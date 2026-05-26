@@ -10,9 +10,8 @@
 import AppKit
 
 extension SessionView {
-    @objc(presentCodeReviewPromptOverlayWithDefaultPrompt:workgroupShortcutHandler:onStart:)
+    @objc(presentCodeReviewPromptOverlayWithDefaultPrompt:onStart:)
     func presentCodeReviewPromptOverlay(defaultPrompt: String?,
-                                         workgroupShortcutHandler: ((NSEvent) -> Bool)?,
                                          onStart: @escaping (String) -> Void) {
         // Drop any existing overlay so a rapid reload-on-reload doesn't
         // stack two prompt views.
@@ -28,7 +27,6 @@ extension SessionView {
         if let defaultPrompt {
             promptView.text = defaultPrompt
         }
-        promptView.workgroupShortcutHandler = workgroupShortcutHandler
         promptView.onStart = { [weak promptView] text in
             onStart(text)
             promptView?.removeFromSuperview()

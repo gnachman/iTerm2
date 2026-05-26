@@ -421,6 +421,24 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     return [instance activatePeerByShortcutDigit:digit fromSession:session];
 }
 
+// Dispatch a custom workgroup peer-switch or toolbar (navigation /
+// reload) shortcut for the focused session. Unlike the fixed
+// ⌥⇧⌘<digit> chord handled by switchToWorkgroupPeerByNumber:, these
+// bindings are user-configurable, so the workgroup instance does the
+// matching: it scans the focused session's toolbar items and every
+// peer's configured peerSwitchShortcut. Returns NO (letting normal
+// dispatch continue) when the focused session isn't in a workgroup or
+// nothing matched.
+- (BOOL)handleWorkgroupToolbarShortcut:(NSEvent *)event
+                    inWindowController:(PseudoTerminal *)currentTerminal {
+    PTYSession *session = [currentTerminal currentSession];
+    iTermWorkgroupInstance *instance = session.workgroupInstance;
+    if (!instance) {
+        return NO;
+    }
+    return [instance handleToolbarShortcutWithEvent:event focusedSession:session];
+}
+
 // Layout-independent 1..9 digit mapping for the number row and
 // numeric keypad. Returns -1 for any other key. Used by the
 // workgroup peer shortcut where Shift is held and characters-based
@@ -609,6 +627,18 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         // user-configured ⌘⇧⌥<digit> action takes precedence over
         // peer activation.
         if ([self switchToWorkgroupPeerByNumber:event inWindowController:currentTerminal]) {
+            return YES;
+        }
+        // Custom (user-configurable) workgroup peer-switch and toolbar
+        // navigation/reload shortcuts. Dispatched centrally here — like
+        // the digit shortcut above — so they fire no matter which view
+        // in the terminal window is first responder: a button in an
+        // overlay, the clippings table, a prompt text view, etc. The
+        // alternative (a view's performKeyEquivalent:) only works when
+        // that specific view is first responder, which is the bug this
+        // replaces. Defers to global key mappings internally so
+        // user-configured bindings still win.
+        if ([self handleWorkgroupToolbarShortcut:event inWindowController:currentTerminal]) {
             return YES;
         }
         if ([[self sessionOfFirstResponder] handleKeyDownWithBuckyBits:event]) {

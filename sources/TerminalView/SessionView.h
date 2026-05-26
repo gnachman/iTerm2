@@ -368,7 +368,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 
 @interface SessionView (CodeReviewPromptOverlay)
 - (void)presentCodeReviewPromptOverlayWithDefaultPrompt:(nullable NSString *)defaultPrompt
-                               workgroupShortcutHandler:(BOOL (^ _Nullable)(NSEvent *event))workgroupShortcutHandler
                                                 onStart:(void (^)(NSString *text))onStart;
 @end
 

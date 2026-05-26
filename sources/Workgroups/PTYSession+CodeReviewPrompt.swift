@@ -78,16 +78,7 @@ extension PTYSession {
     private func showCodeReviewPromptOverlay(onStart: @escaping (String) -> Void) {
         guard let sessionView: SessionView = view else { return }
         let defaultPrompt = CodeReviewPromptStore.shared.defaultPromptText
-        // Route workgroup peer-switch / toolbar shortcuts to this host
-        // session even while the overlay's NSTextView is first responder.
-        // Without this hook the text view consumes ^1, etc. as text input
-        // before PTYTextView's performKeyEquivalent: ever runs.
-        let shortcutHandler: (NSEvent) -> Bool = { [weak self] event in
-            guard let self else { return false }
-            return self.textViewWorkgroupShortcutHandlesEvent(event)
-        }
         sessionView.presentCodeReviewPromptOverlay(defaultPrompt: defaultPrompt,
-                                                   workgroupShortcutHandler: shortcutHandler,
                                                    onStart: onStart)
     }
 

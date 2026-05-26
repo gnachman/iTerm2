@@ -39,15 +39,6 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
     // viewDidMoveToWindow.
     @objc var promptResponder: NSView { textView }
 
-    // Forwarded to the prompt's NSTextView so workgroup peer-switch
-    // shortcuts (and other workgroup toolbar key bindings) fire even
-    // when the text view is first responder. Without this, the text
-    // view consumes the keystroke for text input before the host
-    // session's PTYTextView ever sees performKeyEquivalent:.
-    var workgroupShortcutHandler: ((NSEvent) -> Bool)? {
-        didSet { textView.workgroupShortcutHandler = workgroupShortcutHandler }
-    }
-
     private let scrollView: NSScrollView
     private let textView: ShiftReturnSubmittingTextView
     private let startButton: NSButton
@@ -368,21 +359,11 @@ extension CodeReviewPromptView: NSMenuDelegate {
 // Return-family keys as text input before window-level performKeyEquivalent:
 // runs against subviews.
 //
-// performKeyEquivalent: is also overridden so workgroup peer-switch and
-// toolbar shortcuts (^1, etc.) get routed to the host session's workgroup
-// handler before the text view consumes them as text input. PTYTextView's
-// own performKeyEquivalent: bails out when it isn't first responder, so
-// without this hook nothing in the responder chain claims the shortcut.
+// Workgroup peer-switch and toolbar shortcuts are dispatched centrally in
+// -[iTermApplication handleKeypressInTerminalWindow:], so they fire even
+// while this text view is first responder without any hook here.
 private class ShiftReturnSubmittingTextView: NSTextView {
     var onSubmit: (() -> Void)?
-    var workgroupShortcutHandler: ((NSEvent) -> Bool)?
-
-    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        if workgroupShortcutHandler?(event) == true {
-            return true
-        }
-        return super.performKeyEquivalent(with: event)
-    }
 
     override func keyDown(with event: NSEvent) {
         if event.charactersIgnoringModifiers == "\r",

@@ -26,14 +26,6 @@ class iTermClippingsGutterPanel: NSObject, iTermRightGutterPanel {
     override init() {
         super.init()
         clippingsView.delegate = self
-        // Forward workgroup peer-switch / toolbar shortcuts to whichever
-        // session the gutter is currently showing. Resolved through
-        // `currentSession` so a peer swap (which doesn't re-call
-        // attach(to:)) still routes the keystroke to the live host.
-        clippingsView.workgroupShortcutHandler = { [weak self] event in
-            guard let session = self?.currentSession else { return false }
-            return session.textViewWorkgroupShortcutHandlesEvent(event)
-        }
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(clippingsDidChange(_:)),
