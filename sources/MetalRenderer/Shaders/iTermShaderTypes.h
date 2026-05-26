@@ -14,6 +14,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexColorArray,  // Points at per-quad vector_float4 color
     iTermVertexInputIndexValidationFlag,  // Issue 12604: uint32 where bit 0 = CPU validation failed
     iTermVertexInputIndexBgImageChecksum,  // Issue 12604/12791: uint32, expected FNV-1a hash of the 6-vertex array
+    iTermVertexInputIndexBgColorChecksum,  // Issue 12604/12791: iTermBgColorChecksumParams for the PIU array
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -35,6 +36,7 @@ typedef enum {
     iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
     iTermFragmentBufferIndexScale = 7,  // backing scale factor float
     iTermFragmentBufferIndexBgImageChecksumReport = 8,  // Issue 12604/12791: device atomic_uint
+    iTermFragmentBufferIndexBgColorChecksumReport = 9,  // Issue 12604/12791: device atomic_uint
 } iTermFragmentBufferIndex;
 
 // AND with mask to remove strikethrough bit
@@ -130,6 +132,15 @@ typedef struct {
     // Is default background color?
     unsigned char isDefault;
 } iTermBackgroundColorPIU;
+
+// Issue 12604/12791: bg-color PIU checksum witness. The expected hash rides via
+// setVertexBytes (inline command-buffer payload, not an MTLBuffer) so a stomp on
+// the pooled PIU buffer can't corrupt both witnesses in lockstep. expected==0 is a
+// sentinel meaning "don't check this draw" (used for the suppressed region).
+typedef struct {
+    unsigned int expected;  // FNV-1a-32 of the PIU array for this draw (0 = skip)
+    unsigned int count;     // number of PIU instances to hash
+} iTermBgColorChecksumParams;
 
 typedef struct {
     vector_float4 color;

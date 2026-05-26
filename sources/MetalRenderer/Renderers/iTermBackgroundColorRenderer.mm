@@ -1,14 +1,87 @@
 #import "iTermBackgroundColorRenderer.h"
 
+#import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "NSFileManager+iTerm.h"
 #import "iTermPIUArray.h"
 #import "iTermTextRenderer.h"
 
+// Issue 12604/12791: FNV-1a-32 over the PIU array, hashed field-by-field to avoid
+// struct padding. Must match the GPU-side implementation in iTermBackgroundColor.metal.
+static inline uint32_t iTermBgColorPiuHash(const iTermBackgroundColorPIU *pius, uint32_t count) {
+    uint32_t hash = 2166136261u;
+    for (uint32_t i = 0; i < count; i++) {
+        uint32_t words[9];
+        const float ox = pius[i].offset.x;
+        const float oy = pius[i].offset.y;
+        const float cx = pius[i].color.x;
+        const float cy = pius[i].color.y;
+        const float cz = pius[i].color.z;
+        const float cw = pius[i].color.w;
+        memcpy(&words[0], &ox, sizeof(uint32_t));
+        memcpy(&words[1], &oy, sizeof(uint32_t));
+        words[2] = (uint32_t)pius[i].runLength;
+        words[3] = (uint32_t)pius[i].numRows;
+        memcpy(&words[4], &cx, sizeof(uint32_t));
+        memcpy(&words[5], &cy, sizeof(uint32_t));
+        memcpy(&words[6], &cz, sizeof(uint32_t));
+        memcpy(&words[7], &cw, sizeof(uint32_t));
+        words[8] = (uint32_t)pius[i].isDefault;
+        for (int j = 0; j < 9; j++) {
+            hash ^= words[j];
+            hash *= 16777619u;
+        }
+    }
+    // Reserve 0 as a "skip check" sentinel; clip a legitimate-but-zero hash to 1.
+    return hash == 0u ? 1u : hash;
+}
+
+// Issue 12604/12791: One per PIU draw this frame, so didComplete can re-hash the buffer
+// the GPU read and tell whether a reported mismatch was transient or persistent.
+@interface iTermBgColorWitnessEntry : NSObject
+@property (nonatomic, strong) id<MTLBuffer> piuBuffer;
+@property (nonatomic) uint32_t expected;
+@property (nonatomic) uint32_t count;
+@end
+
+@implementation iTermBgColorWitnessEntry
+@end
+
 @interface iTermBackgroundColorRendererTransientState()
+// Issue 12604/12791: GPU checksum witness.
+@property (nullable, nonatomic, strong) id<MTLBuffer> checksumReportBuffer;
+@property (nonatomic, strong) NSMutableArray<iTermBgColorWitnessEntry *> *witnessEntries;
+@property (nonatomic) vector_uint2 capturedViewportSize;
+@property (nonatomic) iTermBackgroundColorRendererMode capturedMode;
+- (void)setOwner:(iTermBackgroundColorRenderer *)owner;
+@end
+
+@interface iTermBackgroundColorRenderer (TransientStateReports)
+- (void)reportChecksumFailureForTransientState:(iTermBackgroundColorRendererTransientState *)tState
+                                         report:(uint32_t)report;
 @end
 
 @implementation iTermBackgroundColorRendererTransientState {
     iTerm2::PIUArray<iTermBackgroundColorPIU> _pius;
+    __weak iTermBackgroundColorRenderer *_owner;
+}
+
+- (void)setOwner:(iTermBackgroundColorRenderer *)owner {
+    _owner = owner;
+}
+
+// Issue 12604/12791: Read back the GPU-written checksum report after the command
+// buffer completes. Called from -[iTermMetalDriver complete:].
+- (void)didComplete {
+    if (!_checksumReportBuffer) {
+        return;
+    }
+    uint32_t report = 0;
+    memcpy(&report, _checksumReportBuffer.contents, sizeof(report));
+    if (report == 0) {
+        return;
+    }
+    [_owner reportChecksumFailureForTransientState:self report:report];
 }
 
 - (NSUInteger)sizeOfNewPIUBuffer {
@@ -63,11 +136,13 @@
     iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
 #endif
     iTermMetalMixedSizeBufferPool *_piuPool;
+    id<MTLDevice> _device;  // Issue 12604/12791: for per-frame checksum report buffers
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
     self = [super init];
     if (self) {
+        _device = device;
         _suppressedRegionVertexBufferPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
         if (iTermTextIsMonochrome()) {
@@ -157,6 +232,30 @@
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermBackgroundColorRendererTransientState *tState = transientState;
     id<MTLBuffer> infoBuffer = [self infoBufferForTransientState:tState];
+
+    // Issue 12604/12791: Set up the PIU checksum witness. A shared-storage buffer is the
+    // GPU's path to report a mismatch back; it's read in didComplete. We also remember each
+    // PIU buffer + expected hash so didComplete can re-hash and tell whether a mismatch was
+    // transient (race) or persistent. The bg-color renderer can be invoked more than once
+    // per frame (e.g. default-only then nondefault-only around kitty images) on the same
+    // transient state, so allocate lazily and accumulate witness entries across passes.
+    if (!tState.checksumReportBuffer) {
+        const uint32_t zero = 0;
+        id<MTLBuffer> checksumReportBuffer = [_device newBufferWithBytes:&zero
+                                                                 length:sizeof(zero)
+                                                                options:MTLResourceStorageModeShared];
+        checksumReportBuffer.label = @"BG color checksum report";
+        tState.checksumReportBuffer = checksumReportBuffer;
+        tState.witnessEntries = [NSMutableArray array];
+        tState.capturedViewportSize = (vector_uint2){
+            (uint32_t)tState.configuration.viewportSize.x,
+            (uint32_t)tState.configuration.viewportSize.y
+        };
+        tState.capturedMode = self.mode;
+        [tState setOwner:self];
+    }
+    id<MTLBuffer> checksumReportBuffer = tState.checksumReportBuffer;
+
     const NSUInteger suppressedBottomPx = static_cast<NSUInteger>(tState.suppressedBottomHeight * tState.cellConfiguration.scale - tState.margins.top);
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         if (numberOfInstances == 0) {
@@ -168,6 +267,21 @@
         piuBuffer.label = @"PIUs";
         iTermMetalCellRenderer *cellRenderer = [self rendererForConfiguration:tState.cellConfiguration];
 
+        // Issue 12604/12791: Hash the PIU bytes the CPU just wrote and pass the expected
+        // value inline via setVertexBytes so it bypasses the pooled PIU memory.
+        const uint32_t expectedChecksum = iTermBgColorPiuHash((const iTermBackgroundColorPIU *)piuBuffer.contents,
+                                                              (uint32_t)numberOfInstances);
+        const iTermBgColorChecksumParams params = { expectedChecksum, (uint32_t)numberOfInstances };
+        [frameData.renderEncoder setVertexBytes:&params
+                                         length:sizeof(params)
+                                        atIndex:iTermVertexInputIndexBgColorChecksum];
+
+        iTermBgColorWitnessEntry *entry = [[iTermBgColorWitnessEntry alloc] init];
+        entry.piuBuffer = piuBuffer;
+        entry.expected = expectedChecksum;
+        entry.count = (uint32_t)numberOfInstances;
+        [tState.witnessEntries addObject:entry];
+
         [cellRenderer drawWithTransientState:tState
                                renderEncoder:frameData.renderEncoder
                             numberOfVertices:6
@@ -177,7 +291,7 @@
                                                 @(iTermVertexInputIndexOffset): tState.offsetBuffer,
                                                 @(iTermVertexInputIndexDefaultBackgroundColorInfo): infoBuffer
                                }
-                             fragmentBuffers:@{}
+                             fragmentBuffers:@{ @(iTermFragmentBufferIndexBgColorChecksumReport): checksumReportBuffer }
                                     textures:@{} ];
     }];
     if (tState.suppressedBottomHeight > 0) {
@@ -239,6 +353,13 @@
         tState.suppressedTopHeight = 0;
         tState.suppressedBottomHeight = 0;
 
+        // Issue 12604/12791: Skip the checksum check for the suppressed region (sentinel=0).
+        // The report buffer is still bound because the fragment shader always declares it.
+        const iTermBgColorChecksumParams skipParams = { 0, 1 };
+        [frameData.renderEncoder setVertexBytes:&skipParams
+                                         length:sizeof(skipParams)
+                                        atIndex:iTermVertexInputIndexBgColorChecksum];
+
         [cellRenderer drawWithTransientState:tState
                                renderEncoder:frameData.renderEncoder
                             numberOfVertices:6
@@ -248,12 +369,62 @@
                                                 @(iTermVertexInputIndexOffset): tState.offsetBuffer,
                                                 @(iTermVertexInputIndexDefaultBackgroundColorInfo): infoBuffer
                                }
-                             fragmentBuffers:@{}
+                             fragmentBuffers:@{ @(iTermFragmentBufferIndexBgColorChecksumReport): tState.checksumReportBuffer }
                                     textures:@{} ];
 
         tState.suppressedTopHeight = savedTop;
         tState.suppressedBottomHeight = savedBottom;
     }
+}
+
+#pragma mark - Issue 12604/12791: Checksum witness reporting
+
+- (void)reportChecksumFailureForTransientState:(iTermBackgroundColorRendererTransientState *)tState
+                                         report:(uint32_t)report {
+    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+    NSString *filename = [NSString stringWithFormat:@"bgcolor-diag-checksum-%f.txt",
+                          [NSDate timeIntervalSinceReferenceDate]];
+    NSString *path = [appSupport stringByAppendingPathComponent:filename];
+
+    NSMutableString *dump = [NSMutableString string];
+    [dump appendFormat:@"Timestamp: %@\n", [NSDate date]];
+    [dump appendFormat:@"Reason: GPU PIU checksum mismatch (report bits=0x%x)\n", report];
+    [dump appendFormat:@"Viewport: %u x %u\n", tState.capturedViewportSize.x, tState.capturedViewportSize.y];
+    [dump appendFormat:@"Renderer mode: %d\n", (int)tState.capturedMode];
+    const vector_float4 bg = tState.defaultBackgroundColor;
+    [dump appendFormat:@"DefaultBackgroundColor: (%.4f, %.4f, %.4f, %.4f)\n", bg.x, bg.y, bg.z, bg.w];
+    [dump appendFormat:@"Segments this frame: %lu\n", (unsigned long)tState.witnessEntries.count];
+
+    NSInteger segmentIndex = 0;
+    for (iTermBgColorWitnessEntry *entry in tState.witnessEntries) {
+        const iTermBackgroundColorPIU *pius = (const iTermBackgroundColorPIU *)entry.piuBuffer.contents;
+        const uint32_t rehashedNow = iTermBgColorPiuHash(pius, entry.count);
+        const BOOL mismatch = (rehashedNow != entry.expected);
+        [dump appendFormat:@"\nSegment %ld: instances=%u expected=0x%08x rehashedNow=0x%08x %@\n",
+            (long)segmentIndex, entry.count, entry.expected, rehashedNow,
+            mismatch ? @"<-- PERSISTENT MISMATCH (buffer differs now)"
+                     : @"(buffer matches now; corruption was transient/in-flight)"];
+        for (uint32_t i = 0; i < entry.count && i < 64; i++) {
+            [dump appendFormat:@"  piu[%u]: offset=(%.2f, %.2f) runLength=%u numRows=%u color=(%.4f, %.4f, %.4f, %.4f) isDefault=%u\n",
+                i, pius[i].offset.x, pius[i].offset.y,
+                (unsigned)pius[i].runLength, (unsigned)pius[i].numRows,
+                pius[i].color.x, pius[i].color.y, pius[i].color.z, pius[i].color.w,
+                (unsigned)pius[i].isDefault];
+        }
+        if (entry.count > 64) {
+            [dump appendString:@"  ... (truncated)\n"];
+        }
+        segmentIndex++;
+    }
+
+    NSError *error = nil;
+    [dump writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    if (error) {
+        ELog(@"Failed to write bg-color checksum diagnostic: %@", error);
+    }
+    ITCriticalError(NO,
+                    @"Background color GPU PIU checksum failed. Diagnostic written to %@",
+                    path);
 }
 
 #pragma mark - iTermMetalDebugInfoFormatter

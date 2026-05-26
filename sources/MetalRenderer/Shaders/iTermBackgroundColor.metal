@@ -9,7 +9,33 @@ typedef struct {
     float4 clipSpacePosition [[position]];
     float4 color;
     bool cancel;
+    float isValid;  // Issue 12604/12791: 1.0 = PIU checksum matched, 0.0 = mismatch (uniform across draw)
 } iTermBackgroundColorVertexFunctionOutput;
+
+// Issue 12604/12791: FNV-1a-32 over the PIU array, hashed field-by-field to avoid
+// struct padding. Must match the CPU-side implementation in iTermBackgroundColorRenderer.mm.
+static inline uint iTermBgColorPiuHash(constant iTermBackgroundColorPIU *pius, uint count) {
+    uint hash = 2166136261u;
+    for (uint i = 0; i < count; i++) {
+        uint words[9] = {
+            as_type<uint>(pius[i].offset.x),
+            as_type<uint>(pius[i].offset.y),
+            (uint)pius[i].runLength,
+            (uint)pius[i].numRows,
+            as_type<uint>(pius[i].color.x),
+            as_type<uint>(pius[i].color.y),
+            as_type<uint>(pius[i].color.z),
+            as_type<uint>(pius[i].color.w),
+            (uint)pius[i].isDefault
+        };
+        for (uint j = 0; j < 9; j++) {
+            hash ^= words[j];
+            hash *= 16777619u;
+        }
+    }
+    // Match CPU-side: reserve 0 as a "skip check" sentinel.
+    return hash == 0u ? 1u : hash;
+}
 
 // Matches function in iTermOffscreenCommandLineBackgroundRenderer.m
 static float4 iTermBlendColors(float4 src, float4 dst) {
@@ -36,8 +62,19 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
                                  constant vector_uint2 *viewportSizePointer  [[ buffer(iTermVertexInputIndexViewportSize) ]],
                                  constant iTermBackgroundColorPIU *perInstanceUniforms [[ buffer(iTermVertexInputIndexPerInstanceUniforms) ]],
                                  constant iTermMetalBackgroundColorInfo *info [[ buffer(iTermVertexInputIndexDefaultBackgroundColorInfo) ]],
+                                 constant iTermBgColorChecksumParams *bgChecksum [[ buffer(iTermVertexInputIndexBgColorChecksum) ]],
                                  unsigned int iid [[instance_id]]) {
     iTermBackgroundColorVertexFunctionOutput out;
+
+    // Issue 12604/12791: Independent checksum witness. The expected hash arrives via
+    // setVertexBytes (inline command-buffer payload, not an MTLBuffer), so a stomp on
+    // the pooled PIU buffer between CPU write and GPU read produces a mismatch.
+    // expected==0 is a sentinel meaning "don't check this draw".
+    out.isValid = 1.0;
+    if (bgChecksum->expected != 0u) {
+        const uint computed = iTermBgColorPiuHash(perInstanceUniforms, bgChecksum->count);
+        out.isValid = (computed == bgChecksum->expected) ? 1.0 : 0.0;
+    }
 
     switch (info->mode) {
         case iTermBackgroundColorRendererModeAll:
@@ -72,10 +109,18 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
 
 // Trivial changes in this implementation trigger metal compiler bugs (like putting `return in.color` in an else clause).
 fragment float4
-iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [[stage_in]]) {
+iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [[stage_in]],
+                                   device atomic_uint *checksumReport [[ buffer(iTermFragmentBufferIndexBgColorChecksumReport) ]]) {
     if (in.cancel) {
         discard_fragment();
         return float4(0, 0, 0, 0);
+    }
+    // Issue 12604/12791: PIU checksum mismatch. Atomically signal the CPU side (read in
+    // -[iTermBackgroundColorRendererTransientState didComplete]) and paint red for a
+    // visible witness. Checked after cancel so discarded fragments never report or paint.
+    if (in.isValid < 0.5) {
+        atomic_fetch_or_explicit(checksumReport, 1u, memory_order_relaxed);
+        return float4(1.0, 0.0, 0.0, 1.0);
     }
     return in.color;
 }

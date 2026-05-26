@@ -2626,6 +2626,11 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
             [frameData transientStateForRenderer:_backgroundImageRenderer];
         [bgState didComplete];
     }
+    if (!_backgroundColorRenderer.rendererDisabled) {
+        iTermBackgroundColorRendererTransientState *bgColorState =
+            [frameData transientStateForRenderer:_backgroundColorRenderer];
+        [bgColorState didComplete];
+    }
     DLog(@"  Recording final stats");
 
 #if ENABLE_STATS
