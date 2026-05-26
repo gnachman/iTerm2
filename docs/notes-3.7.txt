@@ -998,3 +998,17 @@ Bug Fixes:
   picks up the new mode automatically;
   flip it back to Regular in Settings
   if you prefer the old behavior.
+- Add a urlHandlerCommand advanced
+  setting. When set, clicking a URL
+  (including OSC 8 hyperlinks and
+  auto-detected URLs) runs it as a
+  /bin/sh -c task with the URL in
+  \(url) and a background-open flag in
+  \(background), instead of handing the
+  URL to the system. Its output goes to
+  the Script Console. Lets you route
+  links through your own script, e.g. to
+  open in the background or pick a
+  browser mode. Empty by default, so
+  normal URL opening is unchanged.
+  Issue 12878.

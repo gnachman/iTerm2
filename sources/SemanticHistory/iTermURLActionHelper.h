@@ -62,6 +62,7 @@ launchProfileInCurrentTerminal:(Profile *)profile
                   style:(iTermOpenStyle)style;
 - (iTermVariableScope *)urlActionHelperScope:(iTermURLActionHelper *)helper;
 - (id<iTermObject>)urlActionHelperOwner:(iTermURLActionHelper *)helper;
+- (NSString * _Nullable)urlActionHelperShell:(iTermURLActionHelper *)helper;
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper;
 - (iTermSelection *)urlActionHelperSelection:(iTermURLActionHelper *)helper;
 - (void)urlActionHelperShowCommandInfoForMark:(id<VT100ScreenMarkReading>)mark coord:(VT100GridCoord)coord;

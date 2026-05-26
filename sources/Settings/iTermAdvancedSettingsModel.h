@@ -524,6 +524,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useShortcutAccessoryViewController;
 + (NSString *)URLCharacterSet;
 + (NSString *)URLCharacterSetExclusions;
++ (NSString *)urlHandlerCommand;
 + (BOOL)useAdaptiveFrameRate;
 + (BOOL)useBlackFillerColorForTmuxInFullScreen;
 + (BOOL)useColorfgbgFallback;

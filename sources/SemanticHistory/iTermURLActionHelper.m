@@ -20,6 +20,8 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermBackgroundCommandRunner.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermImageInfo.h"
 #import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
@@ -28,6 +30,8 @@
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermUserDefaults.h"
+#import "iTermVariableScope.h"
+#import "iTermVariables.h"
 
 @implementation iTermURLActionHelper {
     NSInteger _openTargetGeneration;
@@ -298,6 +302,11 @@ workingDirectory:(NSString *)workingDirectory
         });
         return;
     }
+    NSString *handlerCommand = [iTermAdvancedSettingsModel urlHandlerCommand];
+    if (handlerCommand.length > 0) {
+        [self runURLHandlerCommand:handlerCommand forURL:url inBackground:background];
+        return;
+    }
     if (background) {
         NSWorkspaceOpenConfiguration *config = [NSWorkspaceOpenConfiguration configuration];
         config.activates = NO;
@@ -312,6 +321,46 @@ workingDirectory:(NSString *)workingDirectory
                                             style:style
                                            window:self.delegate.urlActionHelperWindow];
     }
+}
+
+// Runs the user-configured urlHandlerCommand advanced setting (an interpolated
+// string) as a background task whose output goes to the Script Console. The
+// clicked URL is exposed as \(url) and whether the user requested a background
+// open (by holding option) as \(background), which is 1 or 0. The command is
+// responsible for actually opening the URL.
+- (void)runURLHandlerCommand:(NSString *)swiftyString forURL:(NSURL *)url inBackground:(BOOL)background {
+    iTermVariableScope *scope = [[self.delegate urlActionHelperScope:self] copy];
+    iTermVariables *frame = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone
+                                                              owner:[self.delegate urlActionHelperOwner:self]];
+    [scope addVariables:frame toScopeNamed:nil];
+    [scope setValue:url.absoluteString forVariableNamed:@"url"];
+    [scope setValue:@(background) forVariableNamed:@"background"];
+
+    iTermExpressionEvaluator *evaluator =
+        [[iTermExpressionEvaluator alloc] initWithInterpolatedString:swiftyString scope:scope];
+    __weak __typeof(self) weakSelf = self;
+    [evaluator evaluateWithTimeout:5
+                sideEffectsAllowed:YES
+                        completion:^(iTermExpressionEvaluator *evaluator) {
+        NSString *command = [NSString castFrom:evaluator.value];
+        if (command.length == 0) {
+            DLog(@"urlHandlerCommand evaluated to an empty string; not running. error=%@", evaluator.error);
+            return;
+        }
+        [weakSelf launchURLHandlerCommand:command];
+    }];
+}
+
+- (void)launchURLHandlerCommand:(NSString *)command {
+    DLog(@"Run urlHandlerCommand: /bin/sh -c %@", command);
+    // iTermBackgroundCommandRunner streams the command's output to the Script
+    // Console and keeps itself alive until it finishes.
+    iTermBackgroundCommandRunner *runner =
+        [[iTermBackgroundCommandRunner alloc] initWithCommand:command
+                                                        shell:[self.delegate urlActionHelperShell:self]
+                                                        title:@"URL Handler"];
+    runner.notificationTitle = @"URL Handler Command Failed";
+    [runner run];
 }
 
 - (void)finishOpeningTargetWithEvent:(NSEvent *)event

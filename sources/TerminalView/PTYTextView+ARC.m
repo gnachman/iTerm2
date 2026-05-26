@@ -1517,6 +1517,10 @@ launchProfileInCurrentTerminal:(Profile *)profile
     return self.delegate;
 }
 
+- (NSString *)urlActionHelperShell:(iTermURLActionHelper *)helper {
+    return self.delegate.textViewShell;
+}
+
 - (void)urlActionHelperCopySelectionIfNeeded:(iTermURLActionHelper *)helper {
     if ([self.selection hasSelection] && self.delegate) {
         // if we want to copy our selection, do so
