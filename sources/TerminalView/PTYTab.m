@@ -642,6 +642,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (self.isBroadcasting) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
     }
+    // The aggregated tab status is a cached copy of the winning session's
+    // status, otherwise refreshed only when a resident session changes its own
+    // status (sessionTabStatusDidChange:). A session can join or leave the tab
+    // while already carrying a status (closed, moved between tabs, reparented
+    // by a workgroup, restored from an arrangement, …) without any such change,
+    // which would leave the tab showing a stale or missing status. All of those
+    // paths funnel through here, so recompute from the current sessions.
+    [self updateAggregatedTabStatus];
     [_delegate numberOfSessionsDidChangeInTab:self];
 }
 
@@ -3307,6 +3315,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                   forKey:sessionView];
     }
     [tabToGut.viewToSessionMap removeAllObjects];
+
+    // We just absorbed another tab's sessions (and any status they carry)
+    // without going through numberOfSessionsDidChange, so recompute. tabToGut
+    // is now empty and about to be discarded, so it needs no update.
+    [self updateAggregatedTabStatus];
 }
 
 - (void)enableFlexibleView {
@@ -5630,6 +5643,10 @@ typedef struct {
     [buried didMoveSession];
     [self updateSessionOrdinals];
 
+    // Count-preserving membership change (see swapSession:withSession:): recompute
+    // so the buried session's status replaces the one that just left the tab.
+    [self updateAggregatedTabStatus];
+
     [[iTermBuriedSessions sharedInstance] swapSession:existing withBuriedSession:buried];
 
     if (wasMaximized) {
@@ -5735,6 +5752,14 @@ typedef struct {
 
     [session1Tab updateSessionOrdinals];
     [session2Tab updateSessionOrdinals];
+
+    // A swap changes which sessions belong to each tab without changing either
+    // tab's session count, so numberOfSessionsDidChange (where the aggregated
+    // status is normally recomputed) isn't called. Recompute on both tabs so a
+    // swapped session's status (e.g. "waiting") follows it to its new tab
+    // instead of being stranded on the old one.
+    [session1Tab updateAggregatedTabStatus];
+    [session2Tab updateAggregatedTabStatus];
 }
 
 - (void)_recursivePopulateSplitTreeNode:(ITMSplitTreeNode *)node

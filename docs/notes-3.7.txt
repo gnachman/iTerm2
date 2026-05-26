@@ -424,6 +424,13 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- A tab no longer shows a stale or missing
+  session status (such as “waiting”) when a
+  pane carrying a status is closed, moved
+  between tabs, or reparented (for example by
+  entering or exiting a workgroup). The tab’s
+  aggregated status is now recomputed whenever
+  its set of sessions changes.
 - The “taking a long time to check state
   restoration” prompt no longer appears so
   readily right after login, when the system
