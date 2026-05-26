@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "FMDatabase.h"
 #import "NSArray+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermUserDefaults.h"
 
@@ -266,7 +267,12 @@ typedef enum {
     // so the integrity check should finish quickly. After a crash the check can
     // take much longer, so extend the timeout to avoid false-alarming the user
     // with the "taking a long time" dialog on every post-crash launch.
-    const NSTimeInterval timeout = [iTermUserDefaults lastShutdownWasClean] ? 10 : 120;
+    //
+    // We also extend the timeout shortly after boot: at login the system is busy
+    // restoring every app's windows and disk I/O is saturated, which can make even
+    // a healthy database's check exceed the normal timeout. Issue 11809.
+    const BOOL recentlyBooted = [NSDate it_timeSinceBoot] < 10 * 60;
+    const NSTimeInterval timeout = ([iTermUserDefaults lastShutdownWasClean] && !recentlyBooted) ? 10 : 120;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [weakSelf integrityCheckDidTimeOut:lock state:&state];
     });

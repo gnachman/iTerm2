@@ -424,6 +424,15 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- The “taking a long time to check state
+  restoration” prompt no longer appears so
+  readily right after login, when the system
+  is busy and disk I/O is slow. The integrity
+  check timeout is now extended in the first
+  ten minutes after boot, the prompt's
+  wording is friendlier, and it defaults to
+  continuing rather than discarding windows.
+  Issue 11809.
 - Editing a color in a color well no longer
   silently switches the picker from sRGB to
   P3 (or back). The color space the well is

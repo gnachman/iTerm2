@@ -145,10 +145,11 @@
         __block BOOL result = NO;
         dispatch_sync(dispatch_get_main_queue(), ^{
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Continue restoring state?";
-            alert.informativeText = @"It's taking a long time to check the validity of the state restoration database. Keep trying to open it? Select Ok to keep waiting or Delete to lose saved windows.";
-            [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Delete"];
+            alert.messageText = @"Still restoring your windows…";
+            alert.informativeText = @"iTerm2 is taking longer than usual to verify your saved windows and tabs. This usually means the system is busy and it’s safe to keep waiting, but a damaged state restoration database could also cause it. You can discard the saved windows instead if you’d rather not wait.";
+            // Keep Waiting is added first so it is the default action (triggered by Return).
+            [alert addButtonWithTitle:@"Keep Waiting"];
+            [alert addButtonWithTitle:@"Discard Saved Windows"];
             result = ([alert runModal] == NSAlertSecondButtonReturn);
         });
         return result;
