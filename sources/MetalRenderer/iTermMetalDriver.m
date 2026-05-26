@@ -167,6 +167,10 @@ typedef struct {
     int _dropped;
     int _total;
 
+    // Issue 7459 diagnostics: mach time of the last attempt we recorded, used to
+    // sample frame-lifecycle logging so high frame rates do not flood the ring.
+    NSTimeInterval _lastDiagnosticAttemptTime;
+
     // Private queue access only
     BOOL _expireNonASCIIGlyphs;
 
@@ -504,6 +508,12 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     return captureDescriptor;
 }
 
+// Issue 7459 diagnostics. Records a per-session frame-lifecycle event. Safe to
+// call from any thread.
+- (void)recordDiagnostic:(NSString *)text {
+    [[iTermMetalDiagnostics sharedInstance] recordSessionEvent:_identifier text:text];
+}
+
 - (BOOL)reallyDrawInMTKView:(nonnull iTermMetalView *)view startToStartTime:(NSTimeInterval)startToStartTime {
     DLog(@"Draw in %@ for %@", view, self.dataSource);
     // Read the advanced setting once per frame to ensure consistent behavior throughout the frame.
@@ -536,13 +546,31 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         }
     }
 
+    // Issue 7459 diagnostics: sample frame-lifecycle logging. At a high frame
+    // rate we record at most ~4 frames/sec; when the cadence is slow (idle, which
+    // is exactly when the blank-screen bug manifests) every attempt is recorded.
+    const NSTimeInterval diagnosticNow = CACurrentMediaTime();
+    const BOOL recordDiagnostics = (diagnosticNow - _lastDiagnosticAttemptTime) > 0.25;
+    if (recordDiagnostics) {
+        // DRAW_ENTER is recorded for every sampled attempt. Its presence proves
+        // draws are still being requested; gaps between DRAW_ENTER timestamps
+        // reveal the actual redraw cadence. Absence after a reconfiguration means
+        // no redraw is being requested at all.
+        [self recordDiagnostic:[NSString stringWithFormat:@"DRAW_ENTER %@", view.metalDiagnosticsSnapshot]];
+        _lastDiagnosticAttemptTime = diagnosticNow;
+    }
+
     if (view.bounds.size.width == 0 || view.bounds.size.height == 0) {
         DLog(@"  abort: 0x0 view");
+        if (recordDiagnostics) {
+            [self recordDiagnostic:[NSString stringWithFormat:@"ABORT_0x0_VIEW %@", view.metalDiagnosticsSnapshot]];
+        }
         return NO;
     }
 
     iTermMetalFrameData *frameData = [self newFrameDataForView:view];
     frameData.useSynchronizedDrawing = useSynchronizedDrawing;
+    frameData.recordDiagnostics = recordDiagnostics;
     if (useSynchronizedDrawing) {
         // Create helper on main thread; it captures iTermMetalLayerBox (thread-safe)
         // and can be used from the private queue without touching NSView.
@@ -551,6 +579,9 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     DLog(@"allocated metal frame %@", frameData);
     if (VT100GridSizeEquals(frameData.gridSize, VT100GridSizeMake(0, 0))) {
         DLog(@"  abort: 0x0 grid");
+        if (recordDiagnostics) {
+            [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ ABORT_0x0_GRID %@", @(frameData.frameNumber), view.metalDiagnosticsSnapshot]];
+        }
         return NO;
     }
 
@@ -561,6 +592,10 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
             DLog(@"  abort: busy (dropped %@%%, number in flight: %d)", @((_dropped * 100)/_total), (int)framesInFlight);
             DLog(@"  current frames:\n%@", _currentFrames);
             _dropped++;
+            if (recordDiagnostics) {
+                [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ DROPPED_BUSY inFlight=%d max=%d dropped=%d/%d %@",
+                                        @(frameData.frameNumber), (int)framesInFlight, (int)[self maximumNumberOfFramesInFlight], _dropped, _total, view.metalDiagnosticsSnapshot]];
+            }
             [self rescheduleAfterFailure];
             return NO;
         }
@@ -581,8 +616,19 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     if (!frameData.deferCurrentDrawable) {
         if (frameData.destinationTexture == nil || frameData.renderPassDescriptor == nil) {
             DLog(@"  abort: failed to get drawable or RPD");
+            if (recordDiagnostics) {
+                [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ NO_DRAWABLE_OR_RPD drawable=%@ rpd=%@ avgAcquireMs=%.1f %@",
+                                        @(frameData.frameNumber),
+                                        frameData.destinationDrawable ? @"got" : @"nil",
+                                        frameData.renderPassDescriptor ? @"got" : @"nil",
+                                        _currentDrawableTime.value * 1000.0,
+                                        view.metalDiagnosticsSnapshot]];
+            }
             [self rescheduleAfterFailure];
             return NO;
+        } else if (recordDiagnostics) {
+            [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ GOT_DRAWABLE avgAcquireMs=%.1f %@",
+                                    @(frameData.frameNumber), _currentDrawableTime.value * 1000.0, view.metalDiagnosticsSnapshot]];
         }
     }
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
@@ -2507,6 +2553,9 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         if (!frameData.useSynchronizedDrawing && frameData.destinationDrawable) {
             DLog(@"  presentDrawable %@", frameData);
             [commandBuffer presentDrawable:frameData.destinationDrawable];
+            if (frameData.recordDiagnostics) {
+                [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ PRESENT_DRAWABLE", @(frameData.frameNumber)]];
+            }
         }
 
 #if ENABLE_STATS
@@ -2530,6 +2579,11 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         } copy];
 
         [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _Nonnull buffer) {
+            if (frameData.recordDiagnostics) {
+                NSString *errorString = buffer.error ? buffer.error.localizedDescription : @"none";
+                [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ COMPLETED status=%ld error=%@",
+                                        @(frameData.frameNumber), (long)buffer.status, errorString]];
+            }
 #if ENABLE_PRIVATE_QUEUE
             [frameData dispatchToQueue:self->_queue forCompletion:completedBlock];
 #else
@@ -2547,14 +2601,23 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
                     // presenting a mismatched drawable.
                     if ([helper isContextStillValid]) {
                         [drawable present];
+                        if (frameData.recordDiagnostics) {
+                            [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ PRESENT_DRAWABLE_SYNC", @(frameData.frameNumber)]];
+                        }
                     } else {
                         DLog(@"Skipping presentation - layer context changed since drawable acquisition");
+                        if (frameData.recordDiagnostics) {
+                            [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ PRESENT_SKIPPED_CONTEXT_CHANGED", @(frameData.frameNumber)]];
+                        }
                     }
                 });
             }];
         }
 
         DLog(@"  commit %@", frameData);
+        if (frameData.recordDiagnostics) {
+            [self recordDiagnostic:[NSString stringWithFormat:@"frame=%@ COMMIT", @(frameData.frameNumber)]];
+        }
         [commandBuffer commit];
     }];
 }

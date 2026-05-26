@@ -56,6 +56,11 @@
                                     <action selector="captureNextMetalFrame:" target="-1" id="vR7-q7-IN8"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Save Metal Diagnostics..." identifier="Save Metal Diagnostics" id="sMd-74-591">
+                                <connections>
+                                    <action selector="saveMetalDiagnostics:" target="201" id="sMd-74-592"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="199">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

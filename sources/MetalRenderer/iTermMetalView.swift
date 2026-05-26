@@ -32,6 +32,17 @@ public class iTermMetalView: NSView {
     private var displayLink: CVDisplayLink?
     private var currentInterval: Int = 0
     private nonisolated let displaySource = MutableAtomicObject<DispatchSourceUserDataAdd?>(nil)
+
+    // Diagnostics counters for issue 7459. These track calls into the background
+    // nextDrawable() so we can tell if it is blocking indefinitely (started >
+    // returned for a long time means a stuck acquisition). They are nonisolated
+    // because the background getDrawableQueue increments `returned`.
+    private nonisolated let nextDrawableStarted = MutableAtomicObject<Int>(0)
+    private nonisolated let nextDrawableReturned = MutableAtomicObject<Int>(0)
+    // Short identifier so the global view-lifecycle events (created/destroyed)
+    // correlate with the per-session VIEWSTATE snapshots. Destroying and
+    // recreating a view is exactly how a tab switch recovers from the bug.
+    nonisolated let diagnosticsID = String(UUID().uuidString.prefix(8))
     private static var drawRectSuperIMP: IMP?
     private var drawRectSubIMP: IMP?
     private var subClassOverridesDrawRect: Bool = false
@@ -217,6 +228,7 @@ public class iTermMetalView: NSView {
     }
 
     deinit {
+        iTermMetalDiagnostics.sharedInstance().recordGlobalEvent("METAL_VIEW_DESTROYED id=\(diagnosticsID)")
         NotificationCenter.default.removeObserver(self)
         // Clear the CAMetalLayer's delegate before deallocation. CALayer.delegate
         // is unowned(unsafe), so without this it becomes a dangling pointer.
@@ -385,7 +397,10 @@ extension iTermMetalView {
         while !timedOut {
             let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
                 Self.getDrawableQueue.async {
-                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawableWithoutTimeout()))
+                    _ = self.nextDrawableStarted.mutate { $0 + 1 }
+                    let drawable = metalLayerBox.nextDrawableWithoutTimeout()
+                    _ = self.nextDrawableReturned.mutate { $0 + 1 }
+                    seal.fulfill(PendingDrawable(context, drawable: drawable))
                 }
             }
             var result: CAMetalDrawable?
@@ -497,6 +512,8 @@ extension iTermMetalView {
     }
 
     private func initCommon() {
+        iTermMetalDiagnostics.sharedInstance().startIfNeeded()
+        iTermMetalDiagnostics.sharedInstance().recordGlobalEvent("METAL_VIEW_CREATED id=\(diagnosticsID)")
         drawableScaleFactor = CGSize(width: 1.0, height: 1.0)
         wantsLayer = true
         let layer = CAMetalLayer()
@@ -920,6 +937,34 @@ fileprivate func DisplayLinkCallback(displayLink: CVDisplayLink,
 
     displaySource.add(data: 1)
     return kCVReturnSuccess
+}
+
+// MARK: - Diagnostics (issue 7459)
+@MainActor
+extension iTermMetalView {
+    @objc var nextDrawableStartedCount: Int { nextDrawableStarted.value }
+    @objc var nextDrawableReturnedCount: Int { nextDrawableReturned.value }
+    @objc var pendingDrawablePromiseActive: Bool { pendingDrawablePromise != nil }
+
+    /// A compact, human-readable snapshot of the view and its Metal layer's
+    /// current state. Recorded with each frame attempt so the diagnostics dump
+    /// shows what the view looked like at and after a display reconfiguration.
+    @objc var metalDiagnosticsSnapshot: String {
+        let started = nextDrawableStarted.value
+        let returned = nextDrawableReturned.value
+        let screenDesc: String
+        if let screen = window?.screen {
+            let displayID = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
+            screenDesc = "id=\(displayID) scale=\(screen.backingScaleFactor) fps=\(screen.maximumFramesPerSecond)"
+        } else {
+            screenDesc = "none"
+        }
+        let drawable = metalLayerBox?.drawableSize ?? .zero
+        let scale = metalLayerBox?.contentsScale ?? 0
+        let deviceName = _device?.name ?? "nil"
+        let b = bounds.size
+        return "VIEWSTATE id=\(diagnosticsID) paused=\(paused ? "Y" : "N") hidden=\(isHidden ? "Y" : "N") alpha=\(String(format: "%.2f", Double(alphaValue))) window=\(window != nil ? "Y" : "N") screen={\(screenDesc)} bounds=\(Int(b.width))x\(Int(b.height)) drawable=\(Int(drawable.width))x\(Int(drawable.height)) contentsScale=\(scale) device=\(deviceName) pendingPromise=\(pendingDrawablePromise != nil ? "Y" : "N") nextDrawable(started=\(started) returned=\(returned) outstanding=\(started - returned)) frameNum=\(frameNum)"
+    }
 }
 
 extension CAMetalLayer: @unchecked @retroactive Sendable {}

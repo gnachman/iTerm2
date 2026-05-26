@@ -35,6 +35,7 @@ class MainMenuMangler: NSObject {
         "Toggle Debug Logging": "ladybug",
         "Copy Performance Stats": "hare",
         "Capture Metal Frame": "camera",
+        "Save Metal Diagnostics": "stethoscope",
         "Preferences...": "gear",
         // "Services" menu item has no identifier in XIB
         "Hide iTerm2": "eye.slash",

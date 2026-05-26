@@ -164,6 +164,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong, nullable) dispatch_group_t group;  // nonnil implies synchronous
 @property (nonatomic) BOOL useSynchronizedDrawing;  // Cached value of advanced setting
 @property (nonatomic) BOOL deferCurrentDrawable;
+// Issue 7459 diagnostics: when YES, this frame's present/commit/completion are
+// recorded to iTermMetalDiagnostics. Sampled to avoid flooding at high frame rates.
+@property (nonatomic) BOOL recordDiagnostics;
 // Helper to acquire drawable from any thread and validate context before presentation.
 @property (nonatomic, strong, nullable) iTermDrawableAcquisitionHelper *drawableAcquisitionHelper;
 @property (nonatomic, strong, nullable) MTLCaptureDescriptor *captureDescriptor NS_AVAILABLE_MAC(10_15);

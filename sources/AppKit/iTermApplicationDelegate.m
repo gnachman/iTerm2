@@ -2353,6 +2353,34 @@ static iTermKeyEventReplayer *gReplayer;
     [pboard setString:copyString forType:NSPasteboardTypeString];
 }
 
+// Issue 7459: dump the always-on Metal diagnostics ring buffers to a file on the
+// Desktop and reveal it in Finder, so a user who can reproduce the blank-screen
+// bug can send us what the rendering pipeline did around the display change.
+- (IBAction)saveMetalDiagnostics:(id)sender {
+    NSString *contents = [[iTermMetalDiagnostics sharedInstance] dump];
+
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyy-MM-dd-HHmmss";
+    NSString *filename = [NSString stringWithFormat:@"iterm2-metal-diagnostics-%@.txt",
+                          [formatter stringFromDate:[NSDate date]]];
+
+    NSURL *desktop = [[NSFileManager defaultManager] URLForDirectory:NSDesktopDirectory
+                                                            inDomain:NSUserDomainMask
+                                                   appropriateForURL:nil
+                                                              create:NO
+                                                               error:nil];
+    NSURL *url = [desktop URLByAppendingPathComponent:filename];
+    NSError *error = nil;
+    if ([contents writeToURL:url atomically:YES encoding:NSUTF8StringEncoding error:&error]) {
+        [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ url ]];
+    } else {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Could not save Metal diagnostics";
+        alert.informativeText = error.localizedDescription ?: @"Unknown error";
+        [alert runModal];
+    }
+}
+
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
 }
