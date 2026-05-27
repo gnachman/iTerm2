@@ -424,6 +424,9 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Session notes now keep their distance from
+  the top-right corner of a session when it
+  is resized, instead of from the bottom-left.
 - A tab no longer shows a stale or missing
   session status (such as “waiting”) when a
   pane carrying a status is closed, moved
