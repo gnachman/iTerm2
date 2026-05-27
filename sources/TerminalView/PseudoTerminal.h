@@ -392,6 +392,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)closeTab:(PTYTab *)aTab;
 
 - (void)changeTabColorToMenuAction:(id)sender;
+
+// Cycle the current tab's color through the presets in the tabColorMenuOptions
+// advanced setting, then to no color, then back to the first preset.
+- (IBAction)cycleTabColor:(id)sender;
+
 - (void)moveSessionToWindow:(id)sender;
 
 - (void)addRevivedSession:(PTYSession *)session;
