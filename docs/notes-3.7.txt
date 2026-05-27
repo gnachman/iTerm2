@@ -374,6 +374,11 @@ Menus and Miscellaneous:
   ends.
 - New "Suppress notifications from the active
   session" setting.
+- Undo Close now has the ⌘⇧T shortcut. Show
+  Tabs in Fullscreen moved to ⌘⇧U. The first
+  time you press ⌘⇧T in full screen, an alert
+  explains the change and can restore ⌘⇧T to
+  Show Tabs in Fullscreen with a key binding.
 
 Core Improvements:
 - Significant Metal rendering speedups for

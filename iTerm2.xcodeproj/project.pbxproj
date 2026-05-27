@@ -25,6 +25,7 @@
 		120A0343A3399666A8DB1DF6 /* iTermWorkgroupSessionConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAAC581B8C1D99C7CF3091C /* iTermWorkgroupSessionConfig.swift */; };
 		121DDEF50F8DA4E78C8B93F7 /* iTermLayoutSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80B6F3668D68E11BAEA54060 /* iTermLayoutSpec.swift */; };
 		13828E04441792A509FD9864 /* ClaudeCodeModeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73FCEC5593D29C35827971E /* ClaudeCodeModeController.swift */; };
+		1447BC8FDA55281D980D6411 /* iTermUndoCloseShortcutChangeWarning.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31CBF1015D2B6474294432E1 /* iTermUndoCloseShortcutChangeWarning.swift */; };
 		144DC651FBD55CD3407DB29C /* decdwl_decdhl_normalized.txt in Resources */ = {isa = PBXBuildFile; fileRef = 148411BF36E0AD043E6CA1CD /* decdwl_decdhl_normalized.txt */; };
 		1795DE429BCEFBBC4A80BB6F /* WorkgroupMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B6C28F8B3BF9399A955C2CA /* WorkgroupMenu.swift */; };
 		197645E877F9CFD188A98B42 /* iTermGitStringMaker.m in Sources */ = {isa = PBXBuildFile; fileRef = 60884ED8C599CCA130F47597 /* iTermGitStringMaker.m */; };
@@ -6165,6 +6166,7 @@
 		28AF992AB875E6786421227B /* iTermScreenshotOnDemandPreview.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScreenshotOnDemandPreview.swift; sourceTree = "<group>"; };
 		2AEB275FE345E8480B41FAEF /* iTermImageComparison.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermImageComparison.m; sourceTree = "<group>"; };
 		2B9A9D7BB06953CE9297F1FC /* iTermStreamingScreenshotEncoder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermStreamingScreenshotEncoder.swift; sourceTree = "<group>"; };
+		31CBF1015D2B6474294432E1 /* iTermUndoCloseShortcutChangeWarning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUndoCloseShortcutChangeWarning.swift; sourceTree = "<group>"; };
 		3298E60BA3D410B4C3FC1A98 /* PeerSessionSettingsViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PeerSessionSettingsViewController.swift; sourceTree = "<group>"; };
 		3335AD96138BA74CC79D25A8 /* iTermUnicodeNormalization.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermUnicodeNormalization.h; sourceTree = "<group>"; };
 		39A91EF453B797BB100AD508 /* SessionNoteModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionNoteModel.swift; sourceTree = "<group>"; };
@@ -13342,6 +13344,7 @@
 				A6FCAF62250D4CF000B89EB0 /* KeyMappers */,
 				A60E045726DD4A6000DD162B /* TypingAggregator.swift */,
 				A697CED22D9D8E540031583F /* VimKeyParser.swift */,
+				31CBF1015D2B6474294432E1 /* iTermUndoCloseShortcutChangeWarning.swift */,
 			);
 			path = Keyboard;
 			sourceTree = "<group>";
@@ -21309,6 +21312,7 @@
 				2E1AADF79D2B83BA91BA1236 /* iTermGitFileStatus+Diffable.swift in Sources */,
 				AA20D63F60C6C80D0BFEDA7D /* iTermGutterPanelWidths.swift in Sources */,
 				2AB4919B57C2A4A033E8492C /* FocusOrder.swift in Sources */,
+				1447BC8FDA55281D980D6411 /* iTermUndoCloseShortcutChangeWarning.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

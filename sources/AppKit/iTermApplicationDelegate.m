@@ -2814,6 +2814,11 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)undoCloseSession:(id)sender {
+    // Capture these before restoring, since the restore may change the key
+    // window. Used to show a one-time notice that ⌘⇧T now performs Undo Close.
+    NSEvent *triggeringEvent = [NSApp currentEvent];
+    const BOOL wasFullScreen = [[iTermController sharedInstance] currentTerminal].anyFullScreen;
+
     iTermController *controller = [iTermController sharedInstance];
     iTermRestorableSession *restorableSession = [controller popRestorableSession];
     if (restorableSession) {
@@ -2904,6 +2909,9 @@ static iTermKeyEventReplayer *gReplayer;
                 break;
         }
     }
+
+    [iTermUndoCloseShortcutChangeWarning maybeShowForTriggeringEvent:triggeringEvent
+                                                       wasFullScreen:wasFullScreen];
 }
 
 - (IBAction)toggleMultiLinePasteWarning:(NSButton *)sender {
