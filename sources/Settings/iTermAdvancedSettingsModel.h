@@ -365,6 +365,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;
 + (BOOL)prioritizeSmartSelectionActions;
 + (BOOL)saveScrollBufferWhenClearing;
++ (BOOL)saveScrollbackWhenCursorMovesAbovePrompt;
 + (BOOL)saveProfilesToRecentDocuments;
 + (void)setPreventEscapeSequenceFromClearingHistory:(const BOOL *)value;
 + (const BOOL *)preventEscapeSequenceFromChangingProfile;

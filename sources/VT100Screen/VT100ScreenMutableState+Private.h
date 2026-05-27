@@ -67,6 +67,12 @@ iTermTriggerScopeProvider> {
 @property (class, atomic, readwrite) BOOL performingJoinedBlock;
 @property (nonatomic) BOOL allowNextReport;
 
+// Has the running command appended any output since it began executing (FTCS C)? Reset at FTCS C,
+// set whenever text is appended. Used to decide whether a program that moves the cursor above its
+// output region (without using the alternate screen) is doing a launch-time takeover that should
+// preserve the prior screen, versus a mid-run repaint of its own output that must not be disturbed.
+@property (nonatomic) BOOL appendedTextSinceCommandExecuted;
+
 - (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
 - (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;
 - (iTermColorMap *)mutableColorMap;

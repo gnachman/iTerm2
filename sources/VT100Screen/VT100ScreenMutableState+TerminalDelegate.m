@@ -471,9 +471,53 @@ typedef struct {
     [self cursorUp:n andToStartOfLine:toStart];
 }
 
+// Some full-screen programs that don’t use the alternate screen buffer repaint by moving the cursor
+// to the top of the screen and drawing over whatever was already there, destroying content the user
+// can still see (for example, Claude Code does this on launch via CSI H followed by line erases).
+// When such a program moves the cursor above the start of its output, before it has written any
+// output of its own, scroll the visible screen into history first so that content is preserved, as
+// though it had sent CSI 2J.
+//
+// We gate on appendedTextSinceCommandExecuted (reset at FTCS C, set on any append) rather than
+// inspecting the grid, because the screen may still show leftover content from a previous command
+// that also didn’t clear on exit (e.g. relaunching Claude Code). That leftover content needs to be
+// preserved too, but it would make a grid-contents check wrongly conclude this command had already
+// produced output. The flag reflects only what *this* command has drawn, so it stays correct across
+// relaunches and naturally fires at most once per command (the program’s first draw sets it).
+- (void)saveScreenToScrollbackIfCursorMovedAboveCommandOutput {
+    if (![iTermAdvancedSettingsModel saveScrollbackWhenCursorMovesAbovePrompt]) {
+        return;
+    }
+    if (self.terminalSoftAlternateScreenMode) {
+        // The alternate screen has its own buffer; leave the main scrollback alone.
+        return;
+    }
+    if (self.appendedTextSinceCommandExecuted) {
+        // The running program has already drawn output. Scrolling the screen into history now would
+        // displace that output, so leave it alone.
+        return;
+    }
+    const VT100GridAbsCoord outputStart = self.startOfRunningCommandOutput;
+    if (outputStart.x < 0) {
+        // No shell integration / no command is running, so we don’t know where output begins.
+        return;
+    }
+    // Grid row where the running command’s output begins. Negative if it’s already in scrollback.
+    const long long outputStartRow = (outputStart.y -
+                                      self.cumulativeScrollbackOverflow -
+                                      self.numberOfScrollbackLines);
+    if (self.currentGrid.cursor.y >= outputStartRow) {
+        // The cursor is within or below the command’s output region, so there’s nothing of the
+        // user’s above it to preserve.
+        return;
+    }
+    [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];
+}
+
 - (void)terminalMoveCursorToX:(int)x y:(int)y {
     DLog(@"begin x=%@ y=%@", @(x), @(y));
     [self cursorToX:x Y:y];
+    [self saveScreenToScrollbackIfCursorMovedAboveCommandOutput];
     [self clearTriggerLine];
     if (self.commandStartCoord.x != -1) {
         [self didUpdatePromptLocation];

@@ -467,6 +467,7 @@ DEFINE_STRING(webUserAgent, @"Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) Apple
 
 DEFINE_BOOL(jiggleTTYSizeOnClearBuffer, NO, SECTION_GENERAL @"Redraw the screen after the Clear Buffer menu item is selected.\nWhen enabled, the TTY size is briefly changed after clearing the buffer to cause the shell or current app to redraw.");
 DEFINE_BOOL(saveScrollBufferWhenClearing, YES, SECTION_GENERAL @"Save scroll buffer when clearing screen.\nWhen enabled, saves the current screen into scroll back buffer instead of clearing it.");
+DEFINE_BOOL(saveScrollbackWhenCursorMovesAbovePrompt, YES, SECTION_GENERAL @"Save the screen to scrollback when an app moves the cursor above the prompt.\nSome full-screen programs that don’t use the alternate screen buffer repaint by moving the cursor to the top of the screen and overwriting whatever was already there, destroying content you can still see. When enabled, iTerm2 first scrolls the visible screen into history so that content isn’t lost. Requires shell integration.");
 DEFINE_BOOL(indicateBellsInDockBadgeLabel, YES, SECTION_GENERAL @"Indicate the number of bells rung while the app is inactive in the dock icon’s badge label");
 DEFINE_STRING(downloadsDirectory, @"", SECTION_GENERAL @"Downloads folder.\nIf set, downloaded files go to this location instead of the user’s $HOME/Downloads folder.");
 DEFINE_BOOL(noSyncSuppressDownloadConfirmation, NO, SECTION_GENERAL @"Suppress confirmation of terminal-initiated downloads?");

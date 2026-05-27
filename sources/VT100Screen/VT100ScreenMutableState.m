@@ -1067,6 +1067,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                              rtlFound:(BOOL)rtlFound
                               dwcFree:(BOOL)dwcFree {
     if (len >= 1) {
+        self.appendedTextSinceCommandExecuted = YES;
         const int cursorY = self.currentGrid.cursorY;
         iTermLineAttribute lineAttr = [self.currentGrid lineInfoAtLineNumber:cursorY].metadata.lineAttribute;
 
@@ -4104,6 +4105,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self commandDidEndWithRange:self.commandRange];
         [self invalidateCommandStartCoord];
         self.startOfRunningCommandOutput = coord;
+        // The command’s output begins here. Nothing has been appended to it yet.
+        self.appendedTextSinceCommandExecuted = NO;
         return YES;
     }
     return NO;
@@ -5679,6 +5682,9 @@ lengthExcludingInBandSignaling:data.length
             [self setCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake([screenState[kScreenStateCommandStartXKey] intValue],
                                                                                [screenState[kScreenStateCommandStartYKey] longLongValue])];
             self.startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+            // Conservatively assume a restored command may already have produced output, so we don’t
+            // scroll its restored screen into history if it repaints by moving the cursor up.
+            self.appendedTextSinceCommandExecuted = YES;
         }
         self.cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
         self.trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];

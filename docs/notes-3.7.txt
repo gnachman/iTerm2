@@ -431,6 +431,13 @@ Bug Fixes:
   entering or exiting a workgroup). The tab’s
   aggregated status is now recomputed whenever
   its set of sessions changes.
+- Full-screen programs that don’t use the
+  alternate screen buffer (such as Claude
+  Code) no longer destroy on-screen content
+  when, on startup, they move the cursor to
+  the top of the screen and repaint over it.
+  The visible screen is now scrolled into
+  history first. Requires shell integration.
 - The “taking a long time to check state
   restoration” prompt no longer appears so
   readily right after login, when the system
