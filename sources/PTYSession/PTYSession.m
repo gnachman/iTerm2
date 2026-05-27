@@ -1585,7 +1585,7 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession.lastActivityOrdinal = ordinal;
         // Keep the global counter strictly above any restored ordinal so
         // future stamps never collide with restored values.
-        [[iTermController sharedInstance].sessionActivityCounter setMinimum:ordinal];
+        [[iTermFocusOrder sharedInstance] ratchetToValue:ordinal];
     }
     if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
         NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
@@ -15032,13 +15032,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 
     DLog(@"Make this session active in delegate %@", _delegate);
-    // Stamp the active session BEFORE selecting the containing tab.
-    // tabView:didSelectTabViewItem: stamps the destination tab's
-    // activeSession_ on the cross-window MRU ordinal; if the tab
-    // switch ran first while activeSession_ was still the previously-
-    // active sibling, that sibling would get the MRU bump in our
-    // place and Cmd-Shift-O Enter would drift onto it. Setting
-    // active first means the tab switch (redundantly) stamps self.
+    // Set the active session before selecting the containing tab so the tab
+    // switch sees self as active. The cross-window Open Quickly MRU ordinal no
+    // longer depends on this order: it is stamped by a coalesced update that
+    // reads the settled focused session after this whole jump completes (see
+    // -[iTermFocusOrder setNeedsUpdate]), so the destination window's
+    // previously-active sibling is never stamped.
     [_delegate setActiveSessionPreservingMaximization:self];
     if (!isHotKey) {
         DLog(@"Selecting tab from delegate %@", _delegate);

@@ -1160,7 +1160,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
         [coder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] forKey:iTermBuriedSessionState];
     }
-    [coder encodeObject:@([iTermController sharedInstance].sessionActivityCounter.value)
+    [coder encodeObject:@([iTermFocusOrder sharedInstance].highWaterMark)
                  forKey:kSessionActivityCounterKey];
     DLog(@"Time to save app restorable state: %@",
          @([NSDate timeIntervalSinceReferenceDate] - start));
@@ -1213,7 +1213,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     }
     NSNumber *sessionActivityCounter = [NSNumber castFrom:[coder decodeObjectForKey:kSessionActivityCounterKey]];
     if (sessionActivityCounter) {
-        [[iTermController sharedInstance].sessionActivityCounter setMinimum:sessionActivityCounter.integerValue];
+        [[iTermFocusOrder sharedInstance] ratchetToValue:sessionActivityCounter.integerValue];
     }
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
         NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
@@ -3675,7 +3675,7 @@ static iTermKeyEventReplayer *gReplayer;
             // TODO: Why doesn't this encode window content?
             [encoder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] key:iTermBuriedSessionState];
         }
-        [encoder encodeObject:@([iTermController sharedInstance].sessionActivityCounter.value)
+        [encoder encodeObject:@([iTermFocusOrder sharedInstance].highWaterMark)
                           key:kSessionActivityCounterKey];
         DLog(@"Time to save app restorable state: %@",
              @([NSDate timeIntervalSinceReferenceDate] - start));
@@ -3730,7 +3730,7 @@ static iTermKeyEventReplayer *gReplayer;
 
     NSNumber *sessionActivityCounter = [NSNumber fromGraphRecord:app withKey:kSessionActivityCounterKey];
     if (sessionActivityCounter) {
-        [[iTermController sharedInstance].sessionActivityCounter setMinimum:sessionActivityCounter.integerValue];
+        [[iTermFocusOrder sharedInstance] ratchetToValue:sessionActivityCounter.integerValue];
     }
 
     if (finishedLaunching_) {

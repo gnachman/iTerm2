@@ -483,6 +483,15 @@ Bug Fixes:
   drifting onto a sibling pane that
   happened to be active in the destination
   tab. Issue 12799.
+- Open Quickly recency now strictly follows
+  focus order. Jumping to a pane no longer
+  bumps the previously-active sibling in the
+  destination window, and structural changes
+  (closing a pane, splitting, restoring) in
+  background windows no longer reorder the
+  list, so Cmd-Shift-O Enter reliably
+  toggles between the last two focused
+  panes. Issue 12799.
 - OSC color overrides (foreground, background,
   cursor, selection, palette, and the iTerm2
   SetColors variants) now survive macOS Light
