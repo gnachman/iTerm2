@@ -39,6 +39,10 @@
 
 + (NSSize)preferredSize;
 
+// The preset tab colors from the tabColorMenuOptions advanced setting (with a
+// hardcoded fallback if that string is unparseable).
++ (NSArray<NSColor *> *)presetTabColors;
+
 - (void)drawRect:(NSRect)rect;
 - (void)mouseUp:(NSEvent*) event;
 

@@ -486,6 +486,10 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 }
 
 - (NSArray<NSColor *> *)colors {
+    return [ColorsMenuItemView presetTabColors];
+}
+
++ (NSArray<NSColor *> *)presetTabColors {
     NSArray<NSColor *> *result = [[[iTermAdvancedSettingsModel tabColorMenuOptions] componentsSeparatedByString:@" "] mapWithBlock:^id(NSString *anObject) {
         return [NSColor colorFromHexString:anObject];
     }];

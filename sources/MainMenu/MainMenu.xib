@@ -1655,8 +1655,8 @@ CQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="8EB-Jn-Xxs"/>
-                            <menuItem title="Edit Window Title" identifier="Edit Window Title" id="STe-pB-R3v">
-                                <modifierMask key="keyEquivalentModifierMask"/>
+                            <menuItem title="Edit Window Title" keyEquivalent="r" identifier="Edit Window Title" id="STe-pB-R3v">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" control="YES" command="YES"/>
                                 <connections>
                                     <action selector="editWindowTitle:" target="-1" id="AQk-j6-utG"/>
                                 </connections>
@@ -1666,10 +1666,16 @@ CQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Tab" id="cX5-Da-13x">
                                     <items>
-                                        <menuItem title="Edit Tab Title" identifier="Edit Tab Title" id="o4x-qQ-aC9">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        <menuItem title="Edit Tab Title" keyEquivalent="r" identifier="Edit Tab Title" id="o4x-qQ-aC9">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                             <connections>
                                                 <action selector="editTabTitle:" target="-1" id="tXR-UH-8S7"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Cycle Tab Color" keyEquivalent="e" identifier="Cycle Tab Color" id="ctc-Cy-001">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="cycleTabColor:" target="-1" id="ctc-Ac-001"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Select Tab" id="847">

@@ -11996,6 +11996,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         iTermTabColorMenuItem *colorMenuItem = [iTermTabColorMenuItem castFrom:item];
         colorMenuItem.colorsView.currentColor = self.currentSession.tabColor;
         return self.currentSession != nil;
+    } else if (item.action == @selector(cycleTabColor:)) {
+        return self.currentSession != nil;
     } else if (item.action == @selector(setWindowStyle:)) {
         iTermWindowType normalized = iTermWindowTypeNormalized(self.windowType);
         // For backward compatibility the main menu still makes a distinction between full-width/height
@@ -12422,6 +12424,19 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     return [PseudoTerminal castFrom:term];
 }
 
+// Apply a tab color (nil clears it) to every session in a tab, remember it as a
+// recently used color, and refresh the tab bar. Shared by the color menu and the
+// cycle-color keyboard shortcut.
+- (void)applyTabColor:(NSColor *)color toTab:(PTYTab *)tab {
+    for (PTYSession *aSession in [tab sessions]) {
+        [aSession setTabColor:color];
+    }
+    if (color) {
+        [[iTermRecentTabColors shared] addColor:color];
+    }
+    [self updateTabColors];
+}
+
 // Change the tab color to the selected menu color
 - (IBAction)changeTabColorToMenuAction:(id)sender {
     // If we got here because you right clicked on a tab, use the represented object.
@@ -12434,14 +12449,43 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
 
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];
-    NSColor *color = menuItem.color;
-    for (PTYSession *aSession in [aTab sessions]) {
-        [aSession setTabColor:color];
+    [self applyTabColor:menuItem.color toTab:aTab];
+}
+
+// Cycle the current tab's color through the presets in the tabColorMenuOptions
+// advanced setting, then to no color, then back to the first preset. Gives a
+// one-keystroke way to visually distinguish tabs (e.g. when running many agents).
+- (IBAction)cycleTabColor:(id)sender {
+    PTYTab *tab = self.currentTab;
+    if (!tab) {
+        return;
     }
-    if (color) {
-        [[iTermRecentTabColors shared] addColor:color];
+    NSArray<NSColor *> *presets = [ColorsMenuItemView presetTabColors];
+    if (presets.count == 0) {
+        return;
     }
-    [self updateTabColors];
+    // Locate the current color in the cycle. -1 means “no color”, which also
+    // covers an unrecognized custom color (it restarts the cycle at presets[0]).
+    NSColor *current = tab.activeSession.tabColor;
+    NSInteger currentIndex = -1;
+    if (current) {
+        for (NSInteger i = 0; i < (NSInteger)presets.count; i++) {
+            if ([presets[i] isApproximatelyEqualToColor:current epsilon:0.01]) {
+                currentIndex = i;
+                break;
+            }
+        }
+    }
+    // Sequence: presets[0] … presets[n-1] → no color (nil) → presets[0] …
+    NSColor *next;
+    if (currentIndex < 0) {
+        next = presets[0];
+    } else if (currentIndex + 1 < (NSInteger)presets.count) {
+        next = presets[currentIndex + 1];
+    } else {
+        next = nil;
+    }
+    [self applyTabColor:next toTab:tab];
 }
 
 - (IBAction)compose:(id)sender {

@@ -12,6 +12,13 @@ Major New Features:
 - Tabs can now be placed on the right side
   of the window.
 
+- Keyboard shortcuts were added for quickly
+  organizing tabs and windows: ⌃⌘R renames
+  the current tab, ⌃⌥⌘R renames the window,
+  and ⌃⌘E cycles the current tab’s color
+  through the presets (then to no color).
+  Handy when many tabs look alike.
+
 - A new Tab Status system was added. Sessions
   can now report status that appears on their
   tab with a custom subtitle, color, and dot
