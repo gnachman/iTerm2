@@ -46,6 +46,12 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     iTermScriptInspector *_inspector;
 
     id _token;
+
+    // The entries currently shown in _tableView, in display order. Used to diff
+    // against the live filteredEntries so we can insert/remove just the affected
+    // rows instead of reloading the whole table (which drops the selection
+    // highlight and scroll position).
+    NSArray<iTermScriptHistoryEntry *> *_displayedEntries;
 }
 
 + (instancetype)sharedInstance {
@@ -63,6 +69,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         _tableView.style = NSTableViewStyleInset;
     }
 #endif
+    _logsView.textColor = [NSColor textColor];
     _callsView.textColor = [NSColor textColor];
     NSScrollView *scrollView = _callsView.enclosingScrollView;
     scrollView.horizontalScrollElasticity = NSScrollElasticityNone;
@@ -147,6 +154,8 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
     [self makeTextViewHorizontallyScrollable:_logsView];
     [self makeTextViewHorizontallyScrollable:_callsView];
+
+    [self reloadTableFully];
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
@@ -162,7 +171,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 }
 
 - (IBAction)scriptFilterDidChange:(id)sender {
-    [_tableView reloadData];
+    [self reloadTableFully];
     _terminateButton.enabled = NO;
     _startButton.enabled = NO;
 }
@@ -246,7 +255,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         index = [[[iTermScriptHistory sharedInstance] entries] indexOfObject:entry];
         if (index != NSNotFound) {
             [_scriptFilterControl selectSegmentWithTag:iTermScriptFilterControlTagAll];
-            [_tableView reloadData];
+            [self reloadTableFully];
         }
     }
     if (index == NSNotFound) {
@@ -297,8 +306,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         [self scrollCallsToBottomIfNeeded];
         NSInteger row = _tableView.selectedRow;
         iTermScriptHistoryEntry *entry = [[self filteredEntries] objectAtIndex:row];
-        _terminateButton.enabled = entry.isRunning && (entry.onlyPid != 0);
-        _startButton.enabled = entry.relaunch != nil;
+        [self updateButtonsEnabled];
         _logsView.font = [NSFont fontWithName:@"Menlo" size:12];
         _callsView.font = [NSFont fontWithName:@"Menlo" size:12];
 
@@ -327,8 +335,14 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
                     [strongSelf scrollCallsToBottomIfNeeded];
                 }
             } else {
-                [strongSelf->_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row]
-                                                  columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+                // Incremental row removals shift the selection to follow its
+                // entry without firing a selection-changed notification, so the
+                // captured `row` can go stale. Reload this entry's live row.
+                const NSInteger liveRow = [strongSelf.filteredEntries indexOfObject:entry];
+                if (liveRow != NSNotFound) {
+                    [strongSelf->_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:liveRow]
+                                                      columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+                }
             }
         }];
     }
@@ -338,7 +352,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!_filter.stringValue.length) {
         [_logsView.textStorage.mutableString appendString:delta];
     } else {
-        [self updateFilteredValue];
+        [self updateFilteredValuePreservingScroll:YES];
     }
 }
 
@@ -346,8 +360,17 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     if (!_filter.stringValue.length) {
         [_callsView.textStorage.mutableString appendString:delta];
     } else {
-        [self updateFilteredValue];
+        [self updateFilteredValuePreservingScroll:YES];
     }
+}
+
+// Replaces the contents of a text view without disturbing its scroll position.
+- (void)setText:(NSString *)text inTextView:(NSTextView *)textView {
+    NSClipView *clipView = textView.enclosingScrollView.contentView;
+    const NSPoint origin = clipView.bounds.origin;
+    textView.string = text;
+    [clipView scrollToPoint:origin];
+    [textView.enclosingScrollView reflectScrolledClipView:clipView];
 }
 
 - (void)scrollLogsToBottomIfNeeded {
@@ -378,6 +401,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 }
 
 - (void)updateFilteredValue {
+    [self updateFilteredValuePreservingScroll:NO];
+}
+
+- (void)updateFilteredValuePreservingScroll:(BOOL)preserveScroll {
     if (_tableView.selectedRow == -1) {
         _logsView.string = @"";
         _callsView.string = @"";
@@ -388,15 +415,19 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     NSString *filter = _filter.stringValue;
     BOOL unfiltered = filter.length == 0;
     BOOL caseSensitive = [filter rangeOfCharacterFromSet:[NSCharacterSet uppercaseLetterCharacterSet]].location != NSNotFound;
-    NSString *newValue = [[entry.logLines filteredArrayUsingBlock:^BOOL(NSString *line) {
+    NSString *newLogs = [[entry.logLines filteredArrayUsingBlock:^BOOL(NSString *line) {
         return unfiltered || [self line:line containsString:filter caseSensitive:caseSensitive];
     }] componentsJoinedByString:@"\n"];
-    _logsView.string = newValue;
-
-    newValue = [[entry.callEntries filteredArrayUsingBlock:^BOOL(NSString *line) {
+    NSString *newCalls = [[entry.callEntries filteredArrayUsingBlock:^BOOL(NSString *line) {
         return unfiltered || [self line:line containsString:filter caseSensitive:caseSensitive];
     }] componentsJoinedByString:@"\n"];
-    _callsView.string = newValue;
+    if (preserveScroll) {
+        [self setText:newLogs inTextView:_logsView];
+        [self setText:newCalls inTextView:_callsView];
+    } else {
+        _logsView.string = newLogs;
+        _callsView.string = newCalls;
+    }
 }
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
@@ -406,17 +437,88 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 #pragma mark - Notifications
 
 - (void)numberOfScriptHistoryEntriesDidChange:(NSNotification *)notification {
-    [_tableView reloadData];
-    _terminateButton.enabled = NO;
-    _startButton.enabled = NO;
+    [self syncTableToEntries];
 }
 
 - (void)historyEntryDidChange:(NSNotification *)notification {
-    if (!notification.userInfo) {
-        [_tableView reloadData];
+    if (notification.userInfo) {
+        return;
+    }
+    // A script's running state changed (it stopped). Under the "Running" filter
+    // this removes its row; syncTableToEntries handles that. Under "All" the row
+    // stays but its label changes (it gets parenthesized), so refresh that row.
+    [self syncTableToEntries];
+    iTermScriptHistoryEntry *entry = [iTermScriptHistoryEntry castFrom:notification.object];
+    const NSInteger row = entry ? [_displayedEntries indexOfObject:entry] : NSNotFound;
+    if (row != NSNotFound) {
+        [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row]
+                              columnIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, _tableView.numberOfColumns)]];
+    }
+}
+
+// Performs a full reload and records the displayed entries as the baseline for
+// future incremental diffs. Use this when the displayed set changes wholesale
+// (filter switch, initial load).
+- (void)reloadTableFully {
+    _displayedEntries = [self.filteredEntries copy];
+    [_tableView reloadData];
+    [self updateButtonsEnabled];
+}
+
+// Brings the table in line with the live filteredEntries by inserting/removing
+// only the rows that actually changed. Existing rows are left untouched, so the
+// selection highlight and scroll position survive. Both filtered lists are
+// order-preserving subsequences of the same underlying entries array, so old
+// and new never reorder relative to one another: an entry missing from the new
+// list was removed, and one missing from the old list was inserted.
+- (void)syncTableToEntries {
+    if (!_tableView) {
+        return;
+    }
+    NSArray<iTermScriptHistoryEntry *> *old = _displayedEntries;
+    NSArray<iTermScriptHistoryEntry *> *updated = [self.filteredEntries copy];
+
+    if (!old || (NSInteger)old.count != _tableView.numberOfRows) {
+        // No trustworthy baseline to diff against; fall back to a full reload.
+        [self reloadTableFully];
+        return;
+    }
+    _displayedEntries = updated;
+
+    NSSet<iTermScriptHistoryEntry *> *oldSet = [NSSet setWithArray:old];
+    NSSet<iTermScriptHistoryEntry *> *newSet = [NSSet setWithArray:updated];
+    NSMutableIndexSet *removed = [NSMutableIndexSet indexSet];
+    [old enumerateObjectsUsingBlock:^(iTermScriptHistoryEntry *entry, NSUInteger i, BOOL *stop) {
+        if (![newSet containsObject:entry]) {
+            [removed addIndex:i];
+        }
+    }];
+    NSMutableIndexSet *inserted = [NSMutableIndexSet indexSet];
+    [updated enumerateObjectsUsingBlock:^(iTermScriptHistoryEntry *entry, NSUInteger i, BOOL *stop) {
+        if (![oldSet containsObject:entry]) {
+            [inserted addIndex:i];
+        }
+    }];
+
+    if (removed.count || inserted.count) {
+        [_tableView beginUpdates];
+        [_tableView removeRowsAtIndexes:removed withAnimation:NSTableViewAnimationEffectNone];
+        [_tableView insertRowsAtIndexes:inserted withAnimation:NSTableViewAnimationEffectNone];
+        [_tableView endUpdates];
+    }
+    [self updateButtonsEnabled];
+}
+
+- (void)updateButtonsEnabled {
+    const NSInteger row = _tableView.selectedRow;
+    if (row < 0 || row >= self.filteredEntries.count) {
         _terminateButton.enabled = NO;
         _startButton.enabled = NO;
+        return;
     }
+    iTermScriptHistoryEntry *entry = self.filteredEntries[row];
+    _terminateButton.enabled = entry.isRunning && (entry.onlyPid != 0);
+    _startButton.enabled = entry.relaunch != nil;
 }
 
 - (NSString *)formatPIDs:(NSArray<NSNumber *> *)pids {

@@ -1043,3 +1043,10 @@ Bug Fixes:
   browser mode. Empty by default, so
   normal URL opening is unchanged.
   Issue 12878.
+- Script Console no longer jumps to the
+  top when a new entry arrives. The
+  script list keeps its scroll position
+  and selection, and a filtered log view
+  stays put as new lines come in.
+- Fix black, unreadable text in the
+  Script Console Logs tab in dark mode.
