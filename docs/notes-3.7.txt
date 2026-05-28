@@ -12,6 +12,11 @@ Major New Features:
 - Tabs can now be placed on the right side
   of the window.
 
+- A new Cycle Tab Color menu item steps the
+  current tab’s color through the presets and
+  then to no color. Handy when many tabs look
+  alike.
+
 - A new Tab Status system was added. Sessions
   can now report status that appears on their
   tab with a custom subtitle, color, and dot

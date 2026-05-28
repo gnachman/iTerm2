@@ -1672,6 +1672,12 @@ CQ
                                                 <action selector="editTabTitle:" target="-1" id="tXR-UH-8S7"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Cycle Tab Color" identifier="Cycle Tab Color" id="ctc-Cy-001">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="cycleTabColor:" target="-1" id="ctc-Ac-001"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem title="Select Tab" id="847">
                                             <menu key="submenu" title="Select Tab" id="848">
                                                 <items>
