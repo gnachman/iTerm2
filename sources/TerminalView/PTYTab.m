@@ -19,6 +19,7 @@
 #import "iTermPresentationController.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSessionRestoreDiag.h"
 #import "iTermSwiftyString.h"
 #import "iTermSwiftyStringGraph.h"
 #import "iTermTmuxLayoutBuilder.h"
@@ -3396,6 +3397,41 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 // reservedTabGUIDs gives GUIDs of other tabs which are not reachable through
 // iTermController.terminals because they are siblings of a window that is still being created.
+// Issue 12866 diagnostic. Walks a tab arrangement node tree and appends a
+// compact one-line description of each leaf (TYPE/GUID/keyCount) so we can
+// see whether the root pane's session arrangement made it into the tree at
+// all, and what its key count is BEFORE +[PTYSession sessionFromArrangement:]
+// runs.
+static void iTermDescribeArrangementNode(NSDictionary *node,
+                                          NSString *path,
+                                          NSMutableArray<NSString *> *out) {
+    if (!node) {
+        [out addObject:[NSString stringWithFormat:@"%@:<nil>", path]];
+        return;
+    }
+    NSString *viewType = [NSString castFrom:node[TAB_ARRANGEMENT_VIEW_TYPE]];
+    if ([viewType isEqualToString:VIEW_TYPE_SPLITTER]) {
+        NSString *splitterID = [NSString castFrom:node[TAB_ARRANGEMENT_SPLITTER_ID]];
+        NSArray *subviews = [NSArray castFrom:node[SUBVIEWS]];
+        [out addObject:[NSString stringWithFormat:@"%@:SPLIT id=%@ children=%lu",
+                        path, splitterID ?: @"<nil>", (unsigned long)subviews.count]];
+        [subviews enumerateObjectsUsingBlock:^(NSDictionary *child, NSUInteger idx, BOOL *stop) {
+            NSString *childPath = [NSString stringWithFormat:@"%@/%lu", path, (unsigned long)idx];
+            iTermDescribeArrangementNode([NSDictionary castFrom:child], childPath, out);
+        }];
+        return;
+    }
+    NSDictionary *session = [NSDictionary castFrom:node[TAB_ARRANGEMENT_SESSION]];
+    NSString *sessionGUID = session ? [NSString castFrom:[PTYSession guidInArrangement:session]] : nil;
+    NSString *workingDir = session ? [NSString castFrom:session[@"Working Directory"]] : nil;
+    [out addObject:[NSString stringWithFormat:@"%@:LEAF type=%@ guid=%@ wd=%@ sessionKeys=%lu",
+                    path,
+                    viewType ?: @"<nil>",
+                    sessionGUID ?: @"<nil>",
+                    workingDir ? (workingDir.length ? workingDir : @"<empty>") : @"<missing>",
+                    (unsigned long)session.count]];
+}
+
 // It's passed in to ensure that tab GUIDs are truly globally unique.
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                          named:(NSString *)arrangementName
@@ -3409,6 +3445,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                        options:(NSDictionary *)options {
     PTYTab *theTab;
     NSMutableArray<PTYSession *> *revivedSessions = [NSMutableArray array];
+    // Issue 12866 diagnostic. Dump the tree shape as it arrives, before we
+    // build any views, so we can see whether the root pane's saved arrangement
+    // is in the tree and how many keys its session dict has.
+    {
+        NSMutableArray<NSString *> *nodes = [NSMutableArray array];
+        iTermDescribeArrangementNode([arrangement objectForKey:TAB_ARRANGEMENT_ROOT], @"R", nodes);
+        iTermSessionRestoreDiagLog(@"TAB tabGUID=%@ name=%@ rootKeyCount=%lu tree=[%@]",
+                                   arrangement[TAB_GUID] ?: @"<nil>",
+                                   arrangementName ?: @"<nil>",
+                                   (unsigned long)[[NSDictionary castFrom:arrangement[TAB_ARRANGEMENT_ROOT]] count],
+                                   [nodes componentsJoinedByString:@" | "]);
+    }
     // Build a tree with splitters and SessionViews but no PTYSessions.
     NSSplitView *newRoot = (NSSplitView *)[PTYTab _recursiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                                    fromIdMap:viewMap
