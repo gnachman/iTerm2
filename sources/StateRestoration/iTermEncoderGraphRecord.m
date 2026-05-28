@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermChangeTrackingDictionary.h"
 #import "iTermGraphDatabase.h"
+#import "iTermSessionRestoreDiag.h"
 #import "iTermTuple.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "NSArray+iTerm.h"
@@ -420,6 +421,10 @@ NSString *const iTermEncoderGraphRecordGenerationKeySuffix = @"_Generation";
             // Match iTermOrderedDictionary byMapping:'s "first occurrence
             // wins" semantics, so reallySave's INSERT pass and this tree
             // agree on which sibling is authoritative.
+            // Issue 12866 diagnostic: a dropped sibling here is exactly the
+            // kind of data loss we are hunting.
+            iTermSessionRestoreDiagLog(@"GREC dedup-drop sibling under key=%@ id=%@: dropped child key=%@ id=%@",
+                                       _key, _identifier, child.key, child.identifier);
             continue;
         }
         [seen addObject:tuple];

@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermGraphDatabase.h"
+#import "iTermSessionRestoreDiag.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -49,6 +50,28 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
          nodeDict[@"key"], nodeDict[@"identifier"],
          nodeDict[@"rowid"], @(generation), @(hasLargeData),
          childNodeIDs, [pod tastefulDescription]);
+
+    // Issue 12866 diagnostic. See iTermSessionRestoreDiag.h. One GT line per
+    // node as the in-memory tree is rebuilt from disk rows, with its full
+    // path, so we can match it against the GW (write) and GROW (raw row) lines
+    // and see exactly where a session leaf's POD goes missing.
+    NSString *podKeyDesc;
+    if (hasLargeData) {
+        podKeyDesc = @"deferred";
+    } else {
+        NSString *joined = [[pod.allKeys sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@","];
+        if (joined.length > 500) {
+            joined = [[joined substringToIndex:500] stringByAppendingString:@"…"];
+        }
+        podKeyDesc = [NSString stringWithFormat:@"%lu[%@]", (unsigned long)pod.count, joined];
+    }
+    iTermSessionRestoreDiagLog(@"GT path=%@ key=%@ id=%@ rowid=%@ gen=%@ large=%d podKeys=%@ children=%lu",
+                               [path componentsJoinedByString:@"/"],
+                               nodeDict[@"key"], nodeDict[@"identifier"],
+                               nodeDict[@"rowid"] ?: @"<nil>", @(generation),
+                               (int)hasLargeData,
+                               podKeyDesc,
+                               (unsigned long)childNodeIDs.count);
 
     return [iTermEncoderGraphRecord withPODs:pod
                                       graphs:childGraphRecords
@@ -121,6 +144,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
         if (parent.integerValue == 0 && key.length == 0) {
             if (*rootNodeIDOut) {
                 DLog(@"Two roots found");
+                iTermSessionRestoreDiagLog(@"GTERR two roots found (rowid=%@ and %@)", *rootNodeIDOut, rowid);
                 _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                                  code:1
                                              userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Two roots found"] }];
@@ -154,6 +178,9 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
         if (!parentDict) {
             ok = NO;
             DLog(@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid);
+            iTermSessionRestoreDiagLog(@"GTERR dangling parent=%@ from rowid=%@ key=%@ id=%@",
+                                       nodeDict[@"parent"], nodeid,
+                                       nodeDict[@"key"], nodeDict[@"identifier"]);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
                                          userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid] }];
@@ -167,17 +194,22 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
 
 - (iTermEncoderGraphRecord * _Nullable)transform {
     NSNumber *rootNodeID = nil;
+    iTermSessionRestoreDiagLog(@"GT begin transform rows=%lu", (unsigned long)_nodeRows.count);
     NSDictionary<NSNumber *, NSMutableDictionary *> *nodes = [self nodes:&rootNodeID];
     if (!nodes) {
         DLog(@"nodes: returned nil");
+        iTermSessionRestoreDiagLog(@"GTERR nodes: returned nil (whole tree dropped)");
         return nil;
     }
     if (!rootNodeID) {
         DLog(@"No root found");
+        iTermSessionRestoreDiagLog(@"GTERR no root found among %lu nodes (whole tree dropped)",
+                                   (unsigned long)nodes.count);
         return nil;
     }
     if (![self attachChildrenToParents:nodes ignoringRootRowID:rootNodeID]) {
         DLog(@"Failed to attach children to parents");
+        iTermSessionRestoreDiagLog(@"GTERR failed to attach children to parents (whole tree dropped)");
         return nil;
     }
 

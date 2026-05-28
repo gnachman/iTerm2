@@ -15,10 +15,24 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermGraphDeltaEncoder.h"
 #import "iTermGraphTableTransformer.h"
+#import "iTermSessionRestoreDiag.h"
 #import "iTermWarning.h"
 #import "iTermPromise.h"
 #import "iTermThreadSafety.h"
 #import <stdatomic.h>
+
+// Issue 12866 diagnostic helper: a compact, length-capped, sorted list of keys
+// for a POD dictionary so log lines stay readable.
+static NSString *SRDiagKeyList(NSArray<NSString *> *keys) {
+    if (keys.count == 0) {
+        return @"[]";
+    }
+    NSString *joined = [[keys sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@","];
+    if (joined.length > 500) {
+        joined = [[joined substringToIndex:500] stringByAppendingString:@"…"];
+    }
+    return [NSString stringWithFormat:@"[%@]", joined];
+}
 
 @class iTermGraphDatabaseState;
 
@@ -232,6 +246,8 @@
         }
 
         DLogCyclic(_log, @"save failed: %@ with recovery count %@", state.db.lastError, @(_recoveryCount));
+        iTermSessionRestoreDiagLog(@"GREC save failed, entering recovery. recoveryCount=%@ error=%@",
+                                   @(_recoveryCount), state.db.lastError ?: @"<nil>");
         if (_recoveryCount >= 3) {
             DLogCyclic(_log, @"Not attempting recovery.");
             ok = NO;
@@ -368,6 +384,13 @@
              state:(iTermGraphDatabaseState *)state {
     DLog(@"Start saving");
     NSDate *start = [NSDate date];
+    // Issue 12866 diagnostic. See iTermSessionRestoreDiag.h. One GW line per
+    // node touched during the delta save, so we can see whether the first
+    // session leaf's POD was written, with what data length, into which rowid.
+    iTermSessionRestoreDiagLog(@"GW begin save rootRowid=%@ rootGen=%@ hasPrevious=%d",
+                               encoder.record.rowid ?: @"<nil>",
+                               @(encoder.record.generation),
+                               (int)(encoder.previousRevision != nil));
     const BOOL ok =
     [encoder enumerateRecords:^(iTermEncoderGraphRecord * _Nullable before,
                                 iTermEncoderGraphRecord * _Nullable after,
@@ -391,7 +414,12 @@
                                          userInfo:nil];
         }
         if (before && !after) {
+            iTermSessionRestoreDiagLog(@"GW op=DELETE path=%@ parent=%@ key=%@ id=%@ rowid=%@ beforeGen=%@",
+                                       path, parent, before.key, before.identifier,
+                                       before.rowid ?: @"<nil>", @(before.generation));
             if (![state.db executeUpdate:@"delete from Node where rowid=?", before.rowid]) {
+                iTermSessionRestoreDiagLog(@"GW op=FAIL stage=DELETE path=%@ rowid=%@ error=%@",
+                                           path, before.rowid ?: @"<nil>", state.db.lastError ?: @"<nil>");
                 *stop = YES;
                 return;
             }
@@ -411,6 +439,10 @@
 
             if (![state.db executeUpdate:@"insert into Node (key, identifier, parent, data, generation, large_data) values (?, ?, ?, ?, ?, ?)",
                   after.key, after.identifier, parent, smallData ?: [NSData data], @(after.generation), largeData ?: [NSNull null]]) {
+                iTermSessionRestoreDiagLog(@"GW op=FAIL stage=INSERT path=%@ parent=%@ key=%@ id=%@ dataLen=%lu large=%d error=%@",
+                                           path, parent, after.key, after.identifier,
+                                           (unsigned long)(useLargeDataColumn ? largeData.length : smallData.length),
+                                           (int)useLargeDataColumn, state.db.lastError ?: @"<nil>");
                 *stop = YES;
                 return;
             }
@@ -419,6 +451,12 @@
                 DLog(@"Insert root node with path %@, rowid %@", path, lastInsertRowID);
             }
             assert(lastInsertRowID);
+            iTermSessionRestoreDiagLog(@"GW op=INSERT path=%@ parent=%@ key=%@ id=%@ rowid=%@ gen=%@ dataLen=%lu large=%d podKeys=%@",
+                                       path, parent, after.key, after.identifier,
+                                       lastInsertRowID ?: @"<nil>", @(after.generation),
+                                       (unsigned long)(useLargeDataColumn ? largeData.length : smallData.length),
+                                       (int)useLargeDataColumn,
+                                       SRDiagKeyList(after.pod.allKeys));
             @try {
                 // Issue 9117
                 after.rowid = lastInsertRowID;
@@ -437,6 +475,9 @@
                 if (before.generation == after.generation &&
                     after.generation != iTermGenerationAlwaysEncode) {
                     DLog(@"Don't update rowid %@ %@[%@] because it is unchanged", before.rowid, after.key, after.identifier);
+                    iTermSessionRestoreDiagLog(@"GW op=SKIP path=%@ parent=%@ key=%@ id=%@ rowid=%@ gen=%@ (unchanged)",
+                                               path, parent, after.key, after.identifier,
+                                               before.rowid ?: @"<nil>", @(after.generation));
                     return;
                 }
             }
@@ -453,14 +494,23 @@
                 smallData = nodeData;
             }
 
+            iTermSessionRestoreDiagLog(@"GW op=UPDATE path=%@ parent=%@ key=%@ id=%@ rowid=%@ beforeGen=%@ afterGen=%@ dataLen=%lu large=%d podKeys=%@",
+                                       path, parent, after.key, after.identifier,
+                                       before.rowid ?: @"<nil>", @(before.generation), @(after.generation),
+                                       (unsigned long)(useLargeDataColumn ? largeData.length : smallData.length),
+                                       (int)useLargeDataColumn,
+                                       SRDiagKeyList(after.pod.allKeys));
             if (![state.db executeUpdate:@"update Node set data=?, generation=?, large_data=? where rowid=?",
                   smallData ?: [NSData data], @(after.generation), largeData ?: [NSNull null], before.rowid]) {
+                iTermSessionRestoreDiagLog(@"GW op=FAIL stage=UPDATE path=%@ rowid=%@ error=%@",
+                                           path, before.rowid ?: @"<nil>", state.db.lastError ?: @"<nil>");
                 *stop = YES;
             }
             return;
         }
         assert(NO);
     }];
+    iTermSessionRestoreDiagLog(@"GW end save ok=%d", (int)ok);
     NSDate *end = [NSDate date];
     DLogCyclic(_log, @"Save result=%@ duration=%.1fms",
                @(ok), (end.timeIntervalSinceNow - start.timeIntervalSinceNow) * 1000);
@@ -476,6 +526,36 @@
         return NO;
     }
     [state.db executeUpdate:@"create index if not exists parent_index on Node (parent)"];
+
+    // Issue 12866 diagnostic. The orphan-deletion below runs on every open and
+    // silently removes any node whose parent row is gone. If a session leaf
+    // ever gets orphaned (e.g. its parent rowid was reassigned by a botched
+    // save), this is where it would vanish. Log exactly what is about to be
+    // deleted BEFORE deleting it.
+    {
+        FMResultSet *orphans = [state.db executeQuery:
+         @"select child.rowid as id, child.key as k, child.identifier as ident, "
+         @"       child.parent as p, length(child.data) as dlen, "
+         @"       (child.large_data IS NOT NULL) as large "
+         @"  from Node as child "
+         @"  left join Node as parentNode on parentNode.rowid = child.parent "
+         @"  where parentNode.rowid is NULL and child.parent != 0"];
+        NSInteger count = 0;
+        while ([orphans next]) {
+            count += 1;
+            iTermSessionRestoreDiagLog(@"GORPHAN delete rowid=%lld key=%@ id=%@ parent=%lld dataLen=%lld large=%d",
+                                       [orphans longLongIntForColumn:@"id"],
+                                       [orphans stringForColumn:@"k"] ?: @"<nil>",
+                                       [orphans stringForColumn:@"ident"] ?: @"<nil>",
+                                       [orphans longLongIntForColumn:@"p"],
+                                       [orphans longLongIntForColumn:@"dlen"],
+                                       (int)[orphans boolForColumn:@"large"]);
+        }
+        [orphans close];
+        if (count > 0) {
+            iTermSessionRestoreDiagLog(@"GORPHAN total=%ld nodes will be deleted on this open", (long)count);
+        }
+    }
 
     // Delete nodes without parents.
     [state.db executeUpdate:
@@ -588,13 +668,27 @@
             @"(large_data IS NOT NULL) as has_large_data FROM Node"];
         while ([rs next]) {
             DLog(@"Read row");
+            NSData *rowData = [rs dataForColumn:@"data"] ?: [NSData data];
+            const BOOL rowHasLarge = [rs boolForColumn:@"has_large_data"];
+            // Issue 12866 diagnostic. See iTermSessionRestoreDiag.h. One GROW
+            // line per raw row on disk: this is the ground truth that settles
+            // whether the first session leaf's data column is empty and/or its
+            // large_data column is unexpectedly populated.
+            iTermSessionRestoreDiagLog(@"GROW rowid=%lld parent=%lld key=%@ id=%@ dataLen=%lu large=%d gen=%lld",
+                                       [rs longLongIntForColumn:@"rowid"],
+                                       [rs longLongIntForColumn:@"parent"],
+                                       [rs stringForColumn:@"key"] ?: @"<nil>",
+                                       [rs stringForColumn:@"identifier"] ?: @"<nil>",
+                                       (unsigned long)rowData.length,
+                                       (int)rowHasLarge,
+                                       [rs longLongIntForColumn:@"generation"]);
             [nodes addObject:@[ [rs stringForColumn:@"key"],
                                 [rs stringForColumn:@"identifier"],
                                 @([rs longLongIntForColumn:@"parent"]),
                                 @([rs longLongIntForColumn:@"rowid"]),
-                                [rs dataForColumn:@"data"] ?: [NSData data],
+                                rowData,
                                 @([rs longLongIntForColumn:@"generation"]),
-                                @([rs boolForColumn:@"has_large_data"]) ]];
+                                @(rowHasLarge) ]];
         }
         DLog(@"Select done");
         [rs close];
@@ -651,6 +745,11 @@
                     DLog(@"Failed to unarchive large_data for rowid %@: %@", rowid, error);
                 }
             }
+            iTermSessionRestoreDiagLog(@"GLAZY rowid=%@ dataLen=%lu podKeys=%lu",
+                                       rowid, (unsigned long)data.length,
+                                       (unsigned long)result.count);
+        } else {
+            iTermSessionRestoreDiagLog(@"GLAZY rowid=%@ no-row", rowid);
         }
         [rs close];
     }];
