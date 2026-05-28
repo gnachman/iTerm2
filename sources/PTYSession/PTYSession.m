@@ -7007,6 +7007,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_screen setForegroundJobAncestorsForTriggerFiltering:ancestorNames];
     _eventTriggerEvaluator.foregroundJobAncestors = ancestorNames;
 
+    // Codex title adaptor needs to re-evaluate on foreground-job changes so the
+    // synthesized "working" status clears when codex exits and the shell takes over.
+    [self evaluateCodexTitleStatusAdaptorWithTitle:self.windowTitle];
+
     if ([name isEqualToString:@"sudo"]) {
         [self checkForSudoPasswordPromptToOfferTouchID];
     } else {
@@ -14618,6 +14622,30 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     title = [title stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self setWindowTitle:title];
     [self.delegate sessionDidSetWindowTitle:title];
+    [self evaluateCodexTitleStatusAdaptorWithTitle:title];
+}
+
+// Codex CLI signals its working state via the OSC 0/1/2 title (braille-spinner
+// prefix while working, removed when idle / blocked on the user). Translate
+// that into iTermSessionTabStatus so the tab indicator and any consumers of
+// the OSC 21337 status model react the same way as for native emitters.
+- (void)evaluateCodexTitleStatusAdaptorWithTitle:(NSString *)title {
+    // tabStatus is unsynchronized mutable state; same threading contract as
+    // screenSetTabStatus: which runs on the main thread.
+    ITAssertWithMessage([NSThread isMainThread],
+                        @"evaluateCodexTitleStatusAdaptorWithTitle: must run on main thread");
+    NSString *ancestorsJoined =
+        [[self variablesScope] valueForVariableName:iTermVariableKeySessionForegroundJobAncestors];
+    NSArray<NSString *> *ancestors =
+        ancestorsJoined.length ? [ancestorsJoined componentsSeparatedByString:@"\n"] : @[];
+    NSString *previousStatusText = self.tabStatus.statusText;
+    BOOL changed = [iTermCodexTitleStatusAdaptor applyForTitle:title
+                                              ancestorJobNames:ancestors
+                                                     tabStatus:self.tabStatus];
+    if (changed) {
+        [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+        [_delegate sessionTabStatusDidChange:self];
+    }
 }
 
 - (NSString *)screenWindowTitle {
