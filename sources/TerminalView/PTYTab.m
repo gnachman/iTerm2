@@ -838,10 +838,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     for (PTYSession *session in self.sessions) {
         [session enclosingTabDidBecomeSelected];
     }
-    // Bump cross-window MRU for the active pane in this tab. setActiveSession:
-    // only stamps when the active pane within a tab changes, so a plain
-    // tab switch (no pane change) wouldn't otherwise register.
-    activeSession_.lastActivityOrdinal = [iTermController sharedInstance].sessionActivityCounter.next;
+    // A tab switch changes the focused session without changing any tab's
+    // active pane, so setActiveSession: wouldn't otherwise register it. Stamp
+    // the now-focused session (coalesced) for cross-window Open Quickly MRU.
+    [[iTermFocusOrder sharedInstance] setNeedsUpdate];
 }
 
 - (void)sessionSelectContainingTab {
@@ -876,9 +876,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (changed && updateActivityCounter) {
         [activeSession_ setActivityCounter:@(_activityCounter++)];
         [session setActivityCounter:@(_activityCounter++)];
-        // Stamp a globally comparable ordinal too, so cross-tab/cross-window
-        // MRU sorting (e.g. Open Quickly) can rank panes by recency.
-        session.lastActivityOrdinal = [iTermController sharedInstance].sessionActivityCounter.next;
     }
     activeSession_ = session;
     if (activeSession_ == nil) {
@@ -898,6 +895,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             [[realParentWindow_ window] makeFirstResponder:[session mainResponder]];
         }
         [realParentWindow_ setDimmingForSessions];
+        // The active pane in this tab changed, so the focused session may have
+        // changed. Stamp it (coalesced) for cross-window Open Quickly MRU. Not
+        // gated on updateActivityCounter: even cmd-[/] navigation moves focus,
+        // and focus order is what Open Quickly ranks by. The per-tab
+        // _activityCounter above stays gated to preserve cmd-[/] toggling.
+        [[iTermFocusOrder sharedInstance] setNeedsUpdate];
     }
     // TODO: It's dangerous to call refresh here because it causes side effects to run.
     // I need to audit every call to refresh and remove them all if possible.
@@ -1048,8 +1051,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                          with:[session view]];
     }
     // -reveal is the only caller path and every -reveal site is an explicit
-    // user-initiated jump, so bump both the per-tab activity counter (for
-    // cmd-[/]) and the global lastActivityOrdinal (for Open Quickly MRU).
+    // user-initiated jump, so bump the per-tab activity counter (for cmd-[/]).
+    // The cross-window Open Quickly MRU ordinal is handled separately by the
+    // coalesced focused-session stamp setActiveSession: schedules.
     [self setActiveSession:session updateActivityCounter:YES];
     if (maximize) {
         [self.activeSession toggleTmuxZoom];

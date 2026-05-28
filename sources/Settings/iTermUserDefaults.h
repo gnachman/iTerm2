@@ -59,6 +59,11 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // refresh their labels live.
 @property (class, nonatomic) BOOL showSessionStatusInTabSubtitle;
 @property (class, nonatomic) BOOL haveExplainedHowToAddTouchbarControls;
+
+// Set to YES after the one-time alert that explains the ⌘⇧T shortcut now
+// performs Undo Close (it formerly toggled Show Tabs in Full Screen, which has
+// moved to ⌘⇧U). NoSync because it is migration state, not a synced setting.
+@property (class, nonatomic) BOOL haveWarnedAboutUndoCloseShortcutChange;
 @property (class, nonatomic) BOOL ignoreSystemWindowRestoration;
 @property (class, nonatomic) NSUInteger globalSearchMode;
 @property (class, nonatomic) BOOL addTriggerInstant;

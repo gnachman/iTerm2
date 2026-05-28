@@ -1,5 +1,6 @@
 #import "iTermOpenQuicklyModel.h"
 
+#import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermActionsModel.h"
 #import "iTermApplication.h"
@@ -278,6 +279,8 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     // exclude it from results. This makes Cmd-Shift-O + Enter toggle to the
     // most-recently-used other pane.
     PTYSession *currentSession = [[iTermController sharedInstance] currentTerminal].currentSession;
+    DLog(@"OpenQuickly MRU: excluding current session guid=%@ name=%@",
+         currentSession.guid, currentSession.name);
 
     // (feature name, display string)
     iTermTuple<NSString *, NSString *> *(^detailFunction)(PTYSession *) = [self detailFunctionForSessions:self.sessions];
@@ -316,7 +319,10 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             if (maxOrdinal > 0) {
                 // Recency tiebreaker, strictly less than 0.01 so it never
                 // outweighs even a single empty-query feature contribution.
-                item.score += 0.0099 * ((double)session.lastActivityOrdinal / (double)maxOrdinal);
+                const double recency = 0.0099 * ((double)session.lastActivityOrdinal / (double)maxOrdinal);
+                item.score += recency;
+                DLog(@"OpenQuickly MRU: guid=%@ name=%@ ordinal=%@ maxOrdinal=%@ recency=%f score=%f",
+                     session.guid, session.name, @(session.lastActivityOrdinal), @(maxOrdinal), recency, item.score);
             }
             iTermTuple<NSString *, NSAttributedString *> *detail = [self detailForSession:session features:features];
             // "Feature: value" giving why this session was recalled.

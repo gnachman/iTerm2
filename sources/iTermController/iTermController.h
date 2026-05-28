@@ -41,7 +41,6 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 extern NSString *const iTermSnippetsTagsDidChange;
 
 @protocol iTermWindowController;
-@class iTermMonotonicCounter;
 @class iTermRenegablePromise<T>;
 @class iTermRestorableSession;
 @class iTermSavePanelItem;
@@ -74,11 +73,6 @@ extern NSString *const iTermSnippetsTagsDidChange;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;
-
-// Monotonically increasing global counter. Use [.next] when a session
-// becomes active to stamp PTYSession.lastActivityOrdinal so cross-window
-// MRU comparisons remain meaningful.
-@property(nonatomic, readonly) iTermMonotonicCounter *sessionActivityCounter;
 
 + (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
 

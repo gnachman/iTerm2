@@ -769,8 +769,17 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return YES;
     }
 
+    // Reaching here means no key binding (profile or global) claimed ⌘⇧T. When
+    // nothing can be restored the Undo Close menu item is disabled and its key
+    // equivalent won't fire either, so detect the keystroke here to still show
+    // the one-time notice about the shortcut change. Placed after the binding
+    // handlers so an existing ⌘⇧T binding is always respected.
+    if ([iTermUndoCloseShortcutChangeWarning maybeHandleKeyDownWhenUndoCloseDisabled:event]) {
+        return YES;
+    }
+
     [self reportKeyDownToAPIClientsIfNeeded:event];
-    
+
     return NO;
 }
 

@@ -172,6 +172,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermActivePaneBorderView *_activePaneBorderView;
 
     iTermSessionNoteView *_sessionNoteView;
+    // Bounds size in effect the last time the session note was positioned. Used
+    // to shift the note so it keeps its distance from the top-right corner as
+    // the session resizes.
+    NSSize _lastSessionNoteBoundsSize;
     iTermSessionToolbarView *_toolbarView;
     __weak iTermCodeReviewPromptView *_codeReviewPromptOverlay;
     __weak iTermDiffWaitingPromptView *_diffWaitingPromptOverlay;
@@ -3030,6 +3034,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
     _sessionNoteView = [[iTermSessionNoteView alloc] initWithFrame:noteFrame model:model];
     _sessionNoteView.delegate = self;
+    _lastSessionNoteBoundsSize = self.bounds.size;
     [self addSubviewBelowFindView:_sessionNoteView];
 
     NSFont *font = [self sessionNoteFont];
@@ -3063,10 +3068,21 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
     NSRect noteFrame = _sessionNoteView.frame;
     NSRect bounds = self.bounds;
+    // Shift the note's origin by however much the bounds grew or shrank so that
+    // it keeps its distance from the top-right corner rather than the bottom-left.
+    // This is a non-flipped view (bottom-left origin, y increases upward), so the
+    // top-right corner is at (width, height): growing either dimension moves that
+    // corner away from the origin, and we move the note by the same delta to follow it.
+    const CGFloat dx = bounds.size.width - _lastSessionNoteBoundsSize.width;
+    const CGFloat dy = bounds.size.height - _lastSessionNoteBoundsSize.height;
+    const CGFloat shiftedX = noteFrame.origin.x + dx;
+    const CGFloat shiftedY = noteFrame.origin.y + dy;
+    _lastSessionNoteBoundsSize = bounds.size;
+
     CGFloat w = MIN(noteFrame.size.width, bounds.size.width);
     CGFloat h = MIN(noteFrame.size.height, bounds.size.height);
-    CGFloat x = MAX(0, MIN(noteFrame.origin.x, bounds.size.width - w));
-    CGFloat y = MAX(0, MIN(noteFrame.origin.y, bounds.size.height - h));
+    CGFloat x = MAX(0, MIN(shiftedX, bounds.size.width - w));
+    CGFloat y = MAX(0, MIN(shiftedY, bounds.size.height - h));
     NSRect clamped = NSMakeRect(x, y, w, h);
     if (!NSEqualRects(noteFrame, clamped)) {
         [_sessionNoteView setFrame:clamped];
