@@ -7,7 +7,24 @@
 
 fileprivate extension AITermController.Message {
     static func role(from message: Message) -> LLM.Role {
-        switch message.author {
+        // Tool results are persisted as user-authored Messages, but on the LLM
+        // side they have to be carried as role=.function so the per-vendor
+        // request builders route them through the right serializer branch:
+        // DeepSeek maps .function -> "tool" (otherwise the wire stays "user"
+        // with a tool_call_id, which DeepSeek 400s with "insufficient tool
+        // messages"), OpenAI Responses keys functionToolCallOutput off
+        // role=.function (without this it logs "Unexpected user message body"
+        // and drops the item). Anthropic and Gemini already accept either —
+        // Anthropic special-cases functionOutput bodies before the role
+        // switch, Gemini maps .function-without-function_call to "user".
+        // Production live calls construct tool results with role=.function
+        // directly (AITerm.swift around line 957); this keeps the chat-reload
+        // path in lockstep with that invariant.
+        switch message.content {
+        case .remoteCommandResponse: return .function
+        default: break
+        }
+        return switch message.author {
         case .user: .user
         case .agent: .assistant
         }
@@ -88,17 +105,20 @@ class ChatAgent {
                     .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
                     .multipart:
                 return aiMessage(from: message)
-                
+
             case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
                     .commit, .vectorStoreCreated, .userCommand:
                 return nil
-                
+
             case .setPermissions(let updated):
                 permissions = updated
                 return nil
             }
         }
-        conversation.messages = aiMessages
+        // Pair any orphaned tool_result with a synthesized tool_use so the
+        // vendor doesn't reject the rebuilt prompt. Heals conversations that
+        // were serialized before this fix as well as new ones.
+        conversation.messages = AIChatToolCallRepair.repairingOrphanedToolResults(aiMessages)
         updateSystemMessage(permissions)
     }
 
@@ -685,5 +705,37 @@ extension ChatAgent: MessagePrepPipelineDelegate {
         try broker.publishMessageFromAgent(
             chatID: chatID,
             content: .clientLocal(.init(action: .notice(message))))
+    }
+}
+
+extension ChatAgent {
+    /// Live-harness seam: re-runs the prompt-rebuild logic from
+    /// `load(messages:)` on a synthetic transcript and returns the same
+    /// `AIConversation.messages` shape `load(...)` would assign. Exists
+    /// because `ChatAgent.init` requires a `ChatBroker`, and `ChatBroker`
+    /// requires a real `ChatDatabase` / `ChatListModel` singleton that would
+    /// write the user's actual chat DB during a test run. Mirror the body
+    /// here if `load(messages:)` ever changes — `AILiveHarness` reaches
+    /// `AIChatToolCallRepair` through this seam to validate the chat-restore
+    /// path end-to-end against real vendor APIs.
+    static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
+        var stateMachine = MessageToPromptStateMachine()
+        let aiMessages = messages.compactMap { message -> AITermController.Message? in
+            switch message.content {
+            case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
+                    .multipart:
+                let body = stateMachine.body(message: message)
+                return AITermController.Message(
+                    responseID: message.responseID,
+                    role: AITermController.Message.role(from: message),
+                    body: body,
+                    reasoningContent: message.agentReasoning)
+            case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
+                    .commit, .vectorStoreCreated, .userCommand, .setPermissions:
+                return nil
+            }
+        }
+        return AIChatToolCallRepair.repairingOrphanedToolResults(aiMessages)
     }
 }

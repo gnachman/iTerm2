@@ -54,14 +54,23 @@ final class AILiveHarness: XCTestCase {
                           "Live AI harness is opt-in. Run tools/run_ai_live.sh.")
     }
 
+    /// Last config we successfully read off disk. The config file lives in
+    /// NSTemporaryDirectory() and we've seen Xcode test environments rotate
+    /// that directory mid-run (the file is present for the first test method
+    /// invocation in a -only-testing batch and gone for later ones, even
+    /// without any explicit cleanup running). Caching the first successful
+    /// read keeps later setUpWithError calls from spuriously XCTSkip'ing the
+    /// whole live suite. Process-local; doesn't persist across runs.
+    private static var cachedConfig: [String: String]?
+
     private static func loadConfig() -> [String: String]? {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath())),
-              let any = try? JSONSerialization.jsonObject(with: data),
-              let json = any as? [String: String]
-        else {
-            return nil
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: configPath())),
+           let any = try? JSONSerialization.jsonObject(with: data),
+           let json = any as? [String: String] {
+            cachedConfig = json
+            return json
         }
-        return json
+        return cachedConfig
     }
 
     private static func loadKeys() -> Keys {
@@ -74,7 +83,8 @@ final class AILiveHarness: XCTestCase {
 
     // Models that AIMetadata still lists but that a freshly-minted vendor
     // API key cannot reach. Capture attempts return 404 ("no longer
-    // available to new users") or 429 RESOURCE_EXHAUSTED on the first
+    // available to new users", or "no longer available" once Google fully
+    // retires a preview model) or 429 RESOURCE_EXHAUSTED on the first
     // call, so exercising them on a default sweep is pure noise. An
     // explicit ITERM2_AI_LIVE_<VENDOR>_MODELS override still lets you
     // target them deliberately if a grandfathered key works.
@@ -82,6 +92,8 @@ final class AILiveHarness: XCTestCase {
     static let unreachableForNewKeys: Set<String> = [
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
+        // Retired by Google: returns 404 "no longer available" for all keys.
+        "gemini-3-pro-preview",
     ]
 
     private static func models(forVendor vendor: String) -> [String] {
@@ -1297,5 +1309,420 @@ final class AILiveHarness: XCTestCase {
         } catch {
             XCTFail("[deepseek/reasoningOnlyRoundTrip] \(error) — DeepSeek may have rejected the empty-content + reasoning_content shape")
         }
+    }
+
+    // MARK: - Chat-reload (ChatAgent.load + AIChatToolCallRepair) round-trips
+    //
+    // These tests cover the prompt-rebuild path: a persisted [Message]
+    // transcript (`remoteCommandRequest` / `remoteCommandResponse` etc.) is
+    // replayed through `ChatAgent.aiMessagesForReloadingTranscript`, which
+    // runs the same `MessageToPromptStateMachine.body(message:)` +
+    // `AIChatToolCallRepair.repairingOrphanedToolResults` pipeline that
+    // production uses on chat reload, then a new user message is appended
+    // and sent to the real vendor. The point is to fly the rebuilt prompt
+    // and catch any vendor rejection that the offline repair tests can't
+    // see. Two hazards on every vendor:
+    //   - "paired" pins the well-formed reload path: a transcript that
+    //     contains a remoteCommandRequest + matching remoteCommandResponse
+    //     must still round-trip after rebuilding. Regression here means
+    //     the reload path itself broke.
+    //   - "orphan" pins the auto-approved-command shape (response without
+    //     request) that the repair is designed to heal. For Anthropic /
+    //     OpenAI Responses / OpenAI chat-completions / DeepSeek the
+    //     transcript carries a real call id (id-based vendors); for Gemini
+    //     it carries nil ids on both halves — that is exactly what
+    //     Gemini.swift's deserializer produces, and the repair must NOT
+    //     drop the nil-id functionOutput, it must synthesize an adjacent
+    //     nil-id functionCall so Gemini's adjacency-based pairing accepts
+    //     the request.
+    //
+    // The seam `ChatAgent.aiMessagesForReloadingTranscript(...)` exists
+    // because instantiating a real ChatAgent here would require a
+    // ChatBroker, which requires ChatDatabase.instance — that would write
+    // the user's actual chat DB during a test run. The seam mirrors
+    // `load(messages:)` line-for-line; keep them in sync if either moves.
+
+    private enum ChatReloadScenario: String {
+        case paired
+        case orphan
+    }
+
+    private enum ChatReloadIDStyle {
+        /// Real ids baked into both the request and the response. The two
+        /// id fields are distinct because vendors differ on what they accept:
+        /// OpenAI Responses requires the item id (FunctionCallID.itemID) to
+        /// begin with "fc_" and the call id (FunctionCallID.callID) to begin
+        /// with "call_". Anthropic / OpenAI chat-completions / DeepSeek
+        /// don't distinguish, so for them callID and itemID are equal.
+        case real(callID: String, itemID: String)
+        /// Both inner FunctionCall.id and wrapper FunctionCallID nil;
+        /// matches Gemini.swift (and the legacy OpenAI function_call path)
+        /// deserialized shape. Pairing is by adjacency, not id.
+        case nilID
+    }
+
+    /// Build a synthetic [Message] transcript shaped like a persisted chat.
+    /// The tool name maps to `execute_command` so it can use the existing
+    /// `RemoteCommand.ExecuteCommand` content; everything else is metadata
+    /// the vendor only sees indirectly via the rebuilt prompt.
+    private func makeChatReloadTranscript(scenario: ChatReloadScenario,
+                                          toolName: String,
+                                          idStyle: ChatReloadIDStyle) -> [Message] {
+        let chatID = "live-chat-reload"
+        let userQuestion = Message(
+            chatID: chatID,
+            author: .user,
+            content: .plainText("Please run the diagnostic command.", context: nil),
+            sentDate: Date(),
+            uniqueID: UUID())
+
+        let (innerID, wrapperID): (String?, LLM.Message.FunctionCallID?) = {
+            switch idStyle {
+            case .real(let callID, let itemID):
+                // FunctionCall.id mirrors the call id (what chat-completions
+                // and DeepSeek serializers key tool_calls off, and what
+                // Anthropic serializes as the tool_use block id). The wrapper
+                // FunctionCallID separately carries the call_id / item id
+                // distinction OpenAI Responses requires.
+                return (callID, LLM.Message.FunctionCallID(callID: callID, itemID: itemID))
+            case .nilID:
+                return (nil, nil)
+            }
+        }()
+        let argsJSON = "{\"command\":\"uname -a\"}"
+        let llmCall = LLM.Message(
+            role: .assistant,
+            body: .functionCall(
+                LLM.FunctionCall(name: toolName,
+                                 arguments: argsJSON,
+                                 id: innerID,
+                                 thoughtSignature: nil),
+                id: wrapperID))
+        let remoteCommand = RemoteCommand(
+            llmMessage: llmCall,
+            content: .executeCommand(.init(command: "uname -a")))
+        let request = Message(
+            chatID: chatID,
+            author: .agent,
+            content: .remoteCommandRequest(remoteCommand, safe: nil),
+            sentDate: Date(),
+            uniqueID: UUID())
+        let response = Message(
+            chatID: chatID,
+            author: .user,
+            content: .remoteCommandResponse(
+                .success("Darwin host 25.4.0 arm64"),
+                UUID(),
+                toolName,
+                wrapperID),
+            sentDate: Date(),
+            uniqueID: UUID())
+
+        switch scenario {
+        case .paired:
+            return [userQuestion, request, response]
+        case .orphan:
+            // Auto-approved shape: the request was squelched (ChatClient.swift
+            // .always branch historically), so only the response survives.
+            return [userQuestion, response]
+        }
+    }
+
+    /// Drive one chat-reload round-trip against `model`. The transcript is
+    /// rebuilt via the seam (so we reach `AIChatToolCallRepair` exactly the
+    /// way `ChatAgent.load(messages:)` would), then a new user message is
+    /// appended and the resulting prompt flies to the vendor. The vendor
+    /// reply must be non-empty (vendor accepted the rebuilt prompt). For the
+    /// orphan scenario we additionally inspect the captured Anthropic wire
+    /// body and assert the synthesized tool_use block actually lands before
+    /// the tool_result — that's the wire-level check the offline test
+    /// `testOrphanRepair_serializesAsAnthropicToolUse` makes, but here run
+    /// against the body the live driver actually transmitted.
+    private func runChatReloadOnce(vendorTag: String,
+                                   model: AIMetadata.Model,
+                                   apiKey: String,
+                                   streaming: Bool,
+                                   scenario: ChatReloadScenario,
+                                   idStyle: ChatReloadIDStyle) {
+        let toolName = "execute_command"
+        let decl = ChatGPTFunctionDeclaration(
+            name: toolName,
+            description: "Run a shell command (stub for chat-reload tests).",
+            parameters: JSONSchema(for: RemoteCommand.ExecuteCommand(),
+                                   descriptions: ["command": "The command to run."]))
+        let spec = AILiveFunctionSpec<RemoteCommand.ExecuteCommand>(
+            decl: decl,
+            implementation: { _, _, completion in
+                try completion(.success("{\"ok\":true}"))
+            })
+
+        let transcript = makeChatReloadTranscript(
+            scenario: scenario, toolName: toolName, idStyle: idStyle)
+        let rebuilt = ChatAgent.aiMessagesForReloadingTranscript(transcript)
+        // New user message that forces the rebuilt prompt to actually fly.
+        let followUp = LLM.Message(role: .user,
+                                   content: "In one short sentence, summarize what you learned from the previous command output.")
+        let messages = rebuilt + [followUp]
+
+        do {
+            let result = try AILiveDriver.run(
+                model: model,
+                apiKey: apiKey,
+                messages: messages,
+                streaming: streaming,
+                function: spec,
+                scenarioTag: "chatReload_\(scenario.rawValue)",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "[\(vendorTag)/\(model.name)/chatReload_\(scenario.rawValue)] empty response; the vendor likely rejected the rebuilt prompt")
+            if scenario == .orphan, model.vendor == .anthropic, case .real(let callID, _) = idStyle {
+                assertAnthropicWireBodyHasPairedToolUse(
+                    capturedBodies: result.capturedRequestBodies,
+                    toolID: callID,
+                    vendorTag: vendorTag,
+                    model: model.name)
+            }
+            report(vendor: vendorTag,
+                   model: model.name,
+                   scenario: "chatReload_\(scenario.rawValue)",
+                   streaming: streaming,
+                   result: result)
+        } catch {
+            XCTFail("[\(vendorTag)/\(model.name)/chatReload_\(scenario.rawValue)/stream=\(streaming)] \(error)")
+        }
+    }
+
+    /// Iterate every reachable model for `vendor`, skipping non-tool-calling
+    /// ones, and run one chat-reload round-trip per model.
+    private func runChatReload(vendor: String,
+                               apiKey: String,
+                               streaming: Bool,
+                               scenario: ChatReloadScenario,
+                               idStyle: ChatReloadIDStyle) {
+        for name in Self.models(forVendor: vendor) {
+            guard let resolved = AIMetadata.instance.models.first(where: { $0.name == name }) else {
+                XCTFail("[\(vendor)/\(name)] not found in AIMetadata"); continue
+            }
+            guard resolved.features.contains(.functionCalling) else { continue }
+            throttle(forVendor: vendor)
+            runChatReloadOnce(vendorTag: vendor,
+                              model: resolved,
+                              apiKey: apiKey,
+                              streaming: streaming,
+                              scenario: scenario,
+                              idStyle: idStyle)
+        }
+    }
+
+    /// OpenAI's chat-completions path is exercised via a synthetic model
+    /// (see `runSyntheticToolCall`), so the chat-reload runner takes the
+    /// model explicitly instead of iterating AIMetadata.
+    private func runChatReloadSynthetic(model: AIMetadata.Model,
+                                        apiKey: String,
+                                        streaming: Bool,
+                                        scenario: ChatReloadScenario,
+                                        idStyle: ChatReloadIDStyle) {
+        throttle(forVendor: "openai")
+        runChatReloadOnce(vendorTag: "openai-\(model.api)",
+                          model: model,
+                          apiKey: apiKey,
+                          streaming: streaming,
+                          scenario: scenario,
+                          idStyle: idStyle)
+    }
+
+    /// Wire-level guarantee for the Anthropic orphan path: the captured
+    /// outbound body must contain a `tool_use` block whose id matches the
+    /// `tool_result`'s `tool_use_id`, and the `tool_use` must come before
+    /// the `tool_result`. Pins exactly the regression the original bug
+    /// produced (orphan tool_result with no preceding tool_use).
+    private func assertAnthropicWireBodyHasPairedToolUse(capturedBodies: [String],
+                                                         toolID: String,
+                                                         vendorTag: String,
+                                                         model: String) {
+        guard let first = capturedBodies.first,
+              let data = first.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let wireMessages = json["messages"] as? [[String: Any]] else {
+            XCTFail("[\(vendorTag)/\(model)/chatReload_orphan] could not parse captured Anthropic body")
+            return
+        }
+        var toolUseIndexByID = [String: Int]()
+        var toolResultIndexByID = [String: Int]()
+        var blockIndex = 0
+        for message in wireMessages {
+            guard let blocks = message["content"] as? [[String: Any]] else { continue }
+            for block in blocks {
+                defer { blockIndex += 1 }
+                switch block["type"] as? String {
+                case "tool_use":
+                    if let id = block["id"] as? String { toolUseIndexByID[id] = blockIndex }
+                case "tool_result":
+                    if let id = block["tool_use_id"] as? String { toolResultIndexByID[id] = blockIndex }
+                default: break
+                }
+            }
+        }
+        guard let resultIdx = toolResultIndexByID[toolID] else {
+            XCTFail("[\(vendorTag)/\(model)/chatReload_orphan] no tool_result with id \(toolID) on the wire")
+            return
+        }
+        guard let useIdx = toolUseIndexByID[toolID] else {
+            XCTFail("[\(vendorTag)/\(model)/chatReload_orphan] no paired tool_use on the wire; this is the original 400 regression")
+            return
+        }
+        XCTAssertLessThan(useIdx, resultIdx,
+                          "[\(vendorTag)/\(model)/chatReload_orphan] tool_use must come before its tool_result")
+    }
+
+    // MARK: chat-reload — Anthropic
+
+    func test_anthropic_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: false,
+                      scenario: .paired,
+                      idStyle: .real(callID: "toolu_test_chat_reload_paired",
+                                     itemID: "toolu_test_chat_reload_paired"))
+    }
+    func test_anthropic_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: true,
+                      scenario: .paired,
+                      idStyle: .real(callID: "toolu_test_chat_reload_paired",
+                                     itemID: "toolu_test_chat_reload_paired"))
+    }
+    func test_anthropic_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: false,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "toolu_test_chat_reload_orphan",
+                                     itemID: "toolu_test_chat_reload_orphan"))
+    }
+    func test_anthropic_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: true,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "toolu_test_chat_reload_orphan",
+                                     itemID: "toolu_test_chat_reload_orphan"))
+    }
+
+    // MARK: chat-reload — Gemini (decisive: nil-id pairing)
+
+    func test_gemini_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: false,
+                      scenario: .paired, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: true,
+                      scenario: .paired, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: false,
+                      scenario: .orphan, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: true,
+                      scenario: .orphan, idStyle: .nilID)
+    }
+
+    // MARK: chat-reload — OpenAI Responses
+
+    func test_openai_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: false,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "fc_test_chat_reload_paired"))
+    }
+    func test_openai_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: true,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "fc_test_chat_reload_paired"))
+    }
+    func test_openai_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: false,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "fc_test_chat_reload_orphan"))
+    }
+    func test_openai_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: true,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "fc_test_chat_reload_orphan"))
+    }
+
+    // MARK: chat-reload — OpenAI chat-completions (synthetic model)
+
+    func test_openai_chatCompletions_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: false,
+                               scenario: .paired,
+                               idStyle: .real(callID: "call_test_chat_reload_paired",
+                                              itemID: "call_test_chat_reload_paired"))
+    }
+    func test_openai_chatCompletions_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: true,
+                               scenario: .paired,
+                               idStyle: .real(callID: "call_test_chat_reload_paired",
+                                              itemID: "call_test_chat_reload_paired"))
+    }
+    func test_openai_chatCompletions_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: false,
+                               scenario: .orphan,
+                               idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                              itemID: "call_test_chat_reload_orphan"))
+    }
+    func test_openai_chatCompletions_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: true,
+                               scenario: .orphan,
+                               idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                              itemID: "call_test_chat_reload_orphan"))
+    }
+
+    // MARK: chat-reload — DeepSeek
+
+    func test_deepseek_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: false,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "call_test_chat_reload_paired"))
+    }
+    func test_deepseek_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: true,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "call_test_chat_reload_paired"))
+    }
+    func test_deepseek_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: false,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "call_test_chat_reload_orphan"))
+    }
+    func test_deepseek_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: true,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "call_test_chat_reload_orphan"))
     }
 }

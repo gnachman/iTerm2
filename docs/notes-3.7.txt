@@ -429,6 +429,12 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- AI chat no longer fails with a tool_use_id
+  error after an auto-approved command. The
+  tool call was dropped from saved history
+  while its result was kept; the prompt is now
+  repaired when reloaded, healing chats saved
+  by earlier versions too.
 - Session notes now keep their distance from
   the top-right corner of a session when it
   is resized, instead of from the bottom-left.

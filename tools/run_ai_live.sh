@@ -142,6 +142,26 @@ else
         test_openai_refusal_nonStreaming
         test_openai_refusal_streaming
         test_openai_hostedCodeInterpreter
+        test_anthropic_chatReload_paired_nonStreaming
+        test_anthropic_chatReload_paired_streaming
+        test_anthropic_chatReload_orphan_nonStreaming
+        test_anthropic_chatReload_orphan_streaming
+        test_gemini_chatReload_paired_nonStreaming
+        test_gemini_chatReload_paired_streaming
+        test_gemini_chatReload_orphan_nonStreaming
+        test_gemini_chatReload_orphan_streaming
+        test_openai_chatReload_paired_nonStreaming
+        test_openai_chatReload_paired_streaming
+        test_openai_chatReload_orphan_nonStreaming
+        test_openai_chatReload_orphan_streaming
+        test_openai_chatCompletions_chatReload_paired_nonStreaming
+        test_openai_chatCompletions_chatReload_paired_streaming
+        test_openai_chatCompletions_chatReload_orphan_nonStreaming
+        test_openai_chatCompletions_chatReload_orphan_streaming
+        test_deepseek_chatReload_paired_nonStreaming
+        test_deepseek_chatReload_paired_streaming
+        test_deepseek_chatReload_orphan_nonStreaming
+        test_deepseek_chatReload_orphan_streaming
     )
     matched=()
     for m in "${methods[@]}"; do
