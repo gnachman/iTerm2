@@ -1056,3 +1056,8 @@ Bug Fixes:
   stays put as new lines come in.
 - Fix black, unreadable text in the
   Script Console Logs tab in dark mode.
+- Session Stats now shows the correct
+  keyboard shortcut for workgroup peers
+  that have a custom peer-switch
+  shortcut configured, instead of always
+  showing the built-in ⌥⇧⌘ number.

@@ -177,6 +177,20 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         return peerMembers.first { $0.identifier == id }?.label
     }
 
+    // Display string for the peer's configured custom peer-switch
+    // shortcut, or nil when it has none. Callers fall back to the
+    // built-in ⌥⇧⌘<position> shortcut when this returns nil — matching
+    // how WorkgroupModeSwitcherItem renders its segment labels.
+    @objc func customShortcutLabel(forPeerID id: String) -> String? {
+        guard let member = peerMembers.first(where: {
+                  $0.identifier == id
+              }),
+              let keystroke = member.shortcut?.keystroke else {
+            return nil
+        }
+        return iTermKeystrokeFormatter.string(for: keystroke)
+    }
+
     // 1-based position of the peer registered under `id` in the peer
     // configs, or 0 when not found. Used to compute the peer's
     // ⌥⇧⌘<digit> activation shortcut for display.

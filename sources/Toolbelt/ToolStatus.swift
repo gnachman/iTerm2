@@ -402,12 +402,16 @@ private extension ToolStatus {
         return size
     }
 
-    // Mirrors WorkgroupModeSwitcherItem.shortcutLabel: peers 1..8 get
-    // their numeric digit; the *last* peer gets ⌥⇧⌘9 (which is what
-    // activatePeer(byShortcutDigit: 9) does); peers between 9 and
-    // count-1 get nothing.
+    // Mirrors WorkgroupModeSwitcherItem's segment labels: a peer with a
+    // configured custom peerSwitchShortcut shows that shortcut; otherwise
+    // peers 1..8 get their numeric digit, the *last* peer gets ⌥⇧⌘9
+    // (which is what activatePeer(byShortcutDigit: 9) does), and peers
+    // between 9 and count-1 get nothing.
     func peerSwitchShortcutLabel(port: iTermWorkgroupPeerPort,
                                  peerID: String) -> String? {
+        if let custom = port.customShortcutLabel(forPeerID: peerID) {
+            return custom
+        }
         let position = port.position(forPeerID: peerID)
         guard position > 0 else {
             return nil
