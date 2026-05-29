@@ -858,13 +858,16 @@ static int gSignalsToList[] = {
     if (!view) {
         view = [self viewWithString:string font:font from:tableView owner:owner];
     }
-    NSImageView *imageView = [[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 2, 2)];
-    if (image) {
-        imageView.image = image;
+    // Reuse the existing image view on a recycled cell; creating a new one each time
+    // would leave the prior image views stacked up as orphaned subviews.
+    NSImageView *imageView = view.imageView;
+    if (!imageView) {
+        imageView = [[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 2, 2)];
+        imageView.alphaValue = 0.75;
+        [view addSubview:imageView];
+        view.imageView = imageView;
     }
-    imageView.alphaValue = 0.75;
-    [view addSubview:imageView];
-    view.imageView = imageView;
+    imageView.image = image;
     [view layoutSubviews];
     return view;
 }
