@@ -293,12 +293,6 @@ Tmux Improvements:
 - Bracketed paste state is restored on attach
   (prep for tmux’s upcoming bracket_paste_flag
   format).
-- Integrated tmux now preserves local scrollback
-  outside tmux’s captured history when unpausing
-  a pane.
-- Integrated tmux now saves the visible primary
-  screen to scrollback before a non-alternate-screen
-  full-screen app repaints from the home position.
 - The per-pane modifyOtherKeys state is now
   restored on attach (using tmux 3.5+’s
   pane_key_mode format), so reattaching while

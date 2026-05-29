@@ -1531,9 +1531,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         if (x1 == 0 && yStart == 0 && [self shouldSaveScreenBeforeClearingFromHome]) {
             // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
             // clear the screen.
-            // Also do it for integrated tmux clients when an interactive app has disabled hard
-            // alternate screen but still repaints from the home position.
-            // Don't do it if in a protection mode since that would defeat the purpose.
+            // Only do it in alternate screen mode to avoid doing this for zsh (issue 8822)
+            // And don't do it if in a protection mode since that would defeat the purpose.
             [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                 [delegate screenRemoveSelection];
             } name:@"erase in display"];
