@@ -41,8 +41,15 @@ static const CGFloat kMargin = 0;
     if (self) {
         _jobTreeViewController = [[iTermJobTreeViewController alloc] initWithProcessID:1
                                                                    processInfoProvider:[iTermProcessCache sharedInstance]];
-        _jobTreeViewController.font = [NSFont it_toolbeltFont];
         _jobTreeViewController.animateChanges = NO;
+        // The toolbelt provides its own background, so suppress the visual
+        // effect view (set before -font, which loads the view).
+        _jobTreeViewController.useVisualEffectView = NO;
+        // Space is at a premium in the toolbelt: anchor the 22pt-tall controls
+        // flush to the bottom with 6pt above them and none below.
+        _jobTreeViewController.toolbarHeight = 28;
+        _jobTreeViewController.controlsBottomMargin = 0;
+        _jobTreeViewController.font = [NSFont it_toolbeltFont];
         [self addSubview:_jobTreeViewController.view];
         [self relayout];
     }

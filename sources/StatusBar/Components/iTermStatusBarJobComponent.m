@@ -161,8 +161,9 @@ NS_ASSUME_NONNULL_BEGIN
     pid_t pid = [[self.scope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid] integerValue];
     iTermJobTreeViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid
                                                                                    processInfoProvider:[self.delegate statusBarComponentProcessInfoProvider]];
-    viewController.font = [self font];
+    // Must be set before -font, which loads the view and reads this in -awakeFromNib.
     viewController.useGlassEffectView = YES;
+    viewController.font = [self font];
     popover.contentViewController = viewController;
     popover.contentSize = viewController.view.frame.size;
     popover.behavior = NSPopoverBehaviorSemitransient;

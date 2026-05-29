@@ -265,6 +265,9 @@ static int gSignalsToList[] = {
     if (self) {
         _pid = pid;
         _animateChanges = YES;
+        _toolbarHeight = 38;
+        _controlsBottomMargin = 8;
+        _useVisualEffectView = YES;
         _graphicSource = [[iTermGraphicSource alloc] init];
         _graphicSource.disableTinting = YES;
         _processInfoProvider = processInfoProvider;
@@ -278,7 +281,10 @@ static int gSignalsToList[] = {
         _outlineView.style = NSTableViewStyleInset;
     }
     _outlineView.backgroundColor = [NSColor clearColor];
-    if (_useGlassEffectView) {
+    if (!_useVisualEffectView) {
+        [_vev removeFromSuperview];
+        _vev = nil;
+    } else if (_useGlassEffectView) {
         if (@available(macOS 26, *)) {
             NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:_vev.frame];
             glassView.autoresizingMask = _vev.autoresizingMask;
@@ -293,10 +299,9 @@ static int gSignalsToList[] = {
 - (void)viewDidLayout {
     [super viewDidLayout];
     NSView *superview = _signalContainer.superview;
-    const CGFloat scrollViewBottom = NSMinY(_outlineView.enclosingScrollView.frame);
     NSRect frame = _signalContainer.frame;
     frame.origin.x = round((NSWidth(superview.bounds) - NSWidth(frame)) / 2.0);
-    frame.origin.y = round(scrollViewBottom / 2.0 - NSHeight(frame) / 2.0);
+    frame.origin.y = self.controlsBottomMargin;
     _signalContainer.frame = frame;
 }
 
@@ -534,8 +539,11 @@ static int gSignalsToList[] = {
         _outlineView.frame = frame;
     }
 
-    const CGFloat toolbarHeight = NSMaxY(kill_.frame);
-    _outlineView.enclosingScrollView.frame = NSMakeRect(0, toolbarHeight, self.view.frame.size.width, self.view.frame.size.height - toolbarHeight);
+    const CGFloat toolbarHeight = self.toolbarHeight;
+    _outlineView.enclosingScrollView.frame = NSMakeRect(0,
+                                                        toolbarHeight,
+                                                        self.view.frame.size.width,
+                                                        MAX(0, self.view.frame.size.height - toolbarHeight));
 }
 
 #pragma mark - Actions
