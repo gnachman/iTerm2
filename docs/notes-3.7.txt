@@ -12,6 +12,13 @@ Major New Features:
 - Tabs can now be placed on the right side
   of the window.
 
+- Sending or copying clippings now prefixes
+  each one with its title in bold Markdown and
+  separates multiple clippings with a
+  configurable string (default is a line of
+  two dashes). See the Clipping Separator
+  advanced setting.
+
 - A new Tab Status system was added. Sessions
   can now report status that appears on their
   tab with a custom subtitle, color, and dot

@@ -762,6 +762,9 @@ DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, SECTION_PASTEBOARD @"Delay in se
 DEFINE_BOOL(copyWithStylesByDefault, NO, SECTION_PASTEBOARD @"Copy to pasteboard on selection includes color and font style.");
 DEFINE_BOOL(copyBackgroundColor, YES, SECTION_PASTEBOARD @"Exclude the default background color when text is copied with color and font style?\nWhen off, the default background color will be left unset. Non-default background colors will remain.");
 DEFINE_INT(pasteHistoryMaxOptions, 20, SECTION_PASTEBOARD @"Number of entries to save in Paste History.\n");
+DEFINE_STRING(clippingSeparator, @"\\n--\\n",
+              SECTION_PASTEBOARD @"Separator inserted between multiple clippings when sending or copying them.\n"
+              @"The value should use Vim syntax, such as \\n for newline and \\e for escape.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, SECTION_PASTEBOARD @"Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, SECTION_PASTEBOARD @"Pressing a key will remove the selection.");
 DEFINE_BOOL(pastingClearsSelection, YES, SECTION_PASTEBOARD @"Pasting text will remove the selection.");

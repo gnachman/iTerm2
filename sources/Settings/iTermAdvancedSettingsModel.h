@@ -108,6 +108,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)chaseAnchoredScreen;
 + (BOOL)channelsEnabled;
 + (BOOL)clearBellIconAggressively;
++ (NSString *)clippingSeparator;
 + (BOOL)cmdClickWhenInactiveInvokesSemanticHistory;
 + (int)codeciergeCommandWarningCount;
 + (NSString *)codeciergeGhostRidingPrompt;

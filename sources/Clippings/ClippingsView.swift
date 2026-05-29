@@ -297,7 +297,16 @@ class iTermClippingsView: NSView {
     private func joinedSelectedDetails() -> String? {
         let selected = selectedClippings()
         guard !selected.isEmpty else { return nil }
-        return selected.map { $0.detail }.joined(separator: "\n")
+        let separator = (iTermAdvancedSettingsModel.clippingSeparator() as NSString).expandingVimSpecialCharacters()
+        return selected.map { formattedClipping($0) }.joined(separator: separator)
+    }
+
+    private func formattedClipping(_ clipping: PTYSessionClipping) -> String {
+        let title = clipping.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else {
+            return clipping.detail
+        }
+        return "**\(title)**\n\(clipping.detail)"
     }
 
     private func currentClippings() -> [PTYSessionClipping] {
