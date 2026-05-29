@@ -144,6 +144,12 @@
                         <action selector="copyProcessID:" target="-2" id="1CB-qe-KGJ"/>
                     </connections>
                 </menuItem>
+                <menuItem title="Notify on Termination" id="ntf-01-trm">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="toggleNotifyOnTermination:" target="-2" id="ntf-02-act"/>
+                    </connections>
+                </menuItem>
             </items>
             <point key="canvasLocation" x="1" y="-288"/>
         </menu>

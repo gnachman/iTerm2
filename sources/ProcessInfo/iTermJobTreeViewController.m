@@ -35,6 +35,10 @@ static int gSignalsToList[] = {
 
 @interface iTermJobTreeTextTableCellView: NSTableCellView
 + (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner;
+// Re-renders SF Symbol attachments tagged with iTermDynamicProfileSymbolName so
+// they tint correctly for the current selection state and appearance. Call after
+// changing the text field's attributed value.
+- (void)it_updateDynamicSymbolTint;
 @end
 
 @interface iTermJobTreeImageTableCellView: iTermJobTreeTextTableCellView
@@ -271,8 +275,32 @@ static int gSignalsToList[] = {
         _graphicSource = [[iTermGraphicSource alloc] init];
         _graphicSource.disableTinting = YES;
         _processInfoProvider = processInfoProvider;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(jobTerminationMonitorStateDidChange:)
+                                                     name:iTermJobTerminationMonitor.stateDidChangeNotificationName
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)jobTerminationMonitorStateDidChange:(NSNotification *)notification {
+    // Re-render visible job rows so the indicator appears or disappears. This also keeps
+    // separate views (e.g. the toolbelt and a status bar popover) in sync, and removes
+    // the bell as soon as a watched process exits.
+    if (!_outlineView) {
+        return;
+    }
+    const NSRange rows = [_outlineView rowsInRect:_outlineView.visibleRect];
+    for (NSInteger row = rows.location; row < NSMaxRange(rows); row++) {
+        id item = [_outlineView itemAtRow:row];
+        if (item) {
+            [_outlineView reloadItem:item];
+        }
+    }
 }
 
 - (void)awakeFromNib {
@@ -553,7 +581,23 @@ static int gSignalsToList[] = {
         menuItem.action == @selector(copyProcessID:)) {
         return [_outlineView clickedRow] >= 0;
     }
+    if (menuItem.action == @selector(toggleNotifyOnTermination:)) {
+        iTermJobProxy *info = [self clickedJob];
+        const BOOL monitoring = (info.pid != 0 &&
+                                 [[iTermJobTerminationMonitor sharedInstance] isMonitoringProcessID:info.pid]);
+        menuItem.state = monitoring ? NSControlStateValueOn : NSControlStateValueOff;
+        return info.pid != 0;
+    }
     return [super validateMenuItem:menuItem];
+}
+
+- (iTermJobProxy *)clickedJob {
+    const int row = [_outlineView clickedRow];
+    if (row < 0) {
+        return nil;
+    }
+    id item = [_outlineView itemAtRow:row];
+    return item ?: _root;
 }
 
 - (IBAction)copyJobName:(id)sender {
@@ -590,6 +634,21 @@ static int gSignalsToList[] = {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
     [pboard setString:[@(info.pid) stringValue] forType:NSPasteboardTypeString];
+}
+
+- (IBAction)toggleNotifyOnTermination:(id)sender {
+    iTermJobProxy *info = [self clickedJob];
+    if (!info.pid) {
+        return;
+    }
+    iTermJobTerminationMonitor *monitor = [iTermJobTerminationMonitor sharedInstance];
+    if ([monitor isMonitoringProcessID:info.pid]) {
+        [monitor stopMonitoringProcessID:info.pid];
+    } else {
+        [monitor beginMonitoringProcessID:info.pid name:(info.name ?: info.fullName)];
+    }
+    // Changing the monitor posts a state-change notification, which reloads the affected
+    // rows to show or hide the indicator (see jobTerminationMonitorStateDidChange:).
 }
 
 #pragma mark - NSOutlineViewDataSource
@@ -629,6 +688,8 @@ static int gSignalsToList[] = {
     NSString *string;
     NSImage *image = nil;
     const BOOL isJob = [tableColumn.identifier isEqualToString:@"job"];
+    const BOOL monitored = (isJob && info.pid &&
+                            [[iTermJobTerminationMonitor sharedInstance] isMonitoringProcessID:info.pid]);
     if (isJob) {
         string = info.fullName ?: @"(terminated)";
         NSImage *rawImage = [_graphicSource imageForJobName:info.name];
@@ -655,7 +716,44 @@ static int gSignalsToList[] = {
         string = [string substringToIndex:256];
     }
     string = [string stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    return [self tableCellViewWithString:string image:image isJob:isJob];
+    NSTableCellView *cell = [self tableCellViewWithString:string image:image isJob:isJob];
+    if (monitored) {
+        // Prefix the name with a monochrome SF Symbol bell so it is obvious the
+        // job is being watched. An SF Symbol attachment (rather than an emoji
+        // glyph) is guaranteed to render, and tagging it with
+        // iTermDynamicProfileSymbolName lets the cell retint it to follow the
+        // row's selection state and light/dark appearance.
+        NSFont *font = self.font ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        NSMutableAttributedString *attributed = [[self monitorIndicatorPrefixWithFont:font] mutableCopy];
+        [attributed appendAttributedString:[[NSAttributedString alloc] initWithString:string
+                                                                           attributes:@{ NSFontAttributeName: font }]];
+        cell.textField.attributedStringValue = attributed;
+        [(iTermJobTreeTextTableCellView *)cell it_updateDynamicSymbolTint];
+    } else if (isJob) {
+        // A reused job cell may still hold an attributed bell from when it was
+        // monitored, so reset it to plain text.
+        cell.textField.stringValue = string;
+    }
+    return cell;
+}
+
+- (NSAttributedString *)monitorIndicatorPrefixWithFont:(NSFont *)font {
+    NSImage *bell = [NSImage it_imageForSymbolName:@"bell"
+                            accessibilityDescription:@"Will notify when this job terminates"];
+    if (!bell) {
+        return [[NSAttributedString alloc] initWithString:@""];
+    }
+    NSImage *sized = [bell imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:font.pointSize
+                                                                                                       weight:NSFontWeightRegular]] ?: bell;
+    NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+    attachment.image = sized;
+    NSMutableAttributedString *result =
+        [[NSAttributedString attributedStringWithAttachment:attachment] mutableCopy];
+    // The cell rerenders this attachment with a selection- and appearance-aware
+    // color whenever its background style or effective appearance changes.
+    [result addAttribute:iTermDynamicProfileSymbolName value:@"bell" range:NSMakeRange(0, result.length)];
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
+    return result;
 }
 
 - (NSTableCellView *)tableCellViewWithString:(NSString *)string image:(NSImage *)image isJob:(BOOL)isJob {
@@ -695,7 +793,9 @@ static int gSignalsToList[] = {
 
 @end
 
-@implementation iTermJobTreeTextTableCellView
+@implementation iTermJobTreeTextTableCellView {
+    BOOL _emphasized;
+}
 
 + (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner {
     iTermJobTreeTextTableCellView *view = [tableView makeViewWithIdentifier:NSStringFromClass(self) owner:owner];
@@ -714,6 +814,25 @@ static int gSignalsToList[] = {
     view.textField.stringValue = string;
     [view layoutSubviews];
     return view;
+}
+
+- (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
+    [super setBackgroundStyle:backgroundStyle];
+    _emphasized = (backgroundStyle == NSBackgroundStyleEmphasized);
+    [self it_updateDynamicSymbolTint];
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    [self it_updateDynamicSymbolTint];
+}
+
+- (void)it_updateDynamicSymbolTint {
+    // Full strength and the bell's natural (font-derived) size, unlike the smaller,
+    // dimmed profile symbols.
+    [self.textField it_retintDynamicSymbolAttachmentsForEmphasized:_emphasized
+                                                             alpha:1
+                                                        symbolSize:NSZeroSize];
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {

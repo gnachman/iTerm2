@@ -1068,3 +1068,9 @@ Bug Fixes:
   that have a custom peer-switch
   shortcut configured, instead of always
   showing the built-in ⌥⇧⌘ number.
+- Jobs toolbelt and the status bar job
+  popover gain a “Notify on Termination”
+  right-click option. Monitored jobs show
+  a bell next to their name, and when the
+  chosen process exits a modal alert names
+  the job and process ID.

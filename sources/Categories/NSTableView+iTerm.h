@@ -45,4 +45,17 @@ extern NSString *const iTermDynamicProfileSymbolName;
                                           owner:(NSView<NSOutlineViewDelegate, NSOutlineViewDataSource> *)owner;
 @end
 
+@interface NSTextField(iTermDynamicSymbol)
+
+// Re-renders SF Symbol text attachments tagged with iTermDynamicProfileSymbolName in the
+// receiver's attributed value so they tint correctly for the current selection state and
+// effective appearance. Call from a table cell view's setBackgroundStyle: and
+// viewDidChangeEffectiveAppearance. alpha sets the symbol opacity (e.g. 0.75 for a
+// secondary look, 1 for full strength). If symbolSize is not NSZeroSize each attachment is
+// forced to that size; otherwise it keeps the size it was created with.
+- (void)it_retintDynamicSymbolAttachmentsForEmphasized:(BOOL)emphasized
+                                                 alpha:(CGFloat)alpha
+                                            symbolSize:(NSSize)symbolSize;
+@end
+
 NS_ASSUME_NONNULL_END
