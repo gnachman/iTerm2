@@ -38,11 +38,27 @@ class iTermJobTerminationMonitor: NSObject {
     }
 
     // Begins watching pid. When it terminates, a modal alert naming the job and
-    // pid is shown. Does nothing if pid is already being monitored.
+    // pid is shown. Does nothing (returning true) if pid is already being
+    // monitored. Returns false, after showing an explanatory alert, if pid cannot
+    // be watched, e.g. it has already exited or belongs to another user.
+    @discardableResult
     @objc(beginMonitoringProcessID:name:)
-    func beginMonitoring(processID pid: pid_t, name: String?) {
-        guard pid > 0, sources[pid] == nil else {
-            return
+    func beginMonitoring(processID pid: pid_t, name: String?) -> Bool {
+        guard pid > 0 else {
+            return false
+        }
+        if sources[pid] != nil {
+            return true
+        }
+        // kill(pid, 0) sends no signal but tells us whether the process still
+        // exists. ESRCH means it is already gone, so the kqueue source we are about
+        // to create would never fire; report that instead of failing silently.
+        // EPERM means the process exists but belongs to another user (e.g. a root
+        // job). EVFILT_PROC's NOTE_EXIT does not require signal permission, so those
+        // notify fine and we proceed normally.
+        if kill(pid, 0) != 0 && errno == ESRCH {
+            showCannotMonitorAlert(pid: pid, name: name)
+            return false
         }
         let source = DispatchSource.makeProcessSource(identifier: pid,
                                                       eventMask: .exit,
@@ -55,6 +71,7 @@ class iTermJobTerminationMonitor: NSObject {
         source.resume()
         DLog("Began monitoring pid \(pid) (\(name ?? "")) for termination")
         postStateDidChange()
+        return true
     }
 
     // Stops watching pid without showing an alert.
@@ -121,5 +138,15 @@ class iTermJobTerminationMonitor: NSObject {
     private func sentence(for termination: (name: String, pid: pid_t)) -> String {
         let displayName = termination.name.isEmpty ? "(unknown)" : termination.name
         return "The job \(displayName) with process ID \(termination.pid) has terminated."
+    }
+
+    private func showCannotMonitorAlert(pid: pid_t, name: String?) {
+        let displayName = (name?.isEmpty == false) ? name! : "(unknown)"
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "Cannot Notify on Termination"
+        alert.informativeText = "iTerm2 cannot watch the job \(displayName) with process ID \(pid) because it has already terminated."
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 }
