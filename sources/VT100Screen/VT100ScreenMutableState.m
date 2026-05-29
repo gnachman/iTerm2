@@ -1474,6 +1474,25 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }
 }
 
+- (BOOL)tmuxClientIsRunningInteractiveAppWithoutAltScreen {
+    return (self.terminal.tmuxMode &&
+            !self.terminal.softAlternateScreenMode &&
+            (self.terminal.cursorMode ||
+             self.terminal.keypadMode ||
+             self.terminal.bracketedPasteMode ||
+             self.terminal.mouseMode != MOUSE_REPORTING_NONE));
+}
+
+- (BOOL)shouldSaveScreenBeforeClearingFromHome {
+    if (![iTermAdvancedSettingsModel saveScrollBufferWhenClearing]) {
+        return NO;
+    }
+    if (self.terminal.softAlternateScreenMode) {
+        return YES;
+    }
+    return [self tmuxClientIsRunningInteractiveAppWithoutAltScreen];
+}
+
 - (void)eraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
     int x1, yStart, x2, y2;
     BOOL shouldHonorProtected = NO;
@@ -1509,11 +1528,12 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         yStart = self.currentGrid.cursor.y;
         x2 = self.currentGrid.size.width - 1;
         y2 = self.currentGrid.size.height - 1;
-        if (x1 == 0 && yStart == 0 && [iTermAdvancedSettingsModel saveScrollBufferWhenClearing] && self.terminal.softAlternateScreenMode) {
+        if (x1 == 0 && yStart == 0 && [self shouldSaveScreenBeforeClearingFromHome]) {
             // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
             // clear the screen.
-            // Only do it in alternate screen mode to avoid doing this for zsh (issue 8822)
-            // And don't do it if in a protection mode since that would defeat the purpose.
+            // Also do it for integrated tmux clients when an interactive app has disabled hard
+            // alternate screen but still repaints from the home position.
+            // Don't do it if in a protection mode since that would defeat the purpose.
             [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                 [delegate screenRemoveSelection];
             } name:@"erase in display"];
