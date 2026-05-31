@@ -272,6 +272,15 @@ AI Improvements:
   rejected drag-and-drop attachments now show
   an explanatory alert instead of vanishing
   silently.
+- New advanced setting “Log raw AI API
+  requests and responses to disk” captures
+  full-fidelity AI wire traffic (headers,
+  body, streamed chunks, response, timing) to
+  ~/Library/Application Support/iTerm2/
+  AIChatWire/ for debugging. Off by default;
+  the log includes API keys and prompt
+  content verbatim, so delete the files when
+  finished.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the

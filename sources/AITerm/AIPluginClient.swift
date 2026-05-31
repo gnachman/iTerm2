@@ -304,15 +304,30 @@ class iTermAIClient {
                                        error: nil,
                                        elapsed: 0))
         }
+        // Stable per-call ID so the disk wire log can correlate the
+        // request, every streamed chunk, and the final response /
+        // error across interleaved concurrent calls. The cost of
+        // generating it when logging is off is one UUID per call,
+        // which is negligible next to the round-trip itself.
+        let callID = UUID()
+        let wireLogger = AIChatWireLogger.instance
+        wireLogger.logRequest(callID: callID, request: webRequest)
         let startTime = Date()
         let emit: (Result<WebResponse, PluginError>) -> Void = { result in
+            let elapsed = Date().timeIntervalSince(startTime)
+            switch result {
+            case .success(let r):
+                wireLogger.logSuccess(callID: callID, response: r, elapsed: elapsed)
+            case .failure(let e):
+                wireLogger.logFailure(callID: callID, error: e, elapsed: elapsed)
+            }
             DispatchQueue.main.async {
                 if let observer, let captureBox {
                     switch result {
                     case .success(let r): captureBox.capture.response = r
                     case .failure(let e): captureBox.capture.error = e
                     }
-                    captureBox.capture.elapsed = Date().timeIntervalSince(startTime)
+                    captureBox.capture.elapsed = elapsed
                     observer(captureBox.capture)
                 }
                 completion(result)
@@ -330,6 +345,7 @@ class iTermAIClient {
                     }
                     let wrappedStream: ((String) -> ())? = stream.map { downstream in
                         return { chunk in
+                            wireLogger.logStreamChunk(callID: callID, chunk: chunk)
                             captureBox?.capture.streamChunks.append(chunk)
                             downstream(chunk)
                         }
