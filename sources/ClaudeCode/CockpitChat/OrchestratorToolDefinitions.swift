@@ -5,13 +5,13 @@
 
 import Foundation
 
-// JSON-Schema definitions for the 16 orchestrator tools. Passed to
+// JSON-Schema definitions for the 12 orchestrator tools. Passed to
 // AIConversation in the tools array of each LLM request so the model
 // knows what it can call.
 //
 // Schemas use plain dictionaries because the destination is JSON
 // (the LLM API serializes them) and writing a typed schema layer for
-// 16 tools would be more code than the schemas themselves. Keep
+// 12 tools would be more code than the schemas themselves. Keep
 // descriptions tunable here. they're what the LLM sees and how it
 // decides which tool to use.
 struct ToolDefinition {
@@ -179,13 +179,5 @@ extension OrchestratorCommand {
             name: ToolName.listWatches.rawValue,
             description: "List every async watcher currently registered for this chat.",
             inputSchema: emptyObjectSchema),
-
-        // -------- User --------
-        //
-        // notify_user is intentionally not registered: the dispatcher
-        // throws notImplemented for it today, so advertising it would
-        // tempt the LLM to call it and burn a tool-call slot for a
-        // structured error. When implemented, restore the definition
-        // here and the dispatcher arm in OrchestratorDispatcher.
     ]
 }

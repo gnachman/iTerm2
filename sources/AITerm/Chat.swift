@@ -199,6 +199,10 @@ extension Chat: iTermDatabaseElement {
     // without it, an embedded \n would silently split one ID into two
     // on the next read.
     private static func encodeIDList(_ ids: [String]) -> String {
+        for id in ids {
+            it_assert(!id.contains("\n"),
+                      "Chat.encodeIDList: id contains newline; the newline-separated encoding would split it on read.")
+        }
         return ids.joined(separator: "\n")
     }
 

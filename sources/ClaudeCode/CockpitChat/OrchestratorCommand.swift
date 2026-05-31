@@ -113,12 +113,6 @@ struct StartSessionArgs: Codable {
     let window: SpawnWindowChoice?  // nil → .tab
 }
 
-struct NotifyUserArgs: Codable {
-    let title: String
-    let body: String?
-    let sound: Bool?  // nil → false
-}
-
 // MARK: - Enums
 
 enum SessionState: String, Codable {
@@ -161,7 +155,6 @@ enum ToolName: String, CaseIterable {
     case registerWatch = "register_watch"
     case unregisterWatch = "unregister_watch"
     case listWatches = "list_watches"
-    case notifyUser = "notify_user"
 }
 
 // MARK: - Command
@@ -193,16 +186,12 @@ enum OrchestratorCommand {
     case unregisterWatch(watcherID: String)
     case listWatches
 
-    // User
-    case notifyUser(NotifyUserArgs)
-
     // Categorization drives the safety/dispatch policy.
     enum Category {
         case readOnly       // no claim, no special handling
         case watcher        // no claim, manipulates the async watch list
         case write          // requires the target workgroup to be claimed
         case spawn          // start_session. always prompts the user
-        case userFacing     // notify_user. no claim
     }
 
     var category: Category {
@@ -216,8 +205,6 @@ enum OrchestratorCommand {
             return .spawn
         case .registerWatch, .unregisterWatch, .listWatches:
             return .watcher
-        case .notifyUser:
-            return .userFacing
         }
     }
 
@@ -237,8 +224,7 @@ enum OrchestratorCommand {
         case .listWorkgroups, .getState, .getScreenContents,
                 .listWorkgroupClippings,
                 .startSession,
-                .registerWatch, .unregisterWatch, .listWatches,
-                .notifyUser:
+                .registerWatch, .unregisterWatch, .listWatches:
             return nil
         }
     }

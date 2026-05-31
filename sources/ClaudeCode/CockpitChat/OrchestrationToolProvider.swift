@@ -337,9 +337,6 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Cancelling a watch"
         case "list_watches":
             return "Listing active watches"
-        case "notify_user":
-            let title = (dict["title"] as? String) ?? ""
-            return "Sending macOS notification: \u{201C}\(title)\u{201D}"
         default:
             if name.hasPrefix("session_") {
                 let guid = (dict["session_guid"] as? String) ?? "?"

@@ -87,7 +87,16 @@ final class OrchestratorClient {
     // watcher state and broker subscription are released along with
     // the agent's tool-call surface.
     func dropDispatcher(forChatID chatID: String) {
-        dispatchers.removeValue(forKey: chatID)
+        // Synchronously detach broker/observer state before dropping
+        // the dict entry. An in-flight handleToolCall Task can still
+        // hold a strong ref past the dict removal; without tearDown
+        // that orphan would keep delivering tab-status notifications,
+        // resume parked permission prompts as if they were live, and
+        // publish a posthumous tool_result into a chat that's no
+        // longer in orchestration mode.
+        if let existing = dispatchers.removeValue(forKey: chatID) {
+            existing.tearDown()
+        }
     }
 
     // MARK: - Broker handler

@@ -38,6 +38,17 @@ final class OrchestratorDispatcher {
     private let chatID: String
     private weak var broker: ChatBroker?
 
+    // Set by tearDown() to short-circuit any handler that's already
+    // mid-await when the chat exits orchestration mode (or the chat is
+    // deleted). After tearDown the dispatcher's subscription and
+    // observers are gone, but in-flight Tasks may still hold strong
+    // refs and resume into this object. Each public-ish entrypoint
+    // checks this flag so a posthumous handleToolCall doesn't publish
+    // a tool_result back into a chat that's no longer listening, and
+    // a posthumous broker update doesn't try to resume a continuation
+    // that's already been resolved with `false`.
+    private var tornDown = false
+
     // Persisted claim set, cached in memory. The listModel is the
     // source of truth on disk; we write through on every mutation
     // and read once at init.
@@ -71,6 +82,18 @@ final class OrchestratorDispatcher {
     // doesn't leak a task.
     private var pendingPermissionPrompts: [String: CheckedContinuation<Bool, Never>] = [:]
     private var brokerSubscription: ChatBroker.Subscription?
+
+    // De-dup table for in-flight ensureClaim calls. Two concurrent
+    // write tool calls against the same unclaimed workgroup would
+    // otherwise both pass the claimedScopes.contains check (the
+    // membership read is synchronous but the prompt is async), both
+    // call promptForClaim, and surface two stacked permission bubbles
+    // for the same target. The @MainActor isolation serializes
+    // synchronous code but doesn't bridge across the `await` that
+    // promptForClaim hangs on, so we need a per-workgroup in-flight
+    // map: if a claim is being negotiated, later callers await the
+    // same task instead of spawning a new prompt.
+    private var pendingClaimTasks: [String: Task<Bool, Never>] = [:]
 
     // Observer on iTermSessionTabStatusDidChange — the source of
     // truth for "a session's state changed". When a notification
@@ -134,34 +157,62 @@ final class OrchestratorDispatcher {
         }
     }
 
+    // Synchronously detach from the broker, notification center, and
+    // any parked permission prompts. Called from
+    // OrchestratorClient.dropDispatcher when the chat exits
+    // orchestration mode or is deleted, before the dispatcher is
+    // removed from the dict. The dict drop alone wouldn't be enough:
+    // an in-flight handleToolCall Task still has a strong ref to this
+    // dispatcher, and without explicit detach it would keep delivering
+    // status updates (tab-status observer), keep publishing tool
+    // responses into a chat that's no longer in orchestration mode,
+    // and leave any user permission bubble parked on a continuation
+    // that's never going to resume.
+    @MainActor
+    func tearDown() {
+        if tornDown { return }
+        tornDown = true
+        brokerSubscription?.unsubscribe()
+        brokerSubscription = nil
+        if let tabObs = tabStatusObserver {
+            NotificationCenter.default.removeObserver(tabObs)
+            tabStatusObserver = nil
+        }
+        if let termObs = sessionWillTerminateObserver {
+            NotificationCenter.default.removeObserver(termObs)
+            sessionWillTerminateObserver = nil
+        }
+        for (_, task) in pendingClaimTasks {
+            task.cancel()
+        }
+        pendingClaimTasks.removeAll()
+        for (_, cont) in pendingPermissionPrompts {
+            cont.resume(returning: false)
+        }
+        pendingPermissionPrompts.removeAll()
+    }
+
     deinit {
         // Beta/Nightly tripwire: deinit on a @MainActor class is not
         // itself main-actor-isolated. If a future code path captures
         // the dispatcher in a non-main Task and that Task holds the
-        // last strong ref, this body runs off-main. The assertion
-        // surfaces the violation on testing channels so we can fix
-        // the call site. Capturing into locals first because
-        // it_assert's autoclosure can't close over @MainActor state
-        // directly.
+        // last strong ref, this body runs off-main; the cleanup hops
+        // back to main on its own, but anything that reads dispatcher
+        // state directly here would race.
         let isBetaChannel = Bundle.it_isEarlyAdopter() || Bundle.it_isNightlyBuild()
-        let promptsRemaining = pendingPermissionPrompts.count
-        let subscriptionRemaining = brokerSubscription != nil
         if isBetaChannel {
-            it_assert(promptsRemaining == 0,
-                      "OrchestratorDispatcher.deinit: pending prompts not drained before deinit")
-            it_assert(!subscriptionRemaining,
-                      "OrchestratorDispatcher.deinit: brokerSubscription not torn down before deinit")
+            it_assert(Thread.isMainThread,
+                      "OrchestratorDispatcher.deinit: ran off the main thread")
         }
-        // Belt-and-suspenders: do the actual cleanup on main, even if
-        // we're already there. The mutations touch @MainActor state
-        // (ChatBroker.subs via Subscription.unsubscribe) and resuming
-        // continuations is thread-safe on its own but downstream
-        // awaiters expect to wake on main. Capture all references
-        // explicitly into the dispatch closure so they outlive self
-        // and run safely after the deinit returns. If the work turns
-        // out to be no-op by the time it runs (observers already gone,
-        // broker already cleaned up its subs), the cost is one
-        // runloop hop.
+        // Do the actual cleanup on main, even if we're already there.
+        // The mutations touch @MainActor state (ChatBroker.subs via
+        // Subscription.unsubscribe) and resuming continuations is
+        // thread-safe on its own but downstream awaiters expect to wake
+        // on main. Capture all references explicitly into the dispatch
+        // closure so they outlive self and run safely after the deinit
+        // returns. If the work turns out to be no-op by the time it
+        // runs (observers already gone, broker already cleaned up its
+        // subs), the cost is one runloop hop.
         let sub = brokerSubscription
         let tabObs = tabStatusObserver
         let termObs = sessionWillTerminateObserver
@@ -189,6 +240,7 @@ final class OrchestratorDispatcher {
     // and resuming sides both run on main, no locks needed.
     @MainActor
     private func handle(brokerUpdate update: ChatBroker.Update) {
+        if tornDown { return }
         guard case let .delivery(message, _) = update,
               message.author == .user,
               case let .userCommand(command) = message.content,
@@ -236,11 +288,23 @@ final class OrchestratorDispatcher {
     // skip. Always update history regardless of whether anything fired.
     @MainActor
     private func handle(tabStatusNotification notification: Notification) {
+        if tornDown { return }
         guard let status = notification.object as? iTermSessionTabStatus else {
             return
         }
-        let newState = WorkgroupIntrospection.state(forTabStatus: status)
         let guid = status.sessionID
+        // The notification fires for every session in the app (object: nil),
+        // not just sessions we have watchers on. Without this gate,
+        // sessionStateHistory would grow once per (chat, every session ever
+        // observed) and stay there until the session terminated. Only sessions
+        // we have a watcher for need their history tracked. doRegisterWatch
+        // and doStartCodeReview seed history themselves before appending a
+        // watcher, so a watcher's first matching notification always finds a
+        // non-nil previousState.
+        guard watchers.contains(where: { $0.sessionGUID == guid }) else {
+            return
+        }
+        let newState = WorkgroupIntrospection.state(forTabStatus: status)
         let previousState = sessionStateHistory[guid]
         sessionStateHistory[guid] = newState
         guard previousState != newState else { return }
@@ -265,6 +329,7 @@ final class OrchestratorDispatcher {
     // watch ended without firing — better than silently leaking.
     @MainActor
     private func handleSessionWillTerminate(_ notification: Notification) {
+        if tornDown { return }
         guard let session = notification.object as? PTYSession else { return }
         let guid = session.guid
         // Drop the per-session history entry alongside the watchers.
@@ -426,6 +491,11 @@ final class OrchestratorDispatcher {
     func handleToolCall(name: String,
                         jsonArgs: Data,
                         llmMessage: LLM.Message) async -> Data {
+        if tornDown {
+            return safeEncode(OrchestratorError
+                .unsupported(reason:
+                    "This chat is no longer in orchestration mode.").asResult)
+        }
         if name.hasPrefix("session_") {
             return await handleSessionToolCall(name: name,
                                                jsonArgs: jsonArgs,
@@ -497,23 +567,32 @@ final class OrchestratorDispatcher {
             }
         }
 
-        do {
-            let response: String = try await withCheckedThrowingContinuation { continuation in
-                do {
-                    try session.execute(remoteCommand) { response, _ in
-                        // session.execute's completion can fire off-main
-                        // (browser commands resolve on WebKit queues, some
-                        // command-history paths dispatch async).
-                        continuation.resume(returning: response)
-                    }
-                } catch {
-                    continuation.resume(throwing: error)
+        // session.execute's completion isn't guaranteed to fire on every
+        // code path: a browser command whose WebView is gone, a remote-host
+        // lookup that the SSH daemon never responds to, or a command-history
+        // query whose database call hangs would all park this Task forever.
+        // ResolveOnce wraps the continuation so the timeout can race the
+        // real completion; whichever fires first wins, and any later
+        // callback (or a second call from a misbehaving execute path) is
+        // dropped. Timeout matches doStartSession's 30s.
+        let response = await withResolvedOnce(
+            timeoutSeconds: 30
+        ) { (resume: @escaping (String?) -> Void) in
+            do {
+                try session.execute(remoteCommand) { response, _ in
+                    // session.execute's completion can fire off-main
+                    // (browser commands resolve on WebKit queues, some
+                    // command-history paths dispatch async).
+                    resume(response)
                 }
+            } catch {
+                resume("Error executing command: \(error.localizedDescription)")
             }
-            return Data(response.utf8)
-        } catch {
-            return Data("Error executing command: \(error.localizedDescription)".utf8)
         }
+        guard let response else {
+            return Data("Error: session command timed out after 30s.".utf8)
+        }
+        return Data(response.utf8)
     }
 
     // Per-content decode helper. The runtime case carries the prototype
@@ -650,8 +729,6 @@ final class OrchestratorDispatcher {
             return .unregisterWatch(watcherID: try decoder.decode(A.self, from: jsonArgs).watcher_id)
         case .listWatches:
             return .listWatches
-        case .notifyUser:
-            return .notifyUser(try decoder.decode(NotifyUserArgs.self, from: jsonArgs))
         }
     }
 
@@ -670,7 +747,7 @@ final class OrchestratorDispatcher {
             if !approved {
                 throw OrchestratorError.permissionDenied
             }
-        case .readOnly, .watcher, .userFacing:
+        case .readOnly, .watcher:
             return
         }
     }
@@ -693,16 +770,39 @@ final class OrchestratorDispatcher {
 
     // Shared claim check + prompt + persist. Returns true when the
     // workgroup is already claimed or the user just approved.
+    //
+    // Concurrent callers asking about the same workgroupID share one
+    // prompt: the first caller spawns a Task that owns the prompt and
+    // persists the result, later callers await the same Task. Without
+    // this, two writes against the same unclaimed workgroup arriving in
+    // the same turn would both pass the contains check (a synchronous
+    // read can't see another in-flight prompt) and each call
+    // promptForClaim, stacking two bubbles.
     @MainActor
     private func ensureClaim(workgroupID: String) async -> Bool {
         if claimedScopes.contains(workgroupID) {
             return true
         }
-        let approved = await promptForClaim(workgroupID: workgroupID)
-        if approved {
-            claimedScopes.insert(workgroupID)
-            persistClaimedScopes()
+        if let existing = pendingClaimTasks[workgroupID] {
+            return await existing.value
         }
+        let task = Task<Bool, Never> { @MainActor [weak self] in
+            guard let self else { return false }
+            // Another caller may have raced ahead and approved while we
+            // were spawning, so re-check before prompting.
+            if self.claimedScopes.contains(workgroupID) {
+                return true
+            }
+            let approved = await self.promptForClaim(workgroupID: workgroupID)
+            if approved {
+                self.claimedScopes.insert(workgroupID)
+                self.persistClaimedScopes()
+            }
+            return approved
+        }
+        pendingClaimTasks[workgroupID] = task
+        let approved = await task.value
+        pendingClaimTasks.removeValue(forKey: workgroupID)
         return approved
     }
 
@@ -820,11 +920,9 @@ final class OrchestratorDispatcher {
         case .registerWatch(let args):
             return try await doRegisterWatch(args)
         case .unregisterWatch(let watcherID):
-            return await doUnregisterWatch(watcherID: watcherID)
+            return doUnregisterWatch(watcherID: watcherID)
         case .listWatches:
-            return await doListWatches()
-        case .notifyUser(let args):
-            return try await doNotifyUser(args)
+            return doListWatches()
         }
     }
 
@@ -1130,9 +1228,26 @@ final class OrchestratorDispatcher {
     // standalone session for synthetic workgroups). PTYSession.clippings
     // delegates through peerPort, so writes against the leader fan
     // out automatically to whatever the workgroup considers its
-    // clippings store.
+    // clippings store. Routes through PTYSession.addClipping so the
+    // append + clippingsViewIndex snap-back live in one place; that
+    // also encapsulates the read-modify-write so callers don't have
+    // to think about whether another @MainActor body could slip in
+    // between the read and the write.
     @MainActor
     private func doAddWorkgroupClipping(_ args: AddClippingArgs) async throws -> OrchestratorResult {
+        let trimmedType = args.type.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedType.isEmpty else {
+            throw OrchestratorError.malformedArgs(reason:
+                "type must be a non-empty short tag describing the clipping kind.")
+        }
+        // 80 chars matches the schema's \u{201C}short tag\u{201D} description.
+        // The ClippingsView cell renders the type as a chip; very long
+        // values blow out the layout and don't add information that
+        // wouldn't fit in the title.
+        guard trimmedType.count <= 80 else {
+            throw OrchestratorError.malformedArgs(reason:
+                "type must be 80 characters or fewer (got \(trimmedType.count)).")
+        }
         let session: PTYSession?
         let syntheticPrefix = WorkgroupIntrospection.syntheticWorkgroupIDPrefix
         if args.workgroupID.hasPrefix(syntheticPrefix) {
@@ -1150,11 +1265,9 @@ final class OrchestratorDispatcher {
             throw OrchestratorError.targetNoLongerExists(
                 OrchestratorTarget(workgroupID: args.workgroupID, role: ""))
         }
-        var current = session.clippings
-        current.append(PTYSessionClipping(type: args.type,
-                                           title: args.title,
-                                           detail: args.detail))
-        session.clippings = current
+        session.addClipping(type: trimmedType,
+                            title: args.title,
+                            detail: args.detail)
         return .ack
     }
 
@@ -1367,10 +1480,6 @@ final class OrchestratorDispatcher {
              + "in \(resolved.workgroupName) using \(promptLabel); watcher \(watcher.watcherID)")
 
         return .watcherRegistered(Self.description(of: watcher))
-    }
-
-    private func doNotifyUser(_ args: NotifyUserArgs) async throws -> OrchestratorResult {
-        throw OrchestratorError.notImplemented("notify_user")
     }
 
     // MARK: - Helpers

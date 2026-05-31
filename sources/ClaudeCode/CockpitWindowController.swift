@@ -44,9 +44,11 @@ class CockpitWindowController: NSWindowController {
         }
     }
 
-    // Empty = no filter (grouped view). Non-empty = flat filtered
-    // list, no group rows. Plumbed in a later step; right now the
-    // outline shows the stub group structure either way.
+    // Empty = no filter, show the grouped tree as built. Non-empty =
+    // post-rebuild prune: keep only session leaves whose title contains
+    // the filter (case-insensitive), drop intermediate rows that no
+    // longer have any matching descendant. Keeps the structure the user
+    // chose (group mode), just narrower.
     private var filter: String = ""
 
     // Live tree built from iTermController + session state. Rebuilt
@@ -671,8 +673,58 @@ extension CockpitWindowController {
         case .byWorkgroup:
             rebuiltRoots = rebuildByWorkgroup(freshCache: &freshCache)
         }
+        let pruned = filter.isEmpty
+            ? rebuiltRoots
+            : Self.prune(rebuiltRoots, filter: filter, keptCache: &freshCache)
         rowCache = freshCache
-        rootRows = rebuiltRoots
+        rootRows = pruned
+    }
+
+    // Walk a freshly-built tree and keep only the subtrees that contain
+    // at least one session leaf whose title contains `filter` (case-
+    // insensitive). Intermediate rows survive only if at least one
+    // descendant survives. Identity-stable: surviving rows are the same
+    // CockpitRow instances NSOutlineView already knows about, so
+    // expansion / selection persist across filter edits. Identities of
+    // dropped rows are evicted from keptCache so the diff and the cache
+    // agree on the surviving set.
+    private static func prune(_ rows: [CockpitRow],
+                              filter: String,
+                              keptCache: inout [CockpitRow.Identity: CockpitRow]) -> [CockpitRow] {
+        let needle = filter.lowercased()
+        var kept: [CockpitRow] = []
+        for row in rows {
+            if let surviving = pruneRow(row, needle: needle, keptCache: &keptCache) {
+                kept.append(surviving)
+            }
+        }
+        return kept
+    }
+
+    private static func pruneRow(_ row: CockpitRow,
+                                 needle: String,
+                                 keptCache: inout [CockpitRow.Identity: CockpitRow]) -> CockpitRow? {
+        switch row.kind {
+        case .session:
+            if row.title.lowercased().contains(needle) {
+                return row
+            }
+            keptCache.removeValue(forKey: row.identity)
+            return nil
+        case .window, .buriedRoot, .workgroup, .tab, .group:
+            var keptChildren: [CockpitRow] = []
+            for child in row.children {
+                if let survivor = pruneRow(child, needle: needle, keptCache: &keptCache) {
+                    keptChildren.append(survivor)
+                }
+            }
+            if keptChildren.isEmpty {
+                keptCache.removeValue(forKey: row.identity)
+                return nil
+            }
+            row.children = keptChildren
+            return row
+        }
     }
 
     // byStatus: window > {Waiting/Working/Idle} > sessions.
@@ -1278,10 +1330,9 @@ extension CockpitWindowController: NSSearchFieldDelegate {
     func controlTextDidChange(_ obj: Notification) {
         guard let field = obj.object as? NSSearchField else { return }
         filter = field.stringValue
-        // Filter is not yet applied to the live tree; rebuilding
-        // preserves expansion via the row-identity cache. When the
-        // filter becomes load-bearing it should drive a diffable
-        // update path instead.
+        // refresh() rebuilds the tree, then rebuildRows applies the
+        // prune; identity-stable row reuse keeps expansion / selection
+        // across filter edits.
         refresh()
     }
 }

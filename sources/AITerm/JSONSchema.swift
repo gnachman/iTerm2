@@ -154,7 +154,7 @@ struct JSONSchema: Codable {
     // When set, encoding emits this dictionary as the whole schema and
     // ignores the struct fields. Lets callers ship a hand-built JSON
     // Schema (nested objects, enums, etc.) that the reflection init
-    // cannot express. The orchestrator's 16-tool surface uses this path.
+    // cannot express. The orchestrator's 12-tool surface uses this path.
     private var rawJSONStorage: [String: AnyCodable]?
 
     private enum CodingKeys: String, CodingKey {
@@ -243,8 +243,11 @@ struct JSONSchema: Codable {
                 let array = child.value as! [Any]
                 // Empty arrays are the default value for any `var foo: [T] = []`
                 // property. We can't reflect element type from an empty array;
-                // declare it as an untyped array (items omitted) and let the
-                // caller layer on the proper element schema if needed.
+                // fall back to string-typed items so the resulting schema is
+                // still valid JSON Schema (items is required for arrays in
+                // most validators). Callers needing a specific element type
+                // should populate the array with a sample element before
+                // calling, or layer on the right schema after.
                 guard !array.isEmpty else {
                     property.items = AnyCodable("string")
                     properties[label] = property

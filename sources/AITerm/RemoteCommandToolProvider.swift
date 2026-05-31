@@ -6,7 +6,7 @@
 import Foundation
 
 // Tool provider for AITerm's single-session-bound chat surface.
-// Wraps the RemoteCommand.Content enum's 28 tool cases as
+// Wraps the RemoteCommand.Content enum's 24 tool cases as
 // ChatGPTFunctionDeclarations, filtered by the chat's current
 // permission set, and routes each invocation back through a
 // dispatcher closure the agent supplies. Pulled out of ChatAgent so

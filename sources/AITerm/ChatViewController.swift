@@ -1209,13 +1209,22 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 }
             case .workgroupPermissionRequest:
                 let capturedChatID = self.chatID
-                cell.buttonClicked = { [weak self] identifier, _ in
+                cell.buttonClicked = { [weak self] identifier, messageID in
+                    // buttonClicked closures get re-wired across reloads, but
+                    // a stale tap on a recycled cell could still arrive before
+                    // the next reload runs. Match the sibling .permissions /
+                    // .executingCommand / .offerLink handlers by gating on
+                    // the original message ID so a stale click for a prior
+                    // permission request doesn't publish a response keyed to
+                    // an unrelated requestID.
+                    guard messageID == originalMessageID else { return }
                     self?.handleWorkgroupPermissionButton(identifier: identifier,
                                                           chatID: capturedChatID)
                 }
             case .enableOrchestrationRequest:
                 let capturedChatID = self.chatID
-                cell.buttonClicked = { [weak self] identifier, _ in
+                cell.buttonClicked = { [weak self] identifier, messageID in
+                    guard messageID == originalMessageID else { return }
                     self?.handleEnableOrchestrationButton(identifier: identifier,
                                                           chatID: capturedChatID)
                 }

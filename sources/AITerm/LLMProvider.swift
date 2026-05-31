@@ -168,18 +168,24 @@ struct LLMProvider {
 
     func accepts(mimeType: String) -> Bool {
         // Textual content (including image/svg+xml, which is XML text) is
-        // always acceptable — it can be inlined as a text block on any vendor.
+        // always acceptable. it can be inlined as a text block on any vendor.
         if MIMETypeIsTextual(mimeType) {
             return true
         }
-        if mimeType == "application/pdf" {
-            return supportsPDFAttachments
+        if mimeType == "application/pdf" && supportsPDFAttachments {
+            return true
         }
-        if mimeType.hasPrefix("image/") {
-            return supportedImageMimeTypes.contains(mimeType)
+        // Inline image/audio/video MIME types per the vendor's content-block
+        // allowlist. If the per-vendor allowlist rejects, fall through to
+        // shouldUploadFile so vector-store-backed providers (today: OpenAI
+        // responses + vectorStore) can still ingest the file as an upload.
+        // Without the fall-through, an OpenAI/responses chat would silently
+        // reject images that previously routed through the upload path.
+        if mimeType.hasPrefix("image/") && supportedImageMimeTypes.contains(mimeType) {
+            return true
         }
-        if mimeType.hasPrefix("audio/") || mimeType.hasPrefix("video/") {
-            return supportsAudioVideoAttachments
+        if (mimeType.hasPrefix("audio/") || mimeType.hasPrefix("video/")) && supportsAudioVideoAttachments {
+            return true
         }
         // Vector-store-backed providers can ingest arbitrary other binaries
         // by uploading them and referencing by file ID.
