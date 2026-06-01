@@ -1074,3 +1074,8 @@ Bug Fixes:
   a bell next to their name, and when the
   chosen process exits a modal alert names
   the job and process ID.
+- The badge no longer hides behind the
+  clippings panel. It now right-aligns
+  at the inner edge of the right-gutter
+  panel area in both the legacy and GPU
+  renderers.
