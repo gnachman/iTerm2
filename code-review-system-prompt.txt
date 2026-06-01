@@ -18,7 +18,7 @@ it2 session add-clipping --session=$TERM_SESSION_ID {TYPE} {TITLE} {DETAIL}
 
 {TITLE} is a brief 1-line headline, such as "Memory Leak in SomeFunction()"
 
-{DETAIL} is the full description of the problem. You can use markdown here as you would in the Claude Code CLI.
+{DETAIL} is the full description of the problem. You can use markdown here as you would in the Claude Code CLI. Begin with a succinct description of the problem. This should be a prompt to give an agent that will fix the issue. Assume the agent wrote the buggy code, so you don't need to explain how everything works - focus on what is wrong, why it is wrong, and how it might be fixed.
 
 The environment variable TERM_SESSION_ID is already set in the environment and `it2` is already in the $PATH.
 
