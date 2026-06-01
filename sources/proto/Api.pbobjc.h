@@ -5295,6 +5295,7 @@ typedef GPB_ENUM(ITMCreateTabRequest_FieldNumber) {
   ITMCreateTabRequest_FieldNumber_TabIndex = 3,
   ITMCreateTabRequest_FieldNumber_Command = 4,
   ITMCreateTabRequest_FieldNumber_CustomProfilePropertiesArray = 5,
+  ITMCreateTabRequest_FieldNumber_SelectTab = 6,
 };
 
 GPB_FINAL @interface ITMCreateTabRequest : GPBMessage
@@ -5323,6 +5324,14 @@ GPB_FINAL @interface ITMCreateTabRequest : GPBMessage
 /** The number of items in @c customProfilePropertiesArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger customProfilePropertiesArray_Count;
 
+/**
+ * If false, create the tab in the background: do not select it and do not
+ * bring its window to the front. Unset or true preserves the default
+ * behavior (select the new tab and order its window front).
+ **/
+@property(nonatomic, readwrite) BOOL selectTab;
+
+@property(nonatomic, readwrite) BOOL hasSelectTab;
 @end
 
 #pragma mark - ITMCreateTabResponse
