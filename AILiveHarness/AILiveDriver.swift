@@ -38,6 +38,13 @@ struct AILiveRunResult {
     /// loaded — not whatever happens to be in the keychain singleton. Empty
     /// string if the request didn't carry an Authorization header.
     var capturedAuthorizationHeaders: [String]
+    /// Raw inbound response body strings (one per HTTP request captured by
+    /// iTermAIClient.liveObserver). For streaming requests this is the
+    /// concatenated stream chunks; for non-streaming requests this is the
+    /// single response body. Exposed so tests can parse server-emitted
+    /// usage fields (e.g. cache_creation_input_tokens / cache_read_input_tokens
+    /// for Anthropic prompt caching).
+    var capturedResponseBodies: [String]
     /// Reasoning text surfaced via the dedicated didReceiveReasoning delegate
     /// channel. Populated for both streaming (final accumulated reasoning)
     /// and non-streaming. Distinct from `reasoningText` below which derives
@@ -104,6 +111,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
     private let startTime = Date()
     private var capturedRequestBodies: [String] = []
     private var capturedAuthorizationHeaders: [String] = []
+    private var capturedResponseBodies: [String] = []
     /// Reasoning text delivered via aitermController(_:didReceiveReasoning:).
     /// Distinct from the attachment-derived `reasoningText` on the result;
     /// this path fires for non-streaming responses and for the final
@@ -256,6 +264,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                elapsed: Date().timeIntervalSince(driver.startTime),
                                capturedRequestBodies: driver.capturedRequestBodies,
                                capturedAuthorizationHeaders: driver.capturedAuthorizationHeaders,
+                               capturedResponseBodies: driver.capturedResponseBodies,
                                deliveredReasoning: driver.receivedReasoning)
     }
 
@@ -363,6 +372,18 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
             capture.request.headers["Authorization"]
             ?? capture.request.headers["authorization"]
             ?? "")
+        // Stash the response body so tests can inspect server-emitted
+        // usage / cache fields. For streaming requests this is the
+        // concatenated SSE chunks (the LiveCapture's response.data field
+        // for streaming is the joined stream); for non-streaming requests
+        // this is the single response body.
+        if let response = capture.response {
+            capturedResponseBodies.append(response.data)
+        } else if !capture.streamChunks.isEmpty {
+            capturedResponseBodies.append(capture.streamChunks.joined())
+        } else {
+            capturedResponseBodies.append("")
+        }
         let mode = streamingRequested ? "stream" : "noStream"
         let safeModel = AILiveDriver.sanitize(modelName)
         let safeScenario = AILiveDriver.sanitize(scenarioTag)

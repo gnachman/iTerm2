@@ -35,6 +35,7 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+@MainActor
 final class AILiveHarness: XCTestCase {
     private struct Keys {
         var openAI: String?
@@ -522,6 +523,131 @@ final class AILiveHarness: XCTestCase {
     func test_anthropic_imageDescribe() throws {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
         runImageDescribe(vendor: "anthropic", modelName: "claude-haiku-4-5", apiKey: key)
+    }
+
+    /// Verify Anthropic prompt caching engages end-to-end against the
+    /// real server. Issue two back-to-back requests with the same
+    /// system prompt (large enough to exceed Anthropic's minimum
+    /// cacheable size: Haiku is ≥1024 tokens), assert the first
+    /// response shows cache_creation_input_tokens > 0, and the second
+    /// shows cache_read_input_tokens > 0 with cache_creation back to 0.
+    ///
+    /// This is the only place where we can actually confirm the cache
+    /// markers we attach offline (system + last-tool cache_control)
+    /// are accepted by the server and counted toward the cached
+    /// segment. Offline unit tests pin the wire shape and byte
+    /// determinism; this pins the contract with the server.
+    func test_anthropic_promptCaching_cacheReadAfterCacheCreation() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        let model = "claude-haiku-4-5"
+
+        // Build a system prompt comfortably above Anthropic's minimum
+        // cacheable size. Haiku's minimum is 2048 tokens (Sonnet/Opus
+        // are 1024, but we test on Haiku for cost). Aim for ~4500
+        // tokens to leave plenty of headroom; the marker is silently
+        // ignored below threshold and the test would falsely fail.
+        // Padded so the same string flies both times (cache key is
+        // byte-exact); a per-test UUID guarantees we're not picking up
+        // some other test's residual cache entry in the 5-minute
+        // window. Plain English so it tokenizes predictably.
+        let nonce = UUID().uuidString
+        let padding = String(
+            repeating: "This is throwaway filler text only here to push the system prompt over Anthropic's minimum cacheable size for Claude Haiku (~2048 tokens), so the cache_control marker actually engages on the server side. ",
+            count: 96)
+        let systemText = "Test fixture \(nonce). \(padding) End fixture."
+
+        let firstUser = LLM.Message(
+            role: .user,
+            content: "Reply with the single word OK.")
+        let firstMessages: [LLM.Message] = [
+            LLM.Message(role: .system, content: systemText),
+            firstUser,
+        ]
+
+        throttle(forVendor: "anthropic")
+        let first = try AILiveDriver.run(modelName: model,
+                                         apiKey: key,
+                                         messages: firstMessages,
+                                         streaming: false,
+                                         scenarioTag: "promptCache_create",
+                                         test: self)
+        XCTAssertFalse(first.finalText.isEmpty,
+                       "[anthropic/promptCache] empty response on first call")
+        // Sanity: confirm the cache_control marker actually rode on
+        // the wire. If this fails the bug is in the request builder
+        // (offline tests should catch it too); if it passes but the
+        // usage assertions below fail, the bug is "server didn't
+        // engage" — usually a system-prompt size below the model's
+        // minimum cacheable threshold.
+        let firstBody = first.capturedRequestBodies.first ?? ""
+        XCTAssertTrue(firstBody.contains("\"cache_control\""),
+                      "[anthropic/promptCache] first request body missing "
+                      + "cache_control marker; serializer regressed")
+        let firstUsage = try parseUsage(from: first.capturedResponseBodies.first ?? "",
+                                        label: "first call")
+        XCTAssertGreaterThan(firstUsage.cacheCreation, 0,
+                             "[anthropic/promptCache] first call did not register "
+                             + "cache_creation_input_tokens; the cache_control marker "
+                             + "was not accepted. usage=\(firstUsage)")
+        XCTAssertEqual(firstUsage.cacheRead, 0,
+                       "[anthropic/promptCache] first call should not have read from "
+                       + "cache (unique nonce). usage=\(firstUsage)")
+
+        // Same system, same nonce → cache key matches. Change only the
+        // last user message to force a fresh request (different bytes
+        // after the cacheable prefix).
+        let secondMessages: [LLM.Message] = [
+            LLM.Message(role: .system, content: systemText),
+            LLM.Message(role: .user, content: "Reply with the single word HELLO."),
+        ]
+        throttle(forVendor: "anthropic")
+        let second = try AILiveDriver.run(modelName: model,
+                                          apiKey: key,
+                                          messages: secondMessages,
+                                          streaming: false,
+                                          scenarioTag: "promptCache_read",
+                                          test: self)
+        XCTAssertFalse(second.finalText.isEmpty,
+                       "[anthropic/promptCache] empty response on second call")
+        let secondUsage = try parseUsage(from: second.capturedResponseBodies.first ?? "",
+                                         label: "second call")
+        XCTAssertGreaterThan(secondUsage.cacheRead, 0,
+                             "[anthropic/promptCache] second call did not read from "
+                             + "cache; markers did not actually cache the prefix. "
+                             + "usage=\(secondUsage)")
+        XCTAssertEqual(secondUsage.cacheCreation, 0,
+                       "[anthropic/promptCache] second call should not have re-created "
+                       + "cache (same system+nonce as call 1). usage=\(secondUsage)")
+    }
+
+    private struct AnthropicUsageSummary: CustomStringConvertible {
+        let inputTokens: Int
+        let outputTokens: Int
+        let cacheCreation: Int
+        let cacheRead: Int
+        var description: String {
+            "input=\(inputTokens) output=\(outputTokens) "
+                + "cache_creation=\(cacheCreation) cache_read=\(cacheRead)"
+        }
+    }
+
+    /// Pull the usage block out of a (non-streaming) Anthropic
+    /// response body. Throws an XCT-style failure on the test if the
+    /// shape isn't what we expect rather than silently treating
+    /// missing fields as zero — a missing field is almost certainly a
+    /// vendor API change worth surfacing.
+    private func parseUsage(from body: String, label: String) throws -> AnthropicUsageSummary {
+        guard let data = body.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let usage = obj["usage"] as? [String: Any] else {
+            XCTFail("[anthropic/promptCache/\(label)] response body missing usage block; body=\(body.prefix(500))")
+            throw AILiveError.providerFailure("response missing usage block on \(label)")
+        }
+        return AnthropicUsageSummary(
+            inputTokens: (usage["input_tokens"] as? Int) ?? 0,
+            outputTokens: (usage["output_tokens"] as? Int) ?? 0,
+            cacheCreation: (usage["cache_creation_input_tokens"] as? Int) ?? 0,
+            cacheRead: (usage["cache_read_input_tokens"] as? Int) ?? 0)
     }
 
     // Pins an Anthropic 400 reproduced in production by iTerm2's Cockpit
@@ -1408,7 +1534,7 @@ final class AILiveHarness: XCTestCase {
         let request = Message(
             chatID: chatID,
             author: .agent,
-            content: .remoteCommandRequest(remoteCommand, safe: nil),
+            content: .remoteCommandRequest(.classic(remoteCommand), safe: nil),
             sentDate: Date(),
             uniqueID: UUID())
         let response = Message(
@@ -1442,6 +1568,7 @@ final class AILiveHarness: XCTestCase {
     /// the tool_result — that's the wire-level check the offline test
     /// `testOrphanRepair_serializesAsAnthropicToolUse` makes, but here run
     /// against the body the live driver actually transmitted.
+    @MainActor
     private func runChatReloadOnce(vendorTag: String,
                                    model: AIMetadata.Model,
                                    apiKey: String,
@@ -1498,6 +1625,7 @@ final class AILiveHarness: XCTestCase {
 
     /// Iterate every reachable model for `vendor`, skipping non-tool-calling
     /// ones, and run one chat-reload round-trip per model.
+    @MainActor
     private func runChatReload(vendor: String,
                                apiKey: String,
                                streaming: Bool,
@@ -1521,6 +1649,7 @@ final class AILiveHarness: XCTestCase {
     /// OpenAI's chat-completions path is exercised via a synthetic model
     /// (see `runSyntheticToolCall`), so the chat-reload runner takes the
     /// model explicitly instead of iterating AIMetadata.
+    @MainActor
     private func runChatReloadSynthetic(model: AIMetadata.Model,
                                         apiKey: String,
                                         streaming: Bool,

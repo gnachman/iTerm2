@@ -742,7 +742,12 @@ struct AnthropicRequestBuilder {
         var model: String
         var messages: [AnthropicMessage]
         var max_tokens: Int
-        var system: String?
+        // Structured form `[{type: "text", text: ..., cache_control: ...}]`.
+        // Anthropic accepts either the legacy bare string or the array
+        // form on the wire; we use the array form unconditionally so we
+        // can attach cache_control to the system text block. Nil when
+        // the conversation carries no system message (renames, etc.).
+        var system: [AnthropicSystemBlock]?
         var temperature: Double?
         var stream: Bool?
         var tools: [AnthropicTool]?
@@ -750,10 +755,32 @@ struct AnthropicRequestBuilder {
         var disable_parallel_tool_use: Bool?
     }
 
+    // Ephemeral prompt-cache marker. Anthropic caches every token from
+    // the start of the request up through this marker, keyed by exact
+    // byte equivalence. Within a ~5-minute window, subsequent requests
+    // with the same prefix pay 0.1x for those tokens (cache_read)
+    // instead of the full input rate.
+    private struct AnthropicCacheControl: Codable {
+        var type: String  // "ephemeral"
+        static let ephemeral = AnthropicCacheControl(type: "ephemeral")
+    }
+
+    private struct AnthropicSystemBlock: Codable {
+        var type: String  // "text"
+        var text: String
+        var cache_control: AnthropicCacheControl?
+    }
+
     private struct AnthropicTool: Codable {
         var name: String
         var description: String
         var input_schema: JSONSchema
+        // Optional ephemeral marker on the LAST tool in the array — see
+        // body() — so the entire tools array (and everything before it,
+        // i.e. system) caches as one prefix segment. Earlier tools must
+        // leave this nil; each cache_control burns one of the four
+        // breakpoints Anthropic allows per request.
+        var cache_control: AnthropicCacheControl?
     }
 
     private struct AnthropicToolChoice: Codable {
@@ -917,7 +944,7 @@ struct AnthropicRequestBuilder {
 
     func body() throws -> Data {
         let anthropicMessages = convertMessages(messages)
-        let systemMessage = messages.compactMap { message in
+        let systemMessageText = messages.compactMap { message in
             switch message.role {
             case .system:
                 return message.content
@@ -926,19 +953,65 @@ struct AnthropicRequestBuilder {
             }
         }.first
 
-        let anthropicTools = functions.isEmpty ? nil : functions.map { function in
-            AnthropicTool(
-                name: function.decl.name,
-                description: function.decl.description,
-                input_schema: function.decl.parameters
-            )
+        // Prompt-cache markers.
+        //
+        // Anthropic orders the cacheable prefix as tools → system →
+        // messages. Each cache_control marker creates a breakpoint
+        // that covers everything from the start of that order up to
+        // and including the marked element. So:
+        //
+        //   - Marker on system: covers [tools + system]. This is the
+        //     common-case win — both stable across the chat, the
+        //     entire ~13KB prefix becomes one cache_read.
+        //   - Marker on the LAST tool: covers [tools] only. This is
+        //     the fallback that still hits if the system prompt
+        //     changes (e.g. a future feature that injects a per-turn
+        //     system addendum), because [tools] is a strict prefix of
+        //     [tools + system] and the tools-only segment survives.
+        //
+        // Keep BOTH markers. Dropping the last-tool marker as
+        // "redundant" because the system marker already covers tools
+        // would silently destroy the fallback segment: any system
+        // edit would invalidate everything, and we'd pay
+        // cache_creation on tools again. The tools array (~5KB) is
+        // worth the second breakpoint.
+        //
+        // Earlier tools intentionally carry no marker; each one would
+        // burn a breakpoint, and Anthropic caps the request at four.
+        // Body() with an empty conversation (no system, no tools)
+        // emits no markers at all.
+        let systemBlocks: [AnthropicSystemBlock]?
+        if let systemMessageText {
+            systemBlocks = [
+                AnthropicSystemBlock(
+                    type: "text",
+                    text: systemMessageText,
+                    cache_control: .ephemeral)
+            ]
+        } else {
+            systemBlocks = nil
+        }
+
+        let anthropicTools: [AnthropicTool]?
+        if functions.isEmpty {
+            anthropicTools = nil
+        } else {
+            var tools: [AnthropicTool] = functions.map { function in
+                AnthropicTool(
+                    name: function.decl.name,
+                    description: function.decl.description,
+                    input_schema: function.decl.parameters,
+                    cache_control: nil)
+            }
+            tools[tools.count - 1].cache_control = .ephemeral
+            anthropicTools = tools
         }
 
         let body = Body(
             model: provider.model.name,
             messages: anthropicMessages,
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
-            system: systemMessage,
+            system: systemBlocks,
             temperature: 0.0,
             stream: stream ? true : nil,
             tools: anthropicTools,
@@ -950,6 +1023,16 @@ struct AnthropicRequestBuilder {
         }
 
         let bodyEncoder = JSONEncoder()
+        // Anthropic prompt caching is keyed on byte-exact prefix match.
+        // Tool input_schema contains a [String: Property] dictionary,
+        // and Swift's Dictionary iteration order is randomized per
+        // process, so without .sortedKeys two requests built from the
+        // same tool list can serialize their tools array with the same
+        // bytes shuffled — making the cache_read path silently never
+        // fire. sortedKeys also gives us reproducible request bodies
+        // for tests. The wire shape is unaffected; Anthropic doesn't
+        // care about key order, only the cache does.
+        bodyEncoder.outputFormatting = [.sortedKeys]
         let bodyData = try bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")
         return bodyData
