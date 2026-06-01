@@ -27,6 +27,20 @@ import Foundation
 // Identifies a session within a workgroup. The API accepts the role
 // as either its stable role_id (e.g. "builtin.claudeCode.review") or
 // its display name ("Code Review"); the dispatcher resolves both.
+//
+// workgroup_id takes two shapes:
+//   - A real workgroup instance ID (e.g. "wg-253318C1-...") for a
+//     user-configured workgroup. Roles inside come from the workgroup
+//     template (Chat / Diff / Code Review / ...).
+//   - A synthetic single-session ID prefixed with
+//     WorkgroupIntrospection.syntheticWorkgroupIDPrefix ("session:"),
+//     followed by a raw PTYSession GUID (e.g.
+//     "session:7FCDDD87-C021-46AA-924A-D87E2C85A392"). Standalone
+//     sessions that aren't part of any user-configured workgroup get
+//     wrapped this way so the LLM can address them through the same
+//     OrchestratorTarget shape. Synthetic workgroups have exactly one
+//     role; the dispatcher accepts any role name there as long as the
+//     session GUID resolves.
 struct OrchestratorTarget: Codable, Hashable {
     let workgroupID: String
     let role: String

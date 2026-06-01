@@ -958,7 +958,14 @@ class ChatAgent {
                                 streaming: Bool,
                                 responseID: String?) -> Message? {
         switch userMessage.content {
-        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse, .multipart:
+        case .plainText, .markdown, .explanationResponse, .terminalCommand,
+                .remoteCommandResponse, .multipart, .watcherEvent:
+            // .watcherEvent is a user-author message synthesized by the
+            // orchestrator when a registered watcher fires. The agent
+            // gets a turn to summarize the event for the user, and that
+            // turn renders as plain markdown just like a normal reply.
+            // It belongs alongside the other "agent replies with text"
+            // shapes, not in the fatalError block below.
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .markdown(text),
@@ -980,8 +987,7 @@ class ChatAgent {
                 uniqueID: messageID,
                 responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand,
-                .watcherEvent:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
             it_fatalError()
         }
     }
@@ -991,7 +997,13 @@ class ChatAgent {
                                 userMessage: Message,
                                 responseID: String?) -> Message? {
         switch userMessage.content {
-        case .plainText, .markdown, .explanationResponse, .terminalCommand, .remoteCommandResponse, .multipart:
+        case .plainText, .markdown, .explanationResponse, .terminalCommand,
+                .remoteCommandResponse, .multipart, .watcherEvent:
+            // .watcherEvent: see message(completionText:...) above for
+            // the rationale. A streamed attachment that comes back on a
+            // watcher-triggered turn is still an agent reply and renders
+            // as a multipart message just like one triggered by plain
+            // user text.
             return Message(chatID: userMessage.chatID,
                            author: .agent,
                            content: .multipart(
@@ -1016,8 +1028,7 @@ class ChatAgent {
                 uniqueID: messageID,
                 responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand,
-                .watcherEvent:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
             it_fatalError()
         }
     }

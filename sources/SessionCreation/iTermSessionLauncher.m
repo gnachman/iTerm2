@@ -416,6 +416,13 @@
                                          vertical:(BOOL)vertical
                                  windowController:(PseudoTerminal *)windowController
                                        completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
+    if (_command.length > 0) {
+        profile = [[profile
+                    dictionaryBySettingObject:kProfilePreferenceCommandTypeCustomValue
+                                       forKey:KEY_CUSTOM_COMMAND]
+                   dictionaryBySettingObject:_command
+                                      forKey:KEY_COMMAND_LINE];
+    }
     PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
                                                                           parent:nil];
     [windowController splitVertically:vertical

@@ -835,10 +835,15 @@ final class OrchestratorDispatcher {
                                       summary: summary)
     }
 
-    // The spawn prompt uses a synthetic workgroupID ("new-session")
-    // since there's no real workgroup yet. The cell renderer doesn't
-    // depend on the ID resolving to anything live — only on the name
-    // and summary being human-readable.
+    // The spawn prompt uses the sentinel workgroupID
+    // WorkgroupIntrospection.spawnWorkgroupID since there's no real
+    // workgroup yet (it's literally the request to create one). The
+    // cell renderer matches the same constant to pick the "Approve
+    // opening …" bubble copy instead of the "Approve writing to
+    // workgroup …" copy used for real workgroup claims; see
+    // ChatViewController.swift's workgroupPermissionRequest branch.
+    // The renderer doesn't depend on the ID resolving to anything live
+    // — only on the name and summary being human-readable.
     private func promptForSpawn(command: OrchestratorCommand) async throws -> Bool {
         let placement: String
         let cmd: String?
@@ -859,7 +864,7 @@ final class OrchestratorDispatcher {
         } else {
             detail = "The agent is asking to open \(placement)."
         }
-        return await awaitPermission(workgroupID: "spawn",
+        return await awaitPermission(workgroupID: WorkgroupIntrospection.spawnWorkgroupID,
                                       workgroupName: "New session",
                                       summary: detail)
     }
@@ -937,25 +942,34 @@ final class OrchestratorDispatcher {
 
     @MainActor
     private func doGetState(target: OrchestratorTarget) async throws -> OrchestratorResult {
-        guard let resolved = WorkgroupIntrospection.resolve(target: target) else {
-            throw OrchestratorError.unknownRole(
-                workgroupID: target.workgroupID,
-                role: target.role,
-                available: WorkgroupIntrospection.availableRoleNames(
-                    forWorkgroupID: target.workgroupID))
-        }
+        let resolved = try resolveTargetOrThrow(target)
         return .sessionState(WorkgroupIntrospection.stateInfo(for: resolved))
+    }
+
+    // Centralized resolve so failures distinguish "workgroup_id no
+    // longer maps to a live session" from "role name doesn't exist on
+    // an existing workgroup". For synthetic ("session:<guid>")
+    // workgroups, a missing session can't be a role mismatch (there's
+    // only one role by construction), so we map it to
+    // targetNoLongerExists. For real workgroups, we keep unknownRole
+    // with a "did you mean" hint built from the workgroup's live roles.
+    private func resolveTargetOrThrow(_ target: OrchestratorTarget) throws -> WorkgroupIntrospection.ResolvedTarget {
+        if let resolved = WorkgroupIntrospection.resolve(target: target) {
+            return resolved
+        }
+        if target.workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix) {
+            throw OrchestratorError.targetNoLongerExists(target)
+        }
+        throw OrchestratorError.unknownRole(
+            workgroupID: target.workgroupID,
+            role: target.role,
+            available: WorkgroupIntrospection.availableRoleNames(
+                forWorkgroupID: target.workgroupID))
     }
 
     @MainActor
     private func doGetScreenContents(_ args: GetScreenContentsArgs) async throws -> OrchestratorResult {
-        guard let resolved = WorkgroupIntrospection.resolve(target: args.target) else {
-            throw OrchestratorError.unknownRole(
-                workgroupID: args.target.workgroupID,
-                role: args.target.role,
-                available: WorkgroupIntrospection.availableRoleNames(
-                    forWorkgroupID: args.target.workgroupID))
-        }
+        let resolved = try resolveTargetOrThrow(args.target)
         let contents = WorkgroupIntrospection.screenContents(
             for: resolved, requestedLines: args.lines)
         return .screenContents(contents)
@@ -994,13 +1008,7 @@ final class OrchestratorDispatcher {
                 "target_state \u{201C}unknown\u{201D} is reported by get_state but is not a watchable "
                 + "transition. Pick \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D} instead.")
         }
-        guard let resolved = WorkgroupIntrospection.resolve(target: args.target) else {
-            throw OrchestratorError.unknownRole(
-                workgroupID: args.target.workgroupID,
-                role: args.target.role,
-                available: WorkgroupIntrospection.availableRoleNames(
-                    forWorkgroupID: args.target.workgroupID))
-        }
+        let resolved = try resolveTargetOrThrow(args.target)
         let session = resolved.session
         let guid = session.guid
         if let existing = watchers.first(where: {
@@ -1098,13 +1106,7 @@ final class OrchestratorDispatcher {
     // which both kicks off the actual launch and removes the overlay.
     @MainActor
     private func doSendText(_ args: SendTextArgs) async throws -> OrchestratorResult {
-        guard let resolved = WorkgroupIntrospection.resolve(target: args.target) else {
-            throw OrchestratorError.unknownRole(
-                workgroupID: args.target.workgroupID,
-                role: args.target.role,
-                available: WorkgroupIntrospection.availableRoleNames(
-                    forWorkgroupID: args.target.workgroupID))
-        }
+        let resolved = try resolveTargetOrThrow(args.target)
         if resolved.session.exited {
             throw OrchestratorError.targetNoLongerExists(args.target)
         }
@@ -1210,13 +1212,7 @@ final class OrchestratorDispatcher {
     // task; the shell's line discipline does the signal delivery.
     @MainActor
     private func doInterrupt(target: OrchestratorTarget) async throws -> OrchestratorResult {
-        guard let resolved = WorkgroupIntrospection.resolve(target: target) else {
-            throw OrchestratorError.unknownRole(
-                workgroupID: target.workgroupID,
-                role: target.role,
-                available: WorkgroupIntrospection.availableRoleNames(
-                    forWorkgroupID: target.workgroupID))
-        }
+        let resolved = try resolveTargetOrThrow(target)
         if resolved.session.exited {
             throw OrchestratorError.targetNoLongerExists(target)
         }
@@ -1297,25 +1293,70 @@ final class OrchestratorDispatcher {
             baseProfile = p
         }
 
-        // Apply optional cwd by mutating a copy of the profile dict.
-        // The session launcher reads KEY_CUSTOM_DIRECTORY = "Yes" plus
-        // KEY_WORKING_DIRECTORY = <path> to override the profile's
-        // configured starting directory for just this launch.
-        let bookmark: [AnyHashable: Any]
+        // Build the launch-time bookmark by overlaying the user-supplied
+        // cwd and (when a command is supplied) the login-shell wrap on
+        // the base profile.
+        //
+        // Login-shell wrap: when args.command is set, the launch path
+        // bypasses the profile's own command and runs the agent-supplied
+        // string instead. Without KEY_RUN_COMMAND_IN_LOGIN_SHELL, iTerm2
+        // forks the command directly with the .app bundle's inherited
+        // PATH, which from Finder/launchd typically omits Homebrew,
+        // ~/.local/bin, ~/.npm-global/bin, etc. The user's interactive
+        // tools (`claude`, `pnpm`, `uv`, anything installed by npm/pip/
+        // brew into a user-local prefix) aren't found. The shell exits
+        // immediately, the only session in the new window terminates,
+        // the window auto-closes, and the LLM is left with a workgroup_id
+        // pointing at nothing. Setting the key tells the existing
+        // bookmarkCommandSwiftyString path to wrap the command in
+        // /usr/bin/login + ShellLauncher so dotfiles run and the user's
+        // interactive PATH is in effect.
+        var mutable = baseProfile
         if let cwd = args.cwd, !cwd.isEmpty {
-            var mutable = baseProfile
             mutable[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue
             mutable[KEY_WORKING_DIRECTORY] = cwd
-            bookmark = mutable
-        } else {
-            bookmark = baseProfile
         }
+        if let cmd = args.command, !cmd.isEmpty {
+            mutable[KEY_RUN_COMMAND_IN_LOGIN_SHELL] = true
+        }
+        let bookmark: [AnyHashable: Any] = mutable
 
         let style: iTermOpenStyle
         switch args.window ?? .tab {
         case .new: style = .window
         case .tab: style = .tab
         case .current: style = .verticalSplit
+        }
+
+        // For the split case (window=current), launchBookmark needs the
+        // window controller it should split *into*. With inTerminal:nil
+        // the launcher fabricates a fresh, zero-tab PseudoTerminal; the
+        // split path inside makeSessionByDefaultWithProfile is gated by
+        // `numberOfTabs > 0`, so that gate fails and the launcher
+        // silently falls through to a new-window/new-tab path. From the
+        // user's POV the requested split silently became a new window,
+        // which contradicts both this tool's description and the
+        // approval prompt the user just clicked through. Resolve the
+        // target window here so the split actually happens, and error
+        // out cleanly if there's nothing to split.
+        //
+        // Window placement for the new-tab case is left to the
+        // launcher's normal "current tabbing target" logic by passing
+        // nil (it'll pick the user's currently-focused terminal or
+        // create a new one).
+        let targetTerminal: PseudoTerminal?
+        switch args.window ?? .tab {
+        case .current:
+            let controller = iTermController.sharedInstance()
+            targetTerminal = controller?.keyTerminalWindow() ?? controller?.currentTerminal
+            guard let t = targetTerminal, t.numberOfTabs() > 0 else {
+                throw OrchestratorError.unsupported(reason:
+                    "window=\u{201C}current\u{201D} splits the currently-focused terminal, "
+                    + "but no terminal window is open. Use window=\u{201C}new\u{201D} or "
+                    + "window=\u{201C}tab\u{201D} instead.")
+            }
+        case .new, .tab:
+            targetTerminal = nil
         }
 
         // 30s timeout safety net. launchBookmark has multiple code
@@ -1326,7 +1367,7 @@ final class OrchestratorDispatcher {
         let spawned: PTYSession? = await withResolvedOnce(timeoutSeconds: 30) { resume in
             iTermSessionLauncher.launchBookmark(
                 bookmark,
-                in: nil,
+                in: targetTerminal,
                 style: style,
                 withURL: nil,
                 hotkeyWindowType: .none,
@@ -1343,7 +1384,28 @@ final class OrchestratorDispatcher {
         }
 
         guard let session = spawned else {
-            throw OrchestratorError.unsupported(reason: "iTerm2 could not spawn the requested session.")
+            throw OrchestratorError.unsupported(reason:
+                "iTerm2 could not open a new session. The launch failed before the window was shown.")
+        }
+        // Synchronous post-launch sanity. launchBookmark's `ok=true`
+        // means the fork/exec succeeded (a shell was started), not that
+        // the program is still alive or that the window made it to the
+        // screen. If the shell exited synchronously within the launch
+        // (a missing custom command, a startup-script abort) and the
+        // user's profile auto-closes the window when the last session
+        // ends, the controller has already torn the window down by the
+        // time we get here. Returning a workgroup_id for a vanished
+        // session strands the agent in a polling loop.
+        //
+        // No sleep: if the program needs grace time to fail, the agent
+        // will surface that itself via get_screen_contents on the next
+        // turn. This check only catches the same-runloop-turn collapse.
+        let reachable = iTermController.sharedInstance()?.anySession(withGUID: session.guid) != nil
+        if session.exited || !reachable {
+            throw OrchestratorError.unsupported(reason:
+                "The new session was created but is no longer reachable. "
+                + "The command likely exited immediately (e.g. binary not on PATH "
+                + "or a non-zero startup script) and the window auto-closed.")
         }
         let workgroupID = WorkgroupIntrospection.syntheticWorkgroupIDPrefix + session.guid
         return .startedSession(workgroupID: workgroupID)
@@ -1363,13 +1425,7 @@ final class OrchestratorDispatcher {
     //      receives a status_update when the review completes.
     @MainActor
     private func doStartCodeReview(_ args: StartCodeReviewArgs) async throws -> OrchestratorResult {
-        guard let resolved = WorkgroupIntrospection.resolve(target: args.target) else {
-            throw OrchestratorError.unknownRole(
-                workgroupID: args.target.workgroupID,
-                role: args.target.role,
-                available: WorkgroupIntrospection.availableRoleNames(
-                    forWorkgroupID: args.target.workgroupID))
-        }
+        let resolved = try resolveTargetOrThrow(args.target)
         if resolved.session.exited {
             throw OrchestratorError.targetNoLongerExists(args.target)
         }

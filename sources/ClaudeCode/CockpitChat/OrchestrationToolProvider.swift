@@ -356,16 +356,46 @@ final class OrchestrationToolProvider: ToolProvider {
 
     @MainActor
     private static func roleDescription(args dict: [String: Any]) -> String {
-        guard let target = dict["target"] as? [String: Any],
-              let wg = target["workgroup_id"] as? String,
-              let role = target["role"] as? String else {
-            return "_unknown role_"
+        // Best-effort: even when the model emits target in a shape we
+        // can't decode (e.g. it hallucinated XML inside a JSON string —
+        // {"target": "\n  <workgroup_id>...</workgroup_id>\n
+        // <role>...</role>\n"} — surface SOMETHING readable in the
+        // activity line instead of "_unknown role_". The dispatcher
+        // will fail the call with malformed_args either way; this is
+        // only about what the user sees scrolling by.
+        let raw = dict["target"]
+        var wg: String?
+        var role: String?
+        if let target = raw as? [String: Any] {
+            wg = target["workgroup_id"] as? String
+            role = target["role"] as? String
+        } else if let str = raw as? String {
+            // Extract <workgroup_id>...</workgroup_id> and <role>...</role>
+            // by hand. Model hallucinations of this shape are common; we
+            // don't try to fix the call, just to render it.
+            wg = extractTag("workgroup_id", from: str)
+            role = extractTag("role", from: str)
+        }
+        guard let wg, let role else {
+            return "_(malformed target)_"
         }
         if let resolved = WorkgroupIntrospection.resolve(
             target: OrchestratorTarget(workgroupID: wg, role: role)) {
             return "**\(resolved.roleName)** in **\(resolved.workgroupName)**"
         }
         return "**\(role)** in **\(wg)**"
+    }
+
+    private static func extractTag(_ name: String, from text: String) -> String? {
+        let open = "<\(name)>"
+        let close = "</\(name)>"
+        guard let start = text.range(of: open),
+              let end = text.range(of: close, range: start.upperBound..<text.endIndex) else {
+            return nil
+        }
+        let inner = text[start.upperBound..<end.lowerBound]
+        let trimmed = inner.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     @MainActor

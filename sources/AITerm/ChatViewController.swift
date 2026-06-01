@@ -2024,17 +2024,26 @@ extension Message.Content {
             case .permissions:
                 return AttributedStringForSystemMessageMarkdown("You can use these buttons or the info button menu at the top of the chat window to control AI permissions for this chat.") {}
             case let .workgroupPermissionRequest(_, workgroupID, workgroupName, summary):
-                // Synthetic single-session workgroups stand in for a
-                // session that isn't part of any user-configured
-                // workgroup. The user never sees the word "workgroup"
-                // anywhere else in that flow, so calling the bubble
-                // "Approve workgroup …" is confusing. Use the session
-                // phrasing in that case; the summary text was already
-                // phrased correspondingly by promptForClaim.
-                let kind = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
-                    ? "session"
-                    : "workgroup"
-                let body = "**Approve writing to \(kind) “\(workgroupName)”?**\n\n\(summary)"
+                // Three distinct prompt shapes share this content type:
+                //   - "spawn": the orchestrator wants to open a brand-new
+                //     session (no workgroup_id yet, since we're about to
+                //     create the session that will back it). Phrase as
+                //     "Approve opening 'New session'", not "Approve
+                //     writing to" — there's nothing to write to yet.
+                //   - synthetic "session:<guid>": a standalone session,
+                //     not part of any user-configured workgroup. The
+                //     user never sees the word "workgroup" anywhere
+                //     else in that flow, so use the session phrasing.
+                //   - real workgroup_id: workgroup phrasing.
+                let body: String
+                if workgroupID == WorkgroupIntrospection.spawnWorkgroupID {
+                    body = "**Approve opening \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)"
+                } else {
+                    let kind = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
+                        ? "session"
+                        : "workgroup"
+                    body = "**Approve writing to \(kind) \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)"
+                }
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .enableOrchestrationRequest:
                 let body = """

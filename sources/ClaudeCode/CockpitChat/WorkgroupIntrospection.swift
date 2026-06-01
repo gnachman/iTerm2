@@ -32,6 +32,18 @@ enum WorkgroupIntrospection {
     // otherwise.
     static let syntheticRoleID = "default"
 
+    // Sentinel workgroup ID used by the spawn-approval prompt
+    // (promptForSpawn). Not a real workgroup_id — by definition there
+    // isn't a workgroup yet at spawn time. Carries the request through
+    // the same workgroupPermissionRequest content type the workgroup
+    // claim prompts use, but the chat renderer keys off this exact
+    // string to pick the "Approve opening …" bubble copy instead of
+    // "Approve writing to workgroup …". Two sites must agree on the
+    // literal — the dispatcher (OrchestratorDispatcher.promptForSpawn)
+    // emits it, the renderer (ChatViewController) consumes it — so
+    // it lives here next to the other orchestrator sentinel IDs.
+    static let spawnWorkgroupID = "spawn"
+
     // MARK: - Listing
 
     // Returns every workgroup the cockpit knows about. Real workgroups
