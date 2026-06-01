@@ -436,6 +436,12 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- iTerm2 no longer spuriously offers to reset
+  terminal state or restore the tab and window
+  title when the local hostname changes (for
+  example when mDNS renames your .local host)
+  or when you run sudo. Any two localhosts are
+  now treated as the same host.
 - AI chat no longer fails with a tool_use_id
   error after an auto-approved command. The
   tool call was dropped from saved history

@@ -16196,7 +16196,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // Ignore changes to username; only update on hostname changes. See issue 8030.
     // Skip these shell-integration host-change heuristics when the change came
     // from the SSH/conductor layer (e.g. a restore), which manages this itself.
-    if (previousHostName && ![previousHostName isEqualToString:host.hostname] && !viaSSHIntegration) {
+    //
+    // Also treat any two localhosts as the same host. The local .local hostname
+    // can drift (e.g. mDNS renames MacBook-Pro-2.local to MacBook-Pro-3.local
+    // when a duplicate name appears on the network), and a sudo/su that changes
+    // only the username likewise doesn't justify resetting terminal state or
+    // offering to restore the title. Locality is frozen on each reported host,
+    // so this compares what was true when each was observed.
+    const BOOL bothLocalhost =
+        _currentHost.localityState == VT100RemoteHostLocalityLocalhost &&
+        host.localityState == VT100RemoteHostLocalityLocalhost;
+    if (previousHostName &&
+        ![previousHostName isEqualToString:host.hostname] &&
+        !viaSSHIntegration &&
+        !bothLocalhost) {
         [self maybeResetTerminalStateOnHostChange:host];
         if ([iTermAdvancedSettingsModel restoreKeyModeAutomaticallyOnHostChange]) {
             [self pushOrPopHostState:host];
