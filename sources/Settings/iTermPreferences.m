@@ -235,6 +235,7 @@ NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser = @"AI Promp
 NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser = @"AI Prompt for AI Chat with ReadWriteTerminalBrowser";
 NSString *const kPreferenceKeyAIPromptAIChatOrchestration = @"AI Prompt for AI Chat Orchestration";
 NSString *const kPreferenceKeyAIPromptCodeReview = @"AI Prompt for Code Review";
+NSString *const kPreferenceKeyAIPromptCodeReviewSystem = @"AI Prompt for Code Review System";
 NSString *const kPreferenceKeyAIPromptPlaceholder = @"NoUserDefaultAIPromptPlaceholder";
 
 NSString *const kPreferenceKeyAIModel = @"AiModel";
@@ -388,6 +389,22 @@ NSString *iTermDefaultAIPromptAIChatOrchestration =
 @"keep the user informed about what you're doing and why.";
 
 // NOTE: If you update this list, also update preferences.py.
+
+// The factory default for the Code Review system prompt is the
+// contents of the bundled code-review-system-prompt.txt rather than a
+// hardcoded string, so the shipped file stays the single source of
+// truth. Falls back to the empty string if the resource is missing.
+static NSString *iTermBundledCodeReviewSystemPrompt(void) {
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"code-review-system-prompt"
+                                                     ofType:@"txt"];
+    if (!path) {
+        return @"";
+    }
+    NSString *contents = [NSString stringWithContentsOfFile:path
+                                                   encoding:NSUTF8StringEncoding
+                                                      error:nil];
+    return contents ?: @"";
+}
 
 static NSMutableDictionary *gObservers;
 static NSString *sPreviousVersion;
@@ -650,6 +667,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser: iTermDefaultAIPromptAIChatReadWriteTerminalBrowser,
                   kPreferenceKeyAIPromptAIChatOrchestration: iTermDefaultAIPromptAIChatOrchestration,
                   kPreferenceKeyAIPromptCodeReview: iTermDefaultAIPromptCodeReview,
+                  kPreferenceKeyAIPromptCodeReviewSystem: iTermBundledCodeReviewSystemPrompt(),
                   kPreferenceKeyAIPromptPlaceholder: @"",
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-4o-mini",

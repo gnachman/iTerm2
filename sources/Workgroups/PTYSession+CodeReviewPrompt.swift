@@ -98,11 +98,43 @@ extension PTYSession {
             "'" + normalized.replacingOccurrences(of: "'", with: "'\\''") + "'"
         genericScope.setValue(shellEscaped, forVariableNamed: "codeReviewPrompt")
 
+        // The system prompt is user-editable in Settings > General > AI >
+        // Prompts. Materialize the current value to a per-session temp
+        // file and expose its path as `codeReviewSystemPromptFile`, which
+        // the command template feeds to `claude --append-system-prompt-file`.
+        // The template wraps the value in single quotes, so a bare path is
+        // expected here; temp paths under NSTemporaryDirectory don't
+        // contain quotes. Falls back to the bundled file if the write
+        // fails so the command still has a usable system prompt.
+        let bundledFallback = NSString.path(withComponents:
+            [Bundle.main.bundlePath, "Contents", "Resources", "code-review-system-prompt.txt"])
+        let systemPromptPath = writeCodeReviewSystemPromptFile() ?? bundledFallback
+        genericScope.setValue(systemPromptPath, forVariableNamed: "codeReviewSystemPromptFile")
+
         let resolvedCommand = evaluateSwiftyTemplate(rawCommand)
         if resolvedCommand.isEmpty {
             return nil
         }
         return ITAddressBookMgr.commandByWrapping(inLoginShell: resolvedCommand)
+    }
+
+    // Writes the configured code-review system prompt to a stable
+    // per-session temp file and returns its path, or nil if the write
+    // fails. Reusing one path per session GUID means reloads overwrite
+    // rather than accumulate temp files. The configured value comes from
+    // kPreferenceKeyAIPromptCodeReviewSystem, whose registered default is
+    // the bundled code-review-system-prompt.txt.
+    private func writeCodeReviewSystemPromptFile() -> String? {
+        let text = iTermPreferences.string(forKey: kPreferenceKeyAIPromptCodeReviewSystem) ?? ""
+        let filename = "iterm2-code-review-system-prompt-\(guid).txt"
+        let path = NSString.path(withComponents: [NSTemporaryDirectory(), filename])
+        do {
+            try text.write(toFile: path, atomically: true, encoding: .utf8)
+            return path
+        } catch {
+            DLog("Failed to write code review system prompt to \(path): \(error)")
+            return nil
+        }
     }
 
     private func evaluateSwiftyTemplate(_ template: String) -> String {

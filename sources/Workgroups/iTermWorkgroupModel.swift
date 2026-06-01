@@ -28,6 +28,7 @@ final class iTermWorkgroupModel: NSObject {
         super.init()
         backfillToolbarShortcutsIfNeeded()
         backfillClaudeCodeDiffModeIfNeeded()
+        backfillCodeReviewSystemPromptCommandIfNeeded()
     }
 
     // MARK: - Top-level mutations
@@ -119,6 +120,61 @@ final class iTermWorkgroupModel: NSObject {
                     == ClaudeCodeWorkgroupTemplate.ID.diff
                 && workgroups[wgIdx].sessions[sIdx].mode == .regular {
                 workgroups[wgIdx].sessions[sIdx].mode = .diff
+                changed = true
+            }
+        }
+        if changed {
+            persist()
+        }
+    }
+
+    // One-time migration: rewrite any persisted Code Review command so
+    // its system prompt comes from the user-editable temp file (the
+    // `codeReviewSystemPromptFile` variable) instead of a fixed path to
+    // the bundled code-review-system-prompt.txt. Installs predating the
+    // editable system prompt carry the old `--append-system-prompt-file`
+    // argument in one of two forms: the templated
+    // `'\(iterm2.appBundlePath)/Contents/Resources/code-review-system-prompt.txt'`,
+    // or an already-resolved absolute path to the same file (older
+    // builds persisted the resolved path, unquoted). Both end in
+    // code-review-system-prompt.txt, so a regex over that argument
+    // handles either without disturbing the rest of the command (e.g. a
+    // custom --settings value). Sessions whose argument no longer points
+    // at the bundled file are left alone.
+    //
+    // Not scoped to the Claude Code workgroup ID: a user who built the
+    // "Coding Agent + Diff + Code Review" preset by hand has the same
+    // argument under a different workgroup ID and should migrate too.
+    //
+    // Latched in NoSync user defaults for the same reason as
+    // backfillClaudeCodeDiffModeIfNeeded above.
+    private func backfillCodeReviewSystemPromptCommandIfNeeded() {
+        guard !iTermUserDefaults.claudeCodeReviewSystemPromptCommandBackfilled else { return }
+        defer { iTermUserDefaults.claudeCodeReviewSystemPromptCommandBackfilled = true }
+
+        // Matches `--append-system-prompt-file` plus its single
+        // argument when that argument (quoted or not) ends in
+        // code-review-system-prompt.txt. `[^']*` can't cross a quote, so
+        // it stops at the closing quote in the quoted form and spans the
+        // unquoted absolute path otherwise; the literal filename anchor
+        // keeps it from overrunning into a later quoted argument.
+        let pattern =
+            "--append-system-prompt-file\\s+'?[^']*code-review-system-prompt\\.txt'?"
+        let newFragment =
+            "--append-system-prompt-file '\\(codeReviewSystemPromptFile)'"
+
+        var changed = false
+        for wgIdx in workgroups.indices {
+            for sIdx in workgroups[wgIdx].sessions.indices {
+                let command = workgroups[wgIdx].sessions[sIdx].command
+                guard let range = command.range(of: pattern,
+                                                options: .regularExpression) else {
+                    continue
+                }
+                // Plain (non-template) replacement so the backslash in
+                // `\(codeReviewSystemPromptFile)` survives verbatim.
+                workgroups[wgIdx].sessions[sIdx].command =
+                    command.replacingCharacters(in: range, with: newFragment)
                 changed = true
             }
         }

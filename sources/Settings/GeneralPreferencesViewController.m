@@ -1055,6 +1055,8 @@ enum {
             return kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
         case iTermAIPromptAIChatOrchestration:
             return kPreferenceKeyAIPromptAIChatOrchestration;
+        case iTermAIPromptCodeReviewSystem:
+            return kPreferenceKeyAIPromptCodeReviewSystem;
     }
 }
 
@@ -1757,10 +1759,11 @@ enum {
 
 - (IBAction)resetAIPrompt:(id)sender {
     NSString *key = [self keyForCurrentlySelectedAIPrompt];
-    [self setString:[iTermPreferences defaultObjectForKey:key]
-             forKey:key];
-    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:iTermDefaultAIPrompt
+    NSString *defaultValue = [iTermPreferences defaultObjectForKey:key] ?: @"";
+    [self setString:defaultValue forKey:key];
+    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:defaultValue
                                                                                    attributes:_aiPrompt.typingAttributes]];
+    [self updateAIPromptWarning];
 }
 
 - (IBAction)aiPromptHelp:(id)sender {
