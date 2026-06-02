@@ -522,6 +522,13 @@ fileprivate class ModernKeyMapperImpl {
         if !flags.contains(.reportAllKeysAsEscapeCodes) {
             return text
         }
+        let currentKeyCode: UInt16 = {
+            guard let currentEvent = NSApp.currentEvent,
+                  currentEvent.type == .keyDown || currentEvent.type == .keyUp else {
+                return 0
+            }
+            return currentEvent.keyCode
+        }()
         let phonyEvent = NSEvent.keyEvent(with: .keyDown,
                                           location: .zero,
                                           modifierFlags: NSApp.currentEvent?.modifierFlags ?? [],
@@ -531,7 +538,7 @@ fileprivate class ModernKeyMapperImpl {
                                           characters: text,
                                           charactersIgnoringModifiers: text,
                                           isARepeat: false,
-                                          keyCode: NSApp.currentEvent?.keyCode ?? 0)
+                                          keyCode: currentKeyCode)
         guard let phonyEvent else {
             return text
         }
