@@ -78,8 +78,19 @@ extension PTYSession {
     private func showCodeReviewPromptOverlay(onStart: @escaping (String) -> Void) {
         guard let sessionView: SessionView = view else { return }
         let defaultPrompt = CodeReviewPromptStore.shared.defaultPromptText
-        sessionView.presentCodeReviewPromptOverlay(defaultPrompt: defaultPrompt,
-                                                   onStart: onStart)
+        sessionView.presentCodeReviewPromptOverlay(defaultPrompt: defaultPrompt) { [weak self] text in
+            onStart(text)
+            // The overlay sits over scrolled-back content; once the user
+            // submits, snap to the bottom so the launched program's output
+            // is visible and the session follows new output.
+            self?.scrollToBottomAfterCodeReviewPrompt()
+        }
+    }
+
+    private func scrollToBottomAfterCodeReviewPrompt() {
+        guard let textview else { return }
+        textview.scrollEnd()
+        (textview.enclosingScrollView as? PTYScrollView)?.detectUserScroll()
     }
 
     private func wrappedCommandForCodeReview(text: String,
