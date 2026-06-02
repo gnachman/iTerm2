@@ -136,6 +136,13 @@ final class AILiveHarness: XCTestCase {
         return apiKey
     }
 
+    private func metadataModel(_ name: String) throws -> AIMetadata.Model {
+        guard let model = AIMetadata.instance.models.first(where: { $0.name == name }) else {
+            throw XCTSkip("\(name) not in AIMetadata; skipping.")
+        }
+        return model
+    }
+
     // MARK: - Per-vendor throttling
     //
     // No vendor needs throttling on a paid plan; defaults are 0. If you're on
@@ -320,12 +327,11 @@ final class AILiveHarness: XCTestCase {
         }
     }
 
-    // Load a committed audio fixture (a short TTS clip saying "the magic word
-    // is pinecone") from the project's AttachmentFixtures directory. Used to
-    // positively verify the input_audio path: the matrix lanes use non-audio
-    // models that reject input_audio at the schema layer, so this is the only
-    // place that proves an audio model accepts the shape we serialize.
-    private static func loadAudioFixture(_ basename: String) throws -> Data {
+    // Load a committed binary fixture from the project's AttachmentFixtures
+    // directory. Used by the media-probe tests, which carry a deterministic
+    // probe word ("pinecone") spoken/shown in the media so we can assert the
+    // model actually parsed it.
+    private static func loadBinaryFixture(_ basename: String) throws -> Data {
         guard let root = loadConfig()?["PROJECT_ROOT"], !root.isEmpty else {
             throw AILiveError.providerFailure("PROJECT_ROOT missing from live config")
         }
@@ -334,20 +340,29 @@ final class AILiveHarness: XCTestCase {
         return try Data(contentsOf: URL(fileURLWithPath: path))
     }
 
-    private func runAudioTranscribe(model: AIMetadata.Model,
-                                    apiKey: String,
-                                    fixtureBasename: String,
-                                    mimeType: String) {
+    // Send a binary media fixture (audio or video) and assert the model
+    // surfaces the deterministic probe word. The 96-cell matrix can't verify
+    // these positively: its audio/video fixtures lack a deterministic probe,
+    // and the OpenAI lanes use non-audio models that reject input_audio at the
+    // schema layer. This is the only place proving the inline media path
+    // round-trips end-to-end on a capable model.
+    private func runMediaProbe(vendorLabel: String,
+                               model: AIMetadata.Model,
+                               apiKey: String,
+                               fixtureBasename: String,
+                               mimeType: String,
+                               prompt: String,
+                               scenarioTag: String) {
         let bytes: Data
         do {
-            bytes = try Self.loadAudioFixture(fixtureBasename)
+            bytes = try Self.loadBinaryFixture(fixtureBasename)
         } catch {
-            XCTFail("[openai/\(model.name)/audioTranscribe] cannot load fixture \(fixtureBasename): \(error)")
+            XCTFail("[\(vendorLabel)/\(model.name)/\(scenarioTag)] cannot load fixture \(fixtureBasename): \(error)")
             return
         }
         let attachment = LLM.Message.Attachment(
             inline: true,
-            id: "audioTranscribe",
+            id: scenarioTag,
             type: .file(.init(name: fixtureBasename,
                               content: bytes,
                               mimeType: mimeType,
@@ -355,7 +370,7 @@ final class AILiveHarness: XCTestCase {
         let messages = [LLM.Message(responseID: nil,
                                     role: .user,
                                     body: .multipart([
-                                        .text("What is the magic word spoken in this audio? Reply with just the word."),
+                                        .text(prompt),
                                         .attachment(attachment),
                                     ]))]
         do {
@@ -363,19 +378,24 @@ final class AILiveHarness: XCTestCase {
                                               apiKey: apiKey,
                                               messages: messages,
                                               streaming: false,
-                                              scenarioTag: "audioTranscribe",
+                                              scenarioTag: scenarioTag,
                                               test: self)
             XCTAssertTrue(result.finalText.lowercased().contains("pinecone"),
-                          "[openai/\(model.name)/\(mimeType)] audio transcription failed; expected 'pinecone'; got: \(result.finalText)")
-            report(vendor: "openai-\(model.api)",
+                          "[\(vendorLabel)/\(model.name)/\(mimeType)] expected the probe 'pinecone'; got: \(result.finalText)")
+            report(vendor: vendorLabel,
                    model: model.name,
-                   scenario: "audioTranscribe/\(mimeType)",
+                   scenario: "\(scenarioTag)/\(mimeType)",
                    streaming: false,
                    result: result)
         } catch {
-            XCTFail("[openai/\(model.name)/audioTranscribe/\(mimeType)] \(error)")
+            XCTFail("[\(vendorLabel)/\(model.name)/\(scenarioTag)/\(mimeType)] \(error)")
         }
     }
+
+    private static let audioProbePrompt =
+        "What is the magic word spoken in this audio? Reply with just the word."
+    private static let videoProbePrompt =
+        "What word is shown and spoken in this video? Reply with just the word."
 
     private func runHostedCodeInterpreter(vendor: String, modelName: String, apiKey: String) {
         // 17 * 23 = 391. Asking the model to use code execution should produce
@@ -548,17 +568,23 @@ final class AILiveHarness: XCTestCase {
     }
     func test_openai_audioTranscribe_mp3() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
-        runAudioTranscribe(model: Self.syntheticAudioModel,
-                           apiKey: key,
-                           fixtureBasename: "speech.mp3",
-                           mimeType: "audio/mpeg")
+        runMediaProbe(vendorLabel: "openai",
+                      model: Self.syntheticAudioModel,
+                      apiKey: key,
+                      fixtureBasename: "speech.mp3",
+                      mimeType: "audio/mpeg",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
     }
     func test_openai_audioTranscribe_wav() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
-        runAudioTranscribe(model: Self.syntheticAudioModel,
-                           apiKey: key,
-                           fixtureBasename: "speech.wav",
-                           mimeType: "audio/wav")
+        runMediaProbe(vendorLabel: "openai",
+                      model: Self.syntheticAudioModel,
+                      apiKey: key,
+                      fixtureBasename: "speech.wav",
+                      mimeType: "audio/wav",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
     }
 
     // MARK: - Anthropic
@@ -876,6 +902,36 @@ final class AILiveHarness: XCTestCase {
     func test_gemini_imageDescribe() throws {
         let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
         runImageDescribe(vendor: "gemini", modelName: "gemini-3-flash-preview", apiKey: key)
+    }
+    func test_gemini_audioTranscribe_mp3() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runMediaProbe(vendorLabel: "gemini",
+                      model: try metadataModel("gemini-3-flash-preview"),
+                      apiKey: key,
+                      fixtureBasename: "speech.mp3",
+                      mimeType: "audio/mpeg",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
+    }
+    func test_gemini_audioTranscribe_wav() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runMediaProbe(vendorLabel: "gemini",
+                      model: try metadataModel("gemini-3-flash-preview"),
+                      apiKey: key,
+                      fixtureBasename: "speech.wav",
+                      mimeType: "audio/wav",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
+    }
+    func test_gemini_videoDescribe() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runMediaProbe(vendorLabel: "gemini",
+                      model: try metadataModel("gemini-3-flash-preview"),
+                      apiKey: key,
+                      fixtureBasename: "pinecone.mp4",
+                      mimeType: "video/mp4",
+                      prompt: Self.videoProbePrompt,
+                      scenarioTag: "videoDescribe")
     }
 
     // MARK: - OpenAI synthetic models for non-Responses protocols

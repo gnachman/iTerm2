@@ -268,13 +268,14 @@ enum AttachmentMatrix {
             .imageHEIC:        .acceptsAndExtractsProbe,
             .imageTIFF:        .rejectsAtHTTPLayer,
             .applicationPDF:   .acceptsAndExtractsProbe,
-            // Gemini supports audio/video natively via inlineData, but our
-            // fixtures (3s synth, scroll-browser screen capture) have no
-            // deterministic content probe. Skip until we have fixtures
-            // with verifiable content (e.g. a clip saying a known phrase
-            // or a frame containing known text).
-            .audioMPEG:        .skipped(reason: "synth mp3 fixture has no deterministic content probe; would test inlineData audio path with a known phrase"),
-            .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; would test inlineData video path with a known frame"),
+            // Gemini supports audio/video natively via inlineData. These
+            // matrix fixtures (3s synth, scroll-browser screen capture) have
+            // no deterministic content probe, so they stay skipped here; the
+            // inlineData audio/video paths are positively verified against a
+            // deterministic spoken/shown probe by test_gemini_audioTranscribe_*
+            // and test_gemini_videoDescribe.
+            .audioMPEG:        .skipped(reason: "no deterministic probe in this fixture; inlineData audio verified by test_gemini_audioTranscribe_{mp3,wav}"),
+            .videoMP4:         .skipped(reason: "no deterministic probe in this fixture; inlineData video verified by test_gemini_videoDescribe"),
             .applicationDOCX:  .rejectsAtHTTPLayer,
             .applicationZIP:   .rejectsAtHTTPLayer,
             .applicationOctet: .rejectsAtHTTPLayer,
