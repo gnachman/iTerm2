@@ -477,6 +477,16 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Fixed several crashes: registering a profile
+  hotkey for a profile with no GUID, loading a
+  profile whose default-bookmark value is a
+  boolean, listing processes over SSH when a
+  process has an empty command, drawing margin
+  background colors with a nil color, a crash when
+  macOS rejected presentation options during a
+  Spaces transition (now retried once it settles),
+  and a divide-by-zero when the Metal view has a
+  zero-size drawable.
 - iTerm2 no longer spuriously offers to reset
   terminal state or restore the tab and window
   title when the local hostname changes (for

@@ -332,7 +332,10 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
             return nil
         }
         isForeground.pointee = ObjCBool(row.fg)
-        return (row.command as NSString).componentsInShellCommand()[0].lastPathComponent
+        guard let first = (row.command as NSString).componentsInShellCommand().first else {
+            return nil
+        }
+        return first.lastPathComponent
     }
 
     func commandLineArguments(forProcess pid: pid_t,
@@ -341,7 +344,9 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
             return nil
         }
         let args = (row.command as NSString).componentsInShellCommand()
-        execName?.pointee = (args[0] as NSString).removingPrefix("-") as NSString
+        if let first = args.first {
+            execName?.pointee = (first as NSString).removingPrefix("-") as NSString
+        }
         return args
     }
 
