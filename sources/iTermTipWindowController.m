@@ -421,9 +421,12 @@ static const CGFloat kWindowTopMargin = 8;
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         self.buttonsEnabled = YES;
         [self close];
-        // Buttons hold references to us.
+        // Buttons hold references to us. Also clear target/action so a button
+        // press that arrives after the card animates away can't invoke anything.
         for (iTermTipCardActionButton *button in self->_cardViewController.actionButtons) {
             button.block = nil;
+            button.target = nil;
+            button.action = nil;
         }
     }];
     [_cardViewController.view.animator setFrame:newFrame];

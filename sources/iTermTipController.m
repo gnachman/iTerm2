@@ -30,6 +30,10 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 
 @implementation iTermTipController {
     BOOL _showingTip;
+    // Strong reference to the visible tip window controller. Without this it was
+    // kept alive only by button block captures; animateOut nils those blocks,
+    // which could free it while a button press was still in flight (use-after-free).
+    iTermTipWindowController *_currentTipWindowController;
 }
 
 + (instancetype)sharedInstance {
@@ -64,6 +68,7 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 - (void)dealloc {
     [_tips release];
     [_currentTipName release];
+    [_currentTipWindowController release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
@@ -217,10 +222,15 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
     [self willShowTipWithIdentifier:tipKey];
     iTermTip *tip = [[[iTermTip alloc] initWithDictionary:tipDictionary
                                                identifier:tipKey] autorelease];
-    iTermTipWindowController *controller = [[[iTermTipWindowController alloc] initWithTip:tip] autorelease];
-    controller.delegate = self;
+    // Hold a strong reference so the window controller survives until the tip is
+    // dismissed, even after animateOut nils the button blocks. autorelease the
+    // previous one (if any) rather than releasing synchronously in case it is
+    // still animating out.
+    [_currentTipWindowController autorelease];
+    _currentTipWindowController = [[iTermTipWindowController alloc] initWithTip:tip];
+    _currentTipWindowController.delegate = self;
     // Cause it to load and become visible.
-    [controller showTipWindow];
+    [_currentTipWindowController showTipWindow];
 }
 
 - (void)willShowTipWithIdentifier:(NSString *)tipKey {
@@ -247,15 +257,25 @@ static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
 - (void)tipWindowDismissed {
     _showingTip = NO;
     [self doNotShowCurrentTipAgain];
+    [self releaseCurrentTipWindowController];
 }
 
 - (void)tipWindowPostponed {
     _showingTip = NO;
+    [self releaseCurrentTipWindowController];
 }
 
 - (void)tipWindowRequestsDisable {
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kTipsDisabledKey];
     _showingTip = NO;
+    [self releaseCurrentTipWindowController];
+}
+
+// Drop our strong reference. autorelease (not release) because these are delegate
+// callbacks invoked by the window controller itself, which is still on the stack.
+- (void)releaseCurrentTipWindowController {
+    [_currentTipWindowController autorelease];
+    _currentTipWindowController = nil;
 }
 
 - (void)tipWindowRequestsEnable {
