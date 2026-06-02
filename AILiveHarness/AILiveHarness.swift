@@ -320,6 +320,63 @@ final class AILiveHarness: XCTestCase {
         }
     }
 
+    // Load a committed audio fixture (a short TTS clip saying "the magic word
+    // is pinecone") from the project's AttachmentFixtures directory. Used to
+    // positively verify the input_audio path: the matrix lanes use non-audio
+    // models that reject input_audio at the schema layer, so this is the only
+    // place that proves an audio model accepts the shape we serialize.
+    private static func loadAudioFixture(_ basename: String) throws -> Data {
+        guard let root = loadConfig()?["PROJECT_ROOT"], !root.isEmpty else {
+            throw AILiveError.providerFailure("PROJECT_ROOT missing from live config")
+        }
+        let path = (root as NSString).appendingPathComponent("ModernTests")
+            + "/Resources/AttachmentFixtures/\(basename)"
+        return try Data(contentsOf: URL(fileURLWithPath: path))
+    }
+
+    private func runAudioTranscribe(model: AIMetadata.Model,
+                                    apiKey: String,
+                                    fixtureBasename: String,
+                                    mimeType: String) {
+        let bytes: Data
+        do {
+            bytes = try Self.loadAudioFixture(fixtureBasename)
+        } catch {
+            XCTFail("[openai/\(model.name)/audioTranscribe] cannot load fixture \(fixtureBasename): \(error)")
+            return
+        }
+        let attachment = LLM.Message.Attachment(
+            inline: true,
+            id: "audioTranscribe",
+            type: .file(.init(name: fixtureBasename,
+                              content: bytes,
+                              mimeType: mimeType,
+                              localPath: nil)))
+        let messages = [LLM.Message(responseID: nil,
+                                    role: .user,
+                                    body: .multipart([
+                                        .text("What is the magic word spoken in this audio? Reply with just the word."),
+                                        .attachment(attachment),
+                                    ]))]
+        do {
+            let result = try AILiveDriver.run(model: model,
+                                              apiKey: apiKey,
+                                              messages: messages,
+                                              streaming: false,
+                                              scenarioTag: "audioTranscribe",
+                                              test: self)
+            XCTAssertTrue(result.finalText.lowercased().contains("pinecone"),
+                          "[openai/\(model.name)/\(mimeType)] audio transcription failed; expected 'pinecone'; got: \(result.finalText)")
+            report(vendor: "openai-\(model.api)",
+                   model: model.name,
+                   scenario: "audioTranscribe/\(mimeType)",
+                   streaming: false,
+                   result: result)
+        } catch {
+            XCTFail("[openai/\(model.name)/audioTranscribe/\(mimeType)] \(error)")
+        }
+    }
+
     private func runHostedCodeInterpreter(vendor: String, modelName: String, apiKey: String) {
         // 17 * 23 = 391. Asking the model to use code execution should produce
         // a response containing 391. Without code execution it might still get
@@ -488,6 +545,20 @@ final class AILiveHarness: XCTestCase {
     func test_openai_imageDescribe() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runImageDescribe(vendor: "openai", modelName: "gpt-4o-mini", apiKey: key)
+    }
+    func test_openai_audioTranscribe_mp3() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runAudioTranscribe(model: Self.syntheticAudioModel,
+                           apiKey: key,
+                           fixtureBasename: "speech.mp3",
+                           mimeType: "audio/mpeg")
+    }
+    func test_openai_audioTranscribe_wav() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runAudioTranscribe(model: Self.syntheticAudioModel,
+                           apiKey: key,
+                           fixtureBasename: "speech.wav",
+                           mimeType: "audio/wav")
     }
 
     // MARK: - Anthropic
@@ -824,6 +895,18 @@ final class AILiveHarness: XCTestCase {
         url: "https://api.openai.com/v1/chat/completions",
         api: .chatCompletions,
         features: [.functionCalling, .streaming],
+        vendor: .openAI)
+
+    // OpenAI audio input is chat-completions-only (the Responses API has no
+    // audio input), and no audio model is in AIMetadata, so synthesize one
+    // here to exercise the input_audio serialization against the real API.
+    private static let syntheticAudioModel = AIMetadata.Model(
+        name: "gpt-audio",
+        contextWindowTokens: 128_000,
+        maxResponseTokens: 16_384,
+        url: "https://api.openai.com/v1/chat/completions",
+        api: .chatCompletions,
+        features: [.streaming],
         vendor: .openAI)
 
     private static let syntheticLegacyCompletionsModel = AIMetadata.Model(

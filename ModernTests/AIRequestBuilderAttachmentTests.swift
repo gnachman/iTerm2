@@ -455,6 +455,29 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         XCTAssertEqual(audio?["data"] as? String, audioBytes.base64EncodedString())
     }
 
+    /// WAV maps to format "wav" (the other half of OpenAI's closed
+    /// input_audio format enum; mp3 is covered above).
+    func testOpenAIChat_audioWavAttachment_asInputAudio() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let audioBytes = Data("RIFFfake-wav-bytes".utf8)
+        let attachment = file(name: "x.wav", mime: "audio/wav", bytes: audioBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Transcribe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        let parts = (messages[0]["content"] as? [[String: Any]]) ?? []
+        let audio = (parts.first { $0["type"] as? String == "input_audio" })?["input_audio"] as? [String: Any]
+        XCTAssertEqual(audio?["format"] as? String, "wav")
+        XCTAssertEqual(audio?["data"] as? String, audioBytes.base64EncodedString())
+    }
+
     // MARK: - DeepSeek (chat-completions style)
 
     /// DeepSeek supports inline text content. A text-mime attachment should
