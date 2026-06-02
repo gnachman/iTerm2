@@ -485,6 +485,10 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runHostedCodeInterpreter(vendor: "openai", modelName: "gpt-4o-mini", apiKey: key)
     }
+    func test_openai_imageDescribe() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runImageDescribe(vendor: "openai", modelName: "gpt-4o-mini", apiKey: key)
+    }
 
     // MARK: - Anthropic
 

@@ -9,14 +9,6 @@ struct AnthropicMessage: Codable, Equatable {
     var role: AnthropicRole
     var content: AnthropicContent
 
-    // Image MIME types Anthropic accepts as inline image content blocks.
-    // The API rejects anything outside this set with a 400, so the
-    // serializer must not send e.g. image/svg+xml here (SVG is XML text
-    // and goes through the textual branch instead).
-    static let anthropicSupportedImageMimeTypes: Set<String> = [
-        "image/jpeg", "image/png", "image/gif", "image/webp"
-    ]
-
     init(role: AnthropicRole, content: AnthropicContent) {
         self.role = role
         self.content = content
@@ -69,10 +61,14 @@ struct AnthropicMessage: Codable, Equatable {
                 // Textual content (including image/svg+xml) goes through as a
                 // plain string. Check this BEFORE the image-prefix branch so
                 // SVGs don't get base64-wrapped as binary images — Anthropic's
-                // image source only accepts jpeg/png/gif/webp.
+                // image source only accepts raster formats.
                 if MIMETypeIsTextual(file.mimeType) {
                     content = .string(file.content.lossyString)
-                } else if Self.anthropicSupportedImageMimeTypes.contains(file.mimeType) {
+                } else if file.mimeType.hasPrefix("image/") {
+                    // Send any image/* as an image block with its real media
+                    // type. Anthropic accepts jpeg/png/gif/webp and 400s on
+                    // anything else (e.g. image/heic); we let that clean
+                    // rejection surface rather than predicting the set here.
                     let base64Data = file.content.base64EncodedString()
                     content = .array([
                         .image(.init(type: "base64",
@@ -87,11 +83,9 @@ struct AnthropicMessage: Codable, Equatable {
                                         data: base64Data))
                     ])
                 } else {
-                    // Any remaining binary type is unsupported by Anthropic;
-                    // the per-provider allowlist should already have rejected
-                    // it at the input layer. Fall back to lossyString so the
-                    // request is still well-formed, but the upstream gate is
-                    // the real defense here.
+                    // Any remaining binary type has no Anthropic content block;
+                    // the provider gate (accepts) refuses these upstream, so
+                    // this is just a well-formed last resort.
                     content = .string(file.content.lossyString)
                 }
             case .fileID(_, let name):
@@ -150,7 +144,9 @@ struct AnthropicMessage: Codable, Equatable {
                         // branch so SVGs aren't sent as binary images.
                         if MIMETypeIsTextual(file.mimeType) {
                             return .text(.init(text: file.content.lossyString))
-                        } else if Self.anthropicSupportedImageMimeTypes.contains(file.mimeType) {
+                        } else if file.mimeType.hasPrefix("image/") {
+                            // Any image/* as an image block with its real media
+                            // type; Anthropic 400s on formats it doesn't accept.
                             let base64Data = file.content.base64EncodedString()
                             return .image(.init(type: "base64",
                                               media_type: file.mimeType,
@@ -161,8 +157,8 @@ struct AnthropicMessage: Codable, Equatable {
                                                    media_type: file.mimeType,
                                                    data: base64Data))
                         } else {
-                            // Non-PDF, non-image binaries should have been
-                            // rejected by the provider allowlist upstream.
+                            // No Anthropic content block for this binary; the
+                            // provider gate refuses these upstream.
                             return .text(.init(text: file.content.lossyString))
                         }
                     case .fileID(id: _, name: let name):

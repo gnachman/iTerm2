@@ -162,12 +162,12 @@ enum AttachmentMatrix {
 
         // MARK: openaiChat (chat-completions request builder)
         //
-        // The builder's .file path (LLMModernProtocol.swift:204-217) handles
-        // PDF natively and wraps every other binary in
-        // <iterm2:attachment> via lossyString. Textual MIMEs are inlined as
-        // text content parts. The vendor never rejects a well-formed chat-
-        // completions request shape for these inputs; the failure mode for
-        // binaries is "model can't recover the bytes," not 4xx.
+        // The builder's .file path (CompletionsMessage.contentPart) now emits
+        // image_url for image/*, input_audio for wav/mp3, file for PDF, and
+        // wraps any other binary in <iterm2:attachment> via lossyString.
+        // gpt-4o-mini has vision, so png/webp are read (probe matches);
+        // heic/tiff aren't accepted image formats so the vendor 4xxs. The
+        // model is not an audio model, so input_audio 4xxs.
         .openaiChat: [
             .textPlain:        .acceptsAndExtractsProbe,
             .textMarkdown:     .acceptsAndExtractsProbe,
@@ -175,26 +175,28 @@ enum AttachmentMatrix {
             .applicationXML:   .acceptsAndExtractsProbe,
             .imageSVG:         .acceptsAndExtractsProbe,
             .yamlAsUnknown:    .acceptsAndExtractsProbe,
-            .imagePNG:         .acceptsButGarbled,
-            .imageWEBP:        .acceptsButGarbled,
-            .imageHEIC:        .acceptsButGarbled,
-            .imageTIFF:        .acceptsButGarbled,
+            .imagePNG:         .acceptsAndExtractsProbe,
+            .imageWEBP:        .acceptsAndExtractsProbe,
+            .imageHEIC:        .rejectsAtHTTPLayer,
+            .imageTIFF:        .rejectsAtHTTPLayer,
             .applicationPDF:   .acceptsAndExtractsProbe,
-            .audioMPEG:        .skipped(reason: "synth mp3 fixture has no deterministic content probe; garbled vs. heard is indistinguishable"),
+            // input_audio sent to gpt-4o-mini, which is not an audio model:
+            // OpenAI 4xxs rather than garbling. (An audio model would parse
+            // it, but no audio-capable model is wired into this lane.)
+            .audioMPEG:        .rejectsAtHTTPLayer,
             .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),
             .applicationDOCX:  .acceptsButGarbled,
             .applicationZIP:   .acceptsButGarbled,
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
 
-        // MARK: openaiResponses (responses+VS, inline input_file path)
+        // MARK: openaiResponses (responses+VS)
         //
-        // AILiveDriver bypasses MessagePrepPipeline, so non-PDF binaries take
-        // the inline input_file path. OpenAI rejects image MIMEs via
-        // input_file per the TODO at ResponsesAPIRequest.swift:1712. We
-        // expect the same rejection shape for the other non-text non-PDF
-        // binaries (audio/video/docx/zip/octet); if any of those instead
-        // succeed, that's a drift signal worth investigating.
+        // AILiveDriver bypasses MessagePrepPipeline. Images now serialize as
+        // input_image (vision) with a base64 data URL, so png/webp are read
+        // and the probe matches; heic/tiff aren't accepted image formats so
+        // the vendor 4xxs. Non-image, non-PDF binaries still take the inline
+        // input_file path, which OpenAI rejects for audio/video/zip/octet.
         .openaiResponses: [
             .textPlain:        .acceptsAndExtractsProbe,
             .textMarkdown:     .acceptsAndExtractsProbe,
@@ -202,8 +204,8 @@ enum AttachmentMatrix {
             .applicationXML:   .acceptsAndExtractsProbe,
             .imageSVG:         .acceptsAndExtractsProbe,
             .yamlAsUnknown:    .acceptsAndExtractsProbe,
-            .imagePNG:         .rejectsAtHTTPLayer,
-            .imageWEBP:        .rejectsAtHTTPLayer,
+            .imagePNG:         .acceptsAndExtractsProbe,
+            .imageWEBP:        .acceptsAndExtractsProbe,
             .imageHEIC:        .rejectsAtHTTPLayer,
             .imageTIFF:        .rejectsAtHTTPLayer,
             .applicationPDF:   .acceptsAndExtractsProbe,
@@ -223,12 +225,11 @@ enum AttachmentMatrix {
 
         // MARK: anthropic
         //
-        // AnthropicMessage serializer (CompletionsAnthropic.swift:50-95)
-        // routes textual to .string, supported images to .image, PDF to
-        // .document, and everything else to lossyString. So non-textual,
-        // non-supported-image, non-PDF binaries become mangled text. We
-        // don't expect 4xx from Anthropic on those (the wire is still a
-        // valid text block), just garbled content.
+        // AnthropicMessage serializer routes textual to .string, any image/*
+        // to an .image block with its real media type, PDF to .document, and
+        // everything else to lossyString. Anthropic accepts jpeg/png/gif/webp
+        // images and 4xxs other image formats (heic/tiff) instead of garbling
+        // them. Non-image, non-PDF binaries still become mangled text.
         .anthropic: [
             .textPlain:        .acceptsAndExtractsProbe,
             .textMarkdown:     .acceptsAndExtractsProbe,
@@ -238,8 +239,8 @@ enum AttachmentMatrix {
             .yamlAsUnknown:    .acceptsAndExtractsProbe,
             .imagePNG:         .acceptsAndExtractsProbe,
             .imageWEBP:        .acceptsAndExtractsProbe,
-            .imageHEIC:        .acceptsButGarbled,
-            .imageTIFF:        .acceptsButGarbled,
+            .imageHEIC:        .rejectsAtHTTPLayer,
+            .imageTIFF:        .rejectsAtHTTPLayer,
             .applicationPDF:   .acceptsAndExtractsProbe,
             .audioMPEG:        .skipped(reason: "synth mp3 fixture has no deterministic content probe; garbled vs. heard is indistinguishable"),
             .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),

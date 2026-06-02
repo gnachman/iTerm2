@@ -1154,3 +1154,16 @@ Bug Fixes:
   that file type, instead of always
   inserting its path as text. The
   choice can be remembered.
+
+- AI chat can now attach images to
+  OpenAI models (vision), and audio
+  to OpenAI audio models on the
+  chat-completions API. Attachment
+  support is now decided by modality
+  rather than a per-format allow
+  list: if a backend can carry an
+  image, PDF, audio, or video block,
+  you can attach it, and an
+  unsupported file is reported by the
+  model instead of being silently
+  refused.

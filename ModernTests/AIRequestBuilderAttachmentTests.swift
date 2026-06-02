@@ -359,6 +359,102 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
                       "expected a base64-encoded PDF file content block; body: \(json)")
     }
 
+    /// Image attachment through the Responses API serializes as an
+    /// input_image content part with a base64 data URL (vision), NOT an
+    /// input_file (which the API 400s for image MIMEs).
+    func testOpenAIResponses_imageAttachment_asInputImage() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let attachment = file(name: "x.png", mime: "image/png", bytes: Self.imageBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Describe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ResponsesBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false,
+            hostedTools: HostedTools(),
+            previousResponseID: nil,
+            shouldThink: nil).body()
+        let json = try decode(bodyData)
+        let input = (json["input"] as? [[String: Any]]) ?? []
+        var foundImage = false
+        for item in input {
+            guard let content = item["content"] as? [[String: Any]] else { continue }
+            for part in content where part["type"] as? String == "input_image" {
+                let url = part["image_url"] as? String
+                XCTAssertNotNil(url, "input_image must carry image_url; got \(part)")
+                XCTAssertTrue(url?.hasPrefix("data:image/png;base64,") == true,
+                              "expected base64 data URL; got \(String(describing: url))")
+                XCTAssertTrue(url?.hasSuffix(Self.imageBase64) == true,
+                              "image bytes lost or re-encoded")
+                foundImage = true
+            }
+        }
+        XCTAssertTrue(foundImage, "no input_image part found; body: \(json)")
+    }
+
+    // MARK: - OpenAI chat-completions
+
+    /// Image attachment through the chat-completions builder serializes as
+    /// an image_url content part with a base64 data URL.
+    func testOpenAIChat_imageAttachment_asImageURL() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let attachment = file(name: "x.png", mime: "image/png", bytes: Self.imageBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Describe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(messages.count, 1)
+        guard let parts = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content; got \(String(describing: messages[0]["content"]))")
+            return
+        }
+        let imagePart = parts.first { $0["type"] as? String == "image_url" }
+        XCTAssertNotNil(imagePart, "no image_url part; got \(parts)")
+        let url = (imagePart?["image_url"] as? [String: Any])?["url"] as? String
+        XCTAssertTrue(url?.hasPrefix("data:image/png;base64,") == true,
+                      "expected base64 data URL; got \(String(describing: url))")
+        XCTAssertTrue(url?.hasSuffix(Self.imageBase64) == true,
+                      "image bytes lost or re-encoded")
+    }
+
+    /// MP3 attachment through the chat-completions builder serializes as an
+    /// input_audio content part with format "mp3" and base64 data.
+    func testOpenAIChat_audioAttachment_asInputAudio() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let audioBytes = Data("ID3fake-mp3-bytes".utf8)
+        let attachment = file(name: "x.mp3", mime: "audio/mpeg", bytes: audioBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Transcribe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        guard let parts = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content; got \(String(describing: messages[0]["content"]))")
+            return
+        }
+        let audioPart = parts.first { $0["type"] as? String == "input_audio" }
+        XCTAssertNotNil(audioPart, "no input_audio part; got \(parts)")
+        let audio = audioPart?["input_audio"] as? [String: Any]
+        XCTAssertEqual(audio?["format"] as? String, "mp3")
+        XCTAssertEqual(audio?["data"] as? String, audioBytes.base64EncodedString())
+    }
+
     // MARK: - DeepSeek (chat-completions style)
 
     /// DeepSeek supports inline text content. A text-mime attachment should
