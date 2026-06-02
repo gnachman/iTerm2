@@ -710,7 +710,11 @@ static NSMutableArray<NSString *> *_combinedLog;
 
 - (void)load:(NSArray *)prefs {
     [bookmarks_ removeAllObjects];
-    for (Profile *profile in prefs) {
+    for (id object in prefs) {
+        Profile *profile = [NSDictionary castFrom:object];
+        if (!profile) {
+            continue;
+        }
         if (![iTermAdvancedSettingsModel browserProfiles] && [profile profileType] == ProfileTypeBrowser) {
             continue;
         }
