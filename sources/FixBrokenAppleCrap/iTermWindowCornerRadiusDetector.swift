@@ -68,6 +68,19 @@ class iTermWindowCornerRadiusDetector: NSObject {
         return result
     }
 
+    /// Best-effort window corner radius (in points) to use before screenshot
+    /// detection has produced a value, or if detection fails outright. Once
+    /// detection succeeds for a window configuration its measured value is cached
+    /// and supersedes this. macOS 26 (Tahoe) uses noticeably rounder window
+    /// corners than earlier releases, so a single hardcoded constant would leave
+    /// the heavy window border arc clipped against the system mask there.
+    @objc static var fallbackCornerRadius: CGFloat {
+        if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+            return 16
+        }
+        return 12
+    }
+
     @objc static func cachedCornerRadius(for window: NSWindow) -> NSNumber? {
         // Lion-style fullscreen windows always have square corners
         if window.styleMask.contains(.fullScreen) {
@@ -299,44 +312,78 @@ class iTermWindowCornerRadiusDetector: NSObject {
             saveImageToTmp(image, windowID: windowID, suffix: "full")
             return nil
         }
-        let buffer = data.bindMemory(to: UInt8.self, capacity: cornerSize * cornerSize * 4)
+        let count = cornerSize * cornerSize * 4
+        let buffer = data.bindMemory(to: UInt8.self, capacity: count)
+        let rgba = Array(UnsafeBufferPointer(start: buffer, count: count))
 
-        // Sample points along the curved edge by scanning each row.
-        // For each row y, find the x where the content becomes opaque.
-        // Use a threshold to skip antialiased pixels at the corner edge.
-        let alphaThreshold: UInt8 = 180
+        guard let radius = cornerRadiusInPoints(premultipliedRGBA: rgba,
+                                                cornerSize: cornerSize,
+                                                backingScaleFactor: backingScaleFactor) else {
+            DLog("detectRadius failed - not enough edge points for windowID=\(windowID)")
+            saveImageToTmp(image, windowID: windowID, suffix: "full")
+            return nil
+        }
+        DLog("detectRadius radius(pt)=\(radius) for windowID=\(windowID)")
+        return radius
+    }
+
+    /// Measure the window corner radius (in points) from a premultiplied-RGBA
+    /// crop whose origin (0, 0) is the window's top-left corner.
+    ///
+    /// The window's rounded mask is encoded in the alpha channel: pixels outside
+    /// the rounded corner are fully transparent (alpha 0) and pixels inside carry
+    /// the window's own opacity. That is true regardless of how transparent the
+    /// window is, so we must not assume the interior is opaque. The old code used
+    /// a fixed alpha threshold of 180, which never triggered on a low-opacity
+    /// window (a 10% window's interior alpha is only ~25) and made detection fail
+    /// there entirely. Instead, threshold each row relative to that row's peak
+    /// alpha: the 50%-of-peak crossing is the antialiased mask boundary at any
+    /// opacity. Returns nil if too few edge points are found to fit a circle.
+    static func cornerRadiusInPoints(premultipliedRGBA rgba: [UInt8],
+                                     cornerSize: Int,
+                                     backingScaleFactor: CGFloat) -> CGFloat? {
+        guard cornerSize > 0,
+              backingScaleFactor > 0,
+              rgba.count >= cornerSize * cornerSize * 4 else {
+            return nil
+        }
+
+        // A row whose peak alpha is below this is treated as fully outside the
+        // window (nothing but transparent fringe) and skipped.
+        let minimumPeakAlpha = 8
         var edgePoints: [(x: Double, y: Double)] = []
 
-        // Scan rows (for each y, find first x with alpha >= threshold)
         for y in 0..<cornerSize {
+            var peak = 0
             for x in 0..<cornerSize {
-                let offset = (y * cornerSize + x) * 4
-                let alpha = buffer[offset + 3]
-                if alpha >= alphaThreshold {
-                    DLog("row scan: y=\(y) x=\(x) alpha=\(alpha)")
+                let alpha = Int(rgba[(y * cornerSize + x) * 4 + 3])
+                if alpha > peak {
+                    peak = alpha
+                }
+            }
+            guard peak >= minimumPeakAlpha else { continue }
+
+            let threshold = max(1, peak / 2)
+            for x in 0..<cornerSize {
+                let alpha = Int(rgba[(y * cornerSize + x) * 4 + 3])
+                if alpha >= threshold {
                     edgePoints.append((x: Double(x), y: Double(y)))
                     break
                 }
             }
-            // Stop when we reach x=0 - we've passed the curved portion
+            // Stop when we reach x=0 - we've passed the curved portion.
             if let lastPoint = edgePoints.last, lastPoint.x == 0 {
                 break
             }
         }
 
         guard edgePoints.count >= 3 else {
-            DLog("detectRadius failed - only \(edgePoints.count) edge points found (need >= 3)")
-            saveImageToTmp(image, windowID: windowID, suffix: "full")
             return nil
         }
 
         // Find the radius that minimizes geometric error by trying all integer radii.
         // For a circle tangent to both axes, center is at (r, r) and radius is r.
         let radiusPixels = findBestRadius(points: edgePoints, maxRadius: cornerSize)
-        DLog("radiusPixels=\(radiusPixels) edgePoints.count=\(edgePoints.count)")
-
-        saveImageToTmp(image, windowID: windowID, suffix: "radius-\(radiusPixels)")
-
         return CGFloat(radiusPixels) / backingScaleFactor
     }
 

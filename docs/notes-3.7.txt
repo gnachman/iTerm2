@@ -597,6 +597,19 @@ Bug Fixes:
   solid color view, which refreshes the color
   in updateLayer under the correct drawing
   appearance.
+- The heavy window border no longer leaves its
+  corners unbordered on low-opacity windows. The
+  corner-radius detector failed on transparent
+  windows (their interior is not opaque enough),
+  so the border fell back to a wrong radius and
+  the corner arc was clipped away. Detection now
+  works at any opacity, with a better per-OS
+  fallback radius. Issue 12882.
+- The heavy window border now stays flush with
+  the window edges instead of sometimes drawing
+  as a smaller inner rounded rectangle. Its view
+  could be left at a stale size and was not kept
+  in sync with the window. Issue 12882.
 - The legacy (non-GPU) renderer now invalidates
   only the lines that actually changed, instead
   of repainting the entire view on every cell
