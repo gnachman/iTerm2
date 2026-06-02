@@ -44,6 +44,11 @@
 
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
         NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
+        if (!guid) {
+            // A profile without a GUID can't be registered for a hotkey, and
+            // -[NSMutableSet removeObject:] raises on a nil argument.
+            continue;
+        }
         [guidsOfProfileHotKeys removeObject:guid];
         const BOOL hasHotKey = [iTermProfilePreferences boolForKey:KEY_HAS_HOTKEY inProfile:profile];
 
