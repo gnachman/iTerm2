@@ -33,10 +33,12 @@ class CommandShareMenuProvider: NSObject {
             return
         }
         let menu = SimpleContextMenu()
-        let command = mark.command ?? ""
+        let command = mark.fullCommand ?? ""
         if !command.isEmpty {
+            let snippetTitle = mark.firstLineOfCommand.flatMap { $0.isEmpty ? nil : $0 } ?? command
             menu.addItem(title: "Add Command as Snippet") { [weak window] in
-                CommandShareMenuProvider.addCommandAsSnippet(command,
+                CommandShareMenuProvider.addCommandAsSnippet(title: snippetTitle,
+                                                             value: command,
                                                              window: window,
                                                              locationInWindow: locationInWindow)
             }
@@ -86,11 +88,12 @@ class CommandShareMenuProvider: NSObject {
         }
     }
 
-    private static func addCommandAsSnippet(_ command: String,
+    private static func addCommandAsSnippet(title: String,
+                                            value: String,
                                             window: NSWindow?,
                                             locationInWindow: NSPoint) {
-        let snippet = iTermSnippet(title: command,
-                                   value: command,
+        let snippet = iTermSnippet(title: title,
+                                   value: value,
                                    guid: UUID().uuidString,
                                    tags: [],
                                    escaping: .none,
@@ -127,7 +130,7 @@ class CommandShareMenuProvider: NSObject {
         }
         let saver = AttributedStringSaver(promisedContent)
         saver.documentAttributes = [ .backgroundColor: defaultBackgroundColor]
-        saver.save(defaultName: defaultCommand(mark.command), window: window)
+        saver.save(defaultName: defaultCommand(mark.fullCommand), window: window)
     }
 
     private static func copyCommandURL(url: URL, window: NSWindow?, locationInWindow: NSPoint) {

@@ -118,7 +118,7 @@ extension PTYSession {
             }
 
             if let mark = screen.lastCommandMark(),
-               let command = mark.command,
+               let command = mark.fullCommand,
                mark.hasCode {
                 items.append("The last command exited with status \(mark.code). That command was: \(command)")
             }
@@ -576,7 +576,7 @@ extension PTYSession {
             if entries.count >= limit {
                 return
             }
-            if let command = mark.command {
+            if let command = mark.fullCommand {
                 var entry: [String: String] = ["command": command]
                 let guid = mark.guid
                 if !guid.isEmpty {
@@ -600,7 +600,7 @@ extension PTYSession {
                        "The last command execute can’t be provided because Shell Integration isn’t installed.")
             return
         }
-        guard let command = screen.lastCommandMark()?.command else {
+        guard let command = screen.lastCommandMark()?.fullCommand else {
             try completion("There are no previous command in history", "No previous command is available in this session}s history.")
             return
         }
@@ -632,7 +632,7 @@ extension PTYSession {
         }
         var entries = [[String: String]]()
         screen.enumeratePrompts(from: nil, to: nil) { mark in
-            if let command = mark.command, command.contains(searchCommandHistory.query) {
+            if let command = mark.fullCommand, command.contains(searchCommandHistory.query) {
                 var entry: [String: String] = ["command": command]
                 let guid = mark.guid
                 if !guid.isEmpty {
@@ -1627,20 +1627,6 @@ extension PTYSession {
             }
         }
     }
-}
-
-extension PTYSession: ResilientCoordinateDataSource {
-    var rcScrollbackOverflow: Int64 { screen.totalScrollbackOverflow() }
-    var rcNumberOfLines: Int32 { screen.numberOfLines() }
-    var rcGuid: String { guid }
-    var rcWidth: Int32 { screen.width() }
-}
-
-extension VT100ScreenMutableState: ResilientCoordinateDataSource {
-    var rcScrollbackOverflow: Int64 { cumulativeScrollbackOverflow }
-    var rcNumberOfLines: Int32 { Int32(numberOfLines) }
-    var rcGuid: String { uniqueIdentifier }
-    var rcWidth: Int32 { Int32(width) }
 }
 
 extension PTYSession: AutomaticProfileSwitchingSessionDelegate {

@@ -13,7 +13,7 @@ class CommandURLBuilderObjC: NSObject {
     static func url(mark: VT100ScreenMarkReading,
                     absLine: Int64,
                     dataSource: PTYTextViewDataSource?) -> URL? {
-        guard let dataSource, let command = mark.command else {
+        guard let dataSource, let command = mark.fullCommand else {
             return nil
         }
         var builder = CommandURLBuilder(command: command)

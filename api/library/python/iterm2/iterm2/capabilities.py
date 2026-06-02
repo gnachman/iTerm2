@@ -190,3 +190,16 @@ def check_supports_apply_layout(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to apply layouts via the Python API. " +
             "You should upgrade to run this script.")
+
+def supports_prompt_excluded_subranges(connection):
+    """Does GetPromptResponse populate excluded_subranges (PS2 prefixes,
+    right-prompt cells inside the command range)?"""
+    min_ver = (1, 15)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_prompt_excluded_subranges(connection):
+    if not supports_prompt_excluded_subranges(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to report excluded subranges " +
+            "(PS2 prefixes, right-prompt cells) on prompts. You should " +
+            "upgrade to run this script.")

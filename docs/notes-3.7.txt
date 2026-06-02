@@ -1180,7 +1180,39 @@ Bug Fixes:
   unsupported file is reported by the
   model instead of being silently
   refused.
-
 - Announcements now become narrower
   when the clippings panel is visible
   so they no longer overlap it.
+- Python API: GetPromptResponse now
+  has excluded_subranges, listing the
+  cell regions inside the command
+  range that the shell marked as
+  non-input via OSC 133;A;k=s|c|r
+  (PS2 prefixes, right-prompt cells).
+  Available on responses to
+  async_get_last_prompt and
+  async_get_prompt_by_id. Always
+  empty on PromptMonitor.PROMPT
+  notifications — fetch via the RPC
+  after a COMMAND_END notification
+  for the populated value.
+- OSC 133 aid= now tracks nested
+  shell-integration sessions: a local
+  shell that runs ssh into a remote
+  shell with shell integration (or a
+  REPL that emits its own A/B/C/D)
+  no longer confuses iTerm2's mark
+  bookkeeping when the inner D's
+  arrive before the outer's. Each
+  mark carries the aid from its
+  A/B/C/D markers and a parentAid
+  pointing at the open mark it
+  nested under. D;aid=X closes the
+  matching command instead of the
+  topmost. If an outer command dies
+  (ssh tunnel drop, etc.) without
+  the inner ever closing, the outer
+  D cascade-closes every still-open
+  mark whose parentAid chain leads
+  back to it so no inner mark leaks
+  as still-running.

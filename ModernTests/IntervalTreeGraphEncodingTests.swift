@@ -719,14 +719,18 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     func testVT100ScreenMarkRoundTrip() {
         let mark = VT100ScreenMark()
         mark.isPrompt = true
-        mark.command = "ls -la"
+        mark.firstLineOfCommand = "ls -la"
+        mark.fullCommand = "ls -la"
         mark.code = 0
         mark.name = "Test Mark"
 
         verifyRoundTrip(mark, interval: Interval(location: 100, length: 50)) { original, restored in
             XCTAssertEqual(restored.guid, original.guid, "GUID should be preserved")
             XCTAssertEqual(restored.isPrompt, original.isPrompt, "isPrompt should be preserved")
-            XCTAssertEqual(restored.command, original.command, "command should be preserved")
+            XCTAssertEqual(restored.firstLineOfCommand, original.firstLineOfCommand,
+                           "firstLineOfCommand should be preserved")
+            XCTAssertEqual(restored.fullCommand, original.fullCommand,
+                           "fullCommand should be preserved")
             XCTAssertEqual(restored.code, original.code, "code should be preserved")
             XCTAssertEqual(restored.name, original.name, "name should be preserved")
         }
@@ -956,7 +960,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Add one of each Swift-visible type
         // Note: iTermCapturedOutputMark and VT100WorkingDirectory are not in bridging header
         let screenMark = VT100ScreenMark()
-        screenMark.command = "echo test"
+        screenMark.firstLineOfCommand = "echo test"
+        screenMark.fullCommand = "echo test"
 
         let annotation = PTYAnnotation()
         annotation.stringValue = "Note"
@@ -1023,7 +1028,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Verify key properties preserved
         let restoredScreenMark = restoredObjects.compactMap { $0 as? VT100ScreenMark }.first!
-        XCTAssertEqual(restoredScreenMark.command, "echo test")
+        XCTAssertEqual(restoredScreenMark.firstLineOfCommand, "echo test")
+        XCTAssertEqual(restoredScreenMark.fullCommand, "echo test")
 
         let restoredAnnotation = restoredObjects.compactMap { $0 as? PTYAnnotation }.first!
         XCTAssertEqual(restoredAnnotation.stringValue, "Note")

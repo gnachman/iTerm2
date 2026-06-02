@@ -1457,7 +1457,10 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
                                                              metadata:metadata];
             [object autorelease];
         } else {
-            // Standard restoration
+            // Standard restoration. Decoded RCs come back unbound; the
+            // EventuallyConsistentIntervalTree.add side effect (for
+            // doppelgangers) and fixUpDeserializedIntervalTree: (for
+            // progenitors) bind them to their respective pools later.
             if (![theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
                 continue;
             }

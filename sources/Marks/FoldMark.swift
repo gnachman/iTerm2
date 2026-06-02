@@ -487,6 +487,7 @@ class FoldMark: iTermMark, FoldMarkReading, iTermLargeContentObject, iTermWidthS
         self.imageCodes = source.imageCodes
         self._savedWidth = source._savedWidth
         super.init()
+        self.copyGuid(from: source)
     }
 
     // Non-graph path (archived sessions)

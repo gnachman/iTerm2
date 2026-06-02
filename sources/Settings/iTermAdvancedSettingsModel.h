@@ -133,6 +133,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (CGFloat)customTabBarFontSize;
 + (double)darkModeInactiveTabDarkness;
 + (BOOL)darkThemeHasBlackTitlebar;
++ (BOOL)debugShowPromptMarkRangesInLegacyRenderer;
 + (CGFloat)defaultTabBarHeight;
 + (void)setDefaultTabBarHeight:(CGFloat)value;
 + (int)defaultTabStopWidth;

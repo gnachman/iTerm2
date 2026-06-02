@@ -1738,6 +1738,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         [_drawingHelper drawTextViewContentInRect:virtualRect rectsPtr:rectArray rectCount:rectCount virtualOffset:virtualOffset];
 
         [NSGraphicsContext restoreGraphicsState];
+
+        // Optional debug overlay: highlight each visible prompt mark's command
+        // range (green) and excluded subranges (red). Gated by an advanced
+        // setting and runs only on the legacy renderer (this method is only
+        // reached when textViewShouldDrawRect returns YES).
+        if ([iTermAdvancedSettingsModel debugShowPromptMarkRangesInLegacyRenderer]) {
+            [NSGraphicsContext saveGraphicsState];
+            [self drawDebugPromptMarkOverlayInRect:virtualRect virtualOffset:virtualOffset];
+            [NSGraphicsContext restoreGraphicsState];
+        }
+
         const NSRect indicatorsRect = NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, MAX(0, virtualOffset));
 
         if (!_drawingHelper.offscreenCommandLine) {
@@ -1773,6 +1784,110 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                              startedThisFrame:startedLegacyAnimation];
     }];
     [self shiftTrackingChildWindows];
+}
+
+#pragma mark - Debug overlay for prompt-mark ranges
+
+// Walks every visible line, finds the unique prompt marks intersecting the
+// viewport, and outlines each one's promptRange (blue), commandRange (green),
+// and excludedSubranges (red). Cell coordinates are converted to view coords
+// via the same rectForCoordRange helper the rest of the legacy draw path uses,
+// so the outlines line up with cells exactly.
+- (void)drawDebugPromptMarkOverlayInRect:(NSRect)rect virtualOffset:(CGFloat)virtualOffset {
+    const VT100GridCoordRange visible = [_drawingHelper coordRangeForRect:rect];
+    if (visible.start.y > visible.end.y) {
+        return;
+    }
+    const long long overflow = _dataSource.totalScrollbackOverflow;
+    NSMutableSet<NSString *> *drawnGuids = [NSMutableSet set];
+
+    for (int line = visible.start.y; line <= visible.end.y; line++) {
+        id<VT100ScreenMarkReading> mark = [_dataSource screenMarkOnLine:line];
+        if (!mark || !mark.isPrompt) {
+            continue;
+        }
+        NSString *guid = mark.guid;
+        if (guid && [drawnGuids containsObject:guid]) {
+            continue;
+        }
+        if (guid) {
+            [drawnGuids addObject:guid];
+        }
+
+        // Blue outline around the prompt range (start of A to start of B).
+        // Drawn first so adjacent green/red outlines paint over it on the cell
+        // boundary if any are coincident.
+        const VT100GridAbsCoordRange prompt = mark.promptRange;
+        if (prompt.start.y >= 0 && prompt.end.y >= 0 && prompt.start.x >= 0 &&
+            !VT100GridAbsCoordEquals(prompt.start, prompt.end)) {
+            [self drawDebugRectsForAbsCoordRange:prompt
+                                            color:[NSColor systemBlueColor]
+                                         overflow:overflow
+                                    virtualOffset:virtualOffset];
+        }
+
+        // Green outline around the typed command range (start of B to start of C).
+        const VT100GridAbsCoordRange cmd = mark.commandRange;
+        if (cmd.start.y >= 0 && cmd.end.y >= 0 && cmd.start.x >= 0) {
+            [self drawDebugRectsForAbsCoordRange:cmd
+                                            color:[NSColor systemGreenColor]
+                                         overflow:overflow
+                                    virtualOffset:virtualOffset];
+        }
+
+        // Red outline around each excluded subrange (PS2 prefixes, right-prompt).
+        for (iTermResilientCoordinateRange *rcRange in mark.excludedSubranges) {
+            if (rcRange.start.status != StatusValid ||
+                rcRange.end.status != StatusValid) {
+                continue;
+            }
+            [self drawDebugRectsForAbsCoordRange:rcRange.absRange
+                                            color:[NSColor systemRedColor]
+                                         overflow:overflow
+                                    virtualOffset:virtualOffset];
+        }
+    }
+}
+
+// Draws a one-pixel outline around the cells covered by `absRange`. For a
+// multi-row range, draws one outlined rect per row (first row from start.x to
+// end of line, last row from 0 to end.x, intermediate rows full-width).
+- (void)drawDebugRectsForAbsCoordRange:(VT100GridAbsCoordRange)absRange
+                                 color:(NSColor *)color
+                              overflow:(long long)overflow
+                         virtualOffset:(CGFloat)virtualOffset {
+    const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, overflow);
+    if (range.start.y < 0 || range.end.y < 0 || range.start.y > range.end.y) {
+        return;
+    }
+    const NSSize cellSize = _drawingHelper.cellSize;
+    const CGFloat margin = [iTermPreferences sideMargins];
+    const int width = _dataSource.width;
+    // NSFrameRect (the primitive iTermFrameRect calls) uses the current fill
+    // color and a default operation of NSCompositingOperationCopy — `setStroke`
+    // would have no effect and the rect would draw black. Use `-set` so both
+    // fill and stroke are configured, and explicitly use the sourceOver
+    // operation so the outline composites onto the text underneath instead
+    // of stamping a hard-edged colored box over it.
+    [color set];
+
+    for (int y = range.start.y; y <= range.end.y; y++) {
+        const int x0 = (y == range.start.y) ? range.start.x : 0;
+        const int x1 = (y == range.end.y) ? range.end.x : width;
+        if (x1 <= x0) {
+            continue;
+        }
+        const NSRect r = NSMakeRect(margin + x0 * cellSize.width,
+                                    y * cellSize.height,
+                                    (x1 - x0) * cellSize.width,
+                                    cellSize.height);
+        // Inset by 1 so the 2-pixel border sits inside the cell bounds and
+        // doesn't clip against the next row's outline.
+        const NSRect inset = NSInsetRect(r, 1.0, 1.0);
+        iTermFrameRectWithWidthUsingOperation(inset, 2.0,
+                                              NSCompositingOperationSourceOver,
+                                              virtualOffset);
+    }
 }
 
 // This view is visible only when annotations are revealed. They are subviews, and while macOS does
@@ -3675,7 +3790,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (IBAction)selectCurrentCommand:(id)sender {
     DLog(@"selectCurrentCommand");
-    [self selectRange:[_delegate textViewRangeOfCurrentCommand]];
+    NSArray<iTermSubSelection *> *subs = [_delegate textViewSubSelectionsOfCurrentCommand];
+    if (subs.count == 0) {
+        return;
+    }
+    [_selection clearSelection];
+    [_selection addSubSelections:subs];
+    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+        [self copySelectionAccordingToUserPreferences];
+    }
 }
 
 - (IBAction)selectOutputOfLastCommand:(id)sender {
@@ -6290,7 +6413,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     {
         id<VT100ScreenMarkReading> mark = [_delegate textViewSelectedCommandMark];
         DLog(@"mark=%@", mark);
-        if (!mark.lineStyle && mark.command.length > 0 && [iTermAdvancedSettingsModel showButtonsForSelectedCommand]) {
+        if (!mark.lineStyle && mark.hasNonEmptyCommand && [iTermAdvancedSettingsModel showButtonsForSelectedCommand]) {
             const NSRange intersectionRange = NSIntersectionRange(self.findOnPageHelper.absLineRange,
                                                                   [self visibleAbsoluteRangeIncludingOffscreenCommandLineIfVisible:NO]);
             if (intersectionRange.length > 0) {
@@ -6363,7 +6486,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         if (!mark.lineStyle) {
             continue;
         }
-        if (!mark.command.length) {
+        if (!mark.hasNonEmptyCommand) {
             continue;
         }
         [updated addObjectsFromArray:[self commandButtonsForMark:mark line:markLine shouldFloat:NO offByOne:YES]];
@@ -6492,7 +6615,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     if (![[mark retain] autorelease]) {
         return;
     }
-    NSString *command = mark.command;
+    NSString *command = mark.fullCommand;
 
     iTermSimpleContextMenu *menu = [[[iTermSimpleContextMenu alloc] init] autorelease];
     if (command.length) {

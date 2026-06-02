@@ -26,6 +26,16 @@ extension VT100GridCoord: Comparable {
     }
 }
 
+extension VT100GridAbsCoord: Comparable {
+    public static func == (lhs: VT100GridAbsCoord, rhs: VT100GridAbsCoord) -> Bool {
+        return lhs.x == rhs.x && lhs.y == rhs.y
+    }
+
+    public static func < (lhs: VT100GridAbsCoord, rhs: VT100GridAbsCoord) -> Bool {
+        return VT100GridAbsCoordOrder(lhs, rhs) == .orderedAscending
+    }
+}
+
 extension VT100GridCoord {
     func absolute(overflow: Int64) -> VT100GridAbsCoord {
         return VT100GridAbsCoordFromCoord(self, overflow)
@@ -89,6 +99,48 @@ extension VT100GridAbsCoord {
 extension VT100GridAbsCoordRange {
     var description: String {
         VT100GridAbsCoordRangeDescription(self)
+    }
+
+    /// Return the disjoint pieces of `self` left after removing every cell
+    /// covered by any range in `subRanges`. Half-open semantics on inputs
+    /// and outputs: `start` is inclusive, `end` is exclusive.
+    ///
+    /// Results are normalized — no empty pieces (start == end) and no
+    /// overlapping pieces — and ordered row-major. Inputs may be
+    /// unsorted, out-of-bounds, overlapping, nested, duplicated, or
+    /// individually empty; all are handled.
+    ///
+    /// Returns `[]` when `self` is invalid (start.x < 0 or start.y < 0)
+    /// or empty (start >= end), or fully covered by the union of
+    /// `subRanges`.
+    func subtracting(_ subRanges: [VT100GridAbsCoordRange]) -> [VT100GridAbsCoordRange] {
+        guard start.x >= 0, start.y >= 0, start < end else {
+            return []
+        }
+        let sortedExcluded = subRanges
+            .filter { $0.start < $0.end }
+            .sorted { $0.start < $1.start }
+
+        var pieces: [VT100GridAbsCoordRange] = []
+        var cursor = start
+        for ex in sortedExcluded {
+            if ex.start >= end {
+                break
+            }
+            if ex.end <= cursor {
+                continue
+            }
+            let exStart = max(ex.start, cursor)
+            let exEnd = min(ex.end, end)
+            if cursor < exStart {
+                pieces.append(VT100GridAbsCoordRangeMake(cursor.x, cursor.y, exStart.x, exStart.y))
+            }
+            cursor = exEnd
+        }
+        if cursor < end {
+            pieces.append(VT100GridAbsCoordRangeMake(cursor.x, cursor.y, end.x, end.y))
+        }
+        return pieces
     }
 }
 

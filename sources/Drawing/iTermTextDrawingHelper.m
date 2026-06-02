@@ -1345,7 +1345,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             NSRect rect;
             rect.origin.x = 0;
             int buttonCells = iTermTextDrawingHelperLineStyleMarkRightInsetCells;
-            if (!mark.command.length) {
+            if (!mark.hasNonEmptyCommand) {
                 buttonCells = 0;
             }
             rect.size.width = leftMargin.size.width + self.cellSize.width * (self.gridSize.width - buttonCells);

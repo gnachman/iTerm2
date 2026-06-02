@@ -8,6 +8,7 @@
 
 #import "iTermTextExtractor.h"
 #import "DebugLogging.h"
+#import "NSArray+CommonAdditions.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
@@ -1164,6 +1165,92 @@ const NSInteger kLongMaximumWordLength = 100000;
     [result appendAttributedString:matchString];
     [result appendAttributedString:attributedSuffix];
     return result;
+}
+
+- (NSString *)contentInRange:(VT100GridWindowedRange)windowedRange
+          excludingSubranges:(NSArray<iTermResilientCoordinateRange *> *)excludedSubranges {
+    const VT100GridCoordRange range = windowedRange.coordRange;
+    if (range.start.x < 0 || range.start.y < 0) {
+        return nil;
+    }
+
+    // Resolve resilient excluded subranges to concrete grid-coord ranges,
+    // dropping any whose endpoints aren't currently resolvable. mapWithBlock
+    // filters nils, so .invalid / .unresolved* / .scrolledOff entries
+    // drop out naturally. Sort by start so isExcluded can walk a single
+    // monotonic index forward alongside the cell enumeration.
+    const long long overflow = [_dataSource totalScrollbackOverflow];
+    NSArray<NSValue *> *excludedGridRanges =
+        [[(excludedSubranges ?: @[]) mapWithBlock:^id(iTermResilientCoordinateRange *r) {
+            if (r.start.status != StatusValid || r.end.status != StatusValid) {
+                return nil;
+            }
+            const VT100GridAbsCoordRange a = r.absRange;
+            const VT100GridCoordRange g =
+                VT100GridCoordRangeMake(a.start.x, (int)(a.start.y - overflow),
+                                        a.end.x,   (int)(a.end.y   - overflow));
+            return [NSValue valueWithBytes:&g objCType:@encode(VT100GridCoordRange)];
+        }] sortedArrayUsingComparator:^NSComparisonResult(NSValue *aV, NSValue *bV) {
+            VT100GridCoordRange a, b;
+            [aV getValue:&a];
+            [bV getValue:&b];
+            return VT100GridCoordCompare(a.start, b.start);
+        }];
+
+    // Cell enumeration walks forward in row-major order; excludedGridRanges
+    // is sorted the same way. Park nextIdx at the lowest range whose end
+    // might still cover a future coord; advance past any range we've
+    // walked past entirely. Per-call cost is amortized O(1).
+    __block NSUInteger nextIdx = 0;
+    BOOL (^isExcluded)(VT100GridCoord) = ^BOOL(VT100GridCoord coord) {
+        while (nextIdx < excludedGridRanges.count) {
+            VT100GridCoordRange g;
+            [excludedGridRanges[nextIdx] getValue:&g];
+            // [g.start, g.end) half-open. If coord >= g.end, the range
+            // is fully behind us; no future coord can land in it either.
+            if (VT100GridCoordCompare(coord, g.end) == NSOrderedAscending) {
+                return VT100GridCoordCompare(coord, g.start) != NSOrderedAscending;
+            }
+            nextIdx++;
+        }
+        return NO;
+    };
+
+    NSMutableString *result = [NSMutableString string];
+    [self enumerateCharsInRange:windowedRange
+                    supportBidi:NO
+                      charBlock:^BOOL(const screen_char_t *line,
+                                      screen_char_t c,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord visualCoord) {
+        // Return value: YES stops enumeration, NO continues. We always
+        // want to keep walking until the range is exhausted.
+        if (isExcluded(visualCoord)) {
+            return NO;
+        }
+        if (c.image) {
+            return NO;
+        }
+        if (!c.complexChar && (c.code == 0 ||
+                               (c.code >= ITERM2_PRIVATE_BEGIN && c.code <= ITERM2_PRIVATE_END))) {
+            return NO;
+        }
+        NSString *s = ScreenCharToStr(&c);
+        if (s) {
+            [result appendString:s];
+        }
+        return NO;
+    }
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
+        if (code == EOL_HARD) {
+            [result appendString:@"\n"];
+        }
+        return NO;
+    }];
+
+    NSString *trimmed = [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return trimmed.length > 0 ? trimmed : nil;
 }
 
 - (id)contentInRange:(VT100GridWindowedRange)windowedRange

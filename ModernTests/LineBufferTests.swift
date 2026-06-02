@@ -1118,6 +1118,29 @@ class LineBufferTests: XCTestCase {
             XCTAssertEqual(xyRanges?.first?.yStart, 2, "Match should be on row 2 (the 'xthird' row)")
             XCTAssertEqual(xyRanges?.first?.xStart, 0, "Match should start at column 0")
         }
+    func testRightPromptBug() {
+        let buffer = LineBuffer()
+        let width = Int32(133)
+        let s0 = screenCharArrayWithDefaultStyle("Blah",
+                                                 eol: EOL_HARD)
+        let s1 = screenCharArrayWithDefaultStyle(
+            "Prompt>                                                     [abcdefgh]",
+            eol: EOL_HARD)
+        let s2 = screenCharArrayWithDefaultStyle("Hello world",
+                                                 eol: EOL_HARD)
+        buffer.append(s0, width: width)
+        buffer.append(s1, width: width)
+        buffer.append(s2, width: width)
+
+        let pos = buffer.position(forCoordinate: VT100GridCoord(x: 70, y: 1), width: width, offset: 0)
+        guard let pos else {
+            XCTFail("failed to get position")
+            return
+        }
+        var ok = ObjCBool(false)
+        let result = buffer.coordinate(for: pos, width: width - 1, extendsRight: false, ok: &ok)
+        XCTAssertTrue(ok.boolValue)
+        XCTAssertEqual(result, VT100GridCoord(x: 70, y: 1))
     }
 
     // MARK: - Raw line counting

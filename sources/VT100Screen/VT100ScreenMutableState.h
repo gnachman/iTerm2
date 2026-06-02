@@ -17,12 +17,29 @@
 @class iTermTokenExecutor;
 @class TmuxHistory;
 @class iTermEventuallyConsistentIntervalTree;
+@class iTermResilientCoordinate;
+@protocol iTermResilientCoordinateDataSource;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol VT100ScreenSideEffectPerforming<NSObject>
 - (nullable id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate;
 - (nullable id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver;
+@end
+
+// A lightweight ResilientCoordinateDataSource that proxies width /
+// numberOfLines / scrollbackOverflow to a backing data source but
+// returns its OWN rcGuid. Used to give the saved interval tree a
+// distinct RC pool guid from the primary tree, so the resize / fold /
+// porthole notification broadcasts can target only the right tree's
+// marks. One instance per pool: mutation-thread (backed by
+// VT100ScreenMutableState) and main-thread (backed by VT100ScreenState).
+@interface iTermSavedTreeRCDataSource : NSObject <iTermResilientCoordinateDataSource>
+@property (nonatomic, weak, nullable) id<iTermResilientCoordinateDataSource> backing;
+@property (nonatomic, copy) NSString *guid;
+- (instancetype)initWithGuid:(NSString *)guid
+                     backing:(id<iTermResilientCoordinateDataSource>)backing NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 @end
 
 @interface VT100ScreenMutableState: VT100ScreenState<NSCopying, VT100ScreenMutableState>
@@ -36,6 +53,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
 @property (nonatomic, weak, nullable) id<iTermEchoProbeDelegate> echoProbeDelegate;
 @property (nullable, nonatomic, strong) VT100ScreenState *mainThreadCopy;
+
+// Saved-tree RC pool: distinct guid from the primary tree so resize /
+// fold / porthole notifications can target only the right tree's
+// marks. Held strongly so VT100Screen.init can wire them onto the
+// tree's mainThreadDataSource / mutationThreadDataSource and leave
+// lifetime management to mutableState. Configured by VT100Screen.init.
+@property (nullable, nonatomic, strong) iTermSavedTreeRCDataSource *savedTreeMutationThreadDataSource;
+@property (nullable, nonatomic, strong) iTermSavedTreeRCDataSource *savedTreeMainThreadDataSource;
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (VT100ScreenState *)copy;
@@ -256,9 +281,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // This is like setPromptStartLine: but with lots of side effects that are desirable for the
 // regular shell integration flow.
-- (VT100ScreenMark * _Nullable)promptDidStartAt:(VT100GridAbsCoord)coord wasInCommand:(BOOL)wasInCommand detectedByTrigger:(BOOL)detectedByTrigger;
+// freshLine controls the "insert a CR+LF if the cursor isn't at column 0"
+// behavior (further gated by config.shouldPlacePromptAtFirstColumn). YES for
+// OSC 133;A and for trigger-detected prompts; NO for OSC 133;P.
+// `aid` is the OSC 133 `aid=<id>` attribute (nil for trigger-detected or
+// shells that don't emit aid); when non-nil it's stamped on the resulting
+// mark and the mark is registered in marksByAid/openAidStack so the
+// matching `D;aid=<id>` can close it.
+- (VT100ScreenMark * _Nullable)promptDidStartAt:(VT100GridAbsCoord)coord
+                                   wasInCommand:(BOOL)wasInCommand
+                              detectedByTrigger:(BOOL)detectedByTrigger
+                                      freshLine:(BOOL)freshLine
+                                            aid:(NSString * _Nullable)aid;
 
-- (VT100ScreenMark * _Nullable)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger;
+- (VT100ScreenMark * _Nullable)setPromptStartLine:(int)line
+                                detectedByTrigger:(BOOL)detectedByTrigger
+                                              aid:(NSString * _Nullable)aid;
 - (void)didUpdatePromptLocation;
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger;
 - (void)pauseAtNextPrompt:(nullable void (^)(void))paused;
@@ -382,6 +420,69 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 @property (nonatomic) BOOL isTmuxGateway;
 @property (nonatomic) BOOL hasMuteCoprocess;
 @property (nonatomic) BOOL suppressAllOutput;
+
+// Kind of the most-recently-opened OSC 133;A / 133;P. The delegate methods
+// for `terminalCommandDidStart` and friends consult this to decide whether
+// the matching B closes a real command read (.initial) or a non-input
+// region like a PS2 or right-prompt. Reset to .initial after each B/C/D.
+@property (nonatomic) VT100PromptKind currentPromptKind;
+
+// Cursor position recorded at a non-initial OSC 133;A (PS2 or right-prompt
+// open). Consumed by the matching `terminalCommandDidStart` to append
+// (pendingNonInitialPromptStart.coord, cursor) as an excluded subrange on
+// the active prompt mark. Resilient so resize / scrollback overflow that
+// happens between the A and the B doesn't corrupt the recorded coord.
+// nil means "no pending range".
+@property (nonatomic, strong, nullable) iTermResilientCoordinate *pendingNonInitialPromptStart;
+
+// Registry of currently-open command marks keyed by OSC 133 `aid=<id>`.
+// Populated when an aid'd prompt mark is created (at A) and removed when
+// that aid's matching D arrives (or its parent closes via cascade).
+// Empty in the common case where shells don't emit aid. Used to dispatch
+// `D;aid=X` close-by-aid and to compute `parentAid` (set on a new mark to
+// the deepest-open aid at the moment its first marker arrives — drives
+// the cascade-close that prevents leaked open marks when an outer
+// command like ssh dies).
+@property (nonatomic, strong, readonly) NSMutableDictionary<NSString *, VT100ScreenMark *> *marksByAid;
+
+// Stack of currently-open aids in arrival order (top = deepest). Pushed
+// at A;aid=X (when X isn't already present), popped at D;aid=X. The
+// deepest entry is the `parentAid` for any new aid'd mark that opens
+// while a parent is still in-flight.
+//
+// Maintenance comes in two flavors:
+//   1. The D-by-aid close paths in +TerminalDelegate.m (setReturnCodeForAidMark:,
+//      closeAidMark:'s cascade loop) drop targeted aids inline — the marks
+//      stay in the tree after the close (endDate set, mark not removed),
+//      so the removal hook can't help here.
+//   2. PERMANENT removals from the tree fire
+//      -willRemoveScreenMarksFromIntervalTree:, which drops the aid'd
+//      mark's registry entry centrally. That covers every path that goes
+//      through -removeObjectFromIntervalTree: / -removeObjectsFromIntervalTree:
+//      (scrollback clear, prompt-marks-below, removeInaccessibleIntervalTreeObjects,
+//      etc.).
+//   3. Two paths use -[mutableIntervalTree removeObject:] directly and
+//      thereby bypass the will/did hooks: -commandWasAborted (legacy abort)
+//      and -abortSpecificAidMark: (close-by-aid abort). Both call
+//      -pruneAidRegistry explicitly because their removals are permanent.
+//
+// Patterns that temporarily remove + re-add a mark (replaceMark:,
+// changeHeightOfMark:, reallyReplaceRange:, intervalTree's internal
+// move-and-rebind during bulkMoveObjects:) use -[mutableIntervalTree
+// removeObject:] directly too. Because they bypass the will/did hooks,
+// the registry stays correct for those — the mark survives the operation
+// and its entry is restored by the matching addObject:.
+//
+// Serialized through kScreenStateOpenAidStackKey; marksByAid rebuilds
+// from the restored stack at the end of fixUpDeserializedIntervalTree:.
+@property (nonatomic, strong, readonly) NSMutableArray<NSString *> *openAidStack;
+
+// Drop registry entries whose mark is no longer in the interval tree
+// (mark.entry == nil). Called from the two PERMANENT direct-removal
+// paths (commandWasAborted, abortSpecificAidMark:) that bypass the
+// willRemove hook. Safe to call unconditionally — it's a no-op when
+// nothing's stale.
+- (void)pruneAidRegistry;
 
 - (void)threadedReadTask:(char *)buffer length:(int)length;
 - (void)addTokens:(CVector)vector

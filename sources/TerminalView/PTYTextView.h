@@ -40,6 +40,7 @@
 @protocol iTermPathMarkReading;
 @class iTermQuickLookController;
 @class iTermSelection;
+@class iTermSubSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
 @protocol iTermSwipeHandler;
 @class iTermTerminalButton;
@@ -193,6 +194,13 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput;
 - (VT100GridAbsCoordRange)textViewRangeOfCurrentCommand;
+// Same as textViewRangeOfCurrentCommand but returns a disjoint set of
+// iTermSubSelections that excludes any cells covered by the current
+// command mark's excludedSubranges (PS2 prefix cells, right-prompt
+// cells). Returns @[] when there's nothing to select. Used by
+// -selectCurrentCommand: so Cmd-Shift-A doesn't drag PS2 / right-prompt
+// text into the clipboard.
+- (NSArray<iTermSubSelection *> *)textViewSubSelectionsOfCurrentCommand;
 - (BOOL)textViewCanSelectOutputOfLastCommand;
 - (BOOL)textViewCanSelectCurrentCommand;
 - (NSColor *)textViewCursorGuideColor;

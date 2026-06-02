@@ -19,6 +19,7 @@
 #import "iTermImageMark.h"
 #import "iTermSelection.h"
 
+
 @implementation VT100ScreenMutableState (Resizing)
 
 - (void)setSize:(VT100GridSize)proposedSize
@@ -697,65 +698,10 @@ static void SwapInt(int *a, int *b) {
             self.blockStartAbsLine[blockMark.blockID] = @(newRange.start.y);
         }
 
-        VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:note];
-        if (screenMark) {
-            const int width = self.width;
-            const VT100GridCoordRange commandRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow)];
-            if (commandRange.start.x >= 0 && commandRange.start.x < width && commandRange.end.x <= width) {
-                VT100GridCoordRange converted;
-                if ([self convertRange:commandRange
-                               toWidth:newWidth
-                                    to:&converted
-                          inLineBuffer:self.linebuffer
-                         tolerateEmpty:tolerateEmptyScreenMarks]) {
-                    [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
-                        [VT100ScreenMark castFrom:mutableMark].commandRange = VT100GridAbsCoordRangeFromCoordRange(converted, overflow);
-                    }];
-                }
-            }
-
-            VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
-            // This is a cheap hack that will break with DWCs. I need a better way to make prompt range sane.
-            promptRange.start.y += promptRange.start.x / self.width;
-            promptRange.end.y += promptRange.start.x / self.width;
-            promptRange.start.x %= self.width;
-            promptRange.end.y += promptRange.end.x / self.width;
-            promptRange.end.x %= self.width;
-            if (promptRange.start.x >= 0) {
-                VT100GridCoordRange converted;
-                if ([self convertRange:promptRange
-                               toWidth:newWidth
-                                    to:&converted
-                          inLineBuffer:self.linebuffer
-                         tolerateEmpty:tolerateEmptyScreenMarks]) {
-                    [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
-                        [VT100ScreenMark castFrom:mutableMark].promptRange = VT100GridAbsCoordRangeFromCoordRange(converted, overflow);
-                    }];
-                }
-            }
-
-            if (screenMark.outputStart.x != -1) {
-                BOOL ok = NO;
-                const VT100GridCoord outputStart = VT100GridCoordFromAbsCoord(screenMark.outputStart, overflow, &ok);
-                if (!ok) {
-                    screenMark.outputStart = VT100GridAbsCoordMake(-1, -1);
-                } else {
-                    VT100GridCoordRange converted;
-                    if ([self convertRange:VT100GridCoordRangeMake(outputStart.x,
-                                                                   outputStart.y,
-                                                                   outputStart.x + 1,
-                                                                   outputStart.y)
-                                   toWidth:newWidth
-                                        to:&converted
-                              inLineBuffer:self.linebuffer
-                             tolerateEmpty:tolerateEmptyScreenMarks]) {
-                        [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> mutableMark) {
-                            [VT100ScreenMark castFrom:mutableMark].outputStart = VT100GridAbsCoordFromCoord(converted.start, overflow);
-                        }];
-                    }
-                }
-            }
-        }
+        // promptRange / commandRange / outputStart self-update via the
+        // ResilientCoordinate resize converter posted at the end of the
+        // resize pass; no per-field rewrite needed here. See
+        // VT100ScreenMark's RC-backed accessors.
     }];
 }
 
@@ -1116,10 +1062,21 @@ static void SwapInt(int *a, int *b) {
 - (void)updateSavedIntervalTreeWithWidth:(int)newWidth
                               lineBuffer:(LineBuffer *)altScreenLineBuffer
                                  dropped:(int)numLinesDroppedFromTop {
-    NSArray<id<IntervalTreeImmutableObject>> *objects = self.savedIntervalTree.allObjects;
+    NSArray<id<IntervalTreeObject>> *objects = (NSArray<id<IntervalTreeObject>> *)self.savedIntervalTree.allObjects;
+    // Snapshot entries BEFORE removeAllObjects, which nils each object's
+    // entry. Without this snapshot, every later read of object.entry.interval
+    // returns nil (location 0, length 0), collapsing the convert range to
+    // (0,0) and dropping the mark. Snapshot the entry (always non-nil for an
+    // in-tree object) rather than entry.interval so mapWithBlock can't drop an
+    // element and desync the parallel array. Matches updateIntervalTreeWithWidth.
+    NSArray<id<IntervalTreeImmutableEntry>> *entries = [objects mapWithBlock:^id(id<IntervalTreeObject> anObject) {
+        return anObject.entry;
+    }];
     [self.mutableSavedIntervalTree removeAllObjects];
-    for (id<IntervalTreeObject> object in objects) {
-        VT100GridCoordRange objectRange = [self coordRangeForInterval:object.entry.interval];
+    for (NSUInteger idx = 0; idx < objects.count; idx++) {
+        id<IntervalTreeObject> object = objects[idx];
+        Interval *interval = entries[idx].interval;
+        VT100GridCoordRange objectRange = [self coordRangeForInterval:interval];
         DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
         VT100GridCoordRange newRange;
         if (![self convertRange:objectRange
@@ -1159,84 +1116,19 @@ static void SwapInt(int *a, int *b) {
             object.entry = nil;
             object.doppelganger.entry = nil;
             [self.mutableSavedIntervalTree addObject:object withInterval:newInterval];
-
-            // Update VT100ScreenMark's internal coordinate properties.
-            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:object];
-            if (screenMark) {
-                const long long overflow = self.cumulativeScrollbackOverflow;
-                const int width = self.width;
-                const long long yOffset = overflow - numLinesDroppedFromTop;
-
-                // Update commandRange
-                const VT100GridCoordRange commandRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.commandRange, overflow)];
-                if (commandRange.start.x >= 0 && commandRange.start.x < width && commandRange.end.x <= width) {
-                    VT100GridCoordRange converted;
-                    if ([self convertRange:commandRange
-                                   toWidth:newWidth
-                                        to:&converted
-                              inLineBuffer:altScreenLineBuffer
-                             tolerateEmpty:NO]) {
-                        converted.start.y += yOffset;
-                        converted.end.y += yOffset;
-                        [self.mutableSavedIntervalTree mutateObject:object block:^(id<IntervalTreeObject> mutableMark) {
-                            [VT100ScreenMark castFrom:mutableMark].commandRange = VT100GridAbsCoordRangeFromCoordRange(converted, 0);
-                        }];
-                    }
-                }
-
-                // Update promptRange
-                VT100GridCoordRange promptRange = [self safeCoordRange:VT100GridCoordRangeFromAbsCoordRange(screenMark.promptRange, overflow)];
-                promptRange.start.y += promptRange.start.x / width;
-                promptRange.end.y += promptRange.start.x / width;
-                promptRange.start.x %= width;
-                promptRange.end.y += promptRange.end.x / width;
-                promptRange.end.x %= width;
-                if (promptRange.start.x >= 0) {
-                    VT100GridCoordRange converted;
-                    if ([self convertRange:promptRange
-                                   toWidth:newWidth
-                                        to:&converted
-                              inLineBuffer:altScreenLineBuffer
-                             tolerateEmpty:NO]) {
-                        converted.start.y += yOffset;
-                        converted.end.y += yOffset;
-                        [self.mutableSavedIntervalTree mutateObject:object block:^(id<IntervalTreeObject> mutableMark) {
-                            [VT100ScreenMark castFrom:mutableMark].promptRange = VT100GridAbsCoordRangeFromCoordRange(converted, 0);
-                        }];
-                    }
-                }
-
-                // Update outputStart
-                if (screenMark.outputStart.x != -1) {
-                    BOOL ok = NO;
-                    const VT100GridCoord outputStart = VT100GridCoordFromAbsCoord(screenMark.outputStart, overflow, &ok);
-                    if (!ok) {
-                        screenMark.outputStart = VT100GridAbsCoordMake(-1, -1);
-                    } else {
-                        VT100GridCoordRange converted;
-                        if ([self convertRange:VT100GridCoordRangeMake(outputStart.x,
-                                                                       outputStart.y,
-                                                                       outputStart.x + 1,
-                                                                       outputStart.y)
-                                       toWidth:newWidth
-                                            to:&converted
-                                  inLineBuffer:altScreenLineBuffer
-                                 tolerateEmpty:NO]) {
-                            converted.start.y += yOffset;
-                            [self.mutableSavedIntervalTree mutateObject:object block:^(id<IntervalTreeObject> mutableMark) {
-                                [VT100ScreenMark castFrom:mutableMark].outputStart = VT100GridAbsCoordFromCoord(converted.start, 0);
-                            }];
-                        }
-                    }
-                }
-            }
+            // promptRange / commandRange / outputStart on saved-tree
+            // screen marks self-update via the saved-tree RC resize
+            // broadcast (built against altScreenLineBuffer); no
+            // per-field rewrite needed here.
         } else {
             DLog(@"Failed to convert");
         }
     }
 }
 
-- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize {
+- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize
+                                            oldWidth:(int)oldWidth
+                                            delegate:(id<VT100ScreenDelegate>)delegate {
     // Append alt screen to empty line buffer
     LineBuffer *altScreenLineBuffer = [[LineBuffer alloc] init];
     [altScreenLineBuffer beginResizing];
@@ -1247,6 +1139,20 @@ static void SwapInt(int *a, int *b) {
     int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:newSize.width],
                                          newSize.height);
     int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
+
+    // Broadcast the saved-tree RC resize converter so each saved-tree
+    // mark's promptRange / commandRange / outputStart self-update.
+    // wasShowingAltScreen=NO got here: saved-tree marks reference
+    // alt-grid coords and reflow via altScreenLineBuffer. Pass
+    // numLinesDroppedFromTop so the converter applies the same
+    // -dropped adjustment that updateSavedIntervalTreeWithWidth
+    // applies to the mark's interval; otherwise RCs overshoot the
+    // saved-tree DS's bounds and revert to sentinel.
+    [self broadcastSavedTreeResizeWithOldWidth:oldWidth
+                                       newWidth:newSize.width
+                                     lineBuffer:altScreenLineBuffer
+                                        dropped:numLinesDroppedFromTop
+                                       delegate:delegate];
 
     // Convert note ranges to new coords, dropping or truncating as needed
     self.currentGrid = self.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
@@ -1261,6 +1167,60 @@ static void SwapInt(int *a, int *b) {
                               withDefaultChar:[self.altGrid defaultChar]
                             maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:self.currentGrid.size.width]];
     [altScreenLineBuffer endResizing];
+}
+
+- (void)broadcastSavedTreeResizeWithOldWidth:(int)oldWidth
+                                     newWidth:(int)newWidth
+                                   lineBuffer:(LineBuffer *)lineBuffer
+                                      dropped:(int)numLinesDroppedFromTop
+                                     delegate:(id<VT100ScreenDelegate>)delegate {
+    if (!lineBuffer) {
+        return;
+    }
+    const long long overflow = self.totalScrollbackOverflow;
+    const int dropped = numLinesDroppedFromTop;
+    VT100GridAbsCoord (^converter)(VT100GridAbsCoord) =
+        ^VT100GridAbsCoord(VT100GridAbsCoord oldAbs) {
+            BOOL ok = NO;
+            VT100GridCoord old = VT100GridCoordFromAbsCoord(oldAbs, overflow, &ok);
+            if (!ok) {
+                return VT100GridAbsCoordInvalid;
+            }
+            LineBufferPosition *pos = [lineBuffer positionForCoordinate:old
+                                                                    width:oldWidth
+                                                                   offset:0];
+            if (!pos) {
+                return VT100GridAbsCoordInvalid;
+            }
+            VT100GridCoord result = [lineBuffer coordinateForPosition:pos
+                                                                  width:newWidth
+                                                           extendsRight:NO
+                                                                     ok:&ok];
+            if (!ok) {
+                return VT100GridAbsCoordInvalid;
+            }
+            result.y -= dropped;
+            // When the mark's reflowed row lands within the dropped
+            // region, the interval reflows clamp to (0, 0) — see
+            // updateSavedIntervalTreeWithWidth's newRange.y < 0 clamp
+            // and the same logic in addObjectsToIntervalTreeFromTuples.
+            // Match that here so the RC follows its interval rather
+            // than reverting to the (-1, -1) sentinel.
+            if (result.y < 0) {
+                result.y = 0;
+                result.x = 0;
+            }
+            return VT100GridAbsCoordFromCoord(result, overflow);
+        };
+    NSString *savedMutationGuid = self.savedTreeMutationThreadDataSource.rcGuid;
+    if (savedMutationGuid) {
+        [iTermRCResizeNotification postWithGuid:savedMutationGuid converter:converter];
+    }
+    NSString *savedMainGuid = self.savedTreeMainThreadDataSource.rcGuid;
+    if (savedMainGuid && delegate) {
+        [delegate screenResizeResilientCoordinatesForSavedTree:converter
+                                                          guid:savedMainGuid];
+    }
 }
 
 - (void)didResizeToSize:(VT100GridSize)newSize
@@ -1438,11 +1398,78 @@ static void SwapInt(int *a, int *b) {
             return VT100GridAbsCoordFromCoord(result, overflow);
         };
 
-    // Post for mutation-thread ResilientCoordinates.
-    [iTermRCResizeNotification postWithGuid:self.uniqueIdentifier converter:resizeConverter];
+    // Alt screen was showing, so the visible marks are alt-content marks
+    // now held in altScreenNotes, still bound to the primary RC pool.
+    // (They were pulled into a plain list before the tree swap, so the
+    // swap's rebind never reached them.) Their content lives in
+    // altScreenLineBuffer, not self.linebuffer, so only the saved-tree
+    // converter built below can reflow them. Move them to the saved pool
+    // for the broadcasts, then restore the primary binding afterward.
+    //
+    // Example: a prompt mark on alt row 2. The primary converter looks
+    // up row 2 in self.linebuffer (primary content) and gets the wrong
+    // line; the saved converter looks it up in altScreenLineBuffer and
+    // reflows it correctly.
+    id<iTermResilientCoordinateDataSource> primaryMutDS = self;
+    id<iTermResilientCoordinateDataSource> primaryMainDS =
+        (id<iTermResilientCoordinateDataSource>)self.mainThreadCopy;
+    id<iTermResilientCoordinateDataSource> savedMutDS = self.savedTreeMutationThreadDataSource;
+    id<iTermResilientCoordinateDataSource> savedMainDS = self.savedTreeMainThreadDataSource;
+    if (wasShowingAltScreen) {
+        for (NSArray *triple in altScreenNotes) {
+            id<IntervalTreeObject> note = triple.firstObject;
+            if (savedMutDS && [note conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+                [(id<iTermResilientCoordinateHolder>)note rebindResilientCoordinatesToDataSource:savedMutDS];
+            }
+            id<IntervalTreeImmutableObject> dop = note.doppelganger;
+            if (savedMainDS && [dop conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+                [(id<iTermResilientCoordinateHolder>)dop rebindResilientCoordinatesToDataSource:savedMainDS];
+            }
+        }
+    }
 
-    // Post for main-thread ResilientCoordinates via the delegate.
+    // Post the primary-tree resize broadcast. Primary-tree RCs are
+    // bound to self.uniqueIdentifier; the converter uses self.linebuffer
+    // (primary content).
+    [iTermRCResizeNotification postWithGuid:self.uniqueIdentifier converter:resizeConverter];
     [delegate screenResizeResilientCoordinates:resizeConverter];
+
+    // Reflow the saved-tree marks against the alt content. Only does
+    // work when alt was showing; otherwise altScreenLineBuffer is nil and
+    // broadcastSavedTreeResize... returns immediately (the primary-was-
+    // showing case is handled later in updateAlternateScreenIntervalTreeForNewSize).
+    //
+    // `dropped` is how many rows fall off the top when the alt content
+    // reflows to the new width. It must equal the `linesMovedUp` the
+    // interval reflow uses (subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid
+    // → addObjectsToIntervalTreeFromTuples), which works out to
+    // numLines − newHeight.
+    //
+    // Example: alt content reflows to 15 rows but newSize.height is 12,
+    // so the top 3 rows scroll off and dropped = 3.
+    const int altLineCountAtNewW = [altScreenLineBuffer numLinesWithWidth:newSize.width];
+    const int altScreenDropped = MAX(0, altLineCountAtNewW - newSize.height);
+    [self broadcastSavedTreeResizeWithOldWidth:oldWidth
+                                       newWidth:newSize.width
+                                     lineBuffer:altScreenLineBuffer
+                                        dropped:altScreenDropped
+                                       delegate:delegate];
+
+    // Broadcasts done — restore each rebound mark's RC binding to the
+    // primary pool. rebind preserves the RC location (set by the saved
+    // broadcast above) so the converter result survives.
+    if (wasShowingAltScreen) {
+        for (NSArray *triple in altScreenNotes) {
+            id<IntervalTreeObject> note = triple.firstObject;
+            if (primaryMutDS && [note conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+                [(id<iTermResilientCoordinateHolder>)note rebindResilientCoordinatesToDataSource:primaryMutDS];
+            }
+            id<IntervalTreeImmutableObject> dop = note.doppelganger;
+            if (primaryMainDS && [dop conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+                [(id<iTermResilientCoordinateHolder>)dop rebindResilientCoordinatesToDataSource:primaryMainDS];
+            }
+        }
+    }
     // Restore the screen contents that were pushed onto the linebuffer.
     [self.currentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : self.linebuffer
                                   withDefaultChar:[self.currentGrid defaultChar]
@@ -1472,7 +1499,9 @@ static void SwapInt(int *a, int *b) {
                                                                      intervalTreeObjects:altScreenNotes];
     } else {
         // Was showing primary grid. Fix up notes in the alt screen.
-        [self updateAlternateScreenIntervalTreeForNewSize:newSize];
+        [self updateAlternateScreenIntervalTreeForNewSize:newSize
+                                                  oldWidth:oldWidth
+                                                  delegate:delegate];
     }
     if (updatedSavedCursorPosition.x >= 0) {
         BOOL ok;
@@ -1502,7 +1531,7 @@ static void SwapInt(int *a, int *b) {
 
 - (VT100GridAbsCoord)startCoordOfCurrentCommand {
     id<VT100ScreenMarkReading> lastScreenMark = [self lastPromptMark];
-    if (!lastScreenMark || lastScreenMark.command != nil) {
+    if (!lastScreenMark || lastScreenMark.firstLineOfCommand != nil) {
         return VT100GridAbsCoordMake(-1, -1);
     }
     const VT100GridAbsCoordRange markRange = [self absCoordRangeForInterval:lastScreenMark.entry.interval];

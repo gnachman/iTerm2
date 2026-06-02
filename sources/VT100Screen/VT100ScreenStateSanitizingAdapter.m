@@ -85,6 +85,14 @@
     return [_source.mutableColorMap sanitizingAdapter];
 }
 
+// Override the protocol method directly so the sanitizing adapter doesn't
+// blindly forward -rcGuid to the mutation state (which would return the
+// mutation-pool uniqueIdentifier and collapse the two-pool design). Read
+// the inherited main-thread pool guid via mainThreadPoolGuid instead.
+- (NSString *)rcGuid {
+    return _source.mainThreadPoolGuid;
+}
+
 @end
 
 @implementation VT100ScreenStateSanitizingAdapter {

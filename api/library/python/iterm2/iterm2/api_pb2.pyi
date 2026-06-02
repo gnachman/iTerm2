@@ -4369,6 +4369,7 @@ class GetPromptResponse(_message.Message):
     PROMPT_STATE_FIELD_NUMBER: _builtins.int
     EXIT_STATUS_FIELD_NUMBER: _builtins.int
     UNIQUE_PROMPT_ID_FIELD_NUMBER: _builtins.int
+    EXCLUDED_SUBRANGES_FIELD_NUMBER: _builtins.int
     status: Global___GetPromptResponse.Status.ValueType
     working_directory: _builtins.str
     command: _builtins.str
@@ -4382,6 +4383,24 @@ class GetPromptResponse(_message.Message):
     def command_range(self) -> Global___CoordRange: ...
     @_builtins.property
     def output_range(self) -> Global___CoordRange: ...
+    @_builtins.property
+    def excluded_subranges(self) -> _containers.RepeatedCompositeFieldContainer[Global___CoordRange]:
+        """Cell regions inside command_range that are NOT part of the user-typed
+        command: PS2 prefixes on continuation rows and right-prompt text the
+        shell emitted between an OSC 133;A;k=s|c|r and its matching 133;B.
+        Half-open: `start` inclusive, `end` exclusive. Selection / share /
+        AI consumers should subtract these from command_range to get the
+        actual user input.
+
+        Populated only on responses to an explicit GetPromptRequest. When a
+        PromptNotification fires (at OSC 133;B), no non-INITIAL pairs can
+        have been recorded yet, so the list would be empty AND misleading:
+        a script reading it then would assume there are no excluded
+        subranges, ever. Scripts that want the field should subscribe to
+        COMMAND_END notifications and re-fetch the prompt by id once they
+        fire.
+        """
+
     def __init__(
         self,
         *,
@@ -4394,10 +4413,11 @@ class GetPromptResponse(_message.Message):
         prompt_state: Global___GetPromptResponse.State.ValueType | None = ...,
         exit_status: _builtins.int | None = ...,
         unique_prompt_id: _builtins.str | None = ...,
+        excluded_subranges: _abc.Iterable[Global___CoordRange] | None = ...,
     ) -> None: ...
     _HasFieldArgType: _TypeAlias = _typing.Literal["command", b"command", "command_range", b"command_range", "exit_status", b"exit_status", "output_range", b"output_range", "prompt_range", b"prompt_range", "prompt_state", b"prompt_state", "status", b"status", "unique_prompt_id", b"unique_prompt_id", "working_directory", b"working_directory"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["command", b"command", "command_range", b"command_range", "exit_status", b"exit_status", "output_range", b"output_range", "prompt_range", b"prompt_range", "prompt_state", b"prompt_state", "status", b"status", "unique_prompt_id", b"unique_prompt_id", "working_directory", b"working_directory"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["command", b"command", "command_range", b"command_range", "excluded_subranges", b"excluded_subranges", "exit_status", b"exit_status", "output_range", b"output_range", "prompt_range", b"prompt_range", "prompt_state", b"prompt_state", "status", b"status", "unique_prompt_id", b"unique_prompt_id", "working_directory", b"working_directory"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 

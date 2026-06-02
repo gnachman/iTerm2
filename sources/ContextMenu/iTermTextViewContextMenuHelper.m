@@ -207,7 +207,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     NSMenu *contextMenu = [self menuAtCoord:coord];
 
     id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
-    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
+    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark firstLineOfCommand]);
     [self addFoldUnfoldMenuItemForLine:y contextMenu:contextMenu];
     if (mark.name) {
         NSMenuItem *nameItem = [[NSMenuItem alloc] initWithTitle:mark.name action:nil keyEquivalent:@""];
@@ -220,14 +220,24 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         [contextMenu insertItem:removeItem atIndex:1];
         [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:2];
     }
-    if (mark && mark.command.length) {
+    if (mark && mark.hasNonEmptyCommand) {
         NSMenuItem *markItem = [[NSMenuItem alloc] initWithTitle:@"Command Info"
                                                           action:@selector(revealCommandInfo:)
                                                    keyEquivalent:@""];
         markItem.target = self;
         markItem.representedObject = mark;
         [contextMenu insertItem:markItem atIndex:0];
-        [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+        NSInteger nextIndex = 1;
+#if DEBUG
+        NSMenuItem *aidItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"aid: %@ (parent: %@)",
+                                                                 mark.aid ?: @"(none)",
+                                                                 mark.parentAid ?: @"(none)"]
+                                                         action:nil
+                                                  keyEquivalent:@""];
+        aidItem.enabled = NO;
+        [contextMenu insertItem:aidItem atIndex:nextIndex++];
+#endif
+        [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:nextIndex];
     }
     return contextMenu;
 }
@@ -244,7 +254,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         markItem.representedObject = foldMark;
         [contextMenu insertItem:markItem atIndex:0];
         [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
-    } else if (mark && mark.command.length && [self.delegate contextMenu:self markShouldBeFoldable:mark]) {
+    } else if (mark && mark.hasNonEmptyCommand && [self.delegate contextMenu:self markShouldBeFoldable:mark]) {
         NSMenuItem *markItem = [[NSMenuItem alloc] initWithTitle:@"Fold"
                                                           action:@selector(foldCommandMark:)
                                                    keyEquivalent:@""];
@@ -897,7 +907,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
 
     NSMenuItem *theItem = [[NSMenuItem alloc] init];
-    theItem.title = [NSString stringWithFormat:@"Command: %@", mark.command];
+    theItem.title = [NSString stringWithFormat:@"Command: %@", mark.firstLineOfCommand];
     [theMenu addItem:theItem];
 
     if (directory) {
@@ -938,7 +948,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
                                          action:@selector(reRunCommand:)
                                   keyEquivalent:@""];
     theItem.target = self;
-    [theItem setRepresentedObject:mark.command];
+    [theItem setRepresentedObject:mark.fullCommand];
     [theMenu addItem:theItem];
 
     theItem = [[NSMenuItem alloc] initWithTitle:@"Select Command Output"

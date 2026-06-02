@@ -1141,7 +1141,7 @@ extension PTYTextView {
         }
 
         // First command (truncated)
-        if let cmd = firstMark?.command, !cmd.isEmpty {
+        if let cmd = firstMark?.firstLineOfCommand, !cmd.isEmpty {
             parts.append(String(cmd.prefix(20)))
         }
 
@@ -1150,7 +1150,7 @@ extension PTYTextView {
         parts.append("…\(lineCount) line\(lineCount > 1 ? "s" : "")…")
 
         // Last command if different
-        if let lastCmd = lastMark?.command,
+        if let lastCmd = lastMark?.firstLineOfCommand,
            !lastCmd.isEmpty,
            lastMark !== firstMark {
             parts.append(String(lastCmd.prefix(20)))

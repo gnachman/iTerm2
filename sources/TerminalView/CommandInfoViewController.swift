@@ -106,9 +106,15 @@ class CommandInfoViewController: NSViewController {
             codePromise = mark.returnCodePromise
         }
 
+        // The popover renders `command` in an NSTextField (single line) and
+        // the "Send" button echoes it back unmodified, so the displayed
+        // string is also the one that gets re-run. Use the first-line
+        // preview here until the popover learns to render multi-line input
+        // (NSTextView). Re-run Command, Copy Command, and Share use
+        // fullCommand directly.
         let viewController = CommandInfoViewController(
             mark: mark,
-            command: mark.command ?? "",
+            command: mark.firstLineOfCommand ?? "",
             directory: directory,
             remoteHost: remoteHost,
             returnCode: codePromise,

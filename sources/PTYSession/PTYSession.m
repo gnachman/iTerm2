@@ -1012,7 +1012,6 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidDealloc object:guid];
-        [iTermRCDataSourceDeallocNotification postWithGuid:guid];
         [guid release];
     });
     if (_textview.delegate == self) {
@@ -9557,7 +9556,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
             hasErrorCode = mark.code != 0;
-            if (mark.command != nil) {
+            if (mark.firstLineOfCommand != nil) {
                 [self selectCommandWithMarkIfSafe:mark];
             } else {
                 // Remove the selected command (and its abs line range)
@@ -9695,7 +9694,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     BOOL isCommandMark = NO;
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
-        isCommandMark = mark.command != nil;
+        isCommandMark = mark.firstLineOfCommand != nil;
     }
     if (isCommandMark) {
         [_textview scrollLineNumberRangeToTop:range];
@@ -9743,11 +9742,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)scrollToMarkWithGUID:(NSString *)guid {
-    if (@available(macOS 11, *)) {
-        if (self.isBrowserSession) {
-            [_view.browserViewController revealNamedMarkWithGUID:guid];
-        }
-        return;
+    if (self.isBrowserSession) {
+        [_view.browserViewController revealNamedMarkWithGUID:guid];
     }
     id<VT100ScreenMarkReading> mark = [_screen namedMarkWithGUID:guid];
     if (mark) {
@@ -12902,6 +12898,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (NSArray<iTermSubSelection *> *)textViewSubSelectionsOfCurrentCommand {
+    DLog(@"Fetching subselections of current command");
+    const VT100GridAbsCoordRange outerRange = [self textViewRangeOfCurrentCommand];
+    if (outerRange.start.x < 0) {
+        return @[];
+    }
+    // Pick the mark whose excludedSubranges describe the cells covered by
+    // PS2 prefixes / right-prompts inside `outerRange`. At a live prompt
+    // it's the still-unfinished prompt mark; otherwise it's the most
+    // recent command mark (commandDidEndWithRange: promoted it).
+    id<VT100ScreenMarkReading> mark = self.isAtShellPrompt
+        ? [_screen lastPromptMark]
+        : [_screen lastCommandMark];
+    return [iTermSubSelection subSelectionsInRange:outerRange
+                                excludingSubranges:mark.excludedSubranges
+                                             width:_screen.width];
+}
+
 - (BOOL)textViewCanSelectOutputOfLastCommand {
     // Return YES if command history has never been used so we can show the informational message.
     return (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
@@ -14887,7 +14901,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         const VT100GridCoordRange range = [self.screen coordRangeForInterval:obj.entry.interval];
         return VT100GridAbsCoordRangeFromCoordRange(range, self.screen.totalScrollbackOverflow);
     } copy] autorelease];
-    [iTermRCClearToEndNotification postWithGuid:self.guid
+    // Post against the main-thread RC pool guid (VT100ScreenState), not the
+    // PTYSession guid. The mutation-thread pool's own post happens inside
+    // VT100ScreenMutableState.m and uses its uniqueIdentifier.
+    [iTermRCClearToEndNotification postWithGuid:self.screen.immutableState.mainThreadPoolGuid
                                            absY:absY
                               intervalConverter:converter];
 }
@@ -15136,6 +15153,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_pasteHelper unblock];
 }
 
+- (void)screenPromptOfNonInitialKindDidStart:(VT100PromptKind)kind {
+    // The user just produced a PS2/right/continuation prompt while typing a
+    // command. The only side effect we want is unblocking Advanced Paste's
+    // "Wait for shell prompt" loop so it can advance past this line (issue 5749).
+    // No tab-status clearing, no prompt subscription notifications, no mark.
+    [_pasteHelper unblock];
+}
+
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark {
     if (_eventTriggerEvaluator.hasPromptDetectedTrigger) {
         [_eventTriggerEvaluator promptDetected];
@@ -15235,7 +15260,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 // Mark has already been rmeoved
                 return;
             }
-            if (!newName && !screenMark.command && !screenMark.isPrompt) {
+            if (!newName && !screenMark.firstLineOfCommand && !screenMark.isPrompt) {
                 // Remove a non-command named mark
                 [mutableState removeNamedMark:screenMark];
                 return;
@@ -16714,8 +16739,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (mark) {
         userInfo[iTermLinesShiftedNotification.markKey] = mark;
     }
+    // Post against the main-thread RC pool guid (VT100ScreenState). The
+    // mutation-thread pool has its own linesShifted post site in
+    // VT100ScreenMutableState.m that uses uniqueIdentifier. Matches the
+    // other three main-thread RC posts in this file (clearToEnd, resize,
+    // dealloc) — never fall back to self.guid, since no observer is
+    // registered against it after the two-pool refactor.
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermLinesShiftedNotification.name
-                                                        object:self.guid
+                                                        object:self.screen.immutableState.mainThreadPoolGuid
                                                       userInfo:userInfo];
 }
 
@@ -16916,7 +16947,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             duration = -[maybeMark.startDate timeIntervalSinceNow];
         }
         iTermEventCommandFinishedInfo *info = [[iTermEventCommandFinishedInfo alloc] initWithExitCode:code
-                                                                                              command:maybeMark.command
+                                                                                              command:maybeMark.fullCommand
                                                                                              duration:duration];
         [_eventTriggerEvaluator commandFinishedWithInfo:info];
     }
@@ -16940,7 +16971,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         const int line = lineRange.location;
         const VT100GridCoordRange outputRange = [_screen rangeOfOutputForCommandMark:maybeMark];
         NSDictionary *userInfo = @{
-            PTYCommandDidExitUserInfoKeyCommand: maybeMark.command ?: (id)[NSNull null],
+            PTYCommandDidExitUserInfoKeyCommand: maybeMark.fullCommand ?: (id)[NSNull null],
             PTYCommandDidExitUserInfoKeyExitCode: @(maybeMark.code),
             PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
             PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
@@ -19326,12 +19357,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         Interval *end = [Interval intervalWithLocation:interval.limit - 1 length:0];
         id<VT100ScreenMarkReading> endMark = [_screen screenMarkBefore:end];
         if (startMark == endMark) {
-            return startMark.command;
+            return startMark.fullCommand;
         }
         return nil;
     }
     id<VT100ScreenMarkReading> mark = self.selectedCommandMark ?: _screen.lastCommandMark;
-    return mark.command;
+    return mark.fullCommand;
 }
 
 - (NSString *)titleForExplainWithAI {
@@ -19339,14 +19370,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16];
     }
     if (self.selectedCommandMark) {
-        if (self.selectedCommandMark.command.length) {
-            return self.selectedCommandMark.command;
+        if (self.selectedCommandMark.firstLineOfCommand.length) {
+            return self.selectedCommandMark.firstLineOfCommand;
         }
         return @"Command output";
     }
     if (_screen.lastCommandMark) {
-        if (_screen.lastCommandMark.command.length) {
-            return _screen.lastCommandMark.command;
+        if (_screen.lastCommandMark.firstLineOfCommand.length) {
+            return _screen.lastCommandMark.firstLineOfCommand;
         }
         return @"Command output";
     }
@@ -19358,14 +19389,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return [[_textview selectedText] ellipsizedDescriptionNoLongerThan:16].stringEnclosedInMarkdownInlineCode ?: @"some selected text";
     }
     if (self.selectedCommandMark) {
-        if (self.selectedCommandMark.command.length) {
-            return self.selectedCommandMark.command.stringEnclosedInMarkdownInlineCode;
+        if (self.selectedCommandMark.firstLineOfCommand.length) {
+            return self.selectedCommandMark.firstLineOfCommand.stringEnclosedInMarkdownInlineCode;
         }
         return @"the selected command";
     }
     if (_screen.lastCommandMark) {
-        if (_screen.lastCommandMark.command.length) {
-            return _screen.lastCommandMark.command.stringEnclosedInMarkdownInlineCode;
+        if (_screen.lastCommandMark.firstLineOfCommand.length) {
+            return _screen.lastCommandMark.firstLineOfCommand.stringEnclosedInMarkdownInlineCode;
         }
         return @"the last command";
     }
@@ -20575,6 +20606,27 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         mark = [_screen lastPromptMark];
     }
     ITMGetPromptResponse *response = [self getPromptResponseForMark:mark];
+    // excluded_subranges is populated only on the synchronous RPC path
+    // (here), not in the Prompt notification builder. At 133;B time the
+    // mark hasn't accumulated any non-INITIAL OSC 133;A;k= pairs yet, so
+    // surfacing the empty list there would let a notification consumer
+    // assume "no PS2 / right-prompt, ever" — even after later subranges
+    // get recorded. Scripts that want the data subscribe to COMMAND_END
+    // and call back through this RPC.
+    for (iTermResilientCoordinateRange *r in mark.excludedSubranges ?: @[]) {
+        if (r.start.status != StatusValid || r.end.status != StatusValid) {
+            continue;
+        }
+        const VT100GridAbsCoordRange absRange = r.absRange;
+        ITMCoordRange *coordRange = [[[ITMCoordRange alloc] init] autorelease];
+        coordRange.start = [[[ITMCoord alloc] init] autorelease];
+        coordRange.start.x = absRange.start.x;
+        coordRange.start.y = absRange.start.y;
+        coordRange.end = [[[ITMCoord alloc] init] autorelease];
+        coordRange.end.x = absRange.end.x;
+        coordRange.end.y = absRange.end.y;
+        [response.excludedSubrangesArray addObject:coordRange];
+    }
     completion(response);
 }
 
@@ -20607,7 +20659,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         response.outputRange.end.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
     }
 
-    response.command = mark.command ?: self.currentCommand;
+    response.command = mark.fullCommand ?: self.currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
     response.workingDirectory = [_screen workingDirectoryOnLine:mark.promptRange.end.y] ?: self.lastDirectory;
     if (mark.hasCode) {
@@ -22273,7 +22325,21 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // Copy the block to the heap. It arrives as a stack block from the ARC caller,
     // and NSDictionary only retains (doesn't copy), which is a no-op for stack blocks.
     convert = [[convert copy] autorelease];
-    [iTermRCResizeNotification postWithGuid:self.guid converter:convert];
+    // Post against the main-thread RC pool guid (VT100ScreenState), not the
+    // PTYSession guid. The mutation-thread pool's own post happens inside
+    // VT100ScreenMutableState+Resizing.m and uses its uniqueIdentifier.
+    [iTermRCResizeNotification postWithGuid:self.screen.immutableState.mainThreadPoolGuid
+                                  converter:convert];
+}
+
+- (void)screenResizeResilientCoordinatesForSavedTree:(VT100GridAbsCoord(^ _Nonnull)(VT100GridAbsCoord))convert
+                                                guid:(NSString * _Nonnull)savedTreeMainGuid {
+    convert = [[convert copy] autorelease];
+    // The saved-tree main pool has its own guid (distinct from the
+    // primary pool guid). RCs bound to the saved tree's main DS observe
+    // this notification; primary-tree RCs are not affected.
+    [iTermRCResizeNotification postWithGuid:savedTreeMainGuid
+                                  converter:convert];
 }
 
 - (void)screenUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action {

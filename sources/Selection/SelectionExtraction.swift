@@ -42,7 +42,7 @@ class SelectionExtractorDelegate: NSObject, iTermSelectionDelegate {
         width = delegate.selectionViewportWidth()
     }
 
-    func selectionDidChange(_ selection: iTermSelection!) {
+    func selectionDidChange(_ selection: iTermSelection) {
     }
 
     func liveSelectionDidEnd() {
@@ -84,7 +84,7 @@ class SelectionExtractorDelegate: NSObject, iTermSelectionDelegate {
         return realDelegate!.selectionTotalScrollbackOverflow()
     }
 
-    func selectionIndexes(onAbsoluteLine line: Int64, containingCharacter c: unichar, in range: NSRange) -> IndexSet! {
+    func selectionIndexes(onAbsoluteLine line: Int64, containingCharacter c: unichar, in range: NSRange) -> IndexSet? {
         return realDelegate!.selectionIndexes(onAbsoluteLine: line, containingCharacter: c, in: range)
     }
 
@@ -186,7 +186,7 @@ class SelectionExtractor: NSObject {
                 if maxBytes > 0 {
                     cap = maxBytes - Int32(result.length)
                     if cap <= 0 {
-                        stopPtr?.pointee = ObjCBool(true)
+                        stopPtr.pointee = ObjCBool(true)
                         return
                     }
                 }

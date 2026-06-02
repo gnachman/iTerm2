@@ -346,7 +346,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
                                                                          range:&range];
     if (!mark ||
         mark.promptRange.start.x < 0 ||
-        !mark.command ||
+        !mark.firstLineOfCommand ||
         !VT100GridWindowedRangeContainsCoord(range, self.coord)) {
         return nil;
     }

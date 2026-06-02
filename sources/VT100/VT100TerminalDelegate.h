@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "ScreenChar.h"
 #import "VT100InlineImageHelper.h"
+#import "VT100PromptKind.h"
 #import "VT100Token.h"
 #import "iTermPromise.h"
 
@@ -41,6 +42,10 @@ typedef NS_ENUM(NSInteger, VT100TerminalSemanticTextType) {
 
     kVT100TerminalSemanticTextTypeMax
 };
+
+// VT100PromptKind (Semantic Prompt `k=` attribute) lives in
+// VT100PromptKind.h, imported at the top of this header so lightweight
+// consumers can pull just the enum.
 
 typedef NS_ENUM(NSUInteger, VT100AttentionRequestType) {
     VT100AttentionRequestTypeStartBouncingDockIcon,
@@ -439,17 +444,40 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalSetHighlightCursorLine:(BOOL)highlight;
 
 // FinalTerm features
-- (void)terminalPromptDidStart:(BOOL)wasInCommand;
+// kind reports the OSC 133 `k=` attribute (Semantic Prompt). Receivers that don't
+// care about non-initial kinds should keep their existing behavior for `.initial`
+// and route the others to a minimal "paste-unblock only" path.
+//
+// freshLine distinguishes OSC 133;A (YES — may insert a CR+LF if the cursor is
+// not at column 0, gated by the user's shouldPlacePromptAtFirstColumn pref)
+// from OSC 133;P (NO — emit the prompt wherever the cursor is, no implicit
+// CR+LF regardless of the pref).
+// `aid` (when non-nil) is the OSC 133 `aid=<id>` value seen on the marker
+// that triggered the call. It identifies one logical command across
+// nested shell-integration sessions (local-shell -> ssh -> remote-shell,
+// REPLs emitting their own A/B/C/D, etc.). nil for shells that don't
+// emit aid (the common case) and for trigger-detected prompts.
+- (void)terminalPromptDidStart:(BOOL)wasInCommand
+                          kind:(VT100PromptKind)kind
+                     freshLine:(BOOL)freshLine
+                           aid:(NSString * _Nullable)aid;
 - (void)terminalCommandDidStart;
 - (void)terminalCommandDidEnd;
 - (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type;
 - (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type;
 - (void)terminalProgressAt:(double)fraction label:(NSString *)label;
 - (void)terminalProgressDidFinish;
-- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode;
+// `aid` targets a specific open command mark (the close-by-aid path).
+// nil falls back to the today's "close topmost open command" behavior.
+// `returnCode` is nil when the wire-level D carried no integer exit code
+// (e.g. `D;aid=X` with no number). When nil, the close-by-aid path still
+// closes the targeted mark but doesn't claim an exit value. nil + nil aid
+// means the parser already declined to dispatch.
+- (void)terminalReturnCodeOfLastCommandWas:(NSNumber * _Nullable)returnCode
+                                       aid:(NSString * _Nullable)aid;
 - (void)terminalFinalTermCommand:(NSArray *)argv;
 - (void)terminalSetShellIntegrationVersion:(NSString *)version;
-- (void)terminalAbortCommand;
+- (void)terminalAbortCommandWithAid:(NSString * _Nullable)aid;
 
 // Flag changes
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue;

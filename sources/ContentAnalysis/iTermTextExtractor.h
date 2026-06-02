@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermBidiDisplayInfo;
 @class iTermProgress;
+@class iTermResilientCoordinateRange;
 
 typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyFromStartToFirst,  // Ignore content after first null
@@ -151,6 +152,18 @@ extern const NSInteger kLongMaximumWordLength;
    continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
               coords:(iTermGridCoordArray * _Nullable)coords
    deduplicateDECDHL:(BOOL)deduplicateDECDHL;
+
+// Extracts the content of `range`, dropping any cell that falls inside any
+// excluded subrange. Cells are walked in row-major order; cell-by-cell
+// skipping means nulls, image cells, and iTerm2 private codes (DWC_RIGHT,
+// TAB_FILLER, etc.) are omitted from the result. Hard EOLs introduce a
+// real newline; soft / DWC wraps are joined as a single logical line.
+// Surrounding whitespace and newlines on the returned string are trimmed;
+// an empty result returns nil. Excluded subranges with unresolvable
+// endpoints (status != .valid) are silently skipped. Order of
+// `excludedSubranges` does not matter; the method sorts internally.
+- (NSString * _Nullable)contentInRange:(VT100GridWindowedRange)range
+                    excludingSubranges:(nullable NSArray<iTermResilientCoordinateRange *> *)excludedSubranges;
 
 // Returns an iTermLocated[Attributed]String
 - (id)locatedStringInRange:(VT100GridWindowedRange)range

@@ -103,7 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
             // Don't draw line-style mark in selected command region or immediately after selected command region.
             // Note: that logic is in populateLineStyleMarkRendererTransientStateWithFrameData.
             *lineStyleMark = YES;
-            if (mark.command.length) {
+            if (mark.hasNonEmptyCommand) {
                 *lineStyleMarkRightInset = iTermTextDrawingHelperLineStyleMarkRightInsetCells;
             }
         }
