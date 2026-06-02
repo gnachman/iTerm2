@@ -6,7 +6,7 @@
 import Foundation
 
 // Bridges the LLM tool-use loop to the orchestrator's actual
-// behavior. One instance per chat; owned by CockpitChatAgent and
+// behavior. One instance per chat; owned by OrchestratorClient and
 // torn down when the chat closes.
 //
 // Holds two pieces of state, both persisted on the chat record so
@@ -272,7 +272,7 @@ final class OrchestratorDispatcher {
     // but workgroup peer-port sessions (Code Review, Diff, any side-pane
     // peer) aren't enumerated through that path — the controller only knows
     // about top-level windowed sessions — so the lookup returned nil for the
-    // very roles the cockpit cares about and every watcher fire was
+    // very roles the orchestrator cares about and every watcher fire was
     // silently dropped. status.sessionID is itself the session's GUID
     // (PTYSession.tabStatus is created with sessionID: self.guid), so we
     // can match watchers directly and read the new state from the tabStatus
@@ -424,7 +424,7 @@ final class OrchestratorDispatcher {
                 chatID: chatID,
                 content: .watcherEvent(payload))
         } catch {
-            DLog("Cockpit dispatcher: failed to publish status_update: \(error)")
+            DLog("Orchestrator dispatcher: failed to publish status_update: \(error)")
         }
     }
 
@@ -451,7 +451,7 @@ final class OrchestratorDispatcher {
             try broker?.listModel
                 .setClaimedScopes(claimedScopes, forChatID: chatID)
         } catch {
-            DLog("Cockpit dispatcher: failed to persist claimed workgroups: \(error)")
+            DLog("Orchestrator dispatcher: failed to persist claimed workgroups: \(error)")
         }
     }
 
@@ -460,7 +460,7 @@ final class OrchestratorDispatcher {
             try broker?.listModel
                 .setWatchers(watchers, forChatID: chatID)
         } catch {
-            DLog("Cockpit dispatcher: failed to persist watchers: \(error)")
+            DLog("Orchestrator dispatcher: failed to persist watchers: \(error)")
         }
     }
 
@@ -752,16 +752,17 @@ final class OrchestratorDispatcher {
         }
     }
 
-    // Ensure this chat has user approval to perform write actions on the
-    // session identified by `sessionGuid`. The session is wrapped in a
-    // synthetic single-session workgroup ("session:<guid>"), so its
-    // approval state lives in the same `claimedScopes` set the
-    // workgroup-shaped tools use. session_* tools call this before
-    // dispatching to PTYSession.execute so a one-time user prompt
-    // gates the whole family for the rest of the chat. Returns true
-    // when the chat is already claimed for this session or the user
-    // just approved; false if the user declines (the caller surfaces
-    // an error string to the LLM).
+    // Ensure this chat has user approval to control the session
+    // identified by `sessionGuid` (send keystrokes, interrupt running
+    // commands, etc.). The session is wrapped in a synthetic single-
+    // session workgroup ("session:<guid>"), so its approval state
+    // lives in the same `claimedScopes` set the workgroup-shaped
+    // tools use. session_* tools call this before dispatching to
+    // PTYSession.execute so a one-time user prompt gates the whole
+    // family for the rest of the chat. Returns true when the chat is
+    // already claimed for this session or the user just approved;
+    // false if the user declines (the caller surfaces an error string
+    // to the LLM).
     @MainActor
     public func ensureSessionClaim(sessionGuid: String) async -> Bool {
         let workgroupID = WorkgroupIntrospection.syntheticWorkgroupIDPrefix + sessionGuid
@@ -822,13 +823,13 @@ final class OrchestratorDispatcher {
             summary = "The agent is asking to send keystrokes and interrupt "
                 + "running commands in session \u{201C}\(workgroupName)\u{201D}. "
                 + "Approval is sticky for the rest of this chat. Deny to refuse "
-                + "this and future write actions on this session until you "
+                + "this and future control of this session until you "
                 + "explicitly approve."
         } else {
             summary = "The agent is asking to send keystrokes, interrupt running "
                 + "commands, and post clippings to this workgroup. Approval is sticky "
-                + "for the rest of this chat. Deny to refuse this and future write "
-                + "actions on this workgroup until you explicitly approve."
+                + "for the rest of this chat. Deny to refuse this and future control "
+                + "of this workgroup until you explicitly approve."
         }
         return await awaitPermission(workgroupID: workgroupID,
                                       workgroupName: workgroupName,
@@ -838,9 +839,9 @@ final class OrchestratorDispatcher {
     // The spawn prompt uses the sentinel workgroupID
     // WorkgroupIntrospection.spawnWorkgroupID since there's no real
     // workgroup yet (it's literally the request to create one). The
-    // cell renderer matches the same constant to pick the "Approve
-    // opening …" bubble copy instead of the "Approve writing to
-    // workgroup …" copy used for real workgroup claims; see
+    // cell renderer matches the same constant to pick the "Open a
+    // new session?" bubble copy instead of the "Allow agent to
+    // control workgroup …" copy used for real workgroup claims; see
     // ChatViewController.swift's workgroupPermissionRequest branch.
     // The renderer doesn't depend on the ID resolving to anything live
     // — only on the name and summary being human-readable.
@@ -891,7 +892,7 @@ final class OrchestratorDispatcher {
                                                   workgroupName: workgroupName,
                                                   summary: summary))))
             } catch {
-                DLog("Cockpit dispatcher: failed to publish permission request: \(error)")
+                DLog("Orchestrator dispatcher: failed to publish permission request: \(error)")
                 if let cont = pendingPermissionPrompts.removeValue(forKey: requestID) {
                     cont.resume(returning: false)
                 }
@@ -1121,9 +1122,9 @@ final class OrchestratorDispatcher {
             overlay.onStart?(decoded)
             return .ack
         }
-        Self.typeIntoPTY(session: resolved.session,
-                         text: decoded,
-                         appendNewline: args.appendNewline ?? true)
+        await Self.typeIntoPTY(session: resolved.session,
+                               text: decoded,
+                               appendNewline: args.appendNewline ?? true)
         return .ack
     }
 
@@ -1136,31 +1137,52 @@ final class OrchestratorDispatcher {
     //  - On a bracketed-paste TUI (Claude Code, which uses Ink, and vim),
     //    raw multi-line prompt-style text would surface embedded \n bytes as
     //    Enter keystrokes mid-content. Wrap in ESC[200~ / ESC[201~ markers so
-    //    the TUI receives the whole thing as one paste event rather than per-
-    //    character input. EXCEPTION: if the payload contains any control byte
-    //    other than \n (e.g. ESC, Ctrl-C), the caller is sending keystrokes
-    //    rather than prose. Paste-wrap would convert those control bytes into
-    //    literal pasted data and neutralize them (the bug that left vim stuck
-    //    in insert mode when the agent sent ESC :q LF and the ESC got pasted
-    //    instead of switching mode). Skip the wrap and write raw in that case.
-    //  - Ink (Claude Code's TUI) swallows the trailing \r when it rides in
-    //    the SAME write as the body: with the paste body and Enter in a
-    //    single kernel PTY event, Ink treats the \r as paste content
-    //    rather than a discrete submit gesture. Splitting text and Enter
-    //    into two separate writeTaskNoBroadcast calls produces two
-    //    separate PTY events on the slave side, which is all Ink needs
-    //    to treat the \r as the submit gesture. This also covers
-    //    single-line text on Claude Code because empirically the trailing
-    //    \r still gets swallowed when it rides in the same write as the
-    //    body, even without BP wrappers.
-    //  - On a plain shell (or any non-BP-mode terminal), neither concern
-    //    applies, and the line-discipline echoes \r as Enter immediately;
-    //    one write is fine and cheaper.
+    //    the TUI receives the whole thing as one paste event rather than
+    //    per-character input. We wrap regardless of whether the text
+    //    contains a newline. Early revisions skipped the wrap for
+    //    single-line text on the theory that the two-write split below
+    //    was enough to keep the \r distinct; that turned out to be
+    //    fragile for long single-line payloads (~500 chars), where the
+    //    kernel chunks the master-side write across multiple slave
+    //    reads and Ink heuristically treats the whole burst as paste,
+    //    absorbing the trailing \r as a literal CR inside the buffer
+    //    instead of as the submit gesture. Always-wrapping gives Ink an
+    //    unambiguous end-of-paste marker (ESC[201~).
+    //  - EXCEPTION to the wrap: if the payload carries any control byte
+    //    other than LF (ESC, Ctrl-C, etc.), the caller is sending
+    //    keystrokes rather than prose. A paste wrap would neutralize
+    //    those control bytes by turning them into literal pasted data
+    //    (the bug that left vim stuck in insert mode when the agent
+    //    sent ESC :q LF and the ESC got pasted instead of switching
+    //    mode). Skip the wrap and write raw in that case.
+    //  - After the body, we wait briefly before sending the \r submit
+    //    gesture. Two back-to-back writeTaskNoBroadcast calls produce
+    //    two PTY events on the slave side which is USUALLY enough to
+    //    keep the \r distinct, but for long payloads (~500 chars) Ink
+    //    can ingest the body in chunks and still be busy when our
+    //    immediate \r arrives, treating the \r as paste content. The
+    //    short delay lets the TUI finish ingesting the BPM-terminated
+    //    paste before it sees the submit. Async-await: doSendText
+    //    awaits typeIntoPTY, so the tool_result is held back until the
+    //    \r has actually been sent. Combined with Anthropic's
+    //    disable_parallel_tool_use, no other tool call can race ahead
+    //    of the \r — the agent only emits one tool call per turn, and
+    //    the next turn doesn't start until this tool_result lands.
+    //  - On a plain shell (or any non-BP-mode terminal), none of this
+    //    applies; the line-discipline echoes \r as Enter immediately
+    //    and one write is fine.
+
+    /// Delay between the bracketed-paste body and the \r submit
+    /// gesture. ~75ms is well above Ink's input-burst window
+    /// (empirically ~25ms) and well below the threshold where the
+    /// agent's tool round-trip starts to feel sluggish. Synchronous
+    /// from doSendText's perspective via await.
+    private static let bracketedPasteSubmitDelayNanos: UInt64 = 75_000_000
 
     @MainActor
     private static func typeIntoPTY(session: PTYSession,
                                     text: String,
-                                    appendNewline: Bool) {
+                                    appendNewline: Bool) async {
         let inBracketedPasteMode = session.screen.terminalBracketedPasteMode
         // If the payload carries any control byte other than LF, the caller is
         // sending keystrokes (e.g. ESC :q LF to quit vim), not prompt-style
@@ -1171,30 +1193,11 @@ final class OrchestratorDispatcher {
             $0.value < 0x20 && $0.value != 0x0A
         }
         if inBracketedPasteMode && !hasControlOtherThanLF {
-            let body: String
-            if text.contains("\n") {
-                let bpStart = "\u{1B}[200~"
-                let bpEnd = "\u{1B}[201~"
-                body = bpStart + text + bpEnd
-            } else {
-                // Single-line text on an Ink TUI doesn't need the BP
-                // wrappers for atomicity, but we still split the Enter into
-                // a second write so Ink sees it as a separate submit
-                // gesture. Tested empirically against Claude Code idle in
-                // its chat prompt: text + "\r" in one write types the text
-                // but never submits.
-                body = text
-            }
-            session.writeTaskNoBroadcast(body)
+            let bpStart = "\u{1B}[200~"
+            let bpEnd = "\u{1B}[201~"
+            session.writeTaskNoBroadcast(bpStart + text + bpEnd)
             if appendNewline {
-                // Second write for the submit gesture. Two separate
-                // writeTaskNoBroadcast calls produce two separate PTY
-                // events on the slave side, which is all Ink needs to
-                // treat the \r as the submit gesture rather than paste
-                // content. No async hop, no sleep: a user pasting into
-                // Claude Code and pressing Enter immediately submits
-                // cleanly, and that's the same shape as two back-to-back
-                // synchronous writes here.
+                try? await Task.sleep(nanoseconds: bracketedPasteSubmitDelayNanos)
                 session.writeTaskNoBroadcast("\r")
             }
         } else {
@@ -1504,9 +1507,9 @@ final class OrchestratorDispatcher {
             // Idle Claude Code TUI fallback. typeIntoPTY handles bracketed
             // paste and the deferred-Enter dance so multi-line prompts (the
             // default review prompt is multi-line) submit reliably.
-            Self.typeIntoPTY(session: resolved.session,
-                             text: promptText,
-                             appendNewline: true)
+            await Self.typeIntoPTY(session: resolved.session,
+                                   text: promptText,
+                                   appendNewline: true)
         }
 
         // Auto-register the completion watcher unless one already

@@ -205,6 +205,21 @@ class ChatViewController: NSViewController {
         brokerSubscription?.unsubscribe()
     }
 
+    // Trim leading whitespace at the rendering boundary only. The
+    // persisted message body keeps the original bytes so the LLM sees
+    // whatever it generated on the next request (Anthropic round-trips
+    // any leading "\n\n" it emitted; clobbering it server-side would be
+    // a separate decision). The chat bubble, however, shouldn't render
+    // an empty paragraph at the top of every tool-using assistant
+    // reply — Anthropic models routinely prefix tool-call responses
+    // with "\n\n" and that becomes a stray blank line in the UI.
+    fileprivate static func trimLeadingWhitespaceForDisplay(_ text: String) -> String {
+        guard let firstNonWhitespace = text.firstIndex(where: { !$0.isWhitespace }) else {
+            return text  // entirely whitespace; leave it alone
+        }
+        return String(text[firstNonWhitespace...])
+    }
+
     @objc
     private func sessionWillTerminate(_ notif: Notification) {
         let session = notif.object as? PTYSession
@@ -1940,13 +1955,14 @@ extension Message.Content {
                 .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
             ]
             return NSAttributedString(
-                string: string,
+                string: ChatViewController.trimLeadingWhitespaceForDisplay(string),
                 attributes: attributes
             )
         case .markdown(let string), .explanationResponse(_, _, let string):
-            return AttributedStringForGPTMarkdown(string,
-                                                  linkColor: linkColor,
-                                                  textColor: textColor) { }
+            return AttributedStringForGPTMarkdown(
+                ChatViewController.trimLeadingWhitespaceForDisplay(string),
+                linkColor: linkColor,
+                textColor: textColor) { }
         case .explanationRequest(request: let request):
             let string =
             if let url = request.url {
@@ -2026,10 +2042,12 @@ extension Message.Content {
             case let .workgroupPermissionRequest(_, workgroupID, workgroupName, summary):
                 // Three distinct prompt shapes share this content type:
                 //   - "spawn": the orchestrator wants to open a brand-new
-                //     session (no workgroup_id yet, since we're about to
-                //     create the session that will back it). Phrase as
-                //     "Approve opening 'New session'", not "Approve
-                //     writing to" — there's nothing to write to yet.
+                //     session. There's no real workgroup_id and the
+                //     workgroupName field is just a placeholder ("New
+                //     session"), so we don't quote it — heading reads
+                //     "**Open a new session?**" and the specifics
+                //     (window placement, command being run) come from
+                //     the summary text promptForSpawn built.
                 //   - synthetic "session:<guid>": a standalone session,
                 //     not part of any user-configured workgroup. The
                 //     user never sees the word "workgroup" anywhere
@@ -2037,12 +2055,12 @@ extension Message.Content {
                 //   - real workgroup_id: workgroup phrasing.
                 let body: String
                 if workgroupID == WorkgroupIntrospection.spawnWorkgroupID {
-                    body = "**Approve opening \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)"
+                    body = "**Open a new session?**\n\n\(summary)"
                 } else {
                     let kind = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
                         ? "session"
                         : "workgroup"
-                    body = "**Approve writing to \(kind) \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)"
+                    body = "**Allow agent to control \(kind) \u{201C}\(workgroupName)\u{201D}?**\n\n\(summary)"
                 }
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .enableOrchestrationRequest:

@@ -37,16 +37,16 @@ enum WorkgroupIntrospection {
     // isn't a workgroup yet at spawn time. Carries the request through
     // the same workgroupPermissionRequest content type the workgroup
     // claim prompts use, but the chat renderer keys off this exact
-    // string to pick the "Approve opening …" bubble copy instead of
-    // "Approve writing to workgroup …". Two sites must agree on the
-    // literal — the dispatcher (OrchestratorDispatcher.promptForSpawn)
+    // string to pick the "Open a new session?" bubble copy instead of
+    // "Allow agent to control workgroup …". Two sites must agree on
+    // the literal — the dispatcher (OrchestratorDispatcher.promptForSpawn)
     // emits it, the renderer (ChatViewController) consumes it — so
     // it lives here next to the other orchestrator sentinel IDs.
     static let spawnWorkgroupID = "spawn"
 
     // MARK: - Listing
 
-    // Returns every workgroup the cockpit knows about. Real workgroups
+    // Returns every workgroup the orchestrator knows about. Real workgroups
     // come from iTermWorkgroupController.allInstances; every other live
     // session in the app gets wrapped in a synthetic single-session
     // workgroup so the LLM can address it via the same target shape.
@@ -403,7 +403,7 @@ enum WorkgroupIntrospection {
     // up the owning PTYSession again. Workgroup peer-port sessions don't
     // appear in iTermController.sharedInstance().allSessions(), so trying
     // to recover the session from a guid returns nil for the very roles
-    // the cockpit watches — which silently swallows watcher fires.
+    // the orchestrator watches — which silently swallows watcher fires.
     static func state(forTabStatus status: iTermSessionTabStatus) -> SessionState {
         if let text = status.statusText?.lowercased(), !text.isEmpty {
             switch text {
@@ -446,7 +446,13 @@ enum WorkgroupIntrospection {
     }
 
     private static func snapshot(of session: PTYSession) -> String {
-        return stripTrailingSpaces(session.screen.compactLineDump())
+        // Visible-screen-only range: skip the scrollback portion of
+        // the line index.
+        let scrollback = session.screen.numberOfScrollbackLines()
+        let height = session.screen.height()
+        return extractScreenText(of: session,
+                                  fromLine: scrollback,
+                                  toLine: scrollback + height)
     }
 
     private static func trailingTranscript(of session: PTYSession, lines: Int) -> String {
@@ -456,30 +462,100 @@ enum WorkgroupIntrospection {
         // documents a default of 100; cap the request to 2000 lines to
         // bound the response size without being mean to legitimate
         // "give me a lot of context" calls.
-        let clamped = max(1, min(2000, lines))
-        let full = session.screen.compactLineDumpWithHistory()
-        let allLines = full.components(separatedBy: "\n")
-        let trimmed = allLines.count <= clamped
-            ? full
-            : allLines.suffix(clamped).joined(separator: "\n")
-        return stripTrailingSpaces(trimmed)
+        let total = session.screen.numberOfLines()
+        let clamped = Int32(max(1, min(2000, lines)))
+        let start = max(Int32(0), total - clamped)
+        return extractScreenText(of: session, fromLine: start, toLine: total)
     }
 
-    // Compact line dumps right-pad every row to the terminal width.
-    // The padding is just noise for an LLM reader and inflates the
-    // payload, so trim it on each line before returning.
-    private static func stripTrailingSpaces(_ text: String) -> String {
-        return text
-            .components(separatedBy: "\n")
-            .map { line in
-                var end = line.endIndex
-                while end > line.startIndex {
-                    let prev = line.index(before: end)
-                    if line[prev] != " " { break }
-                    end = prev
+    // Pull text for a half-open line range [fromLine, toLine) using
+    // iTermTextExtractor. This is the same path PTYSession's
+    // RemoteCommand surface and ToolCodecierge use, so we get real
+    // Unicode (box-drawing, emoji, complex chars) instead of the
+    // debug-dump character substitutions VT100Grid.compactLineDump
+    // produces (`.` for empty cells, `?` for code>127). Empty cells
+    // become spaces; trailing whitespace per line is stripped by the
+    // extractor itself; trailing all-blank rows are stripped by
+    // stripTrailingBlankLines below.
+    //
+    // For image cells the extractor doesn't have a string
+    // representation, so we pass a non-nil attributeProvider to get
+    // an NSAttributedString that carries NSTextAttachment markers at
+    // image positions, then collapse consecutive cells of the same
+    // image into a single "[image]" placeholder.
+    private static func extractScreenText(of session: PTYSession,
+                                           fromLine startY: Int32,
+                                           toLine endY: Int32) -> String {
+        guard endY > startY else { return "" }
+        let extractor = iTermTextExtractor(dataSource: session.screen)
+        let range = VT100GridWindowedRange(
+            coordRange: VT100GridCoordRange(
+                start: VT100GridCoord(x: 0, y: startY),
+                end: VT100GridCoord(x: 0, y: endY)),
+            columnWindow: VT100GridRange(location: 0, length: 0))
+        let content = extractor.content(
+            in: range,
+            attributeProvider: { _, _, _ in [:] },
+            nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+            pad: false,
+            includeLastNewline: false,
+            trimTrailingWhitespace: true,
+            cappedAtSize: -1,
+            truncateTail: false,
+            continuationChars: nil,
+            coords: nil,
+            deduplicateDECDHL: true)
+        let raw: String
+        if let attributed = content as? NSAttributedString {
+            raw = collapseImageAttachments(attributed)
+        } else if let plain = content as? String {
+            raw = plain
+        } else {
+            raw = ""
+        }
+        return stripTrailingBlankLines(raw)
+    }
+
+    // Walk an attributed string and emit text verbatim, replacing
+    // runs of NSTextAttachment image cells with a single "[image]"
+    // placeholder per distinct image. The extractor builds a fresh
+    // NSTextAttachment per cell (so enumerateAttribute yields one
+    // run per cell), but every cell of the same image points its
+    // NSTextAttachment.image at the same NSImage instance — use
+    // identity comparison to dedupe.
+    private static func collapseImageAttachments(_ attributed: NSAttributedString) -> String {
+        let result = NSMutableString()
+        var lastImageID: ObjectIdentifier? = nil
+        attributed.enumerateAttribute(
+            .attachment,
+            in: NSRange(location: 0, length: attributed.length),
+            options: []
+        ) { value, range, _ in
+            if let attachment = value as? NSTextAttachment {
+                let id = attachment.image.map { ObjectIdentifier($0) }
+                if id == nil || id != lastImageID {
+                    result.append("[image]")
+                    lastImageID = id
                 }
-                return String(line[..<end])
+            } else {
+                let substring = attributed.attributedSubstring(from: range).string
+                result.append(substring)
+                lastImageID = nil
             }
-            .joined(separator: "\n")
+        }
+        return result as String
+    }
+
+    // Drop trailing rows that are all whitespace. The extractor
+    // already trims trailing whitespace within a line, so a "blank
+    // line" here is an empty string after split. Useful for snapshot
+    // views of long-running TUIs whose bottom half is unused.
+    private static func stripTrailingBlankLines(_ text: String) -> String {
+        var lines = text.components(separatedBy: "\n")
+        while let last = lines.last,
+              last.trimmingCharacters(in: .whitespaces).isEmpty {
+            lines.removeLast()
+        }
+        return lines.joined(separator: "\n")
     }
 }

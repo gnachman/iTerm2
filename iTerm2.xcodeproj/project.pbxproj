@@ -960,7 +960,7 @@
 		72F96FAF9480758B4A2336E0 /* iTermAdapterSettingsRevealHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6373295DEB74E8DFC995A362 /* iTermAdapterSettingsRevealHelper.swift */; };
 		735B3770025197D62DB3DE9E /* MoveSessionBuiltInFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFF831B875F22773855E32DA /* MoveSessionBuiltInFunctions.swift */; };
 		73F0DD080DECC72620D873FD /* iTermWorkgroupDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FA909C62C1C2AAAE8FA0BB3 /* iTermWorkgroupDetailViewController.swift */; };
-		7411C3148D834251ADC1B627 /* CockpitChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6939F904AA40A26F5FC90AB0 /* CockpitChat.swift */; };
+		7411C3148D834251ADC1B627 /* WorkgroupWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6939F904AA40A26F5FC90AB0 /* WorkgroupWatcher.swift */; };
 		745A29B54D2537CEDE30520E /* iTermLargeContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17306A9E43DF81BD3B73C4B3 /* iTermLargeContent.swift */; };
 		7531FA92945C4C5ABAB8F390 /* iTermEventTriggerEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B231EDB860248C368A511B42 /* iTermEventTriggerEvaluator.swift */; };
 		756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */ = {isa = PBXBuildFile; fileRef = 756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */; };
@@ -6468,7 +6468,7 @@
 		6518C4017AD4275634FA34AA /* iTermRightGutterPanelRegistry.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRightGutterPanelRegistry.h; sourceTree = "<group>"; };
 		67233FA25C3C82AA22B62E01 /* WorkgroupAnimalNames.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupAnimalNames.swift; sourceTree = "<group>"; };
 		677BAE3BF6167A6719904C54 /* iTermJobTerminationMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermJobTerminationMonitor.swift; sourceTree = "<group>"; };
-		6939F904AA40A26F5FC90AB0 /* CockpitChat.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CockpitChat.swift; sourceTree = "<group>"; };
+		6939F904AA40A26F5FC90AB0 /* WorkgroupWatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupWatcher.swift; sourceTree = "<group>"; };
 		6D70E7DE7E81B39DC29CC27B /* VT100PromptKind.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VT100PromptKind.h; sourceTree = "<group>"; };
 		6EFD41B9F2C6F53723CDF88B /* iTermArrangementKeys.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermArrangementKeys.h; sourceTree = "<group>"; };
 		6F87CB3CBFBF0D0E8781513C /* VT100StringConversionConfig.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VT100StringConversionConfig.h; sourceTree = "<group>"; };
@@ -10041,10 +10041,10 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		0586F89994212302FC06BE82 /* CockpitChat */ = {
+		0586F89994212302FC06BE82 /* Orchestration */ = {
 			isa = PBXGroup;
 			children = (
-				6939F904AA40A26F5FC90AB0 /* CockpitChat.swift */,
+				6939F904AA40A26F5FC90AB0 /* WorkgroupWatcher.swift */,
 				2FAA0491F10CEBBC4BA051B1 /* OrchestratorCommand.swift */,
 				DE33CBB56EA96FD0239D8CED /* OrchestratorError.swift */,
 				82455946E0412339FF902BFF /* OrchestratorToolDefinitions.swift */,
@@ -10053,7 +10053,7 @@
 				CC80F2A9A6FBB24419560FD1 /* OrchestrationToolProvider.swift */,
 				84A25904AA380F451E72C586 /* OrchestratorClient.swift */,
 			);
-			path = CockpitChat;
+			path = Orchestration;
 			sourceTree = "<group>";
 		};
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
@@ -14939,7 +14939,7 @@
 				F1FA5EA310888B7DB4DFBE61 /* ClaudeIntegrationHealthMonitor.swift */,
 				A6A72FDE2FAFE50700B391BA /* Cockpit.xib */,
 				F0CF78DCB35283C048B0B54A /* CockpitWindowController.swift */,
-				0586F89994212302FC06BE82 /* CockpitChat */,
+				0586F89994212302FC06BE82 /* Orchestration */,
 			);
 			path = ClaudeCode;
 			sourceTree = "<group>";
@@ -21421,7 +21421,7 @@
 				4418207DFB4BCE15171B7950 /* AIChatToolCallRepair.swift in Sources */,
 				01A01787661B9E1F5177DAB7 /* iTermJobTerminationMonitor.swift in Sources */,
 				9F8E10B7F4BD8C7598537853 /* CockpitWindowController.swift in Sources */,
-				7411C3148D834251ADC1B627 /* CockpitChat.swift in Sources */,
+				7411C3148D834251ADC1B627 /* WorkgroupWatcher.swift in Sources */,
 				87678C5B4CCD4500FC6E46A1 /* OrchestratorCommand.swift in Sources */,
 				775288AB392F2F6937D0B97E /* OrchestratorError.swift in Sources */,
 				14BB5ADA1C1E2B1B5D2D90A4 /* OrchestratorToolDefinitions.swift in Sources */,

@@ -5,7 +5,7 @@
 
 import Foundation
 
-// The tool surface the cockpit orchestrator presents to the LLM.
+// The tool surface the chat-orchestration mode presents to the LLM.
 // Mirrors AITerm's RemoteCommand in role but with a fundamentally
 // different domain: instead of a single session's actions
 // (.runCommand / .typeForYou / .actInWebBrowser), the orchestrator

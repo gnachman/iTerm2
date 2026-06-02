@@ -256,9 +256,9 @@ final class OrchestrationToolProvider: ToolProvider {
     //
     // Scope: by design the orchestrator sees the full app-wide workgroup
     // graph (every window, tab, split, and synthetic single-session
-    // workgroup the user has open), not just the workgroups surfaced in
-    // the Cockpit. list_workgroups returns the same set. Per-session
-    // write actions still gate on a one-time user approval (see
+    // workgroup the user has open). list_workgroups returns the same set.
+    // Per-session
+    // control still gates on a one-time user approval (see
     // OrchestratorDispatcher.ensureSessionClaim), so visibility doesn't
     // equal authority; but the agent is intentionally trusted to see
     // the whole graph so it can suggest cross-session coordination the

@@ -1,5 +1,5 @@
 //
-//  CockpitChat.swift
+//  WorkgroupWatcher.swift
 //  iTerm2SharedARC
 //
 
