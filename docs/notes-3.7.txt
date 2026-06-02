@@ -253,6 +253,12 @@ AI Improvements:
 - AI chat can connect to LAN-hosted models
   over HTTP.
 - Add DeepSeek v4-flash and v4-pro models.
+- Added the latest AI models: OpenAI GPT-5.5
+  and GPT-5.5 Pro, Anthropic Claude Opus 4.8,
+  Opus 4.7, and Sonnet 4.6, and Google Gemini
+  3.5 Flash and Gemini 3.1 Pro. Default models
+  now point at GPT-5.5, Claude Opus 4.8, and
+  Gemini 3.5 Flash.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to
   enable. Reasoning summaries appear live in

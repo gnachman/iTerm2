@@ -1008,7 +1008,7 @@ struct AnthropicRequestBuilder {
             messages: anthropicMessages,
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
             system: systemBlocks,
-            temperature: 0.0,
+            temperature: provider.model.supportsTemperature ? 0.0 : nil,
             stream: stream ? true : nil,
             tools: anthropicTools,
             tool_choice: functions.isEmpty ? nil : .auto
