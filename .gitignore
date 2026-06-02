@@ -71,3 +71,7 @@ emoji-data.txt
 # Unicode data cache for generate_nscharacterset.py
 tools/.unicode_cache/
 emoji-sequences.txt
+
+# Local issue-investigation scratch directories (screenshots, copied
+# prefs, notes); named after the issue number.
+12882/

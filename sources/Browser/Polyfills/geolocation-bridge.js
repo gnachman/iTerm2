@@ -5,9 +5,10 @@
 (function() {
     'use strict';
     // Skip the geolocation polyfill in challenge frames so the probe
-    // sees the unmodified navigator.geolocation. Flag set by
-    // cloak-page-world.js.
-    if (window.__iTermBrowserCloak === true) {
+    // sees the unmodified navigator.geolocation. We recompute the
+    // challenge-frame test here rather than reading a window flag,
+    // because any such flag would itself be a detectable fingerprint.
+    if ({{INCLUDE:challenge-frame-detection.js}}) {
         return;
     }
     try {

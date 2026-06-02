@@ -1,10 +1,10 @@
  (function() {
      'use strict';
      // Skip wrapping console.* in challenge frames so the captcha probe
-     // sees the native [native code] toString. The flag is set by
-     // cloak-page-world.js, which only runs in the .page world; in
-     // .defaultClient the flag is undefined so this script proceeds.
-     if (window.__iTermBrowserCloak === true) {
+     // sees the native [native code] toString. We recompute the
+     // challenge-frame test here rather than reading a window flag,
+     // because any such flag would itself be a detectable fingerprint.
+     if ({{INCLUDE:challenge-frame-detection.js}}) {
          return;
      }
      const TAG = '[ConsoleLogBridge]';
