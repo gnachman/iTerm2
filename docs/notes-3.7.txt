@@ -1167,3 +1167,7 @@ Bug Fixes:
   unsupported file is reported by the
   model instead of being silently
   refused.
+
+- Announcements now become narrower
+  when the clippings panel is visible
+  so they no longer overlap it.

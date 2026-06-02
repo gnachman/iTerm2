@@ -2641,9 +2641,10 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
 }
 
 - (void)updateAnnouncementFrame {
-    // Set the width
+    // Set the width. Reserve space on the right for any visible gutter
+    // panels (e.g. clippings) so the announcement doesn't intersect them.
     NSRect rect = _currentAnnouncement.view.frame;
-    rect.size.width = self.frame.size.width;
+    rect.size.width = MAX(0, self.frame.size.width - self.actualPanelReservation);
     _currentAnnouncement.view.frame = rect;
 
     // Make it change its height
@@ -2684,7 +2685,7 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
         // so we subtract both heights here too.
         NSRect finalRect = NSMakeRect(0,
                                       self.frame.size.height - _currentAnnouncement.view.frame.size.height - [self toolbarReservedHeight] - [self titleReservedHeight],
-                                      self.frame.size.width,
+                                      MAX(0, self.frame.size.width - self.actualPanelReservation),
                                       _currentAnnouncement.view.frame.size.height);
 
         NSRect initialRect = finalRect;
