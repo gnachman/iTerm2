@@ -4201,6 +4201,9 @@
 		A6DCE3F42BFFCA6E005586F5 /* PlaceholderTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */; };
 		A6DCE3FD2C064932005586F5 /* iTermProcess.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCE3FB2C064932005586F5 /* iTermProcess.h */; };
 		A6DCE3FF2C064936005586F5 /* iTermProcess.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCE3FC2C064932005586F5 /* iTermProcess.m */; };
+		A6DDD3162FCE958A0031E81C /* BairesDev.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DDD3152FCE958A0031E81C /* BairesDev.png */; };
+		A6DDD3172FCE958A0031E81C /* BairesDev.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DDD3152FCE958A0031E81C /* BairesDev.png */; };
+		A6DDD3182FCE958A0031E81C /* BairesDev.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DDD3152FCE958A0031E81C /* BairesDev.png */; };
 		A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6DF91B52477B38700FB9F42 /* iTermMissionControlHacks.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF91B32477B38700FB9F42 /* iTermMissionControlHacks.h */; };
@@ -8881,6 +8884,7 @@
 		A6DCE3F32BFFCA6E005586F5 /* PlaceholderTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderTextView.swift; sourceTree = "<group>"; };
 		A6DCE3FB2C064932005586F5 /* iTermProcess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProcess.h; sourceTree = "<group>"; };
 		A6DCE3FC2C064932005586F5 /* iTermProcess.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProcess.m; sourceTree = "<group>"; };
+		A6DDD3152FCE958A0031E81C /* BairesDev.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BairesDev.png; path = images/sponsors/BairesDev.png; sourceTree = "<group>"; };
 		A6DEB2D5267BB8A600192994 /* profile_prologue.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = profile_prologue.txt; sourceTree = "<group>"; };
 		A6DEB2DF267BB95100192994 /* partial_profile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = partial_profile.txt; sourceTree = "<group>"; };
 		A6DEB2E8267BBC7F00192994 /* gen_profile.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = gen_profile.py; sourceTree = "<group>"; };
@@ -10098,6 +10102,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6DDD3152FCE958A0031E81C /* BairesDev.png */,
 				A6A7E2292F9EEA1200B391BA /* GitBig.png */,
 				A68E332D1DE746F5003F1D8E /* Add Mark Touch Bar Icon.png */,
 				A68E332E1DE746F5003F1D8E /* Add Mark Touch Bar Icon@2x.png */,
@@ -17672,6 +17677,7 @@
 				536EF5BA23F6684D00B81875 /* it2run in Resources */,
 				A67F61C3214395C60093940A /* graphic_read.png in Resources */,
 				A62A78D72F987F71007CAA0B /* iTermJobTreeViewController.xib in Resources */,
+				A6DDD3162FCE958A0031E81C /* BairesDev.png in Resources */,
 				A6E7AE69214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				A6F1B3C12693B82C00546767 /* DebugLogging@2x.png in Resources */,
 				A6A64E662508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
@@ -18228,6 +18234,7 @@
 				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				A67A50B226CCD3E300281693 /* xterm in Resources */,
 				A6F7A714213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
+				A6DDD3172FCE958A0031E81C /* BairesDev.png in Resources */,
 				A6CBB8272E0A21F800B2CCCB /* extract-resources.js in Resources */,
 				A6CBB8282E0A21F800B2CCCB /* rewrite-resources.js in Resources */,
 				A6C978F524A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
@@ -19228,6 +19235,7 @@
 				A62A7A742F988932007CAA0B /* FindView.xib in Resources */,
 				A62A7A752F988932007CAA0B /* MinimalFindView.xib in Resources */,
 				A6FE7A7B2E0E120100BEBCE4 /* indexeddb-demo.html in Resources */,
+				A6DDD3182FCE958A0031E81C /* BairesDev.png in Resources */,
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
 				A67F61B0214395B70093940A /* graphic_php.png in Resources */,
 				A6A8322B2E67AA8F00157F82 /* onboarding-intro.html in Resources */,

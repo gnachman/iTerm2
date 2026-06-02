@@ -124,7 +124,8 @@ static const CGFloat kSponsorRowY = 170.0;
         @{ @"image": @"whitebox_logo", @"title": @"Whitebox", @"url": @"https://whitebox.so/?utm_source=iTerm2" },
         @{ @"image": @"coderabbitai",  @"url": @"https://coderabbit.ai/" },
         @{ @"image": @"SerpApi",       @"url": @"https://serpapi.com/?utm_source=iterm" },
-        @{ @"image": @"LIMSIQ",        @"url": @"https://limsiq.com/iterm2?utm_source=iterm2&utm_medium=sponsorship&utm_campaign=about_box" }
+        @{ @"image": @"LIMSIQ",        @"url": @"https://limsiq.com/iterm2?utm_source=iterm2&utm_medium=sponsorship&utm_campaign=about_box" },
+        @{ @"image": @"BairesDev",     @"url": @"https://www.bairesdev.com/sponsoring-open-source-projects/" },
     ];
 
     NSMutableArray<NSView *> *boxes = [NSMutableArray array];
