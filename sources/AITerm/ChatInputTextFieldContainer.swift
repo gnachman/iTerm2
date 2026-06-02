@@ -259,6 +259,29 @@ class ChatInputTextView: ShiftEnterTextView {
     var sendAction: Selector?
     weak var sendTarget: AnyObject?
 
+    // Invoked when file URLs are dropped onto the text view. Return true if
+    // the drop was fully handled (the text view should insert nothing);
+    // return false to fall back to NSTextView's default behavior of inserting
+    // the dropped file paths as plain text.
+    var onDropFileURLs: (([URL]) -> Bool)?
+
+    // A plain-text NSTextView accepts file drops by inserting their paths as
+    // text. Intercept here so the owner can offer to attach backend-supported
+    // files instead. We only divert when onDropFileURLs claims the drop;
+    // otherwise (or for non-file drags like selected text) the default path is
+    // preserved exactly.
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if let handler = onDropFileURLs,
+           let urls = sender.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self],
+            options: [.urlReadingFileURLsOnly: true]) as? [URL],
+           !urls.isEmpty,
+           handler(urls) {
+            return true
+        }
+        return super.performDragOperation(sender)
+    }
+
     // Bind the undo stack to this text view's lifetime. NSUndoManager holds
     // undo targets unowned(unsafe), so registering text-edit undo on a shared
     // (window) undo manager leaves dangling pointers when the chat — and this

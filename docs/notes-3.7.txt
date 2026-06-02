@@ -1147,3 +1147,10 @@ Bug Fixes:
   synthetic workgroup_id so the
   agent can immediately drive the
   new session with the other tools.
+
+- Dropping a file onto the AI chat
+  text field now offers to attach it
+  when the current backend supports
+  that file type, instead of always
+  inserting its path as text. The
+  choice can be remembered.

@@ -104,6 +104,9 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.placeholder = "Type a message…"
         inputTextFieldContainer.isEnabled = false
         inputTextFieldContainer.textView.delegate = self
+        inputTextFieldContainer.textView.onDropFileURLs = { [weak self] urls in
+            self?.handleTextViewFileDrop(urls) ?? false
+        }
 
         sendButton = SendButton(image: sendImage, target: self, action: #selector(sendButtonClicked))
         // .scaleNone keeps the symbol at the configured pointSize. With
@@ -471,6 +474,74 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             responder = next
         }
         return nil
+    }
+
+    // Called when files are dropped directly onto the text view. A plain-text
+    // NSTextView would otherwise insert the file paths as text. For files the
+    // current backend can accept as attachments, offer to attach them instead
+    // (the choice is rememberable). Returns true if we handled the drop, or
+    // false to let the text view insert the paths as before.
+    private func handleTextViewFileDrop(_ urls: [URL]) -> Bool {
+        let provider = AITermController.provider
+        let supported = urls.filter {
+            provider?.fileTypeIsSupported(extension: $0.pathExtension.lowercased()) == true
+        }
+        // Nothing the backend accepts: keep the legacy behavior and let the
+        // text view insert every path as text.
+        guard !supported.isEmpty else {
+            return false
+        }
+        // Consume the drop now (suppressing the text view's default path
+        // insertion) and decide asynchronously: iTermWarning.show with a
+        // window spins a nested sheet-modal loop, which would block the drag
+        // session if run here inside performDragOperation. Deferring to the
+        // next runloop mirrors presentRejectedAttachments' async sheet. When
+        // the choice has been remembered the warning returns immediately with
+        // no UI, so this just adds an imperceptible one-tick delay.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+            let selection = iTermWarning.show(
+                withTitle: dropPromptTitle(for: supported),
+                actions: ["Attach", "Insert Path"],
+                accessory: nil,
+                identifier: "NoSyncAIChatAttachDroppedFile",
+                silenceable: .kiTermWarningTypePermanentlySilenceable,
+                heading: supported.count == 1 ? "Attach File?" : "Attach Files?",
+                window: window)
+            if selection == .kiTermWarningSelection0 {
+                addFiles(from: supported)
+                // Preserve any unsupported files in the same drop by inserting
+                // their paths as text, since we consumed the whole drop.
+                insertFilePathsAsText(urls.filter { !supported.contains($0) })
+            } else {
+                // Insert Path: insert every dropped path as text, matching the
+                // legacy behavior.
+                insertFilePathsAsText(urls)
+            }
+        }
+        return true
+    }
+
+    private func dropPromptTitle(for urls: [URL]) -> String {
+        if urls.count == 1 {
+            return "Add “\(urls[0].lastPathComponent)” to your message as an attachment, or insert its path as text?"
+        }
+        return "Add the \(urls.count) dropped files to your message as attachments, or insert their paths as text?"
+    }
+
+    private func insertFilePathsAsText(_ urls: [URL]) {
+        guard !urls.isEmpty else {
+            return
+        }
+        let textView = inputTextFieldContainer.textView
+        let joined = urls.map { $0.path }.joined(separator: " ")
+        let range = textView.selectedRange()
+        if textView.shouldChangeText(in: range, replacementString: joined) {
+            textView.insertText(joined, replacementRange: range)
+            textView.didChangeText()
+        }
     }
 
     private func addFiles(from urls: [URL]) {
