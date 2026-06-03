@@ -1118,6 +1118,8 @@ class LineBufferTests: XCTestCase {
             XCTAssertEqual(xyRanges?.first?.yStart, 2, "Match should be on row 2 (the 'xthird' row)")
             XCTAssertEqual(xyRanges?.first?.xStart, 0, "Match should start at column 0")
         }
+    }
+
     func testRightPromptBug() {
         let buffer = LineBuffer()
         let width = Int32(133)
