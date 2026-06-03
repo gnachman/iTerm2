@@ -1337,7 +1337,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 }
 
 - (NSArray<ITMRPCRegistrationRequest *> *)contextMenuProviderRegistrationRequests {
-    return [self.serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
+    NSArray<ITMRPCRegistrationRequest *> *requests = [self.serverOriginatedRPCSubscriptions.allKeys mapWithBlock:^id(NSString *signature) {
         ITMNotificationRequest *req = self.serverOriginatedRPCSubscriptions[signature].secondObject;
         if (!req) {
             return nil;
@@ -1346,6 +1346,15 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             return nil;
         }
         return req.rpcRegistrationRequest;
+    }];
+    // The subscriptions are stored in a dictionary, so allKeys returns them
+    // in an unpredictable hash order. Sort by display name to give a stable,
+    // script-controllable order: a script can prefix its titles to force a
+    // particular sequence.
+    return [requests sortedArrayUsingComparator:^NSComparisonResult(ITMRPCRegistrationRequest *lhs, ITMRPCRegistrationRequest *rhs) {
+        NSString *a = lhs.contextMenuAttributes.displayName ?: @"";
+        NSString *b = rhs.contextMenuAttributes.displayName ?: @"";
+        return [a localizedCaseInsensitiveCompare:b];
     }];
 }
 

@@ -1179,6 +1179,13 @@ NS_ASSUME_NONNULL_BEGIN
         if ([file hasPrefix:@"."]) {
             continue;
         }
+        if ([file.lastPathComponent isEqualToString:@"__pycache__"]) {
+            // Python drops a __pycache__ directory next to single-file
+            // scripts. It is not a script, so skip it silently instead of
+            // warning that it is malformed.
+            [enumerator skipDescendants];
+            continue;
+        }
         NSString *path = [scriptsPath stringByAppendingPathComponent:file];
         if ([[NSFileManager defaultManager] itemIsDirectory:path]) {
             [enumerator skipDescendants];
