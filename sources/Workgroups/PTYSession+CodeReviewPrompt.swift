@@ -77,8 +77,13 @@ extension PTYSession {
 
     private func showCodeReviewPromptOverlay(onStart: @escaping (String) -> Void) {
         guard let sessionView: SessionView = view else { return }
-        let defaultPrompt = CodeReviewPromptStore.shared.defaultPromptText
+        // On the second and later presentations for this session, default to
+        // the prompt the user last submitted (a preset or a hand-edited
+        // value) rather than the store's last-selected preset. The first
+        // presentation has no prior submission, so fall back to the store.
+        let defaultPrompt = codeReviewLastUsedPrompt ?? CodeReviewPromptStore.shared.defaultPromptText
         sessionView.presentCodeReviewPromptOverlay(defaultPrompt: defaultPrompt) { [weak self] text in
+            self?.codeReviewLastUsedPrompt = text
             onStart(text)
             // The overlay sits over scrolled-back content; once the user
             // submits, snap to the bottom so the launched program's output

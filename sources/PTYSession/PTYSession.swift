@@ -59,6 +59,14 @@ class PTYSessionSwiftState: NSObject {
     // re-present the prompt overlay against the original template.
     var codeReviewRawCommand: String?
 
+    // For .codeReview sessions, the prompt text the user last submitted
+    // from the overlay (which may be a preset or a hand-edited value).
+    // nil until the first submission. When the overlay is re-presented
+    // (toolbar reload, broken-pipe restart) this is used as the default
+    // instead of the store's last-selected preset, so the user's prior
+    // edits are preserved across reloads.
+    var codeReviewLastUsedPrompt: String?
+
     // For .diff sessions whose spawn was deferred (the workgroup's git
     // poller hadn't reported any pending change yet at spawn time), the
     // captured closure that fires the launch request. Cleared by
@@ -1724,6 +1732,14 @@ extension PTYSession {
     @objc var codeReviewRawCommand: String? {
         get { swiftState.codeReviewRawCommand }
         set { swiftState.codeReviewRawCommand = newValue }
+    }
+
+    // Prompt text last submitted from the code-review overlay; used as the
+    // default when re-presenting the overlay so prior (possibly hand-edited)
+    // input is preserved across reloads. See PTYSession+CodeReviewPrompt.
+    var codeReviewLastUsedPrompt: String? {
+        get { swiftState.codeReviewLastUsedPrompt }
+        set { swiftState.codeReviewLastUsedPrompt = newValue }
     }
 
     // Closure that fires the deferred launch for a .diff-mode session
