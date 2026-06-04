@@ -86,6 +86,7 @@ struct AutoModeClassifier {
             )
         }
         if let shortCircuit = hardRules?(action) {
+            DLog("Hard rules short-circuted check")
             return shortCircuit
         }
         let system = buildSystemPrompt()

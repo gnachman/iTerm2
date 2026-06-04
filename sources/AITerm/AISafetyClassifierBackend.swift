@@ -4,9 +4,11 @@
 //
 //  Bridges AutoModeClassifier to the AITerm provider infrastructure. The
 //  classifier is backend-agnostic; this adapter runs its one-shot side-query
-//  as a non-streaming AIConversation completion using the SAME model and API
-//  key as the user's configured AI conversation. (A separate, dedicated
-//  classifier model can be added later.)
+//  as a non-streaming AIConversation completion. By default it uses the SAME
+//  model and API key as the user's configured AI conversation. Users who were
+//  grandfathered in under the free on-device path and declined to switch keep
+//  using Apple Intelligence (kPreferenceKeyAISafetyCheckUsesAppleIntelligence);
+//  see iTermMigrationHelper and RemoteCommand.isSafe.
 //
 
 import Foundation
@@ -24,17 +26,35 @@ struct AISafetyClassifierBackend: AutoModeClassifier.Backend {
     private static var inflight = [UUID: AIConversation]()
 
     func sideQuery(system: String, user: String, maxTokens: Int) async throws -> String {
+        // "Wants Apple" (the stored user choice) is deliberately kept separate
+        // from "Apple is available right now" (the probe). A user who chose the
+        // on-device path must never be silently downgraded to a cloud provider,
+        // so when they want Apple but it is unavailable we fail closed rather
+        // than fall back to the configured model.
+        let wantsAppleIntelligence =
+            iTermUserDefaults.userDefaults().bool(forKey: kPreferenceKeyAISafetyCheckUsesAppleIntelligence)
         return try await withCheckedThrowingContinuation { continuation in
             // AITermController and its delegate callbacks expect the main
             // thread; the classifier may be awaited from a background executor.
             DispatchQueue.main.async {
-                // The classifier uses the configured conversation model and key.
-                // If AI is not set up there is nothing to classify with, so fail
-                // closed (the caller maps a thrown error to "unsafe").
-                guard AITermControllerRegistrationHelper.instance.registration != nil else {
-                    continuation.resume(
-                        throwing: AIError("No AI model is configured to classify command safety."))
-                    return
+                if wantsAppleIntelligence {
+                    // Never fall back to the cloud for an on-device user. If
+                    // Apple Intelligence is unavailable (not ready, or this Mac
+                    // is not eligible), fail closed; the caller maps a thrown
+                    // error to "unsafe" -> manual approval.
+                    guard AIAvailabilityProbe.check() else {
+                        continuation.resume(throwing: AIError(
+                            "Apple Intelligence is unavailable; the command safety check will not fall back to a cloud provider."))
+                        return
+                    }
+                } else {
+                    // The configured-model path needs AI set up; if it is not,
+                    // there is nothing to classify with, so fail closed.
+                    guard AITermControllerRegistrationHelper.instance.registration != nil else {
+                        continuation.resume(
+                            throwing: AIError("No AI model is configured to classify command safety."))
+                        return
+                    }
                 }
                 let token = UUID()
                 var conversation = AIConversation(
@@ -43,8 +63,13 @@ struct AISafetyClassifierBackend: AutoModeClassifier.Backend {
                         AITermController.Message(role: .system, content: system),
                         AITermController.Message(role: .user, content: user),
                     ])
-                // Leave `conversation.model` unset so it uses the configured
-                // chat model rather than a classifier-specific override.
+                if wantsAppleIntelligence {
+                    // Routes through the AITermController Apple Intelligence
+                    // bypass (on-device, no API key).
+                    conversation.model = AIMetadata.recommendedAppleModel.name
+                }
+                // Otherwise leave `conversation.model` unset so it uses the
+                // configured chat model.
                 Self.inflight[token] = conversation
                 conversation.complete(streaming: nil) { result in
                     Self.inflight.removeValue(forKey: token)

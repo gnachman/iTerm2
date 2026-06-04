@@ -1074,7 +1074,7 @@ extension ChatAgent {
                                   completion: @escaping (Result<String, Error>) throws -> ()) throws {
         if remoteCommand.needsSafetyCheck {
             Task { @MainActor in
-                let safe = await remoteCommand.isSafe()
+                let safe = await remoteCommand.isSafe(force: mode == .orchestration)
                 do {
                     try reallyRunCommand(remoteCommand,
                                          responseID,

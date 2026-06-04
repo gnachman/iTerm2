@@ -1986,7 +1986,7 @@ extension Message.Content {
             case .classic(let request):
                 let specific = request.permissionDescription + "."
                 let warning = if safe == false {
-                    "⚠️ **Apple Intelligence has flagged this command as potentially dangerous. Review it with care.**\n\n"
+                    "⚠️ **The AI safety check flagged this command as potentially dangerous. Review it with care.**\n\n"
                 } else {
                     ""
                 }

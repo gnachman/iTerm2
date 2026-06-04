@@ -213,6 +213,17 @@ extern NSString *const kPreferenceKeyAIVectorStore;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
+
+// Local (NoSync) flags that govern where the AI command-safety check runs.
+// These form a privacy boundary (on-device vs. configured provider), so they
+// are shared constants rather than scattered string literals: a typo fails to
+// build instead of silently mis-routing. Read/written via
+// [iTermUserDefaults userDefaults] (not the registered-defaults map) from both
+// Swift and ObjC.
+extern NSString *const kPreferenceKeyAISafetyCheckUsesAppleIntelligence;  // boolean: route the side-query on-device
+extern NSString *const kPreferenceKeyAISafetyCheckProviderSwitchPending;  // boolean: still owe the user the switch prompt
+extern NSString *const kPreferenceKeyAISafetyCheckProviderMigrationDone;  // boolean: one-time provider migration ran
+extern NSString *const kPreferenceKeyAISafetyCheckNagComplete;  // boolean: opt-in nag already shown
 extern NSString *const kPreferenceKeyAICustomHeadersEnabled;  // boolean
 extern NSString *const kPreferenceKeyAICustomHeaders;  // NSArray of NSDictionary with "name"/"value" NSString entries
 extern NSString *const kPreferenceKeyOpenTmuxWindowsAsTabsInAttachingWindow;  // PHONY

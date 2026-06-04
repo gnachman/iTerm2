@@ -251,7 +251,11 @@ AI Improvements:
 - The AI command safety check now uses your
   configured AI model. It runs deterministic
   terminal rules first and only asks the model
-  when those rules cannot decide.
+  when those rules cannot decide. It can send
+  commands to your (possibly cloud) provider, so
+  it is opt-in. Users who already enabled it keep
+  using free on-device Apple Intelligence and are
+  asked once whether to switch to their model.
 - Command safety auto-allow now requires every
   segment of a compound command to be read-only,
   so a safe command followed by a dangerous one

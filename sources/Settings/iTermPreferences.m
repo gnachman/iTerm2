@@ -255,6 +255,10 @@ NSString *const kPreferenceKeyAIVectorStore = @"AIVectorStore";
 NSString *const kPreferenceKeyUseRecommendedAIModel = @"UseRecommendedAIModel";
 NSString *const kPreferenceKeyAIVendor = @"AIVendor";
 NSString *const kPreferenceKeyAISafetyCheck = @"AI Safety Check";
+NSString *const kPreferenceKeyAISafetyCheckUsesAppleIntelligence = @"NoSyncAISafetyCheckUsesAppleIntelligence";
+NSString *const kPreferenceKeyAISafetyCheckProviderSwitchPending = @"NoSyncAISafetyCheckProviderSwitchPending";
+NSString *const kPreferenceKeyAISafetyCheckProviderMigrationDone = @"NoSyncAISafetyCheckProviderMigrationDone";
+NSString *const kPreferenceKeyAISafetyCheckNagComplete = @"NoSyncAISafetyCheckNagComplete";
 NSString *const kPreferenceKeyAICustomHeadersEnabled = @"AICustomHeadersEnabled";
 NSString *const kPreferenceKeyAICustomHeaders = @"AICustomHeaders";
 

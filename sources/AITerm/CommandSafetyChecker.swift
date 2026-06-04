@@ -33,10 +33,12 @@ public final class AIAvailabilityProbe: NSObject {
 class CommandSafetyChecker {
     // Returns true if the command is safe to run automatically. Delegates to
     // AutoModeClassifier: deterministic TerminalHardRules run first, falling
-    // through to a one-shot LLM side-query against the user's configured
-    // conversation model (a cloud provider for most users). Anything short of
-    // an unambiguous allow is treated as unsafe so the UI prompts for manual
-    // approval; classification errors are fail-closed.
+    // through to a one-shot LLM side-query. The side-query runs against the
+    // configured conversation model (a cloud provider for most users), or
+    // against on-device Apple Intelligence for users grandfathered in under
+    // the old free path who declined to switch (see AISafetyClassifierBackend).
+    // Anything short of an unambiguous allow is treated as unsafe so the UI
+    // prompts for manual approval; classification errors are fail-closed.
     static func check(_ command: String) async -> Bool {
         DLog("Check safety of command: \(command)")
         let rules = TerminalHardRules()
