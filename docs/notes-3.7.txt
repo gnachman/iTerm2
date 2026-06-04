@@ -1266,3 +1266,7 @@ Bug Fixes:
   they vanished on the next launch.
   Uninstalling had the mirror bug. Both
   now flush the profile model to disk.
+- The default AI timeout is now 5 minutes
+  instead of 30 seconds, giving slow
+  models and long responses more time to
+  complete before giving up.

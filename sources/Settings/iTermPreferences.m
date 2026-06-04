@@ -626,7 +626,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyPromptOnQuit: @YES,
                   kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows: @NO,
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,
-                  kPreferenceKeyAITimeout: @30,
+                  kPreferenceKeyAITimeout: @300,
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
                   kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates: @YES,
