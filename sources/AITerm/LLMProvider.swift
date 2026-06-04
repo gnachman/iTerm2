@@ -328,6 +328,10 @@ struct LLMProvider {
             return DeepSeekResponseParser()
         case .anthropic:
             return AnthropicResponseParser()
+        case .appleIntelligence:
+            // On-device; AITermController handles the response directly and
+            // never parses HTTP data for this provider.
+            it_fatalError("Apple Intelligence does not parse HTTP responses")
         @unknown default:
             it_fatalError()
         }
@@ -356,6 +360,10 @@ struct LLMProvider {
 
         case .anthropic:
             return AnthropicStreamingResponseParser()
+
+        case .appleIntelligence:
+            // On-device and non-streaming; never reached.
+            return nil
 
         @unknown default:
             return nil

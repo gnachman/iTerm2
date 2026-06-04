@@ -1008,7 +1008,6 @@ enum {
                     key:kPreferenceKeyAISafetyCheck
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-    _aiSafetyCheck.enabled = [iTermAIAvailabilityProbe check];
 
     info = [self defineControl:_aiCustomHeadersEnabled
                            key:kPreferenceKeyAICustomHeadersEnabled
@@ -1194,6 +1193,7 @@ enum {
     _aiFeatureHostedWebSearch.enabled = allowed;
     _aiFeatureFunctionCalling.enabled = allowed;
     _aiFeatureStreamingResponses.enabled = allowed;
+    _aiSafetyCheck.enabled = allowed;
     _vectorStore.enabled = allowed;
 
     [self updateCoarseAIModelSettingsEnabled];

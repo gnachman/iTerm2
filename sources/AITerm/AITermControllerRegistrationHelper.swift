@@ -74,6 +74,14 @@ class AITermRegistrationWindowController: NSWindowController {
              "https://aistudio.google.com/app/api-keys",
              "https://iterm2.com/aiterm",
              "Gemini"]
+        case .apple:
+            // Apple Intelligence runs on-device and needs no API key, so this
+            // registration dialog is never shown for it. Present harmless
+            // placeholders to keep the switch exhaustive.
+            ["https://support.apple.com/apple-intelligence",
+             "https://support.apple.com/apple-intelligence",
+             "https://iterm2.com/aiterm",
+             "Apple Intelligence"]
         @unknown default:
             it_fatalError()
         }

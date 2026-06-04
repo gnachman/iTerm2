@@ -67,6 +67,11 @@ struct LLMRequestBuilder {
                                        functions: functions,
                                        stream: stream,
                                        shouldThink: shouldThink).body()
+        case .appleIntelligence:
+            // Apple Intelligence runs on-device via FoundationModels and never
+            // builds an HTTP request. AITermController intercepts this provider
+            // before reaching the request builder, so this is unreachable.
+            throw AIError("Apple Intelligence does not use HTTP requests")
         @unknown default:
             it_fatalError()
         }

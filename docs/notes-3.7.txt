@@ -241,6 +241,15 @@ Triggers Improvements:
   matching.
 
 AI Improvements:
+- The AI command safety check now uses your
+  configured AI model. It runs deterministic
+  terminal rules first and only asks the model
+  when those rules cannot decide.
+- Command safety auto-allow now requires every
+  segment of a compound command to be read-only,
+  so a safe command followed by a dangerous one
+  (or a redirection or substitution) is no longer
+  silently auto-run.
 - AI chat can connect to LAN-hosted models
   over HTTP.
 - Add DeepSeek v4-flash and v4-pro models.

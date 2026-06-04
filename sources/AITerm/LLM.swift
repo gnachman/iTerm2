@@ -472,7 +472,7 @@ struct LLMAuthorizationProvider {
         case .anthropic:
             ["x-api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
              "anthropic-version": "2023-06-01"]
-        case .gemini, .llama:
+        case .gemini, .llama, .appleIntelligence:
             [:]
         @unknown default:
             [:]

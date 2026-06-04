@@ -168,6 +168,10 @@ class AIMetadata: NSObject {
         return AIMetadata.claude_4_6_opus
     }
 
+    static var recommendedAppleModel: Model {
+        return AIMetadata.appleOnDevice
+    }
+
     static var alternateOpenAIModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .openAI
@@ -195,6 +199,12 @@ class AIMetadata: NSObject {
     static var alternateAnthropicModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .anthropic
+        }
+    }
+
+    static var alternateAppleModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .apple
         }
     }
 
@@ -545,6 +555,25 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .deepSeek
     )
+
+    // MARK: - Apple Intelligence (on-device)
+
+    // Runs through Apple's on-device Foundation Models framework rather than
+    // an HTTP endpoint, so `url` is unused and the request/response is handled
+    // by a bypass in AITermController. Feature-limited on purpose: no
+    // streaming, no function calling, no attachments. Used today only to power
+    // the command safety classifier (see AISafetyClassifierBackend). Token
+    // limits are modest because the on-device model has a small context.
+    private static let appleOnDevice = Model(
+        name: "apple-on-device",
+        contextWindowTokens: 8192,
+        maxResponseTokens: 1024,
+        url: "",
+        api: .appleIntelligence,
+        features: [],
+        vendor: .apple
+    )
+
     let models: [Model] = [
         // The first model will be the default.
         AIMetadata.gpt5_4,
@@ -606,10 +635,19 @@ class AIMetadata: NSObject {
         // #llama-streaming-functions
         AIMetadata.llama_4_latest,
         AIMetadata.llama_3_3_latest,
+
+        // MARK: - Apple Intelligence
+        AIMetadata.appleOnDevice,
     ]
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {
         for model in models {
+            // Apple Intelligence is an on-device classifier-only backend, not a
+            // general chat model. Keep it in `models` so the safety classifier
+            // can resolve it by name, but never surface it in the model picker.
+            if model.vendor == .apple {
+                continue
+            }
             closure(model.name, model.contextWindowTokens, model.url)
         }
     }

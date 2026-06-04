@@ -132,7 +132,7 @@ class AITermController {
         if let _registration {
             return _registration
         }
-        if isSelfHosted {
+        if isSelfHosted || providerIsAppleIntelligence {
             return Registration(apiKey: "Placeholder for self-hosted")
         }
         return nil
@@ -219,6 +219,12 @@ class AITermController {
             return false
         }
         return PrivateIPChecker.isLocalOrPrivate(host)
+    }
+
+    // Apple Intelligence runs on-device and needs no API key, so it gets a
+    // placeholder registration and never builds an HTTP request.
+    private var providerIsAppleIntelligence: Bool {
+        return llmProvider?.model.api == .appleIntelligence
     }
 
     private func handle(event: Event) {
@@ -377,6 +383,12 @@ class AITermController {
             case .pluginError(let error):
                 handle(event: .error(error))
             case .cancel:
+                // Stop the outstanding operation. For HTTP this aborts the
+                // request; for the on-device Apple Intelligence task it sets
+                // Task.isCancelled so the task returns instead of running to
+                // completion and double-firing a delegate callback.
+                DLog("Cancel")
+                cancellation?.cancel()
                 delegate?.aitermControllerDidCancelOutstandingRequest(self)
                 state = .ground
             case .error(let error):
@@ -446,6 +458,10 @@ class AITermController {
     private func requestCompletion(messages: [Message], registration: Registration, stream: ((String) -> ())?) {
         guard let llmProvider else {
             handle(event: .error(AIError("No AI model configured in settings.")))
+            return
+        }
+        if llmProvider.model.api == .appleIntelligence {
+            requestAppleIntelligenceCompletion(messages: messages)
             return
         }
         var builder = LLMRequestBuilder(provider: llmProvider,
@@ -899,6 +915,70 @@ class AITermController {
                 handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(data.stringOrHex)")))
             }
         }
+    }
+
+    // Bypass for the on-device Apple Intelligence backend. It has no HTTP wire
+    // format, so instead of building a WebRequest we flatten the messages into
+    // instructions + a single prompt, run the on-device model, and deliver the
+    // text through the same offerChoice path as a parsed non-streaming
+    // response. Text only: function calls and attachments are out of scope.
+    private func requestAppleIntelligenceCompletion(messages: [Message]) {
+        guard #available(macOS 26, *) else {
+            handle(event: .error(AIError("Apple Intelligence requires macOS 26 or later.")))
+            return
+        }
+        let system = messages
+            .filter { $0.role == .system }
+            .compactMap { $0.content }
+            .joined(separator: "\n\n")
+        let prompt = messages
+            .filter { $0.role != .system }
+            .compactMap { $0.content }
+            .joined(separator: "\n\n")
+        let maxTokens = llmProvider?.model.maxResponseTokens ?? 1024
+
+        let cancellation = Cancellation()
+        self.cancellation = cancellation
+        state = .querySent(messages: messages, streamParserState: nil)
+
+        let task = Task { [weak self] in
+            let result: Result<String, Error>
+            do {
+                let text = try await AppleIntelligenceRunner.complete(
+                    system: system.isEmpty ? nil : system,
+                    user: prompt,
+                    maxTokens: maxTokens)
+                result = .success(text)
+            } catch {
+                result = .failure(error)
+            }
+            if Task.isCancelled {
+                return
+            }
+            DispatchQueue.main.async {
+                guard let self else {
+                    return
+                }
+                // Drop the result if the request is no longer outstanding. A
+                // cancel (handle(.cancel)) moves state off .querySent and has
+                // already delivered a terminal callback; without this guard the
+                // on-device task would fire a second delegate callback, which
+                // is fatal for callers bridging through a checked continuation.
+                // This mirrors the HTTP path, where a .webResponse arriving in
+                // .ground is ignored by the state machine.
+                guard case .querySent = self.state else {
+                    return
+                }
+                switch result {
+                case .success(let text):
+                    self.state = .ground
+                    self.delegate?.aitermController(self, offerChoice: text)
+                case .failure(let error):
+                    self.handle(event: .error(AIError("Apple Intelligence error: \(error.localizedDescription)")))
+                }
+            }
+        }
+        cancellation.impl = { task.cancel() }
     }
 
     private func doFunctionCall(_ message: Message, call functionCall: LLM.FunctionCall) {

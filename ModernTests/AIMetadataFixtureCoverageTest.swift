@@ -33,8 +33,10 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
         for model in AIMetadata.instance.models {
             // Skip vendors that don't make sense to fixture-capture:
             //   - llama:  local Ollama, no real "refusal" semantics
+            //   - apple:  on-device classifier-only backend, no HTTP request
+            //             to capture a refusal from
             //   - none:   shouldn't happen, but skip rather than crash
-            guard let vendor = model.vendor, vendor != .llama else { continue }
+            guard let vendor = model.vendor, vendor != .llama, vendor != .apple else { continue }
             // Skip models that are deprecated to new keys. They still work
             // for grandfathered accounts so we keep the AIMetadata entry,
             // but a fixture can't be captured from a fresh API key. The list
