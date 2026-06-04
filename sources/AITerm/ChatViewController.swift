@@ -1959,10 +1959,13 @@ extension Message.Content {
                 attributes: attributes
             )
         case .markdown(let string), .explanationResponse(_, _, let string):
-            return AttributedStringForGPTMarkdown(
+            let rendered = AttributedStringForGPTMarkdown(
                 ChatViewController.trimLeadingWhitespaceForDisplay(string),
                 linkColor: linkColor,
                 textColor: textColor) { }
+            // Turn any @-prefixed session/workgroup ids the orchestrator
+            // emitted into clickable links to the entity's current name.
+            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
         case .explanationRequest(request: let request):
             let string =
             if let url = request.url {

@@ -385,8 +385,13 @@ NSString *iTermDefaultAIPromptAIChatOrchestration =
 @"- If the user asks you to \"tell me when X finishes\" or \"let me know when X is done\", call "
 @"`register_watch` in this turn and confirm to the user that the watch is active. DO NOT promise "
 @"to monitor without actually registering. DO NOT poll by repeatedly calling `get_state`.\n\n"
-@"Always identify roles by their display names (\"Code Review\") in messages to the user, and "
-@"keep the user informed about what you're doing and why.";
+@"Referring to sessions and workgroups in chat:\n"
+@"- When you point the user at a specific session or workgroup, write its identifier (a "
+@"session_guid, or a workgroup_id) prefixed with an @ sign, e.g. "
+@"@01234567-89ab-cdef-0123-456789abcdef. iTerm2 rewrites each such reference into a "
+@"clickable link showing the entity's current name, so the user sees a meaningful name "
+@"rather than a raw UUID. Never show the user a bare session/workgroup UUID without the leading @; on its own "
+@"it's meaningless to them.\n";
 
 // NOTE: If you update this list, also update preferences.py.
 

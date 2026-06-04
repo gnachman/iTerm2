@@ -45,6 +45,13 @@ Major New Features:
 - Claude Code integration was added.
   This is still a work in progress as of 3.7.0beta1.
 
+- In AI chat orchestration mode, references
+  to a session or workgroup now appear as a
+  clickable link, marked with a terminal
+  icon, showing its current name instead of
+  a raw identifier. Clicking the link
+  reveals that session.
+
 - Workgroups let you configure a session
   to be transformed into a group of related
   sessions — peers, split panes, or tabs —
