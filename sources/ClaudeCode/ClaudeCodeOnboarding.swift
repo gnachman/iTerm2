@@ -246,6 +246,10 @@ class ClaudeCodeOnboarding: NSObject {
     static func uninstallTriggers() -> Bool {
         if let shared = ProfileModel.sharedInstance() {
             removeOurWorkgroupTriggers(from: shared)
+            // Persist the removal. Like install, removeOurWorkgroupTriggers
+            // only mutates the in-memory model via setObject:forKey:inBookmark:;
+            // without flush the triggers reappear on the next launch.
+            shared.flush()
         }
         if let sessions = ProfileModel.sessionsInstance() {
             removeOurWorkgroupTriggers(from: sessions)
@@ -1544,6 +1548,7 @@ class ClaudeCodeOnboarding: NSObject {
         // until the session is closed and reopened. Mirrors what
         // TriggerController's import paths do after a batch add.
         if !guidsToInstall.isEmpty {
+            ProfileModel.sharedInstance()?.flush()
             NotificationCenter.default.post(
                 name: NSNotification.Name(kReloadAllProfiles),
                 object: nil)

@@ -1259,3 +1259,10 @@ Bug Fixes:
   like -- no longer turn into an em
   dash and smart quotes, autocorrect,
   and text replacements stay off.
+- Fix a bug where installing the Claude
+  Code integration added its workgroup
+  triggers to the settings UI but never
+  wrote them back to user defaults, so
+  they vanished on the next launch.
+  Uninstalling had the mirror bug. Both
+  now flush the profile model to disk.
