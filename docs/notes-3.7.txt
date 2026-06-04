@@ -1243,3 +1243,8 @@ Bug Fixes:
   mark whose parentAid chain leads
   back to it so no inner mark leaks
   as still-running.
+- Disable automatic text substitutions
+  in the AI chat input field, so things
+  like -- no longer turn into an em
+  dash and smart quotes, autocorrect,
+  and text replacements stay off.

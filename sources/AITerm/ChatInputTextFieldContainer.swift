@@ -64,6 +64,13 @@ class ChatInputTextFieldContainer: NSView {
         tv.textContainer?.widthTracksTextView = true
         tv.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
         tv.allowsUndo = true
+        tv.isAutomaticDashSubstitutionEnabled = false
+        tv.isAutomaticQuoteSubstitutionEnabled = false
+        tv.isAutomaticTextReplacementEnabled = false
+        tv.isAutomaticSpellingCorrectionEnabled = false
+        tv.isAutomaticDataDetectionEnabled = false
+        tv.isAutomaticLinkDetectionEnabled = false
+        tv.smartInsertDeleteEnabled = false
         return tv
     }()
 
