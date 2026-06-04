@@ -29,6 +29,10 @@ protocol LayoutResolverEnvironment {
     func tabIDExists(_ tabID: String) -> Bool
     func windowGUIDExists(_ guid: String) -> Bool
 
+    /// True if a profile with the given GUID exists. Used to validate
+    /// `new_session` leaves before any mutation begins.
+    func profileGUIDExists(_ guid: String) -> Bool
+
     /// The numeric tab ID currently containing the given session, or
     /// nil if the session is unknown or unparented.
     func tabID(containingSession sessionGUID: String) -> String?
@@ -51,7 +55,7 @@ enum LayoutResolverError: Error, Equatable {
     case tmuxTabNotSupported(tabGUID: String)
     case newTabsNotSupported
     case newWindowsNotSupported
-    case newSessionLeafNotSupported
+    case unknownProfile(guid: String)
 }
 
 /// One tab whose layout is being replaced. Carries the resolved
@@ -82,17 +86,21 @@ enum LayoutResolver {
     static func resolve(_ spec: LayoutSpec,
                         environment: LayoutResolverEnvironment) throws -> LayoutPlan {
 
-        // Reject features the mutator cannot execute: inline session/
-        // tab/window creation requires a headless session-creation
-        // primitive that does not exist yet.
+        // Reject features the mutator cannot execute. Inline new_session
+        // leaves ARE supported (they're materialized at execution time),
+        // but creating whole new tabs/windows is not.
         if !spec.newTabs.isEmpty {
             throw LayoutResolverError.newTabsNotSupported
         }
         if !spec.newWindows.isEmpty {
             throw LayoutResolverError.newWindowsNotSupported
         }
+
+        // Validate the profile of every new_session leaf up front so a
+        // bad profile GUID fails before any session is created, keeping
+        // a malformed spec side-effect-free.
         for tab in spec.tabs {
-            try rejectNewSessionLeaves(tab.root)
+            try checkNewSessionProfiles(tab.root, environment: environment)
         }
 
         // 1. Existence checks for every referenced ID.
@@ -168,16 +176,19 @@ enum LayoutResolver {
 
     // MARK: - Helpers
 
-    private static func rejectNewSessionLeaves(_ node: LayoutNode) throws {
+    private static func checkNewSessionProfiles(_ node: LayoutNode,
+                                                environment: LayoutResolverEnvironment) throws {
         switch node {
         case .splitter(_, let children):
             for child in children {
-                try rejectNewSessionLeaves(child)
+                try checkNewSessionProfiles(child, environment: environment)
             }
         case .session:
             break
-        case .newSession:
-            throw LayoutResolverError.newSessionLeafNotSupported
+        case .newSession(let info):
+            if !environment.profileGUIDExists(info.profileGUID) {
+                throw LayoutResolverError.unknownProfile(guid: info.profileGUID)
+            }
         }
     }
 

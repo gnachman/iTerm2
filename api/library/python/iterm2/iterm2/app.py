@@ -44,6 +44,25 @@ async def async_get_app(
 def invalidate_app():
     App.instance = None
 
+
+def _node_has_new_session(node: typing.Any) -> bool:
+    if not isinstance(node, dict):
+        return False
+    if "new_session" in node:
+        return True
+    return any(_node_has_new_session(child)
+               for child in node.get("children", []))
+
+
+def _spec_has_new_session(spec: typing.Dict[str, typing.Any]) -> bool:
+    """True if any node in the spec's tab layouts is a new_session leaf.
+    Used to gate the capability check so existing callers that only
+    reshape live sessions don't need a newer iTerm2."""
+    if not isinstance(spec, dict):
+        return False
+    return any(_node_has_new_session(tab.get("root"))
+               for tab in spec.get("tabs", []))
+
 # See note in tmux.async_get_tmux_connections()
 iterm2.tmux.DELEGATE_FACTORY = async_get_app  # type: ignore
 iterm2.window.DELEGATE_FACTORY = async_get_app  # type: ignore
@@ -563,6 +582,19 @@ class App(
 
             - ``{"session_id": "<guid>"}`` — leaf referring to a live
               session.
+            - ``{"new_session": {"profile": "<profile-guid>",
+              "command": "<optional>"}}`` — leaf that creates a brand-new
+              session with the named profile (and optional command
+              override) in place. If given, ``command`` runs in a login
+              shell (your PATH, aliases, and dotfiles are sourced), as if
+              you had typed it. The new pane is sized to its even share
+              of its container; you cannot specify a size. It honors the
+              profile's working-directory setting: Home and Custom
+              Directory behave as configured, and "Reuse previous
+              session's directory" inherits from an existing pane in the
+              destination tab (so it lands where a hand-made split would).
+              Requires iTerm2 new enough to advertise the capability (see
+              :func:`iterm2.capabilities.supports_apply_layout_new_session`).
             - ``{"vertical": True, "children": [<node>, <node>, ...]}``
               — splitter with at least 2 children.
 
@@ -576,30 +608,46 @@ class App(
             - Every tab affected by a session move must be listed in
               ``tabs`` (or its sessions accounted for via
               ``close_sessions`` / ``close_tabs``).
+            - Every ``new_session`` profile GUID must name a real
+              profile.
             - tmux integration tabs are not supported.
 
-            **Limitations:** layouts may reference live sessions only.
-            Creating new sessions inline (``new_session`` leaves), the
-            ``new_tabs`` field, and the ``new_windows`` field are not
-            supported and are rejected by the resolver.
+            **Limitations:** ``new_session`` leaves create sessions in
+            existing tabs only. The ``new_tabs`` and ``new_windows``
+            fields are not supported; use
+            :meth:`~iterm2.window.Window.async_create_tab` /
+            :meth:`~iterm2.window.Window.async_create` to make new tabs
+            and windows, then reshape them with apply_layout.
 
         :throws: :class:`~iterm2.rpc.RPCException` on validation
             failure or execution error. The error message includes a
             tree-path indicating the offending node.
 
-        Example: swap two sessions in a tab.
+        Example: replace a tab's single session with a 3-pane layout,
+        keeping the existing session on the left and creating two new
+        ones on the right, in one call.
 
         .. code-block:: python
 
+            session = tab.sessions[0]
+            profile = await session.async_get_profile()
+            guid = profile.guid
             spec = {
                 "tabs": [
                     {
                         "tab_id": tab.tab_id,
                         "root": {
-                            "vertical": True,
+                            "vertical": True,  # left | right
                             "children": [
-                                {"session_id": "<b-guid>"},
-                                {"session_id": "<a-guid>"},
+                                {"session_id": session.session_id},
+                                {
+                                    "vertical": False,  # top / bottom
+                                    "children": [
+                                        {"new_session": {"profile": guid,
+                                                         "command": "htop"}},
+                                        {"new_session": {"profile": guid}},
+                                    ],
+                                },
                             ],
                         },
                     },
@@ -608,6 +656,9 @@ class App(
             await app.async_apply_layout(spec)
         """
         iterm2.capabilities.check_supports_apply_layout(self.connection)
+        if _spec_has_new_session(spec):
+            iterm2.capabilities.check_supports_apply_layout_new_session(
+                self.connection)
         # The spec is sent as base64 because iTerm2's expression parser does
         # not decode \" inside string literals, and a JSON spec almost always
         # contains quoted strings.

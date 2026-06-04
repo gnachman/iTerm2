@@ -34,7 +34,14 @@ protocol LayoutMutator {
     func detachSession(_ guid: String, fromTab tabGUID: String) throws
 
     /// Create a brand-new session and return its GUID.
-    func createNewSession(profileGUID: String, command: String?) throws -> String
+    /// `destinationTabGUID` is the tab the new session will land in (nil
+    /// if it's destined for a not-yet-created tab/window). The
+    /// implementation uses it to size the session against the right
+    /// window and to inherit a working directory from a neighbor, so a
+    /// new session behaves like a split.
+    func createNewSession(profileGUID: String,
+                          command: String?,
+                          destinationTabGUID: String?) throws -> String
 
     /// Replace the named tab's split-view tree with one matching
     /// `layout`. The resolver guarantees every leaf in `layout` is
@@ -80,19 +87,28 @@ enum LayoutTransaction {
         let resolvedTabUpdates = try plan.tabUpdates.map { update in
             LayoutPlanTabUpdate(
                 tabGUID: update.tabGUID,
-                root: try materializeNewSessions(update.root, mutator: mutator))
+                root: try materializeNewSessions(update.root,
+                                                 destinationTabGUID: update.tabGUID,
+                                                 mutator: mutator))
         }
+        // New tabs/windows have no existing destination tab, so new
+        // sessions there can't inherit context (those paths are currently
+        // unsupported and rejected by the resolver, so this is empty).
         let resolvedNewTabs = try plan.newTabs.map { spec in
             LayoutNewTabSpec(
                 windowID: spec.windowID,
                 index: spec.index,
-                root: try materializeNewSessions(spec.root, mutator: mutator))
+                root: try materializeNewSessions(spec.root,
+                                                 destinationTabGUID: nil,
+                                                 mutator: mutator))
         }
         let resolvedNewWindows = try plan.newWindows.map { spec in
             LayoutNewWindowSpec(
                 profileGUID: spec.profileGUID,
                 frame: spec.frame,
-                root: try materializeNewSessions(spec.root, mutator: mutator))
+                root: try materializeNewSessions(spec.root,
+                                                 destinationTabGUID: nil,
+                                                 mutator: mutator))
         }
 
         // Attach phase comes BEFORE close_sessions so a session can
@@ -164,16 +180,22 @@ enum LayoutTransaction {
     /// Walks a layout tree and rewrites every `.newSession` leaf to a
     /// `.session` leaf carrying a freshly-created session's GUID.
     private static func materializeNewSessions(_ node: LayoutNode,
+                                                destinationTabGUID: String?,
                                                 mutator: any LayoutMutator) throws -> LayoutNode {
         switch node {
         case .splitter(let vertical, let children):
-            let resolved = try children.map { try materializeNewSessions($0, mutator: mutator) }
+            let resolved = try children.map {
+                try materializeNewSessions($0,
+                                           destinationTabGUID: destinationTabGUID,
+                                           mutator: mutator)
+            }
             return .splitter(vertical: vertical, children: resolved)
         case .session:
             return node
         case .newSession(let info):
             let guid = try mutator.createNewSession(profileGUID: info.profileGUID,
-                                                    command: info.command)
+                                                    command: info.command,
+                                                    destinationTabGUID: destinationTabGUID)
             return .session(guid: guid)
         }
     }

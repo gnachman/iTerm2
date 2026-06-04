@@ -299,7 +299,9 @@ Python API Improvements:
   one or more tabs to a target layout in a
   single transaction. Supports swapping panes,
   rearranging the split tree, and moving
-  sessions across tabs and windows.
+  sessions across tabs and windows. New
+  sessions can be created in place with
+  new_session leaves.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.

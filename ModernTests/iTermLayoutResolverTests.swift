@@ -22,12 +22,14 @@ final class iTermLayoutResolverTests: XCTestCase {
         var sessions: Set<String> = []
         var tabs: Set<String> = []
         var windows: Set<String> = []
+        var profiles: Set<String> = []
         var sessionsByTab: [String: [String]] = [:]
         var tmuxTabs: Set<String> = []
 
         func sessionGUIDExists(_ guid: String) -> Bool { sessions.contains(guid) }
         func tabIDExists(_ tabID: String) -> Bool { tabs.contains(tabID) }
         func windowGUIDExists(_ guid: String) -> Bool { windows.contains(guid) }
+        func profileGUIDExists(_ guid: String) -> Bool { profiles.contains(guid) }
 
         func tabID(containingSession sessionGUID: String) -> String? {
             for (tab, list) in sessionsByTab where list.contains(sessionGUID) {
@@ -49,10 +51,12 @@ final class iTermLayoutResolverTests: XCTestCase {
     /// map.
     private func env(_ tabsToSessions: [String: [String]],
                      windows: [String] = ["w1"],
-                     tmuxTabs: Set<String> = []) -> StubEnvironment {
+                     tmuxTabs: Set<String> = [],
+                     profiles: Set<String> = ["P1"]) -> StubEnvironment {
         let env = StubEnvironment()
         env.windows = Set(windows)
         env.tmuxTabs = tmuxTabs
+        env.profiles = profiles
         for (tab, sessions) in tabsToSessions {
             env.tabs.insert(tab)
             env.sessionsByTab[tab] = sessions
@@ -214,16 +218,30 @@ final class iTermLayoutResolverTests: XCTestCase {
         }
     }
 
-    func testNewSessionLeafRejected() {
-        let environment = env(["t1": ["a"]])
+    func testNewSessionLeafWithKnownProfileResolves() throws {
+        let environment = env(["t1": ["a"]], profiles: ["P1"])
         let newLeaf: LayoutNode = .newSession(.init(profileGUID: "P1", command: nil))
         let spec = makeSpec(tabs: [
             tabSpec("t1", vsplit([session("a"), newLeaf])),
         ])
+        let plan = try LayoutResolver.resolve(spec, environment: environment)
+        // The new_session leaf survives into the plan untouched; the
+        // mutator materializes it at execution time.
+        XCTAssertEqual(plan.tabUpdates.count, 1)
+        XCTAssertEqual(plan.tabUpdates[0].tabGUID, "t1")
+    }
+
+    func testNewSessionLeafWithUnknownProfileRejected() {
+        let environment = env(["t1": ["a"]], profiles: ["P1"])
+        let newLeaf: LayoutNode = .newSession(.init(profileGUID: "nope", command: nil))
+        let spec = makeSpec(tabs: [
+            tabSpec("t1", vsplit([session("a"), newLeaf])),
+        ])
         XCTAssertThrowsError(try LayoutResolver.resolve(spec, environment: environment)) { err in
-            guard case LayoutResolverError.newSessionLeafNotSupported = err else {
-                XCTFail("expected newSessionLeafNotSupported, got \(err)"); return
+            guard case LayoutResolverError.unknownProfile(let guid) = err else {
+                XCTFail("expected unknownProfile, got \(err)"); return
             }
+            XCTAssertEqual(guid, "nope")
         }
     }
 

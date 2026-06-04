@@ -191,6 +191,19 @@ def check_supports_apply_layout(connection):
             "This version of iTerm2 is too old to apply layouts via the Python API. " +
             "You should upgrade to run this script.")
 
+def supports_apply_layout_new_session(connection):
+    """Can App.async_apply_layout() create new sessions inline via
+    `new_session` leaves?"""
+    min_ver = (1, 16)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_apply_layout_new_session(connection):
+    if not supports_apply_layout_new_session(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to create new sessions via "
+            "apply_layout (new_session leaves). You should upgrade to run "
+            "this script.")
+
 def supports_prompt_excluded_subranges(connection):
     """Does GetPromptResponse populate excluded_subranges (PS2 prefixes,
     right-prompt cells inside the command range)?"""

@@ -34,6 +34,10 @@ final class iTermLayoutEnvironment: NSObject, LayoutResolverEnvironment {
         controller.terminal(withGuid: guid) != nil
     }
 
+    func profileGUIDExists(_ guid: String) -> Bool {
+        ProfileModel.sharedInstance()?.bookmark(withGuid: guid) != nil
+    }
+
     func tabID(containingSession sessionGUID: String) -> String? {
         guard let session = controller.session(withGUID: sessionGUID),
               let tab = controller.tab(for: session) else {

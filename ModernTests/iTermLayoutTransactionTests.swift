@@ -19,12 +19,24 @@ final class iTermLayoutTransactionTests: XCTestCase {
     /// Records every call into a string log so tests can assert on the
     /// exact sequence of operations.
     final class RecordingMutator: LayoutMutator {
+        enum AttachError: Error { case forced }
+
         private(set) var log: [String] = []
         var sessionGUIDsByTab: [String: [String]] = [:]
         var newSessionsToCreate: [String] = []   // GUIDs to assign to new sessions, in order
+        var failAttachForTab: String?            // make attachTree throw for this tab
+        // Created-but-not-yet-adopted GUIDs, modeling the production
+        // mutator: createNewSession adds, a successful attachTree (adoption)
+        // removes, and endTransaction terminates whatever remains.
+        private var unadoptedCreated: Set<String> = []
 
         func beginTransaction() { log.append("begin") }
-        func endTransaction() { log.append("end") }
+        func endTransaction() {
+            for guid in unadoptedCreated.sorted() {
+                log.append("terminate-orphan \(guid)")
+            }
+            log.append("end")
+        }
 
         func detachSession(_ guid: String, fromTab tabGUID: String) throws {
             log.append("detach \(guid) from \(tabGUID)")
@@ -38,17 +50,28 @@ final class iTermLayoutTransactionTests: XCTestCase {
             return nil
         }
 
-        func createNewSession(profileGUID: String, command: String?) throws -> String {
+        func createNewSession(profileGUID: String,
+                              command: String?,
+                              destinationTabGUID: String?) throws -> String {
             let guid = newSessionsToCreate.isEmpty
                 ? "new-\(log.count)"
                 : newSessionsToCreate.removeFirst()
-            log.append("create-session \(guid) profile=\(profileGUID) cmd=\(command ?? "<none>")")
+            log.append("create-session \(guid) profile=\(profileGUID) "
+                       + "cmd=\(command ?? "<none>") dst=\(destinationTabGUID ?? "<none>")")
+            unadoptedCreated.insert(guid)
             return guid
         }
 
         func attachTree(toTab tabGUID: String, layout: LayoutNode) throws {
+            if tabGUID == failAttachForTab {
+                throw AttachError.forced
+            }
             log.append("attach-tree to \(tabGUID): \(describe(layout))")
-            sessionGUIDsByTab[tabGUID] = collectGUIDs(layout)
+            let guids = collectGUIDs(layout)
+            sessionGUIDsByTab[tabGUID] = guids
+            // A created session that lands in a tree is adopted, so it's no
+            // longer an orphan to clean up.
+            for guid in guids { unadoptedCreated.remove(guid) }
         }
 
         func createNewTab(windowGUID: String, index: Int?, layout: LayoutNode) throws -> String {
@@ -228,7 +251,9 @@ final class iTermLayoutTransactionTests: XCTestCase {
             func detachSession(_ guid: String, fromTab tabGUID: String) throws {
                 log.append("detach")
             }
-            func createNewSession(profileGUID: String, command: String?) throws -> String { "" }
+            func createNewSession(profileGUID: String,
+                                  command: String?,
+                                  destinationTabGUID: String?) throws -> String { "" }
             func attachTree(toTab tabGUID: String, layout: LayoutNode) throws {
                 log.append("attach \(tabGUID)")
                 if tabGUID == "t1" { throw Boom.bang }
@@ -275,7 +300,39 @@ final class iTermLayoutTransactionTests: XCTestCase {
             closeSessions: [], closeTabs: [], closeWindows: [])
         try LayoutTransaction.execute(plan: plan, mutator: mutator)
         XCTAssertTrue(mutator.log.contains(where: { $0.hasPrefix("create-session fresh-1") }))
+        // The destination tab is threaded through so the new session can
+        // size against the right window and inherit a neighbor's cwd.
+        XCTAssertTrue(mutator.log.contains(where: {
+            $0.hasPrefix("create-session fresh-1") && $0.contains("dst=t1")
+        }))
         // Attach should reference the freshly-created session GUID.
         XCTAssertTrue(mutator.log.contains(where: { $0.hasPrefix("attach-tree to t1") && $0.contains("fresh-1") }))
+        // It was adopted, so it must NOT be torn down as an orphan.
+        XCTAssertFalse(mutator.log.contains(where: { $0.hasPrefix("terminate-orphan") }))
+    }
+
+    func testNewSessionTerminatedIfAttachFails() {
+        // If the attach phase fails after a session was minted, that
+        // session is never adopted into a tab. Teardown must terminate it
+        // rather than leak a headless, unreachable shell.
+        let mutator = RecordingMutator()
+        mutator.newSessionsToCreate = ["fresh-1"]
+        mutator.sessionGUIDsByTab = ["t1": ["a"]]
+        mutator.failAttachForTab = "t1"
+
+        let newLeaf: LayoutNode = .newSession(.init(profileGUID: "P1", command: nil))
+        let plan = LayoutPlan(
+            tabUpdates: [.init(tabGUID: "t1", root: vsplit([session("a"), newLeaf]))],
+            newTabs: [], newWindows: [],
+            closeSessions: [], closeTabs: [], closeWindows: [])
+
+        XCTAssertThrowsError(try LayoutTransaction.execute(plan: plan, mutator: mutator))
+        // The created session was created (materialize runs before attach)...
+        XCTAssertTrue(mutator.log.contains(where: { $0.hasPrefix("create-session fresh-1") }))
+        // ...the attach failed, so it was never adopted...
+        XCTAssertFalse(mutator.log.contains(where: { $0.hasPrefix("attach-tree to t1") }))
+        // ...and teardown (via defer) terminates it instead of leaking it.
+        XCTAssertTrue(mutator.log.contains("terminate-orphan fresh-1"))
+        XCTAssertTrue(mutator.log.contains("end"), "end runs via defer even on throw")
     }
 }
