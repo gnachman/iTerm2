@@ -6918,6 +6918,11 @@ typedef struct {
 - (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender {
     DLog(@"session:%@ performDragOperation:%@", session, sender);
 
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        DLog(@"Layout is locked, refusing drag operation");
+        return NO;
+    }
+
     // self is the destination tab. session is the session that's moving.
     if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:session]) {

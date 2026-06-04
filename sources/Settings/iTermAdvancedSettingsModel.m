@@ -683,6 +683,7 @@ DEFINE_BOOL(bordersOnlyInLightMode, YES, SECTION_WINDOWS @"Opaque windows have a
 DEFINE_BOOL(allowLiveResize, YES, SECTION_WINDOWS @"Allow window resizing by dragging edges and corners?");
 DEFINE_SETTABLE_BOOL(showSecureKeyboardEntryIndicator, ShowSecureKeyboardEntryIndicator, YES, SECTION_WINDOWS @"Show secure keyboard entry indicator?");
 DEFINE_BOOL(leftAlignTitleBarMinimalTahoe, YES, SECTION_WINDOWS @"Left-align title bar in Minimal and Compact themes in macOS 26 and later?");
+DEFINE_BOOL(lockLayout, NO, SECTION_WINDOWS @"Lock window layout?\nWhen enabled, freezes a window’s layout: prevents splitting panes, adding tabs, closing panes and tabs, reordering tabs, dragging panes, and moving panes or tabs to other windows. Resizing panes by dragging the divider, opening new windows, and closing the whole window still work. Useful for preventing accidental layout changes from a stray click or drag.");
 
 #pragma mark tmux
 
