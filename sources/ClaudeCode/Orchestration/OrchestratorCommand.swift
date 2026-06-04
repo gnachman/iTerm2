@@ -185,7 +185,8 @@ enum OrchestratorCommand {
         case readOnly       // no claim, no special handling
         case watcher        // no claim, manipulates the async watch list
         case write          // requires the target workgroup to be claimed
-        case spawn          // start_session. always prompts the user
+        case spawn          // start_session. gated by gateSpawn:
+                            // auto-approved when safe, prompts otherwise
     }
 
     var category: Category {

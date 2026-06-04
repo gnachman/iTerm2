@@ -1275,3 +1275,9 @@ Bug Fixes:
   instead of 30 seconds, giving slow
   models and long responses more time to
   complete before giving up.
+- AI orchestration: opening a new session
+  with no command no longer prompts for
+  permission. When the agent supplies a
+  command, the auto-mode safety check
+  vets it and approves automatically if
+  it passes, only prompting otherwise.

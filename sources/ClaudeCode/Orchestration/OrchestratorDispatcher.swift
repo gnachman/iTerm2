@@ -764,7 +764,7 @@ final class OrchestratorDispatcher {
                 throw OrchestratorError.permissionDenied
             }
         case .spawn:
-            let approved = try await promptForSpawn(command: command)
+            let approved = try await gateSpawn(command: command)
             if !approved {
                 throw OrchestratorError.permissionDenied
             }
@@ -866,20 +866,45 @@ final class OrchestratorDispatcher {
     // ChatViewController.swift's workgroupPermissionRequest branch.
     // The renderer doesn't depend on the ID resolving to anything live
     // — only on the name and summary being human-readable.
+    // Spawn gating for orchestration mode. Opening a session with no
+    // command to run is always allowed: nothing executes that could
+    // surprise the user, so there's nothing to vet. When the agent
+    // supplies a command, run it through the auto-mode classifier the
+    // same way session-bound writes are checked — an unambiguous "safe"
+    // verdict auto-approves the spawn, and anything else (block,
+    // needs-manual-approval, unparseable, or a classifier error, all of
+    // which fail closed) falls back to the inline user prompt.
+    private func gateSpawn(command: OrchestratorCommand) async throws -> Bool {
+        guard let cmd = Self.spawnCommand(from: command) else {
+            return true
+        }
+        if await CommandSafetyChecker.check(cmd) {
+            return true
+        }
+        return try await promptForSpawn(command: command)
+    }
+
+    // The shell command a start_session request will run, or nil when it
+    // just opens the profile's default shell.
+    private static func spawnCommand(from command: OrchestratorCommand) -> String? {
+        guard case .startSession(let args) = command else {
+            return nil
+        }
+        return (args.command?.isEmpty == false) ? args.command : nil
+    }
+
     private func promptForSpawn(command: OrchestratorCommand) async throws -> Bool {
         let placement: String
-        let cmd: String?
         if case .startSession(let args) = command {
             switch args.window ?? .tab {
             case .new: placement = "a new window"
             case .tab: placement = "a new tab in the current window"
             case .current: placement = "a vertical split of the current pane"
             }
-            cmd = (args.command?.isEmpty == false) ? args.command : nil
         } else {
             placement = "a new session"
-            cmd = nil
         }
+        let cmd = Self.spawnCommand(from: command)
         let detail: String
         if let cmd {
             detail = "The agent is asking to open \(placement) and run \u{201C}\(cmd)\u{201D}."
@@ -1282,9 +1307,11 @@ final class OrchestratorDispatcher {
 
     // Spawn a new session via iTermSessionLauncher, honoring the
     // requested window placement. Approval is already enforced by the
-    // .spawn gate (promptForSpawn) before we get here; this method is
-    // strictly the "do it" half. Returns the new session's session_guid
-    // so the agent can address it immediately with the other tools.
+    // .spawn gate (gateSpawn) before we get here, whether it was granted
+    // automatically (no command, or a command the safety check cleared)
+    // or via a user prompt; this method is strictly the "do it" half.
+    // Returns the new session's session_guid so the agent can address it
+    // immediately with the other tools.
     @MainActor
     private func doStartSession(_ args: StartSessionArgs) async throws -> OrchestratorResult {
         // Profile is a C #define for NSDictionary, so the bridged
