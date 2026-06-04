@@ -98,7 +98,11 @@ class ClaudeCodeOnboarding: NSObject {
     private var introDisclosureButton: NSButton?
     private var introDisclosureLabel: NSTextField?
     private var introDetailsLabel: NSTextField?
+    private var introHelpLink: LinkButton?
     private var introContinueButton: NSButton?
+
+    private static let integrationHelpURL =
+        "https://iterm2.com/claude-code-integration.html"
 
     // MARK: - Public API
 
@@ -767,6 +771,17 @@ class ClaudeCodeOnboarding: NSObject {
         details.isHidden = true
         introDetailsLabel = details
 
+        // Always-visible link to the full writeup, regardless of the
+        // disclosure state. Sits below the "What gets changed" row so
+        // users who want the whole story can read it on the web.
+        let helpLink = LinkButton(title: "Learn more about the Claude Code integration",
+                                  target: self,
+                                  action: #selector(openIntegrationHelp(_:)))
+        helpLink.font = NSFont.systemFont(ofSize: 13)
+        helpLink.configureLinkAppearance()
+        helpLink.sizeToFit()
+        introHelpLink = helpLink
+
         let continueButton = NSButton(title: "Continue",
                                       target: self,
                                       action: #selector(dismissIntroSheet(_:)))
@@ -788,6 +803,7 @@ class ClaudeCodeOnboarding: NSObject {
         contentView.addSubview(disclosure)
         contentView.addSubview(disclosureLabel)
         contentView.addSubview(details)
+        contentView.addSubview(helpLink)
         contentView.addSubview(continueButton)
         sheetWindow.contentView = contentView
 
@@ -818,6 +834,7 @@ class ClaudeCodeOnboarding: NSObject {
               let disclosure = introDisclosureButton,
               let disclosureLabel = introDisclosureLabel,
               let details = introDetailsLabel,
+              let helpLink = introHelpLink,
               let continueButton = introContinueButton else { return }
 
         let sheetWidth: CGFloat = 540
@@ -826,6 +843,7 @@ class ClaudeCodeOnboarding: NSObject {
         let leadGap: CGFloat = 12
         let disclosureGap: CGFloat = 16
         let detailsGap: CGFloat = 8
+        let linkGap: CGFloat = 12
         let buttonGap: CGFloat = 20
         let disclosureRowHeight = max(disclosure.frame.height,
                                       disclosureLabel.frame.height)
@@ -840,6 +858,8 @@ class ClaudeCodeOnboarding: NSObject {
             height += detailsGap
             height += details.frame.height
         }
+        height += linkGap
+        height += helpLink.frame.height
         height += buttonGap
         height += continueButton.frame.height
         height += bottomPadding
@@ -864,6 +884,9 @@ class ClaudeCodeOnboarding: NSObject {
             y -= details.frame.height
             details.frame.origin = NSPoint(x: sheetPadding, y: y)
         }
+        y -= linkGap
+        y -= helpLink.frame.height
+        helpLink.frame.origin = NSPoint(x: sheetPadding, y: y)
         continueButton.frame.origin = NSPoint(
             x: sheetWidth - sheetPadding - continueButton.frame.width,
             y: bottomPadding)
@@ -872,6 +895,12 @@ class ClaudeCodeOnboarding: NSObject {
     @objc private func toggleIntroDetails(_ sender: NSButton) {
         introDetailsLabel?.isHidden = (sender.state == .off)
         layoutIntroSheet()
+    }
+
+    @objc private func openIntegrationHelp(_ sender: Any?) {
+        if let url = URL(string: Self.integrationHelpURL) {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @objc private func dismissIntroSheet(_ sender: Any?) {
@@ -883,6 +912,7 @@ class ClaudeCodeOnboarding: NSObject {
         introDisclosureButton = nil
         introDisclosureLabel = nil
         introDetailsLabel = nil
+        introHelpLink = nil
         introContinueButton = nil
         updateUI()
     }
@@ -960,7 +990,12 @@ class ClaudeCodeOnboarding: NSObject {
             nextButton.isEnabled = true
         } else {
             nextButton.title = "Next"
-            nextButton.isEnabled = completedSteps.contains(currentStep)
+            // Show Toolbelt is optional: Next is always enabled so the
+            // user can skip it. The default-button logic below keeps
+            // Show as the default until the toolbelt has actually been
+            // shown, then promotes Next to the default.
+            nextButton.isEnabled =
+                completedSteps.contains(currentStep) || currentStep == .showToolbelt
         }
 
         if completedSteps.contains(currentStep) {
@@ -1708,10 +1743,39 @@ private class OnboardingScrim: NSView {
     init(cutoutView: NSView) {
         self.cutoutView = cutoutView
         super.init(frame: .zero)
+        // The cutout is computed in draw() from the cutout view's live
+        // geometry. When the toolbelt is freshly shown its Session
+        // Status tool gets its real frame on a layout pass that can
+        // land after our first draw, leaving the highlight punched out
+        // of a zero-sized rect. Watch the cutout view (and its toolbelt
+        // ancestor) for frame changes and redraw, mirroring how
+        // iTermPrefsScrim invalidates itself when its target moves.
+        cutoutView.postsFrameChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(cutoutGeometryDidChange(_:)),
+            name: NSView.frameDidChangeNotification,
+            object: cutoutView)
+        if let toolbelt = cutoutView.superview {
+            toolbelt.postsFrameChangedNotifications = true
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(cutoutGeometryDidChange(_:)),
+                name: NSView.frameDidChangeNotification,
+                object: toolbelt)
+        }
     }
 
     required init?(coder: NSCoder) {
         it_fatalError()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func cutoutGeometryDidChange(_ notification: Notification) {
+        needsDisplay = true
     }
 
     override var isOpaque: Bool { false }

@@ -1285,3 +1285,12 @@ Bug Fixes:
   command, the auto-mode safety check
   vets it and approves automatically if
   it passes, only prompting otherwise.
+- The Claude Code integration setup
+  wizard is easier to navigate. Show
+  Toolbelt can now be skipped, the
+  default button reflects whether each
+  step is already done (Install when it
+  is not, Next/Close when it is), and
+  the Before You Start sheet has an
+  always-visible link to a web page
+  explaining the whole integration.

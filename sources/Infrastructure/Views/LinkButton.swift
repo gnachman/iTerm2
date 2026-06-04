@@ -17,6 +17,13 @@ class LinkButton: NSButton {
         setupAppearance()
     }
 
+    // awakeFromNib isn't called for code-created instances, so callers
+    // that build a LinkButton programmatically (after setting title and
+    // font) invoke this to get the link styling.
+    @objc func configureLinkAppearance() {
+        setupAppearance()
+    }
+
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let trackingArea = trackingArea {
