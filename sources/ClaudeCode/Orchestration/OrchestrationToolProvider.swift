@@ -289,9 +289,11 @@ final class OrchestrationToolProvider: ToolProvider {
     // MARK: - Human-readable tool descriptions for the chat bubble
 
     // Called by the agent when building the .remoteCommandRequest
-    // bubble for an orchestration tool call. Reads workgroup state
-    // for the role/workgroup labels — a small read-only excursion
-    // across the agent/app line, contained to label rendering.
+    // bubble for an orchestration tool call. Session/workgroup targets
+    // are emitted as @-mentions (e.g. "@<session_guid>"); they're
+    // resolved to clickable, current-name links (or "[defunct session]")
+    // at display time in the app by OrchestrationMentionRenderer, so
+    // this builder does no cross-process workgroup lookup of its own.
     @MainActor
     static func humanDescription(forToolName name: String,
                                   args: AnyCodable) -> String {
@@ -356,26 +358,26 @@ final class OrchestrationToolProvider: ToolProvider {
         return ([capitalized] + words.dropFirst()).joined(separator: " ")
     }
 
-    @MainActor
+    // Emits an @-mention of the target session rather than resolving it
+    // here. OrchestrationMentionRenderer turns it into a link to the
+    // session's current name at display time, or "[defunct session]"
+    // once the session is gone, sharing the same machinery the
+    // orchestrator's text bubbles use.
     private static func sessionDescription(args dict: [String: Any]) -> String {
         guard let guid = dict["session_guid"] as? String, !guid.isEmpty else {
             return "_(unknown session)_"
         }
-        if let resolved = WorkgroupIntrospection.resolve(sessionGuid: guid) {
-            return "**\(resolved.roleName)** in **\(resolved.workgroupName)**"
-        }
-        // The session may already be gone by the time we render the
-        // activity line; fall back to the raw GUID so the user still
-        // sees which target the call named.
-        return "session `\(guid)`"
+        return "@\(guid)"
     }
 
-    @MainActor
+    // As above, but for a whole-workgroup target. The workgroup_id is
+    // already in the "session:<uuid>" / "wg-<uuid>" form the mention
+    // renderer's regex understands.
     private static func workgroupDescription(args dict: [String: Any]) -> String {
-        guard let wg = dict["workgroup_id"] as? String else {
+        guard let wg = dict["workgroup_id"] as? String, !wg.isEmpty else {
             return "_unknown workgroup_"
         }
-        return "**\(WorkgroupIntrospection.displayName(forWorkgroupID: wg))**"
+        return "@\(wg)"
     }
 
     private static func previewQuote(_ text: String) -> String {

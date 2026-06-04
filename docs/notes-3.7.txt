@@ -50,7 +50,11 @@ Major New Features:
   clickable link, marked with a terminal
   icon, showing its current name instead of
   a raw identifier. Clicking the link
-  reveals that session.
+  reveals that session. The tool-call
+  activity lines (e.g. “Reading screen of
+  …”) now use these same links, and show
+  “[defunct session]” once the target is
+  gone instead of leaking a raw GUID.
 
 - A new AI chat created without a session to
   link to now offers to enable orchestration

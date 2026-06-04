@@ -2038,8 +2038,12 @@ extension Message.Content {
                 // a system-message bubble showing what the agent did.
                 // No Approve / Deny buttons, because the orchestrator's
                 // permission gate is the workgroup-claim prompt, not
-                // per-call.
-                return AttributedStringForSystemMessageMarkdown(ext.markdownDescription) {}
+                // per-call. Run it through the mention renderer so the
+                // @<guid> session/workgroup targets the activity line
+                // carries become clickable links (or "[defunct session]"
+                // once the target is gone).
+                let rendered = AttributedStringForSystemMessageMarkdown(ext.markdownDescription) {}
+                return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
             }
         case .remoteCommandResponse(let response, _, _, _):
             switch response {
