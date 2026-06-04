@@ -9,47 +9,27 @@ import Foundation
 // Mirrors AITerm's RemoteCommand in role but with a fundamentally
 // different domain: instead of a single session's actions
 // (.runCommand / .typeForYou / .actInWebBrowser), the orchestrator
-// drives many workgroups, addresses sessions by role within them,
-// and supports multiplexed waits over a monitored set.
+// drives many workgroups, addresses sessions by their GUID, and
+// supports multiplexed waits over a monitored set.
 //
-// All targets are workgroup+role. Standalone sessions (those not in
-// a user-defined workgroup) are wrapped in a synthetic single-role
-// "workgroup" so the API has one shape; see SyntheticWorkgroup
-// below.
+// Every session-acting tool addresses its target with a single
+// session_guid string, copied verbatim from the per-turn
+// <workgroups> snapshot (each role carries a session_guid field). A
+// GUID is globally unique, so it pins exactly one session; the owning
+// workgroup and role are derived app-side via
+// WorkgroupIntrospection.resolve(sessionGuid:). This is the same way
+// the session_* tool family addresses sessions, so the two families
+// are consistent. Standalone sessions (those not in a user-defined
+// workgroup) resolve to a synthetic single-session workgroup; the
+// agent never has to know the difference.
 //
-// Permissions are claimed at the workgroup level. approving a
-// workgroup approves all its roles. Read-only / monitoring / blocking
-// tools require no claim; write tools (.sendText, .interrupt,
-// .addWorkgroupClipping) do; .startSession always prompts.
-
-// MARK: - Target
-
-// Identifies a session within a workgroup. The API accepts the role
-// as either its stable role_id (e.g. "builtin.claudeCode.review") or
-// its display name ("Code Review"); the dispatcher resolves both.
-//
-// workgroup_id takes two shapes:
-//   - A real workgroup instance ID (e.g. "wg-253318C1-...") for a
-//     user-configured workgroup. Roles inside come from the workgroup
-//     template (Chat / Diff / Code Review / ...).
-//   - A synthetic single-session ID prefixed with
-//     WorkgroupIntrospection.syntheticWorkgroupIDPrefix ("session:"),
-//     followed by a raw PTYSession GUID (e.g.
-//     "session:7FCDDD87-C021-46AA-924A-D87E2C85A392"). Standalone
-//     sessions that aren't part of any user-configured workgroup get
-//     wrapped this way so the LLM can address them through the same
-//     OrchestratorTarget shape. Synthetic workgroups have exactly one
-//     role; the dispatcher accepts any role name there as long as the
-//     session GUID resolves.
-struct OrchestratorTarget: Codable, Hashable {
-    let workgroupID: String
-    let role: String
-
-    enum CodingKeys: String, CodingKey {
-        case workgroupID = "workgroup_id"
-        case role
-    }
-}
+// Permissions are still claimed at the workgroup level: approving a
+// workgroup approves all its roles. A session-targeted write resolves
+// the session to its workgroup scope (a real instance ID, or
+// "session:<guid>" for a standalone session) before gating. Read-only
+// / monitoring / blocking tools require no claim; write tools
+// (.sendText, .interrupt, .addWorkgroupClipping) do; .startSession
+// always prompts.
 
 // MARK: - Args
 
@@ -59,39 +39,39 @@ struct ListSessionsInWorkgroupArgs: Codable {
 }
 
 struct SendTextArgs: Codable {
-    let target: OrchestratorTarget
+    let sessionGuid: String
     let text: String
     // nil treated as true at the dispatcher.
     let appendNewline: Bool?
 
     enum CodingKeys: String, CodingKey {
-        case target
+        case sessionGuid = "session_guid"
         case text
         case appendNewline = "append_newline"
     }
 }
 
 struct GetScreenContentsArgs: Codable {
-    let target: OrchestratorTarget
+    let sessionGuid: String
     let lines: Int?  // nil → default 100
 
     enum CodingKeys: String, CodingKey {
-        case target
+        case sessionGuid = "session_guid"
         case lines
     }
 }
 
 struct RegisterWatchArgs: Codable {
-    let target: OrchestratorTarget
+    let sessionGuid: String
     let targetState: SessionState
     enum CodingKeys: String, CodingKey {
-        case target
+        case sessionGuid = "session_guid"
         case targetState = "target_state"
     }
 }
 
 struct StartCodeReviewArgs: Codable {
-    let target: OrchestratorTarget
+    let sessionGuid: String
     // Pick the prompt by name from the user's saved prompts (see
     // the saved-prompts list in the system message). Mutually
     // exclusive with custom_prompt; if both are nil the dispatcher
@@ -101,7 +81,7 @@ struct StartCodeReviewArgs: Codable {
     // Mutually exclusive with prompt_name.
     let customPrompt: String?
     enum CodingKeys: String, CodingKey {
-        case target
+        case sessionGuid = "session_guid"
         case promptName = "prompt_name"
         case customPrompt = "custom_prompt"
     }
@@ -176,13 +156,13 @@ enum ToolName: String, CaseIterable {
 enum OrchestratorCommand {
     // Discovery
     case listWorkgroups
-    case getState(target: OrchestratorTarget)
+    case getState(sessionGuid: String)
     case getScreenContents(GetScreenContentsArgs)
     case listWorkgroupClippings(workgroupID: String, typeFilter: String?)
 
     // Action
     case sendText(SendTextArgs)
-    case interrupt(target: OrchestratorTarget)
+    case interrupt(sessionGuid: String)
     case addWorkgroupClipping(AddClippingArgs)
     // Convenience action: populate the Code Review prompt overlay
     // with the chosen prompt and start the review. Auto-registers a
@@ -222,24 +202,32 @@ enum OrchestratorCommand {
         }
     }
 
-    // The workgroup whose claim must be present for .write tools, or
-    // nil for tools that don't need a claim. Used by the dispatcher
-    // to decide whether to prompt the user.
-    var requiredWorkgroupClaim: String? {
+    // How a .write tool's claim is determined. Session-targeted writes
+    // carry a session_guid that the dispatcher resolves to its
+    // workgroup scope before gating; add_workgroup_clipping is
+    // workgroup-scoped and claims its workgroup_id directly. Other
+    // tools need no claim.
+    enum ClaimRequirement {
+        case none
+        case workgroup(String)   // claim this workgroup_id directly
+        case session(String)     // resolve this session_guid to its scope
+    }
+
+    var claimRequirement: ClaimRequirement {
         switch self {
         case .sendText(let args):
-            return args.target.workgroupID
-        case .interrupt(let target):
-            return target.workgroupID
-        case .addWorkgroupClipping(let args):
-            return args.workgroupID
+            return .session(args.sessionGuid)
+        case .interrupt(let sessionGuid):
+            return .session(sessionGuid)
         case .startCodeReview(let args):
-            return args.target.workgroupID
+            return .session(args.sessionGuid)
+        case .addWorkgroupClipping(let args):
+            return .workgroup(args.workgroupID)
         case .listWorkgroups, .getState, .getScreenContents,
                 .listWorkgroupClippings,
                 .startSession,
                 .registerWatch, .unregisterWatch, .listWatches:
-            return nil
+            return .none
         }
     }
 }
@@ -263,7 +251,7 @@ enum OrchestratorResult: Encodable {
     case sessionState(SessionStateInfo)
     case screenContents(ScreenContents)
     case clippings([ClippingInfo])
-    case startedSession(workgroupID: String)
+    case startedSession(sessionGuid: String)
     case watcherRegistered(WatcherDescription)
     case watcherList([WatcherDescription])
     case error(code: String, message: String)
@@ -281,9 +269,9 @@ enum OrchestratorResult: Encodable {
     }
 
     private struct StartedSessionPayload: Encodable {
-        let workgroupID: String
+        let sessionGuid: String
         enum CodingKeys: String, CodingKey {
-            case workgroupID = "workgroup_id"
+            case sessionGuid = "session_guid"
         }
     }
 
@@ -305,8 +293,8 @@ enum OrchestratorResult: Encodable {
             try c.encode(v, forKey: .screenContents)
         case .clippings(let v):
             try c.encode(v, forKey: .clippings)
-        case .startedSession(let workgroupID):
-            try c.encode(StartedSessionPayload(workgroupID: workgroupID),
+        case .startedSession(let sessionGuid):
+            try c.encode(StartedSessionPayload(sessionGuid: sessionGuid),
                          forKey: .startedSession)
         case .watcherRegistered(let v):
             try c.encode(v, forKey: .watcherRegistered)

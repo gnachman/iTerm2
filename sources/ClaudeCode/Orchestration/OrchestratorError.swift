@@ -12,10 +12,10 @@ import Foundation
 enum OrchestratorError: Error {
     case unknownTool(String)
     case unknownWorkgroup(String)
-    case unknownRole(workgroupID: String, role: String, available: [String] = [])
+    case unknownSession(guid: String)
     case ambiguousWorkgroup(name: String, candidateIDs: [String])
     case permissionDenied
-    case targetNoLongerExists(OrchestratorTarget)
+    case targetNoLongerExists(sessionGuid: String)
     case malformedArgs(reason: String)
     case timeout
     case unsupported(reason: String)
@@ -25,7 +25,7 @@ enum OrchestratorError: Error {
         switch self {
         case .unknownTool: return "unknown_tool"
         case .unknownWorkgroup: return "unknown_workgroup"
-        case .unknownRole: return "unknown_role"
+        case .unknownSession: return "unknown_session"
         case .ambiguousWorkgroup: return "ambiguous_workgroup"
         case .permissionDenied: return "permission_denied"
         case .targetNoLongerExists: return "target_no_longer_exists"
@@ -42,19 +42,14 @@ enum OrchestratorError: Error {
             return "No such tool: \(name)"
         case .unknownWorkgroup(let id):
             return "No active workgroup matches \u{201C}\(id)\u{201D}"
-        case .unknownRole(let workgroupID, let role, let available):
-            var msg = "Workgroup \(workgroupID) has no role \u{201C}\(role)\u{201D}"
-            if !available.isEmpty {
-                let quoted = available.map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
-                msg += ". Available roles: \(quoted)"
-            }
-            return msg
+        case .unknownSession(let guid):
+            return "No active session has GUID \(guid). Copy a session_guid verbatim from the <workgroups> snapshot."
         case .ambiguousWorkgroup(let name, let candidateIDs):
             return "Workgroup name \u{201C}\(name)\u{201D} matches \(candidateIDs.count) active workgroups; use the workgroup_id instead. Candidates: \(candidateIDs.joined(separator: ", "))"
         case .permissionDenied:
             return "User denied permission for this action."
-        case .targetNoLongerExists(let target):
-            return "Target session no longer exists: workgroup=\(target.workgroupID) role=\(target.role)"
+        case .targetNoLongerExists(let sessionGuid):
+            return "Target session no longer exists: session_guid=\(sessionGuid)"
         case .malformedArgs(let reason):
             return "Malformed arguments: \(reason)"
         case .timeout:

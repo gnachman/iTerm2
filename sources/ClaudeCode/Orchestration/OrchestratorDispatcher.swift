@@ -700,8 +700,10 @@ final class OrchestratorDispatcher {
         case .listWorkgroups:
             return .listWorkgroups
         case .getState:
-            struct A: Decodable { let target: OrchestratorTarget }
-            return .getState(target: try decoder.decode(A.self, from: jsonArgs).target)
+            struct A: Decodable {
+                let session_guid: String
+            }
+            return .getState(sessionGuid: try decoder.decode(A.self, from: jsonArgs).session_guid)
         case .getScreenContents:
             return .getScreenContents(try decoder.decode(GetScreenContentsArgs.self, from: jsonArgs))
         case .listWorkgroupClippings:
@@ -714,8 +716,10 @@ final class OrchestratorDispatcher {
         case .sendText:
             return .sendText(try decoder.decode(SendTextArgs.self, from: jsonArgs))
         case .interrupt:
-            struct A: Decodable { let target: OrchestratorTarget }
-            return .interrupt(target: try decoder.decode(A.self, from: jsonArgs).target)
+            struct A: Decodable {
+                let session_guid: String
+            }
+            return .interrupt(sessionGuid: try decoder.decode(A.self, from: jsonArgs).session_guid)
         case .addWorkgroupClipping:
             return .addWorkgroupClipping(try decoder.decode(AddClippingArgs.self, from: jsonArgs))
         case .startSession:
@@ -738,8 +742,25 @@ final class OrchestratorDispatcher {
     private func applyGating(for command: OrchestratorCommand) async throws {
         switch command.category {
         case .write:
-            guard let workgroupID = command.requiredWorkgroupClaim else { return }
-            if !(await ensureClaim(workgroupID: workgroupID)) {
+            let scope: String
+            switch command.claimRequirement {
+            case .none:
+                return
+            case .workgroup(let workgroupID):
+                scope = workgroupID
+            case .session(let sessionGuid):
+                // Resolve the session to the workgroup scope its claim
+                // lives under (a real instance ID, or "session:<guid>"
+                // for a standalone session). A missing session surfaces
+                // as unknown_session rather than silently skipping the
+                // claim and letting the write fall through.
+                guard let resolved = WorkgroupIntrospection.claimScope(
+                    forSessionGuid: sessionGuid) else {
+                    throw OrchestratorError.unknownSession(guid: sessionGuid)
+                }
+                scope = resolved
+            }
+            if !(await ensureClaim(workgroupID: scope)) {
                 throw OrchestratorError.permissionDenied
             }
         case .spawn:
@@ -906,8 +927,8 @@ final class OrchestratorDispatcher {
         switch command {
         case .listWorkgroups:
             return try await doListWorkgroups()
-        case .getState(let target):
-            return try await doGetState(target: target)
+        case .getState(let sessionGuid):
+            return try await doGetState(sessionGuid: sessionGuid)
         case .getScreenContents(let args):
             return try await doGetScreenContents(args)
         case .listWorkgroupClippings(let workgroupID, let typeFilter):
@@ -915,8 +936,8 @@ final class OrchestratorDispatcher {
                 workgroupID: workgroupID, typeFilter: typeFilter)
         case .sendText(let args):
             return try await doSendText(args)
-        case .interrupt(let target):
-            return try await doInterrupt(target: target)
+        case .interrupt(let sessionGuid):
+            return try await doInterrupt(sessionGuid: sessionGuid)
         case .addWorkgroupClipping(let args):
             return try await doAddWorkgroupClipping(args)
         case .startSession(let args):
@@ -942,35 +963,25 @@ final class OrchestratorDispatcher {
     }
 
     @MainActor
-    private func doGetState(target: OrchestratorTarget) async throws -> OrchestratorResult {
-        let resolved = try resolveTargetOrThrow(target)
+    private func doGetState(sessionGuid: String) async throws -> OrchestratorResult {
+        let resolved = try resolveSessionOrThrow(sessionGuid)
         return .sessionState(WorkgroupIntrospection.stateInfo(for: resolved))
     }
 
-    // Centralized resolve so failures distinguish "workgroup_id no
-    // longer maps to a live session" from "role name doesn't exist on
-    // an existing workgroup". For synthetic ("session:<guid>")
-    // workgroups, a missing session can't be a role mismatch (there's
-    // only one role by construction), so we map it to
-    // targetNoLongerExists. For real workgroups, we keep unknownRole
-    // with a "did you mean" hint built from the workgroup's live roles.
-    private func resolveTargetOrThrow(_ target: OrchestratorTarget) throws -> WorkgroupIntrospection.ResolvedTarget {
-        if let resolved = WorkgroupIntrospection.resolve(target: target) {
+    // Centralized resolve so every session-targeted tool reports a
+    // missing session the same way. A session_guid is globally unique,
+    // so resolution either finds exactly one live session or fails;
+    // there's no role-mismatch case to disambiguate.
+    private func resolveSessionOrThrow(_ sessionGuid: String) throws -> WorkgroupIntrospection.ResolvedTarget {
+        if let resolved = WorkgroupIntrospection.resolve(sessionGuid: sessionGuid) {
             return resolved
         }
-        if target.workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix) {
-            throw OrchestratorError.targetNoLongerExists(target)
-        }
-        throw OrchestratorError.unknownRole(
-            workgroupID: target.workgroupID,
-            role: target.role,
-            available: WorkgroupIntrospection.availableRoleNames(
-                forWorkgroupID: target.workgroupID))
+        throw OrchestratorError.unknownSession(guid: sessionGuid)
     }
 
     @MainActor
     private func doGetScreenContents(_ args: GetScreenContentsArgs) async throws -> OrchestratorResult {
-        let resolved = try resolveTargetOrThrow(args.target)
+        let resolved = try resolveSessionOrThrow(args.sessionGuid)
         let contents = WorkgroupIntrospection.screenContents(
             for: resolved, requestedLines: args.lines)
         return .screenContents(contents)
@@ -1009,7 +1020,7 @@ final class OrchestratorDispatcher {
                 "target_state \u{201C}unknown\u{201D} is reported by get_state but is not a watchable "
                 + "transition. Pick \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D} instead.")
         }
-        let resolved = try resolveTargetOrThrow(args.target)
+        let resolved = try resolveSessionOrThrow(args.sessionGuid)
         let session = resolved.session
         let guid = session.guid
         if let existing = watchers.first(where: {
@@ -1107,9 +1118,9 @@ final class OrchestratorDispatcher {
     // which both kicks off the actual launch and removes the overlay.
     @MainActor
     private func doSendText(_ args: SendTextArgs) async throws -> OrchestratorResult {
-        let resolved = try resolveTargetOrThrow(args.target)
+        let resolved = try resolveSessionOrThrow(args.sessionGuid)
         if resolved.session.exited {
-            throw OrchestratorError.targetNoLongerExists(args.target)
+            throw OrchestratorError.targetNoLongerExists(sessionGuid: args.sessionGuid)
         }
         let decoded: String
         do {
@@ -1214,10 +1225,10 @@ final class OrchestratorDispatcher {
     // default. writeTaskNoBroadcast routes through the session's
     // task; the shell's line discipline does the signal delivery.
     @MainActor
-    private func doInterrupt(target: OrchestratorTarget) async throws -> OrchestratorResult {
-        let resolved = try resolveTargetOrThrow(target)
+    private func doInterrupt(sessionGuid: String) async throws -> OrchestratorResult {
+        let resolved = try resolveSessionOrThrow(sessionGuid)
         if resolved.session.exited {
-            throw OrchestratorError.targetNoLongerExists(target)
+            throw OrchestratorError.targetNoLongerExists(sessionGuid: sessionGuid)
         }
         resolved.session.writeTaskNoBroadcast("\u{03}")
         return .ack
@@ -1261,8 +1272,7 @@ final class OrchestratorDispatcher {
             throw OrchestratorError.unknownWorkgroup(args.workgroupID)
         }
         if session.exited {
-            throw OrchestratorError.targetNoLongerExists(
-                OrchestratorTarget(workgroupID: args.workgroupID, role: ""))
+            throw OrchestratorError.targetNoLongerExists(sessionGuid: session.guid)
         }
         session.addClipping(type: trimmedType,
                             title: args.title,
@@ -1273,9 +1283,8 @@ final class OrchestratorDispatcher {
     // Spawn a new session via iTermSessionLauncher, honoring the
     // requested window placement. Approval is already enforced by the
     // .spawn gate (promptForSpawn) before we get here; this method is
-    // strictly the "do it" half. Returns the synthetic single-session
-    // workgroup_id for the new session so the agent can address it
-    // immediately with the other tools.
+    // strictly the "do it" half. Returns the new session's session_guid
+    // so the agent can address it immediately with the other tools.
     @MainActor
     private func doStartSession(_ args: StartSessionArgs) async throws -> OrchestratorResult {
         // Profile is a C #define for NSDictionary, so the bridged
@@ -1397,7 +1406,7 @@ final class OrchestratorDispatcher {
         // (a missing custom command, a startup-script abort) and the
         // user's profile auto-closes the window when the last session
         // ends, the controller has already torn the window down by the
-        // time we get here. Returning a workgroup_id for a vanished
+        // time we get here. Returning a session_guid for a vanished
         // session strands the agent in a polling loop.
         //
         // No sleep: if the program needs grace time to fail, the agent
@@ -1410,8 +1419,7 @@ final class OrchestratorDispatcher {
                 + "The command likely exited immediately (e.g. binary not on PATH "
                 + "or a non-zero startup script) and the window auto-closed.")
         }
-        let workgroupID = WorkgroupIntrospection.syntheticWorkgroupIDPrefix + session.guid
-        return .startedSession(workgroupID: workgroupID)
+        return .startedSession(sessionGuid: session.guid)
     }
 
     // Bundles the Code Review entry sequence into one call so the
@@ -1428,9 +1436,9 @@ final class OrchestratorDispatcher {
     //      receives a status_update when the review completes.
     @MainActor
     private func doStartCodeReview(_ args: StartCodeReviewArgs) async throws -> OrchestratorResult {
-        let resolved = try resolveTargetOrThrow(args.target)
+        let resolved = try resolveSessionOrThrow(args.sessionGuid)
         if resolved.session.exited {
-            throw OrchestratorError.targetNoLongerExists(args.target)
+            throw OrchestratorError.targetNoLongerExists(sessionGuid: args.sessionGuid)
         }
         // Three accepted launch states for the Code Review role:
         //   1. Pre-launch overlay is up — populate the overlay's text and

@@ -44,7 +44,7 @@ final class OrchestrationPayloadTests: XCTestCase {
         let external = ExternalRemoteCommand(
             llmMessage: llmMessage,
             name: "send_text",
-            argsJSON: "{\"target\":{\"workgroup_id\":\"wg-1\",\"role\":\"Code Review\"},\"text\":\"hi\"}",
+            argsJSON: "{\"session_guid\":\"E8CCAA84-DE9C-4175-8A63-12015D3686CD\",\"text\":\"hi\"}",
             markdownDescription: "Typing into **Code Review** in **foo**: “hi”")
         let payload = RemoteCommandPayload.external(external)
 

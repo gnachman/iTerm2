@@ -123,10 +123,9 @@ enum WorkgroupIntrospection {
 
     // MARK: - Resolution
 
-    // Find the (instance, session, roleName) triple a target refers to,
-    // or nil if it can't be resolved. Accepts both the runtime instance
-    // ID ("wg-...") and a synthetic ID ("session:<guid>"); accepts role
-    // by either roleID or display name (case-insensitive).
+    // The (instance, session, role, workgroup) tuple a session GUID
+    // resolves to. instance is nil for standalone sessions (which map
+    // to a synthetic single-session workgroup).
     struct ResolvedTarget {
         let instance: iTermWorkgroupInstance?  // nil for synthetic
         let session: PTYSession
@@ -136,65 +135,41 @@ enum WorkgroupIntrospection {
         let workgroupName: String
     }
 
-    // List role display names available on a workgroup. Used to build
-    // a "did you mean: X, Y, Z" hint in the unknown_role error so the
-    // agent can self-correct without re-calling list_workgroups.
-    // Returns an empty array for synthetic single-session workgroups
-    // (caller already accepts any role there) and for unknown
-    // workgroup IDs.
-    static func availableRoleNames(forWorkgroupID workgroupID: String) -> [String] {
-        if workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
-            return []
-        }
-        guard let instance = workgroupInstance(byID: workgroupID) else {
-            return []
-        }
-        return instance.resolvedMembers().compactMap { member -> String? in
-            guard member.session != nil else { return nil }
-            return displayName(member.displayName, fallback: member.roleID)
-        }
-    }
-
-    static func resolve(target: OrchestratorTarget) -> ResolvedTarget? {
-        // Synthetic single-session workgroup.
-        if target.workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
-            let guid = String(target.workgroupID.dropFirst(syntheticWorkgroupIDPrefix.count))
-            guard let session = session(forGUID: guid) else { return nil }
-            // Synthetic workgroups have exactly one role; accept any
-            // role name the model offered as long as a session exists.
-            let name = sessionDisplayName(session)
-            return ResolvedTarget(
-                instance: nil,
-                session: session,
-                roleID: syntheticRoleID,
-                roleName: name,
-                workgroupID: target.workgroupID,
-                workgroupName: name)
-        }
-
-        // Real workgroup. Look up by runtime instance ID.
-        guard let instance = workgroupInstance(byID: target.workgroupID) else {
+    // Resolve a session GUID (copied verbatim from a snapshot's
+    // session_guid field) to its full context. The GUID is globally
+    // unique, so it pins exactly one session; the owning workgroup and
+    // role are derived via context(for:) rather than supplied by the
+    // caller. Returns nil only when no live session has that GUID.
+    static func resolve(sessionGuid: String) -> ResolvedTarget? {
+        guard let session = session(forGUID: sessionGuid),
+              let ctx = context(for: session) else {
             return nil
         }
-        let needle = target.role.lowercased()
-        for member in instance.resolvedMembers() {
-            guard let session = member.session else { continue }
-            if member.roleID.lowercased() == needle
-                || member.displayName.lowercased() == needle {
-                return ResolvedTarget(
-                    instance: instance,
-                    session: session,
-                    roleID: member.roleID,
-                    roleName: displayName(member.displayName, fallback: member.roleID),
-                    workgroupID: instance.instanceUniqueIdentifier,
-                    workgroupName: workgroupName(for: instance))
-            }
-        }
-        return nil
+        return ResolvedTarget(
+            instance: ctx.instance,
+            session: session,
+            roleID: ctx.roleID,
+            roleName: ctx.roleName,
+            workgroupID: ctx.workgroupID,
+            workgroupName: ctx.workgroupName)
     }
 
-    // Reverse of resolve(target:) — finds the workgroup + role that
-    // owns `session`. Standalone sessions resolve to the synthetic
+    // The claim scope a write against this session gates on. Standalone
+    // sessions claim at "session:<guid>" granularity; sessions inside a
+    // real workgroup claim at the workgroup instance level so approving
+    // a workgroup once approves all its roles (see the claim model in
+    // OrchestratorCommand). Returns nil when no live session has that
+    // GUID, in which case the caller surfaces an unknown_session error.
+    static func claimScope(forSessionGuid guid: String) -> String? {
+        guard let session = session(forGUID: guid),
+              let ctx = context(for: session) else {
+            return nil
+        }
+        return ctx.workgroupID
+    }
+
+    // The workgroup + role that owns `session`; the reverse of looking
+    // a session up by GUID. Standalone sessions resolve to the synthetic
     // single-session workgroup. Returns nil only if the session has
     // exited and isn't reachable through iTermController anymore.
     struct SessionContext {

@@ -61,10 +61,13 @@ private let emptyObjectSchema: [String: Any] = [
     "additionalProperties": false,
 ]
 
-private let targetSchema: [String: Any] = object([
-    ("workgroup_id", string("Runtime workgroup instance ID, or the workgroup display name if unambiguous.")),
-    ("role", string("Role within the workgroup. Either the stable role_id (e.g. \u{201C}builtin.claudeCode.review\u{201D}) or the display name (e.g. \u{201C}Code Review\u{201D}).")),
-], required: ["workgroup_id", "role"])
+// Every session-acting tool addresses its target with this one field.
+// The agent copies a session_guid verbatim from the <workgroups>
+// snapshot (each role carries a session_guid); the app resolves it to
+// the owning workgroup and role. A GUID is globally unique, so no
+// separate role/workgroup disambiguation is needed.
+private let sessionGuidSchema: [String: Any] =
+    string("The session_guid of the target session, copied verbatim from a role in the <workgroups> snapshot (its session_guid field).")
 
 // MARK: - Tool list
 
@@ -80,18 +83,18 @@ extension OrchestratorCommand {
 
         ToolDefinition(
             name: ToolName.getState.rawValue,
-            description: "Get rich state for a single role within a workgroup, including the last cc-status detail message for Claude Code sessions.",
+            description: "Get rich state for a single session, including the last cc-status detail message for Claude Code sessions.",
             inputSchema: object([
-                ("target", targetSchema),
-            ], required: ["target"])),
+                ("session_guid", sessionGuidSchema),
+            ], required: ["session_guid"])),
 
         ToolDefinition(
             name: ToolName.getScreenContents.rawValue,
             description: "Get the visible contents of a session. For Claude Code sessions, returns a synthesized view of recent hook events (assistant messages, tool calls). For shell sessions, returns scrollback. For TUI sessions, returns a snapshot of the rendered screen with is_snapshot=true; there is no history beyond what's currently displayed. The result includes a kind field so you know how to read the text.",
             inputSchema: object([
-                ("target", targetSchema),
+                ("session_guid", sessionGuidSchema),
                 ("lines", integer("Number of trailing lines to return for shell sessions. Default 100. Ignored for tui/claude-code kinds.")),
-            ], required: ["target"])),
+            ], required: ["session_guid"])),
 
         ToolDefinition(
             name: ToolName.listWorkgroupClippings.rawValue,
@@ -107,17 +110,17 @@ extension OrchestratorCommand {
             name: ToolName.sendText.rawValue,
             description: "Type text into a session as if the user typed it. By default appends a newline. The text supports a small backslash-escape vocabulary so you can send control keys and special characters: \\\\ for a literal backslash, \\n for newline, \\r for carriage return, \\t for tab, and \\uXXXX (four hex digits, JSON-style) for any Unicode scalar. Use this to drive control keys: \\u0003 for Ctrl-C (prefer the dedicated interrupt tool), \\u0004 for Ctrl-D / EOF, \\u001a for Ctrl-Z, \\u000c for Ctrl-L, \\u001b for Escape, etc. When sending a standalone control key, pass append_newline=false so you don't tack an Enter onto it. You may combine control bytes with text and a trailing newline in a single call (e.g. \\u001b:q\\n to quit vim). iTerm2 detects embedded control bytes and sends the payload as a raw keystroke stream rather than a bracketed paste, so the control bytes are interpreted by the target program rather than inserted as literal data. The return value `{\"ack\":{}}` only confirms that the bytes were transmitted; it does NOT confirm the program behaved as you expected. For interactive TUIs (vim, emacs, less, htop, fzf, etc.) always follow up with `get_screen_contents` to verify the effect before telling the user it worked. Requires the user to have approved this chat to control the workgroup; the user is prompted inline on the first send to an unclaimed workgroup.",
             inputSchema: object([
-                ("target", targetSchema),
+                ("session_guid", sessionGuidSchema),
                 ("text", stringSchema),
                 ("append_newline", boolean("Whether to append a newline to the text. Defaults to true. Set to false when sending control keys (e.g. \\u001b for Escape) by themselves.")),
-            ], required: ["target", "text"])),
+            ], required: ["session_guid", "text"])),
 
         ToolDefinition(
             name: ToolName.interrupt.rawValue,
             description: "Send SIGINT to the foreground process of a session, equivalent to the user pressing Ctrl-C. Requires workgroup claim.",
             inputSchema: object([
-                ("target", targetSchema),
-            ], required: ["target"])),
+                ("session_guid", sessionGuidSchema),
+            ], required: ["session_guid"])),
 
         ToolDefinition(
             name: ToolName.addWorkgroupClipping.rawValue,
@@ -133,18 +136,18 @@ extension OrchestratorCommand {
 
         ToolDefinition(
             name: ToolName.startCodeReview.rawValue,
-            description: "Run a Code Review in one call. The target must be the Code Review role. The role can be in either of two ready states: (a) the prompt overlay is up (pending_action mentions \u{201C}Code Review prompt overlay\u{201D}), in which case the overlay is populated and the review program launches; or (b) the Code Review session is already running and idle at its chat prompt, in which case the review prompt is typed in directly to start a fresh review on the existing session. Either way the call auto-registers a watcher for the role reaching idle, so you'll receive a status_update when the review completes. The call errors only if the role isn't the Code Review role or its program is busy. Pick the prompt by name from the saved prompts (see the system message for the list) via prompt_name, OR pass custom_prompt with free-form text, OR leave both nil to use the user's default prompt. Prefer this over send_text + register_watch for code reviews.",
+            description: "Run a Code Review in one call. The session_guid must name the Code Review role's session. The session can be in either of two ready states: (a) the prompt overlay is up (pending_action mentions \u{201C}Code Review prompt overlay\u{201D}), in which case the overlay is populated and the review program launches; or (b) the Code Review session is already running and idle at its chat prompt, in which case the review prompt is typed in directly to start a fresh review on the existing session. Either way the call auto-registers a watcher for the session reaching idle, so you'll receive a status_update when the review completes. The call errors only if the session isn't the Code Review role or its program is busy. Pick the prompt by name from the saved prompts (see the system message for the list) via prompt_name, OR pass custom_prompt with free-form text, OR leave both nil to use the user's default prompt. Prefer this over send_text + register_watch for code reviews.",
             inputSchema: object([
-                ("target", targetSchema),
+                ("session_guid", sessionGuidSchema),
                 ("prompt_name", string("Optional. Name of a saved prompt from the user's prompt list.")),
                 ("custom_prompt", string("Optional. Free-form prompt text when no saved prompt fits.")),
-            ], required: ["target"])),
+            ], required: ["session_guid"])),
 
         // -------- Spawn (always prompts) --------
 
         ToolDefinition(
             name: ToolName.startSession.rawValue,
-            description: "Spawn a new terminal session. Use window=\u{201C}new\u{201D} to open a new window, \u{201C}tab\u{201D} (default) to add a tab to the current window, or \u{201C}current\u{201D} to split the current pane vertically. The user is always prompted to approve the spawn (and the command being run, if any). Returns the synthetic workgroup_id of the new single-session workgroup so you can immediately drive the new session with the other tools (send_text, get_screen_contents, etc.).",
+            description: "Spawn a new terminal session. Use window=\u{201C}new\u{201D} to open a new window, \u{201C}tab\u{201D} (default) to add a tab to the current window, or \u{201C}current\u{201D} to split the current pane vertically. The user is always prompted to approve the spawn (and the command being run, if any). Returns the session_guid of the new session so you can immediately drive it with the other tools (send_text, get_screen_contents, etc.).",
             inputSchema: object([
                 ("profile", string("Optional profile name. Falls back to the default profile when absent.")),
                 ("command", string("Optional command to run in the new session. If absent, the profile's default shell is used.")),
@@ -159,14 +162,14 @@ extension OrchestratorCommand {
             name: ToolName.registerWatch.rawValue,
             description: "Register an async watcher for a session reaching a particular state (idle / working / waiting). This call returns immediately and does NOT block your turn. When the watched state is reached, iTerm2 delivers a `<status_update>...</status_update>` message into the chat as a separate turn; treat that as a system event from iTerm2 (not a new user request) and respond with a brief summary to the user. Watchers are de-duplicated on (session, target_state): registering the same watch twice returns the existing watcher_id. If the target is already in the desired state at registration time, the watcher fires immediately. Watchers persist across iTerm2 restarts; if a watched session can't be restored, you get a status_update with reason=\u{201C}watcher_dropped\u{201D}.",
             inputSchema: object([
-                ("target", targetSchema),
+                ("session_guid", sessionGuidSchema),
                 // "unknown" is included in the enum so the schema matches
                 // the runtime SessionState type (which can appear in
                 // get_state output), but it isn't a transition target;
                 // the dispatcher rejects watch registrations for
                 // "unknown" with a clear error.
                 ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. \u{201C}unknown\u{201D} is shown by get_state when a session has no tab status yet, but it is not a watchable transition.", enumValues: ["idle", "working", "waiting", "unknown"])),
-            ], required: ["target", "target_state"])),
+            ], required: ["session_guid", "target_state"])),
 
         ToolDefinition(
             name: ToolName.unregisterWatch.rawValue,
