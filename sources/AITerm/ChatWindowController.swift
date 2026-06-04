@@ -312,6 +312,10 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
                 let terminal = !session.isBrowserSession()
                 let name = session.name
                 chatViewController.offerLink(to: guid, terminal: terminal, name: name)
+            } else {
+                // No session to link to, so offer the alternative:
+                // switch the chat into orchestration mode.
+                chatViewController.offerOrchestration()
             }
         } catch {
             DLog("\(error)")

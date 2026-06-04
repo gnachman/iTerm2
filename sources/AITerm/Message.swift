@@ -47,6 +47,13 @@ struct ClientLocal: Codable {
         case notice(String)
         case streamingChanged(StreamingState)
         case offerLink(terminal: Bool, guid: String, name: String?)
+        // Published when a new chat is created without a session to
+        // link to (e.g. the user hit New Chat with no current
+        // terminal, so the .offerLink bubble doesn't apply). Rendered
+        // as a system-message bubble with a single Enable
+        // Orchestration button; tapping it routes through the same
+        // confirmation alert as the menu-driven toggle.
+        case offerOrchestration
         case permissions(terminal: Bool, guid: String)
         // Inline workgroup-claim prompt published by the orchestrator
         // dispatcher. Rendered as a bubble with Approve / Deny
@@ -220,6 +227,8 @@ struct Message: Codable {
                     return "Client-local: streaming=\(state.rawValue)"
                 case let .offerLink(terminal: terminal, guid: guid, name: name):
                     return "Client-local: offerLink terminal=\(terminal) guid=\(guid) name=\(name.d)"
+                case .offerOrchestration:
+                    return "Client-local: offerOrchestration"
                 case let .permissions(terminal: terminal, guid: guid):
                     return "Client-local: permissions terminal=\(terminal) guid=\(guid)"
                 case let .workgroupPermissionRequest(requestID, workgroupID, workgroupName, _):
@@ -272,7 +281,7 @@ struct Message: Codable {
                     case .active:
                         "Sending commands to AI automatically"
                     }
-                case .offerLink, .permissions, .workgroupPermissionRequest,
+                case .offerLink, .offerOrchestration, .permissions, .workgroupPermissionRequest,
                         .enableOrchestrationRequest:
                     return nil
                 }

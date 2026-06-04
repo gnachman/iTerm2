@@ -498,6 +498,14 @@ extension ChatViewController {
         }
     }
 
+    func offerOrchestration() {
+        if let chatID {
+            try? client.publishClientLocalMessage(
+                chatID: chatID,
+                action: .offerOrchestration)
+        }
+    }
+
     func load(chatID: String?) {
         if streaming {
             stopStreaming()
@@ -1205,6 +1213,27 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                         break
                     }
                 }
+            case .offerOrchestration:
+                cell.buttonClicked = { [weak self] identifier, messageID in
+                    guard let self else {
+                        return
+                    }
+                    guard messageID == originalMessageID else {
+                        return
+                    }
+                    switch identifier {
+                    case "orchestrate":
+                        // Route through the menu action so the user gets
+                        // the same confirmation alert + permission model
+                        // warning as the menu-driven and offerLink paths.
+                        enableOrchestration(nil)
+                        // Recompute enable state whether the user
+                        // confirmed or cancelled (see .offerLink note).
+                        reloadCell(forMessageID: messageID)
+                    default:
+                        break
+                    }
+                }
             case .permissions:
                 cell.buttonClicked = { [weak self] identifier, messageID in
                     guard let self else {
@@ -1471,6 +1500,15 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                  terminalSessionGuid == nil &&
                                  browserSessionGuid == nil &&
                                  !chatIsOrchestration)
+            case .offerOrchestration:
+                // The lone Enable Orchestration button becomes moot
+                // once the chat is in orchestration mode. Recheck on
+                // every render so the reload triggered by the click
+                // handler reflects the new state.
+                let chatIsOrchestration = chatID.flatMap {
+                    listModel.chat(id: $0)?.orchestrationEnabled
+                } ?? false
+                enableButtons = !chatIsOrchestration
             case .permissions(terminal: _, guid: let guid):
                 enableButtons = (iTermController.sharedInstance()?.anySession(withGUID: guid) != nil)
             case .workgroupPermissionRequest:
@@ -2040,6 +2078,16 @@ extension Message.Content {
                     + "workgroups; it uses one-time per-session approval instead of "
                     + "per-call prompts."
                 return AttributedStringForSystemMessageMarkdown(body) {}
+            case .offerOrchestration:
+                let body = "**Enable orchestration for this chat?**\n\n"
+                    + "**Orchestration** lets the AI coordinate across "
+                    + "multiple terminal sessions. It can read the contents "
+                    + "of any session, and you grant a one-time approval "
+                    + "before it controls a session instead of approving "
+                    + "every call. It also runs in **auto mode**: each "
+                    + "command the AI proposes is checked for safety by your "
+                    + "AI provider, and anything risky is held for your review."
+                return AttributedStringForSystemMessageMarkdown(body) {}
             case .permissions:
                 return AttributedStringForSystemMessageMarkdown("You can use these buttons or the info button menu at the top of the chat window to control AI permissions for this chat.") {}
             case let .workgroupPermissionRequest(_, workgroupID, workgroupName, summary):
@@ -2138,6 +2186,10 @@ extension Message {
                 // single-button cases above.
                 return [.init(title: "Link", destructive: false, identifier: "link"),
                         .init(title: "Enable Orchestration", destructive: false, identifier: "orchestrate")]
+            case .offerOrchestration:
+                // Identifier matches the offerOrchestration buttonClicked
+                // handler in configure(cell:RegularMessageCellView,...).
+                return [.init(title: "Enable Orchestration", destructive: false, identifier: "orchestrate")]
             case let .permissions(terminal: terminal, guid: guid):
                 let rce = RemoteCommandExecutor.instance
                 var buttons = [MessageRendition.Regular.Button]()

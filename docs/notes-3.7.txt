@@ -52,6 +52,11 @@ Major New Features:
   a raw identifier. Clicking the link
   reveals that session.
 
+- A new AI chat created without a session to
+  link to now offers to enable orchestration
+  mode, mirroring the link offer shown when a
+  session is available.
+
 - Workgroups let you configure a session
   to be transformed into a group of related
   sessions — peers, split panes, or tabs —
