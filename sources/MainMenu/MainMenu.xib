@@ -1911,6 +1911,12 @@ CQ
                                     <action selector="toggleSizeLocked:" target="-1" id="K1B-UU-I0m"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Lock Layout" identifier="Lock Layout" id="Lk1-Ly-Lt0">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleLayoutLocked:" target="-1" id="Lk2-Ly-Lt1"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Notify on Status Change" keyEquivalent="X" identifier="Notify on Status Change" id="Ns0-Ch-G01">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                 <connections>

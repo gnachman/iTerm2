@@ -295,6 +295,7 @@ class MainMenuMangler: NSObject {
         "Window Style.No Title Bar": "rectangle.dashed",
         "Window Style.Centered": "inset.filled.center.rectangle",
         "Lock Size": "lock",
+        "Lock Layout": "lock.rectangle.on.rectangle",
         "Notify on Status Change": "bell",
         "Save Window Arrangement": "square.and.arrow.down",
         "Save Current Window as Arrangement": "square.and.arrow.down",

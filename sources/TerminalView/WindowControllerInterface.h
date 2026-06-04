@@ -107,6 +107,9 @@
 @property(nonatomic, readonly) NSArray *tabs;
 @property(nonatomic, readonly) BOOL windowIsResizing;
 @property(nonatomic, readonly) BOOL closing;
+// When YES, the window’s layout is frozen (no adding/closing/reordering/moving
+// of tabs or panes). See -[PseudoTerminal toggleLayoutLocked:].
+@property(nonatomic, readonly) BOOL layoutLocked;
 @property(nonatomic, strong) iTermPromise *fullScreenPromise;
 @property(nonatomic, strong) id<iTermPromiseSeal> fullScreenEnteredSeal;
 

@@ -202,6 +202,7 @@ NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 // Boolean NSNumber.
 NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
 NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED = @"Size Locked";
+NSString *const TERMINAL_ARRANGEMENT_LAYOUT_LOCKED = @"Layout Locked";
 
 static void iTermPercentageSanitize(iTermPercentage *percentage) {
     if (percentage->width >= 0) {
@@ -2453,6 +2454,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)closeSessionWithConfirmation:(PTYSession *)aSession {
+    if (_layoutLocked) {
+        DLog(@"Layout is locked, refusing to close session");
+        return NO;
+    }
     PTYTab *tab = [self tabForSession:aSession];
     if ([[tab sessions] count] == 1) {
         return [self closeTabIfConfirmed:tab];
@@ -3831,6 +3836,7 @@ ITERM_WEAKLY_REFERENCEABLE
         useTransparency_ = [arrangement[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] boolValue];
     }
     _sizeLocked = [arrangement[TERMINAL_ARRANGEMENT_SIZE_LOCKED] boolValue];
+    _layoutLocked = [arrangement[TERMINAL_ARRANGEMENT_LAYOUT_LOCKED] boolValue];
     self.scope.windowTitleOverrideFormat = arrangement[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE];
 
     _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
@@ -7159,6 +7165,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // This isn't a delegate method, but I need the functionality with the added suppressConfirmation
 // flag to avoid showing two warnings in tmux integration mode.
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem suppressConfirmation:(BOOL)suppressConfirmation {
+    if (_layoutLocked) {
+        return NO;
+    }
     PTYTab *aTab = [tabViewItem identifier];
     if (aTab == nil) {
         return NO;
@@ -7171,6 +7180,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     shouldDragTabViewItem:(NSTabViewItem *)tabViewItem
                fromTabBar:(PSMTabBarControl *)tabBarControl
 {
+    if (_layoutLocked) {
+        return NO;
+    }
     return YES;
 }
 
@@ -9556,6 +9568,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                targetSession:(PTYSession *)targetSession
                   completion:(void (^)(PTYSession *, BOOL ok))completion
                        ready:(void (^)(PTYSession *, BOOL ok))ready {
+    if (_layoutLocked) {
+        DLog(@"Layout is locked, refusing to split");
+        if (ready) {
+            ready(nil, NO);
+        }
+        if (completion) {
+            completion(nil, NO);
+        }
+        return;
+    }
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         TmuxController *controller = [targetSession tmuxController];
@@ -10346,6 +10368,10 @@ typedef struct {
 }
 
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex {
+    if (_layoutLocked) {
+        DLog(@"Layout is locked, refusing to move tab");
+        return;
+    }
     if (destinationIndex < 0) {
         destinationIndex = [_contentView.tabView numberOfTabViewItems] - 1;
     }
@@ -11432,6 +11458,22 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 - (IBAction)toggleSizeLocked:(id)sender {
     _sizeLocked = !_sizeLocked;
+    if (_sizeLocked) {
+        // Lock Size and Lock Layout are alternatives; only one applies at a time.
+        _layoutLocked = NO;
+    }
+}
+
+- (BOOL)layoutLocked {
+    return _layoutLocked;
+}
+
+- (IBAction)toggleLayoutLocked:(id)sender {
+    _layoutLocked = !_layoutLocked;
+    if (_layoutLocked) {
+        // Lock Size and Lock Layout are alternatives; only one applies at a time.
+        _sizeLocked = NO;
+    }
 }
 
 - (IBAction)moveSessionToWindow:(id)sender {
@@ -11788,6 +11830,24 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 // Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if (_layoutLocked) {
+        const SEL action = [item action];
+        if (action == @selector(closeCurrentTab:) ||
+            action == @selector(closeCurrentSession:) ||
+            action == @selector(splitVertically:) ||
+            action == @selector(splitHorizontally:) ||
+            action == @selector(openSplitHorizontallySheet:) ||
+            action == @selector(openSplitVerticallySheet:) ||
+            action == @selector(moveTabLeft:) ||
+            action == @selector(moveTabRight:) ||
+            action == @selector(moveTabToNewWindow:) ||
+            action == @selector(moveTabToNewWindowContextualMenuAction:) ||
+            action == @selector(newTabToTheRight:) ||
+            action == @selector(closeOtherTabs:) ||
+            action == @selector(closeTabsToTheRight:)) {
+            return NO;
+        }
+    }
     BOOL result = YES;
     if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
@@ -11815,6 +11875,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(toggleSizeLocked:)) {
         [item setState:_sizeLocked ? NSControlStateValueOn : NSControlStateValueOff];
         return self.windowTypeSupportsSizeLock;
+    } else if ([item action] == @selector(toggleLayoutLocked:)) {
+        [item setState:_layoutLocked ? NSControlStateValueOn : NSControlStateValueOff];
+        return YES;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         if (self.currentSession.locked) {
             return NO;
@@ -12368,6 +12431,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 // the -tabs array immediately for tmux tabs.
 - (void)closeOtherTabs:(id)sender
 {
+    if (_layoutLocked) {
+        DLog(@"Layout is locked, refusing to close other tabs");
+        return;
+    }
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
     NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
@@ -12382,6 +12449,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (void)closeTabsToTheRight:(id)sender
 {
+    if (_layoutLocked) {
+        DLog(@"Layout is locked, refusing to close tabs to the right");
+        return;
+    }
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
 
@@ -12412,6 +12483,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab {
+    if (_layoutLocked) {
+        DLog(@"Layout is locked, refusing to move tab to a new window");
+        return nil;
+    }
     if (aTab == nil) {
         return nil;
     }
@@ -12765,6 +12840,16 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         objectType = iTermWindowObject;
     } else {
         objectType = iTermTabObject;
+    }
+    // When the layout is locked, refuse to add a tab to a window that already
+    // has one (a frozen layout can't grow). The first tab of a brand-new window
+    // (objectType == iTermWindowObject) is still allowed.
+    if (_layoutLocked && objectType == iTermTabObject) {
+        DLog(@"Layout is locked, refusing to add a tab");
+        if (completion) {
+            completion(nil, NO);
+        }
+        return nil;
     }
     if (command) {
         profile = [[profile
@@ -13921,6 +14006,7 @@ backgroundColor:(NSColor *)backgroundColor {
                                                   encoder:adapter];
     [encoder encodeNumber:@(self.window.miniaturized) forKey:TERMINAL_ARRANGEMENT_MINIATURIZED];
     [encoder encodeNumber:@(_sizeLocked) forKey:TERMINAL_ARRANGEMENT_SIZE_LOCKED];
+    [encoder encodeNumber:@(_layoutLocked) forKey:TERMINAL_ARRANGEMENT_LAYOUT_LOCKED];
     return commit;
 }
 

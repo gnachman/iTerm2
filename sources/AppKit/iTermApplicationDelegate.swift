@@ -190,6 +190,8 @@ extension iTermApplicationDelegate {
                 text: "When enabled, typing in this session is broadcast to other sessions in the same broadcast domain. Typing in other sessions sends input only to those sessions."),
             Tip(identifier: "Lock Size",
                 text: "Locked windows resist being resized. This can be useful when macOS screws up your windows when connecting or disconnecting displays."),
+            Tip(identifier: "Lock Layout",
+                text: "When a window’s layout is locked, its tabs and panes can’t be added, closed, reordered, dragged, or moved to another window, so a stray click or drag can’t rearrange it. Resizing panes, opening new windows, and closing the window still work. This is an alternative to Lock Size; turning one on turns the other off."),
             Tip(identifier: "Notify on Status Change",
                 text: "When enabled, the next time any session in this window changes its status (such as waiting, idle, or busy) an alert is shown and this setting turns itself back off. This is the same toggle as the bell button in the **Session Status** toolbelt tool, which must be open for this to be available."),
             Tip(identifier: "Toggle Buffer Input", text: "While Buffer Input is turned on, keyboard input is stored in a buffer. It will be sent when Buffer Input is turned off. You can also configure a trigger to change the Buffer Input setting."),

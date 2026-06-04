@@ -68,6 +68,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)movePane:(PTYSession *)session {
     DLog(@"movePane:%@", session);
+    if (session.delegate.realParentWindow.layoutLocked) {
+        DLog(@"Layout is locked, refusing to move");
+        return;
+    }
     if (session.locked) {
         DLog(@"Session is locked, refusing to move");
         return;
@@ -77,6 +81,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)swapPane:(PTYSession *)session {
     DLog(@"swapPane:%@", session);
+    if (session.delegate.realParentWindow.layoutLocked) {
+        DLog(@"Layout is locked, refusing to swap");
+        return;
+    }
     if (session.locked) {
         DLog(@"Session is locked, refusing to swap");
         return;
@@ -296,6 +304,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)beginDrag:(PTYSession *)session {
     DLog(@"beginDrag:%@", session);
+    if (session.delegate.realParentWindow.layoutLocked) {
+        DLog(@"Layout is locked, refusing to drag");
+        return;
+    }
     if (session.locked) {
         DLog(@"Session is locked, refusing to drag");
         return;

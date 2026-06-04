@@ -143,6 +143,14 @@ Tabs, Windows, and UI:
   protected from reordering.
 - New Lock Size menu item and per-profile
   preference to prevent window resizing.
+- New Lock Layout menu item (in the Window
+  menu, next to Lock Size) that freezes a
+  window’s layout: it prevents splitting,
+  adding or closing tabs, reordering tabs,
+  closing or dragging panes, and moving
+  panes or tabs to other windows. Resizing
+  panes, opening new windows, and closing
+  the window still work.
 - Panes can be locked to prevent accidental drag
   and drop.
 - Tabs can now be placed on the right side

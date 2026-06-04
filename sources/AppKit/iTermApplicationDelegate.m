@@ -421,6 +421,19 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    const SEL action = [menuItem action];
+    if (action == @selector(newSessionInTabAtIndex:) ||
+        action == @selector(newSession:) ||
+        action == @selector(newSessionWithSameProfile:)) {
+        // When the current window's layout is locked, refuse to add a tab to a
+        // window that already has one. Opening a brand-new window (no current
+        // terminal, or one with no tabs) is unaffected, and so are the New
+        // Window commands, which use different selectors.
+        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+        if (term.layoutLocked && term.tabs.count > 0) {
+            return NO;
+        }
+    }
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
