@@ -297,29 +297,11 @@ class iTermWorkgroupDetailViewController: NSViewController {
     // MARK: - + / − actions
 
     @objc private func whatIsAWorkgroupClicked(_ sender: NSButton) {
-        let markdown = """
-            A **Workgroup** transforms a single session into a group of
-            related sessions that share a toolbar.
-
-            When a Workgroup is entered on a session (called the **main
-            session**) it can add:
-
-            - **Peers**: multiple sessions or split panes in the a place of a single split pane. A mode
-              switcher in the toolbar flips between them. Useful when you
-              want to see different "modes" of the same context, like a
-              terminal and a diff of your working tree.
-            - **Split panes**: additional panes carved out of the main
-              session's area, each configured with its own profile and
-              command.
-            - **Tabs**: whole new window tabs, attached to the main
-              session's lifetime.
-
-            Each session in the workgroup can be configured with its own
-            profile, command or URL, and toolbar items.
-
-            Configure Workgroups here, and enter one via a trigger on a
-            profile or a menu item.
-            """
+        let markdown = "A **Workgroup** turns a single session into a "
+            + "coordinated set of related sessions, each with its own "
+            + "command and toolbar; see the "
+            + "[Workgroups documentation](https://iterm2.com/documentation-workgroups.html) "
+            + "for the full story."
         sender.it_showInformativeMessage(withMarkdown: markdown)
     }
 

@@ -25,10 +25,14 @@ class iTermWorkgroupsEditingViewController: NSViewController {
     private let buttonStripHeight: CGFloat = 26
     private let margin: CGFloat = 8
 
+    private static let helpURL =
+        "https://iterm2.com/documentation-workgroups.html"
+
     private var tableView: NSTableView!
     private var tableScroll: NSScrollView!
     private var segmented: NSSegmentedControl!
     private var presetPopup: NSPopUpButton!
+    private var helpButton: NSButton!
     private var detailContainer: NSView!
     private var detailViewController: iTermWorkgroupDetailViewController!
 
@@ -88,6 +92,20 @@ class iTermWorkgroupsEditingViewController: NSViewController {
         presetPopup.sizeToFit()
         root.addSubview(presetPopup)
 
+        // Circular "?" help button anchored to the bottom-right. Opens
+        // the Workgroups documentation.
+        helpButton = NSButton(frame: .zero)
+        helpButton.bezelStyle = .helpButton
+        helpButton.setButtonType(.momentaryPushIn)
+        helpButton.title = ""
+        helpButton.target = self
+        helpButton.action = #selector(helpClicked(_:))
+        helpButton.autoresizingMask = [.minXMargin, .maxYMargin]
+        // Hidden until a workgroup is selected; the empty state has its
+        // own "What is a Workgroup?" button. updateDetail() toggles this.
+        helpButton.isHidden = true
+        root.addSubview(helpButton)
+
         detailContainer = NSView(frame: .zero)
         root.addSubview(detailContainer)
 
@@ -130,11 +148,23 @@ class iTermWorkgroupsEditingViewController: NSViewController {
             width: listColumnWidth,
             height: max(0, bounds.height - margin - tableY))
 
+        // Help button in the bottom-right corner, vertically centered in
+        // the same strip as the segmented/preset controls.
+        let helpSize = helpButton.fittingSize
+        helpButton.frame = NSRect(
+            x: bounds.width - margin - helpSize.width,
+            y: leftColumnBottom + (buttonStripHeight - helpSize.height) / 2,
+            width: helpSize.width,
+            height: helpSize.height)
+
+        // The detail pane's bottom aligns with the table's bottom so the
+        // bottom strip (preset controls on the left, help button on the
+        // right) stays clear.
         detailContainer.frame = NSRect(
             x: detailX,
-            y: margin,
+            y: tableY,
             width: max(0, bounds.width - detailX - margin),
-            height: max(0, bounds.height - 2 * margin))
+            height: max(0, bounds.height - margin - tableY))
         detailViewController.view.frame = detailContainer.bounds
         // Table column width follows the scroll view.
         tableView.tableColumns.first?.width =
@@ -188,9 +218,22 @@ class iTermWorkgroupsEditingViewController: NSViewController {
         if let id = selectedWorkgroupID,
            let wg = iTermWorkgroupModel.instance.workgroup(uniqueIdentifier: id) {
             detailViewController.load(workgroup: wg)
+            // The detail pane shows the editor; offer the "?" help link.
+            helpButton.isHidden = false
         } else {
             detailViewController.load(workgroup: nil)
+            // Empty state already shows its own "What is a Workgroup?"
+            // button, so suppress the redundant "?" button.
+            helpButton.isHidden = true
         }
+    }
+
+    @objc private func helpClicked(_ sender: Any?) {
+        guard let url = URL(string: Self.helpURL) else { return }
+        NSWorkspace.shared.it_open(url,
+                                   target: nil,
+                                   style: .tab,
+                                   window: view.window)
     }
 
     @objc private func segmentClicked(_ sender: NSSegmentedControl) {

@@ -1315,3 +1315,7 @@ Bug Fixes:
   no longer hashes every untracked file in
   the tree and the poll finishes within
   the git timeout.
+- The Workgroups settings pane has a
+  help button in the bottom-right
+  corner that opens the Workgroups
+  documentation.
