@@ -505,6 +505,11 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Copying selected text from a porthole (such as
+  rendered markdown) now works in apps that
+  prefer rich text.
+- Clicking in a porthole in an inactive split
+  pane now activates that pane.
 - Fixed several crashes: registering a profile
   hotkey for a profile with no GUID, loading a
   profile whose default-bookmark value is a

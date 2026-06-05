@@ -734,6 +734,13 @@ extension PTYTextView: PortholeDelegate {
         }
     }
 
+    func portholeWantsFirstResponder(_ porthole: Porthole) {
+        // Clicking inside a porthole should activate its split pane. The porthole's text view
+        // refuses first responder, so make this text view first responder on its behalf.
+        DLog("portholeWantsFirstResponder")
+        window?.makeFirstResponder(self)
+    }
+
     func portholeRemove(_ porthole: Porthole) {
         DLog("portholeRemove")
         removePorthole(porthole)
