@@ -99,7 +99,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         for tabID in emptyTabsToClose {
             guard let tab = controller.tab(withID: tabID),
                   let window = controller.window(for: tab) else { continue }
-            if (tab.sessions() as? [PTYSession])?.isEmpty ?? true {
+            if tab.sessions()?.isEmpty ?? true {
                 window.close(tab)
             }
         }
@@ -119,7 +119,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         tab.remove(session)
         detachedSessions[guid] = session
         detachedSessionSourceTab[guid] = tabID
-        if (tab.sessions() as? [PTYSession])?.isEmpty ?? true {
+        if tab.sessions()?.isEmpty ?? true {
             emptyTabsToClose.insert(tabID)
         }
     }
@@ -273,7 +273,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         // tree, so a subsequent `terminateSession(b)` would throw
         // `unknownSession` against a session that's still alive.
         let referencedGuids = collectReferencedGuids(layout)
-        let preExisting = (tab.sessions() as? [PTYSession]) ?? []
+        let preExisting = tab.sessions() ?? []
         for session in preExisting {
             let guid = session.guid
             if !referencedGuids.contains(guid) {
@@ -312,7 +312,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         // apply_layout calls into no-ops because they read the OLD
         // session ordering.
         if sessionsToAdopt.isEmpty,
-           let firstSession = (tab.sessions() as? [PTYSession])?.first {
+           let firstSession = tab.sessions()?.first {
             NotificationCenter.default.post(
                 name: .iTermSessionDidChangeTab,
                 object: firstSession)

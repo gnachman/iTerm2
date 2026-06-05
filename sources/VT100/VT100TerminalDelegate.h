@@ -72,15 +72,17 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
     VT100TerminalProtectedModeDEC = 2
 };
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol VT100TerminalDelegate <NSObject>
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
-- (void)terminalAppendString:(NSString *)string;
-- (void)terminalAppendString:(NSString *)string
-          preconvertedData:(PreconvertedStringData *)preconvertedData;
+- (void)terminalAppendString:(nullable NSString *)string;
+- (void)terminalAppendString:(nullable NSString *)string
+          preconvertedData:(nullable PreconvertedStringData *)preconvertedData;
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData;
 - (void)terminalAppendMixedAsciiCRLFData:(AsciiData *)asciiData
                                    crlfs:(CTVector(int) *)crlfs;
-- (void)terminalAppendMixedAsciiGang:(NSArray<VT100Token *> *)tokens;
+- (void)terminalAppendMixedAsciiGang:(nullable NSArray<VT100Token *> *)tokens;
 
 // Play/display the bell.
 - (void)terminalRingBell;
@@ -115,11 +117,11 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalReportVariableNamed:(NSString *)variable;
 
 // Sends a report.
-- (void)terminalSendReport:(NSData *)report;
+- (void)terminalSendReport:(nullable NSData *)report;
 
 // Sends an OSC 4 color query report (tmux-aware).
 // For tmux clients running 3.6+, this routes through the tmux controller.
-- (void)terminalSendOSC4Report:(NSData *)report;
+- (void)terminalSendOSC4Report:(nullable NSData *)report;
 
 - (VT100OutputOptionalDeviceAttributes)terminalOptionalDeviceAttributes;
 
@@ -199,7 +201,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (NSArray<NSNumber *> *)terminalTabStops;
 
 // Tab stops, 1 based. All numbers will be positive.
-- (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops;
+- (void)terminalSetTabStops:(nullable NSArray<NSNumber *> *)tabStops;
 
 // Tries to resize the screen to |width|.
 - (void)terminalSetWidth:(int)width
@@ -231,10 +233,10 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalPrintScreen;
 
 // Sets the window's title.
-- (void)terminalSetWindowTitle:(NSString *)title;
+- (void)terminalSetWindowTitle:(nullable NSString *)title;
 
 // Sets the icon's title.
-- (void)terminalSetIconTitle:(NSString *)title;
+- (void)terminalSetIconTitle:(nullable NSString *)title;
 - (void)terminalSetSubtitle:(NSString *)subtitle;
 
 // Pastes a string to the shell.
@@ -303,13 +305,13 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow;
 
 // Posts a message to Notification center.
-- (void)terminalPostUserNotification:(NSString *)message;
+- (void)terminalPostUserNotification:(nullable NSString *)message;
 
 // Posts a rich notification message to Notification center.
-- (void)terminalPostUserNotification:(NSString *)message rich:(BOOL)rich;
+- (void)terminalPostUserNotification:(nullable NSString *)message rich:(BOOL)rich;
 
 // Enters Tmux mode.
-- (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID;
+- (void)terminalStartTmuxModeWithDCSIdentifier:(nullable NSString *)dcsID;
 
 // Handles input during tmux mode. A single line of input will be in the token's string.
 - (void)terminalHandleTmuxInput:(VT100Token *)token;
@@ -350,7 +352,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalStealFocus;
 
 // Set the proxy icon of current session window.
-- (void)terminalSetProxyIcon:(NSString *)value;
+- (void)terminalSetProxyIcon:(nullable NSString *)value;
 
 // Erase the screen (preserving the line the cursor is on) and the scrollback buffer.
 - (void)terminalClearBuffer;
@@ -360,7 +362,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Sets the username@hostname or hostname of the current cursor location.
 - (void)terminalSetRemoteHost:(NSString *)remoteHost;
-- (void)terminalSetWorkingDirectoryURL:(NSString *)URL;
+- (void)terminalSetWorkingDirectoryURL:(nullable NSString *)URL;
 
 // The profile should change to one with the name |value|.
 - (void)terminalProfileShouldChangeTo:(NSString *)value;
@@ -372,10 +374,10 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 // empty string, are treated as the default pasteboard.
 - (void)terminalSetPasteboard:(NSString *)value;
 - (void)terminalCopyBufferToPasteboard;
-- (void)terminalAppendDataToPasteboard:(NSData *)data;
+- (void)terminalAppendDataToPasteboard:(nullable NSData *)data;
 
 // Download of a base64-encoded file
-// nil = name unknown, -1 = size unknown. Return YES to accept it.
+// name defaults to “Unnamed file” when unknown; -1 = size unknown. Return YES to accept it.
 - (void)terminalWillReceiveFileNamed:(NSString *)name
                               ofSize:(NSInteger)size
                           completion:(void (^)(BOOL ok))completion;
@@ -388,7 +390,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
-                                      type:(NSString *)type
+                                      type:(nullable NSString *)type
                                  forceWide:(BOOL)forceWide
                                 completion:(void (^)(BOOL ok))completion;
 
@@ -397,7 +399,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Got another chunk of base-64 encoded data for the current download.
 // Preceded by terminalWillReceiveFileNamed:size:.
-- (void)terminalDidReceiveBase64FileData:(NSString *)data;
+- (void)terminalDidReceiveBase64FileData:(nullable NSString *)data;
 
 // Got bogus data, abort download.
 // Preceded by terminalWillReceiveFileNamed:size: and possibly some
@@ -426,12 +428,12 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalResetColor:(VT100TerminalColorIndex)color;
 
 // Change the color tint of the current tab.
-- (void)terminalSetCurrentTabColor:(NSColor *)color;
+- (void)terminalSetCurrentTabColor:(nullable NSColor *)color;
 - (void)terminalSetTabColorRedComponentTo:(CGFloat)color;
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color;
 
-- (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index;
+- (nullable NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index;
 
 // Returns the current cursor position.
 - (int)terminalCursorX;
@@ -465,7 +467,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalCommandDidEnd;
 - (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type;
 - (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type;
-- (void)terminalProgressAt:(double)fraction label:(NSString *)label;
+- (void)terminalProgressAt:(double)fraction label:(nullable NSString *)label;
 - (void)terminalProgressDidFinish;
 // `aid` targets a specific open command mark (the close-by-aid path).
 // nil falls back to the today's "close topmost open command" behavior.
@@ -484,7 +486,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalTypeDidChange;
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue;
 
-- (NSString *)terminalProfileName;
+- (nullable NSString *)terminalProfileName;
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename;
 - (void)terminalSetBadgeFormat:(NSString *)badge;
@@ -509,7 +511,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Copy to pasteboard
 - (void)terminalBeginCopyToPasteboard;
-- (void)terminalDidReceiveBase64PasteboardString:(NSString *)string;
+- (void)terminalDidReceiveBase64PasteboardString:(nullable NSString *)string;
 - (void)terminalDidFinishReceivingPasteboard;
 - (void)terminalPasteboardReceiptEndedUnexpectedly;
 
@@ -531,7 +533,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp;
 
-- (void)terminalAppendSixelData:(NSData *)sixelData;
+- (void)terminalAppendSixelData:(nullable NSData *)sixelData;
 
 - (void)terminalDidChangeSendModifiers;
 - (void)terminalKeyReportingFlagsDidChange;
@@ -547,7 +549,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (NSString *)terminalTopBottomRegionString;
 - (NSString *)terminalLeftRightRegionString;
 
-- (VT100SavedColorsSlot *)terminalSavedColorsSlot;
+- (nullable VT100SavedColorsSlot *)terminalSavedColorsSlot;
 - (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 - (int)terminalMaximumTheoreticalImageDimension;
 - (void)terminalInsertColumns:(int)n;
@@ -566,36 +568,36 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (dispatch_queue_t)terminalQueue;
 - (iTermTokenExecutorUnpauser *)terminalPause;
 - (void)terminalSendCapabilitiesReport;
-- (void)terminalDidHookSSHConductorWithParams:(NSString *)token;
-- (void)terminalDidReadSSHConductorLine:(NSString *)string depth:(int)depth;
+- (void)terminalDidHookSSHConductorWithParams:(nullable NSString *)token;
+- (void)terminalDidReadSSHConductorLine:(nullable NSString *)string depth:(int)depth;
 - (void)terminalDidUnhookSSHConductor;
-- (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
+- (void)terminalDidBeginSSHConductorCommandWithIdentifier:(nullable NSString *)identifier
                                                     depth:(int)depth;
 - (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
                                                    type:(NSString *)type
                                                  status:(uint8_t)status
                                                   depth:(int)depth;
-- (void)terminalHandleSSHSideChannelOutput:(NSString *)string
+- (void)terminalHandleSSHSideChannelOutput:(nullable NSString *)string
                                        pid:(int32_t)pid
                                    channel:(uint8_t)channel
                                      depth:(int)depth;
-- (void)terminalDidReadRawSSHData:(NSData *)data
+- (void)terminalDidReadRawSSHData:(nullable NSData *)data
                               pid:(int)pid
                           channel:(int)channel;
 
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth;
 - (void)terminalUpdateEnv:(NSString *)value;
-- (void)terminalBeginSSHIntegeration:(NSString *)args;
+- (void)terminalBeginSSHIntegeration:(nullable NSString *)args;
 - (void)terminalSendConductor:(NSString *)args;
 - (void)terminalEndSSH:(NSString *)uniqueID;
 - (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth;
-- (void)terminalHandleFramerRecoveryString:(NSString *)string;
+- (void)terminalHandleFramerRecoveryString:(nullable NSString *)string;
 - (void)terminalDidResynchronizeSSH;
 
 - (void)terminalDidExecuteToken:(VT100Token *)token;
 - (void)terminal:(VT100Terminal *)terminal willExecuteToken:(VT100Token *)token defaultChar:(const screen_char_t *)defaultChar encoding:(NSStringEncoding)encoding;
 - (void)terminalOpenURL:(NSURL *)url;
-- (void)terminalBlock:(NSString *)blockID start:(BOOL)start type:(NSString *)type render:(BOOL)render;
+- (void)terminalBlock:(NSString *)blockID start:(BOOL)start type:(nullable NSString *)type render:(BOOL)render;
 
 typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
     iTermUpdateBlockActionFold,
@@ -606,7 +608,7 @@ typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
 - (void)terminalInsertCopyButtonForBlock:(NSString *)blockID;
 - (void)terminalInsertCustomButtonWithCode:(int)code icon:(NSString *)icon;
 - (void)terminalInvalidateCustomButtons;
-- (void)terminalSetPointerShape:(NSString *)pointerShape;
+- (void)terminalSetPointerShape:(nullable NSString *)pointerShape;
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand;
 - (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid;
 - (void)terminalExecDidFail;
@@ -615,3 +617,5 @@ typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
 - (void)terminalSetTabStatus:(VT100TabStatusUpdate *)status;
 
 @end
+
+NS_ASSUME_NONNULL_END

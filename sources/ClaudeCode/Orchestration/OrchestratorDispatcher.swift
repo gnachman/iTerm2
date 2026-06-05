@@ -226,9 +226,11 @@ final class OrchestratorDispatcher {
         // returns. If the work turns out to be no-op by the time it
         // runs (observers already gone, broker already cleaned up its
         // subs), the cost is one runloop hop.
-        let sub = brokerSubscription
-        let tabObs = tabStatusObserver
-        let termObs = sessionWillTerminateObserver
+        // These are only touched on main; hand them across the @Sendable
+        // boundary explicitly since their types aren't Sendable.
+        nonisolated(unsafe) let sub = brokerSubscription
+        nonisolated(unsafe) let tabObs = tabStatusObserver
+        nonisolated(unsafe) let termObs = sessionWillTerminateObserver
         let prompts = pendingPermissionPrompts
         DispatchQueue.main.async {
             sub?.unsubscribe()

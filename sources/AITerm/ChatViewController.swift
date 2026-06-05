@@ -2602,10 +2602,13 @@ class InlinePanelCoordinator: NSObject, ChatViewControllerDelegate {
         warning.title = "Are you sure you want to delete this chat? This action cannot be undone."
         warning.heading = "Delete Chat?"
         let action = iTermWarningAction(label: "Delete") { [weak self] _ in
-            do {
-                try ChatClient.instance?.delete(chatID: chatID)
-            } catch {
-                DLog("\(error)")
+            // Runs from iTermWarning.runModal() on the main thread.
+            MainActor.assumeIsolated {
+                do {
+                    try ChatClient.instance?.delete(chatID: chatID)
+                } catch {
+                    DLog("\(error)")
+                }
             }
             // Clearing the inline-chat ID drops this panel out of the gutter
             // because the registered widthProvider returns 0 once the ID is
@@ -2643,23 +2646,29 @@ class iTermInlineChatGutterPanelRegistration: NSObject {
         iTermRightGutterPanelRegistry.sharedInstance().registerPanelType(
             ChatViewController.inlineChatPanelIdentifier,
             factory: {
-                // The widthProvider gates panel creation on the singletons
-                // being available, so this force-construct is reachable
-                // only when both are non-nil.
-                return ChatViewController(listModel: ChatListModel.instance!,
-                                          client: ChatClient.instance!)
+                // Panel construction happens on the main thread.
+                MainActor.assumeIsolated {
+                    // The widthProvider gates panel creation on the singletons
+                    // being available, so this force-construct is reachable
+                    // only when both are non-nil.
+                    ChatViewController(listModel: ChatListModel.instance!,
+                                       client: ChatClient.instance!)
+                }
             },
             widthProvider: { _, session in
-                guard let session,
-                      session.inlineChatID != nil,
-                      session.inlineChatVisible,
-                      ChatListModel.instance != nil,
-                      ChatClient.instance != nil else {
-                    return 0
+                // Called on the main-thread layout-budget path.
+                MainActor.assumeIsolated {
+                    guard let session,
+                          session.inlineChatID != nil,
+                          session.inlineChatVisible,
+                          ChatListModel.instance != nil,
+                          ChatClient.instance != nil else {
+                        return 0
+                    }
+                    return iTermGutterPanelWidths.width(
+                        forIdentifier: ChatViewController.inlineChatPanelIdentifier,
+                        defaultValue: ChatViewController.inlineChatPanelWidth)
                 }
-                return iTermGutterPanelWidths.width(
-                    forIdentifier: ChatViewController.inlineChatPanelIdentifier,
-                    defaultValue: ChatViewController.inlineChatPanelWidth)
             })
     }
 }

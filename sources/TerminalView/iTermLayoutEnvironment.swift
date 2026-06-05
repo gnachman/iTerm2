@@ -48,7 +48,7 @@ final class iTermLayoutEnvironment: NSObject, LayoutResolverEnvironment {
 
     func sessionGUIDs(inTab tabID: String) -> [String] {
         guard let tab = controller.tab(withID: tabID),
-              let sessions = tab.sessions() as? [PTYSession] else {
+              let sessions = tab.sessions() else {
             return []
         }
         return sessions.compactMap { $0.guid }

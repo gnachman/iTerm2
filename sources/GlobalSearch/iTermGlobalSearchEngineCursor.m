@@ -200,11 +200,11 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
             result.snippet = [self snippetFromExtractor:extractor
                                                  result:anObject];
             result.resilientStart =
-                [[iTermResilientCoordinate alloc] initWithDataSource:self.session
+                [[iTermResilientCoordinate alloc] initWithDataSource:self.session.screen.resilientCoordinateDataSource
                                                         absCoord:VT100GridAbsCoordMake(anObject.internalStartX,
                                                                                         anObject.internalAbsStartY)];
             result.resilientEnd =
-                [[iTermResilientCoordinate alloc] initWithDataSource:self.session
+                [[iTermResilientCoordinate alloc] initWithDataSource:self.session.screen.resilientCoordinateDataSource
                                                         absCoord:VT100GridAbsCoordMake(anObject.internalEndX,
                                                                                         anObject.internalAbsEndY)];
         }
@@ -338,12 +338,12 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
                 iTermFoldMark *foldMark = (iTermFoldMark *)foldResult.foldMark;
                 if (foldMark) {
                     globalResult.resilientStart =
-                        [[iTermResilientCoordinate alloc] initWithDataSource:strongSelf.session
+                        [[iTermResilientCoordinate alloc] initWithDataSource:strongSelf.session.screen.resilientCoordinateDataSource
                                                            enclosingFold:foldMark
                                                                    coord:VT100GridCoordMake(foldResult.startX,
                                                                                             foldResult.startY)];
                     globalResult.resilientEnd =
-                        [[iTermResilientCoordinate alloc] initWithDataSource:strongSelf.session
+                        [[iTermResilientCoordinate alloc] initWithDataSource:strongSelf.session.screen.resilientCoordinateDataSource
                                                            enclosingFold:foldMark
                                                                    coord:VT100GridCoordMake(foldResult.endX,
                                                                                             foldResult.endY)];

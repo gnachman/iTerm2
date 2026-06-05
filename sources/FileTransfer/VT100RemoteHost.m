@@ -86,7 +86,7 @@ static NSString *const kRemoteHostLocalityKey = @"Locality";
             self.class, self, self.hostname, self.username, _doppelganger, _isDoppelganger ? @"IsDop" : @"NotDop", _progenitor];
 }
 
-- (BOOL)isEqualToRemoteHost:(id<VT100RemoteHostReading>)other {
+- (BOOL)isEqualToRemoteHost:(nullable id<VT100RemoteHostReading>)other {
     if (_localityState == VT100RemoteHostLocalityLocalhost &&
         other.localityState == VT100RemoteHostLocalityLocalhost) {
         // Both are known to be the local machine. The hostname may have

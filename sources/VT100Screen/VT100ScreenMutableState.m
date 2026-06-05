@@ -11,6 +11,7 @@
 #import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100ScreenState+Private.h"
 #import "VT100ScreenState+RCDataSource.h"
+#import "VT100ScreenMutableState+RCDataSource.h"
 
 @implementation iTermSavedTreeRCDataSource
 - (instancetype)initWithGuid:(NSString *)guid
@@ -21,22 +22,6 @@
         _backing = backing;
     }
     return self;
-}
-
-- (NSString *)rcGuid {
-    return _guid;
-}
-
-- (int32_t)rcWidth {
-    return _backing.rcWidth;
-}
-
-- (int32_t)rcNumberOfLines {
-    return _backing.rcNumberOfLines;
-}
-
-- (int64_t)rcScrollbackOverflow {
-    return _backing.rcScrollbackOverflow;
 }
 @end
 
@@ -107,6 +92,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     // refreshed if didFinishInitialization seeded it from a stale gethostname().
     NSString *_lastPushedHostname;
 }
+
+// Implemented by the superclass (VT100ScreenState), which owns the backing
+// ivar. We only redeclare it here with a covariant NSMutableArray type.
+@dynamic openAidStack;
 
 // performingJoinedBlock is now centralized in iTermGCD.
 // Provide convenience accessors for compatibility with existing callers.

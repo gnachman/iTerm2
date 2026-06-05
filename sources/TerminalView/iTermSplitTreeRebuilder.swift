@@ -194,7 +194,7 @@ class iTermSplitTreeRebuilder: NSObject {
 
         // Promote a sensible active session: keep the existing active if
         // it survived, otherwise pick the first session in the new tree.
-        let surviving = (tab.sessions() as? [PTYSession]) ?? []
+        let surviving = tab.sessions() ?? []
         if let active = tab.activeSession, surviving.contains(where: { $0 === active }) {
             // Active session survived; nothing to do.
         } else if let first = surviving.first {

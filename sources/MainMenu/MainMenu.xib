@@ -292,7 +292,7 @@
                                         <menuItem isSeparatorItem="YES" id="lAc-WU-Rz6">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
-                                        <menuItem title="Exit Workgroup" identifier="Close All Panes in Tab" id="JqP-Wg-vG9">
+                                        <menuItem title="Exit Workgroup" identifier="Exit Workgroup" id="JqP-Wg-vG9">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="exitWorkgroup:" target="-1" id="gUE-ME-NzR"/>
@@ -1764,13 +1764,13 @@ CQ
                                                         </connections>
                                                     </menuItem>
                                                     <menuItem isSeparatorItem="YES" id="qml-rY-JSo"/>
-                                                    <menuItem title="Previous Peer" keyEquivalent="[" identifier="Select Split Pane.Previous Pane" id="OCq-v2-LJk">
+                                                    <menuItem title="Previous Peer" keyEquivalent="[" identifier="Select Split Pane.Previous Peer" id="OCq-v2-LJk">
                                                         <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                                         <connections>
                                                             <action selector="previousWorkgroupPeer:" target="-1" id="CTy-F2-xIr"/>
                                                         </connections>
                                                     </menuItem>
-                                                    <menuItem title="Next Peer" keyEquivalent="]" identifier="Select Split Pane.Next Pane" id="ZtC-pi-TV2">
+                                                    <menuItem title="Next Peer" keyEquivalent="]" identifier="Select Split Pane.Next Peer" id="ZtC-pi-TV2">
                                                         <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                                         <connections>
                                                             <action selector="nextWorkgroupPeer:" target="-1" id="jNf-zE-95u"/>

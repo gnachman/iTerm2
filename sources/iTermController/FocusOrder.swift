@@ -49,13 +49,13 @@ class FocusOrder: NSObject {
             return
         }
         if focused === lastStampedSession {
-            DLog("update: focused session unchanged (guid=\(focused.guid ?? "?") name=\(focused.name ?? "?")); not stamping")
+            DLog("update: focused session unchanged (guid=\(focused.guid) name=\(focused.name)); not stamping")
             return
         }
         lastStampedSession = focused
         let ordinal = counter.next
         focused.lastActivityOrdinal = ordinal
-        DLog("update: stamped guid=\(focused.guid ?? "?") name=\(focused.name ?? "?") ordinal=\(ordinal)")
+        DLog("update: stamped guid=\(focused.guid) name=\(focused.name) ordinal=\(ordinal)")
     }
 
     // MARK: - Persistence

@@ -18,6 +18,7 @@
 #import "NSStringITerm.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenState+Private.h"
+#import "VT100ScreenState+RCDataSource.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"

@@ -955,8 +955,12 @@ class AITermController {
             if Task.isCancelled {
                 return
             }
+            // self is weak and AITermController is non-Sendable, but it's only
+            // ever touched on main, so hop across the @Sendable boundary
+            // explicitly. (result is Sendable and captures directly.)
+            nonisolated(unsafe) let unsafeSelf = self
             DispatchQueue.main.async {
-                guard let self else {
+                guard let self = unsafeSelf else {
                     return
                 }
                 // Drop the result if the request is no longer outstanding. A

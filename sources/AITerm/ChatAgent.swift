@@ -554,7 +554,7 @@ class ChatAgent {
         swifty.evaluateSynchronously(true,
                                       sideEffectsAllowed: false,
                                       with: scope) { value, _, _ in
-            resolved = value as? String ?? ""
+            resolved = value ?? ""
         }
         return resolved
     }
@@ -580,7 +580,9 @@ class ChatAgent {
         // mutations below would corrupt @MainActor state
         // (ChatBroker.subs). Dispatching to main keeps the work safe
         // even if the assertion above is silenced.
-        let sub = brokerSubscription
+        // Only touched on main; hand across the @Sendable boundary explicitly
+        // since ChatBroker.Subscription isn't Sendable.
+        nonisolated(unsafe) let sub = brokerSubscription
         let parked = pendingOrchestrationRequests
         DispatchQueue.main.async {
             sub?.unsubscribe()
@@ -1115,7 +1117,11 @@ extension Result where Failure == Error {
     }
 }
 
-extension ChatAgent: MessagePrepPipelineDelegate {
+// @preconcurrency: ChatAgent is @MainActor but MessagePrepPipelineDelegate
+// is a pre-concurrency nonisolated protocol. The pipeline only invokes the
+// delegate on the main thread, so relax the isolation check rather than
+// thread isolation through the nonisolated protocol.
+extension ChatAgent: @preconcurrency MessagePrepPipelineDelegate {
     func uploadFile(name: String,
                     content: Data,
                     completion: @escaping (Result<String, any Error>) -> ()) {

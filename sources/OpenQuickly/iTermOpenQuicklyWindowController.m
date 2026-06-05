@@ -572,7 +572,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
                                  queue:NSOperationQueue.mainQueue
                             usingBlock:^(NSNotification *note) {
         if (token) {
-            [center removeObserver:token];
+            [NSWorkspace.sharedWorkspace.notificationCenter removeObserver:token];
             token = nil;
         }
         // Two spins of the runloop, then re-activate if some other app stole
@@ -591,7 +591,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         if (token) {
-            [center removeObserver:token];
+            [NSWorkspace.sharedWorkspace.notificationCenter removeObserver:token];
             token = nil;
         }
     });

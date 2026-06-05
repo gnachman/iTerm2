@@ -24,7 +24,9 @@ import Foundation
 @MainActor
 enum WorkgroupIntrospection {
 
-    static let syntheticWorkgroupIDPrefix = "session:"
+    // nonisolated: an immutable sentinel string with no main-thread state,
+    // read by the nonisolated chat renderer (ChatViewController) too.
+    nonisolated static let syntheticWorkgroupIDPrefix = "session:"
 
     // The single role inside a synthetic workgroup. Chosen so the LLM
     // sees a stable name across all standalone sessions; the role name
@@ -42,7 +44,9 @@ enum WorkgroupIntrospection {
     // the literal — the dispatcher (OrchestratorDispatcher.promptForSpawn)
     // emits it, the renderer (ChatViewController) consumes it — so
     // it lives here next to the other orchestrator sentinel IDs.
-    static let spawnWorkgroupID = "spawn"
+    // nonisolated: an immutable sentinel string with no main-thread state,
+    // read by the nonisolated chat renderer (ChatViewController) too.
+    nonisolated static let spawnWorkgroupID = "spawn"
 
     // MARK: - Listing
 

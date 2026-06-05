@@ -54,6 +54,12 @@ static NSString *const kMarkParentAid = @"Parent Aid";
 static NSString *const kMarkAncestorAids = @"Ancestor Aids";
 static NSString *const kMarkExcludedSubranges = @"Excluded Subranges";
 
+// Declare iTermResilientCoordinateHolder conformance here, where the
+// Swift-generated header that defines the protocol is imported, instead
+// of in VT100ScreenMark.h (which can only forward-declare it).
+@interface VT100ScreenMark () <iTermResilientCoordinateHolder>
+@end
+
 @implementation VT100ScreenMark {
     NSMutableArray<CapturedOutput *> *_capturedOutput;
     iTermPromise<NSNumber *> *_returnCodePromise;

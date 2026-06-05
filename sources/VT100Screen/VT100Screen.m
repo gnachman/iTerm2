@@ -2,6 +2,7 @@
 #import "VT100Screen.h"
 #import "VT100Screen+Private.h"
 #import "VT100Screen+Search.h"
+#import "VT100ScreenMutableState+RCDataSource.h"
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
@@ -1628,6 +1629,13 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
 - (VT100ScreenState *)immutableState {
     return _state;
+}
+
+- (id<iTermResilientCoordinateDataSource>)resilientCoordinateDataSource {
+    // _state is the main-thread VT100ScreenState wired as the main-thread
+    // interval tree's RC pool data source (see -commonInit). Its rcGuid is the
+    // mainThreadPoolGuid the resize / fold / clear broadcasts target.
+    return (id<iTermResilientCoordinateDataSource>)_state;
 }
 
 - (BOOL)stateIsShared {

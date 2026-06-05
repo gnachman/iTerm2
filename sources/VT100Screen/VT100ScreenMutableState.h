@@ -34,7 +34,12 @@ NS_ASSUME_NONNULL_BEGIN
 // porthole notification broadcasts can target only the right tree's
 // marks. One instance per pool: mutation-thread (backed by
 // VT100ScreenMutableState) and main-thread (backed by VT100ScreenState).
-@interface iTermSavedTreeRCDataSource : NSObject <iTermResilientCoordinateDataSource>
+// iTermResilientCoordinateDataSource conformance is declared in a class
+// extension in VT100ScreenMutableState.m, where the Swift-generated header
+// that defines the protocol is imported. This header can only forward
+// declare the protocol, and declaring conformance against a forward
+// declaration warns ("cannot find protocol definition").
+@interface iTermSavedTreeRCDataSource : NSObject
 @property (nonatomic, weak, nullable) id<iTermResilientCoordinateDataSource> backing;
 @property (nonatomic, copy) NSString *guid;
 - (instancetype)initWithGuid:(NSString *)guid

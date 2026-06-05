@@ -7,6 +7,8 @@
 
 #import "VT100ScreenMutableState+Resizing.h"
 #import "VT100ScreenState+Private.h"
+#import "VT100ScreenState+RCDataSource.h"
+#import "VT100ScreenMutableState+RCDataSource.h"
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
@@ -644,7 +646,6 @@ static void SwapInt(int *a, int *b) {
     [self.blockStartAbsLine removeAllObjects];
     self.blocksGeneration += 1;
     const long long overflow = self.cumulativeScrollbackOverflow;
-    const BOOL tolerateEmptyScreenMarks = NO;
 
     // Convert ranges of notes to their new coordinates and replace the interval tree.
     [objects enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull note, NSUInteger idx, BOOL * _Nonnull stop) {

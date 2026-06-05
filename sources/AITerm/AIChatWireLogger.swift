@@ -192,7 +192,7 @@ final class AIChatWireLogger: NSObject {
         // Filename-safe ISO 8601: no colons (illegal on some FS roundtrips
         // when copied to FAT/SMB) and second resolution is sufficient since
         // one process produces one file.
-        var formatter = ISO8601DateFormatter()
+        let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withYear, .withMonth, .withDay,
                                    .withTime]
         let stamp = formatter.string(from: Date())

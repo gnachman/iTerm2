@@ -153,7 +153,14 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 // Visible marks that can be navigated.
-@interface VT100ScreenMark : iTermMark<VT100ScreenMarkReading, IntervalTreeObject, iTermResilientCoordinateHolder>
+//
+// iTermResilientCoordinateHolder conformance is declared in a class
+// extension in VT100ScreenMark.m (which imports the Swift-generated
+// header that defines the protocol) rather than here, because this
+// header can only forward-declare the protocol and declaring
+// conformance against a forward declaration warns ("cannot find
+// protocol definition"). The required methods are still declared below.
+@interface VT100ScreenMark : iTermMark<VT100ScreenMarkReading, IntervalTreeObject>
 
 @property(nonatomic, readwrite) BOOL isPrompt;
 

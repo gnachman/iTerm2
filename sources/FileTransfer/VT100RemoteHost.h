@@ -24,9 +24,11 @@ typedef NS_ENUM(NSInteger, VT100RemoteHostLocality) {
     VT100RemoteHostLocalityRemote,
 };
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol VT100RemoteHostReading<NSObject, IntervalTreeImmutableObject>
-@property(nonatomic, copy, readonly) NSString *hostname;
-@property(nonatomic, copy, readonly) NSString *username;
+@property(nonatomic, copy, readonly, nullable) NSString *hostname;
+@property(nonatomic, copy, readonly, nullable) NSString *username;
 
 // Frozen locality stamp. Prefer this over isLocalhost when you need to
 // distinguish "known remote" from "don't know" (e.g., when deciding whether
@@ -38,7 +40,7 @@ typedef NS_ENUM(NSInteger, VT100RemoteHostLocality) {
 @property(nonatomic, readonly) BOOL isLocalhost;
 @property(nonatomic, readonly) BOOL isRemoteHost;
 
-- (BOOL)isEqualToRemoteHost:(id<VT100RemoteHostReading>)other;
+- (BOOL)isEqualToRemoteHost:(nullable id<VT100RemoteHostReading>)other;
 
 // Returns username@hostname.
 - (NSString *)usernameAndHostname;
@@ -52,9 +54,9 @@ typedef NS_ENUM(NSInteger, VT100RemoteHostLocality) {
 
 - (instancetype)init NS_UNAVAILABLE;
 // Convenience: locality unknown.
-- (instancetype)initWithUsername:(NSString *)username hostname:(NSString *)hostname;
-- (instancetype)initWithUsername:(NSString *)username
-                        hostname:(NSString *)hostname
+- (instancetype)initWithUsername:(nullable NSString *)username hostname:(nullable NSString *)hostname;
+- (instancetype)initWithUsername:(nullable NSString *)username
+                        hostname:(nullable NSString *)hostname
                         locality:(VT100RemoteHostLocality)locality NS_DESIGNATED_INITIALIZER;
 
 + (instancetype)localhost;
@@ -65,3 +67,5 @@ typedef NS_ENUM(NSInteger, VT100RemoteHostLocality) {
 // to the fragile live-hostname compare in -isLocalhost.
 + (VT100RemoteHostLocality)localityForIsLocalhostVariableValue:(nullable id)value;
 @end
+
+NS_ASSUME_NONNULL_END
