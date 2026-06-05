@@ -1294,3 +1294,16 @@ Bug Fixes:
   the Before You Start sheet has an
   always-visible link to a web page
   explaining the whole integration.
+
+- The Cockpit orchestrator can now
+  watch sessions that report no
+  status (plain TUIs, coding agents
+  that don't emit status, bare
+  shells). register_watch falls back
+  to reading the screen with a quiet
+  background AI poller and delivers
+  the usual status_update when the
+  target state is reached, instead of
+  noisily polling in the chat. It
+  gives up after five minutes with a
+  watch_timed_out update.

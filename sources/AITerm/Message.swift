@@ -24,6 +24,7 @@ struct StatusUpdate: Codable, Equatable {
     enum Reason: String, Codable {
         case stateReached     // a registered state-watcher fired
         case watcherDropped   // the watched session is gone (e.g. failed to restore)
+        case watchTimedOut    // a screen-observation watcher gave up after its time cap
     }
     var watcherID: String
     var workgroupID: String

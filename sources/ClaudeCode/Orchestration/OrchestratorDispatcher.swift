@@ -102,6 +102,15 @@ final class OrchestratorDispatcher {
     private var tabStatusObserver: NSObjectProtocol?
     private var sessionWillTerminateObserver: NSObjectProtocol?
 
+    // Live screen-observation pollers, keyed by watcherID. Created for
+    // watchers whose session reports no machine-readable status (see
+    // WorkgroupIntrospection.reportsSessionStatus); each drives a headless
+    // AIConversation that reads the screen and fires the same status_update
+    // a tab-status watcher would. Not persisted — a running loop can't be
+    // serialized; reconcilePersistedWatchers restarts one for each
+    // surviving .screenPoll watcher after a relaunch.
+    private var screenPollers: [String: ScreenWatchPoller] = [:]
+
     init(chatID: String, broker: ChatBroker) {
         self.chatID = chatID
         self.broker = broker
@@ -190,6 +199,10 @@ final class OrchestratorDispatcher {
             cont.resume(returning: false)
         }
         pendingPermissionPrompts.removeAll()
+        for (_, poller) in screenPollers {
+            poller.cancel()
+        }
+        screenPollers.removeAll()
     }
 
     deinit {
@@ -310,6 +323,7 @@ final class OrchestratorDispatcher {
         guard previousState != newState else { return }
         let matches = watchers.filter {
             $0.sessionGUID == guid && $0.targetState == newState
+                && $0.effectiveMode == .tabStatus
         }
         guard !matches.isEmpty else { return }
         let matchedIDs = Set(matches.map { $0.watcherID })
@@ -344,6 +358,7 @@ final class OrchestratorDispatcher {
         watchers.removeAll { droppedIDs.contains($0.watcherID) }
         persistWatchers()
         for watcher in dropped {
+            cancelScreenPoller(watcherID: watcher.watcherID)
             publishStatusUpdate(
                 watcher: watcher,
                 reason: .watcherDropped,
@@ -389,6 +404,12 @@ final class OrchestratorDispatcher {
             guard let session = sessionByGUID(guid) else { continue }
             sessionStateHistory[guid] = Self.seedState(for: session)
         }
+        // Screen-poll watchers have no persisted running loop; restart one
+        // per surviving watcher. Its 5-minute cap restarts from now, which
+        // is the intended behavior after a relaunch.
+        for watcher in watchers where watcher.effectiveMode == .screenPoll {
+            startScreenPoll(for: watcher)
+        }
     }
 
     // Compute the seed value for sessionStateHistory. state(for:) returns
@@ -425,6 +446,70 @@ final class OrchestratorDispatcher {
                 content: .watcherEvent(payload))
         } catch {
             DLog("Orchestrator dispatcher: failed to publish status_update: \(error)")
+        }
+    }
+
+    // MARK: - Screen-observation watchers
+
+    // Spin up a headless AI poller for a statusless session and track it
+    // by watcherID. The closures hold the dispatcher weakly so a running
+    // poller never keeps a torn-down dispatcher alive.
+    @MainActor
+    private func startScreenPoll(for watcher: WorkgroupWatcher) {
+        let id = watcher.watcherID
+        let guid = watcher.sessionGUID
+        let poller = ScreenWatchPoller(
+            watcher: watcher,
+            sessionProvider: { [weak self] in self?.sessionByGUID(guid) },
+            onReached: { [weak self] in
+                self?.screenPollFinished(watcherID: id, timedOut: false)
+            },
+            onTimedOut: { [weak self] in
+                self?.screenPollFinished(watcherID: id, timedOut: true)
+            })
+        screenPollers[id] = poller
+        poller.start()
+    }
+
+    // Terminal callback from a poller: it either decided the target was
+    // reached or gave up at the time cap. Drop the watcher and poller and
+    // publish the matching status_update. Routing through the dispatcher
+    // (rather than letting the poller touch the broker) keeps the watcher
+    // list the single owner of watcher lifecycle.
+    @MainActor
+    private func screenPollFinished(watcherID: String, timedOut: Bool) {
+        screenPollers.removeValue(forKey: watcherID)
+        guard let watcher = watchers.first(where: { $0.watcherID == watcherID }) else {
+            return
+        }
+        watchers.removeAll { $0.watcherID == watcherID }
+        persistWatchers()
+        let target = watcher.targetState.rawValue
+        if timedOut {
+            publishStatusUpdate(
+                watcher: watcher,
+                reason: .watchTimedOut,
+                stateReached: "",
+                detail: "Watch timed out: \(watcher.roleName) in \(watcher.workgroupName) "
+                    + "did not reach state '\(target)' within 5 minutes. This session "
+                    + "reports no machine-readable status, so it was watched by reading "
+                    + "its screen. Check it with get_screen_contents, or register_watch "
+                    + "again to keep waiting.")
+        } else {
+            publishStatusUpdate(
+                watcher: watcher,
+                reason: .stateReached,
+                stateReached: target,
+                detail: "\(watcher.roleName) in \(watcher.workgroupName) reached state "
+                    + "'\(target)' (detected by screen observation; this session reports "
+                    + "no machine-readable status).")
+        }
+    }
+
+    @MainActor
+    private func cancelScreenPoller(watcherID: String) {
+        if let poller = screenPollers.removeValue(forKey: watcherID) {
+            poller.cancel()
         }
     }
 
@@ -1053,6 +1138,27 @@ final class OrchestratorDispatcher {
         }) {
             return .watcherRegistered(Self.description(of: existing))
         }
+        // No machine-readable status source: there are no tab-status
+        // transitions to fire on, so fall back to an AI poller that judges
+        // doneness by reading the screen. It fires the same status_update
+        // via screenPollFinished. No seedState / already-reached fast path
+        // here — the poller's first read detects an already-idle session.
+        if !WorkgroupIntrospection.reportsSessionStatus(session) {
+            let watcher = WorkgroupWatcher(
+                watcherID: UUID().uuidString,
+                sessionGUID: guid,
+                workgroupID: resolved.workgroupID,
+                workgroupName: resolved.workgroupName,
+                roleID: resolved.roleID,
+                roleName: resolved.roleName,
+                targetState: args.targetState,
+                registeredAt: Date(),
+                mode: .screenPoll)
+            watchers.append(watcher)
+            persistWatchers()
+            startScreenPoll(for: watcher)
+            return .watcherRegistered(Self.description(of: watcher))
+        }
         // Seed the per-session state history BEFORE appending the watcher.
         // If we appended first and a tabStatus notification slipped in
         // between, the handler would see a nil previous state, treat the
@@ -1109,6 +1215,7 @@ final class OrchestratorDispatcher {
         if watchers.count != before {
             persistWatchers()
         }
+        cancelScreenPoller(watcherID: watcherID)
         return .ack
     }
 

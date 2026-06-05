@@ -244,7 +244,16 @@ enum WorkgroupIntrospection {
     // returned alongside so the LLM knows how to read the text.
     static func screenContents(for resolved: ResolvedTarget,
                                requestedLines: Int?) -> ScreenContents {
-        let session = resolved.session
+        return screenContents(forSession: resolved.session,
+                              requestedLines: requestedLines)
+    }
+
+    // Session-based core, used directly by ScreenWatchPoller (which holds
+    // a PTYSession, not a ResolvedTarget). The display-name fields on
+    // ResolvedTarget aren't needed to render the screen, so the resolved
+    // overload above just forwards here.
+    static func screenContents(forSession session: PTYSession,
+                               requestedLines: Int?) -> ScreenContents {
         let kind = kind(for: session)
         let pending = pendingActionDescription(for: session)
         switch kind {
@@ -393,6 +402,25 @@ enum WorkgroupIntrospection {
         // is the best we can do for sessions without a status source.
         if status.hasIndicator { return .working }
         return .idle
+    }
+
+    // Whether the session exposes a machine-readable status source we
+    // can build exact tab-status-transition watchers on. True only when
+    // a recognized status string (idle/working/waiting) is currently
+    // present — the cc-status hook and set_status triggers always keep
+    // one set, even at idle. Sessions without that source (plain TUIs,
+    // coding agents that don't emit OSC 21337, bare shells) return false,
+    // and the dispatcher falls back to screen-observation watching for
+    // them. A status-reporting session momentarily between strings would
+    // be misread as statusless and get a screen poller instead; that's a
+    // harmless degradation (the poller still works), not a correctness
+    // bug, so we don't try to remember historical status here.
+    static func reportsSessionStatus(_ session: PTYSession) -> Bool {
+        guard let text = session.tabStatus?.statusText?.lowercased(),
+              !text.isEmpty else {
+            return false
+        }
+        return text == "idle" || text == "working" || text == "waiting"
     }
 
     // Human-readable hint describing what the role is currently
