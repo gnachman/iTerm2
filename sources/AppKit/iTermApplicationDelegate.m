@@ -1414,6 +1414,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         DLog(@"Window restoration is totally complete");
         [_untitledWindowStateMachine didFinishRestoringWindows];
         ScreenCharGarbageCollectImages();
+        [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
     }];
 }
 
@@ -1569,6 +1570,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
             DLog(@"Running post-retoration completion block from appDidFinishLaunching");
             [self restoreBuriedSessionsState];
+            [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
                 _orphansAdopted = YES;
                 [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
@@ -1581,6 +1583,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         }];
     } else {
         [self restoreBuriedSessionsState];
+        [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
     }
     if ([iTermAPIHelper isEnabled]) {
         [iTermAPIHelper sharedInstance];  // starts the server. Won't ask the user since it's enabled.
@@ -1748,6 +1751,15 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
     DLog(@"orphansAdopted=%@", @(_orphansAdopted));
+    // Reconstruct any ready workgroups BEFORE orphan adoption. Workgroup
+    // peers run in servers too; reconstruct reattaches them, which moves
+    // their server children out of the adopter's unattachedChildren set.
+    // If adoption ran first it would pull the live diff/code-review peers
+    // into stray standalone windows instead of back into the workgroup.
+    // Doing it explicitly here (rather than relying on the coordinator's
+    // own notification observer firing first) makes the ordering
+    // deterministic.
+    [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
     if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
         _orphansAdopted = YES;
         [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];

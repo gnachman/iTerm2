@@ -58,6 +58,23 @@ class PTYSessionPeerPort: NSObject {
         return peers.values.compactMap { $0.maybeValue }
     }
 
+    // Every realized peer paired with the identifier it is registered
+    // under. Used by the restoration encoder, which needs both the
+    // config UUID and the live session for each member it embeds.
+    var realizedMembers: [(id: String, session: PTYSession)] {
+        return peers.compactMap { (id, promise) in
+            guard let session = promise.maybeValue else { return nil }
+            return (id, session)
+        }
+    }
+
+    // The identifier of the leader (root) peer. Exposed read-only so the
+    // restoration encoder can record which member is the leader, since
+    // the leader is not always the visible/active member at save time.
+    @objc var leaderIdentifier: String {
+        return leader
+    }
+
     init(peers: [String: iTermPromise<PTYSession>],
          activeSessionIdentifier: String,
          leaderIdentifier: String) {

@@ -333,6 +333,7 @@ static NSString *const SESSION_ARRANGEMENT_CLIPPINGS = @"Clippings";  // NSArray
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE = @"Clippings Visible";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archive";  // NSArray<NSArray<NSDictionary<NSString *, NSString *> *> *>, oldest first.
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
+static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -2216,6 +2217,16 @@ ITERM_WEAKLY_REFERENCEABLE
         [mutableState restoreInitialSizeWithDelegate:delegate];
     }];
     [aSession updateMarksMinimapRangeOfVisibleLines];
+
+    // If this session was the visible/anchor member of a workgroup peer
+    // group, hand the opaque descriptor to the restoration coordinator;
+    // it rebuilds the peer group (adopting the embedded buried members)
+    // once the window/tab finishes restoring.
+    NSDictionary *workgroupState = arrangement[SESSION_ARRANGEMENT_WORKGROUP];
+    if (workgroupState) {
+        [iTermWorkgroupRestoration registerForRestorationWithSession:aSession
+                                                              state:workgroupState];
+    }
 
     void (^finish)(PTYSession *, BOOL) = ^(PTYSession *newSession, BOOL ok) {
         if (!ok) {
@@ -6719,6 +6730,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX] = @(self.localClippingsViewIndex);
     }
     result[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE] = @(self.clippingsVisible);
+
+    // Workgroup peer-group membership. The descriptor is opaque here:
+    // iTermWorkgroupRestoration owns its schema and embeds the other
+    // (buried) peers' arrangements so the group can be rebuilt on
+    // relaunch. Returns nil unless self is the visible/anchor member of
+    // a peer group.
+    NSDictionary *workgroupState = [iTermWorkgroupRestoration encodeStateForSession:self
+                                                                   includeContents:includeContents];
+    if (workgroupState) {
+        result[SESSION_ARRANGEMENT_WORKGROUP] = workgroupState;
+    }
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
@@ -23362,6 +23384,13 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     // itself for sessions that are already in a workgroup. The user
     // must exit the current workgroup first.
     if (self.workgroupInstance != nil) {
+        return;
+    }
+    // No-op while this session is being restored into a workgroup. The
+    // coordinator will rebuild the peer group (adopting the saved
+    // members); letting the trigger fire here on a replayed/reattached
+    // shell would race it and spawn a duplicate workgroup.
+    if ([iTermWorkgroupRestoration isRestoringWithGuid:self.guid]) {
         return;
     }
     // Defer to the next main-runloop tick. We're inside a screen

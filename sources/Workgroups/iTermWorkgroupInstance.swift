@@ -315,6 +315,20 @@ final class iTermWorkgroupInstance: NSObject {
         let session: PTYSession?
     }
 
+    // Leaf non-peer (split/tab) children paired with their config UUID,
+    // in spawn order. Excludes nested-peer-port hosts (those have a
+    // non-nil peerPort and encode themselves as their own peer-group
+    // anchor at save time). Used by the restoration encoder to record
+    // which split/tab children to re-find by GUID and re-wire on
+    // relaunch.
+    var leafNonPeerChildren: [(configID: String, session: PTYSession)] {
+        return nonPeerOrderedConfigIDs.compactMap { id in
+            guard let entry = nonPeerEntriesByConfigID[id] else { return nil }
+            guard entry.session.peerPort == nil else { return nil }
+            return (id, entry.session)
+        }
+    }
+
     func resolvedMembers() -> [ResolvedMember] {
         return workgroup.sessions.map { config in
             ResolvedMember(
@@ -441,6 +455,47 @@ final class iTermWorkgroupInstance: NSObject {
                                   workgroupInstanceID: instanceUniqueIdentifier)
         }
 
+        let instance = assemble(workgroup: workgroup,
+                                mainSession: mainSession,
+                                instanceUniqueIdentifier: instanceUniqueIdentifier,
+                                peers: peers,
+                                peerConfigs: peerConfigs,
+                                activeSessionIdentifier: root.uniqueIdentifier,
+                                gitBase: CCGitBaseSelectorItem.defaultBase,
+                                spawner: spawner)
+
+        // Recursively spawn split-pane and tab children. Each non-peer
+        // session that lands is used as the parent for its own children
+        // — arbitrary depth works because splitVertically/addSession
+        // are synchronous and leave the new session fully installed in
+        // the view hierarchy before spawnNonPeerChildren(of:) returns.
+        // Peer-group children of a non-peer host are handled separately
+        // inside spawnSplit/spawnTab via registerNonPeerOrPeerGroupHost.
+        instance.spawnNonPeerChildren(of: mainSession,
+                                      parentConfigID: root.uniqueIdentifier)
+
+        return instance
+    }
+
+    // Shared construction tail for both enter() (fresh spawn) and
+    // adopt() (restore). Builds the workgroup-wide git poller, the peer
+    // port, the instance, wires the poller to the leader's PWD, and
+    // propagates the workgroupInstance back-pointer to every realized
+    // peer. Does NOT spawn or register non-peer children — the caller
+    // does that (enter spawns; adopt adopts). `activeSessionIdentifier`
+    // is the root for fresh entry but may be a non-leader peer when
+    // restoring a workgroup the user had switched away from.
+    private static func assemble(workgroup: iTermWorkgroup,
+                                 mainSession: PTYSession,
+                                 instanceUniqueIdentifier: String,
+                                 peers: [String: iTermPromise<PTYSession>],
+                                 peerConfigs: [iTermWorkgroupSessionConfig],
+                                 activeSessionIdentifier: String,
+                                 gitBase: String,
+                                 spawner: WorkgroupSessionSpawner) -> iTermWorkgroupInstance {
+        guard let root = workgroup.root else {
+            it_fatalError("assemble called for a workgroup with no root")
+        }
         // Workgroup-wide poller built up front (rather than inside the
         // peer port) so non-peer toolbars can share it. Built only if
         // any session in the WHOLE tree (peer or otherwise) needs git
@@ -466,7 +521,7 @@ final class iTermWorkgroupInstance: NSObject {
         let port = iTermWorkgroupPeerPort(
             peers: peers,
             peerConfigs: peerConfigs,
-            activeSessionIdentifier: root.uniqueIdentifier,
+            activeSessionIdentifier: activeSessionIdentifier,
             leaderIdentifier: root.uniqueIdentifier,
             leaderScope: mainSession.genericScope,
             gitPoller: poller)
@@ -511,6 +566,16 @@ final class iTermWorkgroupInstance: NSObject {
             poller.bump()
         }
 
+        // Adopt the saved/seed gitBase as the workgroup-wide value. For
+        // fresh entry this is the default; for restore it's whatever the
+        // user last committed. applyGitBase syncs the port's cache,
+        // leaderScope, and any gitBaseSelector views; the poller is told
+        // to compute fileStatuses against the same ref.
+        instance.currentGitBase = gitBase
+        port.applyGitBase(gitBase)
+        poller?.gitBase =
+            (gitBase == CCGitBaseSelectorItem.defaultBase) ? nil : gitBase
+
         // Propagate workgroupInstance to every peer (not just the
         // main). desiredToolbarItems on a peer needs to reach the
         // instance to return that peer's own items; without this, a
@@ -522,15 +587,105 @@ final class iTermWorkgroupInstance: NSObject {
             }
         }
 
-        // Recursively spawn split-pane and tab children. Each non-peer
-        // session that lands is used as the parent for its own children
-        // — arbitrary depth works because splitVertically/addSession
-        // are synchronous and leave the new session fully installed in
-        // the view hierarchy before spawnNonPeerChildren(of:) returns.
-        // Peer-group children of a non-peer host are handled separately
-        // inside spawnSplit/spawnTab via registerNonPeerOrPeerGroupHost.
-        instance.spawnNonPeerChildren(of: mainSession,
-                                      parentConfigID: root.uniqueIdentifier)
+        return instance
+    }
+
+    // MARK: - Restore (adopt)
+
+    // Rebuild a workgroup instance from sessions that have ALREADY been
+    // restored from a saved arrangement, instead of spawning fresh ones.
+    // Used by WorkgroupRestorationCoordinator after app relaunch.
+    //
+    //   - mainSession: the leader (root) session. May be buried if the
+    //     user had switched to a non-leader peer at save time.
+    //   - activeIdentifier: the config UUID of the member that is visible
+    //     in its split pane (the one window restoration brought back in
+    //     the tab). Equals root for a leader-active workgroup.
+    //   - peerSessionsByConfigID: the reconstructed (reattached) peer
+    //     members keyed by config UUID, EXCLUDING the root. A peer config
+    //     with NO entry here is spawned fresh via `spawner` (same path as
+    //     enter()), which is how a not-yet-started deferred peer comes
+    //     back with its Code Review / Diff overlay rather than as a stray
+    //     reattached shell.
+    //   - nonPeerSessionsByConfigID: already-restored split/tab children
+    //     keyed by config UUID, re-found in their tabs by GUID.
+    //
+    // Adopted peers are wired in place (no bury, content already on
+    // screen); missing/not-started peers are spawned fresh.
+    static func adopt(workgroup: iTermWorkgroup,
+                      leader mainSession: PTYSession,
+                      instanceUniqueIdentifier: String,
+                      activeIdentifier: String,
+                      gitBase: String,
+                      peerSessionsByConfigID: [String: PTYSession],
+                      nonPeerSessionsByConfigID: [String: PTYSession],
+                      spawner: WorkgroupSessionSpawner = DefaultWorkgroupSessionSpawner()) -> iTermWorkgroupInstance? {
+        guard let root = workgroup.root else { return nil }
+
+        let peerChildren = workgroup.sessions.filter { s in
+            guard s.parentID == root.uniqueIdentifier else { return false }
+            if case .peer = s.kind { return true }
+            return false
+        }
+        // All configured peers participate: adopted ones use their
+        // restored session; the rest are spawned fresh. Including every
+        // peer (not just the restored ones) keeps the mode switcher and
+        // peer-switch shortcuts complete, matching enter().
+        let peerConfigs: [iTermWorkgroupSessionConfig] = [root] + peerChildren
+
+        // The live, in-window session to parent fresh spawns on. The
+        // leader may be buried, so spawn relative to the anchor (the
+        // visible member that window restoration brought back).
+        let anchorSession =
+            (activeIdentifier == root.uniqueIdentifier)
+            ? mainSession
+            : (peerSessionsByConfigID[activeIdentifier] ?? mainSession)
+
+        var peers: [String: iTermPromise<PTYSession>] = [:]
+        peers[root.uniqueIdentifier] = iTermPromise<PTYSession>(value: mainSession)
+        for peer in peerChildren {
+            if let session = peerSessionsByConfigID[peer.uniqueIdentifier] {
+                // Adopt the reattached session and restore its mode tag
+                // (not persisted on the session arrangement) so reload /
+                // toolbar behavior matches a live workgroup.
+                session.workgroupSessionMode = peer.mode
+                peers[peer.uniqueIdentifier] = iTermPromise<PTYSession>(value: session)
+            } else {
+                // Spawn fresh, exactly like enter(): .diff resolves
+                // gitBase at fire time, others substitute now.
+                let configToSpawn = peer.mode == .diff
+                    ? peer
+                    : peer.substitutingGitBase(gitBase)
+                peers[peer.uniqueIdentifier] =
+                    spawner.spawnPeer(parent: anchorSession,
+                                      config: configToSpawn,
+                                      workgroupInstanceID: instanceUniqueIdentifier)
+            }
+        }
+
+        let instance = assemble(workgroup: workgroup,
+                                mainSession: mainSession,
+                                instanceUniqueIdentifier: instanceUniqueIdentifier,
+                                peers: peers,
+                                peerConfigs: peerConfigs,
+                                activeSessionIdentifier: activeIdentifier,
+                                gitBase: gitBase,
+                                spawner: spawner)
+
+        // Re-wire each already-restored non-peer split/tab child: build
+        // its toolbar items and set the workgroup back-pointer. Children
+        // that didn't restore are skipped (no spawn — adopting only).
+        for child in workgroup.sessions {
+            guard let session = nonPeerSessionsByConfigID[child.uniqueIdentifier] else {
+                continue
+            }
+            switch child.kind {
+            case .split, .tab:
+                instance.registerNonPeer(session: session, config: child)
+            case .root, .peer:
+                break
+            }
+        }
 
         return instance
     }

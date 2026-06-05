@@ -105,6 +105,14 @@ Major New Features:
   focuses the prompt text field so you can
   start typing immediately.
 
+- Workgroups now survive a restart. When
+  the app relaunches (for example after a
+  Sparkle upgrade), an active workgroup is
+  rebuilt: its Diff and Code Review peers,
+  split/tab children, toolbar, and peer
+  switching all come back with their
+  content intact.
+
 - Clippings now keep history. An archive
   button in the clippings panel snapshots
   the current list and clears it; back and
