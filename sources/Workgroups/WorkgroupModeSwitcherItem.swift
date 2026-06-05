@@ -20,7 +20,7 @@ protocol WorkgroupModeSwitcherItemDelegate: AnyObject {
 // configured displayName.
 final class WorkgroupModeSwitcherItem: SessionToolbarControl {
     weak var modeSwitchDelegate: WorkgroupModeSwitcherItemDelegate?
-    private let segmentedControl: NSSegmentedControl
+    private let segmentedControl: WorkgroupPeerSegmentedControl
     // Segment index → peer-session unique identifier.
     private var identifiers: [String]
 
@@ -56,7 +56,7 @@ final class WorkgroupModeSwitcherItem: SessionToolbarControl {
             // the peer's name.
             return "\(member.label)\u{2003}\(suffix)"
         }
-        segmentedControl = NSSegmentedControl(
+        segmentedControl = WorkgroupPeerSegmentedControl(
             labels: labels,
             trackingMode: .selectOne,
             target: nil,
@@ -69,6 +69,20 @@ final class WorkgroupModeSwitcherItem: SessionToolbarControl {
                    priority: priority,
                    control: segmentedControl)
         segmentedControl.target = self
+        // Reserving/freeing a busy segment's spinner box changes the
+        // control's fitting width; ask the toolbar to re-lay out so the
+        // item's desiredWidthRange (which tracks fittingSize) is honored.
+        segmentedControl.onReservedWidthChanged = { [weak self] in
+            guard let self else { return }
+            self.delegate?.itemDidChange(sender: self)
+        }
+    }
+
+    // Show or hide the activity indicator on the segment for `identifier`.
+    // No-op if the identifier isn't one of this switcher's peers.
+    func setBusy(_ busy: Bool, forIdentifier identifier: String) {
+        guard let idx = identifiers.firstIndex(of: identifier) else { return }
+        segmentedControl.setBusy(busy, forSegment: idx)
     }
 
     // Shortcut suffix for a segment label, or nil if no shortcut maps

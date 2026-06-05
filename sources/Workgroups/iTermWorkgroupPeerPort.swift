@@ -62,6 +62,12 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // in lockstep regardless of which one originated the change.
     @objc weak var workgroupInstance: iTermWorkgroupInstance?
 
+    // Observes session tab-status changes so each peer's mode switcher
+    // can spin its activity indicator while that peer is in the working
+    // state. Registered for all sessions (object: nil) and gated to this
+    // port's peers in the handler.
+    private var tabStatusObserver: NSObjectProtocol?
+
     init(peers: [String: iTermPromise<PTYSession>],
          peerConfigs: [iTermWorkgroupSessionConfig],
          activeSessionIdentifier: String,
@@ -118,6 +124,81 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             itemsByPeerID[cfg.uniqueIdentifier] = views
         }
         self.peerConfigs = peerConfigs
+
+        // Drive each switcher's activity indicator from session status:
+        // spin while a peer is in the .working state. queue: .main keeps
+        // the UI mutations on the main runloop. object: nil means this
+        // fires for every session app-wide; handle() gates to our peers.
+        tabStatusObserver = NotificationCenter.default.addObserver(
+            forName: iTermSessionTabStatus.didChangeNotificationName,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            // queue: .main guarantees we're on the main thread; assume the
+            // isolation so we can touch the @MainActor introspection +
+            // toolbar UI without hopping (and re-ordering) work.
+            MainActor.assumeIsolated {
+                self?.handle(tabStatusNotification: notification)
+            }
+        }
+        // Catch peers that are already working at build time (e.g.
+        // re-entering a workgroup whose agents are mid-task). This init
+        // already builds NSViews above, so it necessarily runs on main.
+        MainActor.assumeIsolated {
+            seedBusyStates()
+        }
+    }
+
+    deinit {
+        if let tabStatusObserver {
+            NotificationCenter.default.removeObserver(tabStatusObserver)
+        }
+    }
+
+    // MARK: - Activity indicator
+
+    @MainActor
+    private func handle(tabStatusNotification notification: Notification) {
+        guard let status = notification.object as? iTermSessionTabStatus else {
+            return
+        }
+        // object: nil registration fires for every session in the app;
+        // ignore any that isn't one of this port's peers.
+        guard let session = peerSession(withGUID: status.sessionID),
+              let identifier = identifier(for: session) else {
+            return
+        }
+        let working = WorkgroupIntrospection.state(forTabStatus: status) == .working
+        setBusy(working, forPeerIdentifier: identifier)
+    }
+
+    // Reflect a peer's busy state on every switcher in the group: each
+    // peer's toolbar carries its own switcher and all switchers mirror
+    // the full peer set, mirroring how activate() fans setActiveIdentifier
+    // across itemsByPeerID.
+    @MainActor
+    private func setBusy(_ busy: Bool, forPeerIdentifier identifier: String) {
+        for views in itemsByPeerID.values {
+            for view in views {
+                (view as? WorkgroupModeSwitcherItem)?
+                    .setBusy(busy, forIdentifier: identifier)
+            }
+        }
+    }
+
+    // Best-effort initial sync for peers already realized and working at
+    // construction time. Unrealized peers get picked up by the tab-status
+    // observer once their promise fulfills and a status arrives.
+    @MainActor
+    private func seedBusyStates() {
+        for session in realizedPeerSessions {
+            guard let identifier = identifier(for: session),
+                  let status = session.tabStatus,
+                  WorkgroupIntrospection.state(forTabStatus: status) == .working else {
+                continue
+            }
+            setBusy(true, forPeerIdentifier: identifier)
+        }
     }
 
     override func activate(identifier: String) -> Bool {
