@@ -191,12 +191,93 @@ typedef void (^DeferralBlock)(void);
     return YES;
 }
 
-// One git_status_list pass feeding everything that previously took
-// three: dirty (any entry), adds (workdir-new count), deletes
-// (workdir-deleted count), and the per-file fileStatuses array used
-// by the workgroup menu. Mirrors `git status --porcelain` so the
-// menu builder can group staged / unstaged / untracked the same way
-// the user sees them in the terminal.
+// Map a single git_status_entry to an iTermGitFileStatus, or nil if
+// the entry has nothing reportable (an ignored file slipping in, or a
+// path that isn't valid UTF-8). Shared by the count pass's sibling
+// fileStatuses pass below.
+static iTermGitFileStatus *iTermGitFileStatusForEntry(const git_status_entry *e) {
+    if (!e) {
+        return nil;
+    }
+    const unsigned int s = e->status;
+    // Pick the most-recent path: workdir's new_file when the
+    // workdir side has anything to say (incl. rename), else
+    // index's new_file, else index's old_file (rare).
+    const char *cpath = NULL;
+    if (e->index_to_workdir &&
+        e->index_to_workdir->new_file.path) {
+        cpath = e->index_to_workdir->new_file.path;
+    } else if (e->head_to_index &&
+               e->head_to_index->new_file.path) {
+        cpath = e->head_to_index->new_file.path;
+    } else if (e->head_to_index &&
+               e->head_to_index->old_file.path) {
+        cpath = e->head_to_index->old_file.path;
+    }
+    if (!cpath) {
+        return nil;
+    }
+    NSString *path = [NSString stringWithUTF8String:cpath];
+    // -stringWithUTF8String: returns nil if the C string isn't
+    // valid UTF-8. Skipping is the right move here — passing a
+    // nil path through to Swift would crash on the NSString
+    // bridge, and the file isn't actionable anyway since the
+    // per-file restart can't reference a name we can't print.
+    if (!path) {
+        return nil;
+    }
+    iTermGitFileChangeKind indexStatus = iTermGitFileChangeKindNone;
+    iTermGitFileChangeKind workdirStatus = iTermGitFileChangeKindNone;
+    if (s & GIT_STATUS_INDEX_NEW) {
+        indexStatus = iTermGitFileChangeKindAdded;
+    } else if (s & GIT_STATUS_INDEX_MODIFIED) {
+        indexStatus = iTermGitFileChangeKindModified;
+    } else if (s & GIT_STATUS_INDEX_DELETED) {
+        indexStatus = iTermGitFileChangeKindDeleted;
+    } else if (s & GIT_STATUS_INDEX_RENAMED) {
+        indexStatus = iTermGitFileChangeKindRenamed;
+    } else if (s & GIT_STATUS_INDEX_TYPECHANGE) {
+        indexStatus = iTermGitFileChangeKindTypeChange;
+    }
+    if (s & GIT_STATUS_WT_NEW) {
+        workdirStatus = iTermGitFileChangeKindUntracked;
+    } else if (s & GIT_STATUS_WT_MODIFIED) {
+        workdirStatus = iTermGitFileChangeKindModified;
+    } else if (s & GIT_STATUS_WT_DELETED) {
+        workdirStatus = iTermGitFileChangeKindDeleted;
+    } else if (s & GIT_STATUS_WT_TYPECHANGE) {
+        workdirStatus = iTermGitFileChangeKindTypeChange;
+    } else if (s & GIT_STATUS_WT_RENAMED) {
+        workdirStatus = iTermGitFileChangeKindRenamed;
+    }
+    if (s & GIT_STATUS_CONFLICTED) {
+        // Conflict trumps both columns — surface it once on the
+        // workdir side so it lands in the "unstaged" group, the
+        // section users expect to find conflicts in.
+        workdirStatus = iTermGitFileChangeKindConflicted;
+    }
+    if (indexStatus == iTermGitFileChangeKindNone &&
+        workdirStatus == iTermGitFileChangeKindNone) {
+        // Nothing to report (probably an ignored file slipping in).
+        return nil;
+    }
+    iTermGitFileStatus *fs = [[iTermGitFileStatus alloc] init];
+    fs.path = path;
+    fs.indexStatus = indexStatus;
+    fs.workdirStatus = workdirStatus;
+    return fs;
+}
+
+// One git_status_list pass for the count fields: dirty (any entry),
+// adds (workdir-new count), deletes (workdir-deleted count). Mirrors
+// `git status --porcelain` and includes untracked files because the
+// status bar surfaces the untracked count. Rename detection is NOT
+// enabled here; it's only useful for the per-file fileStatuses array,
+// and the similarity scan it forces hashes file contents (including
+// every untracked file under the tree), which can blow past the git
+// timeout in a working copy littered with large untracked files. When
+// the caller needs fileStatuses, populateHeadFileStatusesOnState: runs
+// a second, untracked-free pass.
 - (BOOL)populateFromStatusListOnState:(iTermGitState *)state
                   includeFileStatuses:(BOOL)includeFileStatuses {
     git_status_list *status_list = NULL;
@@ -205,18 +286,9 @@ typedef void (^DeferralBlock)(void);
     opts.flags = (GIT_STATUS_OPT_INCLUDE_UNTRACKED |
                   GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS |
                   GIT_STATUS_OPT_EXCLUDE_SUBMODULES);
-    // Rename detection (head→index, index→workdir) is only useful
-    // when we're emitting per-file statuses; the count fields don't
-    // need it. Skip the similarity scan for the cheap path.
-    if (includeFileStatuses) {
-        opts.flags |= (GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
-                       GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR);
-    }
     if (git_status_list_new(&status_list, _repo, &opts) != 0) {
         return NO;
     }
-    NSMutableArray<iTermGitFileStatus *> *result =
-        includeFileStatuses ? [NSMutableArray array] : nil;
     NSInteger untracked = 0;
     NSInteger deletions = 0;
     const size_t count = git_status_list_entrycount(status_list);
@@ -230,76 +302,47 @@ typedef void (^DeferralBlock)(void);
         if (s & GIT_STATUS_WT_DELETED) {
             deletions += 1;
         }
-        if (!includeFileStatuses) {
-            continue;
-        }
-        // Pick the most-recent path: workdir's new_file when the
-        // workdir side has anything to say (incl. rename), else
-        // index's new_file, else index's old_file (rare).
-        const char *cpath = NULL;
-        if (e->index_to_workdir &&
-            e->index_to_workdir->new_file.path) {
-            cpath = e->index_to_workdir->new_file.path;
-        } else if (e->head_to_index &&
-                   e->head_to_index->new_file.path) {
-            cpath = e->head_to_index->new_file.path;
-        } else if (e->head_to_index &&
-                   e->head_to_index->old_file.path) {
-            cpath = e->head_to_index->old_file.path;
-        }
-        if (!cpath) continue;
-        NSString *path = [NSString stringWithUTF8String:cpath];
-        // -stringWithUTF8String: returns nil if the C string isn't
-        // valid UTF-8. Skipping is the right move here — passing a
-        // nil path through to Swift would crash on the NSString
-        // bridge, and the file isn't actionable anyway since the
-        // per-file restart can't reference a name we can't print.
-        if (!path) continue;
-        iTermGitFileChangeKind indexStatus = iTermGitFileChangeKindNone;
-        iTermGitFileChangeKind workdirStatus = iTermGitFileChangeKindNone;
-        if (s & GIT_STATUS_INDEX_NEW) {
-            indexStatus = iTermGitFileChangeKindAdded;
-        } else if (s & GIT_STATUS_INDEX_MODIFIED) {
-            indexStatus = iTermGitFileChangeKindModified;
-        } else if (s & GIT_STATUS_INDEX_DELETED) {
-            indexStatus = iTermGitFileChangeKindDeleted;
-        } else if (s & GIT_STATUS_INDEX_RENAMED) {
-            indexStatus = iTermGitFileChangeKindRenamed;
-        } else if (s & GIT_STATUS_INDEX_TYPECHANGE) {
-            indexStatus = iTermGitFileChangeKindTypeChange;
-        }
-        if (s & GIT_STATUS_WT_NEW) {
-            workdirStatus = iTermGitFileChangeKindUntracked;
-        } else if (s & GIT_STATUS_WT_MODIFIED) {
-            workdirStatus = iTermGitFileChangeKindModified;
-        } else if (s & GIT_STATUS_WT_DELETED) {
-            workdirStatus = iTermGitFileChangeKindDeleted;
-        } else if (s & GIT_STATUS_WT_TYPECHANGE) {
-            workdirStatus = iTermGitFileChangeKindTypeChange;
-        } else if (s & GIT_STATUS_WT_RENAMED) {
-            workdirStatus = iTermGitFileChangeKindRenamed;
-        }
-        if (s & GIT_STATUS_CONFLICTED) {
-            // Conflict trumps both columns — surface it once on the
-            // workdir side so it lands in the "unstaged" group, the
-            // section users expect to find conflicts in.
-            workdirStatus = iTermGitFileChangeKindConflicted;
-        }
-        if (indexStatus == iTermGitFileChangeKindNone &&
-            workdirStatus == iTermGitFileChangeKindNone) {
-            // Nothing to report (probably an ignored file slipping in).
-            continue;
-        }
-        iTermGitFileStatus *fs = [[iTermGitFileStatus alloc] init];
-        fs.path = path;
-        fs.indexStatus = indexStatus;
-        fs.workdirStatus = workdirStatus;
-        [result addObject:fs];
     }
     git_status_list_free(status_list);
     state.dirty = (count > 0);
     state.adds = untracked;
     state.deletes = deletions;
+    if (includeFileStatuses) {
+        [self populateHeadFileStatusesOnState:state];
+    }
+    return YES;
+}
+
+// Build the per-file fileStatuses array (HEAD base) consumed by the
+// workgroup diff menu. Deliberately excludes untracked files: the menu
+// filters them out anyway (see CCDiffSelectorItem.set(fileStatuses:)),
+// and leaving GIT_STATUS_OPT_INCLUDE_UNTRACKED off means rename
+// detection only has to hash the (typically few) tracked add/delete
+// pairs instead of every untracked file in the tree. Rename detection
+// stays on so the menu labels match what the user sees in
+// `git status`. The staged/unstaged distinction (index vs workdir
+// columns) is preserved, unlike the non-HEAD
+// populateFileStatusesAgainstBase: path.
+- (BOOL)populateHeadFileStatusesOnState:(iTermGitState *)state {
+    git_status_list *status_list = NULL;
+    git_status_options opts = GIT_STATUS_OPTIONS_INIT;
+    opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
+    opts.flags = (GIT_STATUS_OPT_EXCLUDE_SUBMODULES |
+                  GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
+                  GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR);
+    if (git_status_list_new(&status_list, _repo, &opts) != 0) {
+        return NO;
+    }
+    NSMutableArray<iTermGitFileStatus *> *result = [NSMutableArray array];
+    const size_t count = git_status_list_entrycount(status_list);
+    for (size_t i = 0; i < count; i++) {
+        iTermGitFileStatus *fs =
+            iTermGitFileStatusForEntry(git_status_byindex(status_list, i));
+        if (fs) {
+            [result addObject:fs];
+        }
+    }
+    git_status_list_free(status_list);
     state.fileStatuses = result;
     return YES;
 }
@@ -582,19 +625,21 @@ static int GitForEachCallback(git_reference *ref, void *data) {
         state.behind = @"";
     }
 
-    // Single status_list pass: dirty, adds (untracked count), deletes
-    // (workdir-deleted count). Replaces the old repoIsDirty +
-    // getDeletions:untracked: walks. fileStatuses comes from the same
-    // pass when includeDiffStats is YES (the workgroup menu is the
-    // only consumer); the cheap path skips the per-file array
-    // allocation and the rename-detection similarity scan entirely.
+    // Count fields from one status_list pass: dirty, adds (untracked
+    // count), deletes (workdir-deleted count). Replaces the old
+    // repoIsDirty + getDeletions:untracked: walks. When includeDiffStats
+    // is YES, populateFromStatusListOnState: also runs a SEPARATE second
+    // pass (populateHeadFileStatusesOnState:) for the per-file
+    // fileStatuses array the workgroup menu consumes. That pass excludes
+    // untracked files so rename detection doesn't hash them. The cheap
+    // path (includeDiffStats NO) skips the second pass entirely.
     [client populateFromStatusListOnState:state
                       includeFileStatuses:includeDiffStats];
 
     // Richer diff stats: only if the caller explicitly asked. Can be expensive.
     // Adds linesInserted/Deleted and filesAdded/Modified/Deleted by
-    // walking diff deltas with patches; fileStatuses already came from
-    // the status_list pass above.
+    // walking diff deltas with patches; fileStatuses was already
+    // populated by the call above.
     if (includeDiffStats) {
         [client populateDiffStatsOnState:state];
     }

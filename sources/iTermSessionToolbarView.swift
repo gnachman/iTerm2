@@ -431,14 +431,17 @@ class CCDiffSelectorItem: SessionToolbarControl {
 
         // Use every reported file's path for prefix shortening, even
         // when groups overlap — picking a smaller subset would let the
-        // shortened display vary based on which group a file lives in.
-        // Untracked files are intentionally excluded from the menu but
-        // still contribute to the shared prefix so the displayed paths
-        // line up with the rest of the working tree.
-        let allPaths = statuses.map { $0.path }
-        let segmentedAll = allPaths.map { ($0 as NSString).pathComponents }
-        let prefixLength = segmentedAll.map { $0.dropLast() }
-            .longestCommonPrefix.count
+        // shortened display vary based on which group a file lives in
+        // (an MM file appears in both Staged and Unstaged and must read
+        // identically in each). `statuses` carries only tracked changes:
+        // untracked files are excluded upstream (see
+        // populateHeadFileStatusesOnState: in iTermGitClient), so they
+        // no longer constrain the prefix. That's intentional: basing
+        // the shortened depth on incidental untracked clutter (build
+        // output, logs) made the displayed paths lengthen and jump
+        // around as unrelated files came and went.
+        let prefixLength = Self.commonDirectoryPrefixLength(
+            forPaths: statuses.map { $0.path })
 
         let previouslySelected = button.selectedItem?.representedObject as? String
         button.menu?.removeAllItems()
@@ -543,6 +546,21 @@ class CCDiffSelectorItem: SessionToolbarControl {
     // the navigation cluster's progress label.
     @objc var navigableFileCount: Int { orderedFiles.count }
 
+    // Introspection hook (used by tests): the visible titles of the
+    // per-file rows, in menu order, excluding the "All Files" row and
+    // the Staged/Unstaged group headers. Each title is the
+    // porcelain-letter-plus-shortened-path string the user sees.
+    var fileRowDisplayTitles: [String] {
+        guard let items = button.menu?.items else { return [] }
+        return items.compactMap { item in
+            guard let path = item.representedObject as? String,
+                  path != Self.allFilesMarker else {
+                return nil
+            }
+            return item.title
+        }
+    }
+
     // 1-based index of the popup's visibly picked file in
     // orderedFiles, or 0 when "All Files"/nothing is showing.
     // Companion to navigableFileCount for "X/Y" displays.
@@ -574,8 +592,7 @@ class CCDiffSelectorItem: SessionToolbarControl {
         for entry in entries {
             let kind = entry[keyPath: column]
             let letter = Self.letter(for: kind)
-            let segments = (entry.path as NSString).pathComponents
-            let shortened = segments.dropFirst(prefixLength).joined(separator: "/")
+            let shortened = Self.shortenedPath(entry.path, prefixLength: prefixLength)
             // Two spaces between letter and path mirrors `git status
             // --short`. NSMenuItem strips leading whitespace, so the
             // letter has to come first; aligning visually with a
@@ -601,6 +618,33 @@ class CCDiffSelectorItem: SessionToolbarControl {
             button.menu?.addItem(row)
             ordered.append(entry.path)
         }
+    }
+
+    // Number of leading path segments shared by the parent directories
+    // of every path in `paths`. Files whose directory equals this
+    // common prefix are displayed with the prefix stripped (see
+    // shortenedPath / addGroup). Dropping the last component before
+    // comparing means the shared prefix is a directory prefix: two
+    // files in the same directory share that directory but the
+    // filenames themselves never count toward the prefix. Fewer paths
+    // can only lengthen the prefix (nothing left to disagree), which
+    // is why excluding untracked files upstream shortens labels more.
+    // Returns 0 when paths don't share a top-level directory (or the
+    // list is empty), leaving full paths on display.
+    static func commonDirectoryPrefixLength(forPaths paths: [String]) -> Int {
+        return paths
+            .map { ($0 as NSString).pathComponents.dropLast() }
+            .longestCommonPrefix.count
+    }
+
+    // Strip the first `prefixLength` path segments from `path` and
+    // rejoin with "/". Pairs with commonDirectoryPrefixLength(forPaths:):
+    // the same prefixLength is applied to every file so a given path
+    // renders identically regardless of which group it lands in.
+    static func shortenedPath(_ path: String, prefixLength: Int) -> String {
+        return (path as NSString).pathComponents
+            .dropFirst(prefixLength)
+            .joined(separator: "/")
     }
 
     // Letter shown next to a file in its group's section. Mirrors git
