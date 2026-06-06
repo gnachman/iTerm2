@@ -1332,3 +1332,13 @@ Bug Fixes:
   help button in the bottom-right
   corner that opens the Workgroups
   documentation.
+- Next/Previous Pane (cmd-[ and cmd-])
+  work again after using Session >
+  Restart Session on a maximized pane.
+  Restart gives the session a new GUID,
+  and the maximized reading-order list
+  was keyed by GUID, so it could no
+  longer find the restarted pane. The
+  order now tracks panes in a way that
+  survives a restart and other in-place
+  session swaps.
