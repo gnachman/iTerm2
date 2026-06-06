@@ -212,6 +212,10 @@ New Features in Terminal Sessions:
   previously rounded to whole minutes.
 
 Tabs, Windows, and UI:
+- Vertical tab bars now do less work when many
+  tabs are open, improving rapid tab creation,
+  tab switching, closing, and arrangement
+  restore.
 - Closing a pinned tab now requires
   confirmation, whether via the close
   button, middle-click, ⌘W, or quitting
@@ -409,6 +413,12 @@ UI Improvements:
 - Cleaner glass material on the jobs popover.
 - Scroll command marks to top (instead of
   centering) on Next/Previous Mark.
+- Vertical tab lists do less layout work when
+  many tabs are created or restored quickly.
+- Closing windows with many tabs avoids
+  unnecessary tab bar updates.
+- Activity indicators appear promptly while
+  rapidly creating tabs.
 
 Input and Accessibility:
 - VoiceOver now announces terminal output and
@@ -1332,3 +1342,29 @@ Bug Fixes:
   help button in the bottom-right
   corner that opens the Workgroups
   documentation.
+- Vertical tab bars now reserve room
+  for the overflow control when many
+  tabs are open, avoiding overlapped
+  or blank rows while rapidly creating
+  tabs.
+- Holding the new-tab shortcut now keeps
+  the same immediate activation path as
+  individual new-tab commands.
+- Rapid new-tab bursts now reuse one
+  directory source, use cached local
+  directories, and keep the newest tab
+  selected while heavier window-wide
+  updates are batched.
+- Large vertical tab sets now create
+  activity indicators lazily and do less
+  tab bar work while creating, moving,
+  and closing tabs.
+- Legacy job launching no longer blocks
+  the main thread while starting new
+  tabs.
+- Vertical tab bars now virtualize
+  offscreen tab rows, keeping active UI
+  cells near the visible row count.
+- Tab number badges update from the
+  changed index instead of always
+  rescanning every tab.

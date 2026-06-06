@@ -19,6 +19,7 @@
 - (void)closeTabClick:(id)sender button:(int)button;
 - (id<PSMTabStyle>)style;
 - (void)update:(BOOL)animate;
+- (void)setNeedsUpdate:(BOOL)needsUpdate;
 - (BOOL)automaticallyAnimates;
 - (PSMTabBarOrientation)orientation;
 - (id<PSMTabBarControlDelegate>)delegate;
@@ -44,6 +45,7 @@
 @property(nonatomic, copy) NSString *modifierString;
 @property(nonatomic, retain) NSColor *tabColor;
 @property(nonatomic, readonly) PSMProgressIndicator *indicator;
+@property(nonatomic, readonly) PSMProgressIndicator *existingIndicator;
 @property(nonatomic, readonly) PSMCachedTitle *cachedTitle;
 @property(nonatomic, readonly) PSMCachedTitle *cachedSubtitle;
 @property(nonatomic, readonly) NSSize stringSize;

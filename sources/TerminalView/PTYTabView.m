@@ -109,7 +109,7 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
 
     [_tabViewItemsInMRUOrder removeObject:tabViewItemToRemove];
 
-    if (self.selectedTabViewItem == tabViewItemToRemove) {
+    if (self.selectedTabViewItem == tabViewItemToRemove && !self.suppressSelectionOnTabViewItemRemoval) {
         NSArray<NSTabViewItem *> *items = self.tabViewItems;
         NSInteger index = [items indexOfObject:tabViewItemToRemove];
         if (index != NSNotFound) {

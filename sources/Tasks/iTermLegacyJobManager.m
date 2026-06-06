@@ -77,23 +77,24 @@
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus,
                                           NSNumber *))completion  {
-    __block iTermJobManagerForkAndExecStatus status = iTermJobManagerForkAndExecStatusSuccess;
-    dispatch_sync(self.queue, ^{
-        status =
+    dispatch_async(self.queue, ^{
+        const iTermJobManagerForkAndExecStatus status =
         [self queueForkAndExecWithTtyState:ttyState
                                    argpath:argpath
                                       argv:argv
                                 initialPwd:initialPwd
                                 newEnviron:newEnviron
                                       task:task];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (status == iTermJobManagerForkAndExecStatusSuccess) {
+                DLog(@"Register task for pid %@", @(self.childPid));
+                [[TaskNotifier sharedInstance] registerTask:task];
+            }
+            if (completion) {
+                completion(status, nil);
+            }
+        });
     });
-    if (status == iTermJobManagerForkAndExecStatusSuccess) {
-        DLog(@"Register task for pid %@", @(self.childPid));
-        [[TaskNotifier sharedInstance] registerTask:task];
-    }
-    if (completion) {
-        completion(status, nil);
-    }
 }
 
 - (iTermJobManagerForkAndExecStatus)queueForkAndExecWithTtyState:(iTermTTYState)ttyState

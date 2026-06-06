@@ -149,6 +149,10 @@
 
 @class QLPreviewPanel;
 
+@interface PTYSession (iTermRapidTabCreation)
+- (NSString *)lastLocalDirectory;
+@end
+
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kTerminalWindowControllerWasCreatedNotification = @"kTerminalWindowControllerWasCreatedNotification";
 NSString *const iTermDidDecodeWindowRestorableStateNotification = @"iTermDidDecodeWindowRestorableStateNotification";
@@ -265,7 +269,17 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
 @property(nonatomic, readonly) iTermVariables *variables;
 @property(nonatomic, readonly) iTermSwiftyString *windowTitleOverrideSwiftyString;
+- (PTYTab *)currentTabForNewTabInsertion;
+- (BOOL)deferTabBarStateUpdateForTabIfNeeded:(PTYTab *)tab;
+- (void)flushRapidTabInsertionBatchIfGeneration:(NSInteger)generation;
+- (void)flushRapidTabInsertionBatch;
+- (void)performDeferredTabCountUpdatesAfterTabCountChange;
+- (void)scheduleDeferredTabCountUpdatesAfterKeyRepeatQuiet;
+- (void)performDeferredTabCountUpdatesAfterKeyRepeatQuietIfGeneration:(NSInteger)generation;
 @end
+
+static const NSTimeInterval kRapidTabInsertionWindow = 0.20;
+static const NSTimeInterval kRapidTabInsertionFlushDelay = 0.18;
 
 @implementation PseudoTerminal {
     ////////////////////////////////////////////////////////////////////////////
@@ -349,6 +363,24 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // Number of tabs since last change.
     NSInteger _previousNumberOfTabs;
+    BOOL _selectingNewlyInsertedTab;
+    BOOL _rapidTabInsertionBatchActive;
+    BOOL _rapidTabInsertionNeedsTabCountFlush;
+    BOOL _rapidTabInsertionNeedsWindowUpdateFlush;
+    NSInteger _rapidTabInsertionFlushGeneration;
+    NSTimeInterval _lastRapidTabInsertionTime;
+    NSTimeInterval _lastNewTabCreationRequestTime;
+    BOOL _lastNewTabCreationRequestWasRapid;
+    NSTabViewItem *_pendingRapidTabSelectionItem;
+    NSMutableSet<PTYTab *> *_tabsNeedingDeferredTabBarStateUpdate;
+    PTYSession *_lastNewTabDirectorySourceSession;
+    PTYTab *_previousTabDuringTabSelection;
+    PTYSession *_previousActiveSessionDuringTabSelection;
+    BOOL _deferredNewTabSelectionUIRefresh;
+    BOOL _waitingForQuietTabCountUpdate;
+    NSInteger _quietTabCountUpdateGeneration;
+    BOOL _bulkClosingTabs;
+    BOOL _bulkClosingWindowTabs;
 
     // The window restoration completion block was called but windowDidDecodeRestorableState:
     // has not yet been called.
@@ -364,6 +396,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // Keeps the touch bar from updating on every keypress which is distracting.
     iTermRateLimitedIdleUpdate *_touchBarRateLimitedUpdate;
+    iTermRateLimitedIdleUpdate *_tabCountUpdateRateLimitedUpdate;
     NSString *_previousTouchBarWord;
 
     BOOL _windowWasJustCreated;
@@ -409,6 +442,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // adds and removes tracking rects for each tab, which its itself slow. This is an optimization
     // to only update object counts once when creating gobs of tabs at once.
     BOOL _needsUpdateTabObjectCounts;
+    BOOL _hasDirtyTabObjectCountIndex;
+    NSUInteger _firstDirtyTabObjectCountIndex;
+    BOOL _restoringTabsFromArrangement;
 
     // A disgusting hack. This is used to twiddle the titlebar separator style to force
     // the private method _updateDividerLayoutForController:animated: to be called so that we can
@@ -1046,10 +1082,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
-    // Release all our sessions.
-    NSTabViewItem *aTabViewItem;
+    // Release all our sessions. The window is going away, so avoid per-tab
+    // selection and tab bar updates while tearing down large tab sets.
+    _contentView.tabView.suppressSelectionOnTabViewItemRemoval = YES;
+    _contentView.tabView.delegate = nil;
     while ([_contentView.tabView numberOfTabViewItems])  {
-        aTabViewItem = [_contentView.tabView tabViewItemAtIndex:0];
+        NSTabViewItem *aTabViewItem = [_contentView.tabView tabViewItemAtIndex:[_contentView.tabView numberOfTabViewItems] - 1];
         [[aTabViewItem identifier] terminateAllSessions];
         PTYTab* theTab = [aTabViewItem identifier];
         [theTab setParentWindow:nil];
@@ -1083,6 +1121,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [_passwordManagerWindowController release];
     [_touchBarRateLimitedUpdate invalidate];
     [_touchBarRateLimitedUpdate release];
+    [_tabCountUpdateRateLimitedUpdate invalidate];
+    [_tabCountUpdateRateLimitedUpdate release];
+    [_pendingRapidTabSelectionItem release];
+    [_tabsNeedingDeferredTabBarStateUpdate release];
+    [_lastNewTabDirectorySourceSession release];
     [_previousTouchBarWord release];
     [_sessionFactory release];
     [_variables release];
@@ -2067,8 +2110,9 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
 
+    NSArray<PTYSession *> *sessions = [aTab sessions];
     int numClosing = 0;
-    for (PTYSession* session in [aTab sessions]) {
+    for (PTYSession* session in sessions) {
         if (![session exited]) {
             ++numClosing;
         }
@@ -2087,14 +2131,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (mustAsk && !suppressConfirmation) {
-        const BOOL anyIsLocked = [[aTab sessions] anyWithBlock:^BOOL(PTYSession *anObject) {
+        const BOOL anyIsLocked = [sessions anyWithBlock:^BOOL(PTYSession *anObject) {
             return anObject.locked;
         }];
         NSString *const pinnedPrefix = aTab.isPinned ? @"pinned " : @"";
         // When numClosing is 0 (e.g., closing a pinned tab whose sessions all
         // exited) fall back to the tab's pane count to pick singular vs plural
         // wording.
-        const BOOL singular = (numClosing > 0) ? (numClosing == 1) : ([aTab sessions].count <= 1);
+        const BOOL singular = (numClosing > 0) ? (numClosing == 1) : (sessions.count <= 1);
         NSString *identifier;
         if (singular) {
             identifier = anyIsLocked
@@ -2105,7 +2149,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 ? [NSString stringWithFormat:@"This %@multi-pane tab (with locked sessions)", pinnedPrefix]
                 : [NSString stringWithFormat:@"This %@multi-pane tab", pinnedPrefix];
         }
-        return [self confirmCloseForSessions:[aTab sessions]
+        return [self confirmCloseForSessions:sessions
                                   identifier:identifier
                                  genericName:[NSString stringWithFormat:@"tab #%d",
                                               [aTab tabNumber]]];
@@ -2164,6 +2208,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tab:(PTYTab *)tab progressDidChange:(VT100ScreenProgress)progress {
+    if ([self deferTabBarStateUpdateForTabIfNeeded:tab]) {
+        return;
+    }
     [_contentView.tabBarControl setProgress:(PSMProgress)progress
                        forTabWithIdentifier:tab];
 }
@@ -2173,9 +2220,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSUInteger)numberOfTabsWithTmuxController:(TmuxController *)tmuxController {
-    return [[self.tabs filteredArrayUsingBlock:^BOOL(PTYTab *tab) {
-        return tab.tmuxController == tmuxController;
-    }] count];
+    NSUInteger count = 0;
+    for (NSTabViewItem *tabViewItem in _contentView.tabView.tabViewItems) {
+        PTYTab *tab = tabViewItem.identifier;
+        if (tab.tmuxController == tmuxController) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 - (void)killOrHideTmuxTab:(PTYTab *)aTab {
@@ -2257,44 +2309,52 @@ ITERM_WEAKLY_REFERENCEABLE
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
     DLog(@"Remove tab %@", aTab);
+    const BOOL closingWindow = (_closing || _willClose || _bulkClosingWindowTabs);
+    const BOOL bulkClosingTabs = _bulkClosingTabs;
+    const BOOL applicationIsQuitting = [[iTermController sharedInstance] applicationIsQuitting];
+    const BOOL shouldCreateRestorableSession = !closingWindow && !applicationIsQuitting;
     if (![aTab isTmuxTab]) {
+        NSArray<PTYSession *> *sessions = [aTab sessions];
         // Exit synthetic sessions (filter, instant replay, screenshot mode)
         // so the restorable session captures live sessions that can be revived.
-        for (PTYSession *session in [aTab sessions]) {
+        for (PTYSession *session in sessions) {
             if (session.liveSession) {
                 PTYSession *liveSession = session.liveSession;
                 [self showLiveSession:liveSession inPlaceOf:session];
                 [liveSession.view.findDriver setFilterWithoutSideEffects:@""];
             }
         }
-        iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
-        restorableSession.sessions = [aTab sessions];
-        restorableSession.terminalGuid = self.terminalGuid;
-        restorableSession.tabUniqueId = aTab.uniqueId;
-        restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
-        [self storeWindowStateInRestorableSession:restorableSession];
-        NSArray *tabs = [self tabs];
-        NSUInteger index = [tabs indexOfObject:aTab];
-        if (index != NSNotFound) {
-            NSMutableArray *predecessors = [NSMutableArray array];
-            for (NSUInteger i = 0; i < index; i++) {
-                [predecessors addObject:@([tabs[i] uniqueId])];
+        iTermRestorableSession *restorableSession = nil;
+        if (shouldCreateRestorableSession) {
+            restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+            restorableSession.sessions = sessions;
+            restorableSession.terminalGuid = self.terminalGuid;
+            restorableSession.tabUniqueId = aTab.uniqueId;
+            restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
+            [self storeWindowStateInRestorableSession:restorableSession];
+            NSArray *tabs = [self tabs];
+            NSUInteger index = [tabs indexOfObject:aTab];
+            if (index != NSNotFound) {
+                NSMutableArray *predecessors = [NSMutableArray array];
+                for (NSUInteger i = 0; i < index; i++) {
+                    [predecessors addObject:@([tabs[i] uniqueId])];
+                }
+                restorableSession.predecessors = predecessors;
             }
-            restorableSession.predecessors = predecessors;
-        }
 
-        if (self.numberOfTabs == 1) {
-            // Closing the last tab is equivalent to closing the window.
-            restorableSession.arrangement = [self arrangement];
-            restorableSession.group = kiTermRestorableSessionGroupWindow;
-        } else {
-            restorableSession.arrangement = [aTab arrangement];
-            restorableSession.group = kiTermRestorableSessionGroupTab;
+            if (self.numberOfTabs == 1) {
+                // Closing the last tab is equivalent to closing the window.
+                restorableSession.arrangement = [self arrangement];
+                restorableSession.group = kiTermRestorableSessionGroupWindow;
+            } else {
+                restorableSession.arrangement = [aTab arrangement];
+                restorableSession.group = kiTermRestorableSessionGroupTab;
+            }
+            if (restorableSession.arrangement) {
+                [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
+            }
         }
-        if (restorableSession.arrangement) {
-            [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
-        }
-        for (PTYSession* session in [aTab sessions]) {
+        for (PTYSession* session in sessions) {
             [session terminate];
         }
         if (restorableSession.arrangement) {
@@ -2308,15 +2368,24 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
+    if (closingWindow) {
+        return;
+    }
     if ([_contentView.tabView numberOfTabViewItems] <= 1 && self.windowInitialized) {
         [[self window] close];
     } else {
         NSTabViewItem *aTabViewItem;
         // now get rid of this tab
         aTabViewItem = [aTab tabViewItem];
+        const NSUInteger removedIndex = [_contentView.tabView indexOfTabViewItem:aTabViewItem];
+        if (removedIndex != NSNotFound) {
+            [self setNeedsUpdateTabObjectCountsFromIndex:removedIndex];
+        }
         [_contentView.tabView removeTabViewItem:aTabViewItem];
-        PtyLog(@"closeSession - calling fitWindowToTabs");
-        [self fitWindowToTabs];
+        if (!bulkClosingTabs) {
+            PtyLog(@"closeSession - calling fitWindowToTabs");
+            [self fitWindowToTabs];
+        }
     }
 }
 
@@ -3963,31 +4032,80 @@ ITERM_WEAKLY_REFERENCEABLE
                 partialAttachments:(NSDictionary *)partialAttachments
               largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
     BOOL openedAny = NO;
-    for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
-        NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
-        if (sessions) {
-            sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
+    NSArray<NSDictionary *> *tabArrangements = arrangement[TERMINAL_ARRANGEMENT_TABS];
+    NSMutableSet<NSString *> *reservedTabGUIDs = [NSMutableSet setWithSet:[self tabGUIDs]];
+    const BOOL savedAutomaticallySelectNewTabs = _automaticallySelectNewTabs;
+    const BOOL savedRestoringTabsFromArrangement = _restoringTabsFromArrangement;
+    const BOOL batchRestore = (tabArrangements.count > 1);
+    if (batchRestore) {
+        _automaticallySelectNewTabs = NO;
+        [_contentView.tabBarControl beginTabViewItemUpdateBatch];
+    }
+    _restoringTabsFromArrangement = savedRestoringTabsFromArrangement || batchRestore;
+
+    NSInteger nextInsertionIndex;
+    if ([iTermPreferences boolForKey:kPreferenceKeyNewTabsOpenAtEndOfTabBar] || !self.currentTab) {
+        nextInsertionIndex = _contentView.tabView.numberOfTabViewItems;
+    } else {
+        const NSInteger currentTabIndex = [self indexOfTab:self.currentTab];
+        if (currentTabIndex == NSNotFound) {
+            nextInsertionIndex = _contentView.tabView.numberOfTabViewItems;
+        } else {
+            nextInsertionIndex = currentTabIndex + 1;
         }
-        NSMutableDictionary *options = [NSMutableDictionary dictionary];
-        if (arrangement[TERMINAL_ARRANGEMENT_ARCHIVE]) {
-            options[PTYSessionArrangementOptionsArchive] = @YES;
+    }
+    PTYTab *lastOpenedTab = nil;
+    NSMutableDictionary *options = [NSMutableDictionary dictionary];
+    if (arrangement[TERMINAL_ARRANGEMENT_ARCHIVE]) {
+        options[PTYSessionArrangementOptionsArchive] = @YES;
+    }
+    if (largeContentProvider) {
+        options[PTYSessionArrangementOptionsLargeContentProvider] = largeContentProvider;
+    }
+    for (NSDictionary *tabArrangement in tabArrangements) {
+        PTYTab *tab = nil;
+        @autoreleasepool {
+            NSDictionary<NSString *, PTYSession *> *sessionMap = nil;
+            if (sessions) {
+                sessionMap = [PTYTab sessionMapWithArrangement:tabArrangement sessions:sessions];
+            }
+            tab = [self openTabWithArrangement:tabArrangement
+                                         named:arrangementName
+                               hasFlexibleView:NO
+                                       viewMap:nil
+                                    sessionMap:sessionMap
+                            partialAttachments:partialAttachments
+                                       options:options.count > 0 ? options : nil
+                              reservedTabGUIDs:reservedTabGUIDs
+                                insertionIndex:nextInsertionIndex];
         }
-        if (largeContentProvider) {
-            options[PTYSessionArrangementOptionsLargeContentProvider] = largeContentProvider;
-        }
-        if (![self openTabWithArrangement:tabArrangement
-                                    named:arrangementName
-                            hasFlexibleView:NO
-                                    viewMap:nil
-                                 sessionMap:sessionMap
-                       partialAttachments:partialAttachments
-                                  options:options.count > 0 ? options : nil]) {
+        if (!tab) {
+            if (batchRestore) {
+                [_contentView.tabBarControl endTabViewItemUpdateBatch];
+            }
+            _automaticallySelectNewTabs = savedAutomaticallySelectNewTabs;
+            _restoringTabsFromArrangement = savedRestoringTabsFromArrangement;
             return NO;
         }
+        [reservedTabGUIDs addObject:tab.stringUniqueIdentifier];
+        lastOpenedTab = tab;
+        ++nextInsertionIndex;
         openedAny = YES;
     }
+    _automaticallySelectNewTabs = savedAutomaticallySelectNewTabs;
+    _restoringTabsFromArrangement = savedRestoringTabsFromArrangement;
     if (!openedAny) {
+        if (batchRestore) {
+            [_contentView.tabBarControl endTabViewItemUpdateBatch];
+        }
         return NO;
+    }
+    if (batchRestore) {
+        [_contentView.tabBarControl endTabViewItemUpdateBatch];
+        [self performDeferredTabCountUpdatesAfterRestoringArrangement];
+    }
+    if (!_restoringWindow && lastOpenedTab.tabViewItem) {
+        [_contentView.tabView selectTabViewItem:lastOpenedTab.tabViewItem];
     }
     [self updateUseTransparency];
     return YES;
@@ -4490,6 +4608,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)windowWillClose:(NSNotification *)aNotification {
    DLog(@"windowWillClose %@", self);
     _closing = YES;
+    _willClose = YES;
+    _bulkClosingWindowTabs = YES;
+    _contentView.tabView.suppressSelectionOnTabViewItemRemoval = YES;
+    const BOOL applicationIsQuitting = [[iTermController sharedInstance] applicationIsQuitting];
     [iTermWindowCornerRadiusDetector windowDidClose:self.window];
     if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
@@ -4548,22 +4670,28 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
     if ([[self allSessions] count]) {
-        // Save restorable sessions in controllers and make sessions terminate or prepare to terminate.
-        iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
-        restorableSession.sessions = [self allSessions];
-        restorableSession.terminalGuid = self.terminalGuid;
-        restorableSession.arrangement = [self arrangement];
-        restorableSession.group = kiTermRestorableSessionGroupWindow;
-        restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
-        [self storeWindowStateInRestorableSession:restorableSession];
-        if (restorableSession.arrangement) {
-            [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
-        }
-        for (PTYSession* session in [self allSessions]) {
-            [session terminate];
-        }
-        if (restorableSession.arrangement) {
-            [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
+        if (applicationIsQuitting) {
+            for (PTYSession *session in [self allSessions]) {
+                [session terminate];
+            }
+        } else {
+            // Save restorable sessions in controllers and make sessions terminate or prepare to terminate.
+            iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+            restorableSession.sessions = [self allSessions];
+            restorableSession.terminalGuid = self.terminalGuid;
+            restorableSession.arrangement = [self arrangement];
+            restorableSession.group = kiTermRestorableSessionGroupWindow;
+            restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
+            [self storeWindowStateInRestorableSession:restorableSession];
+            if (restorableSession.arrangement) {
+                [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
+            }
+            for (PTYSession* session in [self allSessions]) {
+                [session terminate];
+            }
+            if (restorableSession.arrangement) {
+                [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
+            }
         }
     }
 
@@ -4576,7 +4704,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                         object:nil
                                                       userInfo:nil];
     [self didFinishFullScreenTransitionSuccessfully:NO];
-    _willClose = YES;
 }
 
 - (void)windowWillMiniaturize:(NSNotification *)aNotification {
@@ -6843,14 +6970,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
-    if (![[self currentSession] exited]) {
-        DLog(@"Clear new-output flag in %@", [self currentSession]);
-        [[self currentSession] setNewOutput:NO];
+    PTYSession *currentSession = [self currentSession];
+    _previousTabDuringTabSelection = self.currentTab;
+    _previousActiveSessionDuringTabSelection = currentSession;
+    if (![currentSession exited]) {
+        DLog(@"Clear new-output flag in %@", currentSession);
+        [currentSession setNewOutput:NO];
     }
     // If the user is currently select-dragging the text view, stop it so it
     // doesn't keep going in the background.
-    [[[self currentSession] textview] aboutToHide];
-    [self.currentTab willDeselectTab];
+    [[currentSession textview] aboutToHide];
+    [[self currentTab] willDeselectTab];
 
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView close];
@@ -6892,24 +7022,46 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self hideAutoCommandHistory];
     }
     PTYTab *tab = [tabViewItem identifier];
-    for (PTYSession *aSession in [tab sessions]) {
+    PTYTab *previousTab = _previousTabDuringTabSelection;
+    PTYSession *previousActiveSession = _previousActiveSessionDuringTabSelection;
+    _previousTabDuringTabSelection = nil;
+    _previousActiveSessionDuringTabSelection = nil;
+
+    const BOOL deferRapidWindowUpdates = (_rapidTabInsertionBatchActive &&
+                                          _selectingNewlyInsertedTab);
+    const BOOL deferWindowWideSelectionUpdates = (_selectingNewlyInsertedTab &&
+                                                  _contentView.tabView.numberOfTabViewItems > 2);
+    const BOOL fastNewTabSelection = (deferWindowWideSelectionUpdates &&
+                                      [NSApp currentEvent].type == NSEventTypeKeyDown);
+    NSArray<PTYSession *> *selectedTabSessions = [tab sessions];
+    NSArray<PTYSession *> *allSessions = deferWindowWideSelectionUpdates ? nil : [self allSessions];
+    const BOOL windowIsKey = [[self window] isKeyWindow];
+    for (PTYSession *aSession in selectedTabSessions) {
         DLog(@"Clear new-output flag in %@", aSession);
         [aSession setNewOutput:NO];
 
         // Background tabs' timers run infrequently so make sure the display is
         // up to date to avoid a jump when it's shown.
-        [[aSession textview] requestDelegateRedraw];
-        [aSession updateDisplayBecause:@"tabView:didSelectTabViewItem:"];
+        if (!fastNewTabSelection) {
+            [[aSession textview] requestDelegateRedraw];
+            [aSession updateDisplayBecause:@"tabView:didSelectTabViewItem:"];
+        }
         aSession.active = YES;
         [self setDimmingForSession:aSession];
-        [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
+        [[aSession view] setBackgroundDimmed:!windowIsKey];
         [[aSession view] didBecomeVisible];
         [aSession.textview updateScrollerForBackgroundColor];
     }
 
-    for (PTYSession *session in [self allSessions]) {
-        if ([[session textview] isFindingCursor]) {
-            [[session textview] endFindCursor];
+    if (deferWindowWideSelectionUpdates) {
+        if ([[previousActiveSession textview] isFindingCursor]) {
+            [[previousActiveSession textview] endFindCursor];
+        }
+    } else {
+        for (PTYSession *session in allSessions) {
+            if ([[session textview] isFindingCursor]) {
+                [[session textview] endFindCursor];
+            }
         }
     }
     if (!_fullScreen) {
@@ -6917,9 +7069,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self setWindowTitle];
     }
 
+    PTYSession *activeSession = [tab activeSession];
     // The web browser is added after a spin of the runloop to dodge auto layout bugs.
-    if ([[[[tabViewItem identifier] activeSession] mainResponder] window] == [self window]) {
-        [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] mainResponder]];
+    if ([[activeSession mainResponder] window] == [self window]) {
+        [[self window] makeFirstResponder:[activeSession mainResponder]];
     }
     if ([tab blur]) {
         [self enableBlur:[tab blurRadius]];
@@ -6927,30 +7080,56 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self disableBlur];
     }
 
-    [_instantReplayWindowController updateInstantReplayView];
+    if (!fastNewTabSelection) {
+        [_instantReplayWindowController updateInstantReplayView];
+    }
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
-                                                        object:[[tabViewItem identifier] activeSession]];
+                                                        object:activeSession];
 
-    PTYSession *activeSession = [self currentSession];
-    for (PTYSession *s in [self allSessions]) {
-        [s setFocused:(s == activeSession)];
+    if (deferWindowWideSelectionUpdates) {
+        if (previousActiveSession != activeSession) {
+            [previousActiveSession setFocused:NO];
+        }
+        [activeSession setFocused:YES];
+    } else {
+        for (PTYSession *s in allSessions) {
+            [s setFocused:(s == activeSession)];
+        }
     }
-    [self showOrHideInstantReplayBar];
-    [self refreshTools];
-    [self updateTabColors];
-    [self updateSessionProgressBarVisibility];
-    [self updateToolbeltAppearance];
+    if (deferRapidWindowUpdates) {
+        _rapidTabInsertionNeedsWindowUpdateFlush = YES;
+        [self scheduleDeferredTabCountUpdatesAfterTabCountChange];
+        [_contentView.tabBarControl setNeedsUpdate:YES];
+        return;
+    }
+    if (fastNewTabSelection) {
+        _deferredNewTabSelectionUIRefresh = YES;
+    } else {
+        [self showOrHideInstantReplayBar];
+        [self refreshTools];
+    }
+    if (deferWindowWideSelectionUpdates) {
+        [self scheduleDeferredTabCountUpdatesAfterTabCountChange];
+    } else {
+        [self updateTabColors];
+        [self updateSessionProgressBarVisibility];
+        [self updateToolbeltAppearance];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [self notifyTmuxOfTabChange];
-    if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
+    if (!fastNewTabSelection &&
+        [[PreferencePanel sessionsInstance] isWindowLoaded] &&
+        ![iTermAdvancedSettingsModel pinEditSession]) {
         [self editSession:self.currentSession makeKey:NO];
     }
-    [self updateTouchBarIfNeeded:NO];
+    if (!fastNewTabSelection) {
+        [self updateTouchBarIfNeeded:NO];
+    }
 
     NSInteger darkCount = 0;
     NSInteger lightCount = 0;
-    for (PTYSession *session in tab.sessions) {
+    for (PTYSession *session in selectedTabSessions) {
         if ([[session effectiveUnprocessedBackgroundColor] perceivedBrightness] < 0.5) {
             darkCount++;
         } else {
@@ -6966,22 +7145,28 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self updateProxyIcon];
     [_contentView layoutIfStatusBarChanged];
     if ([iTermAdvancedSettingsModel clearBellIconAggressively]) {
-        [self.currentSession setBell:NO];
+        [activeSession setBell:NO];
     }
-    [self updateUseMetalInAllTabs];
-    [self.scope setValue:self.currentTab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
+    if (deferWindowWideSelectionUpdates) {
+        [previousTab updateUseMetal];
+        [tab updateUseMetal];
+    } else {
+        [self updateUseMetalInAllTabs];
+    }
+    [self.scope setValue:tab.variables forVariableNamed:iTermVariableKeyWindowCurrentTab];
     [self updateForTransparency:self.ptyWindow];
     [self updateDocumentEdited];
     [[iTermFindPasteboard sharedInstance] updateObservers:nil internallyGenerated:NO];
     [self updateBackgroundImage];
-    [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
+    [_contentView setCurrentSessionAlpha:activeSession.textview.transparencyAlpha];
     [tab didSelectTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
     DLog(@"Finished");
 }
 
 - (void)updateUseMetalInAllTabs {
-    for (PTYTab *aTab in self.tabs) {
+    for (NSTabViewItem *tabViewItem in _contentView.tabView.tabViewItems) {
+        PTYTab *aTab = tabViewItem.identifier;
         [aTab updateUseMetal];
     }
 }
@@ -7084,6 +7269,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)saveAffinitiesLater:(PTYTab *)theTab {
+    if (_deallocing) {
+        return;
+    }
     // Avoid saving affinities during detach because the windows will be gone by the time it saves them.
     //    if ([theTab isTmuxTab] && !theTab.tmuxController.detaching) {
     if ([theTab isTmuxTab]) {
@@ -7226,11 +7414,36 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)setNeedsUpdateTabObjectCounts:(BOOL)needsUpdate {
+    if (needsUpdate && _needsUpdateTabObjectCounts) {
+        _hasDirtyTabObjectCountIndex = YES;
+        _firstDirtyTabObjectCountIndex = 0;
+        return;
+    }
     if (_needsUpdateTabObjectCounts == needsUpdate) {
         return;
     }
     if (!needsUpdate) {
         _needsUpdateTabObjectCounts = NO;
+        _hasDirtyTabObjectCountIndex = NO;
+        return;
+    }
+    _hasDirtyTabObjectCountIndex = YES;
+    _firstDirtyTabObjectCountIndex = 0;
+    _needsUpdateTabObjectCounts = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateTabObjectCounts];
+    });
+}
+
+- (void)setNeedsUpdateTabObjectCountsFromIndex:(NSUInteger)index {
+    if (_hasDirtyTabObjectCountIndex) {
+        _firstDirtyTabObjectCountIndex = MIN(_firstDirtyTabObjectCountIndex, index);
+    } else {
+        _firstDirtyTabObjectCountIndex = index;
+        _hasDirtyTabObjectCountIndex = YES;
+    }
+    if (_needsUpdateTabObjectCounts) {
         return;
     }
     _needsUpdateTabObjectCounts = YES;
@@ -7240,15 +7453,29 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     });
 }
 
+- (void)setNeedsUpdateTabObjectCountsAfterTabStructureChange {
+    if (_hasDirtyTabObjectCountIndex) {
+        [self setNeedsUpdateTabObjectCountsFromIndex:_firstDirtyTabObjectCountIndex];
+    } else {
+        [self setNeedsUpdateTabObjectCounts:YES];
+    }
+}
+
 - (void)updateTabObjectCounts {
     if (!_needsUpdateTabObjectCounts) {
         return;
     }
+    const BOOL hasDirtyIndex = _hasDirtyTabObjectCountIndex;
+    const NSUInteger firstDirtyIndex = _firstDirtyTabObjectCountIndex;
     [self setNeedsUpdateTabObjectCounts:NO];
-    [self.tabs enumerateObjectsUsingBlock:^(PTYTab * _Nonnull tab, NSUInteger i, BOOL * _Nonnull stop) {
+    NSArray<NSTabViewItem *> *tabViewItems = _contentView.tabView.tabViewItems;
+    const NSUInteger startIndex = hasDirtyIndex ? MIN(firstDirtyIndex, tabViewItems.count) : 0;
+    for (NSUInteger i = startIndex; i < tabViewItems.count; i++) {
+        NSTabViewItem *tabViewItem = tabViewItems[i];
+        PTYTab *tab = tabViewItem.identifier;
         [tab setObjectCount:i + 1];
         [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
-    }];
+    }
 }
 
 - (void)tabView:(NSTabView*)aTabView
@@ -7374,22 +7601,46 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView {
     PtyLog(@"%s(%d):-[PseudoTerminal tabViewDidChangeNumberOfTabViewItems]", __FILE__, __LINE__);
+    if (_deallocing || _closing || _willClose || _bulkClosingWindowTabs) {
+        return;
+    }
+    if (_bulkClosingTabs) {
+        _previousNumberOfTabs = _contentView.tabView.numberOfTabViewItems;
+        return;
+    }
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
     }
-    for (PTYSession* session in [self allSessions]) {
-        [session setIgnoreResizeNotifications:NO];
-    }
-
+    const NSInteger numberOfTabViewItems = _contentView.tabView.numberOfTabViewItems;
     const BOOL willShowTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
-                                 [_contentView.tabView numberOfTabViewItems] > 1 &&
+                                 numberOfTabViewItems > 1 &&
                                  ([_contentView.tabBarControl isHidden] || [self rootTerminalViewShouldLeaveEmptyAreaAtTop]));
     const BOOL willHideTabBar = ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
-                                 [_contentView.tabView numberOfTabViewItems] == 1 &&
+                                 numberOfTabViewItems == 1 &&
                                  !([_contentView.tabBarControl isHidden] || [self rootTerminalViewShouldLeaveEmptyAreaAtTop]));
+    const BOOL deferArrangementRestoreUpdate = (_restoringTabsFromArrangement &&
+                                                numberOfTabViewItems > 2 &&
+                                                !willShowTabBar &&
+                                                !willHideTabBar);
+    const BOOL deferRapidTabInsertionUpdate = (_rapidTabInsertionBatchActive &&
+                                               numberOfTabViewItems > 2 &&
+                                               !willShowTabBar &&
+                                               !willHideTabBar);
+    const BOOL deferBurstTabCountUpdate = (!_restoringTabsFromArrangement &&
+                                           !deferRapidTabInsertionUpdate &&
+                                           numberOfTabViewItems > 2 &&
+                                           !willShowTabBar &&
+                                           !willHideTabBar &&
+                                           !wasDraggedFromAnotherWindow_);
+    if (!deferArrangementRestoreUpdate && !deferRapidTabInsertionUpdate) {
+        for (PTYSession* session in [self allSessions]) {
+            [session setIgnoreResizeNotifications:NO];
+        }
+    }
+
     // check window size in case tabs have to be hidden or shown
-    if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
+    if ((numberOfTabViewItems == 1) ||  // just decreased to 1 or increased above 1 and is hidden
         willShowTabBar) {
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
@@ -7506,11 +7757,26 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
 
+    if (deferArrangementRestoreUpdate) {
+        _previousNumberOfTabs = numberOfTabViewItems;
+        return;
+    }
+    if (deferRapidTabInsertionUpdate) {
+        _previousNumberOfTabs = numberOfTabViewItems;
+        _rapidTabInsertionNeedsTabCountFlush = YES;
+        return;
+    }
+    if (deferBurstTabCountUpdate) {
+        _previousNumberOfTabs = numberOfTabViewItems;
+        [self scheduleDeferredTabCountUpdatesAfterTabCountChange];
+        return;
+    }
+
     [self updateTabColors];
     [self updateSessionProgressBarVisibility];
     [self updateTabProgress];
     [self updateToolbeltAppearance];
-    [self setNeedsUpdateTabObjectCounts:YES];
+    [self setNeedsUpdateTabObjectCountsAfterTabStructureChange];
     [self updateTouchBarIfNeeded:NO];
 
     if (_contentView.tabView.numberOfTabViewItems == 1 &&
@@ -7531,6 +7797,85 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // Hiding tabbar in fullscreen on 10.14 is extra work because it's a titlebar accessory.
         [self updateTabBarStyle];
     }
+}
+
+- (void)scheduleDeferredTabCountUpdatesAfterTabCountChange {
+    if (_rapidTabInsertionBatchActive) {
+        _rapidTabInsertionNeedsTabCountFlush = YES;
+        return;
+    }
+    if ([NSApp currentEvent].type == NSEventTypeKeyDown) {
+        [self scheduleDeferredTabCountUpdatesAfterKeyRepeatQuiet];
+        return;
+    }
+    if (_tabCountUpdateRateLimitedUpdate == nil) {
+        _tabCountUpdateRateLimitedUpdate = [[iTermRateLimitedIdleUpdate alloc] initWithName:@"tab count updates"
+                                                                           minimumInterval:0.05];
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_tabCountUpdateRateLimitedUpdate performRateLimitedBlock:^{
+        [weakSelf performDeferredTabCountUpdatesAfterTabCountChange];
+    }];
+}
+
+- (void)scheduleDeferredTabCountUpdatesAfterKeyRepeatQuiet {
+    _waitingForQuietTabCountUpdate = YES;
+    const NSInteger generation = ++_quietTabCountUpdateGeneration;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                 (int64_t)(kRapidTabInsertionFlushDelay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf performDeferredTabCountUpdatesAfterKeyRepeatQuietIfGeneration:generation];
+    });
+}
+
+- (void)performDeferredTabCountUpdatesAfterKeyRepeatQuietIfGeneration:(NSInteger)generation {
+    if (generation != _quietTabCountUpdateGeneration) {
+        return;
+    }
+    _waitingForQuietTabCountUpdate = NO;
+    [self performDeferredTabCountUpdatesAfterTabCountChange];
+}
+
+- (void)performDeferredTabCountUpdatesAfterTabCountChange {
+    if (_rapidTabInsertionBatchActive) {
+        _rapidTabInsertionNeedsTabCountFlush = YES;
+        return;
+    }
+    if (_waitingForQuietTabCountUpdate) {
+        return;
+    }
+    for (PTYSession *session in [self allSessions]) {
+        [session setIgnoreResizeNotifications:NO];
+    }
+    [self updateTabColors];
+    [self updateSessionProgressBarVisibility];
+    [self updateTabProgress];
+    [self updateToolbeltAppearance];
+    [self setNeedsUpdateTabObjectCountsAfterTabStructureChange];
+    [self updateTouchBarIfNeeded:NO];
+    if (_deferredNewTabSelectionUIRefresh) {
+        _deferredNewTabSelectionUIRefresh = NO;
+        [self showOrHideInstantReplayBar];
+        [self refreshTools];
+        if ([[PreferencePanel sessionsInstance] isWindowLoaded] &&
+            ![iTermAdvancedSettingsModel pinEditSession]) {
+            [self editSession:self.currentSession makeKey:NO];
+        }
+    }
+    _previousNumberOfTabs = _contentView.tabView.numberOfTabViewItems;
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
+                                                        object:self
+                                                      userInfo:nil];
+    [self invalidateRestorableState];
+    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] && (self.lionFullScreen || togglingLionFullScreen_)) {
+        [self updateTabBarStyle];
+    }
+}
+
+- (void)performDeferredTabCountUpdatesAfterRestoringArrangement {
+    [self setDimmingForSessions];
+    [self performDeferredTabCountUpdatesAfterTabCountChange];
 }
 
 - (BOOL)fittingWindowToTabsWouldCauseExcursion {
@@ -7882,6 +8227,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self saveTmuxWindowOrigins];
 
     if (tabToRemove) {
+        const NSUInteger removedIndex = [self.tabView indexOfTabViewItem:tabToRemove.tabViewItem];
+        if (removedIndex != NSNotFound) {
+            [self setNeedsUpdateTabObjectCountsFromIndex:removedIndex];
+        }
         [self.tabView removeTabViewItem:tabToRemove.tabViewItem];
     }
 
@@ -7993,16 +8342,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 // This updates the window's background color and title text color as well as the tab bar's color.
 - (void)updateTabColors {
-    for (PTYTab *aTab in [self tabs]) {
-        NSTabViewItem *tabViewItem = [aTab tabViewItem];
+    NSArray<NSTabViewItem *> *tabViewItems = _contentView.tabView.tabViewItems;
+    NSTabViewItem *selectedTabViewItem = _contentView.tabView.selectedTabViewItem;
+    const BOOL hasSingleTab = (tabViewItems.count == 1);
+    const BOOL hidesTabBar = [iTermPreferences boolForKey:kPreferenceKeyHideTabBar];
+    for (NSTabViewItem *tabViewItem in tabViewItems) {
+        PTYTab *aTab = tabViewItem.identifier;
         PTYSession *aSession = [aTab activeSession];
         NSColor *color = [aSession tabColor];
         [_contentView.tabBarControl setTabColor:color forTabViewItem:tabViewItem];
-        if ([_contentView.tabView selectedTabViewItem] == tabViewItem) {
+        if (selectedTabViewItem == tabViewItem) {
             NSColor* newTabColor = [_contentView.tabBarControl tabColorForTabViewItem:tabViewItem];
-            if ([_contentView.tabView numberOfTabViewItems] == 1 &&
-                [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
-                newTabColor) {
+            if (hasSingleTab && hidesTabBar && newTabColor) {
                 [self setBackgroundColor:newTabColor];
 
                 [_contentView setColor:newTabColor];
@@ -8046,15 +8397,28 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)updateSessionProgressBarVisibility {
     const BOOL tabBarVisible = [self tabBarProvidesProgressVisibility];
-    DLog(@"updateSessionProgressBarVisibility: tabBarVisible=%d sessions=%d", tabBarVisible, (int)self.allSessions.count);
-    for (PTYSession *session in self.allSessions) {
-        session.view.showInlineProgressBar = [self shouldShowInlineProgressBarForSession:session
-                                                                           tabBarVisible:tabBarVisible];
+    NSArray<NSTabViewItem *> *tabViewItems = _contentView.tabView.tabViewItems;
+    const BOOL hasSingleTab = (tabViewItems.count == 1);
+    NSUInteger sessionCount = 0;
+    for (NSTabViewItem *tabViewItem in tabViewItems) {
+        PTYTab *tab = tabViewItem.identifier;
+        NSArray<PTYSession *> *sessions = tab.sessions;
+        sessionCount += sessions.count;
+        const BOOL hasSplitPanes = (sessions.count > 1);
+        const BOOL isInOverflow = [_contentView.tabBarControl isInOverflowMenuForTabWithIdentifier:tab];
+        const BOOL showInlineProgressBar = (hasSingleTab || hasSplitPanes || isInOverflow || !tabBarVisible);
+        DLog(@"updateSessionProgressBarVisibility: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
+             hasSingleTab, hasSplitPanes, isInOverflow, tabBarVisible, showInlineProgressBar);
+        for (PTYSession *session in sessions) {
+            session.view.showInlineProgressBar = showInlineProgressBar;
+        }
     }
+    DLog(@"updateSessionProgressBarVisibility: tabBarVisible=%d sessions=%d", tabBarVisible, (int)sessionCount);
 }
 
 - (void)updateTabProgress {
-    for (PTYTab *tab in [self tabs]) {
+    for (NSTabViewItem *tabViewItem in _contentView.tabView.tabViewItems) {
+        PTYTab *tab = tabViewItem.identifier;
         [_contentView.tabBarControl setProgress:(PSMProgress)tab.progress
                            forTabWithIdentifier:tab];
     }
@@ -10227,6 +10591,26 @@ typedef struct {
                         sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
                 partialAttachments:(NSDictionary *)partialAttachments
                            options:(NSDictionary *)options {
+    return [self openTabWithArrangement:arrangement
+                                  named:arrangementName
+                        hasFlexibleView:hasFlexible
+                                viewMap:viewMap
+                             sessionMap:sessionMap
+                     partialAttachments:partialAttachments
+                                options:options
+                       reservedTabGUIDs:[self tabGUIDs]
+                         insertionIndex:NSNotFound];
+}
+
+- (PTYTab *)openTabWithArrangement:(NSDictionary *)arrangement
+                             named:(NSString *)arrangementName
+                   hasFlexibleView:(BOOL)hasFlexible
+                           viewMap:(NSDictionary<NSNumber *, SessionView *> *)viewMap
+                        sessionMap:(NSDictionary<NSString *, PTYSession *> *)sessionMap
+                partialAttachments:(NSDictionary *)partialAttachments
+                           options:(NSDictionary *)options
+                  reservedTabGUIDs:(NSSet<NSString *> *)reservedTabGUIDs
+                    insertionIndex:(NSInteger)insertionIndex {
     PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
                                           named:arrangementName
                                      inTerminal:self
@@ -10235,7 +10619,7 @@ typedef struct {
                                      sessionMap:sessionMap
                                  tmuxController:nil
                              partialAttachments:partialAttachments
-                               reservedTabGUIDs:[self tabGUIDs]
+                               reservedTabGUIDs:reservedTabGUIDs
                                         options:options];
     if ([[theTab sessionViews] count] == 0) {
         return nil;
@@ -10244,11 +10628,14 @@ typedef struct {
     if (hasFlexible) {
         // Tmux tab
         [self appendTab:theTab];
+    } else if (insertionIndex != NSNotFound) {
+        [self insertTab:theTab atIndex:(int)insertionIndex];
     } else {
         [self addTabAtAutomaticallyDeterminedLocation:theTab];
     }
     [theTab didAddToTerminal:self
-             withArrangement:arrangement];
+             withArrangement:arrangement
+          deferWindowUpdates:_restoringTabsFromArrangement];
     return theTab;
 }
 
@@ -10266,7 +10653,7 @@ typedef struct {
     if ([iTermPreferences boolForKey:kPreferenceKeyNewTabsOpenAtEndOfTabBar] || ![self currentTab]) {
         [self insertTab:tab atIndex:self.numberOfTabs];
     } else {
-        [self insertTab:tab atIndex:[self indexOfTab:self.currentTab] + 1];
+        [self insertTab:tab atIndex:[self indexOfTab:[self currentTabForNewTabInsertion]] + 1];
         if (tab.isTmuxTab) {
             [self tabsDidReorder];
         }
@@ -10366,7 +10753,7 @@ typedef struct {
     }
 
     [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
-    [self setNeedsUpdateTabObjectCounts:YES];
+    [self setNeedsUpdateTabObjectCountsFromIndex:(NSUInteger)MIN(selectedIndex, destinationIndex)];
     [self tabsDidReorder];
 }
 
@@ -11509,33 +11896,253 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [aTab setSize:size];
 }
 
+- (BOOL)canUseRapidTabInsertionBatch {
+    return (self.windowInitialized &&
+            !_restoringWindow &&
+            !_restoringTabsFromArrangement &&
+            !wasDraggedFromAnotherWindow_);
+}
+
+- (void)beginRapidTabInsertionBatchIfNeeded {
+    if (_rapidTabInsertionBatchActive) {
+        return;
+    }
+    _rapidTabInsertionBatchActive = YES;
+}
+
+- (void)scheduleRapidTabInsertionBatchFlush {
+    const NSInteger generation = ++_rapidTabInsertionFlushGeneration;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                 (int64_t)(kRapidTabInsertionFlushDelay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf flushRapidTabInsertionBatchIfGeneration:generation];
+    });
+}
+
+- (BOOL)prepareRapidTabInsertionBatchIfNeeded {
+    if (![self canUseRapidTabInsertionBatch]) {
+        _lastRapidTabInsertionTime = 0;
+        return NO;
+    }
+
+    NSEvent *currentEvent = [NSApp currentEvent];
+    if (currentEvent.type == NSEventTypeKeyDown) {
+        _lastRapidTabInsertionTime = 0;
+        if (_rapidTabInsertionBatchActive) {
+            [self flushRapidTabInsertionBatch];
+        }
+        return NO;
+    }
+
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    const BOOL isRapidInsert = (_lastRapidTabInsertionTime > 0 &&
+                                now - _lastRapidTabInsertionTime <= kRapidTabInsertionWindow);
+    _lastRapidTabInsertionTime = now;
+
+    const BOOL enoughTabsToBatch = _contentView.tabView.numberOfTabViewItems >= 2;
+    if (!_rapidTabInsertionBatchActive && !(isRapidInsert && enoughTabsToBatch)) {
+        return NO;
+    }
+
+    [self beginRapidTabInsertionBatchIfNeeded];
+    [self scheduleRapidTabInsertionBatchFlush];
+    return YES;
+}
+
+- (void)setPendingRapidTabSelectionItem:(NSTabViewItem *)tabViewItem {
+    if (_pendingRapidTabSelectionItem == tabViewItem) {
+        return;
+    }
+    [tabViewItem retain];
+    [_pendingRapidTabSelectionItem release];
+    _pendingRapidTabSelectionItem = tabViewItem;
+}
+
+- (void)clearPendingRapidTabSelectionItem {
+    [_pendingRapidTabSelectionItem release];
+    _pendingRapidTabSelectionItem = nil;
+}
+
+- (PTYTab *)pendingRapidTabSelectionTab {
+    if (!_pendingRapidTabSelectionItem) {
+        return nil;
+    }
+    if ([_contentView.tabView indexOfTabViewItem:_pendingRapidTabSelectionItem] == NSNotFound) {
+        return nil;
+    }
+    return [PTYTab castFrom:_pendingRapidTabSelectionItem.identifier];
+}
+
+- (PTYTab *)currentTabForNewTabInsertion {
+    return [self pendingRapidTabSelectionTab] ?: self.currentTab;
+}
+
+- (void)rememberDirectorySourceForNewTabCreation:(PTYSession *)session {
+    if (_lastNewTabDirectorySourceSession == session) {
+        return;
+    }
+    [session retain];
+    [_lastNewTabDirectorySourceSession release];
+    _lastNewTabDirectorySourceSession = session;
+}
+
+- (BOOL)isRapidNewTabCreationRequestAtTime:(NSTimeInterval)now {
+    NSEvent *currentEvent = [NSApp currentEvent];
+    const BOOL isRepeatingKeyDown = (currentEvent.type == NSEventTypeKeyDown &&
+                                     currentEvent.isARepeat);
+    return (isRepeatingKeyDown ||
+            (_lastNewTabCreationRequestTime > 0 &&
+             now - _lastNewTabCreationRequestTime <= kRapidTabInsertionWindow));
+}
+
+- (PTYSession *)directorySourceForNewTabCreationCandidate:(PTYSession *)candidate {
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    const BOOL isRapidRequest = [self isRapidNewTabCreationRequestAtTime:now];
+    _lastNewTabCreationRequestWasRapid = isRapidRequest;
+    _lastNewTabCreationRequestTime = now;
+
+    if ([self canUseRapidTabInsertionBatch] &&
+        isRapidRequest &&
+        _lastNewTabDirectorySourceSession) {
+        return _lastNewTabDirectorySourceSession;
+    }
+
+    [self rememberDirectorySourceForNewTabCreation:candidate];
+    return candidate;
+}
+
+- (NSString *)fastDirectoryForRapidNewTabCreationFromSession:(PTYSession *)session
+                                                     profile:(Profile *)profile {
+    if (!_lastNewTabCreationRequestWasRapid || profile.sshIdentity) {
+        return nil;
+    }
+    NSString *pwd = session.lastLocalDirectory;
+    if (pwd.length == 0) {
+        pwd = session.environment[@"PWD"];
+    }
+    return pwd.length > 0 ? pwd : nil;
+}
+
+- (void)setNeedsDeferredTabBarStateUpdateForTab:(PTYTab *)tab {
+    if (!tab) {
+        return;
+    }
+    if (!_tabsNeedingDeferredTabBarStateUpdate) {
+        _tabsNeedingDeferredTabBarStateUpdate = [[NSMutableSet alloc] init];
+    }
+    [_tabsNeedingDeferredTabBarStateUpdate addObject:tab];
+}
+
+- (BOOL)deferTabBarStateUpdateForTabIfNeeded:(PTYTab *)tab {
+    if (!_rapidTabInsertionBatchActive) {
+        return NO;
+    }
+    [self setNeedsDeferredTabBarStateUpdateForTab:tab];
+    return YES;
+}
+
+- (void)flushDeferredTabBarStateUpdates {
+    NSSet<PTYTab *> *tabs = [_tabsNeedingDeferredTabBarStateUpdate copy];
+    [_tabsNeedingDeferredTabBarStateUpdate removeAllObjects];
+    for (PTYTab *tab in tabs) {
+        NSTabViewItem *tabViewItem = tab.tabViewItem;
+        if (!tabViewItem ||
+            [_contentView.tabView indexOfTabViewItem:tabViewItem] == NSNotFound) {
+            continue;
+        }
+        [self tabView:_contentView.tabView updateStateForTabViewItem:tabViewItem];
+    }
+    [tabs release];
+}
+
+- (void)flushRapidTabInsertionBatchIfGeneration:(NSInteger)generation {
+    if (generation != _rapidTabInsertionFlushGeneration) {
+        return;
+    }
+    [self flushRapidTabInsertionBatch];
+}
+
+- (void)flushRapidTabInsertionBatch {
+    if (_rapidTabInsertionBatchActive) {
+        _rapidTabInsertionBatchActive = NO;
+    }
+
+    const BOOL needsWindowUpdateFlush = _rapidTabInsertionNeedsWindowUpdateFlush;
+    _rapidTabInsertionNeedsWindowUpdateFlush = NO;
+    [self clearPendingRapidTabSelectionItem];
+    if (needsWindowUpdateFlush) {
+        NSTabViewItem *selectedItem = _contentView.tabView.selectedTabViewItem;
+        if (selectedItem) {
+            [self tabView:_contentView.tabView didSelectTabViewItem:selectedItem];
+        }
+    }
+    if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone &&
+        self.windowInitialized &&
+        !_restoringWindow) {
+        [[iTermController sharedInstance] setCurrentTerminal:self];
+    }
+
+    if (_rapidTabInsertionNeedsTabCountFlush) {
+        _rapidTabInsertionNeedsTabCountFlush = NO;
+        [self performDeferredTabCountUpdatesAfterTabCountChange];
+    }
+
+    [self flushDeferredTabBarStateUpdates];
+}
+
+- (NSString *)initialLabelForNewTab:(PTYTab *)aTab {
+    PTYSession *session = aTab.activeSession ?: aTab.sessions.firstObject;
+    NSString *label = session.name;
+    if (label.length == 0) {
+        label = session.nameController.presentationSessionTitle;
+    }
+    if (label.length == 0) {
+        label = session.profile[KEY_NAME];
+    }
+    if (label.length == 0) {
+        label = session.userShell.lastPathComponent;
+    }
+    return label.length > 0 ? label : @"Untitled";
+}
+
 // Add a tab to the tabview.
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex {
     PtyLog(@"insertTab:atIndex:%d", anIndex);
     assert(aTab);
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
+        const BOOL useRapidInsertionBatch = [self prepareRapidTabInsertionBatchIfNeeded];
         for (PTYSession* aSession in [aTab sessions]) {
             [aSession setIgnoreResizeNotifications:YES];
         }
         NSTabViewItem* aTabViewItem = [[NSTabViewItem alloc] initWithIdentifier:(id)aTab];
-        [aTabViewItem setLabel:@""];
+        [aTabViewItem setLabel:[self initialLabelForNewTab:aTab]];
         assert(aTabViewItem);
         [aTab setTabViewItem:aTabViewItem];
         PtyLog(@"insertTab:atIndex - calling [_contentView.tabView insertTabViewItem:atIndex]");
         const int safeIndex = MAX(0, MIN(_contentView.tabView.tabViewItems.count, anIndex));
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:safeIndex];
-        [aTabViewItem release];
+        [self setNeedsUpdateTabObjectCountsFromIndex:(NSUInteger)safeIndex];
         if (_automaticallySelectNewTabs || _contentView.tabView.tabViewItems.count == 1) {
+            const BOOL savedSelectingNewlyInsertedTab = _selectingNewlyInsertedTab;
+            _selectingNewlyInsertedTab = YES;
             [_contentView.tabView selectTabViewItemAtIndex:safeIndex];
+            _selectingNewlyInsertedTab = savedSelectingNewlyInsertedTab;
+            if (useRapidInsertionBatch && _contentView.tabView.tabViewItems.count > 1) {
+                [self setPendingRapidTabSelectionItem:aTabViewItem];
+            }
         }
+        [aTabViewItem release];
+        const BOOL deferWindowActivationForRapidBatch = (useRapidInsertionBatch &&
+                                                         self.window.isKeyWindow);
         if (self.windowInitialized && !_restoringWindow) {
-            if (self.tabs.count == 1) {
+            if (_contentView.tabView.numberOfTabViewItems == 1) {
                 // It's important to do this before makeKeyAndOrderFront because API clients need
                 // to know the window exists before learning that it has focus.
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidCreateTerminalWindowNotification object:self];
             }
         }
-        if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
+        if (self.windowInitialized && !_fullScreen && !_restoringWindow && !deferWindowActivationForRapidBatch) {
             DLog(@"insertTab: window is initialized, not full screen, and we are not restoring windows.");
             if (self.isHotKeyWindow && self.window.alphaValue == 0) {
                 DLog(@"This appears to be an invisible hotkey window %@", self);
@@ -11553,7 +12160,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone) {
+        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone &&
+            (!deferWindowActivationForRapidBatch ||
+             [[iTermController sharedInstance] currentTerminal] != self)) {
             [[iTermController sharedInstance] setCurrentTerminal:self];
         }
     }
@@ -11576,7 +12185,13 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return nil;
     }
 
-    if ([[self allSessions] indexOfObject:aSession] != NSNotFound) {
+    PTYTab *existingTab = [PTYTab castFrom:aSession.delegate];
+    if (existingTab.realParentWindow == self &&
+        [[existingTab sessions] indexOfObject:aSession] != NSNotFound) {
+        return existingTab;
+    }
+    if (aSession.delegate != nil &&
+        [[self allSessions] indexOfObject:aSession] != NSNotFound) {
         return [self tabForSession:aSession];
     }
     // create a new tab
@@ -12208,10 +12823,11 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 // Show a dialog confirming close. Returns YES if the window should be closed.
 - (BOOL)showCloseWindow {
-    const BOOL hasLockedSession = [self.allSessions anyWithBlock:^BOOL(PTYSession *session) {
+    NSArray<PTYSession *> *allSessions = self.allSessions;
+    const BOOL hasLockedSession = [allSessions anyWithBlock:^BOOL(PTYSession *session) {
         return session.locked;
     }];
-    return ([self confirmCloseForSessions:[self allSessions]
+    return ([self confirmCloseForSessions:allSessions
                                identifier:hasLockedSession ? @"This window (with locked sessions)" : @"This window"
                               genericName:[NSString stringWithFormat:@"Window #%d", number_+1]]);
 }
@@ -12244,10 +12860,15 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (NSUInteger)indexForNewTab {
+    const NSUInteger numberOfTabViewItems = [_contentView.tabView numberOfTabViewItems];
     if ([iTermPreferences boolForKey:kPreferenceKeyNewTabsOpenAtEndOfTabBar] || ![self currentTab]) {
-        return [_contentView.tabView numberOfTabViewItems];
+        return numberOfTabViewItems;
     }
-    return [self indexOfTab:[self currentTab]] + 1;
+    const NSInteger index = [self indexOfTab:[self currentTabForNewTabInsertion]];
+    if (index == NSNotFound) {
+        return numberOfTabViewItems;
+    }
+    return MIN((NSUInteger)index + 1, numberOfTabViewItems);
 }
 
 - (IBAction)duplicateTab:(id)sender {
@@ -12343,38 +12964,71 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 // These two methods are delicate because -closeTab: won't remove the tab from
 // the -tabs array immediately for tmux tabs.
+- (void)closeTabsInBulk:(NSArray<PTYTab *> *)tabsToRemove selectingTabAfterward:(PTYTab *)tabToSelect
+{
+    if (tabsToRemove.count == 0) {
+        return;
+    }
+
+    const BOOL savedBulkClosingTabs = _bulkClosingTabs;
+    const BOOL savedSuppressSelectionOnRemoval = _contentView.tabView.suppressSelectionOnTabViewItemRemoval;
+    _bulkClosingTabs = YES;
+    _contentView.tabView.suppressSelectionOnTabViewItemRemoval = YES;
+    @try {
+        for (PTYTab *tab in tabsToRemove) {
+            [self closeTab:tab];
+        }
+    } @finally {
+        _bulkClosingTabs = savedBulkClosingTabs;
+        _contentView.tabView.suppressSelectionOnTabViewItemRemoval = savedSuppressSelectionOnRemoval;
+    }
+
+    NSTabViewItem *tabViewItemToSelect = tabToSelect.tabViewItem;
+    if (tabViewItemToSelect &&
+        [_contentView.tabView indexOfTabViewItem:tabViewItemToSelect] != NSNotFound) {
+        [_contentView.tabView selectTabViewItem:tabViewItemToSelect];
+    }
+    if (_contentView.tabView.numberOfTabViewItems > 0) {
+        [self fitWindowToTabs];
+        [self performDeferredTabCountUpdatesAfterTabCountChange];
+        [_contentView.tabBarControl setNeedsUpdate:YES];
+    }
+}
+
 - (void)closeOtherTabs:(id)sender
 {
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
     NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
     [tabsToRemove removeObject:tabToKeep];
+    NSMutableArray<PTYTab *> *tabsToClose = [NSMutableArray array];
     for (PTYTab *tab in tabsToRemove) {
         if (tab.isPinned) {
             continue;
         }
-        [self closeTab:tab];
+        [tabsToClose addObject:tab];
     }
+    [self closeTabsInBulk:tabsToClose selectingTabAfterward:tabToKeep];
 }
 
 - (void)closeTabsToTheRight:(id)sender
 {
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
-
-    NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
-    PTYTab *current;
-    do {
-        current = tabsToRemove[0];
-        [tabsToRemove removeObjectAtIndex:0];
-    } while (current != tabToKeep);
-
+    NSArray<PTYTab *> *tabs = self.tabs;
+    const NSUInteger index = [tabs indexOfObject:tabToKeep];
+    if (index == NSNotFound || index + 1 >= tabs.count) {
+        return;
+    }
+    NSArray<PTYTab *> *tabsToRemove = [tabs subarrayWithRange:NSMakeRange(index + 1, tabs.count - index - 1)];
+    NSMutableArray<PTYTab *> *tabsToClose = [NSMutableArray array];
     for (PTYTab *tab in tabsToRemove) {
         if (tab.isPinned) {
             continue;
         }
-        [self closeTab:tab];
+        [tabsToClose addObject:tab];
     }
+    [self closeTabsInBulk:tabsToClose selectingTabAfterward:tabToKeep];
 }
 
 - (IBAction)exitWorkgroup:(id)sender {
@@ -12409,6 +13063,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     [aTabViewItem retain];
 
     // remove from our window
+    const NSUInteger removedIndex = [_contentView.tabView indexOfTabViewItem:aTabViewItem];
+    if (removedIndex != NSNotFound) {
+        [self setNeedsUpdateTabObjectCountsFromIndex:removedIndex];
+    }
     [_contentView.tabView removeTabViewItem:aTabViewItem];
 
     // add the session to the new terminal
@@ -12694,7 +13352,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                          tabIndex:(NSNumber *)tabIndex
                    didMakeSession:(void (^)(PTYSession *session))didMakeSession
                        completion:(void (^)(PTYSession *, BOOL ok))completion {
-    PTYSession *currentSession = [self sessionForDirectoryRecycling];
+    PTYSession *currentSession = [self directorySourceForNewTabCreationCandidate:[self sessionForDirectoryRecycling]];
     if (!currentSession) {
         PTYSession *newSession = [self createTabWithProfile:profile
                                                 withCommand:command
@@ -12702,6 +13360,22 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                                    tabIndex:tabIndex
                                           previousDirectory:nil
                                                      parent:nil
+                                                 completion:completion];
+        if (didMakeSession) {
+            didMakeSession(newSession);
+        }
+        return;
+    }
+
+    NSString *fastDirectory = [self fastDirectoryForRapidNewTabCreationFromSession:currentSession
+                                                                           profile:profile];
+    if (fastDirectory) {
+        PTYSession *newSession = [self createTabWithProfile:profile
+                                                withCommand:command
+                                                environment:environment
+                                                   tabIndex:tabIndex
+                                          previousDirectory:fastDirectory
+                                                     parent:currentSession
                                                  completion:completion];
         if (didMakeSession) {
             didMakeSession(newSession);
@@ -13018,8 +13692,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             [tab setTitleOverride:[iTermProfilePreferences stringForKey:KEY_CUSTOM_TAB_TITLE
                                                                inProfile:session.profile]];
         }
+        [tab numberOfSessionsDidChange];
     }
-    [[self currentTab] numberOfSessionsDidChange];
 }
 
 - (void)sessionDidTerminate:(PTYSession *)session {
@@ -13196,14 +13870,23 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 #pragma mark - PTYTabDelegate
 
 - (void)tab:(PTYTab *)tab didChangeProcessingStatus:(BOOL)isProcessing {
+    if ([self deferTabBarStateUpdateForTabIfNeeded:tab]) {
+        return;
+    }
     [_contentView.tabBarControl setIsProcessing:isProcessing forTabWithIdentifier:tab];
 }
 
 - (void)tab:(PTYTab *)tab didChangeIcon:(NSImage *)icon {
+    if ([self deferTabBarStateUpdateForTabIfNeeded:tab]) {
+        return;
+    }
     [_contentView.tabBarControl setIcon:icon forTabWithIdentifier:tab];
 }
 
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
+    if ([self deferTabBarStateUpdateForTabIfNeeded:tab]) {
+        return;
+    }
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
 
@@ -13227,6 +13910,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [[self window] close];
     } else {
         NSTabViewItem *tabViewItem = [tab tabViewItem];
+        const NSUInteger removedIndex = [_contentView.tabView indexOfTabViewItem:tabViewItem];
+        if (removedIndex != NSNotFound) {
+            [self setNeedsUpdateTabObjectCountsFromIndex:removedIndex];
+        }
         [_contentView.tabView removeTabViewItem:tabViewItem];
         PtyLog(@"tabRemoveTab - calling lazyFitWindowToTabs");
         // Use lazyFitWindowToTabs so that burying the pre-tmux session after a tmux -CC
@@ -13312,6 +13999,14 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)numberOfSessionsDidChangeInTab:(PTYTab *)tab {
+    if (_restoringTabsFromArrangement) {
+        return;
+    }
+    if (_rapidTabInsertionBatchActive) {
+        _rapidTabInsertionNeedsTabCountFlush = YES;
+        [self setNeedsDeferredTabBarStateUpdateForTab:tab];
+        return;
+    }
     [self updateSessionProgressBarVisibility];
     if (tab == self.currentTab) {
         [self updateUseTransparency];

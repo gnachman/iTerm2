@@ -40,6 +40,7 @@
 // Override setDelegate so that it accepts PSMTabBarControl without warning
 @property(atomic, weak) id<PSMTabViewDelegate> delegate;
 @property(nonatomic, weak) id<iTermSwipeHandler> swipeHandler;
+@property(nonatomic) BOOL suppressSelectionOnTabViewItemRemoval;
 
 // Selects a tab where sender's -representedObject is a NSTabViewItem. Used from a window's
 // context menu.

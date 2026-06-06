@@ -632,13 +632,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return anyChange;
 }
 
-- (void)numberOfSessionsDidChange {
+- (void)numberOfSessionsDidChangeNotifyingWindow:(BOOL)notifyWindow {
     if ([self updatePaneTitles] && [self isTmuxTab]) {
         DLog(@"PTYTab numberOfSessionsDidChange triggering windowDidResize");
         [tmuxController_ windowDidResize:realParentWindow_];
     }
     [self updateSessionOrdinals];
-    [realParentWindow_ invalidateRestorableState];
+    if (notifyWindow) {
+        [realParentWindow_ invalidateRestorableState];
+    }
     if (self.isBroadcasting) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
     }
@@ -650,7 +652,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // which would leave the tab showing a stale or missing status. All of those
     // paths funnel through here, so recompute from the current sessions.
     [self updateAggregatedTabStatus];
-    [_delegate numberOfSessionsDidChangeInTab:self];
+    if (notifyWindow) {
+        [_delegate numberOfSessionsDidChangeInTab:self];
+    }
+}
+
+- (void)numberOfSessionsDidChange {
+    [self numberOfSessionsDidChangeNotifyingWindow:YES];
 }
 
 - (void)updateSessionOrdinals {
@@ -697,13 +705,42 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return result;
 }
 
+- (NSString *)displayTitleForSession:(PTYSession *)session proposedTitle:(NSString *)title {
+    if (title.length > 0) {
+        return title;
+    }
+    title = session.nameController.presentationSessionTitle;
+    if (title.length > 0) {
+        return title;
+    }
+    title = session.profile[KEY_NAME];
+    if (title.length > 0) {
+        return title;
+    }
+    title = session.userShell.lastPathComponent;
+    if (title.length > 0) {
+        return title;
+    }
+    return @"Untitled";
+}
+
 - (NSString *)labelForActiveSession {
-    NSString *title = [[self activeSession] name];
-    return [self stringByAppendingSubtitleForActiveSession:title];
+    PTYSession *session = [self activeSession];
+    return [self labelForSession:session];
+}
+
+- (NSString *)labelForSession:(PTYSession *)session {
+    NSString *title = [self displayTitleForSession:session proposedTitle:session.name];
+    return [self stringByAppendingSubtitleForSession:session title:title];
 }
 
 - (NSString *)stringByAppendingSubtitleForActiveSession:(NSString *)title {
-    NSString *subtitle = self.activeSession.subtitle;
+    return [self stringByAppendingSubtitleForSession:self.activeSession title:title];
+}
+
+- (NSString *)stringByAppendingSubtitleForSession:(PTYSession *)session title:(NSString *)title {
+    NSString *displayTitle = [self displayTitleForSession:session proposedTitle:title];
+    NSString *subtitle = session.subtitle;
     NSString *statusText = _aggregatedTabStatus.statusText;
     if (statusText.length > 0 && iTermUserDefaults.showSessionStatusInTabSubtitle) {
         if (subtitle.length > 0) {
@@ -712,7 +749,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             subtitle = statusText;
         }
     }
-    return [NSString stringWithFormat:@"%@\n%@", title, subtitle];
+    if (subtitle.length == 0) {
+        return displayTitle;
+    }
+    return [NSString stringWithFormat:@"%@\n%@", displayTitle, subtitle];
 }
 
 - (void)_refreshLabels:(id)sender {
@@ -773,7 +813,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)loadTitleFromSession {
-    tabViewItem_.label = self.activeSession.name;
+    tabViewItem_.label = [self labelForActiveSession];
 }
 
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString*)newName {
@@ -796,11 +836,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 value = [tmuxPrefix stringByAppendingString:self.activeSession.name];
             }
         } else {
-            value = newName ?: @"";
+            value = [self displayTitleForSession:self.activeSession proposedTitle:newName];
         }
     } else if (self.tmuxTab && ![value hasPrefix:tmuxPrefix]) {
         value = [tmuxPrefix stringByAppendingString:value];
     }
+    value = [self displayTitleForSession:self.activeSession proposedTitle:value];
     [self.variablesScope setValue:value forVariableNamed:iTermVariableKeyTabTitle];
     [tabViewItem_ setLabel:[self stringByAppendingSubtitleForActiveSession:value]];  // PSM uses bindings to bind the label to its title
     [self.realParentWindow tabTitleDidChange:self];
@@ -1208,12 +1249,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // The tab view item holds a reference to us. So we don't hold a reference to it.
     tabViewItem_ = theTabViewItem;
     if (theTabViewItem != nil) {
-        // While Lion-restoring windows, there may be no active session.
-        if ([self activeSession]) {
-            [tabViewItem_ setLabel:[self labelForActiveSession]];
-        } else {
-            [tabViewItem_ setLabel:@""];
+        PTYSession *session = [self activeSession] ?: self.sessions.firstObject;
+        NSString *label = nil;
+        if (session) {
+            label = [self labelForSession:session];
         }
+        if (label.length == 0) {
+            label = theTabViewItem.label;
+        }
+        if (label.length == 0) {
+            // During rapid tab creation the tab view item can be installed before
+            // the active session is wired up. Keep the tab title drawable until
+            // the real session title arrives instead of publishing an empty label.
+            label = @"Untitled";
+        }
+        [tabViewItem_ setLabel:label];
         [tabViewItem_ setView:tabView_];
     }
 }
@@ -1246,6 +1296,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setObjectCount:(int)value {
+    if (objectCount_ == value) {
+        return;
+    }
     objectCount_ = value;
     [_delegate tab:self didChangeObjectCount:self.objectCount];
 }
@@ -1265,8 +1318,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (BOOL)isProcessing {
     return (![iTermPreferences hideTabActivityIndicator] &&
-            isProcessing_ &&
-            ![self isForegroundTab]);
+            isProcessing_);
 }
 
 - (void)setIsProcessing:(BOOL)aFlag {
@@ -3526,13 +3578,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // +[tabWithArrangement:inTerminal:hasFlexibleView:viewMap:].
 - (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
          withArrangement:(NSDictionary *)arrangement {
+    [self didAddToTerminal:term
+           withArrangement:arrangement
+        deferWindowUpdates:NO];
+}
+
+- (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
+         withArrangement:(NSDictionary *)arrangement
+      deferWindowUpdates:(BOOL)deferWindowUpdates {
     NSDictionary* root = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
     if ([root[TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
         [self maximize];
     }
 
-    [self numberOfSessionsDidChange];
-    [term setDimmingForSessions];
+    [self numberOfSessionsDidChangeNotifyingWindow:!deferWindowUpdates];
+    if (!deferWindowUpdates) {
+        [term setDimmingForSessions];
+    }
 
     // Handle old-style (now deprecated) tab color field.
     NSString *colorName = [arrangement objectForKey:TAB_ARRANGEMENT_COLOR];
@@ -3541,7 +3603,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         PTYSession *session = [self activeSession];
         [session setSessionSpecificProfileValues:@{ [session amendedColorKey:KEY_TAB_COLOR]: [tabColor dictionaryValue],
                                                      [session amendedColorKey:KEY_USE_TAB_COLOR]: @YES }];
-    } else {
+    } else if (!deferWindowUpdates) {
         [term updateTabColors];
     }
     for (PTYSession *session in self.sessions) {
@@ -6690,7 +6752,7 @@ typedef struct {
 
 - (void)setLabelAttributesForActiveTab:(BOOL)notify {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
-    [self setIsProcessing:[self anySessionIsProcessing] && ![self isForegroundTab]];
+    [self setIsProcessing:[self anySessionIsProcessing]];
 
     if (![[self activeSession] havePostedNewOutputNotification] &&
         [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&
