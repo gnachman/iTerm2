@@ -460,8 +460,8 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
 - (PSMTabBarCell *)selectedVisibleCell {
     PSMTabBarControl *bar = self.tabBar;
-    for (PSMTabBarCell *cell in bar.cells.reverseObjectEnumerator) {
-        if (!cell.isInOverflowMenu && cell.state == NSControlStateValueOn) {
+    for (PSMTabBarCell *cell in bar.visibleCells.reverseObjectEnumerator) {
+        if (cell.state == NSControlStateValueOn) {
             return cell;
         }
     }
@@ -511,21 +511,16 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
 - (PSMTabBarCell *)firstVisibleCell {
     PSMTabBarControl *bar = self.tabBar;
-    return bar.cells.firstObject;
+    return bar.visibleCells.firstObject;
 }
 
 - (PSMTabBarCell *)lastVisibleCell {
     PSMTabBarControl *bar = self.tabBar;
-    for (PSMTabBarCell *cell in bar.cells.reverseObjectEnumerator) {
-        if (!cell.isInOverflowMenu) {
-            return cell;
-        }
-    }
-    return nil;
+    return bar.visibleCells.lastObject;
 }
 
 - (PSMTabBarCell *)selectedCellInTabBarControl:(PSMTabBarControl *)bar {
-    for (PSMTabBarCell *cell in bar.cells) {
+    for (PSMTabBarCell *cell in bar.visibleCells) {
         if (cell.state == NSControlStateValueOn) {
             return cell;
         }
@@ -534,22 +529,18 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 }
 
 - (NSInteger)selectedIndex:(PSMTabBarControl *)bar {
-    PSMTabBarCell *cell = [self selectedCellInTabBarControl:bar];
-    if (cell.isInOverflowMenu) {
-        return NSNotFound;
+    NSInteger visibleIndex = 0;
+    for (PSMTabBarCell *cell in bar.visibleCells) {
+        if (cell.state == NSControlStateValueOn) {
+            return visibleIndex;
+        }
+        visibleIndex++;
     }
-    return [bar.cells indexOfObject:cell];
+    return NSNotFound;
 }
 
 - (NSInteger)numberOfVisibleCells:(PSMTabBarControl *)bar {
-    NSInteger i = 0;
-    for (PSMTabBarCell *cell in bar.cells) {
-        if (cell.isInOverflowMenu) {
-            return i;
-        }
-        i++;
-    }
-    return i;
+    return bar.visibleCells.count;
 }
 
 - (void)drawTabBar:(PSMTabBarControl *)bar

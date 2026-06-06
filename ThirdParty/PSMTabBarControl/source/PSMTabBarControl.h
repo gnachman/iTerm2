@@ -230,7 +230,11 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 
 // tab information
 - (NSMutableArray *)representedTabViewItems;
+- (NSArray<PSMTabBarCell *> *)visibleCells;
 - (int)numberOfVisibleTabs;
+- (NSInteger)tabViewIndexForCell:(PSMTabBarCell *)cell;
+- (NSInteger)tabViewInsertionIndexForMaterializedCellIndex:(NSInteger)cellIndex;
+- (void)synchronizeTabViewItemOrder;
 
 // special effects
 - (void)hideTabBar:(BOOL)hide animate:(BOOL)animate;
@@ -239,6 +243,8 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // internal bindings methods also used by the tab drag assistant
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
+- (void)beginTabViewItemUpdateBatch;
+- (void)endTabViewItemUpdateBatch;
 
 #pragma mark - iTerm add-ons
 

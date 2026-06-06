@@ -100,8 +100,7 @@
         completion(status, optionalErrorCode);
     };
 
-    __block iTermJobManagerForkAndExecStatus savedStatus = iTermJobManagerForkAndExecStatusSuccess;
-    dispatch_sync(self.queue, ^{
+    dispatch_async(self.queue, ^{
         [self queueForkAndExecWithTtyState:ttyState
                                    argpath:argpath
                                       argv:argv
@@ -113,7 +112,7 @@
             // Completion handler called after queueForkAndExecWithTtyState returns, but still
             // on self.queue.
             dispatch_async(dispatch_get_main_queue(), ^{
-                wrapper(savedStatus, nil);
+                wrapper(status, optionalErrorCode);
             });
         }];
     });

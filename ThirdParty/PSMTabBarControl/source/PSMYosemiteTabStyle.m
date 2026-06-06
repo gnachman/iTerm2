@@ -507,14 +507,34 @@
     }
 }
 
+- (NSArray<NSString *> *)labelPartsForTabCell:(PSMTabBarCell *)cell {
+    NSString *title = cell.stringValue ?: @"";
+    NSString *subtitle = cell.subtitleString ?: @"";
+    if (title.length == 0 && [[cell representedObject] respondsToSelector:@selector(label)]) {
+        NSString *label = [[cell representedObject] label] ?: @"";
+        NSRange newlineRange = [label rangeOfString:@"\n"];
+        if (newlineRange.location != NSNotFound) {
+            title = [label substringToIndex:newlineRange.location];
+            if (subtitle.length == 0) {
+                subtitle = [label substringFromIndex:NSMaxRange(newlineRange)];
+            }
+        } else {
+            title = label;
+        }
+    }
+    return @[ title ?: @"", subtitle ?: @"" ];
+}
+
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
     id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
     // When the style can't draw a separate subtitle line (short bar / single-line
     // style), fold subtitleString into the title so its content still shows.
-    NSString *title = cell.stringValue;
-    if (!self.supportsMultiLineLabels && cell.subtitleString.length > 0) {
-        title = [NSString stringWithFormat:@"%@ %@", cell.stringValue, cell.subtitleString];
+    NSArray<NSString *> *labelParts = [self labelPartsForTabCell:cell];
+    NSString *title = labelParts[0];
+    NSString *subtitle = labelParts[1];
+    if (!self.supportsMultiLineLabels && subtitle.length > 0) {
+        title = [NSString stringWithFormat:@"%@ %@", title, subtitle];
     }
     PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:title
                                                                truncationStyle:cell.truncationStyle
@@ -528,7 +548,9 @@
 }
 
 - (PSMCachedTitleInputs *)cachedSubtitleInputsForTabCell:(PSMTabBarCell *)cell {
-    if (!cell.subtitleString) {
+    NSArray<NSString *> *labelParts = [self labelPartsForTabCell:cell];
+    NSString *subtitle = labelParts[1];
+    if (subtitle.length == 0) {
         return nil;
     }
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
@@ -542,7 +564,7 @@
     if (!subtitleColor) {
         subtitleColor = [color colorWithAlphaComponent:color.alphaComponent * 0.7];
     }
-    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.subtitleString ?: @""
+    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:subtitle
                                                                truncationStyle:cell.truncationStyle
                                                                          color:subtitleColor
                                                                        graphic:nil
@@ -1322,7 +1344,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     // draw cells
     for (int i = 0; i < 2; i++) {
         NSInteger stateToDraw = (i == 0 ? NSControlStateValueOn : NSControlStateValueOff);
-        for (PSMTabBarCell *cell in [bar cells]) {
+        for (PSMTabBarCell *cell in [bar visibleCells]) {
             if (![cell isInOverflowMenu] && NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
                     [cell drawWithFrame:[cell frame] inView:bar];
@@ -1338,7 +1360,6 @@ const void *PSMTabStyleDarkColorKey = "dark";
             }
         }
     }
-
     if (bar.showAddTabButton && attachedToTitleBar) {
         NSRect frame = bar.addTabButton.frame;
         frame.size.width = NSWidth(bar.bounds) - NSMinX(frame);
@@ -1350,7 +1371,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
 
     [self drawDividerBetweenTabBarAndContent:rect bar:bar];
 
-    for (PSMTabBarCell *cell in [bar cells]) {
+    for (PSMTabBarCell *cell in [bar visibleCells]) {
         if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }

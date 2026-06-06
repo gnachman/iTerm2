@@ -282,6 +282,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 - (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
          withArrangement:(NSDictionary *)arrangement;
+- (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
+         withArrangement:(NSDictionary *)arrangement
+      deferWindowUpdates:(BOOL)deferWindowUpdates;
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 

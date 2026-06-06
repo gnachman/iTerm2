@@ -16,6 +16,8 @@ extern void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 
 @interface PSMTabBarCell()<PSMProgressIndicatorDelegate>
 - (NSView<PSMTabBarControlProtocol> *)psmTabControlView;
+- (void)scheduleControlUpdate;
+- (void)updateStringValueImmediately;
 @end
 
 static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
@@ -193,13 +195,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     self = [super init];
     if (self) {
         [self setControlView:controlView];
-        _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0,
-                                                                            0,
-                                                                            kPSMTabBarIndicatorWidth,
-                                                                            kPSMTabBarIndicatorWidth)];
-        _indicator.delegate = self;
-        [_indicator setAutoresizingMask:NSViewMinYMargin];
-        _indicator.light = controlView.style.useLightControls;
         _hasCloseButton = YES;
         _modifierString = [@"" copy];
         _truncationStyle = NSLineBreakByTruncatingTail;
@@ -335,8 +330,30 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [self setSubtitleString:nil];
 }
 
+- (void)setTitle:(NSString *)aString {
+    [self setStringValue:aString];
+}
+
 - (void)reallySetStringValue:(NSString *)aString {
+    NSString *previousStringValue = [self stringValue] ?: @"";
+    aString = aString ?: @"";
+    NSString *trimmedStringValue = [aString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (trimmedStringValue.length == 0 && previousStringValue.length > 0) {
+        return;
+    }
     [super setStringValue:aString];
+
+    const BOOL firstDrawableTitle = previousStringValue.length == 0 && aString.length > 0;
+    const BOOL clearingTitle = previousStringValue.length > 0 && aString.length == 0;
+    const BOOL replacingPlaceholder = [previousStringValue isEqualToString:@"Untitled"] && aString.length > 0;
+    const BOOL keyDownTabCreation = [NSApp currentEvent].type == NSEventTypeKeyDown;
+    const BOOL visibleTitleChange = !self.isInOverflowMenu && previousStringValue.length > 0 && aString.length > 0;
+    if (firstDrawableTitle || clearingTitle || replacingPlaceholder || keyDownTabCreation || visibleTitleChange || NSEqualSizes(_stringSize, NSZeroSize)) {
+        [_delayedStringValueTimer invalidate];
+        _delayedStringValueTimer = nil;
+        [self updateStringValueImmediately];
+        return;
+    }
 
     if (!_delayedStringValueTimer) {
         static const NSTimeInterval kStringValueSettingDelay = 0.1;
@@ -350,9 +367,19 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 
 - (void)updateStringValue:(NSTimer *)timer {
     _delayedStringValueTimer = nil;
+    [self updateStringValueImmediately];
+}
+
+- (void)updateStringValueImmediately {
     _stringSize = [[self cachedTitle] size];
-    // need to redisplay now - binding observation was too quick.
-    [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]];
+    [self scheduleControlUpdate];
+    if (!self.isInOverflowMenu) {
+        [[self psmTabControlView] setNeedsDisplay:YES];
+    }
+}
+
+- (void)scheduleControlUpdate {
+    [[self psmTabControlView] setNeedsUpdate:YES];
 }
 
 - (NSSize)stringSize {
@@ -376,7 +403,12 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         return;
     }
     _progress = progress;
+    if (self.isInOverflowMenu) {
+        return;
+    }
     [self updateIndicators];
+    [self scheduleControlUpdate];
+    [[self psmTabControlView] setNeedsDisplay:YES];
 }
 
 - (void)setIsProcessing:(BOOL)isProcessing {
@@ -384,7 +416,12 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         return;
     }
     _isProcessing = isProcessing;
+    if (self.isInOverflowMenu) {
+        return;
+    }
     [self updateIndicators];
+    [self scheduleControlUpdate];
+    [[self psmTabControlView] setNeedsDisplay:YES];
 }
 
 - (void)updateIndicators {
@@ -398,6 +435,11 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         case PSMProgressStopped:
             // Fall back to older behavior where the indeterminate progress bar indicates whether
             // the tab is busy "processing".
+            if (!_isProcessing) {
+                _indicator.hidden = YES;
+                _indicator.animate = NO;
+                return;
+            }
             self.indicator.hidden = !_isProcessing;
             self.indicator.animate = _isProcessing;
             [self.indicator becomeIndeterminate];
@@ -439,22 +481,43 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (PSMProgressIndicator *)indicator {
+    if (!_indicator) {
+        _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0,
+                                                                            0,
+                                                                            kPSMTabBarIndicatorWidth,
+                                                                            kPSMTabBarIndicatorWidth)];
+        _indicator.delegate = self;
+        [_indicator setAutoresizingMask:NSViewMinYMargin];
+        _indicator.light = [self psmTabControlView].style.useLightControls;
+        _indicator.hidden = YES;
+        _indicator.animate = NO;
+    }
+    return _indicator;
+}
+
+- (PSMProgressIndicator *)existingIndicator {
     return _indicator;
 }
 
 - (void)setHasIcon:(BOOL)value {
+    if (_hasIcon == value) {
+        return;
+    }
     _hasIcon = value;
-    [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]]; // binding notice is too fast
+    [self scheduleControlUpdate];
 }
 
 - (BOOL)hasIcon {
-    BOOL hasIndicator = [self indicator] && !self.indicator.isHidden;
+    BOOL hasIndicator = _indicator && !_indicator.isHidden;
     return _hasIcon && !hasIndicator;
 }
 
 - (void)setCount:(int)value {
+    if (_count == value) {
+        return;
+    }
     _count = value;
-    [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]]; // binding notice is too fast
+    [self scheduleControlUpdate];
 }
 
 - (void)setCurrentStep:(int)value {
@@ -495,7 +558,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
                         change:(NSDictionary *)change
                        context:(void *)context {
     // the progress indicator, label, icon, or count has changed - redraw the control view
-    [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]];
+    [self scheduleControlUpdate];
 }
 
 #pragma mark - Component Attributes
@@ -656,11 +719,11 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
              operation:NSCompositingOperationSourceOver
               fraction:1.0];
     [returnImage unlockFocus];
-    if (![[self indicator] isHidden]) {
+    if (_indicator && ![_indicator isHidden]) {
         // TODO: This image is missing!
         NSImage *piImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"pi"]];
         [returnImage lockFocus];
-        NSPoint indicatorPoint = self.indicator.frame.origin;
+        NSPoint indicatorPoint = _indicator.frame.origin;
         [piImage drawAtPoint:indicatorPoint
                     fromRect:NSZeroRect
                    operation:NSCompositingOperationSourceOver

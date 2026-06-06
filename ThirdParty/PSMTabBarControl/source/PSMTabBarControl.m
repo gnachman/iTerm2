@@ -142,13 +142,56 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 @end
 
-@interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuItemValidation, NSViewToolTipOwner>
+@interface PSMTabBarItemModel : NSObject
+@property(nonatomic, retain) NSTabViewItem *tabViewItem;
+@property(nonatomic, retain) NSColor *tabColor;
+@property(nonatomic) BOOL hasIcon;
+@property(nonatomic) BOOL isProcessing;
+@property(nonatomic) BOOL isPinned;
+@property(nonatomic) NSInteger objectCount;
+@property(nonatomic) PSMProgress progress;
+@end
+
+@implementation PSMTabBarItemModel
+
+- (void)dealloc {
+    [_tabViewItem release];
+    [_tabColor release];
+    [super dealloc];
+}
+
+@end
+
+@interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuDelegate, NSMenuItemValidation, NSViewToolTipOwner>
 - (void)removeTabProgressBarForCell:(PSMTabBarCell *)cell;
+- (void)synchronizeCellsWithTabViewItems:(NSTabView *)tabView;
+- (PSMTabBarCell *)cellForTabViewItem:(NSTabViewItem *)tabViewItem;
+- (void)cacheCell:(PSMTabBarCell *)cell forTabViewItem:(NSTabViewItem *)item;
+- (void)uncacheCell:(PSMTabBarCell *)cell;
+- (PSMTabBarCell *)lastVisibleTab;
+- (BOOL)usesVerticalTabVirtualization;
+- (NSUInteger)logicalTabCount;
+- (PSMTabBarItemModel *)modelForTabViewItem:(NSTabViewItem *)item create:(BOOL)create;
+- (void)removeVirtualModelForTabViewItem:(NSTabViewItem *)item;
+- (void)addVirtualTabViewItem:(NSTabViewItem *)item atIndex:(NSUInteger)index;
+- (PSMTabBarItemModel *)modelForIdentifier:(id)identifier;
+- (void)unbindTitleForCell:(PSMTabBarCell *)cell;
+- (void)recycleVerticalCell:(PSMTabBarCell *)cell;
+- (PSMTabBarCell *)materializedCellForTabViewItem:(NSTabViewItem *)item;
+- (PSMTabBarCell *)materializeCellForTabViewItem:(NSTabViewItem *)item;
+- (void)applyModel:(PSMTabBarItemModel *)model toCell:(PSMTabBarCell *)cell;
 @end
 
 @implementation PSMTabBarControl {
     // control basics
     NSMutableArray<PSMTabBarCell *> *_cells; // the cells that draw the tabs
+    NSMutableArray<PSMTabBarCell *> *_visibleCells;
+    NSMapTable<NSTabViewItem *, PSMTabBarCell *> *_cellByTabViewItem;
+    NSMapTable<id, PSMTabBarCell *> *_cellByIdentifier;
+    NSMutableArray<NSTabViewItem *> *_virtualTabViewItems;
+    NSMapTable<NSTabViewItem *, PSMTabBarItemModel *> *_virtualModelByTabViewItem;
+    NSMapTable<id, PSMTabBarItemModel *> *_virtualModelByIdentifier;
+    NSMutableArray<PSMTabBarCell *> *_reusableVerticalCells;
     NSButton *_overflowPopUpButton; // for too many tabs
     PSMRolloverButton *_addTabButton;
 
@@ -184,6 +227,13 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSMapTable<PSMTabBarCell *, NSView *> *_tabProgressBars;
     NSMutableArray<PSMToolTip *> *_tooltips;
     NSInteger _toolTipCoalescing;
+    NSInteger _tabViewItemUpdateBatchCount;
+    BOOL _needsTabViewItemSyncAfterBatch;
+    BOOL _usesCheapTruncationStyleForNewCells;
+    NSInteger _tabViewItemChangesHandledIncrementally;
+    BOOL _overflowMenuNeedsRebuild;
+    NSInteger _firstVisibleCellIndex;
+    NSInteger _visibleCellCount;
 }
 
 #pragma mark -
@@ -229,6 +279,13 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (self) {
         // Initialization
         _cells = [[NSMutableArray alloc] initWithCapacity:10];
+        _visibleCells = [[NSMutableArray alloc] initWithCapacity:10];
+        _cellByTabViewItem = [[NSMapTable strongToStrongObjectsMapTable] retain];
+        _cellByIdentifier = [[NSMapTable strongToStrongObjectsMapTable] retain];
+        _virtualTabViewItems = [[NSMutableArray alloc] initWithCapacity:10];
+        _virtualModelByTabViewItem = [[NSMapTable strongToStrongObjectsMapTable] retain];
+        _virtualModelByIdentifier = [[NSMapTable strongToStrongObjectsMapTable] retain];
+        _reusableVerticalCells = [[NSMutableArray alloc] initWithCapacity:10];
         _animationTimer = nil;
         const CGFloat defaultHeight = 24;
         _height = defaultHeight;
@@ -257,6 +314,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         }
         _preDragSelectedTabIndex = NSNotFound;
         _tabProgressBars = [[NSMapTable strongToStrongObjectsMapTable] retain];
+        _overflowMenuNeedsRebuild = YES;
+        _firstVisibleCellIndex = 0;
+        _visibleCellCount = 0;
 
         // the overflow button/menu
         [self setupButtons];
@@ -381,12 +441,24 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         cell.controlView = nil;
         [cell release];
     }
+    NSArray *reusableCells = [[_reusableVerticalCells copy] autorelease];
+    for (PSMTabBarCell *cell in reusableCells) {
+        [self unbindTitleForCell:cell];
+        cell.controlView = nil;
+    }
 
     for (NSView *progressBar in _tabProgressBars.objectEnumerator) {
         [progressBar removeFromSuperview];
     }
     [_tabProgressBars release];
+    [_cellByTabViewItem release];
+    [_cellByIdentifier release];
+    [_virtualTabViewItems release];
+    [_virtualModelByTabViewItem release];
+    [_virtualModelByIdentifier release];
+    [_reusableVerticalCells release];
     [_overflowPopUpButton release];
+    [_visibleCells release];
     [_cells release];
     [_tabView release];
     [_addTabButton release];
@@ -435,6 +507,19 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         ILog(@"Skip sanity check during drag from callsite %@", callsite);
         return;
     }
+    if ([self usesVerticalTabVirtualization]) {
+        if (self.tabView.tabViewItems.count != _virtualTabViewItems.count) {
+            [self sanityCheckFailedWithCallsite:callsite reason:@"virtual count mismatch"];
+        } else {
+            for (NSInteger i = 0; i < _virtualTabViewItems.count; i++) {
+                if (_virtualTabViewItems[i] != self.tabView.tabViewItems[i]) {
+                    [self sanityCheckFailedWithCallsite:callsite reason:@"virtual order mismatch"];
+                    break;
+                }
+            }
+        }
+        return;
+    }
     if (self.tabView.tabViewItems.count != self.cells.count) {
         [self sanityCheckFailedWithCallsite:callsite reason:@"count mismatch"];
     } else {
@@ -455,6 +540,151 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (NSMutableArray *)cells
 {
     return _cells;
+}
+
+- (NSArray<PSMTabBarCell *> *)visibleCells {
+    if (_visibleCells.count > 0 || _cells.count == 0) {
+        return _visibleCells;
+    }
+
+    NSMutableArray<PSMTabBarCell *> *visibleCells = [NSMutableArray array];
+    for (PSMTabBarCell *cell in _cells) {
+        if (!cell.isInOverflowMenu) {
+            [visibleCells addObject:cell];
+        }
+    }
+    return visibleCells;
+}
+
+- (BOOL)usesVerticalTabVirtualization {
+    return [self orientation] != PSMTabBarHorizontalOrientation;
+}
+
+- (NSUInteger)logicalTabCount {
+    return [self usesVerticalTabVirtualization] ? _virtualTabViewItems.count : _cells.count;
+}
+
+- (PSMTabBarItemModel *)modelForTabViewItem:(NSTabViewItem *)item create:(BOOL)create {
+    if (!item) {
+        return nil;
+    }
+    PSMTabBarItemModel *model = [_virtualModelByTabViewItem objectForKey:item];
+    if (model || !create) {
+        return model;
+    }
+
+    model = [[[PSMTabBarItemModel alloc] init] autorelease];
+    model.tabViewItem = item;
+    [_virtualModelByTabViewItem setObject:model forKey:item];
+    id identifier = item.identifier;
+    if (identifier) {
+        [_virtualModelByIdentifier setObject:model forKey:identifier];
+    }
+    return model;
+}
+
+- (void)removeVirtualModelForTabViewItem:(NSTabViewItem *)item {
+    if (!item) {
+        return;
+    }
+    id identifier = item.identifier;
+    if (identifier) {
+        [_virtualModelByIdentifier removeObjectForKey:identifier];
+    }
+    [_virtualModelByTabViewItem removeObjectForKey:item];
+    [_virtualTabViewItems removeObjectIdenticalTo:item];
+}
+
+- (void)addVirtualTabViewItem:(NSTabViewItem *)item atIndex:(NSUInteger)index {
+    if (!item) {
+        return;
+    }
+    if ([_virtualTabViewItems containsObject:item]) {
+        return;
+    }
+    const NSUInteger safeIndex = MIN(index, _virtualTabViewItems.count);
+    [_virtualTabViewItems insertObject:item atIndex:safeIndex];
+    [self modelForTabViewItem:item create:YES];
+    _overflowMenuNeedsRebuild = YES;
+}
+
+- (PSMTabBarItemModel *)modelForIdentifier:(id)identifier {
+    if (!identifier) {
+        return nil;
+    }
+    return [_virtualModelByIdentifier objectForKey:identifier];
+}
+
+- (void)unbindTitleForCell:(PSMTabBarCell *)cell {
+    if ([cell infoForBinding:@"title"]) {
+        [cell unbind:@"title"];
+    }
+}
+
+- (void)recycleVerticalCell:(PSMTabBarCell *)cell {
+    if (!cell || cell.isPlaceholder) {
+        return;
+    }
+
+    [cell retain];
+    [self unbindTitleForCell:cell];
+    [self uncacheCell:cell];
+    PSMProgressIndicator *indicator = cell.existingIndicator;
+    if ([indicator superview]) {
+        [indicator removeFromSuperview];
+    }
+    [cell removeCloseButtonTrackingRectFrom:self];
+    [cell removeCellTrackingRectFrom:self];
+    [self removeTabProgressBarForCell:cell];
+    cell.isInOverflowMenu = YES;
+    cell.representedObject = nil;
+    [_visibleCells removeObjectIdenticalTo:cell];
+    [_cells removeObjectIdenticalTo:cell];
+    [_reusableVerticalCells addObject:cell];
+    [cell release];
+}
+
+- (PSMTabBarCell *)dequeueVerticalCell {
+    PSMTabBarCell *cell = [_reusableVerticalCells lastObject];
+    if (cell) {
+        [cell retain];
+        [_reusableVerticalCells removeLastObject];
+        return [cell autorelease];
+    }
+
+    cell = [[[PSMTabBarCell alloc] initWithControlView:self] autorelease];
+    return cell;
+}
+
+- (void)applyModel:(PSMTabBarItemModel *)model toCell:(PSMTabBarCell *)cell {
+    cell.hasIcon = model.hasIcon;
+    cell.count = (int)model.objectCount;
+    cell.isProcessing = model.isProcessing;
+    cell.progress = model.progress;
+    cell.tabColor = model.tabColor;
+    cell.isPinned = model.isPinned;
+}
+
+- (PSMTabBarCell *)materializedCellForTabViewItem:(NSTabViewItem *)item {
+    PSMTabBarCell *cell = [_cellByTabViewItem objectForKey:item];
+    return (cell.representedObject == item) ? cell : nil;
+}
+
+- (PSMTabBarCell *)materializeCellForTabViewItem:(NSTabViewItem *)item {
+    PSMTabBarItemModel *model = [self modelForTabViewItem:item create:YES];
+    PSMTabBarCell *cell = [self materializedCellForTabViewItem:item];
+    if (!cell) {
+        cell = [self dequeueVerticalCell];
+        cell.truncationStyle = [self truncationStyleForNewCell];
+        cell.controlView = self;
+        cell.representedObject = item;
+        [self cacheCell:cell forTabViewItem:item];
+        [cell setModifierString:[self _modifierString]];
+        [self initializeStateForCell:cell];
+        [self bindPropertiesForCell:cell andTabViewItem:item];
+    }
+    [self applyModel:model toCell:cell];
+    return cell;
 }
 
 - (NSEvent *)lastMouseDownEvent
@@ -522,6 +752,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     }
 
     if (lastOrientation != _orientation) {
+        if (_tabView) {
+            [self synchronizeCellsWithTabViewItems:_tabView];
+        }
         [self update];
     }
 }
@@ -635,12 +868,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         if (point.y < self.insets.top) {
             return NO;
         }
-        PSMTabBarCell *lastCell = _cells.lastObject;
+        PSMTabBarCell *lastCell = [self lastVisibleTab];
         if (!lastCell) {
             return NO;
-        }
-        if (lastCell.isInOverflowMenu) {
-            return YES;
         }
         const CGFloat maxY = NSMaxY(lastCell.frame);
         return point.y < maxY;
@@ -692,11 +922,37 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     }
 }
 
+- (BOOL)shouldUseCheapVerticalTabListPath {
+    return [self orientation] != PSMTabBarHorizontalOrientation &&
+        [self logicalTabCount] > 12 &&
+        ![[PSMTabDragAssistant sharedDragAssistant] isDragging];
+}
+
+- (NSLineBreakMode)truncationStyleForNewCell {
+    if (_usesCheapTruncationStyleForNewCells || [self shouldUseCheapVerticalTabListPath]) {
+        return NSLineBreakByTruncatingTail;
+    }
+    return [self truncationStyle];
+}
+
+- (NSLineBreakMode)truncationStyleForLayout {
+    if ([self shouldUseCheapVerticalTabListPath]) {
+        return NSLineBreakByTruncatingTail;
+    }
+    return [self truncationStyle];
+}
+
 - (void)addTabViewItem:(NSTabViewItem *)item atIndex:(NSUInteger)i {
+    if ([self usesVerticalTabVirtualization]) {
+        [self addVirtualTabViewItem:item atIndex:i];
+        return;
+    }
+
     // create cell
     PSMTabBarCell *cell = [[PSMTabBarCell alloc] initWithControlView:self];
-    cell.truncationStyle = [self truncationStyle];
+    cell.truncationStyle = [self truncationStyleForNewCell];
     [cell setRepresentedObject:item];
+    [self cacheCell:cell forTabViewItem:item];
     [cell setModifierString:[self _modifierString]];
 
     // add to collection
@@ -706,20 +962,29 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [self initializeStateForCell:cell];
     [self bindPropertiesForCell:cell andTabViewItem:item];
     [cell release];
+    _overflowMenuNeedsRebuild = YES;
 }
 
 - (void)addTabViewItem:(NSTabViewItem *)item {
-    [self addTabViewItem:item atIndex:[_cells count]];
+    [self addTabViewItem:item atIndex:[self logicalTabCount]];
 }
 
 - (void)removeTabForCell:(PSMTabBarCell *)cell {
+    if ([self usesVerticalTabVirtualization] && !cell.isPlaceholder) {
+        [self recycleVerticalCell:cell];
+        _overflowMenuNeedsRebuild = YES;
+        return;
+    }
+
     // unbind
-    [cell unbind:@"title"];
+    [self unbindTitleForCell:cell];
+    [self uncacheCell:cell];
 
     // remove indicator
-    if ([[self subviews] containsObject:[cell indicator]]) {
-        [[cell indicator] setDelegate:nil];
-        [[cell indicator] removeFromSuperview];
+    PSMProgressIndicator *indicator = cell.existingIndicator;
+    if (indicator && [[self subviews] containsObject:indicator]) {
+        [indicator setDelegate:nil];
+        [indicator removeFromSuperview];
     }
     // remove tracking
     [[NSNotificationCenter defaultCenter] removeObserver:cell];
@@ -730,7 +995,55 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [self removeTabProgressBarForCell:cell];
 
     // pull from collection
+    [_visibleCells removeObjectIdenticalTo:cell];
     [_cells removeObject:cell];
+    _overflowMenuNeedsRebuild = YES;
+}
+
+- (void)cacheCell:(PSMTabBarCell *)cell forTabViewItem:(NSTabViewItem *)item {
+    if (!cell || !item) {
+        return;
+    }
+    [_cellByTabViewItem setObject:cell forKey:item];
+    id identifier = item.identifier;
+    if (identifier) {
+        [_cellByIdentifier setObject:cell forKey:identifier];
+    }
+}
+
+- (void)uncacheCell:(PSMTabBarCell *)cell {
+    NSTabViewItem *item = cell.representedObject;
+    if (!item) {
+        return;
+    }
+    [_cellByTabViewItem removeObjectForKey:item];
+    id identifier = item.identifier;
+    if (identifier) {
+        [_cellByIdentifier removeObjectForKey:identifier];
+    }
+}
+
+- (void)beginTabViewItemUpdateBatch {
+    ++_tabViewItemUpdateBatchCount;
+}
+
+- (void)endTabViewItemUpdateBatch {
+    if (_tabViewItemUpdateBatchCount <= 0) {
+        return;
+    }
+    --_tabViewItemUpdateBatchCount;
+    if (_tabViewItemUpdateBatchCount > 0 || !_needsTabViewItemSyncAfterBatch) {
+        return;
+    }
+
+    _needsTabViewItemSyncAfterBatch = NO;
+    const BOOL savedUsesCheapTruncationStyleForNewCells = _usesCheapTruncationStyleForNewCells;
+    _usesCheapTruncationStyleForNewCells = YES;
+    if (_tabView) {
+        [self synchronizeCellsWithTabViewItems:_tabView];
+    }
+    _usesCheapTruncationStyleForNewCells = savedUsesCheapTruncationStyleForNewCells;
+    [self setNeedsUpdate:YES];
 }
 
 - (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell {
@@ -755,7 +1068,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 - (void)syncTabProgressBars {
     NSMutableSet<PSMTabBarCell *> *visibleCells = [NSMutableSet set];
-    for (PSMTabBarCell *cell in _cells) {
+    for (PSMTabBarCell *cell in [self visibleCells]) {
         if (![self shouldShowCustomProgressBarForTabCell:cell]) {
             [self removeTabProgressBarForCell:cell];
             continue;
@@ -803,9 +1116,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         if (progressBar.superview != self) {
             [self addSubview:progressBar];
         }
-        cell.indicator.hidden = YES;
-        cell.indicator.animate = NO;
-        [cell.indicator removeFromSuperview];
+        PSMProgressIndicator *indicator = cell.existingIndicator;
+        indicator.hidden = YES;
+        indicator.animate = NO;
+        [indicator removeFromSuperview];
     }
 
     for (PSMTabBarCell *cell in _tabProgressBars.keyEnumerator.allObjects) {
@@ -1102,10 +1416,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 #endif
 
     const NSRect rect = NSIntersectionRect(self.bounds, insaneRect);
-    for (PSMTabBarCell *cell in [self cells]) {
+    for (PSMTabBarCell *cell in [self visibleCells]) {
         [cell setIsLast:NO];
     }
-    [[[self cells] lastObject] setIsLast:YES];
+    [[self lastVisibleTab] setIsLast:YES];
     [_style drawTabBar:self
                 inRect:self.bounds
               clipRect:rect
@@ -1134,6 +1448,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destIndex
 {
+    const NSInteger logicalCount = (NSInteger)[self logicalTabCount];
+    if (sourceIndex < 0 || sourceIndex >= logicalCount || destIndex < 0 || destIndex >= logicalCount) {
+        return;
+    }
+
     NSTabViewItem *theItem = [_tabView tabViewItemAtIndex:sourceIndex];
     BOOL reselect = ([_tabView selectedTabViewItem] == theItem);
 
@@ -1144,11 +1463,16 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [_tabView insertTabViewItem:theItem atIndex:destIndex];
     [theItem release];
 
-    id cell = [_cells objectAtIndex:sourceIndex];
-    [cell retain];
-    [_cells removeObjectAtIndex:sourceIndex];
-    [_cells insertObject:cell atIndex:destIndex];
-    [cell release];
+    if ([self usesVerticalTabVirtualization]) {
+        [_virtualTabViewItems removeObjectAtIndex:sourceIndex];
+        [_virtualTabViewItems insertObject:theItem atIndex:destIndex];
+    } else {
+        id cell = [_cells objectAtIndex:sourceIndex];
+        [cell retain];
+        [_cells removeObjectAtIndex:sourceIndex];
+        [_cells insertObject:cell atIndex:destIndex];
+        [cell release];
+    }
 
     [_tabView setDelegate:tempDelegate];
 
@@ -1156,7 +1480,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         [_tabView selectTabViewItem:theItem];
     }
 
-    [self update:YES];
+    _overflowMenuNeedsRebuild = YES;
+    [self update:[self orientation] == PSMTabBarHorizontalOrientation];
 }
 
 - (void)update {
@@ -1174,12 +1499,12 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     // calculateDragAnimationForTabBar: method, which does layout in that case.
 
     // Make sure all of our tabs are accounted for before updating.
-    if ([_tabView numberOfTabViewItems] != [_cells count]) {
+    if ([_tabView numberOfTabViewItems] != [self logicalTabCount]) {
         return;
     }
 
     // Hide or show? These do nothing if already in the desired state.
-    if ((_hideForSingleTab) && ([_cells count] <= 1)) {
+    if ((_hideForSingleTab) && ([self logicalTabCount] <= 1)) {
         [self hideTabBar:YES animate:YES];
     } else {
         [self hideTabBar:NO animate:YES];
@@ -1244,14 +1569,50 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (void)reallyUpdate:(BOOL)animate {
     [self _removeCellTrackingRects];
 
-    NSLineBreakMode truncationStyle = [self truncationStyle];
+    NSLineBreakMode truncationStyle = [self truncationStyleForLayout];
+    NSMutableArray *verticalOrigins = nil;
+    NSInteger verticalFirstVisibleCellIndex = 0;
+    NSInteger verticalVisibleCellCount = 0;
 
-    // Update cells' settings in case they changed.
-    for (PSMTabBarCell *cell in _cells) {
+    if ([self orientation] != PSMTabBarHorizontalOrientation) {
+        CGFloat currentOrigin = [[self style] topMarginForTabBarControl];
+        NSRect cellRect = [self genericCellRectWithOverflow:(NO || _showAddTabButton)];
+        const NSInteger cellCount = [self logicalTabCount];
+        verticalOrigins = [NSMutableArray arrayWithCapacity:cellCount];
+        const CGFloat fullHeight = [self frame].size.height;
+        NSInteger maximumVisibleCellCount = 0;
+        for (CGFloat origin = currentOrigin;
+             origin + cellRect.size.height <= fullHeight;
+             origin += cellRect.size.height) {
+            ++maximumVisibleCellCount;
+        }
+        const BOOL needsOverflowButton = (cellCount > maximumVisibleCellCount);
+        const CGFloat availableHeight = (needsOverflowButton
+                                         ? MAX(currentOrigin, fullHeight - self.height)
+                                         : fullHeight);
+
+        for (int i = 0; i < cellCount; ++i) {
+            if (currentOrigin + cellRect.size.height <= availableHeight) {
+                [verticalOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
+                currentOrigin += cellRect.size.height;
+            } else {
+                break;
+            }
+        }
+        verticalVisibleCellCount = verticalOrigins.count;
+        verticalFirstVisibleCellIndex = [self firstVisibleCellIndexForVisibleCellCount:verticalVisibleCellCount];
+    }
+
+    // Update visible cells' settings in case they changed.
+    const NSInteger settingsEndIndex = ([self orientation] == PSMTabBarHorizontalOrientation
+                                        ? _cells.count
+                                        : 0);
+    for (NSInteger i = 0; i < settingsEndIndex; i++) {
+        PSMTabBarCell *cell = _cells[i];
         cell.truncationStyle = truncationStyle;
         cell.hasCloseButton = _hasCloseButton;
-        [cell updateForStyle];
         cell.isCloseButtonSuppressed = [self disableTabClose];
+        [cell updateForStyle];
         // Remove highlight if cursor is no longer in cell. Could happen if
         // cell moves because of added/removed tab. Tracking rects aren't smart
         // enough to handle this.
@@ -1260,7 +1621,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     }
 
     // Calculate number of cells to fit in the control and cell widths.
-    const NSInteger cellCount = [_cells count];
+    const NSInteger cellCount = [self logicalTabCount];
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
         if ((animate || _animationTimer != nil) && cellCount > 0) {
             // Animate only on horizontal tab bars.
@@ -1281,23 +1642,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         }
     } else {
         // Vertical orientation
-        CGFloat currentOrigin = [[self style] topMarginForTabBarControl];
-        NSRect cellRect = [self genericCellRectWithOverflow:(NO || _showAddTabButton)];
-        NSMutableArray *newOrigins = [NSMutableArray arrayWithCapacity:cellCount];
-
-        for (int i = 0; i < cellCount; ++i) {
-            if (currentOrigin + cellRect.size.height <= [self frame].size.height) {
-                [newOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
-                currentOrigin += cellRect.size.height;
-            } else {
-                // Out of room, the remaining unpinned tabs go into overflow.
-                if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < cellRect.size.height) {
-                    [newOrigins removeLastObject];
-                }
-                break;
-            }
-        }
-        [self finishUpdateWithRegularWidths:newOrigins widthsWithOverflow:newOrigins];
+        [self finishUpdateWithRegularWidths:verticalOrigins widthsWithOverflow:verticalOrigins];
     }
 
     [self syncTabProgressBars];
@@ -1505,16 +1850,17 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [cell removeCloseButtonTrackingRectFrom:self];
     [cell removeCellTrackingRectFrom:self];
     [self removeTabProgressBarForCell:cell];
+    [_visibleCells removeObjectIdenticalTo:cell];
     [[self cells] removeObject:cell];
 }
 
 - (void)_removeCellTrackingRects {
     // size all cells appropriately and create tracking rects
     // nuke old tracking rects
-    int i, cellCount = [_cells count];
-
-    for (i = 0; i < cellCount; i++) {
-        id cell = [_cells objectAtIndex:i];
+    NSArray<PSMTabBarCell *> *cellsToClear = ([self orientation] == PSMTabBarHorizontalOrientation
+                                              ? _cells
+                                              : [self visibleCells]);
+    for (PSMTabBarCell *cell in cellsToClear) {
         [cell removeCloseButtonTrackingRectFrom:self];
         [cell removeCellTrackingRectFrom:self];
     }
@@ -1580,19 +1926,22 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                    widthsWithOverflow:(NSArray *)widthsWithOverflow {
     // Set up overflow menu.
     NSArray *newValues;
-    if (_showAddTabButton || regularWidths.count < _cells.count) {
+    const NSUInteger logicalTabCount = [self logicalTabCount];
+    if (_showAddTabButton || regularWidths.count < logicalTabCount) {
         newValues = widthsWithOverflow;
     } else {
         newValues = regularWidths;
     }
-    NSMenu *overflowMenu = [self _setupCells:newValues];
+    const BOOL hasOverflow = (newValues.count < logicalTabCount);
+    NSMenu *overflowMenu = [self _setupCells:newValues
+                       firstVisibleCellIndex:[self firstVisibleCellIndexForVisibleCellCount:newValues.count]];
 
-    _lainOutWithOverflow = (overflowMenu != nil || _showAddTabButton);
-    if (overflowMenu) {
-        [self _setupOverflowMenu:overflowMenu];
+    _lainOutWithOverflow = (hasOverflow || _showAddTabButton);
+    if (hasOverflow) {
+        [self _setupOverflowMenu:overflowMenu ?: [_overflowPopUpButton menu]];
     }
 
-    [_overflowPopUpButton setHidden:(overflowMenu == nil)];
+    [_overflowPopUpButton setHidden:!hasOverflow];
 
     // Set up add tab button.
     if (!overflowMenu && _showAddTabButton) {
@@ -1612,29 +1961,300 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     }
 }
 
-- (NSMenu *)_setupCells:(NSArray *)newValues {
-    const int cellCount = [_cells count];
+- (NSInteger)selectedCellIndex {
+    NSTabViewItem *selectedItem = _tabView.selectedTabViewItem;
+    if (!selectedItem) {
+        return NSNotFound;
+    }
+    if ([self usesVerticalTabVirtualization]) {
+        return [_virtualTabViewItems indexOfObjectIdenticalTo:selectedItem];
+    }
+    NSInteger selectedIndex = [_tabView indexOfTabViewItem:selectedItem];
+    if (selectedIndex != NSNotFound &&
+        selectedIndex >= 0 &&
+        selectedIndex < _cells.count &&
+        [_cells[selectedIndex] representedObject] == selectedItem) {
+        return selectedIndex;
+    }
+    return [_cells indexOfObjectPassingTest:^BOOL(PSMTabBarCell * _Nonnull cell, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [[cell representedObject] isEqualTo:selectedItem];
+    }];
+}
+
+- (NSInteger)firstVisibleCellIndexForVisibleCellCount:(NSInteger)numberOfVisibleCells {
+    const NSInteger cellCount = [self logicalTabCount];
+    if ([self orientation] == PSMTabBarHorizontalOrientation ||
+        numberOfVisibleCells <= 0 ||
+        numberOfVisibleCells >= cellCount) {
+        return 0;
+    }
+
+    const NSInteger selectedIndex = [self selectedCellIndex];
+    if (selectedIndex == NSNotFound || selectedIndex < numberOfVisibleCells) {
+        return 0;
+    }
+
+    const NSInteger maxFirstVisibleIndex = MAX(0, cellCount - numberOfVisibleCells);
+    return MIN(maxFirstVisibleIndex, selectedIndex - numberOfVisibleCells + 1);
+}
+
+- (void)_addOverflowMenuItemForCell:(PSMTabBarCell *)cell toMenu:(NSMenu *)overflowMenu {
+    NSString *title = [[cell attributedStringValue] string] ?: @"";
+    NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:title
+                                                      action:@selector(overflowMenuAction:)
+                                               keyEquivalent:@""];
+    [menuItem setTarget:self];
+    [menuItem setRepresentedObject:[cell representedObject]];
+    if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]]) {
+        [menuItem setState:NSControlStateValueOn];
+    }
+
+    if ([cell hasIcon]) {
+        [menuItem setImage:(NSImage *)[(id)[[cell representedObject] identifier] icon]];
+    }
+
+    if ([cell count] > 0) {
+        [menuItem setTitle:[[menuItem title] stringByAppendingFormat:@" (%d)", [cell count]]];
+    }
+
+    [overflowMenu addItem:menuItem];
+    [menuItem release];
+}
+
+- (void)_addOverflowMenuItemForModel:(PSMTabBarItemModel *)model toMenu:(NSMenu *)overflowMenu {
+    NSTabViewItem *item = model.tabViewItem;
+    NSString *title = item.label ?: @"";
+    NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:title
+                                                      action:@selector(overflowMenuAction:)
+                                               keyEquivalent:@""];
+    [menuItem setTarget:self];
+    [menuItem setRepresentedObject:item];
+    if (item == [_tabView selectedTabViewItem]) {
+        [menuItem setState:NSControlStateValueOn];
+    }
+
+    id identifier = item.identifier;
+    if (model.hasIcon && [identifier respondsToSelector:@selector(icon)]) {
+        [menuItem setImage:(NSImage *)[identifier icon]];
+    }
+
+    if (model.objectCount > 0) {
+        [menuItem setTitle:[[menuItem title] stringByAppendingFormat:@" (%ld)", (long)model.objectCount]];
+    }
+
+    [overflowMenu addItem:menuItem];
+    [menuItem release];
+}
+
+- (void)_populateOverflowMenu:(NSMenu *)overflowMenu {
+    [overflowMenu removeAllItems];
+    if (@available(macOS 26, *)) {
+        // It's not a pulldown menu in 26.
+    } else {
+        [overflowMenu insertItemWithTitle:@"FIRST"
+                                   action:nil
+                            keyEquivalent:@""
+                                  atIndex:0];
+    }
+    if ([self usesVerticalTabVirtualization]) {
+        for (NSInteger i = 0; i < _virtualTabViewItems.count; i++) {
+            const BOOL isInOverflowMenu = (i < _firstVisibleCellIndex ||
+                                           i >= _firstVisibleCellIndex + _visibleCellCount);
+            if (isInOverflowMenu) {
+                PSMTabBarItemModel *model = [self modelForTabViewItem:_virtualTabViewItems[i] create:YES];
+                [self _addOverflowMenuItemForModel:model toMenu:overflowMenu];
+            }
+        }
+        _overflowMenuNeedsRebuild = NO;
+        return;
+    }
+
+    for (NSInteger i = 0; i < _cells.count; i++) {
+        PSMTabBarCell *cell = _cells[i];
+        const BOOL isInOverflowMenu = cell.isInOverflowMenu;
+        if (isInOverflowMenu) {
+            [self _addOverflowMenuItemForCell:cell toMenu:overflowMenu];
+        }
+    }
+    _overflowMenuNeedsRebuild = NO;
+}
+
+- (NSMenu *)_buildOverflowMenu {
+    NSMenu *overflowMenu = [[[NSMenu alloc] initWithTitle:@"TITLE"] autorelease];
+    overflowMenu.delegate = self;
+    [self _populateOverflowMenu:overflowMenu];
+    return overflowMenu;
+}
+
+- (void)_markVerticalCellAsOffscreen:(PSMTabBarCell *)cell {
+    if (!cell.isInOverflowMenu) {
+        [cell setIsInOverflowMenu:YES];
+    }
+    PSMProgressIndicator *indicator = cell.existingIndicator;
+    if ([indicator superview]) {
+        [indicator removeFromSuperview];
+    }
+    [self removeTabProgressBarForCell:cell];
+}
+
+- (NSMenu *)_setupVerticalCells:(NSArray *)newValues firstVisibleCellIndex:(NSInteger)firstVisibleCellIndex {
+    const NSInteger cellCount = [self logicalTabCount];
+    const NSInteger numberOfVisibleCells = [newValues count];
+    firstVisibleCellIndex = MAX(0, MIN(firstVisibleCellIndex, MAX(0, cellCount - numberOfVisibleCells)));
+
+    NSMutableSet<NSTabViewItem *> *visibleItems = [NSMutableSet setWithCapacity:numberOfVisibleCells];
+    const NSInteger endIndex = MIN(cellCount, firstVisibleCellIndex + numberOfVisibleCells);
+    for (NSInteger i = firstVisibleCellIndex; i < endIndex; i++) {
+        [visibleItems addObject:_virtualTabViewItems[i]];
+    }
+
+    NSArray<PSMTabBarCell *> *materializedCells = [[_cells copy] autorelease];
+    for (PSMTabBarCell *cell in materializedCells) {
+        if (cell.isPlaceholder) {
+            [self removeCell:cell];
+            continue;
+        }
+        NSTabViewItem *item = cell.representedObject;
+        if (![visibleItems containsObject:item]) {
+            [self _markVerticalCellAsOffscreen:cell];
+            [self recycleVerticalCell:cell];
+        }
+    }
+
+    [_cells removeAllObjects];
+    [_visibleCells removeAllObjects];
+    _firstVisibleCellIndex = firstVisibleCellIndex;
+    _visibleCellCount = numberOfVisibleCells;
+
+    NSRect cellRect = [self genericCellRectWithOverflow:(_showAddTabButton ||
+                                                         cellCount > numberOfVisibleCells)];
+    const NSRect generic = cellRect;
+    const CGFloat intercellSpacing = _style.intercellSpacing;
+
+    for (NSInteger i = firstVisibleCellIndex; i < endIndex; i++) {
+        NSTabViewItem *item = _virtualTabViewItems[i];
+        PSMTabBarCell *cell = [self materializeCellForTabViewItem:item];
+        const NSInteger visibleIndex = i - firstVisibleCellIndex;
+        int tabState = 0;
+
+        cell.truncationStyle = [self truncationStyleForLayout];
+        cell.hasCloseButton = _hasCloseButton;
+        cell.isCloseButtonSuppressed = [self disableTabClose];
+        [cell updateForStyle];
+        [cell updateHighlight];
+        [_cells addObject:cell];
+
+        cellRect.size.width = [self frame].size.width;
+        cellRect.origin.y = [[newValues objectAtIndex:visibleIndex] floatValue];
+        cellRect.origin.x = 0;
+        cellRect = [_style adjustedCellRect:cellRect generic:generic];
+        [cell setFrame:cellRect];
+        [_visibleCells addObject:cell];
+
+        if ([cell hasCloseButton] && !cell.isPinned &&
+            ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]] ||
+             [self allowsBackgroundTabClosing])) {
+            NSPoint mousePoint =
+            [self convertPoint:[[self window] pointFromScreenCoords:[NSEvent mouseLocation]]
+                      fromView:nil];
+            NSRect closeRect = [cell closeButtonRectForFrame:cellRect];
+            [cell removeCloseButtonTrackingRectFrom:self];
+            [cell setCloseButtonTrackingRect:closeRect userData:nil assumeInside:NO view:self];
+            if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]] &&
+                [[NSApp currentEvent] type] != NSEventTypeLeftMouseDown &&
+                NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {
+                [cell setCloseButtonOver:YES];
+            }
+        } else {
+            [cell setCloseButtonOver:NO];
+        }
+
+        [cell removeCellTrackingRectFrom:self];
+        [cell setCellTrackingRect:cellRect userData:nil assumeInside:NO view:self];
+        [cell setEnabled:YES];
+        [self addToolTipRect:cellRect owner:self userData:nil];
+
+        if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]]) {
+            [cell setState:NSControlStateValueOn];
+            tabState |= PSMTab_SelectedMask;
+            if (visibleIndex > 0) {
+                PSMTabBarCell *previousCell = [_visibleCells objectAtIndex:visibleIndex - 1];
+                [previousCell setTabState:([previousCell tabState] | PSMTab_RightIsSelectedMask)];
+            }
+        } else {
+            [cell setState:NSControlStateValueOff];
+            if (visibleIndex > 0) {
+                if ([[_visibleCells objectAtIndex:visibleIndex - 1] state] == NSControlStateValueOn) {
+                    tabState |= PSMTab_LeftIsSelectedMask;
+                }
+            }
+        }
+
+        if (numberOfVisibleCells == 1) {
+            tabState |= PSMTab_PositionLeftMask | PSMTab_PositionRightMask | PSMTab_PositionSingleMask;
+        } else if (visibleIndex == 0) {
+            tabState |= PSMTab_PositionLeftMask;
+        } else if (visibleIndex == numberOfVisibleCells - 1) {
+            tabState |= PSMTab_PositionRightMask;
+        }
+        [cell setTabState:tabState];
+        if (cell.isInOverflowMenu) {
+            [cell setIsInOverflowMenu:NO];
+        }
+        [cell updateIndicators];
+
+        PSMProgressIndicator *indicator = cell.existingIndicator;
+        if (indicator && ![indicator isHidden] && !_hideIndicators) {
+            [indicator setFrame:[cell indicatorRectForFrame:cellRect]];
+            if (![[self subviews] containsObject:indicator]) {
+                [self addSubview:indicator];
+                [indicator setAnimate:YES];
+            }
+        }
+
+        cellRect.origin.x += [[newValues objectAtIndex:visibleIndex] floatValue] + intercellSpacing;
+    }
+
+    return nil;
+}
+
+- (NSMenu *)_setupCells:(NSArray *)newValues firstVisibleCellIndex:(NSInteger)firstVisibleCellIndex {
+    const int cellCount = (int)[self logicalTabCount];
     const int numberOfVisibleCells = [newValues count];
+    firstVisibleCellIndex = MAX(0, MIN(firstVisibleCellIndex, MAX(0, cellCount - numberOfVisibleCells)));
+    if ([self orientation] != PSMTabBarHorizontalOrientation) {
+        return [self _setupVerticalCells:newValues firstVisibleCellIndex:firstVisibleCellIndex];
+    }
     NSRect cellRect = [self genericCellRectWithOverflow:(_showAddTabButton || cellCount > numberOfVisibleCells)];
     const NSRect generic = cellRect;
     NSMenu *overflowMenu = nil;
     const CGFloat intercellSpacing = _style.intercellSpacing;
+    const BOOL shouldBuildOverflowMenu = ([self orientation] == PSMTabBarHorizontalOrientation &&
+                                          cellCount > numberOfVisibleCells &&
+                                          (_overflowMenuNeedsRebuild || [_overflowPopUpButton menu] == nil));
+
+    [_visibleCells removeAllObjects];
+    _firstVisibleCellIndex = 0;
+    _visibleCellCount = numberOfVisibleCells;
 
     // Set up cells with frames and rects
     for (int i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
         int tabState = 0;
-        if (i < numberOfVisibleCells) {
+        const NSInteger visibleIndex = i - firstVisibleCellIndex;
+        const BOOL isVisible = (visibleIndex >= 0 && visibleIndex < numberOfVisibleCells);
+        if (isVisible) {
             // set cell frame
             if ([self orientation] == PSMTabBarHorizontalOrientation) {
-                cellRect.size.width = [[newValues objectAtIndex:i] floatValue];
+                cellRect.size.width = [[newValues objectAtIndex:visibleIndex] floatValue];
             } else {
                 cellRect.size.width = [self frame].size.width;
-                cellRect.origin.y = [[newValues objectAtIndex:i] floatValue];
+                cellRect.origin.y = [[newValues objectAtIndex:visibleIndex] floatValue];
                 cellRect.origin.x = 0;
             }
             cellRect = [_style adjustedCellRect:cellRect generic:generic];
             [cell setFrame:cellRect];
+            [_visibleCells addObject:cell];
 
             // close button tracking rect
             if ([cell hasCloseButton] && !cell.isPinned &&
@@ -1674,76 +2294,61 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 [cell setState:NSControlStateValueOn];
                 tabState |= PSMTab_SelectedMask;
                 // previous cell
-                if (i > 0) {
+                if (visibleIndex > 0) {
                     [[_cells objectAtIndex:i-1] setTabState:([(PSMTabBarCell *)[_cells objectAtIndex:i-1] tabState] | PSMTab_RightIsSelectedMask)];
                 }
                 // next cell - see below
             } else {
                 [cell setState:NSControlStateValueOff];
                 // see if prev cell was selected
-                if (i > 0) {
+                if (visibleIndex > 0) {
                     if ([[_cells objectAtIndex:i-1] state] == NSControlStateValueOn){
                         tabState |= PSMTab_LeftIsSelectedMask;
                     }
                 }
             }
             // more tab states
-            if (cellCount == 1) {
+            if (numberOfVisibleCells == 1) {
                 tabState |= PSMTab_PositionLeftMask | PSMTab_PositionRightMask | PSMTab_PositionSingleMask;
-            } else if (i == 0) {
+            } else if (visibleIndex == 0) {
                 tabState |= PSMTab_PositionLeftMask;
-            } else if (i-1 == cellCount) {
+            } else if (visibleIndex == numberOfVisibleCells - 1) {
                 tabState |= PSMTab_PositionRightMask;
             }
             [cell setTabState:tabState];
-            [cell setIsInOverflowMenu:NO];
+            if (cell.isInOverflowMenu) {
+                [cell setIsInOverflowMenu:NO];
+            }
+            [cell updateIndicators];
 
             // indicator
-            if (![[cell indicator] isHidden] && !_hideIndicators) {
-                [[cell indicator] setFrame:[cell indicatorRectForFrame:cellRect]];
-                if (![[self subviews] containsObject:[cell indicator]]) {
-                    [self addSubview:[cell indicator]];
-                    [[cell indicator] setAnimate:YES];
+            PSMProgressIndicator *indicator = cell.existingIndicator;
+            if (indicator && ![indicator isHidden] && !_hideIndicators) {
+                [indicator setFrame:[cell indicatorRectForFrame:cellRect]];
+                if (![[self subviews] containsObject:indicator]) {
+                    [self addSubview:indicator];
+                    [indicator setAnimate:YES];
                 }
             }
 
             // next...
-            cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
+            cellRect.origin.x += [[newValues objectAtIndex:visibleIndex] floatValue] + intercellSpacing;
 
         } else {
             // set up menu items
-            NSMenuItem *menuItem;
-            if (overflowMenu == nil) {
-                overflowMenu = [[[NSMenu alloc] initWithTitle:@"TITLE"] autorelease];
-                if (@available(macOS 26, *)) {
-                    // It's not a pulldown menu in 26
-                } else {
-                    [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0]; // Because the overflowPupUpButton is a pull down menu
-                }
+            if (!cell.isInOverflowMenu) {
+                [cell setIsInOverflowMenu:YES];
             }
-            NSString *title = [[cell attributedStringValue] string] ?: @"";
-            menuItem = [[NSMenuItem alloc] initWithTitle:title action:@selector(overflowMenuAction:) keyEquivalent:@""];
-            [menuItem setTarget:self];
-            [menuItem setRepresentedObject:[cell representedObject]];
-            [cell setIsInOverflowMenu:YES];
-            [[cell indicator] removeFromSuperview];
-            if ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]]) {
-                [menuItem setState:NSControlStateValueOn];
+            PSMProgressIndicator *indicator = cell.existingIndicator;
+            if ([indicator superview]) {
+                [indicator removeFromSuperview];
             }
-
-            if ([cell hasIcon]) {
-                [menuItem setImage:(NSImage *)[(id)[[cell representedObject] identifier] icon]];
-            }
-
-            if ([cell count] > 0) {
-                [menuItem setTitle:[[menuItem title] stringByAppendingFormat:@" (%d)", [cell count]]];
-            }
-
-            [overflowMenu addItem:menuItem];
-            [menuItem release];
         }
     }
 
+    if (shouldBuildOverflowMenu) {
+        overflowMenu = [self _buildOverflowMenu];
+    }
     return overflowMenu;
 }
 
@@ -1756,7 +2361,16 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         [self addSubview:_overflowPopUpButton];
     }
 
+    if (!overflowMenu && ![_overflowPopUpButton menu]) {
+        overflowMenu = [[[NSMenu alloc] initWithTitle:@"TITLE"] autorelease];
+        overflowMenu.delegate = self;
+    }
+
     if (overflowMenu) {
+        overflowMenu.delegate = self;
+        if (overflowMenu == [_overflowPopUpButton menu]) {
+            return;
+        }
         // Have a candidate for new overflow menu. Does it contain the same information as the current one?
         // If they're equal, we don't want to update the menu since this happens several times per second
         // while the user is visiting the menu. But reading it is fine.
@@ -2310,22 +2924,23 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     // trying to address the drawing artifacts for the progress indicators - hackery follows
     // this one fixes the "blanking" effect when the control hides and shows itself
     for (PSMTabBarCell *cell in _cells) {
-        [[cell indicator] setAnimate:NO];
-        [[cell indicator] setAnimate:YES];
+        PSMProgressIndicator *indicator = cell.existingIndicator;
+        [indicator setAnimate:NO];
+        [indicator setAnimate:YES];
     }
     [self setNeedsDisplay:YES];
 }
 
 - (void)viewWillStartLiveResize {
     for (PSMTabBarCell *cell in _cells) {
-        [[cell indicator] setAnimate:NO];
+        [cell.existingIndicator setAnimate:NO];
     }
     [self setNeedsDisplay:YES];
 }
 
 -(void)viewDidEndLiveResize {
     for (PSMTabBarCell *cell in _cells) {
-        [[cell indicator] setAnimate:YES];
+        [cell.existingIndicator setAnimate:YES];
     }
     [self setNeedsDisplay:YES];
 }
@@ -2391,7 +3006,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (void)windowStatusDidChange:(NSNotification *)notification {
     // hide? must readjust things if I'm not supposed to be showing
     // this block of code only runs when the app launches
-    if ([self hideForSingleTab] && ([_cells count] <= 1) && !_awakenedFromNib) {
+    if ([self hideForSingleTab] && ([self logicalTabCount] <= 1) && !_awakenedFromNib) {
         // must adjust frames now before display
         NSRect myFrame = [self frame];
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
@@ -2454,6 +3069,15 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 #pragma mark -
 #pragma mark Menu Validation
 
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    if (menu != [_overflowPopUpButton menu]) {
+        return;
+    }
+    if (_overflowMenuNeedsRebuild || menu.numberOfItems == 0) {
+        [self _populateOverflowMenu:menu];
+    }
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)sender {
     return [[self delegate] respondsToSelector:@selector(tabView:validateOverflowMenuItem:forTabViewItem:)] ?
         [[self delegate] tabView:[self tabView] validateOverflowMenuItem:sender forTabViewItem:[sender representedObject]] : YES;
@@ -2463,12 +3087,27 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 #pragma mark NSTabView Delegate
 
 - (void)tabView:(NSTabView *)aTabView willAddTabViewItem:(NSTabViewItem *)tabViewItem {
+    if (_tabViewItemUpdateBatchCount == 0 &&
+        ([self usesVerticalTabVirtualization]
+         ? ![_virtualTabViewItems containsObject:tabViewItem]
+         : ![self cellForTabViewItem:tabViewItem])) {
+        [self addTabViewItem:tabViewItem atIndex:[self logicalTabCount]];
+        ++_tabViewItemChangesHandledIncrementally;
+    }
     if ([[self delegate] respondsToSelector:@selector(tabView:willAddTabViewItem:)]){
         [[self delegate] tabView:aTabView willAddTabViewItem:tabViewItem];
     }
 }
 
 - (void)tabView:(NSTabView *)aTabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)anIndex {
+    if (_tabViewItemUpdateBatchCount == 0 &&
+        ([self usesVerticalTabVirtualization]
+         ? ![_virtualTabViewItems containsObject:tabViewItem]
+         : ![self cellForTabViewItem:tabViewItem])) {
+        const NSInteger safeIndex = MAX(0, MIN((NSInteger)[self logicalTabCount], anIndex));
+        [self addTabViewItem:tabViewItem atIndex:safeIndex];
+        ++_tabViewItemChangesHandledIncrementally;
+    }
     if ([[self delegate] respondsToSelector:@selector(tabView:willInsertTabViewItem:atIndex:)]) {
         [[self delegate] tabView:aTabView willInsertTabViewItem:tabViewItem atIndex:anIndex];
     }
@@ -2484,8 +3123,12 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (void)tabView:(NSTabView *)aTabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     // here's a weird one - this message is sent before the "aDidChangeNumberOfTabViewItems"
     // message, thus I can end up updating when there are no cells, if no tabs were (yet) present
-    if ([_cells count] > 0) {
-        [self update];
+    if ([self logicalTabCount] > 0) {
+        if ([self logicalTabCount] > 2) {
+            [self setNeedsUpdate:YES];
+        } else {
+            [self update];
+        }
     }
     if ([[self delegate] respondsToSelector:@selector(tabView:didSelectTabViewItem:)]) {
         [[self delegate] tabView:aTabView didSelectTabViewItem:tabViewItem];
@@ -2512,11 +3155,55 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)aTabView {
-    NSArray *tabItems = [_tabView tabViewItems];
+    if (_tabViewItemUpdateBatchCount > 0) {
+        _needsTabViewItemSyncAfterBatch = YES;
+    } else if (_tabViewItemChangesHandledIncrementally > 0 &&
+               [aTabView numberOfTabViewItems] == [self logicalTabCount]) {
+        --_tabViewItemChangesHandledIncrementally;
+        [self setNeedsUpdate:YES];
+    } else {
+        [self synchronizeCellsWithTabViewItems:aTabView];
+    }
+
+    // pass along for other delegate responses
+    if ([[self delegate] respondsToSelector:@selector(tabViewDidChangeNumberOfTabViewItems:)]) {
+        [[self delegate] tabViewDidChangeNumberOfTabViewItems:aTabView];
+    }
+}
+
+- (void)synchronizeCellsWithTabViewItems:(NSTabView *)aTabView {
+    NSArray *tabItems = [aTabView tabViewItems];
+    if ([self usesVerticalTabVirtualization]) {
+        NSSet *tabItemSet = [NSSet setWithArray:tabItems];
+        NSArray<NSTabViewItem *> *previousItems = [[_virtualTabViewItems copy] autorelease];
+        for (NSTabViewItem *item in previousItems) {
+            if (![tabItemSet containsObject:item]) {
+                if ([[self delegate] respondsToSelector:@selector(tabView:didCloseTabViewItem:)]) {
+                    [[self delegate] tabView:aTabView didCloseTabViewItem:item];
+                }
+                PSMTabBarCell *cell = [self materializedCellForTabViewItem:item];
+                if (cell) {
+                    [self recycleVerticalCell:cell];
+                }
+                [self removeVirtualModelForTabViewItem:item];
+            }
+        }
+
+        [_virtualTabViewItems removeAllObjects];
+        for (NSTabViewItem *item in tabItems) {
+            [_virtualTabViewItems addObject:item];
+            [self modelForTabViewItem:item create:YES];
+        }
+        _overflowMenuNeedsRebuild = YES;
+        [self setNeedsUpdate:YES];
+        return;
+    }
+
+    NSSet *tabItemSet = [NSSet setWithArray:tabItems];
     // go through cells, remove any whose representedObjects are not in [tabView tabViewItems]
     NSMutableArray *cellsToRemove = [NSMutableArray array];
     for (PSMTabBarCell *cell in _cells) {
-        if (![tabItems containsObject:[cell representedObject]]) {
+        if (![tabItemSet containsObject:[cell representedObject]]) {
             [cellsToRemove addObject:cell];
         }
     }
@@ -2529,19 +3216,34 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     }
 
     // go through tab view items, add cell for any not present
-    NSMutableArray *cellItems = [self representedTabViewItems];
+    NSMutableSet *cellItems = [NSMutableSet setWithCapacity:[_cells count]];
+    for (PSMTabBarCell *cell in _cells) {
+        NSTabViewItem *item = [cell representedObject];
+        if (item) {
+            [cellItems addObject:item];
+        }
+    }
     int i = 0;
     for (NSTabViewItem *item in tabItems) {
         if (![cellItems containsObject:item]) {
             [self addTabViewItem:item atIndex:i];
+            [cellItems addObject:item];
         }
         i++;
     }
+}
 
-    // pass along for other delegate responses
-    if ([[self delegate] respondsToSelector:@selector(tabViewDidChangeNumberOfTabViewItems:)]) {
-        [[self delegate] tabViewDidChangeNumberOfTabViewItems:aTabView];
+- (void)synchronizeTabViewItemOrder {
+    if (![self usesVerticalTabVirtualization]) {
+        return;
     }
+    [_virtualTabViewItems removeAllObjects];
+    for (NSTabViewItem *item in [_tabView tabViewItems]) {
+        [_virtualTabViewItems addObject:item];
+        [self modelForTabViewItem:item create:YES];
+    }
+    _overflowMenuNeedsRebuild = YES;
+    [self setNeedsUpdate:YES];
 }
 
 - (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tagViewItem {
@@ -2610,11 +3312,35 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex {
     NSTabViewItem *tabViewItem = [_tabView tabViewItemAtIndex:theIndex];
     assert(tabViewItem);
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell representedObject] == tabViewItem) {
-            [tabViewItem setIdentifier:newIdentifier];
-            return;
+    if ([self usesVerticalTabVirtualization]) {
+        id oldIdentifier = tabViewItem.identifier;
+        if (oldIdentifier) {
+            [_virtualModelByIdentifier removeObjectForKey:oldIdentifier];
+            [_cellByIdentifier removeObjectForKey:oldIdentifier];
         }
+        [tabViewItem setIdentifier:newIdentifier];
+        PSMTabBarItemModel *model = [self modelForTabViewItem:tabViewItem create:YES];
+        if (newIdentifier) {
+            [_virtualModelByIdentifier setObject:model forKey:newIdentifier];
+            PSMTabBarCell *cell = [self materializedCellForTabViewItem:tabViewItem];
+            if (cell) {
+                [_cellByIdentifier setObject:cell forKey:newIdentifier];
+            }
+        }
+        return;
+    }
+
+    PSMTabBarCell *cell = [self cellForTabViewItem:tabViewItem];
+    if (cell) {
+        id oldIdentifier = tabViewItem.identifier;
+        if (oldIdentifier) {
+            [_cellByIdentifier removeObjectForKey:oldIdentifier];
+        }
+        [tabViewItem setIdentifier:newIdentifier];
+        if (newIdentifier) {
+            [_cellByIdentifier setObject:cell forKey:newIdentifier];
+        }
+        return;
     }
     assert(false);
 }
@@ -2622,9 +3348,34 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 #pragma mark -
 #pragma mark Convenience
 
+- (PSMTabBarCell *)cellForTabViewItem:(NSTabViewItem *)tabViewItem {
+    if (!tabViewItem) {
+        return nil;
+    }
+    PSMTabBarCell *cachedCell = [_cellByTabViewItem objectForKey:tabViewItem];
+    if (cachedCell && cachedCell.representedObject == tabViewItem) {
+        return cachedCell;
+    }
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell representedObject] == tabViewItem) {
+            [self cacheCell:cell forTabViewItem:tabViewItem];
+            return cell;
+        }
+    }
+    return nil;
+}
+
 - (PSMTabBarCell *)cellWithIdentifier:(id)identifier {
+    if (!identifier) {
+        return nil;
+    }
+    PSMTabBarCell *cachedCell = [_cellByIdentifier objectForKey:identifier];
+    if (cachedCell && [cachedCell.representedObject identifier] == identifier) {
+        return cachedCell;
+    }
     for (PSMTabBarCell *cell in _cells) {
         if ([cell.representedObject identifier] == identifier) {
+            [self cacheCell:cell forTabViewItem:cell.representedObject];
             return cell;
         }
     }
@@ -2632,38 +3383,171 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier {
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForIdentifier:identifier];
+        if (!model || model.isProcessing == isProcessing) {
+            return;
+        }
+        model.isProcessing = isProcessing;
+        PSMTabBarCell *cell = [self materializedCellForTabViewItem:model.tabViewItem];
+        if (cell) {
+            cell.isProcessing = isProcessing;
+        } else {
+            _overflowMenuNeedsRebuild = YES;
+        }
+        return;
+    }
+
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    if (!cell) {
+        return;
+    }
     cell.isProcessing = isProcessing;
 }
 
 - (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(id)identifier {
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForIdentifier:identifier];
+        if (!model || model.progress == progress) {
+            return;
+        }
+        model.progress = progress;
+        PSMTabBarCell *cell = [self materializedCellForTabViewItem:model.tabViewItem];
+        if (!cell) {
+            _overflowMenuNeedsRebuild = YES;
+            return;
+        }
+        const BOOL hadProgressBar = ([_tabProgressBars objectForKey:cell] != nil);
+        cell.progress = progress;
+        if (!cell.isInOverflowMenu || hadProgressBar) {
+            [self syncTabProgressBars];
+        }
+        return;
+    }
+
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    if (!cell) {
+        return;
+    }
+    const BOOL hadProgressBar = ([_tabProgressBars objectForKey:cell] != nil);
     cell.progress = progress;
-    [self syncTabProgressBars];
+    if (!cell.isInOverflowMenu || hadProgressBar) {
+        [self syncTabProgressBars];
+    }
 }
 
 - (BOOL)isInOverflowMenuForTabWithIdentifier:(id)identifier {
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForIdentifier:identifier];
+        if (!model) {
+            return NO;
+        }
+        const NSInteger index = [_virtualTabViewItems indexOfObjectIdenticalTo:model.tabViewItem];
+        return (index == NSNotFound ||
+                index < _firstVisibleCellIndex ||
+                index >= _firstVisibleCellIndex + _visibleCellCount);
+    }
+
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    if (!cell) {
+        return NO;
+    }
+    if ([self orientation] != PSMTabBarHorizontalOrientation) {
+        const NSInteger index = [_cells indexOfObjectIdenticalTo:cell];
+        return (index == NSNotFound ||
+                index < _firstVisibleCellIndex ||
+                index >= _firstVisibleCellIndex + _visibleCellCount);
+    }
     return cell.isInOverflowMenu;
 }
 
 - (void)graphicDidChangeForTabWithIdentifier:(id)identifier {
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForIdentifier:identifier];
+        if (!model) {
+            return;
+        }
+        PSMTabBarCell *cell = [self materializedCellForTabViewItem:model.tabViewItem];
+        if (!cell) {
+            _overflowMenuNeedsRebuild = YES;
+            return;
+        }
+        [self setNeedsDisplayInRect:cell.frame];
+        return;
+    }
+
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    if (!cell) {
+        return;
+    }
+    if (cell.isInOverflowMenu) {
+        _overflowMenuNeedsRebuild = YES;
+        return;
+    }
     [self setNeedsDisplayInRect:cell.frame];
 }
 
 - (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier {
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForIdentifier:identifier];
+        if (!model) {
+            return;
+        }
+        const BOOL hasIcon = (icon != nil);
+        if (model.hasIcon == hasIcon) {
+            return;
+        }
+        model.hasIcon = hasIcon;
+        PSMTabBarCell *cell = [self materializedCellForTabViewItem:model.tabViewItem];
+        if (cell) {
+            cell.hasIcon = hasIcon;
+        } else {
+            _overflowMenuNeedsRebuild = YES;
+        }
+        return;
+    }
+
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
-    cell.hasIcon = (icon != nil);
+    if (!cell) {
+        return;
+    }
+    const BOOL hasIcon = (icon != nil);
+    if (cell.hasIcon == hasIcon) {
+        return;
+    }
+    cell.hasIcon = hasIcon;
+    if (cell.isInOverflowMenu) {
+        _overflowMenuNeedsRebuild = YES;
+    }
 }
 
 - (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier {
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForIdentifier:identifier];
+        if (!model || model.objectCount == objectCount) {
+            return;
+        }
+        model.objectCount = objectCount;
+        PSMTabBarCell *cell = [self materializedCellForTabViewItem:model.tabViewItem];
+        if (cell) {
+            cell.count = (int)objectCount;
+        } else {
+            _overflowMenuNeedsRebuild = YES;
+        }
+        return;
+    }
+
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    if (!cell || cell.count == objectCount) {
+        return;
+    }
     cell.count = objectCount;
+    if (cell.isInOverflowMenu) {
+        _overflowMenuNeedsRebuild = YES;
+    }
 }
 
 - (void)initializeStateForCell:(PSMTabBarCell *)cell {
-    [[cell indicator] setHidden:YES];
     [cell setHasIcon:NO];
     [cell setCount:0];
 }
@@ -2672,10 +3556,18 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     // bind my string value to the label on the represented tab
     // cell.title <- item.label
     [cell bind:@"title" toObject:item withKeyPath:@"label" options:nil];
+    NSString *label = item.label ?: @"";
+    if (label.length > 0 && cell.stringValue.length == 0) {
+        [cell setStringValue:label];
+    }
     [_delegate tabView:_tabView updateStateForTabViewItem:item];
 }
 
 - (NSMutableArray *)representedTabViewItems {
+    if ([self usesVerticalTabVirtualization]) {
+        return [NSMutableArray arrayWithArray:_virtualTabViewItems];
+    }
+
     NSMutableArray *temp = [NSMutableArray arrayWithCapacity:[_cells count]];
     for (PSMTabBarCell *cell in _cells) {
         if ([cell representedObject]) {
@@ -2685,6 +3577,42 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     return temp;
 }
 
+- (NSInteger)tabViewIndexForCell:(PSMTabBarCell *)cell {
+    if (!cell || cell.isPlaceholder) {
+        return NSNotFound;
+    }
+    NSTabViewItem *item = cell.representedObject;
+    if (!item) {
+        return NSNotFound;
+    }
+    if ([self usesVerticalTabVirtualization]) {
+        return [_virtualTabViewItems indexOfObjectIdenticalTo:item];
+    }
+    return [_cells indexOfObjectIdenticalTo:cell];
+}
+
+- (NSInteger)tabViewInsertionIndexForMaterializedCellIndex:(NSInteger)cellIndex {
+    if (![self usesVerticalTabVirtualization]) {
+        return cellIndex;
+    }
+    if (cellIndex == (NSInteger)NSNotFound || cellIndex < 0) {
+        return NSNotFound;
+    }
+    NSInteger insertionIndex = _firstVisibleCellIndex;
+    const NSInteger limit = MIN(cellIndex, (NSInteger)_cells.count - 1);
+    for (NSInteger i = 0; i <= limit; i++) {
+        PSMTabBarCell *cell = _cells[i];
+        if (i == cellIndex) {
+            return MAX(0, MIN((NSInteger)_virtualTabViewItems.count, insertionIndex));
+        }
+        if (cell.isPlaceholder) {
+            continue;
+        }
+        insertionIndex++;
+    }
+    return MAX(0, MIN((NSInteger)_virtualTabViewItems.count, insertionIndex));
+}
+
 - (id)cellForPoint:(NSPoint)point
          cellFrame:(NSRectPointer)outFrame {
     if ([self orientation] == PSMTabBarHorizontalOrientation &&
@@ -2692,10 +3620,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         return nil;
     }
 
-    int i, cnt = [_cells count];
-    for (i = 0; i < cnt; i++) {
-        PSMTabBarCell *cell = [_cells objectAtIndex:i];
-
+    for (PSMTabBarCell *cell in [self visibleCells]) {
         if (NSPointInRect(point, [cell frame])) {
             if (outFrame) {
                 *outFrame = [cell frame];
@@ -2708,23 +3633,12 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (PSMTabBarCell *)lastVisibleTab
 {
-    int i, cellCount = [_cells count];
-    for(i = 0; i < cellCount; i++){
-        if ([[_cells objectAtIndex:i] isInOverflowMenu])
-            return [_cells objectAtIndex:(i-1)];
-    }
-    return [_cells objectAtIndex:(cellCount - 1)];
+    return [[self visibleCells] lastObject];
 }
 
 - (int)numberOfVisibleTabs
 {
-    int i, cellCount = [_cells count];
-    for(i = 0; i < cellCount; i++){
-        if ([[_cells objectAtIndex:i] isInOverflowMenu]) {
-            return i;
-        }
-    }
-    return cellCount;
+    return (int)[[self visibleCells] count];
 }
 
 #pragma mark -
@@ -2736,8 +3650,13 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (NSArray*)accessibilityChildren {
     NSMutableArray *childElements = [NSMutableArray array];
-    for (PSMTabBarCell *cell in [_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]) {
-        [childElements addObject:cell.element];
+    NSArray<PSMTabBarCell *> *cells = ([self orientation] == PSMTabBarHorizontalOrientation
+                                       ? _cells
+                                       : [self visibleCells]);
+    for (PSMTabBarCell *cell in cells) {
+        if (!cell.isInOverflowMenu) {
+            [childElements addObject:cell.element];
+        }
     }
     if (![_overflowPopUpButton isHidden]) {
         [childElements addObject:_overflowPopUpButton];
@@ -2749,6 +3668,14 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (NSArray*)accessibilityTabs {
+    if ([self usesVerticalTabVirtualization]) {
+        return [[self accessibilityChildren] filteredArrayUsingPredicate:
+                [NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
+            (void)bindings;
+            return [evaluatedObject isKindOfClass:[NSAccessibilityElement class]];
+        }]];
+    }
+
     NSMutableArray *tabElements = [NSMutableArray array];
     for (PSMTabBarCell *cell in _cells) {
         [tabElements addObject:cell.element];
@@ -2770,39 +3697,79 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *)tabViewItem {
     BOOL updated = NO;
 
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell representedObject] == tabViewItem) {
-            if ([cell tabColor] != aColor) {
-                updated = YES;
-                [cell setTabColor:aColor];
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForTabViewItem:tabViewItem create:YES];
+        if (model.tabColor != aColor) {
+            model.tabColor = aColor;
+            updated = YES;
+        }
+        PSMTabBarCell *cell = [self materializedCellForTabViewItem:tabViewItem];
+        if (cell && [cell tabColor] != aColor) {
+            [cell setTabColor:aColor];
+            updated = YES;
+        }
+        if (updated) {
+            if (cell) {
+                [self setNeedsUpdate:YES];
+            } else {
+                _overflowMenuNeedsRebuild = YES;
             }
         }
+        return;
+    }
+
+    PSMTabBarCell *cell = [self cellForTabViewItem:tabViewItem];
+    if (!cell) {
+        return;
+    }
+    if ([cell tabColor] != aColor) {
+        updated = YES;
+        [cell setTabColor:aColor];
     }
 
     if (updated) {
-        [self update: NO];
+        if (cell.isInOverflowMenu && [self orientation] != PSMTabBarHorizontalOrientation) {
+            return;
+        } else {
+            [self setNeedsUpdate:YES];
+        }
     }
 }
 
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem {
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell representedObject] == tabViewItem) {
-            return [cell tabColor];
-        }
+    if ([self usesVerticalTabVirtualization]) {
+        return [[self modelForTabViewItem:tabViewItem create:NO] tabColor];
     }
-    return nil;
+    return [[self cellForTabViewItem:tabViewItem] tabColor];
 }
 
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem {
     BOOL updated = NO;
 
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell representedObject] == tabViewItem) {
-            if ([cell isPinned] != pinned) {
-                updated = YES;
-                [cell setIsPinned:pinned];
-            }
+    if ([self usesVerticalTabVirtualization]) {
+        PSMTabBarItemModel *model = [self modelForTabViewItem:tabViewItem create:YES];
+        if (model.isPinned != pinned) {
+            model.isPinned = pinned;
+            updated = YES;
         }
+        PSMTabBarCell *cell = [self materializedCellForTabViewItem:tabViewItem];
+        if (cell && [cell isPinned] != pinned) {
+            [cell setIsPinned:pinned];
+            updated = YES;
+        }
+        if (updated) {
+            [self update:YES];
+        }
+        return;
+    }
+
+    PSMTabBarCell *cell = [self cellForTabViewItem:tabViewItem];
+    if (!cell) {
+        return;
+    }
+    if ([cell isPinned] != pinned) {
+        updated = YES;
+        [cell setIsPinned:pinned];
     }
 
     if (updated) {
@@ -2811,12 +3778,10 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem {
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell representedObject] == tabViewItem) {
-            return [cell isPinned];
-        }
+    if ([self usesVerticalTabVirtualization]) {
+        return [[self modelForTabViewItem:tabViewItem create:NO] isPinned];
     }
-    return NO;
+    return [[self cellForTabViewItem:tabViewItem] isPinned];
 }
 
 - (void)modifierChanged:(NSNotification *)aNotification {
@@ -2872,6 +3837,36 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toTabBar:(PSMTabBarControl *)destinationTabBar atIndex:(NSInteger)destinationIndex {
     assert(destinationTabBar != self);
+    if ([self usesVerticalTabVirtualization] || [destinationTabBar usesVerticalTabVirtualization]) {
+        NSTabViewItem *movingItem = [self.tabView tabViewItemAtIndex:sourceIndex];
+        [movingItem retain];
+
+        if ([self.delegate respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
+            [self.delegate tabView:self.tabView
+               willDropTabViewItem:movingItem
+                          inTabBar:destinationTabBar];
+        }
+
+        [self.tabView removeTabViewItem:movingItem];
+        [[destinationTabBar tabView] insertTabViewItem:movingItem atIndex:destinationIndex];
+        [[destinationTabBar tabView] selectTabViewItem:movingItem];
+
+        if ([self.delegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
+            [self.delegate tabView:self.tabView
+                didDropTabViewItem:movingItem
+                          inTabBar:destinationTabBar];
+        }
+        if ([self.tabView numberOfTabViewItems] == 0 &&
+            [self.delegate respondsToSelector:@selector(tabView:closeWindowForLastTabViewItem:)]) {
+            [self.delegate tabView:self.tabView closeWindowForLastTabViewItem:movingItem];
+        }
+
+        [self setNeedsUpdate:YES];
+        [destinationTabBar setNeedsUpdate:YES];
+        [movingItem release];
+        return;
+    }
+
     PSMTabBarCell *movingCell = _cells[sourceIndex];
     [destinationTabBar.cells insertObject:movingCell atIndex:destinationIndex];
     [movingCell setControlView:destinationTabBar];

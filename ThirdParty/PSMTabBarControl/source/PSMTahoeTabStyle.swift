@@ -608,7 +608,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         clippingPath(rect: rect).fill()
         NSGraphicsContext.restoreGraphicsState()
     }
-    
+
     class var backgroundColor: NSColor {
         NSColor(white: 0.9, alpha: 1.0)
     }
@@ -655,7 +655,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return
         }
         // draw cells
-        var drawableCells = ((bar.cells() as? [PSMTabBarCell]) ?? []).filter { cell in
+        var drawableCells = ((bar.visibleCells() as? [PSMTabBarCell]) ?? []).filter { cell in
             return !cell.isInOverflowMenu && NSIntersectsRect(cell.frame.insetBy(dx: -1, dy: -1), clipRect)
         }
 
@@ -685,7 +685,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             for i in 0..<(sorted.count - 1) {
                 drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
             }
-            if let selectedCell = drawableCells.first, selectedCell.state == .on {
+            if let selectedCell = drawableCells.last, selectedCell.state == .on {
                 selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
             }
         }

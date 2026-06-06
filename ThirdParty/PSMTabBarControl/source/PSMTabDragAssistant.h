@@ -57,7 +57,7 @@
 
 // Animation
 - (void)animateDrag:(NSTimer *)timer;
-- (void)calculateDragAnimationForTabBar:(PSMTabBarControl *)control;
+- (BOOL)calculateDragAnimationForTabBar:(PSMTabBarControl *)control;
 
 // Placeholder
 - (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control withDraggedCell:(PSMTabBarCell *)cell;
