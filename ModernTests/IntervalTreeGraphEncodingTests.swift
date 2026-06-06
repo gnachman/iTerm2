@@ -781,10 +781,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: VT100RemoteHost Round-Trip
 
     func testVT100RemoteHostRoundTrip() {
-        guard let remoteHost = VT100RemoteHost(username: "testuser", hostname: "testhost.example.com") else {
-            XCTFail("Failed to create VT100RemoteHost")
-            return
-        }
+        let remoteHost = VT100RemoteHost(username: "testuser", hostname: "testhost.example.com")
 
         verifyRoundTrip(remoteHost, interval: Interval(location: 600, length: 10)) { original, restored in
             XCTAssertEqual(restored.username, original.username, "username should be preserved")
@@ -859,11 +856,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Create two VT100RemoteHost objects with identical content
         // This is a realistic scenario - multiple prompts showing the same remote host
-        guard let host1 = VT100RemoteHost(username: "admin", hostname: "server.example.com"),
-              let host2 = VT100RemoteHost(username: "admin", hostname: "server.example.com") else {
-            XCTFail("Failed to create VT100RemoteHost objects")
-            return
-        }
+        let host1 = VT100RemoteHost(username: "admin", hostname: "server.example.com")
+        let host2 = VT100RemoteHost(username: "admin", hostname: "server.example.com")
 
         // Each object should have a unique GUID even though content is identical
         XCTAssertNotEqual(host1.stableIdentifier, host2.stableIdentifier,
@@ -914,14 +908,11 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let tree = IntervalTree()
 
         // Create two hosts at host1.com
-        guard let hostA1 = VT100RemoteHost(username: "user", hostname: "host1.com"),
-              let hostA2 = VT100RemoteHost(username: "user", hostname: "host1.com"),
-              // And two hosts at host2.com
-              let hostB1 = VT100RemoteHost(username: "user", hostname: "host2.com"),
-              let hostB2 = VT100RemoteHost(username: "user", hostname: "host2.com") else {
-            XCTFail("Failed to create VT100RemoteHost objects")
-            return
-        }
+        let hostA1 = VT100RemoteHost(username: "user", hostname: "host1.com")
+        let hostA2 = VT100RemoteHost(username: "user", hostname: "host1.com")
+        // And two hosts at host2.com
+        let hostB1 = VT100RemoteHost(username: "user", hostname: "host2.com")
+        let hostB2 = VT100RemoteHost(username: "user", hostname: "host2.com")
 
         tree.add(hostA1, with: Interval(location: 100, length: 50))
         tree.add(hostA2, with: Interval(location: 200, length: 50))
@@ -973,10 +964,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 3, imageCodes: [], width: 80)
 
-        guard let remoteHost = VT100RemoteHost(username: "user", hostname: "host") else {
-            XCTFail("Failed to create VT100RemoteHost")
-            return
-        }
+        let remoteHost = VT100RemoteHost(username: "user", hostname: "host")
 
         let portholeMark = PortholeMark("porthole-all-test", width: 80)
 
