@@ -2914,6 +2914,35 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+// When a fold mark is removed FOR GOOD (Clear Buffer, scrollback overflow) -
+// as opposed to unfolded - any portholes it stashed in its savedITOs will
+// never be unhidden, so their hidden views and (leaked) marks must be
+// reclaimed. Call this ONLY from genuinely-permanent removal sites. It must
+// NOT be wired into -didRemoveObjectFromIntervalTree:, which is shared with
+// temporary remove+re-add patterns (e.g. the marksToMove shift in
+// -reallyClearFromAbsoluteLineToEnd:): reclaiming there would destroy the
+// portholes of a fold that is about to be re-added, and the later unfold would
+// find the registry entry gone and silently lose the content. (Unfold itself
+// removes the fold mark via -[mutableIntervalTree bulkRemoveObjects:], which
+// reaches neither this method nor -didRemoveObjectFromIntervalTree:.)
+- (void)reclaimPortholesCarriedByPermanentlyRemovedFold:(id<IntervalTreeObject>)obj {
+    iTermFoldMark *foldMark = [iTermFoldMark castFrom:obj];
+    if (!foldMark) {
+        return;
+    }
+    for (iTermSavedIntervalTreeObject *saved in foldMark.savedITOs) {
+        id<IntervalTreeObject> carried = saved.object;
+        if (iTermIntervalTreeObjectTypeForObject(carried) != iTermIntervalTreeObjectTypePorthole) {
+            continue;
+        }
+        id<IntervalTreeImmutableObject> doppelganger = carried.doppelganger;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> _Nonnull observer) {
+            [observer intervalTreeDidPermanentlyRemoveHiddenObject:doppelganger
+                                                            ofType:iTermIntervalTreeObjectTypePorthole];
+        } name:@"fold destroyed: reclaim carried porthole"];
+    }
+}
+
 - (void)willRemoveScreenMarksFromIntervalTree:(NSArray<VT100ScreenMark *> *)objects {
     const long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
     NSArray<NSNumber *> *keys = [objects mapWithBlock:^id _Nullable(VT100ScreenMark * _Nonnull obj) {
@@ -2969,6 +2998,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         const BOOL removed = [self.mutableIntervalTree removeObject:obj];
         assert(removed);
         [self didRemoveObjectFromIntervalTree:obj formerInterval:interval];
+        // This is a permanent removal (its sole caller drops marksToRemove for
+        // good while returning marksToMove to be re-added elsewhere), so a fold
+        // removed here is gone: reclaim any portholes it carried.
+        [self reclaimPortholesCarriedByPermanentlyRemovedFold:obj];
     }];
 }
 
@@ -3147,6 +3180,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             DLog(@"remove innaccessible objects: %@", obj);
             const BOOL removed = [self removeObjectFromIntervalTree:obj];
             assert(removed);
+            // Scrolled into the dustbin: a fold removed here is gone for good,
+            // so reclaim any portholes it carried.
+            [self reclaimPortholesCarriedByPermanentlyRemovedFold:obj];
         }
     }
     DLog(@"End");
@@ -4529,6 +4565,26 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     [self addSavedIntervalTreeObjects:savedITOs baseLine:range.start.y];
 
+    // Re-show any porthole views that were hidden when this region was folded.
+    // See the matching -intervalTreeDidHideObject: site in -reallyReplaceRange:.
+    for (iTermSavedIntervalTreeObject *saved in savedITOs) {
+        id<IntervalTreeObject> obj = saved.object;
+        if (iTermIntervalTreeObjectTypeForObject(obj) != iTermIntervalTreeObjectTypePorthole) {
+            continue;
+        }
+        if (!obj.entry.interval) {
+            // Wasn't actually re-added (e.g. it had scrolled into the dustbin).
+            continue;
+        }
+        id<IntervalTreeImmutableObject> doppelganger = obj.doppelganger;
+        const long long line = [self absCoordRangeForInterval:obj.entry.interval].start.y;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> _Nonnull observer) {
+            [observer intervalTreeDidUnhideObject:doppelganger
+                                           ofType:iTermIntervalTreeObjectTypePorthole
+                                           onLine:line];
+        } name:@"unfold: unhide porthole"];
+    }
+
     if (commandMark && commandMarkInterval) {
         DLog(@"Add command mark %@ back at %@", commandMark, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:commandMarkInterval]));
         [self.mutableIntervalTree addObject:commandMark withInterval:commandMarkInterval];
@@ -4886,6 +4942,27 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                       startLine:absRange.start.y
                                                                screenCharArrays:removedSCAs
                                                                           width:self.width];
+    }
+    // A porthole inside a fold keeps its mark alive (it is retained by the
+    // fold's savedITOs and restored on unfold), so -prunePortholes can never
+    // free its view via the registry. The bulkRemoveObjects: below also skips
+    // the per-object removal hook, so nothing would otherwise tell the view to
+    // go away. Hide the porthole views here; -replaceMark:withLines:savedITOs:
+    // fires the matching unhide on unfold. Scoped to folds so porthole add /
+    // resize (which also pass through here) are unaffected.
+    if (reason == iTermLinesShiftedReasonFold) {
+        for (id<IntervalTreeObject> obj in objectsToRemove) {
+            if (iTermIntervalTreeObjectTypeForObject(obj) != iTermIntervalTreeObjectTypePorthole) {
+                continue;
+            }
+            id<IntervalTreeImmutableObject> doppelganger = obj.doppelganger;
+            const long long line = [self absCoordRangeForInterval:obj.entry.interval].start.y;
+            [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> _Nonnull observer) {
+                [observer intervalTreeDidHideObject:doppelganger
+                                             ofType:iTermIntervalTreeObjectTypePorthole
+                                             onLine:line];
+            } name:@"fold: hide porthole"];
+        }
     }
     [self.mutableIntervalTree bulkRemoveObjects:objectsToRemove];
 

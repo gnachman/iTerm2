@@ -1351,3 +1351,8 @@ Bug Fixes:
   order now tracks panes in a way that
   survives a restart and other in-place
   session swaps.
+- Fix a bug where Fold All and Clear
+  Buffer left inline views (such as
+  imgcat images) behind. Folded views
+  are now hidden and restored on
+  unfold.

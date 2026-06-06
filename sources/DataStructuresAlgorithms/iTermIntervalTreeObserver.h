@@ -32,6 +32,11 @@ typedef NS_ENUM(NSUInteger, iTermIntervalTreeObjectType) {
 - (void)intervalTreeDidHideObject:(id<IntervalTreeImmutableObject>)object
                            ofType:(iTermIntervalTreeObjectType)type
                            onLine:(NSInteger)line;
+// A hidden object (such as a porthole inside a fold) had its container
+// permanently removed - via Clear Buffer or scrollback overflow rather than
+// unfold - so it will never be unhidden and must be reclaimed.
+- (void)intervalTreeDidPermanentlyRemoveHiddenObject:(id<IntervalTreeImmutableObject>)object
+                                              ofType:(iTermIntervalTreeObjectType)type;
 - (void)intervalTreeVisibleRangeDidChange;
 - (void)intervalTreeDidMoveObjects:(NSArray<id<IntervalTreeImmutableObject>> *)objects;
 @end

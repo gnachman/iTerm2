@@ -22830,6 +22830,17 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
     [self addMarkToMinimapOfType:type onLine:line];
 }
 
+- (void)intervalTreeDidPermanentlyRemoveHiddenObject:(id<IntervalTreeImmutableObject>)object
+                                              ofType:(iTermIntervalTreeObjectType)type {
+    DLog(@"Permanently remove hidden %@", object);
+    if (type == iTermIntervalTreeObjectTypePorthole) {
+        PortholeMark *portholeMark = [PortholeMark castFrom:object];
+        if (portholeMark) {
+            [_textview forciblyRemovePortholeWithUniqueIdentifier:portholeMark.uniqueIdentifier];
+        }
+    }
+}
+
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
                                    onLine:(NSInteger)line {
     DLog(@"Remove at %@", @(line));
