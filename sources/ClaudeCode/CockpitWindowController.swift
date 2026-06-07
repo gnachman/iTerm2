@@ -332,6 +332,11 @@ fileprivate final class CockpitRow {
     let identity: Identity
     let kind: Kind
     var title: String
+    // Secondary line shown under the title in a smaller, dimmer font.
+    // Only populated for session rows in byStatus mode (the only place
+    // a session's live detail string is surfaced); nil everywhere else,
+    // which the cell renders as a plain single-line row.
+    var detail: String?
     var children: [CockpitRow] = []
 
     init(identity: Identity, kind: Kind, title: String) {
@@ -437,11 +442,53 @@ fileprivate final class CockpitAlwaysEmphasizedRowView: NSTableRowView {
 // blue selection background).
 @objc(iTermCockpitTableCellView)
 fileprivate final class CockpitTableCellView: NSTableCellView {
+    // The title uses the table's appearance font (same as before this
+    // cell gained a detail line). The detail line is one size smaller
+    // and dimmer so it reads as subordinate to the title.
+    static let detailFont = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+    // Gap between the title baseline box and the detail line.
+    private static let detailSpacing: CGFloat = 1
+    // Vertical breathing room above the title and below the detail.
+    private static let verticalPadding: CGFloat = 8
+
+    // Row height the outline view should use for a row with or without
+    // a detail line. Single-line rows keep the original 24pt look.
+    static func rowHeight(hasDetail: Bool) -> CGFloat {
+        let layoutManager = NSLayoutManager()
+        let titleHeight = ceil(layoutManager.defaultLineHeight(
+            for: NSFont.systemFont(ofSize: NSFont.systemFontSize)))
+        if !hasDetail {
+            return max(24, titleHeight + verticalPadding)
+        }
+        let detailHeight = ceil(layoutManager.defaultLineHeight(for: detailFont))
+        return titleHeight + detailSpacing + detailHeight + verticalPadding
+    }
+
     var cockpitTitle: String = "" {
         didSet {
             if cockpitTitle != oldValue { applyText() }
         }
     }
+
+    // Raw markdown for the detail line. Rendering is cached in
+    // renderedDetail so we don't re-parse markdown on every selection or
+    // appearance change.
+    var cockpitDetail: String? {
+        didSet {
+            if cockpitDetail != oldValue {
+                renderedDetail = cockpitDetail.flatMap(Self.renderDetailMarkdown)
+                detailField?.isHidden = (renderedDetail == nil)
+                applyText()
+                needsLayout = true
+            }
+        }
+    }
+
+    private var detailField: NSTextField?
+    private var renderedDetail: NSAttributedString?
+
+    // Lay out top-down so the title sits above the detail line.
+    override var isFlipped: Bool { true }
 
     override var backgroundStyle: NSView.BackgroundStyle {
         get { return super.backgroundStyle }
@@ -458,17 +505,107 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        installDetailField()
         applyText()
     }
 
-    private func applyText() {
+    // The title field comes from the xib; the detail field is added
+    // programmatically. Both are positioned by hand in layout() (no auto
+    // layout), so opt them out of constraint generation and clear the
+    // xib's autoresizing so our frames are authoritative.
+    private func installDetailField() {
+        guard detailField == nil else { return }
+        textField?.translatesAutoresizingMaskIntoConstraints = true
+        textField?.autoresizingMask = []
+        let field = NSTextField(labelWithString: "")
+        field.font = Self.detailFont
+        field.lineBreakMode = .byTruncatingTail
+        field.maximumNumberOfLines = 1
+        field.isHidden = true
+        field.translatesAutoresizingMaskIntoConstraints = true
+        field.autoresizingMask = []
+        addSubview(field)
+        detailField = field
+    }
+
+    override func layout() {
+        super.layout()
         guard let textField else { return }
-        let color: NSColor = (backgroundStyle == .emphasized)
-            ? .alternateSelectedControlTextColor
-            : .labelColor
-        textField.attributedStringValue = NSAttributedString(
-            string: cockpitTitle,
-            attributes: [.foregroundColor: color])
+        let width = bounds.width
+        let titleHeight = ceil(textField.intrinsicContentSize.height)
+        if let detailField, !detailField.isHidden {
+            let detailHeight = ceil(detailField.intrinsicContentSize.height)
+            let total = titleHeight + Self.detailSpacing + detailHeight
+            let top = max(0, (bounds.height - total) / 2)
+            textField.frame = NSRect(x: 0, y: top, width: width, height: titleHeight)
+            detailField.frame = NSRect(x: 0,
+                                       y: top + titleHeight + Self.detailSpacing,
+                                       width: width,
+                                       height: detailHeight)
+        } else {
+            textField.frame = NSRect(x: 0,
+                                     y: (bounds.height - titleHeight) / 2,
+                                     width: width,
+                                     height: titleHeight)
+        }
+    }
+
+    private func applyText() {
+        let emphasized = (backgroundStyle == .emphasized)
+        if let textField {
+            let color: NSColor = emphasized
+                ? .alternateSelectedControlTextColor
+                : .labelColor
+            textField.attributedStringValue = NSAttributedString(
+                string: cockpitTitle,
+                attributes: [.foregroundColor: color])
+        }
+        if let detailField, let renderedDetail {
+            if emphasized {
+                // On the blue selection fill, force the whole detail
+                // line (including any markdown links) to the selected
+                // text color so it stays legible.
+                let copy = renderedDetail.mutableCopy() as! NSMutableAttributedString
+                copy.addAttribute(.foregroundColor,
+                                  value: NSColor.alternateSelectedControlTextColor,
+                                  range: NSRange(location: 0, length: copy.length))
+                detailField.attributedStringValue = copy
+            } else {
+                detailField.attributedStringValue = renderedDetail
+            }
+        }
+    }
+
+    // Render the markdown detail string into a compact, single-line
+    // attributed string sized for the detail row. The shared markdown
+    // renderer formats at the system font size with the body in
+    // secondaryLabelColor; we scale every run down to the detail size
+    // (preserving bold / italic / code traits via the font descriptor)
+    // and force tail truncation so a long detail stays on one line.
+    static func renderDetailMarkdown(_ markdown: String) -> NSAttributedString? {
+        let trimmed = markdown.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let rendered = AttributedStringForGPTMarkdown(trimmed,
+                                                      linkColor: .linkColor,
+                                                      textColor: .secondaryLabelColor,
+                                                      didCopy: nil)
+        let result = rendered.mutableCopy() as! NSMutableAttributedString
+        // Drop any trailing newline the markdown renderer appended so it
+        // doesn't push a phantom second line into the height.
+        while let last = result.string.last, last.isNewline {
+            result.deleteCharacters(in: NSRange(location: result.length - 1, length: 1))
+        }
+        let fullRange = NSRange(location: 0, length: result.length)
+        let targetSize = NSFont.smallSystemFontSize
+        result.enumerateAttribute(.font, in: fullRange) { value, range, _ in
+            guard let font = value as? NSFont else { return }
+            let scaled = NSFont(descriptor: font.fontDescriptor, size: targetSize) ?? font
+            result.addAttribute(.font, value: scaled, range: range)
+        }
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byTruncatingTail
+        result.addAttribute(.paragraphStyle, value: paragraph, range: fullRange)
+        return result
     }
 }
 
@@ -582,7 +719,16 @@ extension CockpitWindowController: NSOutlineViewDataSource, NSOutlineViewDelegat
             return nil
         }
         cell.cockpitTitle = row.title
+        cell.cockpitDetail = row.detail
         return cell
+    }
+
+    // Rows carrying a detail line are taller so the smaller second line
+    // fits under the title. Everything else keeps the original height.
+    func outlineView(_ outlineView: NSOutlineView,
+                     heightOfRowByItem item: Any) -> CGFloat {
+        let hasDetail = ((item as? CockpitRow)?.detail?.isEmpty == false)
+        return CockpitTableCellView.rowHeight(hasDetail: hasDetail)
     }
 }
 
@@ -883,6 +1029,10 @@ extension CockpitWindowController {
                               kind: .session(guid: session.guid),
                               title: title)
             row.title = title
+            // Detail is a byStatus-only affordance; clear any value a
+            // cached row carried over from a previous byStatus build so
+            // it doesn't leak into byWindow / byWorkgroup rows.
+            row.detail = nil
             row.children = []
             freshCache[identity] = row
             return row
@@ -970,6 +1120,7 @@ extension CockpitWindowController {
                               kind: .session(guid: session.guid),
                               title: title)
             row.title = title
+            row.detail = cockpitDetailText(for: session)
             row.children = []
             freshCache[identity] = row
             bucketed[state, default: []].append(row)
@@ -1087,6 +1238,7 @@ extension CockpitWindowController {
         var parentOf: [CockpitRow.Identity: CockpitRow.Identity] = [:]
         var indexOf: [CockpitRow.Identity: Int] = [:]
         var titleOf: [CockpitRow.Identity: String] = [:]
+        var detailOf: [CockpitRow.Identity: String?] = [:]
     }
 
     private func snapshotTreeShape(of roots: [CockpitRow]) -> TreeShape {
@@ -1095,6 +1247,7 @@ extension CockpitWindowController {
             shape.all.insert(root.identity)
             shape.indexOf[root.identity] = i
             shape.titleOf[root.identity] = root.title
+            shape.detailOf[root.identity] = root.detail
             snapshotChildren(of: root, into: &shape)
         }
         return shape
@@ -1106,6 +1259,7 @@ extension CockpitWindowController {
             shape.parentOf[child.identity] = row.identity
             shape.indexOf[child.identity] = i
             shape.titleOf[child.identity] = child.title
+            shape.detailOf[child.identity] = child.detail
             snapshotChildren(of: child, into: &shape)
         }
     }
@@ -1197,7 +1351,6 @@ extension CockpitWindowController {
         }
 
         outlineView.beginUpdates()
-        defer { outlineView.endUpdates() }
 
         // Pre-batch parent rows: for removes, the parent is either nil
         // (root) or in `common` (we filtered removed parents). Look up
@@ -1220,13 +1373,49 @@ extension CockpitWindowController {
                                     withAnimation: [])
         }
 
-        // Title-only changes (session rename, group "· N" count, late
-        // window-title resolution) reuse the existing row.
-        for id in common where old.titleOf[id] != new.titleOf[id] {
-            if let row = rowCache[id] {
-                outlineView.reloadItem(row)
+        // Title- or detail-only changes (session rename, group "· N"
+        // count, late window-title resolution, or a session publishing /
+        // clearing its detail line) reuse the existing row. Track rows
+        // whose detail line appeared or disappeared: that flips the row
+        // height, which reloadItem alone doesn't recompute.
+        var heightChangedIdentities: [CockpitRow.Identity] = []
+        for id in common {
+            let titleChanged = old.titleOf[id] != new.titleOf[id]
+            let detailChanged = old.detailOf[id] != new.detailOf[id]
+            guard titleChanged || detailChanged, let row = rowCache[id] else {
+                continue
+            }
+            outlineView.reloadItem(row)
+            if detailChanged,
+               Self.hasDetail(old.detailOf[id]) != Self.hasDetail(new.detailOf[id]) {
+                heightChangedIdentities.append(id)
             }
         }
+
+        outlineView.endUpdates()
+
+        // noteHeightOfRows needs final row indexes, so resolve them after
+        // the structural batch has settled.
+        if !heightChangedIdentities.isEmpty {
+            var indexes = IndexSet()
+            for id in heightChangedIdentities {
+                guard let row = rowCache[id] else { continue }
+                let rowIndex = outlineView.row(forItem: row)
+                if rowIndex >= 0 {
+                    indexes.insert(rowIndex)
+                }
+            }
+            if !indexes.isEmpty {
+                outlineView.noteHeightOfRows(withIndexesChanged: indexes)
+            }
+        }
+    }
+
+    // TreeShape.detailOf yields a doubly-optional (dictionary lookup of
+    // an optional value); flatten it to "is there a non-empty detail."
+    private static func hasDetail(_ value: String??) -> Bool {
+        guard let inner = value, let detail = inner else { return false }
+        return !detail.isEmpty
     }
 
     private func sessionState(for session: PTYSession) -> SessionState {
@@ -1246,6 +1435,16 @@ extension CockpitWindowController {
             return prefix
         }
         return "\(prefix): \(raw)"
+    }
+
+    // The live "detail" string a session publishes via its tab status
+    // (OSC 21337 detail=…). Empty / missing reads as no detail so the
+    // row stays single-line.
+    private func cockpitDetailText(for session: PTYSession) -> String? {
+        guard let detail = session.tabStatus?.detailText, !detail.isEmpty else {
+            return nil
+        }
+        return detail
     }
 
     private func cockpitSessionTitle(for session: PTYSession) -> String {
