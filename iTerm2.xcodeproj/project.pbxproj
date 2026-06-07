@@ -948,6 +948,7 @@
 		53FF9826209283D2008688D7 /* template_pyenv_daemon.py in Resources */ = {isa = PBXBuildFile; fileRef = 53FF9823209283D2008688D7 /* template_pyenv_daemon.py */; };
 		564EA2FD15A05A60A95ABBB9 /* PrivateIPChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625C956DD832F4FD0D8F9715 /* PrivateIPChecker.swift */; };
 		57F37DCBE10E9775FA590138 /* ClaudeIntegrationHealthMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1FA5EA310888B7DB4DFBE61 /* ClaudeIntegrationHealthMonitor.swift */; };
+		5A68344851B7CEE773FF8607 /* AICassette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B1126B05955C92900D7A85 /* AICassette.swift */; };
 		5A70B4826716B6F27711CADF /* WorkgroupToolbarBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7C79A0745E993B91C40235 /* WorkgroupToolbarBuilder.swift */; };
 		5A9B38999DE20ABF75B37873 /* WorkgroupNavigationToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */; };
 		5E82F967B87E7F7A76A492E1 /* ChatSessionMentionAttachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D1CA9FEA656247ADC53ADF /* ChatSessionMentionAttachment.swift */; };
@@ -6483,6 +6484,7 @@
 		551CEFF56A53034E3FC7598A /* CCGitBaseSelectorItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CCGitBaseSelectorItem.swift; sourceTree = "<group>"; };
 		57EF08786C9D79C55CDAC970 /* iTermCharacterSets.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermCharacterSets.m; sourceTree = "<group>"; };
 		581A5EEA45904BD841D277FA /* VT100ScreenState+RCDataSource.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenState+RCDataSource.h"; sourceTree = "<group>"; };
+		59B1126B05955C92900D7A85 /* AICassette.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AICassette.swift; sourceTree = "<group>"; };
 		5B686BCDF76FA9118F116990 /* VT100ScreenMutableState+RCDataSource.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "VT100ScreenMutableState+RCDataSource.m"; sourceTree = "<group>"; };
 		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -9647,28 +9649,8 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = PerformanceTests;
-			sourceTree = "<group>";
-		};
-		A6A723AF2DC04C2200A8115D /* ModernTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = ModernTests;
-			sourceTree = "<group>";
-		};
+		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PerformanceTests; sourceTree = "<group>"; };
+		A6A723AF2DC04C2200A8115D /* ModernTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ModernTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -9850,7 +9832,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0464AB0D006CD2EC7F000001 = {
+		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
 				A6BAB25D2F8CCCD10063FA7F /* cc-status */,
@@ -15764,6 +15746,7 @@
 				F790CA240B9BA05F26567E86 /* AILiveAttachmentTests.swift */,
 				64D77A978A9DB0DB1AC8DE61 /* AILiveChatQueueTests.swift */,
 				10C7A9E53E5460D18210F62D /* AILiveAppleIntelligenceClassifier.swift */,
+				59B1126B05955C92900D7A85 /* AICassette.swift */,
 			);
 			path = AILiveHarness;
 			sourceTree = "<group>";
@@ -17604,7 +17587,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 0464AB0D006CD2EC7F000001;
+			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			packageReferences = (
 				A62E3BC62E1CC674002DF8C3 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */,
 			);
@@ -21564,6 +21547,7 @@
 				2E7E803BDBC6637DCA13222A /* AILiveAttachmentTests.swift in Sources */,
 				E5DD5C7CFB7DF710AB631CD4 /* AILiveChatQueueTests.swift in Sources */,
 				74B761FB6428D8717BD7FA76 /* AILiveAppleIntelligenceClassifier.swift in Sources */,
+				5A68344851B7CEE773FF8607 /* AICassette.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

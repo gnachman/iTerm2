@@ -57,6 +57,16 @@ final class AILiveHarness: XCTestCase {
     override func setUpWithError() throws {
         try XCTSkipUnless(Self.loadConfig() != nil,
                           "Live AI harness is opt-in. Run tools/run_ai_live.sh.")
+        // Install the cassette interceptor + recorder for the whole test,
+        // covering both AILiveDriver-based tests and the chat-queue tests
+        // that drive ChatBroker/ChatAgent directly. No-op when no cassette
+        // mode is configured (shared is nil), leaving the pure-live path
+        // unchanged.
+        AICassetteSession.shared?.install()
+    }
+
+    override func tearDownWithError() throws {
+        AICassetteSession.shared?.uninstall()
     }
 
     /// Last config we successfully read off disk. The config file lives in
@@ -426,6 +436,21 @@ final class AILiveHarness: XCTestCase {
         }
     }
 
+    /// Parse the exact HTTP status code out of an error string like
+    ///   "...HTTP request failed with status 400. ..."
+    /// (or the AILiveError.providerFailure(...) wrapping thereof). Returns
+    /// nil when no "status N" marker is present. Shared with the attachment
+    /// matrix, which keys its accept/reject classification off the same code.
+    static func httpStatusCode(inErrorText text: String) -> Int? {
+        let marker = "status "
+        guard let range = text.range(of: marker) else { return nil }
+        var digits = ""
+        for c in text[range.upperBound...] {
+            if c.isNumber { digits.append(c) } else { break }
+        }
+        return Int(digits)
+    }
+
     private func runRefusal(vendor: String, apiKey: String, streaming: Bool) {
         for model in Self.models(forVendor: vendor) {
             throttle(forVendor: vendor)
@@ -457,6 +482,19 @@ final class AILiveHarness: XCTestCase {
                        streaming: streaming,
                        result: result)
             } catch {
+                // A refusal can arrive two ways. Most models refuse in-band:
+                // HTTP 200 with the decline as the response body, handled
+                // above. OpenAI's newest models (the gpt-5.5 family) instead
+                // block this category at the API with an HTTP 400 ("flagged
+                // for possible cybersecurity risk") before the model runs.
+                // That 400 IS a valid refusal, so accept it. Key strictly on
+                // the exact status code: only 400 counts. A 429 (rate limit),
+                // 500, etc. are real failures, not refusals.
+                if Self.httpStatusCode(inErrorText: "\(error)") == 400 {
+                    print("[live] \(vendor)/\(model) refusal -> HTTP 400 "
+                          + "policy block (valid refusal)")
+                    continue
+                }
                 XCTFail("[\(vendor)/\(model)/refusal/stream=\(streaming)] \(error)")
             }
         }

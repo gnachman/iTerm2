@@ -150,17 +150,11 @@ extension AILiveHarness {
     /// Parse the status code from an error string like:
     ///   "HTTP request failed with status 400."
     /// or the AILiveError.providerFailure(...) wrapping thereof. Returns
-    /// nil if no status code pattern is present.
+    /// nil if no status code pattern is present. Delegates to the shared
+    /// implementation on AILiveHarness so the refusal scenario and the
+    /// attachment matrix parse status codes identically.
     private func parseHTTPStatus(_ text: String) -> Int? {
-        let marker = "status "
-        guard let range = text.range(of: marker) else { return nil }
-        let after = text[range.upperBound...]
-        var digits = ""
-        for c in after {
-            if c.isNumber { digits.append(c) }
-            else { break }
-        }
-        return Int(digits)
+        return AILiveHarness.httpStatusCode(inErrorText: text)
     }
 
     /// Lane-aware key resolver. Re-implements keyOrSkip without exposing

@@ -281,7 +281,12 @@ class AITermController {
                         requestCompletion(query: prompt,
                                     registration: registration,
                                     stream: stream ? { [weak self] word in
-                            self?.handle(event: .word(word))
+                            // Stream callbacks fire on iTermAIClient's
+                            // background executionQueue. handle() drives the
+                            // @MainActor chat stack (ChatService -> ChatBroker
+                            // -> SQLite), which must run on main; hop there
+                            // like the begin path above does.
+                            DispatchQueue.main.async { self?.handle(event: .word(word)) }
                         } : nil)
 
                     case .createVectorStore(name: let name):
@@ -338,7 +343,9 @@ class AITermController {
                     requestCompletion(messages: messages,
                                 registration: registration,
                                 stream: stream ? { [weak self] word in
-                        self?.handle(event: .word(word))
+                        // See note above: hop to main so the streaming path
+                        // drives the @MainActor chat stack on the main thread.
+                        DispatchQueue.main.async { self?.handle(event: .word(word)) }
                     } : nil)
                 }
                 delegate?.aitermControllerWillSendRequest(self)

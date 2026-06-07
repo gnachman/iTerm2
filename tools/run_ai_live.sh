@@ -88,6 +88,16 @@ json_quote() {
     emit DEEPSEEK_INTERVAL  "${ITERM2_AI_LIVE_DEEPSEEK_INTERVAL:-}"
     emit PROJECT_ROOT       "$PROJECT_DIR"
     emit REFRESH_REFUSAL_FIXTURES "${ITERM2_AI_LIVE_REFRESH_REFUSAL_FIXTURES:-}"
+    # Cassette record/playback. Unset means pure-live (the historical
+    # behavior). See AICassette.swift for the mode semantics.
+    #   off     no interception (default when unset)
+    #   auto    replay on hit, go live + record on miss
+    #   replay  replay on hit, fail offline on miss (CI; spends nothing)
+    #   record  always go live and (over)write the cassette (refresh)
+    # Cassettes default to ModernTests/Resources/AICassettes and are
+    # scrubbed of secrets, so they are safe to commit.
+    emit CASSETTE_MODE      "${ITERM2_AI_LIVE_CASSETTE_MODE:-}"
+    emit CASSETTE_DIR       "${ITERM2_AI_LIVE_CASSETTE_DIR:-}"
     echo
     echo "}"
 } > "$CONFIG_FILE"

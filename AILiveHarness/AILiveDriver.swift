@@ -243,6 +243,9 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
             driver?.consume(capture: capture)
         }
         defer { iTermAIClient.liveObserver = nil }
+        // The cassette interceptor + recorder are installed once per test in
+        // AILiveHarness.setUpWithError (so chat-queue tests that bypass this
+        // driver are covered too), not here.
 
         let effectiveStream = streaming && controller.supportsStreaming
         controller.request(messages: messages, stream: effectiveStream)
@@ -355,6 +358,9 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
 
     private func consume(capture: iTermAIClient.LiveCapture) {
         captureSeq += 1
+        // Recording is handled by AICassetteSession's responseRecorder hook
+        // (installed in setUpWithError), not here, so it covers chat-queue
+        // tests that don't run through this driver.
         // Stash the raw request body so tests can assert on wire shape
         // without having to fish it out of xcresult attachments.
         switch capture.request.body {
