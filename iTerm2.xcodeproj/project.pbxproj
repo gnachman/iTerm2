@@ -1023,6 +1023,7 @@
 		9F8E10B7F4BD8C7598537853 /* CockpitWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0CF78DCB35283C048B0B54A /* CockpitWindowController.swift */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A1F1A091602C6C5597DFE2B6 /* iTermOpenQuicklyHotKeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F629D4C69CD80D78E2E014C6 /* iTermOpenQuicklyHotKeyProvider.swift */; };
+		A39EE4DF4278D752D3E9CA21 /* iTermJobInfoPopoverViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C838CC7F84A22E7B7E3385 /* iTermJobInfoPopoverViewController.swift */; };
 		A445EEDC85D346B39596FDC3 /* iTermLayoutCalculator.h in Headers */ = {isa = PBXBuildFile; fileRef = 93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */; };
 		A517C8FDABEE95F675923264 /* AppleIntelligenceRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD61537B8518CF9B95B983D9 /* AppleIntelligenceRunner.swift */; };
 		A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */; };
@@ -6220,6 +6221,7 @@
 		31CBF1015D2B6474294432E1 /* iTermUndoCloseShortcutChangeWarning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUndoCloseShortcutChangeWarning.swift; sourceTree = "<group>"; };
 		3298E60BA3D410B4C3FC1A98 /* PeerSessionSettingsViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PeerSessionSettingsViewController.swift; sourceTree = "<group>"; };
 		3335AD96138BA74CC79D25A8 /* iTermUnicodeNormalization.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermUnicodeNormalization.h; sourceTree = "<group>"; };
+		34C838CC7F84A22E7B7E3385 /* iTermJobInfoPopoverViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermJobInfoPopoverViewController.swift; sourceTree = "<group>"; };
 		37E989D59E1FC6B8DAF227C7 /* WorkgroupPeerSegmentedControl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupPeerSegmentedControl.swift; sourceTree = "<group>"; };
 		3958B5886D15D42E92BF7392 /* WorkgroupRestorationCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupRestorationCoordinator.swift; sourceTree = "<group>"; };
 		39A91EF453B797BB100AD508 /* SessionNoteModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionNoteModel.swift; sourceTree = "<group>"; };
@@ -11683,6 +11685,7 @@
 				A6EEAEDD283712070039E850 /* ProcessDataSource.swift */,
 				A6EEAED82836F0580039E850 /* ProcessInfoProvider.swift */,
 				677BAE3BF6167A6719904C54 /* iTermJobTerminationMonitor.swift */,
+				34C838CC7F84A22E7B7E3385 /* iTermJobInfoPopoverViewController.swift */,
 			);
 			path = ProcessInfo;
 			sourceTree = "<group>";
@@ -21484,6 +21487,7 @@
 				D91F883FD3D1E555EF9CFC86 /* VT100ScreenMutableState+RCDataSource.m in Sources */,
 				24AA7B99D58357DFF0FC3126 /* iTermWorkgroupRestoration.swift in Sources */,
 				1EB707937870C588BA26661D /* WorkgroupRestorationCoordinator.swift in Sources */,
+				A39EE4DF4278D752D3E9CA21 /* iTermJobInfoPopoverViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

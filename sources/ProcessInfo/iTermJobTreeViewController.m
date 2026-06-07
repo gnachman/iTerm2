@@ -23,6 +23,32 @@
 #import "NSTextField+iTerm.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+@protocol iTermJobTreeOutlineViewDelegate <NSOutlineViewDelegate>
+// Sent when the user presses space with a row selected. Hosts use this to toggle
+// the per-job info popover.
+- (void)jobTreeOutlineViewToggleInfoPopover:(NSOutlineView *)outlineView;
+@end
+
+// An outline view that turns the space bar into a request to show the info
+// popover for the selected job. Everything else falls through to NSOutlineView
+// (including type-select for other keys).
+@interface iTermJobTreeOutlineView : NSOutlineView
+@end
+
+@implementation iTermJobTreeOutlineView
+- (void)keyDown:(NSEvent *)event {
+    if (self.selectedRow >= 0 &&
+        [event.charactersIgnoringModifiers isEqualToString:@" "]) {
+        id delegate = self.delegate;
+        if ([delegate respondsToSelector:@selector(jobTreeOutlineViewToggleInfoPopover:)]) {
+            [delegate jobTreeOutlineViewToggleInfoPopover:self];
+            return;
+        }
+    }
+    [super keyDown:event];
+}
+@end
+
 static const int kDefaultSignal = 9;
 static int gSignalsToList[] = {
      1, // SIGHUP
@@ -194,7 +220,7 @@ static int gSignalsToList[] = {
 
 @end
 
-@interface iTermJobTreeViewController ()<NSOutlineViewDelegate, NSOutlineViewDataSource>
+@interface iTermJobTreeViewController ()<iTermJobTreeOutlineViewDelegate, NSOutlineViewDataSource>
 @end
 
 @interface iTermJobProxy : NSObject
@@ -261,6 +287,8 @@ static int gSignalsToList[] = {
     IBOutlet NSView *_vev;
     IBOutlet NSView *_signalContainer;
     iTermGraphicSource *_graphicSource;
+    NSPopover *_infoPopover;
+    NSButton *_inspectButton;
 }
 
 - (instancetype)initWithProcessID:(pid_t)pid
@@ -321,6 +349,14 @@ static int gSignalsToList[] = {
             _vev = glassView;
         }
     }
+    NSImage *magnifyingGlass = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
+                                    accessibilityDescription:@"Inspect"];
+    _inspectButton = [NSButton buttonWithImage:magnifyingGlass target:self action:@selector(inspect:)];
+    _inspectButton.bordered = NO;
+    _inspectButton.imageScaling = NSImageScaleProportionallyDown;
+    _inspectButton.toolTip = @"Inspect the selected process";
+    _inspectButton.refusesFirstResponder = YES;
+    [self.view addSubview:_inspectButton];
     [self updateKillButtonEnabled];
 }
 
@@ -331,10 +367,18 @@ static int gSignalsToList[] = {
     frame.origin.x = round((NSWidth(superview.bounds) - NSWidth(frame)) / 2.0);
     frame.origin.y = self.controlsBottomMargin;
     _signalContainer.frame = frame;
+
+    // Inspect button in the bottom-right corner, vertically centered on the
+    // signal controls.
+    const CGFloat side = 22;
+    const CGFloat rightMargin = 8;
+    _inspectButton.frame = NSMakeRect(NSWidth(self.view.bounds) - rightMargin - side,
+                                      round(NSMidY(frame) - side / 2.0),
+                                      side, side);
 }
 
 - (void)viewDidAppear {
-    kill_.enabled = (_outlineView.selectedRow != -1);
+    [self updateKillButtonEnabled];
 
     if (!_timer) {
         __weak __typeof(self) weakSelf = self;
@@ -348,6 +392,8 @@ static int gSignalsToList[] = {
 - (void)viewDidDisappear {
     [_timer invalidate];
     _timer = nil;
+    [_infoPopover close];
+    _infoPopover = nil;
 }
 
 - (BOOL)anySelectedProcessHasChildren {
@@ -532,8 +578,10 @@ static int gSignalsToList[] = {
 }
 
 - (void)updateKillButtonEnabled {
-    signal_.enabled = _outlineView.selectedRowIndexes.count > 0;
-    kill_.enabled = (_outlineView.selectedRowIndexes.count > 0 && [signal_ isValid]);
+    const BOOL hasSelection = _outlineView.selectedRowIndexes.count > 0;
+    signal_.enabled = hasSelection;
+    kill_.enabled = (hasSelection && [signal_ isValid]);
+    _inspectButton.enabled = hasSelection;
 }
 
 - (void)setFont:(NSFont *)font {
@@ -651,6 +699,41 @@ static int gSignalsToList[] = {
     // rows to show or hide the indicator (see jobTerminationMonitorStateDidChange:).
 }
 
+#pragma mark - Info popover
+
+- (IBAction)inspect:(id)sender {
+    [self jobTreeOutlineViewToggleInfoPopover:_outlineView];
+}
+
+- (void)jobTreeOutlineViewToggleInfoPopover:(NSOutlineView *)outlineView {
+    if (_infoPopover.shown) {
+        [_infoPopover close];
+        _infoPopover = nil;
+        return;
+    }
+    const NSInteger row = _outlineView.selectedRow;
+    if (row < 0) {
+        return;
+    }
+    iTermJobProxy *job = [_outlineView itemAtRow:row] ?: _root;
+    if (!job.pid) {
+        return;
+    }
+    // Prefer the unescaped display command; fall back to whatever we have.
+    NSString *fullCommand = ([iTermLSOF displayCommandForProcess:job.pid execName:nil] ?:
+                             job.fullName) ?: job.name;
+    iTermJobInfoPopoverViewController *vc =
+        [[iTermJobInfoPopoverViewController alloc] initWithPid:job.pid
+                                                   fullCommand:fullCommand];
+    NSPopover *popover = [[NSPopover alloc] init];
+    popover.appearance = self.view.effectiveAppearance;
+    popover.behavior = NSPopoverBehaviorTransient;
+    popover.contentViewController = vc;
+    const NSRect rect = [_outlineView rectOfRow:row];
+    [popover showRelativeToRect:rect ofView:_outlineView preferredEdge:NSRectEdgeMaxX];
+    _infoPopover = popover;
+}
+
 #pragma mark - NSOutlineViewDataSource
 
 - (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(nullable id)item {
@@ -734,6 +817,9 @@ static int gSignalsToList[] = {
         // monitored, so reset it to plain text.
         cell.textField.stringValue = string;
     }
+    // Hovering any cell in the row reveals the full, untruncated command (the
+    // visible text is clipped to the column width and capped at 256 chars).
+    cell.toolTip = info.fullName ?: @"(terminated)";
     return cell;
 }
 

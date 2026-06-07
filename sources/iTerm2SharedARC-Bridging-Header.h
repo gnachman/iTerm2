@@ -69,6 +69,7 @@
 #import "iTermKeyMappings.h"
 #import "iTermKeystroke.h"
 #import "iTermKeystrokeFormatter.h"
+#import "iTermLSOF.h"
 #import "iTermLargeContentObject.h"
 #import "iTermLayoutCalculator.h"
 #import "iTermLogoGenerator.h"

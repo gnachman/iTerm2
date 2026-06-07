@@ -33,7 +33,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="480" height="228"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" tableStyle="fullWidth" columnReordering="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="4a9-KI-W3k" viewBased="YES" indentationPerLevel="16" outlineTableColumn="5d6-Bf-wD7" id="5Km-gR-LVc">
+                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" tableStyle="fullWidth" columnReordering="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="4a9-KI-W3k" viewBased="YES" indentationPerLevel="16" outlineTableColumn="5d6-Bf-wD7" id="5Km-gR-LVc" customClass="iTermJobTreeOutlineView">
                                 <rect key="frame" x="0.0" y="0.0" width="480" height="203"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
