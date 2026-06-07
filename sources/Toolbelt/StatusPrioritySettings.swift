@@ -12,7 +12,21 @@ class StatusPrioritySettings: NSObject {
 
     private static let defaultsKey = "StatusPriorities"
     private static let entriesDefaultsKey = "StatusPriorityEntries"
+    private static let mergeWorkgroupsDefaultsKey = "StatusMergeWorkgroups"
     private static let defaultPatterns = ["wait", "work", "idle"]
+
+    /// When enabled, all sessions in a workgroup collapse to a single row in
+    /// the Session Status tool. Defaults to off to preserve prior behavior.
+    var mergeWorkgroups: Bool {
+        get { iTermUserDefaults.userDefaults().bool(forKey: Self.mergeWorkgroupsDefaultsKey) }
+        set {
+            guard newValue != mergeWorkgroups else {
+                return
+            }
+            iTermUserDefaults.userDefaults().set(newValue, forKey: Self.mergeWorkgroupsDefaultsKey)
+            NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+        }
+    }
 
     private(set) var entries: [StatusPriorityEntry] {
         didSet {
@@ -218,7 +232,7 @@ private final class StatusPriorityPopover: NSObject {
         let popover = NSPopover()
         popover.contentViewController = vc
         popover.behavior = .semitransient
-        popover.contentSize = NSSize(width: 280, height: 296)
+        popover.contentSize = NSSize(width: 280, height: 322)
         popover.show(relativeTo: positioningRect, of: positioningView, preferredEdge: edge)
         self.popover = popover
     }
@@ -241,7 +255,7 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
 
     override func loadView() {
         let width: CGFloat = 280
-        let height: CGFloat = 296
+        let height: CGFloat = 322
         let margin: CGFloat = 10
         let segmentHeight: CGFloat = 24
         let labelHeight: CGFloat = 48
@@ -286,8 +300,23 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         toggle.autoresizingMask = [.width, .maxYMargin]
         container.addSubview(toggle)
 
-        // Table view between label and the toggle row
-        let scrollY = toggleY + toggleHeight + toggleGap
+        // Merge toggle: collapse each workgroup to a single status row. Sits
+        // directly above the subtitle toggle so both per-popover switches are
+        // grouped together.
+        let mergeToggleY = toggleY + toggleHeight + toggleGap
+        let mergeToggle = NSButton(checkboxWithTitle: "Merge workgroup statuses",
+                                   target: self,
+                                   action: #selector(mergeWorkgroupsToggleChanged(_:)))
+        mergeToggle.state = StatusPrioritySettings.shared.mergeWorkgroups ? .on : .off
+        mergeToggle.frame = NSRect(x: margin,
+                                   y: mergeToggleY,
+                                   width: width - 2 * margin,
+                                   height: toggleHeight)
+        mergeToggle.autoresizingMask = [.width, .maxYMargin]
+        container.addSubview(mergeToggle)
+
+        // Table view between label and the toggle rows
+        let scrollY = mergeToggleY + toggleHeight + toggleGap
         let scrollHeight = height - margin - labelHeight - 4 - scrollY
         let scrollView = NSScrollView(frame: NSRect(x: margin, y: scrollY,
                                                      width: width - 2 * margin,
@@ -344,6 +373,10 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
 
     @objc private func showSubtitleToggleChanged(_ sender: NSButton) {
         iTermUserDefaults.showSessionStatusInTabSubtitle = (sender.state == .on)
+    }
+
+    @objc private func mergeWorkgroupsToggleChanged(_ sender: NSButton) {
+        StatusPrioritySettings.shared.mergeWorkgroups = (sender.state == .on)
     }
 
     func undoableAdd(_ value: String, completion: @escaping (Int) -> ()) {

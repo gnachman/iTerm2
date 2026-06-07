@@ -41,7 +41,13 @@ class ToolStatus: NSView {
         }
     }
 
+    // The full per-session model, kept sorted. This is the source of truth and
+    // is what the merge-off code path animates directly.
     private var statuses = [Status]()
+    // What the table actually renders. Equal to `statuses` when workgroup
+    // merging is off; otherwise each workgroup collapses to one representative
+    // row here while `statuses` keeps every session.
+    private var displayedStatuses = [Status]()
     // Coalesce bursts of status changes from the controller. Triggers can fire
     // several times in quick succession (e.g. an Idle match followed immediately
     // by a Working match when an interactive TUI repaints); collecting them and
@@ -188,6 +194,7 @@ extension ToolStatus {
             }
         }.sorted()
         DLog("ToolStatus viewDidMoveToWindow: populated \(statuses.count) statuses")
+        rebuildDisplayed()
         _tableView?.reloadData()
         updateSelectionWithoutChangingFirstResponder()
     }
@@ -203,8 +210,10 @@ extension ToolStatus {
     }
 
     @objc func prioritiesDidChange(_ notification: Notification) {
-        // Re-sort all statuses and reload the table.
+        // Fires for priority-order edits and for toggling workgroup merging.
+        // Re-sort the full model, recompute the rendered view, and reload.
         statuses.sort()
+        rebuildDisplayed()
         _tableView?.reloadData()
         updateSelectionWithoutChangingFirstResponder()
     }
@@ -257,7 +266,7 @@ private extension ToolStatus {
 
     @objc
     func needsShortcutReload(_ notification: Notification) {
-        guard let tableView = _tableView, !statuses.isEmpty else {
+        guard let tableView = _tableView, !displayedStatuses.isEmpty else {
             return
         }
         // Active-session changes can shift many rows at once (every
@@ -267,7 +276,7 @@ private extension ToolStatus {
         // toolbelt is small so the cost is trivial;
         // reloadData(forRowIndexes:) preserves selection/scroll,
         // unlike full reloadData().
-        let allRows = IndexSet(integersIn: 0..<statuses.count)
+        let allRows = IndexSet(integersIn: 0..<displayedStatuses.count)
         tableView.reloadData(forRowIndexes: allRows,
                              columnIndexes: IndexSet(integer: 0))
     }
@@ -278,8 +287,19 @@ private extension ToolStatus {
             disableSelectionCount -= 1
         }
         let guid = toolWrapper()?.delegate?.delegate?.toolbeltCurrentSessionGUID()
-        let i = statuses.firstIndex { status in
-            status.sessionID == guid
+        let i: Int?
+        if let guid, mergeWorkgroups {
+            // The active session may be a non-representative peer that has no
+            // row of its own, so match by workgroup: select the displayed
+            // representative whose group contains the active session.
+            let activeGroup = Self.groupKey(forSessionID: guid)
+            i = displayedStatuses.firstIndex { status in
+                Self.groupKey(forSessionID: status.sessionID) == activeGroup
+            }
+        } else {
+            i = displayedStatuses.firstIndex { status in
+                status.sessionID == guid
+            }
         }
         if let i {
             _tableView?.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
@@ -311,89 +331,201 @@ private extension ToolStatus {
         // current state is whatever the controller holds right now. Compare
         // local presence to controller presence to derive the effective change:
         // [.removed, .added] collapses to .updated, [.added, .removed] to a no-op.
-        // Wrap the whole loop so multi-key bursts coalesce into one animation
-        // instead of N cascading ones (the inner begin/endUpdates inside
-        // applyChange become harmless nested calls).
+        if mergeWorkgroups {
+            // In merge mode a single session change can add, remove, or move a
+            // workgroup's representative row, and which row is representative
+            // depends on the group's other members. Those reorderings can't be
+            // derived locally, so update the model and rebuild the merged view
+            // in one reload rather than animating individual rows.
+            for key in keys {
+                applyModelChange(forKey: key)
+            }
+            rebuildDisplayed()
+            _tableView?.reloadData()
+            updateSelectionWithoutChangingFirstResponder()
+            return
+        }
+        // Merge off: animate each row. Wrap the whole loop so multi-key bursts
+        // coalesce into one animation instead of N cascading ones (the inner
+        // begin/endUpdates inside animateRowMutation become harmless nested
+        // calls).
         _tableView?.beginUpdates()
         for key in keys {
-            let inLocal = statuses.contains { $0.sessionID == key }
-            let current = SessionStatusController.instance.statuses[key]
-            switch (inLocal, current) {
-            case (false, .some(let v)):
-                applyChange(key: key, value: v, change: .added)
-            case (true, .some(let v)):
-                applyChange(key: key, value: v, change: .updated)
-            case (true, .none):
-                applyChange(key: key, value: nil, change: .removed)
-            case (false, .none):
-                continue
-            }
+            let mutation = applyModelChange(forKey: key)
+            // displayedStatuses mirrors statuses exactly while merging is off;
+            // sync it before animating so the indices the mutation reports line
+            // up with what the table reads back.
+            displayedStatuses = statuses
+            animateRowMutation(mutation)
         }
         _tableView?.endUpdates()
         updateSelectionWithoutChangingFirstResponder()
     }
 
-    private func applyChange(key: String, value: iTermSessionTabStatus?, change: NotifyingDictionaryChange) {
-        DLog("ToolStatus applyChange: key=\(key) change=\(change) window=\(window.d)")
+    /// Describes how a single key's change moved the corresponding row within
+    /// the full `statuses` model, so the merge-off path can animate the table.
+    private enum RowMutation {
+        case none
+        case inserted(at: Int)
+        case removed(from: Int)
+        case moved(from: Int, to: Int)
+    }
+
+    /// Reconciles `statuses` with the controller's current state for one key and
+    /// returns how the corresponding row moved. Mutates the model only; never
+    /// touches the table.
+    @discardableResult
+    private func applyModelChange(forKey key: String) -> RowMutation {
+        let inLocal = statuses.contains { $0.sessionID == key }
+        let current = SessionStatusController.instance.statuses[key]
+        switch (inLocal, current) {
+        case (false, .some(let v)):
+            return mutateModel(key: key, value: v, change: .added)
+        case (true, .some(let v)):
+            return mutateModel(key: key, value: v, change: .updated)
+        case (true, .none):
+            return mutateModel(key: key, value: nil, change: .removed)
+        case (false, .none):
+            return .none
+        }
+    }
+
+    private func mutateModel(key: String,
+                             value: iTermSessionTabStatus?,
+                             change: NotifyingDictionaryChange) -> RowMutation {
+        DLog("ToolStatus mutateModel: key=\(key) change=\(change) window=\(window.d)")
         switch change {
         case .added:
             let contains = windowContains(sessionGUID: key)
             DLog("ToolStatus didChange .added: contains=\(contains)")
             guard contains else {
-                return
+                return .none
             }
-            let newValue = Status(tabStatus: value!, sessionID: key)
             var updated = statuses
-            updated.append(newValue)
-            updated = updated.sorted { lhs, rhs in
-                lhs < rhs
+            updated.append(Status(tabStatus: value!, sessionID: key))
+            updated.sort()
+            guard let j = updated.firstIndex(where: { $0.sessionID == key }) else {
+                return .none
             }
-            let j = updated.firstIndex { $0.sessionID == key }
-            if let j {
-                statuses = updated
-                _tableView?.beginUpdates()
-                _tableView?.insertRows(at: IndexSet(integer: j))
-                _tableView?.endUpdates()
-            }
+            statuses = updated
+            return .inserted(at: j)
         case .removed:
-            let i = statuses.firstIndex { candidate in
-                candidate.sessionID == key
+            guard let i = statuses.firstIndex(where: { $0.sessionID == key }) else {
+                return .none
             }
-            if let i {
-                _tableView?.beginUpdates()
-                statuses.remove(at: i)
-                _tableView?.removeRows(at: IndexSet(integer: i))
-                _tableView?.endUpdates()
-            }
+            statuses.remove(at: i)
+            return .removed(from: i)
         case .updated:
             guard windowContains(sessionGUID: key) else {
-                return
+                return .none
             }
             guard let i = statuses.firstIndex(where: { $0.sessionID == key }) else {
-                it_assert(false, "applyChange(.updated) for \(key) but session is not in statuses; flushPendingChanges should only route here when inLocal is true")
-                return
+                it_assert(false, "mutateModel(.updated) for \(key) but session is not in statuses; applyModelChange should only route here when inLocal is true")
+                return .none
             }
-            let newValue = Status(tabStatus: value!, sessionID: key)
             var updated = statuses
-            updated[i] = newValue
-            updated = updated.sorted { lhs, rhs in
-                lhs < rhs
+            updated[i] = Status(tabStatus: value!, sessionID: key)
+            updated.sort()
+            guard let j = updated.firstIndex(where: { $0.sessionID == key }) else {
+                return .none
             }
-            let j = updated.firstIndex { $0.sessionID == key }
-            if let j {
-                _tableView?.beginUpdates()
-                statuses = updated
-                if i != j {
-                    _tableView?.moveRow(at: i, to: j)
+            statuses = updated
+            return .moved(from: i, to: j)
+        }
+    }
+
+    private func animateRowMutation(_ mutation: RowMutation) {
+        switch mutation {
+        case .none:
+            break
+        case .inserted(let j):
+            _tableView?.beginUpdates()
+            _tableView?.insertRows(at: IndexSet(integer: j))
+            _tableView?.endUpdates()
+        case .removed(let i):
+            _tableView?.beginUpdates()
+            _tableView?.removeRows(at: IndexSet(integer: i))
+            _tableView?.endUpdates()
+        case .moved(let i, let j):
+            _tableView?.beginUpdates()
+            if i != j {
+                _tableView?.moveRow(at: i, to: j)
+            }
+            _tableView?.reloadData(forRowIndexes: IndexSet(integer: j), columnIndexes: IndexSet(integer: 0))
+            // reloadData reloads cell content but keeps the cached row height;
+            // detail text can wrap 1–3 lines so height must be recomputed
+            // whenever tabStatus changes.
+            _tableView?.noteHeightOfRows(withIndexesChanged: IndexSet(integer: j))
+            _tableView?.endUpdates()
+        }
+    }
+
+    private var mergeWorkgroups: Bool {
+        StatusPrioritySettings.shared.mergeWorkgroups
+    }
+
+    /// Recomputes the table-facing `displayedStatuses` from the full model.
+    func rebuildDisplayed() {
+        guard mergeWorkgroups else {
+            displayedStatuses = statuses
+            return
+        }
+        displayedStatuses = Self.mergeByWorkgroup(statuses)
+    }
+
+    /// Groups sessions by workgroup, keeping one representative per group, then
+    /// sorts the representatives by the standard table order. Solo sessions (no
+    /// workgroup peer port) each remain their own entry.
+    private static func mergeByWorkgroup(_ all: [Status]) -> [Status] {
+        var representatives = [GroupKey: Status]()
+        for status in all {
+            let key = groupKey(forSessionID: status.sessionID)
+            if let existing = representatives[key] {
+                if mergePrefers(status, over: existing) {
+                    representatives[key] = status
                 }
-                _tableView?.reloadData(forRowIndexes: IndexSet(integer: j), columnIndexes: IndexSet(integer: 0))
-                // reloadData reloads cell content but keeps the cached row
-                // height; detail text can wrap 1–3 lines so height must be
-                // recomputed whenever tabStatus changes.
-                _tableView?.noteHeightOfRows(withIndexesChanged: IndexSet(integer: j))
-                _tableView?.endUpdates()
+            } else {
+                representatives[key] = status
             }
         }
+        return representatives.values.sorted()
+    }
+
+    private enum GroupKey: Hashable {
+        // All peers in a workgroup share the same peer-port object.
+        case workgroup(ObjectIdentifier)
+        // Solo sessions have no peer port; key by session so each is its own row.
+        case solo(String)
+    }
+
+    private static func groupKey(forSessionID sessionID: String) -> GroupKey {
+        if let session = iTermController.sharedInstance()?.anySession(withGUID: sessionID),
+           let port = session.peerPort {
+            return .workgroup(ObjectIdentifier(port))
+        }
+        return .solo(sessionID)
+    }
+
+    /// Within a workgroup, the representative is the peer whose status changed
+    /// most recently. Recency, not priority, is the right signal here: inside a
+    /// workgroup an idle peer is often idle *because* a sibling is busy (e.g. a
+    /// chat session waiting for its code-review peer to finish), so the
+    /// freshest transition tracks where the action is. `lastChanged` is a
+    /// reliable proxy for "last genuine transition" because the status pipeline
+    /// only notifies on real changes (screenSetTabStatus bails when
+    /// iTermSessionTabStatus.apply reports no change), so repaint spam never
+    /// bumps it. Ties (e.g. right after a rebuild reset every timestamp to the
+    /// same instant) fall back to priority, then sessionID. Note this is
+    /// independent of the table's overall row ordering, which still sorts the
+    /// chosen representatives by priority.
+    private static func mergePrefers(_ candidate: Status, over current: Status) -> Bool {
+        if candidate.lastChanged != current.lastChanged {
+            return candidate.lastChanged > current.lastChanged
+        }
+        if candidate.tabStatus.priority != current.tabStatus.priority {
+            return candidate.tabStatus.priority < current.tabStatus.priority
+        }
+        return candidate.sessionID < current.sessionID
     }
 
     func contentSize() -> NSSize {
@@ -521,7 +653,7 @@ private extension ToolStatus {
     }
 
     func configureCell(_ cell: ToolStatusCellView, for row: Int) {
-        let status = statuses[row]
+        let status = displayedStatuses[row]
         guard let session = iTermController.sharedInstance()?.anySession(withGUID: status.sessionID) else {
             return
         }
@@ -553,7 +685,7 @@ private extension ToolStatus {
 extension ToolStatus: NSTableViewDataSource {
     @objc
     func numberOfRows(in tableView: NSTableView) -> Int {
-        return statuses.count
+        return displayedStatuses.count
     }
 }
 
@@ -593,7 +725,7 @@ extension ToolStatus: NSTableViewDelegate {
         if row == -1 {
             return
         }
-        let guid = statuses[row].sessionID
+        let guid = displayedStatuses[row].sessionID
         guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
             DLog("No session with ID \(guid)")
             return

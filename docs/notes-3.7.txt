@@ -37,7 +37,11 @@ Major New Features:
   drag-to-reorder popover, status is
   aggregated across split panes, and it is
   auto-cleared on shell prompt or session
-  termination.
+  termination. The toolbelt’s settings popover
+  also has a Merge Workgroup Statuses option
+  that collapses each workgroup to a single
+  row, showing the status of whichever
+  session in it changed most recently.
 
 - Session Notes were added: floating,
   draggable, resizable, collapsible multiline
