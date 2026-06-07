@@ -275,20 +275,10 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         label.autoresizingMask = [.width, .minYMargin]
         container.addSubview(label)
 
-        // +/- segmented control at bottom
-        let addRemove = NSSegmentedControl(images: [
-            NSImage(systemSymbolName: "plus", accessibilityDescription: "Add")!,
-            NSImage(systemSymbolName: "minus", accessibilityDescription: "Remove")!
-        ], trackingMode: .momentary, target: nil, action: nil)
-        addRemove.frame = NSRect(x: margin, y: margin, width: 60, height: segmentHeight)
-        addRemove.autoresizingMask = [.maxXMargin, .maxYMargin]
-        container.addSubview(addRemove)
-
         // Global toggle: gate the status-text subtitle on tabs without
         // affecting the colored dot or this priority list’s meaning.
-        // Sits between the +/- and the table so it’s visually grouped
-        // with the per-popover controls.
-        let toggleY = margin + segmentHeight + toggleGap
+        // Pinned to the bottom with the other per-popover switch.
+        let toggleY = margin
         let toggle = NSButton(checkboxWithTitle: "Show status in tab subtitle",
                               target: self,
                               action: #selector(showSubtitleToggleChanged(_:)))
@@ -308,6 +298,7 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
                                    target: self,
                                    action: #selector(mergeWorkgroupsToggleChanged(_:)))
         mergeToggle.state = StatusPrioritySettings.shared.mergeWorkgroups ? .on : .off
+        mergeToggle.toolTip = "When enabled, only the most recent status from each workgroup is shown."
         mergeToggle.frame = NSRect(x: margin,
                                    y: mergeToggleY,
                                    width: width - 2 * margin,
@@ -315,8 +306,18 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         mergeToggle.autoresizingMask = [.width, .maxYMargin]
         container.addSubview(mergeToggle)
 
-        // Table view between label and the toggle rows
-        let scrollY = mergeToggleY + toggleHeight + toggleGap
+        // +/- segmented control, above the checkboxes and below the table.
+        let segmentY = mergeToggleY + toggleHeight + toggleGap
+        let addRemove = NSSegmentedControl(images: [
+            NSImage(systemSymbolName: "plus", accessibilityDescription: "Add")!,
+            NSImage(systemSymbolName: "minus", accessibilityDescription: "Remove")!
+        ], trackingMode: .momentary, target: nil, action: nil)
+        addRemove.frame = NSRect(x: margin, y: segmentY, width: 60, height: segmentHeight)
+        addRemove.autoresizingMask = [.maxXMargin, .maxYMargin]
+        container.addSubview(addRemove)
+
+        // Table view between label and the +/- control
+        let scrollY = segmentY + segmentHeight + toggleGap
         let scrollHeight = height - margin - labelHeight - 4 - scrollY
         let scrollView = NSScrollView(frame: NSRect(x: margin, y: scrollY,
                                                      width: width - 2 * margin,
