@@ -4257,6 +4257,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Main thread
 - (void)taskDidRegister:(PTYTask *)task {
     [self updateTTYSize];
+    // The task now has a live pid. When this is a reattach during session
+    // restoration the shell was never spawned via the normal launch path, so
+    // nothing has computed the foreground job yet: iTermVariableKeySessionEffectiveSessionRootPid
+    // stays unset and sessionProcessInfoProviderDidChange: never fires, which
+    // leaves the Jobs toolbelt (and the job-name title) empty until the next new
+    // job or shell prompt happens to drive a title update. Recompute now so the
+    // effective root pid is established and the toolbelt refreshes immediately.
+    // This also runs for fresh launches, where it is a harmless early title
+    // update that the cadence loop would otherwise do a moment later.
+    [self updateTitles];
 }
 
 - (void)tmuxDidDisconnect {

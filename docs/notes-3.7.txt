@@ -1356,3 +1356,7 @@ Bug Fixes:
   imgcat images) behind. Folded views
   are now hidden and restored on
   unfold.
+- Fix a bug where the Jobs toolbelt was
+  empty after restoring a session until
+  the next job or shell prompt. Restored
+  sessions now populate it immediately.
