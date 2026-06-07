@@ -1899,10 +1899,17 @@ CQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Ns0-Ch-S03"/>
                             <menuItem title="Lock Size" identifier="Lock Size" id="df3-h4-b4O">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleSizeLocked:" target="-1" id="K1B-UU-I0m"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Notify on Status Change" keyEquivalent="X" identifier="Notify on Status Change" id="Ns0-Ch-G01">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="toggleNotifyOnStatusChange:" target="-1" id="Ns0-Ch-A02"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="XJx-vd-H4Y">

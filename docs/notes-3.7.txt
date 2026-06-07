@@ -1364,3 +1364,13 @@ Bug Fixes:
   empty after restoring a session until
   the next job or shell prompt. Restored
   sessions now populate it immediately.
+- The Session Status toolbelt tool has a
+  bell toggle in its bottom-left corner.
+  When armed, the next time any session’s
+  status (waiting/idle/busy) changes it
+  shows an alert and turns itself back
+  off. A brief flicker that returns to
+  the original status does not count.
+  Window > Notify on Status Change
+  (shift-cmd-X) toggles the same thing
+  from the menu.

@@ -1262,6 +1262,23 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// Returns this window's Session Status toolbelt tool, or nil if the toolbelt is
+// hidden or that tool isn't currently shown.
+- (ToolStatus *)statusToolIfPresent {
+    if (!_contentView.shouldShowToolbelt) {
+        return nil;
+    }
+    id<ToolbeltTool> tool = [self.toolbelt toolWithName:kStatusToolName];
+    if ([tool isKindOfClass:[ToolStatus class]]) {
+        return (ToolStatus *)tool;
+    }
+    return nil;
+}
+
+- (IBAction)toggleNotifyOnStatusChange:(id)sender {
+    [[self statusToolIfPresent] toggleNotifyArmed];
+}
+
 - (void)popupWillClose:(iTermPopupWindowController *)popup {
     if (popup == pbHistoryView) {
         [pbHistoryView autorelease];
@@ -11789,6 +11806,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
         return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.currentSession.profile.profileType] count] > 0;
+    } else if ([item action] == @selector(toggleNotifyOnStatusChange:)) {
+        ToolStatus *statusTool = [self statusToolIfPresent];
+        [item setState:statusTool.isNotifyArmed ? NSControlStateValueOn : NSControlStateValueOff];
+        return statusTool != nil;
     } else if ([item action] == @selector(toggleSizeLocked:)) {
         [item setState:_sizeLocked ? NSControlStateValueOn : NSControlStateValueOff];
         return self.windowTypeSupportsSizeLock;
