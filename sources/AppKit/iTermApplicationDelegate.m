@@ -1627,16 +1627,25 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     // ~/.claude/settings.json hooks reference a stable cc-status
     // symlink in iTerm2's dot dir; we keep it pointed at the running
-    // app's bundle binary. Refresh it on every launch so a moved /
-    // renamed / replaced iTerm2.app still resolves correctly the next
-    // time a hook fires. Gated on the (NoSync) cached install flag —
-    // the vast majority of users never install the cc-status hook,
-    // and they shouldn't pay the cost of touching the dot dir and a
-    // symlink on every launch. reconcileHooksCache above just
-    // refreshed the flag from disk, so a manual edit of
-    // ~/.claude/settings.json is detected next launch.
+    // app's bundle binary. Only re-point it when this launch is a
+    // newer version than the previous one, so launching an older
+    // build never downgrades the deployed cc-status. We still repair
+    // the symlink on any launch when it is missing or resolves to a
+    // bundle that was moved, renamed, or deleted. Gated on the
+    // (NoSync) cached install flag — the vast majority of users never
+    // install the cc-status hook, and they shouldn't pay the cost of
+    // touching the dot dir and a symlink on every launch.
+    // reconcileHooksCache above just refreshed the flag from disk, so
+    // a manual edit of ~/.claude/settings.json is detected next launch.
     if ([iTermClaudeCodeOnboarding hooksAlreadyInstalled]) {
-        [iTermClaudeCodeOnboarding ensureCCStatusSymlink];
+        NSString *previousVersion = [iTermPreferences appVersionBeforeThisLaunch];
+        NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+        const BOOL launchedNewerVersion =
+            (previousVersion == nil) ||
+            (currentVersion != nil && [self version:currentVersion newerThan:previousVersion]);
+        if (launchedNewerVersion || ![iTermClaudeCodeOnboarding ccStatusSymlinkIsHealthy]) {
+            [iTermClaudeCodeOnboarding ensureCCStatusSymlink];
+        }
     }
     [iTermClaudeWatcher start];
     [[iTermClaudeIntegrationHealthMonitor instance] start];

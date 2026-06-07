@@ -1119,6 +1119,25 @@ class ClaudeCodeOnboarding: NSObject {
         return symlinkURL.path
     }
 
+    // True iff the cc-status symlink exists and resolves to a file that is
+    // still present. The launch-time refresh only re-points the symlink when
+    // this launch is a newer version than the last (so an older build never
+    // downgrades the deployed cc-status); this lets it also repair a symlink
+    // that broke for a version-independent reason — the bundle it pointed at
+    // was moved, renamed, or deleted — regardless of version.
+    @objc
+    static func ccStatusSymlinkIsHealthy() -> Bool {
+        let fm = FileManager.default
+        guard let dotDir = fm.homeDirectoryDotDir() else {
+            return false
+        }
+        let symlinkPath = (dotDir as NSString).appendingPathComponent("cc-status")
+        guard let target = try? fm.destinationOfSymbolicLink(atPath: symlinkPath) else {
+            return false
+        }
+        return fm.fileExists(atPath: target)
+    }
+
     /// Hook event names that cc-status handles.
     private static let hookEventNames = [
         "UserPromptSubmit",
