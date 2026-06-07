@@ -17,11 +17,6 @@ class ToolStatus: NSView {
     private var helpButton: PopoverHelpButton!
     private var settingsButton: NSButton!
     private var notifyButton: NSButton!
-    // When true, the next visible status-text transition fires an alert. We
-    // snapshot each visible session's status text at arm time so changes are
-    // measured against the moment the user enabled notifications.
-    private var notifyArmed = false
-    private var notifyStatusTextSnapshot = [String: String]()
     private static let buttonHeight: CGFloat = 23
     private static let margin: CGFloat = 5
     static let statusToolLastUseUserDefaultsKey = "NoSyncStatusToolLastUseDate"
@@ -135,6 +130,13 @@ class ToolStatus: NSView {
                        selector: #selector(prioritiesDidChange(_:)),
                        name: StatusPrioritySettings.didChangeNotification,
                        object: nil)
+        // The armed state now lives in the centralized controller (so the
+        // Window menu and Cockpit share it); keep the bell in sync when it
+        // changes from anywhere.
+        nc.addObserver(self,
+                       selector: #selector(notifyArmedDidChange(_:)),
+                       name: NotifyOnStatusChangeController.armedDidChangeNotification,
+                       object: nil)
     }
 
     required init!(frame: NSRect, url: URL!, identifier: String!) {
@@ -244,20 +246,6 @@ extension ToolStatus {
         updateSelectionWithoutChangingFirstResponder()
     }
 
-    // Exposed (non-private so it reaches the generated ObjC header) for the
-    // Window > Notify on Status Change menu item.
-    @objc var isNotifyArmed: Bool {
-        notifyArmed
-    }
-
-    @objc func toggleNotifyArmed() {
-        if notifyArmed {
-            disarmNotify()
-        } else {
-            armNotify()
-        }
-    }
-
     static let helpMarkdown = """
     ## Session Status
 
@@ -302,6 +290,10 @@ private extension ToolStatus {
         }
         updateSelectionWithoutChangingFirstResponder()
         needsShortcutReload(notification)
+        // The window guid is derived from the active session, so refresh
+        // the bell once the window is established (e.g. the toolbelt was
+        // opened for a window that was already armed elsewhere).
+        updateNotifyButtonAppearance()
     }
 
     @objc
@@ -346,98 +338,100 @@ private extension ToolStatus {
         } else {
             _tableView?.selectRowIndexes(IndexSet(), byExtendingSelection: false)
         }
+        // This programmatic change skips tableViewSelectionDidChange (it's
+        // suppressed by disableSelectionCount), so refresh the bell here.
+        updateNotifyButtonAppearance()
     }
 
     // MARK: - Status-change notifications
 
+    // What the bell acts on: the selected session if a row is selected,
+    // otherwise the whole window.
+    private enum NotifyTarget {
+        case session(String)
+        case window(String)
+    }
+
+    private var notifyTarget: NotifyTarget? {
+        if let row = _tableView?.selectedRow, row >= 0, row < displayedStatuses.count {
+            return .session(displayedStatuses[row].sessionID)
+        }
+        if let windowGuid {
+            return .window(windowGuid)
+        }
+        return nil
+    }
+
+    // The bell toggles the centralized armed state for the current target.
+    // The button's visual state is driven by the controller (via
+    // notifyArmedDidChange) and the selection, not by the click itself.
     @objc private func toggleNotify(_ sender: NSButton) {
-        if sender.state == .on {
-            armNotify()
-        } else {
-            disarmNotify()
-        }
-    }
-
-    private func armNotify() {
-        notifyArmed = true
-        // Snapshot current status text per visible session so the next change is
-        // measured from now, not from whatever was on screen earlier.
-        notifyStatusTextSnapshot.removeAll()
-        for status in SessionStatusController.instance.statuses.values {
-            guard windowContains(sessionGUID: status.sessionID),
-                  let text = status.statusText else {
-                continue
-            }
-            notifyStatusTextSnapshot[status.sessionID] = text
+        let controller = NotifyOnStatusChangeController.instance
+        switch notifyTarget {
+        case .session(let guid):
+            controller.toggleSessionArmed(forGuid: guid)
+        case .window(let guid):
+            controller.toggleWindowArmed(forGuid: guid)
+        case nil:
+            break
         }
         updateNotifyButtonAppearance()
     }
 
-    private func disarmNotify() {
-        notifyArmed = false
-        notifyStatusTextSnapshot.removeAll()
+    @objc private func notifyArmedDidChange(_ notification: Notification) {
         updateNotifyButtonAppearance()
+        // Per-session bell indicators may have changed; refresh visible
+        // rows (preserves selection/scroll, unlike full reloadData()).
+        if let tableView = _tableView, !displayedStatuses.isEmpty {
+            tableView.reloadData(forRowIndexes: IndexSet(integersIn: 0..<displayedStatuses.count),
+                                 columnIndexes: IndexSet(integer: 0))
+        }
+    }
+
+    private var notifyArmed: Bool {
+        let controller = NotifyOnStatusChangeController.instance
+        switch notifyTarget {
+        case .session(let guid):
+            return controller.isSessionArmed(forGuid: guid)
+        case .window(let guid):
+            return controller.isWindowArmed(forGuid: guid)
+        case nil:
+            return false
+        }
+    }
+
+    // The terminal guid of the window hosting this toolbelt, derived from
+    // its current session (works even when the toolbelt is detached into
+    // its own window).
+    private var windowGuid: String? {
+        guard let sessionGuid = toolWrapper()?.delegate?.delegate?.toolbeltCurrentSessionGUID(),
+              !sessionGuid.isEmpty else {
+            return nil
+        }
+        return iTermController.sharedInstance()?
+            .windowForSession(withGUID: sessionGuid)?.terminalGuid
     }
 
     private func updateNotifyButtonAppearance() {
-        let symbol: SFSymbol = notifyArmed ? .bellBadge : .bell
-        notifyButton.state = notifyArmed ? .on : .off
+        let armed = notifyArmed
+        let symbol: SFSymbol = armed ? .bellBadge : .bell
+        notifyButton.state = armed ? .on : .off
         notifyButton.image = NSImage(systemSymbolName: symbol.rawValue,
                                      accessibilityDescription: "Notify on status change")
-        notifyButton.toolTip = notifyArmed
-            ? "Watching for a session status change. An alert will appear on the next transition, then turn this off."
-            : "Notify with an alert when any session’s status changes (waiting/idle/busy)."
-    }
-
-    // Fires when a session's status text has, on net, moved away from the value
-    // captured when notifications were armed. Run against the coalesced flush
-    // (not the raw event stream) so a flicker that returns to the snapshot value
-    // nets to no change and never alerts, matching the debounce behavior the rest
-    // of the tool relies on. Compares the controller's *current* status text, the
-    // canonical net state after coalescing. Only the status (not detail) counts.
-    private func checkNotifyTransitions(keys: Set<String>) {
-        guard notifyArmed else {
-            return
+        let targetingSession: Bool
+        if case .session = notifyTarget {
+            targetingSession = true
+        } else {
+            targetingSession = false
         }
-        for key in keys {
-            guard windowContains(sessionGUID: key) else {
-                continue
-            }
-            let newStatusText = SessionStatusController.instance.statuses[key]?.statusText
-            let oldStatusText = notifyStatusTextSnapshot[key]
-            guard newStatusText != oldStatusText else {
-                continue
-            }
-            let sessionName = iTermController.sharedInstance()?.anySession(withGUID: key)?.name
-            // Disarm before presenting so the button is off the moment the alert shows.
-            disarmNotify()
-            presentNotifyAlert(sessionName: sessionName,
-                               from: oldStatusText,
-                               to: newStatusText)
-            // Fire at most once per coalesced flush.
-            return
-        }
-    }
-
-    private func presentNotifyAlert(sessionName: String?, from: String?, to: String?) {
-        let name = sessionName ?? "A session"
-        let fromText = from ?? "none"
-        let toText = to ?? "none"
-        // Present asynchronously so the modal alert doesn't run reentrantly while
-        // the status-change notification is still being dispatched.
-        DispatchQueue.main.async { [weak self] in
-            guard let self else {
-                return
-            }
-            let alert = NSAlert()
-            alert.messageText = "Session status changed"
-            alert.informativeText = "\(name) changed from “\(fromText)” to “\(toText)”."
-            alert.addButton(withTitle: "OK")
-            if let window = self.window {
-                alert.beginSheetModal(for: window, completionHandler: nil)
-            } else {
-                alert.runModal()
-            }
+        if armed {
+            notifyButton.toolTip = targetingSession
+                ? "Watching the selected session for a status change. An alert will appear on the next change, then turn this off."
+                : "Watching this window for a session status change. An alert will appear on the next change, then turn this off."
+        } else {
+            notifyButton.toolTip = targetingSession
+                ? "Notify with an alert when the selected session’s status changes."
+                : "Notify with an alert when any session in this window changes status."
         }
     }
 
@@ -459,10 +453,6 @@ private extension ToolStatus {
         if keys.isEmpty {
             return
         }
-        // Evaluate notification transitions on the coalesced net state, before
-        // mutating the model, so a flicker that returns to the snapshot value is
-        // absorbed just like the row animations below.
-        checkNotifyTransitions(keys: keys)
         // The session's iTermSessionTabStatus is a stable per-session reference
         // whose state accumulates across partial updates, so the canonical
         // current state is whatever the controller holds right now. Compare
@@ -815,7 +805,8 @@ private extension ToolStatus {
                        shortcut: shortcutString(for: status.sessionID),
                        statusText: tabStatus.statusText,
                        statusColor: statusColor,
-                       detail: tabStatus.detailText)
+                       detail: tabStatus.detailText,
+                       armed: NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: status.sessionID))
     }
 }
 
@@ -858,6 +849,8 @@ extension ToolStatus: NSTableViewDelegate {
         if disableSelectionCount > 0 {
             return
         }
+        // The bell targets the selected session, so keep it in sync.
+        updateNotifyButtonAppearance()
         let row = _tableView!.selectedRow
         if row == -1 {
             return

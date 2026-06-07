@@ -1377,3 +1377,13 @@ Bug Fixes:
 - The Cockpit window now shows each
   session’s detail string under its
   name when grouping by status.
+- The Cockpit window has a bell button
+  that arms notify-on-status-change for
+  the selected window or session, and
+  rows show a bell when armed. The
+  per-window watch is shared with the
+  Window menu and the Session Status
+  tool; per-session watches are new.
+  Notify-on-status-change now works
+  whether or not the Session Status
+  toolbelt tool is open.

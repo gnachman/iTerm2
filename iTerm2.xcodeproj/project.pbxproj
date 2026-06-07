@@ -5394,6 +5394,7 @@
 		EDD2335A6BDA84CE2B29C285 /* Box.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10731A1F54B9BF72FBAC682 /* Box.swift */; };
 		EE293B4DA9D2204FCFDE6784 /* iTermCursorSlideAnimator.h in Sources */ = {isa = PBXBuildFile; fileRef = 889A9128E944B618CDE75E18 /* iTermCursorSlideAnimator.h */; };
 		EFA4A1D0B4853EF8B42D4CA3 /* ExitWorkgroupBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B673BD86C08D1241D0DDA4C1 /* ExitWorkgroupBrowserTrigger.swift */; };
+		F2B61BF663AD403768588B20 /* iTermNotifyOnStatusChangeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38C0DAB55C8520927EB4FB0 /* iTermNotifyOnStatusChangeController.swift */; };
 		F47F2C13C9DE8CA385FB2694 /* AIBackslashEscapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF17846F1849487090265E0 /* AIBackslashEscapes.swift */; };
 		F7C626F9C65F19A1BEE800DA /* iTermWordExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF1E9C79C30008CC546F987 /* iTermWordExtractor.swift */; };
 		F7E9577EBDD47ED18CBD569F /* iTermImageComparison.h in Sources */ = {isa = PBXBuildFile; fileRef = 516BF83D01B179D961D3EDB6 /* iTermImageComparison.h */; };
@@ -9590,6 +9591,7 @@
 		F10731A1F54B9BF72FBAC682 /* Box.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Box.swift; sourceTree = "<group>"; };
 		F11BE1CE0F1EF4E86C53D1E0 /* AILiveAttachmentFixtures.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveAttachmentFixtures.swift; sourceTree = "<group>"; };
 		F1FA5EA310888B7DB4DFBE61 /* ClaudeIntegrationHealthMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeIntegrationHealthMonitor.swift; sourceTree = "<group>"; };
+		F38C0DAB55C8520927EB4FB0 /* iTermNotifyOnStatusChangeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermNotifyOnStatusChangeController.swift; sourceTree = "<group>"; };
 		F5145BCC5773DB25978071C5 /* iTermScreenshotLineRangeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScreenshotLineRangeView.swift; sourceTree = "<group>"; };
 		F52ED8DD037F0A7D01A8A066 /* PTYSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYSession.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F56B230B03A1B36701A8A066 /* PTYWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYWindow.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
@@ -14195,6 +14197,7 @@
 				A6A13AB918C34F6400B241ED /* VT100XtermParser.h */,
 				A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */,
 				6D70E7DE7E81B39DC29CC27B /* VT100PromptKind.h */,
+				F38C0DAB55C8520927EB4FB0 /* iTermNotifyOnStatusChangeController.swift */,
 			);
 			path = VT100;
 			sourceTree = "<group>";
@@ -21488,6 +21491,7 @@
 				24AA7B99D58357DFF0FC3126 /* iTermWorkgroupRestoration.swift in Sources */,
 				1EB707937870C588BA26661D /* WorkgroupRestorationCoordinator.swift in Sources */,
 				A39EE4DF4278D752D3E9CA21 /* iTermJobInfoPopoverViewController.swift in Sources */,
+				F2B61BF663AD403768588B20 /* iTermNotifyOnStatusChangeController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

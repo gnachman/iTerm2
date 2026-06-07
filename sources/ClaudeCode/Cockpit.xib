@@ -11,6 +11,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="iTermCockpitWindowController">
             <connections>
                 <outlet property="groupModeToolbarItem" destination="GMI-tb-001" id="GMI-tb-002"/>
+                <outlet property="notifyToolbarItem" destination="NTI-tb-001" id="NTI-tb-002"/>
                 <outlet property="outlineView" destination="TFL-9c-CEo" id="gIj-P8-vII"/>
                 <outlet property="searchToolbarItem" destination="uxK-ys-Pfe" id="STi-jv-vrU"/>
                 <outlet property="settingsToolbarItem" destination="eAE-pE-PO4" id="Pfk-ZP-fLl"/>
@@ -20,7 +21,7 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Cockpit" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="Cockpit" animationBehavior="default" id="QvC-M9-y7g" customClass="NSPanel">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" resizable="YES" utility="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="877" height="416"/>
             <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
@@ -132,10 +133,15 @@
                         <size key="minSize" width="100" height="24"/>
                         <size key="maxSize" width="100" height="24"/>
                     </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="A1B2C3D4-5E6F-4071-8293-A4B5C6D7E8F9" label="Notify" paletteLabel="Notify" tag="-1" image="bell" catalog="system" bordered="YES" id="NTI-tb-001" userLabel="Notify Toolbar Item">
+                        <size key="minSize" width="33" height="24"/>
+                        <size key="maxSize" width="33" height="24"/>
+                    </toolbarItem>
                 </allowedToolbarItems>
                 <defaultToolbarItems>
                     <toolbarItem reference="eAE-pE-PO4"/>
                     <toolbarItem reference="GMI-tb-001"/>
+                    <toolbarItem reference="NTI-tb-001"/>
                     <searchToolbarItem reference="uxK-ys-Pfe"/>
                 </defaultToolbarItems>
             </toolbar>
@@ -143,6 +149,7 @@
         </window>
     </objects>
     <resources>
+        <image name="bell" catalog="system" width="15" height="18"/>
         <image name="gear" catalog="system" width="17" height="16"/>
     </resources>
 </document>

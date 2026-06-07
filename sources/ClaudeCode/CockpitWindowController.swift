@@ -14,13 +14,21 @@ import AppKit
 //   - File's Owner "window" outlet -> the panel
 //   - The @IBOutlet/@IBAction connections below
 //
-// Window semantics match the global-search panel: a normal NSPanel
-// at NSFloatingWindowLevel, becomesKeyOnlyIfNeeded, hidesOnDeactivate.
+// Window semantics match the global-search panel: an NSPanel at
+// NSFloatingWindowLevel, becomesKeyOnlyIfNeeded, hidesOnDeactivate.
 // That gives a calm floater that stays above iTerm2 windows while
 // iTerm2 is foremost but disappears when another app takes over,
 // instead of overlapping everything across the system. We do NOT
 // use isFloatingPanel or the nonactivatingPanel styleMask; both
 // turn the cockpit into a system-wide always-on-top overlay.
+//
+// The panel uses the utility-window style mask (set in Cockpit.xib).
+// A utility panel keeps its active appearance while iTerm2 is the
+// active app even when it isn't the key window, the way the system
+// Fonts/Colors palettes do. Without it the titlebar, toolbar, and the
+// source-list sidebar all dimmed whenever focus moved to a terminal
+// (which is most of the time for a floater) and snapped back to the
+// active look on click, which read as distracting flicker.
 @objc(iTermCockpitWindowController)
 class CockpitWindowController: NSWindowController {
 
@@ -32,6 +40,7 @@ class CockpitWindowController: NSWindowController {
     @IBOutlet private var settingsToolbarItem: NSToolbarItem!
     @IBOutlet private var searchToolbarItem: NSSearchToolbarItem!
     @IBOutlet private var groupModeToolbarItem: NSToolbarItem!
+    @IBOutlet private var notifyToolbarItem: NSToolbarItem!
 
     // How rows are organized at the top of the outline. Persisted in
     // NoSync user defaults so a relaunch comes back in the same mode
@@ -73,6 +82,7 @@ class CockpitWindowController: NSWindowController {
         configurePanel()
         configureToolbar()
         configureGroupModeToolbarItem()
+        configureNotifyToolbarItem()
         configureOutlineView()
         configureSearch()
         registerForLiveUpdates()
@@ -158,6 +168,18 @@ class CockpitWindowController: NSWindowController {
         groupModeToolbarItem.view = segmented
     }
 
+    // The bell toolbar item arms/disarms notify-on-status-change for the
+    // selected window or session row, mirroring the Session Status tool's
+    // bell. Its image and enabled state track the current selection.
+    private func configureNotifyToolbarItem() {
+        notifyToolbarItem.target = self
+        notifyToolbarItem.action = #selector(toggleNotify(_:))
+        // We drive isEnabled from the selection ourselves; autovalidation
+        // would re-enable it whenever the target responds to the action.
+        notifyToolbarItem.autovalidates = false
+        updateNotifyToolbarItem()
+    }
+
     private func configureSearch() {
         let field = searchToolbarItem.searchField
         field.delegate = self
@@ -202,6 +224,64 @@ class CockpitWindowController: NSWindowController {
             return
         }
         groupMode = mode
+    }
+
+    // Toggle notify-on-status-change for the selected row's entity. Window
+    // rows toggle the per-window watch; session rows toggle the per-session
+    // watch. The controller posts a change notification that drives the
+    // row indicators and this item's appearance.
+    @IBAction func toggleNotify(_ sender: Any?) {
+        let controller = NotifyOnStatusChangeController.instance
+        switch selectedRow()?.kind {
+        case .window(let guid):
+            controller.toggleWindowArmed(forGuid: guid)
+        case .session(let guid):
+            controller.toggleSessionArmed(forGuid: guid)
+        default:
+            break
+        }
+        updateNotifyToolbarItem()
+    }
+
+    // The selected row, or nil if nothing (or a non-selectable row) is
+    // selected.
+    private func selectedRow() -> CockpitRow? {
+        let row = outlineView.selectedRow
+        guard row >= 0 else { return nil }
+        return outlineView.item(atRow: row) as? CockpitRow
+    }
+
+    // Bell image reflects whether the selected entity is armed; the item is
+    // disabled when the selection isn't a window or session.
+    private func updateNotifyToolbarItem() {
+        let controller = NotifyOnStatusChangeController.instance
+        let armed: Bool
+        let enabled: Bool
+        switch selectedRow()?.kind {
+        case .window(let guid):
+            armed = controller.isWindowArmed(forGuid: guid)
+            enabled = true
+        case .session(let guid):
+            armed = controller.isSessionArmed(forGuid: guid)
+            enabled = true
+        default:
+            armed = false
+            enabled = false
+        }
+        let symbol: SFSymbol = armed ? .bellBadge : .bell
+        notifyToolbarItem.image = NSImage(systemSymbolName: symbol.rawValue,
+                                          accessibilityDescription: "Notify on status change")
+        notifyToolbarItem.isEnabled = enabled
+        notifyToolbarItem.toolTip = armed
+            ? "Watching for a status change on the selected item. An alert will appear on the next change, then turn this off."
+            : "Notify with an alert when the selected window or session’s status changes."
+    }
+
+    @objc private func notifyArmedDidChange(_ notification: Notification) {
+        // Armed state changed somewhere (here, the Window menu, the Status
+        // tool, or a fired alert). Refresh row indicators and the bell.
+        scheduleRefresh()
+        updateNotifyToolbarItem()
     }
 
     // MARK: - Selection
@@ -337,6 +417,10 @@ fileprivate final class CockpitRow {
     // a session's live detail string is surfaced); nil everywhere else,
     // which the cell renders as a plain single-line row.
     var detail: String?
+    // True when this window or session has notify-on-status-change armed.
+    // The cell shows a trailing bell when set. Only window and session
+    // rows ever set it.
+    var armed: Bool = false
     var children: [CockpitRow] = []
 
     init(identity: Identity, kind: Kind, title: String) {
@@ -440,6 +524,15 @@ fileprivate final class CockpitAlwaysEmphasizedRowView: NSTableRowView {
 // representation is rebuilt whenever the title or backgroundStyle
 // changes (the latter so selected rows get inverted text on the
 // blue selection background).
+// Indicator-only image view that never intercepts mouse clicks, so a
+// click on (or near) the bell still selects/reveals the row the same as
+// clicking the text.
+fileprivate final class CockpitPassthroughImageView: NSImageView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
+    }
+}
+
 @objc(iTermCockpitTableCellView)
 fileprivate final class CockpitTableCellView: NSTableCellView {
     // The title uses the table's appearance font (same as before this
@@ -484,8 +577,23 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         }
     }
 
+    // Shows a trailing bell when the row's window/session has notify-on-
+    // change armed.
+    var cockpitArmed: Bool = false {
+        didSet {
+            if cockpitArmed != oldValue {
+                bellView?.isHidden = !cockpitArmed
+                applyText()
+                needsLayout = true
+            }
+        }
+    }
+
     private var detailField: NSTextField?
     private var renderedDetail: NSAttributedString?
+    private var bellView: NSImageView?
+    private static let bellSize: CGFloat = 14
+    private static let bellGap: CGFloat = 4
 
     // Lay out top-down so the title sits above the detail line.
     override var isFlipped: Bool { true }
@@ -509,10 +617,10 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         applyText()
     }
 
-    // The title field comes from the xib; the detail field is added
-    // programmatically. Both are positioned by hand in layout() (no auto
-    // layout), so opt them out of constraint generation and clear the
-    // xib's autoresizing so our frames are authoritative.
+    // The title field comes from the xib; the detail field and bell
+    // indicator are added programmatically. All are positioned by hand in
+    // layout() (no auto layout), so opt them out of constraint generation
+    // and clear the xib's autoresizing so our frames are authoritative.
     private func installDetailField() {
         guard detailField == nil else { return }
         textField?.translatesAutoresizingMaskIntoConstraints = true
@@ -526,27 +634,51 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         field.autoresizingMask = []
         addSubview(field)
         detailField = field
+
+        let bell = CockpitPassthroughImageView()
+        let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
+        bell.image = NSImage(systemSymbolName: SFSymbol.bellBadge.rawValue,
+                             accessibilityDescription: "Notify on status change armed")?
+            .withSymbolConfiguration(config)
+        bell.imageScaling = .scaleProportionallyDown
+        bell.isHidden = true
+        bell.translatesAutoresizingMaskIntoConstraints = true
+        bell.autoresizingMask = []
+        addSubview(bell)
+        bellView = bell
     }
 
     override func layout() {
         super.layout()
         guard let textField else { return }
-        let width = bounds.width
+        // When armed, the bell sits at the leading edge (still inside the
+        // row's indentation) and the text is pushed right to make room.
+        let armed = (bellView?.isHidden == false)
+        let leading = armed ? (Self.bellSize + Self.bellGap) : 0
+        let width = max(0, bounds.width - leading)
         let titleHeight = ceil(textField.intrinsicContentSize.height)
+        let titleTop: CGFloat
         if let detailField, !detailField.isHidden {
             let detailHeight = ceil(detailField.intrinsicContentSize.height)
             let total = titleHeight + Self.detailSpacing + detailHeight
-            let top = max(0, (bounds.height - total) / 2)
-            textField.frame = NSRect(x: 0, y: top, width: width, height: titleHeight)
-            detailField.frame = NSRect(x: 0,
-                                       y: top + titleHeight + Self.detailSpacing,
+            titleTop = max(0, (bounds.height - total) / 2)
+            textField.frame = NSRect(x: leading, y: titleTop, width: width, height: titleHeight)
+            detailField.frame = NSRect(x: leading,
+                                       y: titleTop + titleHeight + Self.detailSpacing,
                                        width: width,
                                        height: detailHeight)
         } else {
-            textField.frame = NSRect(x: 0,
-                                     y: (bounds.height - titleHeight) / 2,
-                                     width: width,
-                                     height: titleHeight)
+            titleTop = (bounds.height - titleHeight) / 2
+            textField.frame = NSRect(x: leading, y: titleTop, width: width, height: titleHeight)
+        }
+        if let bellView, armed {
+            // Vertically center the bell on the title line, not the whole
+            // cell, so it lines up with the name even when a detail line
+            // is present.
+            bellView.frame = NSRect(x: 0,
+                                    y: titleTop + (titleHeight - Self.bellSize) / 2,
+                                    width: Self.bellSize,
+                                    height: Self.bellSize)
         }
     }
 
@@ -574,6 +706,9 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
                 detailField.attributedStringValue = renderedDetail
             }
         }
+        bellView?.contentTintColor = emphasized
+            ? .alternateSelectedControlTextColor
+            : .controlAccentColor
     }
 
     // Render the markdown detail string into a compact, single-line
@@ -706,6 +841,10 @@ extension CockpitWindowController: NSOutlineViewDataSource, NSOutlineViewDelegat
         }
     }
 
+    func outlineViewSelectionDidChange(_ notification: Notification) {
+        updateNotifyToolbarItem()
+    }
+
     func outlineView(_ outlineView: NSOutlineView,
                      viewFor tableColumn: NSTableColumn?,
                      item: Any) -> NSView? {
@@ -720,6 +859,7 @@ extension CockpitWindowController: NSOutlineViewDataSource, NSOutlineViewDelegat
         }
         cell.cockpitTitle = row.title
         cell.cockpitDetail = row.detail
+        cell.cockpitArmed = row.armed
         return cell
     }
 
@@ -762,6 +902,12 @@ extension CockpitWindowController {
                                name: name,
                                object: nil)
         }
+        // Notify-on-change arming updates both the row indicators and the
+        // bell toolbar item, so it gets its own handler.
+        center.addObserver(self,
+                           selector: #selector(notifyArmedDidChange(_:)),
+                           name: NotifyOnStatusChangeController.armedDidChangeNotification,
+                           object: nil)
     }
 
     @objc fileprivate func scheduleRefresh() {
@@ -890,6 +1036,7 @@ extension CockpitWindowController {
                               kind: .window(guid: windowGuid),
                               title: title)
             windowRow.title = title
+            windowRow.armed = NotifyOnStatusChangeController.instance.isWindowArmed(forGuid: windowGuid)
             freshCache[windowIdentity] = windowRow
             let expanded = expandWithPeers(terminal.allSessions(),
                                             alreadySeen: &alreadySeen)
@@ -914,6 +1061,7 @@ extension CockpitWindowController {
                               kind: .buriedRoot,
                               title: "Buried Sessions")
             buriedRow.title = "Buried Sessions"
+            buriedRow.armed = false
             freshCache[identity] = buriedRow
             buriedRow.children = bucketSessionsByState(
                 buriedExpanded,
@@ -943,6 +1091,7 @@ extension CockpitWindowController {
                               kind: .window(guid: windowGuid),
                               title: title)
             windowRow.title = title
+            windowRow.armed = NotifyOnStatusChangeController.instance.isWindowArmed(forGuid: windowGuid)
             freshCache[windowIdentity] = windowRow
 
             var tabRows: [CockpitRow] = []
@@ -980,6 +1129,7 @@ extension CockpitWindowController {
                               kind: .buriedRoot,
                               title: "Buried Sessions")
             buriedRow.title = "Buried Sessions"
+            buriedRow.armed = false
             freshCache[identity] = buriedRow
             buriedRow.children = sessionRows(for: buriedExpanded,
                                               freshCache: &freshCache)
@@ -1007,6 +1157,7 @@ extension CockpitWindowController {
                               kind: .workgroup(id: instance.instanceUniqueIdentifier),
                               title: title)
             row.title = title
+            row.armed = false
             freshCache[identity] = row
             row.children = sessionRows(for: liveSessions,
                                         freshCache: &freshCache)
@@ -1033,6 +1184,7 @@ extension CockpitWindowController {
             // cached row carried over from a previous byStatus build so
             // it doesn't leak into byWindow / byWorkgroup rows.
             row.detail = nil
+            row.armed = NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: session.guid)
             row.children = []
             freshCache[identity] = row
             return row
@@ -1121,6 +1273,7 @@ extension CockpitWindowController {
                               title: title)
             row.title = title
             row.detail = cockpitDetailText(for: session)
+            row.armed = NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: session.guid)
             row.children = []
             freshCache[identity] = row
             bucketed[state, default: []].append(row)
@@ -1239,6 +1392,7 @@ extension CockpitWindowController {
         var indexOf: [CockpitRow.Identity: Int] = [:]
         var titleOf: [CockpitRow.Identity: String] = [:]
         var detailOf: [CockpitRow.Identity: String?] = [:]
+        var armedOf: [CockpitRow.Identity: Bool] = [:]
     }
 
     private func snapshotTreeShape(of roots: [CockpitRow]) -> TreeShape {
@@ -1248,6 +1402,7 @@ extension CockpitWindowController {
             shape.indexOf[root.identity] = i
             shape.titleOf[root.identity] = root.title
             shape.detailOf[root.identity] = root.detail
+            shape.armedOf[root.identity] = root.armed
             snapshotChildren(of: root, into: &shape)
         }
         return shape
@@ -1260,6 +1415,7 @@ extension CockpitWindowController {
             shape.indexOf[child.identity] = i
             shape.titleOf[child.identity] = child.title
             shape.detailOf[child.identity] = child.detail
+            shape.armedOf[child.identity] = child.armed
             snapshotChildren(of: child, into: &shape)
         }
     }
@@ -1382,7 +1538,9 @@ extension CockpitWindowController {
         for id in common {
             let titleChanged = old.titleOf[id] != new.titleOf[id]
             let detailChanged = old.detailOf[id] != new.detailOf[id]
-            guard titleChanged || detailChanged, let row = rowCache[id] else {
+            let armedChanged = old.armedOf[id] != new.armedOf[id]
+            guard titleChanged || detailChanged || armedChanged,
+                  let row = rowCache[id] else {
                 continue
             }
             outlineView.reloadItem(row)
