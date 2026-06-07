@@ -616,7 +616,12 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     } else {
         [_toolbar setVisible:YES];
         [self resizeWindowForTabViewItem:_globalTabViewItem animated:NO];
-        self.window.title = @"Settings";
+        NSString *suiteName = [iTermUserDefaults customSuiteName];
+        if (suiteName.length > 0) {
+            self.window.title = [NSString stringWithFormat:@"Settings: %@", suiteName];
+        } else {
+            self.window.title = @"Settings";
+        }
     }
 
     iTermPrefsPanel *panel = (iTermPrefsPanel *)self.window;
