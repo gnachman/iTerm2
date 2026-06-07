@@ -128,6 +128,20 @@ func permissionDetail(_ json: [String: Any]) -> String? {
         return nil
     }
     let toolInput = (json["tool_input"] as? [String: Any]) ?? [:]
+    // AskUserQuestion is not a permission to grant: it is a question posed to the
+    // user. Show the question itself rather than the "Allow …?" framing.
+    if toolName == "AskUserQuestion" {
+        let questions = (toolInput["questions"] as? [[String: Any]]) ?? []
+        let texts = questions.compactMap { $0["question"] as? String }
+        if !texts.isEmpty {
+            return condense(texts.joined(separator: " "))
+        }
+    }
+    // ExitPlanMode asks the user to approve a plan, not to grant a permission, so
+    // the "Allow …?" framing is wrong here too. The plan body is too long to show.
+    if toolName == "ExitPlanMode" {
+        return "Review proposed plan?"
+    }
     return "Allow " + toolCallSummary(toolName: toolName, toolInput: toolInput) + "?"
 }
 
@@ -137,9 +151,12 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     case "Bash":
         let command = (toolInput["command"] as? String) ?? ""
         return condense("Bash: " + command)
-    case "Read", "Edit", "Write":
+    case "Read", "Edit", "Write", "MultiEdit":
         let path = (toolInput["file_path"] as? String) ?? ""
         return "\(toolName): \(shortPath(path))"
+    case "NotebookEdit":
+        let path = (toolInput["notebook_path"] as? String) ?? ""
+        return "NotebookEdit: \(shortPath(path))"
     case "Grep":
         let pattern = (toolInput["pattern"] as? String) ?? ""
         var s = "Grep \u{201C}\(pattern)\u{201D}"
@@ -152,9 +169,9 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     case "Glob":
         let pattern = (toolInput["pattern"] as? String) ?? ""
         return "Glob: \(pattern)"
-    case "Agent":
+    case "Agent", "Task":
         let desc = (toolInput["description"] as? String) ?? ""
-        return "Agent: \(desc)"
+        return "\(toolName): \(desc)"
     case "WebFetch":
         let url = (toolInput["url"] as? String) ?? ""
         return "WebFetch: \(shortURL(url))"
@@ -172,8 +189,36 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
                 return "\(parts[0])/\(parts.last!)"
             }
         }
-        return toolName
+        // Unknown tool: humanize its identifier so a raw internal keyword
+        // (AskUserQuestion, TodoWrite, ExitPlanMode, …) never leaks into the UI.
+        return humanize(toolName)
     }
+}
+
+/// Split a PascalCase/camelCase tool identifier into spaced words so unhandled
+/// tools read naturally instead of leaking their raw keyword. Keeps acronym runs
+/// together: "AskUserQuestion" -> "Ask User Question", "URLFetch" -> "URL Fetch".
+func humanize(_ identifier: String) -> String {
+    let chars = Array(identifier)
+    var words: [String] = []
+    var current = ""
+    for (i, c) in chars.enumerated() {
+        if c.isUppercase, !current.isEmpty {
+            let prev = chars[i - 1]
+            let nextIsLower = i + 1 < chars.count && chars[i + 1].isLowercase
+            // Boundary after a lowercase/digit (askU…) or when an acronym run
+            // gives way to a new word (URLFetch -> URL | Fetch).
+            if prev.isLowercase || prev.isNumber || (prev.isUppercase && nextIsLower) {
+                words.append(current)
+                current = ""
+            }
+        }
+        current.append(c)
+    }
+    if !current.isEmpty {
+        words.append(current)
+    }
+    return words.isEmpty ? identifier : words.joined(separator: " ")
 }
 
 /// Shorten a long absolute path to `…/parent/file`. Leaves short paths alone.
