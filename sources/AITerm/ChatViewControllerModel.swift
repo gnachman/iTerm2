@@ -138,8 +138,20 @@ class ChatViewControllerModel {
         self.chatID = chatID
         var lastDate: DateComponents?
         if let messages = listModel.messages(forChat: chatID, createIfNeeded: false) {
+            // An auto-approved/denied tool call now persists its
+            // .remoteCommandRequest for history completeness, but a request
+            // that has already been resolved (its .remoteCommandResponse is
+            // present) must not surface as an interactive Allow/Deny prompt.
+            // Hide any such resolved request; live delivery never carries
+            // these (ChatClient persists them without broker delivery), so
+            // this only affects the rebuild/reload path.
+            let resolvedRequestIDs = Self.resolvedRequestIDs(in: messages)
             for message in messages {
                 if message.hiddenFromClient {
+                    continue
+                }
+                if case .remoteCommandRequest = message.content,
+                   resolvedRequestIDs.contains(message.uniqueID) {
                     continue
                 }
                 let date = message.dateErasingTime
@@ -156,6 +168,20 @@ class ChatViewControllerModel {
             }
         }
         initializeItemsDelegate()
+    }
+
+    // The set of request uniqueIDs that already have a matching
+    // .remoteCommandResponse (keyed by requestUUID). A request in this set has
+    // been resolved and should not render as an interactive prompt. Pure and
+    // static so it can be unit-tested without a ChatListModel.
+    static func resolvedRequestIDs<S: Sequence>(in messages: S) -> Set<UUID>
+    where S.Element == Message {
+        Set(messages.compactMap { message -> UUID? in
+            if case .remoteCommandResponse(_, let requestUUID, _, _) = message.content {
+                return requestUUID
+            }
+            return nil
+        })
     }
 
     private func initializeItemsDelegate() {

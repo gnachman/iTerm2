@@ -1164,9 +1164,14 @@ extension ChatAgent {
     /// here if `load(messages:)` ever changes — `AILiveHarness` reaches
     /// `AIChatToolCallRepair` through this seam to validate the chat-restore
     /// path end-to-end against real vendor APIs.
-    static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
+    /// Translate a persisted transcript to LLM messages WITHOUT the orphan
+    /// repair pass. Production never sends this (aiMessagesForReloadingTranscript
+    /// always repairs), but the live negative-control test sends it to prove a
+    /// real vendor actually rejects an un-repaired orphan tool_result, so the
+    /// positive repair test cannot pass by accident.
+    static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
         var stateMachine = MessageToPromptStateMachine()
-        let aiMessages = messages.compactMap { message -> AITermController.Message? in
+        return messages.compactMap { message -> AITermController.Message? in
             switch message.content {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
@@ -1182,7 +1187,11 @@ extension ChatAgent {
                 return nil
             }
         }
-        return AIChatToolCallRepair.repairingOrphanedToolResults(aiMessages)
+    }
+
+    static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
+        return AIChatToolCallRepair.repairingOrphanedToolResults(
+            transcriptMessagesBeforeRepair(messages))
     }
 }
 

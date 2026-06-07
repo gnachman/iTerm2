@@ -1889,6 +1889,95 @@ final class AILiveHarness: XCTestCase {
                           "[\(vendorTag)/\(model)/chatReload_orphan] tool_use must come before its tool_result")
     }
 
+    // MARK: chat-reload — orphan negative control
+    //
+    // The positive chatReload_orphan test proves a real vendor ACCEPTS a
+    // repaired orphan. On its own that doesn't prove the repair is what made
+    // it work: maybe the vendor never rejected the orphan in the first place,
+    // or our fixture isn't a real orphan. This negative control closes that
+    // gap by sending the SAME orphan transcript WITHOUT the repair pass
+    // (ChatAgent.transcriptMessagesBeforeRepair, exactly what production
+    // transmitted before the fix) and asserting the vendor rejects it with
+    // HTTP 400. If a vendor ever stops rejecting un-repaired orphans, this
+    // fails loudly so we know the positive test has gone vacuous. Id-based
+    // vendors only (Anthropic, OpenAI Responses); Gemini pairs by adjacency
+    // and 400s for a different reason, so it's out of scope here.
+
+    @MainActor
+    private func runOrphanNegativeControlOnce(vendorTag: String,
+                                              model: AIMetadata.Model,
+                                              apiKey: String,
+                                              idStyle: ChatReloadIDStyle) {
+        let toolName = "execute_command"
+        let decl = ChatGPTFunctionDeclaration(
+            name: toolName,
+            description: "Run a shell command (stub for chat-reload tests).",
+            parameters: JSONSchema(for: RemoteCommand.ExecuteCommand(),
+                                   descriptions: ["command": "The command to run."]))
+        let spec = AILiveFunctionSpec<RemoteCommand.ExecuteCommand>(
+            decl: decl,
+            implementation: { _, _, completion in try completion(.success("{\"ok\":true}")) })
+
+        let transcript = makeChatReloadTranscript(
+            scenario: .orphan, toolName: toolName, idStyle: idStyle)
+        // The un-repaired prompt: the orphan tool_result with no preceding
+        // tool_use, identical to the positive path except the repair is
+        // skipped. This isolates the repair as the only variable.
+        let unrepaired = ChatAgent.transcriptMessagesBeforeRepair(transcript)
+        let followUp = LLM.Message(
+            role: .user,
+            content: "In one short sentence, summarize what you learned from the previous command output.")
+        let messages = unrepaired + [followUp]
+
+        do {
+            _ = try AILiveDriver.run(
+                model: model,
+                apiKey: apiKey,
+                messages: messages,
+                streaming: false,
+                function: spec,
+                scenarioTag: "chatReload_orphan_negativeControl",
+                test: self)
+            XCTFail("[\(vendorTag)/\(model.name)] vendor ACCEPTED an un-repaired orphan tool_result. Either the vendor stopped enforcing tool_use/tool_result pairing or the fixture is no longer a real orphan; the positive chatReload_orphan test no longer proves the repair is necessary.")
+        } catch {
+            let status = Self.httpStatusCode(inErrorText: "\(error)")
+            XCTAssertEqual(status, 400,
+                           "[\(vendorTag)/\(model.name)] expected the un-repaired orphan to be rejected with HTTP 400 (tool pairing), got: \(error)")
+        }
+    }
+
+    /// One representative tool-calling model is enough: pairing is enforced at
+    /// the vendor API layer, not per model.
+    @MainActor
+    private func runOrphanNegativeControl(vendor: String,
+                                          apiKey: String,
+                                          idStyle: ChatReloadIDStyle) {
+        for name in Self.models(forVendor: vendor) {
+            guard let resolved = AIMetadata.instance.models.first(where: { $0.name == name }),
+                  resolved.features.contains(.functionCalling) else { continue }
+            throttle(forVendor: vendor)
+            runOrphanNegativeControlOnce(vendorTag: vendor,
+                                         model: resolved,
+                                         apiKey: apiKey,
+                                         idStyle: idStyle)
+            return
+        }
+    }
+
+    func test_anthropic_chatReload_orphanNegativeControl_rejected() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runOrphanNegativeControl(vendor: "anthropic", apiKey: key,
+                                 idStyle: .real(callID: "toolu_negctl",
+                                                itemID: "toolu_negctl"))
+    }
+
+    func test_openai_chatReload_orphanNegativeControl_rejected() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runOrphanNegativeControl(vendor: "openai", apiKey: key,
+                                 idStyle: .real(callID: "call_negctl",
+                                                itemID: "fc_negctl"))
+    }
+
     // MARK: chat-reload — Anthropic
 
     func test_anthropic_chatReload_paired_nonStreaming() throws {

@@ -139,6 +139,13 @@ class ChatClient {
                                                          inSessionGuid: guid,
                                                          category: request.content.permissionCategory) {
         case .never:
+            // Persist the tool request before its (denial) response so the
+            // rebuilt history has a matching tool_use for every tool_result.
+            // We still return nil so the request is not delivered to the
+            // live UI; ChatViewControllerModel hides this resolved request on
+            // reload. Historically the request was squelched entirely, which
+            // left an orphan tool_result that the next turn had to repair.
+            try? model.append(message: message, toChatID: chatID)
             try? respondSuccessfullyToRemoteCommandRequest(
                 inChat: chatID,
                 requestUUID: message.uniqueID,
@@ -151,6 +158,10 @@ class ChatClient {
             if safe == false {
                 return message
             }
+            // See .never above: persist the request (so the next turn's
+            // history is complete) then run the tool. Returning nil keeps it
+            // out of the live UI; the resolved request is hidden on reload.
+            try? model.append(message: message, toChatID: chatID)
             try? performRemoteCommand(request,
                                       in: session,
                                       chatID: chatID,
