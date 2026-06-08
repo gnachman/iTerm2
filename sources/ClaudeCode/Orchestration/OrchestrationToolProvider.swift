@@ -343,9 +343,11 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Listing active watches"
         default:
             if name.hasPrefix("session_") {
-                let guid = (dict["session_guid"] as? String) ?? "?"
                 let raw = String(name.dropFirst("session_".count))
-                return "`\(prettifyToolName(raw))` on session `\(guid)`"
+                // Use the @<guid> mention form (not a bare backticked guid) so
+                // OrchestrationMentionRenderer rewrites it to the session's name
+                // (or "[defunct session]" when it no longer resolves).
+                return "`\(prettifyToolName(raw))` on " + sessionDescription(args: dict)
             }
             return prettifyToolName(name)
         }

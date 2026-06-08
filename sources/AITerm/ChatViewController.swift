@@ -103,6 +103,14 @@ class ChatViewController: NSViewController {
     private(set) var chatID: String? = UUID().uuidString
 
     private let inputView = ChatInputView()
+    // Pending-but-unsent input per chat, so switching chats clears the field
+    // but returning restores what was typed (tokens and attachments included).
+    private struct InputDraft {
+        let text: NSAttributedString
+        let attachments: [HorizontalFileListView.File]
+        var isEmpty: Bool { text.length == 0 && attachments.isEmpty }
+    }
+    private var inputDrafts = [String: InputDraft]()
     private var scrollView: NSScrollView!
     private var tableView: NSTableView!
     private var sendButton: NSButton!
@@ -525,8 +533,40 @@ extension ChatViewController {
         } else {
             model = nil
         }
+        // Stash the outgoing chat's pending input before we switch away, so it
+        // comes back when the user returns. Drop the entry when nothing is
+        // pending so the dictionary doesn't accumulate empty drafts. Only on an
+        // actual chat change — a same-id reload must not disturb the field.
+        let previousChatID = self.chatID
+        let switchingChats = previousChatID != chat?.id
+        if switchingChats, let previousChatID {
+            let draft = InputDraft(text: inputView.attributedStringValue,
+                                   attachments: inputView.attachedFiles)
+            inputDrafts[previousChatID] = draft.isEmpty ? nil : draft
+        }
         inputView.isEnabled = chatID != nil
         self.chatID = chat?.id
+        // The @-mention session picker is only available in orchestration chats.
+        // Read it lazily so a runtime toggle (e.g. via a tool call) takes effect
+        // without re-wiring.
+        inputView.orchestrationEnabledProvider = { [weak self] in
+            guard let self, let chatID = self.chatID else {
+                return false
+            }
+            return self.listModel.chat(id: chatID)?.orchestrationEnabled ?? false
+        }
+        inputView.refreshPlaceholder()
+
+        // Switching chats clears the field; restore the incoming chat's saved
+        // draft (if any) so a pending message survives the round trip. Skip on a
+        // same-id reload so live (unsent) input isn't wiped.
+        if switchingChats {
+            inputView.clear()
+            if let id = self.chatID, let draft = inputDrafts[id] {
+                inputView.attributedStringValue = draft.text
+                inputView.setAttachedFiles(draft.attachments)
+            }
+        }
 
         // Update window title via window controller. Skip when this CVC is
         // hosted as an inline gutter panel — its window is the terminal
@@ -1454,6 +1494,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     func rendition(for message: Message, isLast: Bool) -> MessageRendition {
         var enableButtons = isLast
         var editable = false
+        // @-mention rewriting (@<guid> -> linked session name) is an
+        // orchestration-only feature. Gate it so ordinary chats don't mutate
+        // user-typed text that merely contains an @<uuid>-looking substring
+        // (e.g. turning it into "[defunct session]").
+        let chatIsOrchestration = chatID.flatMap {
+            listModel.chat(id: $0)?.orchestrationEnabled
+        } ?? false
         switch message.content {
         case .plainText:
             editable = message.author == .user
@@ -1574,20 +1621,22 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                             attributedString: Message.Content.plainText(text, context: nil)
                                 .attributedStringValue(
                                     linkColor: message.linkColor,
-                                    textColor: message.textColor))
+                                    textColor: message.textColor,
+                                    renderMentions: chatIsOrchestration))
                     case .markdown(let text):
                         MessageRendition.SubpartContainer(
                             kind: .regular,
                             attributedString: Message.Content.markdown(text)
                                 .attributedStringValue(
                                     linkColor: message.linkColor,
-                                    textColor: message.textColor))
+                                    textColor: message.textColor,
+                                    renderMentions: chatIsOrchestration))
                     case .context:
                         nil
                     }
                 })
         default:
-                .regular(.init(attributedString: message.attributedStringValue,
+                .regular(.init(attributedString: message.attributedStringValue(renderMentions: chatIsOrchestration),
                                buttons: message.buttons,
                                enableButtons: enableButtons,
                                keepsButtonsEnabledAfterClick: message.isPermissionsClientLocal))
@@ -1965,7 +2014,8 @@ fileprivate enum PickSessionButtonIdentifier: String {
 // strings and never appear in orchestrator transcripts.
 extension Message.Content {
     func attributedStringValue(linkColor: NSColor,
-                               textColor: NSColor) -> NSAttributedString {
+                               textColor: NSColor,
+                               renderMentions: Bool = false) -> NSAttributedString {
         switch self {
         case .multipart:
             it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
@@ -1992,10 +2042,18 @@ extension Message.Content {
                 .paragraphStyle: paragraphStyle,
                 .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)
             ]
-            return NSAttributedString(
+            let rendered = NSAttributedString(
                 string: ChatViewController.trimLeadingWhitespaceForDisplay(string),
                 attributes: attributes
             )
+            // The user can @-mention sessions in orchestration chats; their
+            // sent message carries @<guid> the same way the orchestrator's do,
+            // so rewrite those to clickable session names here too. Only in
+            // orchestration chats — see renderMentions.
+            guard renderMentions else {
+                return rendered
+            }
+            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
         case .markdown(let string), .explanationResponse(_, _, let string):
             let rendered = AttributedStringForGPTMarkdown(
                 ChatViewController.trimLeadingWhitespaceForDisplay(string),
@@ -2003,6 +2061,11 @@ extension Message.Content {
                 textColor: textColor) { }
             // Turn any @-prefixed session/workgroup ids the orchestrator
             // emitted into clickable links to the entity's current name.
+            // Orchestration chats only (see renderMentions) so ordinary
+            // markdown that happens to contain an @<uuid> isn't mutated.
+            guard renderMentions else {
+                return rendered
+            }
             return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
         case .explanationRequest(request: let request):
             let string =
@@ -2261,9 +2324,10 @@ extension Message {
         }
     }
 
-    var attributedStringValue: NSAttributedString {
+    func attributedStringValue(renderMentions: Bool) -> NSAttributedString {
         return content.attributedStringValue(linkColor: linkColor,
-                                             textColor: textColor)
+                                             textColor: textColor,
+                                             renderMentions: renderMentions)
     }
 }
 
@@ -2802,6 +2866,7 @@ extension ChatViewController {
             DLog("Failed to toggle orchestration: \(error)")
             return
         }
+        inputView.refreshPlaceholder()
         let notice = enabled
             ? "Orchestration enabled. Agent can see content of all sessions."
             : "Orchestration disabled."

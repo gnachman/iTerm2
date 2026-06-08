@@ -251,6 +251,14 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // disable the next/previous-peer items when there's nothing to cycle.
     @objc var peerCount: Int { peerConfigs.count }
 
+    // Realized peer sessions in peer-config order — the same order the peer
+    // switcher control presents them. Other UIs (e.g. the chat @-mention
+    // picker) use this so their peer ordering matches the switcher rather than
+    // the unordered `realizedPeerSessions` dictionary traversal.
+    var orderedRealizedPeerSessions: [PTYSession] {
+        return peerConfigs.compactMap { session(forIdentifier: $0.uniqueIdentifier) }
+    }
+
     // Display label for the peer registered under `id` — falls back to
     // "Peer" when the config's displayName is empty (matches how
     // peerLabel renders in WorkgroupVisualView and the mode switcher).

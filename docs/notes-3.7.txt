@@ -18,6 +18,13 @@ Major New Features:
   list of open files and network
   connections.
 
+- In an orchestration-mode AI chat you can now
+  @-mention a terminal session: type @ to get a
+  window/tab/pane outline with a live preview,
+  and the picked session is inserted as a single
+  token that the AI receives as a session
+  reference.
+
 - Tabs can now be placed on the right side
   of the window.
 

@@ -200,8 +200,10 @@ enum OrchestrationMentionRenderer {
         guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
             return nil
         }
-        let name = session.name.isEmpty ? "Untitled session" : session.name
-        return Resolved(displayName: name, revealGuid: guid)
+        // Use the shared mention naming so message bubbles match the picker and
+        // the inserted token (workgroup role prefix, colon omitted when the
+        // session has no title yet).
+        return Resolved(displayName: ChatMentionDisplay.displayName(for: session), revealGuid: guid)
     }
 
     private static func resolveWorkgroup(instanceID: String) -> Resolved? {

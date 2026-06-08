@@ -261,4 +261,5 @@
 #import "iTermShortcut.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermOpenQuicklyWindowController.h"
+#import "iTermSessionPreviewPanel.h"
 #import <CoreParse/CoreParse.h>

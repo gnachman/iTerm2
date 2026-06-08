@@ -42,6 +42,13 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     private var outerColumn: ChatManualStackView!
 
     weak var delegate: ChatInputViewDelegate?
+
+    // Returns whether the current chat is in orchestration mode. The @-mention
+    // session picker only activates when this returns true. Read lazily on every
+    // keystroke so runtime orchestration toggles are reflected immediately.
+    var orchestrationEnabledProvider: (() -> Bool)?
+    private let mentionPicker = ChatMentionPickerController()
+
     var stoppable = false {
         didSet {
             updateSendButtonEnabled()
@@ -324,6 +331,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     }
 
     func clear() {
+        mentionPicker.hide()
         stringValue = ""
         attachmentsView.files.removeAll()
         updateAttachmentsView()
@@ -599,14 +607,45 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             inputTextFieldContainer.stringValue
         }
         set {
+            mentionPicker.hide()
             inputTextFieldContainer.stringValue = newValue
             updateSendButtonEnabled()
             heightDidChange()
         }
     }
 
+    // The attributed input (including @-mention tokens), for saving/restoring a
+    // per-chat draft across chat switches.
+    var attributedStringValue: NSAttributedString {
+        get {
+            inputTextFieldContainer.attributedStringValue
+        }
+        set {
+            mentionPicker.hide()
+            inputTextFieldContainer.attributedStringValue = newValue
+            updateSendButtonEnabled()
+            heightDidChange()
+        }
+    }
+
+    func setAttachedFiles(_ files: [HorizontalFileListView.File]) {
+        attachmentsView.files = files
+        updateAttachmentsView()
+        updateSendButtonEnabled()
+    }
+
     func makeTextViewFirstResponder() {
         window?.makeFirstResponder(inputTextFieldContainer.textView)
+    }
+
+    // Surface the @-mention feature where it's available: orchestration chats
+    // get a placeholder that advertises it. Call when the chat loads and
+    // whenever orchestration is toggled.
+    func refreshPlaceholder() {
+        let orchestration = orchestrationEnabledProvider?() ?? false
+        inputTextFieldContainer.placeholder = orchestration
+            ? "Type a message, or @ to mention a session…"
+            : "Type a message…"
     }
 
     private func revealSelectedRange() {
@@ -660,6 +699,26 @@ extension ChatInputView {
 
 extension ChatInputView: NSTextViewDelegate {
     func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        // While the @-mention picker is open it owns the arrow/Return/Tab/Escape
+        // keys: they drive the list rather than the text view or the send action.
+        if mentionPicker.isVisible {
+            switch commandSelector {
+            case #selector(NSResponder.moveDown(_:)):
+                mentionPicker.moveSelectionDown()
+                return true
+            case #selector(NSResponder.moveUp(_:)):
+                mentionPicker.moveSelectionUp()
+                return true
+            case #selector(NSResponder.insertNewline(_:)), #selector(NSResponder.insertTab(_:)):
+                mentionPicker.commitSelection()
+                return true
+            case #selector(NSResponder.cancelOperation(_:)):
+                mentionPicker.hide()
+                return true
+            default:
+                break
+            }
+        }
         if commandSelector == #selector(NSResponder.insertNewline(_:))
             && !iTermApplication.shared().it_modifierFlags.contains(.shift)
             && sendButton.isEnabled {
@@ -676,6 +735,7 @@ extension ChatInputView: NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         updateSendButtonEnabled()
         heightDidChange()
+        updateMentionPicker()
         delegate?.textDidChange()
     }
 
@@ -683,5 +743,151 @@ extension ChatInputView: NSTextViewDelegate {
         DispatchQueue.main.async {
             self.revealSelectedRange()
         }
+        // Moving the caret (e.g. a click) out of an @-mention context dismisses
+        // the picker; moving into one shows it.
+        updateMentionPicker()
+    }
+}
+
+// MARK: - @-mention session picker
+extension ChatInputView {
+    // A run beginning with "@" immediately before the caret, if any. `atIndex`
+    // is the location of the "@"; `query` is the text typed after it (no
+    // whitespace, since a space ends the mention being composed).
+    private func mentionQueryContext() -> (atIndex: Int, query: String)? {
+        let tv = inputTextFieldContainer.textView
+        let selection = tv.selectedRange()
+        guard selection.length == 0 else {
+            return nil
+        }
+        let caret = selection.location
+        let ns = tv.string as NSString
+        guard caret <= ns.length else {
+            return nil
+        }
+        let atChar = UInt16(UnicodeScalar("@").value)
+        var i = caret
+        while i > 0 {
+            let c = ns.character(at: i - 1)
+            if c == atChar {
+                let atIndex = i - 1
+                // The "@" must start a word: at the very start, or right after
+                // whitespace or another token.
+                if atIndex == 0 || isMentionBoundary(ns.character(at: atIndex - 1)) {
+                    let query = ns.substring(with: NSRange(location: i, length: caret - i))
+                    return (atIndex, query)
+                }
+                return nil
+            }
+            // A whitespace/newline or attachment glyph before reaching "@" means
+            // the caret isn't inside a mention being composed.
+            if isMentionBoundary(c) {
+                return nil
+            }
+            i -= 1
+        }
+        return nil
+    }
+
+    private func isMentionBoundary(_ unichar: unichar) -> Bool {
+        if unichar == 0xFFFC {
+            // Object replacement character: an existing attachment/token.
+            return true
+        }
+        guard let scalar = UnicodeScalar(unichar) else {
+            return false
+        }
+        return CharacterSet.whitespacesAndNewlines.contains(scalar)
+    }
+
+    private func updateMentionPicker() {
+        guard orchestrationEnabledProvider?() == true,
+              window != nil,
+              let context = mentionQueryContext() else {
+            mentionPicker.hide()
+            return
+        }
+        if mentionPicker.isVisible {
+            mentionPicker.update(query: context.query)
+        } else {
+            mentionPicker.show(anchorView: inputTextFieldContainer,
+                               query: context.query) { [weak self] guid, displayName in
+                self?.insertMention(guid: guid, displayName: displayName)
+            }
+        }
+    }
+
+    private func insertMention(guid: String, displayName: String) {
+        let tv = inputTextFieldContainer.textView
+        guard let context = mentionQueryContext() else {
+            return
+        }
+        let caret = tv.selectedRange().location
+        let replaceRange = NSRange(location: context.atIndex, length: caret - context.atIndex)
+        let font = tv.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let color = resolvedMentionColor()
+        let mention = NSMutableAttributedString(
+            attributedString: ChatSessionMentionAttachment.attributedString(
+                guid: guid,
+                displayName: displayName,
+                font: font,
+                color: color))
+        // A trailing space so the next keystroke isn't swallowed into the token.
+        mention.append(NSAttributedString(string: " ",
+                                          attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        guard tv.shouldChangeText(in: replaceRange, replacementString: mention.string) else {
+            return
+        }
+        tv.textStorage?.replaceCharacters(in: replaceRange, with: mention)
+        tv.didChangeText()
+        let newCaret = replaceRange.location + mention.length
+        tv.setSelectedRange(NSRange(location: newCaret, length: 0))
+        tv.typingAttributes = [.font: font, .foregroundColor: NSColor.labelColor]
+        updateSendButtonEnabled()
+        heightDidChange()
+    }
+
+    // The token images bake in the link color resolved for one appearance, so
+    // they don't follow a light/dark switch on their own. Re-render every
+    // mention token when the effective appearance changes.
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        rerenderMentionTokens()
+    }
+
+    private func rerenderMentionTokens() {
+        let textView = inputTextFieldContainer.textView
+        guard let storage = textView.textStorage, storage.length > 0 else {
+            return
+        }
+        let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let color = resolvedMentionColor()
+        let fullRange = NSRange(location: 0, length: storage.length)
+        var ranges: [NSRange] = []
+        storage.enumerateAttribute(.attachment, in: fullRange) { value, range, _ in
+            guard let mention = value as? ChatSessionMentionAttachment else {
+                return
+            }
+            mention.renderImage(font: font, color: color)
+            ranges.append(range)
+        }
+        guard !ranges.isEmpty else {
+            return
+        }
+        // Updating an attachment's image doesn't invalidate the layout
+        // manager's cached glyph, so force a redraw of each token's range.
+        for range in ranges {
+            textView.layoutManager?.invalidateDisplay(forCharacterRange: range)
+        }
+    }
+
+    // The session-link color baked into the token image, resolved for the text
+    // view's current appearance so the frozen image matches light/dark.
+    private func resolvedMentionColor() -> NSColor {
+        var color = NSColor.linkColor
+        inputTextFieldContainer.textView.effectiveAppearance.performAsCurrentDrawingAppearance {
+            color = NSColor.linkColor.usingColorSpace(.sRGB) ?? NSColor.linkColor
+        }
+        return color
     }
 }
