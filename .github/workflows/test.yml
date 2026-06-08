@@ -43,7 +43,11 @@ jobs:
           submodules: recursive
 
       - name: Select Xcode 26
-        run: sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+        # Keep this pinned to the same Xcode that the committed prebuilt binary
+        # dependencies were built with (the build script prints its
+        # "last-built-for version"). A mismatch makes the dependency build
+        # phase try to regenerate them and fail.
+        run: sudo xcode-select -s /Applications/Xcode_26.4.app/Contents/Developer
 
       - name: Show Xcode version
         run: xcodebuild -version
@@ -94,7 +98,10 @@ jobs:
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
               CODE_SIGNING_ALLOWED=NO 2>&1 | tee build_output.txt
-            exit_code=$?
+            # tee always exits 0, so $? here is tee's, not xcodebuild's. Use
+            # PIPESTATUS[0] to get xcodebuild's real exit code, otherwise a
+            # build/test failure masquerades as a pass.
+            exit_code=${PIPESTATUS[0]}
             set -e
             echo "::endgroup::"
 
@@ -105,7 +112,7 @@ jobs:
 
             # Check if this is a flaky ibtoold/asset catalog crash
             if grep -q "CompileAssetCatalogVariant failed\|IBPlatformToolFailureException\|The tool closed the connection" build_output.txt; then
-              echo "::warning::Attempt $attempt failed due to flaky ibtoold crash (known Xcode 26.2 issue)"
+              echo "::warning::Attempt $attempt failed due to flaky ibtoold crash (known Xcode 26 issue)"
               if [ $attempt -lt 3 ]; then
                 echo "Retrying..."
                 killall ibtoold 2>/dev/null || true
