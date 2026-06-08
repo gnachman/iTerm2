@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/responses\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"input\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\",\"type\":\"message\"}],\"max_output_tokens\":127979,\"model\":\"gpt-5.5\",\"stream\":false,\"tool_choice\":\"none\",\"tools\":[]}",
+  "key" : "e7dcee06f4d97613b68a788377161a6727a09c9268ac936ef7bee4200df29317",
+  "response" : {
+    "data" : "{\n  \"id\": \"resp_08410399009a07a5006a25f1e2d308819a8acac2533201fc2c\",\n  \"object\": \"response\",\n  \"created_at\": 1780871650,\n  \"status\": \"completed\",\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1780871652,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": null,\n  \"max_output_tokens\": 127979,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5.5-2026-04-23\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_08410399009a07a5006a25f1e45b5c819aa88d340bf249eef7\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"summary\": []\n    },\n    {\n      \"id\": \"msg_08410399009a07a5006a25f1e48df8819aaab60b6f5d869bbf\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"OK\"\n        }\n      ],\n      \"phase\": \"final_answer\",\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"24h\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"none\",\n  \"tools\": [],\n  \"top_logprobs\": 0,\n  \"top_p\": 0.98,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 16,\n    \"input_tokens_details\": {\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 16,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 9\n    },\n    \"total_tokens\": 32\n  },\n  \"user\": null,\n  \"metadata\": {}\n}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

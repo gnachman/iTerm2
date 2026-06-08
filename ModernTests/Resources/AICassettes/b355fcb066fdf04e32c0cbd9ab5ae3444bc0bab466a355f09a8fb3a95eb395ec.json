@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":8000,\"messages\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\"}],\"model\":\"deepseek-reasoner\",\"stream\":false,\"temperature\":0}",
+  "key" : "b355fcb066fdf04e32c0cbd9ab5ae3444bc0bab466a355f09a8fb3a95eb395ec",
+  "response" : {
+    "data" : "{\"id\":\"fc51e4d8-f491-4d7c-84c2-d3ad66b99faf\",\"object\":\"chat.completion\",\"created\":1780870847,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"OK.\",\"reasoning_content\":\"We need to respond to the user's statement. They said \\\"My favorite color is chartreuse. Reply OK.\\\" So the instruction is to reply with \\\"OK.\\\" Simple.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":15,\"completion_tokens\":39,\"total_tokens\":54,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":36},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":15},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

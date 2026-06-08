@@ -42,6 +42,10 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
             // but a fixture can't be captured from a fresh API key. The list
             // is short and easy to revisit when Google fully removes a model.
             if AILiveHarness.unreachableForNewKeys.contains(model.name) { continue }
+            // Skip models that block the refusal prompt at the API layer
+            // (HTTP 400) rather than returning a refusal: there's no refusal
+            // response to capture or parse. See AILiveHarness.refusalBlockedAtHTTP.
+            if AILiveHarness.refusalBlockedAtHTTP.contains(model.name) { continue }
             let vendorString = AIMetadataFixtureCoverageTest.vendorSlug(for: vendor)
             let safeModel = AIMetadataFixtureCoverageTest.sanitize(model.name)
             // Filenames are <vendor>_<safeModel>_refusal_<mode>_<seq>.json.

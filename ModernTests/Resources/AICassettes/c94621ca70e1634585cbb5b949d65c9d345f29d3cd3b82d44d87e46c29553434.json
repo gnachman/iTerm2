@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":127815,\"messages\":[{\"content\":\"Please run the diagnostic command.\",\"role\":\"user\"},{\"content\":[{\"id\":\"toolu_test_chat_reload_orphan\",\"input\":{},\"name\":\"execute_command\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"Darwin host 25.4.0 arm64\",\"tool_use_id\":\"toolu_test_chat_reload_orphan\",\"type\":\"tool_result\"}],\"role\":\"user\"},{\"content\":\"In one short sentence, summarize what you learned from the previous command output.\",\"role\":\"user\"}],\"model\":\"claude-opus-4-8\",\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Run a shell command (stub for chat-reload tests).\",\"input_schema\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"},\"name\":\"execute_command\"}]}",
+  "key" : "c94621ca70e1634585cbb5b949d65c9d345f29d3cd3b82d44d87e46c29553434",
+  "response" : {
+    "data" : "{\"model\":\"claude-opus-4-8\",\"id\":\"msg_01FnGYVpJvoF8MqGRxJMggdT\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"The system is running macOS (Darwin kernel version 25.4.0) on a 64-bit ARM (Apple Silicon) architecture.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":467,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":48,\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash-lite:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Please run the diagnostic command.\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"uname -a\"},\"name\":\"execute_command\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"execute_command\",\"response\":{\"output\":\"Darwin host 25.4.0 arm64\"}}}],\"role\":\"user\"},{\"parts\":[{\"text\":\"In one short sentence, summarize what you learned from the previous command output.\"}],\"role\":\"user\"}],\"tools\":[{\"functionDeclarations\":[{\"description\":\"Run a shell command (stub for chat-reload tests).\",\"name\":\"execute_command\",\"parameters\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"}}]}]}",
+  "key" : "e2717daa1692d37f0d52ccc84a4733ef96d742e434fee3b02cd68bb8d3b111cc",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"The previous command output indicated that the operating system is macOS (Darwin) running on an ARM64 architecture.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 114,\n    \"candidatesTokenCount\": 22,\n    \"totalTokenCount\": 136,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 114\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash-lite\",\n  \"responseId\": \"XO8lap3PC5GVmtkPk-7o4As\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

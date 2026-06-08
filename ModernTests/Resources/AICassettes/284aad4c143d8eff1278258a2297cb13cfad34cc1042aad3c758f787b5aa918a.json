@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":8000,\"messages\":[{\"content\":\"Reply with exactly the single word: PINEAPPLE\",\"role\":\"user\"}],\"model\":\"deepseek-reasoner\",\"stream\":false,\"temperature\":0}",
+  "key" : "284aad4c143d8eff1278258a2297cb13cfad34cc1042aad3c758f787b5aa918a",
+  "response" : {
+    "data" : "{\"id\":\"a8b723e0-916b-4ee5-a22f-923eac4010c4\",\"object\":\"chat.completion\",\"created\":1780870900,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"PINEAPPLE\",\"reasoning_content\":\"We are asked to reply with exactly the single word: PINEAPPLE. So the response should be just that word.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":15,\"completion_tokens\":30,\"total_tokens\":45,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":25},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":15},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

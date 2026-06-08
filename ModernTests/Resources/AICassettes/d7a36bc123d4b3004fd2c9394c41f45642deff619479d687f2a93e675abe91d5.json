@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":8000,\"messages\":[{\"content\":\"Reply with exactly the single word: PINEAPPLE\",\"role\":\"user\"}],\"model\":\"deepseek-coder\",\"stream\":false,\"temperature\":0}",
+  "key" : "d7a36bc123d4b3004fd2c9394c41f45642deff619479d687f2a93e675abe91d5",
+  "response" : {
+    "data" : "{\"id\":\"32beffc4-8191-4f85-ab04-942fea01bc19\",\"object\":\"chat.completion\",\"created\":1780870899,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"PINEAPPLE\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":15,\"completion_tokens\":4,\"total_tokens\":19,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":15},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

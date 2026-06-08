@@ -422,20 +422,37 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         if scenarioTag.hasPrefix("refusal"),
            AILiveDriver.configFlag("REFRESH_REFUSAL_FIXTURES"),
            let projectRoot = AILiveDriver.projectRoot() {
-            let fixturesDir = (projectRoot as NSString)
-                .appendingPathComponent("ModernTests")
-                + "/Resources/SafetyRefusalFixtures"
-            try? FileManager.default.createDirectory(
-                atPath: fixturesDir, withIntermediateDirectories: true)
-            let vendor = AILiveDriver.guessVendor(modelName: modelName) ?? "unknown"
-            let fixtureName = "\(vendor)_\(safeModel)_\(safeScenario)_\(mode).json"
-            let fixtureURL = URL(fileURLWithPath: fixturesDir)
-                .appendingPathComponent(fixtureName)
-            do {
-                try data.write(to: fixtureURL, options: .atomic)
-                print("[live] saved refusal fixture: \(fixtureURL.path)")
-            } catch {
-                print("[live] failed to write refusal fixture \(fixtureURL.path): \(error)")
+            // Only persist an actual refusal response. A request that failed
+            // at the transport layer (timeout, connection reset), returned an
+            // HTTP error (e.g. gpt-5.5-pro 400s the phishing prompt under
+            // OpenAI's cyber_policy block), or has an empty body is not a
+            // refusal to parse; writing it would poison the offline parser
+            // test (AISafetyRefusalParserTests) with a fixture that can never
+            // produce a message. Skip it so a refresh leaves the prior good
+            // fixture in place rather than overwriting it with garbage.
+            let responseBody = capture.response?.data ?? ""
+            let httpError = capture.response?.error ?? ""
+            if capture.error != nil || !httpError.isEmpty || responseBody.isEmpty {
+                let reason = capture.error?.reason
+                    ?? (httpError.isEmpty ? "empty body" : httpError)
+                print("[live] skipping refusal fixture for \(modelName): "
+                      + "request failed (\(reason))")
+            } else {
+                let fixturesDir = (projectRoot as NSString)
+                    .appendingPathComponent("ModernTests")
+                    + "/Resources/SafetyRefusalFixtures"
+                try? FileManager.default.createDirectory(
+                    atPath: fixturesDir, withIntermediateDirectories: true)
+                let vendor = AILiveDriver.guessVendor(modelName: modelName) ?? "unknown"
+                let fixtureName = "\(vendor)_\(safeModel)_\(safeScenario)_\(mode).json"
+                let fixtureURL = URL(fileURLWithPath: fixturesDir)
+                    .appendingPathComponent(fixtureName)
+                do {
+                    try data.write(to: fixtureURL, options: .atomic)
+                    print("[live] saved refusal fixture: \(fixtureURL.path)")
+                } catch {
+                    print("[live] failed to write refusal fixture \(fixtureURL.path): \(error)")
+                }
             }
         }
     }

@@ -98,6 +98,9 @@ json_quote() {
     # scrubbed of secrets, so they are safe to commit.
     emit CASSETTE_MODE      "${ITERM2_AI_LIVE_CASSETTE_MODE:-}"
     emit CASSETTE_DIR       "${ITERM2_AI_LIVE_CASSETTE_DIR:-}"
+    # Opt-in: rewrite the static magic.pdf / magic.zip probe fixtures. Used by
+    # test_regenerateProbeAttachmentFixtures; off for normal runs.
+    emit REGENERATE_ATTACHMENT_FIXTURES "${ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES:-}"
     echo
     echo "}"
 } > "$CONFIG_FILE"

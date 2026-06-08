@@ -205,6 +205,29 @@ extension AILiveHarness {
         print("[live] \(lane.displayName) \(kind.rawValue): expected=\(expectedTag) actual=\(actualTag)")
     }
 
+    // MARK: - Static probe-fixture regeneration (opt-in)
+
+    /// Rewrites the committed magic.pdf / magic.zip probe fixtures. They embed
+    /// a wall-clock timestamp (PDF /CreationDate, ZIP mtime), so they are
+    /// committed static rather than generated per run (which would never be
+    /// byte-identical and so couldn't be cached). Normally skipped. Refresh
+    /// after changing visualProbe / textProbe or the generators:
+    ///   ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES=1 \
+    ///     tools/run_ai_live.sh test_regenerateProbeAttachmentFixtures
+    func test_regenerateProbeAttachmentFixtures() throws {
+        let configPath = "/tmp/iterm2-ai-live.json"
+        let regenerate: Bool = {
+            guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
+            else { return false }
+            return json["REGENERATE_ATTACHMENT_FIXTURES"] == "1"
+        }()
+        try XCTSkipUnless(regenerate,
+                          "Opt-in. Set ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES=1 to rewrite magic.pdf / magic.zip.")
+        let dir = try AILiveAttachmentFixtures.regenerateStaticProbeFixtures()
+        print("[fixtures] regenerated magic.pdf and magic.zip in \(dir)")
+    }
+
     // MARK: - 96 test methods
     //
     // Generated explicitly so xctest discovers each as a distinct

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127852,\"messages\":[{\"content\":\"Briefly explain why the sky is blue. Reply in one short sentence.\",\"role\":\"user\"},{\"content\":\"The sky appears blue because sunlight is scattered by Earth's atmosphere, and blue light is scattered more strongly than other colors due to its shorter wavelength.\",\"reasoning_content\":\"We need to answer why the sky is blue in one short sentence. The Rayleigh scattering explanation: sunlight scatters off atmospheric particles, and shorter wavelengths (blue) scatter more than longer wavelengths (red), making the sky appear blue.\",\"role\":\"assistant\"},{\"content\":\"Was that explanation about Rayleigh scattering? Answer yes or no.\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"enabled\"}}",
+  "key" : "0410901f41b6ab0a2b06a3b63527049f25d6ade729973517635f11d7a486d122",
+  "response" : {
+    "data" : "{\"id\":\"ab945523-6e8a-4ea4-a27b-992658e04d16\",\"object\":\"chat.completion\",\"created\":1780870916,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Yes\",\"reasoning_content\":\"We need to answer yes or no. The previous explanation mentioned \\\"scattered more strongly... due to its shorter wavelength\\\" which is Rayleigh scattering. So answer yes.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":64,\"completion_tokens\":35,\"total_tokens\":99,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":33},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":64},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

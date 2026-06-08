@@ -53,6 +53,30 @@ jobs:
           killall ibtoold 2>/dev/null || true
           killall AssetCatalogSimulatorAgent 2>/dev/null || true
 
+      - name: Configure AI live harness for offline cassette replay
+        run: |
+          # The ModernTests scheme includes AILiveHarness, which is opt-in and
+          # skips itself unless this config file exists. Write it in replay
+          # mode so the harness runs entirely from the committed cassettes
+          # (ModernTests/Resources/AICassettes) instead of hitting vendor APIs.
+          # Keys are dummies on purpose: canonicalization replaces the key with
+          # <SECRET> so any non-empty value matches the recorded request, and
+          # replay never makes a network call, so if a request isn't cached the
+          # test fails loudly rather than silently spending money. PROJECT_ROOT
+          # lets the harness find the cassettes and the on-disk fixtures.
+          cat > /tmp/iterm2-ai-live.json <<JSON
+          {
+            "OPENAI_API_KEY": "sk-dummy-ci",
+            "ANTHROPIC_API_KEY": "sk-ant-dummy-ci",
+            "GEMINI_API_KEY": "dummy-ci",
+            "DEEPSEEK_API_KEY": "sk-dummy-ci",
+            "CASSETTE_MODE": "replay",
+            "PROJECT_ROOT": "${GITHUB_WORKSPACE}"
+          }
+          JSON
+          chmod 0600 /tmp/iterm2-ai-live.json
+          echo "Wrote AI live cassette-replay config (PROJECT_ROOT=$GITHUB_WORKSPACE)"
+
       - name: Run tests
         run: |
           # Retry up to 3 times, but only for flaky ibtoold/asset catalog crashes

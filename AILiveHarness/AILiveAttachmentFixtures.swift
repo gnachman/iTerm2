@@ -171,10 +171,14 @@ enum AILiveAttachmentFixtures {
                 acceptanceProbes: [visualProbe])
 
         case .applicationPDF:
+            // Static fixture, not generated per run: PDFDocument stamps a
+            // /CreationDate, so a per-run PDF is never byte-identical and the
+            // cassette layer can't cache it. Committed like the other binary
+            // fixtures; regenerate with regenerateStaticProbeFixtures().
             return AILiveAttachmentFixture(
                 mime: "application/pdf",
                 filename: "magic.pdf",
-                bytes: try renderProbePDF(),
+                bytes: try loadDiskFixture("magic.pdf"),
                 prompt: "What word is written in this PDF? Reply with just the word.",
                 acceptanceProbes: [visualProbe])
 
@@ -208,18 +212,15 @@ enum AILiveAttachmentFixtures {
                 acceptanceProbes: ["lorem ipsum", "Lorem ipsum", "Lorem Ipsum", "lorem", "Lorem"])
 
         case .applicationZIP:
-            // The payload is padded with repetitive content so the zip
-            // command's default DEFLATE compression kicks in and the probe
-            // no longer appears verbatim in the resulting bytes. Without
-            // padding, a small payload gets stored uncompressed and any
-            // textual probe leaks through the lossyString fallback,
-            // making "garbled" cells unreliably match probes.
-            let padding = String(repeating: "padding line for deflate compression. ", count: 256)
-            let payload = padding + "\nThe magic phrase is \(textProbe).\n" + padding
+            // Static fixture, not generated per run: the zip stores the
+            // staged file's mtime, so a per-run archive is never
+            // byte-identical and can't be cached. Committed like the other
+            // binary fixtures; regenerate with regenerateStaticProbeFixtures()
+            // (which also documents the padded-payload rationale).
             return AILiveAttachmentFixture(
                 mime: "application/zip",
                 filename: "magic.zip",
-                bytes: try zipSingleFile(name: "magic.txt", content: Data(payload.utf8)),
+                bytes: try loadDiskFixture("magic.zip"),
                 prompt: "What magic phrase is inside the file in this archive? Quote it verbatim.",
                 acceptanceProbes: [textProbe])
 
@@ -348,6 +349,39 @@ enum AILiveAttachmentFixtures {
             throw AILiveAttachmentFixtureError.imageEncodeFailed(format: format.utType as String)
         }
         return buffer as Data
+    }
+
+    // MARK: - Static-fixture regeneration
+
+    /// Rewrites the two timestamp-bearing probe fixtures (magic.pdf, magic.zip)
+    /// in ModernTests/Resources/AttachmentFixtures. They embed a wall-clock
+    /// value (PDF /CreationDate, ZIP mtime) so a per-run build is never
+    /// byte-identical; committing them static keeps the attachment matrix
+    /// cacheable. Opt-in, driven by AILiveHarness.test_regenerateProbeAttachmentFixtures.
+    /// Run after changing visualProbe / textProbe or the generators. Returns
+    /// the directory written to.
+    @discardableResult
+    static func regenerateStaticProbeFixtures() throws -> String {
+        guard let root = projectRoot() else {
+            throw AILiveAttachmentFixtureError.projectRootMissing
+        }
+        let dir = (root as NSString).appendingPathComponent("ModernTests")
+            + "/Resources/AttachmentFixtures"
+        let dirURL = URL(fileURLWithPath: dir)
+
+        try renderProbePDF().write(to: dirURL.appendingPathComponent("magic.pdf"))
+
+        // The payload is padded with repetitive content so the zip command's
+        // default DEFLATE compression kicks in and the probe no longer appears
+        // verbatim in the bytes. Without padding, a small payload is stored
+        // uncompressed and the textual probe leaks through the lossyString
+        // fallback, making "garbled" cells unreliably match probes.
+        let padding = String(repeating: "padding line for deflate compression. ", count: 256)
+        let payload = padding + "\nThe magic phrase is \(textProbe).\n" + padding
+        try zipSingleFile(name: "magic.txt", content: Data(payload.utf8))
+            .write(to: dirURL.appendingPathComponent("magic.zip"))
+
+        return dir
     }
 
     // MARK: - PDF rendering

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3-flash-preview:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Please run the diagnostic command.\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{\"command\":\"uname -a\"},\"name\":\"execute_command\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"execute_command\",\"response\":{\"output\":\"Darwin host 25.4.0 arm64\"}}}],\"role\":\"user\"},{\"parts\":[{\"text\":\"In one short sentence, summarize what you learned from the previous command output.\"}],\"role\":\"user\"}],\"tools\":[{\"functionDeclarations\":[{\"description\":\"Run a shell command (stub for chat-reload tests).\",\"name\":\"execute_command\",\"parameters\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"}}]}]}",
+  "key" : "9256b0033153bc01aca4545f72879d93447213f04fa7459277046606935b6c27",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"The system is running Darwin (macOS) on an ARM64 architecture.\",\n            \"thoughtSignature\": \"Er0DCroDAQw51sc\/JrenLTLDvkRgx1pV\/V+HIIdt4arAHifJp5NIiEJJCdSQ0g3D1FsbXUVP3fNFgG8MEYP4EkP0\/YSRQj0d6mO8NsWo0pm1wA2qpj6\/FzvhJqk1UGyOf75YY6\/1D5bBsdcMJJdjDs9MXzf6c4Xa4f+abupHGUgvqw7F15rK7xYEjJ\/mcCMYBjTgbBwWoJ88w+RP2zclE8NBcRi1cFq22pOBD7PgCeRZkbiHfAhjdxpxa16WIklU6FEiOI2OJDJvc7jm06luSoeDslgH7G9MqEV+TP3it052GMK72WIsIXTOzNMxQFDBw7tTGzO\/HiHjhVdSvwZz0dWXf0OhqCyo3WkD4pW8\/2fYPSziQHMt7Bzn6svJlYLNLYIum4pZK6wEHGkC83v0DTZf5cebstg6vSbeaUOmziBiIrPU3XffT+YHvoOL98AKXOc\/8F7JPRTYrrudoCpfx0lb9jyvxiAHGkebhhjeBPUo7IVh2RABYyd3QM4WN8brqYv7DN9YnpBACaofXoaA3i\/m+H\/tGtwKWYpMoSbQDFSGu7CjOpC2kQRRIyq3Phh3E+6bjlUWA7\/016QXnI2eAw==\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 125,\n    \"candidatesTokenCount\": 16,\n    \"totalTokenCount\": 259,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 125\n      }\n    ],\n    \"thoughtsTokenCount\": 118,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3-flash-preview\",\n  \"responseId\": \"We8lap7XIMSnqtsP86u-8A0\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

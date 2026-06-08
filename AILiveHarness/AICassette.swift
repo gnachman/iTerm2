@@ -409,7 +409,10 @@ final class AICassetteSession {
                 || errorChannel.contains("RESOURCE_EXHAUSTED")
                 || errorChannel.contains("UNAVAILABLE")
                 || lower.contains("timed out")
-                || lower.contains("timeout") {
+                || lower.contains("timeout")
+                // A request cancelled by a test timeout (slow reasoning
+                // model) has no real response; never cache it.
+                || lower.contains("cancelled") {
                 return true
             }
         }

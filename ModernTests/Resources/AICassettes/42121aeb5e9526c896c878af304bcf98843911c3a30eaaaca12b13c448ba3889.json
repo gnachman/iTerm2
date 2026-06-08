@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":16384,\"messages\":[{\"content\":\"Please run the diagnostic command.\",\"role\":\"user\"},{\"content\":null,\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"arguments\":\"{}\",\"id\":\"call_test_chat_reload_orphan\",\"name\":\"execute_command\"},\"id\":\"call_test_chat_reload_orphan\",\"type\":\"function\"}]},{\"content\":\"Darwin host 25.4.0 arm64\",\"role\":\"tool\",\"tool_call_id\":\"call_test_chat_reload_orphan\"},{\"content\":\"In one short sentence, summarize what you learned from the previous command output.\",\"role\":\"user\"}],\"model\":\"gpt-4o-mini\",\"stream\":false,\"temperature\":0,\"tool_choice\":\"auto\",\"tools\":[{\"function\":{\"description\":\"Run a shell command (stub for chat-reload tests).\",\"name\":\"execute_command\",\"parameters\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "42121aeb5e9526c896c878af304bcf98843911c3a30eaaaca12b13c448ba3889",
+  "response" : {
+    "data" : "{\n  \"id\": \"chatcmpl-DoGHkBhkdfEYHgzaz6PMce4vOSXHg\",\n  \"object\": \"chat.completion\",\n  \"created\": 1780871372,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"The system is running on Darwin with version 25.4.0 on an ARM64 architecture.\",\n        \"refusal\": null,\n        \"annotations\": []\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 109,\n    \"completion_tokens\": 21,\n    \"total_tokens\": 130,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\": 0,\n      \"audio_tokens\": 0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\": 0,\n      \"audio_tokens\": 0,\n      \"accepted_prediction_tokens\": 0,\n      \"rejected_prediction_tokens\": 0\n    }\n  },\n  \"service_tier\": \"default\",\n  \"system_fingerprint\": \"fp_31455a11c2\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

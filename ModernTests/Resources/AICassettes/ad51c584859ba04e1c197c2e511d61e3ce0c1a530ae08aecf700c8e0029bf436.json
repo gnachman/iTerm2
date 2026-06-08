@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3.5-flash:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Reply with exactly the single word: PINEAPPLE\"}],\"role\":\"user\"}]}",
+  "key" : "ad51c584859ba04e1c197c2e511d61e3ce0c1a530ae08aecf700c8e0029bf436",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"PINEAPPLE\",\n            \"thoughtSignature\": \"EtcCCtQCAQw51scMVGB4AMWyu6t7EZwGjhvv9NuF6hEYMmrQcW\/AspC3ebrWQhQgI6TF6cWtya\/MKmR7N42wRMSXbieNIypy6fpS92AYM\/5QG0xZkCv8eKYsD1r90Kk3OMBhvXFnI5kj8pug38gHfXvv5MEzHgsXWG4kuShrpGQmFH8ohYyLGzzsPi9m7oKkMR\/PBLy9irlbn6ldhkxAF6nPDulaeDiRH1\/3U8Gk5En6Z0wX\/pIRUlVE1LcEN5G6ma\/XVdaqgBrz3EjLCwT4+wZR17zSMJaTGU0AhUzREZ37PE8SCUeTA6YbjFZ+jMrQp4gWjKnxBoNTKq0tvoW8I3wrWUYhOG\/9Sqtvfd7r\/5ax+gr3upNmC\/cA2mjVKia7Vl3N4hko0EMhl0meRczIytM84A4iCzkWb5eGsPikWaaxbAeTKcLnwH7HMpRqCFNx3Y6NuUfUq8f\/XQ==\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 11,\n    \"candidatesTokenCount\": 3,\n    \"totalTokenCount\": 91,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 11\n      }\n    ],\n    \"thoughtsTokenCount\": 77,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash\",\n  \"responseId\": \"MfAlapjRA_6xjMcPoomZ4Ao\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

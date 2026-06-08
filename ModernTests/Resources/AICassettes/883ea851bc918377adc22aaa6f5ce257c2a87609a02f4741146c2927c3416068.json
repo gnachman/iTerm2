@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":16384,\"messages\":[{\"content\":[{\"text\":\"Quote the bolded phrase.\",\"type\":\"text\"},{\"text\":\"<iterm2:attachment file=\\\"magic.md\\\" type=\\\"text\\\/markdown\\\">\\n# Magic\\n\\nThe phrase is **pinecone-42**.\\n\\n<\\\/iterm2:attachment>\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"gpt-4o-mini\",\"stream\":false,\"temperature\":0}",
+  "key" : "883ea851bc918377adc22aaa6f5ce257c2a87609a02f4741146c2927c3416068",
+  "response" : {
+    "data" : "{\n  \"id\": \"chatcmpl-DoG7mj6vMfgm2V57Yvn3siYuNP4jc\",\n  \"object\": \"chat.completion\",\n  \"created\": 1780870754,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"The bolded phrase is **pinecone-42**.\",\n        \"refusal\": null,\n        \"annotations\": []\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 49,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 61,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\": 0,\n      \"audio_tokens\": 0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\": 0,\n      \"audio_tokens\": 0,\n      \"accepted_prediction_tokens\": 0,\n      \"rejected_prediction_tokens\": 0\n    }\n  },\n  \"service_tier\": \"default\",\n  \"system_fingerprint\": \"fp_03ddaa0cca\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

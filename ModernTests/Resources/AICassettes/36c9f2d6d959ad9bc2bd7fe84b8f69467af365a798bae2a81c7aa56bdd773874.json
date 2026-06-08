@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"function_call\":\"auto\",\"max_tokens\":8000,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"}],\"model\":\"deepseek-chat\",\"stream\":false,\"temperature\":0,\"tools\":[{\"function\":{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "36c9f2d6d959ad9bc2bd7fe84b8f69467af365a798bae2a81c7aa56bdd773874",
+  "response" : {
+    "data" : "{\"id\":\"a925e9ff-787c-4df8-919d-02931e8d2085\",\"object\":\"chat.completion\",\"created\":1780870937,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"index\":0,\"id\":\"call_00_mvNH6rWQwZghQGfZ5HTO2536\",\"type\":\"function\",\"function\":{\"name\":\"get_random_word\",\"arguments\":\"{}\"}}]},\"logprobs\":null,\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":297,\"completion_tokens\":28,\"total_tokens\":325,\"prompt_tokens_details\":{\"cached_tokens\":256},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":41},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

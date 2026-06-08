@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash:streamGenerateContent?alt=sse&key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"My favorite color is chartreuse. Reply OK.\"}],\"role\":\"user\"},{\"parts\":[{\"text\":\"OK\"}],\"role\":\"model\"},{\"parts\":[{\"text\":\"What color did I just tell you was my favorite? Answer with one word.\"}],\"role\":\"user\"}]}",
+  "key" : "010c51611c39112033b5056bf0f322402714a044cec8419fd4747ec8e5d19d10",
+  "response" : {
+    "data" : "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"Chartreuse\"}],\"role\": \"model\"},\"finishReason\": \"STOP\",\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 30,\"candidatesTokenCount\": 2,\"totalTokenCount\": 65,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 30}],\"thoughtsTokenCount\": 33,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.5-flash\",\"responseId\": \"uO8lapXdDfTkjMcPp5DIGQ\"}\r\n\r\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"Chartreuse\"}],\"role\": \"model\"},\"finishReason\": \"STOP\",\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 30,\"candidatesTokenCount\": 2,\"totalTokenCount\": 65,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 30}],\"thoughtsTokenCount\": 33,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.5-flash\",\"responseId\": \"uO8lapXdDfTkjMcPp5DIGQ\"}\r\n\r\n"
+  ],
+  "streaming" : true
+}

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"function_call\":\"auto\",\"max_tokens\":8000,\"messages\":[{\"content\":\"Please run the diagnostic command.\",\"role\":\"user\"},{\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"arguments\":\"{\\\"command\\\":\\\"uname -a\\\"}\",\"id\":\"call_test_chat_reload_paired\",\"name\":\"execute_command\"},\"id\":\"call_test_chat_reload_paired\",\"type\":\"function\"}]},{\"content\":\"Darwin host 25.4.0 arm64\",\"role\":\"tool\",\"tool_call_id\":\"call_test_chat_reload_paired\"},{\"content\":\"In one short sentence, summarize what you learned from the previous command output.\",\"role\":\"user\"}],\"model\":\"deepseek-reasoner\",\"stream\":false,\"temperature\":0,\"tools\":[{\"function\":{\"description\":\"Run a shell command (stub for chat-reload tests).\",\"name\":\"execute_command\",\"parameters\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "0e070d1c831b2419635e3408c0f68f64cd8afeec0e844b73bcd7c469ca2c08ad",
+  "response" : {
+    "data" : "{\"id\":\"6861608a-74dc-4da2-877c-35097ac94a78\",\"object\":\"chat.completion\",\"created\":1780870827,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The previous command revealed that the system is a macOS (Darwin) host running kernel version 25.4.0 on an **ARM64** (Apple Silicon) architecture.\",\"reasoning_content\":\"The command `uname -a` returned information about the system: it's a Darwin (macOS) system running on an ARM64 architecture (Apple Silicon).\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":380,\"completion_tokens\":70,\"total_tokens\":450,\"prompt_tokens_details\":{\"cached_tokens\":256},\"completion_tokens_details\":{\"reasoning_tokens\":33},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":124},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

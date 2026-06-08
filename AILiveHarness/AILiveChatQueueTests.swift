@@ -146,7 +146,10 @@ extension AILiveHarness {
         //    so we can verify the agent's post-tool reply actually
         //    consumed it.
         let toolDelay: TimeInterval = 2.0
-        let toolMarker = "kw-\(UUID().uuidString.prefix(6))"
+        // Fixed (not random) so the tool-result request is byte-stable and the
+        // cassette layer can replay it. Still unguessable, so a model that
+        // ignores the tool output can't reproduce it by chance.
+        let toolMarker = "kw-MAGENTA-LARK-77"
         let toolOutput = "command output containing \(toolMarker)"
         let responder = FakeToolResponder(broker: broker,
                                           chatID: chatID,

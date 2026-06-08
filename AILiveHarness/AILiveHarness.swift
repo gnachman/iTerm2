@@ -111,6 +111,16 @@ final class AILiveHarness: XCTestCase {
         "gemini-3-pro-preview",
     ]
 
+    // Models that block the refusal-scenario prompt at the API layer instead
+    // of returning a refusal response, so no refusal fixture can be captured
+    // or parsed. gpt-5.5-pro routes the phishing prompt through OpenAI's
+    // cyber_policy pre-filter and 400s ("Trusted Access for Cyber program"),
+    // so there's nothing to parse. AIMetadataFixtureCoverageTest skips these
+    // the same way it skips unreachableForNewKeys.
+    static let refusalBlockedAtHTTP: Set<String> = [
+        "gpt-5.5-pro",
+    ]
+
     private static func models(forVendor vendor: String) -> [String] {
         if let raw = loadConfig()?["\(vendor.uppercased())_MODELS"], !raw.isEmpty {
             return splitModels(raw)
