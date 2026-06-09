@@ -1467,6 +1467,8 @@ Bug Fixes:
 - AI Chat no longer asks for an API key
   when the active provider already has
   one saved in Keychain.
+- AI Chat now checks saved API keys
+  before showing plugin setup warnings.
 - AI Chat now sends Gemini-compatible
   function schemas for tool arguments
   that accept multiple JSON types.

@@ -38,12 +38,12 @@ class AITermControllerRegistrationHelper {
     func requestRegistration(in window: NSWindow,
                              for vendor: iTermAIVendor,
                              completion: @escaping (AITermController.Registration?) -> ()) {
-        if !iTermAITermGatekeeper.check() {
-            completion(nil)
-            return
-        }
         if let registration = registration(for: vendor) {
             completion(registration)
+            return
+        }
+        if !iTermAITermGatekeeper.check() {
+            completion(nil)
             return
         }
         let windowController = AITermRegistrationWindowController.create(vendor: vendor)
