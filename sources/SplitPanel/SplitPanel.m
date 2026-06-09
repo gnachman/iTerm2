@@ -26,9 +26,9 @@
         splitPanel.parent = parent;
         splitPanel.isVertical = vertical;
         if (vertical) {
-            [splitPanel.label setStringValue:@"Split current pane vertically with profile:"];
+            [splitPanel.label setStringValue:@"Split current pane right with profile:"];
         } else {
-            [splitPanel.label setStringValue:@"Split current pane horizontally with profile:"];
+            [splitPanel.label setStringValue:@"Split current pane down with profile:"];
         }
         [parent.window beginSheet:splitPanel.window completionHandler:^(NSModalResponse returnCode) {
             [NSApp stopModal];

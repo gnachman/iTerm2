@@ -193,23 +193,33 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="w1g-nK-kOV"/>
-                            <menuItem title="Split Horizontally with Current Profile" keyEquivalent="D" identifier="Split Horizontally with Current Profile" id="1201">
+                            <menuItem title="Split Right" keyEquivalent="d" identifier="Split Vertically with Current Profile" id="1200">
                                 <connections>
-                                    <action selector="splitHorizontally:" target="-1" id="1203"/>
+                                    <action selector="splitRight:" target="-1" id="1202"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Split Vertically with Current Profile" keyEquivalent="d" identifier="Split Vertically with Current Profile" id="1200">
+                            <menuItem title="Split Left" identifier="Split Left" id="spl-Lf-001">
                                 <connections>
-                                    <action selector="splitVertically:" target="-1" id="1202"/>
+                                    <action selector="splitLeft:" target="-1" id="spl-Lf-act"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Split Horizontally…" keyEquivalent="H" identifier="Split Horizontally…" id="1289">
+                            <menuItem title="Split Down" keyEquivalent="D" identifier="Split Horizontally with Current Profile" id="1201">
+                                <connections>
+                                    <action selector="splitDown:" target="-1" id="1203"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Split Up" identifier="Split Up" id="spl-Up-001">
+                                <connections>
+                                    <action selector="splitUp:" target="-1" id="spl-Up-act"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Split Down with Profile…" keyEquivalent="H" identifier="Split Horizontally…" id="1289">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openSplitHorizontallySheet:" target="-1" id="1293"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Split Vertically…" keyEquivalent="V" identifier="Split Vertically…" id="1291">
+                            <menuItem title="Split Right with Profile…" keyEquivalent="V" identifier="Split Vertically…" id="1291">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openSplitVerticallySheet:" target="-1" id="1294"/>

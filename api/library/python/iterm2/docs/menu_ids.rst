@@ -39,10 +39,12 @@ Shell > New Tab                                                                 
 Shell > New Tab with Current Profile                                                    `New Tab with Current Profile`                                                
 Shell > Duplicate Window                                                                `Duplicate Window`                                                            
 Shell > Duplicate Tab                                                                   `Duplicate Tab`                                                               
-Shell > Split Horizontally with Current Profile                                         `Split Horizontally with Current Profile`                                     
-Shell > Split Vertically with Current Profile                                           `Split Vertically with Current Profile`                                       
-Shell > Split Horizontally…                                                             `Split Horizontally…`                                                         
-Shell > Split Vertically…                                                               `Split Vertically…`                                                           
+Shell > Split Right                                                                     `Split Vertically with Current Profile`
+Shell > Split Left                                                                      `Split Left`
+Shell > Split Down                                                                      `Split Horizontally with Current Profile`
+Shell > Split Up                                                                        `Split Up`
+Shell > Split Down with Profile…                                                        `Split Horizontally…`
+Shell > Split Right with Profile…                                                       `Split Vertically…`
 Shell > Save Contents…                                                                  `Log.SaveContents`                                                            
 Shell > Save Selected Text…                                                             `Save Selected Text…`                                                         
 Shell > Close                                                                           `Close`                                                                       
