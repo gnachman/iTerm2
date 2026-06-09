@@ -2383,6 +2383,10 @@ static iTermKeyEventReplayer *gReplayer;
     [suUpdater checkForUpdates:(sender)];
 }
 
+- (IBAction)pairCompanionDevice:(id)sender {
+    [[iTermCompanionPairingWindowController shared] showAndBeginPairing];
+}
+
 - (IBAction)installClaudeCodeIntegration:(id)sender {
     [[iTermClaudeCodeIntegrationMenuController shared] install:sender];
 }
