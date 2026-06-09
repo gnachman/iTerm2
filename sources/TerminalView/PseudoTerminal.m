@@ -7435,7 +7435,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         const BOOL preserveOnlyIfExcursion = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges];
         const BOOL wouldCauseExcursion = willShowTabBar && [self fittingWindowToTabsWouldCauseExcursion];
         const BOOL preserveDueToShowing = generallyPreserveWindowSize && (!preserveOnlyIfExcursion || wouldCauseExcursion);
-        const BOOL preserveDueToHiding = willHideTabBar && _excursionPrevented;
+        NSScreen *windowScreen = self.window.screen;
+        const NSRect windowScreenVisibleFrame = windowScreen.visibleFrame;
+        const BOOL windowIsFullHeight = (windowScreen != nil &&
+                                         !self.anyFullScreen &&
+                                         NSMinY(self.window.frame) <= NSMinY(windowScreenVisibleFrame) + 1.0 &&
+                                         NSMaxY(self.window.frame) >= NSMaxY(windowScreenVisibleFrame) - 1.0);
+        const BOOL preserveDueToHiding = willHideTabBar && (_excursionPrevented || windowIsFullHeight);
         const BOOL actuallyPreserve = preserveDueToHiding || preserveDueToShowing;
         const BOOL shouldResizeWindow = _windowNeedsInitialSize || !actuallyPreserve;
 

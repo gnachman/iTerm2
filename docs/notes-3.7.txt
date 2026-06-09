@@ -525,6 +525,9 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- A full-height window no longer loses the tab
+  bar’s height from the bottom when the last
+  tab closes and the tab bar auto-hides.
 - Copying selected text from a porthole (such as
   rendered markdown) now works in apps that
   prefer rich text.
