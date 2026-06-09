@@ -24,6 +24,7 @@ struct Chat {
     var browserSessionGuid: String?
     var permissions: String
     var vectorStore: String?
+    var modelName: String?
 
     // Targets this chat is allowed to write to via the orchestrator
     // tools (send_text / interrupt / add_workgroup_clipping for
@@ -52,6 +53,7 @@ extension Chat: iTermDatabaseElement {
         case browserSessionGuid
         case permissions
         case vectorStore
+        case modelName
         case claimedScopes
         case watchers
     }
@@ -67,6 +69,7 @@ extension Chat: iTermDatabaseElement {
              \(Columns.browserSessionGuid.rawValue) text,
              \(Columns.permissions.rawValue) text,
              \(Columns.vectorStore.rawValue) text,
+             \(Columns.modelName.rawValue) text,
              \(Columns.claimedScopes.rawValue) text,
              \(Columns.watchers.rawValue) text)
         """
@@ -75,6 +78,9 @@ extension Chat: iTermDatabaseElement {
         var result = [Migration]()
         if !existingColumns.contains(Columns.vectorStore.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.vectorStore.rawValue) text", args: []))
+        }
+        if !existingColumns.contains(Columns.modelName.rawValue) {
+            result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.modelName.rawValue) text", args: []))
         }
         if !existingColumns.contains(Columns.terminalSessionGuid.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.terminalSessionGuid.rawValue) text", args: []))
@@ -118,9 +124,10 @@ extension Chat: iTermDatabaseElement {
              \(Columns.browserSessionGuid.rawValue),
              \(Columns.permissions.rawValue),
              \(Columns.vectorStore.rawValue),
+             \(Columns.modelName.rawValue),
              \(Columns.claimedScopes.rawValue),
              \(Columns.watchers.rawValue))
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
          [
             id,
@@ -132,6 +139,7 @@ extension Chat: iTermDatabaseElement {
             browserSessionGuid ?? NSNull(),
             permissions,
             vectorStore ?? NSNull(),
+            modelName ?? NSNull(),
             Self.encodeIDList(claimedScopes),
             Self.encodeWatchers(watchers),
          ])
@@ -147,6 +155,7 @@ extension Chat: iTermDatabaseElement {
                         \(Columns.browserSessionGuid.rawValue) = ?,
                         \(Columns.permissions.rawValue) = ?,
                         \(Columns.vectorStore.rawValue) = ?,
+                        \(Columns.modelName.rawValue) = ?,
                         \(Columns.claimedScopes.rawValue) = ?,
                         \(Columns.watchers.rawValue) = ?
         where \(Columns.uuid.rawValue) = ?
@@ -160,6 +169,7 @@ extension Chat: iTermDatabaseElement {
             browserSessionGuid ?? NSNull(),
             permissions,
             vectorStore ?? NSNull(),
+            modelName ?? NSNull(),
             Self.encodeIDList(claimedScopes),
             Self.encodeWatchers(watchers),
 
@@ -186,6 +196,7 @@ extension Chat: iTermDatabaseElement {
         self.browserSessionGuid = result.string(forColumn: Columns.browserSessionGuid.rawValue)
         self.permissions = result.string(forColumn: Columns.permissions.rawValue) ?? ""
         self.vectorStore = result.string(forColumn: Columns.vectorStore.rawValue)
+        self.modelName = result.string(forColumn: Columns.modelName.rawValue)
         self.claimedScopes = Self.decodeIDList(
             result.string(forColumn: Columns.claimedScopes.rawValue))
         self.watchers = Self.decodeWatchers(

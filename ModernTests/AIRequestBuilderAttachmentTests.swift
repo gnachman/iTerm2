@@ -54,6 +54,45 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         return obj
     }
 
+    private func containsKey(_ key: String, in object: Any) -> Bool {
+        if let dictionary = object as? [String: Any] {
+            if dictionary.keys.contains(key) {
+                return true
+            }
+            return dictionary.values.contains { containsKey(key, in: $0) }
+        }
+        if let array = object as? [Any] {
+            return array.contains { containsKey(key, in: $0) }
+        }
+        return false
+    }
+
+    private func containsTypeArray(in object: Any) -> Bool {
+        if let dictionary = object as? [String: Any] {
+            if dictionary["type"] is [Any] {
+                return true
+            }
+            return dictionary.values.contains { containsTypeArray(in: $0) }
+        }
+        if let array = object as? [Any] {
+            return array.contains { containsTypeArray(in: $0) }
+        }
+        return false
+    }
+
+    private func containsStringItems(in object: Any) -> Bool {
+        if let dictionary = object as? [String: Any] {
+            if dictionary["items"] is String {
+                return true
+            }
+            return dictionary.values.contains { containsStringItems(in: $0) }
+        }
+        if let array = object as? [Any] {
+            return array.contains { containsStringItems(in: $0) }
+        }
+        return false
+    }
+
     // MARK: - Anthropic
 
     /// Image attachment alone in the message body should serialize as a
@@ -316,6 +355,87 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         // attachment support, update or delete this test.
         XCTAssertTrue(contents.isEmpty,
                       "Gemini builder unexpectedly accepted a top-level attachment; update this pinning test")
+    }
+
+    func testGemini_functionParameters_stripAdditionalProperties() throws {
+        _ = try model(named: "gemini-3-flash-preview")
+        struct ToolArgs: Codable {}
+        let schema = JSONSchema(rawJSON: [
+            "type": "object",
+            "properties": [
+                "command": [
+                    "type": "string",
+                    "additionalProperties": false,
+                ],
+                "items": [
+                    "type": "array",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "name": [
+                                "type": "string",
+                            ],
+                        ],
+                        "required": ["name"],
+                        "additionalProperties": false,
+                    ],
+                ],
+            ],
+            "required": ["command"],
+            "additionalProperties": false,
+        ])
+        let function = LLM.Function<ToolArgs>(
+            decl: ChatGPTFunctionDeclaration(
+                name: "test_tool",
+                description: "Test tool.",
+                parameters: schema),
+            call: { _, _, _ in },
+            parameterType: ToolArgs.self)
+        let message = LLM.Message(responseID: nil, role: .user, content: "Use the tool.")
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [function],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+        XCTAssertFalse(containsKey("additionalProperties", in: json),
+                       "Gemini rejects additionalProperties in tool schemas; body: \(json)")
+    }
+
+    func testGemini_functionParameters_collapseUnsupportedJSONSchemaTypes() throws {
+        _ = try model(named: "gemini-3-flash-preview")
+        struct ToolArgs: Codable {}
+        let schema = JSONSchema(rawJSON: [
+            "type": "object",
+            "properties": [
+                "value": [
+                    "type": ["string", "number", "array", "null"],
+                    "items": "string",
+                ],
+                "names": [
+                    "type": "array",
+                    "items": "string",
+                ],
+            ],
+            "required": ["value"],
+            "additionalProperties": false,
+        ])
+        let function = LLM.Function<ToolArgs>(
+            decl: ChatGPTFunctionDeclaration(
+                name: "test_tool",
+                description: "Test tool.",
+                parameters: schema),
+            call: { _, _, _ in },
+            parameterType: ToolArgs.self)
+        let message = LLM.Message(responseID: nil, role: .user, content: "Use the tool.")
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [function],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+        XCTAssertFalse(containsTypeArray(in: json),
+                       "Gemini rejects JSON Schema type arrays; body: \(json)")
+        XCTAssertFalse(containsStringItems(in: json),
+                       "Gemini expects items to be a schema object; body: \(json)")
     }
 
     // MARK: - OpenAI Responses API

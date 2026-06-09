@@ -343,9 +343,13 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Listing active watches"
         default:
             if name.hasPrefix("session_") {
-                let guid = (dict["session_guid"] as? String) ?? "?"
                 let raw = String(name.dropFirst("session_".count))
-                return "`\(prettifyToolName(raw))` on session `\(guid)`"
+                if raw == "execute_command",
+                   let cmd = dict["command"] as? String,
+                   !cmd.isEmpty {
+                    return "Executing `\(cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 80))`"
+                }
+                return "\(prettifyToolName(raw)) in " + sessionDescription(args: dict)
             }
             return prettifyToolName(name)
         }

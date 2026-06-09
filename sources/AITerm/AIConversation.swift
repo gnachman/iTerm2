@@ -10,7 +10,7 @@ struct AIConversation {
         private(set) var busy = false
         var completion: ((Result<String, Error>) -> ())?
         var streaming: ((LLM.StreamingUpdate) -> ())?
-        var registrationNeeded: ((@escaping (AITermController.Registration) -> ()) -> ())?
+        var registrationNeeded: ((iTermAIVendor, @escaping (AITermController.Registration) -> ()) -> ())?
         var createVectorStoreCompletion: ((Result<String, Error>) -> ())?
         var uploadFileCompletion: ((Result<String, Error>) -> ())?
         var addFilesToVectorStoreCompletion: ((Error?) -> ())?
@@ -48,7 +48,7 @@ struct AIConversation {
 
         func aitermControllerRequestRegistration(_ sender: AITermController,
                                                  completion: @escaping (AITermController.Registration) -> ()) {
-            registrationNeeded?(completion)
+            registrationNeeded?(sender.requiredRegistrationVendor, completion)
         }
 
         func aitermController(_ sender: AITermController, didStreamUpdate update: String?) {
@@ -110,6 +110,16 @@ struct AIConversation {
     var shouldThink: Bool? = nil {
         didSet {
             controller.shouldThink = shouldThink
+        }
+    }
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? = nil {
+        didSet {
+            controller.reasoningEffort = reasoningEffort
+        }
+    }
+    var serviceTier: ResponsesRequestBody.ServiceTier? = nil {
+        didSet {
+            controller.serviceTier = serviceTier
         }
     }
     private(set) var controller: AITermController
@@ -237,7 +247,7 @@ struct AIConversation {
         controller.cancel()
         delegate.completion = { _ in }
         delegate.streaming = nil
-        delegate.registrationNeeded = { _ in }
+        delegate.registrationNeeded = { _, _ in }
         delegate.createVectorStoreCompletion = nil
         delegate.uploadFileCompletion = nil
         delegate.addFilesToVectorStoreCompletion = nil
@@ -247,9 +257,9 @@ struct AIConversation {
         if delegate.busy {
             cancel()
         }
-        delegate.registrationNeeded = { [weak registrationProvider] regCompletion in
+        delegate.registrationNeeded = { [weak registrationProvider] vendor, regCompletion in
             if let registrationProvider {
-                registrationProvider.registrationProviderRequestRegistration() { registration in
+                registrationProvider.registrationProviderRequestRegistration(for: vendor) { registration in
                     if let registration {
                         regCompletion(registration)
                         completion(nil)

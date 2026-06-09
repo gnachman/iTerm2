@@ -7,9 +7,10 @@ class MessageCellView: NSView {
     var editable: Bool = false
     // store the messageUniqueID so that the edit button can pass it along.
     var messageUniqueID: UUID?
-    static let topInset: CGFloat = 8
-    static let bottomInset: CGFloat = 8
-    static let horizontalEdgePadding: CGFloat = 8
+    static let topInset: CGFloat = 10
+    static let bottomInset: CGFloat = 10
+    static let horizontalEdgePadding: CGFloat = 40
+    static let readableColumnMaxWidth: CGFloat = 760
     // Callback for the edit button.
     var editButtonClicked: ((UUID) -> Void)?
     var forkButtonClicked: ((UUID) -> Void)?
@@ -56,7 +57,8 @@ class MessageCellView: NSView {
     }
 
     static func maxBubbleWidth(tableViewWidth: CGFloat) -> CGFloat {
-        return max(16, tableViewWidth * 0.7)
+        let availableWidth = tableViewWidth - horizontalEdgePadding * 2
+        return max(16, min(readableColumnMaxWidth, availableWidth))
     }
 
     func maxBubbleWidth(tableViewWidth: CGFloat) -> CGFloat {

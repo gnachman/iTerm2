@@ -12,25 +12,49 @@ class AITermControllerRegistrationHelper {
         if !iTermAITermGatekeeper.allowed {
             return nil
         }
-        return AITermController.Registration(apiKey: AITermControllerObjC.apiKey)
+        return registration(for: LLMMetadata.effectiveVendor)
+    }
+
+    func registration(for vendor: iTermAIVendor) -> AITermController.Registration? {
+        if !iTermAITermGatekeeper.allowed {
+            return nil
+        }
+        return AITermController.Registration(apiKey: AITermControllerObjC.apiKey(for: vendor),
+                                             vendor: vendor)
     }
 
     func setKey(_ key: String) {
-        AITermControllerObjC.apiKey = key
+        setKey(key, for: LLMMetadata.effectiveVendor)
+    }
+
+    func setKey(_ key: String, for vendor: iTermAIVendor) {
+        AITermControllerObjC.setAPIKey(key, for: vendor)
     }
 
     func requestRegistration(in window: NSWindow, completion: @escaping (AITermController.Registration?) -> ()) {
+        requestRegistration(in: window, for: LLMMetadata.effectiveVendor, completion: completion)
+    }
+
+    func requestRegistration(in window: NSWindow,
+                             for vendor: iTermAIVendor,
+                             completion: @escaping (AITermController.Registration?) -> ()) {
         if !iTermAITermGatekeeper.check() {
             completion(nil)
             return
         }
-        let windowController = AITermRegistrationWindowController.create()
+        if let registration = registration(for: vendor) {
+            completion(registration)
+            return
+        }
+        let windowController = AITermRegistrationWindowController.create(vendor: vendor)
         window.beginSheet(windowController.window!) { [weak self] response in
             windowController.window?.orderOut(nil)
             if response == .OK, let key = windowController.apiKey {
-                self?.setKey(key)
+                self?.setKey(key, for: vendor)
             }
-            if response == .OK, let registration = AITermController.Registration(apiKey: windowController.apiKey) {
+            if response == .OK,
+               let registration = AITermController.Registration(apiKey: windowController.apiKey,
+                                                                vendor: vendor) {
                 completion(registration)
             } else {
                 completion(nil)
@@ -46,14 +70,21 @@ class AITermRegistrationWindowController: NSWindowController {
     @IBOutlet var textField: NSTextField!
     @IBOutlet var titleImageView: NSImageView!
     private(set) var apiKey: String?
+    private var vendor = LLMMetadata.effectiveVendor
 
     static func create() -> AITermRegistrationWindowController {
-        return AITermRegistrationWindowController(windowNibName: NSNib.Name("AITerm"))
+        create(vendor: LLMMetadata.effectiveVendor)
+    }
+
+    static func create(vendor: iTermAIVendor) -> AITermRegistrationWindowController {
+        let controller = AITermRegistrationWindowController(windowNibName: NSNib.Name("AITerm"))
+        controller.vendor = vendor
+        return controller
     }
 
     override func awakeFromNib() {
         var temp = message.string
-        let urls = switch LLMMetadata.effectiveVendor {
+        let urls = switch vendor {
         case .openAI, .llama:
             ["https://auth.openai.com/create-account",
              "https://platform.openai.com/api-keys",
@@ -149,9 +180,22 @@ protocol AIRegistrationProvider: AnyObject {
         _ completion: @escaping (AITermController.Registration?) -> ())
 }
 
+extension AIRegistrationProvider {
+    func registrationProviderRequestRegistration(for vendor: iTermAIVendor,
+                                                 _ completion: @escaping (AITermController.Registration?) -> ()) {
+        registrationProviderRequestRegistration(completion)
+    }
+}
+
 extension NSWindow: AIRegistrationProvider {
     func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
+        registrationProviderRequestRegistration(for: LLMMetadata.effectiveVendor, completion)
+    }
+
+    func registrationProviderRequestRegistration(for vendor: iTermAIVendor,
+                                                 _ completion: @escaping (AITermController.Registration?) -> ()) {
         AITermControllerRegistrationHelper.instance.requestRegistration(in: self,
+                                                                        for: vendor,
                                                                         completion: completion)
     }
 }

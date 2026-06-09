@@ -344,6 +344,8 @@ struct Message: Codable {
         var vectorStoreIDs: [String]
         var model: String?
         var shouldThink: Bool
+        var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
+        var serviceTier: ResponsesRequestBody.ServiceTier?
     }
     var configuration: Configuration?
 
@@ -354,7 +356,9 @@ struct Message: Codable {
     // Not shown as separate messages in chat
     var hiddenFromClient: Bool {
         switch content {
-        case .remoteCommandResponse, .renameChat, .commit, .setPermissions, .vectorStoreCreated, .userCommand:
+        case .remoteCommandResponse(_, _, let functionName, _):
+            !RemoteCommandDisplay.isTerminalCommandOutputTool(functionName)
+        case .renameChat, .commit, .setPermissions, .vectorStoreCreated, .userCommand:
             true
         case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown,
                 .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand,

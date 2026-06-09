@@ -45,6 +45,7 @@ class MultipartMessageCellView: MessageCellView {
 
     private var backgroundColorPair: (NSColor, NSColor)?
     private var isUserMessage: Bool = false
+    private var drawsBubbleChrome: Bool = true
 
     private var textViews: [NSTextView] {
         subparts.flatMap { sp -> [NSTextView] in
@@ -59,10 +60,10 @@ class MultipartMessageCellView: MessageCellView {
 
     static let bubbleInsetTop: CGFloat = 8
     static let bubbleInsetBottom: CGFloat = 8
-    static let bubbleInsetHorizontal: CGFloat = 8
+    static let bubbleInsetHorizontal: CGFloat = 12
     static let subpartSpacing: CGFloat = 8
-    static let bubbleEdgePadding: CGFloat = 8
-    static let timestampGap: CGFloat = 8
+    static let bubbleEdgePadding: CGFloat = 40
+    static let timestampGap: CGFloat = 6
     static let minBubbleContentWidth: CGFloat = 200
     // Insets that text views apply inside their own bounds (lineFragmentPadding +
     // textContainerInset.width). For the regular text view both are 0; code/status
@@ -72,7 +73,6 @@ class MultipartMessageCellView: MessageCellView {
     static let codeTextVerticalPadding: CGFloat = 8
     static let codeBlockHeaderHeight: CGFloat = 32
     static let codeBlockBorder: CGFloat = 1
-    static let statusUpdateSideMargin: CGFloat = 16
     static let fileAttachmentHeight: CGFloat = 32
 
     override func setupViews() {
@@ -90,15 +90,7 @@ class MultipartMessageCellView: MessageCellView {
                 updateCodeBlockHeaderColors(header)
                 updateCodeTextViewColors(textView)
             case .statusUpdate(let textView):
-                if effectiveAppearance.it_isDark {
-                    if let storage = textView.textStorage {
-                        let mutable = NSMutableAttributedString(attributedString: storage)
-                        mutable.addAttribute(.foregroundColor,
-                                             value: NSColor.black,
-                                             range: NSRange(location: 0, length: mutable.length))
-                        storage.setAttributedString(mutable)
-                    }
-                }
+                updateStatusUpdateTextViewColors(textView)
             case .regular, .fileAttachment:
                 break
             }
@@ -106,6 +98,11 @@ class MultipartMessageCellView: MessageCellView {
     }
 
     private func updateBubbleColor() {
+        guard drawsBubbleChrome else {
+            bubbleView.layer?.backgroundColor = NSColor.clear.cgColor
+            bubbleView.layer?.borderWidth = 0
+            return
+        }
         guard let (lightColor, darkColor) = backgroundColorPair else { return }
         bubbleView.layer?.backgroundColor = (effectiveAppearance.it_isDark ? darkColor : lightColor).cgColor
     }
@@ -123,6 +120,7 @@ class MultipartMessageCellView: MessageCellView {
         }
         configuredMaxBubbleWidth = maxBubbleWidth
         isUserMessage = rendition.isUser
+        drawsBubbleChrome = rendition.isUser
 
         // Tear down previous state.
         bubbleView.removeFromSuperview()
@@ -252,13 +250,9 @@ class MultipartMessageCellView: MessageCellView {
             tv.textContainer?.size = NSSize(width: contentWidth - Self.regularTextSidePadding * 2,
                                             height: .greatestFiniteMagnitude)
         case .statusUpdate(let tv):
-            // Status updates are centered with a min side margin and use
-            // their natural width up to the available content width.
-            let statusContentWidth = max(0, contentWidth - Self.statusUpdateSideMargin * 2)
-            let measured = tv.desiredSize(forContentWidth: statusContentWidth)
-            let drawnWidth = min(statusContentWidth, ceil(measured.width))
-            let drawnX = contentX + floor((contentWidth - drawnWidth) / 2)
-            tv.frame = NSRect(x: drawnX, y: y, width: drawnWidth, height: height)
+            tv.frame = NSRect(x: contentX, y: y, width: contentWidth, height: height)
+            tv.textContainer?.size = NSSize(width: max(0, contentWidth - Self.regularTextSidePadding * 2),
+                                            height: .greatestFiniteMagnitude)
         case .codeAttachment(let container, let header, let textView):
             container.frame = NSRect(x: contentX, y: y, width: contentWidth, height: height)
             // Header sits at the top of the container; text view fills the rest.
@@ -284,8 +278,7 @@ class MultipartMessageCellView: MessageCellView {
         case .regular(let tv):
             return ceil(tv.desiredSize(forContentWidth: contentWidth).height)
         case .statusUpdate(let tv):
-            let inner = max(0, contentWidth - Self.statusUpdateSideMargin * 2)
-            return ceil(tv.desiredSize(forContentWidth: inner).height)
+            return ceil(tv.desiredSize(forContentWidth: contentWidth).height)
         case .codeAttachment(_, _, let tv):
             // layoutSubpart shrinks the text container by codeTextSidePadding*2
             // on top of the container's own lineFragmentPadding. Measure at
@@ -309,7 +302,7 @@ class MultipartMessageCellView: MessageCellView {
 
     func backgroundColorPair(_ rendition: MessageRendition) -> (NSColor, NSColor) {
         rendition.isUser
-        ? (NSColor(fromHexString: "p3#448bf7")!, NSColor(fromHexString: "p3#4a93f5")!)
+        ? (NSColor(fromHexString: "p3#303033")!, NSColor(fromHexString: "p3#303033")!)
         : (NSColor(fromHexString: "p3#e9e9eb")!, NSColor(fromHexString: "p3#3b3b3d")!)
     }
 
@@ -335,25 +328,17 @@ class MultipartMessageCellView: MessageCellView {
         let tv = StatusUpdateTextView()
         tv.isEditable = false
         tv.isSelectable = textSelectable
-        tv.drawsBackground = true
+        tv.drawsBackground = false
         tv.isVerticallyResizable = false
         tv.isHorizontallyResizable = false
-        tv.textContainer?.lineFragmentPadding = Self.codeTextSidePadding
-        tv.textContainerInset = NSSize(width: 0, height: Self.codeTextVerticalPadding)
+        tv.textContainer?.lineFragmentPadding = Self.regularTextSidePadding
+        tv.textContainerInset = .zero
         tv.textContainer?.widthTracksTextView = false
         tv.wantsLayer = true
         tv.layer?.cornerRadius = 6
-        tv.layer?.borderWidth = 1.0
-        tv.backgroundColor = NSColor(fromHexString: "#ffffc0")!
-        tv.layer?.borderColor = NSColor.gray.cgColor
-
-        let attributedString = NSMutableAttributedString(attributedString: sp.attributedString)
-        if effectiveAppearance.it_isDark {
-            attributedString.addAttribute(.foregroundColor,
-                                          value: NSColor.black,
-                                          range: NSRange(location: 0, length: attributedString.length))
-        }
-        tv.textStorage?.setAttributedString(attributedString)
+        tv.layer?.borderWidth = 0
+        updateStatusUpdateTextViewColors(tv)
+        tv.textStorage?.setAttributedString(sp.attributedString)
         return tv
     }
 
@@ -473,6 +458,16 @@ class MultipartMessageCellView: MessageCellView {
         }
     }
 
+    private func updateStatusUpdateTextViewColors(_ textView: NSTextView) {
+        if effectiveAppearance.it_isDark {
+            textView.backgroundColor = NSColor(white: 0.14, alpha: 1.0)
+            textView.layer?.borderColor = NSColor(white: 0.32, alpha: 1.0).cgColor
+        } else {
+            textView.backgroundColor = NSColor(white: 0.95, alpha: 1.0)
+            textView.layer?.borderColor = NSColor(white: 0.8, alpha: 1.0).cgColor
+        }
+    }
+
     @objc private func copyCodeButtonClicked(_ sender: NSButton) {
         guard let entry = copyButtonsForCodeViews.first(where: { $0.button === sender }) else {
             return
@@ -527,11 +522,10 @@ class MultipartMessageCellView: MessageCellView {
                                     lineFragmentPadding: regularTextSidePadding,
                                     verticalInset: 0))
         case .statusUpdate:
-            let inner = max(0, contentWidth - statusUpdateSideMargin * 2)
             return ceil(measureText(sp.attributedString,
-                                    contentWidth: inner,
-                                    lineFragmentPadding: codeTextSidePadding,
-                                    verticalInset: codeTextVerticalPadding))
+                                    contentWidth: contentWidth,
+                                    lineFragmentPadding: regularTextSidePadding,
+                                    verticalInset: 0))
         case .codeAttachment:
             let inner = max(0, contentWidth - codeTextSidePadding * 2)
             let textHeight = ceil(measureText(sp.attributedString,

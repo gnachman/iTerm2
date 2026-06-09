@@ -39,6 +39,245 @@ enum {
     kDontOpenAnyWindowsTag= 2
 };
 
+static NSString *const kAIManualModelIDKey = @"id";
+static NSString *const kAIManualModelNameKey = @"name";
+static NSString *const kAIManualModelURLKey = @"url";
+static NSString *const kAIManualModelAPIKey = @"api";
+static NSString *const kAIManualModelContextWindowTokensKey = @"contextWindowTokens";
+static NSString *const kAIManualModelMaxResponseTokensKey = @"maxResponseTokens";
+static NSString *const kAIManualModelHostedCodeInterpreterKey = @"hostedCodeInterpreter";
+static NSString *const kAIManualModelHostedFileSearchKey = @"hostedFileSearch";
+static NSString *const kAIManualModelHostedWebSearchKey = @"hostedWebSearch";
+static NSString *const kAIManualModelFunctionCallingKey = @"functionCalling";
+static NSString *const kAIManualModelStreamingKey = @"streaming";
+static NSString *const kAIManualModelVectorStoreKey = @"vectorStore";
+
+static NSString *const kAIManualModelsDefaultColumn = @"default";
+static NSString *const kAIManualModelsModelColumn = @"model";
+static NSString *const kAIManualModelsAPIColumn = @"api";
+static NSString *const kAIManualModelsEndpointColumn = @"endpoint";
+static NSString *const kAIDefaultModelProviderPrefix = @"provider:";
+static NSString *const kAIDefaultModelManualPrefix = @"manual:";
+
+typedef NS_ENUM(NSInteger, iTermManualAIModelManagerResponse) {
+    iTermManualAIModelManagerResponseAdd = 1001,
+    iTermManualAIModelManagerResponseEdit,
+    iTermManualAIModelManagerResponseDuplicate,
+    iTermManualAIModelManagerResponseDelete,
+    iTermManualAIModelManagerResponseDefault
+};
+
+static NSInteger iTermManualAIModelIntegerValue(NSDictionary *configuration,
+                                                NSString *key,
+                                                NSInteger fallback) {
+    id value = configuration[key];
+    if ([value respondsToSelector:@selector(integerValue)]) {
+        return [value integerValue];
+    }
+    return fallback;
+}
+
+static NSString *iTermTitleForAIAPI(iTermAIAPI api) {
+    switch (api) {
+        case iTermAIAPIResponses:
+            return @"Responses";
+        case iTermAIAPIChatCompletions:
+            return @"Chat Completions";
+        case iTermAIAPICompletions:
+            return @"Completions";
+        case iTermAIAPIGemini:
+            return @"Google Gemini";
+        case iTermAIAPIEarlyO1:
+            return @"Chat Completions (Early O1)";
+        case iTermAIAPILlama:
+            return @"Llama";
+        case iTermAIAPIDeepSeek:
+            return @"DeepSeek";
+        case iTermAIAPIAnthropic:
+            return @"Anthropic";
+        case iTermAIAPIAppleIntelligence:
+            return @"Apple Intelligence";
+    }
+}
+
+static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
+    NSString *url = configuration[kAIManualModelURLKey] ?: @"";
+    if (url.length == 0) {
+        return @"";
+    }
+    NSURL *parsedURL = [NSURL URLWithString:url];
+    return parsedURL.host ?: url;
+}
+
+@interface iTermManualAIModelsPanelController : NSObject<NSTableViewDataSource, NSTableViewDelegate>
+@property(nonatomic, copy) NSArray<NSDictionary *> *configurations;
+@property(nonatomic, copy) NSString *defaultModelName;
+@property(nonatomic) NSInteger selectedIndex;
+@property(nonatomic, strong) NSTableView *tableView;
+@property(nonatomic, copy) NSArray<NSButton *> *selectionButtons;
+- (instancetype)initWithConfigurations:(NSArray<NSDictionary *> *)configurations
+                      defaultModelName:(NSString *)defaultModelName
+                         selectedIndex:(NSInteger)selectedIndex;
+- (NSView *)view;
+@end
+
+@implementation iTermManualAIModelsPanelController
+
+- (instancetype)initWithConfigurations:(NSArray<NSDictionary *> *)configurations
+                      defaultModelName:(NSString *)defaultModelName
+                         selectedIndex:(NSInteger)selectedIndex {
+    self = [super init];
+    if (self) {
+        _configurations = [configurations copy];
+        _defaultModelName = [defaultModelName copy];
+        _selectedIndex = selectedIndex;
+    }
+    return self;
+}
+
+- (NSView *)view {
+    const CGFloat width = 720;
+    const CGFloat height = 292;
+    const CGFloat tableWidth = 568;
+    const CGFloat buttonWidth = 120;
+    const CGFloat buttonHeight = 28;
+    const CGFloat buttonX = tableWidth + 16;
+    NSView *view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, height)];
+
+    NSTextField *title = [NSTextField labelWithString:@"Manual models"];
+    title.font = [NSFont boldSystemFontOfSize:NSFont.systemFontSize];
+    title.frame = NSMakeRect(0, height - 24, tableWidth, 20);
+    [view addSubview:title];
+
+    NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 42, tableWidth, 214)];
+    scrollView.hasVerticalScroller = YES;
+    scrollView.hasHorizontalScroller = NO;
+    scrollView.borderType = NSBezelBorder;
+
+    NSTableView *tableView = [[NSTableView alloc] initWithFrame:scrollView.bounds];
+    tableView.delegate = self;
+    tableView.dataSource = self;
+    tableView.headerView = [[NSTableHeaderView alloc] initWithFrame:NSMakeRect(0, 0, tableWidth, 22)];
+    tableView.usesAlternatingRowBackgroundColors = YES;
+    tableView.allowsMultipleSelection = NO;
+    tableView.rowHeight = 28;
+
+    NSArray<NSDictionary *> *columns = @[
+        @{ @"identifier": kAIManualModelsDefaultColumn, @"title": @"", @"width": @64 },
+        @{ @"identifier": kAIManualModelsModelColumn, @"title": @"Model", @"width": @210 },
+        @{ @"identifier": kAIManualModelsAPIColumn, @"title": @"API", @"width": @134 },
+        @{ @"identifier": kAIManualModelsEndpointColumn, @"title": @"Endpoint", @"width": @150 }
+    ];
+    for (NSDictionary *spec in columns) {
+        NSTableColumn *column = [[NSTableColumn alloc] initWithIdentifier:spec[@"identifier"]];
+        column.title = spec[@"title"];
+        column.width = [spec[@"width"] doubleValue];
+        column.resizingMask = NSTableColumnUserResizingMask;
+        [tableView addTableColumn:column];
+    }
+
+    scrollView.documentView = tableView;
+    _tableView = tableView;
+    [view addSubview:scrollView];
+
+    NSArray<NSDictionary *> *buttons = @[
+        @{ @"title": @"Add", @"tag": @(iTermManualAIModelManagerResponseAdd) },
+        @{ @"title": @"Edit", @"tag": @(iTermManualAIModelManagerResponseEdit) },
+        @{ @"title": @"Duplicate", @"tag": @(iTermManualAIModelManagerResponseDuplicate) },
+        @{ @"title": @"Delete", @"tag": @(iTermManualAIModelManagerResponseDelete) },
+        @{ @"title": @"Set Default", @"tag": @(iTermManualAIModelManagerResponseDefault) }
+    ];
+    NSMutableArray<NSButton *> *selectionButtons = [NSMutableArray array];
+    CGFloat buttonY = 226;
+    for (NSDictionary *spec in buttons) {
+        NSButton *button = [NSButton buttonWithTitle:spec[@"title"]
+                                              target:self
+                                              action:@selector(performManualModelAction:)];
+        button.frame = NSMakeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        button.bezelStyle = NSBezelStyleRounded;
+        button.tag = [spec[@"tag"] integerValue];
+        [view addSubview:button];
+        if (button.tag != iTermManualAIModelManagerResponseAdd) {
+            [selectionButtons addObject:button];
+        }
+        buttonY -= 36;
+    }
+    self.selectionButtons = selectionButtons;
+
+    NSString *footerText = self.configurations.count == 0
+        ? @"No manual models configured. Add one to use it as a default model or from AI Chat."
+        : @"Select a row to edit, duplicate, delete, or make it the default model for new chats.";
+    NSTextField *footer = [NSTextField labelWithString:footerText];
+    footer.textColor = NSColor.secondaryLabelColor;
+    footer.font = [NSFont systemFontOfSize:NSFont.smallSystemFontSize];
+    footer.frame = NSMakeRect(0, 8, width, 20);
+    [view addSubview:footer];
+
+    if (self.configurations.count > 0) {
+        self.selectedIndex = MAX(0, MIN(self.selectedIndex, (NSInteger)self.configurations.count - 1));
+        [tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)self.selectedIndex]
+                byExtendingSelection:NO];
+    }
+    [self updateSelectionButtons];
+    return view;
+}
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
+    return (NSInteger)self.configurations.count;
+}
+
+- (id)tableView:(NSTableView *)tableView
+objectValueForTableColumn:(NSTableColumn *)tableColumn
+            row:(NSInteger)row {
+    if (row < 0 || row >= (NSInteger)self.configurations.count) {
+        return @"";
+    }
+    NSDictionary *configuration = self.configurations[(NSUInteger)row];
+    NSString *identifier = tableColumn.identifier;
+    if ([identifier isEqualToString:kAIManualModelsDefaultColumn]) {
+        NSString *name = configuration[kAIManualModelNameKey];
+        return [name isEqualToString:self.defaultModelName] ? @"Default" : @"";
+    }
+    if ([identifier isEqualToString:kAIManualModelsModelColumn]) {
+        return configuration[kAIManualModelNameKey] ?: @"Untitled model";
+    }
+    if ([identifier isEqualToString:kAIManualModelsAPIColumn]) {
+        iTermAIAPI api = (iTermAIAPI)iTermManualAIModelIntegerValue(configuration,
+                                                                   kAIManualModelAPIKey,
+                                                                   iTermAIAPIChatCompletions);
+        return iTermTitleForAIAPI(api);
+    }
+    if ([identifier isEqualToString:kAIManualModelsEndpointColumn]) {
+        return iTermManualAIModelHost(configuration);
+    }
+    return @"";
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    self.selectedIndex = self.tableView.selectedRow;
+    [self updateSelectionButtons];
+}
+
+- (void)updateSelectionButtons {
+    const BOOL hasSelection = self.selectedIndex >= 0 && self.selectedIndex < (NSInteger)self.configurations.count;
+    for (NSButton *button in self.selectionButtons) {
+        button.enabled = hasSelection;
+    }
+}
+
+- (void)performManualModelAction:(NSButton *)sender {
+    if (sender.tag != iTermManualAIModelManagerResponseAdd) {
+        self.selectedIndex = self.tableView.selectedRow;
+        if (self.selectedIndex < 0 || self.selectedIndex >= (NSInteger)self.configurations.count) {
+            NSBeep();
+            return;
+        }
+    }
+    [NSApp stopModalWithCode:sender.tag];
+}
+
+@end
+
 @implementation GeneralPreferencesViewController {
     BOOL _awoken;
     // open bookmarks when iterm starts
@@ -180,6 +419,9 @@ enum {
 
     IBOutlet NSButton *_openAIAPIKey;
     IBOutlet NSTextField *_openAIAPIKeyLabel;
+    NSTextField *_aiAPIKeysStatus;
+    NSMutableArray<NSSecureTextField *> *_aiAPIKeySheetFields;
+    NSMutableArray<NSTextField *> *_aiAPIKeySheetStatusLabels;
 
     IBOutlet NSPopUpButton *_promptSelector;
     IBOutlet NSTextView *_aiPrompt;
@@ -240,6 +482,12 @@ enum {
     IBOutlet NSButton *_sshIntegrationForURLs;
 
     NSString *_lastModel;
+    PreferenceInfo *_aiModelInfo;
+    PreferenceInfo *_aiTokenLimitInfo;
+    PreferenceInfo *_aiResponseTokenLimitInfo;
+    PreferenceInfo *_aiURLInfo;
+    PreferenceInfo *_aiAPIInfo;
+    NSArray<PreferenceInfo *> *_aiFeatureInfos;
 
     // Custom headers section (wired up in the XIB).
     IBOutlet NSButton *_aiCustomHeadersEnabled;
@@ -291,6 +539,8 @@ enum {
     _awoken = YES;
 
     [self setupCustomHeadersSection];
+    [self setupAIAPIKeysRow];
+    [self setupDefaultAIModelSelector];
     PreferenceInfo *info;
 
     __weak __typeof(self) weakSelf = self;
@@ -797,8 +1047,9 @@ enum {
     /// -------
 
     [self addViewToSearchIndex:_openAIAPIKey
-                   displayName:@"Set API Key"
-                       phrases:@[ @"Set API key for AI" ]
+                   displayName:@"Manage AI API Keys"
+                       phrases:@[ @"Set API key for AI",
+                                   @"OpenAI Anthropic Gemini DeepSeek API keys" ]
                            key:kPreferenceKeyAIAPIKey];
 
     info = [self defineControl:_aiPrompt
@@ -826,15 +1077,18 @@ enum {
                         key:kPreferenceKeyAITokenLimit
                 relatedView:_aiTokenLimitLabel
                        type:kPreferenceInfoTypeIntegerTextField];
+    _aiTokenLimitInfo = tokenLimitInfo;
     PreferenceInfo *responseTokenLimitInfo =
         [self defineControl:_aiResponseTokenLimit
                         key:kPreferenceKeyAIResponseTokenLimit
                 relatedView:_aiTokenLimitLabel
                        type:kPreferenceInfoTypeIntegerTextField];
+    _aiResponseTokenLimitInfo = responseTokenLimitInfo;
     PreferenceInfo *urlInfo = [self defineControl:_customAIEndpoint
                                               key:kPreferenceKeyAITermURL
                                       displayName:@"Custom URL for AI"
                                              type:kPreferenceInfoTypeStringTextField];
+    _aiURLInfo = urlInfo;
     urlInfo.onUpdate = ^BOOL{
         [weakSelf updateEnabledState];
         return NO;
@@ -916,6 +1170,7 @@ enum {
                            key:kPreferenceKeyAITermAPI
                    relatedView:nil
                           type:kPreferenceInfoTypePopup];
+    _aiAPIInfo = apiInfo;
     apiInfo.shouldBeEnabled = ^BOOL{
         return [weakSelf canCustomizeAPI];
     };
@@ -928,6 +1183,7 @@ enum {
                            key:kPreferenceKeyAIModel
                    relatedView:_aiModelLabel
                           type:kPreferenceInfoTypeStringTextField];
+    _aiModelInfo = info;
     info.onChange = ^{
         [weakSelf aiModelDidChange:tokenLimitInfo
                  responseLimitInfo:responseTokenLimitInfo
@@ -937,31 +1193,20 @@ enum {
         [weakSelf updateAIEnabled];
     };
 
-    info = [self defineControl:_aiVendor
-                           key:kPreferenceKeyAIVendor
-                   relatedView:nil
-                          type:kPreferenceInfoTypePopup];
-    info.onChange = ^{
-        [weakSelf updateAIModelFromVendor];
-        [weakSelf aiModelDidChange:tokenLimitInfo
-                 responseLimitInfo:responseTokenLimitInfo
-                           urlInfo:urlInfo
-                           apiInfo:apiInfo
-                      featureInfos:aiFeatureInfos];
-    };
-    info = [self defineControl:_useRecommendedModel
-                           key:kPreferenceKeyUseRecommendedAIModel
-                   relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^{
-        [weakSelf updateAIModelFromVendor];
+    _aiFeatureInfos = [aiFeatureInfos copy];
+    [_observer observeKey:kPreferenceKeyUseRecommendedAIModel block:^{
+        [weakSelf reloadDefaultAIModelPopup];
         [weakSelf updateCoarseAIModelSettingsEnabled];
-        [weakSelf aiModelDidChange:tokenLimitInfo
-                 responseLimitInfo:responseTokenLimitInfo
-                           urlInfo:urlInfo
-                           apiInfo:apiInfo
-                      featureInfos:aiFeatureInfos];
-    };
+    }];
+    [_observer observeKey:kPreferenceKeyAIVendor block:^{
+        [weakSelf reloadDefaultAIModelPopup];
+    }];
+    [_observer observeKey:kPreferenceKeyAIModel block:^{
+        [weakSelf reloadDefaultAIModelPopup];
+    }];
+    [_observer observeKey:kPreferenceKeyAIManualModelConfigurations block:^{
+        [weakSelf reloadDefaultAIModelPopup];
+    }];
     [self addViewToSearchIndex:_aiPluginLabel
                    displayName:@"Install AI Plugin"
                        phrases:@[ @"AI Plugin" ]
@@ -1070,11 +1315,283 @@ enum {
     return YES;
 }
 
+- (NSArray<NSNumber *> *)defaultAIModelProviderVendors {
+    return @[
+        @(iTermAIVendorOpenAI),
+        @(iTermAIVendorAnthropic),
+        @(iTermAIVendorGemini),
+        @(iTermAIVendorDeepSeek),
+        @(iTermAIVendorLlama)
+    ];
+}
+
+- (NSString *)defaultAIModelIdentifierForProvider:(iTermAIVendor)provider {
+    return [NSString stringWithFormat:@"%@%lu",
+            kAIDefaultModelProviderPrefix,
+            (unsigned long)provider];
+}
+
+- (NSString *)defaultAIModelIdentifierForManualModelName:(NSString *)name {
+    return [NSString stringWithFormat:@"%@%@", kAIDefaultModelManualPrefix, name ?: @""];
+}
+
+- (NSString *)manualModelNameFromDefaultAIModelIdentifier:(NSString *)identifier {
+    if (![identifier hasPrefix:kAIDefaultModelManualPrefix]) {
+        return nil;
+    }
+    return [identifier substringFromIndex:kAIDefaultModelManualPrefix.length];
+}
+
+- (NSNumber *)providerFromDefaultAIModelIdentifier:(NSString *)identifier {
+    if (![identifier hasPrefix:kAIDefaultModelProviderPrefix]) {
+        return nil;
+    }
+    NSString *raw = [identifier substringFromIndex:kAIDefaultModelProviderPrefix.length];
+    return @((NSUInteger)raw.integerValue);
+}
+
+- (NSString *)currentDefaultManualModelName {
+    if ([self boolForKey:kPreferenceKeyUseRecommendedAIModel]) {
+        return nil;
+    }
+    return [self stringForKey:kPreferenceKeyAIModel];
+}
+
+- (NSDictionary *)manualAIModelConfigurationNamed:(NSString *)name
+                                inConfigurations:(NSArray<NSDictionary *> *)configurations {
+    if (name.length == 0) {
+        return nil;
+    }
+    for (NSDictionary *configuration in configurations) {
+        if ([configuration[kAIManualModelNameKey] isEqualToString:name]) {
+            return configuration;
+        }
+    }
+    return nil;
+}
+
+- (iTermAIVendor)providerForManualAIModelConfiguration:(NSDictionary *)configuration {
+    const iTermAIAPI api = (iTermAIAPI)[self manualAIModelConfiguration:configuration
+                                                          integerForKey:kAIManualModelAPIKey
+                                                               fallback:iTermAIAPIChatCompletions];
+    switch (api) {
+        case iTermAIAPIAnthropic:
+            return iTermAIVendorAnthropic;
+        case iTermAIAPIGemini:
+            return iTermAIVendorGemini;
+        case iTermAIAPIDeepSeek:
+            return iTermAIVendorDeepSeek;
+        case iTermAIAPILlama:
+            return iTermAIVendorLlama;
+        case iTermAIAPIAppleIntelligence:
+            return iTermAIVendorApple;
+        case iTermAIAPIResponses:
+        case iTermAIAPIChatCompletions:
+        case iTermAIAPICompletions:
+        case iTermAIAPIEarlyO1:
+            break;
+    }
+
+    NSString *modelName = [configuration[kAIManualModelNameKey] lowercaseString] ?: @"";
+    NSString *host = [iTermManualAIModelHost(configuration) lowercaseString] ?: @"";
+    if ([modelName containsString:@"claude"] || [host containsString:@"anthropic"]) {
+        return iTermAIVendorAnthropic;
+    }
+    if ([modelName containsString:@"gemini"] || [host containsString:@"google"]) {
+        return iTermAIVendorGemini;
+    }
+    if ([modelName containsString:@"deepseek"] || [host containsString:@"deepseek"]) {
+        return iTermAIVendorDeepSeek;
+    }
+    if ([modelName containsString:@"llama"] || [host containsString:@"localhost"]) {
+        return iTermAIVendorLlama;
+    }
+    return iTermAIVendorOpenAI;
+}
+
+- (NSString *)defaultAIModelTitleForManualConfiguration:(NSDictionary *)configuration {
+    NSString *name = configuration[kAIManualModelNameKey] ?: @"Untitled model";
+    iTermAIVendor provider = [self providerForManualAIModelConfiguration:configuration];
+    return [NSString stringWithFormat:@"Manual: %@ — %@",
+            name,
+            [self aiAPIKeyProviderNameForVendor:provider]];
+}
+
+- (NSTextField *)defaultAIModelSelectorLabel {
+    for (NSView *subview in _aiVendor.superview.subviews) {
+        if (![subview isKindOfClass:NSTextField.class]) {
+            continue;
+        }
+        NSTextField *label = (NSTextField *)subview;
+        if (![label.stringValue isEqualToString:@"AI Model:"]) {
+            continue;
+        }
+        CGFloat delta = NSMidY(label.frame) - NSMidY(_aiVendor.frame);
+        if (delta < 0) {
+            delta = -delta;
+        }
+        if (delta < 16) {
+            return label;
+        }
+    }
+    return nil;
+}
+
+- (void)setupDefaultAIModelSelector {
+    _useRecommendedModel.hidden = YES;
+    _useRecommendedModel.enabled = NO;
+
+    NSTextField *label = [self defaultAIModelSelectorLabel];
+    if (label) {
+        label.stringValue = @"Default model for new chats:";
+        label.frame = NSMakeRect(9, NSMinY(label.frame), 210, NSHeight(label.frame));
+    }
+
+    NSRect popupFrame = _aiVendor.frame;
+    popupFrame.origin.x = 224;
+    popupFrame.size.width = 358;
+    _aiVendor.frame = popupFrame;
+    _aiVendor.target = self;
+    _aiVendor.action = @selector(defaultAIModelPopupDidChange:);
+    _aiVendor.toolTip = @"Default provider or manual model for new AI chats. Existing chats keep their provider.";
+
+    [self addViewToSearchIndex:_aiVendor
+                   displayName:@"Default model for new AI chats"
+                       phrases:@[ @"AI default provider",
+                                   @"AI manual model default" ]
+                           key:kPreferenceKeyAIModel];
+    [self reloadDefaultAIModelPopup];
+}
+
+- (void)selectPopUpButton:(NSPopUpButton *)button representedObject:(NSString *)representedObject {
+    for (NSMenuItem *item in button.itemArray) {
+        if ([item.representedObject isEqual:representedObject]) {
+            [button selectItem:item];
+            return;
+        }
+    }
+}
+
+- (void)reloadDefaultAIModelPopup {
+    if (!_aiVendor) {
+        return;
+    }
+
+    NSString *selectedIdentifier = nil;
+    if ([self boolForKey:kPreferenceKeyUseRecommendedAIModel]) {
+        selectedIdentifier =
+            [self defaultAIModelIdentifierForProvider:(iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor]];
+    } else {
+        selectedIdentifier =
+            [self defaultAIModelIdentifierForManualModelName:[self stringForKey:kPreferenceKeyAIModel]];
+    }
+
+    [_aiVendor removeAllItems];
+    for (NSNumber *number in [self defaultAIModelProviderVendors]) {
+        iTermAIVendor provider = (iTermAIVendor)number.unsignedIntegerValue;
+        [_aiVendor addItemWithTitle:[self aiAPIKeyProviderNameForVendor:provider]];
+        _aiVendor.lastItem.representedObject = [self defaultAIModelIdentifierForProvider:provider];
+    }
+
+    NSArray<NSDictionary *> *manualConfigurations = [self mutableManualAIModelConfigurations];
+    if (manualConfigurations.count > 0) {
+        [_aiVendor.menu addItem:[NSMenuItem separatorItem]];
+        NSMenuItem *header = [[NSMenuItem alloc] initWithTitle:@"Manual Models"
+                                                        action:nil
+                                                 keyEquivalent:@""];
+        header.enabled = NO;
+        [_aiVendor.menu addItem:header];
+        for (NSDictionary *configuration in manualConfigurations) {
+            NSString *name = configuration[kAIManualModelNameKey] ?: @"";
+            [_aiVendor addItemWithTitle:[self defaultAIModelTitleForManualConfiguration:configuration]];
+            _aiVendor.lastItem.representedObject = [self defaultAIModelIdentifierForManualModelName:name];
+        }
+    }
+
+    [self selectPopUpButton:_aiVendor representedObject:selectedIdentifier];
+    if (_aiVendor.selectedItem == nil && _aiVendor.numberOfItems > 0) {
+        [_aiVendor selectItemAtIndex:0];
+    }
+}
+
+- (void)updateAIModelDependentControlValues {
+    NSMutableArray<PreferenceInfo *> *infos = [NSMutableArray array];
+    if (_aiModelInfo) {
+        [infos addObject:_aiModelInfo];
+    }
+    if (_aiTokenLimitInfo) {
+        [infos addObject:_aiTokenLimitInfo];
+    }
+    if (_aiResponseTokenLimitInfo) {
+        [infos addObject:_aiResponseTokenLimitInfo];
+    }
+    if (_aiURLInfo) {
+        [infos addObject:_aiURLInfo];
+    }
+    if (_aiAPIInfo) {
+        [infos addObject:_aiAPIInfo];
+    }
+    for (PreferenceInfo *info in infos) {
+        [self updateValueForInfo:info];
+    }
+    for (PreferenceInfo *info in _aiFeatureInfos) {
+        [self updateValueForInfo:info];
+    }
+}
+
+- (void)updateAIAfterDefaultModelChange {
+    [self aiModelDidChange:_aiTokenLimitInfo
+         responseLimitInfo:_aiResponseTokenLimitInfo
+                   urlInfo:_aiURLInfo
+                   apiInfo:_aiAPIInfo
+              featureInfos:_aiFeatureInfos ?: @[]];
+    [self updateAIModelDependentControlValues];
+    [self reloadDefaultAIModelPopup];
+    [self updateAIEnabled];
+}
+
+- (void)selectProviderAsDefaultForNewChats:(iTermAIVendor)provider {
+    [self setBool:YES forKey:kPreferenceKeyUseRecommendedAIModel];
+    [self setObject:@(provider) forKey:kPreferenceKeyAIVendor];
+    [self updateAIModelFromVendor];
+    [self updateAIAfterDefaultModelChange];
+}
+
+- (void)selectManualConfigurationAsDefaultForNewChats:(NSDictionary *)configuration {
+    if (!configuration) {
+        return;
+    }
+    [self setBool:NO forKey:kPreferenceKeyUseRecommendedAIModel];
+    [self applyManualAIModelConfigurationToDefaults:configuration];
+    [self updateAIAfterDefaultModelChange];
+}
+
+- (IBAction)defaultAIModelPopupDidChange:(id)sender {
+    NSString *identifier = _aiVendor.selectedItem.representedObject;
+    NSNumber *providerNumber = [self providerFromDefaultAIModelIdentifier:identifier];
+    if (providerNumber) {
+        [self selectProviderAsDefaultForNewChats:(iTermAIVendor)providerNumber.unsignedIntegerValue];
+        return;
+    }
+
+    NSString *manualName = [self manualModelNameFromDefaultAIModelIdentifier:identifier];
+    NSDictionary *configuration =
+        [self manualAIModelConfigurationNamed:manualName
+                            inConfigurations:[self mutableManualAIModelConfigurations]];
+    if (configuration) {
+        [self selectManualConfigurationAsDefaultForNewChats:configuration];
+        return;
+    }
+
+    [self reloadDefaultAIModelPopup];
+}
+
 - (void)updateCoarseAIModelSettingsEnabled {
-    const BOOL automatic = [self boolForKey:kPreferenceKeyUseRecommendedAIModel];
     const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
-    _manualAIConfiguration.enabled = allowed && !automatic;
-    _aiVendor.enabled = allowed && automatic;
+    _manualAIConfiguration.enabled = allowed;
+    _manualAIConfiguration.title = @"Manage Manual Models...";
+    _aiVendor.enabled = allowed;
+    [self reloadDefaultAIModelPopup];
 }
 
 - (void)updateAIModelFromVendor {
@@ -1171,6 +1688,138 @@ enum {
 
 - (void)viewDidAppear {
     DLog(@"viewDidAppear");
+    [self updateAIAPIKeysStatus];
+}
+
+- (NSArray<NSNumber *> *)aiAPIKeyProviderVendors {
+    return @[
+        @(iTermAIVendorOpenAI),
+        @(iTermAIVendorAnthropic),
+        @(iTermAIVendorGemini),
+        @(iTermAIVendorDeepSeek)
+    ];
+}
+
+- (NSString *)aiAPIKeyProviderNameForVendor:(iTermAIVendor)vendor {
+    switch (vendor) {
+        case iTermAIVendorOpenAI:
+            return @"OpenAI";
+        case iTermAIVendorAnthropic:
+            return @"Anthropic";
+        case iTermAIVendorGemini:
+            return @"Gemini";
+        case iTermAIVendorDeepSeek:
+            return @"DeepSeek";
+        case iTermAIVendorLlama:
+            return @"Llama";
+        case iTermAIVendorApple:
+            return @"Apple Intelligence";
+    }
+}
+
+- (BOOL)aiAPIKeyStringIsConfigured:(NSString *)string {
+    return [[string stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] length] > 0;
+}
+
+- (BOOL)aiAPIKeyIsConfiguredForVendor:(iTermAIVendor)vendor {
+    return [self aiAPIKeyStringIsConfigured:[AITermControllerObjC apiKeyForVendor:vendor]];
+}
+
+- (void)setupAIAPIKeysRow {
+    _openAIAPIKeyLabel.stringValue = @"API Keys:";
+    _openAIAPIKey.title = @"Manage…";
+    [_openAIAPIKey sizeToFit];
+
+    if (!_aiAPIKeysStatus) {
+        NSRect buttonFrame = _openAIAPIKey.frame;
+        CGFloat x = NSMaxX(buttonFrame) + 8;
+        _aiAPIKeysStatus =
+            [NSTextField labelWithString:@""];
+        _aiAPIKeysStatus.frame = NSMakeRect(x,
+                                            NSMinY(buttonFrame),
+                                            260,
+                                            NSHeight(buttonFrame));
+        _aiAPIKeysStatus.font = [NSFont systemFontOfSize:NSFont.smallSystemFontSize];
+        _aiAPIKeysStatus.textColor = NSColor.secondaryLabelColor;
+        _aiAPIKeysStatus.lineBreakMode = NSLineBreakByTruncatingTail;
+        _aiAPIKeysStatus.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+        [_openAIAPIKey.superview addSubview:_aiAPIKeysStatus];
+    }
+
+    [self updateAIAPIKeysStatus];
+}
+
+- (void)updateAIAPIKeysStatus {
+    NSArray<NSNumber *> *vendors = [self aiAPIKeyProviderVendors];
+    NSMutableArray<NSString *> *configured = [NSMutableArray array];
+    for (NSNumber *number in vendors) {
+        iTermAIVendor vendor = (iTermAIVendor)number.unsignedIntegerValue;
+        if ([self aiAPIKeyIsConfiguredForVendor:vendor]) {
+            [configured addObject:[self aiAPIKeyProviderNameForVendor:vendor]];
+        }
+    }
+
+    switch (configured.count) {
+        case 0:
+            _aiAPIKeysStatus.stringValue = @"No provider keys configured";
+            break;
+        case 1:
+            _aiAPIKeysStatus.stringValue =
+                [NSString stringWithFormat:@"%@ configured", configured[0]];
+            break;
+        case 2:
+            _aiAPIKeysStatus.stringValue =
+                [NSString stringWithFormat:@"%@ configured",
+                 [configured componentsJoinedByString:@", "]];
+            break;
+        default:
+            _aiAPIKeysStatus.stringValue =
+                [NSString stringWithFormat:@"%lu of %lu configured",
+                 (unsigned long)configured.count,
+                 (unsigned long)vendors.count];
+            break;
+    }
+}
+
+- (void)updateAIAPIKeySheetStatusAtIndex:(NSInteger)index {
+    if (index < 0 || index >= _aiAPIKeySheetFields.count ||
+        index >= _aiAPIKeySheetStatusLabels.count) {
+        return;
+    }
+    NSSecureTextField *field = _aiAPIKeySheetFields[index];
+    NSTextField *status = _aiAPIKeySheetStatusLabels[index];
+    if (![self aiAPIKeyStringIsConfigured:field.stringValue]) {
+        status.stringValue = @"Not Set";
+        status.textColor = NSColor.tertiaryLabelColor;
+        return;
+    }
+    NSArray<NSNumber *> *vendors = [self aiAPIKeyProviderVendors];
+    if (index >= vendors.count) {
+        status.stringValue = @"Set";
+        status.textColor = NSColor.secondaryLabelColor;
+        return;
+    }
+    iTermAIVendor vendor = (iTermAIVendor)vendors[index].unsignedIntegerValue;
+    const BOOL matches = [AITermControllerObjC apiKey:field.stringValue matchesVendor:vendor];
+    status.stringValue = matches ? @"Set" : @"Invalid";
+    status.textColor = matches ? NSColor.secondaryLabelColor : NSColor.systemRedColor;
+}
+
+- (IBAction)clearAIAPIKeyField:(id)sender {
+    NSInteger index = [sender tag];
+    if (index < 0 || index >= _aiAPIKeySheetFields.count) {
+        return;
+    }
+    _aiAPIKeySheetFields[index].stringValue = @"";
+    [self updateAIAPIKeySheetStatusAtIndex:index];
+}
+
+- (void)controlTextDidChange:(NSNotification *)notification {
+    id object = notification.object;
+    NSInteger index = [_aiAPIKeySheetFields indexOfObject:object];
+    if (index != NSNotFound) {
+        [self updateAIAPIKeySheetStatusAtIndex:index];
+    }
 }
 
 - (void)updateAIEnabled {
@@ -1178,6 +1827,7 @@ enum {
 
     const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
     _openAIAPIKey.enabled = allowed;
+    _aiAPIKeysStatus.enabled = allowed;
     _aiPrompt.editable = allowed;
     _aiModel.enabled = allowed;
     _aiTokenLimit.enabled = allowed;
@@ -1327,30 +1977,86 @@ enum {
 
 - (IBAction)changeAPIKey:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = [NSString stringWithFormat:@"Enter the API key for your AI provider. The key will be stored securely in the Keychain."];
-    [alert addButtonWithTitle:@"OK"];
+    alert.messageText = @"Manage AI API Keys";
+    alert.informativeText = @"Keys are stored securely in the macOS Keychain.";
+    [alert addButtonWithTitle:@"Save"];
     [alert addButtonWithTitle:@"Cancel"];
 
-    NSSecureTextField *apiKey = [[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 500, 24)];
-    apiKey.usesSingleLineMode = YES;
-    apiKey.editable = YES;
-    apiKey.selectable = YES;
-    apiKey.stringValue = [AITermControllerObjC apiKey] ?: @"";
-    alert.accessoryView = apiKey;
+    NSArray<NSNumber *> *vendors = [self aiAPIKeyProviderVendors];
+    const CGFloat width = 620;
+    const CGFloat rowHeight = 36;
+    const CGFloat topPadding = 10;
+    const CGFloat bottomPadding = 10;
+    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0,
+                                                                0,
+                                                                width,
+                                                                topPadding + bottomPadding +
+                                                                rowHeight * vendors.count)];
+    _aiAPIKeySheetFields = [NSMutableArray array];
+    _aiAPIKeySheetStatusLabels = [NSMutableArray array];
+
+    for (NSInteger i = 0; i < vendors.count; i++) {
+        iTermAIVendor vendor = (iTermAIVendor)vendors[i].unsignedIntegerValue;
+        NSString *name = [self aiAPIKeyProviderNameForVendor:vendor];
+        CGFloat y = bottomPadding + rowHeight * (vendors.count - 1 - i);
+
+        NSTextField *label = [NSTextField labelWithString:name];
+        label.frame = NSMakeRect(0, y + 5, 90, 22);
+        label.alignment = NSTextAlignmentRight;
+        [accessory addSubview:label];
+
+        NSSecureTextField *field =
+            [[NSSecureTextField alloc] initWithFrame:NSMakeRect(104, y + 2, 350, 24)];
+        field.usesSingleLineMode = YES;
+        field.editable = YES;
+        field.selectable = YES;
+        field.delegate = self;
+        field.placeholderString = [NSString stringWithFormat:@"%@ API key", name];
+        field.stringValue = [AITermControllerObjC apiKeyForVendor:vendor] ?: @"";
+        [accessory addSubview:field];
+        [_aiAPIKeySheetFields addObject:field];
+
+        NSTextField *status = [NSTextField labelWithString:@""];
+        status.frame = NSMakeRect(466, y + 5, 58, 22);
+        status.font = [NSFont systemFontOfSize:NSFont.smallSystemFontSize];
+        [accessory addSubview:status];
+        [_aiAPIKeySheetStatusLabels addObject:status];
+
+        NSButton *clear = [NSButton buttonWithTitle:@"Clear"
+                                             target:self
+                                             action:@selector(clearAIAPIKeyField:)];
+        clear.frame = NSMakeRect(536, y, 68, 28);
+        clear.tag = i;
+        clear.bezelStyle = NSBezelStyleRounded;
+        [accessory addSubview:clear];
+
+        [self updateAIAPIKeySheetStatusAtIndex:i];
+    }
+
+    alert.accessoryView = accessory;
     [alert layout];
-    [[alert window] makeFirstResponder:apiKey];
+    if (_aiAPIKeySheetFields.count > 0) {
+        [[alert window] makeFirstResponder:_aiAPIKeySheetFields[0]];
+    }
 
     [NSApp activateIgnoringOtherApps:YES];
     [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
         switch (returnCode) {
             case NSAlertFirstButtonReturn: {
-                [AITermControllerObjC setAPIKeyAsync:apiKey.stringValue];
+                for (NSInteger i = 0; i < vendors.count && i < self->_aiAPIKeySheetFields.count; i++) {
+                    iTermAIVendor vendor = (iTermAIVendor)vendors[i].unsignedIntegerValue;
+                    [AITermControllerObjC setAPIKey:self->_aiAPIKeySheetFields[i].stringValue
+                                          forVendor:vendor];
+                }
+                [self updateAIAPIKeysStatus];
                 break;
             }
             case NSAlertSecondButtonReturn: {
                 break;
             }
         }
+        self->_aiAPIKeySheetFields = nil;
+        self->_aiAPIKeySheetStatusLabels = nil;
     }];
 }
 
@@ -1611,38 +2317,436 @@ enum {
     [self saveCustomHeaders];
 }
 
-- (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
-    NSWindow *parent = self.view.window;
-    if (parent == nil) {
+- (BOOL)manualAIModelConfiguration:(NSDictionary *)configuration boolForKey:(NSString *)key {
+    id value = configuration[key];
+    if ([value respondsToSelector:@selector(boolValue)]) {
+        return [value boolValue];
+    }
+    return NO;
+}
+
+- (NSInteger)manualAIModelConfiguration:(NSDictionary *)configuration
+                          integerForKey:(NSString *)key
+                               fallback:(NSInteger)fallback {
+    id value = configuration[key];
+    if ([value respondsToSelector:@selector(integerValue)]) {
+        return [value integerValue];
+    }
+    return fallback;
+}
+
+- (NSDictionary *)legacyManualAIModelConfiguration {
+    NSString *url = [self stringForKey:kPreferenceKeyAITermURL];
+    if (url.length == 0) {
+        return nil;
+    }
+    return @{
+        kAIManualModelIDKey: NSUUID.UUID.UUIDString,
+        kAIManualModelNameKey: [self stringForKey:kPreferenceKeyAIModel] ?: @"gpt-4o-mini",
+        kAIManualModelURLKey: url,
+        kAIManualModelAPIKey: @([self unsignedIntegerForKey:kPreferenceKeyAITermAPI]),
+        kAIManualModelContextWindowTokensKey: @([self integerForKey:kPreferenceKeyAITokenLimit]),
+        kAIManualModelMaxResponseTokensKey: @([self integerForKey:kPreferenceKeyAIResponseTokenLimit]),
+        kAIManualModelHostedCodeInterpreterKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedCodeInterpreter]),
+        kAIManualModelHostedFileSearchKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedFileSearch]),
+        kAIManualModelHostedWebSearchKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedWebSearch]),
+        kAIManualModelFunctionCallingKey: @([self boolForKey:kPreferenceKeyAIFeatureFunctionCalling]),
+        kAIManualModelStreamingKey: @([self boolForKey:kPreferenceKeyAIFeatureStreamingResponses]),
+        kAIManualModelVectorStoreKey: @([self integerForKey:kPreferenceKeyAIVectorStore])
+    };
+}
+
+- (NSDictionary *)defaultManualAIModelConfiguration {
+    const NSInteger savedContextTokens = [self integerForKey:kPreferenceKeyAITokenLimit];
+    const NSInteger savedResponseTokens = [self integerForKey:kPreferenceKeyAIResponseTokenLimit];
+    const NSInteger contextTokens = savedContextTokens > 0 ? savedContextTokens : 8192;
+    const NSInteger responseTokens = savedResponseTokens > 0 ? savedResponseTokens : 8192;
+    return @{
+        kAIManualModelIDKey: NSUUID.UUID.UUIDString,
+        kAIManualModelNameKey: [self stringForKey:kPreferenceKeyAIModel] ?: @"gpt-4o-mini",
+        kAIManualModelURLKey: [self stringForKey:kPreferenceKeyAITermURL] ?: @"",
+        kAIManualModelAPIKey: @([self unsignedIntegerForKey:kPreferenceKeyAITermAPI]),
+        kAIManualModelContextWindowTokensKey: @(contextTokens),
+        kAIManualModelMaxResponseTokensKey: @(responseTokens),
+        kAIManualModelHostedCodeInterpreterKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedCodeInterpreter]),
+        kAIManualModelHostedFileSearchKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedFileSearch]),
+        kAIManualModelHostedWebSearchKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedWebSearch]),
+        kAIManualModelFunctionCallingKey: @([self boolForKey:kPreferenceKeyAIFeatureFunctionCalling]),
+        kAIManualModelStreamingKey: @([self boolForKey:kPreferenceKeyAIFeatureStreamingResponses]),
+        kAIManualModelVectorStoreKey: @([self integerForKey:kPreferenceKeyAIVectorStore])
+    };
+}
+
+- (NSMutableArray<NSMutableDictionary *> *)mutableManualAIModelConfigurations {
+    NSMutableArray<NSMutableDictionary *> *result = [NSMutableArray array];
+    id raw = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
+    if ([raw isKindOfClass:NSArray.class]) {
+        for (id entry in (NSArray *)raw) {
+            if ([entry isKindOfClass:NSDictionary.class]) {
+                [result addObject:[entry mutableCopy]];
+            }
+        }
+    }
+    if (result.count == 0 && ![self boolForKey:kPreferenceKeyUseRecommendedAIModel]) {
+        NSDictionary *legacy = [self legacyManualAIModelConfiguration];
+        if (legacy) {
+            [result addObject:[legacy mutableCopy]];
+        }
+    }
+    return result;
+}
+
+- (void)saveManualAIModelConfigurations:(NSArray<NSDictionary *> *)configurations {
+    NSMutableArray<NSDictionary *> *clean = [NSMutableArray array];
+    for (NSDictionary *configuration in configurations) {
+        NSString *name = configuration[kAIManualModelNameKey];
+        NSString *url = configuration[kAIManualModelURLKey];
+        if (![name isKindOfClass:NSString.class] || name.length == 0 ||
+            ![url isKindOfClass:NSString.class] || url.length == 0) {
+            continue;
+        }
+        [clean addObject:[configuration copy]];
+    }
+    [iTermPreferences setObject:clean forKey:kPreferenceKeyAIManualModelConfigurations];
+}
+
+- (void)clearLegacyManualAIModelConfiguration {
+    [self setString:@"gpt-4o-mini" forKey:kPreferenceKeyAIModel];
+    [self setString:@"" forKey:kPreferenceKeyAITermURL];
+}
+
+- (void)applyManualAIModelConfigurationToDefaults:(NSDictionary *)configuration {
+    if (!configuration) {
+        [self clearLegacyManualAIModelConfiguration];
         return;
     }
+    [self setString:configuration[kAIManualModelNameKey] ?: @"gpt-4o-mini"
+             forKey:kPreferenceKeyAIModel];
+    [self setString:configuration[kAIManualModelURLKey] ?: @""
+             forKey:kPreferenceKeyAITermURL];
+    [self setObject:@([self manualAIModelConfiguration:configuration
+                                         integerForKey:kAIManualModelAPIKey
+                                              fallback:iTermAIAPIChatCompletions])
+             forKey:kPreferenceKeyAITermAPI];
+    [self setInteger:[self manualAIModelConfiguration:configuration
+                                       integerForKey:kAIManualModelContextWindowTokensKey
+                                            fallback:8192]
+              forKey:kPreferenceKeyAITokenLimit];
+    [self setInteger:[self manualAIModelConfiguration:configuration
+                                       integerForKey:kAIManualModelMaxResponseTokensKey
+                                            fallback:8192]
+              forKey:kPreferenceKeyAIResponseTokenLimit];
+    [self setBool:[self manualAIModelConfiguration:configuration boolForKey:kAIManualModelHostedCodeInterpreterKey]
+           forKey:kPreferenceKeyAIFeatureHostedCodeInterpreter];
+    [self setBool:[self manualAIModelConfiguration:configuration boolForKey:kAIManualModelHostedFileSearchKey]
+           forKey:kPreferenceKeyAIFeatureHostedFileSearch];
+    [self setBool:[self manualAIModelConfiguration:configuration boolForKey:kAIManualModelHostedWebSearchKey]
+           forKey:kPreferenceKeyAIFeatureHostedWebSearch];
+    [self setBool:[self manualAIModelConfiguration:configuration boolForKey:kAIManualModelFunctionCallingKey]
+           forKey:kPreferenceKeyAIFeatureFunctionCalling];
+    [self setBool:[self manualAIModelConfiguration:configuration boolForKey:kAIManualModelStreamingKey]
+           forKey:kPreferenceKeyAIFeatureStreamingResponses];
+    [self setInteger:[self manualAIModelConfiguration:configuration
+                                       integerForKey:kAIManualModelVectorStoreKey
+                                            fallback:0]
+              forKey:kPreferenceKeyAIVectorStore];
+    _lastModel = configuration[kAIManualModelNameKey];
+}
 
-    if (_manualAIConfigurationSheet == nil) {
-        const NSSize size = _manualAISettings.frame.size;
-        NSWindow *sheet = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, size.width, size.height)
-                                                      styleMask:(NSWindowStyleMaskTitled |
-                                                                 NSWindowStyleMaskFullSizeContentView)
-                                                        backing:NSBackingStoreBuffered
-                                                          defer:NO];
-        sheet.titlebarAppearsTransparent = YES;
-        sheet.titleVisibility = NSWindowTitleHidden;
-        sheet.contentView = _manualAISettings;
-        [sheet setContentSize:size];
+- (NSString *)titleForAIAPI:(iTermAIAPI)api {
+    return iTermTitleForAIAPI(api);
+}
 
-        // Hidden Cancel button so Escape dismisses the sheet. NSWindow routes
-        // ⎋ to whichever button has keyEquivalent == "\e", but XML 1.0 forbids
-        // U+001B in attributes so we add it in code rather than the XIB.
-        NSButton *escapeButton = [[NSButton alloc] initWithFrame:NSZeroRect];
-        escapeButton.hidden = YES;
-        escapeButton.keyEquivalent = @"\e";
-        escapeButton.target = self;
-        escapeButton.action = @selector(closeManualAIConfigurationSheet:);
-        [_manualAISettings addSubview:escapeButton];
-
-        _manualAIConfigurationSheet = sheet;
+- (NSString *)manualAIModelTitle:(NSDictionary *)configuration {
+    NSString *name = configuration[kAIManualModelNameKey] ?: @"Untitled model";
+    NSString *url = configuration[kAIManualModelURLKey] ?: @"";
+    iTermAIAPI api = (iTermAIAPI)[self manualAIModelConfiguration:configuration
+                                                   integerForKey:kAIManualModelAPIKey
+                                                        fallback:iTermAIAPIChatCompletions];
+    if (url.length == 0) {
+        return [NSString stringWithFormat:@"%@ — %@", name, [self titleForAIAPI:api]];
     }
+    NSURL *parsedURL = [NSURL URLWithString:url];
+    NSString *host = parsedURL.host ?: url;
+    return [NSString stringWithFormat:@"%@ — %@ — %@", name, [self titleForAIAPI:api], host];
+}
 
-    [parent beginSheet:_manualAIConfigurationSheet completionHandler:^(NSModalResponse returnCode) {}];
+- (NSDictionary *)runManualAIModelEditorWithConfiguration:(NSDictionary *)configuration
+                                    existingConfigurations:(NSArray<NSDictionary *> *)existingConfigurations
+                                             editingIndex:(NSInteger)editingIndex {
+    NSDictionary *base = configuration ?: [self defaultManualAIModelConfiguration];
+    while (YES) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = configuration ? @"Edit Manual AI Model" : @"Add Manual AI Model";
+        alert.informativeText = @"Manual models can be selected as the default for new chats and under Manual Configs in AI Chat.";
+        [alert addButtonWithTitle:configuration ? @"Save" : @"Add"];
+        [alert addButtonWithTitle:@"Cancel"];
+
+        const CGFloat width = 520;
+        const CGFloat labelWidth = 150;
+        const CGFloat fieldX = labelWidth + 12;
+        const CGFloat fieldWidth = width - fieldX;
+        const CGFloat rowHeight = 30;
+        __block CGFloat y = 374;
+        NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, y + 4)];
+
+        void (^addLabel)(NSString *) = ^(NSString *title) {
+            NSTextField *label = [NSTextField labelWithString:title];
+            label.alignment = NSTextAlignmentRight;
+            label.frame = NSMakeRect(0, y + 3, labelWidth, 20);
+            [accessory addSubview:label];
+        };
+        NSTextField *(^addTextField)(NSString *, NSString *) = ^NSTextField *(NSString *title, NSString *value) {
+            addLabel(title);
+            NSTextField *field = [[NSTextField alloc] initWithFrame:NSMakeRect(fieldX, y, fieldWidth, 24)];
+            field.stringValue = value ?: @"";
+            [accessory addSubview:field];
+            y -= rowHeight;
+            return field;
+        };
+
+        NSTextField *nameField = addTextField(@"Model:", base[kAIManualModelNameKey]);
+        NSTextField *urlField = addTextField(@"URL:", base[kAIManualModelURLKey]);
+
+        addLabel(@"API:");
+        NSPopUpButton *apiPopup = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(fieldX, y, fieldWidth, 24)];
+        NSArray<NSNumber *> *apis = @[
+            @(iTermAIAPIResponses),
+            @(iTermAIAPIChatCompletions),
+            @(iTermAIAPIAnthropic),
+            @(iTermAIAPIGemini),
+            @(iTermAIAPIDeepSeek),
+            @(iTermAIAPILlama),
+            @(iTermAIAPICompletions),
+            @(iTermAIAPIEarlyO1)
+        ];
+        for (NSNumber *number in apis) {
+            iTermAIAPI api = (iTermAIAPI)number.unsignedIntegerValue;
+            [apiPopup addItemWithTitle:[self titleForAIAPI:api]];
+            apiPopup.lastItem.tag = (NSInteger)api;
+        }
+        [apiPopup selectItemWithTag:[self manualAIModelConfiguration:base
+                                                       integerForKey:kAIManualModelAPIKey
+                                                            fallback:iTermAIAPIChatCompletions]];
+        [accessory addSubview:apiPopup];
+        y -= rowHeight;
+
+        NSTextField *contextField =
+            addTextField(@"Context tokens:",
+                         [NSString stringWithFormat:@"%ld",
+                          [self manualAIModelConfiguration:base
+                                             integerForKey:kAIManualModelContextWindowTokensKey
+                                                  fallback:8192]]);
+        NSTextField *responseField =
+            addTextField(@"Max response tokens:",
+                         [NSString stringWithFormat:@"%ld",
+                          [self manualAIModelConfiguration:base
+                                             integerForKey:kAIManualModelMaxResponseTokensKey
+                                                  fallback:8192]]);
+
+        addLabel(@"Vector store:");
+        NSPopUpButton *vectorStore = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(fieldX, y, fieldWidth, 24)];
+        [vectorStore addItemWithTitle:@"Disabled"];
+        vectorStore.lastItem.tag = 0;
+        [vectorStore addItemWithTitle:@"OpenAI"];
+        vectorStore.lastItem.tag = 1;
+        [vectorStore selectItemWithTag:[self manualAIModelConfiguration:base
+                                                           integerForKey:kAIManualModelVectorStoreKey
+                                                                fallback:0]];
+        [accessory addSubview:vectorStore];
+        y -= rowHeight + 8;
+
+        NSArray<NSDictionary *> *features = @[
+            @{ @"title": @"Function calling", @"key": kAIManualModelFunctionCallingKey },
+            @{ @"title": @"Streaming responses", @"key": kAIManualModelStreamingKey },
+            @{ @"title": @"Hosted web search", @"key": kAIManualModelHostedWebSearchKey },
+            @{ @"title": @"Hosted file search", @"key": kAIManualModelHostedFileSearchKey },
+            @{ @"title": @"Hosted code interpreter", @"key": kAIManualModelHostedCodeInterpreterKey }
+        ];
+        NSMutableDictionary<NSString *, NSButton *> *featureButtons = [NSMutableDictionary dictionary];
+        for (NSDictionary *feature in features) {
+            NSString *key = feature[@"key"];
+            NSButton *button = [NSButton checkboxWithTitle:feature[@"title"]
+                                                    target:nil
+                                                    action:nil];
+            button.frame = NSMakeRect(fieldX, y, fieldWidth, 22);
+            button.state = [self manualAIModelConfiguration:base boolForKey:key] ? NSControlStateValueOn : NSControlStateValueOff;
+            [accessory addSubview:button];
+            featureButtons[key] = button;
+            y -= 26;
+        }
+
+        alert.accessoryView = accessory;
+        [alert.window setInitialFirstResponder:nameField];
+        if ([alert runModal] != NSAlertFirstButtonReturn) {
+            return nil;
+        }
+
+        NSString *name =
+            [nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        NSString *url =
+            [urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        NSString *failure = nil;
+        if (name.length == 0) {
+            failure = @"Model is required.";
+        } else if (url.length == 0) {
+            failure = @"URL is required.";
+        } else if (contextField.integerValue <= 0) {
+            failure = @"Context tokens must be greater than zero.";
+        } else if (responseField.integerValue <= 0) {
+            failure = @"Max response tokens must be greater than zero.";
+        } else {
+            for (NSInteger i = 0; i < (NSInteger)existingConfigurations.count; i++) {
+                if (i == editingIndex) {
+                    continue;
+                }
+                NSString *otherName = existingConfigurations[(NSUInteger)i][kAIManualModelNameKey];
+                if ([otherName isEqualToString:name]) {
+                    failure = @"Manual model names must be unique.";
+                    break;
+                }
+            }
+        }
+        if (failure) {
+            NSAlert *failureAlert = [[NSAlert alloc] init];
+            failureAlert.messageText = @"Invalid Manual AI Model";
+            failureAlert.informativeText = failure;
+            [failureAlert runModal];
+            continue;
+        }
+
+        NSMutableDictionary *result = [NSMutableDictionary dictionary];
+        result[kAIManualModelIDKey] = base[kAIManualModelIDKey] ?: NSUUID.UUID.UUIDString;
+        result[kAIManualModelNameKey] = name;
+        result[kAIManualModelURLKey] = url;
+        result[kAIManualModelAPIKey] = @(apiPopup.selectedItem.tag);
+        result[kAIManualModelContextWindowTokensKey] = @(contextField.integerValue);
+        result[kAIManualModelMaxResponseTokensKey] = @(responseField.integerValue);
+        result[kAIManualModelVectorStoreKey] = @(vectorStore.selectedItem.tag);
+        for (NSString *key in featureButtons) {
+            result[key] = @(featureButtons[key].state == NSControlStateValueOn);
+        }
+        return result;
+    }
+}
+
+- (void)saveManualAIModelConfigurationsAndRefresh:(NSArray<NSDictionary *> *)configurations {
+    [self saveManualAIModelConfigurations:configurations];
+    [self reloadDefaultAIModelPopup];
+    [self updateAIEnabled];
+}
+
+- (void)fallbackAfterDeletingDefaultManualModel:(NSArray<NSDictionary *> *)configurations
+                                  selectedIndex:(NSInteger)selectedIndex {
+    if (selectedIndex >= 0 && selectedIndex < (NSInteger)configurations.count) {
+        [self selectManualConfigurationAsDefaultForNewChats:configurations[(NSUInteger)selectedIndex]];
+        return;
+    }
+    [self selectProviderAsDefaultForNewChats:(iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor]];
+}
+
+- (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
+    NSMutableArray<NSMutableDictionary *> *configurations = [self mutableManualAIModelConfigurations];
+    NSInteger selectedIndex = 0;
+
+    while (YES) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Manage Manual AI Models";
+        alert.informativeText = @"These models appear in the default model selector and under Manual Configs in AI Chat.";
+        [alert addButtonWithTitle:@"Done"];
+
+        iTermManualAIModelsPanelController *panel =
+            [[iTermManualAIModelsPanelController alloc] initWithConfigurations:configurations
+                                                              defaultModelName:[self currentDefaultManualModelName]
+                                                                 selectedIndex:selectedIndex];
+        alert.accessoryView = [panel view];
+        if (panel.tableView) {
+            alert.window.initialFirstResponder = panel.tableView;
+        }
+        NSModalResponse response = [alert runModal];
+        selectedIndex = panel.selectedIndex;
+        if (response != NSAlertFirstButtonReturn) {
+            [alert.window orderOut:nil];
+        }
+        if (response == NSAlertFirstButtonReturn) {
+            return;
+        }
+
+        if (response == iTermManualAIModelManagerResponseAdd) {
+            NSDictionary *newConfiguration =
+                [self runManualAIModelEditorWithConfiguration:nil
+                                       existingConfigurations:configurations
+                                                editingIndex:-1];
+            if (newConfiguration) {
+                [configurations addObject:[newConfiguration mutableCopy]];
+                selectedIndex = (NSInteger)configurations.count - 1;
+                [self saveManualAIModelConfigurationsAndRefresh:configurations];
+            }
+        } else if (response == iTermManualAIModelManagerResponseEdit) {
+            if (selectedIndex < 0 || selectedIndex >= (NSInteger)configurations.count) {
+                NSBeep();
+                continue;
+            }
+            NSString *oldName = configurations[(NSUInteger)selectedIndex][kAIManualModelNameKey];
+            const BOOL editingDefault = [oldName isEqualToString:[self currentDefaultManualModelName]];
+            NSDictionary *edited =
+                [self runManualAIModelEditorWithConfiguration:configurations[(NSUInteger)selectedIndex]
+                                       existingConfigurations:configurations
+                                                editingIndex:selectedIndex];
+            if (edited) {
+                configurations[(NSUInteger)selectedIndex] = [edited mutableCopy];
+                [self saveManualAIModelConfigurations:configurations];
+                if (editingDefault) {
+                    [self selectManualConfigurationAsDefaultForNewChats:edited];
+                } else {
+                    [self reloadDefaultAIModelPopup];
+                    [self updateAIEnabled];
+                }
+            }
+        } else if (response == iTermManualAIModelManagerResponseDuplicate) {
+            if (selectedIndex < 0 || selectedIndex >= (NSInteger)configurations.count) {
+                NSBeep();
+                continue;
+            }
+            NSMutableDictionary *copy = [configurations[(NSUInteger)selectedIndex] mutableCopy];
+            copy[kAIManualModelIDKey] = NSUUID.UUID.UUIDString;
+            copy[kAIManualModelNameKey] =
+                [NSString stringWithFormat:@"%@ copy", copy[kAIManualModelNameKey] ?: @"Manual model"];
+            NSDictionary *edited =
+                [self runManualAIModelEditorWithConfiguration:copy
+                                       existingConfigurations:configurations
+                                                editingIndex:-1];
+            if (edited) {
+                [configurations addObject:[edited mutableCopy]];
+                selectedIndex = (NSInteger)configurations.count - 1;
+                [self saveManualAIModelConfigurationsAndRefresh:configurations];
+            }
+        } else if (response == iTermManualAIModelManagerResponseDelete) {
+            if (selectedIndex < 0 || selectedIndex >= (NSInteger)configurations.count) {
+                NSBeep();
+                continue;
+            }
+            NSString *deletedName = configurations[(NSUInteger)selectedIndex][kAIManualModelNameKey];
+            const BOOL deletingDefault = [deletedName isEqualToString:[self currentDefaultManualModelName]];
+            [configurations removeObjectAtIndex:(NSUInteger)selectedIndex];
+            selectedIndex = MIN(selectedIndex, (NSInteger)configurations.count - 1);
+            [self saveManualAIModelConfigurations:configurations];
+            if (deletingDefault) {
+                [self fallbackAfterDeletingDefaultManualModel:configurations
+                                                selectedIndex:selectedIndex];
+            } else {
+                [self reloadDefaultAIModelPopup];
+                [self updateAIEnabled];
+            }
+        } else if (response == iTermManualAIModelManagerResponseDefault) {
+            if (selectedIndex < 0 || selectedIndex >= (NSInteger)configurations.count) {
+                NSBeep();
+                continue;
+            }
+            [self saveManualAIModelConfigurations:configurations];
+            [self selectManualConfigurationAsDefaultForNewChats:configurations[(NSUInteger)selectedIndex]];
+        }
+    }
 }
 
 - (IBAction)closeManualAIConfigurationSheet:(id)sender {

@@ -42,6 +42,22 @@ private func boolean(_ description: String) -> [String: Any] {
     return ["type": "boolean", "description": description]
 }
 
+private func nullableString(_ description: String, enumValues: [String]? = nil) -> [String: Any] {
+    var result: [String: Any] = ["type": ["string", "null"], "description": description]
+    if let enumValues {
+        result["enum"] = enumValues.map { $0 as Any } + [NSNull()]
+    }
+    return result
+}
+
+private func nullableInteger(_ description: String) -> [String: Any] {
+    return ["type": ["integer", "null"], "description": description]
+}
+
+private func nullableBoolean(_ description: String) -> [String: Any] {
+    return ["type": ["boolean", "null"], "description": description]
+}
+
 private func object(_ properties: [(String, [String: Any])],
                     required: [String]) -> [String: Any] {
     var props = [String: Any]()
@@ -93,16 +109,16 @@ extension OrchestratorCommand {
             description: "Get the visible contents of a session. For Claude Code sessions, returns a synthesized view of recent hook events (assistant messages, tool calls). For shell sessions, returns scrollback. For TUI sessions, returns a snapshot of the rendered screen with is_snapshot=true; there is no history beyond what's currently displayed. The result includes a kind field so you know how to read the text.",
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
-                ("lines", integer("Number of trailing lines to return for shell sessions. Default 100. Ignored for tui/claude-code kinds.")),
-            ], required: ["session_guid"])),
+                ("lines", nullableInteger("Number of trailing lines to return for shell sessions. Use null for the default 100. Ignored for tui/claude-code kinds.")),
+            ], required: ["session_guid", "lines"])),
 
         ToolDefinition(
             name: ToolName.listWorkgroupClippings.rawValue,
             description: "List the clippings posted to a workgroup. Clippings are structured snippets (type, title, detail) that the user or other agents have posted to the workgroup leader for shared reference. Optional type_filter limits to clippings of a particular type (e.g. \u{201C}Code Review Comment\u{201D}).",
             inputSchema: object([
                 ("workgroup_id", stringSchema),
-                ("type_filter", string("Optional. Only return clippings whose type matches this string exactly.")),
-            ], required: ["workgroup_id"])),
+                ("type_filter", nullableString("Optional. Only return clippings whose type matches this string exactly. Use null for all types.")),
+            ], required: ["workgroup_id", "type_filter"])),
 
         // -------- Action (claim required) --------
 
@@ -112,8 +128,8 @@ extension OrchestratorCommand {
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
                 ("text", stringSchema),
-                ("append_newline", boolean("Whether to append a newline to the text. Defaults to true. Set to false when sending control keys (e.g. \\u001b for Escape) by themselves.")),
-            ], required: ["session_guid", "text"])),
+                ("append_newline", nullableBoolean("Whether to append a newline to the text. Use null for the default true. Set to false when sending control keys (e.g. \\u001b for Escape) by themselves.")),
+            ], required: ["session_guid", "text", "append_newline"])),
 
         ToolDefinition(
             name: ToolName.interrupt.rawValue,
@@ -139,9 +155,9 @@ extension OrchestratorCommand {
             description: "Run a Code Review in one call. The session_guid must name the Code Review role's session. The session can be in either of two ready states: (a) the prompt overlay is up (pending_action mentions \u{201C}Code Review prompt overlay\u{201D}), in which case the overlay is populated and the review program launches; or (b) the Code Review session is already running and idle at its chat prompt, in which case the review prompt is typed in directly to start a fresh review on the existing session. Either way the call auto-registers a watcher for the session reaching idle, so you'll receive a status_update when the review completes. The call errors only if the session isn't the Code Review role or its program is busy. Pick the prompt by name from the saved prompts (see the system message for the list) via prompt_name, OR pass custom_prompt with free-form text, OR leave both nil to use the user's default prompt. Prefer this over send_text + register_watch for code reviews.",
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
-                ("prompt_name", string("Optional. Name of a saved prompt from the user's prompt list.")),
-                ("custom_prompt", string("Optional. Free-form prompt text when no saved prompt fits.")),
-            ], required: ["session_guid"])),
+                ("prompt_name", nullableString("Optional. Name of a saved prompt from the user's prompt list. Use null when not using a saved prompt.")),
+                ("custom_prompt", nullableString("Optional. Free-form prompt text when no saved prompt fits. Use null to use the default prompt.")),
+            ], required: ["session_guid", "prompt_name", "custom_prompt"])),
 
         // -------- Spawn (always prompts) --------
 
@@ -149,12 +165,12 @@ extension OrchestratorCommand {
             name: ToolName.startSession.rawValue,
             description: "Spawn a new terminal session. Use window=\u{201C}new\u{201D} to open a new window, \u{201C}tab\u{201D} (default) to add a tab to the current window, or \u{201C}current\u{201D} to split the current pane vertically. The user is always prompted to approve the spawn (and the command being run, if any). Returns the session_guid of the new session so you can immediately drive it with the other tools (send_text, get_screen_contents, etc.).",
             inputSchema: object([
-                ("profile", string("Optional profile name. Falls back to the default profile when absent.")),
-                ("command", string("Optional command to run in the new session. If absent, the profile's default shell is used.")),
-                ("cwd", string("Optional working directory.")),
-                ("window", string("Where to put the new session. \u{201C}new\u{201D} for a new window, \u{201C}current\u{201D} to split the current pane, \u{201C}tab\u{201D} (default) for a new tab in the current window.",
-                                  enumValues: ["new", "current", "tab"])),
-            ], required: [])),
+                ("profile", nullableString("Optional profile name. Use null to fall back to the default profile.")),
+                ("command", nullableString("Optional command to run in the new session. Use null for the profile's default shell.")),
+                ("cwd", nullableString("Optional working directory. Use null for the default.")),
+                ("window", nullableString("Where to put the new session. \u{201C}new\u{201D} for a new window, \u{201C}current\u{201D} to split the current pane, \u{201C}tab\u{201D} (default) for a new tab in the current window. Use null for tab.",
+                                          enumValues: ["new", "current", "tab"])),
+            ], required: ["profile", "command", "cwd", "window"])),
 
         // -------- Watchers (async; non-blocking) --------
 

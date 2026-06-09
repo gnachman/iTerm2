@@ -57,12 +57,15 @@ class AITermController {
     var representedObject: String?
     private(set) var functions = [LLM.AnyFunction]()
     var shouldThink: Bool?
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
+    var serviceTier: ResponsesRequestBody.ServiceTier?
     var truncate: (([Message]) -> ([Message]))?
 
     struct Registration {
         var apiKey: String
+        var vendor: iTermAIVendor?
 
-        init?(apiKey: String?) {
+        init?(apiKey: String?, vendor: iTermAIVendor? = nil) {
             guard let apiKey else {
                 return nil
             }
@@ -70,6 +73,11 @@ class AITermController {
                 return nil
             }
             self.apiKey = apiKey
+            self.vendor = vendor
+        }
+
+        func isValid(for vendor: iTermAIVendor) -> Bool {
+            return self.vendor == nil || self.vendor == vendor
         }
     }
 
@@ -129,11 +137,12 @@ class AITermController {
 
     private var _registration: Registration?
     var registration: Registration? {
-        if let _registration {
-            return _registration
-        }
         if isSelfHosted || providerIsAppleIntelligence {
             return Registration(apiKey: "Placeholder for self-hosted")
+        }
+        let vendor = requiredRegistrationVendor
+        if let _registration, _registration.isValid(for: vendor) {
+            return _registration
         }
         return nil
     }
@@ -225,6 +234,10 @@ class AITermController {
     // placeholder registration and never builds an HTTP request.
     private var providerIsAppleIntelligence: Bool {
         return llmProvider?.model.api == .appleIntelligence
+    }
+
+    var requiredRegistrationVendor: iTermAIVendor {
+        return llmProvider?.model.vendor ?? LLMMetadata.effectiveVendor
     }
 
     private func handle(event: Event) {
@@ -395,7 +408,11 @@ class AITermController {
                 DLog("error: \(error)")
                 state = .ground
                 if streamParserState != nil && !(error is PendingCommandCanceled) {
-                    delegate?.aitermController(self, didStreamUpdate: "An error ocurred: \(error.localizedDescription)")
+                    let details = error.localizedDescription
+                        .components(separatedBy: "\n")
+                        .map { "    " + $0 }
+                        .joined(separator: "\n")
+                    delegate?.aitermController(self, didStreamUpdate: "\n\n**Request failed**\n\n\(details)")
                 }
                 delegate?.aitermController(self, didFailWithError: error)
             case .word(let word):
@@ -470,7 +487,9 @@ class AITermController {
                                         functions: functions,
                                         hostedTools: hostedTools,
                                         previousResponseID: previousResponseID,
-                                        shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil)
+                                        shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil,
+                                        reasoningEffort: llmProvider.model.supports(reasoningEffort: reasoningEffort) ? reasoningEffort : nil,
+                                        serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil)
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
@@ -649,7 +668,7 @@ class AITermController {
                     switch status {
                     case .cancelled, .failed:
                         state = .ground
-                        handle(event: .error(AIError("An error ocurred while ingesting files to vector storage")))
+                        handle(event: .error(AIError("An error occurred while ingesting files to vector storage")))
                         delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: AIError("The file may not be well formed."))
                     case .completed:
                         delegate?.aitermControllerDidAddFilesToVectorStore(self)
@@ -998,6 +1017,10 @@ class AITermController {
         case .querySent(let messages, let streamParserState):
             let shouldStream = streamParserState != nil
             var amended = messages
+            var messageForCall = message
+            if messageForCall.responseID == nil {
+                messageForCall.responseID = previousResponseID
+            }
             // The full `message` (including its reasoningContent scalar) is
             // appended here so the on-the-wire follow-up echoes
             // reasoning_content back to the vendor — which DeepSeek requires
@@ -1009,11 +1032,11 @@ class AITermController {
             // persists intermediate tool-call assistant turns to chat history,
             // they'll need to also surface reasoning via didReceiveReasoning
             // (or otherwise propagate `message.reasoningContent`) from here.
-            amended.append(message)
+            amended.append(messageForCall)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
                 DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
                 delegate?.aitermController(self, willInvokeFunction: impl)
-                impl.invoke(message: message,
+                impl.invoke(message: messageForCall,
                             json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
                     DLog("result of function call is \(result)")
                     guard let self else {
@@ -1034,7 +1057,7 @@ class AITermController {
                         // for them. Kept so a future parser that populates
                         // only the inner id still round-trips through
                         // providers that require a tool_use_id reference.
-                        let outputCallID = message.functionCallID
+                        let outputCallID = messageForCall.functionCallID
                             ?? functionCall.id.map {
                                 LLM.Message.FunctionCallID(callID: $0, itemID: $0)
                             }
@@ -1051,14 +1074,40 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .error(error))
+                        if error is PendingCommandCanceled {
+                            previousResponseID = nil
+                            handle(event: .error(error))
+                            return
+                        }
+                        let outputCallID = messageForCall.functionCallID
+                            ?? functionCall.id.map {
+                                LLM.Message.FunctionCallID(callID: $0, itemID: $0)
+                            }
+                        amended.append(Message(role: .function,
+                                               content: "Tool call failed: \(error.localizedDescription)",
+                                               name: functionCall.name,
+                                               functionCallID: outputCallID))
+                        if let truncate {
+                            amended = truncate(amended)
+                        }
+                        DLog("Will send failed function call output, stream=\(shouldStream)")
+                        request(messages: amended, stream: shouldStream)
                         return
                     }
                 }
                 return
             }
-            amended.append(Message(role: .user,
-                                   content: "There is no registered function by that name. Try again."))
+            let missingFunction = "There is no registered function by that name. Try again."
+            if let outputCallID = messageForCall.functionCallID
+                ?? functionCall.id.map({ LLM.Message.FunctionCallID(callID: $0, itemID: $0) }) {
+                amended.append(Message(role: .function,
+                                       content: missingFunction,
+                                       name: functionCall.name,
+                                       functionCallID: outputCallID))
+            } else {
+                amended.append(Message(role: .user,
+                                       content: missingFunction))
+            }
             request(messages: amended, stream: shouldStream)
         }
     }
@@ -1112,4 +1161,3 @@ func truncate(messages: [AITermController.Message], maxTokens: Int) -> [AITermCo
     }
     return messagesToSend
 }
-

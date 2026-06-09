@@ -7,18 +7,15 @@
 
 class SystemMessageCellView: RegularMessageCellView {
     override func bubbleOriginX(bubbleWidth: CGFloat) -> CGFloat {
-        let centered = floor((bounds.width - bubbleWidth) / 2)
-        return max(Self.bubbleEdgePadding, centered)
+        return Self.bubbleEdgePadding
     }
 
     override func backgroundColorPair(_ rendition: MessageRendition) -> (NSColor, NSColor) {
-        return (NSColor(fromHexString: "#ffffc0")!,
-                NSColor(fromHexString: "#202020")!)
+        return (NSColor(fromHexString: "p3#e9e9eb")!,
+                NSColor(fromHexString: "p3#2f3033")!)
     }
 
-    override func setupViews() {
-        super.setupViews()
-        bubbleView.layer?.borderColor = NSColor.gray.cgColor
-        bubbleView.layer?.borderWidth = 1.0
+    override func shouldDrawBubbleChrome(for rendition: MessageRendition) -> Bool {
+        return false
     }
 }

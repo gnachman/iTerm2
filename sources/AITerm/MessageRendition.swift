@@ -41,6 +41,8 @@ struct MessageRendition {
     }
     struct Command {
         var command: String
+        var output: String
+        var exitCode: Int32
         var url: URL
     }
 
@@ -51,4 +53,3 @@ struct MessageRendition {
     var isEditable: Bool
     var linkColor: NSColor
 }
-

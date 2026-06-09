@@ -18,44 +18,144 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     private let query: String
     private let pleaseWait: PleaseWaitWindow
     private static let apiKeyQueue = DispatchQueue(label: "com.iterm2.aiterm-set-key")
-    private static var cachedKey = MutableAtomicObject(CachedKey())
+    private static var cachedKeys = [UInt: CachedKey]()
+    private static let keychainService = "iTerm2 API Keys"
+    private static let legacyKeychainAccount = "OpenAI API Key for iTerm2"
 
     @objc static var haveCachedAPIKey: Bool {
-        return cachedKey.value.valid
+        return apiKeyQueue.sync {
+            cachedKeys[cacheKey(for: LLMMetadata.effectiveVendor)]?.valid == true
+        }
     }
 
     @objc static var apiKey: String? {
         get {
-            if cachedKey.value.valid {
-                return cachedKey.value.value
-            }
-            return apiKeyQueue.sync {
-                if !cachedKey.value.valid {
-                    let value = try? SSKeychain.password(forService: "iTerm2 API Keys",
-                                                         account: "OpenAI API Key for iTerm2")
-                    cachedKey.set(CachedKey(valid: true, value: value))
-                }
-                return cachedKey.value.value
-            }
+            apiKey(for: LLMMetadata.effectiveVendor)
         }
         set {
-            cachedKey.set(CachedKey(valid: true, value: newValue))
-            apiKeyQueue.sync {
-                cachedKey.set(CachedKey(valid: true, value: newValue))
-                _ = SSKeychain.setPassword(newValue ?? "",
-                                           forService: "iTerm2 API Keys",
-                                           account: "OpenAI API Key for iTerm2")
-            }
+            setAPIKey(newValue, for: LLMMetadata.effectiveVendor)
         }
     }
 
     @objc static func setAPIKeyAsync(_ key: String?) {
-        cachedKey.set(CachedKey(valid: true, value: key))
+        let vendor = LLMMetadata.effectiveVendor
         apiKeyQueue.async {
-            cachedKey.set(CachedKey(valid: true, value: key))
-            _ = SSKeychain.setPassword(key ?? "",
-                                       forService: "iTerm2 API Keys",
-                                       account: "OpenAI API Key for iTerm2")
+            setAPIKeyOnQueue(key, for: vendor)
+        }
+    }
+
+    static func apiKey(for vendor: iTermAIVendor) -> String? {
+        apiKeyQueue.sync {
+            apiKeyOnQueue(for: vendor)
+        }
+    }
+
+    @objc(apiKeyForVendor:)
+    static func objcApiKey(for vendor: iTermAIVendor) -> String? {
+        apiKey(for: vendor)
+    }
+
+    static func setAPIKey(_ key: String?, for vendor: iTermAIVendor) {
+        apiKeyQueue.sync {
+            setAPIKeyOnQueue(key, for: vendor)
+        }
+    }
+
+    @objc(setAPIKey:forVendor:)
+    static func objcSetAPIKey(_ key: String?, for vendor: iTermAIVendor) {
+        setAPIKey(key, for: vendor)
+    }
+
+    @objc(apiKey:matchesVendor:)
+    static func objcApiKey(_ key: String?, matches vendor: iTermAIVendor) -> Bool {
+        guard let key else {
+            return false
+        }
+        return !keyIsEmpty(key) && self.key(key, matches: vendor)
+    }
+
+    private static func apiKeyOnQueue(for vendor: iTermAIVendor) -> String? {
+        let cacheKey = cacheKey(for: vendor)
+        if let cached = cachedKeys[cacheKey], cached.valid {
+            return cached.value
+        }
+
+        let account = keychainAccount(for: vendor)
+        var value = try? SSKeychain.password(forService: keychainService,
+                                             account: account)
+        if let stored = value, !key(stored, matches: vendor) {
+            value = nil
+        }
+        if keyIsEmpty(value),
+           account != legacyKeychainAccount,
+           let legacy = try? SSKeychain.password(forService: keychainService,
+                                                 account: legacyKeychainAccount),
+           key(legacy, matches: vendor) {
+            value = legacy
+            _ = SSKeychain.setPassword(legacy,
+                                       forService: keychainService,
+                                       account: account)
+        }
+        cachedKeys[cacheKey] = CachedKey(valid: true, value: value)
+        return value
+    }
+
+    private static func setAPIKeyOnQueue(_ key: String?, for vendor: iTermAIVendor) {
+        let value = key?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalized = keyIsEmpty(value) ? nil : value
+        cachedKeys[cacheKey(for: vendor)] = CachedKey(valid: true, value: normalized)
+        _ = SSKeychain.setPassword(normalized ?? "",
+                                   forService: keychainService,
+                                   account: keychainAccount(for: vendor))
+        if vendor == .openAI {
+            _ = SSKeychain.setPassword(normalized ?? "",
+                                       forService: keychainService,
+                                       account: legacyKeychainAccount)
+        }
+    }
+
+    private static func cacheKey(for vendor: iTermAIVendor) -> UInt {
+        return UInt(vendor.rawValue)
+    }
+
+    private static func keychainAccount(for vendor: iTermAIVendor) -> String {
+        switch vendor {
+        case .openAI:
+            return legacyKeychainAccount
+        case .anthropic:
+            return "Anthropic API Key for iTerm2"
+        case .gemini:
+            return "Gemini API Key for iTerm2"
+        case .deepSeek:
+            return "DeepSeek API Key for iTerm2"
+        case .llama:
+            return "Llama API Key for iTerm2"
+        case .apple:
+            return "Apple Intelligence API Key for iTerm2"
+        @unknown default:
+            return "AI API Key for iTerm2"
+        }
+    }
+
+    private static func keyIsEmpty(_ key: String?) -> Bool {
+        key?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false
+    }
+
+    private static func key(_ key: String, matches vendor: iTermAIVendor) -> Bool {
+        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch vendor {
+        case .anthropic:
+            return trimmed.hasPrefix("sk-ant-")
+        case .gemini:
+            return trimmed.hasPrefix("AIza")
+        case .openAI:
+            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza")
+        case .deepSeek:
+            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza")
+        case .llama, .apple:
+            return true
+        @unknown default:
+            return true
         }
     }
 
@@ -198,7 +298,8 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
 
     func aitermControllerRequestRegistration(_ sender: AITermController,
                                              completion: @escaping (AITermController.Registration) -> ()) {
-        AITermControllerRegistrationHelper.instance.requestRegistration(in: ownerWindow) { [weak self] registration in
+        AITermControllerRegistrationHelper.instance.requestRegistration(in: ownerWindow,
+                                                                        for: sender.requiredRegistrationVendor) { [weak self] registration in
             guard let self else {
                 return
             }
@@ -218,4 +319,3 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         return nil
     }
 }
-

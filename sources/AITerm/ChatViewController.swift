@@ -192,9 +192,6 @@ class ChatViewController: NSViewController {
                                                selector: #selector(sessionWillTerminate(_:)),
                                                name: NSNotification.Name.iTermSessionWillTerminate,
                                                object: nil)
-        userDefaultsObserver.observeKey(Self.preferredModelDefaultsKey) { [weak self] in
-            self?.chatToolbar.update()
-        }
     }
 
     required init?(coder: NSCoder) {
@@ -478,8 +475,144 @@ extension Message {
 }
 
 extension ChatViewController {
-    private func modelIsValid(_ name: String) -> Bool {
-        return AITermController.allProvidersForCurrentVendor.map({ $0.model }).contains { $0.name == name }
+    private static let chatSelectableProviders: [iTermAIVendor] = [
+        .openAI,
+        .anthropic,
+        .gemini,
+        .deepSeek,
+        .llama
+    ]
+
+    private func model(named name: String?) -> AIMetadata.Model? {
+        guard let name else {
+            return nil
+        }
+        if let manualModel = manualConfiguredModels.first(where: { $0.name == name }) {
+            return manualModel
+        }
+        return AIMetadata.instance.models.first { $0.name == name }
+    }
+
+    private var storedChatModel: AIMetadata.Model? {
+        guard let chatID else {
+            return nil
+        }
+        return model(named: listModel.chat(id: chatID)?.modelName)
+    }
+
+    private var latestConfiguredMessageModel: AIMetadata.Model? {
+        guard let chatID,
+              let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return nil
+        }
+        for message in Array(messages).reversed() {
+            if let result = model(named: message.configuration?.model) {
+                return result
+            }
+        }
+        return nil
+    }
+
+    private var effectiveChatModel: AIMetadata.Model? {
+        return storedChatModel ?? latestConfiguredMessageModel ?? AITermController.provider?.model
+    }
+
+    private var effectiveChatProvider: iTermAIVendor? {
+        return effectiveChatModel?.vendor
+    }
+
+    private var manualConfiguredModels: [AIMetadata.Model] {
+        return LLMMetadata.manualModels()
+    }
+
+    private var defaultManualConfiguredModel: AIMetadata.Model? {
+        let models = manualConfiguredModels
+        if let name = iTermPreferences.string(forKey: kPreferenceKeyAIModel),
+           let model = models.first(where: { $0.name == name }) {
+            return model
+        }
+        return models.first
+    }
+
+    private var currentProviderIdentifier: String? {
+        if let effectiveChatModel,
+           manualConfiguredModels.contains(where: { $0.name == effectiveChatModel.name }) {
+            return ChatProviderOption.manualIdentifier
+        }
+        if let effectiveChatProvider {
+            return ChatProviderOption.vendorIdentifier(effectiveChatProvider)
+        }
+        if effectiveChatModel != nil {
+            return ChatProviderOption.manualIdentifier
+        }
+        return nil
+    }
+
+    private func recommendedModel(for provider: iTermAIVendor) -> AIMetadata.Model? {
+        return LLMMetadata.recommendedModel(for: provider) ?? LLMMetadata.alternateModels(for: provider).first
+    }
+
+    private func setCurrentChatModelIfNeeded(_ modelName: String) {
+        guard let chatID,
+              listModel.chat(id: chatID)?.modelName != modelName else {
+            return
+        }
+        do {
+            try listModel.setModel(chatID: chatID, modelName: modelName)
+        } catch {
+            DLog("Failed to persist AI chat model \(modelName) for chat \(chatID): \(error)")
+        }
+    }
+
+    private func ensureCurrentChatHasModel() {
+        guard let chatID,
+              listModel.chat(id: chatID)?.modelName == nil,
+              let modelName = effectiveChatModel?.name else {
+            return
+        }
+        do {
+            try listModel.setModel(chatID: chatID, modelName: modelName)
+        } catch {
+            DLog("Failed to initialize AI chat model for chat \(chatID): \(error)")
+        }
+    }
+
+    private var chatProviderIsLocked: Bool {
+        if viewModelLocksProvider {
+            return true
+        }
+        guard let chatID,
+              let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return false
+        }
+        return messages.contains { Self.messageLocksProvider($0) }
+    }
+
+    private var viewModelLocksProvider: Bool {
+        guard let model else {
+            return false
+        }
+        for i in 0..<model.items.count {
+            let item = model.items[i]
+            guard let message = item.existingMessage?.message else {
+                continue
+            }
+            if Self.messageLocksProvider(message) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func messageLocksProvider(_ message: Message) -> Bool {
+        switch message.content {
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                .append, .appendAttachment, .terminalCommand, .multipart, .watcherEvent:
+            return true
+        case .clientLocal, .renameChat, .commit, .userCommand, .setPermissions, .vectorStoreCreated:
+            return false
+        }
     }
 
     var chatTitle: String {
@@ -527,6 +660,8 @@ extension ChatViewController {
         }
         inputView.isEnabled = chatID != nil
         self.chatID = chat?.id
+        ensureCurrentChatHasModel()
+        chatToolbar.update()
 
         // Update window title via window controller. Skip when this CVC is
         // hosted as an inline gutter panel — its window is the terminal
@@ -701,15 +836,42 @@ extension ChatViewController {
 
     private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
     private static let thinkUserDefaultsKey = "AI High Effort Enabled"
-    private static let preferredModelDefaultsKey = "NoSync AI Preferred Model"
+    static let reasoningEffortUserDefaultsKey = "NoSync AI Reasoning Effort"
+    static let serviceTierUserDefaultsKey = "NoSync AI Service Tier"
 
-    // The last value selected in the model picker, but it might be invalid so check it with modelIsValid before use.
-    private var preferredModel: String? {
+    private var preferredReasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? {
         get {
-            iTermUserDefaults.userDefaults().string(forKey: Self.preferredModelDefaultsKey)
+            guard let value = iTermUserDefaults.userDefaults().string(
+                forKey: Self.reasoningEffortUserDefaultsKey) else {
+                return nil
+            }
+            return ResponsesRequestBody.ReasoningOptions.Effort(rawValue: value)
         }
         set {
-            iTermUserDefaults.userDefaults().set(newValue, forKey: Self.preferredModelDefaultsKey)
+            if let newValue {
+                iTermUserDefaults.userDefaults().set(newValue.rawValue,
+                                                     forKey: Self.reasoningEffortUserDefaultsKey)
+            } else {
+                iTermUserDefaults.userDefaults().removeObject(forKey: Self.reasoningEffortUserDefaultsKey)
+            }
+        }
+    }
+
+    private var preferredServiceTier: ResponsesRequestBody.ServiceTier? {
+        get {
+            guard let value = iTermUserDefaults.userDefaults().string(
+                forKey: Self.serviceTierUserDefaultsKey) else {
+                return nil
+            }
+            return ResponsesRequestBody.ServiceTier(rawValue: value)
+        }
+        set {
+            if let newValue, newValue != .auto {
+                iTermUserDefaults.userDefaults().set(newValue.rawValue,
+                                                     forKey: Self.serviceTierUserDefaultsKey)
+            } else {
+                iTermUserDefaults.userDefaults().removeObject(forKey: Self.serviceTierUserDefaultsKey)
+            }
         }
     }
 
@@ -1057,28 +1219,32 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             view.set(dateComponents: date)
             return view
         case .message(let message):
-            switch message.message.content {
-            case .terminalCommand:
+            let rendered = rendition(for: message.message, isLast: isLastMessage)
+            switch rendered.flavor {
+            case .command:
                 let cell = TerminalCommandMessageCellView()
-                configure(cell: cell, for: message.message, isLast: isLastMessage)
-                return cell
-            case .clientLocal, .watcherEvent:
-                let cell = SystemMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
             case .multipart:
                 let cell = MultipartMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
-
-            case .userCommand:
-                it_fatalError("User messages should not be in model")
-            case .append, .appendAttachment:
-                it_fatalError("Append-type messages should not be in model")
-
-            case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
-                    .renameChat, .commit, .setPermissions, .vectorStoreCreated:
+            case .regular:
+                switch message.message.content {
+                case .userCommand:
+                    it_fatalError("User messages should not be in model")
+                case .append, .appendAttachment:
+                    it_fatalError("Append-type messages should not be in model")
+                case .clientLocal, .watcherEvent:
+                    let cell = SystemMessageCellView()
+                    configure(cell: cell, for: message.message, isLast: isLastMessage)
+                    return cell
+                case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                        .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                        .renameChat, .commit, .setPermissions, .vectorStoreCreated,
+                        .terminalCommand, .multipart:
+                    break
+                }
                 let cell = RegularMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
@@ -1407,11 +1573,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .appendAttachment, .multipart, .watcherEvent:
+                .appendAttachment, .multipart, .watcherEvent, .terminalCommand:
             cell.buttonClicked = nil
-
-        case .terminalCommand:
-            it_fatalError()
         }
     }
 
@@ -1529,7 +1692,14 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }()
         let flavor: MessageRendition.Flavor = switch message.content {
         case .terminalCommand(let cmd):
-                .command(.init(command: cmd.command, url: cmd.url))
+                .regular(.init(
+                    attributedString: AttributedStringForGPTMarkdown(
+                        TerminalCommandTranscriptMarkdown(command: cmd.command,
+                                                          output: cmd.output),
+                        linkColor: .linkColor,
+                        textColor: .textColor) {},
+                    buttons: [],
+                    enableButtons: false))
         case .multipart(let subparts, _):
                 .multipart(subparts.compactMap { subpart in
                     switch subpart {
@@ -1587,12 +1757,22 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     }
                 })
         default:
-                .regular(.init(attributedString: message.attributedStringValue,
+                .regular(.init(attributedString: CommandTranscriptMarkdown(message.content).map {
+                    AttributedStringForGPTMarkdown($0,
+                                                   linkColor: .linkColor,
+                                                   textColor: .textColor) {}
+                } ?? message.attributedStringValue,
                                buttons: message.buttons,
                                enableButtons: enableButtons,
                                keepsButtonsEnabledAfterClick: message.isPermissionsClientLocal))
         }
-        return MessageRendition(isUser: message.author == .user,
+        let isUserMessage = switch message.content {
+        case .terminalCommand:
+            false
+        default:
+            message.author == .user
+        }
+        return MessageRendition(isUser: isUserMessage,
                                 messageUniqueID: message.uniqueID,
                                 flavor: flavor,
                                 timestamp: timestamp,
@@ -1757,11 +1937,16 @@ extension ChatViewController: ChatInputViewDelegate {
         let vectorStoreIDs = [listModel.chat(id: chatID)?.vectorStore].compactMap { $0 }
         var configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled,
                                                   vectorStoreIDs: vectorStoreIDs,
-                                                  shouldThink: thinkingEnabled)
+                                                  shouldThink: thinkingEnabled,
+                                                  reasoningEffort: selectedReasoningEffort,
+                                                  serviceTier: selectedServiceTier)
 
-        // Set the model if one is selected
-        if let modelIdentifier = chatToolbar.selectedModelIdentifier {
+        // Set the chat-pinned model for this request. The model selector only
+        // offers models from the chat's provider, so switching OpenAI/Gemini/
+        // Anthropic/DeepSeek mid-conversation cannot corrupt the request chain.
+        if let modelIdentifier = chatToolbar.selectedModelIdentifier ?? effectiveModel {
             configuration.model = modelIdentifier
+            setCurrentChatModelIfNeeded(modelIdentifier)
         }
 
         // Auto-populate terminal state. This must stay in sync with autopopulatedWhenAlways.
@@ -1896,6 +2081,9 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         if let model {
             assertMessageTypeAllowed(model.items[i].existingMessage?.message)
         }
+        if viewModelLocksProvider {
+            chatToolbar.update()
+        }
         DLog("Insert tableview row at \(i)")
         estimatedCount += 1
         it_assert(i <= estimatedCount)
@@ -1929,6 +2117,9 @@ extension ChatViewController: ChatViewControllerModelDelegate {
                 assertMessageTypeAllowed(model.items[i].existingMessage?.message)
             }
         }
+        if viewModelLocksProvider {
+            chatToolbar.update()
+        }
         guard let scrollView = tableView.enclosingScrollView,
               scrollView.documentView != nil else {
             return
@@ -1958,6 +2149,336 @@ fileprivate enum PickSessionButtonIdentifier: String {
     case cancel
 }
 
+fileprivate func MarkdownCodeBlock(_ string: String, language: String = "") -> String {
+    let text = string.isEmpty ? " " : string
+    var fence = "```"
+    while text.contains(fence) {
+        fence += "`"
+    }
+    return "\(fence)\(language)\n\(text)\n\(fence)"
+}
+
+fileprivate func TerminalCommandTranscriptMarkdown(command: String,
+                                                   output: String) -> String {
+    let commandLine = "Ran `\(command.escapedForMarkdownCode)`"
+    let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedOutput.isEmpty {
+        return commandLine
+    }
+    return commandLine + "\n\n" + MarkdownCodeBlock(trimmedOutput, language: "text")
+}
+
+fileprivate func CommandTranscriptMarkdown(_ content: Message.Content) -> String? {
+    let raw: String
+    switch content {
+    case .plainText(let string, context: _), .markdown(let string):
+        raw = string
+    case .clientLocal(let clientLocal):
+        if case .notice(let notice) = clientLocal.action {
+            raw = notice
+        } else {
+            return nil
+        }
+    default:
+        return nil
+    }
+    return CommandTranscriptMarkdown(raw)
+}
+
+fileprivate func CommandTranscriptMarkdown(_ raw: String) -> String? {
+    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.hasPrefix("Ran ") else {
+        return nil
+    }
+    guard let firstNewline = trimmed.firstIndex(of: "\n") else {
+        return nil
+    }
+    let commandPart = String(trimmed[..<firstNewline]).dropFirst("Ran ".count)
+    let outputPart = String(trimmed[firstNewline...])
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !outputPart.isEmpty else {
+        return nil
+    }
+    let command = UnwrapInlineCode(String(commandPart))
+    let output = UnwrapFencedCodeBlock(outputPart) ?? outputPart
+    return TerminalCommandTranscriptMarkdown(command: command, output: output)
+}
+
+fileprivate func UnwrapInlineCode(_ string: String) -> String {
+    let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.hasPrefix("`"), trimmed.hasSuffix("`"), trimmed.count >= 2 {
+        return String(trimmed.dropFirst().dropLast())
+    }
+    return trimmed
+}
+
+fileprivate func UnwrapFencedCodeBlock(_ string: String) -> String? {
+    let lines = string.components(separatedBy: .newlines)
+    guard lines.count >= 2 else {
+        return nil
+    }
+    guard let first = lines.first?.trimmingCharacters(in: .whitespaces),
+          first.hasPrefix("```") else {
+        return nil
+    }
+    guard let lastFenceIndex = lines.indices.reversed().first(where: {
+        lines[$0].trimmingCharacters(in: .whitespaces).hasPrefix("```")
+    }), lastFenceIndex > lines.startIndex else {
+        return nil
+    }
+    return lines[(lines.startIndex + 1)..<lastFenceIndex].joined(separator: "\n")
+}
+
+fileprivate func RemoteCommandResponseMarkdown(_ response: Result<String, AIError>,
+                                               functionName: String) -> String {
+    switch response {
+    case .success(let output):
+        let title = RemoteCommandDisplay.isTerminalCommandOutputTool(functionName)
+            ? "Command output"
+            : "Tool output: `\(functionName.escapedForMarkdownCode)`"
+        return title + "\n\n" + MarkdownCodeBlock(output, language: "text")
+    case .failure(let error):
+        return "Tool failed\n\n" + MarkdownCodeBlock(error.localizedDescription, language: "text")
+    }
+}
+
+fileprivate func NoticeMarkdown(_ message: String) -> String {
+    let prefix = "Ran "
+    guard message.hasPrefix(prefix) else {
+        return message.escapedForMarkdown
+    }
+    let command = String(message.dropFirst(prefix.count))
+    return "Ran `\(command.escapedForMarkdownCode)`"
+}
+
+fileprivate func RemoteCommandPermissionMarkdown(_ request: RemoteCommand,
+                                                 safe: Bool?) -> String {
+    let warning: String? = if safe == false {
+        "⚠️ **The AI safety check flagged this command as potentially dangerous. Review it with care.**"
+    } else {
+        nil
+    }
+    let general = "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
+    let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
+
+    let prompt: String
+    let codeBlock: String?
+    switch request.content {
+    case .executeCommand(let args):
+        prompt = "**The AI Agent would like to execute this command.**"
+        codeBlock = MarkdownCodeBlock(args.command, language: "bash")
+    case .insertTextAtCursor(let args):
+        prompt = "**The AI Agent would like to type this into the current session.**"
+        codeBlock = MarkdownCodeBlock(args.text)
+    case .setClipboard(let args):
+        prompt = "**The AI Agent would like to write this to the clipboard.**"
+        codeBlock = MarkdownCodeBlock(args.text)
+    case .createFile(let args):
+        prompt = "**The AI Agent would like to create `\(args.filename.escapedForMarkdownCode)`.**"
+        codeBlock = MarkdownCodeBlock(args.content)
+    case .getManPage(let args):
+        prompt = "**The AI Agent would like to read this man page.**"
+        codeBlock = MarkdownCodeBlock(args.cmd, language: "bash")
+    case .searchBrowser(let args):
+        prompt = "**The AI Agent would like to search the current web page for this text.**"
+        codeBlock = MarkdownCodeBlock(args.query)
+    case .loadURL(let args):
+        prompt = "**The AI Agent would like to open this URL.**"
+        codeBlock = MarkdownCodeBlock(args.url)
+    case .webSearch(let args):
+        prompt = "**The AI Agent would like to search the web for this text.**"
+        codeBlock = MarkdownCodeBlock(args.query)
+    default:
+        prompt = request.permissionDescription + "."
+        codeBlock = nil
+    }
+
+    var sections = [String]()
+    if let warning {
+        sections.append(warning)
+    }
+    sections.append(prompt)
+    if let codeBlock {
+        sections.append(codeBlock)
+    }
+    sections.append(general)
+    sections.append(info)
+    return sections.joined(separator: "\n\n")
+}
+
+fileprivate func PrettyPrintedJSONString(_ string: String) -> String {
+    return PrettyPrintedJSONString(string, removingKeys: [])
+}
+
+fileprivate func JSONObjectDictionary(_ string: String) -> [String: Any]? {
+    guard let data = string.data(using: .utf8),
+          let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        return nil
+    }
+    return object
+}
+
+fileprivate func PrettyPrintedJSONString(_ string: String,
+                                         removingKeys keysToRemove: Set<String>) -> String {
+    guard var object = JSONObjectDictionary(string) else {
+        return string
+    }
+    for key in keysToRemove {
+        object.removeValue(forKey: key)
+    }
+    guard JSONSerialization.isValidJSONObject(object),
+          let pretty = try? JSONSerialization.data(withJSONObject: object,
+                                                   options: [.prettyPrinted, .sortedKeys]),
+          let result = String(data: pretty, encoding: .utf8) else {
+        return string
+    }
+    return result
+}
+
+fileprivate func RemoteCommandActivityMarkdown(_ command: RemoteCommand) -> String {
+    switch command.content {
+    case .executeCommand(let args):
+        return "Executing command\n\n" + MarkdownCodeBlock(args.command, language: "bash")
+    case .insertTextAtCursor(let args):
+        return "Typing into session\n\n" + MarkdownCodeBlock(args.text)
+    case .setClipboard(let args):
+        return "Writing to clipboard\n\n" + MarkdownCodeBlock(args.text)
+    case .createFile(let args):
+        return "Creating `\(args.filename.escapedForMarkdownCode)`\n\n"
+            + MarkdownCodeBlock(args.content)
+    case .getManPage(let args):
+        return "Reading man page\n\n" + MarkdownCodeBlock(args.cmd)
+    case .searchBrowser(let args):
+        return "Searching browser\n\n" + MarkdownCodeBlock(args.query)
+    case .loadURL(let args):
+        return "Opening URL\n\n" + MarkdownCodeBlock(args.url)
+    case .webSearch(let args):
+        return "Searching the web\n\n" + MarkdownCodeBlock(args.query)
+    case .readWebPage(let args):
+        return "Reading web page\n\n"
+            + MarkdownCodeBlock("startingLineNumber: \(args.startingLineNumber)\nnumberOfLines: \(args.numberOfLines)")
+    case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
+            .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+            .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
+            .getUserIdentity, .getCurrentDirectory, .deleteCurrentLine, .getURL:
+        return command.markdownDescription
+    }
+}
+
+fileprivate func ExternalRemoteCommandActivityMarkdown(_ command: ExternalRemoteCommand) -> String {
+    if let sessionMarkdown = ExternalSessionRemoteCommandActivityMarkdown(command) {
+        return sessionMarkdown
+    }
+
+    let prettyArgs = PrettyPrintedJSONString(command.argsJSON)
+    let trimmedArgs = prettyArgs.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedArgs.isEmpty || trimmedArgs == "{}" {
+        return command.markdownDescription
+    }
+    return command.markdownDescription + "\n\nArguments\n\n" + MarkdownCodeBlock(prettyArgs)
+}
+
+fileprivate func ExternalSessionRemoteCommandActivityMarkdown(_ command: ExternalRemoteCommand) -> String? {
+    let prefix = "session_"
+    guard command.name.hasPrefix(prefix) else {
+        return nil
+    }
+
+    let rawName = RemoteCommandDisplay.normalizedToolName(command.name)
+    let args = JSONObjectDictionary(command.argsJSON) ?? [:]
+    switch rawName {
+    case "execute_command":
+        if let shellCommand = args["command"] as? String, !shellCommand.isEmpty {
+            return "Executing command\n\n" + MarkdownCodeBlock(shellCommand, language: "bash")
+        }
+    case "insert_text_at_cursor":
+        if let text = args["text"] as? String, !text.isEmpty {
+            return "Typing into session\n\n" + MarkdownCodeBlock(text)
+        }
+    case "set_clipboard":
+        if let text = args["text"] as? String, !text.isEmpty {
+            return "Writing to clipboard\n\n" + MarkdownCodeBlock(text)
+        }
+    case "create_file":
+        let filename = (args["filename"] as? String) ?? "file"
+        let content = (args["content"] as? String) ?? ""
+        return "Creating `\(filename.escapedForMarkdownCode)`\n\n" + MarkdownCodeBlock(content)
+    case "get_man_page":
+        if let commandName = args["cmd"] as? String, !commandName.isEmpty {
+            return "Reading man page\n\n" + MarkdownCodeBlock(commandName, language: "bash")
+        }
+    case "find_on_page":
+        if let query = args["query"] as? String, !query.isEmpty {
+            return "Searching browser\n\n" + MarkdownCodeBlock(query)
+        }
+    case "load_url":
+        if let url = args["url"] as? String, !url.isEmpty {
+            return "Opening URL\n\n" + MarkdownCodeBlock(url)
+        }
+    case "web_search_in_browser":
+        if let query = args["query"] as? String, !query.isEmpty {
+            return "Searching the web\n\n" + MarkdownCodeBlock(query)
+        }
+    case "read_web_page_section":
+        let startingLineNumber = args["startingLineNumber"] ?? args["starting_line_number"] ?? 0
+        let numberOfLines = args["numberOfLines"] ?? args["number_of_lines"] ?? 0
+        return "Reading web page\n\n"
+            + MarkdownCodeBlock("startingLineNumber: \(startingLineNumber)\nnumberOfLines: \(numberOfLines)")
+    default:
+        break
+    }
+
+    let title = ExternalSessionRemoteCommandTitle(rawName)
+    let prettyArgs = PrettyPrintedJSONString(command.argsJSON, removingKeys: ["session_guid"])
+    let trimmedArgs = prettyArgs.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedArgs.isEmpty || trimmedArgs == "{}" {
+        return title
+    }
+    return title + "\n\nArguments\n\n" + MarkdownCodeBlock(prettyArgs)
+}
+
+fileprivate func ExternalSessionRemoteCommandTitle(_ rawName: String) -> String {
+    switch rawName {
+    case "is_at_prompt":
+        return "Checking if the session is at a shell prompt"
+    case "get_last_exit_status":
+        return "Checking the exit status of the last command"
+    case "get_command_history":
+        return "Reviewing command history"
+    case "get_last_command":
+        return "Viewing the last command"
+    case "get_command_before_cursor":
+        return "Reading the current command prompt"
+    case "search_command_history":
+        return "Searching command history"
+    case "get_command_output":
+        return "Fetching command output"
+    case "get_terminal_size":
+        return "Querying terminal size"
+    case "get_shell_type":
+        return "Determining shell type"
+    case "detect_ssh_session":
+        return "Checking if the session is using SSH"
+    case "get_remote_hostname":
+        return "Getting the remote host name"
+    case "get_user_identity":
+        return "Checking the current user"
+    case "get_current_directory":
+        return "Discovering the current directory"
+    case "delete_current_line":
+        return "Erasing the current command line"
+    case "get_current_url":
+        return "Getting the current URL"
+    default:
+        let words = rawName.split(separator: "_").map(String.init)
+        guard let first = words.first else {
+            return rawName
+        }
+        return ([first.prefix(1).uppercased() + first.dropFirst()] + words.dropFirst())
+            .joined(separator: " ")
+    }
+}
+
 // Switches over every Message.Content case to produce the rendered
 // attributed-string body. Several cases (.remoteCommandRequest,
 // .selectSessionRequest, .clientLocal(.permissions/.offerLink/
@@ -1973,6 +2494,8 @@ extension Message.Content {
                 .vectorStoreCreated, .userCommand:
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
+            paragraphStyle.lineHeightMultiple = 1.3
+            paragraphStyle.paragraphSpacing = 8
             let attributes: [NSAttributedString.Key: Any] = [
                 .foregroundColor: textColor,
                 .paragraphStyle: paragraphStyle,
@@ -1987,6 +2510,8 @@ extension Message.Content {
         case .plainText(let string, context: _):
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
+            paragraphStyle.lineHeightMultiple = 1.3
+            paragraphStyle.paragraphSpacing = 8
             let attributes: [NSAttributedString.Key: Any] = [
                 .foregroundColor: textColor,
                 .paragraphStyle: paragraphStyle,
@@ -2022,15 +2547,7 @@ extension Message.Content {
         case .remoteCommandRequest(let payload, safe: let safe):
             switch payload {
             case .classic(let request):
-                let specific = request.permissionDescription + "."
-                let warning = if safe == false {
-                    "⚠️ **The AI safety check flagged this command as potentially dangerous. Review it with care.**\n\n"
-                } else {
-                    ""
-                }
-                let general =  "Would you like to grant AI **\(request.content.permissionCategory.rawValue)** permission?"
-                let info = "*If you grant or deny permission, it affects only this chat conversation while linked to this particular terminal session. You can change permissions in the chat Info menu.*"
-                return AttributedStringForGPTMarkdown(warning + specific + " " + general + "\n\n" + info,
+                return AttributedStringForGPTMarkdown(RemoteCommandPermissionMarkdown(request, safe: safe),
                                                       linkColor: linkColor,
                                                       textColor: textColor) {}
             case .external(let ext):
@@ -2042,26 +2559,24 @@ extension Message.Content {
                 // @<guid> session/workgroup targets the activity line
                 // carries become clickable links (or "[defunct session]"
                 // once the target is gone).
-                let rendered = AttributedStringForSystemMessageMarkdown(ext.markdownDescription) {}
+                let rendered = AttributedStringForSystemMessageMarkdown(
+                    ExternalRemoteCommandActivityMarkdown(ext)) {}
                 return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
             }
-        case .remoteCommandResponse(let response, _, _, _):
-            switch response {
-            case .success(let object):
-                it_fatalError("\(object)")
-            case .failure(let error):
-                return AttributedStringForGPTMarkdown(error.localizedDescription,
-                                                      linkColor: linkColor,
-                                                      textColor: textColor) {}
-            }
+        case .remoteCommandResponse(let response, _, let functionName, _):
+            return AttributedStringForGPTMarkdown(
+                RemoteCommandResponseMarkdown(response,
+                                              functionName: functionName),
+                linkColor: linkColor,
+                textColor: textColor) {}
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession:
                 return AttributedStringForSystemMessageMarkdown("Waiting for a session to be selected…") { }
             case .executingCommand(let command):
-                return AttributedStringForSystemMessageMarkdown(command.markdownDescription) { }
+                return AttributedStringForSystemMessageMarkdown(RemoteCommandActivityMarkdown(command)) { }
             case .notice(let message):
-                return AttributedStringForSystemMessagePlain(message, textColor: textColor)
+                return AttributedStringForSystemMessageMarkdown(NoticeMarkdown(message)) { }
             case .streamingChanged(let state):
                 return switch state {
                 case .stopped:
@@ -2083,14 +2598,10 @@ extension Message.Content {
                     + "per-call prompts."
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .offerOrchestration:
-                let body = "**Enable orchestration for this chat?**\n\n"
-                    + "**Orchestration** lets the AI coordinate across "
-                    + "multiple terminal sessions. It can read the contents "
-                    + "of any session, and you grant a one-time approval "
-                    + "before it controls a session instead of approving "
-                    + "every call. It also runs in **auto mode**: each "
-                    + "command the AI proposes is checked for safety by your "
-                    + "AI provider, and anything risky is held for your review."
+                let body = "**Enable orchestration?**\n\n"
+                    + "The agent can coordinate across terminal sessions. "
+                    + "It may read session contents, and it asks before "
+                    + "controlling a session."
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .permissions:
                 return AttributedStringForSystemMessageMarkdown("You can use these buttons or the info button menu at the top of the chat window to control AI permissions for this chat.") {}
@@ -2122,14 +2633,8 @@ extension Message.Content {
                 let body = """
                 **Enable orchestration?**
 
-                Orchestration mode lets the agent read screen contents from any session. To type \
-                into a session still requires your permission.
-                
-                This is a more permissive model than when an agent is linked to \
-                a single session, where there are very fine-grained permission settings.
-
-                Enabling will detach any linked terminal or browser session and switch \
-                the chat to Orchestration mode.
+                The agent can coordinate across terminal sessions. It may read session \
+                contents, and it asks before controlling a session.
                 """
                 return AttributedStringForSystemMessageMarkdown(body) {}
             }
@@ -2283,13 +2788,78 @@ extension ChatViewController: NSMenuItemValidation {
 }
 
 extension ChatViewController: ChatToolbarDataSource {
+    private func reasoningEffort(for model: AIMetadata.Model) -> ResponsesRequestBody.ReasoningOptions.Effort? {
+        guard !model.reasoningEfforts.isEmpty else {
+            return nil
+        }
+        if let preferredReasoningEffort,
+           model.supports(reasoningEffort: preferredReasoningEffort) {
+            return preferredReasoningEffort
+        }
+        let fallback = iTermUserDefaults.userDefaults().bool(forKey: Self.thinkUserDefaultsKey)
+            ? model.thinkingOnEffort
+            : model.thinkingOffEffort
+        if model.supports(reasoningEffort: fallback) {
+            return fallback
+        }
+        return model.reasoningEfforts.first
+    }
+
+    private func serviceTier(for model: AIMetadata.Model) -> ResponsesRequestBody.ServiceTier? {
+        guard !model.serviceTiers.isEmpty else {
+            return nil
+        }
+        if let preferredServiceTier,
+           model.supports(serviceTier: preferredServiceTier) {
+            return preferredServiceTier
+        }
+        return nil
+    }
+
     var provider: LLMProvider? {
-        if let effectiveModelName = preferredModel,
-           modelIsValid(effectiveModelName),
-           let model = AIMetadata.instance.models.first(where: { $0.name == effectiveModelName }) {
+        if let model = effectiveChatModel {
             return LLMProvider(model: model)
         }
         return AITermController.provider
+    }
+
+    var availableProviderOptions: [ChatProviderOption] {
+        var options = Self.chatSelectableProviders
+            .filter { !LLMMetadata.alternateModels(for: $0).isEmpty }
+            .map { ChatProviderOption.vendor($0) }
+
+        if !manualConfiguredModels.isEmpty {
+            options.append(ChatProviderOption.manual())
+        }
+
+        if let currentProviderIdentifier,
+           !options.contains(where: { $0.identifier == currentProviderIdentifier }),
+           let vendor = ChatProviderOption.vendor(from: currentProviderIdentifier),
+           !LLMMetadata.alternateModels(for: vendor).isEmpty {
+            options.append(ChatProviderOption.vendor(vendor))
+        }
+        return options
+    }
+
+    var effectiveProviderIdentifier: String? {
+        return currentProviderIdentifier
+    }
+
+    var canChangeProvider: Bool {
+        return chatID != nil && !chatProviderIsLocked
+    }
+
+    var availableModels: [AIMetadata.Model] {
+        if currentProviderIdentifier == ChatProviderOption.manualIdentifier {
+            return manualConfiguredModels
+        }
+        guard let model = effectiveChatModel else {
+            return []
+        }
+        guard let vendor = effectiveChatProvider else {
+            return [model]
+        }
+        return LLMMetadata.alternateModels(for: vendor)
     }
 
     var webSearchEnabled: Bool {
@@ -2317,11 +2887,38 @@ extension ChatViewController: ChatToolbarDataSource {
             if !model.features.contains(.configurableThinking) {
                 return false
             }
+            if let effort = reasoningEffort(for: model) {
+                return effort != model.thinkingOffEffort
+            }
             return iTermUserDefaults.userDefaults().bool(forKey: Self.thinkUserDefaultsKey)
         }
         set {
-            return iTermUserDefaults.userDefaults().set(newValue, forKey: Self.thinkUserDefaultsKey)
+            iTermUserDefaults.userDefaults().set(newValue, forKey: Self.thinkUserDefaultsKey)
+            guard let model = provider?.model,
+                  !model.reasoningEfforts.isEmpty else {
+                return
+            }
+            let effort = newValue ? model.thinkingOnEffort : model.thinkingOffEffort
+            if model.supports(reasoningEffort: effort) {
+                preferredReasoningEffort = effort
+            } else {
+                preferredReasoningEffort = model.reasoningEfforts.first
+            }
         }
+    }
+
+    var selectedReasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? {
+        guard let model = provider?.model else {
+            return nil
+        }
+        return reasoningEffort(for: model)
+    }
+
+    var selectedServiceTier: ResponsesRequestBody.ServiceTier? {
+        guard let model = provider?.model else {
+            return nil
+        }
+        return serviceTier(for: model)
     }
 
     func showSessionButtonMenu(_ sender: NSButton) {
@@ -2329,9 +2926,6 @@ extension ChatViewController: ChatToolbarDataSource {
             return
         }
         let menu = NSMenu()
-
-        menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
-        menu.addItem(NSMenuItem.separator())
 
         // Orchestration mode is mutually exclusive with session/
         // browser binding. The toggle clears any binding when
@@ -2452,11 +3046,83 @@ extension ChatViewController: ChatToolbarDataSource {
     }
 
     func toolbarDidUpdate() {
+        guard isViewLoaded else {
+            return
+        }
+        if let floating = floatingControlsView as? FloatingChatToolbarView {
+            floating.setNeedsLayoutNow()
+        }
+        view.needsLayout = true
         delegate?.chatViewControllerDidUpdateToolbar(self)
     }
 
     func selectedModelDidChange() {
-        preferredModel = chatToolbar.modelSelectorButton?.selectedItem?.title
+        guard let modelName = chatToolbar.selectedModelIdentifier,
+              let selectedModel = model(named: modelName) else {
+            return
+        }
+        if chatProviderIsLocked {
+            let manualModels = manualConfiguredModels
+            let currentIsManual = effectiveChatModel.map { currentModel in
+                manualModels.contains(where: { $0.name == currentModel.name })
+            } ?? false
+            let selectedIsManual = manualModels.contains(where: { $0.name == selectedModel.name })
+            if currentIsManual != selectedIsManual {
+                chatToolbar.update()
+                return
+            }
+            if !currentIsManual,
+               let currentVendor = effectiveChatModel?.vendor,
+               selectedModel.vendor != currentVendor {
+                chatToolbar.update()
+                return
+            }
+        }
+        setCurrentChatModelIfNeeded(modelName)
+    }
+
+    func selectedProviderDidChange() {
+        guard canChangeProvider,
+              let selectedProviderIdentifier = chatToolbar.selectedProviderIdentifier else {
+            chatToolbar.update()
+            return
+        }
+        if selectedProviderIdentifier == ChatProviderOption.manualIdentifier {
+            guard let defaultManualConfiguredModel else {
+                chatToolbar.update()
+                return
+            }
+            setCurrentChatModelIfNeeded(defaultManualConfiguredModel.name)
+            return
+        }
+        guard let provider = ChatProviderOption.vendor(from: selectedProviderIdentifier),
+              let model = recommendedModel(for: provider) else {
+            chatToolbar.update()
+            return
+        }
+        setCurrentChatModelIfNeeded(model.name)
+    }
+
+    func selectedReasoningEffortDidChange() {
+        guard let rawValue = chatToolbar.reasoningEffortButton?.selectedItem?.representedObject as? String,
+              let effort = ResponsesRequestBody.ReasoningOptions.Effort(rawValue: rawValue),
+              let model = provider?.model,
+              model.supports(reasoningEffort: effort) else {
+            return
+        }
+        preferredReasoningEffort = effort
+        iTermUserDefaults.userDefaults().set(effort != model.thinkingOffEffort,
+                                             forKey: Self.thinkUserDefaultsKey)
+    }
+
+    func selectedServiceTierDidChange() {
+        guard let rawValue = chatToolbar.serviceTierButton?.selectedItem?.representedObject as? String,
+              let tier = ResponsesRequestBody.ServiceTier(rawValue: rawValue),
+              let model = provider?.model,
+              model.supports(serviceTier: tier) else {
+            return
+        }
+        preferredServiceTier = tier
     }
 
     var effectiveModel: String? {
@@ -2809,4 +3475,3 @@ extension ChatViewController {
     }
 
 }
-

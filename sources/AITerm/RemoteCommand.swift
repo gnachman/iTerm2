@@ -68,6 +68,38 @@ struct ExternalRemoteCommand: Codable {
     var markdownDescription: String
 }
 
+enum RemoteCommandDisplay {
+    static func normalizedToolName(_ name: String) -> String {
+        var raw = name
+        if raw.hasPrefix("session_") {
+            raw = String(raw.dropFirst("session_".count))
+        }
+        var result = ""
+        for character in raw {
+            if character == "-" {
+                result.append("_")
+            } else if character.isUppercase {
+                if !result.isEmpty && result.last != "_" {
+                    result.append("_")
+                }
+                result.append(contentsOf: character.lowercased())
+            } else {
+                result.append(character)
+            }
+        }
+        return result.lowercased()
+    }
+
+    static func isTerminalCommandOutputTool(_ name: String) -> Bool {
+        switch normalizedToolName(name) {
+        case "execute_command", "get_command_output":
+            return true
+        default:
+            return false
+        }
+    }
+}
+
 extension RemoteCommandPayload: Codable {
     private enum DiscriminatorKey: String, CodingKey {
         case kind

@@ -361,6 +361,16 @@ class ChatListModel: ChatListDataSource {
         }
     }
 
+    func setModel(chatID: String, modelName: String?) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        temp.modelName = modelName
+        try chatStorage.set(at: i, temp)
+        postMetadataChange()
+    }
+
     // MARK: - Orchestrator-mode accessors
 
     // Flip the chat between session-bound and orchestrator modes.

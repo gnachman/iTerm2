@@ -153,6 +153,29 @@ class AIMetadata: NSObject {
         // that reject it set it false so the request builder omits the
         // field. Defaults to true so existing entries are unaffected.
         var supportsTemperature: Bool = true
+
+        // OpenAI Responses reasoning models do not all accept the same effort
+        // values. Keep the request builder declarative: each model states the
+        // lowest effort to use when the UI's thinking toggle is off and the
+        // higher effort to use when it is on.
+        var thinkingOffEffort: ResponsesRequestBody.ReasoningOptions.Effort = .low
+        var thinkingOnEffort: ResponsesRequestBody.ReasoningOptions.Effort = .medium
+        var reasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = []
+        var serviceTiers: [ResponsesRequestBody.ServiceTier] = []
+
+        func supports(reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?) -> Bool {
+            guard let reasoningEffort else {
+                return false
+            }
+            return reasoningEfforts.contains(reasoningEffort)
+        }
+
+        func supports(serviceTier: ResponsesRequestBody.ServiceTier?) -> Bool {
+            guard let serviceTier else {
+                return false
+            }
+            return serviceTiers.contains(serviceTier)
+        }
     }
 
     static var recommendedOpenAIModel: Model {
@@ -215,6 +238,34 @@ class AIMetadata: NSObject {
         }
     }
 
+    private static let openAIOldReasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = [
+        .low, .medium, .high
+    ]
+    private static let openAIGPT5ReasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = [
+        .minimal, .low, .medium, .high
+    ]
+    private static let openAIReasoningEffortsWithNone: [ResponsesRequestBody.ReasoningOptions.Effort] = [
+        .none, .low, .medium, .high
+    ]
+    private static let openAINewReasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = [
+        .none, .low, .medium, .high, .xhigh
+    ]
+    private static let openAICodexReasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = [
+        .low, .medium, .high, .xhigh
+    ]
+    private static let openAIProReasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = [
+        .medium, .high, .xhigh
+    ]
+    private static let openAIPriorityServiceTiers: [ResponsesRequestBody.ServiceTier] = [
+        .auto, .default, .priority
+    ]
+    private static let openAIFlexServiceTiers: [ResponsesRequestBody.ServiceTier] = [
+        .auto, .default, .flex
+    ]
+    private static let openAIPriorityAndFlexServiceTiers: [ResponsesRequestBody.ServiceTier] = [
+        .auto, .default, .priority, .flex
+    ]
+
     private static let gpt5_5 = Model(
         name: "gpt-5.5",
         contextWindowTokens: 1_050_000,
@@ -222,7 +273,10 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .none,
+        reasoningEfforts: openAINewReasoningEfforts,
+        serviceTiers: openAIPriorityAndFlexServiceTiers
     )
     private static let gpt5_5_pro = Model(
         name: "gpt-5.5-pro",
@@ -230,8 +284,12 @@ class AIMetadata: NSObject {
         maxResponseTokens: 128_000,
         url: "https://api.openai.com/v1/responses",
         api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI,
+        thinkingOffEffort: .medium,
+        thinkingOnEffort: .high,
+        reasoningEfforts: openAIProReasoningEfforts,
+        serviceTiers: openAIFlexServiceTiers
     )
     private static let gpt5_4 = Model(
         name: "gpt-5.4",
@@ -240,7 +298,10 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .none,
+        reasoningEfforts: openAINewReasoningEfforts,
+        serviceTiers: openAIPriorityAndFlexServiceTiers
     )
     private static let gpt5_3_codex = Model(
         name: "gpt-5.3-codex",
@@ -249,7 +310,9 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        vendor: .openAI,
+        reasoningEfforts: openAICodexReasoningEfforts,
+        serviceTiers: openAIPriorityServiceTiers
     )
     private static let gpt5_2 = Model(
         name: "gpt-5.2",
@@ -258,7 +321,9 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .none,
+        reasoningEfforts: openAINewReasoningEfforts
     )
     private static let gpt5_2_pro = Model(
         name: "gpt-5.2-pro",
@@ -267,7 +332,10 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .medium,
+        thinkingOnEffort: .high,
+        reasoningEfforts: openAIProReasoningEfforts
     )
     private static let gpt5_1 = Model(
         name: "gpt-5.1",
@@ -276,7 +344,9 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .none,
+        reasoningEfforts: openAIReasoningEffortsWithNone
     )
     private static let gpt5_1_codex = Model(
         name: "gpt-5.1-codex",
@@ -285,7 +355,8 @@ class AIMetadata: NSObject {
         url: "https://api.openai.com/v1/responses",
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
+        vendor: .openAI,
+        reasoningEfforts: openAIOldReasoningEfforts
     )
     private static let gpt5 = Model(
         name: "gpt-5",
@@ -295,7 +366,9 @@ class AIMetadata: NSObject {
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
         vectorStoreConfig: .openAI,
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .minimal,
+        reasoningEfforts: openAIGPT5ReasoningEfforts
     )
     private static let gpt5_mini = Model(
         name: "gpt-5-mini",
@@ -305,7 +378,9 @@ class AIMetadata: NSObject {
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
         vectorStoreConfig: .openAI,
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .minimal,
+        reasoningEfforts: openAIGPT5ReasoningEfforts
     )
     private static let gpt5_nano = Model(
         name: "gpt-5-nano",
@@ -315,7 +390,9 @@ class AIMetadata: NSObject {
         api: .responses,
         features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
         vectorStoreConfig: .openAI,
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .minimal,
+        reasoningEfforts: openAIGPT5ReasoningEfforts
     )
     private static let gpt4_1 = Model(
         name: "gpt-4.1",
@@ -365,7 +442,8 @@ class AIMetadata: NSObject {
         api: .responses,
         features: [.hostedFileSearch, .hostedCodeInterpreter, .configurableThinking],
         vectorStoreConfig: .openAI,
-        vendor: .openAI
+        vendor: .openAI,
+        reasoningEfforts: openAIOldReasoningEfforts
     )
     private static let o3_pro = Model(
         name: "o3-pro",
@@ -375,7 +453,10 @@ class AIMetadata: NSObject {
         api: .responses,
         features: [.functionCalling, .hostedCodeInterpreter, .configurableThinking],
         vectorStoreConfig: .openAI,
-        vendor: .openAI
+        vendor: .openAI,
+        thinkingOffEffort: .medium,
+        thinkingOnEffort: .high,
+        reasoningEfforts: openAIProReasoningEfforts
     )
     private static let o4_mini = Model(
         name: "o4-mini",
@@ -385,7 +466,8 @@ class AIMetadata: NSObject {
         api: .responses,
         features: [.hostedFileSearch, .streaming, .functionCalling, .hostedCodeInterpreter, .configurableThinking],
         vectorStoreConfig: .openAI,
-        vendor: .openAI
+        vendor: .openAI,
+        reasoningEfforts: openAIOldReasoningEfforts
     )
     private static let deepseek_v4_flash = Model(
         name: "deepseek-v4-flash",
@@ -415,15 +497,6 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .deepSeek
     )
-    private static let gemini_2_0_flash = Model(
-        name: "gemini-2.0-flash",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 8_192,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
     private static let llama_4_latest = Model(
         name: "llama4:latest",
         contextWindowTokens: 10_000_000,
@@ -441,19 +514,6 @@ class AIMetadata: NSObject {
         api: .llama,
         features: [.streaming, .functionCalling],
         vendor: .llama
-    )
-    // Returns 404 "no longer available to new users" for Gemini API keys
-    // minted after Google's 2026 deprecation cutoff. Pre-existing keys still
-    // work, so the entry remains. The fixture-coverage test skips deprecated
-    // models via the comment marker below.
-    private static let gemini_2_0_flash_lite = Model(
-        name: "gemini-2.0-flash-lite",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 8_192,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
     )
     private static let gemini_2_5_pro = Model(
         name: "gemini-2.5-pro",
@@ -477,16 +537,6 @@ class AIMetadata: NSObject {
 
     private static let gemini_3_1_pro = Model(
         name: "gemini-3.1-pro-preview",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-
-    private static let gemini_3_pro = Model(
-        name: "gemini-3-pro-preview",
         contextWindowTokens: 1_048_576,
         maxResponseTokens: 65_536,
         url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
@@ -582,34 +632,6 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .anthropic
     )
-    private static let claude_4_sonnet = Model(
-        name: "claude-sonnet-4-0",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 64_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-
-    private static let claude_4_1_opus = Model(
-        name: "claude-opus-4-1",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 32_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-    private static let claude_4_opus = Model(
-        name: "claude-opus-4-0",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 32_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
     // Deprecated by DeepSeek on 2026-07-24; remove after that date
     private static let deepseek_coder = Model(
         name: "deepseek-coder",
@@ -672,15 +694,10 @@ class AIMetadata: NSObject {
         // MARK: - Google Models
         AIMetadata.gemini_3_5_flash,
         AIMetadata.gemini_3_1_pro,
-        AIMetadata.gemini_3_pro,
         AIMetadata.gemini_3_flash,
         AIMetadata.gemini_2_5_flash_lite,
         AIMetadata.gemini_2_5_flash,
         AIMetadata.gemini_2_5_pro,
-        AIMetadata.gemini_2_0_flash,
-        // Deprecated by Google: returns 404 for new keys. Kept for users
-        // with grandfathered access. Skipped by AIMetadataFixtureCoverageTest.
-        AIMetadata.gemini_2_0_flash_lite,
 
         // MARK: - DeepSeek Models
         AIMetadata.deepseek_v4_flash,
@@ -698,9 +715,6 @@ class AIMetadata: NSObject {
         AIMetadata.claude_4_6_sonnet,
         AIMetadata.claude_4_5_sonnet,
         AIMetadata.claude_4_5_haiku,
-        AIMetadata.claude_4_sonnet,
-        AIMetadata.claude_4_1_opus,
-        AIMetadata.claude_4_opus,
 
         // MARK: - Local Models (via Ollama)
 

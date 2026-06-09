@@ -5,33 +5,10 @@
 //  Created by George Nachman on 2/23/25.
 //
 
-class TerminalCommandCellContainer: NSView {}
-
 class TerminalCommandMessageCellView: MessageCellView {
     private var url: URL?
-    private let bubbleView: TerminalCommandCellContainer = {
-        let view = TerminalCommandCellContainer()
-        view.wantsLayer = true
-        view.layer?.cornerRadius = 8
-        return view
-    }()
-    private let icon: NSImageView = {
-        let image: NSImage = {
-            if #available(macOS 11, *) {
-                let image = NSImage(systemSymbolName: SFSymbol.desktopcomputer.rawValue,
-                                    accessibilityDescription: "Command icon")!
-                if #available(macOS 12, *) {
-                    return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
-                }
-                return image
-            }
-            return NSImage.it_imageNamed("CommandIcon",
-                                         for: TerminalCommandMessageCellView.self)!
-        }()
-        let view = NSImageView(image: image)
-        view.imageScaling = .scaleProportionallyUpOrDown
-        return view
-    }()
+    private var commandText = ""
+    private var outputText = ""
     private let textLabel: AutoSizingTextView = {
         let tv = AutoSizingTextView()
         tv.isEditable = false
@@ -44,6 +21,7 @@ class TerminalCommandMessageCellView: MessageCellView {
         tv.textContainer?.widthTracksTextView = false
         return tv
     }()
+    private let outputBlock = ChatCodeBlockView()
     private let timestamp: MessageTimestamp = {
         let textField = MessageTimestamp()
         textField.isEditable = false
@@ -57,11 +35,9 @@ class TerminalCommandMessageCellView: MessageCellView {
     }()
     private var clickRecognizer: NSClickGestureRecognizer!
 
-    static let bubbleInset: CGFloat = 8
-    static let bubbleEdgePadding: CGFloat = 8
-    static let stackSpacing: CGFloat = 4
-    static let iconSize: CGFloat = 40
-    static let timestampGap: CGFloat = 8
+    static let bubbleEdgePadding: CGFloat = 40
+    static let timestampGap: CGFloat = 6
+    static let labelToOutputSpacing: CGFloat = 14
 
     override func configure(with rendition: MessageRendition,
                             maxBubbleWidth: CGFloat) {
@@ -70,25 +46,25 @@ class TerminalCommandMessageCellView: MessageCellView {
         }
         configuredMaxBubbleWidth = maxBubbleWidth
         self.url = commandFlavor.url
+        self.commandText = commandFlavor.command
+        self.outputText = commandFlavor.output
 
-        bubbleView.removeFromSuperview()
+        textLabel.removeFromSuperview()
+        outputBlock.removeFromSuperview()
         timestamp.removeFromSuperview()
 
-        addSubview(bubbleView)
-        bubbleView.addSubview(icon)
-        bubbleView.addSubview(textLabel)
+        addSubview(textLabel)
 
-        let attributedString = NSAttributedString(
-            string: commandFlavor.command,
-            attributes: [
-                .font: NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize,
-                                                   weight: .regular),
-                .foregroundColor: NSColor.white
-            ])
-        textLabel.textStorage?.setAttributedString(attributedString)
-        textLabel.textContainer?.size = NSSize(width: maxBubbleWidth - Self.bubbleInset * 2,
+        textLabel.textStorage?.setAttributedString(Self.attributedCommand(commandFlavor.command))
+        textLabel.textContainer?.size = NSSize(width: maxBubbleWidth,
                                                height: .greatestFiniteMagnitude)
         textLabel.linkTextAttributes = [.foregroundColor: NSColor.textColor]
+
+        if !commandFlavor.output.isEmpty {
+            addSubview(outputBlock)
+            outputBlock.configure(code: commandFlavor.output, title: "Output")
+            outputBlock.setSelectable(textSelectable)
+        }
 
         timestamp.stringValue = rendition.timestamp
         if !rendition.timestamp.isEmpty {
@@ -104,51 +80,43 @@ class TerminalCommandMessageCellView: MessageCellView {
         super.layout()
         let maxBubble = configuredMaxBubbleWidth
         guard maxBubble > 0 else { return }
-        let textContentWidth = max(0, maxBubble - Self.bubbleInset * 2)
-        let textSize = textLabel.desiredSize(forContentWidth: textContentWidth)
-        let textWidth = ceil(textSize.width)
+        let textSize = textLabel.desiredSize(forContentWidth: maxBubble)
         let textHeight = ceil(textSize.height)
-        let stackContentWidth = max(Self.iconSize, textWidth)
-        let bubbleWidth = min(maxBubble, stackContentWidth + Self.bubbleInset * 2)
-        let stackInnerWidth = bubbleWidth - Self.bubbleInset * 2
-        let stackInnerHeight = Self.iconSize + Self.stackSpacing + textHeight
-        let bubbleHeight = stackInnerHeight + Self.bubbleInset * 2
 
-        // Right-aligned bubble.
-        let bubbleX = max(Self.bubbleEdgePadding,
-                          bounds.maxX - Self.bubbleEdgePadding - bubbleWidth)
-        let bubbleY = Self.bottomInset
-        bubbleView.frame = NSRect(x: bubbleX,
-                                  y: bubbleY,
-                                  width: bubbleWidth,
-                                  height: bubbleHeight)
+        let contentX = Self.bubbleEdgePadding
+        var y = Self.bottomInset
 
-        // Inside bubble: icon at top-center, text below it.
-        let iconX = Self.bubbleInset + floor((stackInnerWidth - Self.iconSize) / 2)
-        let iconY = bubbleHeight - Self.bubbleInset - Self.iconSize
-        icon.frame = NSRect(x: iconX,
-                            y: iconY,
-                            width: Self.iconSize,
-                            height: Self.iconSize)
+        var contentWidth = min(maxBubble, max(220, ceil(textSize.width)))
+        if outputBlock.superview != nil {
+            let outputSize = outputBlock.desiredSize(forContentWidth: maxBubble)
+            contentWidth = max(contentWidth, outputSize.width)
+            outputBlock.frame = NSRect(x: contentX,
+                                       y: y,
+                                       width: outputSize.width,
+                                       height: outputSize.height)
+            y += outputSize.height + Self.labelToOutputSpacing
+        }
 
-        let textX = Self.bubbleInset + floor((stackInnerWidth - textWidth) / 2)
-        let textY = iconY - Self.stackSpacing - textHeight
-        textLabel.frame = NSRect(x: textX,
-                                 y: textY,
-                                 width: textWidth,
+        textLabel.frame = NSRect(x: contentX,
+                                 y: y,
+                                 width: contentWidth,
                                  height: textHeight)
 
         if timestamp.superview != nil {
             timestamp.sizeToFit()
             let ts = timestamp.frame.size
-            timestamp.frame = NSRect(x: bubbleX - Self.timestampGap - ts.width,
-                                     y: bubbleY,
+            timestamp.frame = NSRect(x: contentX + contentWidth + Self.timestampGap,
+                                     y: Self.bottomInset,
                                      width: ts.width,
                                      height: ts.height)
         }
     }
 
-    @objc private func handleClick(_ sender: Any) {
+    @objc private func handleClick(_ sender: NSClickGestureRecognizer) {
+        let point = sender.location(in: self)
+        if outputBlock.superview != nil && outputBlock.frame.contains(point) {
+            return
+        }
         if let url {
             NSWorkspace.shared.open(url)
         }
@@ -157,7 +125,11 @@ class TerminalCommandMessageCellView: MessageCellView {
     override func copyMenuItemClicked(_ sender: Any) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(textLabel.string, forType: .string)
+        if outputText.isEmpty {
+            pasteboard.setString(commandText, forType: .string)
+        } else {
+            pasteboard.setString("Ran \(commandText)\n\n\(outputText)", forType: .string)
+        }
     }
 
     override func setupViews() {
@@ -169,13 +141,31 @@ class TerminalCommandMessageCellView: MessageCellView {
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
+        if textSelectable {
+            return super.hitTest(point)
+        }
         return self
     }
 
     override func updateColors() {
-        let (lightColor, darkColor) = (NSColor(fromHexString: "p3#448bf7")!,
-                                       NSColor(fromHexString: "p3#4a93f5")!)
-        bubbleView.layer?.backgroundColor = (effectiveAppearance.it_isDark ? darkColor : lightColor).cgColor
+        outputBlock.updateColors()
+    }
+
+    private static func attributedCommand(_ command: String) -> NSAttributedString {
+        let result = NSMutableAttributedString(
+            string: "Ran ",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .semibold),
+                .foregroundColor: NSColor.secondaryLabelColor
+            ])
+        result.append(NSAttributedString(
+            string: command,
+            attributes: [
+                .font: NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize,
+                                                   weight: .regular),
+                .foregroundColor: NSColor.textColor
+            ]))
+        return result
     }
 
     static func cellHeight(for rendition: MessageRendition,
@@ -184,19 +174,17 @@ class TerminalCommandMessageCellView: MessageCellView {
             return 0
         }
         let maxBubble = maxBubbleWidth(tableViewWidth: tableViewWidth)
-        let textContentWidth = max(0, maxBubble - bubbleInset * 2)
-        let attributedString = NSAttributedString(
-            string: cmd.command,
-            attributes: [
-                .font: NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize,
-                                                   weight: .regular),
-                .foregroundColor: NSColor.white
-            ])
+        let attributedString = attributedCommand(cmd.command)
         let textHeight = ceil(measureMonospaceText(attributedString,
-                                                   contentWidth: textContentWidth))
-        let stackInnerHeight = iconSize + stackSpacing + textHeight
-        let bubbleHeight = stackInnerHeight + bubbleInset * 2
-        return topInset + bubbleHeight + bottomInset
+                                                   contentWidth: maxBubble))
+        let outputHeight: CGFloat
+        if cmd.output.isEmpty {
+            outputHeight = 0
+        } else {
+            outputHeight = measureCodeBlock(cmd.output, contentWidth: maxBubble)
+                + labelToOutputSpacing
+        }
+        return topInset + textHeight + outputHeight + bottomInset
     }
 
     private static func measureMonospaceText(_ attributedString: NSAttributedString,
@@ -214,5 +202,15 @@ class TerminalCommandMessageCellView: MessageCellView {
         layoutManager.ensureLayout(for: container)
         let glyphRange = layoutManager.glyphRange(for: container)
         return layoutManager.boundingRect(forGlyphRange: glyphRange, in: container).maxY
+    }
+
+    private static func measureCodeBlock(_ code: String,
+                                         contentWidth: CGFloat) -> CGFloat {
+        let innerWidth = max(0, contentWidth - ChatCodeBlockView.textHorizontalPadding * 2)
+        let textHeight = measureMonospaceText(ChatCodeBlockView.attributedCodeString(code),
+                                              contentWidth: innerWidth)
+        let bodyHeight = max(ChatCodeBlockView.minimumHeight,
+                             ceil(textHeight) + ChatCodeBlockView.textVerticalPadding * 2)
+        return ChatCodeBlockView.headerHeight + bodyHeight
     }
 }

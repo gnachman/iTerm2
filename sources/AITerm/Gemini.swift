@@ -66,6 +66,55 @@ struct GeminiRequestBuilder: Codable {
         }
     }
 
+    private static func parametersForGemini(_ schema: JSONSchema) -> JSONSchema {
+        do {
+            let data = try JSONEncoder().encode(schema)
+            let object = try JSONSerialization.jsonObject(with: data)
+            guard let sanitized = sanitizingFunctionParameterSchema(object) as? [String: Any] else {
+                return schema
+            }
+            return JSONSchema(rawJSON: sanitized)
+        } catch {
+            DLog("Failed to sanitize Gemini function parameters: \(error)")
+            return schema
+        }
+    }
+
+    private static func sanitizingFunctionParameterSchema(_ object: Any) -> Any {
+        if let dictionary = object as? [String: Any] {
+            var result = [String: Any]()
+            for (key, value) in dictionary where key != "additionalProperties" {
+                switch key {
+                case "type":
+                    if let typeNames = value as? [Any] {
+                        let names = typeNames.compactMap { $0 as? String }
+                        if let typeName = names.first(where: { $0 != "null" }) {
+                            result[key] = typeName
+                        }
+                        if names.contains("null") {
+                            result["nullable"] = true
+                        }
+                    } else {
+                        result[key] = value
+                    }
+                case "items":
+                    if let typeName = value as? String {
+                        result[key] = ["type": typeName]
+                    } else {
+                        result[key] = sanitizingFunctionParameterSchema(value)
+                    }
+                default:
+                    result[key] = sanitizingFunctionParameterSchema(value)
+                }
+            }
+            return result
+        }
+        if let array = object as? [Any] {
+            return array.map { sanitizingFunctionParameterSchema($0) }
+        }
+        return object
+    }
+
     init(messages: [LLM.Message],
          functions: [LLM.AnyFunction],
          hostedTools: HostedTools) {
@@ -80,7 +129,7 @@ struct GeminiRequestBuilder: Codable {
                 FunctionDeclaration(
                     name: function.decl.name,
                     description: function.decl.description,
-                    parameters: function.decl.parameters)
+                    parameters: Self.parametersForGemini(function.decl.parameters))
             }))
         } else {
             // Gemini doesn't allow both functions and hosted tools in the same call yet.

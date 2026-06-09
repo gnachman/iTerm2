@@ -63,6 +63,80 @@ private func SwiftyMarkdownForMessage(string unsafeString: String,
     return md
 }
 
+private func ReadableParagraphStyle(lineHeightMultiple: CGFloat = 1.3,
+                                    paragraphSpacing: CGFloat = 8) -> NSMutableParagraphStyle {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineBreakMode = .byWordWrapping
+    paragraphStyle.lineHeightMultiple = lineHeightMultiple
+    paragraphStyle.paragraphSpacing = paragraphSpacing
+    return paragraphStyle
+}
+
+private func ApplyReadableParagraphStyle(_ attributedString: NSAttributedString) -> NSAttributedString {
+    let result = NSMutableAttributedString(attributedString: attributedString)
+    result.enumerateAttribute(
+        .paragraphStyle,
+        in: NSRange(location: 0, length: result.length),
+        options: []) { value, range, _ in
+            let paragraphStyle = (value as? NSParagraphStyle)?.mutableCopy() as? NSMutableParagraphStyle
+                ?? ReadableParagraphStyle()
+            paragraphStyle.lineBreakMode = .byWordWrapping
+            paragraphStyle.lineHeightMultiple = max(paragraphStyle.lineHeightMultiple, 1.3)
+            paragraphStyle.paragraphSpacing = max(paragraphStyle.paragraphSpacing, 8)
+            result.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+        }
+    if result.length > 0,
+       result.attribute(.paragraphStyle, at: 0, effectiveRange: nil) == nil {
+        result.addAttribute(.paragraphStyle,
+                            value: ReadableParagraphStyle(),
+                            range: NSRange(location: 0, length: result.length))
+    }
+    return result
+}
+
+private func ApplyChatCodeBlockStyle(_ attributedString: NSAttributedString) -> NSAttributedString {
+    let result = NSMutableAttributedString(attributedString: attributedString)
+    let range = NSRange(location: 0, length: result.length)
+    let backgroundColor = NSColor.it_dynamicColor(
+        forLightMode: NSColor(fromHexString: "#eeeeee")!,
+        darkMode: NSColor(fromHexString: "#181818")!)
+    let textColor = NSColor.it_dynamicColor(
+        forLightMode: NSColor(fromHexString: "#1f1f1f")!,
+        darkMode: NSColor(fromHexString: "#f6f6f6")!)
+    let font = NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)
+        ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize,
+                                       weight: .regular)
+
+    result.enumerateAttribute(
+        NSAttributedString.Key.swiftyMarkdownLineStyle,
+        in: range,
+        options: []) { value, codeRange, _ in
+            guard value as? String == "codeblock" else {
+                return
+            }
+            let paragraphStyle = (result.attribute(.paragraphStyle,
+                                                   at: codeRange.location,
+                                                   effectiveRange: nil) as? NSParagraphStyle)?
+                .mutableCopy() as? NSMutableParagraphStyle
+                ?? ReadableParagraphStyle(lineHeightMultiple: 1.2,
+                                          paragraphSpacing: 0)
+            paragraphStyle.lineBreakMode = .byCharWrapping
+            paragraphStyle.lineHeightMultiple = 1.2
+            paragraphStyle.paragraphSpacingBefore = 0
+            paragraphStyle.paragraphSpacing = 0
+            paragraphStyle.firstLineHeadIndent = max(paragraphStyle.firstLineHeadIndent, 8)
+            paragraphStyle.headIndent = max(paragraphStyle.headIndent, 8)
+
+            result.addAttributes([
+                .backgroundColor: backgroundColor,
+                .foregroundColor: textColor,
+                .font: font,
+                .paragraphStyle: paragraphStyle
+            ], range: codeRange)
+        }
+    return result
+}
+
 func AttributedStringForSystemMessageMarkdown(_ unsafeString: String,
                                               linkColor: NSColor? = nil,
                                               didCopy: (() -> ())?) -> NSAttributedString {
@@ -70,7 +144,7 @@ func AttributedStringForSystemMessageMarkdown(_ unsafeString: String,
         string: unsafeString,
         linkColor: linkColor,
         textColor: .it_dynamicColor(forLightMode: NSColor(fromHexString: "#202020")!,
-                                    darkMode: NSColor(fromHexString: "#ffffc0")!))
+                                    darkMode: NSColor(fromHexString: "#f2f2f2")!))
     return AttributedStringForMessage(md, didCopy: didCopy)
 }
 
@@ -78,7 +152,8 @@ func AttributedStringForSystemMessagePlain(_ text: String,
                                            textColor: NSColor) -> NSAttributedString {
     let textAttributes: [NSAttributedString.Key: Any] = [
         .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
-        .foregroundColor: textColor
+        .foregroundColor: textColor,
+        .paragraphStyle: ReadableParagraphStyle()
     ]
 
     return NSAttributedString(string: text, attributes: textAttributes)
@@ -135,7 +210,8 @@ extension LLM.Message.StatusUpdate {
             "Executing code…"
         case .codeInterpreterFinished:
             "Finished executing code"
-        case .reasoningSummaryUpdate(let text): text
+        case .reasoningSummaryUpdate:
+            "Thought for a few seconds \u{203A}"
         case .multipart(let subparts):
             Self.subpartsForDisplay(subparts).map { $0.displayString }.joined(separator: "\n")
         }
@@ -155,7 +231,8 @@ extension LLM.Message.StatusUpdate {
             "Executing code…"
         case .codeInterpreterFinished:
             "Finished executing code"
-        case .reasoningSummaryUpdate(let text): text
+        case .reasoningSummaryUpdate:
+            "Thought for a few seconds \u{203A}"
         case .multipart(let subparts):
             Self.subpartsForDisplay(subparts).map { $0.displayMarkdownString }.joined(separator: "\n")
         }
@@ -164,8 +241,8 @@ extension LLM.Message.StatusUpdate {
 
 func AttributedStringForCode(_ string: String,
                              textColor: NSColor) -> NSAttributedString {
-    let paragraphStyle = NSMutableParagraphStyle()
-    paragraphStyle.lineBreakMode = .byWordWrapping
+    let paragraphStyle = ReadableParagraphStyle(lineHeightMultiple: 1.2,
+                                                paragraphSpacing: 6)
     let attributes: [NSAttributedString.Key: Any] = [
         .foregroundColor: textColor,
         .paragraphStyle: paragraphStyle,
@@ -189,52 +266,6 @@ func AttributedStringForGPTMarkdown(_ unsafeString: String,
 
 private func AttributedStringForMessage(_ md: SwiftyMarkdown,
                                         didCopy: (() -> ())?) -> NSAttributedString {
-    let attributedString = md.attributedString()
-    if #available(macOS 11.0, *) {
-        let image = NSImage(systemSymbolName: SFSymbol.docOnDoc.rawValue, accessibilityDescription: "Copy")!
-        let modified = attributedString.mutableCopy() as! NSMutableAttributedString
-        var ranges = [NSRange]()
-        let utf16String = attributedString.string.utf16
-        attributedString.enumerateAttribute(
-            NSAttributedString.Key.swiftyMarkdownLineStyle,
-            in: NSRange(from: 0, to: attributedString.length)) { value, range, stopPtr in
-            guard value as? String == "codeblock" else {
-                return
-            }
-            if let previous = ranges.last {
-                let startIndex = utf16String.index(utf16String.startIndex, offsetBy: previous.upperBound)
-                let endIndex = utf16String.index(utf16String.startIndex, offsetBy: range.lowerBound)
-                let utf16CodeUnits = Array(utf16String[startIndex..<endIndex])
-                let substringToCheck = String(utf16CodeUnits: utf16CodeUnits, count: utf16CodeUnits.count)
-                if substringToCheck.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    // The area between this range and the last contains contains only whitespace characters
-                    ranges.removeLast()
-                    ranges.append(NSRange(location: previous.location,
-                                          length: range.upperBound - previous.location))
-                    return
-                }
-            }
-            ranges.append(range)
-        }
-        if let didCopy {
-            for range in ranges.reversed() {
-                modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
-                    NSPasteboard.general.declareTypes([.string], owner: NSApp)
-                    NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
-                    ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
-                    didCopy()
-                }
-                modified.insert(
-                    NSAttributedString(
-                        string: " ",
-                        attributes: modified.attributes(
-                            at: range.location + 1,
-                            effectiveRange: nil)),
-                    at: range.location + 1)
-            }
-        }
-        return modified
-    } else {
-        return attributedString
-    }
+    return ApplyChatCodeBlockStyle(
+        ApplyReadableParagraphStyle(md.attributedString()))
 }
