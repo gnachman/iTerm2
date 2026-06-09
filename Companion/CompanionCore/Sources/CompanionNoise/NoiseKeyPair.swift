@@ -11,7 +11,7 @@
 import Foundation
 import CNoise
 
-public struct NoiseKeyPair: Equatable {
+public struct NoiseKeyPair: Equatable, Sendable {
     /// 32-byte X25519 private key.
     public let privateKey: Data
     /// 32-byte X25519 public key, derived from the private key.
