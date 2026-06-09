@@ -1489,9 +1489,8 @@ Bug Fixes:
   menu.
 - AI Chat now locks the provider picker
   immediately after a conversation starts.
-- AI Chat now lets started manual-config
-  chats switch among manual models while
-  keeping the provider group locked.
+- AI Chat now locks the model picker
+  immediately after a conversation starts.
 - AI Chat now shows orchestration terminal
   command results as raw code blocks and
   keeps session GUIDs out of user-facing
@@ -1499,7 +1498,3 @@ Bug Fixes:
 - AI settings now choose the default
   model for new chats from one selector,
   including saved manual AI models.
-- AI Chat keeps the manual model picker
-  enabled after a Manual Configs chat
-  has started when more than one saved
-  manual model is available.

@@ -2849,6 +2849,10 @@ extension ChatViewController: ChatToolbarDataSource {
         return chatID != nil && !chatProviderIsLocked
     }
 
+    var canChangeModel: Bool {
+        return chatID != nil && !chatProviderIsLocked
+    }
+
     var availableModels: [AIMetadata.Model] {
         if currentProviderIdentifier == ChatProviderOption.manualIdentifier {
             return manualConfiguredModels
@@ -3057,26 +3061,13 @@ extension ChatViewController: ChatToolbarDataSource {
     }
 
     func selectedModelDidChange() {
+        guard canChangeModel else {
+            chatToolbar.update()
+            return
+        }
         guard let modelName = chatToolbar.selectedModelIdentifier,
               let selectedModel = model(named: modelName) else {
             return
-        }
-        if chatProviderIsLocked {
-            let manualModels = manualConfiguredModels
-            let currentIsManual = effectiveChatModel.map { currentModel in
-                manualModels.contains(where: { $0.name == currentModel.name })
-            } ?? false
-            let selectedIsManual = manualModels.contains(where: { $0.name == selectedModel.name })
-            if currentIsManual != selectedIsManual {
-                chatToolbar.update()
-                return
-            }
-            if !currentIsManual,
-               let currentVendor = effectiveChatModel?.vendor,
-               selectedModel.vendor != currentVendor {
-                chatToolbar.update()
-                return
-            }
         }
         setCurrentChatModelIfNeeded(modelName)
     }

@@ -63,6 +63,7 @@ protocol ChatToolbarDataSource: AnyObject {
     var availableProviderOptions: [ChatProviderOption] { get }
     var effectiveProviderIdentifier: String? { get }
     var canChangeProvider: Bool { get }
+    var canChangeModel: Bool { get }
     var webSearchEnabled: Bool { get }
     var thinkingEnabled: Bool { get }
     var selectedReasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? { get }
@@ -411,10 +412,15 @@ extension ChatToolbar {
             modelSelector.lastItem?.representedObject = model.name
         }
 
-        modelSelector.isEnabled = availableModels.count > 1
-        modelSelector.toolTip = modelSelector.isEnabled
-            ? "Select a model for this chat. Manual Configs chats can switch among saved manual models."
-            : "Only one model is available for this chat."
+        let canChangeModel = dataSource?.canChangeModel ?? false
+        modelSelector.isEnabled = canChangeModel && availableModels.count > 1
+        if !canChangeModel {
+            modelSelector.toolTip = "The model is fixed after the chat starts."
+        } else if availableModels.count > 1 {
+            modelSelector.toolTip = "Select a model for this chat."
+        } else {
+            modelSelector.toolTip = "Only one model is available for this chat."
+        }
         if let selectedModel = dataSource?.effectiveModel {
             modelSelector.selectItem(withTitle: selectedModel)
         } else if !availableModels.isEmpty {
