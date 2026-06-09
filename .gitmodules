@@ -55,3 +55,6 @@
 [submodule "submodules/SFSymbolEnum"]
 	path = submodules/SFSymbolEnum
 	url = https://github.com/gnachman/SFSymbolEnum
+[submodule "Companion/CompanionCore/Sources/CNoise/vendor"]
+	path = Companion/CompanionCore/Sources/CNoise/vendor
+	url = https://github.com/rweather/noise-c.git
