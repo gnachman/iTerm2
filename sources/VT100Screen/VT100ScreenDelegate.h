@@ -71,7 +71,7 @@ typedef NS_ENUM(NSInteger, iTermLinesShiftedReason) {
 - (void)triggerSideEffectShowCapturedOutputTool;
 - (void)triggerSessionSetBufferInput:(BOOL)shouldBuffer;
 - (void)triggerSideEffectEnterWorkgroupWithIdentifier:(NSString * _Nonnull)workgroupUniqueIdentifier;
-- (void)triggerSideEffectExitWorkgroup;
+- (void)triggerSideEffectExitWorkgroupLeaderOnly:(BOOL)leaderOnly;
 
 @end
 

@@ -2303,7 +2303,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
-    func triggerSideEffectExitWorkgroup() {
+    func triggerSideEffectExitWorkgroup(leaderOnly: Bool) {
 
     }
 

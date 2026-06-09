@@ -13,6 +13,10 @@ import Foundation
 // when claude finishes.
 @objc(iTermExitWorkgroupTrigger)
 class ExitWorkgroupTrigger: Trigger {
+    // Key under which the leader-only flag is stored in the trigger's
+    // eventParams. Shared with the editor UI and the Claude Code installer.
+    @objc static let leaderOnlyParamKey = "leaderOnly"
+
     override static var title: String {
         return "Exit Workgroup"
     }
@@ -27,6 +31,20 @@ class ExitWorkgroupTrigger: Trigger {
 
     override var isIdempotent: Bool {
         return true
+    }
+
+    override var hasLeaderOnlyOption: Bool {
+        return true
+    }
+
+    // When true, exiting only happens if this trigger fired on the workgroup
+    // leader (main session). The claude-code installer sets this so a peer
+    // (Code Review, Diff) whose own claude ends or reloads doesn't tear down
+    // the whole workgroup. Stored in eventParams so it round-trips with the
+    // rest of the trigger's serialized configuration. Defaults to false, which
+    // preserves the legacy behavior of exiting from whichever session matched.
+    @objc var leaderOnly: Bool {
+        return (eventParams?[Self.leaderOnlyParamKey] as? NSNumber)?.boolValue ?? false
     }
 
     // Live session required to exit a workgroup on it.
@@ -45,8 +63,9 @@ class ExitWorkgroupTrigger: Trigger {
                                 stop: UnsafeMutablePointer<ObjCBool>) -> Bool {
         let scopeProvider = session.triggerSessionVariableScopeProvider(self)
         let scheduler = scopeProvider.triggerCallbackScheduler()
+        let leaderOnly = self.leaderOnly
         scheduler.scheduleTriggerCallback {
-            session.triggerSessionExitWorkgroup(self)
+            session.triggerSessionExitWorkgroup(self, leaderOnly: leaderOnly)
         }
         return true
     }

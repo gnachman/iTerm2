@@ -7396,9 +7396,9 @@ launchCoprocessWithCommand:(NSString *)command
     } name:@"trigger enter workgroup"];
 }
 
-- (void)triggerSessionExitWorkgroup:(Trigger *)trigger {
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger leaderOnly:(BOOL)leaderOnly {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate triggerSideEffectExitWorkgroup];
+        [delegate triggerSideEffectExitWorkgroupLeaderOnly:leaderOnly];
     } name:@"trigger exit workgroup"];
 }
 

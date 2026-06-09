@@ -38,6 +38,7 @@ static const CGFloat kLabelWidth = 124;
     NSTextField *_regexLabel;
     NSPopUpButton *_actionButton;
     NSView *_paramContainerView;
+    NSView *_paramWrapperView;
     NSButton *_instantButton;
     NSButton *_updateProfileButton;
     NSButton *_okButton;
@@ -70,6 +71,8 @@ static const CGFloat kLabelWidth = 124;
     iTermEventTriggerParameterView *_eventParamView;
     NSView *_regexRow;
     NSView *_eventParamRow;
+    NSView *_leaderOnlyRow;
+    NSButton *_leaderOnlyButton;
 }
 
 + (void)addTriggerForText:(NSString *)text
@@ -241,6 +244,11 @@ static const CGFloat kLabelWidth = 124;
     _currentTrigger = [Trigger triggerFromUntrustedDict:trigger.dictionaryValue];
     ITAssertWithMessage(_currentTrigger != nil, @"Failed with %@", trigger.dictionaryValue);  // If this fails then a trigger is not round-tripping to its dictionary representation.
     [self updateCustomViewForTrigger:_currentTrigger value:_currentTrigger.param];
+    // The leader-only option applies to any match type (it's an action option,
+    // not an event-match parameter), so it lives in its own row rather than the
+    // event-parameter view. The flag is stored in eventParams.
+    _leaderOnlyRow.hidden = !_currentTrigger.hasLeaderOnlyOption;
+    _leaderOnlyButton.state = [trigger.eventParams[iTermExitWorkgroupTrigger.leaderOnlyParamKey] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     _visualizationViewController.regex = _regex ?: @"";
     _contentRegexVisualizationViewController.regex = _contentRegex ?: @"";
     _matchType = trigger.matchType;
@@ -362,6 +370,7 @@ static const CGFloat kLabelWidth = 124;
     
     // Param container - create a wrapper view for right alignment
     NSView *paramWrapperView = [[NSView alloc] init];
+    _paramWrapperView = paramWrapperView;
     paramWrapperView.translatesAutoresizingMaskIntoConstraints = NO;
     
     _paramContainerView = [[NSView alloc] init];
@@ -399,7 +408,13 @@ static const CGFloat kLabelWidth = 124;
                                                                   constant:0]];
     
     [stackView addArrangedSubview:paramWrapperView];
-    
+
+    // Leader-only row (initially hidden; shown for triggers that support it,
+    // e.g. Exit Workgroup, regardless of match type).
+    _leaderOnlyRow = [self createLeaderOnlyRow];
+    _leaderOnlyRow.hidden = YES;
+    [stackView addArrangedSubview:_leaderOnlyRow];
+
     // Performance graph row with label (initially hidden)
     NSView *performanceRow = [[NSView alloc] init];
     performanceRow.translatesAutoresizingMaskIntoConstraints = NO;
@@ -1173,10 +1188,73 @@ static const CGFloat kLabelWidth = 124;
     return row;
 }
 
+- (NSView *)createLeaderOnlyRow {
+    NSView *row = [[NSView alloc] init];
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+
+    _leaderOnlyButton = [[NSButton alloc] init];
+    _leaderOnlyButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _leaderOnlyButton.buttonType = NSButtonTypeSwitch;
+    _leaderOnlyButton.title = @"Only on the workgroup leader";
+    _leaderOnlyButton.toolTip = @"When set, the trigger fires only for the workgroup leader (the session that originally entered the workgroup). Peers such as the Code Review and Diff sessions do not, so reloading or quitting one keeps the workgroup open.";
+    _leaderOnlyButton.target = self;
+    _leaderOnlyButton.action = @selector(leaderOnlyDidChange:);
+    [row addSubview:_leaderOnlyButton];
+
+    // Leading spacer so the checkbox aligns with the text fields/controls.
+    NSView *spacer = [[NSView alloc] init];
+    spacer.translatesAutoresizingMaskIntoConstraints = NO;
+    [row addSubview:spacer];
+
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:spacer
+                                                    attribute:NSLayoutAttributeLeading
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:row
+                                                    attribute:NSLayoutAttributeLeading
+                                                   multiplier:1.0
+                                                     constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:spacer
+                                                    attribute:NSLayoutAttributeWidth
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:nil
+                                                    attribute:NSLayoutAttributeNotAnAttribute
+                                                   multiplier:1.0
+                                                     constant:kLabelWidth + 6]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_leaderOnlyButton
+                                                    attribute:NSLayoutAttributeLeading
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:spacer
+                                                    attribute:NSLayoutAttributeTrailing
+                                                   multiplier:1.0
+                                                     constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:_leaderOnlyButton
+                                                    attribute:NSLayoutAttributeCenterY
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:row
+                                                    attribute:NSLayoutAttributeCenterY
+                                                   multiplier:1.0
+                                                     constant:0]];
+    [row addConstraint:[NSLayoutConstraint constraintWithItem:row
+                                                    attribute:NSLayoutAttributeHeight
+                                                    relatedBy:NSLayoutRelationEqual
+                                                       toItem:nil
+                                                    attribute:NSLayoutAttributeNotAnAttribute
+                                                   multiplier:1.0
+                                                     constant:18]];
+
+    return row;
+}
+
+- (void)leaderOnlyDidChange:(id)sender {
+    if (_didChange) {
+        _didChange();
+    }
+}
+
 - (NSView *)createActionRow {
     NSView *row = [[NSView alloc] init];
     row.translatesAutoresizingMaskIntoConstraints = NO;
-    
+
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
@@ -1576,12 +1654,12 @@ static const CGFloat kLabelWidth = 124;
                                                         kTriggerNameKey: _nameTextField.stringValue ?: [NSNull null],
                                                         kTriggerJobKey: _jobTextField.stringValue.length > 0 ? _jobTextField.stringValue : [NSNull null] } mutableCopy];
 
-    // Add event params for event triggers
-    if (isEventTrigger && _eventParamView) {
-        NSDictionary *eventParams = _eventParamView.eventParams;
-        if (eventParams.count > 0) {
-            mutableTriggerDictionary[kTriggerEventParamsKey] = eventParams;
-        }
+    // Add event params. self.eventParams merges the event-match params (for
+    // event triggers) with the leader-only flag, which applies to any match
+    // type, so this also covers a regex-based Exit Workgroup trigger.
+    NSDictionary *eventParams = self.eventParams;
+    if (eventParams.count > 0) {
+        mutableTriggerDictionary[kTriggerEventParamsKey] = eventParams;
     }
 
     NSDictionary *triggerDictionary = [mutableTriggerDictionary dictionaryByRemovingNullValues];
@@ -1609,6 +1687,12 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (void)updateCustomViewForTrigger:(Trigger *)trigger value:(id)value {
+    // Collapse the parameter row when the trigger has no parameter (e.g. Exit
+    // Workgroup); otherwise its empty 21pt height plus the stack's spacing
+    // leaves a large gap above whatever follows. NSStackView detaches hidden
+    // arranged subviews, removing their spacing too.
+    _paramWrapperView.hidden = ![trigger takesParameter];
+
     id delegateToSave;
     NSView *view = [TriggerController viewForParameterForTrigger:trigger
                                                             size:NSMakeSize(320, 21)
@@ -1739,10 +1823,17 @@ static const CGFloat kLabelWidth = 124;
 }
 
 - (NSDictionary<NSString *, id> *)eventParams {
+    NSMutableDictionary<NSString *, id> *result = [NSMutableDictionary dictionary];
     if (iTermTriggerMatchTypeIsEvent(_matchType) && _eventParamView) {
-        return _eventParamView.eventParams;
+        [result addEntriesFromDictionary:_eventParamView.eventParams];
     }
-    return nil;
+    // The leader-only flag lives in eventParams but applies to any match type,
+    // so it's collected from its own row here rather than from the event view.
+    if (_currentTrigger.hasLeaderOnlyOption &&
+        _leaderOnlyButton.state == NSControlStateValueOn) {
+        result[iTermExitWorkgroupTrigger.leaderOnlyParamKey] = @YES;
+    }
+    return result.count > 0 ? result : nil;
 }
 
 - (void)willHide {

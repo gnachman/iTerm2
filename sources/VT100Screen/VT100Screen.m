@@ -2335,8 +2335,8 @@ launchCoprocessWithCommand:(NSString *)command
     [self.delegate triggerSideEffectEnterWorkgroupWithIdentifier:workgroupUniqueIdentifier];
 }
 
-- (void)triggerSessionExitWorkgroup:(Trigger *)trigger {
-    [self.delegate triggerSideEffectExitWorkgroup];
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger leaderOnly:(BOOL)leaderOnly {
+    [self.delegate triggerSideEffectExitWorkgroupLeaderOnly:leaderOnly];
 }
 
 - (void)triggerSession:(Trigger *)trigger

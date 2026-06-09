@@ -1612,6 +1612,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     // (called constantly) can read user defaults instead of re-
     // walking ~/.claude/settings.json or every profile's trigger list.
     [iTermClaudeCodeOnboarding reconcileHooksCache];
+    // Backfill the leader-only flag on existing Claude Code Exit Workgroup
+    // triggers for users upgrading from a build that predates it. Runs before
+    // reconcileTriggersCache so the cached "triggers installed" flag reflects
+    // the migrated (now-flagged) state this launch rather than next launch.
+    [iTermClaudeCodeOnboarding migrateExitTriggersToLeaderOnlyIfNeeded];
     [iTermClaudeCodeOnboarding reconcileTriggersCache];
 
     // Sticky claudeCodeIntegrationCompleted flag was added after

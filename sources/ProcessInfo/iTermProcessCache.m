@@ -16,6 +16,10 @@
 #import "NSArray+iTerm.h"
 #import <stdatomic.h>
 
+NSNotificationName const iTermProcessCacheForegroundJobAncestorsDidChangeNotification = @"iTermProcessCacheForegroundJobAncestorsDidChangeNotification";
+NSString *const iTermProcessCacheForegroundJobAncestorsPidKey = @"pid";
+NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
+
 @interface iTermProcessCache()
 
 // Maps process id to deepest foreground job. _lockQueue
@@ -32,6 +36,10 @@
     BOOL _needsUpdateFlagLQ;  // _lockQueue
     iTermRateLimitedUpdate *_rateLimit;  // Main queue. keeps updateIfNeeded from eating all the CPU
     NSMutableIndexSet *_dirtyPIDsLQ;  // _lockQueue
+    // Last foreground-job ancestry (deepest first, lowercased) posted for each
+    // tracked root pid. Used to diff and emit
+    // iTermProcessCacheForegroundJobAncestorsDidChangeNotification. _lockQueue
+    NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *_lastAncestorsByPidLQ;
 }
 
 + (instancetype)sharedInstance {
@@ -50,6 +58,7 @@
         _workQueue = dispatch_queue_create("com.iterm2.process-cache-work", DISPATCH_QUEUE_SERIAL);
         _trackedPidsLQ = [NSMutableDictionary dictionary];
         _dirtyPIDsLQ = [NSMutableIndexSet indexSet];
+        _lastAncestorsByPidLQ = [NSMutableDictionary dictionary];
         _blocksLQ = [NSMutableArray array];
 
         // I'm not fond of this pattern (code that sometimes is synchronous and sometimes not) but
@@ -271,6 +280,16 @@
 - (void)unregisterTrackedPID:(pid_t)pid {
     dispatch_async(_lockQueue, ^{
         [self->_trackedPidsLQ removeObjectForKey:@(pid)];
+        // The program is gone. Emit a final empty-ancestry change so job-ended
+        // triggers fire deterministically even when the process dies together
+        // with the session (the case the title poll misses, because polling
+        // freezes once the session has exited). Done here rather than relying
+        // on a rescan because unregister + reap can race the rescan.
+        NSArray<NSString *> *oldAncestors = self->_lastAncestorsByPidLQ[@(pid)];
+        [self->_lastAncestorsByPidLQ removeObjectForKey:@(pid)];
+        if (oldAncestors.count > 0) {
+            [self postForegroundJobAncestorChanges:@{ @(pid): @[] }];
+        }
     });
 }
 
@@ -345,6 +364,7 @@
         NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = [self newDeepestForegroundJobCacheWithCollection:collection];
 
         // Flip to the new state.
+        NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *ancestorChanges = [NSMutableDictionary dictionary];
         dispatch_sync(_lockQueue, ^{
             self->_cachedDeepestForegroundJobLQ = cachedDeepestForegroundJob;
             self->_collectionLQ = collection;
@@ -355,9 +375,34 @@
                     DLog(@"%@ changed! Set dirty", @(info.processID));
                     [_dirtyPIDsLQ addIndex:key.intValue];
                 }
+                // Diff the foreground-job ancestry so we can emit an
+                // event-driven notification (job started/ended) without
+                // waiting for the consumer's title poll.
+                NSArray<NSString *> *newAncestors = cachedDeepestForegroundJob[key].foregroundJobAncestorNames ?: @[];
+                NSArray<NSString *> *oldAncestors = self->_lastAncestorsByPidLQ[key] ?: @[];
+                if (![newAncestors isEqualToArray:oldAncestors]) {
+                    self->_lastAncestorsByPidLQ[key] = newAncestors;
+                    ancestorChanges[key] = newAncestors;
+                }
             }];
         });
+        [self postForegroundJobAncestorChanges:ancestorChanges];
     }
+}
+
+// Any queue. Posts one notification per changed tracked pid on the main queue.
+- (void)postForegroundJobAncestorChanges:(NSDictionary<NSNumber *, NSArray<NSString *> *> *)changes {
+    if (changes.count == 0) {
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [changes enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull pid, NSArray<NSString *> * _Nonnull ancestors, BOOL * _Nonnull stop) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermProcessCacheForegroundJobAncestorsDidChangeNotification
+                                                                object:self
+                                                              userInfo:@{ iTermProcessCacheForegroundJobAncestorsPidKey: pid,
+                                                                          iTermProcessCacheForegroundJobAncestorsKey: ancestors }];
+        }];
+    });
 }
 
 #pragma mark - Notifications

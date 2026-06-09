@@ -891,6 +891,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                      name:kCoprocessStatusChangeNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(foregroundJobAncestorsDidChange:)
+                                                     name:iTermProcessCacheForegroundJobAncestorsDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionContentsChanged:)
                                                      name:@"iTermTabContentsChanged"
                                                    object:nil];
@@ -7032,12 +7036,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // stopping before the login shell. This lets triggers and monitors match on the user's command
     // (e.g. "claude") even when a child process (e.g. caffeinate) is the deepest foreground job.
     NSArray<NSString *> *ancestorNames = processInfo.foregroundJobAncestorNames;
-    [self.variablesScope setValue:[ancestorNames componentsJoinedByString:@"\n"]
-                forVariableNamed:iTermVariableKeySessionForegroundJobAncestors];
-
     DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job ancestors to %@ for trigger filtering", ancestorNames);
-    [_screen setForegroundJobAncestorsForTriggerFiltering:ancestorNames];
-    _eventTriggerEvaluator.foregroundJobAncestors = ancestorNames;
+    [self applyForegroundJobAncestors:ancestorNames];
 
     if ([name isEqualToString:@"sudo"]) {
         [self checkForSudoPasswordPromptToOfferTouchID];
@@ -7074,6 +7074,37 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                job:processInfo.name
                                        commandLine:processInfo.commandLine];
     });
+}
+
+// Single funnel for pushing the foreground-job ancestry to the variable, the
+// screen (trigger filtering), and the event trigger evaluator. Fed by both the
+// periodic title poll (setCurrentForegroundJobProcessInfo:) and the
+// event-driven process-cache notification (foregroundJobAncestorsDidChange:).
+- (void)applyForegroundJobAncestors:(NSArray<NSString *> *)ancestorNames {
+    [iTermGCD assertMainQueueSafe];
+    [self.variablesScope setValue:[(ancestorNames ?: @[]) componentsJoinedByString:@"\n"]
+                 forVariableNamed:iTermVariableKeySessionForegroundJobAncestors];
+    [_screen setForegroundJobAncestorsForTriggerFiltering:ancestorNames];
+    _eventTriggerEvaluator.foregroundJobAncestors = ancestorNames;
+}
+
+// Event-driven foreground-job ancestry change from iTermProcessCache. This is
+// what makes job started/ended fire reliably even when the program dies with
+// the session (the title poll freezes once the session has exited, so the
+// final "job gone" transition would otherwise never be observed).
+- (void)foregroundJobAncestorsDidChange:(NSNotification *)notification {
+    const pid_t pid = [notification.userInfo[iTermProcessCacheForegroundJobAncestorsPidKey] intValue];
+    // Match the cache's tracked root pid, which is the tmux client pid for a
+    // tmux integration session (PTYTask registers tmuxClientProcessID) and the
+    // shell pid otherwise. This mirrors the effective pid the title poll uses
+    // in setCurrentForegroundJobProcessInfo:; without it the event-driven path
+    // would never match a tmux session and silently fall back to poll-only.
+    const pid_t effectivePid = _shell.tmuxClientProcessID ? _shell.tmuxClientProcessID.intValue : _shell.pid;
+    if (pid != effectivePid) {
+        return;
+    }
+    NSArray<NSString *> *ancestors = notification.userInfo[iTermProcessCacheForegroundJobAncestorsKey];
+    [self applyForegroundJobAncestors:ancestors];
 }
 
 - (void)refresh {
@@ -23431,19 +23462,32 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     });
 }
 
-- (void)triggerSideEffectExitWorkgroup {
+- (void)triggerSideEffectExitWorkgroupLeaderOnly:(BOOL)leaderOnly {
     [iTermGCD assertMainQueueSafe];
-    // No-op if not in a workgroup. Same dispatch_async deferral as
-    // the enter side: we're inside a screen side-effect, and the
-    // teardown path can call into PTYTab/PseudoTerminal which trip
-    // the "not currently performing a side effect" assert.
+    // No-op if not in a workgroup. When leaderOnly is set (the claude-code
+    // installer sets it on its "Job Ended: claude" Exit Workgroup trigger),
+    // only the workgroup leader (main session) may exit. Peers inherit the
+    // leader's profile and thus this trigger; their own claude ending or
+    // reloading must not tear down the whole workgroup. A leaderOnly=NO
+    // trigger (e.g. one a user added by hand) keeps the legacy behavior of
+    // exiting from whichever session it fired on.
+    //
+    // Same dispatch_async deferral as the enter side: we're inside a screen
+    // side-effect, and the teardown path can call into PTYTab/PseudoTerminal
+    // which trip the "not currently performing a side effect" assert.
     if (self.workgroupInstance == nil) {
+        return;
+    }
+    if (leaderOnly && self.workgroupInstance.mainSession != self) {
         return;
     }
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf || strongSelf.workgroupInstance == nil) {
+            return;
+        }
+        if (leaderOnly && strongSelf.workgroupInstance.mainSession != strongSelf) {
             return;
         }
         [iTermWorkgroupController.instance exitOn:strongSelf];

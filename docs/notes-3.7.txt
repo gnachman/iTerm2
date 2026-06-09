@@ -1394,3 +1394,20 @@ Bug Fixes:
   Notify-on-status-change now works
   whether or not the Session Status
   toolbelt tool is open.
+- Killing or reloading claude in a Claude
+  Code workgroup peer (such as the Code
+  Review or Diff peer) no longer exits the
+  whole workgroup. The Exit Workgroup
+  trigger has a new leader-only option, set
+  by the Claude Code installer, so only the
+  main session's claude ending tears the
+  workgroup down. Existing setups are
+  upgraded automatically.
+- Job Ended triggers now fire reliably
+  when a foreground job exits, including
+  when it exits together with the
+  session. Job started/ended detection is
+  now event driven (from the process
+  monitor) rather than inferred from the
+  periodic title poll, which could miss a
+  job's termination.
