@@ -287,31 +287,17 @@ final class AILiveHarness: XCTestCase {
     convincing.
     """
 
-    /// Tiny PNG with the digit "42" rendered onto a white background.
-    /// Generated lazily at first use. Used by the imageDescribe scenario:
-    /// vision-capable models OCR the digits, so we can assert the response
-    /// contains "42" without depending on subjective image-describing.
+    /// Tiny PNG with the digit "42" rendered onto a white background, used by
+    /// the imageDescribe scenario: vision-capable models OCR the digits, so we
+    /// can assert the response contains "42" without depending on subjective
+    /// image-describing. Loaded from the committed static fixture rather than
+    /// rendered per run: NSImage.lockFocus encodes at the host's screen scale,
+    /// so a runtime bitmap differs between a Retina dev machine and a headless
+    /// CI runner, which breaks cassette matching. Regenerate with
+    /// AILiveAttachmentFixtures.regenerateStaticProbeFixtures() (writes
+    /// number.png via the same renderer).
     private static let imagePngBytes: Data = {
-        let size = CGSize(width: 200, height: 120)
-        let image = NSImage(size: size)
-        image.lockFocus()
-        NSColor.white.setFill()
-        NSRect(origin: .zero, size: size).fill()
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: NSFont.boldSystemFont(ofSize: 80),
-            .foregroundColor: NSColor.black,
-        ]
-        let str = NSAttributedString(string: "42", attributes: attrs)
-        let strSize = str.size()
-        str.draw(at: CGPoint(x: (size.width - strSize.width) / 2,
-                             y: (size.height - strSize.height) / 2))
-        image.unlockFocus()
-        guard let tiff = image.tiffRepresentation,
-              let rep = NSBitmapImageRep(data: tiff),
-              let png = rep.representation(using: .png, properties: [:]) else {
-            return Data()
-        }
-        return png
+        (try? loadBinaryFixture("number.png")) ?? Data()
     }()
 
     private func runImageDescribe(vendor: String, modelName: String, apiKey: String) {

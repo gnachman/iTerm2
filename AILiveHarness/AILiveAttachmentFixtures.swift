@@ -9,12 +9,17 @@
 //  be unambiguous, so a non-empty matching response is strong evidence
 //  the vendor actually parsed the attachment (vs hallucinating).
 //
-//  Programmatic fixtures (image PNG/WEBP/HEIC/TIFF, PDF, ZIP, plain text,
-//  SVG, etc.) are generated in-test for determinism. The four content-rich
-//  binaries (DOCX, XLSX, MP3, MP4) load from
-//  ModernTests/Resources/AttachmentFixtures/, which means the project root
-//  must be discoverable at runtime (run_ai_live.sh writes PROJECT_ROOT into
-//  the temp config file).
+//  Text-shaped fixtures (plain/markdown/json/xml/yaml, SVG) are built in
+//  line from string literals: those are byte-identical everywhere. The
+//  binary fixtures (image PNG/WEBP/HEIC/TIFF, PDF, ZIP, DOCX, MP3, MP4)
+//  load from ModernTests/Resources/AttachmentFixtures/ instead: their
+//  encoders embed timestamps or are OS/codec/DPI-dependent, so generating
+//  them per run is never byte-identical across machines and the cassette
+//  layer can't match them on a different host (e.g. the CI runner). The
+//  images and the timestamped pdf/zip are regenerated on demand by
+//  regenerateStaticProbeFixtures(); the content-rich media are authored
+//  externally. Loading requires the project root to be discoverable at
+//  runtime (run_ai_live.sh writes PROJECT_ROOT into the temp config file).
 //
 
 import Foundation
@@ -135,10 +140,16 @@ enum AILiveAttachmentFixtures {
                 acceptanceProbes: [textProbe])
 
         case .imagePNG:
+            // Static fixture, not generated per run. Runtime image encoders
+            // are OS/codec-dependent (most acutely HEIC), so a per-run bitmap
+            // is not byte-identical across machines and the cassette layer
+            // can't match it on a different host (e.g. the CI runner).
+            // Committed like the other binary fixtures; regenerate with
+            // regenerateStaticProbeFixtures().
             return AILiveAttachmentFixture(
                 mime: "image/png",
                 filename: "magic.png",
-                bytes: try renderDigitsImage(format: .png),
+                bytes: try loadDiskFixture("magic.png"),
                 prompt: "What word do you see in this image? Reply with just the word.",
                 acceptanceProbes: [visualProbe])
 
@@ -155,18 +166,22 @@ enum AILiveAttachmentFixtures {
                 acceptanceProbes: [visualProbe])
 
         case .imageHEIC:
+            // Static fixture (see imagePNG). HEIC is the worst offender: its
+            // HEVC encoder differs by OS build and architecture, so a per-run
+            // file never matches a cassette recorded on another host.
             return AILiveAttachmentFixture(
                 mime: "image/heic",
                 filename: "magic.heic",
-                bytes: try renderDigitsImage(format: .heic),
+                bytes: try loadDiskFixture("magic.heic"),
                 prompt: "What word do you see in this image? Reply with just the word.",
                 acceptanceProbes: [visualProbe])
 
         case .imageTIFF:
+            // Static fixture (see imagePNG).
             return AILiveAttachmentFixture(
                 mime: "image/tiff",
                 filename: "magic.tiff",
-                bytes: try renderDigitsImage(format: .tiff),
+                bytes: try loadDiskFixture("magic.tiff"),
                 prompt: "What word do you see in this image? Reply with just the word.",
                 acceptanceProbes: [visualProbe])
 
@@ -351,24 +366,74 @@ enum AILiveAttachmentFixtures {
         return buffer as Data
     }
 
+    /// Renders the "42" digits image used by the imageDescribe scenario.
+    /// Kept byte-for-byte identical to the historical inline renderer so the
+    /// frozen number.png matches cassettes recorded before it was made static.
+    static func renderNumberImage() throws -> Data {
+        let size = CGSize(width: 200, height: 120)
+        let image = NSImage(size: size)
+        image.lockFocus()
+        NSColor.white.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.boldSystemFont(ofSize: 80),
+            .foregroundColor: NSColor.black,
+        ]
+        let str = NSAttributedString(string: "42", attributes: attrs)
+        let strSize = str.size()
+        str.draw(at: CGPoint(x: (size.width - strSize.width) / 2,
+                             y: (size.height - strSize.height) / 2))
+        image.unlockFocus()
+        guard let tiff = image.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff),
+              let png = rep.representation(using: .png, properties: [:]) else {
+            throw AILiveAttachmentFixtureError.imageEncodeFailed(format: "png")
+        }
+        return png
+    }
+
     // MARK: - Static-fixture regeneration
 
-    /// Rewrites the two timestamp-bearing probe fixtures (magic.pdf, magic.zip)
-    /// in ModernTests/Resources/AttachmentFixtures. They embed a wall-clock
-    /// value (PDF /CreationDate, ZIP mtime) so a per-run build is never
-    /// byte-identical; committing them static keeps the attachment matrix
-    /// cacheable. Opt-in, driven by AILiveHarness.test_regenerateProbeAttachmentFixtures.
-    /// Run after changing visualProbe / textProbe or the generators. Returns
-    /// the directory written to.
+    /// Rewrites every regenerable probe fixture (images + timestamped pdf/zip)
+    /// in ModernTests/Resources/AttachmentFixtures. Opt-in, driven by
+    /// AILiveHarness.test_regenerateProbeAttachmentFixtures. Run after changing
+    /// visualProbe / textProbe or the generators, then re-record the affected
+    /// cassettes. Returns the directory written to.
+    ///
+    /// Note: regenerating the pdf/zip changes their embedded timestamp, so it
+    /// invalidates the pdf/zip cassettes. When you only need to (re)freeze the
+    /// images (e.g. they drifted on a new OS), call regenerateImageFixtures
+    /// directly so the timestamped fixtures and their cassettes are untouched.
     @discardableResult
     static func regenerateStaticProbeFixtures() throws -> String {
-        guard let root = projectRoot() else {
-            throw AILiveAttachmentFixtureError.projectRootMissing
-        }
-        let dir = (root as NSString).appendingPathComponent("ModernTests")
-            + "/Resources/AttachmentFixtures"
-        let dirURL = URL(fileURLWithPath: dir)
+        try regenerateImageFixtures()
+        return try regenerateTimestampedFixtures()
+    }
 
+    /// Freezes the image probe fixtures. Encoders are OS/codec/DPI-dependent
+    /// (HEIC's HEVC encoder and NSImage.lockFocus's screen scale most acutely),
+    /// so these are committed static rather than generated per run, which would
+    /// never be byte-identical across machines and so couldn't be cassette-
+    /// matched on a different host (e.g. the CI runner). magic.* carry the
+    /// visualProbe; number.png carries the "42" digits the imageDescribe
+    /// scenario asserts on. Run on the same host that records the cassettes.
+    @discardableResult
+    static func regenerateImageFixtures() throws -> String {
+        let dirURL = try fixturesDirectoryURL()
+        try renderDigitsImage(format: .png).write(to: dirURL.appendingPathComponent("magic.png"))
+        try renderDigitsImage(format: .heic).write(to: dirURL.appendingPathComponent("magic.heic"))
+        try renderDigitsImage(format: .tiff).write(to: dirURL.appendingPathComponent("magic.tiff"))
+        try renderNumberImage().write(to: dirURL.appendingPathComponent("number.png"))
+        return dirURL.path
+    }
+
+    /// Rewrites the timestamp-bearing probe fixtures (magic.pdf, magic.zip).
+    /// They embed a wall-clock value (PDF /CreationDate, ZIP mtime) so a per-run
+    /// build is never byte-identical; committing them static keeps the matrix
+    /// cacheable. Changes their bytes, so re-record the pdf/zip cassettes after.
+    @discardableResult
+    static func regenerateTimestampedFixtures() throws -> String {
+        let dirURL = try fixturesDirectoryURL()
         try renderProbePDF().write(to: dirURL.appendingPathComponent("magic.pdf"))
 
         // The payload is padded with repetitive content so the zip command's
@@ -380,8 +445,16 @@ enum AILiveAttachmentFixtures {
         let payload = padding + "\nThe magic phrase is \(textProbe).\n" + padding
         try zipSingleFile(name: "magic.txt", content: Data(payload.utf8))
             .write(to: dirURL.appendingPathComponent("magic.zip"))
+        return dirURL.path
+    }
 
-        return dir
+    private static func fixturesDirectoryURL() throws -> URL {
+        guard let root = projectRoot() else {
+            throw AILiveAttachmentFixtureError.projectRootMissing
+        }
+        let dir = (root as NSString).appendingPathComponent("ModernTests")
+            + "/Resources/AttachmentFixtures"
+        return URL(fileURLWithPath: dir)
     }
 
     // MARK: - PDF rendering

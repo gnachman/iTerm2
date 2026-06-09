@@ -207,25 +207,40 @@ extension AILiveHarness {
 
     // MARK: - Static probe-fixture regeneration (opt-in)
 
-    /// Rewrites the committed magic.pdf / magic.zip probe fixtures. They embed
-    /// a wall-clock timestamp (PDF /CreationDate, ZIP mtime), so they are
-    /// committed static rather than generated per run (which would never be
-    /// byte-identical and so couldn't be cached). Normally skipped. Refresh
-    /// after changing visualProbe / textProbe or the generators:
+    /// True when the live config opts into fixture regeneration.
+    private func regenerateFixturesRequested() -> Bool {
+        let configPath = "/tmp/iterm2-ai-live.json"
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
+        else { return false }
+        return json["REGENERATE_ATTACHMENT_FIXTURES"] == "1"
+    }
+
+    /// Rewrites every regenerable probe fixture: the images (magic.png/heic/
+    /// tiff, number.png) and the timestamp-bearing magic.pdf / magic.zip.
+    /// Regenerating the pdf/zip changes their embedded timestamp, so this
+    /// invalidates the pdf/zip cassettes; re-record them after. Normally
+    /// skipped. Refresh after changing visualProbe / textProbe or a generator:
     ///   ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES=1 \
     ///     tools/run_ai_live.sh test_regenerateProbeAttachmentFixtures
     func test_regenerateProbeAttachmentFixtures() throws {
-        let configPath = "/tmp/iterm2-ai-live.json"
-        let regenerate: Bool = {
-            guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
-            else { return false }
-            return json["REGENERATE_ATTACHMENT_FIXTURES"] == "1"
-        }()
-        try XCTSkipUnless(regenerate,
-                          "Opt-in. Set ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES=1 to rewrite magic.pdf / magic.zip.")
+        try XCTSkipUnless(regenerateFixturesRequested(),
+                          "Opt-in. Set ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES=1 to rewrite all probe fixtures.")
         let dir = try AILiveAttachmentFixtures.regenerateStaticProbeFixtures()
-        print("[fixtures] regenerated magic.pdf and magic.zip in \(dir)")
+        print("[fixtures] regenerated all probe fixtures (images + pdf + zip) in \(dir)")
+    }
+
+    /// Re-freezes only the image probe fixtures (magic.png/heic/tiff,
+    /// number.png), leaving the timestamped pdf/zip and their cassettes
+    /// untouched. Use this when image encoders drift on a new OS. Run on the
+    /// same host that records the cassettes so the bytes match:
+    ///   ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES=1 \
+    ///     tools/run_ai_live.sh test_regenerateImageFixtures
+    func test_regenerateImageFixtures() throws {
+        try XCTSkipUnless(regenerateFixturesRequested(),
+                          "Opt-in. Set ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES=1 to rewrite the image fixtures.")
+        let dir = try AILiveAttachmentFixtures.regenerateImageFixtures()
+        print("[fixtures] regenerated image fixtures (magic.png/heic/tiff, number.png) in \(dir)")
     }
 
     // MARK: - 96 test methods
