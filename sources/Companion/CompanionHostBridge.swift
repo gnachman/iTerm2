@@ -179,6 +179,18 @@ final class CompanionHostBridge {
                                         decision: decision)
         case .linkSession(let chatID, let sessionGuid, let terminal):
             performLinkSession(chatID: chatID, guid: sessionGuid, terminal: terminal)
+        case .resolveMentions(let identifiers):
+            send(.mentionsResolved(identifiers.map { Self.resolveMention($0) }),
+                 requestID: requestID)
+        case .fetchSessionScreenInfo(let sessionGuid):
+            handleFetchSessionScreenInfo(guid: sessionGuid, requestID: requestID)
+        case .fetchSessionContent(let sessionGuid, let firstLine, let lineCount):
+            handleFetchSessionContent(guid: sessionGuid,
+                                      firstLine: firstLine,
+                                      lineCount: lineCount,
+                                      requestID: requestID)
+        case .fetchWorkgroupInfo(let workgroupID):
+            handleFetchWorkgroupInfo(workgroupID: workgroupID, requestID: requestID)
         case .ping:
             send(.pong, requestID: requestID)
         case .unpairing:
@@ -400,6 +412,157 @@ final class CompanionHostBridge {
                                              chatID: chatID,
                                              messageUniqueID: messageUniqueID)
         }
+    }
+
+    // MARK: Mentions and session content
+
+    private static func resolveMention(_ identifier: String) -> CompanionMentionResolution {
+        guard let resolved = OrchestrationMentionRenderer.resolve(identifier: identifier) else {
+            return CompanionMentionResolution(identifier: identifier,
+                                              displayName: nil,
+                                              sessionGuid: nil,
+                                              workgroupID: nil)
+        }
+        return CompanionMentionResolution(identifier: identifier,
+                                          displayName: resolved.displayName,
+                                          sessionGuid: resolved.revealGuid,
+                                          workgroupID: resolved.workgroupID)
+    }
+
+    /// Looks a session up for the content APIs, reporting a typed error to the
+    /// phone when it is gone (sessions can close while the phone views them)
+    /// or cannot render yet (a workgroup member whose session has not
+    /// launched has a zero-size textview, which renders nothing).
+    private func contentSession(guid: String, requestID: UInt64?) -> PTYSession? {
+        guard let session = iTermController.sharedInstance().anySession(withGUID: guid),
+              let textview = session.textview else {
+            send(.error(CompanionError(code: .unknownSession,
+                                       message: "That session no longer exists. It may have been closed.")),
+                 requestID: requestID)
+            return nil
+        }
+        guard textview.frame.width > 0 else {
+            send(.error(CompanionError(code: .unknownSession,
+                                       message: "That session hasn’t started running yet, so there is nothing to show.")),
+                 requestID: requestID)
+            return nil
+        }
+        return session
+    }
+
+    private func handleFetchSessionScreenInfo(guid: String, requestID: UInt64?) {
+        guard let session = contentSession(guid: guid, requestID: requestID),
+              let textview = session.textview else {
+            return
+        }
+        let info = CompanionSessionScreenInfo(guid: guid,
+                                              name: session.name,
+                                              lineCount: Int(session.screen.numberOfLines()),
+                                              columns: Int(session.columns),
+                                              width: Double(textview.frame.width),
+                                              lineHeight: Double(textview.lineHeight),
+                                              // Matches the fallback the offscreen renderer uses
+                                              // for windowless (buried/peer) sessions.
+                                              scale: Double(textview.window?.backingScaleFactor ?? 2.0))
+        send(.sessionScreenInfo(info), requestID: requestID)
+    }
+
+    /// Upper bound on lines per content request, so one request cannot render
+    /// (and frame) an arbitrarily large bitmap.
+    private static let maxContentLines = 200
+
+    private func handleFetchSessionContent(guid: String,
+                                           firstLine: Int,
+                                           lineCount: Int,
+                                           requestID: UInt64?) {
+        guard let session = contentSession(guid: guid, requestID: requestID),
+              let textview = session.textview else {
+            return
+        }
+        let totalLines = Int(session.screen.numberOfLines())
+        let first = max(0, firstLine)
+        let count = min(min(lineCount, Self.maxContentLines), totalLines - first)
+        guard count > 0 else {
+            send(.error(CompanionError(code: .badRequest,
+                                       message: "The requested lines are out of range.")),
+                 requestID: requestID)
+            return
+        }
+        // A buried session (or a workgroup peer parked off screen, or one in
+        // its undoable-termination window) has its textview's dataSource
+        // detached, so the renderer sees zero lines and fails. The screen
+        // object still holds the content; re-attach it for the duration of
+        // the render and restore the detached state afterwards. The Mac UI
+        // never hits this because revealing a session disinters it first.
+        let wasDetached = textview.dataSource == nil
+        if wasDetached {
+            textview.dataSource = session.screen
+        }
+        defer {
+            if wasDetached {
+                textview.dataSource = nil
+            }
+        }
+        // Renderer skips the background fill when bgColor is nil, leaving
+        // margins transparent; fall back to black so tiles look continuous.
+        let backgroundColor = session.processedBackgroundColor ?? .black
+        guard let image = textview.renderImage(withLines: NSRange(location: first, length: count),
+                                               includeMargins: false,
+                                               backgroundColor: backgroundColor,
+                                               showCursor: false) else {
+            DLog("Companion bridge: render failed for \(guid): wasDetached=\(wasDetached) lines=\(totalLines) frame=\(NSStringFromRect(textview.frame))")
+            send(.error(CompanionError(code: .internalError,
+                                       message: "Rendering the session content failed.")),
+                 requestID: requestID)
+            return
+        }
+        let pngData = image.dataForFile(of: .png)
+        guard !pngData.isEmpty else {
+            send(.error(CompanionError(code: .internalError,
+                                       message: "Encoding the session content failed.")),
+                 requestID: requestID)
+            return
+        }
+        send(.sessionContent(CompanionSessionContent(guid: guid,
+                                                     firstLine: first,
+                                                     lineCount: count,
+                                                     pngData: pngData)),
+             requestID: requestID)
+    }
+
+    private func handleFetchWorkgroupInfo(workgroupID: String, requestID: UInt64?) {
+        guard let instance = iTermWorkgroupController.instance.allInstances
+            .first(where: { $0.instanceUniqueIdentifier == workgroupID }) else {
+            send(.error(CompanionError(code: .unknownSession,
+                                       message: "That workgroup no longer exists.")),
+                 requestID: requestID)
+            return
+        }
+        let members = instance.resolvedMembers().map { member -> CompanionWorkgroupMember in
+            let roleName = member.displayName.isEmpty ? member.roleID : member.displayName
+            guard let session = member.session else {
+                // The member's session has not been realized yet (or exited).
+                return CompanionWorkgroupMember(roleName: roleName,
+                                                sessionGuid: nil,
+                                                sessionName: nil,
+                                                statusText: nil,
+                                                detailText: nil,
+                                                state: .unknown)
+            }
+            let status = session.tabStatus
+            return CompanionWorkgroupMember(roleName: roleName,
+                                            sessionGuid: session.guid,
+                                            sessionName: session.name,
+                                            statusText: status?.statusText?.nilIfEmpty,
+                                            detailText: status?.detailText?.nilIfEmpty,
+                                            state: WorkgroupIntrospection.state(for: session))
+        }
+        let rawName = instance.workgroup.name
+        send(.workgroupInfo(CompanionWorkgroupInfo(
+            workgroupID: workgroupID,
+            name: rawName.isEmpty ? "Untitled workgroup" : rawName,
+            members: members)),
+             requestID: requestID)
     }
 
     // MARK: Model projection

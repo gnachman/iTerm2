@@ -38,6 +38,72 @@ struct CompanionChatListEntry: Codable {
     var snippet: String?
 }
 
+/// How one @-mention identifier resolved on the Mac. The phone renders the
+/// display name as a tappable link that opens the session view (or, for a
+/// workgroup, the member-list view).
+struct CompanionMentionResolution: Codable, Equatable {
+    /// The identifier as written after the "@": a bare session guid,
+    /// "session:<uuid>", or "wg-<uuid>".
+    var identifier: String
+    /// The entity's live name, or nil when the identifier no longer resolves
+    /// (the phone then shows the same "[defunct session]" text the Mac does).
+    var displayName: String?
+    /// The session to open when the mention is tapped. For a workgroup this is
+    /// its leader session, mirroring the Mac's click behavior.
+    var sessionGuid: String?
+    /// Set when the mention names a real workgroup; tapping it opens the
+    /// member list instead of a single session.
+    var workgroupID: String?
+}
+
+/// One member of a workgroup, as shown in the phone's workgroup view.
+struct CompanionWorkgroupMember: Codable, Equatable {
+    var roleName: String
+    /// nil when the member's session has not launched yet (or has exited).
+    var sessionGuid: String?
+    var sessionName: String?
+    /// The session's machine-readable status (OSC 21337 / cc-status), when it
+    /// reports one.
+    var statusText: String?
+    /// The status detail line, when present.
+    var detailText: String?
+    var state: SessionState
+}
+
+/// Reply payload describing a workgroup and its members.
+struct CompanionWorkgroupInfo: Codable, Equatable {
+    var workgroupID: String
+    var name: String
+    var members: [CompanionWorkgroupMember]
+}
+
+/// Geometry of a session's content, fetched before any pixels so the phone can
+/// size its scrollable canvas and decide how many lines to request per tile.
+struct CompanionSessionScreenInfo: Codable, Equatable {
+    var guid: String
+    var name: String
+    /// Total renderable lines (scrollback plus screen).
+    var lineCount: Int
+    var columns: Int
+    /// Width in Mac points of a rendered line image (includes side margins).
+    var width: Double
+    /// Height in Mac points of one line (the cell height).
+    var lineHeight: Double
+    /// The backing scale content is rendered at (Mac pixels per Mac point),
+    /// so the phone can stop zooming at the bitmaps' native resolution.
+    var scale: Double
+}
+
+/// One rendered slice of a session's content, as a bitmap.
+struct CompanionSessionContent: Codable {
+    var guid: String
+    /// First line actually rendered (requests are clamped to valid lines).
+    var firstLine: Int
+    /// Number of lines actually rendered.
+    var lineCount: Int
+    var pngData: Data
+}
+
 /// The user's verdict on a classic remoteCommandRequest bubble (the four
 /// buttons the Mac shows: Allow Once / Always Allow / Deny this Time /
 /// Always Deny).
@@ -91,6 +157,22 @@ enum CompanionClientMessage: Codable {
     /// Link a session to the chat (the offerLink bubble's Link button).
     case linkSession(chatID: String, sessionGuid: String, terminal: Bool)
 
+    /// Resolve @-mention identifiers (text after the "@") to live names and
+    /// reveal targets. Replied to with `.mentionsResolved`.
+    case resolveMentions(identifiers: [String])
+
+    /// Session view: ask for a session's content geometry. Replied to with
+    /// `.sessionScreenInfo`.
+    case fetchSessionScreenInfo(sessionGuid: String)
+
+    /// Session view: render a range of lines as a bitmap. Replied to with
+    /// `.sessionContent`.
+    case fetchSessionContent(sessionGuid: String, firstLine: Int, lineCount: Int)
+
+    /// Workgroup view: list a workgroup's members with their status. Replied
+    /// to with `.workgroupInfo`.
+    case fetchWorkgroupInfo(workgroupID: String)
+
     /// Liveness check. Replied to with `.pong`.
     case ping
 
@@ -120,6 +202,18 @@ enum CompanionHostMessage: Codable {
     /// Unsolicited: typing-status change. Mirrors
     /// ChatBroker.Update.typingStatus(Bool, Participant).
     case typingStatus(isTyping: Bool, participant: Participant, chatID: String)
+
+    /// Reply to `.resolveMentions`, one entry per requested identifier.
+    case mentionsResolved([CompanionMentionResolution])
+
+    /// Reply to `.fetchSessionScreenInfo`.
+    case sessionScreenInfo(CompanionSessionScreenInfo)
+
+    /// Reply to `.fetchSessionContent`.
+    case sessionContent(CompanionSessionContent)
+
+    /// Reply to `.fetchWorkgroupInfo`.
+    case workgroupInfo(CompanionWorkgroupInfo)
 
     /// Reply to `.ping`.
     case pong

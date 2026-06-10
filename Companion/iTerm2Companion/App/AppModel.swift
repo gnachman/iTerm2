@@ -95,6 +95,8 @@ final class AppModel {
         case create
         case conversation(chatID: String)
         case settings
+        case session(guid: String, title: String)
+        case workgroup(id: String, title: String)
     }
 
     var phase: Phase = .launch
@@ -141,6 +143,12 @@ final class AppModel {
         var terminal: Bool
     }
     var sessionPicker: SessionPickerRequest?
+
+    /// Mention identifier (the text after the "@") to how the Mac resolved it.
+    /// Message bubbles read this to draw live names in place of raw UUIDs;
+    /// misses are requested in batches as messages arrive.
+    var mentionResolutions: [String: CompanionMentionResolution] = [:]
+    private var mentionResolutionsInFlight: Set<String> = []
 
     private var pairingTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
@@ -228,6 +236,24 @@ final class AppModel {
         navigationPath.append(.settings)
     }
 
+    /// Tapping an @-mention in a bubble pushes the read-only session view.
+    func openSession(guid: String, title: String) {
+        navigationPath.append(.session(guid: guid, title: title))
+    }
+
+    /// Tapping a workgroup @-mention pushes the member list.
+    func openWorkgroup(id: String, title: String) {
+        navigationPath.append(.workgroup(id: id, title: title))
+    }
+
+    /// The composer's @ button refreshes the session list before showing the
+    /// mention picker, so the choices are current.
+    func refreshSessionsForMentionPicker() {
+        Task {
+            try? await refreshLists()
+        }
+    }
+
     /// Settings: sever the pairing entirely. Notifies the mac (so it destroys
     /// its key material too), deletes this device's identity and stored
     /// pairing, clears all state, and returns to the scanner.
@@ -251,6 +277,7 @@ final class AppModel {
         chats = []
         sessions = []
         messages = []
+        mentionResolutions = [:]
         openChatID = nil
         isAgentTyping = false
         isLoadingConversation = false
@@ -550,6 +577,7 @@ final class AppModel {
                 return
             }
             messages = history.filter { !$0.hiddenFromClient }
+            noteMentions(in: messages)
             companionLog("Conversation loaded (\(messages.count) messages)")
         } catch {
             companionLog("Conversation load failed: \(String(describing: error))")
@@ -587,6 +615,7 @@ final class AppModel {
                               uniqueID: UUID())
         // Optimistic local echo so the bubble appears immediately.
         messages.append(message)
+        noteMentions(in: [message])
         Task {
             do {
                 let client = try await currentClient(label: "Send message")
@@ -685,6 +714,83 @@ final class AppModel {
         }
     }
 
+    // MARK: Mentions
+
+    /// The visible texts of a message that can contain @-mentions.
+    private func mentionableTexts(of message: Message) -> [String] {
+        switch message.content {
+        case .plainText(let text, _):
+            return [text]
+        case .markdown(let text):
+            return [text]
+        case .multipart(let subparts, _):
+            return subparts.compactMap {
+                switch $0 {
+                case .plainText(let text): return text
+                case .markdown(let text): return text
+                case .attachment, .context: return nil
+                }
+            }
+        case .explanationResponse(let response, _, let markdown):
+            return [markdown.isEmpty ? (response.mainResponse ?? "") : markdown]
+        default:
+            return []
+        }
+    }
+
+    /// Scan a message for mentions and ask the Mac to resolve any we have not
+    /// seen yet. Resolutions land in `mentionResolutions`, which re-renders
+    /// the bubbles that reference them.
+    private func noteMentions(in messages: [Message]) {
+        let identifiers = Set(messages
+            .flatMap { mentionableTexts(of: $0) }
+            .flatMap { MentionParser.mentions(in: $0) }
+            .map { $0.identifier })
+        let unresolved = identifiers.filter {
+            mentionResolutions[$0] == nil && !mentionResolutionsInFlight.contains($0)
+        }
+        guard !unresolved.isEmpty else { return }
+        mentionResolutionsInFlight.formUnion(unresolved)
+        companionLog("Resolving \(unresolved.count) mention(s)")
+        Task {
+            do {
+                let client = try await currentClient(label: "Resolve mentions")
+                let resolutions = try await client.resolveMentions(Array(unresolved))
+                for resolution in resolutions {
+                    mentionResolutions[resolution.identifier] = resolution
+                }
+            } catch {
+                // Leave them unresolved; the raw identifiers stay readable and
+                // the next delivery retries.
+                companionLog("Mention resolution failed: \(String(describing: error))")
+            }
+            mentionResolutionsInFlight.subtract(unresolved)
+        }
+    }
+
+    // MARK: Session content
+
+    func sessionScreenInfo(guid: String) async throws -> CompanionSessionScreenInfo {
+        let client = try await currentClient(label: "Session info")
+        return try await withTimeout(15, "Loading session info") {
+            try await client.sessionScreenInfo(guid: guid)
+        }
+    }
+
+    func sessionContent(guid: String, firstLine: Int, lineCount: Int) async throws -> CompanionSessionContent {
+        let client = try await currentClient(label: "Session content")
+        return try await withTimeout(20, "Loading session content") {
+            try await client.sessionContent(guid: guid, firstLine: firstLine, lineCount: lineCount)
+        }
+    }
+
+    func workgroupInfo(id: String) async throws -> CompanionWorkgroupInfo {
+        let client = try await currentClient(label: "Workgroup info")
+        return try await withTimeout(15, "Loading workgroup info") {
+            try await client.workgroupInfo(id: id)
+        }
+    }
+
     // MARK: Host events
 
     private func handle(event: CompanionHostMessage) {
@@ -716,6 +822,7 @@ final class AppModel {
         chats = []
         sessions = []
         messages = []
+        mentionResolutions = [:]
         openChatID = nil
         isAgentTyping = false
         isLoadingConversation = false
@@ -750,6 +857,18 @@ final class AppModel {
                 messages.append(message)
             }
         }
+        // Resolve any mentions the change introduced. Streaming deltas target
+        // the bubble named by their uuid, not the delta's own uniqueID.
+        let affectedID: UUID
+        switch message.content {
+        case .append(_, let uuid), .appendAttachment(_, let uuid):
+            affectedID = uuid
+        default:
+            affectedID = message.uniqueID
+        }
+        if let affected = messages.first(where: { $0.uniqueID == affectedID }) {
+            noteMentions(in: [affected])
+        }
     }
 
     /// Mutate the streamed message with `mutate`, or start a fresh agent bubble
@@ -775,7 +894,7 @@ final class AppModel {
         }
     }
 
-    private func userMessage(for error: Error) -> String {
+    func userMessage(for error: Error) -> String {
         if case TransportError.localNetworkAccessDenied = error {
             return "Local network access is off. Enable it in Settings > Privacy & Security > Local Network > iTerm2 Companion, then try again."
         }
@@ -810,7 +929,9 @@ final class AppModel {
             return "DNS error \(code)"
         case .tls(let status):
             return "TLS error \(status)"
-        @unknown default:
+        default:
+            // Covers cases newer than our deployment target (.wifiAware) as
+            // well as truly unknown future ones.
             return String(describing: error)
         }
     }

@@ -40,8 +40,112 @@ struct MessageBubbleView: View {
                 .background(isUser ? Color.accentColor : Color(.secondarySystemBackground),
                             in: RoundedRectangle(cornerRadius: 16))
                 .textSelection(.enabled)
+                .environment(\.openURL, OpenURLAction { url in
+                    handleMentionURL(url) ? .handled : .systemAction
+                })
             if !isUser { Spacer(minLength: 48) }
         }
+    }
+
+    // MARK: Mentions
+
+    /// Internal link carried by a linkified mention: the session guid plus its
+    /// display name (for the pushed view's title).
+    private static let mentionScheme = "iterm2companion"
+
+    private func handleMentionURL(_ url: URL) -> Bool {
+        guard url.scheme == Self.mentionScheme else {
+            return false
+        }
+        let identifier = url.lastPathComponent
+        let name = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first { $0.name == "name" }?.value
+        switch url.host {
+        case "session":
+            model.openSession(guid: identifier, title: name ?? "Session")
+            return true
+        case "workgroup":
+            model.openWorkgroup(id: identifier, title: name ?? "Workgroup")
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static func mentionURL(kind: String, identifier: String, name: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = mentionScheme
+        components.host = kind
+        components.path = "/" + identifier
+        components.queryItems = [URLQueryItem(name: "name", value: name)]
+        return components.url
+    }
+
+    /// Renders text with each @-mention replaced by a tappable link to the
+    /// live entity, mirroring the Mac's OrchestrationMentionRenderer: a
+    /// terminal glyph, a thin space, then the underlined name. Defunct
+    /// mentions become "[defunct session]"; not-yet-resolved ones stay as raw
+    /// text until the resolution arrives. Built from concatenated Text
+    /// segments because only Text (not AttributedString) can carry the inline
+    /// symbol image.
+    private func textWithMentions(_ attributed: AttributedString) -> Text {
+        let plain = String(attributed.characters)
+        let mentions = MentionParser.mentions(in: plain)
+        guard !mentions.isEmpty else {
+            return Text(attributed)
+        }
+        var result = Text(verbatim: "")
+        var cursor = attributed.startIndex
+        for mention in mentions {
+            guard let range = Range(mention.range, in: attributed),
+                  range.lowerBound >= cursor else {
+                continue
+            }
+            if cursor < range.lowerBound {
+                result = result + Text(AttributedString(attributed[cursor..<range.lowerBound]))
+            }
+            result = result + mentionText(for: mention, raw: AttributedString(attributed[range]))
+            cursor = range.upperBound
+        }
+        if cursor < attributed.endIndex {
+            result = result + Text(AttributedString(attributed[cursor..<attributed.endIndex]))
+        }
+        return result
+    }
+
+    private func mentionText(for mention: MentionParser.Mention, raw: AttributedString) -> Text {
+        guard let resolution = model.mentionResolutions[mention.identifier] else {
+            return Text(raw)
+        }
+        // A workgroup mention drills into the member list; a session mention
+        // opens that session directly.
+        let target: (kind: String, identifier: String)?
+        if let workgroupID = resolution.workgroupID {
+            target = ("workgroup", workgroupID)
+        } else if let guid = resolution.sessionGuid {
+            target = ("session", guid)
+        } else {
+            target = nil
+        }
+        guard let name = resolution.displayName,
+              let target,
+              let url = Self.mentionURL(kind: target.kind, identifier: target.identifier, name: name) else {
+            return Text("[defunct session]")
+        }
+        var link = AttributedString(name)
+        link.link = url
+        link.underlineStyle = .single
+        // SwiftUI tints links with the accent color, which vanishes on the
+        // user bubble's accent background; keep those white.
+        if isUser {
+            link.foregroundColor = .white
+        }
+        // The same terminal glyph (and thin space) the Mac prefixes, so the
+        // link reads as an iTerm2 session rather than the web.
+        return Text(Image(systemName: "terminal"))
+            .foregroundStyle(isUser ? Color.white : Color.accentColor)
+            + Text("\u{2009}")
+            + Text(link)
     }
 
     private var systemNotice: some View {
@@ -68,9 +172,9 @@ struct MessageBubbleView: View {
     private var content: some View {
         switch message.content {
         case .plainText(let text, _):
-            Text(text)
+            textWithMentions(AttributedString(text))
         case .markdown(let text):
-            Text(renderMarkdown(text))
+            textWithMentions(renderMarkdown(text))
         case .multipart(let subparts, _):
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array(subparts.enumerated()), id: \.offset) { _, subpart in
@@ -97,7 +201,7 @@ struct MessageBubbleView: View {
         case .explanationResponse(let response, _, let markdown):
             // The Mac client folds the response into `markdown` as it renders;
             // fall back to the parsed main response when that hasn't happened.
-            Text(renderMarkdown(markdown.isEmpty ? (response.mainResponse ?? "") : markdown))
+            textWithMentions(renderMarkdown(markdown.isEmpty ? (response.mainResponse ?? "") : markdown))
         case .remoteCommandRequest(let payload, let safe):
             if let remoteCommand = payload.classic {
                 VStack(alignment: .leading, spacing: 10) {
@@ -107,7 +211,7 @@ struct MessageBubbleView: View {
                             .font(.callout.weight(.semibold))
                             .foregroundStyle(.orange)
                     }
-                    Text(renderMarkdown(remoteCommand.markdownDescription))
+                    textWithMentions(renderMarkdown(remoteCommand.markdownDescription))
                     Text(renderMarkdown("Would you like to grant AI **\(remoteCommand.content.permissionCategory.rawValue)** permission?"))
                         .font(.callout)
                     actionButtons(for: message, [
@@ -129,7 +233,7 @@ struct MessageBubbleView: View {
                 // Orchestration-mode tool calls are informational; permission
                 // flows through workgroupPermissionRequest instead.
                 Label {
-                    Text(renderMarkdown(payload.markdownDescription))
+                    textWithMentions(renderMarkdown(payload.markdownDescription))
                 } icon: {
                     Image(systemName: "play.circle")
                 }
@@ -229,9 +333,9 @@ struct MessageBubbleView: View {
     private func subpart(_ subpart: Message.Subpart) -> some View {
         switch subpart {
         case .plainText(let text):
-            Text(text)
+            textWithMentions(AttributedString(text))
         case .markdown(let text):
-            Text(renderMarkdown(text))
+            textWithMentions(renderMarkdown(text))
         case .attachment(let attachment):
             attachmentView(attachment)
         case .context:

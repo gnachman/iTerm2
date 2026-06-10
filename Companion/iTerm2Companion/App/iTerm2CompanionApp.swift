@@ -71,6 +71,12 @@ struct RootView: View {
                         case .settings:
                             SettingsView()
                                 .reconnectingBanner(model.isReconnecting)
+                        case .session(let guid, let title):
+                            SessionView(guid: guid, title: title)
+                                .reconnectingBanner(model.isReconnecting)
+                        case .workgroup(let id, let title):
+                            WorkgroupView(workgroupID: id, title: title)
+                                .reconnectingBanner(model.isReconnecting)
                         }
                     }
             }

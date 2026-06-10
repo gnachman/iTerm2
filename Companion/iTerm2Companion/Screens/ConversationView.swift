@@ -13,8 +13,11 @@ struct ConversationView: View {
     @Environment(AppModel.self) private var model
     let chatID: String
 
-    @State private var draft = ""
-    @FocusState private var inputFocused: Bool
+    @State private var composer = MentionComposerController()
+    @State private var draftIsEmpty = true
+    @State private var draftRevision = 0
+    @State private var showMentionPicker = false
+    @State private var inputFocused = false
 
     private var title: String {
         model.chats.first { $0.chat.id == chatID }?.chat.title ?? "Chat"
@@ -32,8 +35,18 @@ struct ConversationView: View {
         .onAppear {
             model.conversationDidAppear(chatID: chatID)
         }
+        .onDisappear {
+            // Covered by a pushed screen (session view) or popped: drop focus
+            // so the keyboard doesn't linger over content it can't edit.
+            inputFocused = false
+        }
         .sheet(item: $model.sessionPicker) { request in
             SessionPickerSheet(request: request)
+        }
+        .sheet(isPresented: $showMentionPicker) {
+            MentionPickerSheet { session in
+                insertMention(session)
+            }
         }
     }
 
@@ -57,10 +70,11 @@ struct ConversationView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 12)
             }
-            .onChange(of: model.messages.count) { _ in
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: model.messages.count) { _, _ in
                 scrollToBottom(proxy)
             }
-            .onChange(of: model.isAgentTyping) { _ in
+            .onChange(of: model.isAgentTyping) { _, _ in
                 scrollToBottom(proxy)
             }
         }
@@ -68,14 +82,27 @@ struct ConversationView: View {
 
     private var inputRow: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            TextField("Message", text: $draft, axis: .vertical)
-                .lineLimit(1...5)
-                .textFieldStyle(.plain)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color(.secondarySystemBackground),
-                           in: RoundedRectangle(cornerRadius: 18))
-                .focused($inputFocused)
+            Button {
+                model.refreshSessionsForMentionPicker()
+                showMentionPicker = true
+            } label: {
+                Image(systemName: "at.circle.fill")
+                    .font(.system(size: 30))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .accessibilityLabel("Mention a session")
+
+            MentionComposerView(controller: composer,
+                                isFocused: $inputFocused,
+                                placeholder: "Message",
+                                revision: draftRevision) {
+                draftIsEmpty = composer.isEmpty
+                draftRevision += 1
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.secondarySystemBackground),
+                        in: RoundedRectangle(cornerRadius: 18))
 
             Button(action: send) {
                 Image(systemName: "arrow.up.circle.fill")
@@ -89,22 +116,25 @@ struct ConversationView: View {
     }
 
     private var canSend: Bool {
-        !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !draftIsEmpty
     }
 
     private let typingIndicatorID = "typing-indicator"
 
     private func send() {
-        let text = draft
+        let text = composer.serializedText
         companionLog("send(): clearing draft (\(text.count) chars)")
         model.send(text: text)
-        draft = ""
-        // Clearing in the same transaction as the tap can leave the visible
-        // text behind (vertical-axis TextField quirk, especially with marked
-        // autocomplete text); clear again a beat later.
-        Task { @MainActor in
-            draft = ""
-        }
+        composer.clear()
+    }
+
+    /// Insert an @-mention of the chosen session at the cursor as an atomic
+    /// styled token (like the Mac compose field); it serializes to "@<guid>"
+    /// when the message is sent.
+    private func insertMention(_ session: CompanionSessionSummary) {
+        showMentionPicker = false
+        composer.insertMention(guid: session.guid, displayName: session.name)
+        inputFocused = true
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
@@ -141,6 +171,55 @@ private struct TypingIndicatorView: View {
     }
 }
 
+/// Lists the mac's terminal sessions so the composer's @ button can insert a
+/// mention of one.
+private struct MentionPickerSheet: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    let onSelect: (CompanionSessionSummary) -> Void
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if model.sessions.isEmpty {
+                    Text("No sessions available.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    List(model.sessions, id: \.guid) { session in
+                        Button {
+                            onSelect(session)
+                        } label: {
+                            // Default (borderless) button style so the row
+                            // highlights on tap; color the text explicitly so
+                            // it doesn't take the accent tint.
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(session.name)
+                                    .foregroundStyle(.primary)
+                                if !session.subtitle.isEmpty {
+                                    Text(session.subtitle)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Mention a Session")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Lists the mac's terminal sessions so a selectSessionRequest can be
 /// resolved from the phone.
 private struct SessionPickerSheet: View {
@@ -163,14 +242,16 @@ private struct SessionPickerSheet: View {
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(session.name)
+                                    .foregroundStyle(.primary)
                                 if !session.subtitle.isEmpty {
                                     Text(session.subtitle)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }

@@ -29,6 +29,7 @@ SHARED_MAC_SOURCES = %w[
   sources/AITerm/TerminalCommand.swift
   sources/Categories/Result+iTerm.swift
   sources/Categories/NSDictionaryCodableBox.swift
+  sources/ClaudeCode/Orchestration/MentionParser.swift
   sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift
   sources/Companion/Shared/CompanionMessages.swift
   sources/Companion/Shared/CompanionSession.swift

@@ -96,6 +96,56 @@ actor CompanionClient {
         try await session.send(.linkSession(chatID: chatID, sessionGuid: sessionGuid, terminal: terminal))
     }
 
+    func resolveMentions(_ identifiers: [String]) async throws -> [CompanionMentionResolution] {
+        let reply = try await session.request(.resolveMentions(identifiers: identifiers))
+        switch reply {
+        case .mentionsResolved(let resolutions):
+            return resolutions
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to mention resolution")
+        }
+    }
+
+    func sessionScreenInfo(guid: String) async throws -> CompanionSessionScreenInfo {
+        let reply = try await session.request(.fetchSessionScreenInfo(sessionGuid: guid))
+        switch reply {
+        case .sessionScreenInfo(let info):
+            return info
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to session info request")
+        }
+    }
+
+    func sessionContent(guid: String, firstLine: Int, lineCount: Int) async throws -> CompanionSessionContent {
+        let reply = try await session.request(.fetchSessionContent(sessionGuid: guid,
+                                                                   firstLine: firstLine,
+                                                                   lineCount: lineCount))
+        switch reply {
+        case .sessionContent(let content):
+            return content
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to session content request")
+        }
+    }
+
+    func workgroupInfo(id: String) async throws -> CompanionWorkgroupInfo {
+        let reply = try await session.request(.fetchWorkgroupInfo(workgroupID: id))
+        switch reply {
+        case .workgroupInfo(let info):
+            return info
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to workgroup info request")
+        }
+    }
+
     /// Tell the mac this device is unpairing (sent before close()).
     func sendUnpairing() async throws {
         try await session.send(.unpairing)
