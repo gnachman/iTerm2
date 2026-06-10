@@ -10,9 +10,12 @@
 
 import Foundation
 import SwiftUI
+import os
 import CompanionProtocol
 import CompanionNoise
 import CompanionTransport
+
+private let logger = Logger(subsystem: "com.googlecode.iterm2.companion", category: "companion")
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -47,6 +50,11 @@ final class AppModel: ObservableObject {
 
     init(connector: TransportConnector = RaceTransportConnector([BonjourTransportConnector()])) {
         self.connector = connector
+        // Route the transport/crypto layers' diagnostics into the unified log
+        // (visible in Console.app and `log stream`).
+        CompanionLog.handler = { message in
+            logger.info("\(message, privacy: .public)")
+        }
     }
 
     // MARK: Navigation
@@ -69,13 +77,16 @@ final class AppModel: ObservableObject {
     /// Called by the scanning screen once it has a valid pairing code. Moves to
     /// the pairing screen and runs the rendezvous + handshake.
     func pair(with code: PairingCode) {
+        logger.info("Pairing started (pid \(code.pairingID, privacy: .public))")
         route = .pairing
         pairingError = nil
         Task {
             do {
                 try await establish(code: code)
+                logger.info("Pairing succeeded; loading home")
                 try await loadHome()
             } catch {
+                logger.error("Pairing failed: \(String(describing: error), privacy: .public)")
                 pairingError = userMessage(for: error)
             }
         }
@@ -259,6 +270,9 @@ final class AppModel: ObservableObject {
     }
 
     private func userMessage(for error: Error) -> String {
+        if case TransportError.localNetworkAccessDenied = error {
+            return "Local network access is off. Enable it in Settings > Privacy & Security > Local Network > iTerm2 Companion, then try again."
+        }
         if let companion = error as? CompanionError {
             return companion.message
         }

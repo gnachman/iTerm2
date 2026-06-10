@@ -39,18 +39,21 @@ public struct BonjourTransportConnector: TransportConnector {
                 resumed.bind(continuation, browser: browser)
 
                 browser.browseResultsChangedHandler = { results, _ in
+                    CompanionLog.log("BonjourTransportConnector: \(results.count) result(s)")
                     for result in results {
                         guard case let .bonjour(txt) = result.metadata,
                               txt[CompanionBonjour.pairingIDKey] == pairingID else {
                             continue
                         }
+                        CompanionLog.log("BonjourTransportConnector: matched pid at \(result.endpoint)")
                         resumed.succeed(result.endpoint)
                         return
                     }
                 }
                 browser.stateUpdateHandler = { state in
+                    CompanionLog.log("BonjourTransportConnector: browser state \(state)")
                     if case .failed(let error) = state {
-                        resumed.fail(error)
+                        resumed.fail(TransportError.translating(error))
                     }
                 }
                 queue.asyncAfter(deadline: .now() + timeout) {

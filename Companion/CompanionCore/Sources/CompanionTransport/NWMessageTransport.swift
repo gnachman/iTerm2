@@ -53,6 +53,7 @@ public final class NWMessageTransport: MessageTransport, @unchecked Sendable {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             let resumed = ResumeOnce(continuation)
             connection.stateUpdateHandler = { [weak self] state in
+                CompanionLog.log("NWMessageTransport: state \(state)")
                 switch state {
                 case .ready:
                     resumed.succeed()

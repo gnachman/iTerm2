@@ -30,7 +30,7 @@ public protocol MessageTransport: AnyObject, Sendable {
     func close() async
 }
 
-public enum TransportError: Error, Equatable {
+public enum TransportError: Error, Equatable, LocalizedError {
     /// The connection is closed; no more frames will be sent or received.
     case closed
     /// A frame exceeded the negotiated maximum size.
@@ -39,4 +39,35 @@ public enum TransportError: Error, Equatable {
     case malformedFrame
     /// The transport-specific connection attempt failed.
     case connectionFailed(String)
+    /// The operating system's local network privacy denied Bonjour access
+    /// (kDNSServiceErr_NoAuth). The user has to grant permission in system
+    /// settings; the apps attach platform-specific instructions.
+    case localNetworkAccessDenied
+
+    public var errorDescription: String? {
+        switch self {
+        case .closed:
+            return "The connection was closed"
+        case .frameTooLarge(let size, let maximum):
+            return "Received a frame of \(size) bytes, larger than the limit of \(maximum)"
+        case .malformedFrame:
+            return "Received a malformed frame"
+        case .connectionFailed(let reason):
+            return reason
+        case .localNetworkAccessDenied:
+            return "The operating system denied local network access"
+        }
+    }
+}
+
+/// Minimal logging hook for the transport and crypto layers, which cannot see
+/// the apps' loggers (DLog on the Mac, os.Logger on the phone). Each app
+/// installs a handler at startup; without one, logging is a no-op.
+public enum CompanionLog {
+    /// nonisolated(unsafe) by design: set once at startup before any traffic.
+    nonisolated(unsafe) public static var handler: (@Sendable (String) -> Void)?
+
+    public static func log(_ message: @autoclosure () -> String) {
+        handler?(message())
+    }
 }

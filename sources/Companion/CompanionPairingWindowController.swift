@@ -16,7 +16,9 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     @objc static let shared = CompanionPairingWindowController()
 
     private let qrImageView = NSImageView()
-    private let statusLabel = NSTextField(labelWithString: "")
+    // wrappingLabel, not label: a plain label cell is single-line and ignores
+    // maximumNumberOfLines, silently truncating long error messages.
+    private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private let controller = CompanionPairingController.shared
 
     @objc init() {
@@ -67,10 +69,12 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         content.addSubview(qrImageView)
 
         statusLabel.alignment = .center
-        statusLabel.font = .systemFont(ofSize: 13)
+        statusLabel.font = .systemFont(ofSize: 12)
         statusLabel.textColor = .secondaryLabelColor
-        statusLabel.frame = NSRect(x: 20, y: 56, width: 320, height: 36)
-        statusLabel.maximumNumberOfLines = 2
+        statusLabel.isSelectable = false
+        statusLabel.frame = NSRect(x: 20, y: 16, width: 320, height: 84)
+        statusLabel.maximumNumberOfLines = 5
+        statusLabel.cell?.truncatesLastVisibleLine = true
         content.addSubview(statusLabel)
     }
 
