@@ -11,7 +11,7 @@ import SwiftUI
 import CompanionProtocol
 
 struct ScanningView: View {
-    @EnvironmentObject private var model: AppModel
+    @Environment(AppModel.self) private var model
 
     @State private var errorMessage: String?
     // Guards against the metadata delegate firing repeatedly for the same code.
@@ -88,6 +88,10 @@ struct ScanningView: View {
         guard !handled else { return }
         do {
             let code = try PairingCode.parse(string)
+            if model.isUsedPairingCode(code) {
+                errorMessage = "That code was already used. Choose iTerm2 > Pair Companion Device on your Mac to get a fresh one."
+                return
+            }
             handled = true
             model.pair(with: code)
         } catch let error as PairingCode.ParseError {

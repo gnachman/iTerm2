@@ -50,8 +50,15 @@ public final class NWMessageTransport: MessageTransport, @unchecked Sendable {
             return
         }
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             let resumed = ResumeOnce(continuation)
+            connection.pathUpdateHandler = { path in
+                let interfaces = path.availableInterfaces
+                    .map { "\($0.name)(\($0.type))" }
+                    .joined(separator: ", ")
+                CompanionLog.log("NWMessageTransport: path \(path.status), interfaces [\(interfaces)], remote \(String(describing: path.remoteEndpoint))")
+            }
             connection.stateUpdateHandler = { [weak self] state in
                 CompanionLog.log("NWMessageTransport: state \(state)")
                 switch state {
@@ -59,9 +66,11 @@ public final class NWMessageTransport: MessageTransport, @unchecked Sendable {
                     resumed.succeed()
                     self?.receiveLoop()
                 case .failed(let error):
+                    self?.connection.pathUpdateHandler = nil
                     resumed.fail(error)
                     self?.fail(with: error)
                 case .cancelled:
+                    self?.connection.pathUpdateHandler = nil
                     let error = TransportError.closed
                     resumed.fail(error)
                     self?.fail(with: error)
@@ -70,6 +79,10 @@ public final class NWMessageTransport: MessageTransport, @unchecked Sendable {
                 }
             }
             connection.start(queue: queue)
+            }
+        } onCancel: {
+            // Resolves the continuation via the .cancelled state update.
+            connection.cancel()
         }
     }
 
@@ -87,16 +100,24 @@ public final class NWMessageTransport: MessageTransport, @unchecked Sendable {
     }
 
     public func receive() async throws -> Data {
-        try await withCheckedThrowingContinuation { continuation in
-            lock.withLock {
-                if !inbox.isEmpty {
-                    continuation.resume(returning: inbox.removeFirst())
-                } else if let failure {
-                    continuation.resume(throwing: failure)
-                } else {
-                    waiters.append(continuation)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                lock.withLock {
+                    if !inbox.isEmpty {
+                        continuation.resume(returning: inbox.removeFirst())
+                    } else if let failure {
+                        continuation.resume(throwing: failure)
+                    } else {
+                        waiters.append(continuation)
+                    }
                 }
             }
+        } onCancel: {
+            // A cancelled receive means the caller is abandoning the
+            // connection (e.g. a handshake deadline); tear it down so the
+            // parked continuation resumes.
+            connection.cancel()
+            fail(with: CancellationError())
         }
     }
 

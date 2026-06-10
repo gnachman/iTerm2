@@ -1479,6 +1479,8 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
+    // If a companion device is paired, quietly listen so it can reconnect.
+    [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
     if (IsTouchBarAvailable()) {
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
     }

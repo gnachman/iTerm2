@@ -261,6 +261,7 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
+	cp plists/dev-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" && \
 	chmod -R go+rX $(BUILD_DIR)/Development
 
@@ -277,6 +278,12 @@ Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO
 	chmod -R go+rX $(BUILD_DIR)/Nightly
+
+companion-iphone: force
+	Companion/tools/run_on_iphone.sh $(COMPANION_DEVICE)
+
+open: Development
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(notdir $(CURDIR))
 
 run: Development
 	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \

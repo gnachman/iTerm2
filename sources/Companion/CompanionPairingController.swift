@@ -2,17 +2,20 @@
 //  CompanionPairingController.swift
 //  iTerm2
 //
-//  Drives the mac side of pairing: it advertises the companion service, shows a
-//  pairing code (as a QR), waits for a phone to connect, runs the Noise XK
-//  handshake as the responder, and hands the encrypted channel to a
-//  CompanionHostBridge. The transport is reached through the pluggable
-//  TransportListener abstraction, so adding a relay or iCloud transport later is
-//  a matter of listening on more of them at once.
+//  Drives the mac side of pairing: it advertises the companion service, waits
+//  for a phone to connect, runs the Noise XK handshake as the responder, and
+//  hands the encrypted channel to a CompanionHostBridge. A successful pairing
+//  is persisted (the pairing id; the static identity is already in the
+//  keychain) so the phone can reconnect after either side relaunches: at app
+//  launch, and whenever the phone disconnects, the mac resumes advertising the
+//  stored pairing id. The transport is reached through the pluggable
+//  TransportListener abstraction.
 //
 
 import Foundation
 import AppKit
 import CoreImage
+import Network
 import Security
 import CompanionProtocol
 import CompanionNoise
@@ -33,19 +36,108 @@ final class CompanionPairingController: NSObject {
     var onPaired: (@MainActor () -> Void)?
     var onFailed: (@MainActor (String) -> Void)?
     var onDisconnect: (@MainActor () -> Void)?
+    var onStatus: (@MainActor (String) -> Void)?
+
+    private static let pairedPIDKey = "NoSyncCompanionPairedPID"
+
+    /// The pairing id of the (single, for now) paired device, persisted so
+    /// reconnection survives relaunches. NoSync: device state, not a setting.
+    private var pairedPID: String? {
+        get { iTermUserDefaults.userDefaults().string(forKey: Self.pairedPIDKey) }
+        set {
+            if let newValue {
+                iTermUserDefaults.userDefaults().set(newValue, forKey: Self.pairedPIDKey)
+            } else {
+                iTermUserDefaults.userDefaults().removeObject(forKey: Self.pairedPIDKey)
+            }
+        }
+    }
+
+    /// A phone is connected right now.
+    var isConnected: Bool { bridge != nil }
+    /// A device has paired at some point (it may or may not be connected).
+    var hasPairedDevice: Bool { pairedPID != nil }
+
+    /// The same three gates iTermAITermGatekeeper.check() applies, evaluated
+    /// without its alerts. Pairing (and even listening for a paired device) is
+    /// pointless without working AI features.
+    enum AIGate: Equatable {
+        case allowed
+        case adminDisabled
+        case pluginMissing
+        case consentNeeded
+    }
+
+    static func aiGate() -> AIGate {
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
+            return .adminDisabled
+        }
+        if !iTermAITermGatekeeper.pluginInstalled() {
+            return .pluginMissing
+        }
+        if !SecureUserDefaults.instance.enableAI.value {
+            return .consentNeeded
+        }
+        return .allowed
+    }
+
+    private var gateObservers: [any NSObjectProtocol] = []
 
     private override init() {
         super.init()
+        // Track consent and the advanced setting so the background listener
+        // follows the gate: stop when AI becomes unavailable, resume when it
+        // comes back. (Plugin presence has no notification; it is re-checked
+        // on the next launch or pairing-window visit.)
+        let center = NotificationCenter.default
+        for name in [iTermSecureUserDefaults.didChange,
+                     Notification.Name(iTermAdvancedSettingsDidChange)] {
+            gateObservers.append(center.addObserver(forName: name,
+                                                    object: nil,
+                                                    queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.gateMayHaveChanged()
+                }
+            })
+        }
     }
 
-    /// Begin advertising and waiting for a phone. Returns the pairing code whose
-    /// URL should be displayed as a QR.
-    func startPairing() throws -> PairingCode {
-        // Route the transport/crypto layers' diagnostics into the debug log.
-        CompanionLog.handler = { message in
-            DLog("\(message)")
+    private func gateMayHaveChanged() {
+        if Self.aiGate() == .allowed {
+            resumePairedListeningIfNeeded()
+        } else if acceptTask != nil {
+            DLog("Companion: AI features became unavailable; stopping listener")
+            stopAdvertising()
         }
-        cancel()
+    }
+
+    /// Called at app launch (and after disconnects): if a device is paired,
+    /// quietly advertise its pairing id so it can reconnect.
+    @objc func resumePairedListeningIfNeeded() {
+        installLogHandler()
+        guard Self.aiGate() == .allowed else {
+            DLog("Companion: not listening; AI features are unavailable")
+            return
+        }
+        // Note: no bridge==nil guard. The listener stays up even while a phone
+        // is connected, because a phone returning from a network outage
+        // reconnects while the old TCP session can still look alive here.
+        guard acceptTask == nil, let pid = pairedPID else {
+            return
+        }
+        do {
+            try startListening(pairingID: pid)
+            DLog("Companion: resumed listening for paired device (pid \(pid))")
+        } catch {
+            DLog("Companion: could not resume listening: \(error)")
+        }
+    }
+
+    /// Begin a fresh pairing. Returns the pairing code whose URL should be
+    /// displayed as a QR.
+    func startPairing() throws -> PairingCode {
+        installLogHandler()
+        stopAdvertising()
         let keyPair = try CompanionMacIdentity.keyPair()
         let pairingID = Self.makePairingID()
         let code = PairingCode(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
@@ -60,65 +152,139 @@ final class CompanionPairingController: NSObject {
                                     encoding: .utf8)
 #endif
 
-        // Today this is just the local-network listener; wrap additional
-        // TransportListeners in a CombinedTransportListener to accept on more.
-        let listener = try BonjourTransportListener(pairingID: pairingID,
-                                                    version: PairingCode.supportedVersion)
-        self.listener = listener
-
-        acceptTask = Task { [weak self] in
-            await self?.acceptLoop(listener: listener, keyPair: keyPair, code: code)
-        }
+        try startListening(pairingID: pairingID)
         return code
     }
 
-    func cancel() {
+    /// Kick the paired device and delete the pairing: closes any live bridge,
+    /// forgets the pairing id, and destroys the mac's static identity so a new
+    /// one is generated for the next pairing.
+    func unpair() {
+        DLog("Companion: unpair (bridge connected: \(bridge != nil))")
+        if let bridge {
+            // Fire-and-forget: the farewell flush is async, but the bridge is
+            // already detached from the controller so nothing else uses it.
+            Task {
+                await bridge.announceUnpairedAndStop()
+            }
+        }
+        bridge = nil
+        stopAdvertising()
+        pairedPID = nil
+        pairingCode = nil
+        CompanionMacIdentity.deleteKeyPair()
+        DLog("Companion: unpaired; key material deleted")
+    }
+
+    /// The phone unpaired itself: mirror unpair() minus the farewell (the
+    /// phone is the one leaving).
+    private func peerDidUnpair() {
+        DLog("Companion: peer unpaired; deleting key material")
+        bridge?.stop()
+        bridge = nil
+        stopAdvertising()
+        pairedPID = nil
+        pairingCode = nil
+        CompanionMacIdentity.deleteKeyPair()
+        onDisconnect?()
+    }
+
+    /// Stop advertising and accepting. Does NOT touch a connected bridge; the
+    /// pairing window calls this when it closes.
+    func stopAdvertising() {
         acceptTask?.cancel()
         acceptTask = nil
         listener?.stop()
         listener = nil
-        bridge?.stop()
-        bridge = nil
-        pairingCode = nil
+    }
+
+    private func installLogHandler() {
+        CompanionLog.handler = { message in
+            DLog("\(message)")
+        }
+    }
+
+    private func startListening(pairingID: String) throws {
+        let keyPair = try CompanionMacIdentity.keyPair()
+        let code = PairingCode(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
+        let listener = try BonjourTransportListener(pairingID: pairingID,
+                                                    version: PairingCode.supportedVersion)
+        self.listener = listener
+        acceptTask = Task { [weak self] in
+            await self?.acceptLoop(listener: listener, keyPair: keyPair, code: code)
+        }
     }
 
     private func acceptLoop(listener: TransportListener,
                             keyPair: NoiseKeyPair,
                             code: PairingCode) async {
-        do {
-            DLog("Companion pairing: waiting for a connection (pid \(code.pairingID))")
-            let transport = try await listener.accept()
-            DLog("Companion pairing: connection accepted; starting Noise handshake")
-            let channel = try await NoiseHandshake.perform(
-                role: .responder,
-                transport: transport,
-                localKeyPair: keyPair,
-                remoteStaticPublicKey: nil,
-                prologue: code.handshakePrologue())
-            DLog("Companion pairing: handshake complete")
-
-            let bridge = CompanionHostBridge(transport: channel)
-            bridge.onClose = { [weak self] in
-                self?.bridge = nil
-                self?.onDisconnect?()
+        DLog("Companion pairing: accept loop started (pid \(code.pairingID))")
+        onStatus?("Waiting for your iPhone…")
+        while !Task.isCancelled {
+            let transport: MessageTransport
+            do {
+                transport = try await listener.accept()
+            } catch {
+                listener.stop()
+                if self.listener === listener {
+                    self.listener = nil
+                }
+                acceptTask = nil
+                // A closed listener is always a deliberate teardown (stop or
+                // unpair), regardless of which error shape the cancellation
+                // surfaced as; only genuine failures reach the user.
+                let intentional = Task.isCancelled
+                    || error is CancellationError
+                    || (error as? TransportError) == .closed
+                DLog("Companion pairing: accept ended: \(error), cancelled=\(Task.isCancelled), intentional=\(intentional)")
+                if !intentional {
+                    onFailed?(Self.userFacingDescription(of: error))
+                }
+                return
             }
-            bridge.start()
-            self.bridge = bridge
+            do {
+                DLog("Companion pairing: connection accepted; starting Noise handshake")
+                onStatus?("Phone connected. Securing the connection…")
+                let channel = try await NoiseHandshake.perform(
+                    role: .responder,
+                    transport: transport,
+                    localKeyPair: keyPair,
+                    remoteStaticPublicKey: nil,
+                    prologue: code.handshakePrologue())
+                DLog("Companion pairing: handshake complete")
 
-            // Stop advertising once a phone is connected.
-            listener.stop()
-            self.listener = nil
-            onPaired?()
-        } catch {
-            DLog("Companion pairing failed: \(error)")
-            // The listener is dead or the handshake failed; stop advertising a
-            // pairing that can no longer complete.
-            listener.stop()
-            if self.listener === listener {
-                self.listener = nil
-            }
-            if !Task.isCancelled {
-                onFailed?(Self.userFacingDescription(of: error))
+                let newBridge = CompanionHostBridge(transport: channel)
+                newBridge.onClose = { [weak self, weak newBridge] in
+                    guard let self, let newBridge, self.bridge === newBridge else {
+                        // A stale bridge must not tear down its replacement.
+                        DLog("Companion: stale bridge closed; ignoring")
+                        return
+                    }
+                    DLog("Companion: bridge closed; resuming listening for reconnect")
+                    self.bridge = nil
+                    self.onDisconnect?()
+                    self.resumePairedListeningIfNeeded()
+                }
+                newBridge.onPeerUnpaired = { [weak self] in
+                    self?.peerDidUnpair()
+                }
+                newBridge.start()
+                let staleBridge = bridge
+                bridge = newBridge
+                if let staleBridge {
+                    // The phone reconnected while the previous TCP session
+                    // still looked alive here (e.g. its wifi was off). The new
+                    // handshake supersedes it.
+                    DLog("Companion: replacing stale bridge with the new connection")
+                    staleBridge.stop()
+                }
+                pairedPID = code.pairingID
+                onPaired?()
+                // Keep accepting: this is what lets a phone reconnect after a
+                // network outage the mac never noticed.
+            } catch {
+                DLog("Companion pairing: handshake failed: \(error); still listening")
+                onStatus?("Waiting for your iPhone…")
             }
         }
     }
@@ -129,6 +295,24 @@ final class CompanionPairingController: NSObject {
     private static func userFacingDescription(of error: Error) -> String {
         if case TransportError.localNetworkAccessDenied = error {
             return "macOS denied local network access. Open System Settings > Privacy & Security > Local Network and enable iTerm2, then try again."
+        }
+        if let transport = error as? TransportError {
+            return transport.errorDescription ?? "\(error)"
+        }
+        // Surface the real failure, not bridged-NSError boilerplate.
+        if let nwError = error as? NWError {
+            switch nwError {
+            case .posix(let code):
+                if let cString = strerror(code.rawValue) {
+                    return String(cString: cString)
+                }
+            case .dns(let code):
+                return "Bonjour/DNS error \(code)"
+            case .tls(let status):
+                return "TLS error \(status)"
+            @unknown default:
+                break
+            }
         }
         return error.localizedDescription
     }

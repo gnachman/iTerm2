@@ -18,8 +18,14 @@ actor CompanionClient {
         self.session = session
     }
 
-    func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void) async {
-        await session.start(onEvent: onEvent)
+    func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void,
+               onClose: @escaping @Sendable () -> Void) async {
+        await session.start(onEvent: onEvent, onClose: onClose)
+    }
+
+    /// Liveness check; throws if the mac does not answer.
+    func ping() async throws {
+        _ = try await session.request(.ping)
     }
 
     func listChatsAndSessions() async throws -> (chats: [CompanionChatListEntry],
@@ -66,6 +72,11 @@ actor CompanionClient {
 
     func publish(_ message: Message, toChatID chatID: String) async throws {
         try await session.send(.publish(message: message, toChatID: chatID, partial: false))
+    }
+
+    /// Tell the mac this device is unpairing (sent before close()).
+    func sendUnpairing() async throws {
+        try await session.send(.unpairing)
     }
 
     func close() async {

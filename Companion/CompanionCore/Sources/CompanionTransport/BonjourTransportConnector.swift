@@ -20,9 +20,15 @@ public struct BonjourTransportConnector: TransportConnector {
     public func connect(to rendezvous: PairingRendezvous,
                         timeout: TimeInterval) async throws -> MessageTransport {
         let endpoint = try await discover(pairingID: rendezvous.pairingID, timeout: timeout)
-        let connection = NWConnection(to: endpoint, using: .tcp)
+        let connection = NWConnection(to: endpoint, using: CompanionBonjour.tcpParameters())
         let transport = NWMessageTransport(connection: connection)
-        try await transport.start()
+        // A multi-homed peer can advertise addresses the connecting device
+        // cannot reach (other subnets, VPN tunnels); NWConnection then sits in
+        // .preparing trying candidates. Bound the wait so the failure is
+        // visible instead of an eternal spinner.
+        try await withDeadline(seconds: 15, label: "TCP connection to \(endpoint)") {
+            try await transport.start()
+        }
         return transport
     }
 

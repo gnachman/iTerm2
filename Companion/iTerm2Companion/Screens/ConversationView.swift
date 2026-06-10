@@ -10,7 +10,7 @@ import SwiftUI
 import CompanionProtocol
 
 struct ConversationView: View {
-    @EnvironmentObject private var model: AppModel
+    @Environment(AppModel.self) private var model
     let chatID: String
 
     @State private var draft = ""
@@ -21,29 +21,25 @@ struct ConversationView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                transcript
-                Divider()
-                inputRow
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    Button {
-                        model.leaveConversation()
-                    } label: {
-                        Label("Chats", systemImage: "chevron.left")
-                    }
-                }
-            }
+        VStack(spacing: 0) {
+            transcript
+            Divider()
+            inputRow
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            model.conversationDidAppear(chatID: chatID)
         }
     }
 
     private var transcript: some View {
         ScrollViewReader { proxy in
             ScrollView {
+                if model.isLoadingConversation && model.messages.isEmpty {
+                    ProgressView("Loading…")
+                        .padding(.top, 48)
+                }
                 LazyVStack(spacing: 10) {
                     ForEach(model.messages) { message in
                         MessageBubbleView(message: message)

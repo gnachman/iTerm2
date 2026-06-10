@@ -2,15 +2,16 @@
 //  PairingView.swift
 //  iTerm2 Companion
 //
-//  Shown while the Bonjour rendezvous and Noise handshake run. On success the
-//  model advances to the home screen; on failure it surfaces an error here with
+//  Shown while the rendezvous and Noise handshake run. Displays the current
+//  step plus an elapsed-time counter so a slow Mac is visibly "still trying"
+//  rather than hung, and offers Cancel. On failure it surfaces an error with
 //  a way back.
 //
 
 import SwiftUI
 
 struct PairingView: View {
-    @EnvironmentObject private var model: AppModel
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         VStack(spacing: 24) {
@@ -32,20 +33,45 @@ struct PairingView: View {
                     .controlSize(.large)
                 Text("Pairing with iTerm2…")
                     .font(.headline)
-                    .foregroundStyle(.secondary)
+                statusLine
             }
 
             Spacer()
 
             if model.pairingError != nil {
                 Button {
-                    model.beginScanning()
+                    model.retryPairing()
                 } label: {
                     PrimaryButtonLabel(title: "Try Again")
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 32)
-                .padding(.bottom, 24)
+
+                Button("Pair a Different Mac") {
+                    model.beginScanning()
+                }
+                .font(.subheadline)
+            }
+
+            Button("Cancel") {
+                model.cancelPairing()
+            }
+            .font(.headline)
+            .padding(.bottom, 24)
+        }
+    }
+
+    /// "Waiting on the Mac" feedback: the current step plus seconds elapsed,
+    /// updating once per second.
+    @ViewBuilder
+    private var statusLine: some View {
+        if let startedAt = model.pairingStartedAt {
+            TimelineView(.periodic(from: startedAt, by: 1)) { context in
+                let elapsed = max(0, Int(context.date.timeIntervalSince(startedAt)))
+                Text("\(model.pairingStatus) (\(elapsed)s)…")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
         }
     }

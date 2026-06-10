@@ -67,7 +67,12 @@ public enum CompanionLog {
     /// nonisolated(unsafe) by design: set once at startup before any traffic.
     nonisolated(unsafe) public static var handler: (@Sendable (String) -> Void)?
 
-    public static func log(_ message: @autoclosure () -> String) {
-        handler?(message())
+    public static func log(_ message: @autoclosure () -> String,
+                           file: StaticString = #fileID,
+                           line: UInt = #line,
+                           function: StaticString = #function) {
+        guard let handler else { return }
+        let basename = "\(file)".split(separator: "/").last.map(String.init) ?? "\(file)"
+        handler("\(basename):\(line) (\(function)): \(message())")
     }
 }

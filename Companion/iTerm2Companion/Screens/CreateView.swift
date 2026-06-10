@@ -10,7 +10,7 @@ import SwiftUI
 import CompanionProtocol
 
 struct CreateView: View {
-    @EnvironmentObject private var model: AppModel
+    @Environment(AppModel.self) private var model
     @State private var kind: Kind = .session
 
     private enum Kind: Hashable {
@@ -19,54 +19,47 @@ struct CreateView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    Picker("Chat with", selection: $kind) {
-                        Text("A session").tag(Kind.session)
-                        Text("The orchestrator").tag(Kind.orchestrator)
-                    }
-                    .pickerStyle(.segmented)
-                } footer: {
-                    Text(kind == .orchestrator
-                         ? "The orchestrator can see and act across all of your sessions."
-                         : "The chat is bound to one terminal session.")
+        Form {
+            Section {
+                Picker("Chat with", selection: $kind) {
+                    Text("A session").tag(Kind.session)
+                    Text("The orchestrator").tag(Kind.orchestrator)
                 }
-
-                if kind == .session {
-                    Section("Session") {
-                        if model.sessions.isEmpty {
-                            Text("No sessions available.")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            ForEach(model.sessions, id: \.guid) { session in
-                                Button {
-                                    model.createChat(mode: .session(guid: session.guid))
-                                } label: {
-                                    SessionRow(session: session)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                } else {
-                    Section {
-                        Button {
-                            model.createChat(mode: .orchestrator)
-                        } label: {
-                            Label("Create Orchestrator Chat", systemImage: "rectangle.3.group")
-                        }
-                    }
-                }
+                .pickerStyle(.segmented)
+            } footer: {
+                Text(kind == .orchestrator
+                     ? "The orchestrator can see and act across all of your sessions."
+                     : "The chat is bound to one terminal session.")
             }
-            .navigationTitle("New Chat")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { model.route = .home }
+
+            if kind == .session {
+                Section("Session") {
+                    if model.sessions.isEmpty {
+                        Text("No sessions available.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(model.sessions, id: \.guid) { session in
+                            Button {
+                                model.createChat(mode: .session(guid: session.guid))
+                            } label: {
+                                SessionRow(session: session)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            } else {
+                Section {
+                    Button {
+                        model.createChat(mode: .orchestrator)
+                    } label: {
+                        Label("Create Orchestrator Chat", systemImage: "rectangle.3.group")
+                    }
                 }
             }
         }
+        .navigationTitle("New Chat")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

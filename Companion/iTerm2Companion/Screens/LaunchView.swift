@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LaunchView: View {
-    @EnvironmentObject private var model: AppModel
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,8 +44,22 @@ struct LaunchView: View {
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 32)
-            .padding(.bottom, 24)
+            .padding(.bottom, 8)
+
+            if let stored = model.storedPairingCode {
+                Button("Reconnect to Your Mac") {
+                    model.pair(with: stored, isReconnect: true)
+                }
+                .font(.headline)
+                .padding(.bottom, 4)
+
+                Button("Forget Saved Mac") {
+                    model.forgetStoredPairing()
+                }
+                .font(.subheadline)
+            }
         }
+        .padding(.bottom, 16)
     }
 }
 

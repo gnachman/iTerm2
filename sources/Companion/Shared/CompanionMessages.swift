@@ -71,6 +71,10 @@ enum CompanionClientMessage: Codable {
 
     /// Liveness check. Replied to with `.pong`.
     case ping
+
+    /// The phone is unpairing: the mac should forget the pairing and destroy
+    /// its key material. No reply; the phone closes after sending.
+    case unpairing
 }
 
 /// Sent by the mac (host) to the phone (client). Either a reply correlated to a
@@ -97,6 +101,11 @@ enum CompanionHostMessage: Codable {
 
     /// Reply to `.ping`.
     case pong
+
+    /// Unsolicited farewell: the mac unpaired this device. The phone should
+    /// forget its stored pairing and return to the scan screen. Sent (and
+    /// flushed) just before the mac closes the connection.
+    case unpaired
 
     /// An error, optionally correlated to a request via the envelope.
     case error(CompanionError)

@@ -11,7 +11,7 @@ REPO_ROOT = File.expand_path('../..', __dir__)
 PROJECT_PATH = File.join(COMPANION_DIR, 'iTerm2Companion.xcodeproj')
 APP_DIR = File.join(COMPANION_DIR, 'iTerm2Companion')
 BUNDLE_ID = 'com.googlecode.iterm2.companion'
-DEPLOYMENT_TARGET = '16.0'
+DEPLOYMENT_TARGET = '17.0'
 PACKAGE_PRODUCTS = %w[CompanionProtocol CompanionNoise CompanionTransport]
 
 # Chat-model sources shared with the Mac app. These compile into BOTH the
@@ -71,6 +71,11 @@ if include_assets
   assets = File.join(APP_DIR, 'Resources', 'Assets.xcassets')
   assets_ref = app_group.new_reference(assets)
   target.add_resources([assets_ref])
+  # Icon Composer bundle; pairs with the AppIcon asset set by name (the .icon
+  # is used on iOS 26+, the asset set is the fallback for older systems).
+  icon = File.join(APP_DIR, 'Resources', 'AppIcon.icon')
+  icon_ref = app_group.new_reference(icon)
+  target.add_resources([icon_ref])
 end
 
 # Local Swift package + product dependencies.
@@ -110,6 +115,7 @@ target.build_configurations.each do |config|
   end
   settings['ENABLE_PREVIEWS'] = 'YES'
   settings['CODE_SIGN_STYLE'] = 'Automatic'
+  settings['DEVELOPMENT_TEAM'] = 'H7V7XYVQ7D'
   settings['SWIFT_EMIT_LOC_STRINGS'] = 'YES'
 end
 

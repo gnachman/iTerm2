@@ -35,6 +35,9 @@ final class CompanionHostBridge {
     /// bridge. A user-initiated stop() does not fire it.
     var onClose: (@MainActor () -> Void)?
 
+    /// Called when the phone announces it is unpairing.
+    var onPeerUnpaired: (@MainActor () -> Void)?
+
     init(transport: MessageTransport) {
         self.transport = transport
     }
@@ -47,18 +50,53 @@ final class CompanionHostBridge {
         outbox = continuation
         outboxTask = Task { [transport] in
             for await envelope in stream {
-                guard let data = try? WireCoding.encode(envelope) else { continue }
+                let data: Data
+                do {
+                    data = try WireCoding.encode(envelope)
+                } catch {
+                    DLog("Companion bridge: DROPPING unencodable envelope: \(error)")
+                    continue
+                }
                 do {
                     try await transport.send(data)
                 } catch {
+                    DLog("Companion bridge: outbox send failed; outbox is dead: \(error)")
                     break
                 }
             }
+            DLog("Companion bridge: outbox drained")
         }
 
         receiveTask = Task { [weak self] in
             await self?.runReceiveLoop()
         }
+    }
+
+    /// Tell the phone it has been unpaired, flush the outbox so the message
+    /// actually reaches the wire, then tear down. Used by unpair; a plain
+    /// stop() would race the farewell against the connection close.
+    func announceUnpairedAndStop() async {
+        DLog("Companion bridge: announcing unpair")
+        onClose = nil
+        for subscription in subscriptions.values {
+            subscription.unsubscribe()
+        }
+        subscriptions.removeAll()
+        send(.unpaired, requestID: nil)
+        outbox?.finish()
+        outbox = nil
+        // Drain: the outbox task exits once it has sent everything enqueued
+        // before finish(), including the farewell.
+        await outboxTask?.value
+        outboxTask = nil
+        DLog("Companion bridge: farewell flushed; closing transport")
+        // Tear down the receive side only AFTER the farewell is on the wire:
+        // cancelling the receive task cancels the underlying connection (its
+        // onCancel treats cancellation as abandoning the transport), which
+        // would kill the farewell if done first.
+        receiveTask?.cancel()
+        receiveTask = nil
+        await transport.close()
     }
 
     func stop() {
@@ -132,6 +170,9 @@ final class CompanionHostBridge {
             handlePublish(message: message, toChatID: chatID)
         case .ping:
             send(.pong, requestID: requestID)
+        case .unpairing:
+            DLog("Companion bridge: peer is unpairing")
+            onPeerUnpaired?()
         }
     }
 

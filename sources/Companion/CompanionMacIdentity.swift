@@ -26,6 +26,17 @@ final class CompanionMacIdentity: NSObject {
         return generated
     }
 
+    /// Destroy the stored identity (used when unpairing); the next pairing
+    /// generates a fresh keypair.
+    static func deleteKeyPair() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
     private static func loadPrivateKey() -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

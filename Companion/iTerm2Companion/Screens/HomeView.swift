@@ -9,34 +9,36 @@ import SwiftUI
 import CompanionProtocol
 
 struct HomeView: View {
-    @EnvironmentObject private var model: AppModel
+    @Environment(AppModel.self) private var model
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if model.chats.isEmpty {
-                    emptyState
-                } else {
-                    List(model.chats, id: \.chat.id) { entry in
-                        Button {
-                            model.openChat(entry.chat.id)
-                        } label: {
-                            ChatRow(entry: entry)
-                        }
-                        .buttonStyle(.plain)
+        Group {
+            if model.chats.isEmpty {
+                emptyState
+            } else {
+                List(model.chats, id: \.chat.id) { entry in
+                    NavigationLink(value: AppModel.Destination.conversation(chatID: entry.chat.id)) {
+                        ChatRow(entry: entry)
                     }
-                    .listStyle(.plain)
-                    .refreshable { model.refreshHome() }
+                }
+                .listStyle(.plain)
+                .refreshable { model.refreshHome() }
+            }
+        }
+        .navigationTitle("Chats")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    model.beginSettings()
+                } label: {
+                    Label("Settings", systemImage: "gear")
                 }
             }
-            .navigationTitle("Chats")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        model.beginCreateChat()
-                    } label: {
-                        Label("New Chat", systemImage: "square.and.pencil")
-                    }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    model.beginCreateChat()
+                } label: {
+                    Label("New Chat", systemImage: "square.and.pencil")
                 }
             }
         }
@@ -65,10 +67,6 @@ private struct ChatRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: chat.orchestrationEnabled ? "rectangle.3.group" : "terminal")
-                .font(.title3)
-                .foregroundStyle(.tint)
-                .frame(width: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(chat.title)
                     .font(.headline)
@@ -77,13 +75,10 @@ private struct ChatRow: View {
                     Text(snippet)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
             }
             Spacer()
-            Image(systemName: "chevron.right")
-                .font(.footnote.bold())
-                .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())

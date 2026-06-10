@@ -29,8 +29,7 @@ public final class BonjourTransportListener: TransportListener, @unchecked Senda
     private var failure: Error?
 
     public init(pairingID: String, version: Int) throws {
-        let parameters = NWParameters.tcp
-        let listener = try NWListener(using: parameters)
+        let listener = try NWListener(using: CompanionBonjour.tcpParameters())
         var txt = NWTXTRecord()
         txt[CompanionBonjour.pairingIDKey] = pairingID
         txt[CompanionBonjour.versionKey] = String(version)
