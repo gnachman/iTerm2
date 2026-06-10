@@ -191,6 +191,8 @@ final class CompanionHostBridge {
                                       requestID: requestID)
         case .fetchWorkgroupInfo(let workgroupID):
             handleFetchWorkgroupInfo(workgroupID: workgroupID, requestID: requestID)
+        case .fetchSessionTree:
+            send(.sessionTree(CompanionSessionLister.tree()), requestID: requestID)
         case .ping:
             send(.pong, requestID: requestID)
         case .unpairing:

@@ -56,6 +56,32 @@ struct CompanionMentionResolution: Codable, Equatable {
     var workgroupID: String?
 }
 
+/// The Mac's sessions organized the way the user sees them: window, tab,
+/// pane, with one more level under panes that host a peer group.
+struct CompanionSessionTree: Codable, Equatable {
+    struct Window: Codable, Equatable {
+        var title: String
+        var tabs: [Tab]
+    }
+    struct Tab: Codable, Equatable {
+        var title: String
+        var panes: [Pane]
+    }
+    struct Pane: Codable, Equatable {
+        /// The session currently occupying the pane.
+        var session: CompanionSessionSummary
+        /// All members of the pane's peer group when it hosts more than one
+        /// session (e.g. a workgroup's Code Review peer); empty otherwise.
+        var peers: [Peer]
+    }
+    struct Peer: Codable, Equatable {
+        /// The peer's role name, e.g. “Code Review”.
+        var roleName: String
+        var session: CompanionSessionSummary
+    }
+    var windows: [Window]
+}
+
 /// One member of a workgroup, as shown in the phone's workgroup view.
 struct CompanionWorkgroupMember: Codable, Equatable {
     var roleName: String
@@ -173,6 +199,10 @@ enum CompanionClientMessage: Codable {
     /// to with `.workgroupInfo`.
     case fetchWorkgroupInfo(workgroupID: String)
 
+    /// Sessions tab: the window/tab/pane/peer hierarchy. Replied to with
+    /// `.sessionTree`.
+    case fetchSessionTree
+
     /// Liveness check. Replied to with `.pong`.
     case ping
 
@@ -214,6 +244,9 @@ enum CompanionHostMessage: Codable {
 
     /// Reply to `.fetchWorkgroupInfo`.
     case workgroupInfo(CompanionWorkgroupInfo)
+
+    /// Reply to `.fetchSessionTree`.
+    case sessionTree(CompanionSessionTree)
 
     /// Reply to `.ping`.
     case pong

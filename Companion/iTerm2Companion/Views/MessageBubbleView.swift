@@ -102,13 +102,16 @@ struct MessageBubbleView: View {
                 continue
             }
             if cursor < range.lowerBound {
-                result = result + Text(AttributedString(attributed[cursor..<range.lowerBound]))
+                let segment = Text(AttributedString(attributed[cursor..<range.lowerBound]))
+                result = Text("\(result)\(segment)")
             }
-            result = result + mentionText(for: mention, raw: AttributedString(attributed[range]))
+            let mentionSegment = mentionText(for: mention, raw: AttributedString(attributed[range]))
+            result = Text("\(result)\(mentionSegment)")
             cursor = range.upperBound
         }
         if cursor < attributed.endIndex {
-            result = result + Text(AttributedString(attributed[cursor..<attributed.endIndex]))
+            let segment = Text(AttributedString(attributed[cursor..<attributed.endIndex]))
+            result = Text("\(result)\(segment)")
         }
         return result
     }
@@ -142,10 +145,9 @@ struct MessageBubbleView: View {
         }
         // The same terminal glyph (and thin space) the Mac prefixes, so the
         // link reads as an iTerm2 session rather than the web.
-        return Text(Image(systemName: "terminal"))
+        let icon = Text(Image(systemName: "terminal"))
             .foregroundStyle(isUser ? Color.white : Color.accentColor)
-            + Text("\u{2009}")
-            + Text(link)
+        return Text("\(icon)\u{2009}\(Text(link))")
     }
 
     private var systemNotice: some View {

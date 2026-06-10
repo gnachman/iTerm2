@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "59BB75AF403FA14DD2E211A7"
+               BlueprintIdentifier = "DF5A28017BB3A7BF583B8E8E"
                BuildableName = "iTerm2Companion.app"
                BlueprintName = "iTerm2Companion"
                ReferencedContainer = "container:iTerm2Companion.xcodeproj">
@@ -30,7 +30,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "59BB75AF403FA14DD2E211A7"
+            BlueprintIdentifier = "DF5A28017BB3A7BF583B8E8E"
             BuildableName = "iTerm2Companion.app"
             BlueprintName = "iTerm2Companion"
             ReferencedContainer = "container:iTerm2Companion.xcodeproj">
@@ -53,7 +53,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "59BB75AF403FA14DD2E211A7"
+            BlueprintIdentifier = "DF5A28017BB3A7BF583B8E8E"
             BuildableName = "iTerm2Companion.app"
             BlueprintName = "iTerm2Companion"
             ReferencedContainer = "container:iTerm2Companion.xcodeproj">
@@ -70,7 +70,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "59BB75AF403FA14DD2E211A7"
+            BlueprintIdentifier = "DF5A28017BB3A7BF583B8E8E"
             BuildableName = "iTerm2Companion.app"
             BlueprintName = "iTerm2Companion"
             ReferencedContainer = "container:iTerm2Companion.xcodeproj">

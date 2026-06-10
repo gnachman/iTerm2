@@ -135,6 +135,7 @@ actor CompanionSession {
         case .sessionScreenInfo: "sessionScreenInfo"
         case .sessionContent: "sessionContent"
         case .workgroupInfo: "workgroupInfo"
+        case .sessionTree: "sessionTree"
         case .pong: "pong"
         case .unpaired: "unpaired"
         case .error: "error"

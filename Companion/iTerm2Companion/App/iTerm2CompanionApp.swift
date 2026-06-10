@@ -55,35 +55,55 @@ struct RootView: View {
             PairingView()
                 .transition(.opacity)
         case .home:
-            // One NavigationStack owns the whole paired flow so pushes slide
-            // and the interactive swipe-back gesture works.
-            NavigationStack(path: $model.navigationPath) {
-                HomeView()
-                    .reconnectingBanner(model.isReconnecting)
-                    .navigationDestination(for: AppModel.Destination.self) { destination in
-                        switch destination {
-                        case .create:
-                            CreateView()
-                                .reconnectingBanner(model.isReconnecting)
-                        case .conversation(let chatID):
-                            ConversationView(chatID: chatID)
-                                .reconnectingBanner(model.isReconnecting)
-                        case .settings:
-                            SettingsView()
-                                .reconnectingBanner(model.isReconnecting)
-                        case .session(let guid, let title):
-                            SessionView(guid: guid, title: title)
-                                .reconnectingBanner(model.isReconnecting)
-                        case .workgroup(let id, let title):
-                            WorkgroupView(workgroupID: id, title: title)
-                                .reconnectingBanner(model.isReconnecting)
-                        }
+            // Two top-level modes, one tab each, with independent
+            // NavigationStacks so each tab keeps its own place. Pushes slide
+            // and the interactive swipe-back gesture works per tab.
+            TabView(selection: $model.selectedTab) {
+                Tab("Chats", systemImage: "bubble.left.and.bubble.right", value: AppModel.AppTab.chats) {
+                    NavigationStack(path: $model.navigationPath) {
+                        HomeView()
+                            .reconnectingBanner(model.isReconnecting)
+                            .navigationDestination(for: AppModel.Destination.self) { destination in
+                                destinationView(destination)
+                            }
                     }
+                }
+                Tab("Sessions", systemImage: "terminal", value: AppModel.AppTab.sessions) {
+                    NavigationStack(path: $model.sessionsPath) {
+                        SessionBrowserView()
+                            .reconnectingBanner(model.isReconnecting)
+                            .navigationDestination(for: AppModel.Destination.self) { destination in
+                                destinationView(destination)
+                            }
+                    }
+                }
             }
+            .tabBarMinimizeBehavior(.onScrollDown)
             .transition(.opacity)
         }
         }
         .animation(.smooth(duration: 0.35), value: model.phase)
+    }
+
+    @ViewBuilder
+    private func destinationView(_ destination: AppModel.Destination) -> some View {
+        switch destination {
+        case .create:
+            CreateView()
+                .reconnectingBanner(model.isReconnecting)
+        case .conversation(let chatID):
+            ConversationView(chatID: chatID)
+                .reconnectingBanner(model.isReconnecting)
+        case .settings:
+            SettingsView()
+                .reconnectingBanner(model.isReconnecting)
+        case .session(let guid, let title):
+            SessionView(guid: guid, title: title)
+                .reconnectingBanner(model.isReconnecting)
+        case .workgroup(let id, let title):
+            WorkgroupView(workgroupID: id, title: title)
+                .reconnectingBanner(model.isReconnecting)
+        }
     }
 }
 

@@ -11,7 +11,9 @@ REPO_ROOT = File.expand_path('../..', __dir__)
 PROJECT_PATH = File.join(COMPANION_DIR, 'iTerm2Companion.xcodeproj')
 APP_DIR = File.join(COMPANION_DIR, 'iTerm2Companion')
 BUNDLE_ID = 'com.googlecode.iterm2.companion'
-DEPLOYMENT_TARGET = '17.0'
+# iOS 26: the TabView Tab API and tabBarMinimizeBehavior are used without
+# availability checks. The app is unreleased and tracks the current OS.
+DEPLOYMENT_TARGET = '26.0'
 PACKAGE_PRODUCTS = %w[CompanionProtocol CompanionNoise CompanionTransport]
 
 # Chat-model sources shared with the Mac app. These compile into BOTH the

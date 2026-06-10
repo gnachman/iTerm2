@@ -146,6 +146,18 @@ actor CompanionClient {
         }
     }
 
+    func sessionTree() async throws -> CompanionSessionTree {
+        let reply = try await session.request(.fetchSessionTree)
+        switch reply {
+        case .sessionTree(let tree):
+            return tree
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to session tree request")
+        }
+    }
+
     /// Tell the mac this device is unpairing (sent before close()).
     func sendUnpairing() async throws {
         try await session.send(.unpairing)

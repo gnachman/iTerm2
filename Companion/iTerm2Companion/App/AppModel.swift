@@ -99,7 +99,17 @@ final class AppModel {
         case workgroup(id: String, title: String)
     }
 
+    /// The paired UI's top-level modes (the tab bar).
+    enum AppTab: Hashable {
+        case chats
+        case sessions
+    }
+
     var phase: Phase = .launch
+    var selectedTab: AppTab = .chats
+    /// The Sessions tab's navigation stack (the browser and what it pushes).
+    var sessionsPath: [Destination] = []
+    /// The Chats tab's navigation stack.
     var navigationPath: [Destination] = [] {
         didSet {
             // Swipe-back and the back button mutate the path directly; when
@@ -113,6 +123,11 @@ final class AppModel {
     }
     var chats: [CompanionChatListEntry] = []
     var sessions: [CompanionSessionSummary] = []
+    /// The Sessions tab's window/tab/pane/peer hierarchy.
+    var sessionTree: CompanionSessionTree?
+    /// Why the tree could not be loaded; only meaningful while sessionTree is
+    /// nil (a stale tree keeps showing instead of an error).
+    var sessionTreeError: String?
 
     // Conversation state for the open chat.
     var openChatID: String?
@@ -236,14 +251,25 @@ final class AppModel {
         navigationPath.append(.settings)
     }
 
+    /// The navigation stack of whichever tab the user is looking at; mention
+    /// taps and the session browser both push onto the visible stack.
+    private func appendToActivePath(_ destination: Destination) {
+        switch selectedTab {
+        case .chats:
+            navigationPath.append(destination)
+        case .sessions:
+            sessionsPath.append(destination)
+        }
+    }
+
     /// Tapping an @-mention in a bubble pushes the read-only session view.
     func openSession(guid: String, title: String) {
-        navigationPath.append(.session(guid: guid, title: title))
+        appendToActivePath(.session(guid: guid, title: title))
     }
 
     /// Tapping a workgroup @-mention pushes the member list.
     func openWorkgroup(id: String, title: String) {
-        navigationPath.append(.workgroup(id: id, title: title))
+        appendToActivePath(.workgroup(id: id, title: title))
     }
 
     /// The composer's @ button refreshes the session list before showing the
@@ -251,6 +277,22 @@ final class AppModel {
     func refreshSessionsForMentionPicker() {
         Task {
             try? await refreshLists()
+        }
+    }
+
+    /// Sessions tab: appearance and pull-to-refresh both re-fetch the tree.
+    func refreshSessionBrowser() async {
+        do {
+            let client = try await currentClient(label: "Session tree")
+            sessionTree = try await withTimeout(15, "Loading sessions") {
+                try await client.sessionTree()
+            }
+            sessionTreeError = nil
+        } catch {
+            companionLog("Session tree refresh failed: \(String(describing: error))")
+            if sessionTree == nil {
+                sessionTreeError = userMessage(for: error)
+            }
         }
     }
 
@@ -276,6 +318,8 @@ final class AppModel {
         activePairingCode = nil
         chats = []
         sessions = []
+        sessionTree = nil
+        sessionTreeError = nil
         messages = []
         mentionResolutions = [:]
         openChatID = nil
@@ -283,6 +327,8 @@ final class AppModel {
         isLoadingConversation = false
         isReconnecting = false
         navigationPath = []
+        sessionsPath = []
+        selectedTab = .chats
         pairingError = nil
         pairingStartedAt = nil
         phase = .scanning
@@ -407,6 +453,11 @@ final class AppModel {
     func loadHome() async throws {
         try await refreshLists()
         navigationPath = []
+        if phase != .home {
+            // Arriving from pairing (not a pull-to-refresh): start clean.
+            sessionsPath = []
+            selectedTab = .chats
+        }
         phase = .home
     }
 
@@ -419,6 +470,9 @@ final class AppModel {
         companionLog("Received \(chats.count) chat(s), \(sessions.count) session(s)")
         self.chats = chats
         self.sessions = sessions
+        // Snippets can contain @-mentions; resolve them so the chat list
+        // shows names instead of raw UUIDs.
+        noteMentions(inTexts: chats.compactMap { $0.snippet })
     }
 
     // MARK: Connection lifecycle
@@ -464,6 +518,12 @@ final class AppModel {
                     try await establish(code: code)
                     companionLog("Reconnected (attempt \(attempt))")
                     try await refreshLists()
+                    if sessionTree != nil || selectedTab == .sessions {
+                        // The Sessions tab loads its tree on appearance; if
+                        // that load gave up while we were down (or its data
+                        // is now stale), this is the retry.
+                        await refreshSessionBrowser()
+                    }
                     if let chatID = openChatID, !isLoadingConversation {
                         // Re-subscribe the open conversation on the new
                         // session. Skipped when a load is already parked in
@@ -738,12 +798,15 @@ final class AppModel {
         }
     }
 
-    /// Scan a message for mentions and ask the Mac to resolve any we have not
+    /// Scan messages for mentions and ask the Mac to resolve any we have not
     /// seen yet. Resolutions land in `mentionResolutions`, which re-renders
     /// the bubbles that reference them.
     private func noteMentions(in messages: [Message]) {
-        let identifiers = Set(messages
-            .flatMap { mentionableTexts(of: $0) }
+        noteMentions(inTexts: messages.flatMap { mentionableTexts(of: $0) })
+    }
+
+    private func noteMentions(inTexts texts: [String]) {
+        let identifiers = Set(texts
             .flatMap { MentionParser.mentions(in: $0) }
             .map { $0.identifier })
         let unresolved = identifiers.filter {
@@ -766,6 +829,28 @@ final class AppModel {
             }
             mentionResolutionsInFlight.subtract(unresolved)
         }
+    }
+
+    /// A chat-list snippet, ready to display: inline markdown rendered (so
+    /// **bold** is bold) and @-mentions replaced with the live entity name
+    /// (plain text, not a link; the row itself is the tap target).
+    func renderedSnippet(_ snippet: String) -> AttributedString {
+        var attributed = (try? AttributedString(
+            markdown: snippet,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            ?? AttributedString(snippet)
+        let plain = String(attributed.characters)
+        // Replace back to front so earlier ranges stay valid.
+        for mention in MentionParser.mentions(in: plain).reversed() {
+            guard let resolution = mentionResolutions[mention.identifier],
+                  let range = Range(mention.range, in: attributed) else {
+                continue
+            }
+            attributed.replaceSubrange(
+                range,
+                with: AttributedString(resolution.displayName ?? "[defunct session]"))
+        }
+        return attributed
     }
 
     // MARK: Session content
@@ -821,12 +906,16 @@ final class AppModel {
         Task { await oldClient?.close() }
         chats = []
         sessions = []
+        sessionTree = nil
+        sessionTreeError = nil
         messages = []
         mentionResolutions = [:]
         openChatID = nil
         isAgentTyping = false
         isLoadingConversation = false
         navigationPath = []
+        sessionsPath = []
+        selectedTab = .chats
         pairingError = nil
         phase = .scanning
     }

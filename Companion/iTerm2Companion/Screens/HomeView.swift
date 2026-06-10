@@ -61,6 +61,7 @@ struct HomeView: View {
 }
 
 private struct ChatRow: View {
+    @Environment(AppModel.self) private var model
     let entry: CompanionChatListEntry
 
     private var chat: Chat { entry.chat }
@@ -72,7 +73,7 @@ private struct ChatRow: View {
                     .font(.headline)
                     .lineLimit(1)
                 if let snippet = entry.snippet, !snippet.isEmpty {
-                    Text(snippet)
+                    Text(model.renderedSnippet(snippet))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
