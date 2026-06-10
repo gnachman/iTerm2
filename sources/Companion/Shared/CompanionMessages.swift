@@ -38,6 +38,16 @@ struct CompanionChatListEntry: Codable {
     var snippet: String?
 }
 
+/// The user's verdict on a classic remoteCommandRequest bubble (the four
+/// buttons the Mac shows: Allow Once / Always Allow / Deny this Time /
+/// Always Deny).
+enum CompanionRemoteCommandDecision: String, Codable {
+    case allowOnce
+    case allowAlways
+    case denyOnce
+    case denyAlways
+}
+
 /// How a new chat should be created (the phone's Create screen).
 enum CompanionNewChatMode: Codable, Equatable {
     /// Orchestrator chat that can see all sessions.
@@ -68,6 +78,18 @@ enum CompanionClientMessage: Codable {
     /// Publish a user message to a chat (the phone only ever sends user-author
     /// messages). `partial` matches ChatBroker.publish(partial:).
     case publish(message: Message, toChatID: String, partial: Bool)
+
+    /// Resolve a selectSessionRequest: link the chosen session and republish
+    /// the carried original message (sessionGuid != nil), or decline
+    /// (sessionGuid == nil). Mirrors the Mac UI's Select a Session / Cancel.
+    case selectSessionResponse(chatID: String, originalMessage: Message, sessionGuid: String?, terminal: Bool)
+
+    /// The user's verdict on a remoteCommandRequest. The mac looks the message
+    /// up by id and performs or declines it exactly as its own buttons would.
+    case remoteCommandDecision(chatID: String, messageUniqueID: UUID, decision: CompanionRemoteCommandDecision)
+
+    /// Link a session to the chat (the offerLink bubble's Link button).
+    case linkSession(chatID: String, sessionGuid: String, terminal: Bool)
 
     /// Liveness check. Replied to with `.pong`.
     case ping

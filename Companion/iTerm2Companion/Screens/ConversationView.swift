@@ -21,6 +21,7 @@ struct ConversationView: View {
     }
 
     var body: some View {
+        @Bindable var model = model
         VStack(spacing: 0) {
             transcript
             Divider()
@@ -30,6 +31,9 @@ struct ConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             model.conversationDidAppear(chatID: chatID)
+        }
+        .sheet(item: $model.sessionPicker) { request in
+            SessionPickerSheet(request: request)
         }
     }
 
@@ -92,8 +96,15 @@ struct ConversationView: View {
 
     private func send() {
         let text = draft
-        draft = ""
+        companionLog("send(): clearing draft (\(text.count) chars)")
         model.send(text: text)
+        draft = ""
+        // Clearing in the same transaction as the tap can leave the visible
+        // text behind (vertical-axis TextField quirk, especially with marked
+        // autocomplete text); clear again a beat later.
+        Task { @MainActor in
+            draft = ""
+        }
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
@@ -125,6 +136,52 @@ private struct TypingIndicatorView: View {
         .onAppear {
             withAnimation(.easeInOut(duration: 0.6).repeatForever()) {
                 phase = 2
+            }
+        }
+    }
+}
+
+/// Lists the mac's terminal sessions so a selectSessionRequest can be
+/// resolved from the phone.
+private struct SessionPickerSheet: View {
+    @Environment(AppModel.self) private var model
+    let request: AppModel.SessionPickerRequest
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if model.sessions.isEmpty {
+                    Text("No sessions available.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    List(model.sessions, id: \.guid) { session in
+                        Button {
+                            model.respondSelectSession(requestMessageID: request.requestMessageID,
+                                                       original: request.originalMessage,
+                                                       terminal: request.terminal,
+                                                       guid: session.guid)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(session.name)
+                                if !session.subtitle.isEmpty {
+                                    Text(session.subtitle)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .navigationTitle("Select a Session")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        model.sessionPicker = nil
+                    }
+                }
             }
         }
     }

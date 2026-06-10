@@ -74,6 +74,28 @@ actor CompanionClient {
         try await session.send(.publish(message: message, toChatID: chatID, partial: false))
     }
 
+    func sendSelectSessionResponse(chatID: String,
+                                   originalMessage: Message,
+                                   sessionGuid: String?,
+                                   terminal: Bool) async throws {
+        try await session.send(.selectSessionResponse(chatID: chatID,
+                                                      originalMessage: originalMessage,
+                                                      sessionGuid: sessionGuid,
+                                                      terminal: terminal))
+    }
+
+    func sendRemoteCommandDecision(chatID: String,
+                                   messageUniqueID: UUID,
+                                   decision: CompanionRemoteCommandDecision) async throws {
+        try await session.send(.remoteCommandDecision(chatID: chatID,
+                                                      messageUniqueID: messageUniqueID,
+                                                      decision: decision))
+    }
+
+    func sendLinkSession(chatID: String, sessionGuid: String, terminal: Bool) async throws {
+        try await session.send(.linkSession(chatID: chatID, sessionGuid: sessionGuid, terminal: terminal))
+    }
+
     /// Tell the mac this device is unpairing (sent before close()).
     func sendUnpairing() async throws {
         try await session.send(.unpairing)

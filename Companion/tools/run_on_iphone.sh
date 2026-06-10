@@ -56,6 +56,12 @@ fi
 echo "Installing…"
 xcrun devicectl device install app --device "$DEVICE" "$APP"
 
-echo "Launching (ctrl-C to detach)…"
-xcrun devicectl device process launch --console --terminate-existing \
-    --device "$DEVICE" com.googlecode.iterm2.companion
+if [[ -n "${NO_CONSOLE:-}" ]]; then
+    echo "Launching (detached)…"
+    xcrun devicectl device process launch --terminate-existing \
+        --device "$DEVICE" com.googlecode.iterm2.companion
+else
+    echo "Launching (ctrl-C to detach)…"
+    xcrun devicectl device process launch --console --terminate-existing \
+        --device "$DEVICE" com.googlecode.iterm2.companion
+fi

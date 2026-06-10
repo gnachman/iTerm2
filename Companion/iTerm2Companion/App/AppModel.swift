@@ -129,6 +129,19 @@ final class AppModel {
     /// as a banner; the user keeps their place in the UI).
     var isReconnecting = false
 
+    /// Interactive bubbles the user already answered, so their buttons render
+    /// disabled (mirrors the Mac's one-shot buttons).
+    var respondedInteractiveMessageIDs: Set<UUID> = []
+
+    /// Non-nil while the session-picker sheet is up for a selectSessionRequest.
+    struct SessionPickerRequest: Identifiable {
+        let id = UUID()
+        var requestMessageID: UUID
+        var originalMessage: Message
+        var terminal: Bool
+    }
+    var sessionPicker: SessionPickerRequest?
+
     private var pairingTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
     /// The code the current/last pairing attempt used, so Try Again can retry
@@ -150,6 +163,11 @@ final class AppModel {
         // (visible in Console.app and `log stream`).
         CompanionLog.handler = { message in
             companionLogPreformatted(message)
+        }
+        // Build stamp: settles "is the device running current code" instantly.
+        if let url = Bundle.main.executableURL,
+           let mtime = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date {
+            companionLog("Launched; binary built \(mtime)")
         }
     }
 
@@ -575,6 +593,94 @@ final class AppModel {
                 try await client.publish(message, toChatID: chatID)
             } catch {
                 companionLog("Send failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    // MARK: Interactive message responses
+
+    /// "Select a Session" on a selectSessionRequest bubble: refresh the list
+    /// and put up the picker sheet.
+    func beginSelectSession(requestMessage: Message, original: Message, terminal: Bool) {
+        sessionPicker = SessionPickerRequest(requestMessageID: requestMessage.uniqueID,
+                                             originalMessage: original,
+                                             terminal: terminal)
+        Task {
+            try? await refreshLists()
+        }
+    }
+
+    /// Completes a selectSessionRequest, from the sheet (guid set) or the
+    /// bubble's Cancel button (guid nil).
+    func respondSelectSession(requestMessageID: UUID,
+                              original: Message,
+                              terminal: Bool,
+                              guid: String?) {
+        sessionPicker = nil
+        guard let chatID = openChatID else { return }
+        respondedInteractiveMessageIDs.insert(requestMessageID)
+        companionLog("Select-session response: \(guid ?? "declined")")
+        Task {
+            do {
+                let client = try await currentClient(label: "Select session")
+                try await client.sendSelectSessionResponse(chatID: chatID,
+                                                           originalMessage: original,
+                                                           sessionGuid: guid,
+                                                           terminal: terminal)
+            } catch {
+                companionLog("Select-session response failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    func respondRemoteCommand(requestMessage: Message, decision: CompanionRemoteCommandDecision) {
+        guard let chatID = openChatID else { return }
+        respondedInteractiveMessageIDs.insert(requestMessage.uniqueID)
+        companionLog("Remote command decision: \(decision.rawValue)")
+        Task {
+            do {
+                let client = try await currentClient(label: "Command decision")
+                try await client.sendRemoteCommandDecision(chatID: chatID,
+                                                           messageUniqueID: requestMessage.uniqueID,
+                                                           decision: decision)
+            } catch {
+                companionLog("Command decision failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    /// Approve/Deny on a workgroup permission request, and Enable/Not Now on
+    /// an orchestration request: both are plain user-authored publishes, the
+    /// same thing the Mac UI sends.
+    func respondUserCommand(requestMessage: Message, command: UserCommand) {
+        guard let chatID = openChatID else { return }
+        respondedInteractiveMessageIDs.insert(requestMessage.uniqueID)
+        companionLog("User command response: \(command)")
+        let response = Message(chatID: chatID,
+                               author: .user,
+                               content: .userCommand(command),
+                               sentDate: Date(),
+                               uniqueID: UUID())
+        Task {
+            do {
+                let client = try await currentClient(label: "Interactive response")
+                try await client.publish(response, toChatID: chatID)
+            } catch {
+                companionLog("User command response failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    /// The Link button on an offerLink bubble.
+    func linkSession(requestMessage: Message, guid: String, terminal: Bool) {
+        guard let chatID = openChatID else { return }
+        respondedInteractiveMessageIDs.insert(requestMessage.uniqueID)
+        Task {
+            do {
+                let client = try await currentClient(label: "Link session")
+                try await client.sendLinkSession(chatID: chatID, sessionGuid: guid, terminal: terminal)
+            } catch {
+                companionLog("Link session failed: \(String(describing: error))")
             }
         }
     }

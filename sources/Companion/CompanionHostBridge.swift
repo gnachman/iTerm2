@@ -168,6 +168,17 @@ final class CompanionHostBridge {
             subscriptions[chatID] = nil
         case .publish(let message, let chatID, _):
             handlePublish(message: message, toChatID: chatID)
+        case .selectSessionResponse(let chatID, let originalMessage, let sessionGuid, let terminal):
+            handleSelectSessionResponse(chatID: chatID,
+                                        originalMessage: originalMessage,
+                                        sessionGuid: sessionGuid,
+                                        terminal: terminal)
+        case .remoteCommandDecision(let chatID, let messageUniqueID, let decision):
+            handleRemoteCommandDecision(chatID: chatID,
+                                        messageUniqueID: messageUniqueID,
+                                        decision: decision)
+        case .linkSession(let chatID, let sessionGuid, let terminal):
+            performLinkSession(chatID: chatID, guid: sessionGuid, terminal: terminal)
         case .ping:
             send(.pong, requestID: requestID)
         case .unpairing:
@@ -199,6 +210,17 @@ final class CompanionHostBridge {
                                            browserSessionGuid: nil,
                                            initialMessages: [],
                                            permissions: "")
+            if case .orchestrator = mode {
+                // create() already spun up a session-bound agent (its internal
+                // setPermissions publish reaches ChatService), and an existing
+                // agent never re-reads the flag. Mirror the mac toggle's exact
+                // sequence: drop the agent and dispatcher FIRST, then set the
+                // flag, so the next turn builds an orchestration-mode agent.
+                ChatService.instance?.dropAgent(forChatID: chatID)
+                OrchestratorClient.instance?.dropDispatcher(forChatID: chatID)
+                try ChatListModel.instance?.setOrchestrationEnabled(true, forChatID: chatID)
+                DLog("Companion bridge: chat \(chatID) created in orchestration mode")
+            }
             if let entry = entry(forChatID: chatID) {
                 send(.chatCreated(entry: entry), requestID: requestID)
             } else {
@@ -234,7 +256,12 @@ final class CompanionHostBridge {
         guard message.author == .user else {
             return
         }
-        try? ChatClient.instance?.publishUserMessage(chatID: chatID, content: message.content)
+        // Publish the phone's Message verbatim so its uniqueID survives the
+        // round trip: the delivery then matches the phone's optimistic local
+        // echo (which upserts by uniqueID) instead of duplicating the bubble.
+        var toPublish = message
+        toPublish.chatID = chatID
+        try? ChatClient.instance?.publish(message: toPublish, toChatID: chatID, partial: false)
     }
 
     private func handleBrokerUpdate(_ update: ChatBroker.Update, chatID: String) {
@@ -260,6 +287,118 @@ final class CompanionHostBridge {
             return true
         default:
             return false
+        }
+    }
+
+    // MARK: Interactive message responses (mirroring ChatViewController)
+
+    private func performLinkSession(chatID: String, guid: String, terminal: Bool) {
+        guard let listModel = ChatListModel.instance else { return }
+        do {
+            if terminal {
+                try listModel.setTerminalGuid(for: chatID, to: guid)
+            } else {
+                try listModel.setBrowserGuid(for: chatID, to: guid)
+            }
+            let name = iTermController.sharedInstance().anySession(withGUID: guid)?.name ?? guid
+            try ChatClient.instance?.publishNotice(
+                chatID: chatID,
+                notice: "This chat has been linked to \(terminal ? "terminal" : "browser") session “\(name)”.")
+            DLog("Companion bridge: linked \(terminal ? "terminal" : "browser") session \(guid) to chat \(chatID)")
+        } catch {
+            DLog("Companion bridge: linkSession failed: \(error)")
+            send(.error(CompanionError(code: .internalError, message: "\(error)")), requestID: nil)
+        }
+    }
+
+    private func declineRemoteCommand(chatID: String,
+                                      requestUUID: UUID,
+                                      message: Message,
+                                      text: String) {
+        try? ChatClient.instance?.respondSuccessfullyToRemoteCommandRequest(
+            inChat: chatID,
+            requestUUID: requestUUID,
+            message: text,
+            functionCallName: message.functionCallName ?? "Unknown function call name",
+            functionCallID: message.functionCallID,
+            userNotice: nil)
+    }
+
+    private func handleSelectSessionResponse(chatID: String,
+                                             originalMessage: Message,
+                                             sessionGuid: String?,
+                                             terminal: Bool) {
+        guard let client = ChatClient.instance else { return }
+        if let sessionGuid {
+            DLog("Companion bridge: select-session resolved with \(sessionGuid); republishing original")
+            performLinkSession(chatID: chatID, guid: sessionGuid, terminal: terminal)
+            try? client.publish(message: originalMessage, toChatID: chatID, partial: false)
+        } else {
+            DLog("Companion bridge: select-session declined")
+            declineRemoteCommand(chatID: chatID,
+                                 requestUUID: originalMessage.uniqueID,
+                                 message: originalMessage,
+                                 text: "The user declined to allow this function call to execute.")
+        }
+    }
+
+    private func handleRemoteCommandDecision(chatID: String,
+                                             messageUniqueID: UUID,
+                                             decision: CompanionRemoteCommandDecision) {
+        guard let client = ChatClient.instance,
+              let listModel = ChatListModel.instance,
+              let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return
+        }
+        var found: Message?
+        for index in 0..<messages.count where messages[index].uniqueID == messageUniqueID {
+            found = messages[index]
+            break
+        }
+        guard let message = found,
+              case .remoteCommandRequest(let payload, _) = message.content,
+              let remoteCommand = payload.classic else {
+            DLog("Companion bridge: remoteCommandDecision for unknown message \(messageUniqueID)")
+            return
+        }
+        DLog("Companion bridge: remote command decision \(decision.rawValue) for \(messageUniqueID)")
+        let category = remoteCommand.content.permissionCategory
+        let browser = category.isBrowserSpecific
+        let guid = browser ? listModel.chat(id: chatID)?.browserSessionGuid
+                           : listModel.chat(id: chatID)?.terminalSessionGuid
+        switch decision {
+        case .denyOnce, .denyAlways:
+            if decision == .denyAlways, let guid {
+                try? listModel.setPermission(chat: chatID,
+                                             permission: .never,
+                                             guid: guid,
+                                             category: category)
+            }
+            declineRemoteCommand(chatID: chatID,
+                                 requestUUID: messageUniqueID,
+                                 message: message,
+                                 text: "The user declined to allow this function call to execute.")
+        case .allowOnce, .allowAlways:
+            guard let guid,
+                  let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+                try? client.publishNotice(chatID: chatID,
+                                          notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
+                declineRemoteCommand(chatID: chatID,
+                                     requestUUID: messageUniqueID,
+                                     message: message,
+                                     text: "The user did not link a \(browser ? "web browser" : "terminal") session to chat, so the function could not be run.")
+                return
+            }
+            if decision == .allowAlways {
+                try? listModel.setPermission(chat: chatID,
+                                             permission: .always,
+                                             guid: guid,
+                                             category: category)
+            }
+            try? client.performRemoteCommand(remoteCommand,
+                                             in: session,
+                                             chatID: chatID,
+                                             messageUniqueID: messageUniqueID)
         }
     }
 
