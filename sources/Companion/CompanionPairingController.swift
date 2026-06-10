@@ -41,11 +41,24 @@ final class CompanionPairingController: NSObject {
     /// Begin advertising and waiting for a phone. Returns the pairing code whose
     /// URL should be displayed as a QR.
     func startPairing() throws -> PairingCode {
+        // Route the transport/crypto layers' diagnostics into the debug log.
+        CompanionLog.handler = { message in
+            DLog("\(message)")
+        }
         cancel()
         let keyPair = try CompanionMacIdentity.keyPair()
         let pairingID = Self.makePairingID()
         let code = PairingCode(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
         pairingCode = code
+
+#if DEBUG
+        // Development automation hook: the iOS simulator has no camera, so
+        // end-to-end tests read the pairing URL from here and hand it to the
+        // phone via simctl openurl.
+        try? code.urlString().write(toFile: "/tmp/iterm2-companion-pairing-url.txt",
+                                    atomically: true,
+                                    encoding: .utf8)
+#endif
 
         // Today this is just the local-network listener; wrap additional
         // TransportListeners in a CombinedTransportListener to accept on more.
@@ -73,13 +86,16 @@ final class CompanionPairingController: NSObject {
                             keyPair: NoiseKeyPair,
                             code: PairingCode) async {
         do {
+            DLog("Companion pairing: waiting for a connection (pid \(code.pairingID))")
             let transport = try await listener.accept()
+            DLog("Companion pairing: connection accepted; starting Noise handshake")
             let channel = try await NoiseHandshake.perform(
                 role: .responder,
                 transport: transport,
                 localKeyPair: keyPair,
                 remoteStaticPublicKey: nil,
                 prologue: code.handshakePrologue())
+            DLog("Companion pairing: handshake complete")
 
             let bridge = CompanionHostBridge(transport: channel)
             bridge.onClose = { [weak self] in
@@ -94,10 +110,27 @@ final class CompanionPairingController: NSObject {
             self.listener = nil
             onPaired?()
         } catch {
+            DLog("Companion pairing failed: \(error)")
+            // The listener is dead or the handshake failed; stop advertising a
+            // pairing that can no longer complete.
+            listener.stop()
+            if self.listener === listener {
+                self.listener = nil
+            }
             if !Task.isCancelled {
-                onFailed?("\(error)")
+                onFailed?(Self.userFacingDescription(of: error))
             }
         }
+    }
+
+    /// Convert transport errors into actionable text. The transport layer
+    /// translates the OS's Bonjour denial into a typed case; attach the
+    /// macOS-specific remediation here.
+    private static func userFacingDescription(of error: Error) -> String {
+        if case TransportError.localNetworkAccessDenied = error {
+            return "macOS denied local network access. Open System Settings > Privacy & Security > Local Network and enable iTerm2, then try again."
+        }
+        return error.localizedDescription
     }
 
     private static func makePairingID() -> String {

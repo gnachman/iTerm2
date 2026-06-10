@@ -193,6 +193,8 @@
         <key>NSBonjourServices</key>
         <array>
           <string>_ssh._tcp.</string>
+          <string>_iterm2cmpn._tcp</string>
+          <string>_iterm2cmpn._tcp.</string>
           <string>_ftp._tcp.</string>
           <string>_telnet._tcp.</string>
         </array>

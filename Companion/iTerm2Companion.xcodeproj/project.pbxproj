@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -99,7 +99,6 @@
 				744630C50DB88FC892F19191 /* AppModel.swift */,
 				F24E653B4B4EA32A371B963D /* iTerm2CompanionApp.swift */,
 			);
-			name = App;
 			path = App;
 			sourceTree = "<group>";
 		};
@@ -114,7 +113,6 @@
 				C13A4FB668463D89F9BA516A /* QRScannerView.swift */,
 				1B3BD68E915F2F3F9D5CFB88 /* ScanningView.swift */,
 			);
-			name = Screens;
 			path = Screens;
 			sourceTree = "<group>";
 		};
@@ -124,7 +122,6 @@
 				C026368A0037231B8D03178E /* CompanionClient.swift */,
 				D3BF805F416B6006448CE178 /* PhoneIdentity.swift */,
 			);
-			name = Connection;
 			path = Connection;
 			sourceTree = "<group>";
 		};
@@ -145,7 +142,6 @@
 				E6B0A5CF0C404F4FE4F13AD3 /* MacShims.swift */,
 				1F903F23CD8F06E73D9A4266 /* MacTypeShadows.swift */,
 			);
-			name = Satellites;
 			path = Satellites;
 			sourceTree = "<group>";
 		};
@@ -184,7 +180,6 @@
 				1EB772BA08747DFC025F1D84 /* MessageBubbleView.swift */,
 				7FF50AE059C9ADD0497FF8CF /* PrimaryButtonLabel.swift */,
 			);
-			name = Views;
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -214,7 +209,6 @@
 				A571534391C663D17D28B3E2 /* Views */,
 				D82DBEB1F65DC393E3341E87 /* Assets.xcassets */,
 			);
-			name = iTerm2Companion;
 			path = iTerm2Companion;
 			sourceTree = "<group>";
 		};
@@ -261,11 +255,9 @@
 				Base,
 			);
 			mainGroup = 233A3C5B2C01B25945069981;
-			minimizedProjectReferenceProxies = 0;
 			packageReferences = (
 				F98698365AD9364409EE3C7C /* XCLocalSwiftPackageReference "CompanionCore" */,
 			);
-			preferredProjectObjectVersion = 77;
 			productRefGroup = C3D8BF61BB66C7B5B24CF5E3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -388,11 +380,15 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = iTerm2Companion/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.companion;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -411,11 +407,15 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = iTerm2Companion/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.companion;
 				PRODUCT_NAME = "$(TARGET_NAME)";

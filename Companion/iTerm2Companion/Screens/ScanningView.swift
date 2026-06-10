@@ -16,10 +16,13 @@ struct ScanningView: View {
     @State private var errorMessage: String?
     // Guards against the metadata delegate firing repeatedly for the same code.
     @State private var handled = false
+#if targetEnvironment(simulator)
+    @State private var manualCode = ""
+#endif
 
     var body: some View {
         ZStack {
-            QRScannerView(onCode: handle, onCameraError: { errorMessage = $0 })
+            QRScannerView(onCode: { handle($0) }, onCameraError: { errorMessage = $0 })
                 .ignoresSafeArea()
 
             ScannerOverlay()
@@ -49,6 +52,24 @@ struct ScanningView: View {
                     .padding(.horizontal, 24)
                     .padding(.bottom, 40)
 
+#if targetEnvironment(simulator)
+                // The simulator has no camera; allow pasting the pairing URL
+                // so the full flow can be exercised end to end in development.
+                HStack(spacing: 8) {
+                    TextField("iterm2://pair?…", text: $manualCode)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Button("Pair") {
+                        handle(manualCode, quietOnMalformed: false)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(manualCode.isEmpty)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+#endif
+
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.subheadline)
@@ -63,17 +84,17 @@ struct ScanningView: View {
         }
     }
 
-    private func handle(_ string: String) {
+    private func handle(_ string: String, quietOnMalformed: Bool = true) {
         guard !handled else { return }
         do {
             let code = try PairingCode.parse(string)
             handled = true
             model.pair(with: code)
         } catch let error as PairingCode.ParseError {
-            // Non-pairing QR codes are common while aiming; stay silent for
-            // those and only surface codes that are pairing codes we reject.
+            // Non-pairing QR codes are common while aiming the camera; stay
+            // silent for those. Manually entered codes always report.
             switch error {
-            case .malformedURL:
+            case .malformedURL where quietOnMalformed:
                 break
             default:
                 errorMessage = error.userMessage

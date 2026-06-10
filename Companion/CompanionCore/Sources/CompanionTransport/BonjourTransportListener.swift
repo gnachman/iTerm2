@@ -43,12 +43,19 @@ public final class BonjourTransportListener: TransportListener, @unchecked Senda
     /// started transport. Repeated calls accept subsequent connections.
     public func accept() async throws -> MessageTransport {
         listener.newConnectionHandler = { [weak self] connection in
+            CompanionLog.log("BonjourTransportListener: inbound connection from \(connection.endpoint)")
             self?.enqueue(connection)
         }
         listener.stateUpdateHandler = { [weak self] state in
+            CompanionLog.log("BonjourTransportListener: state \(state)")
             if case .failed(let error) = state {
-                self?.fail(with: error)
+                self?.fail(with: TransportError.translating(error))
             }
+        }
+        listener.serviceRegistrationUpdateHandler = { change in
+            // This is where Bonjour-level denials surface (e.g. the service
+            // type missing from the app's NSBonjourServices).
+            CompanionLog.log("BonjourTransportListener: registration \(change)")
         }
         listener.start(queue: queue)
 
