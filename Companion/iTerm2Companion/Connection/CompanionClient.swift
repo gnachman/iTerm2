@@ -4,7 +4,8 @@
 //
 //  A typed facade over CompanionSession: it turns the companion request/reply
 //  enums into async methods the UI can call, and forwards unsolicited host
-//  events (deliveries, typing status) to a handler.
+//  events (deliveries, typing status) to a handler. The wire carries the real
+//  model types (Chat, Message) shared with the Mac app.
 //
 
 import Foundation
@@ -21,7 +22,8 @@ actor CompanionClient {
         await session.start(onEvent: onEvent)
     }
 
-    func listChatsAndSessions() async throws -> (chats: [ChatDTO], sessions: [SessionDTO]) {
+    func listChatsAndSessions() async throws -> (chats: [CompanionChatListEntry],
+                                                 sessions: [CompanionSessionSummary]) {
         let reply = try await session.request(.listChatsAndSessions)
         switch reply {
         case .chatsAndSessions(let chats, let sessions):
@@ -33,11 +35,11 @@ actor CompanionClient {
         }
     }
 
-    func createChat(title: String, mode: ChatModeDTO) async throws -> ChatDTO {
+    func createChat(title: String, mode: CompanionNewChatMode) async throws -> CompanionChatListEntry {
         let reply = try await session.request(.createChat(title: title, mode: mode))
         switch reply {
-        case .chatCreated(let chat):
-            return chat
+        case .chatCreated(let entry):
+            return entry
         case .error(let error):
             throw error
         default:
@@ -46,7 +48,7 @@ actor CompanionClient {
     }
 
     /// Subscribe to a chat and return its existing history.
-    func subscribe(chatID: String) async throws -> [MessageDTO] {
+    func subscribe(chatID: String) async throws -> [Message] {
         let reply = try await session.request(.subscribe(chatID: chatID))
         switch reply {
         case .history(_, let messages):
@@ -62,11 +64,7 @@ actor CompanionClient {
         try await session.send(.unsubscribe(chatID: chatID))
     }
 
-    func publishUserMessage(chatID: String, text: String) async throws {
-        let message = MessageDTO(uniqueID: UUID(),
-                                 author: .user,
-                                 content: .plainText(text),
-                                 sentDate: Date())
+    func publish(_ message: Message, toChatID chatID: String) async throws {
         try await session.send(.publish(message: message, toChatID: chatID, partial: false))
     }
 

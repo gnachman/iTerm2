@@ -1,6 +1,9 @@
 //
 //  CompanionSession.swift
-//  CompanionCore
+//  iTerm2
+//
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only); Mac-only code goes in sibling files.
 //
 //  Client-side (phone) RPC over any MessageTransport. After the Noise handshake
 //  the transport handed in here is the encrypted NoiseChannel, so this layer
@@ -10,8 +13,9 @@
 //
 
 import Foundation
+import CompanionProtocol
 
-public actor CompanionSession {
+actor CompanionSession {
     private let transport: MessageTransport
     private var nextRequestID: UInt64 = 1
     private var waiters: [UInt64: CheckedContinuation<CompanionHostMessage, Error>] = [:]
@@ -19,13 +23,13 @@ public actor CompanionSession {
     private var eventHandler: (@Sendable (CompanionHostMessage) -> Void)?
     private var closed = false
 
-    public init(transport: MessageTransport) {
+    init(transport: MessageTransport) {
         self.transport = transport
     }
 
     /// Start the receive loop. `onEvent` is called for every unsolicited host
     /// message (one with no requestID): deliveries and typing-status updates.
-    public func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void) {
+    func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void) {
         guard receiveLoop == nil else { return }
         eventHandler = onEvent
         receiveLoop = Task { [weak self] in
@@ -34,7 +38,7 @@ public actor CompanionSession {
     }
 
     /// Send a client message and await its correlated host reply.
-    public func request(_ message: CompanionClientMessage) async throws -> CompanionHostMessage {
+    func request(_ message: CompanionClientMessage) async throws -> CompanionHostMessage {
         let requestID = nextRequestID
         nextRequestID += 1
         let envelope = ClientEnvelope(requestID: requestID, payload: message)
@@ -55,12 +59,12 @@ public actor CompanionSession {
 
     /// Send a client message without waiting for a reply (e.g. unsubscribe,
     /// fire-and-forget publish of a streaming delta).
-    public func send(_ message: CompanionClientMessage) async throws {
+    func send(_ message: CompanionClientMessage) async throws {
         let envelope = ClientEnvelope(requestID: nil, payload: message)
         try await transport.send(try WireCoding.encode(envelope))
     }
 
-    public func close() async {
+    func close() async {
         guard !closed else { return }
         closed = true
         receiveLoop?.cancel()

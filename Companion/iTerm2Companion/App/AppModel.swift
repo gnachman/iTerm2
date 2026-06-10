@@ -3,8 +3,9 @@
 //  iTerm2 Companion
 //
 //  The app-wide coordinator: owns the navigation route, establishes the paired
-//  connection (Bonjour rendezvous then Noise XK handshake), and keeps the UI's
-//  chat/session/message state in sync with host events.
+//  connection (rendezvous then Noise XK handshake), and keeps the UI's
+//  chat/session/message state in sync with host events. State is held in the
+//  real model types (Chat, Message) shared with the Mac app.
 //
 
 import Foundation
@@ -25,12 +26,12 @@ final class AppModel: ObservableObject {
     }
 
     @Published var route: Route = .launch
-    @Published var chats: [ChatDTO] = []
-    @Published var sessions: [SessionDTO] = []
+    @Published var chats: [CompanionChatListEntry] = []
+    @Published var sessions: [CompanionSessionSummary] = []
 
     // Conversation state for the open chat.
     @Published var openChatID: String?
-    @Published var messages: [MessageDTO] = []
+    @Published var messages: [Message] = []
     @Published var isAgentTyping = false
 
     /// A user-facing error for the pairing screen. Nil while in progress.
@@ -130,16 +131,16 @@ final class AppModel: ObservableObject {
 
     // MARK: Create
 
-    func createChat(mode: ChatModeDTO) {
+    func createChat(mode: CompanionNewChatMode) {
         guard let client else { return }
         Task {
             do {
                 let title = (mode == .orchestrator) ? "Orchestrator" : "New Chat"
-                let chat = try await client.createChat(title: title, mode: mode)
-                if !chats.contains(where: { $0.id == chat.id }) {
-                    chats.insert(chat, at: 0)
+                let entry = try await client.createChat(title: title, mode: mode)
+                if !chats.contains(where: { $0.chat.id == entry.chat.id }) {
+                    chats.insert(entry, at: 0)
                 }
-                await openConversation(chatID: chat.id)
+                await openConversation(chatID: entry.chat.id)
             } catch {
                 pairingError = userMessage(for: error)
             }
@@ -157,7 +158,7 @@ final class AppModel: ObservableObject {
         do {
             let history = try await client.subscribe(chatID: chatID)
             openChatID = chatID
-            messages = history
+            messages = history.filter { !$0.hiddenFromClient }
             isAgentTyping = false
             route = .conversation(chatID: chatID)
         } catch {
@@ -178,14 +179,15 @@ final class AppModel: ObservableObject {
     func send(text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let chatID = openChatID, let client else { return }
+        let message = Message(chatID: chatID,
+                              author: .user,
+                              content: .plainText(trimmed, context: nil),
+                              sentDate: Date(),
+                              uniqueID: UUID())
         // Optimistic local echo so the bubble appears immediately.
-        let local = MessageDTO(uniqueID: UUID(),
-                               author: .user,
-                               content: .plainText(trimmed),
-                               sentDate: Date())
-        messages.append(local)
+        messages.append(message)
         Task {
-            try? await client.publishUserMessage(chatID: chatID, text: trimmed)
+            try? await client.publish(message, toChatID: chatID)
         }
     }
 
@@ -194,7 +196,7 @@ final class AppModel: ObservableObject {
     private func handle(event: CompanionHostMessage) {
         switch event {
         case .delivery(let message, let chatID, _):
-            guard chatID == openChatID else { return }
+            guard chatID == openChatID, !message.hiddenFromClient else { return }
             apply(message)
         case .typingStatus(let isTyping, let participant, let chatID):
             if chatID == openChatID, participant == .agent {
@@ -205,12 +207,23 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Apply one delivered message: streaming deltas mutate an existing bubble,
-    /// everything else upserts by uniqueID.
-    private func apply(_ message: MessageDTO) {
+    /// Apply one delivered message: streaming deltas mutate the targeted bubble
+    /// in place (using the same Message.append logic the Mac uses); everything
+    /// else upserts by uniqueID.
+    private func apply(_ message: Message) {
         switch message.content {
-        case .append(let string, let messageID):
-            appendStreaming(string, to: messageID, fallback: message)
+        case .append(let string, let uuid):
+            applyStreamDelta(to: uuid, fallbackDate: message.sentDate) { target in
+                target.append(string, useMarkdownIfAmbiguous: true)
+            } orStartWith: {
+                .markdown(string)
+            }
+        case .appendAttachment(let attachment, let uuid):
+            applyStreamDelta(to: uuid, fallbackDate: message.sentDate) { target in
+                target.append(attachment, vectorStoreID: nil)
+            } orStartWith: {
+                .multipart([.attachment(attachment)], vectorStoreID: nil)
+            }
         case .commit:
             break
         default:
@@ -222,20 +235,26 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func appendStreaming(_ string: String, to messageID: UUID, fallback: MessageDTO) {
+    /// Mutate the streamed message with `mutate`, or start a fresh agent bubble
+    /// with `orStartWith` if no message with that id exists yet. Message.append
+    /// traps on non-text content, so only text-bearing targets are mutated.
+    private func applyStreamDelta(to messageID: UUID,
+                                  fallbackDate: Date,
+                                  mutate: (inout Message) -> Void,
+                                  orStartWith makeContent: () -> Message.Content) {
         if let index = messages.firstIndex(where: { $0.uniqueID == messageID }) {
-            let existing = messages[index]
-            let combined = (existing.snippetTextForStreaming ?? "") + string
-            messages[index] = MessageDTO(uniqueID: existing.uniqueID,
-                                         author: existing.author,
-                                         content: .markdown(combined),
-                                         sentDate: existing.sentDate)
+            switch messages[index].content {
+            case .plainText, .markdown, .multipart:
+                mutate(&messages[index])
+            default:
+                break
+            }
         } else {
-            // First delta for a not-yet-seen message: start a new agent bubble.
-            messages.append(MessageDTO(uniqueID: messageID,
-                                       author: .agent,
-                                       content: .markdown(string),
-                                       sentDate: fallback.sentDate))
+            messages.append(Message(chatID: openChatID ?? "",
+                                    author: .agent,
+                                    content: makeContent(),
+                                    sentDate: fallbackDate,
+                                    uniqueID: messageID))
         }
     }
 
@@ -247,17 +266,5 @@ final class AppModel: ObservableObject {
             return parseError.userMessage
         }
         return (error as NSError).localizedDescription
-    }
-}
-
-private extension MessageDTO {
-    /// The accumulated text of a streaming bubble, for appending the next delta.
-    var snippetTextForStreaming: String? {
-        switch content {
-        case .markdown(let text), .plainText(let text):
-            return text
-        default:
-            return nil
-        }
     }
 }

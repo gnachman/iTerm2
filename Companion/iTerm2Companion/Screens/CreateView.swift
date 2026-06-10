@@ -39,7 +39,7 @@ struct CreateView: View {
                             Text("No sessions available.")
                                 .foregroundStyle(.secondary)
                         } else {
-                            ForEach(model.sessions) { session in
+                            ForEach(model.sessions, id: \.guid) { session in
                                 Button {
                                     model.createChat(mode: .session(guid: session.guid))
                                 } label: {
@@ -71,7 +71,7 @@ struct CreateView: View {
 }
 
 private struct SessionRow: View {
-    let session: SessionDTO
+    let session: CompanionSessionSummary
 
     var body: some View {
         HStack(spacing: 12) {

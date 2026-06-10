@@ -4,6 +4,10 @@
 //
 //  Created by George Nachman on 6/3/24.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only); Mac-only code (token counting, function
+//  invocation, auth) lives in LLM+Mac.swift.
+//
 
 import Foundation
 
@@ -346,11 +350,7 @@ extension LLM {
         // round-trip state, not a render input.
         var reasoningContent: String?
 
-        var approximateTokenCount: Int { AIMetadata.instance.tokens(in: (body.content)) + 1 }
 
-        var trimmedString: String? {
-            return String(body.content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
-        }
 
         enum CodingKeys: String, CodingKey {
             case role, content, function_name, function_call_id, function_call, body, responseID, reasoningContent
@@ -400,53 +400,12 @@ extension LLM {
         }
     }
 
-    protocol AnyFunction {
-        var typeErasedParameterType: Any.Type { get }
-        var decl: ChatGPTFunctionDeclaration { get }
-        func invoke(message: LLM.Message,
-                    json: Data,
-                    completion: @escaping (Result<String, Error>) throws -> ())
-    }
-
-    struct Function<T: Codable>: AnyFunction {
-        typealias Impl = (LLM.Message, T, @escaping (Result<String, Error>) throws -> ()) throws -> ()
-
-        var decl: ChatGPTFunctionDeclaration
-        var call: Impl
-        var parameterType: T.Type
-
-        var typeErasedParameterType: Any.Type { parameterType }
-        func invoke(message: Message,
-                    json: Data,
-                    completion: @escaping (Result<String, Error>) throws -> ()) {
-            do {
-                var jsonString = json.lossyString
-                if jsonString.isEmpty {
-                    // Anthropic does this
-                    jsonString = "{}"
-                }
-                let value = try JSONSerialization.parseTruncatedJSON(jsonString, as: parameterType)
-                try call(message, value, completion)
-            } catch {
-                DLog("\(error.localizedDescription)")
-                try? completion(.failure(AIError.wrapping(
-                    error: error,
-                    context: "While parsing a function call request")))
-            }
-        }
-    }
-
     struct VectorStore {
         var name: String
         // Unique identifier provided by the server
         var id: String
     }
 
-    struct File {
-        var id: String  // file_id
-        var originalFilename: String
-        var originalHost: SSHIdentity?
-    }
 }
 
 struct HostedTools {
@@ -457,29 +416,6 @@ struct HostedTools {
     var webSearch = false
     var codeInterpreter = false
 }
-
-struct LLMAuthorizationProvider {
-    var provider: LLMProvider
-    var apiKey: String
-    var headers: [String: String] {
-        switch provider.model.api {
-        case .chatCompletions, .completions, .earlyO1, .responses, .deepSeek:
-            if LLMMetadata.hostIsAzureAIAPI(url: URL(string: provider.model.url)) {
-                ["api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines) ]
-            } else {
-                ["Authorization": "Bearer " + apiKey.trimmingCharacters(in: .whitespacesAndNewlines)]
-            }
-        case .anthropic:
-            ["x-api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
-             "anthropic-version": "2023-06-01"]
-        case .gemini, .llama, .appleIntelligence:
-            [:]
-        @unknown default:
-            [:]
-        }
-    }
-}
-
 
 protocol LLMResponseParser {
     // Throw on error, return nil on EOF (used by streaming parsers where EOF is in the message, not in the metadata like OpenAI's modern API)
@@ -494,3 +430,40 @@ protocol LLMStreamingResponseParser {
 }
 
 
+extension LLM.Message.StatusUpdate {
+    static func subpartsForDisplay(_ subparts: [LLM.Message.StatusUpdate]) -> [LLM.Message.StatusUpdate] {
+        // Keep the last "long" update plus everything after it
+        var singlePartUpdates = subparts.flatMap { $0.exploded }
+
+        let lastReasoningSummaryUpdateIndex = singlePartUpdates.lastIndex(where: { $0.isReasoningSummaryUpdate })
+        let lastWebSearchFinishedIndex = singlePartUpdates.lastIndex(where: { $0.isWebSearchFinished })
+        let lastCodeInterpreterFinishedIndex = singlePartUpdates.lastIndex(where: { $0 == .codeInterpreterFinished })
+        let keepStart = [lastReasoningSummaryUpdateIndex,
+                         lastWebSearchFinishedIndex,
+                         lastCodeInterpreterFinishedIndex].compactMap { $0 }.max()
+        if let keepStart {
+            singlePartUpdates.removeSubrange(..<keepStart)
+        }
+        return singlePartUpdates
+    }
+
+    var displayString: String {
+        switch self {
+        case .webSearchStarted:
+            "Searching the web…"
+        case .webSearchFinished(let query):
+            if let query {
+                "Finished searching the web for \(query)."
+            } else {
+                "Finished searching the web."
+            }
+        case .codeInterpreterStarted:
+            "Executing code…"
+        case .codeInterpreterFinished:
+            "Finished executing code"
+        case .reasoningSummaryUpdate(let text): text
+        case .multipart(let subparts):
+            Self.subpartsForDisplay(subparts).map { $0.displayString }.joined(separator: "\n")
+        }
+    }
+}

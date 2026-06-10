@@ -17,11 +17,11 @@ struct HomeView: View {
                 if model.chats.isEmpty {
                     emptyState
                 } else {
-                    List(model.chats) { chat in
+                    List(model.chats, id: \.chat.id) { entry in
                         Button {
-                            model.openChat(chat.id)
+                            model.openChat(entry.chat.id)
                         } label: {
-                            ChatRow(chat: chat)
+                            ChatRow(entry: entry)
                         }
                         .buttonStyle(.plain)
                     }
@@ -59,7 +59,9 @@ struct HomeView: View {
 }
 
 private struct ChatRow: View {
-    let chat: ChatDTO
+    let entry: CompanionChatListEntry
+
+    private var chat: Chat { entry.chat }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -71,7 +73,7 @@ private struct ChatRow: View {
                 Text(chat.title)
                     .font(.headline)
                     .lineLimit(1)
-                if let snippet = chat.snippet, !snippet.isEmpty {
+                if let snippet = entry.snippet, !snippet.isEmpty {
                     Text(snippet)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

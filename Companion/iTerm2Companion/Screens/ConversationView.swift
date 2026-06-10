@@ -17,7 +17,7 @@ struct ConversationView: View {
     @FocusState private var inputFocused: Bool
 
     private var title: String {
-        model.chats.first { $0.id == chatID }?.title ?? "Chat"
+        model.chats.first { $0.chat.id == chatID }?.chat.title ?? "Chat"
     }
 
     var body: some View {

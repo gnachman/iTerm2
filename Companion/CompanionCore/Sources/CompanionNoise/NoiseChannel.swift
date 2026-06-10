@@ -29,6 +29,16 @@ public final class NoiseChannel: MessageTransport, @unchecked Sendable {
     // Accumulates chunks of a multi-message frame until the final chunk.
     private var reassembly = Data()
 
+    // Serializes whole sends (encrypt AND transmit). The receiver decrypts
+    // with an implicit, strictly incrementing nonce, so a frame that reaches
+    // the wire out of nonce order fails authentication on the other side and
+    // tears the connection down. Holding sendLock only over encryption is not
+    // enough: with concurrent callers, transmit order could diverge from
+    // nonce order in the await window after the lock is released. Every send
+    // therefore chains behind the previous one.
+    private let sendChainLock = UnfairLock()
+    private var sendChain: Task<Void, Error>?
+
     init(transport: MessageTransport,
          sendCipher: OpaquePointer,
          receiveCipher: OpaquePointer) {
@@ -43,12 +53,24 @@ public final class NoiseChannel: MessageTransport, @unchecked Sendable {
     }
 
     public func send(_ frame: Data) async throws {
-        // Encrypt fully (synchronously, under the send lock) before awaiting any
-        // network I/O so the cipher nonce advances atomically per frame.
-        let messages = try encrypt(frame: frame)
-        for message in messages {
-            try await transport.send(message)
+        let task: Task<Void, Error> = sendChainLock.withLock {
+            let previous = sendChain
+            let task = Task { [weak self] in
+                // Wait for the predecessor regardless of its outcome; a
+                // predecessor's failure is reported to its own caller.
+                _ = try? await previous?.value
+                guard let self else {
+                    throw TransportError.closed
+                }
+                let messages = try self.encrypt(frame: frame)
+                for message in messages {
+                    try await self.transport.send(message)
+                }
+            }
+            sendChain = task
+            return task
         }
+        try await task.value
     }
 
     public func receive() async throws -> Data {

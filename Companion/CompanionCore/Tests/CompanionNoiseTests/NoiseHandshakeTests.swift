@@ -130,6 +130,67 @@ final class NoiseHandshakeTests: XCTestCase {
         XCTAssertEqual(receivedBig, big)
     }
 
+    func testConcurrentSendersDoNotTearTheChannel() async throws {
+        // The Noise receiver decrypts with an implicit incrementing nonce, so
+        // if concurrent send() callers could reach the wire out of nonce order
+        // the peer's decrypt would fail and kill the connection. NoiseChannel
+        // serializes sends; this hammers it with many concurrent senders and
+        // requires every frame to arrive intact.
+        let responderKeys = try NoiseKeyPair.generate()
+        let initiatorKeys = try NoiseKeyPair.generate()
+        let (phoneTransport, macTransport) = connectedPair()
+        let prologue = Data("pid:concurrency".utf8)
+
+        async let phoneChannel = NoiseHandshake.perform(
+            role: .initiator,
+            transport: phoneTransport,
+            localKeyPair: initiatorKeys,
+            remoteStaticPublicKey: responderKeys.publicKey,
+            prologue: prologue)
+        async let macChannel = NoiseHandshake.perform(
+            role: .responder,
+            transport: macTransport,
+            localKeyPair: responderKeys,
+            remoteStaticPublicKey: nil,
+            prologue: prologue)
+        let phone = try await phoneChannel
+        let mac = try await macChannel
+
+        let senders = 8
+        let perSender = 25
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for sender in 0..<senders {
+                group.addTask {
+                    for i in 0..<perSender {
+                        try await phone.send(Data("sender\(sender)-frame\(i)".utf8))
+                    }
+                }
+            }
+            try await group.waitForAll()
+        }
+
+        // Every frame must decrypt; one authentication failure would have
+        // thrown out of receive().
+        var received = Set<String>()
+        for _ in 0..<(senders * perSender) {
+            let frame = try await mac.receive()
+            received.insert(String(decoding: frame, as: UTF8.self))
+        }
+        XCTAssertEqual(received.count, senders * perSender)
+
+        // Frames from any single sender must also arrive in the order that
+        // sender issued them (application-level FIFO per caller).
+        // Re-derive per-sender order from the set is impossible; send one
+        // ordered burst from a single task and check it explicitly.
+        for i in 0..<20 {
+            try await mac.send(Data("ordered-\(i)".utf8))
+        }
+        for i in 0..<20 {
+            let frame = try await phone.receive()
+            XCTAssertEqual(String(decoding: frame, as: UTF8.self), "ordered-\(i)")
+        }
+    }
+
     func testPrologueMismatchFails() async throws {
         let responderKeys = try NoiseKeyPair.generate()
         let initiatorKeys = try NoiseKeyPair.generate()
