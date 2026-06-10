@@ -8,9 +8,15 @@
 //  user messages, and streaming chat updates back to the phone. It is the
 //  mac-side mirror of the phone's CompanionSession.
 //
+//  The wire carries the real model types (Chat, Message); the only filtering
+//  is hiddenFromClient, mirroring what the Mac's own chat UI renders.
+//
 //  Everything here runs on the main actor because ChatClient, ChatBroker, and
-//  iTermController all require it. Transport I/O is async and hops off the main
-//  actor while awaiting the network.
+//  iTermController all require it. All outbound traffic is enqueued
+//  synchronously (in main-actor order) onto a single outbox stream drained by
+//  one task, so frames reach the transport in exactly the order they were
+//  produced: replies never interleave with each other, and streamed .append
+//  deltas cannot arrive scrambled.
 //
 
 import Foundation
@@ -22,8 +28,11 @@ final class CompanionHostBridge {
     private let transport: MessageTransport
     private var receiveTask: Task<Void, Never>?
     private var subscriptions: [String: ChatBroker.Subscription] = [:]
+    private var outbox: AsyncStream<HostEnvelope>.Continuation?
+    private var outboxTask: Task<Void, Never>?
 
-    /// Called once the transport closes, so the owner can drop this bridge.
+    /// Called once the transport closes remotely, so the owner can drop this
+    /// bridge. A user-initiated stop() does not fire it.
     var onClose: (@MainActor () -> Void)?
 
     init(transport: MessageTransport) {
@@ -32,20 +41,45 @@ final class CompanionHostBridge {
 
     func start() {
         ChatBroker.instance?.ensureServiceRunning()
+
+        var continuation: AsyncStream<HostEnvelope>.Continuation!
+        let stream = AsyncStream<HostEnvelope> { continuation = $0 }
+        outbox = continuation
+        outboxTask = Task { [transport] in
+            for await envelope in stream {
+                guard let data = try? WireCoding.encode(envelope) else { continue }
+                do {
+                    try await transport.send(data)
+                } catch {
+                    break
+                }
+            }
+        }
+
         receiveTask = Task { [weak self] in
             await self?.runReceiveLoop()
         }
     }
 
     func stop() {
+        // A user-initiated stop is not a remote disconnect; don't report one.
+        onClose = nil
         receiveTask?.cancel()
         receiveTask = nil
+        teardownStreams()
+        let transport = self.transport
+        Task { await transport.close() }
+    }
+
+    private func teardownStreams() {
         for subscription in subscriptions.values {
             subscription.unsubscribe()
         }
         subscriptions.removeAll()
-        let transport = self.transport
-        Task { await transport.close() }
+        outbox?.finish()
+        outbox = nil
+        outboxTask?.cancel()
+        outboxTask = nil
     }
 
     // MARK: Receive loop
@@ -62,43 +96,53 @@ final class CompanionHostBridge {
                 // A frame we cannot decode (newer phone) is dropped, not fatal.
                 continue
             }
-            await handle(envelope)
+            handle(envelope)
         }
-        for subscription in subscriptions.values {
-            subscription.unsubscribe()
-        }
-        subscriptions.removeAll()
+        teardownStreams()
         onClose?()
     }
 
-    private func handle(_ envelope: ClientEnvelope) async {
+    private func handle(_ envelope: ClientEnvelope) {
         let requestID = envelope.requestID
         switch envelope.payload {
         case .listChatsAndSessions:
-            await send(.chatsAndSessions(chats: chatDTOs(), sessions: CompanionSessionLister.sessions()),
-                       requestID: requestID)
+            send(.chatsAndSessions(chats: chatEntries(),
+                                   sessions: CompanionSessionLister.sessions()),
+                 requestID: requestID)
         case .createChat(let title, let mode):
-            await handleCreate(title: title, mode: mode, requestID: requestID)
+            handleCreate(title: title, mode: mode, requestID: requestID)
         case .deleteChat(let chatID):
-            try? ChatClient.instance?.delete(chatID: chatID)
+            do {
+                guard let client = ChatClient.instance else {
+                    throw CompanionMacError.chatSystemUnavailable
+                }
+                try client.delete(chatID: chatID)
+            } catch {
+                // The phone removed the row optimistically; tell it the Mac
+                // disagrees so it can resync instead of silently diverging.
+                send(.error(CompanionError(code: .internalError, message: "\(error)")),
+                     requestID: requestID)
+            }
         case .subscribe(let chatID):
-            await handleSubscribe(chatID: chatID, requestID: requestID)
+            handleSubscribe(chatID: chatID, requestID: requestID)
         case .unsubscribe(let chatID):
             subscriptions[chatID]?.unsubscribe()
             subscriptions[chatID] = nil
         case .publish(let message, let chatID, _):
             handlePublish(message: message, toChatID: chatID)
         case .ping:
-            await send(.pong, requestID: requestID)
+            send(.pong, requestID: requestID)
         }
     }
 
     // MARK: Handlers
 
-    private func handleCreate(title: String, mode: ChatModeDTO, requestID: UInt64?) async {
+    private func handleCreate(title: String,
+                              mode: CompanionNewChatMode,
+                              requestID: UInt64?) {
         guard let client = ChatClient.instance else {
-            await send(.error(CompanionError(code: .notPaired, message: "Chat system unavailable")),
-                       requestID: requestID)
+            send(.error(CompanionError(code: .notPaired, message: "Chat system unavailable")),
+                 requestID: requestID)
             return
         }
         let terminalSessionGuid: String?
@@ -114,50 +158,58 @@ final class CompanionHostBridge {
                                            browserSessionGuid: nil,
                                            initialMessages: [],
                                            permissions: "")
-            if let chat = ChatListModel.instance?.chat(id: chatID) {
-                await send(.chatCreated(chat: CompanionDTOMapping.chatDTO(
-                    from: chat, snippet: ChatListModel.instance?.snippet(forChatID: chatID))),
-                           requestID: requestID)
+            if let entry = entry(forChatID: chatID) {
+                send(.chatCreated(entry: entry), requestID: requestID)
             } else {
-                await send(.error(CompanionError(code: .internalError, message: "Chat was not created")),
-                           requestID: requestID)
+                send(.error(CompanionError(code: .internalError, message: "Chat was not created")),
+                     requestID: requestID)
             }
         } catch {
-            await send(.error(CompanionError(code: .internalError, message: "\(error)")),
-                       requestID: requestID)
+            send(.error(CompanionError(code: .internalError, message: "\(error)")),
+                 requestID: requestID)
         }
     }
 
-    private func handleSubscribe(chatID: String, requestID: UInt64?) async {
-        await send(.history(chatID: chatID, messages: historyDTOs(chatID: chatID)),
-                   requestID: requestID)
-
+    private func handleSubscribe(chatID: String, requestID: UInt64?) {
+        // Install the subscription BEFORE snapshotting history, with no
+        // suspension point in between: both happen synchronously on the main
+        // actor, so no message published by other main-actor code can fall
+        // into a gap between "not in the history snapshot" and "not yet
+        // subscribed". A delivery that lands after the subscription but
+        // before the snapshot appears in both; the phone dedupes by uniqueID.
         subscriptions[chatID]?.unsubscribe()
-        guard let client = ChatClient.instance else { return }
-        let subscription = client.subscribe(chatID: chatID, registrationProvider: nil) { [weak self] update in
-            self?.handleBrokerUpdate(update, chatID: chatID)
+        if let client = ChatClient.instance {
+            subscriptions[chatID] = client.subscribe(chatID: chatID,
+                                                     registrationProvider: nil) { [weak self] update in
+                self?.handleBrokerUpdate(update, chatID: chatID)
+            }
         }
-        subscriptions[chatID] = subscription
+        send(.history(chatID: chatID, messages: history(chatID: chatID)),
+             requestID: requestID)
     }
 
-    private func handlePublish(message: MessageDTO, toChatID chatID: String) {
-        guard let content = CompanionDTOMapping.messageContent(from: message.content) else {
+    private func handlePublish(message: Message, toChatID chatID: String) {
+        // The phone only sends user-authored content; ignore anything else.
+        guard message.author == .user else {
             return
         }
-        try? ChatClient.instance?.publishUserMessage(chatID: chatID, content: content)
+        try? ChatClient.instance?.publishUserMessage(chatID: chatID, content: message.content)
     }
 
     private func handleBrokerUpdate(_ update: ChatBroker.Update, chatID: String) {
         switch update {
         case .delivery(let message, let deliveredChatID):
-            guard let dto = CompanionDTOMapping.messageDTO(from: message) else { return }
-            let partial = Self.isPartial(message.content)
-            Task { await self.send(.delivery(message: dto, chatID: deliveredChatID, partial: partial),
-                                   requestID: nil) }
+            // Mirror the Mac UI: bookkeeping messages are not rendered there
+            // and are not forwarded here. Streaming .append deltas are visible
+            // (not hidden) and flow through.
+            guard !message.hiddenFromClient else { return }
+            send(.delivery(message: message,
+                           chatID: deliveredChatID,
+                           partial: Self.isPartial(message.content)),
+                 requestID: nil)
         case .typingStatus(let isTyping, let participant):
-            let mapped: ParticipantDTO = participant == .user ? .user : .agent
-            Task { await self.send(.typingStatus(isTyping: isTyping, participant: mapped, chatID: chatID),
-                                   requestID: nil) }
+            send(.typingStatus(isTyping: isTyping, participant: participant, chatID: chatID),
+                 requestID: nil)
         }
     }
 
@@ -172,35 +224,40 @@ final class CompanionHostBridge {
 
     // MARK: Model projection
 
-    private func chatDTOs() -> [ChatDTO] {
+    private func chatEntries() -> [CompanionChatListEntry] {
         guard let model = ChatListModel.instance else { return [] }
-        var result = [ChatDTO]()
+        var result = [CompanionChatListEntry]()
         for index in 0..<model.count {
             let chat = model.chat(at: index)
-            result.append(CompanionDTOMapping.chatDTO(from: chat, snippet: model.snippet(forChatID: chat.id)))
+            result.append(CompanionChatListEntry(chat: chat,
+                                                 snippet: model.snippet(forChatID: chat.id)))
         }
         return result
     }
 
-    private func historyDTOs(chatID: String) -> [MessageDTO] {
+    private func entry(forChatID chatID: String) -> CompanionChatListEntry? {
+        guard let chat = ChatListModel.instance?.chat(id: chatID) else { return nil }
+        return CompanionChatListEntry(chat: chat,
+                                      snippet: ChatListModel.instance?.snippet(forChatID: chatID))
+    }
+
+    private func history(chatID: String) -> [Message] {
         guard let model = ChatListModel.instance,
               let messages = model.messages(forChat: chatID, createIfNeeded: false) else {
             return []
         }
-        var result = [MessageDTO]()
-        for index in 0..<messages.count {
-            if let dto = CompanionDTOMapping.messageDTO(from: messages[index]) {
-                result.append(dto)
-            }
+        var result = [Message]()
+        for index in 0..<messages.count where !messages[index].hiddenFromClient {
+            result.append(messages[index])
         }
         return result
     }
 
     // MARK: Sending
 
-    private func send(_ payload: CompanionHostMessage, requestID: UInt64?) async {
-        let envelope = HostEnvelope(requestID: requestID, payload: payload)
-        guard let data = try? WireCoding.encode(envelope) else { return }
-        try? await transport.send(data)
+    /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
+    /// transmit order.
+    private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
+        outbox?.yield(HostEnvelope(requestID: requestID, payload: payload))
     }
 }

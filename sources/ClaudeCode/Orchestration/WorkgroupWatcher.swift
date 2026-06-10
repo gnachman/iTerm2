@@ -3,6 +3,10 @@
 //  iTerm2SharedARC
 //
 
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only).
+//
+
 import Foundation
 
 // How a watcher detects that its session reached targetState.
@@ -36,4 +40,11 @@ struct WorkgroupWatcher: Codable, Equatable {
     var mode: WatchMode?
 
     var effectiveMode: WatchMode { mode ?? .tabStatus }
+}
+
+enum SessionState: String, Codable {
+    case idle
+    case working
+    case waiting
+    case unknown   // emitted by dispatcher; not accepted as input
 }

@@ -7,11 +7,32 @@ require 'xcodeproj'
 require 'pathname'
 
 COMPANION_DIR = File.expand_path('..', __dir__)
+REPO_ROOT = File.expand_path('../..', __dir__)
 PROJECT_PATH = File.join(COMPANION_DIR, 'iTerm2Companion.xcodeproj')
 APP_DIR = File.join(COMPANION_DIR, 'iTerm2Companion')
 BUNDLE_ID = 'com.googlecode.iterm2.companion'
 DEPLOYMENT_TARGET = '16.0'
 PACKAGE_PRODUCTS = %w[CompanionProtocol CompanionNoise CompanionTransport]
+
+# Chat-model sources shared with the Mac app. These compile into BOTH the
+# iTerm2 app and this iOS app, so they must stay platform-neutral (each file
+# carries a banner comment saying so). Heavy Mac-only leaf types they mention
+# have same-named stand-ins in iTerm2Companion/Satellites/.
+SHARED_MAC_SOURCES = %w[
+  sources/AITerm/Message.swift
+  sources/AITerm/Chat.swift
+  sources/AITerm/RemoteCommand.swift
+  sources/AITerm/LLM.swift
+  sources/AITerm/AIExplanationRequest.swift
+  sources/AITerm/AIExplanationResponse.swift
+  sources/AITerm/iTermAIError.swift
+  sources/AITerm/TerminalCommand.swift
+  sources/Categories/Result+iTerm.swift
+  sources/Categories/NSDictionaryCodableBox.swift
+  sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift
+  sources/Companion/Shared/CompanionMessages.swift
+  sources/Companion/Shared/CompanionSession.swift
+]
 
 project = Xcodeproj::Project.new(PROJECT_PATH)
 
@@ -30,6 +51,15 @@ swift_files.each do |path|
     group = group[segment] || group.new_group(segment, segment)
   end
   ref = group.new_reference(path)
+  target.add_file_references([ref])
+end
+
+# Shared chat-model sources from the Mac tree.
+shared_group = project.new_group('SharedFromMac', REPO_ROOT)
+SHARED_MAC_SOURCES.each do |rel|
+  path = File.join(REPO_ROOT, rel)
+  raise "missing shared source #{path}" unless File.exist?(path)
+  ref = shared_group.new_reference(path)
   target.add_file_references([ref])
 end
 

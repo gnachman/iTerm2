@@ -4,6 +4,11 @@
 //
 //  Created by George Nachman on 6/5/25.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only). 
+//
+
+import Foundation
 
 @objc public class iTermAIError: NSObject {
     @objc static let domain = "com.iterm2.ai"

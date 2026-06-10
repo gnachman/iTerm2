@@ -109,12 +109,8 @@ struct StartSessionArgs: Codable {
 
 // MARK: - Enums
 
-enum SessionState: String, Codable {
-    case idle
-    case working
-    case waiting
-    case unknown   // emitted by dispatcher; not accepted as input
-}
+// SessionState moved to WorkgroupWatcher.swift (shared with the iOS
+// companion app).
 
 enum SpawnWindowChoice: String, Codable {
     case new
