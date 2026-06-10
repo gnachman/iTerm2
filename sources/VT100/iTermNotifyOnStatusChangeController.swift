@@ -26,16 +26,24 @@ class NotifyOnStatusChangeController: NSObject {
     @objc static let armedDidChangeNotification = Notification.Name(
         "iTermNotifyOnStatusChangeArmedDidChange")
 
-    // Armed entities. Presence in the set means "armed." The companion
-    // snapshot dictionaries record each watched session's status text at
-    // arm time so a later change is measured from the moment the user
-    // armed it (and a flicker that returns to the snapshot nets to no
-    // change). Sessions whose status text was nil at arm time are simply
-    // absent from the snapshot, so any later non-nil text counts.
+    // Armed entities. Presence in the set means "armed": the next status-text
+    // change of a relevant session fires an alert and disarms that entity.
     private var armedWindows = Set<String>()
-    private var windowSnapshots = [String: [String: String]]()  // windowGuid -> sessionGuid -> text
     private var armedSessions = Set<String>()
-    private var sessionSnapshots = [String: String]()            // sessionGuid -> text
+    // Per-session arm-time baseline for the session scope. Captured from the
+    // controller's current value when a session is armed, so a change already in
+    // flight at that moment (recorded by the controller but not yet flushed) is
+    // part of the baseline and does not fire. One-shot: dropped when the watch
+    // fires or is disarmed. The window scope deliberately does not use this; see
+    // below.
+    private var sessionArmBaseline = [String: String]()
+    // Window-scope baseline: each session's status text as of the last coalesced
+    // flush, maintained for all sessions regardless of arm state. A window watch
+    // fires when a session's current text differs from this, so it naturally
+    // covers sessions created after the window was armed (no frozen per-window
+    // session set). A flicker that nets back to the prior value within the
+    // debounce window absorbs to no change. Entries drop when a status clears.
+    private var lastSeenStatusText = [String: String]()
 
     private var token: NotifyingDictionaryObserverToken!
 
@@ -80,14 +88,22 @@ class NotifyOnStatusChangeController: NSObject {
 
     private func armWindow(_ guid: String) {
         armedWindows.insert(guid)
-        windowSnapshots[guid] = snapshotStatusText(forWindowGuid: guid)
+        // Absorb any change already in flight for a session in this window so
+        // that arming within its debounce window is treated as "before arming"
+        // and does not fire. Only pending (not-yet-flushed) keys can be stale
+        // relative to the controller; everything else is already current in
+        // lastSeenStatusText. Restricting to this window's sessions leaves other
+        // armed windows' pending changes untouched.
+        let controller = iTermController.sharedInstance()
+        for key in pendingKeys where controller?.windowForSession(withGUID: key)?.terminalGuid == guid {
+            advanceBaseline(forKey: key)
+        }
         postArmedDidChange()
     }
 
     private func disarmWindow(_ guid: String) {
         guard armedWindows.contains(guid) else { return }
         armedWindows.remove(guid)
-        windowSnapshots.removeValue(forKey: guid)
         postArmedDidChange()
     }
 
@@ -107,10 +123,13 @@ class NotifyOnStatusChangeController: NSObject {
 
     private func armSession(_ guid: String) {
         armedSessions.insert(guid)
+        // Capture the baseline from the controller's current value, which
+        // already reflects any change still sitting in the debounce queue, so
+        // arming within that change's window does not fire a spurious alert.
         if let text = SessionStatusController.instance.statuses[guid]?.statusText {
-            sessionSnapshots[guid] = text
+            sessionArmBaseline[guid] = text
         } else {
-            sessionSnapshots.removeValue(forKey: guid)
+            sessionArmBaseline.removeValue(forKey: guid)
         }
         postArmedDidChange()
     }
@@ -118,35 +137,18 @@ class NotifyOnStatusChangeController: NSObject {
     private func disarmSession(_ guid: String) {
         guard armedSessions.contains(guid) else { return }
         armedSessions.remove(guid)
-        sessionSnapshots.removeValue(forKey: guid)
+        sessionArmBaseline.removeValue(forKey: guid)
         postArmedDidChange()
-    }
-
-    // MARK: - Snapshotting
-
-    // Status text of every session currently belonging to a window,
-    // keyed by session guid. Only sessions that have status text are
-    // included; the rest read as "no text" at compare time.
-    private func snapshotStatusText(forWindowGuid windowGuid: String) -> [String: String] {
-        guard let controller = iTermController.sharedInstance() else { return [:] }
-        var result = [String: String]()
-        for status in SessionStatusController.instance.statuses.values {
-            let sessionGuid = status.sessionID
-            guard controller.windowForSession(withGUID: sessionGuid)?.terminalGuid == windowGuid,
-                  let text = status.statusText else {
-                continue
-            }
-            result[sessionGuid] = text
-        }
-        return result
     }
 
     // MARK: - Change handling
 
+    // Every status change is enqueued, even when nothing is armed, so the
+    // window-scope `lastSeenStatusText` baseline stays current. That way a window
+    // armed later measures the next change against the value from just before it,
+    // rather than a stale one. The debounce coalesces bursts, so the steady-state
+    // cost is one flush per 50ms window of activity.
     private func enqueue(key: String) {
-        guard !armedWindows.isEmpty || !armedSessions.isEmpty else {
-            return
-        }
         pendingKeys.insert(key)
         if pendingFlush != nil {
             return
@@ -154,6 +156,17 @@ class NotifyOnStatusChangeController: NSObject {
         let work = DispatchWorkItem { [weak self] in self?.flush() }
         pendingFlush = work
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.debounceInterval, execute: work)
+    }
+
+    // Sets lastSeenStatusText[key] to the controller's current value (or drops
+    // it when the status cleared). The window-scope baseline; advanced at flush
+    // and when arming a window absorbs an in-flight change.
+    private func advanceBaseline(forKey key: String) {
+        if let text = SessionStatusController.instance.statuses[key]?.statusText {
+            lastSeenStatusText[key] = text
+        } else {
+            lastSeenStatusText.removeValue(forKey: key)
+        }
     }
 
     private func flush() {
@@ -167,6 +180,15 @@ class NotifyOnStatusChangeController: NSObject {
         var didChange = false
         for key in keys {
             let current = SessionStatusController.instance.statuses[key]?.statusText
+            // The window-scope baseline from before this change, captured before
+            // we advance it for the next burst. A net no-change (e.g. a flicker
+            // that returned to it) advances nothing of consequence.
+            let windowBaseline = lastSeenStatusText[key]
+            advanceBaseline(forKey: key)
+            if armedSessions.isEmpty && armedWindows.isEmpty {
+                // Nothing armed: we only keep the baseline current.
+                continue
+            }
             let name = controller?.anySession(withGUID: key)?.name
             let terminal = controller?.windowForSession(withGUID: key)
             // A single change can satisfy both the session watch and its
@@ -175,31 +197,27 @@ class NotifyOnStatusChangeController: NSObject {
             // alert, so disarm each satisfied scope and present at most once.
             var alerted = false
 
-            // Session scope.
-            if armedSessions.contains(key) {
-                let old = sessionSnapshots[key]
-                if current != old {
-                    armedSessions.remove(key)
-                    sessionSnapshots.removeValue(forKey: key)
-                    didChange = true
-                    presentAlert(sessionName: name, from: old, to: current,
-                                 window: terminal?.window())
-                    alerted = true
-                }
+            // Session scope: measured from the value captured when this session
+            // was armed (which already folded in any then-in-flight change).
+            if armedSessions.contains(key), current != sessionArmBaseline[key] {
+                armedSessions.remove(key)
+                let from = sessionArmBaseline.removeValue(forKey: key)
+                didChange = true
+                presentAlert(sessionName: name, sessionGuid: key,
+                             from: from, to: current, window: terminal?.window())
+                alerted = true
             }
 
-            // Window scope: the changed session's window, if armed.
+            // Window scope: the changed session's window, if armed. Measured
+            // from the running baseline, so it covers sessions created after the
+            // window was armed (membership is resolved live here).
             if let terminal, let windowGuid = terminal.terminalGuid,
-               armedWindows.contains(windowGuid) {
-                let old = windowSnapshots[windowGuid]?[key]
-                if current != old {
-                    armedWindows.remove(windowGuid)
-                    windowSnapshots.removeValue(forKey: windowGuid)
-                    didChange = true
-                    if !alerted {
-                        presentAlert(sessionName: name, from: old, to: current,
-                                     window: terminal.window())
-                    }
+               armedWindows.contains(windowGuid), current != windowBaseline {
+                armedWindows.remove(windowGuid)
+                didChange = true
+                if !alerted {
+                    presentAlert(sessionName: name, sessionGuid: key,
+                                 from: windowBaseline, to: current, window: terminal.window())
                 }
             }
         }
@@ -211,6 +229,7 @@ class NotifyOnStatusChangeController: NSObject {
     // MARK: - Alert
 
     private func presentAlert(sessionName: String?,
+                              sessionGuid: String?,
                               from: String?,
                               to: String?,
                               window: NSWindow?) {
@@ -225,10 +244,30 @@ class NotifyOnStatusChangeController: NSObject {
             alert.messageText = "Session status changed"
             alert.informativeText = "\(name) changed from “\(fromText)” to “\(toText)”."
             alert.addButton(withTitle: "OK")
+            // Offer Reveal only when the session can still be resolved; it may
+            // have gone away between the change and the alert being shown.
+            let canReveal = sessionGuid.flatMap {
+                iTermController.sharedInstance()?.anySession(withGUID: $0)
+            } != nil
+            if canReveal {
+                alert.addButton(withTitle: "Reveal")
+            }
+            let reveal: () -> Void = {
+                if let sessionGuid {
+                    iTermController.sharedInstance()?.anySession(withGUID: sessionGuid)?.reveal()
+                }
+            }
             if let window {
-                alert.beginSheetModal(for: window, completionHandler: nil)
+                alert.beginSheetModal(for: window) { response in
+                    if response == .alertSecondButtonReturn {
+                        reveal()
+                    }
+                }
             } else {
-                alert.runModal()
+                let response = alert.runModal()
+                if response == .alertSecondButtonReturn {
+                    reveal()
+                }
             }
         }
     }
@@ -250,7 +289,6 @@ class NotifyOnStatusChangeController: NSObject {
         guard !stale.isEmpty else { return }
         for guid in stale {
             armedWindows.remove(guid)
-            windowSnapshots.removeValue(forKey: guid)
         }
         postArmedDidChange()
     }

@@ -1411,3 +1411,9 @@ Bug Fixes:
   monitor) rather than inferred from the
   periodic title poll, which could miss a
   job's termination.
+- The notify-on-status-change alert has a
+  Reveal button that jumps to the session
+  whose status changed. A window watch
+  now covers every session in the window,
+  including ones created after it was
+  armed.
