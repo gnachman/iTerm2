@@ -1575,7 +1575,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     const BOOL showToolbeltInline = self.shouldShowToolbelt;
     NSWindow *thisWindow = _delegate.window;
     if (!_tabBarControlOnLoan) {
-        self.tabBarControl.height = [_delegate rootTerminalViewHeightOfTabBar:self];
+        [self.tabBarControl updateHeightWithDefault:[_delegate rootTerminalViewHeightOfTabBar:self]];
     }
 
     _backgroundImage.frame = self.bounds;
