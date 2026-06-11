@@ -60,6 +60,7 @@
 #import "iTermGitStringMaker.h"
 #import "iTermGlobalSearchResult.h"
 #import "iTermHistogram.h"
+#import "iTermImage+ImageWithData.h"
 #import "iTermImageInfo.h"
 #import "iTermImageMark.h"
 #import "iTermIndicatorsHelper.h"

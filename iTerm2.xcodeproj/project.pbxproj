@@ -17,6 +17,7 @@
 		0657DA3A2A80960269A5A1C4 /* iTermWorkgroupSessionDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98DA05BC2B6C48B5397AF1D8 /* iTermWorkgroupSessionDetailViewController.swift */; };
 		06E0C88E1DF9695400AA061B /* iTermServiceProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */; };
 		084F626684E68821BAEC7D9B /* iTermNonTextPasteHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED49EE365D629DAE80503BFD /* iTermNonTextPasteHelper.swift */; };
+		096EE94A89ADAAA4B4A2ACF9 /* ChatIconGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95E27DEB0B9DD8AE0960FAE5 /* ChatIconGenerator.swift */; };
 		0B05CA460519B96060210386 /* AIChatWireLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88578347A529CFE749B6F433 /* AIChatWireLogger.swift */; };
 		0BC580AF4D2AB9C3E952CB01 /* ShuffleDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = D46A873D7F2EFCF8441303D1 /* ShuffleDeck.swift */; };
 		0C026664CE3F52A755A333FF /* OrchestrationMentionRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB54728D976B5A56B887ED5 /* OrchestrationMentionRenderer.swift */; };
@@ -989,6 +990,7 @@
 		7FFBFAFE7FC065F7FDACBC71 /* ChatAgentConsoleLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C606E59CAE46211246F7B63D /* ChatAgentConsoleLogger.swift */; };
 		8008796EC80143F16E30D1A4 /* CodeReviewPromptManagerWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B8DBB7E0FAD724F2C26042 /* CodeReviewPromptManagerWindowController.swift */; };
 		812B1CADD4B73EBD47FE36FC /* iTermArrangementTrustGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DCE6E6D44984C2D7ECD0AB4 /* iTermArrangementTrustGate.swift */; };
+		815BF5D942C3EAAF56D7E2A7 /* AIPromptTemplateEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2BBD5361A436F82BFAB5CE /* AIPromptTemplateEvaluator.swift */; };
 		82C8876B3E6C833593501F97 /* SetTabStatusTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00885D5646181ED6CFE9A2DE /* SetTabStatusTrigger.swift */; };
 		833B6065F4848F124E956CCC /* WorkgroupVisualView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42ABD0E29FAE8BD4B694629 /* WorkgroupVisualView.swift */; };
 		8442E3770F2B54D3419663DB /* challenge-frame-detection.js in Resources */ = {isa = PBXBuildFile; fileRef = 832B7B71C0EE3B7635C7E77A /* challenge-frame-detection.js */; };
@@ -6545,6 +6547,7 @@
 		91FA576A88BCF13676249576 /* iterm2-test-adapter */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "iterm2-test-adapter"; path = "../pwmplugin/binaries/iterm2-test-adapter"; sourceTree = "<group>"; };
 		93CF70AC7768A565D0C687C0 /* SessionView+DiffWaitingPromptOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SessionView+DiffWaitingPromptOverlay.swift"; sourceTree = "<group>"; };
 		93EDFB853885460AA504C6B9 /* iTermLayoutCalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLayoutCalculator.h; sourceTree = "<group>"; };
+		95E27DEB0B9DD8AE0960FAE5 /* ChatIconGenerator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatIconGenerator.swift; sourceTree = "<group>"; };
 		97539C440B63BAC6011E9208 /* iTermScreenshotRedaction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScreenshotRedaction.swift; sourceTree = "<group>"; };
 		9801DA0646B0541548CD6B0E /* ApplyLayoutBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ApplyLayoutBuiltInFunction.swift; sourceTree = "<group>"; };
 		98DA05BC2B6C48B5397AF1D8 /* iTermWorkgroupSessionDetailViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupSessionDetailViewController.swift; sourceTree = "<group>"; };
@@ -9537,6 +9540,7 @@
 		B673BD86C08D1241D0DDA4C1 /* ExitWorkgroupBrowserTrigger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExitWorkgroupBrowserTrigger.swift; sourceTree = "<group>"; };
 		B73FCEC5593D29C35827971E /* ClaudeCodeModeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeModeController.swift; sourceTree = "<group>"; };
 		B7B8DBB7E0FAD724F2C26042 /* CodeReviewPromptManagerWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodeReviewPromptManagerWindowController.swift; sourceTree = "<group>"; };
+		BB2BBD5361A436F82BFAB5CE /* AIPromptTemplateEvaluator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIPromptTemplateEvaluator.swift; sourceTree = "<group>"; };
 		C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WordSelectionAtom.swift; sourceTree = "<group>"; };
 		C10C843E3FEB7FC74ADE7DC0 /* AddClippingBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AddClippingBuiltInFunction.swift; sourceTree = "<group>"; };
 		C42ABD0E29FAE8BD4B694629 /* WorkgroupVisualView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupVisualView.swift; sourceTree = "<group>"; };
@@ -9649,8 +9653,28 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PerformanceTests; sourceTree = "<group>"; };
-		A6A723AF2DC04C2200A8115D /* ModernTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ModernTests; sourceTree = "<group>"; };
+		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PerformanceTests;
+			sourceTree = "<group>";
+		};
+		A6A723AF2DC04C2200A8115D /* ModernTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ModernTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -9832,7 +9856,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
+		0464AB0D006CD2EC7F000001 = {
 			isa = PBXGroup;
 			children = (
 				A6BAB25D2F8CCCD10063FA7F /* cc-status */,
@@ -11124,6 +11148,8 @@
 				ECFD443A066A4370FCB20EFC /* TerminalHardRules.swift */,
 				B1D1CA9FEA656247ADC53ADF /* ChatSessionMentionAttachment.swift */,
 				2D87E8EB4F6B647368CED6F0 /* ChatMentionPickerController.swift */,
+				95E27DEB0B9DD8AE0960FAE5 /* ChatIconGenerator.swift */,
+				BB2BBD5361A436F82BFAB5CE /* AIPromptTemplateEvaluator.swift */,
 			);
 			path = AITerm;
 			sourceTree = "<group>";
@@ -17587,7 +17613,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
+			mainGroup = 0464AB0D006CD2EC7F000001;
 			packageReferences = (
 				A62E3BC62E1CC674002DF8C3 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */,
 			);
@@ -21491,6 +21517,8 @@
 				7889196D8646277EB77FCAE7 /* iTermSessionPreviewPanel.h in Sources */,
 				5E82F967B87E7F7A76A492E1 /* ChatSessionMentionAttachment.swift in Sources */,
 				9A0CA7F82D9DB1934FC5BB8C /* ChatMentionPickerController.swift in Sources */,
+				096EE94A89ADAAA4B4A2ACF9 /* ChatIconGenerator.swift in Sources */,
+				815BF5D942C3EAAF56D7E2A7 /* AIPromptTemplateEvaluator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

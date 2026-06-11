@@ -108,6 +108,7 @@ typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
     iTermAIPromptAIChatReadWriteTerminalBrowser = 6,
     iTermAIPromptAIChatOrchestration = 7,
     iTermAIPromptCodeReviewSystem = 8,
+    iTermAIPromptChatIcon = 9,
 };
 
 typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {
@@ -153,6 +154,16 @@ extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
 extern NSString *const kPreferenceKeyAIPromptAIChatOrchestration;
 extern NSString *const kPreferenceKeyAIPromptCodeReview;
 extern NSString *const kPreferenceKeyAIPromptCodeReviewSystem;
+extern NSString *const kPreferenceKeyAIPromptChatIcon;
+// The shipped default for kPreferenceKeyAIPromptChatIcon. Exposed so
+// tests can verify the template independent of the machine's defaults.
+extern NSString *iTermDefaultAIPromptChatIcon;
+// Names of the variables (in the interpolated-string "ai" scope) that
+// templated prompts must reference. Shared by the feature code that
+// supplies the value and the Settings warning that checks the template
+// references it, so the two cannot drift.
+extern NSString *const iTermAIPromptVariablePrompt;   // Engage AI: the user's query
+extern NSString *const iTermAIPromptVariableSubject;  // Chat List Icon: the chat's title
 extern NSString *const kPreferenceKeyAIPromptPlaceholder;  // not a real setting, just there to make the prefs UI infra happy
 extern NSString *const kPreferenceKeyAIModel;
 extern NSString *const kPreferenceKeyAITokenLimit;

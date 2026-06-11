@@ -407,3 +407,38 @@ struct AIConversation {
         return truncate(messages: messages, maxTokens: maxTokens)
     }
 }
+
+// MARK: - One-shot completion
+
+// Retention for fire-and-forget conversations: AIConversation is a value
+// type that owns a controller doing async work, so somebody must keep a
+// copy alive until the completion runs. Main-thread only.
+private enum AIConversationOneShotRetention {
+    static var retained = [UUID: AIConversation]()
+}
+
+extension AIConversation {
+    // Completes a fire-and-forget conversation, retaining it (and the
+    // controller it owns) until the completion has run. Use this instead
+    // of a hand-rolled stored property or static dictionary: complete is
+    // mutating and can run its callback synchronously (e.g. when no
+    // registration exists), so a caller that stores the conversation and
+    // then mutates that same storage from inside the callback traps under
+    // exclusivity enforcement. This helper calls complete on a local
+    // copy, stores it afterward, and releases on the next runloop turn,
+    // which keeps the ordering correct in the synchronous case too. Call
+    // on the main thread.
+    static func completeOneShot(_ conversation: AIConversation,
+                                completion: @escaping (Result<AIConversation, Error>) -> ()) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        var mutable = conversation
+        let token = UUID()
+        mutable.complete { result in
+            DispatchQueue.main.async {
+                AIConversationOneShotRetention.retained.removeValue(forKey: token)
+            }
+            completion(result)
+        }
+        AIConversationOneShotRetention.retained[token] = mutable
+    }
+}

@@ -9,7 +9,11 @@ class ChatCellView: NSTableCellView {
     let titleLabel = NSTextField(labelWithString: "")
     let dateLabel = NSTextField(labelWithString: "")
     let snippetLabel = NSTextField(labelWithString: "")
+    private let iconView = NSImageView()
     private var typing = false
+
+    // Display size of the circular chat icon, in points.
+    private static let iconDiameter: CGFloat = 32
 
     var snippet: String? {
         didSet {
@@ -55,6 +59,7 @@ class ChatCellView: NSTableCellView {
         }
         self.date = chat.lastModifiedDate
         titleLabel.stringValue = chat.title
+        iconView.image = Self.iconImage(for: chat)
         typing = false
 
         let chatID = chat.id
@@ -99,7 +104,69 @@ class ChatCellView: NSTableCellView {
         }
     }
 
+    // Chats without an icon (no AI-generated title yet, or icon
+    // generation failed) get a default chat-bubble icon. The circular
+    // clip happens in the view's layer, not the image.
+    //
+    // Decoded icons are cached: load() runs for every visible cell AND
+    // for every row during height measurement on each reloadData, and
+    // metadataDidChange-driven reloads happen on every message. Without
+    // the cache that's on the order of N PNG decodes per incoming
+    // message. Keyed by the PNG data itself, so a regenerated icon
+    // misses the cache naturally and the stale entry ages out under
+    // NSCache eviction.
+    private static let iconCache = NSCache<NSData, NSImage>()
+
+    private static func iconImage(for chat: Chat) -> NSImage {
+        guard let data = chat.icon else {
+            return defaultIcon
+        }
+        let key = data as NSData
+        if let cached = iconCache.object(forKey: key) {
+            return cached
+        }
+        guard let image = NSImage(data: data) else {
+            return defaultIcon
+        }
+        iconCache.setObject(image, forKey: key)
+        return image
+    }
+
+    // Drawn lazily by AppKit so the colors track appearance changes.
+    private static let defaultIcon: NSImage = {
+        let size = NSSize(width: iconDiameter, height: iconDiameter)
+        return NSImage(size: size, flipped: false) { rect in
+            NSColor.systemGray.setFill()
+            NSBezierPath(ovalIn: rect).fill()
+            let configuration = NSImage.SymbolConfiguration(pointSize: iconDiameter * 0.45,
+                                                            weight: .medium)
+            if let symbol = NSImage(systemSymbolName: SFSymbol.message.rawValue,
+                                    accessibilityDescription: "Chat")?
+                .withSymbolConfiguration(configuration)?
+                .it_image(withTintColor: .white) {
+                let symbolSize = symbol.size
+                let origin = NSPoint(x: rect.midX - symbolSize.width / 2,
+                                     y: rect.midY - symbolSize.height / 2)
+                symbol.draw(at: origin,
+                            from: .zero,
+                            operation: .sourceOver,
+                            fraction: 1)
+            }
+            return true
+        }
+    }()
+
     private func setupViews() {
+        // Configure icon view. The layer clips the square generated
+        // image to a circle.
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+        iconView.wantsLayer = true
+        iconView.layer?.cornerRadius = Self.iconDiameter / 2
+        iconView.layer?.masksToBounds = true
+        iconView.image = Self.defaultIcon
+        addSubview(iconView)
+
         // Configure title label
         titleLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .bold)
         if let cell = titleLabel.cell as? NSTextFieldCell {
@@ -134,15 +201,24 @@ class ChatCellView: NSTableCellView {
         addSubview(snippetLabel)
 
         NSLayoutConstraint.activate([
+            // Icon at the leading edge, vertically centered. The
+            // greater-than-or-equal top inset keeps the fitting height
+            // from collapsing below the icon.
+            iconView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
+            iconView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            iconView.topAnchor.constraint(greaterThanOrEqualTo: self.topAnchor, constant: 5),
+            iconView.widthAnchor.constraint(equalToConstant: Self.iconDiameter),
+            iconView.heightAnchor.constraint(equalToConstant: Self.iconDiameter),
+
             // Top row: title and date
-            titleLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
+            titleLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
             titleLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 5),
             dateLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
             dateLabel.topAnchor.constraint(equalTo: titleLabel.topAnchor),
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: dateLabel.leadingAnchor, constant: -8),
 
-            // Snippet below title/date, spanning full width with same insets
-            snippetLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
+            // Snippet below title/date, aligned with the title
+            snippetLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
             snippetLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
             snippetLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
             snippetLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -5)

@@ -89,7 +89,6 @@ class ChatAgent {
     private var messageToPrompt = MessageToPromptStateMachine()
     private var pendingRemoteCommands = [UUID: PendingRemoteCommand]()
     private let broker: ChatBroker
-    private var renameConversation: AIConversation?
     private let prepPipeline: MessagePrepPipeline
     private var lastSystemMessage: String?
     private var toolProviders: [ToolProvider] = []
@@ -538,25 +537,10 @@ class ChatAgent {
                 .map { "  - \($0.name)" }
                 .joined(separator: "\n")
         }
-        let owner = OrchestrationPromptScopeOwner()
-        let scope = iTermVariableScope()
-        let frame = iTermVariables(context: [], owner: owner)
-        scope.add(frame, toScopeNamed: "ai")
-        scope.setValue(defaultCodeReviewPrompt,
-                       forVariableNamed: "ai.default_code_review_prompt")
-        scope.setValue(savedPromptNames,
-                       forVariableNamed: "ai.saved_prompt_names")
-        let swifty = iTermSwiftyString(string: template,
-                                        scope: scope,
-                                        sideEffectsAllowed: false,
-                                        observer: nil)
-        var resolved = ""
-        swifty.evaluateSynchronously(true,
-                                      sideEffectsAllowed: false,
-                                      with: scope) { value, _, _ in
-            resolved = value ?? ""
-        }
-        return resolved
+        return AIPromptTemplateEvaluator.evaluateSynchronously(
+            template,
+            variables: ["default_code_review_prompt": defaultCodeReviewPrompt,
+                        "saved_prompt_names": savedPromptNames])
     }
 
     deinit {
@@ -881,21 +865,54 @@ class ChatAgent {
             temp.responseID = nil
             return temp
         }
-        renameConversation = AIConversation(
+        var newConversation = AIConversation(
             registrationProvider: nil,
             messages: history)
-        renameConversation?.shouldThink = false
-        var failed = false
-        renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
-            if let newName = result.successValue?.messages.last?.body.content {
-                try? self?.renameChat(newName)
-                self?.renameConversation = nil
+        newConversation.shouldThink = false
+        AIConversation.completeOneShot(newConversation) { [weak self] (result: Result<AIConversation, Error>) in
+            // Sanitize the model's reply here, at the single point where
+            // titles are minted, so every .renameChat consumer (the chat
+            // list, the window title) sees the same value and a blank or
+            // padded reply can't blank or pad a title anywhere.
+            let newName = result.successValue?.messages.last?.body.content
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let newName, !newName.isEmpty {
+                do {
+                    try self?.renameChat(newName)
+                    // Only after the rename actually landed: a thrown
+                    // rename means the chat keeps its old title, and an
+                    // icon for the never-applied title would both bill a
+                    // model call and display next to the wrong title.
+                    self?.requestIconGeneration(title: newName)
+                } catch {
+                    DLog("renameChat failed: \(error)")
+                }
             } else {
-                failed = true
+                DLog("Rename produced no usable title")
             }
         }
-        if failed {
-            renameConversation = nil
+    }
+
+    // Generate the chat-list icon for a freshly minted title. This lives
+    // here, next to the title generation it follows, rather than inside
+    // ChatListModel's persistence mutation: a .renameChat can flow
+    // through the model from paths that must not bill a model call
+    // (imports, replays, a future manual-rename UI). On failure the icon
+    // is cleared: for a first generation that's a no-op (the default
+    // icon stays), and after a re-rename it beats leaving the previous
+    // title's icon displayed forever next to the new title. There is no
+    // retry, and pre-existing chats are deliberately not backfilled,
+    // since that would bill one model call per chat without the user
+    // asking for anything.
+    private func requestIconGeneration(title: String) {
+        let chatID = self.chatID
+        ChatIconGenerator.instance.requestIcon(forChatID: chatID,
+                                               title: title) { data in
+            do {
+                try ChatListModel.instance?.setIcon(data, forChatID: chatID)
+            } catch {
+                DLog("Failed to save icon for chat \(chatID): \(error)")
+            }
         }
     }
 
@@ -1193,15 +1210,4 @@ extension ChatAgent {
         return AIChatToolCallRepair.repairingOrphanedToolResults(
             transcriptMessagesBeforeRepair(messages))
     }
-}
-
-// Minimal iTermObject-conforming owner used so a transient
-// iTermVariables frame can be attached to the per-build scope that
-// evaluates the orchestration system prompt's swifty-string template.
-// The frame and scope are discarded immediately after evaluation, so
-// the owner has no real responsibilities; it just needs to satisfy
-// iTermVariables's owner-typed init.
-@objc private class OrchestrationPromptScopeOwner: NSObject, iTermObject {
-    func objectMethodRegistry() -> iTermBuiltInFunctions? { nil }
-    func objectScope() -> iTermVariableScope? { nil }
 }

@@ -19,12 +19,6 @@ struct AISafetyClassifierBackend: AutoModeClassifier.Backend {
     // live ChatAgent conversation) is a future enhancement.
     var entries: [TranscriptEntry]
 
-    // Conversations are value types that own a controller doing async work;
-    // retain them here for the duration of the request so the controller is
-    // not deallocated mid-flight. Keyed by a token and only touched on the
-    // main queue. Mirrors AICompletion's retention approach.
-    private static var inflight = [UUID: AIConversation]()
-
     func sideQuery(system: String, user: String, maxTokens: Int) async throws -> String {
         // "Wants Apple" (the stored user choice) is deliberately kept separate
         // from "Apple is available right now" (the probe). A user who chose the
@@ -56,7 +50,6 @@ struct AISafetyClassifierBackend: AutoModeClassifier.Backend {
                         return
                     }
                 }
-                let token = UUID()
                 var conversation = AIConversation(
                     registrationProvider: nil,
                     messages: [
@@ -70,9 +63,7 @@ struct AISafetyClassifierBackend: AutoModeClassifier.Backend {
                 }
                 // Otherwise leave `conversation.model` unset so it uses the
                 // configured chat model.
-                Self.inflight[token] = conversation
-                conversation.complete(streaming: nil) { result in
-                    Self.inflight.removeValue(forKey: token)
+                AIConversation.completeOneShot(conversation) { result in
                     switch result {
                     case .success(let updated):
                         if let content = updated.messages.last?.body.content {

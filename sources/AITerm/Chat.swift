@@ -39,6 +39,21 @@ struct Chat {
     // Async watchers registered via the orchestrator's register_watch
     // tool. Empty for non-orchestrator chats.
     var watchers: [WorkgroupWatcher] = []
+
+    // Small square PNG generated from the title by ChatIconGenerator,
+    // shown circle-clipped in the chat list. Nil until the first
+    // AI-generated title arrives or when generation fails; the list
+    // shows a default icon then.
+    //
+    // Known tradeoff: fetchAllQuery() selects * and DatabaseBackedArray
+    // keeps every row resident, so all icon blobs (roughly 3-15KB each)
+    // load eagerly and stay in memory. The blob also rides along on
+    // every row rewrite: each message bump is a DELETE + INSERT of the
+    // full row, so a busy chat rewrites its icon to the WAL once per
+    // message event. Fine at realistic chat counts; if chats in the
+    // thousands become common, project this column out of the list
+    // query (and the hot row) and fetch per chat on demand.
+    var icon: Data?
 }
 
 extension Chat: iTermDatabaseElement {
@@ -54,6 +69,7 @@ extension Chat: iTermDatabaseElement {
         case vectorStore
         case claimedScopes
         case watchers
+        case icon
     }
     static func schema() -> String {
         """
@@ -68,7 +84,8 @@ extension Chat: iTermDatabaseElement {
              \(Columns.permissions.rawValue) text,
              \(Columns.vectorStore.rawValue) text,
              \(Columns.claimedScopes.rawValue) text,
-             \(Columns.watchers.rawValue) text)
+             \(Columns.watchers.rawValue) text,
+             \(Columns.icon.rawValue) blob)
         """
     }
     static func migrations(existingColumns: [String]) -> [Migration] {
@@ -90,6 +107,9 @@ extension Chat: iTermDatabaseElement {
         }
         if !existingColumns.contains(Columns.orchestrationEnabled.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.orchestrationEnabled.rawValue) integer DEFAULT 0", args: []))
+        }
+        if !existingColumns.contains(Columns.icon.rawValue) {
+            result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.icon.rawValue) blob", args: []))
         }
         return result
     }
@@ -119,8 +139,9 @@ extension Chat: iTermDatabaseElement {
              \(Columns.permissions.rawValue),
              \(Columns.vectorStore.rawValue),
              \(Columns.claimedScopes.rawValue),
-             \(Columns.watchers.rawValue))
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             \(Columns.watchers.rawValue),
+             \(Columns.icon.rawValue))
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
          [
             id,
@@ -134,6 +155,7 @@ extension Chat: iTermDatabaseElement {
             vectorStore ?? NSNull(),
             Self.encodeIDList(claimedScopes),
             Self.encodeWatchers(watchers),
+            icon ?? NSNull(),
          ])
     }
 
@@ -148,7 +170,8 @@ extension Chat: iTermDatabaseElement {
                         \(Columns.permissions.rawValue) = ?,
                         \(Columns.vectorStore.rawValue) = ?,
                         \(Columns.claimedScopes.rawValue) = ?,
-                        \(Columns.watchers.rawValue) = ?
+                        \(Columns.watchers.rawValue) = ?,
+                        \(Columns.icon.rawValue) = ?
         where \(Columns.uuid.rawValue) = ?
         """,
         [
@@ -162,6 +185,7 @@ extension Chat: iTermDatabaseElement {
             vectorStore ?? NSNull(),
             Self.encodeIDList(claimedScopes),
             Self.encodeWatchers(watchers),
+            icon ?? NSNull(),
 
             // where clause
             id
@@ -190,6 +214,7 @@ extension Chat: iTermDatabaseElement {
             result.string(forColumn: Columns.claimedScopes.rawValue))
         self.watchers = Self.decodeWatchers(
             result.string(forColumn: Columns.watchers.rawValue))
+        self.icon = result.data(forColumn: Columns.icon.rawValue)
     }
 
     // Workgroup IDs don't contain newlines (they're stable identifiers,

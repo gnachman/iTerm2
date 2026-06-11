@@ -114,14 +114,60 @@ class ChatListModel: ChatListDataSource {
 
     private func rename(chatID: String, newName: String) throws {
         guard let i = index(of: chatID) else { return }
-        var temp = chatStorage[i]
-        temp.title = newName
-        try chatStorage.set(at: i, temp)
+        let trimmedNewName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedNewName.isEmpty {
+            // Defense in depth: ChatAgent sanitizes model-supplied titles
+            // before publishing, but nothing stops a future producer from
+            // publishing a blank .renameChat. Never blank the title.
+            DLog("Ignoring rename of \(chatID) to a blank title")
+            return
+        }
+        if chatStorage[i].title == trimmedNewName {
+            // A no-op rename must not rewrite the row or reload the list.
+            return
+        }
+        try chatStorage.modify(at: i) { chat in
+            chat.title = trimmedNewName
+            // The icon is drawn from the title, so a title change
+            // invalidates it. Behavior-neutral for the one current
+            // producer (ChatAgent renames a chat once, while its icon is
+            // still nil, and regenerates afterward), but it makes any
+            // future rename path correct by default: worst case is the
+            // default icon until something regenerates, never a stale
+            // icon for the previous title.
+            chat.icon = nil
+        }
         postMetadataChange()
     }
 
-    private func postMetadataChange() {
-        NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
+    // Persists an AI-generated icon (delivered by ChatAgent after it
+    // mints a title) or copies one to a new chat (the fork path, since a
+    // forked chat is never renamed and would otherwise keep the default
+    // icon forever). Nil clears the icon back to the default; the no-op
+    // guard matters because the common failure path delivers nil right
+    // after rename() already cleared the icon, which must not cost a row
+    // rewrite and a list reload. The notification carries the chatID so
+    // the list can reload just this row: an icon can't change row height
+    // or order.
+    func setIcon(_ data: Data?, forChatID chatID: String) throws {
+        guard let i = index(of: chatID) else { return }
+        if chatStorage[i].icon == data {
+            return
+        }
+        try chatStorage.modify(at: i) { chat in
+            chat.icon = data
+        }
+        postMetadataChange(chatID: chatID)
+    }
+
+    // When the change is scoped to one chat AND cannot affect row height
+    // or order (currently only icon changes), pass its ID so observers
+    // can reload a single row instead of every cell.
+    private func postMetadataChange(chatID: String? = nil) {
+        let userInfo: [AnyHashable: Any]? = chatID.map { [Self.chatIDUserInfoKey: $0] }
+        NotificationCenter.default.post(name: Self.metadataDidChange,
+                                        object: nil,
+                                        userInfo: userInfo)
     }
 
     // MARK: - Message-level operations

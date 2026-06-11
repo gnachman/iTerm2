@@ -651,6 +651,21 @@ extension ChatWindowController: ChatViewControllerDelegate {
                                            browserSessionGuid: chat.browserSessionGuid,
                                            initialMessages: initialMessages,
                                            permissions: chat.permissions)
+            // The fork inherits the source chat's icon: icon generation
+            // only runs when the AI mints a title, and a forked chat is
+            // never renamed (its title is set at creation and
+            // .renameChat messages are stripped from the clones above),
+            // so without this it would show the default icon forever
+            // next to its near-identical sibling. setIcon is the single
+            // funnel for icon writes; both this and create's insert post
+            // their notifications in the same runloop turn, so no
+            // default-icon flash is visible. Non-fatal: a failed icon
+            // write must not abort loading the freshly forked chat.
+            do {
+                try listModel.setIcon(chat.icon, forChatID: chatID)
+            } catch {
+                DLog("Failed to copy icon to forked chat \(chatID): \(error)")
+            }
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
 

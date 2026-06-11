@@ -285,6 +285,11 @@ Triggers Improvements:
   matching.
 
 AI Improvements:
+- Chats in the AI chat list now get an icon
+  drawn by your AI model from the chat
+  title. Chats without one show a default
+  icon. The prompt can be edited in
+  Settings > General > AI > Prompts.
 - The AI command safety check now uses your
   configured AI model. It runs deterministic
   terminal rules first and only asks the model

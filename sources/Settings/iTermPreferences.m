@@ -236,6 +236,9 @@ NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser = @"AI Prom
 NSString *const kPreferenceKeyAIPromptAIChatOrchestration = @"AI Prompt for AI Chat Orchestration";
 NSString *const kPreferenceKeyAIPromptCodeReview = @"AI Prompt for Code Review";
 NSString *const kPreferenceKeyAIPromptCodeReviewSystem = @"AI Prompt for Code Review System";
+NSString *const kPreferenceKeyAIPromptChatIcon = @"AI Prompt for Chat Icon";
+NSString *const iTermAIPromptVariablePrompt = @"prompt";
+NSString *const iTermAIPromptVariableSubject = @"subject";
 NSString *const kPreferenceKeyAIPromptPlaceholder = @"NoUserDefaultAIPromptPlaceholder";
 
 NSString *const kPreferenceKeyAIModel = @"AiModel";
@@ -290,6 +293,15 @@ NSString *iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser = @"You are an assis
 NSString *iTermDefaultAIPromptAIChatReadWriteTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser.\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal: execute_command, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
 NSString *iTermDefaultAIPromptCodeReview = @"Review the pending changes in this repo. Flag issues a careful maintainer would block on before merge, in roughly this order:\n  1. Correctness — logic errors, broken invariants, missed edge cases, off-by-one, races, lifetime/memory bugs, error paths that swallow failures.\n  2. Security — injection, authn/authz mistakes, secret handling, unsafe deserialization, unsafe defaults, TOCTOU.\n  3. Reliability & performance — blocking the wrong thread, unbounded resource use, accidental O(N²), retries without backoff, silent failure paths.\n  4. Contract risk — behavior changes callers rely on, silently changed defaults, broken backward compatibility, missing migrations.\n\nFor each finding cite `file:line`, explain *why* it is wrong (not what the code does), and propose a concrete fix when one is obvious. Be calibrated: if a finding is not high-confidence, say so or skip it. Verify claims against the actual code rather than inferring from names.\n\nSkip pure style, formatting, naming, and anything a linter or CI already enforces.\n\nIf you find nothing worth fixing, say so plainly.";
+
+NSString *iTermDefaultAIPromptChatIcon =
+@"Design an icon representing this subject: “\\(ai.subject)”. "
+@"Respond with only an SVG document. Do not use markdown, code fences, or commentary. "
+@"Requirements: square viewBox; bold, simple flat shapes (paths, circles, rects, polygons) "
+@"with solid fills or simple gradients; fill the whole canvas with a background color so "
+@"nothing is transparent; no text elements, scripts, external references, images, or "
+@"filters. The icon will be shown at 32x32 points clipped to a circle, so keep the "
+@"composition centered and uncluttered.";
 
 NSString *iTermDefaultAIPromptAIChatOrchestration =
 @"You are an orchestrator inside iTerm2's AI chat feature, running in orchestration mode. "
@@ -685,6 +697,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPromptAIChatOrchestration: iTermDefaultAIPromptAIChatOrchestration,
                   kPreferenceKeyAIPromptCodeReview: iTermDefaultAIPromptCodeReview,
                   kPreferenceKeyAIPromptCodeReviewSystem: iTermBundledCodeReviewSystemPrompt(),
+                  kPreferenceKeyAIPromptChatIcon: iTermDefaultAIPromptChatIcon,
                   kPreferenceKeyAIPromptPlaceholder: @"",
                   kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
                   kPreferenceKeyAIModel: @"gpt-4o-mini",

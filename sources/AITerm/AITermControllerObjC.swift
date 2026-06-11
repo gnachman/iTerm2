@@ -101,12 +101,11 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         let template = iTermPreferences.string(forKey: kPreferenceKeyAIPrompt) ?? ""
         let sanitizedPrompt = query.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let myScope = scope.copy() as! iTermVariableScope
-        let frame = iTermVariables(context: [], owner: self)
-        myScope.add(frame, toScopeNamed: "ai")
-        myScope.setValue(sanitizedPrompt, forVariableNamed: "ai.prompt")
-        let swiftyString = iTermSwiftyString(string: template, scope: myScope, sideEffectsAllowed: true)
-        swiftyString.evaluateSynchronously(false, sideEffectsAllowed: true, with: myScope) { maybeResult, maybeError, _ in
+        AIPromptTemplateEvaluator.evaluate(template,
+                                           variables: [iTermAIPromptVariablePrompt: sanitizedPrompt],
+                                           scope: scope,
+                                           sideEffectsAllowed: true,
+                                           synchronous: false) { maybeResult in
             if let prompt = maybeResult {
                 Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
                     if !shouldCancel {
