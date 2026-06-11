@@ -67,6 +67,16 @@ protocol AdapterCapabilities: AnyObject {
     @objc func settingsValue(forKey key: String) -> String?
     @objc func setSettingsValue(_ value: String, forKey key: String)
     @objc var settingsFieldDescriptions: [[String: Any]]? { get }
+
+    @objc var addAccountToggleDescriptions: [[String: Any]]? { get }
+
+    @objc(addUserName:accountName:password:flags:context:completion:)
+    optional func add(userName: String,
+                      accountName: String,
+                      password: String,
+                      flags: [String: Bool],
+                      context: RecipeExecutionContext,
+                      completion: @escaping (PasswordManagerAccount?, Error?) -> ())
 }
 
 extension PasswordManagerAccount {
