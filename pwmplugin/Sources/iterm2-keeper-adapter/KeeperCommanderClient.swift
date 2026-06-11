@@ -43,8 +43,7 @@ private struct KeeperFolder: Decodable {
     let flags: String?
 }
 
-/// Commander `ls -l` often appends connection info after `login @ …`: `https://…`, or database-style
-/// `host:port` / IPv4. iTerm2 sends `userName` to the terminal as-is, so we keep only the login segment.
+/// Strip URL/host suffix after `login @ …` from Commander list descriptions.
 private func loginFromKeeperListDisplayDescription(_ raw: String) -> String {
     let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
     guard let range = trimmed.range(of: " @ ", options: .literal) else {
@@ -59,17 +58,14 @@ private func loginFromKeeperListDisplayDescription(_ raw: String) -> String {
     return trimmed
 }
 
-/// True when the part after ` @ ` looks like a URL or server address (not part of the login).
 private func keeperListDescriptionSuffixIsConnectionInfo(_ tail: String) -> Bool {
     let t = tail.trimmingCharacters(in: .whitespacesAndNewlines)
     if t.isEmpty { return false }
     let lower = t.lowercased()
     if lower.hasPrefix("http://") || lower.hasPrefix("https://") { return true }
-    // IPv4 or IPv4:port (e.g. 127.0.0.1:3366)
     if t.range(of: #"^(?:\d{1,3}\.){3}\d{1,3}(:\d+)?$"#, options: .regularExpression) != nil {
         return true
     }
-    // hostname:port (e.g. db.example.com:3306)
     if t.range(of: #"^[a-zA-Z0-9][a-zA-Z0-9.-]*:\d{1,5}$"#, options: .regularExpression) != nil {
         return true
     }
@@ -80,32 +76,113 @@ struct KeeperRecord: Decodable {
     let number: Int?
     let uid: String?
     private let record_uid: String?
-    var effectiveUid: String? { uid ?? record_uid }
     let type: String?
     let title: String?
     let description: String?
-    /// Present in some Commander JSON list payloads; avoids N+1 `get` calls (which trigger HTTP 429 rate limits).
+    let name: String?
+    let details: String?
+    let source: String?
     let login: String?
     let username: String?
+    let record_category: String?
 
-    init(number: Int?, uid: String?, record_uid: String?, type: String?, title: String?, description: String?, login: String? = nil, username: String? = nil) {
+    private let upperUID: String?
+    private let upperTitle: String?
+    private let upperType: String?
+    private let itemType: String?
+
+    enum CodingKeys: String, CodingKey {
+        case number, uid, record_uid, type, title, description
+        case name, details, source, login, username, record_category
+        case upperUID = "UID"
+        case upperTitle = "Title"
+        case upperType = "Type"
+        case itemType = "Item Type"
+    }
+
+    init(number: Int? = nil, uid: String? = nil, record_uid: String? = nil,
+         type: String? = nil, title: String? = nil, description: String? = nil,
+         name: String? = nil, details: String? = nil, source: String? = nil,
+         login: String? = nil, username: String? = nil,
+         record_category: String? = nil) {
         self.number = number
         self.uid = uid
         self.record_uid = record_uid
         self.type = type
         self.title = title
         self.description = description
+        self.name = name
+        self.details = details
+        self.source = source
         self.login = login
         self.username = username
+        self.record_category = record_category
+        self.upperUID = nil
+        self.upperTitle = nil
+        self.upperType = nil
+        self.itemType = nil
     }
 
-    /// Best-effort login/username for the password manager list without extra API round-trips.
+    var effectiveUid: String? { uid ?? record_uid ?? upperUID }
+    var effectiveType: String? { type ?? upperType }
+
+    var isFolder: Bool {
+        if let t = effectiveType?.lowercased(), t == "folder" { return true }
+        if let it = itemType?.lowercased(), it == "folder" { return true }
+        return false
+    }
+
+    var displayTitle: String {
+        for candidate in [title, upperTitle, name] {
+            if let t = candidate?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty { return t }
+        }
+        return "Untitled"
+    }
+
+    var detailsDescription: String? {
+        guard let d = details else { return nil }
+        guard let range = d.range(of: "Description:", options: .literal) else { return nil }
+        let raw = d[range.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+        if raw.isEmpty || raw.caseInsensitiveCompare("None") == .orderedSame { return nil }
+        return raw
+    }
+
     var listUserName: String {
         if let l = login?.trimmingCharacters(in: .whitespacesAndNewlines), !l.isEmpty { return l }
         if let u = username?.trimmingCharacters(in: .whitespacesAndNewlines), !u.isEmpty { return u }
-        let d = description?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if d.isEmpty { return "" }
-        return loginFromKeeperListDisplayDescription(d)
+        for candidate in [description, detailsDescription] {
+            let d = candidate?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if d.isEmpty { continue }
+            return loginFromKeeperListDisplayDescription(d)
+        }
+        return ""
+    }
+
+    var sourceLabel: String? {
+        if let cat = record_category?.trimmingCharacters(in: .whitespacesAndNewlines), !cat.isEmpty {
+            switch cat.lowercased() {
+            case "classic", "legacy": return "Classic"
+            case "nested",
+                 "nested share folder",
+                 "nested share subfolder",
+                 "nested share subfolders": return "Nested"
+            default: return cat
+            }
+        }
+        guard let raw = source?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
+        switch raw.lowercased() {
+        case "legacy": return "Classic"
+        case "nested",
+             "nested share folder",
+             "nested share subfolder",
+             "nested share subfolders": return "Nested"
+        default: return raw
+        }
+    }
+
+    var displayTitleWithSource: String {
+        guard let label = sourceLabel else { return displayTitle }
+        return "\(displayTitle) (\(label))"
     }
 }
 
@@ -128,6 +205,10 @@ enum KeeperClientError: Error, LocalizedError {
 }
 
 final class KeeperCommanderClient {
+    static let longRequestTimeout: TimeInterval = 300
+    static let validationRequestTimeout: TimeInterval = 20
+    static let statusPollTimeout: TimeInterval = 30
+
     let baseURL: URL
     private let session: URLSession
 
@@ -159,49 +240,61 @@ final class KeeperCommanderClient {
         Self.v2BaseURL(from: baseURL).appendingPathComponent("result").appendingPathComponent(requestId)
     }
 
-    func executeCommand(apiKey: String, command: String) throws -> Data {
+    func executeCommand(apiKey: String,
+                        command: String,
+                        timeout: TimeInterval = longRequestTimeout) throws -> Data {
         let body = try JSONEncoder().encode(KeeperExecuteRequest(command: command))
         var request = URLRequest(url: asyncURL())
+        request.timeoutInterval = timeout
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "api-key")
         request.httpBody = body
         let (data, response, err) = session.synchronousData(for: request)
-        if let err = err { throw err }
+        if let err = err {
+            throw KeeperClientError.message(keeperConnectivityErrorMessage(urlError: err) ?? err.localizedDescription)
+        }
         guard let data = data else { throw KeeperClientError.message("No data") }
         guard let http = response as? HTTPURLResponse, http.statusCode == 202 else {
-            throw KeeperClientError.message(keeperHumanReadableError(fromResponseData: data) ?? String(data: data, encoding: .utf8) ?? "Unexpected response")
+            let code = (response as? HTTPURLResponse)?.statusCode
+            throw KeeperClientError.message(keeperConnectivityErrorMessage(statusCode: code, data: data))
         }
         let queued = try JSONDecoder().decode(KeeperV2QueuedResponse.self, from: data)
         guard let requestId = queued.request_id, !requestId.isEmpty else {
             throw KeeperClientError.message("No request_id in v2 response")
         }
-        return try pollForResult(apiKey: apiKey, requestId: requestId)
+        return try pollForResult(apiKey: apiKey, requestId: requestId, totalTimeout: timeout)
     }
 
-    private func pollForResult(apiKey: String, requestId: String) throws -> Data {
+    private func pollForResult(apiKey: String,
+                               requestId: String,
+                               totalTimeout: TimeInterval) throws -> Data {
         let interval: TimeInterval = 2
-        let deadline = Date().addingTimeInterval(120)
+        let deadline = Date().addingTimeInterval(totalTimeout)
+        let maxPolls = Int(totalTimeout / interval) + 30
         var pollCount = 0
         var consecutiveUnparseable = 0
         while true {
             pollCount += 1
             if Date() > deadline { throw KeeperClientError.message("Keeper service v2 request timed out") }
-            if pollCount > 60 { throw KeeperClientError.message("Keeper service did not complete the request in time") }
+            if pollCount > maxPolls { throw KeeperClientError.message("Keeper service did not complete the request in time") }
             var sreq = URLRequest(url: statusURL(requestId: requestId))
+            sreq.timeoutInterval = Self.statusPollTimeout
             sreq.setValue(apiKey, forHTTPHeaderField: "api-key")
             let (sdata, sresp, serr) = session.synchronousData(for: sreq)
-            if let serr = serr { throw serr }
+            if let serr = serr {
+                throw KeeperClientError.message(keeperConnectivityErrorMessage(urlError: serr) ?? serr.localizedDescription)
+            }
             let scode = (sresp as? HTTPURLResponse)?.statusCode ?? 0
             if scode != 200 {
-                throw KeeperClientError.message(keeperHumanReadableError(fromResponseData: sdata) ?? "HTTP \(scode)")
+                throw KeeperClientError.message(keeperConnectivityErrorMessage(statusCode: scode, data: sdata))
             }
             guard let sdata = sdata,
                   let statusResp = try? JSONDecoder().decode(KeeperV2StatusResponse.self, from: sdata),
                   let status = statusResp.status else {
                 consecutiveUnparseable += 1
                 if consecutiveUnparseable >= 15 {
-                    throw KeeperClientError.message(keeperHumanReadableError(fromResponseData: sdata) ?? "Invalid status response")
+                    throw KeeperClientError.message(keeperConnectivityErrorMessage(statusCode: scode, data: sdata))
                 }
                 Thread.sleep(forTimeInterval: interval)
                 continue
@@ -210,12 +303,15 @@ final class KeeperCommanderClient {
             switch status {
             case "completed":
                 var rreq = URLRequest(url: resultURL(requestId: requestId))
+                rreq.timeoutInterval = totalTimeout
                 rreq.setValue(apiKey, forHTTPHeaderField: "api-key")
                 let (rdata, rresp, rerr) = session.synchronousData(for: rreq)
-                if let rerr = rerr { throw rerr }
+                if let rerr = rerr {
+                    throw KeeperClientError.message(keeperConnectivityErrorMessage(urlError: rerr) ?? rerr.localizedDescription)
+                }
                 guard let rdata = rdata, !rdata.isEmpty else { throw KeeperClientError.message("No data") }
                 if let http = rresp as? HTTPURLResponse, http.statusCode != 200 {
-                    throw KeeperClientError.message(keeperHumanReadableError(fromResponseData: rdata) ?? "HTTP \(http.statusCode)")
+                    throw KeeperClientError.message(keeperConnectivityErrorMessage(statusCode: http.statusCode, data: rdata))
                 }
                 return rdata
             case "failed", "expired":
@@ -343,9 +439,45 @@ private func validatedRecordUID(_ recordUid: String) throws -> String {
     return uid
 }
 
-func listAccountsRecords(apiKey: String, client: KeeperCommanderClient) throws -> [PasswordManagerProtocol.Account] {
-    let data = try client.executeCommand(apiKey: apiKey, command: "ls -R -l")
-    var records: [KeeperRecord]?
+enum KeeperRecordSource: String {
+    case classic
+    case nested
+
+    var idPrefix: String { rawValue }
+
+    static func fromLabel(_ label: String?) -> KeeperRecordSource? {
+        switch label?.lowercased() {
+        case "classic": return .classic
+        case "nested":  return .nested
+        default:        return nil
+        }
+    }
+}
+
+struct ParsedAccountIdentifier {
+    let source: KeeperRecordSource?
+    let uid: String
+}
+
+// accountID is `classic:<uid>` or `nested:<uid>` so per-record routing survives the host protocol.
+func parseAccountIdentifier(_ raw: String) -> ParsedAccountIdentifier {
+    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let colon = trimmed.firstIndex(of: ":") {
+        let prefix = String(trimmed[..<colon])
+        let rest = String(trimmed[trimmed.index(after: colon)...])
+        if let source = KeeperRecordSource(rawValue: prefix.lowercased()), !rest.isEmpty {
+            return ParsedAccountIdentifier(source: source, uid: rest)
+        }
+    }
+    return ParsedAccountIdentifier(source: nil, uid: trimmed)
+}
+
+func prefixedAccountID(uid: String, source: KeeperRecordSource?) -> String {
+    guard let source = source else { return uid }
+    return "\(source.idPrefix):\(uid)"
+}
+
+private func parseListingPayload(_ data: Data) -> [KeeperRecord] {
     var payloadsToTry: [Data] = [data]
     if let wrapper = try? JSONDecoder().decode(KeeperV2ResultWrapper.self, from: data),
        wrapper.status == "success",
@@ -367,38 +499,99 @@ func listAccountsRecords(apiKey: String, client: KeeperCommanderClient) throws -
            parsed["command"] as? String == "ls",
            let dataObj = parsed["data"] as? [String: Any],
            let rawRecords = dataObj["records"] as? [[String: Any]], !rawRecords.isEmpty {
-            records = rawRecords.compactMap { dict -> KeeperRecord? in
+            let recs = rawRecords.compactMap { dict -> KeeperRecord? in
                 guard let line = dict["title"] as? String else { return nil }
                 return parseLsRecordLine(line)
             }
-            if !(records?.isEmpty ?? true) { break }
+            if !recs.isEmpty { return recs }
         }
-        if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: jsonData), response.status == "success", let recs = response.data?.records, !recs.isEmpty {
-            records = recs
-            break
+        if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: jsonData),
+           response.status == "success", let recs = response.data?.records, !recs.isEmpty {
+            return recs
         }
-        if let responseArray = try? JSONDecoder().decode(KeeperExecuteResponseDataArray.self, from: jsonData), responseArray.status == "success", let arr = responseArray.data, !arr.isEmpty {
-            records = arr
-            break
+        if let responseArray = try? JSONDecoder().decode(KeeperExecuteResponseDataArray.self, from: jsonData),
+           responseArray.status == "success", let arr = responseArray.data, !arr.isEmpty {
+            return arr
         }
     }
-    guard let recs = records, !recs.isEmpty else { return [] }
-    // Do not call `get` per record here: each record would add several HTTP calls and Commander
-    // Service Mode often returns HTTP 429 (Too Many Requests). Usernames come from `ls` output
-    // (description column and optional login/username fields in JSON).
-    return recs.compactMap { rec -> PasswordManagerProtocol.Account? in
+    return []
+}
+
+private func taggedAsNested(_ records: [KeeperRecord]) -> [KeeperRecord] {
+    return records.map { rec in
+        if let cat = rec.record_category?.trimmingCharacters(in: .whitespacesAndNewlines), !cat.isEmpty {
+            return rec
+        }
+        if let s = rec.source?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty {
+            return rec
+        }
+        return KeeperRecord(number: rec.number, uid: rec.effectiveUid, record_uid: rec.effectiveUid,
+                            type: rec.effectiveType, title: rec.displayTitle != "Untitled" ? rec.displayTitle : rec.title,
+                            description: rec.description,
+                            name: rec.name, details: rec.details, source: rec.source,
+                            login: rec.login, username: rec.username,
+                            record_category: "Nested")
+    }
+}
+
+func validateApiKey(apiKey: String, client: KeeperCommanderClient) throws {
+    _ = try client.executeCommand(apiKey: apiKey,
+                                  command: "list --format=json",
+                                  timeout: KeeperCommanderClient.validationRequestTimeout)
+}
+
+func listAccountsRecords(apiKey: String,
+                         client: KeeperCommanderClient,
+                         syncFirst: Bool = true) throws -> [PasswordManagerProtocol.Account] {
+    KeeperAdapterLog.write("listAccountsRecords: begin syncFirst=\(syncFirst)")
+    if syncFirst {
+        _ = try? client.executeCommand(apiKey: apiKey, command: "sync-down")
+        KeeperAdapterLog.write("listAccountsRecords: sync-down completed")
+    }
+
+    let listData = try client.executeCommand(apiKey: apiKey, command: "list --format=json")
+    let listRecords = parseListingPayload(listData)
+    KeeperAdapterLog.write("listAccountsRecords: list returned \(listRecords.count) records")
+
+    var nsfRecords: [KeeperRecord] = []
+    if let nsfData = try? client.executeCommand(apiKey: apiKey, command: "nsf-list --records --format=json") {
+        nsfRecords = taggedAsNested(parseListingPayload(nsfData))
+        KeeperAdapterLog.write("listAccountsRecords: nsf-list returned \(nsfRecords.count) records")
+    } else {
+        KeeperAdapterLog.write("listAccountsRecords: nsf-list call failed (continuing with `list` results only)")
+    }
+
+    var byUid: [String: KeeperRecord] = [:]
+    var order: [String] = []
+    for rec in listRecords {
+        guard let uid = rec.effectiveUid, !uid.isEmpty else { continue }
+        if byUid[uid] == nil { order.append(uid) }
+        byUid[uid] = rec
+    }
+    for rec in nsfRecords {
+        guard let uid = rec.effectiveUid, !uid.isEmpty else { continue }
+        if byUid[uid] == nil {
+            order.append(uid)
+            byUid[uid] = rec
+        }
+    }
+    let merged = order.compactMap { byUid[$0] }
+    KeeperAdapterLog.write("listAccountsRecords: merged total=\(merged.count) unique UIDs (list=\(listRecords.count), nsf=\(nsfRecords.count))")
+
+    return merged.compactMap { rec -> PasswordManagerProtocol.Account? in
+        if rec.isFolder { return nil }
         guard let uid = rec.effectiveUid, !uid.isEmpty else { return nil }
-        let title = rec.title ?? "Untitled"
+        let source = KeeperRecordSource.fromLabel(rec.sourceLabel)
         return PasswordManagerProtocol.Account(
-            identifier: PasswordManagerProtocol.AccountIdentifier(accountID: uid),
+            identifier: PasswordManagerProtocol.AccountIdentifier(accountID: prefixedAccountID(uid: uid, source: source)),
             userName: rec.listUserName,
-            accountName: title,
+            accountName: rec.displayTitleWithSource,
             hasOTP: false)
     }
 }
 
 func getPassword(apiKey: String, recordUid: String, client: KeeperCommanderClient) throws -> PasswordManagerProtocol.Password {
-    let uid = try validatedRecordUID(recordUid)
+    let uid = try validatedRecordUID(parseAccountIdentifier(recordUid).uid)
     let jsonData = try client.executeCommand(apiKey: apiKey, command: "get \(uid) --format=json")
     if let exact = passwordFromGetJSONResponse(jsonData) {
         return PasswordManagerProtocol.Password(password: exact, otp: nil)
@@ -411,7 +604,7 @@ func getPassword(apiKey: String, recordUid: String, client: KeeperCommanderClien
 }
 
 func getLogin(apiKey: String, recordUid: String, client: KeeperCommanderClient) throws -> String {
-    let uid = try validatedRecordUID(recordUid)
+    let uid = try validatedRecordUID(parseAccountIdentifier(recordUid).uid)
     let jsonData = try client.executeCommand(apiKey: apiKey, command: "get \(uid) --format=json")
     if let login = loginFromGetJSONResponse(jsonData) {
         return login
@@ -450,27 +643,76 @@ private func extractPasswordFromRawGet(data: Data) -> String? {
     return nil
 }
 
+private func passwordCommandFragment(password: String) -> String {
+    let b64 = Data(password.utf8).base64EncodedString()
+    return "password=$BASE64:\(b64)"
+}
+
+private func redactedPasswordFragment(password: String) -> String {
+    let b64Length = Data(password.utf8).base64EncodedString().count
+    return "password=$BASE64:<\(b64Length) chars>"
+}
+
 func setPassword(apiKey: String, recordUid: String, newPassword: String?, client: KeeperCommanderClient) throws {
     guard let newPassword = newPassword, !newPassword.isEmpty else {
         throw KeeperClientError.message("Password field is required.")
     }
-    let uid = try validatedRecordUID(recordUid)
-    let b64 = Data(newPassword.utf8).base64EncodedString()
-    let cmd = "record-update -r \(uid) password=$BASE64:\(b64)"
-    let data = try client.executeCommand(apiKey: apiKey, command: cmd)
-    if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
-        return
+    let parsed = parseAccountIdentifier(recordUid)
+    let uid = try validatedRecordUID(parsed.uid)
+
+    func attempt(_ verb: String) throws -> (success: Bool, raw: Data) {
+        let cmd = "\(verb) --force -r \(uid) \(passwordCommandFragment(password: newPassword))"
+        KeeperAdapterLog.write("setPassword: trying verb=\(verb) uid=\(uid) \(redactedPasswordFragment(password: newPassword))")
+        let data: Data
+        do {
+            data = try client.executeCommand(apiKey: apiKey, command: cmd)
+        } catch {
+            KeeperAdapterLog.write("setPassword: \(verb) executeCommand threw: \(error.localizedDescription)")
+            throw error
+        }
+        KeeperAdapterLog.write("setPassword: \(verb) raw response (\(data.count) bytes): \(String(data: data, encoding: .utf8) ?? "<binary>")")
+        if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
+            return (true, data)
+        }
+        return (false, data)
     }
-    let raw = keeperHumanReadableError(fromResponseData: data) ?? "Update failed"
-    throw KeeperClientError.message(keeperUserFacingPasswordUpdateError(apiDetail: raw))
+
+    let verbs: [String]
+    switch parsed.source {
+    case .classic:
+        verbs = ["record-update"]
+    case .nested:
+        verbs = ["nsf-record-update"]
+    case .none:
+        verbs = ["record-update", "nsf-record-update"]
+    }
+
+    var lastResponse: Data?
+    var lastNetworkError: Error?
+    for verb in verbs {
+        do {
+            let result = try attempt(verb)
+            if result.success {
+                KeeperAdapterLog.write("setPassword: success uid=\(uid) via \(verb)")
+                return
+            }
+            lastResponse = result.raw
+        } catch {
+            lastNetworkError = error
+        }
+    }
+
+    if let response = lastResponse {
+        let raw = keeperHumanReadableError(fromResponseData: response) ?? "Update failed"
+        KeeperAdapterLog.write("setPassword: FAILED uid=\(uid) — \(raw)")
+        throw KeeperClientError.message(keeperUserFacingPasswordUpdateError(apiDetail: raw))
+    }
+    if let error = lastNetworkError {
+        throw error
+    }
+    throw KeeperClientError.message(keeperUserFacingPasswordUpdateError(apiDetail: "Update failed"))
 }
 
-/// Escape `accountName` / `userName` for `record-add ... --title="..." login="..."`.
-///
-/// Commander receives the command as a string and may evaluate it in a shell-like way. Values are
-/// wrapped in double quotes; inside those quotes, POSIX-ish shells still treat `\`, `"`, `` ` ``,
-/// and `$` specially (command substitution / expansion). We also normalize line breaks and escape
-/// `!` for bash `histexpand` edge cases.
 private func escapeForKeeperDoubleQuotedCommandField(_ s: String) -> String {
     s
         .replacingOccurrences(of: "\\", with: "\\\\")
@@ -483,36 +725,109 @@ private func escapeForKeeperDoubleQuotedCommandField(_ s: String) -> String {
 }
 
 func deleteRecord(apiKey: String, recordUid: String, client: KeeperCommanderClient) throws {
-    let uid = try validatedRecordUID(recordUid)
-    let data = try client.executeCommand(apiKey: apiKey, command: "rm -f \(uid)")
-    if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
-        return
+    let parsed = parseAccountIdentifier(recordUid)
+    let uid = try validatedRecordUID(parsed.uid)
+
+    func attempt(_ cmd: String, label: String) throws -> (success: Bool, raw: Data) {
+        KeeperAdapterLog.write("deleteRecord: trying verb=\(label) uid=\(uid)")
+        let data: Data
+        do {
+            data = try client.executeCommand(apiKey: apiKey, command: cmd)
+        } catch {
+            KeeperAdapterLog.write("deleteRecord: \(label) executeCommand threw: \(error.localizedDescription)")
+            throw error
+        }
+        KeeperAdapterLog.write("deleteRecord: \(label) raw response (\(data.count) bytes): \(String(data: data, encoding: .utf8) ?? "<binary>")")
+        if let response = try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data), response.status == "success" {
+            return (true, data)
+        }
+        return (false, data)
+    }
+
+    let attempts: [(cmd: String, label: String)]
+    switch parsed.source {
+    case .classic:
+        attempts = [("rm -f \(uid)", "rm")]
+    case .nested:
+        attempts = [("nsf-rm \(uid) -f", "nsf-rm")]
+    case .none:
+        attempts = [("rm -f \(uid)", "rm"), ("nsf-rm \(uid) -f", "nsf-rm")]
+    }
+
+    var lastResponse: Data?
+    var lastNetworkError: Error?
+    for (cmd, label) in attempts {
+        do {
+            let result = try attempt(cmd, label: label)
+            if result.success {
+                KeeperAdapterLog.write("deleteRecord: success uid=\(uid) via \(label)")
+                return
+            }
+            lastResponse = result.raw
+        } catch {
+            lastNetworkError = error
+        }
+    }
+
+    if let response = lastResponse {
+        let raw = keeperHumanReadableError(fromResponseData: response) ?? "Delete failed"
+        KeeperAdapterLog.write("deleteRecord: FAILED uid=\(uid) — \(raw)")
+        throw KeeperClientError.message(raw)
+    }
+    if let error = lastNetworkError {
+        throw error
     }
     throw KeeperClientError.message("Delete failed")
 }
 
-func addRecord(apiKey: String, userName: String, accountName: String, password: String?, client: KeeperCommanderClient) throws -> String {
+func addRecord(apiKey: String,
+               userName: String,
+               accountName: String,
+               password: String?,
+               useClassicPermission: Bool,
+               client: KeeperCommanderClient) throws -> String {
     let escapedTitle = escapeForKeeperDoubleQuotedCommandField(accountName)
-    var cmd = "record-add --record-type=login --title=\"\(escapedTitle)\""
+    let verb = useClassicPermission ? "record-add" : "nsf-record-add"
+    var cmd = "\(verb) --force --record-type=login --title=\"\(escapedTitle)\""
     if !userName.isEmpty {
         let escapedLogin = escapeForKeeperDoubleQuotedCommandField(userName)
         cmd += " login=\"\(escapedLogin)\""
     }
     if let password = password, !password.isEmpty {
-        let passwordB64 = Data(password.utf8).base64EncodedString()
-        cmd += " password=$BASE64:\(passwordB64)"
+        cmd += " " + passwordCommandFragment(password: password)
     }
-    let data = try client.executeCommand(apiKey: apiKey, command: cmd)
+    let loggableCmd: String = {
+        guard let password = password, !password.isEmpty else { return cmd }
+        return cmd.replacingOccurrences(of: passwordCommandFragment(password: password),
+                                        with: redactedPasswordFragment(password: password))
+    }()
+    KeeperAdapterLog.write("addRecord: verb=\(verb) issuing command=\(loggableCmd)")
+    let data: Data
+    do {
+        data = try client.executeCommand(apiKey: apiKey, command: cmd)
+    } catch {
+        KeeperAdapterLog.write("addRecord: \(verb) executeCommand threw: \(error.localizedDescription)")
+        throw error
+    }
+    KeeperAdapterLog.write("addRecord: \(verb) raw response (\(data.count) bytes): \(String(data: data, encoding: .utf8) ?? "<binary>")")
     struct RecordAddResponse: Decodable {
         let status: String?
         let data: RecordAddData?
+        let message: String?
     }
     struct RecordAddData: Decodable {
         let record_uid: String?
+        let uid: String?
+        var effectiveUid: String? { record_uid ?? uid }
     }
     let response = try JSONDecoder().decode(RecordAddResponse.self, from: data)
-    guard response.status == "success", let uid = response.data?.record_uid, !uid.isEmpty else {
+    let extractedUid: String? = response.data?.effectiveUid
+        ?? response.message?.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard response.status == "success", let uid = extractedUid, !uid.isEmpty else {
+        KeeperAdapterLog.write("addRecord: \(verb) returned without a record_uid; raw=\(String(data: data, encoding: .utf8) ?? "<binary>")")
         throw KeeperClientError.message("Add failed")
     }
-    return uid
+    KeeperAdapterLog.write("addRecord: \(verb) returned uid=\(uid)")
+    let source: KeeperRecordSource = useClassicPermission ? .classic : .nested
+    return prefixedAccountID(uid: uid, source: source)
 }

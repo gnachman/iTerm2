@@ -369,6 +369,18 @@ Python API Improvements:
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.
 - Keeper Security is also supported.
+- The Keeper adapter supports Nested Share
+  Subfolders as well as the classic vault.
+  Both appear in one list, labeled (Classic)
+  or (Nested). Add, edit, and delete work
+  for either type.
+- Password manager adapters can declare
+  optional toggles in their handshake that the
+  Add Account panel renders as checkboxes. The
+  Keeper adapter uses this to offer a “Use
+  classic permission model” choice — leaving
+  it unchecked adds to Nested Share Subfolders;
+  checking it adds to the classic vault.
 
 Shell Integration Improvements:
 - xonsh is now a supported shell.
