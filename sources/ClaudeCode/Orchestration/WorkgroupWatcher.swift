@@ -23,9 +23,16 @@ enum WatchMode: String, Codable {
 }
 
 // A registered async watcher. Fires once when sessionGUID's role
-// transitions into targetState. Carries the captured display names so
+// satisfies the watcher's goal: either a transition into targetState,
+// or (for condition watchers) a plain-English condition judged true by
+// reading the screen. Carries the captured display names so
 // the status_update message reads correctly even if the workgroup is
 // torn down between registration and firing.
+//
+// Exactly one of targetState / condition is set. targetState was
+// non-optional before condition watchers existed, so every persisted
+// pre-condition watcher decodes with targetState present and
+// condition absent.
 struct WorkgroupWatcher: Codable, Equatable {
     var watcherID: String
     var sessionGUID: String
@@ -33,13 +40,30 @@ struct WorkgroupWatcher: Codable, Equatable {
     var workgroupName: String
     var roleID: String
     var roleName: String
-    var targetState: SessionState
+    var targetState: SessionState?
     var registeredAt: Date
     // Absent in watchers persisted before screen-poll watching existed;
     // decode-missing means the original tab-status behavior.
     var mode: WatchMode?
+    // Plain-English condition judged by screen observation (always
+    // mode == .screenPoll). nil for state watchers.
+    var condition: String?
+    // The user asked to be told when this fires: iTerm2 sends a push
+    // notification to the paired phone itself rather than hoping the
+    // model decides to. Absent in watchers persisted before push
+    // support existed.
+    var notifyUser: Bool? = nil
 
     var effectiveMode: WatchMode { mode ?? .tabStatus }
+
+    // Human-readable goal for log lines and status_update details:
+    // "state 'idle'" or "condition 'emacs has exited'".
+    var goalDescription: String {
+        if let condition {
+            return "condition '\(condition)'"
+        }
+        return "state '\(targetState?.rawValue ?? "unknown")'"
+    }
 }
 
 enum SessionState: String, Codable {

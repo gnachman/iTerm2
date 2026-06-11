@@ -29,6 +29,7 @@ enum Participant: String, Codable, Hashable {
 struct StatusUpdate: Codable, Equatable {
     enum Reason: String, Codable {
         case stateReached     // a registered state-watcher fired
+        case conditionMet     // a plain-English condition watcher fired
         case watcherDropped   // the watched session is gone (e.g. failed to restore)
         case watchTimedOut    // a screen-observation watcher gave up after its time cap
     }
@@ -39,12 +40,19 @@ struct StatusUpdate: Codable, Equatable {
     var roleName: String
     var reason: Reason
     // Concrete state name for stateReached (e.g. "idle"). Empty for
-    // watcherDropped (state isn't relevant — the session is gone).
+    // the other reasons: conditionMet carries its condition in detail,
+    // and for watcherDropped / watchTimedOut no state was reached.
     var stateReached: String
     var timestamp: Date
     // Free-form human-readable detail, used both as the chat-UI body
     // and as the inner text of the agent-side <status_update> tag.
     var detail: String
+    // Whether iTerm2 already pushed a notification to the paired phone
+    // for this event (the watcher was registered with notify_user).
+    // true = sent; false = asked for but undeliverable; nil = not
+    // requested. Drives the agent-side guidance so the model neither
+    // double-notifies nor stays silent when it shouldn't.
+    var pushed: Bool? = nil
 }
 
 struct ClientLocal: Codable {

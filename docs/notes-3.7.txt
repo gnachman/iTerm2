@@ -1352,6 +1352,17 @@ Bug Fixes:
   noisily polling in the chat. It
   gives up after five minutes with a
   watch_timed_out update.
+- The Cockpit orchestrator's watchers
+  can now watch for a plain-English
+  condition (e.g. “emacs has exited”),
+  judged by reading the screen, in
+  addition to idle/working/waiting
+  states. Sessions also report whether
+  their status is announced by the
+  program or merely inferred, so the
+  agent picks the reliable watch form
+  instead of misreading a splash
+  screen as “idle”.
 - Workgroup code-review/diff sessions no
   longer hang on “waiting for changes” in
   a checkout full of untracked files. The

@@ -349,6 +349,10 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Kicking off Code Review on " + sessionDescription(args: dict)
                 + " " + promptLabel
         case "register_watch":
+            if let condition = dict["condition"] as? String, !condition.isEmpty {
+                return "Will notify when " + sessionDescription(args: dict)
+                    + " satisfies: " + previewQuote(condition)
+            }
             let state = (dict["target_state"] as? String) ?? "?"
             return "Will notify when " + sessionDescription(args: dict)
                 + " becomes **\(state)**"

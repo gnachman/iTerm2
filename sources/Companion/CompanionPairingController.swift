@@ -44,7 +44,9 @@ final class CompanionPairingController: NSObject {
     var onDisconnect: (@MainActor () -> Void)?
     var onStatus: (@MainActor (String) -> Void)?
 
-    private static let pairedPIDKey = "NoSyncCompanionPairedPID"
+    // Internal (not private): CompanionPushRegistry.devicePaired reads the
+    // same default from nonisolated contexts.
+    static let pairedPIDKey = "NoSyncCompanionPairedPID"
 
     /// The pairing id of the (single, for now) paired device, persisted so
     /// reconnection survives relaunches. NoSync: device state, not a setting.

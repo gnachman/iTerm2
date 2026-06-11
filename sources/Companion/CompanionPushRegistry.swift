@@ -51,6 +51,14 @@ enum CompanionPushRegistry {
         authorization == .authorized && deviceTokenHex != nil && relaySecretHex != nil
     }
 
+    /// True when a companion device is paired, whether or not it is
+    /// connected right now. Push-related prompt guidance keys off this so
+    /// users without a companion device never see it.
+    static var devicePaired: Bool {
+        iTermUserDefaults.userDefaults()
+            .string(forKey: CompanionPairingController.pairedPIDKey) != nil
+    }
+
     /// True when asking for permission could possibly succeed: iOS only ever
     /// shows the prompt while the state is notDetermined; after a decline,
     /// only the Settings app can change it. Gating the request tool on this
