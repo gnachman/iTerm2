@@ -157,9 +157,14 @@ struct MentionComposerView: UIViewRepresentable {
 
     func updateUIView(_ textView: SelfSizingTextView, context: Context) {
         context.coordinator.parent = self
-        if isFocused, !textView.isFirstResponder {
+        // Honor SwiftUI's .disabled, which doesn't reach UIKit views on its
+        // own through a representable.
+        let enabled = context.environment.isEnabled
+        textView.isEditable = enabled
+        textView.isUserInteractionEnabled = enabled
+        if isFocused, !textView.isFirstResponder, enabled {
             textView.becomeFirstResponder()
-        } else if !isFocused, textView.isFirstResponder {
+        } else if (!isFocused || !enabled), textView.isFirstResponder {
             textView.resignFirstResponder()
         }
     }

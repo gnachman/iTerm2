@@ -149,6 +149,12 @@ final class AppModel {
     /// as a banner; the user keeps their place in the UI).
     var isReconnecting = false
 
+    /// True when the open conversation's chat was deleted on the Mac. The
+    /// conversation stays on screen (yanking it away would be disruptive)
+    /// with composing disabled; it is gone from the list once the user
+    /// leaves.
+    var openChatWasDeleted = false
+
     /// Interactive bubbles the user already answered, so their buttons render
     /// disabled (mirrors the Mac's one-shot buttons).
     var respondedInteractiveMessageIDs: Set<UUID> = []
@@ -482,6 +488,7 @@ final class AppModel {
         // Snippets can contain @-mentions; resolve them so the chat list
         // shows names instead of raw UUIDs.
         noteMentions(inTexts: chats.compactMap { $0.snippet })
+        checkOpenChatStillExists()
     }
 
     // MARK: Connection lifecycle
@@ -613,12 +620,28 @@ final class AppModel {
             return
         }
         openChatID = chatID
+        openChatWasDeleted = false
         messages = []
         isAgentTyping = false
         isLoadingConversation = true
         Task {
             await loadConversation(chatID: chatID)
         }
+    }
+
+    /// The open chat vanished from a fresh list snapshot: it was deleted on
+    /// the Mac. Disable composing and say why, but leave the transcript up.
+    private func checkOpenChatStillExists() {
+        guard let openChatID, !openChatWasDeleted else { return }
+        guard !chats.contains(where: { $0.chat.id == openChatID }) else { return }
+        companionLog("Open chat \(openChatID) was deleted on the Mac")
+        openChatWasDeleted = true
+        messages.append(Message(chatID: openChatID,
+                                author: .agent,
+                                content: .clientLocal(ClientLocal(action: .notice(
+                                    "This chat was deleted on your Mac. You can keep reading it until you leave, but nothing new can be sent."))),
+                                sentDate: Date(),
+                                uniqueID: UUID()))
     }
 
     /// Programmatic open used by the Create flow: replaces the stack so back
@@ -671,13 +694,14 @@ final class AppModel {
             Task { try? await client.unsubscribe(chatID: chatID) }
         }
         openChatID = nil
+        openChatWasDeleted = false
         messages = []
         isAgentTyping = false
     }
 
     func send(text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let chatID = openChatID else { return }
+        guard !trimmed.isEmpty, let chatID = openChatID, !openChatWasDeleted else { return }
         let message = Message(chatID: chatID,
                               author: .user,
                               content: .plainText(trimmed, context: nil),
@@ -1039,6 +1063,7 @@ final class AppModel {
             // its icon, or is created/deleted/reordered.
             chats = entries
             noteMentions(inTexts: entries.compactMap { $0.snippet })
+            checkOpenChatStillExists()
         case .requestNotificationPermission(let requestID):
             handleNotificationPermissionRequest(requestID: requestID)
         case .unpaired:

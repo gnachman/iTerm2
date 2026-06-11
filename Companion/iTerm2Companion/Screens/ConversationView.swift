@@ -113,6 +113,15 @@ struct ConversationView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+        // The chat was deleted on the Mac: the transcript stays readable,
+        // but nothing can be composed or sent.
+        .disabled(model.openChatWasDeleted)
+        .opacity(model.openChatWasDeleted ? 0.4 : 1)
+        .onChange(of: model.openChatWasDeleted) { _, deleted in
+            if deleted {
+                inputFocused = false
+            }
+        }
     }
 
     private var canSend: Bool {
