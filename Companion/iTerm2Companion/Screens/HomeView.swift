@@ -68,6 +68,7 @@ private struct ChatRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            icon
             VStack(alignment: .leading, spacing: 2) {
                 Text(chat.title)
                     .font(.headline)
@@ -83,5 +84,25 @@ private struct ChatRow: View {
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+
+    /// The chat's AI-generated icon (a small PNG the Mac stores on the Chat),
+    /// circle-clipped like the Mac's chat list; a default chat-bubble icon
+    /// when none has been generated yet.
+    @ViewBuilder
+    private var icon: some View {
+        if let data = chat.icon, let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 36, height: 36)
+                .clipShape(Circle())
+        } else {
+            Image(systemName: "bubble.left")
+                .font(.system(size: 17))
+                .foregroundStyle(.secondary)
+                .frame(width: 36, height: 36)
+                .background(Color(.secondarySystemBackground), in: Circle())
+        }
     }
 }
