@@ -35,6 +35,10 @@ final class CompanionHostBridge {
     /// permission prompt), keyed by a host-side request id and resolved when
     /// the phone's response arrives. nil = the bridge died first.
     private var permissionWaiters: [UInt64: CheckedContinuation<CompanionPushAuthorization?, Never>] = [:]
+
+    /// Chat-list change observers driving unsolicited .chatListChanged pushes.
+    private var chatListObservers: [any NSObjectProtocol] = []
+    private var chatListPushTask: Task<Void, Never>?
     private var nextHostRequestID: UInt64 = 1
 
     /// Called once the transport closes remotely, so the owner can drop this
@@ -76,6 +80,33 @@ final class CompanionHostBridge {
         receiveTask = Task { [weak self] in
             await self?.runReceiveLoop()
         }
+
+        // Keep the phone's chat list fresh: any list-level change (rename,
+        // icon generated, create/delete/reorder) pushes a debounced snapshot.
+        // metadataDidChange fires for all of those; chatWasDeleted is the
+        // one removal signal that doesn't also post metadata.
+        let center = NotificationCenter.default
+        for name in [ChatListModel.metadataDidChange, ChatListModel.chatWasDeleted] {
+            chatListObservers.append(center.addObserver(forName: name,
+                                                        object: nil,
+                                                        queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.scheduleChatListPush()
+                }
+            })
+        }
+    }
+
+    /// Coalesce bursts (a rename immediately invalidates the icon, which
+    /// regenerates moments later) into one snapshot after a quiet moment.
+    private func scheduleChatListPush() {
+        chatListPushTask?.cancel()
+        chatListPushTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard let self, !Task.isCancelled else { return }
+            self.chatListPushTask = nil
+            self.send(.chatListChanged(chats: self.chatEntries()), requestID: nil)
+        }
     }
 
     /// Tell the phone it has been unpaired, flush the outbox so the message
@@ -84,6 +115,12 @@ final class CompanionHostBridge {
     func announceUnpairedAndStop() async {
         DLog("Companion bridge: announcing unpair")
         onClose = nil
+        for observer in chatListObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        chatListObservers.removeAll()
+        chatListPushTask?.cancel()
+        chatListPushTask = nil
         for subscription in subscriptions.values {
             subscription.unsubscribe()
         }
@@ -116,6 +153,12 @@ final class CompanionHostBridge {
     }
 
     private func teardownStreams() {
+        for observer in chatListObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        chatListObservers.removeAll()
+        chatListPushTask?.cancel()
+        chatListPushTask = nil
         for subscription in subscriptions.values {
             subscription.unsubscribe()
         }

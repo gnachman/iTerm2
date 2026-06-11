@@ -1034,6 +1034,11 @@ final class AppModel {
             if chatID == openChatID, participant == .agent {
                 isAgentTyping = isTyping
             }
+        case .chatListChanged(let entries):
+            // The Mac pushes a fresh list whenever a chat is renamed, gets
+            // its icon, or is created/deleted/reordered.
+            chats = entries
+            noteMentions(inTexts: entries.compactMap { $0.snippet })
         case .requestNotificationPermission(let requestID):
             handleNotificationPermissionRequest(requestID: requestID)
         case .unpaired:

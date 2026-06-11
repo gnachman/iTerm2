@@ -136,6 +136,7 @@ actor CompanionSession {
         case .sessionContent: "sessionContent"
         case .workgroupInfo: "workgroupInfo"
         case .sessionTree: "sessionTree"
+        case .chatListChanged: "chatListChanged"
         case .requestNotificationPermission: "requestNotificationPermission"
         case .pong: "pong"
         case .unpaired: "unpaired"

@@ -275,6 +275,12 @@ enum CompanionHostMessage: Codable {
     /// Reply to `.ping`.
     case pong
 
+    /// Unsolicited: the Mac's chat list changed (a chat was renamed, its
+    /// icon was generated, or a chat was created/deleted/reordered).
+    /// Carries the fresh list; the phone replaces its copy. Session-list
+    /// changes will get a sibling message when the need arises.
+    case chatListChanged(chats: [CompanionChatListEntry])
+
     /// Unsolicited: ask the phone to prompt the user for notification
     /// permission (driven by the orchestrator's request_notification_
     /// permission tool). The phone replies with
