@@ -820,6 +820,10 @@ final class OrchestratorDispatcher {
             return .unregisterWatch(watcherID: try decoder.decode(A.self, from: jsonArgs).watcher_id)
         case .listWatches:
             return .listWatches
+        case .notify:
+            return .notify(try decoder.decode(NotifyArgs.self, from: jsonArgs))
+        case .requestNotificationPermission:
+            return .requestNotificationPermission
         }
     }
 
@@ -1062,6 +1066,62 @@ final class OrchestratorDispatcher {
             return doUnregisterWatch(watcherID: watcherID)
         case .listWatches:
             return doListWatches()
+        case .notify(let args):
+            return try await doNotify(args)
+        case .requestNotificationPermission:
+            return try await doRequestNotificationPermission()
+        }
+    }
+
+    // Push a notification to the paired companion phone through the relay.
+    @MainActor
+    private func doNotify(_ args: NotifyArgs) async throws -> OrchestratorResult {
+        guard CompanionPushRegistry.canNotify else {
+            switch (CompanionPairingController.shared.isPhoneConnected, CompanionPushRegistry.authorization) {
+            case (true, .notDetermined):
+                throw OrchestratorError.unsupported(
+                    reason: "Notifications are not enabled on the paired phone yet. Call request_notification_permission first.")
+            case (_, .denied):
+                throw OrchestratorError.unsupported(
+                    reason: "The user has notifications turned off for iTerm2 Buddy. Do not push them about it; they can enable it in iOS Settings if they want alerts.")
+            default:
+                throw OrchestratorError.unsupported(
+                    reason: "No paired companion phone is registered for notifications.")
+            }
+        }
+        do {
+            try await CompanionPushSender.send(title: args.title, body: args.body)
+        } catch {
+            throw OrchestratorError.unsupported(
+                reason: "Notification delivery failed: \(error.localizedDescription)")
+        }
+        return .ack
+    }
+
+    // Have the connected phone show iOS's notification-permission prompt.
+    // Blocks (with a deadline) on the user's answer.
+    @MainActor
+    private func doRequestNotificationPermission() async throws -> OrchestratorResult {
+        if CompanionPushRegistry.canNotify {
+            // Already good to go; don't bother the user.
+            return .ack
+        }
+        guard CompanionPairingController.shared.isPhoneConnected else {
+            throw OrchestratorError.unsupported(
+                reason: "No companion phone is connected right now, so permission cannot be requested.")
+        }
+        let authorization = await CompanionPairingController.shared.requestNotificationPermission()
+        switch authorization {
+        case .authorized:
+            return .ack
+        case .denied:
+            throw OrchestratorError.unsupported(
+                reason: "The user declined notification permission. Do not ask again; iOS only shows the prompt once. If they change their mind they can enable notifications for iTerm2 Buddy in iOS Settings.")
+        case .notDetermined:
+            throw OrchestratorError.unsupported(
+                reason: "The phone could not show the permission prompt.")
+        case nil:
+            throw OrchestratorError.timeout
         }
     }
 

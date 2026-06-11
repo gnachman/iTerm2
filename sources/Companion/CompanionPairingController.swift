@@ -28,7 +28,13 @@ final class CompanionPairingController: NSObject {
 
     private var listener: TransportListener?
     private var acceptTask: Task<Void, Never>?
-    private var bridge: CompanionHostBridge?
+    private var bridge: CompanionHostBridge? {
+        didSet {
+            // Mirrored where the (nonisolated) tool-registration path can
+            // read it.
+            CompanionPushRegistry.setPhoneConnected(bridge != nil)
+        }
+    }
 
     private(set) var pairingCode: PairingCode?
 
@@ -129,7 +135,26 @@ final class CompanionPairingController: NSObject {
             try startListening(pairingID: pid)
             DLog("Companion: resumed listening for paired device (pid \(pid))")
         } catch {
-            DLog("Companion: could not resume listening: \(error)")
+            DLog("Companion: could not resume listening: \(error); will retry")
+            scheduleListenerRetry()
+        }
+    }
+
+    /// The background listener must outlive transient failures (sleep/wake
+    /// and network changes can kill the NW listener): whenever it dies while
+    /// a device is paired, retry until it sticks. Without this the mac
+    /// silently stops advertising and the phone can never reconnect.
+    private var listenerRetryTask: Task<Void, Never>?
+
+    private func scheduleListenerRetry() {
+        guard listenerRetryTask == nil, pairedPID != nil else {
+            return
+        }
+        listenerRetryTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            guard let self, !Task.isCancelled else { return }
+            self.listenerRetryTask = nil
+            self.resumePairedListeningIfNeeded()
         }
     }
 
@@ -156,6 +181,18 @@ final class CompanionPairingController: NSObject {
         return code
     }
 
+    /// Whether a companion phone is connected right now (a live bridge). Used
+    /// to decide which push tools the orchestrator gets.
+    var isPhoneConnected: Bool {
+        bridge != nil
+    }
+
+    /// Ask the connected phone to prompt for notification permission. nil
+    /// when no phone is connected or it didn't answer.
+    func requestNotificationPermission() async -> CompanionPushAuthorization? {
+        await bridge?.requestNotificationPermission()
+    }
+
     /// Kick the paired device and delete the pairing: closes any live bridge,
     /// forgets the pairing id, and destroys the mac's static identity so a new
     /// one is generated for the next pairing.
@@ -173,6 +210,7 @@ final class CompanionPairingController: NSObject {
         pairedPID = nil
         pairingCode = nil
         CompanionMacIdentity.deleteKeyPair()
+        CompanionPushRegistry.clear()
         DLog("Companion: unpaired; key material deleted")
     }
 
@@ -186,12 +224,15 @@ final class CompanionPairingController: NSObject {
         pairedPID = nil
         pairingCode = nil
         CompanionMacIdentity.deleteKeyPair()
+        CompanionPushRegistry.clear()
         onDisconnect?()
     }
 
     /// Stop advertising and accepting. Does NOT touch a connected bridge; the
     /// pairing window calls this when it closes.
     func stopAdvertising() {
+        listenerRetryTask?.cancel()
+        listenerRetryTask = nil
         acceptTask?.cancel()
         acceptTask = nil
         listener?.stop()
@@ -239,6 +280,9 @@ final class CompanionPairingController: NSObject {
                 DLog("Companion pairing: accept ended: \(error), cancelled=\(Task.isCancelled), intentional=\(intentional)")
                 if !intentional {
                     onFailed?(Self.userFacingDescription(of: error))
+                    // The background listener for a paired device must come
+                    // back on its own (e.g. after sleep/wake kills it).
+                    scheduleListenerRetry()
                 }
                 return
             }

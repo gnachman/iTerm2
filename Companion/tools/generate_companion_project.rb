@@ -34,6 +34,7 @@ SHARED_MAC_SOURCES = %w[
   sources/ClaudeCode/Orchestration/MentionParser.swift
   sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift
   sources/Companion/Shared/CompanionMessages.swift
+  sources/Companion/Shared/CompanionPushRelay.swift
   sources/Companion/Shared/CompanionSession.swift
 ]
 
@@ -112,6 +113,9 @@ target.build_configurations.each do |config|
   settings['TARGETED_DEVICE_FAMILY'] = '1,2'
   settings['GENERATE_INFOPLIST_FILE'] = 'NO'
   settings['INFOPLIST_FILE'] = 'iTerm2Companion/Resources/Info.plist'
+  # Push notifications (aps-environment). Automatic signing provisions the
+  # capability because run_on_iphone.sh passes -allowProvisioningUpdates.
+  settings['CODE_SIGN_ENTITLEMENTS'] = 'iTerm2Companion/Resources/iTerm2Companion.entitlements'
   if include_assets
     settings['ASSETCATALOG_COMPILER_APPICON_NAME'] = 'AppIcon'
     settings['ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME'] = 'AccentColor'

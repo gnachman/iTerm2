@@ -158,6 +158,24 @@ actor CompanionClient {
         }
     }
 
+    /// Report this device's push capability (and credentials) to the mac.
+    func sendPushStatus(authorization: CompanionPushAuthorization,
+                        token: Data?,
+                        relaySecret: Data?,
+                        sandbox: Bool) async throws {
+        try await session.send(.pushStatus(authorization: authorization,
+                                           token: token,
+                                           relaySecret: relaySecret,
+                                           sandbox: sandbox))
+    }
+
+    /// Answer the mac's notification-permission request.
+    func sendNotificationPermissionResponse(requestID: UInt64,
+                                            authorization: CompanionPushAuthorization) async throws {
+        try await session.send(.notificationPermissionResponse(requestID: requestID,
+                                                               authorization: authorization))
+    }
+
     /// Tell the mac this device is unpairing (sent before close()).
     func sendUnpairing() async throws {
         try await session.send(.unpairing)

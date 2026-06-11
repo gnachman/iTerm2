@@ -31,6 +31,12 @@ final class CompanionHostBridge {
     private var outbox: AsyncStream<HostEnvelope>.Continuation?
     private var outboxTask: Task<Void, Never>?
 
+    /// Host-initiated requests to the phone (today: the notification
+    /// permission prompt), keyed by a host-side request id and resolved when
+    /// the phone's response arrives. nil = the bridge died first.
+    private var permissionWaiters: [UInt64: CheckedContinuation<CompanionPushAuthorization?, Never>] = [:]
+    private var nextHostRequestID: UInt64 = 1
+
     /// Called once the transport closes remotely, so the owner can drop this
     /// bridge. A user-initiated stop() does not fire it.
     var onClose: (@MainActor () -> Void)?
@@ -118,6 +124,29 @@ final class CompanionHostBridge {
         outbox = nil
         outboxTask?.cancel()
         outboxTask = nil
+        let waiters = permissionWaiters
+        permissionWaiters.removeAll()
+        for (_, waiter) in waiters {
+            waiter.resume(returning: nil)
+        }
+    }
+
+    /// Ask the phone to prompt the user for notification permission. Returns
+    /// the resulting authorization, or nil if the phone didn't answer within
+    /// two minutes (or the connection died). The permission dialog is in the
+    /// user's hands, hence the generous deadline.
+    func requestNotificationPermission() async -> CompanionPushAuthorization? {
+        let requestID = nextHostRequestID
+        nextHostRequestID += 1
+        send(.requestNotificationPermission(requestID: requestID), requestID: nil)
+        return await withCheckedContinuation { continuation in
+            permissionWaiters[requestID] = continuation
+            Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 120_000_000_000)
+                self?.permissionWaiters.removeValue(forKey: requestID)?
+                    .resume(returning: nil)
+            }
+        }
     }
 
     // MARK: Receive loop
@@ -193,6 +222,14 @@ final class CompanionHostBridge {
             handleFetchWorkgroupInfo(workgroupID: workgroupID, requestID: requestID)
         case .fetchSessionTree:
             send(.sessionTree(CompanionSessionLister.tree()), requestID: requestID)
+        case .pushStatus(let authorization, let token, let relaySecret, let sandbox):
+            CompanionPushRegistry.update(authorization: authorization,
+                                         token: token,
+                                         relaySecret: relaySecret,
+                                         sandbox: sandbox)
+        case .notificationPermissionResponse(let permissionRequestID, let authorization):
+            permissionWaiters.removeValue(forKey: permissionRequestID)?
+                .resume(returning: authorization)
         case .ping:
             send(.pong, requestID: requestID)
         case .unpairing:

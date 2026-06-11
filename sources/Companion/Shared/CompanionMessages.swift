@@ -130,6 +130,16 @@ struct CompanionSessionContent: Codable {
     var pngData: Data
 }
 
+/// The phone's notification-permission state, as iOS reports it.
+enum CompanionPushAuthorization: String, Codable {
+    /// The user has never been asked; the prompt can be shown.
+    case notDetermined
+    /// The user declined (or revoked in Settings); the prompt cannot be
+    /// shown again, only Settings can change it.
+    case denied
+    case authorized
+}
+
 /// The user's verdict on a classic remoteCommandRequest bubble (the four
 /// buttons the Mac shows: Allow Once / Always Allow / Deny this Time /
 /// Always Deny).
@@ -203,6 +213,20 @@ enum CompanionClientMessage: Codable {
     /// `.sessionTree`.
     case fetchSessionTree
 
+    /// The phone's push capability, sent after each connection and again
+    /// whenever it changes (permission granted, APNs token refreshed). When
+    /// authorized and registered, carries the APNs token plus the
+    /// phone-minted secret the Mac must present to the push relay; the Mac
+    /// replaces any previously stored values. `sandbox` is true for
+    /// development builds, whose tokens only work against APNs' sandbox
+    /// environment.
+    case pushStatus(authorization: CompanionPushAuthorization, token: Data?, relaySecret: Data?, sandbox: Bool)
+
+    /// Reply to the host's `.requestNotificationPermission`, correlated by
+    /// its requestID. A grant is followed by a `.pushStatus` carrying the
+    /// token once APNs issues it.
+    case notificationPermissionResponse(requestID: UInt64, authorization: CompanionPushAuthorization)
+
     /// Liveness check. Replied to with `.pong`.
     case ping
 
@@ -250,6 +274,12 @@ enum CompanionHostMessage: Codable {
 
     /// Reply to `.ping`.
     case pong
+
+    /// Unsolicited: ask the phone to prompt the user for notification
+    /// permission (driven by the orchestrator's request_notification_
+    /// permission tool). The phone replies with
+    /// `.notificationPermissionResponse` carrying the same requestID.
+    case requestNotificationPermission(requestID: UInt64)
 
     /// Unsolicited farewell: the mac unpaired this device. The phone should
     /// forget its stored pairing and return to the scan screen. Sent (and

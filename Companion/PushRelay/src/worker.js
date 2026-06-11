@@ -1,0 +1,199 @@
+//
+//  worker.js
+//  iTerm2 Buddy push relay
+//
+//  Holds the APNs signing key so the open-source app doesn't have to. Two
+//  endpoints, both JSON POST:
+//
+//    /register  {token, secretHash, sandbox}
+//      Called by the PHONE when it obtains an APNs device token. The phone
+//      mints a random 32-byte secret per device, registers sha256(secret)
+//      here, and hands the secret to its paired Mac over the encrypted
+//      pairing channel. Re-registering overwrites: only a caller who knows
+//      the token can do so, and tokens are unguessable.
+//
+//    /push      {token, secret, title, body}
+//      Called by the MAC. The relay verifies sha256(secret) matches the
+//      registration, rate-limits per token, and forwards to APNs. So a push
+//      can only be sent to a phone by someone holding that phone's secret,
+//      which only travels over the Noise channel to the paired Mac.
+//
+//  Secrets (wrangler secret put): APNS_TEAM_ID, APNS_KEY_ID, APNS_P8.
+//  Vars: APNS_TOPIC. KV binding: PUSH_KV.
+//
+
+const PUSHES_PER_MINUTE = 10;
+const MAX_BODY_BYTES = 4096;
+
+// APNs provider JWTs may be reused for up to an hour; Apple rejects tokens
+// refreshed more often than twice in 20 minutes, so cache per isolate.
+let cachedJWT = null;
+let cachedJWTIssuedAt = 0;
+
+export default {
+  async fetch(request, env) {
+    if (request.method !== "POST") {
+      return json(405, { error: "POST only" });
+    }
+    let payload;
+    try {
+      payload = await readBody(request);
+    } catch (e) {
+      return json(400, { error: String(e.message || e) });
+    }
+    const url = new URL(request.url);
+    try {
+      switch (url.pathname) {
+        case "/register":
+          return await register(payload, env);
+        case "/push":
+          return await push(payload, env);
+        default:
+          return json(404, { error: "no such endpoint" });
+      }
+    } catch (e) {
+      return json(500, { error: String(e.message || e) });
+    }
+  },
+};
+
+async function readBody(request) {
+  const text = await request.text();
+  if (text.length > MAX_BODY_BYTES) {
+    throw new Error("request too large");
+  }
+  return JSON.parse(text);
+}
+
+function json(status, object) {
+  return new Response(JSON.stringify(object), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+const isHex = (s, minLen, maxLen) =>
+  typeof s === "string" &&
+  s.length >= minLen &&
+  s.length <= maxLen &&
+  /^[0-9a-f]+$/.test(s);
+
+async function register(payload, env) {
+  const { token, secretHash, sandbox } = payload;
+  if (!isHex(token, 32, 256) || !isHex(secretHash, 64, 64)) {
+    return json(400, { error: "bad token or secretHash" });
+  }
+  await env.PUSH_KV.put(
+    `device:${token}`,
+    JSON.stringify({ secretHash, sandbox: !!sandbox, registeredAt: Date.now() })
+  );
+  return json(200, { ok: true });
+}
+
+async function push(payload, env) {
+  const { token, secret, title, body } = payload;
+  if (!isHex(token, 32, 256) || !isHex(secret, 64, 64)) {
+    return json(400, { error: "bad token or secret" });
+  }
+  if (typeof title !== "string" || typeof body !== "string") {
+    return json(400, { error: "title and body are required strings" });
+  }
+
+  const record = await env.PUSH_KV.get(`device:${token}`, "json");
+  if (!record) {
+    return json(403, { error: "unknown device token" });
+  }
+  if ((await sha256Hex(secret)) !== record.secretHash) {
+    return json(403, { error: "bad secret" });
+  }
+
+  // Per-token rate limit. KV is eventually consistent, so this is a soft
+  // limit, but it stops runaway loops cold.
+  const bucket = `rl:${token}:${Math.floor(Date.now() / 60000)}`;
+  const count = parseInt((await env.PUSH_KV.get(bucket)) || "0", 10);
+  if (count >= PUSHES_PER_MINUTE) {
+    return json(429, { error: "rate limited" });
+  }
+  await env.PUSH_KV.put(bucket, String(count + 1), { expirationTtl: 120 });
+
+  const host = record.sandbox
+    ? "api.sandbox.push.apple.com"
+    : "api.push.apple.com";
+  const response = await fetch(`https://${host}/3/device/${token}`, {
+    method: "POST",
+    headers: {
+      authorization: `bearer ${await providerJWT(env)}`,
+      "apns-topic": env.APNS_TOPIC,
+      "apns-push-type": "alert",
+      "apns-priority": "10",
+    },
+    body: JSON.stringify({
+      aps: {
+        alert: { title, body },
+        sound: "default",
+      },
+    }),
+  });
+  if (response.ok) {
+    return json(200, { ok: true });
+  }
+  const detail = await response.text();
+  return json(502, { error: `APNs ${response.status}: ${detail}` });
+}
+
+async function sha256Hex(hexString) {
+  const bytes = Uint8Array.from(
+    hexString.match(/../g).map((b) => parseInt(b, 16))
+  );
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// ES256-signed APNs provider token, cached for 45 minutes.
+async function providerJWT(env) {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedJWT && now - cachedJWTIssuedAt < 45 * 60) {
+    return cachedJWT;
+  }
+  const key = await importP8(env.APNS_P8);
+  const header = b64url(JSON.stringify({ alg: "ES256", kid: env.APNS_KEY_ID }));
+  const claims = b64url(JSON.stringify({ iss: env.APNS_TEAM_ID, iat: now }));
+  const signingInput = `${header}.${claims}`;
+  const signature = await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    key,
+    new TextEncoder().encode(signingInput)
+  );
+  cachedJWT = `${signingInput}.${b64url(signature)}`;
+  cachedJWTIssuedAt = now;
+  return cachedJWT;
+}
+
+async function importP8(pem) {
+  const base64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/, "")
+    .replace(/-----END PRIVATE KEY-----/, "")
+    .replace(/\s/g, "");
+  const der = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    "pkcs8",
+    der,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"]
+  );
+}
+
+function b64url(input) {
+  const bytes =
+    typeof input === "string"
+      ? new TextEncoder().encode(input)
+      : new Uint8Array(input);
+  let binary = "";
+  for (const b of bytes) {
+    binary += String.fromCharCode(b);
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}

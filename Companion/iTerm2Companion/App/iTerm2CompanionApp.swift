@@ -4,10 +4,44 @@
 //
 
 import SwiftUI
+import UserNotifications
 import CompanionProtocol
+
+/// Exists for the APNs registration callbacks, which only arrive via the app
+/// delegate. The token is handed to AppModel, which forwards it to the Mac.
+final class CompanionAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    static var onPushToken: (@MainActor (Data) -> Void)?
+
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+
+    /// Show notifications even while the app is frontmost; the alert is the
+    /// product here, not a redundant copy of on-screen state.
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        return [.banner, .sound]
+    }
+
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        companionLog("APNs device token: \(deviceToken.map { String(format: "%02x", $0) }.joined())")
+        Task { @MainActor in
+            Self.onPushToken?(deviceToken)
+        }
+    }
+
+    func application(_ application: UIApplication,
+                     didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        companionLog("APNs registration failed: \(String(describing: error))")
+    }
+}
 
 @main
 struct iTerm2CompanionApp: App {
+    @UIApplicationDelegateAdaptor(CompanionAppDelegate.self) private var appDelegate
     @State private var model = AppModel()
     @Environment(\.scenePhase) private var scenePhase
 
@@ -21,6 +55,9 @@ struct iTerm2CompanionApp: App {
                     }
                 }
                 .task {
+                    CompanionAppDelegate.onPushToken = { [weak model] token in
+                        model?.pushTokenDidChange(token)
+                    }
                     model.handleLaunch()
                 }
                 .onOpenURL { url in

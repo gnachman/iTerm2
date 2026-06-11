@@ -145,6 +145,8 @@ enum ToolName: String, CaseIterable {
     case registerWatch = "register_watch"
     case unregisterWatch = "unregister_watch"
     case listWatches = "list_watches"
+    case notify = "notify"
+    case requestNotificationPermission = "request_notification_permission"
 }
 
 // MARK: - Command
@@ -176,6 +178,14 @@ enum OrchestratorCommand {
     case unregisterWatch(watcherID: String)
     case listWatches
 
+    // Push a notification to the user's paired companion phone. Only
+    // offered to the model while a companion phone is paired.
+    case notify(NotifyArgs)
+
+    // Ask the user (via their connected phone) for notification permission.
+    // Only offered while a phone is connected but cannot yet receive pushes.
+    case requestNotificationPermission
+
     // Categorization drives the safety/dispatch policy.
     enum Category {
         case readOnly       // no claim, no special handling
@@ -196,6 +206,10 @@ enum OrchestratorCommand {
             return .spawn
         case .registerWatch, .unregisterWatch, .listWatches:
             return .watcher
+        case .notify, .requestNotificationPermission:
+            // These touch the user's own phone, not a session, so they
+            // need no claim or prompt (iOS shows its own permission UI).
+            return .readOnly
         }
     }
 
@@ -223,10 +237,18 @@ enum OrchestratorCommand {
         case .listWorkgroups, .getState, .getScreenContents,
                 .listWorkgroupClippings,
                 .startSession,
-                .registerWatch, .unregisterWatch, .listWatches:
+                .registerWatch, .unregisterWatch, .listWatches,
+                .notify, .requestNotificationPermission:
             return .none
         }
     }
+}
+
+// MARK: - Notify
+
+struct NotifyArgs: Codable {
+    let title: String
+    let body: String
 }
 
 // MARK: - Result

@@ -182,5 +182,24 @@ extension OrchestratorCommand {
             name: ToolName.listWatches.rawValue,
             description: "List every async watcher currently registered for this chat.",
             inputSchema: emptyObjectSchema),
+
+        // -------- Companion phone --------
+
+        // The push tools are conditionally offered (see
+        // OrchestrationToolProvider's filter): notify whenever a companion
+        // phone is paired, request_notification_permission only while a
+        // phone is connected but cannot yet receive pushes.
+        ToolDefinition(
+            name: ToolName.notify.rawValue,
+            description: "Send a push notification to the user's iPhone (their paired iTerm2 companion device). Use it to alert the user to something that needs their attention when they may be away from the Mac: a long-running task finished, a session is waiting on input, or an error needs their decision. Keep it brief; it renders as a standard iOS notification. Do not use it for routine progress updates. If it fails because notifications aren't enabled, call request_notification_permission first.",
+            inputSchema: object([
+                ("title", string("Short notification title, a few words.")),
+                ("body", string("Notification body, one or two sentences.")),
+            ], required: ["title", "body"])),
+
+        ToolDefinition(
+            name: ToolName.requestNotificationPermission.rawValue,
+            description: "Ask the user, on their paired iPhone, for permission to receive notifications. Call this before the first notify when the user asks to be alerted about something (e.g. \u{201C}let me know when my job finishes\u{201D}) and notifications aren't enabled yet. iOS shows its standard permission dialog on the phone; this returns the outcome. If the user previously declined, the dialog cannot be shown again and they must enable notifications in iOS Settings, which the result will say. This is a valuable feature that users won't discover on their own, so offer this when they ask to be notified (for example, if you create a watcher, you should probably request notification permission). If the result is a decline, accept it: do not call this again or lobby the user about Settings unless they bring it up.",
+            inputSchema: emptyObjectSchema),
     ]
 }

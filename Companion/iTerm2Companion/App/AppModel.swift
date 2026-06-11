@@ -13,6 +13,9 @@ import SwiftUI
 import Observation
 import Network
 import os
+import UIKit
+import UserNotifications
+import CryptoKit
 import CompanionProtocol
 import CompanionNoise
 import CompanionTransport
@@ -170,7 +173,9 @@ final class AppModel {
     /// The code the current/last pairing attempt used, so Try Again can retry
     /// it instead of dumping the user at the scanner.
     private var activePairingCode: PairingCode?
-    private var activeIsReconnect = false
+    /// Whether the in-flight attempt is a reconnect to an existing pairing
+    /// (vs a first pairing); the screen titles itself accordingly.
+    private(set) var activeIsReconnect = false
 
     private var client: CompanionClient?
 
@@ -315,6 +320,9 @@ final class AppModel {
         }
         forgetStoredPairing()
         PhoneIdentity.deleteKeyPair()
+        // Rotate the push secret: the old Mac knows the old one. The next
+        // APNs registration re-registers the new hash with the relay.
+        PhoneIdentity.deletePushRelaySecret()
         activePairingCode = nil
         chats = []
         sessions = []
@@ -365,6 +373,7 @@ final class AppModel {
                     try await loadHome()
                     companionLog("Home loaded")
                     storePairing(code)
+                    reportPushStatus()
                 } catch is CancellationError {
                     companionLog("Pairing cancelled")
                 } catch {
@@ -517,6 +526,7 @@ final class AppModel {
                 do {
                     try await establish(code: code)
                     companionLog("Reconnected (attempt \(attempt))")
+                    reportPushStatus()
                     try await refreshLists()
                     if sessionTree != nil || selectedTab == .sessions {
                         // The Sessions tab loads its tree on appearance; if
@@ -774,6 +784,143 @@ final class AppModel {
         }
     }
 
+    // MARK: Push notifications
+
+    // The permission prompt is never shown spontaneously: it appears just in
+    // time, when the orchestrator calls its request_notification_permission
+    // tool because the user asked to be alerted about something. Connects
+    // only REPORT the current state (the user can revoke in Settings between
+    // connections).
+
+    private static let pushTokenDefault = "NoSyncPushDeviceToken"
+
+    /// A debug build's APNs token belongs to the sandbox environment; the
+    /// relay must use the matching endpoint.
+#if DEBUG
+    private static let pushSandbox = true
+#else
+    private static let pushSandbox = false
+#endif
+
+    /// The last APNs device token iOS issued. Persisted so connect-time
+    /// status reports can carry it before re-registration completes.
+    private var storedPushToken: Data? {
+        get { UserDefaults.standard.data(forKey: Self.pushTokenDefault) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.pushTokenDefault) }
+    }
+
+    private static func authorization(from status: UNAuthorizationStatus) -> CompanionPushAuthorization {
+        switch status {
+        case .authorized, .provisional, .ephemeral:
+            return .authorized
+        case .denied:
+            return .denied
+        case .notDetermined:
+            return .notDetermined
+        @unknown default:
+            return .denied
+        }
+    }
+
+    /// Report the phone's push capability to the Mac. Called after every
+    /// connection; when authorized it also refreshes the APNs token (whose
+    /// arrival triggers a follow-up report carrying it).
+    private func reportPushStatus() {
+        Task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            let authorization = Self.authorization(from: settings.authorizationStatus)
+            if authorization == .authorized {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+            await sendPushStatus(authorization)
+        }
+    }
+
+    private func sendPushStatus(_ authorization: CompanionPushAuthorization) async {
+        guard let client else { return }
+        var token: Data?
+        var secret: Data?
+        if authorization == .authorized, let storedPushToken {
+            token = storedPushToken
+            secret = try? PhoneIdentity.pushRelaySecret()
+        }
+        do {
+            try await client.sendPushStatus(authorization: authorization,
+                                            token: token,
+                                            relaySecret: secret,
+                                            sandbox: Self.pushSandbox)
+            companionLog("Push status sent: \(authorization.rawValue) (token: \(token != nil))")
+        } catch {
+            companionLog("Push status send failed: \(String(describing: error))")
+        }
+    }
+
+    /// The app delegate received (or refreshed) the APNs token: register its
+    /// secret hash with the push relay, then report to the Mac.
+    func pushTokenDidChange(_ token: Data) {
+        storedPushToken = token
+        Task {
+            await registerWithPushRelay(token: token)
+            await sendPushStatus(.authorized)
+        }
+    }
+
+    private func registerWithPushRelay(token: Data) async {
+        struct Registration: Encodable {
+            var token: String
+            var secretHash: String
+            var sandbox: Bool
+        }
+        guard let secret = try? PhoneIdentity.pushRelaySecret() else {
+            companionLog("Push relay registration skipped: no secret")
+            return
+        }
+        var request = URLRequest(url: CompanionPushRelay.registerURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
+        let secretHash = SHA256.hash(data: secret).map { String(format: "%02x", $0) }.joined()
+        do {
+            request.httpBody = try JSONEncoder().encode(
+                Registration(token: token.map { String(format: "%02x", $0) }.joined(),
+                             secretHash: secretHash,
+                             sandbox: Self.pushSandbox))
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) {
+                companionLog("Registered with push relay")
+            } else {
+                companionLog("Push relay registration rejected: \(String(data: data, encoding: .utf8) ?? "")")
+            }
+        } catch {
+            companionLog("Push relay registration failed: \(String(describing: error))")
+        }
+    }
+
+    /// The Mac asked (on the orchestrator's behalf) to show iOS's
+    /// notification-permission prompt. Replies with the outcome; a grant is
+    /// followed by a pushStatus carrying the token once APNs issues it.
+    private func handleNotificationPermissionRequest(requestID: UInt64) {
+        Task {
+            let center = UNUserNotificationCenter.current()
+            var authorization = Self.authorization(
+                from: await center.notificationSettings().authorizationStatus)
+            if authorization == .notDetermined {
+                let granted = (try? await center.requestAuthorization(
+                    options: [.alert, .sound, .badge])) ?? false
+                authorization = granted ? .authorized : .denied
+                companionLog("Notification permission prompt answered: \(authorization.rawValue)")
+            }
+            if authorization == .authorized {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+            if let client {
+                try? await client.sendNotificationPermissionResponse(requestID: requestID,
+                                                                     authorization: authorization)
+            }
+            await sendPushStatus(authorization)
+        }
+    }
+
     // MARK: Mentions
 
     /// The visible texts of a message that can contain @-mentions.
@@ -887,6 +1034,8 @@ final class AppModel {
             if chatID == openChatID, participant == .agent {
                 isAgentTyping = isTyping
             }
+        case .requestNotificationPermission(let requestID):
+            handleNotificationPermissionRequest(requestID: requestID)
         case .unpaired:
             handleRemoteUnpair()
         default:
@@ -901,6 +1050,7 @@ final class AppModel {
         reconnectTask?.cancel()
         reconnectTask = nil
         forgetStoredPairing()
+        PhoneIdentity.deletePushRelaySecret()
         let oldClient = client
         client = nil
         Task { await oldClient?.close() }

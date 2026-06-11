@@ -31,7 +31,7 @@ struct PairingView: View {
             } else {
                 ProgressView()
                     .controlSize(.large)
-                Text("Pairing with iTerm2…")
+                Text(model.activeIsReconnect ? "Connecting to iTerm2…" : "Pairing with iTerm2…")
                     .font(.headline)
                 statusLine
             }
