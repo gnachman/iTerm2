@@ -11042,7 +11042,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                                                           effectiveAppearance:self.window.effectiveAppearance];
     [_contentView.tabBarControl setStyle:style];
     [_contentView.tabBarControl setTabsHaveCloseButtons:[iTermPreferences boolForKey:kPreferenceKeyTabsHaveCloseButton]];
-    _contentView.tabBarControl.height = [self desiredTabBarHeight];
+    [_contentView.tabBarControl updateHeightWithDefault:[self desiredTabBarHeight]];
 
     [[self currentTab] recheckBlur];
     [self updateTabColors];
