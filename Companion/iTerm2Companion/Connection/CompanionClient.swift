@@ -53,6 +53,12 @@ actor CompanionClient {
         }
     }
 
+    /// Delete a chat. No reply; the mac pushes a fresh chat list (or an
+    /// error) afterwards.
+    func deleteChat(chatID: String) async throws {
+        try await session.send(.deleteChat(chatID: chatID))
+    }
+
     /// Subscribe to a chat and return its existing history.
     func subscribe(chatID: String) async throws -> [Message] {
         let reply = try await session.request(.subscribe(chatID: chatID))

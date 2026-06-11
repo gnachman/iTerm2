@@ -194,12 +194,18 @@ class ChatListModel: ChatListDataSource {
                         createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }
     }
 
+    // The no-maxLength form is the ChatListDataSource witness (a defaulted
+    // parameter can't satisfy a protocol requirement).
     func snippet(forChatID chatID: String) -> String? {
+        snippet(forChatID: chatID, maxLength: 40)
+    }
+
+    func snippet(forChatID chatID: String, maxLength: Int) -> String? {
         if let array = messageStorage[chatID] {
-            return array.last { $0.snippetText != nil }?.snippetText
+            return array.last { $0.snippetText != nil }?.content.snippetText(maxLength: maxLength)
         }
         for message in database.messageReverseIterator(inChat: chatID) {
-            if let snippet = message.snippetText {
+            if let snippet = message.content.snippetText(maxLength: maxLength) {
                 return snippet
             }
         }

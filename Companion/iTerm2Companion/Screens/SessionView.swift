@@ -71,6 +71,17 @@ struct SessionView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                // Jump into a conversation about this session: continues its
+                // most recent chat when that's fresh (last 24h), otherwise
+                // starts a new session-attached one.
+                Button {
+                    model.openOrCreateChat(forSessionGuid: guid)
+                } label: {
+                    Image(systemName: "text.bubble")
+                }
+                .accessibilityLabel("Chat about this session")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     reload()
                 } label: {

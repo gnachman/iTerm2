@@ -20,6 +20,13 @@ struct HomeView: View {
                     NavigationLink(value: AppModel.Destination.conversation(chatID: entry.chat.id)) {
                         ChatRow(entry: entry)
                     }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            model.deleteChat(chatID: entry.chat.id)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
                 .listStyle(.plain)
                 .refreshable { model.refreshHome() }
@@ -66,24 +73,55 @@ private struct ChatRow: View {
 
     private var chat: Chat { entry.chat }
 
+    /// Height of the text column (plus the row's vertical padding), captured
+    /// at layout time so the icon can be sized relative to the cell. The
+    /// icon is excluded from the measurement to avoid a feedback loop.
+    @State private var contentHeight: CGFloat = 56
+
+    private var iconSize: CGFloat { contentHeight * 0.65 }
+
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             icon
             VStack(alignment: .leading, spacing: 2) {
-                Text(chat.title)
-                    .font(.headline)
-                    .lineLimit(1)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(chat.title)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    Text(Self.timestamp(for: chat.lastModifiedDate))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
                 if let snippet = entry.snippet, !snippet.isEmpty {
                     Text(model.renderedSnippet(snippet))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            Spacer()
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.size.height
+            } action: { height in
+                contentHeight = height + 8
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+
+    /// The last-activity stamp, iMessage style: time of day within the last
+    /// 24 hours, weekday within the last week, M/d/yy beyond that.
+    private static func timestamp(for date: Date) -> String {
+        let age = Date().timeIntervalSince(date)
+        if age < 24 * 60 * 60 {
+            return date.formatted(date: .omitted, time: .shortened)
+        }
+        if age < 7 * 24 * 60 * 60 {
+            return date.formatted(.dateTime.weekday(.wide))
+        }
+        return date.formatted(.dateTime.month(.defaultDigits).day(.defaultDigits).year(.twoDigits))
     }
 
     /// The chat's AI-generated icon (a small PNG the Mac stores on the Chat),
@@ -95,13 +133,13 @@ private struct ChatRow: View {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 36, height: 36)
+                .frame(width: iconSize, height: iconSize)
                 .clipShape(Circle())
         } else {
             Image(systemName: "bubble.left")
-                .font(.system(size: 17))
+                .font(.system(size: iconSize * 0.45))
                 .foregroundStyle(.secondary)
-                .frame(width: 36, height: 36)
+                .frame(width: iconSize, height: iconSize)
                 .background(Color(.secondarySystemBackground), in: Circle())
         }
     }

@@ -275,7 +275,12 @@ struct Message: Codable {
         }
 
         var snippetText: String? {
-            let maxLength = 40
+            // 40 suits the Mac's narrow chat-list sidebar; the companion
+            // bridge asks for a longer cut for the phone's two-line cells.
+            snippetText(maxLength: 40)
+        }
+
+        func snippetText(maxLength: Int) -> String? {
             switch self {
             case .plainText(let text, _): return text.truncatedWithTrailingEllipsis(to: maxLength)
             case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)

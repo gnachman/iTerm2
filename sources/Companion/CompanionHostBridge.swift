@@ -649,21 +649,28 @@ final class CompanionHostBridge {
 
     // MARK: Model projection
 
+    /// The phone's chat rows show two lines of snippet; the Mac default (40,
+    /// sized for its narrow sidebar) truncates far short of that.
+    private static let snippetLength = 200
+
     private func chatEntries() -> [CompanionChatListEntry] {
         guard let model = ChatListModel.instance else { return [] }
         var result = [CompanionChatListEntry]()
         for index in 0..<model.count {
             let chat = model.chat(at: index)
-            result.append(CompanionChatListEntry(chat: chat,
-                                                 snippet: model.snippet(forChatID: chat.id)))
+            result.append(CompanionChatListEntry(
+                chat: chat,
+                snippet: model.snippet(forChatID: chat.id, maxLength: Self.snippetLength)))
         }
         return result
     }
 
     private func entry(forChatID chatID: String) -> CompanionChatListEntry? {
         guard let chat = ChatListModel.instance?.chat(id: chatID) else { return nil }
-        return CompanionChatListEntry(chat: chat,
-                                      snippet: ChatListModel.instance?.snippet(forChatID: chatID))
+        return CompanionChatListEntry(
+            chat: chat,
+            snippet: ChatListModel.instance?.snippet(forChatID: chatID,
+                                                     maxLength: Self.snippetLength))
     }
 
     private func history(chatID: String) -> [Message] {

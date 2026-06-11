@@ -610,6 +610,39 @@ final class AppModel {
         }
     }
 
+    /// Swipe-to-delete: remove the row optimistically and tell the Mac. The
+    /// list snapshot pushed after the Mac-side delete confirms it (or
+    /// restores the row if the Mac refused).
+    func deleteChat(chatID: String) {
+        chats.removeAll { $0.chat.id == chatID }
+        Task {
+            do {
+                let client = try await currentClient(label: "Delete chat")
+                try await client.deleteChat(chatID: chatID)
+            } catch {
+                companionLog("Delete chat failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    /// The Session view's chat button: continue the session's most recently
+    /// active chat if it was touched in the last 24 hours, otherwise start a
+    /// fresh one. Conversations live on the Chats tab, so either way this
+    /// switches there.
+    func openOrCreateChat(forSessionGuid guid: String) {
+        let attached = chats
+            .filter { $0.chat.terminalSessionGuid == guid }
+            .max { $0.chat.lastModifiedDate < $1.chat.lastModifiedDate }
+        if let attached,
+           Date().timeIntervalSince(attached.chat.lastModifiedDate) < 24 * 60 * 60 {
+            companionLog("Continuing chat \(attached.chat.id) for session \(guid)")
+            openConversation(chatID: attached.chat.id, replacingPath: true)
+        } else {
+            companionLog("Creating a new chat for session \(guid)")
+            createChat(mode: .session(guid: guid))
+        }
+    }
+
     // MARK: Conversation
 
     /// Called from ConversationView.onAppear. Chat rows are NavigationLinks,
@@ -648,6 +681,9 @@ final class AppModel {
     /// returns to Home, then lets conversationDidAppear load the history.
     func openConversation(chatID: String, replacingPath: Bool) {
         withAnimation {
+            // Conversations live on the Chats tab (callers can be on the
+            // Sessions tab, e.g. the session view's chat button).
+            selectedTab = .chats
             if replacingPath {
                 navigationPath = [.conversation(chatID: chatID)]
             } else {
