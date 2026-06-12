@@ -109,6 +109,36 @@ extension PseudoTerminal {
         deleteTabGroup(group)
     }
 
+    @objc func newTabInGroup(_ sender: Any?) {
+        guard let group = tabGroupFromSender(sender) else { return }
+        let profile = currentSession()?.profile ?? ProfileModel.sharedInstance().defaultProfile()
+        asyncCreateTab(withProfile: profile,
+                       withCommand: nil,
+                       environment: nil,
+                       tabIndex: nil,
+                       didMakeSession: nil) { [weak self] session, ok in
+            guard let self, ok, let tab = session?.delegate as? PTYTab else { return }
+            self.addTab(tab, toGroup: group)
+        }
+    }
+
+    @objc func closeTabGroup(_ sender: Any?) {
+        guard let group = tabGroupFromSender(sender) else { return }
+        if group.isCollapsed {
+            expandGroupSilently(group)
+        }
+        let allTabs = tabs() ?? []
+        let members = group.memberTabIDs.compactMap { id in allTabs.first { Int($0.uniqueId) == id } }
+        for tab in members {
+            close(tab)
+        }
+    }
+
+    @objc func toggleCollapseGroupFromMenu(_ sender: Any?) {
+        guard let group = tabGroupFromSender(sender) else { return }
+        toggleCollapseGroup(group)
+    }
+
     @objc func showRenameGroupSheet(_ sender: Any?) {
         guard let group = tabGroupFromSender(sender) else { return }
         showEditGroupSheet(group: group)

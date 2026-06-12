@@ -473,5 +473,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)removeTabFromGroup:(id)sender;
 - (void)showCreateTabGroupSheetForTab:(PTYTab *)tab completion:(void (^)(iTermTabGroup *))completion;
 - (void)addTab:(PTYTab *)tab toGroup:(iTermTabGroup *)group;
+- (void)newTabInGroup:(id)sender;
+- (void)closeTabGroup:(id)sender;
+- (void)toggleCollapseGroupFromMenu:(id)sender;
 @end
 

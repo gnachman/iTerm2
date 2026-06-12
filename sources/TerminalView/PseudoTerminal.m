@@ -8096,7 +8096,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
 
-    NSMenuItem *editItem = [[[NSMenuItem alloc] initWithTitle:@"Edit Group"
+    NSMenuItem *newTabItem = [[[NSMenuItem alloc] initWithTitle:@"New Tab in Group"
+                                                         action:@selector(newTabInGroup:)
+                                                  keyEquivalent:@""] autorelease];
+    [newTabItem setRepresentedObject:group];
+    [newTabItem setTarget:self];
+    [menu addItem:newTabItem];
+
+    NSMenuItem *collapseItem = [[[NSMenuItem alloc] initWithTitle:group.isCollapsed ? @"Expand Group" : @"Collapse Group"
+                                                           action:@selector(toggleCollapseGroupFromMenu:)
+                                                    keyEquivalent:@""] autorelease];
+    [collapseItem setRepresentedObject:group];
+    [collapseItem setTarget:self];
+    [menu addItem:collapseItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
+
+    NSMenuItem *editItem = [[[NSMenuItem alloc] initWithTitle:@"Edit Group…"
                                                         action:@selector(showRenameGroupSheet:)
                                                  keyEquivalent:@""] autorelease];
     [editItem setRepresentedObject:group];
@@ -8109,6 +8125,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [ungroupItem setRepresentedObject:group];
     [ungroupItem setTarget:self];
     [menu addItem:ungroupItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
+
+    NSMenuItem *closeItem = [[[NSMenuItem alloc] initWithTitle:@"Close Group"
+                                                        action:@selector(closeTabGroup:)
+                                                 keyEquivalent:@""] autorelease];
+    [closeItem setRepresentedObject:group];
+    [closeItem setTarget:self];
+    [menu addItem:closeItem];
 
     return menu;
 }
