@@ -1,0 +1,241 @@
+//
+//  RelayTransport.swift
+//  CompanionCore
+//
+//  A MessageTransport that reaches the peer through the Cloudflare room relay
+//  instead of the local network. Both devices open an outbound WebSocket to
+//  the relay (so no inbound firewall holes are needed), complete the relay's
+//  admission handshake, and are then spliced together; from that point the
+//  WebSocket carries opaque binary frames exactly like any other transport,
+//  and the Noise + RPC layers ride on top unchanged. The relay sees only
+//  ciphertext. See docs/companion-relay-design.md.
+//
+//  Admission frames are JSON text messages (Hello/Challenge/Proof/Result);
+//  once admitted, every frame is a binary WebSocket message = one transport
+//  frame (the WS layer provides boundaries, so no length-prefix framing is
+//  needed here).
+//
+
+import Foundation
+import CompanionProtocol
+
+/// One spliced relay connection, presented as a MessageTransport. The optional
+/// pre-buffered first frame lets the responder (mac) return from accept() only
+/// once the peer has actually sent something, matching local-network accept
+/// semantics.
+public final class RelayTransport: MessageTransport, @unchecked Sendable {
+    private let task: URLSessionWebSocketTask
+    private let lock = UnfairLock()
+    private var pendingFirstFrame: Data?
+    private var closed = false
+
+    init(task: URLSessionWebSocketTask, firstFrame: Data? = nil) {
+        self.task = task
+        self.pendingFirstFrame = firstFrame
+    }
+
+    public func send(_ frame: Data) async throws {
+        try await task.send(.data(frame))
+    }
+
+    public func receive() async throws -> Data {
+        if let buffered = lock.withLock({ () -> Data? in
+            defer { pendingFirstFrame = nil }
+            return pendingFirstFrame
+        }) {
+            return buffered
+        }
+        let message: URLSessionWebSocketTask.Message
+        do {
+            message = try await task.receive()
+        } catch {
+            throw TransportError.closed
+        }
+        switch message {
+        case .data(let data):
+            return data
+        case .string:
+            // Post-admission frames are always binary; a text frame here is the
+            // relay closing or a protocol error.
+            throw TransportError.malformedFrame
+        @unknown default:
+            throw TransportError.malformedFrame
+        }
+    }
+
+    public func close() async {
+        let shouldCancel = lock.withLock { () -> Bool in
+            if closed { return false }
+            closed = true
+            return true
+        }
+        if shouldCancel {
+            task.cancel(with: .goingAway, reason: nil)
+        }
+    }
+
+    deinit {
+        if !closed {
+            task.cancel(with: .goingAway, reason: nil)
+        }
+    }
+}
+
+/// Shared admission: open a WebSocket to the relay room and run the
+/// Hello -> Challenge -> Proof -> Result handshake. Returns the Result and the
+/// connected task on success.
+enum RelayAdmissionClient {
+    /// The admission protocol version this build speaks.
+    static let protocolVersion = 1
+
+    /// Builds the WebSocket URL for a relay origin. Production origins are
+    /// https:// -> wss://; http://localhost is allowed (ws://) for `wrangler
+    /// dev` integration tests. The https-only policy is enforced upstream when
+    /// the relay origin is parsed from the QR (PairingCode).
+    static func socketURL(relayOrigin: String) throws -> URL {
+        if relayOrigin.hasPrefix("https://"),
+           let url = URL(string: "wss://" + relayOrigin.dropFirst("https://".count) + "/") {
+            return url
+        }
+        if relayOrigin.hasPrefix("http://"),
+           let url = URL(string: "ws://" + relayOrigin.dropFirst("http://".count) + "/") {
+            return url
+        }
+        throw TransportError.connectionFailed("Invalid relay origin: \(relayOrigin)")
+    }
+
+    /// Run admission on a freshly created (un-resumed) task. `proofFor` is given
+    /// the Challenge and returns the Proof to send.
+    static func admit(
+        task: URLSessionWebSocketTask,
+        role: RelayAdmission.Role,
+        proofFor: (RelayAdmission.Challenge) throws -> RelayAdmission.Proof
+    ) async throws -> RelayAdmission.Result {
+        task.resume()
+
+        try await sendJSON(task, RelayAdmission.Hello(v: protocolVersion, role: role))
+        let challenge: RelayAdmission.Challenge = try await receiveJSON(task)
+        let proof = try proofFor(challenge)
+        try await sendJSON(task, proof)
+        let result: RelayAdmission.Result = try await receiveJSON(task)
+        guard result.ok else {
+            task.cancel(with: .policyViolation, reason: nil)
+            throw TransportError.connectionFailed("Relay refused admission: \(result.error ?? "unknown")")
+        }
+        return result
+    }
+
+    private static let encoder = JSONEncoder()
+    private static let decoder = JSONDecoder()
+
+    private static func sendJSON<T: Encodable>(_ task: URLSessionWebSocketTask, _ value: T) async throws {
+        let data = try encoder.encode(value)
+        let text = String(decoding: data, as: UTF8.self)
+        try await task.send(.string(text))
+    }
+
+    private static func receiveJSON<T: Decodable>(_ task: URLSessionWebSocketTask) async throws -> T {
+        let message = try await task.receive()
+        let data: Data
+        switch message {
+        case .string(let s): data = Data(s.utf8)
+        case .data(let d): data = d
+        @unknown default: throw TransportError.malformedFrame
+        }
+        return try decoder.decode(T.self, from: data)
+    }
+}
+
+/// Phone side: connect to the relay room and join as the phone. For first-time
+/// pairing the proof is empty (open mode); a `joinProof` closure can supply a
+/// signature for reconnecting to an established room.
+public struct RelayTransportConnector: TransportConnector {
+    public let transportName = "relay"
+    private let relayOrigin: String
+    private let responderStaticKey: Data
+    private let joinProof: (@Sendable (RelayAdmission.Challenge, _ roomName: String) throws -> RelayAdmission.Proof)?
+    private let session: URLSession
+
+    /// - responderStaticKey: the mac's static public key (rs from the QR),
+    ///   needed to derive the room pseudonym.
+    /// - joinProof: nil for pairing (empty proof); supply for established-room
+    ///   reconnects to return a signed proof.
+    public init(relayOrigin: String,
+                responderStaticKey: Data,
+                joinProof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? = nil,
+                session: URLSession = .shared) {
+        self.relayOrigin = relayOrigin
+        self.responderStaticKey = responderStaticKey
+        self.joinProof = joinProof
+        self.session = session
+    }
+
+    public func connect(to rendezvous: PairingRendezvous,
+                        timeout: TimeInterval) async throws -> MessageTransport {
+        let roomName = RelayRoom.name(responderStaticPublicKey: responderStaticKey,
+                                      pairingID: rendezvous.pairingID)
+        let url = try RelayAdmissionClient.socketURL(relayOrigin: relayOrigin)
+        var request = URLRequest(url: url, timeoutInterval: timeout)
+        request.setValue(roomName, forHTTPHeaderField: "x-relay-room")
+        let task = session.webSocketTask(with: request)
+        _ = try await RelayAdmissionClient.admit(task: task, role: .phone) { challenge in
+            try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
+        }
+        return RelayTransport(task: task)
+    }
+}
+
+/// Mac side: park in the relay room as the mac, then wait for the phone to send
+/// its first frame before returning, so accept() resolves only when a peer is
+/// actually present (matching local-network accept semantics).
+public final class RelayTransportListener: TransportListener, @unchecked Sendable {
+    public let transportName = "relay"
+    private let relayOrigin: String
+    private let roomName: String
+    private let session: URLSession
+    private let lock = UnfairLock()
+    private var stopped = false
+    private var current: URLSessionWebSocketTask?
+
+    public init(relayOrigin: String, roomName: String, session: URLSession = .shared) {
+        self.relayOrigin = relayOrigin
+        self.roomName = roomName
+        self.session = session
+    }
+
+    public func accept() async throws -> MessageTransport {
+        if lock.withLock({ stopped }) {
+            throw TransportError.closed
+        }
+        let url = try RelayAdmissionClient.socketURL(relayOrigin: relayOrigin)
+        var request = URLRequest(url: url)
+        request.setValue(roomName, forHTTPHeaderField: "x-relay-room")
+        let task = session.webSocketTask(with: request)
+        lock.withLock { current = task }
+
+        _ = try await RelayAdmissionClient.admit(task: task, role: .mac) { _ in
+            RelayAdmission.Proof(ticket: nil, signature: nil)
+        }
+        // Admitted and parked. Block until the phone actually joins and sends
+        // its first frame (Noise msg1), so the combined listener doesn't treat
+        // an empty parked room as an inbound connection.
+        let firstMessage = try await task.receive()
+        let firstFrame: Data
+        switch firstMessage {
+        case .data(let d): firstFrame = d
+        case .string: throw TransportError.malformedFrame
+        @unknown default: throw TransportError.malformedFrame
+        }
+        return RelayTransport(task: task, firstFrame: firstFrame)
+    }
+
+    public func stop() {
+        let task = lock.withLock { () -> URLSessionWebSocketTask? in
+            stopped = true
+            let t = current
+            current = nil
+            return t
+        }
+        task?.cancel(with: .goingAway, reason: nil)
+    }
+}
