@@ -123,8 +123,10 @@ final class CompanionPairingController: NSObject {
     /// quietly advertise its pairing id so it can reconnect.
     @objc func resumePairedListeningIfNeeded() {
         installLogHandler()
+        relayLog("resumePairedListeningIfNeeded called")
         guard Self.aiGate() == .allowed else {
             DLog("Companion: not listening; AI features are unavailable")
+            relayLog("resume: SKIP (AI gate not allowed)")
             return
         }
         // Park only when nothing is connected. The relay room has a single mac
@@ -133,13 +135,18 @@ final class CompanionPairingController: NSObject {
         // reconnect (after the connection is gone) still proceeds; only callers
         // firing while connected (launch races, gate changes) are held off.
         guard acceptTask == nil, bridge == nil, let pid = pairedPID else {
+            relayLog("resume: SKIP guard "
+                     + "(acceptTaskNil=\(acceptTask == nil) bridgeNil=\(bridge == nil) "
+                     + "hasPID=\(pairedPID != nil))")
             return
         }
         do {
+            relayLog("resume: starting listening for pid \(pid)")
             try startListening(pairingID: pid)
             DLog("Companion: resumed listening for paired device (pid \(pid))")
         } catch {
             DLog("Companion: could not resume listening: \(error); will retry")
+            relayLog("resume: startListening THREW \(error); scheduling retry")
             scheduleListenerRetry()
         }
     }
@@ -166,6 +173,7 @@ final class CompanionPairingController: NSObject {
     /// displayed as a QR.
     func startPairing() throws -> PairingCode {
         installLogHandler()
+        relayLog("startPairing() called (fresh QR)")
         stopAdvertising()
         let keyPair = try CompanionMacIdentity.keyPair()
         let pairingID = Self.makePairingID()
@@ -203,6 +211,7 @@ final class CompanionPairingController: NSObject {
     /// forgets the pairing id, and destroys the mac's static identity so a new
     /// one is generated for the next pairing.
     func unpair() {
+        relayLog("unpair() called")
         DLog("Companion: unpair (bridge connected: \(bridge != nil))")
         if let bridge {
             // Fire-and-forget: the farewell flush is async, but the bridge is
@@ -223,6 +232,7 @@ final class CompanionPairingController: NSObject {
     /// The phone unpaired itself: mirror unpair() minus the farewell (the
     /// phone is the one leaving).
     private func peerDidUnpair() {
+        relayLog("peerDidUnpair() called")
         DLog("Companion: peer unpaired; deleting key material")
         bridge?.stop()
         bridge = nil
@@ -237,6 +247,7 @@ final class CompanionPairingController: NSObject {
     /// Stop advertising and accepting. Does NOT touch a connected bridge; the
     /// pairing window calls this when it closes.
     func stopAdvertising() {
+        relayLog("stopAdvertising() called (cancelling acceptTask, stopping listener)")
         listenerRetryTask?.cancel()
         listenerRetryTask = nil
         acceptTask?.cancel()
@@ -248,7 +259,20 @@ final class CompanionPairingController: NSObject {
     private func installLogHandler() {
         CompanionLog.handler = { message in
             DLog("\(message)")
+            // TEMP DEBUG: mirror the transport/crypto layer's logs to NSLog too,
+            // tagged so the relay lifecycle is greppable without the giant DLog.
+            NSFuckingLog("%@", "COMPANIONRELAY transport: \(message)")
         }
+    }
+
+    /// TEMP DEBUG: one-line, greppable trace of the relay lifecycle, stamped
+    /// with the state that actually drives the single-mac-slot logic. Filter the
+    /// system log with: `log stream --predicate 'eventMessage CONTAINS "COMPANIONRELAY"'`
+    /// (or grep stderr for COMPANIONRELAY).
+    private func relayLog(_ message: String) {
+        NSFuckingLog("%@", "COMPANIONRELAY \(message) "
+                     + "[bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) "
+                     + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.aiGate())]")
     }
 
     private func startListening(pairingID: String) throws {
@@ -260,6 +284,9 @@ final class CompanionPairingController: NSObject {
         let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                pairingID: pairingID,
                                relayOrigin: relayOrigin)
+        let roomName = relayOrigin == nil ? "n/a"
+            : RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
+        relayLog("startListening pid=\(pairingID) relayOrigin=\(relayOrigin ?? "nil") room=\(roomName)")
         let listener = try CompanionTransports.listener(
             pairingID: pairingID,
             responderStaticPublicKey: keyPair.publicKey,
@@ -299,6 +326,7 @@ final class CompanionPairingController: NSObject {
                             keyPair: NoiseKeyPair,
                             code: PairingCode) async {
         DLog("Companion pairing: accept loop started (pid \(code.pairingID))")
+        relayLog("acceptLoop START pid=\(code.pairingID); awaiting a connection (park)")
         onStatus?("Waiting for your iPhone…")
         while !Task.isCancelled {
             let transport: MessageTransport
@@ -317,6 +345,7 @@ final class CompanionPairingController: NSObject {
                     || error is CancellationError
                     || (error as? TransportError) == .closed
                 DLog("Companion pairing: accept ended: \(error), cancelled=\(Task.isCancelled), intentional=\(intentional)")
+                relayLog("acceptLoop EXIT via accept() error (intentional=\(intentional)): \(error)")
                 if !intentional {
                     onFailed?(Self.userFacingDescription(of: error))
                     // The background listener for a paired device must come
@@ -327,6 +356,7 @@ final class CompanionPairingController: NSObject {
             }
             do {
                 DLog("Companion pairing: connection accepted; starting Noise handshake")
+                relayLog("acceptLoop: connection ACCEPTED (peer joined); starting Noise handshake")
                 onStatus?("Phone connected. Securing the connection…")
                 let channel = try await NoiseHandshake.perform(
                     role: .responder,
@@ -335,15 +365,18 @@ final class CompanionPairingController: NSObject {
                     remoteStaticPublicKey: nil,
                     prologue: code.handshakePrologue())
                 DLog("Companion pairing: handshake complete")
+                relayLog("acceptLoop: handshake COMPLETE; creating bridge")
 
                 let newBridge = CompanionHostBridge(transport: channel)
                 newBridge.onClose = { [weak self, weak newBridge] in
                     guard let self, let newBridge, self.bridge === newBridge else {
                         // A stale bridge must not tear down its replacement.
                         DLog("Companion: stale bridge closed; ignoring")
+                        self?.relayLog("bridge.onClose: STALE bridge closed; ignoring")
                         return
                     }
                     DLog("Companion: bridge closed; resuming listening for reconnect")
+                    self.relayLog("bridge.onClose: LIVE bridge closed; nil-ing bridge + resuming")
                     self.bridge = nil
                     self.onDisconnect?()
                     self.resumePairedListeningIfNeeded()
@@ -370,9 +403,12 @@ final class CompanionPairingController: NSObject {
                 // resumePairedListeningIfNeeded above. (When Bonjour returns as a
                 // parallel transport, this can keep accepting again.)
                 acceptTask = nil
+                relayLog("acceptLoop EXIT: connected, bridge up, stopped accepting "
+                         + "(reconnect now driven by bridge.onClose)")
                 return
             } catch {
                 DLog("Companion pairing: handshake failed: \(error); still listening")
+                relayLog("acceptLoop: handshake FAILED (\(error)); closing socket and re-accepting")
                 onStatus?("Waiting for your iPhone…")
                 // The parked socket was consumed by the failed handshake; close
                 // it so the next accept() can park a fresh one (and the relay

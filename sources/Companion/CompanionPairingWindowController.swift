@@ -263,6 +263,8 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     func windowWillClose(_ notification: Notification) {
         stopGatePolling()
         currentGate = nil
+        NSFuckingLog("%@", "COMPANIONRELAY windowWillClose (hasPairedDevice=\(controller.hasPairedDevice)): "
+                     + (controller.hasPairedDevice ? "keeping listener" : "stopAdvertising"))
         if controller.hasPairedDevice {
             // A pairing happened: the listener that handled it keeps running in
             // the background to serve the connection and accept reconnects.
