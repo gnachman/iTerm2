@@ -191,7 +191,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     BOOL _isGroupActive;
     BOOL _isMultiSelected;
     CGFloat _cellAlpha;
-    CGFloat _cellSlideOffset;
     NSString *_groupName;
     NSColor *_groupColor;
     NSInteger _groupMemberCount;
@@ -203,7 +202,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 @synthesize isGroupActive = _isGroupActive;
 @synthesize isMultiSelected = _isMultiSelected;
 @synthesize cellAlpha = _cellAlpha;
-@synthesize cellSlideOffset = _cellSlideOffset;
 @synthesize groupName = _groupName;
 @synthesize groupColor = _groupColor;
 @synthesize groupMemberCount = _groupMemberCount;

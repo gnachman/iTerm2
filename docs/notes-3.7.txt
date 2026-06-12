@@ -9,6 +9,13 @@ to version 3.6.7 and duplicates some items in
 betas since then.
 
 Major New Features:
+- Tabs can now be organized into groups. Select
+  multiple tabs with cmd-click and click the
+  Group button to create a named, color-coded
+  group. Group headers appear in the tab bar;
+  click one to collapse or expand its tabs.
+  Groups are saved in window arrangements.
+
 - In the Jobs view (toolbelt and status bar
   popover) hovering a row shows the full
   command as a tooltip, and pressing space

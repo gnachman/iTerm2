@@ -827,9 +827,19 @@
     } else {
         [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
         if (cell.isGroupMember && cell.groupColor) {
-            [self drawGroupMemberSidebar:cell];
+            [self drawGroupMemberAccent:cell];
         }
     }
+}
+
+- (BOOL)tabBarHasDarkAppearance {
+    NSAppearanceName bestMatch =
+        [_tabBar.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                          NSAppearanceNameVibrantDark,
+                                                                          NSAppearanceNameAqua,
+                                                                          NSAppearanceNameVibrantLight ]];
+    return ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]);
 }
 
 - (NSGradient *)groupGradientForColor:(NSColor *)color {
@@ -858,6 +868,11 @@
     const CGFloat vMargin = 5.0;
     const CGFloat cornerRadius = 4.0;
 
+    NSColor *srgb = [cell.groupColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    CGFloat r, g, b, a;
+    [srgb getRed:&r green:&g blue:&b alpha:&a];
+    const BOOL lightGroupColor = (0.299 * r + 0.587 * g + 0.114 * b) > 0.55;
+
     if (!hasName) {
         const CGFloat dotDiameter = 16.0;
         NSRect dotRect = NSMakeRect(NSMidX(cellFrame) - dotDiameter / 2.0,
@@ -885,6 +900,17 @@
                                  cellFrame.origin.y + vMargin,
                                  cellFrame.size.width - hMargin * 2,
                                  cellFrame.size.height - vMargin * 2);
+    if (_orientation == PSMTabBarVerticalOrientation) {
+        // Vertical cells span the full bar width; hug the name instead of stretching.
+        NSDictionary *measureAttrs = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize
+                                                                                weight:NSFontWeightSemibold] };
+        const CGFloat nameWidth = ceil([cell.groupName sizeWithAttributes:measureAttrs].width);
+        const CGFloat pillWidth = MIN(NSWidth(pillRect), nameWidth + hMargin * 3);
+        pillRect = NSMakeRect(NSMidX(cellFrame) - pillWidth / 2.0,
+                              pillRect.origin.y,
+                              pillWidth,
+                              pillRect.size.height);
+    }
     NSBezierPath *outerPill = [NSBezierPath bezierPathWithRoundedRect:pillRect
                                                              xRadius:cornerRadius
                                                              yRadius:cornerRadius];
@@ -920,25 +946,29 @@
 
         // Active state (a member tab is currently selected): persistent inner border
         if (cell.isGroupActive) {
-            [[NSColor colorWithWhite:1.0 alpha:0.4] set];
+            [[NSColor colorWithWhite:lightGroupColor ? 0.0 : 1.0 alpha:0.4] set];
             [outerPill setLineWidth:1.5];
             [outerPill stroke];
         }
 
-        // Hover: dark overlay that fades in with mouse position
+        // Hover: contrasting overlay that fades in with mouse position
         if (cell.highlightAmount > 0.001) {
-            [[NSColor colorWithWhite:0.0 alpha:cell.highlightAmount * 0.25] set];
+            [[NSColor colorWithWhite:lightGroupColor ? 0.0 : 1.0 alpha:cell.highlightAmount * 0.25] set];
             [outerPill fill];
         }
     }
 
-    NSColor *srgb = [cell.groupColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-    CGFloat r, g, b, a;
-    [srgb getRed:&r green:&g blue:&b alpha:&a];
-    NSColor *textColor = neon ? [NSColor whiteColor]
-                               : ((0.299 * r + 0.587 * g + 0.114 * b) > 0.55
-                                  ? [NSColor colorWithWhite:0.1 alpha:1.0]
-                                  : [NSColor whiteColor]);
+    NSColor *darkText = [NSColor colorWithWhite:0.1 alpha:1.0];
+    NSColor *textColor;
+    if (neon) {
+        // The pill interior only fills with the group gradient on hover/active;
+        // otherwise the name sits on the tab bar background.
+        const BOOL darkBackground = (effectiveHighlight > 0.5) ? !lightGroupColor
+                                                               : [self tabBarHasDarkAppearance];
+        textColor = darkBackground ? [NSColor whiteColor] : darkText;
+    } else {
+        textColor = lightGroupColor ? darkText : [NSColor whiteColor];
+    }
 
     NSDictionary *nameAttrs = @{
         NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize weight:NSFontWeightSemibold],
@@ -950,15 +980,23 @@
                  withAttributes:nameAttrs];
 }
 
-- (void)drawGroupMemberSidebar:(PSMTabBarCell *)cell {
+- (void)drawGroupMemberAccent:(PSMTabBarCell *)cell {
     NSRect cellFrame = cell.frame;
-    const CGFloat borderHeight = 2.5;
-    NSRect borderRect = NSMakeRect(cellFrame.origin.x,
-                                   cellFrame.origin.y,
-                                   cellFrame.size.width,
-                                   borderHeight);
+    const CGFloat accentThickness = 2.5;
+    NSRect accentRect;
+    if (_orientation == PSMTabBarVerticalOrientation) {
+        accentRect = NSMakeRect(cellFrame.origin.x,
+                                cellFrame.origin.y,
+                                accentThickness,
+                                cellFrame.size.height);
+    } else {
+        accentRect = NSMakeRect(cellFrame.origin.x,
+                                cellFrame.origin.y,
+                                cellFrame.size.width,
+                                accentThickness);
+    }
     [cell.groupColor set];
-    NSRectFill(borderRect);
+    NSRectFill(accentRect);
 }
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {

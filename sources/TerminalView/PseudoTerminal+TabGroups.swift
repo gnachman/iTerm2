@@ -402,7 +402,7 @@ extension PseudoTerminal {
                 self.contentView.tabView.removeTabViewItem(item)
                 group.stashedTabViewItems.append(item)
             }
-            self.contentView.tabBarControl.updateAnimated()
+            self.contentView.tabBarControl.update()
         }
     }
 
@@ -447,7 +447,7 @@ extension PseudoTerminal {
             let safeIndex = min(targetIndex, tabView.numberOfTabViewItems)
             tabView.insertTabViewItem(item, at: safeIndex)
         }
-        contentView.tabBarControl.updateAnimated()
+        contentView.tabBarControl.update()
         updateTabGroupDecorations()
     }
 

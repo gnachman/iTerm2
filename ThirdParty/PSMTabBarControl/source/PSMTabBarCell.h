@@ -64,7 +64,6 @@
 @property(nonatomic, assign) BOOL isGroupActive;
 @property(nonatomic, assign) BOOL isMultiSelected;
 @property(nonatomic, assign) CGFloat cellAlpha;
-@property(nonatomic, assign) CGFloat cellSlideOffset;
 @property(nonatomic, assign) BOOL isAnimatingCollapse;
 @property(nonatomic, copy, nullable) NSString *groupName;
 @property(nonatomic, retain, nullable) NSColor *groupColor;

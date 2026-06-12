@@ -353,3 +353,9 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (void)didSelectTab;
 
 @end
+
+// Tab view items normally have a PTYTab identifier, but tab-group header items do not.
+@interface NSTabViewItem (iTermPTYTab)
+// The owning PTYTab, or nil if this item is a tab-group header rather than a real tab.
+@property (nonatomic, readonly, nullable) PTYTab *it_tab;
+@end

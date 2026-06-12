@@ -58,6 +58,10 @@ import Cocoa
         super.init(coder: coder)
     }
 
+    deinit {
+        dismissColorPanel()
+    }
+
     override func loadView() {
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 340, height: 180))
         self.view = container

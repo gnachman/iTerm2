@@ -163,10 +163,17 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     return self;
 }
 
+- (void)dealloc {
+    [_trackingArea release];
+    [_title release];
+    [super dealloc];
+}
+
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
     if (_trackingArea) {
         [self removeTrackingArea:_trackingArea];
+        [_trackingArea release];
     }
     _trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
                                                  options:NSTrackingMouseEnteredAndExited | NSTrackingActiveInKeyWindow
@@ -181,23 +188,36 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     return NSMakeSize(textSize.width + 20.0, 20.0);
 }
 
+- (BOOL)hasDarkAppearance {
+    NSAppearanceName bestMatch =
+        [self.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                       NSAppearanceNameVibrantDark,
+                                                                       NSAppearanceNameAqua,
+                                                                       NSAppearanceNameVibrantLight ]];
+    return ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]);
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     NSRect r = NSInsetRect(self.bounds, 0.5, 0.5);
     CGFloat radius = NSHeight(r) / 2.0;
     NSBezierPath *pill = [NSBezierPath bezierPathWithRoundedRect:r xRadius:radius yRadius:radius];
+    const BOOL dark = [self hasDarkAppearance];
+    const CGFloat foregroundWhite = dark ? 1.0 : 0.0;
+    const CGFloat borderWhite = dark ? 0.85 : 0.15;
 
     // Fill: transparent normally, subtle tint on hover/press.
     if (_pressed) {
-        [[NSColor colorWithWhite:1.0 alpha:0.12] setFill];
+        [[NSColor colorWithWhite:foregroundWhite alpha:0.12] setFill];
         [pill fill];
     } else if (_hovered) {
-        [[NSColor colorWithWhite:1.0 alpha:0.07] setFill];
+        [[NSColor colorWithWhite:foregroundWhite alpha:0.07] setFill];
         [pill fill];
     }
 
     // Border.
     CGFloat borderAlpha = _hovered ? 0.5 : 0.28;
-    [[NSColor colorWithWhite:0.85 alpha:borderAlpha] setStroke];
+    [[NSColor colorWithWhite:borderWhite alpha:borderAlpha] setStroke];
     [pill setLineWidth:1.0];
     [pill stroke];
 
@@ -205,7 +225,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     CGFloat textAlpha = _hovered ? 1.0 : 0.72;
     NSDictionary *attrs = @{
         NSFontAttributeName: [NSFont systemFontOfSize:11.0 weight:NSFontWeightMedium],
-        NSForegroundColorAttributeName: [NSColor colorWithWhite:1.0 alpha:textAlpha]
+        NSForegroundColorAttributeName: [NSColor colorWithWhite:foregroundWhite alpha:textAlpha]
     };
     NSSize ts = [_title sizeWithAttributes:attrs];
     [_title drawAtPoint:NSMakePoint(NSMidX(self.bounds) - ts.width / 2.0,
@@ -503,6 +523,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [_style release];
     [_tooltips release];
     _tooltips = nil;
+    [_fadingInCells release];
+    [_collapsingCells release];
+    [_collapseCompletions release];
+    [_multiSelectedTabViewItems release];
+    [_groupSelectionButton release];
 
     [self unregisterDraggedTypes];
 
@@ -1291,10 +1316,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [self update:NO];
 }
 
-- (void)updateAnimated {
-    [self update:NO];
-}
-
 - (void)markNextInsertionsAsAnimated:(NSInteger)count {
     _animatedInsertionCount += count;
 }
@@ -1317,7 +1338,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         _collapseCompletions = [[NSMutableArray alloc] init];
     }
     if (completion) {
-        [_collapseCompletions addObject:[completion copy]];
+        [_collapseCompletions addObject:[[completion copy] autorelease]];
     }
     if (!_collapseTimer) {
         _collapseTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
@@ -1335,7 +1356,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         cell.cellAlpha = 1.0;
     }
     [_collapsingCells removeAllObjects];
-    NSArray<void (^)(void)> *completions = [_collapseCompletions copy];
+    NSArray<void (^)(void)> *completions = [[_collapseCompletions copy] autorelease];
     [_collapseCompletions removeAllObjects];
     for (void (^cb)(void) in completions) { cb(); }
 }
@@ -1371,7 +1392,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (_collapsingCells.count == 0) {
         [timer invalidate];
         _collapseTimer = nil;
-        NSArray<void (^)(void)> *completions = [_collapseCompletions copy];
+        NSArray<void (^)(void)> *completions = [[_collapseCompletions copy] autorelease];
         [_collapseCompletions removeAllObjects];
         for (void (^cb)(void) in completions) { cb(); }
     }

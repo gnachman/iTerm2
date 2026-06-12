@@ -5531,8 +5531,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                     rightExtra:self.currentSession.desiredRightExtra];
     // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
-        PTYTab* theTab = [tabViewItem identifier];
-        if (![theTab isKindOfClass:[PTYTab class]]) { continue; }
+        PTYTab* theTab = tabViewItem.it_tab;
+        if (!theTab) { continue; }
         NSSize minTabSize = [theTab minSize];
         tabSize.width = MAX(tabSize.width, minTabSize.width);
         tabSize.height = MAX(tabSize.height, minTabSize.height);
@@ -6942,8 +6942,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Did select tab view %@", tabViewItem);
-    PTYTab *tab = [tabViewItem identifier];
-    if (![tab isKindOfClass:[PTYTab class]]) {
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) {
         return;
     }
     [_contentView.tabBarControl setFlashing:YES];
@@ -7159,22 +7159,24 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem {
-    if (![[tabViewItem identifier] isKindOfClass:[PTYTab class]]) { return; }
-    [self saveAffinitiesLater:[tabViewItem identifier]];
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) { return; }
+    [self saveAffinitiesLater:tab];
 }
 
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem {
-    if (![[tabViewItem identifier] isKindOfClass:[PTYTab class]]) { return; }
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) { return; }
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
-    [self saveAffinitiesLater:[tabViewItem identifier]];
+    [self saveAffinitiesLater:tab];
 }
 
 - (void)tabView:(NSTabView *)tabView
     willInsertTabViewItem:(NSTabViewItem *)tabViewItem
         atIndex:(int)anIndex {
     DLog(@"%@: tabView:%@ willInsertTabViewItem:%@ atIndex:%d", self, tabView, tabViewItem, anIndex);
-    PTYTab* theTab = [tabViewItem identifier];
-    if (![theTab isKindOfClass:[PTYTab class]]) { return; }
+    PTYTab* theTab = tabViewItem.it_tab;
+    if (!theTab) { return; }
     [theTab setParentWindow:self];
     theTab.delegate = self;
 #if BETA
@@ -7285,8 +7287,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView*)aTabView
     willDropTabViewItem:(NSTabViewItem *)tabViewItem
                inTabBar:(PSMTabBarControl *)aTabBarControl {
-    PTYTab *aTab = [tabViewItem identifier];
-    if (![aTab isKindOfClass:[PTYTab class]]) { return; }
+    PTYTab *aTab = tabViewItem.it_tab;
+    if (!aTab) { return; }
     for (PTYSession* aSession in [aTab sessions]) {
         [aSession setIgnoreResizeNotifications:YES];
     }
@@ -7321,8 +7323,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView*)aTabView
     didDropTabViewItem:(NSTabViewItem *)tabViewItem
               inTabBar:(PSMTabBarControl *)aTabBarControl {
-    PTYTab *aTab = [tabViewItem identifier];
-    if (![aTab isKindOfClass:[PTYTab class]]) { return; }
+    PTYTab *aTab = tabViewItem.it_tab;
+    if (!aTab) { return; }
     PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
     [self didDonateTab:aTab toWindowController:term];
 }
@@ -7463,10 +7465,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
         NSTabViewItem *tabViewItem = [[_contentView.tabView tabViewItems] objectAtIndex:0];
-        PTYTab *firstTab = [tabViewItem identifier];
-        if (![firstTab isKindOfClass:[PTYTab class]]) {
-            firstTab = [self tabs].firstObject;
-        }
+        PTYTab *firstTab = tabViewItem.it_tab ?: [self tabs].firstObject;
 
         NSPoint originalOrigin = self.window.frame.origin;
         if (wasDraggedFromAnotherWindow_) {
@@ -7648,7 +7647,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
         NSUInteger count = 1;
         for (NSTabViewItem *aTabViewItem in [_contentView.tabView tabViewItems]) {
-            if (![[aTabViewItem identifier] isKindOfClass:[PTYTab class]]) { continue; }
+            if (!aTabViewItem.it_tab) { continue; }
             NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], (unsigned long)count++];
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(selectTab:)
@@ -8127,8 +8126,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView *)tabView groupTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems {
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
     for (NSTabViewItem *item in tabViewItems) {
-        PTYTab *tab = item.identifier;
-        if ([tab isKindOfClass:[PTYTab class]]) {
+        PTYTab *tab = item.it_tab;
+        if (tab) {
             [tabs addObject:tab];
         }
     }
@@ -8152,7 +8151,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self collapseGroupSilently:group];
         self.groupCollapseManaging = NO;
         [self updateTabGroupDecorations];
-        [_contentView.tabBarControl updateAnimated];
+        [_contentView.tabBarControl update];
     }
 }
 
@@ -8186,8 +8185,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
-    PTYTab *tab = tabViewItem.identifier;
-    if (![tab isKindOfClass:[PTYTab class]]) { return; }
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) { return; }
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
     [_contentView.tabBarControl setProgress:(PSMProgress)tab.progress
                        forTabWithIdentifier:tab];
@@ -9985,8 +9984,8 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
     PtyLog(@"fitWindowToTabs.......");
     DLog(@"Finding the biggest tab:");
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
-        PTYTab* tab = [item identifier];
-        if (![tab isKindOfClass:[PTYTab class]]) { continue; }
+        PTYTab* tab = item.it_tab;
+        if (!tab) { continue; }
         switch (exclusion) {
             case PseudoTerminalTabSizeExclusionTmux:
                 if (tab.isTmuxTab) {
@@ -10427,8 +10426,8 @@ typedef struct {
     // Pick 400 as an absolute minimum just to be safe. This is rather arbitrary and hacky.
     float minWidth = 400;
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
-        PTYTab* theTab = [tabViewItem identifier];
-        if (![theTab isKindOfClass:[PTYTab class]]) { continue; }
+        PTYTab* theTab = tabViewItem.it_tab;
+        if (!theTab) { continue; }
         minWidth = MAX(minWidth, [theTab minSize].width);
     }
     return minWidth;
@@ -10492,9 +10491,9 @@ typedef struct {
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
         NSTabViewItem* theItem = [_contentView.tabView tabViewItemAtIndex:i];
-        id identifier = [theItem identifier];
-        if ([identifier isKindOfClass:[PTYTab class]]) {
-            [tabs addObject:identifier];
+        PTYTab *tab = theItem.it_tab;
+        if (tab) {
+            [tabs addObject:tab];
         }
     }
     return tabs;
@@ -10816,8 +10815,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     // formerly countless tabs show their counts.
     BOOL needResize = NO;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        PTYTab *aTab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
-        if (![aTab isKindOfClass:[PTYTab class]]) { continue; }
+        PTYTab *aTab = [_contentView.tabView tabViewItemAtIndex:i].it_tab;
+        if (!aTab) { continue; }
         if ([aTab updatePaneTitles]) {
             needResize = YES;
         }
@@ -12412,8 +12411,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)fitTabsToWindow {
     PtyLog(@"fitTabsToWindow begins");
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
-        if (![tab isKindOfClass:[PTYTab class]]) { continue; }
+        PTYTab *tab = [_contentView.tabView tabViewItemAtIndex:i].it_tab;
+        if (!tab) { continue; }
         [self fitTabToWindow:tab];
     }
     PtyLog(@"fitTabsToWindow returns");
@@ -12735,8 +12734,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (NSArray<PTYSession *> *)allSessions {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[_contentView.tabView numberOfTabViewItems]];
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
-        PTYTab *tab = [item identifier];
-        if (![tab isKindOfClass:[PTYTab class]]) { continue; }
+        PTYTab *tab = item.it_tab;
+        if (!tab) { continue; }
         [result addObjectsFromArray:[tab sessions]];
     }
     return result;
