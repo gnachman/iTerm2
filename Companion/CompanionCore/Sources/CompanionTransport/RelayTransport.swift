@@ -28,6 +28,11 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     private let lock = UnfairLock()
     private var pendingFirstFrame: Data?
     private var closed = false
+    // Resolved once the connection is known to be gone (close() called, or a
+    // receive/ error). Lets the mac listener wait for a live connection to end
+    // before it parks again (see RelayTransportListener.accept).
+    private var closeWaiters: [CheckedContinuation<Void, Never>] = []
+    private var closeSignaled = false
 
     init(task: URLSessionWebSocketTask, firstFrame: Data? = nil) {
         self.task = task
@@ -35,7 +40,12 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     }
 
     public func send(_ frame: Data) async throws {
-        try await task.send(.data(frame))
+        do {
+            try await task.send(.data(frame))
+        } catch {
+            signalClosed()
+            throw TransportError.closed
+        }
     }
 
     public func receive() async throws -> Data {
@@ -49,6 +59,7 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
         do {
             message = try await task.receive()
         } catch {
+            signalClosed()
             throw TransportError.closed
         }
         switch message {
@@ -57,13 +68,42 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
         case .string:
             // Post-admission frames are always binary; a text frame here is the
             // relay closing or a protocol error.
+            signalClosed()
             throw TransportError.malformedFrame
         @unknown default:
+            signalClosed()
             throw TransportError.malformedFrame
         }
     }
 
     public func close() async {
+        cancelAndSignalClosed()
+    }
+
+    /// Resolves when this connection is gone. Returns immediately if it already
+    /// is. Never throws. Also returns if the awaiting task is cancelled, so a
+    /// listener tearing down can unblock an accept() that is waiting on a still
+    /// live connection without having to close that connection.
+    func waitUntilClosed() async {
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                let alreadyClosed = lock.withLock { () -> Bool in
+                    if closeSignaled { return true }
+                    closeWaiters.append(cont)
+                    return false
+                }
+                if alreadyClosed { cont.resume() }
+            }
+        } onCancel: {
+            // Resolve waiters; does not cancel the socket, so a live connection
+            // handed to a bridge keeps working.
+            signalClosed()
+        }
+    }
+
+    /// Cancel the socket and mark the connection gone. Idempotent; safe to call
+    /// from synchronous teardown (listener.stop()).
+    func cancelAndSignalClosed() {
         let shouldCancel = lock.withLock { () -> Bool in
             if closed { return false }
             closed = true
@@ -72,12 +112,25 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
         if shouldCancel {
             task.cancel(with: .goingAway, reason: nil)
         }
+        signalClosed()
+    }
+
+    private func signalClosed() {
+        let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
+            if closeSignaled { return [] }
+            closeSignaled = true
+            let w = closeWaiters
+            closeWaiters = []
+            return w
+        }
+        for w in waiters { w.resume() }
     }
 
     deinit {
         if !closed {
             task.cancel(with: .goingAway, reason: nil)
         }
+        signalClosed()
     }
 }
 
@@ -194,6 +247,14 @@ public struct RelayTransportConnector: TransportConnector {
 /// Mac side: park in the relay room as the mac, then wait for the phone to send
 /// its first frame before returning, so accept() resolves only when a peer is
 /// actually present (matching local-network accept semantics).
+///
+/// The relay room has exactly one mac slot, and a new park displaces the
+/// current holder (newest-wins). So unlike a local-network listener, this one
+/// must NOT park again while a connection it already handed out is still live,
+/// or it would displace its own bridge. accept() therefore serializes: the
+/// second and later calls wait for the previously-issued transport to close
+/// before parking. A reconnecting phone is surfaced when that transport ends
+/// (the relay closes the mac socket once the phone's side goes away).
 public final class RelayTransportListener: TransportListener, @unchecked Sendable {
     public let transportName = "relay"
     private let relayOrigin: String
@@ -203,6 +264,7 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
     private let lock = UnfairLock()
     private var stopped = false
     private var current: URLSessionWebSocketTask?
+    private var previous: RelayTransport?
 
     /// - onParked: invoked once admission completes and the listener is parked
     ///   in the room (before it blocks awaiting the peer's first frame). The
@@ -221,16 +283,30 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
         if lock.withLock({ stopped }) {
             throw TransportError.closed
         }
+        // One mac slot, newest-wins: do not park again until the connection we
+        // last handed out has ended, or we would displace our own live bridge.
+        // The wait returns on cancellation too (stop() cancels the accept task),
+        // and crucially does NOT close that live connection.
+        if let prev = lock.withLock({ previous }) {
+            await prev.waitUntilClosed()
+        }
+        if Task.isCancelled || lock.withLock({ stopped }) {
+            throw TransportError.closed
+        }
         let url = try RelayAdmissionClient.socketURL(relayOrigin: relayOrigin)
         var request = URLRequest(url: url)
         request.setValue(roomName, forHTTPHeaderField: "x-relay-room")
         let task = session.webSocketTask(with: request)
+        // `current` is the in-flight park (a socket being admitted / awaiting the
+        // peer's first frame), NOT a handed-out connection. It is cleared the
+        // moment accept() returns, so stop() never cancels a live bridge.
         lock.withLock { current = task }
 
         // In a combined-listener race, the loser's accept task is cancelled;
         // tear the parked socket down so the mac releases the room's mac slot
         // instead of leaving a dangling park.
         return try await withTaskCancellationHandler {
+            defer { lock.withLock { if current === task { current = nil } } }
             _ = try await RelayAdmissionClient.admit(task: task, role: .mac) { _ in
                 RelayAdmission.Proof(ticket: nil, signature: nil)
             }
@@ -247,17 +323,24 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
             case .string: throw TransportError.malformedFrame
             @unknown default: throw TransportError.malformedFrame
             }
-            return RelayTransport(task: task, firstFrame: firstFrame)
+            let transport = RelayTransport(task: task, firstFrame: firstFrame)
+            lock.withLock { previous = transport }
+            return transport
         } onCancel: {
             task.cancel(with: .goingAway, reason: nil)
         }
     }
 
     public func stop() {
+        // Cancel only the in-flight park, never a handed-out (live) connection:
+        // that one belongs to the bridge, which tears it down on its own. A
+        // blocked accept() is unblocked by cancelling its task (the acceptLoop
+        // does this), which makes waitUntilClosed return.
         let task = lock.withLock { () -> URLSessionWebSocketTask? in
             stopped = true
             let t = current
             current = nil
+            previous = nil
             return t
         }
         task?.cancel(with: .goingAway, reason: nil)

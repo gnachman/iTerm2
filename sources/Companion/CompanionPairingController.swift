@@ -127,10 +127,12 @@ final class CompanionPairingController: NSObject {
             DLog("Companion: not listening; AI features are unavailable")
             return
         }
-        // Note: no bridge==nil guard. The listener stays up even while a phone
-        // is connected, because a phone returning from a network outage
-        // reconnects while the old TCP session can still look alive here.
-        guard acceptTask == nil, let pid = pairedPID else {
+        // Park only when nothing is connected. The relay room has a single mac
+        // slot, so parking while a bridge is live would displace it. The
+        // bridge's onClose nils `bridge` before calling here, so a genuine
+        // reconnect (after the connection is gone) still proceeds; only callers
+        // firing while connected (launch races, gate changes) are held off.
+        guard acceptTask == nil, bridge == nil, let pid = pairedPID else {
             return
         }
         do {
@@ -361,11 +363,21 @@ final class CompanionPairingController: NSObject {
                 }
                 pairedPID = code.pairingID
                 onPaired?()
-                // Keep accepting: this is what lets a phone reconnect after a
-                // network outage the mac never noticed.
+                // Connected: stop accepting now. The relay room has a single mac
+                // slot, so parking again while connected would displace this very
+                // connection (newest-wins). The next park happens only after this
+                // connection is gone, driven by the bridge's onClose ->
+                // resumePairedListeningIfNeeded above. (When Bonjour returns as a
+                // parallel transport, this can keep accepting again.)
+                acceptTask = nil
+                return
             } catch {
                 DLog("Companion pairing: handshake failed: \(error); still listening")
                 onStatus?("Waiting for your iPhone…")
+                // The parked socket was consumed by the failed handshake; close
+                // it so the next accept() can park a fresh one (and the relay
+                // listener's wait-for-close serialization is released).
+                await transport.close()
             }
         }
     }

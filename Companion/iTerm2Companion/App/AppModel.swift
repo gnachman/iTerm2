@@ -385,7 +385,10 @@ final class AppModel {
             while true {
                 attempt += 1
                 do {
-                    try await establish(code: code)
+                    try await establish(code: code,
+                                        handshakeTimeout: isReconnect
+                                            ? Self.reconnectHandshakeTimeout
+                                            : Self.firstPairHandshakeTimeout)
                     pairingStatus = "Loading chats"
                     companionLog("Pairing succeeded; loading home")
                     try await loadHome()
@@ -398,10 +401,12 @@ final class AppModel {
                     companionLog("Pairing attempt \(attempt) failed: \(String(describing: error))")
                     if isReconnect {
                         // Transient network trouble must never dead-end into
-                        // re-pairing; keep trying until the user cancels.
+                        // re-pairing; keep trying until the user cancels. Retry
+                        // quickly: the mac may still be relaunching, and each
+                        // attempt re-sends a fresh handshake until it lands.
                         pairingStatus = "Mac not found yet; retrying (attempt \(attempt + 1))"
                         do {
-                            try await Task.sleep(nanoseconds: 5_000_000_000)
+                            try await Task.sleep(nanoseconds: Self.reconnectRetryDelayNanos)
                             continue
                         } catch {
                             companionLog("Pairing retry loop cancelled")
@@ -436,7 +441,23 @@ final class AppModel {
         phase = .launch
     }
 
-    private func establish(code: PairingCode) async throws {
+    /// Seconds to wait for the Noise handshake before giving up an attempt.
+    /// First pairing is generous (the user is watching, the network may be
+    /// settling). Reconnect is short: over the relay the handshake is ~1s when
+    /// the mac is ready, and when it is NOT (mac still relaunching, or a stale
+    /// mac socket that swallows the first message), a fast failure lets us retry
+    /// promptly instead of stalling ~15s on a message that will never be answered.
+    private static let firstPairHandshakeTimeout: TimeInterval = 15
+    private static let reconnectHandshakeTimeout: TimeInterval = 6
+    /// Delay between reconnect attempts. The relay does not notify the phone
+    /// when the mac (re)appears and drops a handshake sent before the mac is
+    /// parked, so reconnect is a poll: keep re-sending a fresh handshake on this
+    /// cadence until one lands on a ready mac. Kept short so a mac that just
+    /// finished relaunching is picked up quickly.
+    private static let reconnectRetryDelayNanos: UInt64 = 2_000_000_000
+
+    private func establish(code: PairingCode,
+                           handshakeTimeout: TimeInterval = firstPairHandshakeTimeout) async throws {
         // A retry (PairingView "Try Again") can re-enter establish after a prior
         // attempt already built a client. Tear the old one down so its
         // connection and receive loop do not linger.
@@ -453,7 +474,7 @@ final class AppModel {
             timeout: 30)
         companionLog("Transport connected; starting Noise handshake…")
         pairingStatus = "Securing the connection"
-        let channel = try await withTimeout(15, "Noise handshake") {
+        let channel = try await withTimeout(handshakeTimeout, "Noise handshake") {
             try await NoiseHandshake.perform(
                 role: .initiator,
                 transport: transport,
@@ -543,7 +564,8 @@ final class AppModel {
             while true {
                 attempt += 1
                 do {
-                    try await establish(code: code)
+                    try await establish(code: code,
+                                        handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
                     reportPushStatus()
                     try await refreshLists()
@@ -567,7 +589,7 @@ final class AppModel {
                     // trouble must not dump them on the pairing screen.
                     companionLog("Reconnect attempt \(attempt) failed: \(String(describing: error))")
                     do {
-                        try await Task.sleep(nanoseconds: 5_000_000_000)
+                        try await Task.sleep(nanoseconds: Self.reconnectRetryDelayNanos)
                         continue
                     } catch {
                         companionLog("Reconnect loop cancelled")

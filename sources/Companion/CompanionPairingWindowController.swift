@@ -263,9 +263,15 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     func windowWillClose(_ notification: Notification) {
         stopGatePolling()
         currentGate = nil
-        // Only stop the QR advertisement; a connected bridge (or the silent
-        // reconnect listener) outlives the window.
+        if controller.hasPairedDevice {
+            // A pairing happened: the listener that handled it keeps running in
+            // the background to serve the connection and accept reconnects.
+            // Do NOT stop and restart it: over the single-slot relay a restart
+            // parks a fresh mac socket that displaces the live connection, which
+            // would tear down the bridge moments after pairing. Leave it be.
+            return
+        }
+        // Window dismissed without pairing: stop advertising the QR.
         controller.stopAdvertising()
-        controller.resumePairedListeningIfNeeded()
     }
 }
