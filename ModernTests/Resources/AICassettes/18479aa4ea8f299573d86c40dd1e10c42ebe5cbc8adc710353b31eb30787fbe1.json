@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"},{\"content\":[{\"id\":\"toolu_01UBg8rfA9C2ocmpcmoFuioN\",\"input\":{},\"name\":\"get_random_word\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"MAGENTA-LARK-77\",\"tool_use_id\":\"toolu_01UBg8rfA9C2ocmpcmoFuioN\",\"type\":\"tool_result\"}],\"role\":\"user\"}],\"model\":\"claude-sonnet-4-0\",\"temperature\":0,\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"input_schema\":{\"properties\":{},\"required\":[],\"type\":\"object\"},\"name\":\"get_random_word\"}]}",
+  "key" : "18479aa4ea8f299573d86c40dd1e10c42ebe5cbc8adc710353b31eb30787fbe1",
+  "response" : {
+    "data" : "{\"model\":\"claude-sonnet-4-20250514\",\"id\":\"msg_01SJB1YgUsmoQHACVh9jZ2nB\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I called the get_random_word function and it returned \\\"MAGENTA-LARK-77\\\". That's quite an interesting and colorful made-up word! The combination of a vibrant color, a songbird, and numbers creates a unique identifier that could work well as a creative project name or code word.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":439,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":70,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

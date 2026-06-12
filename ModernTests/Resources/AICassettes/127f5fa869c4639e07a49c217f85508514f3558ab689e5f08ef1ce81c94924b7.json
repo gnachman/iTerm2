@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":[{\"text\":\"Quote the text inside the <magic> element shown.\",\"type\":\"text\"},{\"text\":\"<?xml version=\\\"1.0\\\"?><root><magic>pinecone-42<\\\/magic><\\\/root>\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-haiku-4-5\",\"temperature\":0}",
+  "key" : "127f5fa869c4639e07a49c217f85508514f3558ab689e5f08ef1ce81c94924b7",
+  "response" : {
+    "data" : "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01F9abWKV9UVPNrCXXBzdUGc\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"The text inside the <magic> element is:\\n\\n**pinecone-42**\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":42,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":21,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

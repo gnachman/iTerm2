@@ -121,6 +121,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 
 :doc:`movetab` — Demonstrates moving tabs among windows.
 
+:doc:`apply_layout` — Demonstrates moving sessions between tabs, windows, and split panes via :meth:`iterm2.App.async_apply_layout`.
+
 :doc:`sorttabs` — Demonstrates reordering tabs in a window.
 
 :doc:`mrutabs` — Demonstrates monitoring for changes in keyboard focus and reordering tabs in a window. This script keeps tabs always in most-recently-used order, so the first tab is always selected.
@@ -171,6 +173,8 @@ Here are a collection of working scripts for you to crib from. While they are ca
 :doc:`ccs` — Demonstrates custom control sequences that identify the session that received the sequence.
 
 :doc:`oneshot` — Demonstrates registering a function and showing a modal alert.
+
+:doc:`open_browser_tab` — Demonstrates creating a browser tab and loading a URL in it.
 
 ----
 

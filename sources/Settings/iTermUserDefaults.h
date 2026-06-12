@@ -1,0 +1,109 @@
+//
+//  iTermUserDefaults.h
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 4/16/19.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+extern NSString *const kSelectionRespectsSoftBoundariesKey;
+extern NSString *const iTermShowSessionStatusInTabSubtitleDidChange;
+
+@interface iTermUserDefaults : NSObject
+
+// Call this before any access to +userDefaults to use a custom suite instead of standardUserDefaults.
++ (void)setCustomSuiteName:(nullable NSString *)suiteName;
+
+// Returns the custom suite name if one was set via setCustomSuiteName:, otherwise nil.
++ (nullable NSString *)customSuiteName;
+
+// Returns the custom suite if set, otherwise standardUserDefaults.
++ (NSUserDefaults *)userDefaults;
+
++ (void)performMigrations;
+
+@property (class, nonatomic, copy) NSArray<NSString *> *searchHistory;
+@property (class, nonatomic) BOOL secureKeyboardEntry;
+@property (class, nonatomic) BOOL enableAutomaticProfileSwitchingLogging;
+
+typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
+    iTermAppleWindowTabbingModeAlways,
+    iTermAppleWindowTabbingModeFullscreen,
+    iTermAppleWindowTabbingModeManual
+};
+
+@property (class, nonatomic, readonly) iTermAppleWindowTabbingMode appleWindowTabbingMode;
+@property (class, nonatomic) BOOL haveBeenWarnedAboutTabDockSetting;
+@property (class, nonatomic) BOOL requireAuthenticationAfterScreenLocks;
+@property (class, nonatomic) BOOL openTmuxDashboardIfHiddenWindows;
+@property (class, nonatomic) BOOL claudeCodeWorkgroupUpsellSuppressed;
+@property (class, nonatomic) BOOL claudeCodeHooksInstalled;
+@property (class, nonatomic) BOOL claudeCodeTriggersInstalled;
+// Sticky flag: set to YES when the user successfully installs the
+// cc-status hook, cleared only by the Uninstall menu flow. Distinct
+// from claudeCodeHooksInstalled, which is reconciled against disk on
+// every launch — this one preserves the "user once completed setup"
+// signal so we can detect when something else (e.g. Claude Code
+// rewriting ~/.claude/settings.json) silently strips our hook.
+@property (class, nonatomic) BOOL claudeCodeIntegrationCompleted;
+
+// Whether session-status text (from cc-status, OSC 21337, the SetTabStatus
+// trigger, or iterm2.set_status) is woven into the tab’s subtitle and
+// allowed to tint that subtitle text. The colored dot on the tab is
+// independent and always visible regardless of this setting. Default YES
+// preserves the existing behavior. Posted as
+// iTermShowSessionStatusInTabSubtitleDidChange when toggled so tabs can
+// refresh their labels live.
+@property (class, nonatomic) BOOL showSessionStatusInTabSubtitle;
+@property (class, nonatomic) BOOL haveExplainedHowToAddTouchbarControls;
+
+// Set to YES after the one-time alert that explains the ⌘⇧T shortcut now
+// performs Undo Close (it formerly toggled Show Tabs in Full Screen, which has
+// moved to ⌘⇧U). NoSync because it is migration state, not a synced setting.
+@property (class, nonatomic) BOOL haveWarnedAboutUndoCloseShortcutChange;
+@property (class, nonatomic) BOOL ignoreSystemWindowRestoration;
+@property (class, nonatomic) NSUInteger globalSearchMode;
+@property (class, nonatomic) BOOL addTriggerInstant;
+@property (class, nonatomic) BOOL addTriggerUpdateProfile;
+@property (class, nonatomic, copy) NSString *lastSystemPythonVersionRequirement;
+@property (class, nonatomic) BOOL probeForPassword;
+@property (class, nonatomic, copy, nullable) NSString *importPath;
+@property (class, nonatomic) BOOL shouldSendReturnAfterPassword;
+@property (class, nonatomic, copy, nullable) NSDictionary<NSString *, NSNumber *> *windowCornerRadiusCache;
+@property (class, nonatomic, copy, nullable) NSData *workgroupsData;
+
+// Latched once the one-time backfill of default keyboard shortcuts
+// onto pre-existing workgroup .navigation / .reload toolbar items
+// has run. Stored locally (NoSync prefix) so it doesn't push
+// migration state through synced prefs.
+@property (class, nonatomic) BOOL workgroupShortcutsBackfilled;
+
+// Latched once the one-time migration that flips the Claude Code
+// workgroup's Diff peer mode from .regular to .diff has run.
+// NoSync for the same reason as workgroupShortcutsBackfilled.
+@property (class, nonatomic) BOOL claudeCodeDiffModeBackfilled;
+
+// Latched once the one-time migration that rewrites the Claude Code
+// workgroup's Code Review command to read its system prompt from the
+// user-editable temp file (codeReviewSystemPromptFile) instead of the
+// bundled code-review-system-prompt.txt has run. NoSync for the same
+// reason as workgroupShortcutsBackfilled.
+@property (class, nonatomic) BOOL claudeCodeReviewSystemPromptCommandBackfilled;
+
+// Returns whether the previous process exited cleanly. The value is latched on
+// first access: the on-disk flag is read then immediately reset so that if this
+// process crashes before +markShutdownAsClean is called, the next launch will
+// correctly see the previous shutdown as unclean. Subsequent calls return the
+// cached value from first access.
+@property (class, nonatomic, readonly) BOOL lastShutdownWasClean;
+
+// Call during clean application termination to record that this launch ended
+// cleanly. Writes to disk and synchronizes.
++ (void)markShutdownAsClean;
+
+@end
+
+NS_ASSUME_NONNULL_END

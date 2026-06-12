@@ -4,6 +4,13 @@
 
 (function() {
     'use strict';
+    // Skip the Notification polyfill in challenge frames so the probe
+    // sees the unmodified native Notification surface. We recompute the
+    // challenge-frame test here rather than reading a window flag,
+    // because any such flag would itself be a detectable fingerprint.
+    if ({{INCLUDE:challenge-frame-detection.js}}) {
+        return;
+    }
     try {
         // Generate a cryptographically secure random token for this session
         // This token must be included in all callbacks from native code

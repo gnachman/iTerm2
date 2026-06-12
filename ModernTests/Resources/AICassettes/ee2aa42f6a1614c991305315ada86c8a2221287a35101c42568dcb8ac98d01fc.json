@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash-lite:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{},\"name\":\"get_random_word\"}}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"get_random_word\",\"response\":{\"output\":\"MAGENTA-LARK-77\"}}}],\"role\":\"user\"}],\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}}]}]}",
+  "key" : "ee2aa42f6a1614c991305315ada86c8a2221287a35101c42568dcb8ac98d01fc",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"The random word is MAGENTA-LARK-77.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 105,\n    \"candidatesTokenCount\": 13,\n    \"totalTokenCount\": 118,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 105\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash-lite\",\n  \"responseId\": \"XPAlaobmDaSh1MkPp7nQmQQ\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

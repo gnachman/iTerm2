@@ -82,3 +82,4 @@ extension iTermGraphEncoder {
         )
     }
 }
+

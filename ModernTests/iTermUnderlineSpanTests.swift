@@ -68,6 +68,10 @@ final class iTermUnderlineSpanTests: XCTestCase {
         )
     }
 
+    private func asciiStyle(_ style: iTermMetalGlyphAttributesUnderline) -> Int32 {
+        return Int32(style.rawValue) | Int32(iTermMetalUnderlineSpanASCIIFlag)
+    }
+
     private let red = simd_make_float4(1, 0, 0, 1)
     private let green = simd_make_float4(0, 1, 0, 1)
     private let yellow = simd_make_float4(1, 1, 0, 1)  // iTermAnnotationUnderlineColor
@@ -105,7 +109,7 @@ final class iTermUnderlineSpanTests: XCTestCase {
         XCTAssertEqual(s[0].row, 3)
         XCTAssertEqual(s[0].startColumn, 2)
         XCTAssertEqual(s[0].endColumn, 5)
-        XCTAssertEqual(s[0].style, iTermMetalGlyphAttributesUnderlineSingle)
+        XCTAssertEqual(s[0].style, asciiStyle(iTermMetalGlyphAttributesUnderlineSingle))
         XCTAssert(simd_equal(s[0].color, red))
         XCTAssertEqual(strikethroughs.length, 0)
     }
@@ -127,10 +131,10 @@ final class iTermUnderlineSpanTests: XCTestCase {
         XCTAssertEqual(s.count, 2)
         XCTAssertEqual(s[0].startColumn, 0)
         XCTAssertEqual(s[0].endColumn, 2)
-        XCTAssertEqual(s[0].style, iTermMetalGlyphAttributesUnderlineSingle)
+        XCTAssertEqual(s[0].style, asciiStyle(iTermMetalGlyphAttributesUnderlineSingle))
         XCTAssertEqual(s[1].startColumn, 3)
         XCTAssertEqual(s[1].endColumn, 5)
-        XCTAssertEqual(s[1].style, iTermMetalGlyphAttributesUnderlineDouble)
+        XCTAssertEqual(s[1].style, asciiStyle(iTermMetalGlyphAttributesUnderlineDouble))
     }
 
     func testColorChangeSplitsSpan() {
@@ -172,7 +176,7 @@ final class iTermUnderlineSpanTests: XCTestCase {
         XCTAssertEqual(s.count, 1)
         XCTAssertEqual(s[0].startColumn, 1)
         XCTAssertEqual(s[0].endColumn, 3)
-        XCTAssertEqual(s[0].style, iTermMetalGlyphAttributesUnderlineStrikethrough)
+        XCTAssertEqual(s[0].style, asciiStyle(iTermMetalGlyphAttributesUnderlineStrikethrough))
     }
 
     func testUnderlineAndStrikethroughTogether() {
@@ -191,8 +195,8 @@ final class iTermUnderlineSpanTests: XCTestCase {
         let st = spans(from: strikethroughs)
         XCTAssertEqual(u.count, 1)
         XCTAssertEqual(st.count, 1)
-        XCTAssertEqual(u[0].style, iTermMetalGlyphAttributesUnderlineSingle)
-        XCTAssertEqual(st[0].style, iTermMetalGlyphAttributesUnderlineStrikethrough)
+        XCTAssertEqual(u[0].style, asciiStyle(iTermMetalGlyphAttributesUnderlineSingle))
+        XCTAssertEqual(st[0].style, asciiStyle(iTermMetalGlyphAttributesUnderlineStrikethrough))
     }
 
     func testMarkedRangeCreatesUnderline() {
@@ -211,7 +215,7 @@ final class iTermUnderlineSpanTests: XCTestCase {
         XCTAssertEqual(s.count, 1)
         XCTAssertEqual(s[0].startColumn, 3)
         XCTAssertEqual(s[0].endColumn, 6)
-        XCTAssertEqual(s[0].style, iTermMetalGlyphAttributesUnderlineSingle)
+        XCTAssertEqual(s[0].style, asciiStyle(iTermMetalGlyphAttributesUnderlineSingle))
     }
 
     func testAnnotationUsesYellowColor() {

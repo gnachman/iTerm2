@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/responses\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"input\":[{\"content\":[{\"text\":\"What magic phrase is inside the file in this archive? Quote it verbatim.\",\"type\":\"input_text\"},{\"file_data\":\"data:application\\\/zip;base64,UEsDBBQAAAAIAGJgyFzcVEFYkgAAACJMAAAJABwAbWFnaWMudHh0VVQJAAPoESdq6BEnanV4CwABBPUBAAAEFAAAAO3OsQ2DMBRAwZ4p\\\/gKhiDJKFrDAgCWwLcj+SiZITXH9Pen1NM+lrrGXmmNpZ8x52dMnx9SOfubrKq2O0SmKoiiKoiiKoiiKoiiKoiiKoiiKoiiKoiiKoqibqeG95TjSWqbo25muHOWK\\\/kumVvPj9RyHu55TFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVR\\\/9UXUEsBAh4DFAAAAAgAYmDIXNxUQViSAAAAIkwAAAkAGAAAAAAAAQAAAKSBAAAAAG1hZ2ljLnR4dFVUBQAD6BEnanV4CwABBPUBAAAEFAAAAFBLBQYAAAAAAQABAE8AAADVAAAAAAA=\",\"filename\":\"magic.zip\",\"type\":\"input_file\"}],\"role\":\"user\",\"type\":\"message\"}],\"max_output_tokens\":16384,\"model\":\"gpt-4o-mini\",\"stream\":false,\"tool_choice\":\"none\",\"tools\":[]}",
+  "key" : "7dd838ffc2423677271a26ac5791d8e838a6af6d7290773bebf85f9ad63bdae6",
+  "response" : {
+    "data" : "{\n  \"error\": {\n    \"message\": \"Invalid file data: 'input[0].content[1].file_data'. Expected a base64-encoded data URL with a valid file MIME type (e.g. 'data:text\/plain;base64,SGVsbG8sIFdvcmxkIQ=='), but got unsupported MIME type 'application\/zip'. Please see https:\/\/platform.openai.com\/docs\/assistants\/tools\/file-search#supported-files for supported file types.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"input[0].content[1].file_data\",\n    \"code\": \"invalid_value\"\n  }\n}",
+    "error" : "HTTP request failed with status 400."
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

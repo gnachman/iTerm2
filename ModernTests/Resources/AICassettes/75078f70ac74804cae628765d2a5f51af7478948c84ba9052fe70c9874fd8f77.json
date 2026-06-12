@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":16384,\"messages\":[{\"content\":[{\"text\":\"Quote the text inside the <text> element shown.\",\"type\":\"text\"},{\"text\":\"<iterm2:attachment file=\\\"magic.svg\\\" type=\\\"image\\\/svg+xml\\\">\\n<svg xmlns=\\\"http:\\\/\\\/www.w3.org\\\/2000\\\/svg\\\" viewBox=\\\"0 0 200 20\\\"><text x=\\\"0\\\" y=\\\"15\\\">pinecone-42<\\\/text><\\\/svg>\\n<\\\/iterm2:attachment>\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"gpt-4o-mini\",\"stream\":false,\"temperature\":0}",
+  "key" : "75078f70ac74804cae628765d2a5f51af7478948c84ba9052fe70c9874fd8f77",
+  "response" : {
+    "data" : "{\n  \"id\": \"chatcmpl-DoG7kM13nkxCnNHQDe0YslxaWuywg\",\n  \"object\": \"chat.completion\",\n  \"created\": 1780870752,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"The text inside the `<text>` element is \\\"pinecone-42\\\".\",\n        \"refusal\": null,\n        \"annotations\": []\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 85,\n    \"completion_tokens\": 15,\n    \"total_tokens\": 100,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\": 0,\n      \"audio_tokens\": 0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\": 0,\n      \"audio_tokens\": 0,\n      \"accepted_prediction_tokens\": 0,\n      \"rejected_prediction_tokens\": 0\n    }\n  },\n  \"service_tier\": \"default\",\n  \"system_fingerprint\": \"fp_f8d40babb7\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

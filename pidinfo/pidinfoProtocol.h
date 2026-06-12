@@ -47,9 +47,19 @@ NS_ASSUME_NONNULL_BEGIN
                        executable:(BOOL)executable
                         withReply:(void (^)(NSArray<NSString *> * _Nullable))reply;
 
+// `gitBase` selects the ref the file-status comparison runs against.
+// Pass nil (or "HEAD") for the legacy `git status`-style output —
+// the cheap libgit2 status_list pass that compares working tree to
+// HEAD/index. Any other value (a branch, tag, or revision spec like
+// "origin/master^^^") triggers the diff-against-base path: libgit2
+// resolves the spec, diffs its tree against working-tree-with-index,
+// and emits one fileStatuses entry per delta. Counts (dirty/adds/
+// deletes) keep their HEAD-relative meaning regardless of gitBase.
 - (void)requestGitStateForPath:(NSString *)path
+                       gitBase:(NSString * _Nullable)gitBase
                        timeout:(int)timeout
-                    completion:(void (^)(iTermGitState * _Nullable))completion;
+              includeDiffStats:(BOOL)includeDiffStats
+                    completion:(void (^)(iTermGitState * _Nullable, BOOL timedOut))completion;
 
 - (void)fetchRecentBranchesAt:(NSString *)path count:(NSInteger)maxCount completion:(void (^)(NSArray<NSString *> *))reply;
 
@@ -79,6 +89,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)fetchDirectoryListingOfPath:(NSString *)path
                          completion:(void (^)(NSArray<iTermDirectoryEntry *> *entries))completion;
+
+// Returns the calling user's login shell (the pw_shell field). Goes through
+// NSS > opendirectoryd, so it can hang if the daemon is wedged. That's why it
+// lives in the XPC service: the performRiskyBlock watchdog catches the wedge
+// without burning a thread in the main app.
+- (void)fetchUserShellWithReply:(void (^)(NSString * _Nullable shell))reply;
 
 @end
 

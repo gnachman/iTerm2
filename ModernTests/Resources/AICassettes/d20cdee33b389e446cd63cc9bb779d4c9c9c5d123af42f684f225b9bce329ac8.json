@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"function_call\":\"auto\",\"max_tokens\":127839,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"},{\"reasoning_content\":\"The user wants me to call the get_random_word tool and then include the word it returns in my reply. Let me do that.\",\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"arguments\":\"{}\",\"name\":\"get_random_word\"},\"id\":\"call_00_9ihz3E8JUes8wrbkM6yK9678\",\"type\":\"function\"}]},{\"content\":\"MAGENTA-LARK-77\",\"role\":\"tool\",\"tool_call_id\":\"call_00_9ihz3E8JUes8wrbkM6yK9678\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"enabled\"},\"tools\":[{\"function\":{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "d20cdee33b389e446cd63cc9bb779d4c9c9c5d123af42f684f225b9bce329ac8",
+  "response" : {
+    "data" : "{\"id\":\"160f0c2c-8779-48a3-9d46-3fa9c884fb96\",\"object\":\"chat.completion\",\"created\":1780870923,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Here's the random word I got: **MAGENTA-LARK-77** — quite a colorful and whimsical combination! It sounds like it could be the code name for a secret project or maybe a rare bird species spotted only at dusk. 😄\",\"reasoning_content\":\"The tool returned \\\"MAGENTA-LARK-77\\\". I'll include this exact word in my reply.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":373,\"completion_tokens\":77,\"total_tokens\":450,\"prompt_tokens_details\":{\"cached_tokens\":256},\"completion_tokens_details\":{\"reasoning_tokens\":23},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":117},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

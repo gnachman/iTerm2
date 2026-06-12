@@ -1446,7 +1446,7 @@ final class PreconvertedStringTests: XCTestCase {
         sessionA.screen = screenA
         screenA.delegate = sessionA
         screenA.performBlock(joinedThreads: { _, mutableState, _ in
-            guard let ms = mutableState else { return }
+            let ms = mutableState
             ms.terminalEnabled = true
             ms.terminal!.termType = "xterm"
             screenA.destructivelySetScreenWidth(20, height: 5, mutableState: ms)
@@ -1485,7 +1485,7 @@ final class PreconvertedStringTests: XCTestCase {
         tokenPre.pointee.buffer = nil
 
         screenB.performBlock(joinedThreads: { _, mutableState, _ in
-            guard let ms = mutableState else { return }
+            let ms = mutableState
             ms.terminalEnabled = true
             ms.terminal!.termType = "xterm"
             screenB.destructivelySetScreenWidth(20, height: 5, mutableState: ms)
@@ -1520,7 +1520,7 @@ final class PreconvertedStringTests: XCTestCase {
         sessionA.screen = screenA
         screenA.delegate = sessionA
         screenA.performBlock(joinedThreads: { _, mutableState, _ in
-            guard let ms = mutableState else { return }
+            let ms = mutableState
             ms.terminalEnabled = true
             ms.terminal!.termType = "xterm"
             screenA.destructivelySetScreenWidth(20, height: 5, mutableState: ms)
@@ -1559,7 +1559,7 @@ final class PreconvertedStringTests: XCTestCase {
         tokenPre.pointee.buffer = nil
 
         screenB.performBlock(joinedThreads: { _, mutableState, _ in
-            guard let ms = mutableState else { return }
+            let ms = mutableState
             ms.terminalEnabled = true
             ms.terminal!.termType = "xterm"
             screenB.destructivelySetScreenWidth(20, height: 5, mutableState: ms)
@@ -1603,7 +1603,7 @@ final class PreconvertedStringTests: XCTestCase {
         sessionA.screen = screenA
         screenA.delegate = sessionA
         screenA.performBlock(joinedThreads: { _, mutableState, _ in
-            guard let ms = mutableState else { return }
+            let ms = mutableState
             ms.terminalEnabled = true
             ms.terminal!.termType = "xterm"
             screenA.destructivelySetScreenWidth(20, height: 5, mutableState: ms)
@@ -1652,7 +1652,7 @@ final class PreconvertedStringTests: XCTestCase {
         tokenPre.pointee.buffer = nil
 
         screenB.performBlock(joinedThreads: { _, mutableState, _ in
-            guard let ms = mutableState else { return }
+            let ms = mutableState
             ms.terminalEnabled = true
             ms.terminal!.termType = "xterm"
             screenB.destructivelySetScreenWidth(20, height: 5, mutableState: ms)

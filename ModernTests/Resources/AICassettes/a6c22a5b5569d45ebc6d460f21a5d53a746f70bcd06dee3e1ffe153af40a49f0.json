@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"function_call\":\"auto\",\"max_tokens\":8000,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"}],\"model\":\"deepseek-reasoner\",\"stream\":false,\"temperature\":0,\"tools\":[{\"function\":{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "a6c22a5b5569d45ebc6d460f21a5d53a746f70bcd06dee3e1ffe153af40a49f0",
+  "response" : {
+    "data" : "{\"id\":\"c05a0edc-2495-459a-a896-8b1e690591ef\",\"object\":\"chat.completion\",\"created\":1780870943,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"The user wants me to call the get_random_word tool and then include the returned word in my reply.\",\"tool_calls\":[{\"index\":0,\"id\":\"call_00_HPTh1FYIX4aTaPjcE1Ql4406\",\"type\":\"function\",\"function\":{\"name\":\"get_random_word\",\"arguments\":\"{}\"}}]},\"logprobs\":null,\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":297,\"completion_tokens\":50,\"total_tokens\":347,\"prompt_tokens_details\":{\"cached_tokens\":256},\"completion_tokens_details\":{\"reasoning_tokens\":21},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":41},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

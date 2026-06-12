@@ -349,12 +349,12 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (void)setStringValue:(NSString *)aString {
+    // Always split a \n-bearing label into title + subtitleString. Styles
+    // that don't support multi-line labels recompose them inline when
+    // building cached title inputs, so the cell's state stays valid across
+    // style/height changes (e.g., Compact → Minimal at runtime).
     const NSRange newlineRange = [aString rangeOfString:@"\n"];
     if (newlineRange.location != NSNotFound) {
-        if (![[self psmTabControlView] supportsMultiLineLabels]) {
-            [self reallySetStringValue:[aString stringByReplacingCharactersInRange:newlineRange withString:@" "]];
-            return;
-        }
         NSString *firstLine = [aString substringToIndex:newlineRange.location];
         NSString *subtitle = [aString substringFromIndex:NSMaxRange(newlineRange)];
         [self reallySetStringValue:firstLine];
@@ -362,6 +362,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         return;
     }
     [self reallySetStringValue:aString];
+    [self setSubtitleString:nil];
 }
 
 - (void)reallySetStringValue:(NSString *)aString {

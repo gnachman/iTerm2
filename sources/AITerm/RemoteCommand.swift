@@ -1,0 +1,721 @@
+//
+//  RemoteCommand.swift
+//  iTerm2
+//
+//  Created by George Nachman on 8/18/25.
+//
+
+// Generic wrapper around "a remote command the LLM wants to run".
+// Two flavors:
+//   - .classic: session-bound mode's typed RemoteCommand. Its Content
+//     enum drives permission checks, safety classification, markdown
+//     rendering, and the per-tool argument shape known at compile time.
+//   - .external: any other stack's tool call (today: the orchestration
+//     mode's tool surface). Args travel as opaque JSON. Renders via
+//     the wrapper's markdownDescription.
+//
+// Codable shape:
+//   - .classic encodes as a bare RemoteCommand (no envelope) so existing
+//     chat databases round-trip without migration.
+//   - .external encodes with a "kind": "external" discriminator on the
+//     same object level; init(from:) checks for it and routes
+//     accordingly, falling back to the legacy classic shape.
+enum RemoteCommandPayload {
+    case classic(RemoteCommand)
+    case external(ExternalRemoteCommand)
+
+    var llmMessage: LLM.Message {
+        switch self {
+        case .classic(let rc): rc.llmMessage
+        case .external(let ext): ext.llmMessage
+        }
+    }
+
+    // Tool name as the LLM sees it. For .classic this is the typed
+    // Content's functionName; for .external it's whatever the
+    // orchestrator's tool definition registered.
+    var name: String {
+        switch self {
+        case .classic(let rc): rc.content.functionName
+        case .external(let ext): ext.name
+        }
+    }
+
+    var markdownDescription: String {
+        switch self {
+        case .classic(let rc): rc.markdownDescription
+        case .external(let ext): ext.markdownDescription
+        }
+    }
+
+    // Convenience for AITerm-side readers that need typed Content
+    // access (safety check, permission category, etc.). Returns nil
+    // for external payloads — readers that don't have a sensible
+    // fallback should treat that as "skip this message".
+    var classic: RemoteCommand? {
+        if case .classic(let rc) = self { return rc }
+        return nil
+    }
+}
+
+struct ExternalRemoteCommand: Codable {
+    // Discriminator. Always "external"; used by RemoteCommandPayload's
+    // custom decoder to tell this shape apart from a bare RemoteCommand.
+    var kind: String = "external"
+    var llmMessage: LLM.Message
+    var name: String
+    var argsJSON: String
+    var markdownDescription: String
+}
+
+extension RemoteCommandPayload: Codable {
+    private enum DiscriminatorKey: String, CodingKey {
+        case kind
+    }
+
+    init(from decoder: Decoder) throws {
+        if let container = try? decoder.container(keyedBy: DiscriminatorKey.self),
+           let kind = try? container.decode(String.self, forKey: .kind),
+           kind == "external" {
+            let ext = try ExternalRemoteCommand(from: decoder)
+            self = .external(ext)
+            return
+        }
+        let rc = try RemoteCommand(from: decoder)
+        self = .classic(rc)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        switch self {
+        case .classic(let rc):
+            try rc.encode(to: encoder)
+        case .external(let ext):
+            try ext.encode(to: encoder)
+        }
+    }
+}
+
+struct RemoteCommand: Codable {
+    struct IsAtPrompt: Codable {}
+    struct ExecuteCommand: Codable { var command: String = "" }
+    struct GetLastExitStatus: Codable {}
+
+    struct GetCommandHistory: Codable { var limit: Int = 100 }
+    struct GetLastCommand: Codable {}
+    struct GetCommandBeforeCursor: Codable {}
+    struct SearchCommandHistory: Codable { var query: String = "" }
+    struct GetCommandOutput: Codable { var id: String = "" }
+
+    struct GetTerminalSize: Codable {}
+    struct GetShellType: Codable {}
+    struct DetectSSHSession: Codable {}
+    struct GetRemoteHostname: Codable {}
+    struct GetUserIdentity: Codable {}
+    struct GetCurrentDirectory: Codable {}
+
+    struct SetClipboard: Codable { var text: String = "" }
+    struct InsertTextAtCursor: Codable { var text: String = "" }
+    struct DeleteCurrentLine: Codable {}
+    struct GetManPage: Codable { var cmd: String = "" }
+    struct CreateFile: Codable {
+        var filename: String=""
+        var content: String=""
+    }
+    struct SearchBrowser: Codable { var query: String = "" }
+    struct LoadURL: Codable { var url: String = "" }
+    struct WebSearch: Codable { var query: String = "" }
+    struct GetURL: Codable {}
+    struct ReadWebPage: Codable {
+        var startingLineNumber: Int = 0
+        var numberOfLines: Int = 0
+    }
+    enum Content: Codable, CaseIterable {
+        static var allCases: [RemoteCommand.Content] {
+            return [.isAtPrompt(IsAtPrompt()),
+                    .executeCommand(ExecuteCommand()),
+                    .getLastExitStatus(GetLastExitStatus()),
+                    .getCommandHistory(GetCommandHistory()),
+                    .getLastCommand(GetLastCommand()),
+                    .getCommandBeforeCursor(GetCommandBeforeCursor()),
+                    .searchCommandHistory(SearchCommandHistory()),
+                    .getCommandOutput(GetCommandOutput()),
+                    .getTerminalSize(GetTerminalSize()),
+                    .getShellType(GetShellType()),
+                    .detectSSHSession(DetectSSHSession()),
+                    .getRemoteHostname(GetRemoteHostname()),
+                    .getUserIdentity(GetUserIdentity()),
+                    .getCurrentDirectory(GetCurrentDirectory()),
+                    .setClipboard(SetClipboard()),
+                    .insertTextAtCursor(InsertTextAtCursor()),
+                    .deleteCurrentLine(DeleteCurrentLine()),
+                    .getManPage(GetManPage()),
+                    .createFile(CreateFile()),
+                    .searchBrowser(SearchBrowser()),
+                    .loadURL(LoadURL()),
+                    .webSearch(WebSearch()),
+                    .getURL(GetURL()),
+                    .readWebPage(ReadWebPage())
+            ]
+        }
+
+        case isAtPrompt(IsAtPrompt)
+        case executeCommand(ExecuteCommand)
+        case getLastExitStatus(GetLastExitStatus)
+        case getCommandHistory(GetCommandHistory)
+        case getLastCommand(GetLastCommand)
+        case getCommandBeforeCursor(GetCommandBeforeCursor)
+        case searchCommandHistory(SearchCommandHistory)
+        case getCommandOutput(GetCommandOutput)
+        case getTerminalSize(GetTerminalSize)
+        case getShellType(GetShellType)
+        case detectSSHSession(DetectSSHSession)
+        case getRemoteHostname(GetRemoteHostname)
+        case getUserIdentity(GetUserIdentity)
+        case getCurrentDirectory(GetCurrentDirectory)
+        case setClipboard(SetClipboard)
+        case insertTextAtCursor(InsertTextAtCursor)
+        case deleteCurrentLine(DeleteCurrentLine)
+        case getManPage(GetManPage)
+        case createFile(CreateFile)
+        case searchBrowser(SearchBrowser)
+        case loadURL(LoadURL)
+        case webSearch(WebSearch)
+        case getURL(GetURL)
+        case readWebPage(ReadWebPage)
+        // When adding a new command be sure to update allCases.
+
+        enum PermissionCategory: String, Codable, CaseIterable {
+            case checkTerminalState = "Check Terminal State"
+            case runCommands = "Run Commands"
+            case viewHistory = "View History"
+            case writeToClipboard = "Write to the Clipboard"
+            case typeForYou = "Type for You"
+            case viewManpages = "View Manpages"
+            case writeToFilesystem = "Write to the File System"
+            case actInWebBrowser = "Act in Web Browser"
+
+            var isBrowserSpecific: Bool {
+                switch self {
+                case .checkTerminalState, .runCommands, .viewHistory, .writeToClipboard,
+                        .typeForYou, .viewManpages, .writeToFilesystem:
+                    false
+                case .actInWebBrowser:
+                    true
+                }
+            }
+
+            var autopopulationTitle: String? {
+                switch self {
+                case .checkTerminalState:
+                    "Provide Terminal State Automatically"
+                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    nil
+                }
+            }
+
+            var autopopulationWarningText: String? {
+                switch self {
+                case .checkTerminalState:
+                    "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
+                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    nil
+                }
+            }
+
+            var regularTitle: String {
+                "AI can \(rawValue)"
+            }
+
+            var autopopulatedWhenAlways: Bool {
+                switch self {
+                case .checkTerminalState:
+                    true
+                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    false
+                }
+            }
+        }
+
+        var permissionCategory: PermissionCategory {
+            switch self {
+            case .isAtPrompt, .getLastExitStatus, .getTerminalSize, .getShellType,
+                    .detectSSHSession, .getRemoteHostname, .getUserIdentity, .getCurrentDirectory:
+                    .checkTerminalState
+            case .executeCommand:
+                    .runCommands
+            case .getCommandHistory, .getLastCommand, .getCommandBeforeCursor,
+                    .searchCommandHistory, .getCommandOutput:
+                    .viewHistory
+            case .setClipboard:
+                    .writeToClipboard
+            case .insertTextAtCursor, .deleteCurrentLine:
+                    .typeForYou
+            case .getManPage:
+                    .viewManpages
+            case .createFile:
+                    .writeToFilesystem
+            case .searchBrowser, .loadURL, .webSearch, .getURL, .readWebPage:
+                    .actInWebBrowser
+            }
+        }
+
+        var args: Any {
+            switch self {
+            case .isAtPrompt(let args): args
+            case .executeCommand(let args): args
+            case .getLastExitStatus(let args): args
+            case .getCommandHistory(let args): args
+            case .getLastCommand(let args): args
+            case .getCommandBeforeCursor(let args): args
+            case .searchCommandHistory(let args): args
+            case .getCommandOutput(let args): args
+            case .getTerminalSize(let args): args
+            case .getShellType(let args): args
+            case .detectSSHSession(let args): args
+            case .getRemoteHostname(let args): args
+            case .getUserIdentity(let args): args
+            case .getCurrentDirectory(let args): args
+            case .setClipboard(let args): args
+            case .insertTextAtCursor(let args): args
+            case .deleteCurrentLine(let args): args
+            case .getManPage(let args): args
+            case .createFile(let args): args
+            case .searchBrowser(let args): args
+            case .loadURL(let args): args
+            case .webSearch(let args): args
+            case .getURL(let args): args
+            case .readWebPage(let args): args
+            }
+        }
+    }
+
+
+    var llmMessage: LLM.Message
+    var content: Content
+
+    var needsSafetyCheck: Bool {
+        switch content {
+        case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
+                .getUserIdentity, .getCurrentDirectory, .setClipboard,
+                .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+            return false
+        case .executeCommand:
+            return true
+        }
+    }
+
+    // `force` makes the safety check mandatory regardless of the user
+    // preference (used for orchestration chats, where autonomous command
+    // execution always gets checked).
+    @MainActor
+    func isSafe(force: Bool) async -> Bool {
+        switch content {
+        case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
+                .getUserIdentity, .getCurrentDirectory, .setClipboard,
+                .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+            return true
+        case .executeCommand(let command):
+            // The safety check uses the configured conversation model, so it is
+            // available whenever AI is set up (not tied to any specific vendor
+            // or OS version).
+            if iTermAITermGatekeeper.allowed {
+                // Orchestration chats are checked unconditionally, so don't nag
+                // about the opt-in preference there.
+                if !force {
+                    let nagKey = kPreferenceKeyAISafetyCheckNagComplete
+                    if iTermUserDefaults.userDefaults().object(forKey: kPreferenceKeyAISafetyCheck) == nil &&
+                        !iTermUserDefaults.userDefaults().bool(forKey: nagKey) {
+                        let selection = iTermWarning.show(
+                            withTitle: "iTerm2 can use AI to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, each proposed command will be sent to your configured AI provider for a safety check.",
+                            actions: ["OK", "Cancel"],
+                            accessory: nil,
+                            identifier: nil,
+                            silenceable: .kiTermWarningTypePersistent,
+                            heading: "Enable Command Safety Checking?",
+                            window: nil)
+                        iTermPreferences.setBool(true, forKey: nagKey)
+                        if selection == .kiTermWarningSelection0 {
+                            iTermPreferences.setBool(true, forKey: kPreferenceKeyAISafetyCheck)
+                        }
+                    }
+                }
+                if force || iTermPreferences.bool(forKey: kPreferenceKeyAISafetyCheck) {
+                    if !force {
+                        Self.maybePromptToSwitchSafetyProvider()
+                    }
+                    return await CommandSafetyChecker.check(command.command)
+                }
+            }
+            return true
+        }
+    }
+
+    // Users who enabled the safety check while it ran on-device via Apple
+    // Intelligence (free) are asked once, before the next checked command,
+    // whether to switch to the configured model (more accurate, but may incur
+    // provider charges). Declining keeps Apple Intelligence. The migration in
+    // iTermMigrationHelper sets the pending flag and the Apple default.
+    @MainActor
+    private static func maybePromptToSwitchSafetyProvider() {
+        let defaults = iTermUserDefaults.userDefaults()
+        guard defaults.bool(forKey: kPreferenceKeyAISafetyCheckProviderSwitchPending) else {
+            return
+        }
+        // Only present the choice when on-device is actually available here.
+        // If it is not (the pref synced from an Apple Intelligence Mac, or the
+        // model is temporarily not ready), leave the prompt pending so we do
+        // not offer "Keep Apple Intelligence" where it cannot work. Until then
+        // the side-query fails closed rather than falling back to the cloud.
+        guard AIAvailabilityProbe.check() else {
+            return
+        }
+        defaults.set(false, forKey: kPreferenceKeyAISafetyCheckProviderSwitchPending)
+        let selection = iTermWarning.show(
+            withTitle: "Until now, iTerm2 checked the safety of AI-suggested commands on your Mac using Apple Intelligence, at no cost. It can now use your configured AI model instead, which is more accurate but sends each checked command to your AI provider and may incur charges.\n\nSwitch to your configured model? If you decline, iTerm2 keeps using Apple Intelligence.",
+            actions: ["Switch to My Model", "Keep Apple Intelligence"],
+            accessory: nil,
+            identifier: nil,
+            silenceable: .kiTermWarningTypePersistent,
+            heading: "Command Safety Checking Has Changed",
+            window: nil)
+        // Selection 0 == switch to the configured model; 1 == keep Apple.
+        defaults.set(selection != .kiTermWarningSelection0,
+                     forKey: kPreferenceKeyAISafetyCheckUsesAppleIntelligence)
+    }
+
+    var markdownDescription: String {
+        switch content {
+        case .isAtPrompt:
+            "Checking if you're at a shell prompt"
+        case let .executeCommand(args):
+            "Executing `\(args.command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+        case .getLastExitStatus:
+            "Checking the exit status of the last command"
+        case .getCommandHistory:
+            "Reviewing the history of commands you have run in this session"
+        case .getLastCommand:
+            "Viewing the last command you ran in this session"
+        case .getCommandBeforeCursor:
+            "Reading your current command prompt"
+        case .searchCommandHistory:
+            "Searching the history of commands you have run in this session"
+        case .getCommandOutput:
+            "Fetching the output of a previously run command"
+        case .getTerminalSize:
+            "Querying the size of your terminal window"
+        case .getShellType:
+            "Determining which shell you use"
+        case .detectSSHSession:
+            "Checking if you are using SSH"
+        case .getRemoteHostname:
+            "Getting the current host name of this terminal session"
+        case .getUserIdentity:
+            "Checking your username"
+        case .getCurrentDirectory:
+            "Discovering your current directory"
+        case .setClipboard:
+            "Pasting to the clipboard"
+        case let .insertTextAtCursor(args):
+            "Typing `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session"
+        case .deleteCurrentLine:
+            "Erasing the current command line"
+        case let .getManPage(args):
+            "Checking the manpage for `\(args.cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+        case let .createFile(args):
+            "Creating \(args.filename)"
+        case let .searchBrowser(args):
+            "Search in browser for \(args.query)"
+        case let .loadURL(args):
+            "Navigate to \(args.url)"
+        case let .webSearch(args):
+            "Search the web for “\(args.query)”"
+        case .getURL:
+            "Get the current URL"
+        case .readWebPage:
+            "View the current web page"
+        }
+    }
+
+    var permissionDescription: String {
+        switch content {
+        case .isAtPrompt:
+            "The AI Agent would like to check if you're at a shell prompt"
+        case let .executeCommand(args):
+            "The AI Agent would like to execute `\(args.command.escapedForMarkdownCode)`"
+        case .getLastExitStatus:
+            "The AI Agent would like to check the exit status of the last command"
+        case .getCommandHistory:
+            "The AI Agent would like to review the history of commands you have run in this session"
+        case .getLastCommand:
+            "The AI Agent would like to view the last command you ran in this session"
+        case .getCommandBeforeCursor:
+            "The AI Agent would like to read your current command prompt"
+        case .searchCommandHistory:
+            "The AI Agent would like to search the history of commands you have run in this session"
+        case .getCommandOutput:
+            "The AI Agent would like to fetch the output of a previously run command"
+        case .getTerminalSize:
+            "The AI Agent would like to query the size of your terminal window"
+        case .getShellType:
+            "The AI Agent would like to determine which shell you use"
+        case .detectSSHSession:
+            "The AI Agent would like to check if you are using SSH"
+        case .getRemoteHostname:
+            "The AI Agent would like to get the current host name of this terminal session"
+        case .getUserIdentity:
+            "The AI Agent would like to check your username"
+        case .getCurrentDirectory:
+            "The AI Agent would like to know your current directory"
+        case .setClipboard:
+            "The AI Agent would like to paste to the clipboard"
+        case let .insertTextAtCursor(args):
+            "The AI Agent would like to type `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session"
+        case .deleteCurrentLine:
+            "The AI Agent would like to erase the current command line"
+        case let .getManPage(args):
+            "The AI Agent would like to check the manpage for `\(args.cmd.escapedForMarkdownCode)`"
+        case let .createFile(args):
+            "The AI Agent would like to create a file named `\(args.filename)`"
+        case let .searchBrowser(args):
+            "The AI agent would like to search the current web page for “\(args.query)”"
+        case let .loadURL(args):
+            "The AI agent would like to navigate to \(args.url)"
+        case let .webSearch(args):
+            "The AI agent would like to write to search the web for “\(args.query)”"
+        case .getURL:
+            "The AI agent would like to write to get the current URL"
+        case .readWebPage:
+            "The AI agent would like to write to view the current web page"
+        }
+    }
+
+    var shouldPublishNotice: Bool {
+        switch content {
+        case .executeCommand:
+            false
+        case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput, .getTerminalSize,
+                .getShellType, .detectSSHSession, .getRemoteHostname, .getUserIdentity,
+                .getCurrentDirectory, .setClipboard, .insertTextAtCursor, .deleteCurrentLine,
+                .getManPage, .createFile, .searchBrowser, .loadURL,
+                .webSearch, .getURL, .readWebPage:
+            true
+        }
+    }
+}
+
+extension RemoteCommand.Content.PermissionCategory {
+    var userDefaultsKey: String {
+        switch self {
+        case .checkTerminalState: kPreferenceKeyAIPermissionCheckTerminalState
+        case .runCommands: kPreferenceKeyAIPermissionRunCommands
+        case .viewHistory: kPreferenceKeyAIPermissionViewHistory
+        case .writeToClipboard: kPreferenceKeyAIPermissionWriteToClipboard
+        case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
+        case .viewManpages: kPreferenceKeyAIPermissionViewManpages
+        case .writeToFilesystem: kPreferenceKeyAIPermissionWriteToFilesystem
+        case .actInWebBrowser: kPreferenceKeyAIPermissionActInWebBrowser
+        }
+    }
+}
+
+extension RemoteCommand.Content {
+    var functionName: String {
+        switch self {
+        case .isAtPrompt:
+            "is_at_prompt"
+        case .executeCommand:
+            "execute_command"
+        case .getLastExitStatus:
+            "get_last_exit_status"
+        case .getCommandHistory:
+            "get_command_history"
+        case .getLastCommand:
+            "get_last_command"
+        case .getCommandBeforeCursor:
+            "get_command_before_cursor"
+        case .searchCommandHistory:
+            "search_command_history"
+        case .getCommandOutput:
+            "get_command_output"
+        case .getTerminalSize:
+            "get_terminal_size"
+        case .getShellType:
+            "get_shell_type"
+        case .detectSSHSession:
+            "detect_ssh_session"
+        case .getRemoteHostname:
+            "get_remote_hostname"
+        case .getUserIdentity:
+            "get_user_identity"
+        case .getCurrentDirectory:
+            "get_current_directory"
+        case .setClipboard:
+            "set_clipboard"
+        case .insertTextAtCursor:
+            "insert_text_at_cursor"
+        case .deleteCurrentLine:
+            "delete_current_line"
+        case .getManPage:
+            "get_man_page"
+        case .createFile:
+            "create_file"
+        case .searchBrowser:
+            "find_on_page"
+        case .loadURL:
+            "load_url"
+        case .webSearch:
+            "web_search_in_browser"
+        case .getURL:
+            "get_current_url"
+        case .readWebPage:
+            "read_web_page_section"
+        }
+    }
+
+    var argDescriptions: [String: String] {
+        return switch self {
+        case .isAtPrompt(_):
+            [:]
+        case .executeCommand(_):
+            ["command": "The command to run"]
+        case .getLastExitStatus(_):
+            [:]
+        case .getCommandHistory(_):
+            ["limit": "Maximum number of history items to return."]
+        case .getLastCommand(_):
+            [:]
+        case .getCommandBeforeCursor(_):
+            [:]
+        case .searchCommandHistory(_):
+            ["query": "Search query for filtering command history."]
+        case .getCommandOutput(_):
+            ["id": "Unique identifier of the command whose output is requested."]
+        case .getTerminalSize(_):
+            [:]
+        case .getShellType(_):
+            [:]
+        case .detectSSHSession(_):
+            [:]
+        case .getRemoteHostname(_):
+            [:]
+        case .getUserIdentity(_):
+            [:]
+        case .getCurrentDirectory(_):
+            [:]
+        case .setClipboard(_):
+            ["text": "The text to copy to the clipboard."]
+        case .insertTextAtCursor(_):
+            ["text": "The text to insert at the cursor position. Supports a small backslash-escape vocabulary so you can send control keys and special characters: \\\\ for a literal backslash, \\n for newline, \\r for carriage return, \\t for tab, and \\uXXXX (four hex digits, JSON-style) for any Unicode scalar. Examples: \\u0004 for Ctrl-D / EOF, \\u001a for Ctrl-Z, \\u000c for Ctrl-L, \\u001b for Escape. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."]
+        case .deleteCurrentLine(_):
+            [:]
+        case .getManPage(_):
+            ["cmd": "The command whose man page content is requested."]
+        case .createFile:
+            ["filename": "The name of the file you wish to create. It will be replaced if it already exists.",
+             "content": "The content that will be written to the file."]
+        case .searchBrowser(_):
+            ["query": "The text to search for on the current page. Ensure you know which web page is currently loaded before using this."]
+        case .loadURL(_):
+            ["url": "The URL to load. Must use https scheme."]
+        case .webSearch(_):
+            ["query": "The web search query"]
+        case .getURL(_):
+            [:]
+        case .readWebPage(_):
+            ["startingLineNumber": "The line number to start reading at.",
+             "numberOfLines": "The number of lines to return."]
+        }
+    }
+
+    var functionDescription: String {
+        switch self {
+        case .isAtPrompt(_):
+            "Returns true if the terminal is at the command prompt, allowing safe command injection."
+        case .executeCommand(_):
+            "Runs a shell command and returns its output."
+        case .getLastExitStatus(_):
+            "Retrieves the exit status of the last executed command."
+        case .getCommandHistory(_):
+            "Returns the recent command history."
+        case .getLastCommand(_):
+            "Retrieves the most recent command."
+        case .getCommandBeforeCursor(_):
+            "Returns the current partially typed command before the cursor."
+        case .searchCommandHistory(_):
+            "Searches history for commands matching a query."
+        case .getCommandOutput(_):
+            "Returns the output of a previous command by its unique identifier."
+        case .getTerminalSize(_):
+            "Returns (columns, rows) of the terminal window."
+        case .getShellType(_):
+            "Detects the shell in use (e.g., bash, fish, xonsh, zsh)."
+        case .detectSSHSession(_):
+            "Returns true if the user is SSH’ed into a remote host."
+        case .getRemoteHostname(_):
+            "Returns the remote hostname if in an SSH session."
+        case .getUserIdentity(_):
+            "Returns the logged-in user’s username."
+        case .getCurrentDirectory(_):
+            "Returns the current directory."
+        case .setClipboard(_):
+            "Copies text to the clipboard."
+        case .insertTextAtCursor(_):
+            "Inserts text into the terminal input at the cursor position."
+        case .deleteCurrentLine(_):
+            "Clears the current command line input (only at the prompt)."
+        case .getManPage(_):
+            "Returns the content of a command's man page."
+        case .createFile:
+            "Creates a file containing a specified string on the user's computer and then reveals it in Finder."
+        case .loadURL:
+            "Loads the specified URL in the associated web browser"
+        case .webSearch:
+            "Performs a web search using the currently configured search engine in the associated web browser"
+        case .getURL:
+            "Returns the current URL of the associated web browser"
+        case .readWebPage:
+            "Returns some of the content (in markdown format) of the page visible in the associated web browser."
+        case .searchBrowser(_):
+            "Searches the current web page in the associated web browser (after converting to markdown format) for a substring."
+        }
+    }
+
+    func withValue(_ value: Any) -> RemoteCommand.Content {
+        switch self {
+        case .isAtPrompt: .isAtPrompt(value as! RemoteCommand.IsAtPrompt)
+        case .executeCommand: .executeCommand(value as! RemoteCommand.ExecuteCommand)
+        case .getLastExitStatus: .getLastExitStatus(value as! RemoteCommand.GetLastExitStatus)
+        case .getCommandHistory: .getCommandHistory(value as! RemoteCommand.GetCommandHistory)
+        case .getLastCommand: .getLastCommand(value as! RemoteCommand.GetLastCommand)
+        case .getCommandBeforeCursor: .getCommandBeforeCursor(value as! RemoteCommand.GetCommandBeforeCursor)
+        case .searchCommandHistory: .searchCommandHistory(value as! RemoteCommand.SearchCommandHistory)
+        case .getCommandOutput: .getCommandOutput(value as! RemoteCommand.GetCommandOutput)
+        case .getTerminalSize: .getTerminalSize(value as! RemoteCommand.GetTerminalSize)
+        case .getShellType: .getShellType(value as! RemoteCommand.GetShellType)
+        case .detectSSHSession: .detectSSHSession(value as! RemoteCommand.DetectSSHSession)
+        case .getRemoteHostname: .getRemoteHostname(value as! RemoteCommand.GetRemoteHostname)
+        case .getUserIdentity: .getUserIdentity(value as! RemoteCommand.GetUserIdentity)
+        case .getCurrentDirectory: .getCurrentDirectory(value as! RemoteCommand.GetCurrentDirectory)
+        case .setClipboard: .setClipboard(value as! RemoteCommand.SetClipboard)
+        case .insertTextAtCursor: .insertTextAtCursor(value as! RemoteCommand.InsertTextAtCursor)
+        case .deleteCurrentLine: .deleteCurrentLine(value as! RemoteCommand.DeleteCurrentLine)
+        case .getManPage: .getManPage(value as! RemoteCommand.GetManPage)
+        case .createFile: .createFile(value as! RemoteCommand.CreateFile)
+        case .searchBrowser: .searchBrowser(value as! RemoteCommand.SearchBrowser)
+        case .loadURL: .loadURL(value as! RemoteCommand.LoadURL)
+        case .webSearch: .webSearch(value as! RemoteCommand.WebSearch)
+        case .getURL: .getURL(value as! RemoteCommand.GetURL)
+        case .readWebPage: .readWebPage(value as! RemoteCommand.ReadWebPage)
+        }
+    }
+}

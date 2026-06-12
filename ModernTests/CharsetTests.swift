@@ -516,18 +516,30 @@ final class StringToScreenCharsTests: XCTestCase {
 
     // MARK: 2.8 RTL Detection
 
+    // [iTermPreferences bidiEnabled] is a fast-path cache updated via async
+    // KVO dispatched to the main queue. After toggling, pump the runloop
+    // until the cached value catches up to the write; otherwise the
+    // dispatched update might not land before the test reads the cache.
+    private func setBidiPreference(_ enabled: Bool) {
+        iTermPreferences.setBool(enabled, forKey: kPreferenceKeyBidi)
+        let deadline = Date().addingTimeInterval(0.5)
+        while iTermPreferences.bidiEnabled() != enabled && Date() < deadline {
+            RunLoop.main.run(mode: .default, before: Date(timeIntervalSinceNow: 0.005))
+        }
+    }
+
     /// 2.8.1 Pure ASCII → no RTL.
     func testRTL_pureASCII() {
-        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
-        defer { iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi) }
+        setBidiPreference(true)
+        defer { setBidiPreference(false) }
         let (_, _, rtl) = callStringToScreenChars("Hello")
         XCTAssertFalse(rtl)
     }
 
     /// 2.8.2 Hebrew alef → RTL found.
     func testRTL_hebrew() {
-        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
-        defer { iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi) }
+        setBidiPreference(true)
+        defer { setBidiPreference(false) }
         let s = stringFromCodePoints([0x05D0])
         let (_, _, rtl) = callStringToScreenChars(s)
         XCTAssertTrue(rtl)
@@ -535,8 +547,8 @@ final class StringToScreenCharsTests: XCTestCase {
 
     /// 2.8.3 Arabic alef → RTL found.
     func testRTL_arabic() {
-        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
-        defer { iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi) }
+        setBidiPreference(true)
+        defer { setBidiPreference(false) }
         let s = stringFromCodePoints([0x0627])
         let (_, _, rtl) = callStringToScreenChars(s)
         XCTAssertTrue(rtl)
@@ -544,7 +556,7 @@ final class StringToScreenCharsTests: XCTestCase {
 
     /// 2.8.4 Bidi disabled → always NO.
     func testRTL_disabled() {
-        iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi)
+        setBidiPreference(false)
         let s = stringFromCodePoints([0x05D0])
         let (_, _, rtl) = callStringToScreenChars(s)
         XCTAssertFalse(rtl)
@@ -552,8 +564,8 @@ final class StringToScreenCharsTests: XCTestCase {
 
     /// 2.8.5 Mixed LTR/RTL → RTL found.
     func testRTL_mixed() {
-        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
-        defer { iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi) }
+        setBidiPreference(true)
+        defer { setBidiPreference(false) }
         let s = "Hello " + stringFromCodePoints([0x05D0]) + " world"
         let (_, _, rtl) = callStringToScreenChars(s)
         XCTAssertTrue(rtl)
@@ -561,8 +573,8 @@ final class StringToScreenCharsTests: XCTestCase {
 
     /// 2.8.6 Supplementary RTL (Cypriot syllable U+10800).
     func testRTL_supplementary() {
-        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
-        defer { iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi) }
+        setBidiPreference(true)
+        defer { setBidiPreference(false) }
         let s = stringFromCodePoints([0x10800])
         let (_, _, rtl) = callStringToScreenChars(s)
         XCTAssertTrue(rtl)
@@ -570,8 +582,8 @@ final class StringToScreenCharsTests: XCTestCase {
 
     /// 2.8.7 Bidi formatting character (RLE U+202B).
     func testRTL_bidiFormatting() {
-        iTermPreferences.setBool(true, forKey: kPreferenceKeyBidi)
-        defer { iTermPreferences.setBool(false, forKey: kPreferenceKeyBidi) }
+        setBidiPreference(true)
+        defer { setBidiPreference(false) }
         let s = stringFromCodePoints([0x202B])
         let (_, _, rtl) = callStringToScreenChars(s)
         XCTAssertTrue(rtl)

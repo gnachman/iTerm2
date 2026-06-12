@@ -3,7 +3,7 @@
 # Usage: tools/compare-rendering.sh <file> [rows] [columns]
 #
 # The file should contain raw bytes including any escape sequences.
-# Outputs comparison stats and saves images to /tmp/iterm2-compare-*.png
+# Outputs comparison stats and saves images to current directory.
 
 set -e
 

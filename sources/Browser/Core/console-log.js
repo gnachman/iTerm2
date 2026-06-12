@@ -1,5 +1,12 @@
  (function() {
      'use strict';
+     // Skip wrapping console.* in challenge frames so the captcha probe
+     // sees the native [native code] toString. We recompute the
+     // challenge-frame test here rather than reading a window flag,
+     // because any such flag would itself be a detectable fingerprint.
+     if ({{INCLUDE:challenge-frame-detection.js}}) {
+         return;
+     }
      const TAG = '[ConsoleLogBridge]';
 
      // Safely grab the native handler (or stub)

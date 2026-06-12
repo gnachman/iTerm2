@@ -262,6 +262,14 @@
     return result;
 }
 
+- (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell {
+    NSRect cellFrame = [cell frame];
+    return NSMakeRect(cellFrame.origin.x,
+                      cellFrame.origin.y,
+                      cellFrame.size.width,
+                      PSMTabBarProgressBarHeight);
+}
+
 - (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
     return rect;
 }
@@ -511,7 +519,13 @@
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
     id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
-    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
+    // When the style can't draw a separate subtitle line (short bar / single-line
+    // style), fold subtitleString into the title so its content still shows.
+    NSString *title = cell.stringValue;
+    if (!self.supportsMultiLineLabels && cell.subtitleString.length > 0) {
+        title = [NSString stringWithFormat:@"%@ %@", cell.stringValue, cell.subtitleString];
+    }
+    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:title
                                                                truncationStyle:cell.truncationStyle
                                                                          color:[self textColorForCell:cell]
                                                                        graphic:cell.isGroupHeader ? nil : [(id)[[cell representedObject] identifier] psmTabGraphic]
@@ -1506,10 +1520,12 @@ const void *PSMTabStyleDarkColorKey = "dark";
         [[self bottomLineColorSelected:NO] set];
         NSRect rightLineRect = rect;
         rightLineRect.origin.y -= 1;
-        [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
+        const CGFloat x = (bar.tabLocation == PSMTab_RightTab) ? NSMinX(rect) : NSMaxX(rect) - 1;
+        [self drawVerticalLineInFrame:rightLineRect x:x];
     } else {
         switch (bar.tabLocation) {
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 break;
             case PSMTab_TopTab:
                 // Bottom line
@@ -1531,6 +1547,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     switch (position) {
         case PSMTab_BottomTab:
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             return YES;
 
         case PSMTab_TopTab:

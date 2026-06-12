@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "2640"
-   version = "2.0">
+   version = "1.8">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -48,13 +48,12 @@
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
-      debugXPCServices = "NO"
-      migratedStopOnEveryIssue = "YES"
       debugServiceExtension = "internal"
       enableGPUValidationMode = "1"
       allowLocationSimulation = "YES"
       queueDebuggingEnabled = "No"
-      disablePerformanceAntipatternChecker = "YES">
+      disablePerformanceAntipatternChecker = "YES"
+      migratedStopOnEveryIssue = "YES">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference

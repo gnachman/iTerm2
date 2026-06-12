@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Quote the value of the \\\"magic\\\" field shown.\"},{\"text\":\"{\\\"magic\\\":\\\"pinecone-42\\\"}\"}],\"role\":\"user\"}]}",
+  "key" : "2d3305bd8a460b04b8064508764683aa265a6bc80f5cfe6860eefc8f46856566",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"The value of the \\\"magic\\\" field is **pinecone-42**.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 21,\n    \"candidatesTokenCount\": 16,\n    \"totalTokenCount\": 67,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 21\n      }\n    ],\n    \"thoughtsTokenCount\": 30,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"Se4larmxFJGVmtkPk-7o4As\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

@@ -19,6 +19,7 @@ from iterm2.triggers import (
     BellReceivedEventTrigger,
     LongRunningCommandEventTrigger,
     CustomEscapeSequenceEventTrigger,
+    NotificationPostedEventTrigger,
 )
 
 
@@ -679,6 +680,72 @@ class TestSimpleEventTriggers:
         }
         trigger = decode_trigger(encoded)
         assert isinstance(trigger, BellReceivedEventTrigger)
+
+
+class TestNotificationPostedEventTrigger:
+    """Tests for NotificationPostedEventTrigger."""
+
+    def test_create_with_message_regex(self):
+        """Test creating with a message regex."""
+        trigger = NotificationPostedEventTrigger(
+            action_name="AlertTrigger",
+            param="Got notification!",
+            enabled=True,
+            message_regex="error.*"
+        )
+        assert trigger.message_regex == "error.*"
+        assert trigger.event_params["messageRegex"] == "error.*"
+
+    def test_create_without_message_regex(self):
+        """Test creating without a message regex."""
+        trigger = NotificationPostedEventTrigger(
+            action_name="AlertTrigger",
+            param="Got notification!",
+            enabled=True
+        )
+        assert trigger.message_regex is None
+        assert "messageRegex" not in trigger.event_params
+
+    def test_decode(self):
+        """Test decoding a NotificationPostedEventTrigger."""
+        encoded = {
+            "action": "AlertTrigger",
+            "regex": "",
+            "parameter": "Notified",
+            "matchType": 111,
+            "eventParams": {"messageRegex": "build.*"}
+        }
+        trigger = decode_trigger(encoded)
+        assert isinstance(trigger, NotificationPostedEventTrigger)
+        assert trigger.message_regex == "build.*"
+
+    def test_decode_without_params(self):
+        """Test decoding without event params."""
+        encoded = {
+            "action": "AlertTrigger",
+            "regex": "",
+            "parameter": "Notified",
+            "matchType": 111
+        }
+        trigger = decode_trigger(encoded)
+        assert isinstance(trigger, NotificationPostedEventTrigger)
+        assert trigger.message_regex is None
+
+    def test_roundtrip(self):
+        """Test round-trip for NotificationPostedEventTrigger."""
+        original = NotificationPostedEventTrigger(
+            action_name="AlertTrigger",
+            param="Notified!",
+            enabled=True,
+            message_regex="deploy"
+        )
+        encoded = original.encode
+        decoded = decode_trigger(encoded)
+        assert isinstance(decoded, NotificationPostedEventTrigger)
+        assert decoded.message_regex == "deploy"
+        assert decoded.action_name == original.action_name
+        assert decoded.param == original.param
+        assert decoded.enabled == original.enabled
 
 
 class TestEventTriggerRoundTrip:

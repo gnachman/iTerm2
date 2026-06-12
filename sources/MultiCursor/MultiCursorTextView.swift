@@ -1406,9 +1406,17 @@ extension MultiCursorTextView {
 extension MultiCursorTextView {
     open override func insertText(_ insertString: Any) {
         if hasMarkedText() {
+            let plainString: String
+            if let s = insertString as? String {
+                plainString = s
+            } else if let s = insertString as? NSAttributedString {
+                plainString = s.string
+            } else {
+                it_fatalError()
+            }
             undoable(force: true) {
                 let markedCharacterRange = markedRange()
-                safelyReplaceCharacters(in: markedCharacterRange, with: insertString as! String)
+                safelyReplaceCharacters(in: markedCharacterRange, with: plainString)
                 let maybeCursorsBeforeUnmarkedText = cursorsBeforeMarkedText
                 unmarkText()
                 if let cursors = maybeCursorsBeforeUnmarkedText {
@@ -1417,7 +1425,7 @@ extension MultiCursorTextView {
                         let originalGlyphRange = layoutManager!.glyphRange(forCharacterRange: cursors[0],
                                                                            actualCharacterRange: nil)
                         let replacementRange = NSRange(location: originalGlyphRange.location,
-                                                       length: (insertString as! NSString).length)
+                                                       length: (plainString as NSString).length)
                         // Fix up _multiCursorSelectedRanges for the newly inserted text at the first range.
                         didModifySubstringLength(originalCharacterRange: originalGlyphRange,
                                                  newCharacterRange: replacementRange)

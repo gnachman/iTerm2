@@ -8,6 +8,7 @@ import iterm2.capabilities
 import iterm2.connection
 import iterm2.notifications
 import iterm2.rpc
+import iterm2.util
 
 class PromptState(enum.Enum):
     """Describes the states that a command prompt can take."""
@@ -57,6 +58,36 @@ class Prompt:
     def command(self) -> typing.Union[None, str]:
         """Returns the command entered at the prompt."""
         return self.__proto.command
+
+    @property
+    def excluded_subranges(self) -> typing.List[iterm2.util.CoordRange]:
+        """Returns cell regions inside :attr:`command_range` that are NOT
+        part of the user-typed command — PS2 prefixes on continuation
+        rows, right-prompt text, anything the shell emitted between an
+        OSC 133;A;k=s|c|r pair and its matching 133;B. Half-open
+        (`start` inclusive, `end` exclusive).
+
+        Use this to extract the actual user input by subtracting these
+        regions from :attr:`command_range`.
+
+        Populated only when this `Prompt` is fetched via
+        :func:`~async_get_last_prompt` or :func:`~async_get_prompt_by_id`.
+        When you receive a `Prompt` from a
+        :attr:`~PromptMonitor.Mode.PROMPT` notification, this list is
+        always empty because the OSC 133;B that triggered the
+        notification fires before the user enters any continuation or
+        right-prompt text — there's nothing to report yet. Scripts that
+        want the field should subscribe to
+        :attr:`~PromptMonitor.Mode.COMMAND_END` and call
+        :func:`~async_get_prompt_by_id` once the notification fires.
+
+        Returns an empty list if the connected iTerm2 is too old to
+        report excluded subranges; check
+        :func:`~iterm2.capabilities.supports_prompt_excluded_subranges`
+        if you need to distinguish "old iTerm2" from "no subranges."
+        """
+        return [iterm2.util.CoordRange.from_proto(r)
+                for r in self.__proto.excluded_subranges]
 
     @property
     def state(self) -> PromptState:

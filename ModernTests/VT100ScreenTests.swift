@@ -15,12 +15,12 @@ class VT100ScreenTests: XCTestCase {
         session.screen = screen
         screen.delegate = session
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.terminalEnabled = true
+            mutableState.terminalEnabled = true
             screen.destructivelySetScreenWidth(5, height: 4, mutableState: mutableState)
-            mutableState!.appendString(atCursor: "abcdefgh")
-            mutableState!.appendCarriageReturnLineFeed()
-            mutableState!.appendString(atCursor: "ijkl")
-            mutableState!.appendCarriageReturnLineFeed()
+            mutableState.appendString(atCursor: "abcdefgh")
+            mutableState.appendCarriageReturnLineFeed()
+            mutableState.appendString(atCursor: "ijkl")
+            mutableState.appendCarriageReturnLineFeed()
         })
         return screen
     }
@@ -30,16 +30,16 @@ class VT100ScreenTests: XCTestCase {
         session.screen = screen
         screen.delegate = session
         screen.performBlock(joinedThreads: { terminal, mutableState, _ in
-            mutableState!.terminalEnabled = true
-            mutableState!.terminal!.termType = "xterm"
+            mutableState.terminalEnabled = true
+            mutableState.terminal!.termType = "xterm"
             screen.destructivelySetScreenWidth(5, height: 9, mutableState: mutableState)
-            mutableState!.maxScrollbackLines = 10;
+            mutableState.maxScrollbackLines = 10;
             for line in ["", "abcdefgh", "", "ijkl"] {
-                mutableState!.appendString(atCursor: line)
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: line)
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        ".....\n" +
                        "abcde\n" +
                        "fgh..\n" +
@@ -64,11 +64,11 @@ class VT100ScreenTests: XCTestCase {
         let note = PTYAnnotation()
         screen.addNote(note, in: VT100GridCoordRangeMake(0, 1, 2, 1), focus: false, visible: false)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showAltBuffer()
+            mutableState.showAltBuffer()
         })
         screen.size = VT100GridSizeMake(4, 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
         XCTAssertEqual(screen.immutableState.currentGrid.compactLineDump(),
                        "abcd\n" +
@@ -88,8 +88,8 @@ class VT100ScreenTests: XCTestCase {
         session.screen = screen
         screen.delegate = session
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.terminalEnabled = true
-            mutableState!.terminal!.termType = "xterm"
+            mutableState.terminalEnabled = true
+            mutableState.terminal!.termType = "xterm"
             screen.destructivelySetScreenWidth(width, height: height, mutableState: mutableState)
         })
         return screen
@@ -108,9 +108,9 @@ class VT100ScreenTests: XCTestCase {
     private func appendLinesNoNewline(_ lines: [String], screen: VT100Screen) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for (i, line) in lines.enumerated() {
-                mutableState?.appendString(atCursor: line)
+                mutableState.appendString(atCursor: line)
                 if i + 1 != lines.count {
-                    mutableState?.appendCarriageReturnLineFeed()
+                    mutableState.appendCarriageReturnLineFeed()
                 }
             }
         })
@@ -122,7 +122,7 @@ class VT100ScreenTests: XCTestCase {
         let screen = fiveByFourScreenWithThreeLinesOneWrapped()
         appendLinesNoNewline([ "hello world" ], screen: screen)
 
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abcde\n" +   // history
                        "fgh..\n" +   // history
                        "ijkl.\n" +
@@ -132,14 +132,14 @@ class VT100ScreenTests: XCTestCase {
         let note = PTYAnnotation()
         screen.addNote(note, in: VT100GridCoordRangeMake(0, 2, 2, 2), focus: true, visible: true)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showAltBuffer()
+            mutableState.showAltBuffer()
         })
         screen.size = VT100GridSizeMake(4, 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
 
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abcd\n" +  // history
                        "efgh\n" +  // history
                        "ijkl\n" +
@@ -157,7 +157,7 @@ class VT100ScreenTests: XCTestCase {
         let screen = fiveByFourScreenWithThreeLinesOneWrapped()
         appendLinesNoNewline(["hello world"], screen: screen)
 
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abcde\n" +   // history
                        "fgh..\n" +   // history
                        "ijkl.\n" +
@@ -167,13 +167,13 @@ class VT100ScreenTests: XCTestCase {
         let note = PTYAnnotation()
         screen.addNote(note, in: VT100GridCoordRangeMake(0, 2, 2, 2), focus: true, visible: true)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showAltBuffer()
+            mutableState.showAltBuffer()
         })
         screen.size = VT100GridSizeMake(3, 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abc\n" +
                        "def\n" +
                        "gh.\n" +
@@ -193,7 +193,7 @@ class VT100ScreenTests: XCTestCase {
     func testResizeNoteInPrimaryWhileInAltAndPushingSomePrimaryIncludingPartOfNoteIntoHistory() {
         let screen = fiveByFourScreenWithThreeLinesOneWrapped()
         appendLinesNoNewline(["hello world"], screen: screen)
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abcde\n" +
                        "fgh..\n" +
                        "ijkl.\n" +
@@ -203,13 +203,13 @@ class VT100ScreenTests: XCTestCase {
         let note = PTYAnnotation()
         screen.addNote(note, in: VT100GridCoordRangeMake(0, 2, 5, 3), focus: true, visible: true)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showAltBuffer()
+            mutableState.showAltBuffer()
         })
         screen.size = VT100GridSizeMake(3, 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abc\n" +
                        "def\n" +
                        "gh.\n" +
@@ -228,11 +228,11 @@ class VT100ScreenTests: XCTestCase {
 
     private func showAltAndUppercase(_ screen: VT100Screen) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let temp = mutableState?.currentGrid.copy()
-            mutableState?.showAltBuffer()
+            let temp = mutableState.currentGrid.copy()
+            mutableState.showAltBuffer()
             for y in 0..<screen.height() {
                 let lineIn = temp!.screenChars(atLineNumber: y)!
-                let lineOut = mutableState!.currentGrid.screenChars(atLineNumber: y)!
+                let lineOut = mutableState.currentGrid.screenChars(atLineNumber: y)!
                 for x in 0..<Int(screen.width()) {
                     lineOut[x] = lineIn[x]
                     var c = lineIn[x].code;
@@ -250,7 +250,7 @@ class VT100ScreenTests: XCTestCase {
     func testResizeNoteInAlternateThatGetsTruncatedByShrinkage() {
         let screen = fiveByFourScreenWithThreeLinesOneWrapped()
         appendLinesNoNewline(["hello world"], screen: screen)
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abcde\n" +
                        "fgh..\n" +
                        "ijkl.\n" +
@@ -264,7 +264,7 @@ class VT100ScreenTests: XCTestCase {
                        focus: true,
                        visible: true)
         screen.size = VT100GridSizeMake(3, 4)
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "abc\n" +
                        "def\n" +
                        "gh.\n" +
@@ -283,7 +283,7 @@ class VT100ScreenTests: XCTestCase {
 
     private func commonAnnotationRestoration(range: VT100GridCoordRange) {
         var screen = fiveByNineScreenWithEmptyLineAtTop()
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        ".....\n" +
                        "abcde\n" +
                        "fgh..\n" +
@@ -301,12 +301,12 @@ class VT100ScreenTests: XCTestCase {
         let state = encoder.mutableDictionary
 
         screen = self.screen(width: 3, height: 4)
-        screen.restore(from: state as? [AnyHashable : Any],
+        screen.restore(from: (state as? [AnyHashable : Any])!,
                        includeRestorationBanner: false,
                        reattached: false,
                        isArchive: false,
                        largeContentProvider: nil)
-        XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+        XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        ".....\n" +
                        "abcde\n" +
                        "fgh..\n" +
@@ -382,8 +382,8 @@ class VT100ScreenTests: XCTestCase {
     private func appendLines(_ lines: [String], screen: VT100Screen) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for line in lines {
-                mutableState!.appendString(atCursor: line)
-                mutableState!.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: line)
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
     }
@@ -394,7 +394,7 @@ class VT100ScreenTests: XCTestCase {
         let screen = self.screen(width: 142, height: 8)
 
         screen.performBlock(joinedThreads: { terminal, mutableState, _ in
-            mutableState!.maxScrollbackLines = 1000
+            mutableState.maxScrollbackLines = 1000
         })
         appendLines([
             "Last login: Mon Dec  9 23:22:07 on ttys011",
@@ -414,6 +414,21 @@ class VT100ScreenTests: XCTestCase {
         XCTAssertTrue(VT100GridCoordRangeEqualsCoordRange(rangeAfterResize, expected))
     }
 
+    // MARK: - VT100ScreenMark dealloc tests
+
+    // Regression test: a mark with an unfulfilled return-code promise (i.e. returnCodePromise
+    // was called but setCode: was never called) must not crash on dealloc.
+    // This reproduces the crash seen when marks are freed during copySlowStuffFrom: while a
+    // command is still running (session closed before the command finished).
+    func testMarkDeallocWithUnfulfilledReturnCodePromise() {
+        autoreleasepool {
+            let mark = VT100ScreenMark()
+            _ = mark.returnCodePromise
+            // mark deallocates here without setCode: ever being called
+        }
+        // reaching this line without a crash is the pass condition
+    }
+
     // MARK: - VT100ScreenMark property resize tests
 
     // Test that VT100ScreenMark's commandRange, promptRange, and outputStart are updated
@@ -421,7 +436,7 @@ class VT100ScreenTests: XCTestCase {
     func testResizeScreenMarkPropertiesInPrimaryWhileInAlt() {
         let screen = self.screen(width: 10, height: 6)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 20
+            mutableState.maxScrollbackLines = 20
         })
 
         // Create content spanning multiple lines
@@ -436,10 +451,10 @@ class VT100ScreenTests: XCTestCase {
 
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // Add a VT100ScreenMark with multi-line commandRange
-            let mark = mutableState!.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
-            let absLine = mutableState!.cumulativeScrollbackOverflow
+            let mark = mutableState.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
+            let absLine = mutableState.cumulativeScrollbackOverflow
 
-            mutableState!.mutableIntervalTree().mutate(mark) { obj in
+            mutableState.mutableIntervalTree().mutate(mark) { obj in
                 let m = obj as! VT100ScreenMark
                 // commandRange spans from column 8 on line 0 to column 7 on line 3
                 // (simulating "command --with-long-arguments" wrapping across lines)
@@ -454,7 +469,7 @@ class VT100ScreenTests: XCTestCase {
 
         // Switch to alt screen - moves primary marks to savedIntervalTree
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showAltBuffer()
+            mutableState.showAltBuffer()
         })
 
         // Resize from width 10 to width 8 - causes reflow
@@ -462,7 +477,7 @@ class VT100ScreenTests: XCTestCase {
 
         // Switch back to primary
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
 
         // Verify the mark's properties were updated
@@ -499,16 +514,16 @@ class VT100ScreenTests: XCTestCase {
     func testResizeWithOutOfBoundsCommandRangeStartX() {
         let screen = self.screen(width: 5, height: 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 100
+            mutableState.maxScrollbackLines = 100
         })
         appendLinesNoNewline(["abcde", "fghij", "klmno"], screen: screen)
 
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // Add a mark
-            let mark = mutableState!.addMark(onLine: 1, of: VT100ScreenMark.self) as! VT100ScreenMark
-            let absLine = mutableState!.cumulativeScrollbackOverflow + 1
+            let mark = mutableState.addMark(onLine: 1, of: VT100ScreenMark.self) as! VT100ScreenMark
+            let absLine = mutableState.cumulativeScrollbackOverflow + 1
 
-            mutableState!.mutableIntervalTree().mutate(mark) { obj in
+            mutableState.mutableIntervalTree().mutate(mark) { obj in
                 let m = obj as! VT100ScreenMark
                 // Set commandRange with start.x = width (5), which is out of bounds
                 // This simulates cursor at wrap position. Range spans to next line.
@@ -521,7 +536,7 @@ class VT100ScreenTests: XCTestCase {
 
         // Verify we didn't crash and the mark still exists
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let marks = mutableState!.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
+            let marks = mutableState.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
             XCTAssertEqual(marks.count, 1)
         })
     }
@@ -531,7 +546,7 @@ class VT100ScreenTests: XCTestCase {
     func testResizeScreenMarkInSavedIntervalTreeWithDroppedLines() {
         let screen = self.screen(width: 20, height: 5)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 10
+            mutableState.maxScrollbackLines = 10
         })
 
         // Fill screen with content that will reflow significantly
@@ -544,10 +559,10 @@ class VT100ScreenTests: XCTestCase {
 
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // Add a mark on line 0 (the command line, which wraps)
-            let mark = mutableState!.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
-            let absLine = mutableState!.cumulativeScrollbackOverflow
+            let mark = mutableState.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
+            let absLine = mutableState.cumulativeScrollbackOverflow
 
-            mutableState!.mutableIntervalTree().mutate(mark) { obj in
+            mutableState.mutableIntervalTree().mutate(mark) { obj in
                 let m = obj as! VT100ScreenMark
                 // Command spans from column 13 ("ls") across the wrap to column 9 on next line
                 m.commandRange = VT100GridAbsCoordRangeMake(13, absLine, 9, absLine + 2)
@@ -560,7 +575,7 @@ class VT100ScreenTests: XCTestCase {
 
         // Switch to alt screen - this moves primary marks to savedIntervalTree
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showAltBuffer()
+            mutableState.showAltBuffer()
         })
 
         // Resize to much narrower width - causes significant reflow
@@ -568,12 +583,12 @@ class VT100ScreenTests: XCTestCase {
 
         // Switch back to primary
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
 
         // Verify the mark survived and has valid properties
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let marks = mutableState!.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
+            let marks = mutableState.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
 
             for mark in marks {
                 let cmdRange = mark.commandRange
@@ -605,7 +620,7 @@ class VT100ScreenTests: XCTestCase {
     func testResizeScreenMarkPropertiesGrowingWidth() {
         let screen = self.screen(width: 5, height: 6)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 20
+            mutableState.maxScrollbackLines = 20
         })
 
         // Content that wraps at width 5
@@ -617,10 +632,10 @@ class VT100ScreenTests: XCTestCase {
 
         var screenMark: VT100ScreenMark?
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let mark = mutableState!.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
-            let absLine = mutableState!.cumulativeScrollbackOverflow
+            let mark = mutableState.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
+            let absLine = mutableState.cumulativeScrollbackOverflow
 
-            mutableState!.mutableIntervalTree().mutate(mark) { obj in
+            mutableState.mutableIntervalTree().mutate(mark) { obj in
                 let m = obj as! VT100ScreenMark
                 // Command "cmd" at column 2-5 on line 0
                 m.commandRange = VT100GridAbsCoordRangeMake(2, absLine, 5, absLine)
@@ -634,13 +649,13 @@ class VT100ScreenTests: XCTestCase {
 
         // Switch to alt, resize wider, switch back
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showAltBuffer()
+            mutableState.showAltBuffer()
         })
 
         screen.size = VT100GridSizeMake(10, 6)
 
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
 
         // Verify properties are valid for new width
@@ -668,7 +683,7 @@ class VT100ScreenTests: XCTestCase {
                                                 intermediateRange range2: VT100GridCoordRange) {
         var screen = self.screen(width: 80, height: 25)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 1000
+            mutableState.maxScrollbackLines = 1000
         })
         appendLines([
             "",
@@ -685,7 +700,7 @@ class VT100ScreenTests: XCTestCase {
         let state = encoder.mutableDictionary
 
         screen = self.screen(width: 80, height: 25)
-        screen.restore(from: state as? [AnyHashable: Any],
+        screen.restore(from: (state as? [AnyHashable : Any])!,
                        includeRestorationBanner: false,
                        reattached: true,
                        isArchive: false,
@@ -716,7 +731,7 @@ class VT100ScreenTests: XCTestCase {
         // Test annotation resize on an empty line (line 0)
         let screen = self.screen(width: 80, height: 25)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 1000
+            mutableState.maxScrollbackLines = 1000
         })
         appendLines([
             "",
@@ -742,7 +757,7 @@ class VT100ScreenTests: XCTestCase {
         // Test annotation resize on an empty line (line 1)
         let screen = self.screen(width: 80, height: 25)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 1000
+            mutableState.maxScrollbackLines = 1000
         })
         appendLines([
             "",
@@ -815,7 +830,7 @@ class VT100ScreenTests: XCTestCase {
     private func gangExpected(initialLines: [String], mixedTokens: [String]) -> String {
         let screen = self.screen(width: 10, height: 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 1000
+            mutableState.maxScrollbackLines = 1000
         })
         appendLines(initialLines, screen: screen)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
@@ -825,12 +840,12 @@ class VT100ScreenTests: XCTestCase {
                     let nextNewline = token.range(of: "\r\n", range: i..<token.endIndex)
                     if let nextNewline {
                         let substring = token[i..<nextNewline.lowerBound]
-                        mutableState!.appendString(atCursor: String(substring))
-                        mutableState!.appendCarriageReturnLineFeed()
+                        mutableState.appendString(atCursor: String(substring))
+                        mutableState.appendCarriageReturnLineFeed()
                         i = nextNewline.upperBound
                     } else {
                         let substring = token[i..<token.endIndex]
-                        mutableState!.appendString(atCursor: String(substring))
+                        mutableState.appendString(atCursor: String(substring))
                         i = token.endIndex
                     }
                 }
@@ -845,19 +860,19 @@ class VT100ScreenTests: XCTestCase {
 
         let screen = self.screen(width: 10, height: 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.maxScrollbackLines = 1000
+            mutableState.maxScrollbackLines = 1000
         })
         appendLines(initialLines, screen: screen)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             let gang = mixedTokens.map {
                 makeMixedToken($0)
             }
-            mutableState!.terminalAppendMixedAsciiGang(gang)
+            mutableState.terminalAppendMixedAsciiGang(gang)
         })
         let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssertEqual(actual, expected)
         if actual != expected {
-            print("Actual:\n\(actual!)\n\nExpected:\n\(expected)")
+            print("Actual:\n\(actual)\n\nExpected:\n\(expected)")
         }
         return actual == expected
     }
@@ -936,20 +951,20 @@ class VT100ScreenTests: XCTestCase {
         // Compute expected output after setup + firstTokens via character-at-a-time
         let expectedAfterSetup: String = {
             let s = self.screen(width: width, height: height)
-            s.performBlock(joinedThreads: { _, ms, _ in ms!.maxScrollbackLines = 1000 })
+            s.performBlock(joinedThreads: { _, ms, _ in ms.maxScrollbackLines = 1000 })
             appendLines(initialLines, screen: s)
             s.performBlock(joinedThreads: { _, ms, _ in
-                setup(ms!)
+                setup(ms)
                 for token in firstTokens {
                     var i = token.startIndex
                     while i < token.endIndex {
                         let nl = token.range(of: "\r\n", range: i..<token.endIndex)
                         if let nl {
-                            ms!.appendString(atCursor: String(token[i..<nl.lowerBound]))
-                            ms!.appendCarriageReturnLineFeed()
+                            ms.appendString(atCursor: String(token[i..<nl.lowerBound]))
+                            ms.appendCarriageReturnLineFeed()
                             i = nl.upperBound
                         } else {
-                            ms!.appendString(atCursor: String(token[i..<token.endIndex]))
+                            ms.appendString(atCursor: String(token[i..<token.endIndex]))
                             i = token.endIndex
                         }
                     }
@@ -961,35 +976,35 @@ class VT100ScreenTests: XCTestCase {
         // Compute expected output after restore + secondTokens via character-at-a-time
         let expectedAfterRestore: String = {
             let s = self.screen(width: width, height: height)
-            s.performBlock(joinedThreads: { _, ms, _ in ms!.maxScrollbackLines = 1000 })
+            s.performBlock(joinedThreads: { _, ms, _ in ms.maxScrollbackLines = 1000 })
             appendLines(initialLines, screen: s)
             s.performBlock(joinedThreads: { _, ms, _ in
-                setup(ms!)
+                setup(ms)
                 for token in firstTokens {
                     var i = token.startIndex
                     while i < token.endIndex {
                         let nl = token.range(of: "\r\n", range: i..<token.endIndex)
                         if let nl {
-                            ms!.appendString(atCursor: String(token[i..<nl.lowerBound]))
-                            ms!.appendCarriageReturnLineFeed()
+                            ms.appendString(atCursor: String(token[i..<nl.lowerBound]))
+                            ms.appendCarriageReturnLineFeed()
                             i = nl.upperBound
                         } else {
-                            ms!.appendString(atCursor: String(token[i..<token.endIndex]))
+                            ms.appendString(atCursor: String(token[i..<token.endIndex]))
                             i = token.endIndex
                         }
                     }
                 }
-                restore(ms!)
+                restore(ms)
                 for token in secondTokens {
                     var i = token.startIndex
                     while i < token.endIndex {
                         let nl = token.range(of: "\r\n", range: i..<token.endIndex)
                         if let nl {
-                            ms!.appendString(atCursor: String(token[i..<nl.lowerBound]))
-                            ms!.appendCarriageReturnLineFeed()
+                            ms.appendString(atCursor: String(token[i..<nl.lowerBound]))
+                            ms.appendCarriageReturnLineFeed()
                             i = nl.upperBound
                         } else {
-                            ms!.appendString(atCursor: String(token[i..<token.endIndex]))
+                            ms.appendString(atCursor: String(token[i..<token.endIndex]))
                             i = token.endIndex
                         }
                     }
@@ -1000,13 +1015,13 @@ class VT100ScreenTests: XCTestCase {
 
         // Now test the gang path
         let screen = self.screen(width: width, height: height)
-        screen.performBlock(joinedThreads: { _, ms, _ in ms!.maxScrollbackLines = 1000 })
+        screen.performBlock(joinedThreads: { _, ms, _ in ms.maxScrollbackLines = 1000 })
         appendLines(initialLines, screen: screen)
 
         // Phase 1: setup + gang (should take slow path)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            setup(ms!)
-            ms!.terminalAppendMixedAsciiGang(firstTokens.map { self.makeMixedToken($0) })
+            setup(ms)
+            ms.terminalAppendMixedAsciiGang(firstTokens.map { self.makeMixedToken($0) })
         })
         let actualAfterSetup = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssertEqual(actualAfterSetup, expectedAfterSetup,
@@ -1015,8 +1030,8 @@ class VT100ScreenTests: XCTestCase {
 
         // Phase 2: restore + gang (should re-enable fast path)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            restore(ms!)
-            ms!.terminalAppendMixedAsciiGang(secondTokens.map { self.makeMixedToken($0) })
+            restore(ms)
+            ms.terminalAppendMixedAsciiGang(secondTokens.map { self.makeMixedToken($0) })
         })
         let actualAfterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssertEqual(actualAfterRestore, expectedAfterRestore,
@@ -1080,27 +1095,27 @@ class VT100ScreenTests: XCTestCase {
         // appear correctly and that normal text resumes after leaving line drawing mode.
         let screen = self.screen(width: 10, height: 4)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.maxScrollbackLines = 1000
+            ms.maxScrollbackLines = 1000
         })
 
         // Enter line drawing mode, send a gang (should take slow path)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.setCharacterSet(0, usesLineDrawingMode: true)
-            ms!.terminalAppendMixedAsciiGang(["jklmn\r\n"].map { self.makeMixedToken($0) })
+            ms.setCharacterSet(0, usesLineDrawingMode: true)
+            ms.terminalAppendMixedAsciiGang(["jklmn\r\n"].map { self.makeMixedToken($0) })
         })
         // j,k,l,m,n in line drawing mode should produce box drawing characters
-        let afterSetup = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        let afterSetup = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         // These ASCII chars map to specific box drawing chars in line drawing mode
         XCTAssert(!afterSetup.contains("jklmn"),
                   "Line drawing mode should convert characters: \(afterSetup)")
 
         // Exit line drawing mode, send another gang (should re-enable fast path)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.setCharacterSet(0, usesLineDrawingMode: false)
-            ms!.terminalAppendMixedAsciiGang(["back\r\n"].map { self.makeMixedToken($0) })
+            ms.setCharacterSet(0, usesLineDrawingMode: false)
+            ms.terminalAppendMixedAsciiGang(["back\r\n"].map { self.makeMixedToken($0) })
         })
         // "back" should appear as normal text
-        let afterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        let afterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssert(afterRestore.contains("back"),
                   "Expected 'back' on screen after leaving line drawing mode: \(afterRestore)")
     }
@@ -1165,30 +1180,30 @@ class VT100ScreenTests: XCTestCase {
         // verify screen output resumes correctly after leaving print buffer mode.
         let screen = self.screen(width: 10, height: 4)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.maxScrollbackLines = 1000
+            ms.maxScrollbackLines = 1000
             // Enable printing so terminalBeginRedirectingToPrintBuffer works
             let config = VT100MutableScreenConfiguration()
             config.printingAllowed = true
-            ms!.setConfig(config)
+            ms.setConfig(config)
         })
 
         // Enter print buffer mode, send a gang (should take slow path)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalBeginRedirectingToPrintBuffer()
-            ms!.terminalAppendMixedAsciiGang(["hello\r\nworld\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalBeginRedirectingToPrintBuffer()
+            ms.terminalAppendMixedAsciiGang(["hello\r\nworld\r\n"].map { self.makeMixedToken($0) })
         })
         // Nothing should appear on screen since output went to print buffer
-        let afterPrint = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        let afterPrint = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssert(!afterPrint.contains("hello"),
                   "Print buffer output should not appear on screen: \(afterPrint)")
 
         // Exit print buffer mode, send another gang (should re-enable fast path)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalPrintBuffer()
-            ms!.terminalAppendMixedAsciiGang(["back\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalPrintBuffer()
+            ms.terminalAppendMixedAsciiGang(["back\r\n"].map { self.makeMixedToken($0) })
         })
         // "back" should now appear on screen
-        let afterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        let afterRestore = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssert(afterRestore.contains("back"),
                   "Expected 'back' on screen after leaving print mode: \(afterRestore)")
     }
@@ -1220,7 +1235,7 @@ class VT100ScreenTests: XCTestCase {
         // can take the fast path.
         let screen = self.screen(width: 10, height: 4)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.maxScrollbackLines = 1000
+            ms.maxScrollbackLines = 1000
         })
 
         // Install an expectation that matches "hello"
@@ -1231,21 +1246,21 @@ class VT100ScreenTests: XCTestCase {
                                                deadline: nil,
                                                willExpect: nil,
                                                completion: nil)
-            ms!.updateExpect(from: expect)
+            ms.updateExpect(from: expect)
         })
 
         // Send text that matches the expectation via the slow path.
         // The slow path evaluates triggers, which matches and consumes the expectation.
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalAppendMixedAsciiGang(["hello\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalAppendMixedAsciiGang(["hello\r\n"].map { self.makeMixedToken($0) })
         })
 
         // Send another gang. Should work correctly now that expectation is consumed.
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalAppendMixedAsciiGang(["world\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalAppendMixedAsciiGang(["world\r\n"].map { self.makeMixedToken($0) })
         })
 
-        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         // Both "hello" and "world" should appear on the grid.
         XCTAssert(actual.contains("hello"), "Expected 'hello' in grid: \(actual)")
         XCTAssert(actual.contains("world"), "Expected 'world' in grid: \(actual)")
@@ -1256,7 +1271,7 @@ class VT100ScreenTests: XCTestCase {
         // the gang mechanism still works correctly.
         let screen = self.screen(width: 10, height: 4)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.maxScrollbackLines = 1000
+            ms.maxScrollbackLines = 1000
         })
 
         // Install an expectation with a deadline in the past
@@ -1268,20 +1283,20 @@ class VT100ScreenTests: XCTestCase {
                                                deadline: pastDeadline,
                                                willExpect: nil,
                                                completion: nil)
-            ms!.updateExpect(from: expect)
+            ms.updateExpect(from: expect)
         })
 
         // The deadline has already passed but expiry hasn't been processed yet.
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalAppendMixedAsciiGang(["hello\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalAppendMixedAsciiGang(["hello\r\n"].map { self.makeMixedToken($0) })
         })
 
         // Send a second gang to confirm processing continues correctly after expiry.
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalAppendMixedAsciiGang(["world\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalAppendMixedAsciiGang(["world\r\n"].map { self.makeMixedToken($0) })
         })
 
-        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssert(actual.contains("hello"), "Expected 'hello' in grid: \(actual)")
         XCTAssert(actual.contains("world"), "Expected 'world' in grid: \(actual)")
     }
@@ -1291,7 +1306,7 @@ class VT100ScreenTests: XCTestCase {
         // and then being drained works correctly with gang processing.
         let screen = self.screen(width: 10, height: 4)
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.maxScrollbackLines = 1000
+            ms.maxScrollbackLines = 1000
         })
 
         // Configure a prompt-detecting trigger that matches "prompt>"
@@ -1302,31 +1317,31 @@ class VT100ScreenTests: XCTestCase {
         screen.performBlock(joinedThreads: { _, ms, _ in
             let config = VT100MutableScreenConfiguration()
             config.triggerProfileDicts = [triggerDict]
-            ms!.setConfig(config)
+            ms.setConfig(config)
         })
 
         // Send text matching the trigger.
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalAppendMixedAsciiGang(["prompt>\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalAppendMixedAsciiGang(["prompt>\r\n"].map { self.makeMixedToken($0) })
         })
 
         // Remove triggers so only _postTriggerActions state matters for eligibility.
         screen.performBlock(joinedThreads: { _, ms, _ in
             let config = VT100MutableScreenConfiguration()
             config.triggerProfileDicts = []
-            ms!.setConfig(config)
+            ms.setConfig(config)
         })
 
         // Send more gangs to verify processing continues correctly.
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalAppendMixedAsciiGang(["after\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalAppendMixedAsciiGang(["after\r\n"].map { self.makeMixedToken($0) })
         })
 
         screen.performBlock(joinedThreads: { _, ms, _ in
-            ms!.terminalAppendMixedAsciiGang(["verify\r\n"].map { self.makeMixedToken($0) })
+            ms.terminalAppendMixedAsciiGang(["verify\r\n"].map { self.makeMixedToken($0) })
         })
 
-        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()!
+        let actual = screen.compactLineDumpWithDividedHistoryAndContinuationMarks()
         XCTAssert(actual.contains("after"), "Expected 'after' in output: \(actual)")
         XCTAssert(actual.contains("verify"), "Expected 'verify' in output: \(actual)")
     }
@@ -1347,9 +1362,9 @@ class VT100ScreenTests: XCTestCase {
                             String(repeating: "h", count: 10) + "\r\n",
                             String(repeating: "i", count: 10) + "\r\n",
                             String(repeating: "j", count: 10) + "\r\n"]
-                mutableState?.terminalAppendMixedAsciiGang(gang.map { makeMixedToken($0) })
+                mutableState.terminalAppendMixedAsciiGang(gang.map { makeMixedToken($0) })
             }
-            XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+            XCTAssertEqual(screen.compactLineDumpWithHistory(),
                            "dd......\n" +
                            "eeeeeeee\n" +
                            "ee......\n" +
@@ -1371,9 +1386,9 @@ class VT100ScreenTests: XCTestCase {
                             String(repeating: "m", count: 10) + "\r\n",
                             String(repeating: "n", count: 10) + "\r\n",
                             String(repeating: "o", count: 10) + "\r\n"]
-                mutableState?.terminalAppendMixedAsciiGang(gang.map { makeMixedToken($0) })
+                mutableState.terminalAppendMixedAsciiGang(gang.map { makeMixedToken($0) })
             }
-            XCTAssertEqual(screen.compactLineDumpWithHistory()!,
+            XCTAssertEqual(screen.compactLineDumpWithHistory(),
                            "ii......\n" +
                            "jjjjjjjj\n" +
                            "jj......\n" +
@@ -1401,7 +1416,7 @@ class VT100ScreenTests: XCTestCase {
         let screen = screen(width: 5, height: 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // "abcdefgh" wraps: "abcde" on line 0 (EOL_SOFT), "fgh" on line 1
-            mutableState!.appendString(atCursor: "abcdefgh")
+            mutableState.appendString(atCursor: "abcdefgh")
         })
         // Verify initial state: line 0 has EOL_SOFT
         XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
@@ -1411,8 +1426,8 @@ class VT100ScreenTests: XCTestCase {
                        ".....!")
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // Simulate zsh redraw: CR to column 0, then erase from cursor to end of line
-            mutableState!.carriageReturn()
-            mutableState!.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
+            mutableState.carriageReturn()
+            mutableState.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
         })
         // Line 0 should still have EOL_SOFT because it's full to the right edge
         XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
@@ -1428,12 +1443,12 @@ class VT100ScreenTests: XCTestCase {
         let screen = screen(width: 5, height: 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // Write text that wraps
-            mutableState!.appendString(atCursor: "abcdefgh")
+            mutableState.appendString(atCursor: "abcdefgh")
             // Now erase some characters at the end of line 0 to make it not full.
             // Move cursor to position 4 on line 0 and erase to end of line.
-            mutableState!.currentGrid.cursorX = 4
-            mutableState!.currentGrid.cursorY = 0
-            mutableState!.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
+            mutableState.currentGrid.cursorX = 4
+            mutableState.currentGrid.cursorY = 0
+            mutableState.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
         })
         // After erasing end of line 0, it should now have EOL_HARD
         // (setCharsFrom:to:toChar: sets EOL_HARD when erasing to right edge)
@@ -1445,11 +1460,11 @@ class VT100ScreenTests: XCTestCase {
                        ".....!")
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // Now set line 0 back to EOL_SOFT artificially (simulating an edge case)
-            mutableState!.currentGrid.setContinuationMarkOnLine(0, to: unichar(EOL_SOFT))
+            mutableState.currentGrid.setContinuationMarkOnLine(0, to: unichar(EOL_SOFT))
             // Move cursor to (0, 1) and erase after cursor
-            mutableState!.currentGrid.cursorX = 0
-            mutableState!.currentGrid.cursorY = 1
-            mutableState!.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
+            mutableState.currentGrid.cursorX = 0
+            mutableState.currentGrid.cursorY = 1
+            mutableState.eraseLine(beforeCursor: false, afterCursor: true, decProtect: false)
         })
         // Line 0 should now have EOL_HARD because position 4 is null (line not full)
         XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
@@ -1463,7 +1478,7 @@ class VT100ScreenTests: XCTestCase {
         // Same as the EL test but for ED (erase in display).
         let screen = screen(width: 5, height: 4)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState!.appendString(atCursor: "abcdefgh")
+            mutableState.appendString(atCursor: "abcdefgh")
         })
         XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
                        "abcde+\n" +
@@ -1472,8 +1487,8 @@ class VT100ScreenTests: XCTestCase {
                        ".....!")
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             // CR to column 0 on line 1, then erase display from cursor to end
-            mutableState!.carriageReturn()
-            mutableState!.eraseInDisplay(beforeCursor: false, afterCursor: true, decProtect: false)
+            mutableState.carriageReturn()
+            mutableState.eraseInDisplay(beforeCursor: false, afterCursor: true, decProtect: false)
         })
         // Line 0 should still have EOL_SOFT
         XCTAssertEqual(screen.immutableState.currentGrid.compactLineDumpWithContinuationMarks(),
@@ -1621,6 +1636,15 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
 
     func screenResizeResilientCoordinates(_ convert: @escaping (VT100GridAbsCoord) -> VT100GridAbsCoord) {
+
+    }
+
+    func screenResizeResilientCoordinates(forSavedTree convert: @escaping (VT100GridAbsCoord) -> VT100GridAbsCoord,
+                                          guid savedTreeMainGuid: String) {
+
+    }
+
+    func screenSetTabStatus(_ status: VT100TabStatusUpdate) {
 
     }
 
@@ -1884,7 +1908,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenPromptDidStart(atLine line: Int32) {
 
     }
-    
+
+    func screenPromptOfNonInitialKindDidStart(_ kind: VT100PromptKind) {
+
+    }
+
     func screenPromptDidEnd(withMark mark: any VT100ScreenMarkReading) {
 
     }
@@ -1969,7 +1997,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenCurrentHostDidChange(_ host: any VT100RemoteHostReading, pwd workingDirectory: String?, ssh: Bool) {
+    func screenCurrentHostDidChange(_ host: any VT100RemoteHostReading, pwd workingDirectory: String?, viaSSHIntegration: Bool) {
 
     }
     
@@ -2268,6 +2296,14 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
 
     func triggerSideEffectStopScrolling(atLine absLine: Int64) {
+
+    }
+
+    func triggerSideEffectEnterWorkgroup(withIdentifier workgroupUniqueIdentifier: String) {
+
+    }
+
+    func triggerSideEffectExitWorkgroupLeaderOnly(_ leaderOnly: Bool) {
 
     }
 

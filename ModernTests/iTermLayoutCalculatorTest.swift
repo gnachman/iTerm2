@@ -148,6 +148,22 @@ final class iTermLayoutCalculatorTest: XCTestCase {
         XCTAssertEqual(result, frame)
     }
 
+    /// Test: Right tab bar position -> no shrinking
+    func testRightTabBar_NoShrinking() {
+        var inputs = makeDefaultInputs()
+        inputs.tabBarVisible = true
+        inputs.tabBarOnLoan = true
+        inputs.tabBarAccessoryOverlapsContent = true
+        inputs.inFullscreen = true
+        inputs.tabPosition = kLayoutTabPositionRight
+
+        let frame = CGRect(x: 0, y: 0, width: 800, height: 600)
+        let result = iTermLayoutCalculator.tabViewFrame(byShrinkingForFullScreenTabBar: frame, with: inputs)
+
+        // Right tab bar never shrinks via this method
+        XCTAssertEqual(result, frame)
+    }
+
     /// Test: Flashing tab bar overlaps content -> no shrinking
     func testFlashingTabBar_NoShrinking() {
         var inputs = makeDefaultInputs()
@@ -429,6 +445,64 @@ final class iTermLayoutCalculatorTest: XCTestCase {
         hiddenInputs.tabBarVisible = false
         let hiddenOutputs = iTermLayoutCalculator.calculateLayout(with: hiddenInputs)
         XCTAssertEqual(hiddenOutputs.tabBarFrame, CGRect.zero)
+
+        // Right tab bar
+        var rightInputs = makeDefaultInputs()
+        rightInputs.tabBarVisible = true
+        rightInputs.tabPosition = kLayoutTabPositionRight
+        let rightOutputs = iTermLayoutCalculator.calculateLayout(with: rightInputs)
+        XCTAssertGreaterThan(rightOutputs.tabBarFrame.origin.x, rightOutputs.tabViewFrame.origin.x)
+    }
+
+    // MARK: - Visible Right Tab Bar Layout Tests
+
+    /// Test: Right tab bar occupies the right edge when toolbelt is hidden
+    func testVisibleRightTabBarWithoutToolbelt() {
+        var inputs = makeDefaultInputs()
+        inputs.tabBarVisible = true
+        inputs.tabPosition = kLayoutTabPositionRight
+        inputs.leftTabBarWidth = 200
+        inputs.contentViewWidth = 800
+
+        let outputs = iTermLayoutCalculator.calculateLayout(withVisibleRightTabBarInputs: inputs)
+
+        XCTAssertEqual(outputs.tabBarFrame.origin.x, 600)
+        XCTAssertEqual(outputs.tabBarFrame.size.width, 200)
+        XCTAssertEqual(outputs.tabViewFrame.origin.x, 0)
+        XCTAssertEqual(outputs.tabViewFrame.size.width, 600)
+    }
+
+    /// Test: Right tab bar sits left of the toolbelt when toolbelt is visible
+    func testVisibleRightTabBarWithToolbelt() {
+        var inputs = makeDefaultInputs()
+        inputs.tabBarVisible = true
+        inputs.tabPosition = kLayoutTabPositionRight
+        inputs.leftTabBarWidth = 200
+        inputs.shouldShowToolbelt = true
+        inputs.toolbeltWidth = 150
+        inputs.contentViewWidth = 800
+
+        let outputs = iTermLayoutCalculator.calculateLayout(withVisibleRightTabBarInputs: inputs)
+
+        XCTAssertEqual(outputs.tabBarFrame.origin.x, 450)
+        XCTAssertEqual(outputs.tabBarFrame.size.width, 200)
+        XCTAssertEqual(outputs.tabViewFrame.size.width, 450)
+        XCTAssertEqual(outputs.toolbeltFrame.origin.x, 650)
+    }
+
+    /// Test: Flashing right tab bar overlaps content instead of shrinking it
+    func testVisibleRightTabBarFlashing() {
+        var inputs = makeDefaultInputs()
+        inputs.tabBarVisible = true
+        inputs.tabPosition = kLayoutTabPositionRight
+        inputs.leftTabBarWidth = 200
+        inputs.tabBarFlashing = true
+        inputs.contentViewWidth = 800
+
+        let outputs = iTermLayoutCalculator.calculateLayout(withVisibleRightTabBarInputs: inputs)
+
+        XCTAssertEqual(outputs.tabViewFrame.origin.x, 0)
+        XCTAssertEqual(outputs.tabViewFrame.size.width, 800)
     }
 
     // MARK: - Unified Mechanism Tests (Phase 4)

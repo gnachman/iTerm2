@@ -168,3 +168,51 @@ def check_supports_load_url(connection):
         raise AppVersionTooOld(
             "This version of iTerm2 is too old to load URLs in browser sessions. " +
             "You should upgrade to run this script.")
+
+def supports_move_session_to_tab_or_window(connection):
+    """Can you use move_session_to_new_tab() or move_session_to_new_window()?"""
+    min_ver = (1, 13)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_move_session_to_tab_or_window(connection):
+    if not supports_move_session_to_tab_or_window(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to move sessions to new tabs or windows. " +
+            "You should upgrade to run this script.")
+
+def supports_apply_layout(connection):
+    """Can you use App.async_apply_layout()?"""
+    min_ver = (1, 14)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_apply_layout(connection):
+    if not supports_apply_layout(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to apply layouts via the Python API. " +
+            "You should upgrade to run this script.")
+
+def supports_apply_layout_new_session(connection):
+    """Can App.async_apply_layout() create new sessions inline via
+    `new_session` leaves?"""
+    min_ver = (1, 16)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_apply_layout_new_session(connection):
+    if not supports_apply_layout_new_session(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to create new sessions via "
+            "apply_layout (new_session leaves). You should upgrade to run "
+            "this script.")
+
+def supports_prompt_excluded_subranges(connection):
+    """Does GetPromptResponse populate excluded_subranges (PS2 prefixes,
+    right-prompt cells inside the command range)?"""
+    min_ver = (1, 15)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_prompt_excluded_subranges(connection):
+    if not supports_prompt_excluded_subranges(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to report excluded subranges " +
+            "(PS2 prefixes, right-prompt cells) on prompts. You should " +
+            "upgrade to run this script.")

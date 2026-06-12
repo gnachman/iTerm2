@@ -530,6 +530,7 @@ final class SubexpressionTests: XCTestCase, iTermObject {
     // MARK: - Edge Cases with nil
 
     func testTernaryWithFunctionReturningNilViaDirect() {
+        // A function returning nil/NSNull as ternary condition is treated as falsy.
         let expectation = XCTestExpectation(description: "ternary with nil function - direct")
 
         let parser = iTermExpressionParser.callParser()!
@@ -545,11 +546,10 @@ final class SubexpressionTests: XCTestCase, iTermObject {
 
         expr.evaluate(invocation: "test", receiver: nil, timeout: 1, sideEffectsAllowed: true, scope: scope) { result in
             result.whenFirst { value in
-                XCTFail("Expected error for nil in ternary condition, but got value: \(value)")
+                // NSNull is falsy, so the false branch (2) should be taken
+                XCTAssertEqual(value as? NSNumber, 2)
             } second: { error in
-                XCTAssertNotNil(error)
-                XCTAssertTrue(error.localizedDescription.contains("expected number") ||
-                             error.localizedDescription.contains("Type mismatch"))
+                XCTFail("Unexpected error: \(error)")
             }
             expectation.fulfill()
         }

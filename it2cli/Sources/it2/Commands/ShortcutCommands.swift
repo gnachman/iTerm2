@@ -177,3 +177,35 @@ struct NewTabShortcut: ParsableCommand {
         try cmd.run()
     }
 }
+
+struct SetStatusShortcut: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "set-status",
+        abstract: "Shortcut for 'it2 session set-status'."
+    )
+
+    @Option(name: .shortAndLong, help: "Target session ID.")
+    var session: String
+
+    @Option(name: .long, help: "Status text (idle, working, or waiting).")
+    var status: String?
+
+    @Option(name: .long, help: "Dot indicator color as #rrggbb.")
+    var dotColor: String?
+
+    @Option(name: .long, help: "Text color as #rrggbb.")
+    var textColor: String?
+
+    @Option(name: .long, help: "Optional detail text shown alongside the status.")
+    var detail: String?
+
+    func run() throws {
+        var args: [String] = ["-s", session]
+        if let st = status { args += ["--status", st] }
+        if let dc = dotColor { args += ["--dot-color", dc] }
+        if let tc = textColor { args += ["--text-color", tc] }
+        if let d = detail { args += ["--detail", d] }
+        let cmd = try Session.SetStatus.parse(args)
+        try cmd.run()
+    }
+}

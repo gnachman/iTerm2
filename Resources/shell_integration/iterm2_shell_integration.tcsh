@@ -30,6 +30,25 @@ if ( ! ($?iterm2_shell_integration_installed)) then
 
       set iterm2_shell_integration_installed="yes"
 
+      # OSC 133 aid: per-SHELL identifier the receiver uses to target a
+      # specific mark for D-by-aid (and cascade-close when an outer
+      # command like ssh dies before its inner remote shell's D arrives).
+      #
+      # tcsh limitation: unlike bash/zsh/fish, tcsh's `set prompt=...`
+      # captures the A/B sequences at script-source time via backticks
+      # rather than re-evaluating per prompt. We can't make the aid
+      # change per-command without restructuring the prompt mechanism,
+      # so the aid is constant per shell session. That still
+      # disambiguates local vs remote shells in nested ssh (PIDs and
+      # start times differ between the outer and inner shells), which
+      # is the main use case, but D-by-aid within one tcsh session
+      # always targets the most-recently created mark, equivalent to
+      # today's topmost-open behavior. tcsh has no $RANDOM/$random; $$
+      # (PID) plus `date +%s` (POSIX-standard since 2001, supported on
+      # macOS / Linux / *BSD / AIX 5.3+ / Solaris 10+) is the most
+      # portable per-shell identifier available at source time.
+      set _iterm2_current_aid = "tcsh-$$-`date +%s`"
+
       alias _iterm2_start 'printf "\033]"'
       alias _iterm2_end 'printf "\007"'
       alias _iterm2_end_prompt 'printf "\007"'
@@ -59,33 +78,35 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       alias _iterm2_current_dir "(_iterm2_start; _iterm2_print_current_dir; _iterm2_end)"
 
       # Define aliases for printing the shell integration version this script is written against
-      alias _iterm2_print_shell_integration_version 'printf "1337;ShellIntegrationVersion=7;shell=tcsh"'
+      alias _iterm2_print_shell_integration_version 'printf "1337;ShellIntegrationVersion=8;shell=tcsh"'
       alias _iterm2_shell_integration_version "(_iterm2_start; _iterm2_print_shell_integration_version; _iterm2_end)"
 
       # Define aliases for defining the boundary between a command prompt and the
-      # output of a command started from that prompt.
+      # output of a command started from that prompt. $_iterm2_current_aid is
+      # constant per shell session (see note above) so every C/A/B/D in this
+      # shell carries the same aid string.
       if (! $?TERM_PROGRAM) then
-          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;"'
+          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;aid=$_iterm2_current_aid"'
       else
         if ( x"$TERM_PROGRAM" != x"iTerm.app" ) then
-          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;"'
+          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;aid=$_iterm2_current_aid"'
         else
-          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;\r"'
+          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;aid=$_iterm2_current_aid\r"'
         endif
       endif
 
       alias _iterm2_between_prompt_and_exec "(_iterm2_start; _iterm2_print_between_prompt_and_exec; _iterm2_end)"
 
       # Define aliases for defining the start of a command prompt.
-      alias _iterm2_print_before_prompt 'printf "133;A"'
+      alias _iterm2_print_before_prompt 'printf "133;A;aid=$_iterm2_current_aid"'
       alias _iterm2_before_prompt "(_iterm2_start; _iterm2_print_before_prompt; _iterm2_end_prompt)"
 
       # Define aliases for defining the end of a command prompt.
-      alias _iterm2_print_after_prompt 'printf "133;B"'
+      alias _iterm2_print_after_prompt 'printf "133;B;aid=$_iterm2_current_aid"'
       alias _iterm2_after_prompt "(_iterm2_start; _iterm2_print_after_prompt; _iterm2_end_prompt)"
-       
+
       # Define aliases for printing the status of the last command.
-      alias _iterm2_last_status 'printf "\033]133;D;$?\007"'
+      alias _iterm2_last_status 'printf "\033]133;D;$?;aid=$_iterm2_current_aid\007"'
 
       # Usage: iterm2_set_user_var key `printf "%s" value | base64`
       alias iterm2_set_user_var 'printf "\033]1337;SetUserVar=%s=%s\007"'

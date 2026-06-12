@@ -20,9 +20,9 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         session.screen = screen
         screen.delegate = session
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.terminalEnabled = true
-            mutableState!.terminal!.termType = "xterm"
-            mutableState!.maxScrollbackLines = scrollback
+            mutableState.terminalEnabled = true
+            mutableState.terminal!.termType = "xterm"
+            mutableState.maxScrollbackLines = scrollback
             screen.destructivelySetScreenWidth(width, height: height, mutableState: mutableState)
         })
         return screen
@@ -42,8 +42,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Fill beyond scrollback capacity to cause overflow
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<50 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -54,14 +54,14 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Add more content to increase overflow further
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<30 {
-                mutableState?.appendString(atCursor: "More \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "More \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
         // Clear scrollback
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.clearScrollbackBuffer()
+            mutableState.clearScrollbackBuffer()
         })
 
         // Verify interval tree is valid
@@ -88,8 +88,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Add some initial content
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<5 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -101,14 +101,14 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Add 5 more lines - annotation now spans from scrollback into screen
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<5 {
-                mutableState?.appendString(atCursor: "Push \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Push \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
         // Clear scrollback - the spanning annotation should be handled correctly
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.clearScrollbackBuffer()
+            mutableState.clearScrollbackBuffer()
         })
 
         // Verify interval tree is valid
@@ -144,8 +144,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Create content with some scrollback
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<40 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -157,7 +157,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // With shiftIntervalTreeObjects fix: coords clamped to valid range
         // Without fix: coords go negative
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.shiftIntervalTreeObjects(
+            mutableState.shiftIntervalTreeObjects(
                 in: VT100GridCoordRangeMake(0, 0, 80, 24),
                 startingAfter: -1,
                 downByLines: -5
@@ -168,7 +168,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // If shiftIntervalTreeObjects created negative coords AND clearScrollback
         // doesn't clamp, the negative coords get worse (more negative after -history)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.clearScrollbackBuffer()
+            mutableState.clearScrollbackBuffer()
         })
 
         // Verify interval tree is valid
@@ -197,8 +197,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Add just enough content to have some scrollback but NO overflow
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<15 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
         // Now we have ~5 lines of scrollback, no overflow
@@ -210,7 +210,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Shift with large negative delta - with no overflow to absorb it,
         // this creates truly negative absolute coordinates
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.shiftIntervalTreeObjects(
+            mutableState.shiftIntervalTreeObjects(
                 in: VT100GridCoordRangeMake(0, 0, 80, 10),
                 startingAfter: -1,
                 downByLines: -10
@@ -233,7 +233,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Now clear scrollback - if tree is corrupted and clearScrollback
         // doesn't clamp, it makes things worse
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.clearScrollbackBuffer()
+            mutableState.clearScrollbackBuffer()
         })
 
         // Verify interval tree is valid after clear
@@ -282,8 +282,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Create content in primary screen
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<20 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -293,7 +293,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
 
         // Switch to alt screen
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showAltBuffer()
+            mutableState.showAltBuffer()
         })
 
         // Resize to smaller height - this triggers coordinate adjustments
@@ -302,7 +302,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
 
         // Switch back to primary
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.showPrimaryBuffer()
+            mutableState.showPrimaryBuffer()
         })
 
         // Verify interval tree is valid
@@ -340,8 +340,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Create content
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<15 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -363,7 +363,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Without clamping, start.y would be -3 (invalid)
         // With clamping, start.y becomes 0, and the note spans 0-3
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.shiftIntervalTreeObjects(
+            mutableState.shiftIntervalTreeObjects(
                 in: VT100GridCoordRangeMake(0, 0, 80, 24),
                 startingAfter: -1,
                 downByLines: -5
@@ -404,8 +404,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Create content
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<5 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -415,7 +415,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
 
         // Shift with deltaLines = -5, which would put the note at line -2 without clamping
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.shiftIntervalTreeObjects(
+            mutableState.shiftIntervalTreeObjects(
                 in: VT100GridCoordRangeMake(0, 0, 80, 24),
                 startingAfter: -1,
                 downByLines: -5
@@ -445,8 +445,8 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
         // Create content
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for i in 0..<10 {
-                mutableState?.appendString(atCursor: "Line \(i)")
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: "Line \(i)")
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
 
@@ -456,7 +456,7 @@ final class IntervalTreeCoordinateClampingTests: XCTestCase {
 
         // Shift by exactly -5, which should put the note at line 0 (valid)
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.shiftIntervalTreeObjects(
+            mutableState.shiftIntervalTreeObjects(
                 in: VT100GridCoordRangeMake(0, 0, 80, 24),
                 startingAfter: -1,
                 downByLines: -5

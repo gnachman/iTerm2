@@ -28,6 +28,8 @@ class MatchType(enum.Enum):
     EVENT_BELL_RECEIVED = 108
     EVENT_LONG_RUNNING_COMMAND = 109
     EVENT_CUSTOM_ESCAPE_SEQUENCE = 110
+    EVENT_NOTIFICATION_POSTED = 111
+    EVENT_PROGRESS_BAR_CHANGED = 112
 
     @staticmethod
     def is_event(match_type: 'MatchType') -> bool:
@@ -145,6 +147,8 @@ def _decode_event_trigger(
         MatchType.EVENT_BELL_RECEIVED: BellReceivedEventTrigger,
         MatchType.EVENT_LONG_RUNNING_COMMAND: LongRunningCommandEventTrigger,
         MatchType.EVENT_CUSTOM_ESCAPE_SEQUENCE: CustomEscapeSequenceEventTrigger,
+        MatchType.EVENT_NOTIFICATION_POSTED: NotificationPostedEventTrigger,
+        MatchType.EVENT_PROGRESS_BAR_CHANGED: ProgressBarChangedEventTrigger,
     }
 
     if match_type is not None and match_type in event_classes:
@@ -1626,4 +1630,105 @@ class CustomEscapeSequenceEventTrigger(EventTrigger):
             action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'CustomEscapeSequenceEventTrigger':
         sequence_id = event_params.get("sequenceId") if event_params else None
         return CustomEscapeSequenceEventTrigger(action_name, param, enabled, sequence_id)
+
+
+class NotificationPostedEventTrigger(EventTrigger):
+    """Trigger that fires when a notification is posted by a control sequence (OSC 9).
+
+    :param action_name: The action to perform.
+    :param param: The parameter for the action.
+    :param enabled: Whether the trigger is enabled.
+    :param message_regex: Optional regex pattern to match against the notification
+        message.
+    """
+    def __init__(
+            self,
+            action_name: str,
+            param,
+            enabled: bool,
+            message_regex: typing.Optional[str] = None):
+        event_params = {}
+        if message_regex:
+            event_params["messageRegex"] = message_regex
+        super().__init__(
+            match_type=MatchType.EVENT_NOTIFICATION_POSTED,
+            action_name=action_name,
+            param=param,
+            enabled=enabled,
+            event_params=event_params)
+        self.__message_regex = message_regex
+
+    @property
+    def message_regex(self) -> typing.Optional[str]:
+        """Regex pattern to match against the notification message."""
+        return self.__message_regex
+
+    @message_regex.setter
+    def message_regex(self, value: typing.Optional[str]):
+        self.__message_regex = value
+        if value:
+            self.event_params["messageRegex"] = value
+        elif "messageRegex" in self.event_params:
+            del self.event_params["messageRegex"]
+
+    @staticmethod
+    def deserialize(
+            action_name: str,
+            param,
+            enabled: bool,
+            event_params: typing.Optional[dict],
+            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'NotificationPostedEventTrigger':
+        message_regex = event_params.get("messageRegex") if event_params else None
+        return NotificationPostedEventTrigger(action_name, param, enabled, message_regex)
+
+
+class ProgressBarChangedEventTrigger(EventTrigger):
+    """Trigger that fires when a progress bar appears or disappears.
+
+    :param action_name: The action to perform.
+    :param param: The parameter for the action.
+    :param enabled: Whether the trigger is enabled.
+    :param progress_bar_filter: Filter for when to fire. One of ``"*"``
+        (appears or disappears), ``"appeared"``, or ``"disappeared"``.
+        Defaults to ``"*"``.
+    """
+    def __init__(
+            self,
+            action_name: str,
+            param,
+            enabled: bool,
+            progress_bar_filter: str = "*"):
+        event_params = {}
+        if progress_bar_filter and progress_bar_filter != "*":
+            event_params["progressBarFilter"] = progress_bar_filter
+        super().__init__(
+            match_type=MatchType.EVENT_PROGRESS_BAR_CHANGED,
+            action_name=action_name,
+            param=param,
+            enabled=enabled,
+            event_params=event_params)
+        self.__progress_bar_filter = progress_bar_filter
+
+    @property
+    def progress_bar_filter(self) -> str:
+        """Filter for when to fire: ``"*"``, ``"appeared"``, or ``"disappeared"``."""
+        return self.__progress_bar_filter
+
+    @progress_bar_filter.setter
+    def progress_bar_filter(self, value: str):
+        self.__progress_bar_filter = value
+        if value and value != "*":
+            self.event_params["progressBarFilter"] = value
+        elif "progressBarFilter" in self.event_params:
+            del self.event_params["progressBarFilter"]
+
+    @staticmethod
+    def deserialize(
+            action_name: str,
+            param,
+            enabled: bool,
+            event_params: typing.Optional[dict],
+            action_classes: typing.Dict[str, typing.Type[Trigger]]) -> 'ProgressBarChangedEventTrigger':
+        progress_bar_filter = event_params.get("progressBarFilter", "*") if event_params else "*"
+        return ProgressBarChangedEventTrigger(action_name, param, enabled, progress_bar_filter)
 

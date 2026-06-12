@@ -733,8 +733,36 @@ private class iTermTestHTTPServer {
         try! task.run()
         server = task
 
-        // Give the server a moment to start (longer for CI environments)
-        Thread.sleep(forTimeInterval: 1.0)
+        // Wait until the server actually accepts connections instead of a fixed
+        // sleep. python3 -m http.server can take well over a second to start
+        // listening on a cold/loaded CI runner, and a too-short fixed wait made
+        // the first test fail with "Connection refused". Poll the port.
+        waitUntilAccepting(timeout: 15.0)
+    }
+
+    /// Polls 127.0.0.1:port with short-lived TCP connects until one succeeds or
+    /// the timeout elapses. Returns early on the first successful connect.
+    private func waitUntilAccepting(timeout: TimeInterval) {
+        let deadline = Date(timeIntervalSinceNow: timeout)
+        while Date() < deadline {
+            let fd = socket(AF_INET, SOCK_STREAM, 0)
+            if fd >= 0 {
+                var addr = sockaddr_in()
+                addr.sin_family = sa_family_t(AF_INET)
+                addr.sin_port = in_port_t(UInt16(port).bigEndian)
+                addr.sin_addr.s_addr = inet_addr("127.0.0.1")
+                let connected = withUnsafePointer(to: &addr) {
+                    $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                        connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) == 0
+                    }
+                }
+                close(fd)
+                if connected {
+                    return
+                }
+            }
+            Thread.sleep(forTimeInterval: 0.05)
+        }
     }
     
     func stop() {

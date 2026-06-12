@@ -85,7 +85,13 @@ func trimJSONQuotes(_ s: String?) -> String {
 }
 
 /// Wrap a string as a JSON string value.
+/// Uses JSONEncoder (doesn't escape `/`) rather than JSONSerialization (which does).
 func jsonString(_ s: String) -> String {
+    if let data = try? JSONEncoder().encode(s),
+       let result = String(data: data, encoding: .utf8) {
+        return result
+    }
+    // Fallback for edge cases where JSONEncoder fails:
     let escaped = s.replacingOccurrences(of: "\\", with: "\\\\")
                    .replacingOccurrences(of: "\"", with: "\\\"")
     return "\"\(escaped)\""

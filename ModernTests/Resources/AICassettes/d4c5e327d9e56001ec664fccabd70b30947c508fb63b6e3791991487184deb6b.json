@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3.1-pro-preview:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"My favorite color is chartreuse. Reply OK.\"}],\"role\":\"user\"}]}",
+  "key" : "d4c5e327d9e56001ec664fccabd70b30947c508fb63b6e3791991487184deb6b",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"OK.\",\n            \"thoughtSignature\": \"EsoDCscDAQw51seWx75zB9m4DmzUn8wkOjM4hmAvf7M6JkilmtTzvVfYeZuRlVltPVgHTmffYiPS7f9pBag9nDarNZVhk5pBROBJTNz4OBXjNV\/9HWmzXLKf4HO3bcn5k\/BUYGX9Ja9MOV8bObPTAiwsjxiU+ou9NRwZqS9CZJ8rIZFfRCSIJ0pWPZ1vEJoY6u8F\/9zBl7AlaBB95Rqh3W7MzupsYrXEXCkxuwI7axlmKLbunwUGyHZhMoFnuFVHUrl80Mm8fRx9hJiBHf\/ZtW4digCGsyf9G06Amzi1bj\/9IUGC5LudWKbTHlN4wTI6SFwFnsSuGF64IbNe9FDWVON8RHhOsmUdZKrTTwJt19kN\/ZIrdZpBXMffdr62mRoF2ID42cvYiI7FLCdV6o9WSXgGCuTHOhlDRgNJEBhRXwoUfU2lEWQWgxjh2FL8l5cleR1tFH2Gxz\/tXFayImnGmjcPubQY7xsXhkA+\/PSr922zp8CMdNqQ8JhNtrJ+FjN8FoyDCvX0FHRN29I\/wjot9yvzNP14eDsZIS\/nSCE2KWbx6crDvEbSejMTs7d9xMxGnxo+X26qr8FTBlnCyp8RNiVfGo9luuBa6KtNuio=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 11,\n    \"candidatesTokenCount\": 2,\n    \"totalTokenCount\": 104,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 11\n      }\n    ],\n    \"thoughtsTokenCount\": 91,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.1-pro-preview\",\n  \"responseId\": \"iu8lap3yM-Ttz7IPmZDEwQE\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

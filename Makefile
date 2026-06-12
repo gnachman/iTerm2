@@ -72,6 +72,7 @@ help:
 	@echo "  make dev          Build Development"
 	@echo "  make prod         Build Deployment"
 	@echo "  make run          Build and launch Development build"
+	@echo "  make watch        Build and launch with interactive r=reload q=quit loop"
 	@echo "  make test         Run unit tests"
 	@echo "  make install      Build Deployment and install to /Applications"
 	@echo ""
@@ -278,7 +279,20 @@ Nightly: force
 	chmod -R go+rX $(BUILD_DIR)/Nightly
 
 run: Development
-	$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2 -suite iterm2-dev
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
+	pid=$$!; \
+	trap 'kill $$pid 2>/dev/null' INT TERM; \
+	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
+	wait $$pid
+
+runbg: Development
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
+	pid=$$!; \
+	trap 'kill $$pid 2>/dev/null' INT TERM; \
+	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
+
+watch: Development
+	tools/run.sh "$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" "$(BUILD_DIR)" -suite iterm2-dev
 
 devzip: Development
 	cd $(BUILD_DIR)/Development && \
@@ -455,6 +469,9 @@ pwmadapters: force
 it2cli: force
 	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 	cp it2cli/.build/release/it2 it2cli/bin
+
+cc-status: force
+	cd cc-status/ && ./build.sh
 
 libgit2: force
 	mkdir -p submodules/libgit2/build

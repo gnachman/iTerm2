@@ -275,7 +275,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:coords];
+                                          coords:coords
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"xyz", actual);
     XCTAssertEqual(coords.count, 3);
 }
@@ -310,7 +311,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:coords];
+                                          coords:coords
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"xyz", actual);
     XCTAssertEqual(coords.count, 3);
 }
@@ -344,7 +346,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:3
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:nil];
+                                          coords:nil
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"xyz", actual);
 
     // Same thing but truncate to 3 bytes at the tail.
@@ -357,7 +360,8 @@ static const NSInteger kUnicodeVersion = 9;
                           cappedAtSize:3
                           truncateTail:YES
                      continuationChars:nil
-                                coords:nil];
+                                coords:nil
+                     deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"abc", actual);
 }
 
@@ -377,7 +381,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[1].code = TAB_FILLER;
@@ -397,7 +402,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:-1
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:nil];
+                                          coords:nil
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"a\tb", actual);
 
 }
@@ -418,7 +424,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
     buffer[2].code = TAB_FILLER;
@@ -438,7 +445,8 @@ static const NSInteger kUnicodeVersion = 9;
                                     cappedAtSize:-1
                                     truncateTail:NO
                                continuationChars:nil
-                                          coords:nil];
+                                          coords:nil
+                               deduplicateDECDHL:NO];
     XCTAssertEqualObjects(@"ab  c", actual);
 }
 
@@ -477,7 +485,8 @@ static const NSInteger kUnicodeVersion = 9;
                         NULL,
                         NO,
                         kUnicodeVersion,
-                        NO);
+                        NO,
+                        NULL);
     screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
     buffer[width].code = eol;
     if (!_lines) {
@@ -651,7 +660,8 @@ static const NSInteger kUnicodeVersion = 9;
                             NULL,
                             NO,
                             kUnicodeVersion,
-                            NO);
+                            NO,
+                            NULL);
         return len;
     }
 }
@@ -700,7 +710,8 @@ static const NSInteger kUnicodeVersion = 9;
                             NULL,
                             NO,
                             kUnicodeVersion,
-                            NO);
+                            NO,
+                            NULL);
         _buffer[len].code = EOL_SOFT;
     }
 

@@ -593,7 +593,7 @@ class WorkingDirectoryFlowTests: XCTestCase {
     }
 
     // NOTE: OSC 7 with a NEW hostname (no prior host) cannot be tested here because:
-    // 1. setHost:user:ssh:completion: adds an unmanaged paused side effect
+    // 1. setHost:user:viaSSHIntegration:completion: adds an unmanaged paused side effect
     // 2. The side effect dispatches to main thread, then back to mutation queue
     // 3. completion() (which sets the flag and path) runs after the dispatch chain
     // 4. Our sync() can't process this async chain without a running main runloop

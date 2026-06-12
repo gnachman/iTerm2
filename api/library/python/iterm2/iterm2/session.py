@@ -1019,7 +1019,7 @@ class Session:
         :raises: :class:`~iterm2.rpc.RPCException` if the session is not a
             browser session, the URL is invalid, or the user denies permission.
 
-        .. seealso:: Example ":ref:`browser_function_example`"
+        .. seealso:: Example ":ref:`open_browser_tab_example`"
         """
         iterm2.capabilities.check_supports_load_url(self.connection)
         invocation = iterm2.util.invocation_string(
@@ -1027,6 +1027,83 @@ class Session:
             {"url": url})
         await iterm2.rpc.async_invoke_method(
             self.connection, self.session_id, invocation, -1)
+
+    async def async_move_to_new_tab(
+            self,
+            window: typing.Optional['iterm2.window.Window'] = None,
+            tab_index: typing.Optional[int] = None) -> typing.Optional[str]:
+        """
+        Move this session from a split pane into a new tab.
+
+        The session must be one of at least two sessions in its current tab.
+
+        :param window: The window to create the tab in. If `None`, the
+            session's current window is used.
+        :param tab_index: The position for the new tab in the tab bar
+            (0=first). If `None`, the tab is placed after the session's
+            current tab (same window) or at the end (different window).
+        :returns: The new tab's ID as a string, or `None` if the session
+            is a tmux client (tmux moves are handled asynchronously).
+
+        :throws: :class:`~iterm2.rpc.RPCException` if the move fails.
+
+        .. seealso::
+            * :meth:`async_move_to_new_window`
+            * :meth:`App.async_move_session
+                <iterm2.app.App.async_move_session>`
+        """
+        iterm2.capabilities.check_supports_move_session_to_tab_or_window(
+            self.connection)
+        args: typing.Dict[str, typing.Any] = {"session": self.session_id}
+        if window is not None:
+            args["window_id"] = window.window_id
+        if tab_index is not None:
+            args["tab_index"] = tab_index
+        invocation = iterm2.util.invocation_string(
+            "iterm2.move_session_to_new_tab", args)
+        response = await iterm2.rpc.async_invoke_function(
+            self.connection, invocation)
+        which = response.invoke_function_response.WhichOneof('disposition')
+        if which == 'error':
+            raise iterm2.rpc.RPCException("{}: {}".format(
+                iterm2.api_pb2.InvokeFunctionResponse.Status.Name(
+                    response.invoke_function_response.error.status),
+                response.invoke_function_response.error.error_reason))
+        return json.loads(
+            response.invoke_function_response.success.json_result)
+
+    async def async_move_to_new_window(self) -> typing.Optional[str]:
+        """
+        Move this session from a split pane into a new window.
+
+        The session must be one of at least two sessions in its current tab,
+        or be in a window with multiple tabs.
+
+        :returns: The new window's ID as a string, or `None` if the session
+            is a tmux client (tmux moves are handled asynchronously).
+
+        :throws: :class:`~iterm2.rpc.RPCException` if the move fails.
+
+        .. seealso::
+            * :meth:`async_move_to_new_tab`
+            * :meth:`App.async_move_session
+                <iterm2.app.App.async_move_session>`
+        """
+        iterm2.capabilities.check_supports_move_session_to_tab_or_window(
+            self.connection)
+        invocation = iterm2.util.invocation_string(
+            "iterm2.move_session_to_new_window",
+            {"session": self.session_id})
+        response = await iterm2.rpc.async_invoke_function(
+            self.connection, invocation)
+        which = response.invoke_function_response.WhichOneof('disposition')
+        if which == 'error':
+            raise iterm2.rpc.RPCException("{}: {}".format(
+                iterm2.api_pb2.InvokeFunctionResponse.Status.Name(
+                    response.invoke_function_response.error.status),
+                response.invoke_function_response.error.error_reason))
+        return json.loads(
+            response.invoke_function_response.success.json_result)
 
 
 class InvalidSessionId(Exception):

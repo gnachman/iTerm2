@@ -3,6 +3,7 @@
 This module is the starting point for getting access to windows and other
 application-global data.
 """
+import base64
 import json
 import typing
 
@@ -42,6 +43,25 @@ async def async_get_app(
 
 def invalidate_app():
     App.instance = None
+
+
+def _node_has_new_session(node: typing.Any) -> bool:
+    if not isinstance(node, dict):
+        return False
+    if "new_session" in node:
+        return True
+    return any(_node_has_new_session(child)
+               for child in node.get("children", []))
+
+
+def _spec_has_new_session(spec: typing.Dict[str, typing.Any]) -> bool:
+    """True if any node in the spec's tab layouts is a new_session leaf.
+    Used to gate the capability check so existing callers that only
+    reshape live sessions don't need a newer iTerm2."""
+    if not isinstance(spec, dict):
+        return False
+    return any(_node_has_new_session(tab.get("root"))
+               for tab in spec.get("tabs", []))
 
 # See note in tmux.async_get_tmux_connections()
 iterm2.tmux.DELEGATE_FACTORY = async_get_app  # type: ignore
@@ -527,6 +547,128 @@ class App(
         await async_invoke_function(
             self.connection,
             f'iterm2.move_session(session: {json.dumps(session.session_id)}, destination: {json.dumps(destination.session_id)}, vertical: {json.dumps(split_vertically)}, before: {json.dumps(before)})')
+
+    async def async_apply_layout(self, spec: typing.Dict[str, typing.Any]):
+        """
+        Apply a target layout to one or more tabs.
+
+        Supports reshaping existing tabs (including swapping panes and
+        rearranging the split tree) and moving sessions across tabs and
+        windows.
+
+        Validation runs in two phases: a structural pre-check before any
+        mutation (rejects malformed specs without side effects), then
+        per-tab mutations. If a per-tab mutation fails partway through
+        the plan, the transaction aborts and the error propagates to
+        the caller; the parts already mutated remain mutated (there is
+        no rollback). The structural pre-check makes mid-plan failures
+        rare in practice, but callers should not assume the API is
+        all-or-nothing in the face of unexpected errors.
+
+        :param spec: A dictionary describing the target state. Schema:
+
+            ::
+
+                {
+                    "tabs": [
+                        {"tab_id": "<guid>", "root": <node>},  # reshape
+                    ],
+                    "close_sessions": ["<guid>", ...],     # explicit closes
+                    "close_tabs":     ["<guid>", ...],
+                    "close_windows":  ["<guid>", ...],
+                }
+
+            A ``<node>`` is one of:
+
+            - ``{"session_id": "<guid>"}`` — leaf referring to a live
+              session.
+            - ``{"new_session": {"profile": "<profile-guid>",
+              "command": "<optional>"}}`` — leaf that creates a brand-new
+              session with the named profile (and optional command
+              override) in place. If given, ``command`` runs in a login
+              shell (your PATH, aliases, and dotfiles are sourced), as if
+              you had typed it. The new pane is sized to its even share
+              of its container; you cannot specify a size. It honors the
+              profile's working-directory setting: Home and Custom
+              Directory behave as configured, and "Reuse previous
+              session's directory" inherits from an existing pane in the
+              destination tab (so it lands where a hand-made split would).
+              Requires iTerm2 new enough to advertise the capability (see
+              :func:`iterm2.capabilities.supports_apply_layout_new_session`).
+            - ``{"vertical": True, "children": [<node>, <node>, ...]}``
+              — splitter with at least 2 children.
+
+            Validation rules enforced server-side:
+
+            - Splitters must have at least 2 children.
+            - Same-orientation nesting (V inside V, H inside H) is
+              rejected — flatten yourself.
+            - Every session GUID that appears in the spec may appear
+              at most once.
+            - Every tab affected by a session move must be listed in
+              ``tabs`` (or its sessions accounted for via
+              ``close_sessions`` / ``close_tabs``).
+            - Every ``new_session`` profile GUID must name a real
+              profile.
+            - tmux integration tabs are not supported.
+
+            **Limitations:** ``new_session`` leaves create sessions in
+            existing tabs only. The ``new_tabs`` and ``new_windows``
+            fields are not supported; use
+            :meth:`~iterm2.window.Window.async_create_tab` /
+            :meth:`~iterm2.window.Window.async_create` to make new tabs
+            and windows, then reshape them with apply_layout.
+
+        :throws: :class:`~iterm2.rpc.RPCException` on validation
+            failure or execution error. The error message includes a
+            tree-path indicating the offending node.
+
+        Example: replace a tab's single session with a 3-pane layout,
+        keeping the existing session on the left and creating two new
+        ones on the right, in one call.
+
+        .. code-block:: python
+
+            session = tab.sessions[0]
+            profile = await session.async_get_profile()
+            guid = profile.guid
+            spec = {
+                "tabs": [
+                    {
+                        "tab_id": tab.tab_id,
+                        "root": {
+                            "vertical": True,  # left | right
+                            "children": [
+                                {"session_id": session.session_id},
+                                {
+                                    "vertical": False,  # top / bottom
+                                    "children": [
+                                        {"new_session": {"profile": guid,
+                                                         "command": "htop"}},
+                                        {"new_session": {"profile": guid}},
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                ],
+            }
+            await app.async_apply_layout(spec)
+        """
+        iterm2.capabilities.check_supports_apply_layout(self.connection)
+        if _spec_has_new_session(spec):
+            iterm2.capabilities.check_supports_apply_layout_new_session(
+                self.connection)
+        # The spec is sent as base64 because iTerm2's expression parser does
+        # not decode \" inside string literals, and a JSON spec almost always
+        # contains quoted strings.
+        spec_b64 = base64.b64encode(
+            json.dumps(spec).encode("utf-8")).decode("ascii")
+        await async_invoke_function(
+            self.connection,
+            iterm2.util.invocation_string(
+                "iterm2.apply_layout",
+                {"spec_json_b64": spec_b64}))
 
     async def _async_listen(self):
         """

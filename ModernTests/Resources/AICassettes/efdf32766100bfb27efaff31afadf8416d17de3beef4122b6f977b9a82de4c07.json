@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":16384,\"messages\":[{\"content\":[{\"text\":\"Quote the value of the 'magic' key shown.\",\"type\":\"text\"},{\"text\":\"<iterm2:attachment file=\\\"magic.yaml\\\" type=\\\"text\\\/plain\\\">\\nmagic: pinecone-42\\n\\n<\\\/iterm2:attachment>\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"gpt-4o-mini\",\"stream\":false,\"temperature\":0}",
+  "key" : "efdf32766100bfb27efaff31afadf8416d17de3beef4122b6f977b9a82de4c07",
+  "response" : {
+    "data" : "{\n  \"id\": \"chatcmpl-DoG7nfhg6BRUSsKQFLkMqYksD7OQ9\",\n  \"object\": \"chat.completion\",\n  \"created\": 1780870755,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"The value of the 'magic' key is `pinecone-42`.\",\n        \"refusal\": null,\n        \"annotations\": []\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 47,\n    \"completion_tokens\": 15,\n    \"total_tokens\": 62,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\": 0,\n      \"audio_tokens\": 0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\": 0,\n      \"audio_tokens\": 0,\n      \"accepted_prediction_tokens\": 0,\n      \"rejected_prediction_tokens\": 0\n    }\n  },\n  \"service_tier\": \"default\",\n  \"system_fingerprint\": \"fp_944bbf963c\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

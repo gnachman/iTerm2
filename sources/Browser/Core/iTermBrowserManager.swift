@@ -117,6 +117,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let audioHandler: iTermBrowserAudioHandler?
     private let editingDetector: iTermBrowserEditingDetectorHandler?
     private let graphDiscovery = iTermBrowserGraphDiscoveryHandler()
+    private var permissionNotificationObserver: NSObjectProtocol?
     private static var nextIdentifier = 1
     private lazy var identifier: Int = {
         defer {
@@ -165,6 +166,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     }
     
     deinit {
+        if let observer = permissionNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
         // Remove KVO observer to prevent crashes
         webView?.removeObserver(self, forKeyPath: "title")
         if let webView = self.webView {
@@ -176,6 +180,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     }
 
     private enum UserScripts: String {
+        case cloakPageWorld
         case consoleLog
         case notificationHandler
         case selectionMonitor
@@ -211,6 +216,24 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let js = iTermBrowserTemplateLoader.loadTemplate(named: "console-log",
                                                          type: "js",
                                                          substitutions: ["LOG_ERRORS": logErrors])
+
+        // Inject the cloak first in the page world so it runs before any
+        // of the bridges below and before any page script. In challenge
+        // frames (Cloudflare Turnstile, hCaptcha, etc.) it strips
+        // window.webkit so the probe sees a clean Safari surface. The
+        // bridges below independently make the same challenge-frame
+        // decision rather than reading a shared window flag, which would
+        // itself be a detectable fingerprint.
+        let cloakJS = iTermBrowserTemplateLoader.loadTemplate(named: "cloak-page-world",
+                                                              type: "js",
+                                                              substitutions: [:])
+        contentManager.add(userScript: BrowserExtensionUserContentManager.UserScript(
+            code: cloakJS,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            worlds: [.page],
+            identifier: UserScripts.cloakPageWorld.rawValue))
+
         configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iTerm2ConsoleLog")
         configuration.userContentController.add(handlerProxy, contentWorld: .defaultClient, name: "iTerm2ConsoleLog")
         configuration.userContentController.add(handlerProxy, contentWorld: .page, name: "iterm2-about:permissions")
@@ -482,7 +505,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
     private func setupPermissionNotificationObserver() {
         let key = iTermBrowserPermissionManager.permissionRevokedOriginKey
-        NotificationCenter.default.addObserver(
+        permissionNotificationObserver = NotificationCenter.default.addObserver(
             forName: iTermBrowserPermissionManager.permissionRevokedNotification,
             object: nil,
             queue: .main

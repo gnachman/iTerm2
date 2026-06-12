@@ -196,6 +196,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenSaveScrollPosition() {}
     func screenDidAdd(_ mark: any iTermMarkProtocol, alert: Bool, completion: @escaping () -> Void) { completion() }
     func screenPromptDidStart(atLine line: Int32) {}
+    func screenPromptOfNonInitialKindDidStart(_ kind: VT100PromptKind) {}
     func screenPromptDidEnd(withMark mark: any VT100ScreenMarkReading) {}
     func screenStealFocus() {}
     func screenSetProfile(toProfileNamed value: String) {}

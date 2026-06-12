@@ -109,7 +109,7 @@ class ExtendURLSearchResultsTests: XCTestCase {
         let dataSource = MockDataSourceWithDividers(strings: lines, width: 40)
 
         // Create a search result for just the first part of the URL (ends at column 18)
-        let result = SearchResult(fromX: 0, y: 0, toX: 18, y: 0)!
+        _ = SearchResult(fromX: 0, y: 0, toX: 18, y: 0)!
 
         // Create a text view mock or use the extractor directly
         let extractor = iTermTextExtractor(dataSource: dataSource)

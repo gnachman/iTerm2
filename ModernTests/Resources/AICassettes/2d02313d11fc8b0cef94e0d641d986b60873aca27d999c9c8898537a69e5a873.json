@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3.1-pro-preview:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\"}],\"role\":\"user\"}],\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}}]}]}",
+  "key" : "2d02313d11fc8b0cef94e0d641d986b60873aca27d999c9c8898537a69e5a873",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"functionCall\": {\n              \"name\": \"get_random_word\",\n              \"args\": {},\n              \"id\": \"0a792orp\"\n            },\n            \"thoughtSignature\": \"EtsDCtgDAQw51sc4V6e9IRJnM1anBDS9pR6lNZ0lASNzq4WM0lyRaPCRbm65s4ankiW84DI9ARyJ5OSvK75aX+5erPllyui\/3Wh2BDWTmR9JWpqRc9I8wWNKDqTp8VyV0gctx0FqnzfzCDqpw2bGy\/siZ1dgs9zh3qh2en\/hfZFKG+hNBwQ6AokhDf8jUU8B6c1WxsxOGQ1HOrhmmST+21dGPGxaQAntuavl5fjVPwIYTVQxDWDNI30Kx9v7Bv85q9S30u2Zal\/ovbIhzN9cc4GjaMJGL\/89VMOiOP5iLoIjWloHz6hGCdnnc02WtPP3lKlnmBV5iLs\/SKN\/8pfWioy0eur\/Iji7bUjjxiBKTsOkKzHLThcCLuuEyb8p8D12BuDrjxhQeHMOmzRsOPRdzGW2p9lc9SzUVoOtNKbKAH8QG9B1fY6oXMUaPxJ3pyCmm5IS9qyEaxk4TKbSYq+sI\/isr+crxjKaViwdRZDuDn4YPF3fRsNsUKRxXlTZHA7c8dcp49auWaXM5A6dqgwx3ynIPtg7YmzfwvSrlZdR6HvoaxrlC01Pf\/AXLhFnepouvDOs2SRWxJ3G\/bsQwxiaj4mkKT1H43t+dqDTgJZjX7xliOUy9JTQXxDuTRsacA==\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"finishMessage\": \"Model generated function call(s).\"\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 69,\n    \"candidatesTokenCount\": 12,\n    \"totalTokenCount\": 207,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 69\n      }\n    ],\n    \"thoughtsTokenCount\": 126,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.1-pro-preview\",\n  \"responseId\": \"RfAlavbCIPC1_uMPlqmpmAs\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

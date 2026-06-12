@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":2048,\"model\":\"gpt-3.5-turbo-instruct\",\"prompt\":\"Reply with exactly the single word: PINEAPPLE\"}",
+  "key" : "fdf4fd5f2e290599b12abab88c2b78513f7c3e3317d941054186ef570cbcd004",
+  "response" : {
+    "data" : "{\n  \"id\": \"cmpl-DoGMEbqFx2zUQw3aYHnRARdt5JqFg\",\n  \"object\": \"text_completion\",\n  \"created\": 1780871650,\n  \"model\": \"gpt-3.5-turbo-instruct:20230824-v2\",\n  \"choices\": [\n    {\n      \"text\": \"\\n\\nPINEAPPLE\",\n      \"index\": 0,\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 10,\n    \"completion_tokens\": 4,\n    \"total_tokens\": 14\n  }\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

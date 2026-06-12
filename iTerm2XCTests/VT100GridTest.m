@@ -22,7 +22,7 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
         a.blink != b.blink ||
         a.invisible != b.invisible ||
         a.underline != b.underline ||
-        a.underlineStyle != b.underlineStyle ||
+        ScreenCharGetUnderlineStyle(a) != ScreenCharGetUnderlineStyle(b) ||
         a.strikethrough != b.strikethrough) {
         return NO;
     }
@@ -366,7 +366,8 @@ do { \
                                useScrollbackWithRegion:NO
                                             willScroll:^{
                                                 XCTAssert(false);
-                                            }];
+                                            }
+                                      sentToLineBuffer:NULL];
     XCTAssert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
     XCTAssert(grid.cursorX == 0);
@@ -381,7 +382,8 @@ do { \
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:NO
-                                            willScroll:nil];
+                                            willScroll:nil
+                                      sentToLineBuffer:NULL];
     XCTAssert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
     XCTAssert(grid.cursorX == 0);
     XCTAssert(grid.cursorY == 2);
@@ -397,7 +399,8 @@ do { \
                                useScrollbackWithRegion:NO
                                             willScroll:^{
                                                 scrolled = YES;
-                                            }];
+                                            }
+                                      sentToLineBuffer:NULL];
     XCTAssert(scrolled);
     XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
@@ -412,7 +415,8 @@ do { \
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:NO
-                                            willScroll:nil];
+                                            willScroll:nil
+                                      sentToLineBuffer:NULL];
     XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd+"]);
     XCTAssert(grid.cursorX == 0);
@@ -427,7 +431,8 @@ do { \
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:YES
-                                            willScroll:nil];
+                                            willScroll:nil
+                                      sentToLineBuffer:NULL];
     XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
     XCTAssert(grid.cursorX == 0);
@@ -442,7 +447,8 @@ do { \
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:NO
-                                            willScroll:nil];
+                                            willScroll:nil
+                                      sentToLineBuffer:NULL];
     XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
     XCTAssert(grid.cursorX == 0);
@@ -459,7 +465,8 @@ do { \
         dropped += [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                                   unlimitedScrollback:NO
                                               useScrollbackWithRegion:NO
-                                                           willScroll:nil];
+                                                           willScroll:nil
+                                      sentToLineBuffer:NULL];
     }
     XCTAssert(dropped == 2);
     XCTAssert([[grid compactLineDump] isEqualToString:@"mnop\n....\n....\n...."]);
@@ -478,7 +485,8 @@ do { \
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:YES
-                                            willScroll:nil];
+                                            willScroll:nil
+                                      sentToLineBuffer:NULL];
     XCTAssert([[grid compactLineDump] isEqualToString:@"abcd\nejkh\ni..l\nmnop"]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
     XCTAssert(grid.cursorX == 1);
@@ -586,7 +594,8 @@ do { \
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:YES
                                useScrollbackWithRegion:NO
-                                            willScroll:nil];
+                                            willScroll:nil
+                                      sentToLineBuffer:NULL];
     grid.cursorX = 0;
 
     string = @"d";
@@ -1378,7 +1387,9 @@ do { \
     greenBg.backgroundColorMode = ColorModeNormal;
 
     [grid setBackgroundColor:greenBg
+                     applyBg:YES
              foregroundColor:redFg
+                     applyFg:YES
                   inRectFrom:VT100GridCoordMake(1, 1)
                           to:VT100GridCoordMake(2, 2)];
 
@@ -1398,11 +1409,11 @@ do { \
         }
     }
 
-    // Test the setting an invalid fg results in to change to fg
-    screen_char_t invalidFg = redFg;
-    invalidFg.foregroundColorMode = ColorModeInvalid;
+    // Test that passing applyFg:NO leaves fg unchanged.
     [grid setBackgroundColor:greenBg
-             foregroundColor:invalidFg
+                     applyBg:YES
+             foregroundColor:redFg
+                     applyFg:NO
                   inRectFrom:VT100GridCoordMake(0, 0)
                           to:VT100GridCoordMake(3, 3)];
     // Now should be green bg everywhere, red fg in center square
@@ -1420,11 +1431,11 @@ do { \
         }
     }
 
-    // Try an invalid bg now
-    screen_char_t invalidBg = greenBg;
-    invalidBg.backgroundColorMode = ColorModeInvalid;
-    [grid setBackgroundColor:invalidBg
+    // Try applyBg:NO now (leaves bg unchanged).
+    [grid setBackgroundColor:greenBg
+                     applyBg:NO
              foregroundColor:foregroundColor_
+                     applyFg:YES
                   inRectFrom:VT100GridCoordMake(0, 0)
                           to:VT100GridCoordMake(3, 3)];
     // Now should be default on green everywhere

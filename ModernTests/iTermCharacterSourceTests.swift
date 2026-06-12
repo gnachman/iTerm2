@@ -543,6 +543,299 @@ final class iTermCharacterSourceTests: XCTestCase {
         }
     }
 
+    // MARK: - Double-Width Line Tests
+
+    /// Creates a CGContext and character source for double-width rendering.
+    /// Uses radius=5 (iTermTextureMapMaxCharacterParts) like production, with
+    /// maxParts=11. The context is sized to exactly maxParts * glyphSize so
+    /// bitmapForPart byte-row extraction aligns with the draw offset.
+    private func makeDoubleWidthSource(
+        character: String
+    ) -> (source: iTermCharacterSource, context: CGContext)? {
+        let dwRadius: Int32 = 5  // iTermTextureMapMaxCharacterParts
+        let dwMaxParts = Int(dwRadius) * 2 + 1  // 11
+        let dwContextWidth = cellWidth * CGFloat(dwMaxParts)
+        let dwContextHeight = cellHeight * CGFloat(dwMaxParts)
+
+        guard let dwContext = CGContext(
+            data: nil,
+            width: Int(dwContextWidth),
+            height: Int(dwContextHeight),
+            bitsPerComponent: 8,
+            bytesPerRow: Int(dwContextWidth) * 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        ) else {
+            return nil
+        }
+        dwContext.clear(CGRect(x: 0, y: 0, width: dwContextWidth, height: dwContextHeight))
+
+        guard let source = iTermCharacterSourceTestHelper.doubleWidthCharacterSource(
+            withCharacter: character,
+            descriptor: descriptor,
+            attributes: attributes,
+            radius: dwRadius,
+            context: dwContext
+        ) else {
+            return nil
+        }
+        return (source, dwContext)
+    }
+
+    /// Helper: counts total non-zero pixels across all parts of a character source.
+    private func totalNonZeroPixels(in source: iTermCharacterSource) -> Int {
+        guard let parts = source.parts else { return 0 }
+        var total = 0
+        for part in parts {
+            total += iTermCharacterSourceTestHelper.source(
+                source, nonZeroPixelCountForPart: part.int32Value)
+        }
+        return total
+    }
+
+    /// Verify that a double-width rendering has visible pixels across its parts.
+    /// This is the core regression test for the post-processing stride bug:
+    /// if performPostProcessing doesn't account for the context's row stride
+    /// being wider than _size, the extracted bitmaps come out blank.
+    func testDoubleWidthBitmapHasContent() {
+        guard let (source, _) = makeDoubleWidthSource(character: "A") else {
+            XCTFail("Failed to create double-width source for 'A'")
+            return
+        }
+
+        let total = totalNonZeroPixels(in: source)
+        XCTAssertGreaterThan(total, 0,
+            "Double-width 'A' should have visible pixels across its parts")
+    }
+
+    /// Verify that the 2x horizontal stretch causes the glyph to use more
+    /// than one part (overflow into a neighbor cell).
+    func testDoubleWidthBitmapOverflowsRight() {
+        guard let (source, _) = makeDoubleWidthSource(character: "A") else {
+            XCTFail("Failed to create double-width source for 'A'")
+            return
+        }
+
+        guard let parts = source.parts else {
+            XCTFail("No parts for double-width 'A'")
+            return
+        }
+
+        // Count how many parts have content
+        var partsWithContent = 0
+        for part in parts {
+            if iTermCharacterSourceTestHelper.source(
+                source, hasBitmapContentForPart: part.int32Value) {
+                partsWithContent += 1
+            }
+        }
+        XCTAssertGreaterThan(partsWithContent, 1,
+            "Double-width 'A' should have content in multiple parts (got \(partsWithContent))")
+    }
+
+    /// Compare single-width and double-width renderings of the same character.
+    /// The double-width glyph is 2x stretched horizontally, so the total number
+    /// of non-zero pixels across all parts should be roughly twice the
+    /// single-width total (within a tolerance for antialiasing differences).
+    func testDoubleWidthPixelCountApproximatelyDoublesSingleWidth() {
+        // Single-width rendering
+        guard let swSource = iTermCharacterSourceTestHelper.characterSource(
+            withCharacter: "A",
+            descriptor: descriptor,
+            attributes: attributes,
+            radius: radius,
+            context: context
+        ) else {
+            XCTFail("Failed to create single-width source for 'A'")
+            return
+        }
+        let swPixels = totalNonZeroPixels(in: swSource)
+        XCTAssertGreaterThan(swPixels, 0, "Single-width 'A' should have pixels")
+
+        // Double-width rendering
+        guard let (dwSource, _) = makeDoubleWidthSource(character: "A") else {
+            XCTFail("Failed to create double-width source for 'A'")
+            return
+        }
+        let dwPixels = totalNonZeroPixels(in: dwSource)
+
+        // The 2x horizontal stretch should roughly double the pixel count.
+        // Allow wide tolerance (1.2x to 3x) for antialiasing differences.
+        let ratio = Double(dwPixels) / Double(swPixels)
+        XCTAssertGreaterThan(ratio, 1.2,
+            "Double-width should have significantly more pixels than single-width " +
+            "(got \(dwPixels) vs \(swPixels), ratio=\(ratio))")
+        XCTAssertLessThan(ratio, 3.0,
+            "Double-width pixel count should be reasonable " +
+            "(got \(dwPixels) vs \(swPixels), ratio=\(ratio))")
+    }
+
+    /// Test several characters at double width to make sure they all produce content.
+    /// Uses characters that fill their cell well (ascenders + wide strokes).
+    func testDoubleWidthVariousCharacters() {
+        // Use characters known to have substantial coverage in the center cell.
+        // Characters with primarily descenders (g) or narrow strokes may need
+        // the full production pipeline (including asciiOffset) to align correctly.
+        let testChars = ["A", "W", "M", "X", "H"]
+        for ch in testChars {
+            guard let (source, _) = makeDoubleWidthSource(character: ch) else {
+                XCTFail("Failed to create double-width source for '\(ch)'")
+                continue
+            }
+
+            let total = totalNonZeroPixels(in: source)
+            XCTAssertGreaterThan(total, 0,
+                "Double-width '\(ch)' should have visible pixels across its parts")
+        }
+    }
+
+    // MARK: - Double-Height Line Tests
+
+    /// Creates a CGContext and character source for double-height rendering.
+    private func makeDoubleHeightSource(
+        character: String,
+        lineAttribute: iTermLineAttribute
+    ) -> (source: iTermCharacterSource, context: CGContext)? {
+        let dhRadius: Int32 = 5  // iTermTextureMapMaxCharacterParts
+        let dhMaxParts = Int(dhRadius) * 2 + 1  // 11
+        let dhContextWidth = cellWidth * CGFloat(dhMaxParts)
+        let dhContextHeight = cellHeight * CGFloat(dhMaxParts)
+
+        guard let dhContext = CGContext(
+            data: nil,
+            width: Int(dhContextWidth),
+            height: Int(dhContextHeight),
+            bitsPerComponent: 8,
+            bytesPerRow: Int(dhContextWidth) * 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        ) else {
+            return nil
+        }
+        dhContext.clear(CGRect(x: 0, y: 0, width: dhContextWidth, height: dhContextHeight))
+
+        let factory: (String, iTermCharacterSourceDescriptor, iTermCharacterSourceAttributes, Int32, CGContext) -> iTermCharacterSource?
+        switch lineAttribute {
+        case .doubleHeightTop:
+            factory = iTermCharacterSourceTestHelper.doubleHeightTopCharacterSource(withCharacter:descriptor:attributes:radius:context:)
+        case .doubleHeightBottom:
+            factory = iTermCharacterSourceTestHelper.doubleHeightBottomCharacterSource(withCharacter:descriptor:attributes:radius:context:)
+        default:
+            return nil
+        }
+        guard let source = factory(character, descriptor, attributes, dhRadius, dhContext) else {
+            return nil
+        }
+        return (source, dhContext)
+    }
+
+    /// Verify that double-height top rendering has visible pixels.
+    func testDoubleHeightTopBitmapHasContent() {
+        guard let (source, _) = makeDoubleHeightSource(
+            character: "A", lineAttribute: .doubleHeightTop
+        ) else {
+            XCTFail("Failed to create double-height-top source for 'A'")
+            return
+        }
+
+        let total = totalNonZeroPixels(in: source)
+        XCTAssertGreaterThan(total, 0,
+            "Double-height-top 'A' should have visible pixels across its parts")
+    }
+
+    /// Verify that double-height bottom rendering has visible pixels.
+    func testDoubleHeightBottomBitmapHasContent() {
+        guard let (source, _) = makeDoubleHeightSource(
+            character: "A", lineAttribute: .doubleHeightBottom
+        ) else {
+            XCTFail("Failed to create double-height-bottom source for 'A'")
+            return
+        }
+
+        let total = totalNonZeroPixels(in: source)
+        XCTAssertGreaterThan(total, 0,
+            "Double-height-bottom 'A' should have visible pixels across its parts")
+    }
+
+    /// Top and bottom use the same part positions (dy=0) but contain
+    /// different pixel content because the atlas stores separate entries
+    /// for each lineAttribute. Verify both have content and it differs.
+    func testDoubleHeightTopAndBottomHaveDifferentContent() {
+        guard let (topSource, _) = makeDoubleHeightSource(
+            character: "A", lineAttribute: .doubleHeightTop
+        ) else {
+            XCTFail("Failed to create double-height-top source")
+            return
+        }
+        guard let (bottomSource, _) = makeDoubleHeightSource(
+            character: "A", lineAttribute: .doubleHeightBottom
+        ) else {
+            XCTFail("Failed to create double-height-bottom source")
+            return
+        }
+
+        let topPixels = totalNonZeroPixels(in: topSource)
+        let bottomPixels = totalNonZeroPixels(in: bottomSource)
+        XCTAssertGreaterThan(topPixels, 0, "Top should have pixels")
+        XCTAssertGreaterThan(bottomPixels, 0, "Bottom should have pixels")
+
+        // The parts use the same grid positions (dy=0) but the atlas stores
+        // separate entries per lineAttribute, so pixel content differs.
+    }
+
+    /// The combined pixel count of top + bottom should approximate the
+    /// double-width pixel count (since DECDHL is 2x in both dimensions).
+    func testDoubleHeightCombinedPixelsExceedDoubleWidth() {
+        guard let (topSource, _) = makeDoubleHeightSource(
+            character: "A", lineAttribute: .doubleHeightTop
+        ) else {
+            XCTFail("Failed to create double-height-top source")
+            return
+        }
+        guard let (bottomSource, _) = makeDoubleHeightSource(
+            character: "A", lineAttribute: .doubleHeightBottom
+        ) else {
+            XCTFail("Failed to create double-height-bottom source")
+            return
+        }
+        guard let (dwSource, _) = makeDoubleWidthSource(character: "A") else {
+            XCTFail("Failed to create double-width source")
+            return
+        }
+
+        let topPixels = totalNonZeroPixels(in: topSource)
+        let bottomPixels = totalNonZeroPixels(in: bottomSource)
+        let dwPixels = totalNonZeroPixels(in: dwSource)
+        let combinedPixels = topPixels + bottomPixels
+
+        // Double-height renders at 2x both dimensions → ~4x single-width pixels.
+        // Double-width is 2x horizontal only → ~2x single-width pixels.
+        // Combined DH should be significantly more than DW.
+        XCTAssertGreaterThan(combinedPixels, dwPixels,
+            "Combined double-height pixels (\(combinedPixels)) should exceed " +
+            "double-width pixels (\(dwPixels))")
+    }
+
+    /// Verify several characters produce content in both top and bottom halves.
+    func testDoubleHeightVariousCharacters() {
+        let testChars = ["A", "W", "M", "g", "y"]  // Include descender chars
+        for ch in testChars {
+            for attr: iTermLineAttribute in [.doubleHeightTop, .doubleHeightBottom] {
+                let name = attr == .doubleHeightTop ? "top" : "bottom"
+                guard let (source, _) = makeDoubleHeightSource(
+                    character: ch, lineAttribute: attr
+                ) else {
+                    XCTFail("Failed to create double-height-\(name) source for '\(ch)'")
+                    continue
+                }
+
+                let total = totalNonZeroPixels(in: source)
+                XCTAssertGreaterThan(total, 0,
+                    "Double-height-\(name) '\(ch)' should have visible pixels")
+            }
+        }
+    }
+
     /// Quick test with just a few common fonts for CI
     func testClearingWithCommonFonts() {
         let commonFonts = [

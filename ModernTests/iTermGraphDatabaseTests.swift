@@ -233,6 +233,8 @@ class iTermGraphDatabaseTests: XCTestCase {
 
     // MARK: - Deep Tree Tests
 
+    // MARK: - Deep Tree Tests
+
     /// Test deep tree structure creation and traversal
     func testDeepTreeStructure() {
         // Create a 3-level deep structure

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127976,\"messages\":[{\"content\":\"Quote the text inside the <magic> element shown.\\n<iterm2:attachment file=\\\"magic.xml\\\" type=\\\"application\\\/xml\\\">\\n<?xml version=\\\"1.0\\\"?><root><magic>pinecone-42<\\\/magic><\\\/root>\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"disabled\"}}",
+  "key" : "c1522a960de78996de3e1551aa23ce3badf03653384d7cb4e9586c1364c5a4bc",
+  "response" : {
+    "data" : "{\"id\":\"f1e1e30e-635f-472b-8b43-91b2e6bc74d7\",\"object\":\"chat.completion\",\"created\":1780870714,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"```xml\\n<magic>pinecone-42<\/magic>\\n```\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":65,\"completion_tokens\":16,\"total_tokens\":81,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":65},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

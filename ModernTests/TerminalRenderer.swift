@@ -67,9 +67,12 @@ class TerminalRenderer {
     }
 
     private static func renderWithLegacy(session: PTYSession, rows: Int) throws -> NSImage {
+        guard let textview = session.textview else {
+            throw TerminalRendererError.renderFailed
+        }
         let scrollbackLines = Int(session.screen.numberOfScrollbackLines())
-        session.textview.setDrawingHelperIsRetina((NSScreen.main?.backingScaleFactor ?? 2.0) > 1)
-        guard let image = session.textview.renderLines(toImage: NSRange(location: scrollbackLines, length: rows)) else {
+        textview.setDrawingHelperIsRetina((NSScreen.main?.backingScaleFactor ?? 2.0) > 1)
+        guard let image = textview.renderLines(toImage: NSRange(location: scrollbackLines, length: rows)) else {
             throw TerminalRendererError.renderFailed
         }
         return image
@@ -93,7 +96,8 @@ class TerminalRenderer {
         RunLoop.current.run(until: Date(timeIntervalSinceNow: 2.0))
         session.updateMetalDriver()
 
-        guard let image = session.view.drawMetalFrameToImage() else {
+        guard let sessionView = session.view,
+              let image = sessionView.drawMetalFrameToImage() else {
             window.orderOut(nil)
             throw TerminalRendererError.metalRenderFailed
         }

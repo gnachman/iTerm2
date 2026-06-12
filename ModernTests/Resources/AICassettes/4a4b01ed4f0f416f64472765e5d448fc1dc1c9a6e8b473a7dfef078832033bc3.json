@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127979,\"messages\":[{\"content\":\"Quote the value of the \\\"magic\\\" field shown.\\n<iterm2:attachment file=\\\"magic.json\\\" type=\\\"application\\\/json\\\">\\n{\\\"magic\\\":\\\"pinecone-42\\\"}\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"disabled\"}}",
+  "key" : "4a4b01ed4f0f416f64472765e5d448fc1dc1c9a6e8b473a7dfef078832033bc3",
+  "response" : {
+    "data" : "{\"id\":\"f9b10d31-7024-483c-a35a-264c0101ee28\",\"object\":\"chat.completion\",\"created\":1780870712,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The value of the \\\"magic\\\" field is `\\\"pinecone-42\\\"`.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":49,\"completion_tokens\":18,\"total_tokens\":67,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":49},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

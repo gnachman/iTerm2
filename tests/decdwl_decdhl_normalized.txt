@@ -1,0 +1,85 @@
+[0m=== DECDWL (ESC # 6) ===[0m
+#6Normal double-width[0m
+#6[0;1mBold double-width[0m[0m
+#6[0;3mItalic double-width[0m[0m
+#6[0;1;3mBold italic double-width[0m[0m
+#6[0;4mUnderline double-width[0m[0m
+#6[0;2mFaint double-width[0m[0m
+#6[0;39;49;7mReverse double-width[0m[0m
+#6[0;9mStrikethrough double-width[0m[0m
+#6[0;31mRed double-width[0m[0m
+#6[0;31;1;3;4mBold underline italic red[0m[0m
+#6汉语 - non-ASCII[0m
+#6 - PowerLine[0m
+#6لرحيم - RTL[0m
+#6😂 - emoji[0m
+#6q́ẍ - composed characters[0m
+[0m
+=== DECDHL top (ESC # 3) + bottom (ESC # 4) ===[0m
+#3Normal double-height[0m
+#4Normal double-height[0m
+#3[0;1mBold double-height[0m[0m
+#4[0;1mBold double-height[0m[0m
+#3[0;3mItalic double-height[0m[0m
+#4[0;3mItalic double-height[0m[0m
+#3[0;1;3mBold italic DH[0m[0m
+#4[0;1;3mBold italic DH[0m[0m
+#3[0;4mUnderline DH[0m[0m
+#4[0;4mUnderline DH[0m[0m
+#3[0;2mFaint double-height[0m[0m
+#4[0;2mFaint double-height[0m[0m
+#3[0;39;49;7mReverse DH[0m[0m
+#4[0;39;49;7mReverse DH[0m[0m
+#3[0;9mStrikethrough DH[0m[0m
+#4[0;9mStrikethrough DH[0m[0m
+[0m
+=== DECDHL with colors ===[0m
+#3[0;31mRed[0;32m Green[0;34m Blue[0m[0m
+#4[0;31mRed[0;32m Green[0;34m Blue[0m[0m
+#3[0;38:5:208mOrange 256-color[0m[0m
+#4[0;38:5:208mOrange 256-color[0m[0m
+#3[0;38:2:1:128:0:255mPurple 24-bit[0m[0m
+#4[0;38:2:1:128:0:255mPurple 24-bit[0m[0m
+[0m
+=== DECDHL with emoji ===[0m
+#3Hello 🌍 World 🎉[0m
+#4Hello 🌍 World 🎉[0m
+#3[0;1mBold emoji 🚀✨[0m[0m
+#4[0;1mBold emoji 🚀✨[0m[0m
+[0m
+=== DECDHL other ===[0m
+#3汉语 - non-ASCII[0m
+#4汉语 - non-ASCII[0m
+#3 - PowerLine[0m
+#4 - PowerLine[0m
+#3لرحيم - RTL[0m
+#4لرحيم - RTL[0m
+#3q́ẍ - composed characters[0m
+#4q́ẍ - composed characters[0m
+=== DECSWL (ESC # 5) reset ===[0m
+#6This was double-width[0m
+This is back to normal[0m
+[0m
+=== Mixed lines ===[0m
+Normal line[0m
+#6Double-width line[0m
+#3Double-height top[0m
+#4Double-height bottom[0m
+Normal again[0m
+[0m
+=== Fullwidth characters on DECDWL ===[0m
+#6Ｈｅｌｌｏ[0m
+[0m
+=== CJK on DECDHL ===[0m
+#3漢字テスト[0m
+#4漢字テスト[0m
+[0m
+=== Long line wrapping on DECDWL ===[0m
+#6ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnop[0m
+[0m
+=== Background colors ===[0m
+#3[0;41m Red bg [0;42m Green bg [0;44m Blue bg [0m[0m
+#4[0;41m Red bg [0;42m Green bg [0;44m Blue bg [0m[0m
+[0m
+Done. Scroll up to verify all styles render correctly.[0m
+Toggle GPU renderer (Preferences > Advanced) to compare.[0m

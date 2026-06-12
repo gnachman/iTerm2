@@ -1583,9 +1583,19 @@ HANDLERS = {
     "runpy": handle_runpy
 }
 
+def _silence_shutdown_unraisable(unraisable):
+    # Subprocess transports' __del__ runs after asyncio.run() has closed the
+    # loop; their cleanup calls call_soon() and raises "Event loop is closed".
+    # We're on our way out — nobody cares.
+    exc = unraisable.exc_value
+    if isinstance(exc, RuntimeError) and 'Event loop is closed' in str(exc):
+        return
+    sys.__unraisablehook__(unraisable)
+
 def main():
     if sys.stdin.isatty():
         signal.signal(signal.SIGWINCH, on_sigwinch)
+    sys.unraisablehook = _silence_shutdown_unraisable
     try:
         asyncio.run(mainloop())
     except Exception as e:

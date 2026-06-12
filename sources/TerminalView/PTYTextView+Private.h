@@ -1,0 +1,117 @@
+//
+//  PTYTextView+Private.h
+//  iTerm2
+//
+//  Created by George Nachman on 4/15/19.
+//
+
+#import "PTYTextView.h"
+
+#import "iTermCursorSlideAnimator.h"
+#import "PTYNoteViewController.h"
+#import "iTermTextViewContextMenuHelper.h"
+#import "iTermSelection.h"
+#import "iTermSemanticHistoryController.h"
+#import "iTermFindCursorView.h"
+#import "iTermQuickLookController.h"
+#import "iTermBadgeLabel.h"
+#import "iTermTextViewAccessibilityHelper.h"
+#import "iTermFindCursorView.h"
+#import "iTermFindOnPageHelper.h"
+#import "iTermKeyboardHandler.h"
+#import "iTermSelection.h"
+#import "iTermSelectionScrollHelper.h"
+#import "iTermTextPopoverViewController.h"
+
+@protocol iTermCancelable;
+@class iTermContentNavigationShortcut;
+@class iTermIdempotentOperationJoiner;
+@class iTermShellIntegrationWindowController;
+@class iTermURLActionHelper;
+@protocol Porthole;
+@class PTYMouseHandler;
+@protocol PTYTrackingChildWindow;
+
+@interface PTYTextView () <
+PTYNoteViewControllerDelegate,
+iTermBadgeLabelDelegate,
+iTermCursorSlideAnimatorDelegate,
+iTermTextViewAccessibilityHelperDelegate,
+iTermFindCursorViewDelegate,
+iTermFindOnPageHelperDelegate,
+iTermKeyboardHandlerDelegate,
+iTermSelectionDelegate,
+iTermSelectionScrollHelperDelegate,
+NSDraggingSource,
+NSFontChanging,
+NSMenuItemValidation,
+NSPopoverDelegate> {
+    NSCursor *cursor_;
+    PTYMouseHandler *_mouseHandler;
+    iTermURLActionHelper *_urlActionHelper;
+    iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
+    iTermTextViewContextMenuHelper *_contextMenuHelper;
+    iTermTextPopoverViewController* _indicatorMessagePopoverViewController;
+    // Child windows that need to have their frames adjusted as you scroll.
+    NSMutableArray<id<PTYTrackingChildWindow>> *_trackingChildWindows;
+    CGFloat _lastVirtualOffset;
+}
+
+@property(nonatomic, strong) iTermSelection *selection;
+@property(nonatomic, strong) iTermSemanticHistoryController *semanticHistoryController;
+@property(nonatomic, strong) iTermFindCursorView *findCursorView;
+@property(nonatomic, strong) NSWindow *findCursorWindow;  // For find-cursor animation
+@property(nonatomic, strong) iTermQuickLookController *quickLookController;
+@property(strong, readwrite) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
+@property(nonatomic, readonly) BOOL hasUnderline;
+@property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
+@property(nonatomic, readonly, strong) NSMutableArray<id<Porthole>> *portholes;
+@property(nonatomic, strong) iTermIdempotentOperationJoiner *portholesNeedUpdatesJoiner;
+@property(nonatomic) int lastPortholeWidth;  // in cells
+// The IME composition's footprint at the previous -invalidateInputMethodEditorRect
+// call, in PTYTextView coordinates and before the halo expansion. Used to detect
+// shrinkage and cursor moves: if the new rect does not fully contain this one,
+// the old composition could have left pixels outside the new footprint, so we
+// fall back to a full redraw.
+//
+// Note: these coordinates shift as scrollback grows. That's harmless here:
+// -updateDirtyRects: forces a full redraw whenever the grid scrolls, so any
+// staleness is reconciled before the next IME invalidation runs. The only
+// effect of a stale priorRect is that we may issue an unnecessary full redraw.
+@property(nonatomic) NSRect lastInvalidatedIMERect;
+@property(nonatomic, strong) NSMutableArray<iTermContentNavigationShortcut *> *contentNavigationShortcuts;
+
+- (void)addNote;
+- (void)updateAlphaValue;
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes;
+- (BOOL)_haveShortSelection;
+- (BOOL)haveReasonableSelection;
+- (BOOL)withRelativeCoord:(VT100GridAbsCoord)coord
+                    block:(void (^ NS_NOESCAPE)(VT100GridCoord coord))block;
+- (BOOL)withRelativeCoordRange:(VT100GridAbsCoordRange)range
+                         block:(void (^ NS_NOESCAPE)(VT100GridCoordRange))block;
+- (NSRect)adjustedDocumentVisibleRect;
+
+// exposed for tests
++ (NSArray<NSString *> *)accessibilityAnnouncementLinesForTrimmedLines:(NSArray<NSString *> *)trimmedLines
+                                                     firstAbsoluteLine:(long long)firstAbsoluteLine
+                                                       oldAbsoluteCursorY:(long long)oldAbsoluteCursorY
+                                                     oldCursorLineString:(NSString *)oldCursorLineString;
+- (void)setDrawingHelperIsRetina:(BOOL)isRetina;
+- (void)copySelectionWithControlSequences:(iTermSelection *)selection;
+- (void)copySelectionWithStyles:(iTermSelection *)selection;
+- (void)copySelection:(iTermSelection *)selection;
+- (void)scrollToCenterLine:(int)line;
+
+- (BOOL)showCommandInfoForEvent:(NSEvent *)event;
+- (BOOL)showCommandInfoForMark:(id<VT100ScreenMarkReading>)mark at:(NSPoint)locationInWindow;
+- (IBAction)performFindPanelAction:(id)sender;
+- (BOOL)mouseIsOverButtonInEvent:(NSEvent *)event;
+- (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus visible:(BOOL)visible;
+
+// Creates a new drawing helper configured for offscreen rendering (screenshots, etc.).
+// Interactive features (cursor, selection, marks) are disabled.
+- (iTermTextDrawingHelper *)newDrawingHelperForOffscreenRendering;
+
+@end
+

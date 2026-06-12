@@ -1,0 +1,138 @@
+Version 3.7.0beta2 was built on May 5, 2026.
+
+Changes since 3.7.0beta1:
+
+Major New Features:
+- Claude Code integration is now functional (beta1
+  shipped only an onboarding stub). It’s built on
+  a new feature called Workgroups: a workgroup
+  lets a small group of related sessions live in
+  the same pane and switch between each other via
+  a per-session toolbar (or open as splits or tabs
+  instead). The Claude Code workgroup pairs a chat
+  session with a Code Review session for reviewing
+  Claude’s changes. Configure workgroups in
+  Settings > Shortcuts > Workgroups; still a work
+  in progress.
+- The new Clippings side panel attaches a list of
+  context items to a session, shown alongside the
+  terminal. The Claude Code integration uses it
+  for Code Review findings, command output
+  snippets, and similar context. Items render as
+  Markdown; press Space or click the magnifying
+  glass for a Quick Look-style preview.
+
+New Features:
+- An AI chat that’s linked to a session can be
+  docked into that session’s window. Use the chat
+  menu’s “Put Chat in Linked Session” item; toggle
+  visibility with View > Show Inline Chat.
+- New Python API App.async_apply_layout reshapes
+  one or more tabs in a single transaction: swap
+  panes, restructure splits, move sessions across
+  tabs and windows.
+- New “dual-mode” SGR colors let programs emit
+  different fg/bg for light vs dark mode so
+  scrollback stays readable across appearance
+  toggles. Use CSI 38:12:Rl:Gl:Bl:Rd:Gd:Bd m for
+  24-bit and CSI 38:13:Nl:Nd m for 256-color (and
+  48 for backgrounds).
+
+Improvements:
+- The it2 command-line tool can post a clipping to
+  the Clippings panel via `it2 add-clipping`.
+- New global variable iterm2.appBundlePath holds
+  the path to the running iTerm2.app for use in
+  interpolated strings.
+- The Copy Smart Selection Action accepts an
+  interpolated-string parameter so the copied text
+  can be derived from the match (for example, a
+  capture group) instead of always being the whole
+  match. Also fixes Copy from the right-click
+  context menu being a no-op.
+- Relative timestamps now use Go-style suffixes
+  such as +1m23s and +2h5m, giving sub-minute
+  precision in the 1m–1h range.
+- Background images can rotate through a folder of
+  images at a configurable interval. Pick a folder
+  instead of a file in Settings > Profiles >
+  Window > Background.
+- Settings > Profiles > Text > Special Exceptions
+  has a new Add Preset… button that inserts
+  entries for common Unicode blocks (Arabic,
+  Cyrillic, Greek, Han, Hangul, Hiragana/Katakana,
+  Private Use Area). You still pick the font.
+- iTerm2 now overrides the Se terminfo capability
+  so Neovim 0.12+ restores your profile’s default
+  cursor on exit instead of a block cursor.
+- Improved energy efficiency, particularly on
+  Apple Silicon.
+
+Bug Fixes:
+- Fixed various hangs that could cause a beachball
+  (closing the Settings window, changing tab
+  style, slow or wedged opendirectoryd lookups).
+- The git status bar no longer times out silently
+  in large repositories such as Chromium. When a
+  poll does time out, the bar shows “⚠ timed out”;
+  click it to double the timeout and retry.
+- Fix bell and other user notifications not being
+  posted when iTerm2 is fully covered by another
+  app.
+- Fix the cursor jumping to the end while typing
+  in the middle of an annotation.
+- Fix long custom commands failing immediately
+  with a zsh “unmatched '” error.
+- Fix shell escaping of embedded apostrophes and
+  CR/LF in single-quote (POSIX) and $'…' (bash)
+  modes.
+- Fix the session’s hostname variable going stale
+  when the system’s initial hostname (e.g. a
+  transient DHCP-provided name) differs from the
+  hostname the shell later reports.
+- Fix “Save Current Window to File with Contents…”
+  producing a file with no contents.
+- Fix tmux window shrink on first attach when a
+  pre-tmux session was buried.
+- Quarantined .iterm2arrangement files (downloaded
+  from the internet) now require explicit
+  confirmation before opening, with a summary of
+  embedded risk factors (custom commands,
+  triggers, SSH targets, Smart Selection Actions,
+  etc.). Reported by @naxus-audit.
+- Extend the state-restoration database integrity
+  check timeout to 120s after an unclean shutdown
+  so the “taking a long time” prompt doesn’t
+  appear on every post-crash launch.
+- The password-manager CLI picker now accepts
+  plain files named `bw` and the `bw` symlink
+  target (e.g. `bw.js`), which fixes selecting
+  Bitwarden’s `bw` on machines where Homebrew
+  installs it as a Node.js script.
+- Fix carriage return (\r) handling in the tmux
+  integration’s escape-sequence decoder.
+- Fix old (deleted) iTerm installs being detected
+  as the default handler for a URL scheme.
+- ⌥Y and the Character Viewer no longer insert a
+  backslash instead of ¥ on non-JIS keyboards. ⌥+¥
+  on JIS keyboards now sends ESC+\ again.
+- Fix positioning of the “Delete sends ^H” control
+  in profile key settings.
+- Fix the session title popup being too narrow in
+  the Edit Session panel.
+- The Always/Never choice in the “restore
+  tab/window title when an ssh session ends”
+  prompt is now broadcast to other sessions
+  showing the same prompt.
+- Fix orphaned quotes appearing in the Jobs
+  popover when process names contain shell-special
+  characters (e.g. `package@version`).
+- Fix Smart Selection Rule edits not flushing the
+  profile or updating running sessions until
+  Settings was reopened.
+- Fix a ghost divider painted inside a tool after
+  a manual toolbelt splitter resize.
+- Fix a stray en-space being appended to the git
+  status bar when it shows rich stats.
+- Fix various crashes.
+- Fix various memory leaks.

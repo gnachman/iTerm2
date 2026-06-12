@@ -1,0 +1,196 @@
+//
+//  ScreenCharArray.h
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 9/18/21.
+//
+
+#import <Foundation/Foundation.h>
+#import "ScreenChar.h"
+#import "iTermMetadata.h"
+
+@class iTermBidiDisplayInfo;
+@class MutableScreenCharArray;
+
+NS_ASSUME_NONNULL_BEGIN
+
+// Typically used to store a single screen line.
+@interface ScreenCharArray : NSObject<NSMutableCopying>
+
+@property (nonatomic, readonly) const screen_char_t *line;
+@property (nonatomic) int length;
+@property (nonatomic, readonly) int eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
+@property (nonatomic, readonly) screen_char_t continuation;
+@property (nonatomic, readonly) iTermImmutableMetadata metadata;
+@property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) NSString *stringValue;
+@property (nonatomic, readonly) NSString *stringValueIncludingEmbeddedNulls;
+@property (nonatomic, readonly) NSString *stringValueIncludingNewline;
+@property (nonatomic, readonly) NSString *debugStringValue;
+@property (nonatomic, readonly, nullable) iTermBidiDisplayInfo *bidiInfo;
+@property (nonatomic, readonly, nullable) iTermExternalAttributeIndex *eaIndex;
+@property (nonatomic, readonly) NSData *data;
+@property (nonatomic, readonly) NSInteger lengthExcludingTrailingWhitespaceAndNulls;
+
++ (instancetype)emptyLineOfLength:(int)length;
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithCopyOfLine:(const screen_char_t *)line
+                            length:(int)length
+                      continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithCopyOfLine:(const screen_char_t *)line
+                            length:(int)length
+                      continuation:(screen_char_t)continuation
+                          bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
+- (instancetype)initWithData:(NSData *)data
+       includingContinuation:(BOOL)includingContinuation
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
+- (instancetype)initWithData:(NSData *)data
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation;
+
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation
+               freeOnRelease:(BOOL)freeOnRelease;
+
+// This is intended for swift so we can avoid the void* hijynx of iTermImmutableMetadata.
+- (instancetype)initWithLine:(const screen_char_t *)line
+                      length:(int)length
+                continuation:(screen_char_t)continuation
+                        date:(NSDate *)date
+          externalAttributes:(iTermExternalAttributeIndex * _Nullable)eaIndex
+                    rtlFound:(BOOL)rtlFound
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
+- (instancetype)initWithData:(NSData *)data
+       includingContinuation:(BOOL)includingContinuation
+                continuation:(screen_char_t)continuation
+                        date:(NSDate *)date
+          externalAttributes:(id<iTermExternalAttributeIndexReading> _Nullable)eaIndex
+                    rtlFound:(BOOL)rtlFound
+                    bidiInfo:(iTermBidiDisplayInfo * _Nullable)bidiInfo;
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+
+// It only makes sense to use this when freeOnRelease=YES.
+// start of malloced memory      start of line to expose
+// [index 0] [index 1] [index 2] [index 3]
+//
+// line = &[index 0]
+// offset = 3
+// length = 1
+- (instancetype)initWithLine:(const screen_char_t *)line  // pointer to 1st byte of malloced memory
+                      offset:(size_t)offset  // self.line == line + offset
+                      length:(int)length
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation
+               freeOnRelease:(BOOL)freeOnRelease;
+
+
+- (BOOL)isEqualToScreenCharArray:(ScreenCharArray *)other;
+// Compares only character identity (code + complexChar + image), ignoring
+// style attributes, eol, continuation, and metadata.
+- (BOOL)hasEqualCharacterContents:(ScreenCharArray *)other;
+// Returns YES if this is a DECDHL bottom-half line that duplicates the
+// given top-half line's character content.
+- (BOOL)isDECDHLDuplicateOf:(ScreenCharArray *)previous;
+- (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other;
+- (ScreenCharArray *)screenCharArrayByRemovingTrailingNullsAndHardNewline;
+- (ScreenCharArray *)inWindow:(VT100GridRange)window;
+
+// It's eligible for DWC if all of these are true:
+// 1. This is the last line in history
+// 2. The top-left cell of the grid is a double-width character
+- (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC;
+
+// Zeros a logical range
+- (ScreenCharArray *)copyByZeroingRange:(NSRange)range;
+- (ScreenCharArray *)copyByZeroingVisibleRange:(NSRange)range;
+- (ScreenCharArray *)paddedOrTruncatedToLength:(NSUInteger)newLength;
+- (ScreenCharArray *)paddedToAtLeastLength:(NSUInteger)newLength;
+- (ScreenCharArray *)screenCharArrayByRemovingFirst:(int)n;
+- (ScreenCharArray *)screenCharArrayByRemovingLast:(int)n;
+
+- (ScreenCharArray *)subArrayToIndex:(int)i;
+- (ScreenCharArray *)subArrayFromIndex:(int)i;
+- (ScreenCharArray *)subArrayWithRange:(NSRange)range;
+- (MutableScreenCharArray *)mutableSubArrayWithRange:(NSRange)range;
+
+- (NSMutableData *)mutableLineData;
+- (ScreenCharArray *)screenCharArrayBySettingCharacterAtIndex:(int)i
+                                                           to:(screen_char_t)c;
+// Ensures that if this object outlives the raw pointer it was initialized with that there won't be a dangling pointer.
+- (void)makeSafe;
+
+- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *, const iTermImmutableMetadata *))attributeProvider;
+
+// Wraps copy for Swift's benefit
+- (instancetype)clone;
+- (int)numberOfTrailingEmptyCells;
+- (int)numberOfTrailingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty;
+- (int)numberOfLeadingEmptyCellsWhereSpaceIsEmpty:(BOOL)spaceIsEmpty;
+- (BOOL)dataSizeMatchesLength;  // If true, no continuation mark is at the end of the data.
+- (BOOL)hasValidAppendedContinuationMark;
+
+- (MutableScreenCharArray *)mutableReplacement;
+@end
+
+@interface MutableScreenCharArray: ScreenCharArray
+
+@property (nonatomic, readonly) screen_char_t *mutableLine;
+@property (nonatomic, readwrite) screen_char_t continuation;
+@property (nonatomic, readwrite) int eol;
+@property (nonatomic, readwrite, nullable, strong) iTermBidiDisplayInfo *bidiInfo;
+
+- (void)appendScreenCharArray:(ScreenCharArray *)sca;
+- (void)appendString:(NSString *)string style:(screen_char_t)c continuation:(screen_char_t)continuation;
+- (void)setExternalAttributesIndex:(iTermExternalAttributeIndex * _Nullable)eaIndex;
+- (void)setBackground:(screen_char_t)bg inRange:(NSRange)range;
+- (void)setForeground:(screen_char_t)gg inRange:(NSRange)range;
+- (void)appendString:(NSString *)string fg:(screen_char_t)fg bg:(screen_char_t)bg;
+- (void)ensureContinuationMarkAppended;
+- (void)ensureContinuationMarkNotAppended;
+- (void)deleteRange:(NSRange)range;
+- (void)insert:(ScreenCharArray *)sca atIndex:(int)index;
+- (void)setMetadata:(iTermMetadata)metadata;
+- (void)setCharacter:(screen_char_t)c inRange:(NSRange)range;
+- (iTermExternalAttributeIndex *)eaIndexCreatingIfNeeded;
+- (void)copyRange:(NSRange)sourceRange from:(ScreenCharArray *)source destinationIndex:(int)destinationIndex;
+- (ScreenCharArray *)immutableReplacement;
+@end
+
+@interface ScreenCharRope: NSObject
+@property (nonatomic, strong) NSArray<ScreenCharArray *> *scas;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithScreenCharArrays:(NSArray<ScreenCharArray *> *)scas NS_DESIGNATED_INITIALIZER;
+
+- (MutableScreenCharArray *)joined;
+@end
+
+NS_INLINE BOOL ScreenCharIsNull(screen_char_t c) {
+    return c.code == 0 && !c.complexChar && !c.image;
+}
+
+
+NS_ASSUME_NONNULL_END
