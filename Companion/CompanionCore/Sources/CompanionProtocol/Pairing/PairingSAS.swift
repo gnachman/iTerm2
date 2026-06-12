@@ -24,10 +24,15 @@ public enum PairingSAS {
     /// Derive the SAS from the Noise handshake hash. Returns a zero-padded
     /// 6-digit decimal string.
     public static func code(handshakeHash: Data) -> String {
+        // HKDF compresses the (32-byte) handshake hash down to exactly 8
+        // output bytes; `derived` is those 8 bytes, not the input. Reading 8
+        // bytes big-endian fills a UInt64 precisely (8 * 8 = 64 bits), so the
+        // shift-and-OR below assembles them without truncation.
+        let outputByteCount = MemoryLayout<UInt64>.size  // 8; keep tied to UInt64
         let derived = HKDF<SHA256>.deriveKey(
             inputKeyMaterial: SymmetricKey(data: handshakeHash),
             info: Data(label.utf8),
-            outputByteCount: 8)
+            outputByteCount: outputByteCount)
         let value = derived.withUnsafeBytes { raw in
             raw.reduce(UInt64(0)) { ($0 << 8) | UInt64($1) }
         }
