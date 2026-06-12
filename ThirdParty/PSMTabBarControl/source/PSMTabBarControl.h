@@ -241,6 +241,7 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // special effects
 - (void)hideTabBar:(BOOL)hide animate:(BOOL)animate;
 - (void)update;
+- (void)update:(BOOL)animate;
 - (void)markNextInsertionsAsAnimated:(NSInteger)count;
 - (void)beginCollapseAnimationForTabViewItems:(NSArray<NSTabViewItem *> *)items completion:(void (^)(void))completion;
 - (void)cancelCollapseAnimation;

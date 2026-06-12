@@ -9,7 +9,6 @@
 #import "PSMYosemiteTabStyle.h"
 
 #import "iTermAdvancedSettingsModel.h"
-#import "NSBezierPath+iTerm.h"
 #import "PSMCachedTitle.h"
 #import "NSColor+PSM.h"
 #import "PSMOverflowPopUpButton.h"
@@ -826,43 +825,16 @@
     if (cell.isGroupHeader && cell.groupColor) {
         [self drawGroupHeaderDecorations:cell];
     } else {
-        [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
         if (cell.isGroupMember && cell.groupColor) {
-            [self drawGroupMemberAccent:cell];
+            [self drawGroupMemberDecoration:cell];
         }
+        [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
     }
-}
-
-- (BOOL)tabBarHasDarkAppearance {
-    NSAppearanceName bestMatch =
-        [_tabBar.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
-                                                                          NSAppearanceNameVibrantDark,
-                                                                          NSAppearanceNameAqua,
-                                                                          NSAppearanceNameVibrantLight ]];
-    return ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
-            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]);
-}
-
-- (NSGradient *)groupGradientForColor:(NSColor *)color {
-    NSColor *hsb = [color colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-    CGFloat h, s, b, a;
-    [hsb getHue:&h saturation:&s brightness:&b alpha:&a];
-    const CGFloat shift = 0.08;
-    NSColor *start = [NSColor colorWithHue:fmod(h + shift, 1.0)
-                                saturation:MIN(s + 0.1, 1.0)
-                                brightness:MIN(b + 0.1, 1.0)
-                                     alpha:1.0];
-    NSColor *end = [NSColor colorWithHue:fmod(h - shift + 1.0, 1.0)
-                              saturation:MIN(s + 0.1, 1.0)
-                              brightness:MIN(b + 0.05, 1.0)
-                               alpha:1.0];
-    return [[NSGradient alloc] initWithColors:@[start, color, end]];
 }
 
 - (void)drawGroupHeaderDecorations:(PSMTabBarCell *)cell {
     NSRect cellFrame = cell.frame;
     BOOL hasName = cell.groupName.length > 0;
-    BOOL neon = [iTermAdvancedSettingsModel tabGroupNeonStyle];
     const CGFloat effectiveHighlight = MAX(cell.highlightAmount, cell.isGroupActive ? 0.5 : 0.0);
 
     const CGFloat hMargin = 10.0;
@@ -887,13 +859,8 @@
             [[cell.groupColor colorWithAlphaComponent:effectiveHighlight * 0.3] set];
             [[NSBezierPath bezierPathWithOvalInRect:haloRect] fill];
         }
-        NSBezierPath *dot = [NSBezierPath bezierPathWithOvalInRect:dotRect];
-        if (neon) {
-            [[self groupGradientForColor:cell.groupColor] drawInBezierPath:dot angle:0.0];
-        } else {
-            [cell.groupColor set];
-            [dot fill];
-        }
+        [cell.groupColor set];
+        [[NSBezierPath bezierPathWithOvalInRect:dotRect] fill];
         return;
     }
 
@@ -916,60 +883,24 @@
                                                              xRadius:cornerRadius
                                                              yRadius:cornerRadius];
 
-    if (neon) {
-        NSGradient *gradient = [self groupGradientForColor:cell.groupColor];
-        const CGFloat borderWidth = 1.5;
-        NSRect innerRect = NSInsetRect(pillRect, borderWidth, borderWidth);
-        NSBezierPath *innerPill = [NSBezierPath bezierPathWithRoundedRect:innerRect
-                                                                 xRadius:MAX(cornerRadius - borderWidth, 0)
-                                                                 yRadius:MAX(cornerRadius - borderWidth, 0)];
-        CGContextRef ctx = [NSGraphicsContext currentContext].CGContext;
+    [cell.groupColor set];
+    [outerPill fill];
 
-        // Gradient border ring only (even-odd clip punches out the interior)
-        CGContextSaveGState(ctx);
-        CGContextAddPath(ctx, [outerPill iterm_CGPath]);
-        CGContextAddPath(ctx, [innerPill iterm_CGPath]);
-        CGContextEOClip(ctx);
-        [gradient drawInBezierPath:outerPill angle:0.0];
-        CGContextRestoreGState(ctx);
+    // Active state (a member tab is currently selected): persistent inner border
+    if (cell.isGroupActive) {
+        [[NSColor colorWithWhite:lightGroupColor ? 0.0 : 1.0 alpha:0.4] set];
+        [outerPill setLineWidth:1.5];
+        [outerPill stroke];
+    }
 
-        // Interior gradient fill fades in on hover/active
-        if (effectiveHighlight > 0.001) {
-            CGContextSaveGState(ctx);
-            CGContextSetAlpha(ctx, effectiveHighlight);
-            [gradient drawInBezierPath:innerPill angle:0.0];
-            CGContextRestoreGState(ctx);
-        }
-    } else {
-        // Flat: solid group colour, brightness-adaptive text
-        [cell.groupColor set];
+    // Hover: contrasting overlay that fades in with mouse position
+    if (cell.highlightAmount > 0.001) {
+        [[NSColor colorWithWhite:lightGroupColor ? 0.0 : 1.0 alpha:cell.highlightAmount * 0.25] set];
         [outerPill fill];
-
-        // Active state (a member tab is currently selected): persistent inner border
-        if (cell.isGroupActive) {
-            [[NSColor colorWithWhite:lightGroupColor ? 0.0 : 1.0 alpha:0.4] set];
-            [outerPill setLineWidth:1.5];
-            [outerPill stroke];
-        }
-
-        // Hover: contrasting overlay that fades in with mouse position
-        if (cell.highlightAmount > 0.001) {
-            [[NSColor colorWithWhite:lightGroupColor ? 0.0 : 1.0 alpha:cell.highlightAmount * 0.25] set];
-            [outerPill fill];
-        }
     }
 
-    NSColor *darkText = [NSColor colorWithWhite:0.1 alpha:1.0];
-    NSColor *textColor;
-    if (neon) {
-        // The pill interior only fills with the group gradient on hover/active;
-        // otherwise the name sits on the tab bar background.
-        const BOOL darkBackground = (effectiveHighlight > 0.5) ? !lightGroupColor
-                                                               : [self tabBarHasDarkAppearance];
-        textColor = darkBackground ? [NSColor whiteColor] : darkText;
-    } else {
-        textColor = lightGroupColor ? darkText : [NSColor whiteColor];
-    }
+    NSColor *textColor = lightGroupColor ? [NSColor colorWithWhite:0.1 alpha:1.0]
+                                         : [NSColor whiteColor];
 
     NSDictionary *nameAttrs = @{
         NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize weight:NSFontWeightSemibold],
@@ -981,24 +912,19 @@
                  withAttributes:nameAttrs];
 }
 
-- (void)drawGroupMemberAccent:(PSMTabBarCell *)cell {
+- (void)drawGroupMemberDecoration:(PSMTabBarCell *)cell {
     NSRect cellFrame = cell.frame;
-    const CGFloat accentThickness = 2.5;
-    NSRect accentRect;
-    if (_orientation == PSMTabBarVerticalOrientation) {
-        accentRect = NSMakeRect(cellFrame.origin.x,
-                                cellFrame.origin.y,
-                                accentThickness,
-                                cellFrame.size.height);
+    if (cell.state == NSControlStateValueOn) {
+        // Selected member: thin group-colour inner border around the tab.
+        NSBezierPath *ring = [NSBezierPath bezierPathWithRect:NSInsetRect(cellFrame, 1.0, 1.0)];
+        [cell.groupColor set];
+        [ring setLineWidth:1.5];
+        [ring stroke];
     } else {
-        // Bottom edge (the view is flipped); the top band belongs to the tab progress bar.
-        accentRect = NSMakeRect(cellFrame.origin.x,
-                                NSMaxY(cellFrame) - accentThickness,
-                                cellFrame.size.width,
-                                accentThickness);
+        // Unselected member: subtle wash of the group colour across the tab.
+        [[cell.groupColor colorWithAlphaComponent:0.14] set];
+        NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceOver);
     }
-    [cell.groupColor set];
-    NSRectFill(accentRect);
 }
 
 - (CGFloat)tabColorBrightness:(PSMTabBarCell *)cell {

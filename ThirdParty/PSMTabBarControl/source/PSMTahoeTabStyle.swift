@@ -523,10 +523,10 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if cell.isGroupHeader, cell.groupColor != nil {
             drawGroupHeaderDecorations(cell)
         } else {
-            drawInterior(with: cell, inView: cell.controlView, highlightAmount: highlightAmount)
             if cell.isGroupMember, cell.groupColor != nil {
-                drawGroupMemberAccent(cell)
+                drawGroupMemberDecoration(cell)
             }
+            drawInterior(with: cell, inView: cell.controlView, highlightAmount: highlightAmount)
         }
 
         if PSMTahoeTabStyleDebuggingEnabled {
@@ -535,42 +535,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
 
-    private var tabBarHasDarkAppearance: Bool {
-        let names = [NSAppearance.Name.darkAqua,
-                     NSAppearance.Name.vibrantDark,
-                     NSAppearance.Name.aqua,
-                     NSAppearance.Name.vibrantLight]
-        let bestMatch = tabBar?.effectiveAppearance.bestMatch(from: names)
-        return bestMatch == .darkAqua || bestMatch == .vibrantDark
-    }
-
-    private func groupGradient(for color: NSColor) -> NSGradient? {
-        guard let srgb = color.usingColorSpace(.sRGB) else {
-            return nil
-        }
-        var hue: CGFloat = 0
-        var saturation: CGFloat = 0
-        var brightness: CGFloat = 0
-        var alpha: CGFloat = 0
-        srgb.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
-        let shift = 0.08
-        let start = NSColor(hue: fmod(hue + shift, 1.0),
-                            saturation: min(saturation + 0.1, 1.0),
-                            brightness: min(brightness + 0.1, 1.0),
-                            alpha: 1.0)
-        let end = NSColor(hue: fmod(hue - shift + 1.0, 1.0),
-                          saturation: min(saturation + 0.1, 1.0),
-                          brightness: min(brightness + 0.05, 1.0),
-                          alpha: 1.0)
-        return NSGradient(colors: [start, color, end])
-    }
-
     private func drawGroupHeaderDecorations(_ cell: PSMTabBarCell) {
         guard let groupColor = cell.groupColor else {
             return
         }
         let cellFrame = cell.frame
-        let neon = iTermAdvancedSettingsModel.tabGroupNeonStyle()
         let effectiveHighlight = max(cell.highlightAmount, cell.isGroupActive ? 0.5 : 0.0)
 
         guard let groupName = cell.groupName, !groupName.isEmpty else {
@@ -588,18 +557,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 groupColor.withAlphaComponent(effectiveHighlight * 0.3).set()
                 NSBezierPath(ovalIn: haloRect).fill()
             }
-            let dot = NSBezierPath(ovalIn: dotRect)
-            if neon, let gradient = groupGradient(for: groupColor) {
-                gradient.draw(in: dot, angle: 0.0)
-            } else {
-                groupColor.set()
-                dot.fill()
-            }
+            groupColor.set()
+            NSBezierPath(ovalIn: dotRect).fill()
             return
         }
 
-        let horizontalMargin = 10.0
-        let verticalMargin = 5.0
+        let horizontalMargin = 6.0
+        let verticalMargin = 4.0
         var pillRect = backgroundRect(for: cellFrame).insetBy(dx: horizontalMargin, dy: verticalMargin)
         if _orientation == .verticalOrientation {
             // Vertical cells span the full bar width; hug the name instead of stretching.
@@ -607,14 +571,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold)
             ]
             let nameWidth = ceil(groupName.size(withAttributes: nameAttributes).width)
-            let pillWidth = min(pillRect.width, nameWidth + horizontalMargin * 3)
+            let pillWidth = min(pillRect.width, nameWidth + horizontalMargin * 5)
             pillRect = NSRect(x: cellFrame.midX - pillWidth / 2.0,
                               y: pillRect.minY,
                               width: pillWidth,
                               height: pillRect.height)
         }
         let cornerRadius = pillRect.height / 2.0
-        let outerPill = NSBezierPath(roundedRect: pillRect, xRadius: cornerRadius, yRadius: cornerRadius)
+        let pill = NSBezierPath(roundedRect: pillRect, xRadius: cornerRadius, yRadius: cornerRadius)
 
         var red: CGFloat = 0
         var green: CGFloat = 0
@@ -623,58 +587,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         (groupColor.usingColorSpace(.sRGB) ?? groupColor).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         let lightGroupColor = (0.299 * red + 0.587 * green + 0.114 * blue) > 0.55
 
-        if neon, let gradient = groupGradient(for: groupColor) {
-            let borderWidth = 1.5
-            let innerRect = pillRect.insetBy(dx: borderWidth, dy: borderWidth)
-            let innerPill = NSBezierPath(roundedRect: innerRect,
-                                         xRadius: max(cornerRadius - borderWidth, 0),
-                                         yRadius: max(cornerRadius - borderWidth, 0))
-            if let context = NSGraphicsContext.current?.cgContext {
-                // Gradient border ring only (even-odd clip punches out the interior)
-                context.saveGState()
-                context.addPath(outerPill.cgPath)
-                context.addPath(innerPill.cgPath)
-                context.clip(using: .evenOdd)
-                gradient.draw(in: outerPill, angle: 0.0)
-                context.restoreGState()
+        groupColor.set()
+        pill.fill()
 
-                // Interior gradient fill fades in on hover/active
-                if effectiveHighlight > 0.001 {
-                    context.saveGState()
-                    context.setAlpha(effectiveHighlight)
-                    gradient.draw(in: innerPill, angle: 0.0)
-                    context.restoreGState()
-                }
-            }
-        } else {
-            groupColor.set()
-            outerPill.fill()
-
-            // Active state (a member tab is currently selected): persistent inner border
-            if cell.isGroupActive {
-                NSColor(white: lightGroupColor ? 0.0 : 1.0, alpha: 0.4).set()
-                outerPill.lineWidth = 1.5
-                outerPill.stroke()
-            }
-
-            // Hover: contrasting overlay that fades in with mouse position
-            if cell.highlightAmount > 0.001 {
-                NSColor(white: lightGroupColor ? 0.0 : 1.0, alpha: cell.highlightAmount * 0.25).set()
-                outerPill.fill()
-            }
+        // Active state (a member tab is currently selected): persistent inner border
+        if cell.isGroupActive {
+            NSColor(white: lightGroupColor ? 0.0 : 1.0, alpha: 0.4).set()
+            pill.lineWidth = 1.5
+            pill.stroke()
         }
 
-        let darkText = NSColor(white: 0.1, alpha: 1.0)
-        let textColor: NSColor
-        if neon {
-            // The pill interior only fills with the group gradient on hover/active;
-            // otherwise the name sits on the tab bar background.
-            let darkBackground = (effectiveHighlight > 0.5) ? !lightGroupColor : tabBarHasDarkAppearance
-            textColor = darkBackground ? .white : darkText
-        } else {
-            textColor = lightGroupColor ? darkText : .white
+        // Hover: contrasting overlay that fades in with mouse position
+        if cell.highlightAmount > 0.001 {
+            NSColor(white: lightGroupColor ? 0.0 : 1.0, alpha: cell.highlightAmount * 0.25).set()
+            pill.fill()
         }
 
+        let textColor = lightGroupColor ? NSColor(white: 0.1, alpha: 1.0) : .white
         let nameAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold),
             .foregroundColor: textColor
@@ -685,32 +614,26 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                        withAttributes: nameAttributes)
     }
 
-    private func drawGroupMemberAccent(_ cell: PSMTabBarCell) {
+    private func drawGroupMemberDecoration(_ cell: PSMTabBarCell) {
         guard let groupColor = cell.groupColor else {
             return
         }
-        let pillRect = backgroundRect(for: cell.frame)
         let radius = max(0, barRadius - 2.5)
-        let pill = NSBezierPath(roundedRect: pillRect, xRadius: radius, yRadius: radius)
-        NSGraphicsContext.saveGraphicsState()
-        pill.addClip()
-        let accentThickness = 2.5
-        let accentRect: NSRect
-        if _orientation == .verticalOrientation {
-            accentRect = NSRect(x: pillRect.minX,
-                                y: pillRect.minY,
-                                width: accentThickness,
-                                height: pillRect.height)
+        let rect = backgroundRect(for: cell.frame)
+        if cell.state == .on {
+            // Selected member: thin group-colour ring around the regular pill.
+            let ring = NSBezierPath(roundedRect: rect.insetBy(dx: 0.75, dy: 0.75),
+                                    xRadius: max(0, radius - 0.75),
+                                    yRadius: max(0, radius - 0.75))
+            groupColor.set()
+            ring.lineWidth = 1.5
+            ring.stroke()
         } else {
-            // Bottom edge (the view is flipped); the top band belongs to the tab progress bar.
-            accentRect = NSRect(x: pillRect.minX,
-                                y: pillRect.maxY - accentThickness,
-                                width: pillRect.width,
-                                height: accentThickness)
+            // Unselected member: subtle wash of the group colour across the pill.
+            let pill = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+            groupColor.withAlphaComponent(0.14).set()
+            pill.fill()
         }
-        groupColor.set()
-        accentRect.fill()
-        NSGraphicsContext.restoreGraphicsState()
     }
     
     private func drawDropShadow(cell: PSMTabBarCell) {
