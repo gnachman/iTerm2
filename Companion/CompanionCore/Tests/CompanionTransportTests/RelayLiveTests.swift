@@ -18,6 +18,26 @@ import CompanionProtocol
 import CompanionNoise
 @testable import CompanionTransport
 
+/// A one-shot async signal: waiters before or after `signal()` all proceed
+/// once it fires. Used to gate the phone's join on the mac being parked,
+/// without polling or sleeping.
+private actor Gate {
+    private var open = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func signal() {
+        guard !open else { return }
+        open = true
+        for w in waiters { w.resume() }
+        waiters.removeAll()
+    }
+
+    func wait() async {
+        if open { return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+}
+
 final class RelayLiveTests: XCTestCase {
     private func relayOrigin() throws -> String {
         guard let origin = ProcessInfo.processInfo.environment["RELAY_TEST_ORIGIN"] else {
@@ -38,7 +58,14 @@ final class RelayLiveTests: XCTestCase {
         let prologue = PairingCode(responderStaticPublicKey: macStatic.publicKey,
                                    pairingID: pid).handshakePrologue()
 
-        let listener = RelayTransportListener(relayOrigin: origin, roomName: roomName)
+        // The mac must be parked before the phone sends Noise msg1, or the DO
+        // drops msg1 pre-splice and the handshake hangs. The `parked` gate
+        // fires from the listener's onParked hook; the phone waits on it
+        // instead of guessing with a sleep.
+        let parked = Gate()
+        let listener = RelayTransportListener(relayOrigin: origin,
+                                              roomName: roomName,
+                                              onParked: { Task { await parked.signal() } })
         let connector = RelayTransportConnector(relayOrigin: origin,
                                                 responderStaticKey: macStatic.publicKey)
 
@@ -53,9 +80,7 @@ final class RelayLiveTests: XCTestCase {
                 localKeyPair: macStatic, remoteStaticPublicKey: nil, prologue: prologue)
         }()
         async let phoneChannel: NoiseChannel = {
-            // A small head start so the mac is parked before the phone joins
-            // (mirrors "park before showing the QR"); the DO persists either way.
-            try await Task.sleep(nanoseconds: 300_000_000)
+            await parked.wait()
             let phone = try await connector.connect(to: rendezvous, timeout: 15)
             return try await NoiseHandshake.perform(
                 role: .initiator, transport: phone,

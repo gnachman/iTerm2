@@ -193,14 +193,22 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
     private let relayOrigin: String
     private let roomName: String
     private let session: URLSession
+    private let onParked: (@Sendable () -> Void)?
     private let lock = UnfairLock()
     private var stopped = false
     private var current: URLSessionWebSocketTask?
 
-    public init(relayOrigin: String, roomName: String, session: URLSession = .shared) {
+    /// - onParked: invoked once admission completes and the listener is parked
+    ///   in the room (before it blocks awaiting the peer's first frame). The
+    ///   mac is now reachable through the relay; the phone may join.
+    public init(relayOrigin: String,
+                roomName: String,
+                session: URLSession = .shared,
+                onParked: (@Sendable () -> Void)? = nil) {
         self.relayOrigin = relayOrigin
         self.roomName = roomName
         self.session = session
+        self.onParked = onParked
     }
 
     public func accept() async throws -> MessageTransport {
@@ -216,9 +224,12 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
         _ = try await RelayAdmissionClient.admit(task: task, role: .mac) { _ in
             RelayAdmission.Proof(ticket: nil, signature: nil)
         }
-        // Admitted and parked. Block until the phone actually joins and sends
-        // its first frame (Noise msg1), so the combined listener doesn't treat
-        // an empty parked room as an inbound connection.
+        // Parked: the mac now holds the mac slot and is reachable through the
+        // relay. Signal before blocking, since the next step waits on the peer.
+        onParked?()
+        // Block until the phone actually joins and sends its first frame (Noise
+        // msg1), so the combined listener doesn't treat an empty parked room as
+        // an inbound connection.
         let firstMessage = try await task.receive()
         let firstFrame: Data
         switch firstMessage {
