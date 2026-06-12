@@ -1524,8 +1524,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 [_animationTimer invalidate];
             }
             
-            _animationDelta = 0.0f;
-            _animationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
+            NSMutableArray<NSNumber *> *startWidths = [NSMutableArray arrayWithCapacity:cellCount];
+            for (PSMTabBarCell *cell in _cells) {
+                [startWidths addObject:@(cell.frame.size.width)];
+            }
+            [_animationStartWidths release];
+            _animationStartWidths = [startWidths copy];
+            _animationStartTime = [NSDate timeIntervalSinceReferenceDate];
+            _animationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
                                                                target:self
                                                              selector:@selector(_animateCells:)
                                                              userInfo:[self cellWidthsForHorizontalArrangementWithOverflow:_lainOutWithOverflow]
@@ -1821,48 +1827,37 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 - (void)_animateCells:(NSTimer *)timer {
     NSArray *targetWidths = [timer userInfo];
-    int i, numberOfVisibleCells = [targetWidths count];
-    float totalChange = 0.0f;
-    BOOL updated = NO;
+    const NSInteger numberOfVisibleCells = [targetWidths count];
+    const NSTimeInterval duration = 0.25;
+    const NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _animationStartTime;
+    const CGFloat progress = MIN(1.0, elapsed / duration);
+    const CGFloat eased = 1.0 - pow(1.0 - progress, 3.0);
 
-    if ([_cells count] > 0) {
-        //compare our target widths with the current widths and move towards the target
-        for (i = 0; i < [_cells count]; i++) {
-            PSMTabBarCell *currentCell = [_cells objectAtIndex:i];
-            NSRect cellFrame = [currentCell frame];
-            cellFrame.origin.x += totalChange;
+    CGFloat totalChange = 0.0;
+    NSInteger i = 0;
+    for (PSMTabBarCell *currentCell in _cells) {
+        NSRect cellFrame = [currentCell frame];
+        cellFrame.origin.x += totalChange;
 
-            if (i < numberOfVisibleCells) {
-                float target = [[targetWidths objectAtIndex:i] floatValue];
-
-                if (currentCell.isPinned) {
-                    // Pinned cells snap to target width immediately - no gradual animation.
-                    totalChange += target - cellFrame.size.width;
-                    cellFrame.size.width = target;
-                    [currentCell setFrame:cellFrame];
-                } else if (fabs(cellFrame.size.width - target) < _animationDelta) {
-                    cellFrame.size.width = target;
-                    totalChange += cellFrame.size.width - target;
-                    [currentCell setFrame:cellFrame];
-                } else if (cellFrame.size.width > target) {
-                    cellFrame.size.width -= _animationDelta;
-                    totalChange -= _animationDelta;
-                    updated = YES;
-                } else if (cellFrame.size.width < target) {
-                    cellFrame.size.width += _animationDelta;
-                    totalChange += _animationDelta;
-                    [currentCell setFrame:cellFrame];
-                    updated = YES;
-                }
+        if (i < numberOfVisibleCells) {
+            const CGFloat target = [[targetWidths objectAtIndex:i] doubleValue];
+            CGFloat newWidth;
+            if (currentCell.isPinned || i >= (NSInteger)_animationStartWidths.count) {
+                // Pinned cells snap to target width immediately - no gradual animation.
+                newWidth = target;
+            } else {
+                const CGFloat start = [_animationStartWidths[i] doubleValue];
+                newWidth = start + (target - start) * eased;
             }
-
-            [currentCell setFrame:cellFrame];
+            totalChange += newWidth - cellFrame.size.width;
+            cellFrame.size.width = newWidth;
         }
 
-        _animationDelta += 4.0f;
+        [currentCell setFrame:cellFrame];
+        i++;
     }
 
-    if (!updated) {
+    if (progress >= 1.0) {
         [self finishUpdateWithRegularWidths:targetWidths
                          widthsWithOverflow:targetWidths];
         [timer invalidate];
