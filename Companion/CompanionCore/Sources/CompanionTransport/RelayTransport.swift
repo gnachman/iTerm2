@@ -178,10 +178,16 @@ public struct RelayTransportConnector: TransportConnector {
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.setValue(roomName, forHTTPHeaderField: "x-relay-room")
         let task = session.webSocketTask(with: request)
-        _ = try await RelayAdmissionClient.admit(task: task, role: .phone) { challenge in
-            try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
+        // In a transport race, the loser's task is cancelled; tear the socket
+        // down so a half-open relay join doesn't linger (and free the room slot).
+        return try await withTaskCancellationHandler {
+            _ = try await RelayAdmissionClient.admit(task: task, role: .phone) { challenge in
+                try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
+            }
+            return RelayTransport(task: task)
+        } onCancel: {
+            task.cancel(with: .goingAway, reason: nil)
         }
-        return RelayTransport(task: task)
     }
 }
 
@@ -221,23 +227,30 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
         let task = session.webSocketTask(with: request)
         lock.withLock { current = task }
 
-        _ = try await RelayAdmissionClient.admit(task: task, role: .mac) { _ in
-            RelayAdmission.Proof(ticket: nil, signature: nil)
+        // In a combined-listener race, the loser's accept task is cancelled;
+        // tear the parked socket down so the mac releases the room's mac slot
+        // instead of leaving a dangling park.
+        return try await withTaskCancellationHandler {
+            _ = try await RelayAdmissionClient.admit(task: task, role: .mac) { _ in
+                RelayAdmission.Proof(ticket: nil, signature: nil)
+            }
+            // Parked: the mac now holds the mac slot and is reachable through the
+            // relay. Signal before blocking, since the next step waits on the peer.
+            onParked?()
+            // Block until the phone actually joins and sends its first frame (Noise
+            // msg1), so the combined listener doesn't treat an empty parked room as
+            // an inbound connection.
+            let firstMessage = try await task.receive()
+            let firstFrame: Data
+            switch firstMessage {
+            case .data(let d): firstFrame = d
+            case .string: throw TransportError.malformedFrame
+            @unknown default: throw TransportError.malformedFrame
+            }
+            return RelayTransport(task: task, firstFrame: firstFrame)
+        } onCancel: {
+            task.cancel(with: .goingAway, reason: nil)
         }
-        // Parked: the mac now holds the mac slot and is reachable through the
-        // relay. Signal before blocking, since the next step waits on the peer.
-        onParked?()
-        // Block until the phone actually joins and sends its first frame (Noise
-        // msg1), so the combined listener doesn't treat an empty parked room as
-        // an inbound connection.
-        let firstMessage = try await task.receive()
-        let firstFrame: Data
-        switch firstMessage {
-        case .data(let d): firstFrame = d
-        case .string: throw TransportError.malformedFrame
-        @unknown default: throw TransportError.malformedFrame
-        }
-        return RelayTransport(task: task, firstFrame: firstFrame)
     }
 
     public func stop() {

@@ -80,8 +80,10 @@ public struct PairingCode: Equatable, Sendable {
     /// Canonicalize a relay= value to a bare https origin (scheme + host +
     /// optional port), or throw .invalidRelay. Rejects non-https schemes,
     /// userinfo, non-empty path, query, and fragment, so the phone can only
-    /// ever build endpoint paths against a trusted origin.
-    static func canonicalRelayOrigin(_ raw: String) throws -> String {
+    /// ever build endpoint paths against a trusted origin. Public so the mac
+    /// can validate its operator-configured relay origin with the exact same
+    /// rule the phone applies when parsing the QR, guaranteeing both ends agree.
+    public static func canonicalRelayOrigin(_ raw: String) throws -> String {
         guard let c = URLComponents(string: raw),
               c.scheme?.lowercased() == "https",
               let host = c.host, !host.isEmpty,

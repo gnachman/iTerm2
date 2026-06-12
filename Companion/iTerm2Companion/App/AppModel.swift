@@ -185,14 +185,15 @@ final class AppModel {
 
     private var client: CompanionClient?
 
-    // How the phone reaches the mac. Transport-agnostic: today this is just the
-    // local-network connector, but a relay-server or iCloud connector can be
-    // appended here and RaceTransportConnector will use whichever connects
-    // first. Nothing else in the app knows which transport won.
-    private let connector: TransportConnector
+    // How the phone reaches the mac, built per pairing code: the local-network
+    // connector always, plus the relay connector when the code carries a relay
+    // origin (off-LAN reach). RaceTransportConnector uses whichever connects
+    // first; nothing else in the app knows which transport won. Injectable for
+    // tests; production uses CompanionTransports.connector(for:).
+    private let connectorForCode: (PairingCode) -> TransportConnector
 
-    init(connector: TransportConnector = RaceTransportConnector([BonjourTransportConnector()])) {
-        self.connector = connector
+    init(connectorForCode: @escaping (PairingCode) -> TransportConnector = { CompanionTransports.connector(for: $0) }) {
+        self.connectorForCode = connectorForCode
         // Route the transport/crypto layers' diagnostics into the unified log
         // (visible in Console.app and `log stream`).
         CompanionLog.handler = { message in
@@ -209,9 +210,12 @@ final class AppModel {
 
     private static let storedKeyDefault = "PairedResponderStaticKey"
     private static let storedPIDDefault = "PairedPairingID"
+    private static let storedRelayOriginDefault = "PairedRelayOrigin"
 
     /// The pairing from the last successful handshake. The responder key is
-    /// public and the pid is not a secret, so UserDefaults is fine.
+    /// public and the pid is not a secret, so UserDefaults is fine. The relay
+    /// origin is persisted too so an off-LAN reconnect after relaunch can still
+    /// reach the mac through the relay (not just the local network).
     var storedPairingCode: PairingCode? {
         let defaults = UserDefaults.standard
         guard let key = defaults.data(forKey: Self.storedKeyDefault),
@@ -219,19 +223,27 @@ final class AppModel {
               let pid = defaults.string(forKey: Self.storedPIDDefault) else {
             return nil
         }
-        return PairingCode(responderStaticPublicKey: key, pairingID: pid)
+        return PairingCode(responderStaticPublicKey: key,
+                           pairingID: pid,
+                           relayOrigin: defaults.string(forKey: Self.storedRelayOriginDefault))
     }
 
     private func storePairing(_ code: PairingCode) {
         let defaults = UserDefaults.standard
         defaults.set(code.responderStaticPublicKey, forKey: Self.storedKeyDefault)
         defaults.set(code.pairingID, forKey: Self.storedPIDDefault)
+        if let relayOrigin = code.relayOrigin {
+            defaults.set(relayOrigin, forKey: Self.storedRelayOriginDefault)
+        } else {
+            defaults.removeObject(forKey: Self.storedRelayOriginDefault)
+        }
     }
 
     func forgetStoredPairing() {
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: Self.storedKeyDefault)
         defaults.removeObject(forKey: Self.storedPIDDefault)
+        defaults.removeObject(forKey: Self.storedRelayOriginDefault)
     }
 
     /// Called once at launch: if a pairing is stored, reconnect to it instead
@@ -434,8 +446,8 @@ final class AppModel {
         }
 
         let identity = try PhoneIdentity.keyPair()
-        companionLog("Connecting (discovery + TCP)…")
-        let connector = self.connector
+        companionLog("Connecting (discovery + TCP\(code.relayOrigin != nil ? " + relay" : ""))…")
+        let connector = connectorForCode(code)
         let transport = try await connector.connect(
             to: PairingRendezvous(pairingID: code.pairingID),
             timeout: 30)

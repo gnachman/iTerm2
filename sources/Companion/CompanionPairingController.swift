@@ -167,7 +167,9 @@ final class CompanionPairingController: NSObject {
         stopAdvertising()
         let keyPair = try CompanionMacIdentity.keyPair()
         let pairingID = Self.makePairingID()
-        let code = PairingCode(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
+        let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
+                               pairingID: pairingID,
+                               relayOrigin: Self.configuredRelayOrigin())
         pairingCode = code
 
 #if DEBUG
@@ -249,13 +251,46 @@ final class CompanionPairingController: NSObject {
 
     private func startListening(pairingID: String) throws {
         let keyPair = try CompanionMacIdentity.keyPair()
-        let code = PairingCode(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
-        let listener = try BonjourTransportListener(pairingID: pairingID,
-                                                    version: PairingCode.supportedVersion)
+        // The relay origin comes from local config, not the stored pairing, so
+        // it applies to background reconnect listening too (where there is no
+        // fresh QR). nil => local-network only, the default.
+        let relayOrigin = Self.configuredRelayOrigin()
+        let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
+                               pairingID: pairingID,
+                               relayOrigin: relayOrigin)
+        let listener = try CompanionTransports.listener(
+            pairingID: pairingID,
+            responderStaticPublicKey: keyPair.publicKey,
+            relayOrigin: relayOrigin)
         self.listener = listener
         acceptTask = Task { [weak self] in
             await self?.acceptLoop(listener: listener, keyPair: keyPair, code: code)
         }
+    }
+
+    /// The relay origin the pairing uses for connectivity. The relay is the
+    /// only transport (Bonjour is currently disabled), so this must be set for
+    /// pairing to work; it defaults to the project relay and can be overridden
+    /// per machine via the CompanionRelayOrigin default (e.g. a fork's own
+    /// Worker, or an open-mode test relay). Setting it to the empty string
+    /// disables the relay entirely (no transport, pairing cannot complete).
+    /// Validated as a bare https origin with the same rule the phone applies to
+    /// the QR, so an invalid value is ignored (logged) rather than producing a
+    /// QR the phone rejects.
+    static let relayOriginKey = "CompanionRelayOrigin"
+    static let defaultRelayOrigin = "https://iterm2-companion-relay.gnachman.workers.dev"
+
+    private static func configuredRelayOrigin() -> String? {
+        let raw = iTermUserDefaults.userDefaults().string(forKey: relayOriginKey) ?? defaultRelayOrigin
+        guard !raw.isEmpty else {
+            // Explicitly disabled.
+            return nil
+        }
+        guard let origin = try? PairingCode.canonicalRelayOrigin(raw) else {
+            DLog("Companion: ignoring \(relayOriginKey)=\(raw); must be a bare https origin")
+            return nil
+        }
+        return origin
     }
 
     private func acceptLoop(listener: TransportListener,
