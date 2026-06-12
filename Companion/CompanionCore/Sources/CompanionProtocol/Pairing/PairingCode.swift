@@ -27,9 +27,18 @@ public struct PairingCode: Equatable, Sendable {
     /// the mac can associate the connection with the QR code it displayed.
     public let pairingID: String
 
-    public init(responderStaticPublicKey: Data, pairingID: String) {
+    /// The relay origin (scheme + host + optional port, e.g.
+    /// "https://relay.example.com") this pairing should use for off-LAN
+    /// connectivity, or nil for a LAN-only (Bonjour) pairing. Canonicalized at
+    /// parse time: https only, no userinfo/path/query/fragment.
+    public let relayOrigin: String?
+
+    public init(responderStaticPublicKey: Data,
+                pairingID: String,
+                relayOrigin: String? = nil) {
         self.responderStaticPublicKey = responderStaticPublicKey
         self.pairingID = pairingID
+        self.relayOrigin = relayOrigin
     }
 
     public enum ParseError: Error, Equatable {
@@ -43,6 +52,9 @@ public struct PairingCode: Equatable, Sendable {
         case malformedURL
         /// pid was missing or empty.
         case missingPairingID
+        /// relay was present but not a bare https origin (had a non-https
+        /// scheme, userinfo, path, query, fragment, or no host).
+        case invalidRelay
 
         /// A user-facing message. Phrased per the product spec so version and
         /// protocol mismatches steer the user to update the app, while size or
@@ -59,8 +71,30 @@ public struct PairingCode: Equatable, Sendable {
                 return "This QR code is not an iTerm2 pairing code"
             case .missingPairingID:
                 return "This QR code is invalid"
+            case .invalidRelay:
+                return "This QR code is invalid"
             }
         }
+    }
+
+    /// Canonicalize a relay= value to a bare https origin (scheme + host +
+    /// optional port), or throw .invalidRelay. Rejects non-https schemes,
+    /// userinfo, non-empty path, query, and fragment, so the phone can only
+    /// ever build endpoint paths against a trusted origin.
+    static func canonicalRelayOrigin(_ raw: String) throws -> String {
+        guard let c = URLComponents(string: raw),
+              c.scheme?.lowercased() == "https",
+              let host = c.host, !host.isEmpty,
+              c.user == nil, c.password == nil,
+              c.query == nil, c.fragment == nil,
+              c.path.isEmpty || c.path == "/" else {
+            throw ParseError.invalidRelay
+        }
+        var origin = "https://\(host)"
+        if let port = c.port {
+            origin += ":\(port)"
+        }
+        return origin
     }
 
     /// Parse a scanned string. Returns the validated code or throws ParseError
@@ -101,7 +135,11 @@ public struct PairingCode: Equatable, Sendable {
             throw ParseError.missingPairingID
         }
 
-        return PairingCode(responderStaticPublicKey: key, pairingID: pid)
+        let relayOrigin = try value("relay").map { try canonicalRelayOrigin($0) }
+
+        return PairingCode(responderStaticPublicKey: key,
+                           pairingID: pid,
+                           relayOrigin: relayOrigin)
     }
 
     /// The Noise prologue both peers mix into the handshake. Binding the
@@ -118,12 +156,16 @@ public struct PairingCode: Equatable, Sendable {
         var components = URLComponents()
         components.scheme = "iterm2"
         components.host = "pair"
-        components.queryItems = [
+        var items = [
             URLQueryItem(name: "v", value: String(Self.supportedVersion)),
             URLQueryItem(name: "proto", value: Self.supportedProtocol),
             URLQueryItem(name: "rs", value: responderStaticPublicKey.base64URLEncodedString()),
             URLQueryItem(name: "pid", value: pairingID)
         ]
+        if let relayOrigin {
+            items.append(URLQueryItem(name: "relay", value: relayOrigin))
+        }
+        components.queryItems = items
         return components.string ?? ""
     }
 }
