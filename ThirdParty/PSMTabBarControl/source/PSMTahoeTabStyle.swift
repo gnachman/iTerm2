@@ -702,8 +702,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                 width: accentThickness,
                                 height: pillRect.height)
         } else {
+            // Bottom edge (the view is flipped); the top band belongs to the tab progress bar.
             accentRect = NSRect(x: pillRect.minX,
-                                y: pillRect.minY,
+                                y: pillRect.maxY - accentThickness,
                                 width: pillRect.width,
                                 height: accentThickness)
         }

@@ -65,8 +65,8 @@
 @property(nonatomic, assign) BOOL isMultiSelected;
 @property(nonatomic, assign) CGFloat cellAlpha;
 @property(nonatomic, assign) BOOL isAnimatingCollapse;
-@property(nonatomic, copy, nullable) NSString *groupName;
-@property(nonatomic, retain, nullable) NSColor *groupColor;
+@property(nonatomic, copy) NSString *groupName;
+@property(nonatomic, retain) NSColor *groupColor;
 @property(nonatomic, assign) NSInteger groupMemberCount;
 
 // creation/destruction

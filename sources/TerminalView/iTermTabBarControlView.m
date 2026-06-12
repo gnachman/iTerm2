@@ -287,9 +287,10 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (BOOL)cellAllowsTabProgressBar:(PSMTabBarCell *)cell {
     NSTabViewItem *item = (NSTabViewItem *)cell.representedObject;
-    PTYTab *tab = item.identifier;
-    if (![tab isKindOfClass:[PTYTab class]]) {
-        return YES;
+    PTYTab *tab = item.it_tab;
+    if (!tab) {
+        // Group header items have no tab and never show progress.
+        return NO;
     }
     return tab.activeSession.view.enableProgressBars;
 }
@@ -306,8 +307,8 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (NSString *)tabProgressBarColorSchemeForCell:(PSMTabBarCell *)cell {
     NSTabViewItem *item = (NSTabViewItem *)cell.representedObject;
-    PTYTab *tab = item.identifier;
-    if (![tab isKindOfClass:[PTYTab class]]) {
+    PTYTab *tab = item.it_tab;
+    if (!tab) {
         return iTermProgressBarColorSchemeDefault;
     }
     return tab.activeSession.view.progressBarColorScheme ?: iTermProgressBarColorSchemeDefault;

@@ -9,6 +9,7 @@
 #import "PSMYosemiteTabStyle.h"
 
 #import "iTermAdvancedSettingsModel.h"
+#import "NSBezierPath+iTerm.h"
 #import "PSMCachedTitle.h"
 #import "NSColor+PSM.h"
 #import "PSMOverflowPopUpButton.h"
@@ -926,8 +927,8 @@
 
         // Gradient border ring only (even-odd clip punches out the interior)
         CGContextSaveGState(ctx);
-        CGContextAddPath(ctx, outerPill.CGPath);
-        CGContextAddPath(ctx, innerPill.CGPath);
+        CGContextAddPath(ctx, [outerPill iterm_CGPath]);
+        CGContextAddPath(ctx, [innerPill iterm_CGPath]);
         CGContextEOClip(ctx);
         [gradient drawInBezierPath:outerPill angle:0.0];
         CGContextRestoreGState(ctx);
@@ -990,8 +991,9 @@
                                 accentThickness,
                                 cellFrame.size.height);
     } else {
+        // Bottom edge (the view is flipped); the top band belongs to the tab progress bar.
         accentRect = NSMakeRect(cellFrame.origin.x,
-                                cellFrame.origin.y,
+                                NSMaxY(cellFrame) - accentThickness,
                                 cellFrame.size.width,
                                 accentThickness);
     }

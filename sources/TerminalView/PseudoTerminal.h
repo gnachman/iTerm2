@@ -333,14 +333,6 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;
 
-// Tab groups for inline tab organization.
-@property(nonatomic, readonly) NSArray<iTermTabGroup *> *tabGroups;
-- (void)addTabToNewGroup:(id)sender;
-- (void)moveTabToGroup:(id)sender;
-- (void)removeTabFromGroup:(id)sender;
-- (void)showCreateTabGroupSheetForTab:(PTYTab *)tab completion:(void (^)(iTermTabGroup *))completion;
-- (void)addTab:(PTYTab *)tab toGroup:(iTermTabGroup *)group;
-
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.
 - (void)screenParametersDidChange;
@@ -471,5 +463,15 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
              nearSessionGuid:(NSString *)sessionGuid
                     vertical:(BOOL)vertical;
 
+@end
+
+// Tab groups for inline tab organization. Implemented in PseudoTerminal+TabGroups.swift.
+@interface PseudoTerminal (TabGroups)
+@property(nonatomic, readonly) NSArray<iTermTabGroup *> *tabGroups;
+- (void)addTabToNewGroup:(id)sender;
+- (void)moveTabToGroup:(id)sender;
+- (void)removeTabFromGroup:(id)sender;
+- (void)showCreateTabGroupSheetForTab:(PTYTab *)tab completion:(void (^)(iTermTabGroup *))completion;
+- (void)addTab:(PTYTab *)tab toGroup:(iTermTabGroup *)group;
 @end
 

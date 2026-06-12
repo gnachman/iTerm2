@@ -231,7 +231,7 @@ extension PseudoTerminal {
         let allCells = tabBar.cells()
         let selectedTabID: Int? = currentTab().map { Int($0.uniqueId) }
 
-        for cell in allCells ?? [] {
+        for cell in allCells {
             guard let psmCell = cell as? PSMTabBarCell,
                   let tabViewItem = psmCell.representedObject as? NSTabViewItem else {
                 continue
