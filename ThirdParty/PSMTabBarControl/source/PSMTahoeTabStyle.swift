@@ -318,13 +318,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return Float(tabBar?.pinnedTabWidth ?? 0)
         }
         if cell.isGroupHeader {
-            guard let groupName = cell.groupName, !groupName.isEmpty else {
+            guard let displayName = groupHeaderDisplayName(for: cell) else {
                 return 40.0
             }
             let nameAttributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold)
             ]
-            let nameWidth = ceil(groupName.size(withAttributes: nameAttributes).width)
+            let nameWidth = ceil(displayName.size(withAttributes: nameAttributes).width)
             let horizontalPadding = 52.0
             return Float(ceil(nameWidth + horizontalPadding))
         }
@@ -542,7 +542,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let cellFrame = cell.frame
         let effectiveHighlight = max(cell.highlightAmount, cell.isGroupActive ? 0.5 : 0.0)
 
-        guard let groupName = cell.groupName, !groupName.isEmpty else {
+        guard let displayName = groupHeaderDisplayName(for: cell) else {
             let dotDiameter = 16.0
             let dotRect = NSRect(x: cellFrame.midX - dotDiameter / 2.0,
                                  y: cellFrame.midY - dotDiameter / 2.0,
@@ -570,7 +570,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             let nameAttributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold)
             ]
-            let nameWidth = ceil(groupName.size(withAttributes: nameAttributes).width)
+            let nameWidth = ceil(displayName.size(withAttributes: nameAttributes).width)
             let pillWidth = min(pillRect.width, nameWidth + horizontalMargin * 5)
             pillRect = NSRect(x: cellFrame.midX - pillWidth / 2.0,
                               y: pillRect.minY,
@@ -608,8 +608,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold),
             .foregroundColor: textColor
         ]
-        let nameSize = groupName.size(withAttributes: nameAttributes)
-        groupName.draw(at: NSPoint(x: pillRect.midX - nameSize.width / 2.0,
+        let nameSize = displayName.size(withAttributes: nameAttributes)
+        displayName.draw(at: NSPoint(x: pillRect.midX - nameSize.width / 2.0,
                                    y: pillRect.midY - nameSize.height / 2.0),
                        withAttributes: nameAttributes)
     }
@@ -807,10 +807,55 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             for i in 0..<(sorted.count - 1) {
                 drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
             }
+            drawGroupUnderlines(bar: bar)
             if let selectedCell = drawableCells.first, selectedCell.state == .on {
                 selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
             }
         }
+    }
+
+    // Chrome-style connected underline: one rounded line in the group colour running
+    // from the header beneath all of its member tabs.
+    private func drawGroupUnderlines(bar: PSMTabBarControl) {
+        guard _orientation == .horizontalOrientation,
+              let cells = bar.cells() as? [PSMTabBarCell] else {
+            return
+        }
+        var i = 0
+        while i < cells.count {
+            let header = cells[i]
+            guard header.isGroupHeader, let groupColor = header.groupColor, !header.isInOverflowMenu else {
+                i += 1
+                continue
+            }
+            var runRect = header.frame
+            var j = i + 1
+            while j < cells.count {
+                let member = cells[j]
+                if !member.isGroupMember || member.isInOverflowMenu || member.groupColor != groupColor {
+                    break
+                }
+                runRect = runRect.union(member.frame)
+                j += 1
+            }
+            let inset = 4.0
+            let thickness = 2.5
+            let lineRect = NSRect(x: runRect.minX + inset,
+                                  y: runRect.maxY - thickness,
+                                  width: runRect.width - inset * 2,
+                                  height: thickness)
+            groupColor.set()
+            NSBezierPath(roundedRect: lineRect, xRadius: thickness / 2, yRadius: thickness / 2).fill()
+            i = j
+        }
+    }
+
+    private func groupHeaderDisplayName(for cell: PSMTabBarCell) -> String? {
+        let name = cell.groupName ?? ""
+        if cell.isGroupCollapsed, cell.groupMemberCount > 0 {
+            return name.isEmpty ? "\(cell.groupMemberCount)" : "\(name) (\(cell.groupMemberCount))"
+        }
+        return name.isEmpty ? nil : name
     }
 
     var dividerColor: NSColor {

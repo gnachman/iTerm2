@@ -425,11 +425,12 @@
         return self.tabBar.pinnedTabWidth;
     }
     if (cell.isGroupHeader) {
-        if (!cell.groupName.length) {
+        NSString *displayName = [self groupHeaderDisplayNameForCell:cell];
+        if (!displayName.length) {
             return 40.0;
         }
         NSDictionary *nameAttrs = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize weight:NSFontWeightSemibold] };
-        CGFloat nameWidth = ceil([cell.groupName sizeWithAttributes:nameAttrs].width);
+        CGFloat nameWidth = ceil([displayName sizeWithAttributes:nameAttrs].width);
         const CGFloat hPad = 52.0;
         return ceil(nameWidth + hPad);
     }
@@ -832,9 +833,20 @@
     }
 }
 
+- (NSString *)groupHeaderDisplayNameForCell:(PSMTabBarCell *)cell {
+    if (cell.isGroupCollapsed && cell.groupMemberCount > 0) {
+        if (cell.groupName.length) {
+            return [NSString stringWithFormat:@"%@ (%@)", cell.groupName, @(cell.groupMemberCount)];
+        }
+        return [@(cell.groupMemberCount) stringValue];
+    }
+    return cell.groupName ?: @"";
+}
+
 - (void)drawGroupHeaderDecorations:(PSMTabBarCell *)cell {
     NSRect cellFrame = cell.frame;
-    BOOL hasName = cell.groupName.length > 0;
+    NSString *displayName = [self groupHeaderDisplayNameForCell:cell];
+    BOOL hasName = displayName.length > 0;
     const CGFloat effectiveHighlight = MAX(cell.highlightAmount, cell.isGroupActive ? 0.5 : 0.0);
 
     const CGFloat hMargin = 10.0;
@@ -872,7 +884,7 @@
         // Vertical cells span the full bar width; hug the name instead of stretching.
         NSDictionary *measureAttrs = @{ NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize
                                                                                 weight:NSFontWeightSemibold] };
-        const CGFloat nameWidth = ceil([cell.groupName sizeWithAttributes:measureAttrs].width);
+        const CGFloat nameWidth = ceil([displayName sizeWithAttributes:measureAttrs].width);
         const CGFloat pillWidth = MIN(NSWidth(pillRect), nameWidth + hMargin * 3);
         pillRect = NSMakeRect(NSMidX(cellFrame) - pillWidth / 2.0,
                               pillRect.origin.y,
@@ -906,9 +918,9 @@
         NSFontAttributeName: [NSFont systemFontOfSize:self.fontSize weight:NSFontWeightSemibold],
         NSForegroundColorAttributeName: textColor
     };
-    NSSize nameSize = [cell.groupName sizeWithAttributes:nameAttrs];
-    [cell.groupName drawAtPoint:NSMakePoint(NSMidX(pillRect) - nameSize.width / 2.0,
-                                            NSMidY(pillRect) - nameSize.height / 2.0)
+    NSSize nameSize = [displayName sizeWithAttributes:nameAttrs];
+    [displayName drawAtPoint:NSMakePoint(NSMidX(pillRect) - nameSize.width / 2.0,
+                                         NSMidY(pillRect) - nameSize.height / 2.0)
                  withAttributes:nameAttrs];
 }
 
@@ -1473,11 +1485,53 @@ const void *PSMTabStyleDarkColorKey = "dark";
     }
 
     [self drawDividerBetweenTabBarAndContent:rect bar:bar];
+    [self drawGroupUnderlinesInBar:bar clipRect:clipRect];
 
     for (PSMTabBarCell *cell in [bar cells]) {
         if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }
+    }
+}
+
+// Chrome-style connected underline: one rounded line in the group colour running
+// from the header beneath all of its member tabs.
+- (void)drawGroupUnderlinesInBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect {
+    if (_orientation != PSMTabBarHorizontalOrientation) {
+        return;
+    }
+    NSArray<PSMTabBarCell *> *cells = [bar cells];
+    NSUInteger i = 0;
+    while (i < cells.count) {
+        PSMTabBarCell *header = cells[i];
+        if (!header.isGroupHeader || !header.groupColor || header.isInOverflowMenu) {
+            i++;
+            continue;
+        }
+        NSRect runRect = header.frame;
+        NSUInteger j = i + 1;
+        while (j < cells.count) {
+            PSMTabBarCell *member = cells[j];
+            if (!member.isGroupMember || member.isInOverflowMenu ||
+                ![member.groupColor isEqual:header.groupColor]) {
+                break;
+            }
+            runRect = NSUnionRect(runRect, member.frame);
+            j++;
+        }
+        const CGFloat inset = 4.0;
+        const CGFloat thickness = 2.5;
+        NSRect lineRect = NSMakeRect(NSMinX(runRect) + inset,
+                                     NSMaxY(runRect) - thickness,
+                                     NSWidth(runRect) - inset * 2,
+                                     thickness);
+        if (NSIntersectsRect(lineRect, clipRect)) {
+            [header.groupColor set];
+            [[NSBezierPath bezierPathWithRoundedRect:lineRect
+                                             xRadius:thickness / 2
+                                             yRadius:thickness / 2] fill];
+        }
+        i = j;
     }
 }
 

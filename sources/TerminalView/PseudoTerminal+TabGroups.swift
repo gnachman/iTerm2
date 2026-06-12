@@ -138,26 +138,46 @@ extension PseudoTerminal {
 
     @objc func reconcileGroupsAfterReorder() {
         guard !tabGroups.isEmpty else { return }
-        let allTabs = tabs() ?? []
         let tabView = contentView.tabView
         for group in tabGroups where !group.isCollapsed {
             let headerIndex = tabView.indexOfTabViewItem(group.headerTabViewItem)
-            guard headerIndex != NSNotFound else { continue }
-            let memberCount = group.memberTabIDs.count
-            let validRange = (headerIndex + 1)...(headerIndex + memberCount)
-            let memberTabs = group.memberTabIDs.compactMap { id in allTabs.first { Int($0.uniqueId) == id } }
-            var tabsToRemove: [PTYTab] = []
-            for tab in memberTabs {
-                guard let item = tab.tabViewItem else { continue }
-                let idx = tabView.indexOfTabViewItem(item)
-                if idx == NSNotFound || !validRange.contains(idx) {
-                    tabsToRemove.append(tab)
+            guard headerIndex != NSNotFound, !group.memberTabIDs.isEmpty else { continue }
+
+            // Walk the span after the header. Members stay; a single foreign tab
+            // dropped between members joins (Chrome-style drag-in); members that no
+            // longer appear in the span were dragged out and leave the group.
+            var remaining = Set(group.memberTabIDs)
+            var newMemberIDs: [Int] = []
+            var pendingJoiner: Int?
+            var index = headerIndex + 1
+            while index < tabView.numberOfTabViewItems, !remaining.isEmpty {
+                guard let tab = tabView.tabViewItem(at: index).identifier as? PTYTab else {
+                    break
                 }
+                let tabID = Int(tab.uniqueId)
+                let belongsToOtherGroup = tabGroups.contains { $0 !== group && $0.memberTabIDs.contains(tabID) }
+                if remaining.contains(tabID) {
+                    if let joiner = pendingJoiner {
+                        newMemberIDs.append(joiner)
+                        pendingJoiner = nil
+                    }
+                    newMemberIDs.append(tabID)
+                    remaining.remove(tabID)
+                } else if belongsToOtherGroup || pendingJoiner != nil {
+                    break
+                } else {
+                    pendingJoiner = tabID
+                }
+                index += 1
             }
-            for tab in tabsToRemove {
-                removeTab(tab, fromGroup: group)
+
+            if newMemberIDs.isEmpty {
+                deleteTabGroup(group)
+            } else if newMemberIDs != group.memberTabIDs {
+                group.memberTabIDs = newMemberIDs
             }
         }
+        updateTabGroupDecorations()
     }
 
     private func tabGroupFromSender(_ sender: Any?) -> iTermTabGroup? {

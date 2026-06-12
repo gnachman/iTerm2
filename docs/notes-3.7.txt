@@ -14,7 +14,9 @@ Major New Features:
   Group button to create a named, color-coded
   group. Group headers appear in the tab bar;
   click one to collapse or expand its tabs.
-  Groups are saved in window arrangements.
+  Drag a tab into or out of a group to change
+  its membership. Groups are saved in window
+  arrangements.
 
 - In the Jobs view (toolbelt and status bar
   popover) hovering a row shows the full
