@@ -14,13 +14,15 @@
 @class iTermRootTerminalView;
 @class iTermStatusBarViewController;
 @protocol iTermSwipeHandler;
-@class iTermTabBarControlView;
+#import "iTermTabBarControlView.h"
+#import "PTYTabView.h"
 @protocol iTermTabBarControlViewDelegate;
 @class iTermToolbeltView;
 @protocol iTermToolbeltViewDelegate;
 @protocol PSMTabBarControlDelegate;
 @protocol PSMPUAFontProvider;
-@class PTYTabView;
+
+NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate, iTermSwipeHandler>
 - (void)repositionWidgets;
@@ -48,10 +50,10 @@
 - (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor;
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
-- (NSImage *)rootTerminalViewCurrentTabIcon;
+- (nullable NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
-- (iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
+- (nullable iTermStatusBarViewController *)rootTerminalViewSharedStatusBarViewController;
 
 // Returns YES when the tab bar is a titlebar accessory in fullscreen AND the window
 // uses NSWindowStyleMaskFullSizeContentView, meaning the content view extends under
@@ -69,7 +71,7 @@
 - (NSString *)rootTerminalViewWindowSizeViewDetailString;
 - (void)rootTerminalViewWillLayoutSubviews;
 - (void)rootTerminalViewDidLayoutSubviews;
-- (NSString *)rootTerminalViewCurrentTabSubtitle;
+- (nullable NSString *)rootTerminalViewCurrentTabSubtitle;
 - (id<PSMPUAFontProvider>)rootTerminalViewPUAFontProvider;
 @end
 
@@ -92,7 +94,7 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // Gray line dividing tab/title bar from content. Will be nil if a division
 // view isn't needed such as for fullscreen windows or windows without a
 // title bar (e.g., top-of-screen).
-@property(nonatomic, readonly) NSView<iTermSolidColorView> *divisionView;
+@property(nonatomic, readonly, nullable) NSView<iTermSolidColorView> *divisionView;
 
 // Toolbelt view. Goes on the right side of the terminal window, if visible.
 @property(nonatomic, readonly) iTermToolbeltView *toolbelt;
@@ -114,10 +116,10 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 
 @property(nonatomic) BOOL useMetal;
 @property(nonatomic, readonly) BOOL tabBarControlOnLoan NS_AVAILABLE_MAC(10_14);
-@property(nonatomic, strong, readonly) iTermStatusBarViewController *statusBarViewController;
+@property(nonatomic, strong, readonly, nullable) iTermStatusBarViewController *statusBarViewController;
 @property(nonatomic, readonly) iTermImageView *backgroundImage NS_AVAILABLE_MAC(10_14);
 // Excludes the window number
-@property(nonatomic, readonly) NSString *windowTitle;
+@property(nonatomic, readonly, nullable) NSString *windowTitle;
 
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color
@@ -128,8 +130,8 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)updateDivisionViewAndWindowNumberLabel;
 
 // Perform a layout pass on the toolbelt, and hide/show it as needed.
-- (void)updateToolbeltFrameForWindow:(NSWindow *)thisWindow;
-- (void)updateToolbeltForWindow:(NSWindow *)thisWindow;
+- (void)updateToolbeltFrameForWindow:(nullable NSWindow *)thisWindow;
+- (void)updateToolbeltForWindow:(nullable NSWindow *)thisWindow;
 
 // TODO: Don't expose this
 - (void)constrainToolbeltWidth;
@@ -146,8 +148,8 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)didChangeCompactness;
 
 - (void)windowTitleDidChangeTo:(NSString *)title;
-- (void)windowNumberDidChangeTo:(NSNumber *)number;
-- (void)setWindowTitleIcon:(NSImage *)icon;
+- (void)windowNumberDidChangeTo:(nullable NSNumber *)number;
+- (void)setWindowTitleIcon:(nullable NSImage *)icon;
 - (iTermTabBarControlView *)borrowTabBarControl NS_AVAILABLE_MAC(10_14);
 - (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl NS_AVAILABLE_MAC(10_14);
 - (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
@@ -164,3 +166,5 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (CGFloat)compactProxyIconWidthIncludingMargin;
 
 @end
+
+NS_ASSUME_NONNULL_END

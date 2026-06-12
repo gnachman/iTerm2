@@ -229,7 +229,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func closeButtonRect(forTabCell cell: PSMTabBarCell) -> NSRect {
-        if cell.isPinned {
+        if cell.isPinned || cell.isGroupHeader {
             return NSZeroRect
         }
         let cellFrame = cell.frame
@@ -316,6 +316,17 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     func desiredWidth(ofTabCell cell: PSMTabBarCell) -> Float {
         if cell.isPinned {
             return Float(tabBar?.pinnedTabWidth ?? 0)
+        }
+        if cell.isGroupHeader {
+            guard let displayName = groupHeaderDisplayName(for: cell) else {
+                return 40.0
+            }
+            let nameAttributes: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold)
+            ]
+            let nameWidth = ceil(displayName.size(withAttributes: nameAttributes).width)
+            let horizontalPadding = 52.0
+            return Float(ceil(nameWidth + horizontalPadding))
         }
         return Float(ceil(widthOfLeftMatterInCell(cell) +
                           widthOfAttributedStringInCell(cell) +
@@ -488,10 +499,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func drawTabCell(_ cell: PSMTabBarCell, highlightAmount: CGFloat) {
+        if cell.isAnimatingCollapse {
+            return
+        }
         let horizontal = (_orientation == .horizontalOrientation)
         let isFirst = (cell == tabBar?.cells().firstObject as? PSMTabBarCell)
         let isLast = (cell == tabBar?.cells().lastObject as? PSMTabBarCell)
-        
+
         if tabBar?.window?.isKeyWindow == true {
             if cell.state == .on {
                 drawDropShadow(cell: cell)
@@ -504,13 +518,121 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             withTabColor: cell.tabColor,
             isFirst: isFirst,
             isLast: isLast,
-            highlightAmount: highlightAmount,
+            highlightAmount: cell.isGroupHeader ? 0.0 : highlightAmount,
             isHighlighted: cell.isHighlighted)
-        drawInterior(with: cell, inView: cell.controlView, highlightAmount: highlightAmount)
-        
+        if cell.isGroupHeader, cell.groupColor != nil {
+            drawGroupHeaderDecorations(cell)
+        } else {
+            if cell.isGroupMember, cell.groupColor != nil {
+                drawGroupMemberDecoration(cell)
+            }
+            drawInterior(with: cell, inView: cell.controlView, highlightAmount: highlightAmount)
+        }
+
         if PSMTahoeTabStyleDebuggingEnabled {
             NSColor.red.set()
             cell.frame.frame(withWidth: 0.5)
+        }
+    }
+
+    private func drawGroupHeaderDecorations(_ cell: PSMTabBarCell) {
+        guard let groupColor = cell.groupColor else {
+            return
+        }
+        let cellFrame = cell.frame
+        let effectiveHighlight = max(cell.highlightAmount, cell.isGroupActive ? 0.5 : 0.0)
+
+        guard let displayName = groupHeaderDisplayName(for: cell) else {
+            let dotDiameter = 16.0
+            let dotRect = NSRect(x: cellFrame.midX - dotDiameter / 2.0,
+                                 y: cellFrame.midY - dotDiameter / 2.0,
+                                 width: dotDiameter,
+                                 height: dotDiameter)
+            if effectiveHighlight > 0.001 {
+                let haloDiameter = dotDiameter + 8.0
+                let haloRect = NSRect(x: cellFrame.midX - haloDiameter / 2.0,
+                                      y: cellFrame.midY - haloDiameter / 2.0,
+                                      width: haloDiameter,
+                                      height: haloDiameter)
+                groupColor.withAlphaComponent(effectiveHighlight * 0.3).set()
+                NSBezierPath(ovalIn: haloRect).fill()
+            }
+            groupColor.set()
+            NSBezierPath(ovalIn: dotRect).fill()
+            return
+        }
+
+        let horizontalMargin = 6.0
+        let verticalMargin = 4.0
+        var pillRect = backgroundRect(for: cellFrame).insetBy(dx: horizontalMargin, dy: verticalMargin)
+        if _orientation == .verticalOrientation {
+            // Vertical cells span the full bar width; hug the name instead of stretching.
+            let nameAttributes: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold)
+            ]
+            let nameWidth = ceil(displayName.size(withAttributes: nameAttributes).width)
+            let pillWidth = min(pillRect.width, nameWidth + horizontalMargin * 5)
+            pillRect = NSRect(x: cellFrame.midX - pillWidth / 2.0,
+                              y: pillRect.minY,
+                              width: pillWidth,
+                              height: pillRect.height)
+        }
+        let cornerRadius = pillRect.height / 2.0
+        let pill = NSBezierPath(roundedRect: pillRect, xRadius: cornerRadius, yRadius: cornerRadius)
+
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        (groupColor.usingColorSpace(.sRGB) ?? groupColor).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        let lightGroupColor = (0.299 * red + 0.587 * green + 0.114 * blue) > 0.55
+
+        groupColor.set()
+        pill.fill()
+
+        // Active state (a member tab is currently selected): persistent inner border
+        if cell.isGroupActive {
+            NSColor(white: lightGroupColor ? 0.0 : 1.0, alpha: 0.4).set()
+            pill.lineWidth = 1.5
+            pill.stroke()
+        }
+
+        // Hover: contrasting overlay that fades in with mouse position
+        if cell.highlightAmount > 0.001 {
+            NSColor(white: lightGroupColor ? 0.0 : 1.0, alpha: cell.highlightAmount * 0.25).set()
+            pill.fill()
+        }
+
+        let textColor = lightGroupColor ? NSColor(white: 0.1, alpha: 1.0) : .white
+        let nameAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: fontSize, weight: .semibold),
+            .foregroundColor: textColor
+        ]
+        let nameSize = displayName.size(withAttributes: nameAttributes)
+        displayName.draw(at: NSPoint(x: pillRect.midX - nameSize.width / 2.0,
+                                   y: pillRect.midY - nameSize.height / 2.0),
+                       withAttributes: nameAttributes)
+    }
+
+    private func drawGroupMemberDecoration(_ cell: PSMTabBarCell) {
+        guard let groupColor = cell.groupColor else {
+            return
+        }
+        let radius = max(0, barRadius - 2.5)
+        let rect = backgroundRect(for: cell.frame)
+        if cell.state == .on {
+            // Selected member: thin group-colour ring around the regular pill.
+            let ring = NSBezierPath(roundedRect: rect.insetBy(dx: 0.75, dy: 0.75),
+                                    xRadius: max(0, radius - 0.75),
+                                    yRadius: max(0, radius - 0.75))
+            groupColor.set()
+            ring.lineWidth = 1.5
+            ring.stroke()
+        } else {
+            // Unselected member: subtle wash of the group colour across the pill.
+            let pill = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+            groupColor.withAlphaComponent(0.14).set()
+            pill.fill()
         }
     }
     
@@ -685,10 +807,55 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             for i in 0..<(sorted.count - 1) {
                 drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
             }
+            drawGroupUnderlines(bar: bar)
             if let selectedCell = drawableCells.first, selectedCell.state == .on {
                 selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
             }
         }
+    }
+
+    // Chrome-style connected underline: one rounded line in the group colour running
+    // from the header beneath all of its member tabs.
+    private func drawGroupUnderlines(bar: PSMTabBarControl) {
+        guard _orientation == .horizontalOrientation,
+              let cells = bar.cells() as? [PSMTabBarCell] else {
+            return
+        }
+        var i = 0
+        while i < cells.count {
+            let header = cells[i]
+            guard header.isGroupHeader, let groupColor = header.groupColor, !header.isInOverflowMenu else {
+                i += 1
+                continue
+            }
+            var runRect = header.frame
+            var j = i + 1
+            while j < cells.count {
+                let member = cells[j]
+                if !member.isGroupMember || member.isInOverflowMenu || member.groupColor != groupColor {
+                    break
+                }
+                runRect = runRect.union(member.frame)
+                j += 1
+            }
+            let inset = 4.0
+            let thickness = 2.5
+            let lineRect = NSRect(x: runRect.minX + inset,
+                                  y: runRect.maxY - thickness,
+                                  width: runRect.width - inset * 2,
+                                  height: thickness)
+            groupColor.set()
+            NSBezierPath(roundedRect: lineRect, xRadius: thickness / 2, yRadius: thickness / 2).fill()
+            i = j
+        }
+    }
+
+    private func groupHeaderDisplayName(for cell: PSMTabBarCell) -> String? {
+        let name = cell.groupName ?? ""
+        if cell.isGroupCollapsed, cell.groupMemberCount > 0 {
+            return name.isEmpty ? "\(cell.groupMemberCount)" : "\(name) (\(cell.groupMemberCount))"
+        }
+        return name.isEmpty ? nil : name
     }
 
     var dividerColor: NSColor {

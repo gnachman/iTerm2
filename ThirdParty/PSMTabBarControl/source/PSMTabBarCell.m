@@ -185,7 +185,26 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     NSMutableArray<PSMCachedTitle *> *_subtitleCache;
     NSTrackingArea *_cellTrackingArea;
     NSTrackingArea *_closeButtonTrackingArea;
+    BOOL _isGroupHeader;
+    BOOL _isGroupMember;
+    BOOL _isGroupCollapsed;
+    BOOL _isGroupActive;
+    BOOL _isMultiSelected;
+    CGFloat _cellAlpha;
+    NSString *_groupName;
+    NSColor *_groupColor;
+    NSInteger _groupMemberCount;
 }
+
+@synthesize isGroupHeader = _isGroupHeader;
+@synthesize isGroupMember = _isGroupMember;
+@synthesize isGroupCollapsed = _isGroupCollapsed;
+@synthesize isGroupActive = _isGroupActive;
+@synthesize isMultiSelected = _isMultiSelected;
+@synthesize cellAlpha = _cellAlpha;
+@synthesize groupName = _groupName;
+@synthesize groupColor = _groupColor;
+@synthesize groupMemberCount = _groupMemberCount;
 
 #pragma mark - Creation/Destruction
 
@@ -203,6 +222,15 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         _hasCloseButton = YES;
         _modifierString = [@"" copy];
         _truncationStyle = NSLineBreakByTruncatingTail;
+        _isGroupHeader = NO;
+        _isGroupMember = NO;
+        _isGroupCollapsed = NO;
+        _isGroupActive = NO;
+        _isMultiSelected = NO;
+        _cellAlpha = 1.0;
+        _groupName = nil;
+        _groupColor = nil;
+        _groupMemberCount = 0;
         [self setUpAccessibilityElement];
     }
     return self;

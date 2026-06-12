@@ -2502,7 +2502,8 @@ static iTermKeyEventReplayer *gReplayer;
     }
 
     for (NSTabViewItem *aTabViewItem in tabViewItemArray) {
-        PTYTab *aTab = [aTabViewItem identifier];
+        PTYTab *aTab = aTabViewItem.it_tab;
+        if (!aTab) { continue; }
         NSMenuItem *aMenuItem;
 
         if ([aTab activeSession]) {

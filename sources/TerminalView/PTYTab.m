@@ -7583,3 +7583,15 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 @end
+
+@implementation NSTabViewItem (iTermPTYTab)
+
+- (PTYTab *)it_tab {
+    id identifier = self.identifier;
+    if ([identifier isKindOfClass:[PTYTab class]]) {
+        return identifier;
+    }
+    return nil;
+}
+
+@end

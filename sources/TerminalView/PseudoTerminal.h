@@ -18,6 +18,7 @@
 #import "PTYWindow.h"
 #import "WindowControllerInterface.h"
 #import "iTermSessionRestorationStatusProtocol.h"
+#import "iTermRootTerminalView.h"
 
 #include "iTermFileDescriptorClient.h"
 
@@ -27,6 +28,8 @@
 @class iTermBrowserWebView;
 @class iTermPromptOnCloseReason;
 @class iTermSessionFactory;
+@class iTermTabGroup;
+
 @class iTermToolbeltView;
 @protocol iTermLargeContentProvider;
 @protocol iTermWindowScope;
@@ -84,6 +87,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Indicates if the window is fully initialized.
 @property(nonatomic, readonly) BOOL windowInitialized;
+
+// The window's root content view. Typed here for convenience.
+@property(nonatomic, readonly) __unsafe_unretained iTermRootTerminalView *contentView;
 
 // If the window is "anchored" to a screen, this returns that screen. Otherwise, it returns the
 // current screen. If the window doesn't have a current screen, it returns the
@@ -457,5 +463,18 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
              nearSessionGuid:(NSString *)sessionGuid
                     vertical:(BOOL)vertical;
 
+@end
+
+// Tab groups for inline tab organization. Implemented in PseudoTerminal+TabGroups.swift.
+@interface PseudoTerminal (TabGroups)
+@property(nonatomic, readonly) NSArray<iTermTabGroup *> *tabGroups;
+- (void)addTabToNewGroup:(id)sender;
+- (void)moveTabToGroup:(id)sender;
+- (void)removeTabFromGroup:(id)sender;
+- (void)showCreateTabGroupSheetForTab:(PTYTab *)tab completion:(void (^)(iTermTabGroup *))completion;
+- (void)addTab:(PTYTab *)tab toGroup:(iTermTabGroup *)group;
+- (void)newTabInGroup:(id)sender;
+- (void)closeTabGroup:(id)sender;
+- (void)toggleCollapseGroupFromMenu:(id)sender;
 @end
 

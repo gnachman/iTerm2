@@ -203,6 +203,23 @@ NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH = @"Scroller Width";
 NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED = @"miniaturized";
 NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED = @"Size Locked";
 
+static NSString *iTermColorNameForGroupColor(NSColor *color) {
+    NSColor *srgb = [color colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    if (!srgb) return @"Group";
+    CGFloat h = 0, s = 0, b = 0, a = 0;
+    [srgb getHue:&h saturation:&s brightness:&b alpha:&a];
+    h *= 360.0;
+    if (s < 0.25) return @"Grey";
+    if (h < 15 || h >= 345) return @"Red";
+    if (h < 45) return @"Orange";
+    if (h < 75) return @"Yellow";
+    if (h < 150) return @"Green";
+    if (h < 195) return @"Teal";
+    if (h < 255) return @"Blue";
+    if (h < 300) return @"Purple";
+    return @"Pink";
+}
+
 static void iTermPercentageSanitize(iTermPercentage *percentage) {
     if (percentage->width >= 0) {
         if (percentage->width <= 0 || percentage->width > 100) {
@@ -439,6 +456,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     CGFloat _rightExtraWindowGrowthDelta;
     BOOL _excursionPrevented;
 
+    NSMutableArray<iTermTabGroup *> *_mutableTabGroups;
+
 }
 
 @synthesize scope = _scope;
@@ -464,8 +483,13 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     if (self) {
         _automaticallySelectNewTabs = YES;
         self.autoCommandHistorySessionGuid = nil;
+        _mutableTabGroups = [[NSMutableArray alloc] init];
     }
     return self;
+}
+
+- (NSMutableArray *)mutableTabGroups {
+    return _mutableTabGroups;
 }
 
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
@@ -1103,6 +1127,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_fullScreenEnteredSeal release];
     [_windowSizeHelper release];
     [_titlebarAccessoryNanny release];
+    [_mutableTabGroups release];
 
     [super dealloc];
 }
@@ -2263,6 +2288,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
     DLog(@"Remove tab %@", aTab);
+    [self tabWillBeRemoved:aTab];
     if (![aTab isTmuxTab]) {
         // Exit synthetic sessions (filter, instant replay, screenshot mode)
         // so the restorable session captures live sessions that can be revived.
@@ -3996,6 +4022,10 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
     [self updateUseTransparency];
+    NSArray *groupDicts = arrangement[@"Tab Groups"];
+    if (groupDicts) {
+        [self restoreTabGroupsFromArrangement:groupDicts];
+    }
     return YES;
 }
 
@@ -4115,34 +4145,53 @@ ITERM_WEAKLY_REFERENCEABLE
                         encoder:(id<iTermEncoderAdapter>)result {
     NSRect rect = [[self window] frame];
 
-    return [PseudoTerminal populateArrangementWith:tabsOrSession
-                                 includingContents:includeContents
-                                           encoder:result
-                                      terminalGuid:self.terminalGuid
-                                              rect:rect
-                                   useTransparency:useTransparency_
-                                shouldShowToolbelt:_contentView.shouldShowToolbelt
-                               toolbeltProportions:_contentView.toolbelt.proportions
-                           toolbeltRestorableState:_contentView.toolbelt.restorableState
-                         windowTitleOverrideFormat:self.scope.windowTitleOverrideFormat
-                  hidingToolbeltShouldResizeWindow:hidingToolbeltShouldResizeWindow_
-                                     anyFullScreen:[self anyFullScreen]
-                                    lionFullScreen:[self lionFullScreen]
-                                          oldFrame:oldFrame_
-                                        windowType:self.windowType
-                                   savedWindowType:self.savedWindowType
-                                        percentage:_percentage
-                                    initialProfile:[self expurgatedInitialProfile]
-                                    isHotKeyWindow:self.isHotKeyWindow
-                                  hotkeyWindowType:_hotkeyWindowType
-                                       screenIndex:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]
-                      screenNumberFromFirstProfile:_windowPositioner.screenNumberFromFirstProfile
-                                  windowSizeHelper:_windowSizeHelper
-                                  hideAfterOpening:hideAfterOpening_
-                                  selectedTabIndex:[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]
-                                               tab:nil
-                                       profileGuid:[[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID]
-                                       isMaximized:[self isMaximized]];
+    NSMutableArray<iTermTabGroup *> *collapsedGroups = [NSMutableArray array];
+    for (iTermTabGroup *group in self.tabGroups) {
+        if (group.isCollapsed) {
+            [collapsedGroups addObject:group];
+            [self expandGroupSilently:group];
+        }
+    }
+
+    const BOOL ok = [PseudoTerminal populateArrangementWith:tabsOrSession
+                                          includingContents:includeContents
+                                                    encoder:result
+                                               terminalGuid:self.terminalGuid
+                                                       rect:rect
+                                            useTransparency:useTransparency_
+                                         shouldShowToolbelt:_contentView.shouldShowToolbelt
+                                        toolbeltProportions:_contentView.toolbelt.proportions
+                                    toolbeltRestorableState:_contentView.toolbelt.restorableState
+                                  windowTitleOverrideFormat:self.scope.windowTitleOverrideFormat
+                           hidingToolbeltShouldResizeWindow:hidingToolbeltShouldResizeWindow_
+                                              anyFullScreen:[self anyFullScreen]
+                                             lionFullScreen:[self lionFullScreen]
+                                                   oldFrame:oldFrame_
+                                                 windowType:self.windowType
+                                            savedWindowType:self.savedWindowType
+                                                 percentage:_percentage
+                                             initialProfile:[self expurgatedInitialProfile]
+                                             isHotKeyWindow:self.isHotKeyWindow
+                                           hotkeyWindowType:_hotkeyWindowType
+                                                screenIndex:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]
+                               screenNumberFromFirstProfile:_windowPositioner.screenNumberFromFirstProfile
+                                           windowSizeHelper:_windowSizeHelper
+                                           hideAfterOpening:hideAfterOpening_
+                                           selectedTabIndex:[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]
+                                                        tab:nil
+                                                profileGuid:[[[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] profile] objectForKey:KEY_GUID]
+                                                isMaximized:[self isMaximized]];
+    for (iTermTabGroup *group in collapsedGroups) {
+        [self collapseGroupSilently:group];
+    }
+
+    if (ok) {
+        NSArray *groupDicts = [self encodeTabGroupsForArrangement];
+        if (groupDicts.count > 0) {
+            result[@"Tab Groups"] = groupDicts;
+        }
+    }
+    return ok;
 }
 
 + (BOOL)populateArrangementWith:(iTermOr<NSArray<PTYTab *> *, PTYSession *> *)tabsOrSession
@@ -5482,7 +5531,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                     rightExtra:self.currentSession.desiredRightExtra];
     // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
-        PTYTab* theTab = [tabViewItem identifier];
+        PTYTab* theTab = tabViewItem.it_tab;
+        if (!theTab) { continue; }
         NSSize minTabSize = [theTab minSize];
         tabSize.width = MAX(tabSize.width, minTabSize.width);
         tabSize.height = MAX(tabSize.height, minTabSize.height);
@@ -6892,12 +6942,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Did select tab view %@", tabViewItem);
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) {
+        return;
+    }
     [_contentView.tabBarControl setFlashing:YES];
 
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
-    PTYTab *tab = [tabViewItem identifier];
     for (PTYSession *aSession in [tab sessions]) {
         DLog(@"Clear new-output flag in %@", aSession);
         [aSession setNewOutput:NO];
@@ -6983,6 +7036,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     [tab didSelectTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
+
+    [self autoManageGroupCollapseForTab:tab];
+    if (self.tabGroups.count > 0) {
+        [self updateTabGroupDecorations];
+    }
     DLog(@"Finished");
 }
 
@@ -7101,20 +7159,24 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem {
-    [self saveAffinitiesLater:[tabViewItem identifier]];
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) { return; }
+    [self saveAffinitiesLater:tab];
 }
 
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem {
-
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) { return; }
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
-    [self saveAffinitiesLater:[tabViewItem identifier]];
+    [self saveAffinitiesLater:tab];
 }
 
 - (void)tabView:(NSTabView *)tabView
     willInsertTabViewItem:(NSTabViewItem *)tabViewItem
         atIndex:(int)anIndex {
     DLog(@"%@: tabView:%@ willInsertTabViewItem:%@ atIndex:%d", self, tabView, tabViewItem, anIndex);
-    PTYTab* theTab = [tabViewItem identifier];
+    PTYTab* theTab = tabViewItem.it_tab;
+    if (!theTab) { return; }
     [theTab setParentWindow:self];
     theTab.delegate = self;
 #if BETA
@@ -7225,7 +7287,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView*)aTabView
     willDropTabViewItem:(NSTabViewItem *)tabViewItem
                inTabBar:(PSMTabBarControl *)aTabBarControl {
-    PTYTab *aTab = [tabViewItem identifier];
+    PTYTab *aTab = tabViewItem.it_tab;
+    if (!aTab) { return; }
     for (PTYSession* aSession in [aTab sessions]) {
         [aSession setIgnoreResizeNotifications:YES];
     }
@@ -7260,7 +7323,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView*)aTabView
     didDropTabViewItem:(NSTabViewItem *)tabViewItem
               inTabBar:(PSMTabBarControl *)aTabBarControl {
-    PTYTab *aTab = [tabViewItem identifier];
+    PTYTab *aTab = tabViewItem.it_tab;
+    if (!aTab) { return; }
     PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
     [self didDonateTab:aTab toWindowController:term];
 }
@@ -7401,7 +7465,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
         NSTabViewItem *tabViewItem = [[_contentView.tabView tabViewItems] objectAtIndex:0];
-        PTYTab *firstTab = [tabViewItem identifier];
+        PTYTab *firstTab = tabViewItem.it_tab ?: [self tabs].firstObject;
 
         NSPoint originalOrigin = self.window.frame.origin;
         if (wasDraggedFromAnotherWindow_) {
@@ -7583,6 +7647,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
         NSUInteger count = 1;
         for (NSTabViewItem *aTabViewItem in [_contentView.tabView tabViewItems]) {
+            if (!aTabViewItem.it_tab) { continue; }
             NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], (unsigned long)count++];
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(selectTab:)
@@ -7692,6 +7757,43 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
+    }
+
+    // tab groups
+    [rootMenu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *addToGroupItem = [[[NSMenuItem alloc] initWithTitle:@"Add to New Group\u2026"
+                                                             action:@selector(addTabToNewGroup:)
+                                                      keyEquivalent:@""] autorelease];
+    [addToGroupItem setRepresentedObject:tabViewItem];
+    [addToGroupItem setTarget:self];
+    [rootMenu addItem:addToGroupItem];
+
+    if (self.tabGroups.count > 0) {
+        NSMenu *moveMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+        for (iTermTabGroup *group in self.tabGroups) {
+            NSString *groupTitle = group.name.length > 0 ? group.name : iTermColorNameForGroupColor(group.color);
+            NSMenuItem *groupItem = [[[NSMenuItem alloc] initWithTitle:groupTitle
+                                                               action:@selector(moveTabToGroup:)
+                                                        keyEquivalent:@""] autorelease];
+            [groupItem setRepresentedObject:@{@"tabViewItem": tabViewItem, @"group": group}];
+            [groupItem setTarget:self];
+            [moveMenu addItem:groupItem];
+        }
+        NSMenuItem *moveItem = [[[NSMenuItem alloc] initWithTitle:@"Move to Group"
+                                                           action:nil
+                                                    keyEquivalent:@""] autorelease];
+        [rootMenu addItem:moveItem];
+        [rootMenu setSubmenu:moveMenu forItem:moveItem];
+    }
+
+    PTYTab *contextMenuTab = [tabViewItem identifier];
+    if ([self tabGroupForTab:contextMenuTab] != nil) {
+        NSMenuItem *removeItem = [[[NSMenuItem alloc] initWithTitle:@"Remove from Group"
+                                                             action:@selector(removeTabFromGroup:)
+                                                      keyEquivalent:@""] autorelease];
+        [removeItem setRepresentedObject:tabViewItem];
+        [removeItem setTarget:self];
+        [rootMenu addItem:removeItem];
     }
 
     // add label
@@ -7987,8 +8089,129 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [itad newSession:nil];
 }
 
+- (NSMenu *)tabView:(NSTabView *)tabView menuForGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem {
+    iTermTabGroup *group = tabViewItem.identifier;
+    if (![group isKindOfClass:[iTermTabGroup class]]) {
+        return nil;
+    }
+    NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+
+    NSMenuItem *newTabItem = [[[NSMenuItem alloc] initWithTitle:@"New Tab in Group"
+                                                         action:@selector(newTabInGroup:)
+                                                  keyEquivalent:@""] autorelease];
+    [newTabItem setRepresentedObject:group];
+    [newTabItem setTarget:self];
+    [menu addItem:newTabItem];
+
+    NSMenuItem *collapseItem = [[[NSMenuItem alloc] initWithTitle:group.isCollapsed ? @"Expand Group" : @"Collapse Group"
+                                                           action:@selector(toggleCollapseGroupFromMenu:)
+                                                    keyEquivalent:@""] autorelease];
+    [collapseItem setRepresentedObject:group];
+    [collapseItem setTarget:self];
+    [menu addItem:collapseItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
+
+    NSMenuItem *editItem = [[[NSMenuItem alloc] initWithTitle:@"Edit Group…"
+                                                        action:@selector(showRenameGroupSheet:)
+                                                 keyEquivalent:@""] autorelease];
+    [editItem setRepresentedObject:group];
+    [editItem setTarget:self];
+    [menu addItem:editItem];
+
+    NSMenuItem *ungroupItem = [[[NSMenuItem alloc] initWithTitle:@"Ungroup"
+                                                          action:@selector(ungroupTabs:)
+                                                   keyEquivalent:@""] autorelease];
+    [ungroupItem setRepresentedObject:group];
+    [ungroupItem setTarget:self];
+    [menu addItem:ungroupItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
+
+    NSMenuItem *closeItem = [[[NSMenuItem alloc] initWithTitle:@"Close Group"
+                                                        action:@selector(closeTabGroup:)
+                                                 keyEquivalent:@""] autorelease];
+    [closeItem setRepresentedObject:group];
+    [closeItem setTarget:self];
+    [menu addItem:closeItem];
+
+    return menu;
+}
+
+- (void)tabView:(NSTabView *)tabView doubleClickGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem {
+    iTermTabGroup *group = tabViewItem.identifier;
+    if (![group isKindOfClass:[iTermTabGroup class]]) {
+        return;
+    }
+    NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""] autorelease];
+    [item setRepresentedObject:group];
+    [self showRenameGroupSheet:item];
+}
+
+- (void)tabView:(NSTabView *)tabView groupTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems {
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
+    for (NSTabViewItem *item in tabViewItems) {
+        PTYTab *tab = item.it_tab;
+        if (tab) {
+            [tabs addObject:tab];
+        }
+    }
+    if (tabs.count < 2) { return; }
+    PTYTab *firstTab = tabs.firstObject;
+    [self showCreateTabGroupSheetForTab:firstTab completion:^(iTermTabGroup *group) {
+        if (!group) { return; }
+        for (NSUInteger i = 1; i < tabs.count; i++) {
+            [self addTab:tabs[i] toGroup:group];
+        }
+    }];
+}
+
+- (void)tabView:(NSTabView *)tabView willBeginDraggingGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem {
+    iTermTabGroup *group = tabViewItem.identifier;
+    if (![group isKindOfClass:[iTermTabGroup class]]) {
+        return;
+    }
+    if (!group.isCollapsed) {
+        self.groupCollapseManaging = YES;
+        [self collapseGroupSilently:group];
+        self.groupCollapseManaging = NO;
+        [self updateTabGroupDecorations];
+        [_contentView.tabBarControl update];
+    }
+}
+
+- (void)tabView:(NSTabView *)tabView didClickGroupHeaderTabViewItem:(NSTabViewItem *)tabViewItem {
+    iTermTabGroup *group = tabViewItem.identifier;
+    if (![group isKindOfClass:[iTermTabGroup class]]) {
+        return;
+    }
+    // Hold the guard so that tabView:didSelectTabViewItem: doesn't run
+    // autoManageGroupCollapseForTab mid-operation and undo our expand.
+    self.groupCollapseManaging = YES;
+    [self toggleCollapseGroup:group];
+    self.groupCollapseManaging = NO;
+
+    if (!group.isCollapsed) {
+        PTYTab *firstMember = nil;
+        for (PTYTab *tab in [self tabs]) {
+            if ([group.memberTabIDs containsObject:@(tab.uniqueId)]) {
+                firstMember = tab;
+                break;
+            }
+        }
+        if (firstMember) {
+            // Collapse other groups first, then select so the selection sticks.
+            [self autoManageGroupCollapseForTab:firstMember];
+            if (firstMember.tabViewItem) {
+                [_contentView.tabView selectTabViewItem:firstMember.tabViewItem];
+            }
+        }
+    }
+}
+
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
-    PTYTab *tab = tabViewItem.identifier;
+    PTYTab *tab = tabViewItem.it_tab;
+    if (!tab) { return; }
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
     [_contentView.tabBarControl setProgress:(PSMProgress)tab.progress
                        forTabWithIdentifier:tab];
@@ -8178,6 +8401,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 
 - (void)tabsDidReorder {
+    PSMTabBarControl *tabBar = self.contentView.tabBarControl;
+    if (tabBar.lastDragWasGroupHeader) {
+        tabBar.lastDragWasGroupHeader = NO;
+        [self enforceContiguityOfAllGroups];
+    } else {
+        [self reconcileGroupsAfterReorder];
+    }
     TmuxController *controller = nil;
     NSMutableArray *windowIds = [NSMutableArray array];
 
@@ -9779,7 +10009,8 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
     PtyLog(@"fitWindowToTabs.......");
     DLog(@"Finding the biggest tab:");
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
-        PTYTab* tab = [item identifier];
+        PTYTab* tab = item.it_tab;
+        if (!tab) { continue; }
         switch (exclusion) {
             case PseudoTerminalTabSizeExclusionTmux:
                 if (tab.isTmuxTab) {
@@ -10220,7 +10451,8 @@ typedef struct {
     // Pick 400 as an absolute minimum just to be safe. This is rather arbitrary and hacky.
     float minWidth = 400;
     for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
-        PTYTab* theTab = [tabViewItem identifier];
+        PTYTab* theTab = tabViewItem.it_tab;
+        if (!theTab) { continue; }
         minWidth = MAX(minWidth, [theTab minSize].width);
     }
     return minWidth;
@@ -10284,7 +10516,10 @@ typedef struct {
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
         NSTabViewItem* theItem = [_contentView.tabView tabViewItemAtIndex:i];
-        [tabs addObject:[theItem identifier]];
+        PTYTab *tab = theItem.it_tab;
+        if (tab) {
+            [tabs addObject:tab];
+        }
     }
     return tabs;
 }
@@ -10605,7 +10840,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     // formerly countless tabs show their counts.
     BOOL needResize = NO;
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        PTYTab *aTab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
+        PTYTab *aTab = [_contentView.tabView tabViewItemAtIndex:i].it_tab;
+        if (!aTab) { continue; }
         if ([aTab updatePaneTitles]) {
             needResize = YES;
         }
@@ -12200,7 +12436,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)fitTabsToWindow {
     PtyLog(@"fitTabsToWindow begins");
     for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-        [self fitTabToWindow:[[_contentView.tabView tabViewItemAtIndex:i] identifier]];
+        PTYTab *tab = [_contentView.tabView tabViewItemAtIndex:i].it_tab;
+        if (!tab) { continue; }
+        [self fitTabToWindow:tab];
     }
     PtyLog(@"fitTabsToWindow returns");
 }
@@ -12521,7 +12759,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (NSArray<PTYSession *> *)allSessions {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[_contentView.tabView numberOfTabViewItems]];
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
-        PTYTab *tab = [item identifier];
+        PTYTab *tab = item.it_tab;
+        if (!tab) { continue; }
         [result addObjectsFromArray:[tab sessions]];
     }
     return result;
@@ -13661,6 +13900,16 @@ backgroundColor:(NSColor *)backgroundColor {
 - (NSColor *)minimalTabStyleBackgroundColor {
     DLog(@"Getting bg color for session %@, colormap %@", self.currentSession, self.currentSession.screen.colorMap);
     return self.currentSession.effectiveUnprocessedBackgroundColor;
+}
+
+- (NSAppearance *)sheetAppearance {
+    BOOL isDark;
+    if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        isDark = self.minimalTabStyleBackgroundColor.isDark;
+    } else {
+        isDark = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua, NSAppearanceNameAqua]] == NSAppearanceNameDarkAqua;
+    }
+    return [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
 }
 
 #pragma mark - iTermBroadcastInputHelperDelegate

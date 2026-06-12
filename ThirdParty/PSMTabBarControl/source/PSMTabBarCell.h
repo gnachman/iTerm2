@@ -58,6 +58,16 @@
 @property(nonatomic) PSMProgress progress;
 @property(nonatomic) BOOL isProcessing;
 @property(nonatomic, assign) BOOL isPinned;
+@property(nonatomic, assign) BOOL isGroupHeader;
+@property(nonatomic, assign) BOOL isGroupMember;
+@property(nonatomic, assign) BOOL isGroupCollapsed;
+@property(nonatomic, assign) BOOL isGroupActive;
+@property(nonatomic, assign) BOOL isMultiSelected;
+@property(nonatomic, assign) CGFloat cellAlpha;
+@property(nonatomic, assign) BOOL isAnimatingCollapse;
+@property(nonatomic, copy) NSString *groupName;
+@property(nonatomic, retain) NSColor *groupColor;
+@property(nonatomic, assign) NSInteger groupMemberCount;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

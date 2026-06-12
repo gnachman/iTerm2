@@ -142,6 +142,112 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 @end
 
+// Minimal pill button used for the multi-select "Group (N)" action.
+@interface PSMGroupPillButton : NSView
+@property (nonatomic, copy) NSString *title;
+@property (nonatomic, weak) id target;
+@property (nonatomic, assign) SEL action;
+@end
+
+@implementation PSMGroupPillButton {
+    NSTrackingArea *_trackingArea;
+    BOOL _hovered;
+    BOOL _pressed;
+}
+
+- (instancetype)init {
+    self = [super initWithFrame:NSZeroRect];
+    if (self) {
+        self.wantsLayer = NO;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_trackingArea release];
+    [_title release];
+    [super dealloc];
+}
+
+- (void)updateTrackingAreas {
+    [super updateTrackingAreas];
+    if (_trackingArea) {
+        [self removeTrackingArea:_trackingArea];
+        [_trackingArea release];
+    }
+    _trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
+                                                 options:NSTrackingMouseEnteredAndExited | NSTrackingActiveInKeyWindow
+                                                   owner:self
+                                                userInfo:nil];
+    [self addTrackingArea:_trackingArea];
+}
+
+- (NSSize)intrinsicContentSize {
+    NSFont *font = [NSFont systemFontOfSize:11.0 weight:NSFontWeightMedium];
+    NSSize textSize = [_title sizeWithAttributes:@{NSFontAttributeName: font}];
+    return NSMakeSize(textSize.width + 20.0, 20.0);
+}
+
+- (BOOL)hasDarkAppearance {
+    NSAppearanceName bestMatch =
+        [self.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameDarkAqua,
+                                                                       NSAppearanceNameVibrantDark,
+                                                                       NSAppearanceNameAqua,
+                                                                       NSAppearanceNameVibrantLight ]];
+    return ([bestMatch isEqualToString:NSAppearanceNameDarkAqua] ||
+            [bestMatch isEqualToString:NSAppearanceNameVibrantDark]);
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    NSRect r = NSInsetRect(self.bounds, 0.5, 0.5);
+    CGFloat radius = NSHeight(r) / 2.0;
+    NSBezierPath *pill = [NSBezierPath bezierPathWithRoundedRect:r xRadius:radius yRadius:radius];
+    const BOOL dark = [self hasDarkAppearance];
+    const CGFloat foregroundWhite = dark ? 1.0 : 0.0;
+    const CGFloat borderWhite = dark ? 0.85 : 0.15;
+
+    // Fill: transparent normally, subtle tint on hover/press.
+    if (_pressed) {
+        [[NSColor colorWithWhite:foregroundWhite alpha:0.12] setFill];
+        [pill fill];
+    } else if (_hovered) {
+        [[NSColor colorWithWhite:foregroundWhite alpha:0.07] setFill];
+        [pill fill];
+    }
+
+    // Border.
+    CGFloat borderAlpha = _hovered ? 0.5 : 0.28;
+    [[NSColor colorWithWhite:borderWhite alpha:borderAlpha] setStroke];
+    [pill setLineWidth:1.0];
+    [pill stroke];
+
+    // Label.
+    CGFloat textAlpha = _hovered ? 1.0 : 0.72;
+    NSDictionary *attrs = @{
+        NSFontAttributeName: [NSFont systemFontOfSize:11.0 weight:NSFontWeightMedium],
+        NSForegroundColorAttributeName: [NSColor colorWithWhite:foregroundWhite alpha:textAlpha]
+    };
+    NSSize ts = [_title sizeWithAttributes:attrs];
+    [_title drawAtPoint:NSMakePoint(NSMidX(self.bounds) - ts.width / 2.0,
+                                    NSMidY(self.bounds) - ts.height / 2.0)
+         withAttributes:attrs];
+}
+
+- (void)mouseEntered:(NSEvent *)event { _hovered = YES;  [self setNeedsDisplay:YES]; }
+- (void)mouseExited:(NSEvent *)event  { _hovered = NO; _pressed = NO; [self setNeedsDisplay:YES]; }
+- (void)mouseDown:(NSEvent *)event    { _pressed = YES;  [self setNeedsDisplay:YES]; }
+- (void)mouseUp:(NSEvent *)event {
+    _pressed = NO;
+    [self setNeedsDisplay:YES];
+    if (NSMouseInRect([self convertPoint:event.locationInWindow fromView:nil], self.bounds, self.isFlipped)) {
+        if (_target && _action) {
+            [NSApp sendAction:_action to:_target from:self];
+        }
+    }
+}
+
+@end
+
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuItemValidation, NSViewToolTipOwner>
 - (void)removeTabProgressBarForCell:(PSMTabBarCell *)cell;
 @end
@@ -155,6 +261,20 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     // drawing style
     NSTimer *_animationTimer;
     float _animationDelta;
+
+    // fade-in / slide-in animation for new cells (group expand only)
+    NSMutableSet<PSMTabBarCell *> *_fadingInCells;
+    NSTimer *_fadeTimer;
+    NSInteger _animatedInsertionCount;
+
+    // slide-out / fade-out animation for collapsing cells (group collapse)
+    NSMutableSet<PSMTabBarCell *> *_collapsingCells;
+    NSTimer *_collapseTimer;
+    NSMutableArray<void (^)(void)> *_collapseCompletions;
+
+    // deferred single-click on group headers (to avoid firing toggle on double-click)
+    NSTimer *_groupHeaderSingleClickTimer;
+    PSMTabBarCell *_pendingGroupHeaderClickCell;
 
     // vertical tab resizing
     BOOL _resizing;
@@ -184,6 +304,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSMapTable<PSMTabBarCell *, NSView *> *_tabProgressBars;
     NSMutableArray<PSMToolTip *> *_tooltips;
     NSInteger _toolTipCoalescing;
+
+    // multi-selection (cmd+click)
+    NSMutableSet<NSTabViewItem *> *_multiSelectedTabViewItems;
+    PSMGroupPillButton *_groupSelectionButton;
 }
 
 #pragma mark -
@@ -371,6 +495,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 }
 
 - (void)dealloc {
+    [_fadeTimer invalidate];
+    [_collapseTimer invalidate];
+    [_groupHeaderSingleClickTimer invalidate];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     // Remove bindings.
@@ -396,6 +523,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [_style release];
     [_tooltips release];
     _tooltips = nil;
+    [_fadingInCells release];
+    [_collapsingCells release];
+    [_collapseCompletions release];
+    [_multiSelectedTabViewItems release];
+    [_groupSelectionButton release];
 
     [self unregisterDraggedTypes];
 
@@ -702,6 +834,23 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     // add to collection
     [_cells insertObject:cell atIndex:i];
 
+    // Only animate group-expand insertions; regular new tabs appear instantly.
+    if (_animatedInsertionCount > 0) {
+        _animatedInsertionCount--;
+        cell.cellAlpha = 0.0;
+        if (!_fadingInCells) {
+            _fadingInCells = [[NSMutableSet alloc] init];
+        }
+        [_fadingInCells addObject:cell];
+        if (!_fadeTimer) {
+            _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
+                                                         target:self
+                                                       selector:@selector(_tickFadeIn:)
+                                                       userInfo:nil
+                                                        repeats:YES];
+        }
+    }
+
     // bind it up
     [self initializeStateForCell:cell];
     [self bindPropertiesForCell:cell andTabViewItem:item];
@@ -713,6 +862,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 }
 
 - (void)removeTabForCell:(PSMTabBarCell *)cell {
+    if (!cell) {
+        return;
+    }
     // unbind
     [cell unbind:@"title"];
 
@@ -731,6 +883,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
     // pull from collection
     [_cells removeObject:cell];
+    [_fadingInCells removeObject:cell];
 }
 
 - (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell {
@@ -1163,6 +1316,109 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [self update:NO];
 }
 
+- (void)markNextInsertionsAsAnimated:(NSInteger)count {
+    _animatedInsertionCount += count;
+}
+
+- (void)beginCollapseAnimationForTabViewItems:(NSArray<NSTabViewItem *> *)items
+                                   completion:(void (^)(void))completion {
+    if (!_collapsingCells) {
+        _collapsingCells = [[NSMutableSet alloc] init];
+    }
+    for (NSTabViewItem *item in items) {
+        for (PSMTabBarCell *cell in _cells) {
+            if ([cell.representedObject isEqual:item]) {
+                cell.cellAlpha = 1.0;
+                [_collapsingCells addObject:cell];
+                break;
+            }
+        }
+    }
+    if (!_collapseCompletions) {
+        _collapseCompletions = [[NSMutableArray alloc] init];
+    }
+    if (completion) {
+        [_collapseCompletions addObject:[[completion copy] autorelease]];
+    }
+    if (!_collapseTimer) {
+        _collapseTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
+                                                         target:self
+                                                       selector:@selector(_tickCollapse:)
+                                                       userInfo:nil
+                                                        repeats:YES];
+    }
+}
+
+- (void)cancelCollapseAnimation {
+    [_collapseTimer invalidate];
+    _collapseTimer = nil;
+    for (PSMTabBarCell *cell in _collapsingCells) {
+        cell.cellAlpha = 1.0;
+    }
+    [_collapsingCells removeAllObjects];
+    NSArray<void (^)(void)> *completions = [[_collapseCompletions copy] autorelease];
+    [_collapseCompletions removeAllObjects];
+    for (void (^cb)(void) in completions) { cb(); }
+}
+
+- (void)_fireGroupHeaderSingleClick:(NSTimer *)timer {
+    _groupHeaderSingleClickTimer = nil;
+    PSMTabBarCell *cell = _pendingGroupHeaderClickCell;
+    _pendingGroupHeaderClickCell = nil;
+    if (cell) {
+        [self tabClick:cell];
+    }
+}
+
+- (void)_tickCollapse:(NSTimer *)timer {
+    const CGFloat delta = (1.0 / 60.0) / 0.12;  // 120ms total — collapse faster than expand
+    NSMutableSet *completed = [NSMutableSet set];
+    for (PSMTabBarCell *cell in _collapsingCells) {
+        cell.isAnimatingCollapse = YES;
+        cell.cellAlpha = MAX(0.0, cell.cellAlpha - delta);
+        if (cell.cellAlpha <= 0.0) {
+            [completed addObject:cell];
+        }
+    }
+    for (PSMTabBarCell *cell in completed) {
+        cell.isAnimatingCollapse = NO;
+    }
+    [_collapsingCells minusSet:completed];
+    if ([PSMTabBarControl isAnyDragInProgress]) {
+        [self setNeedsDisplay:YES];
+    } else {
+        [self update];
+    }
+    if (_collapsingCells.count == 0) {
+        [timer invalidate];
+        _collapseTimer = nil;
+        NSArray<void (^)(void)> *completions = [[_collapseCompletions copy] autorelease];
+        [_collapseCompletions removeAllObjects];
+        for (void (^cb)(void) in completions) { cb(); }
+    }
+}
+
+- (void)_tickFadeIn:(NSTimer *)timer {
+    const CGFloat delta = (1.0 / 60.0) / 0.25;  // 250ms total — expand
+    NSMutableSet *completed = [NSMutableSet set];
+    for (PSMTabBarCell *cell in _fadingInCells) {
+        cell.cellAlpha = MIN(1.0, cell.cellAlpha + delta);
+        if (cell.cellAlpha >= 1.0) {
+            [completed addObject:cell];
+        }
+    }
+    [_fadingInCells minusSet:completed];
+    if (_fadingInCells.count == 0) {
+        [timer invalidate];
+        _fadeTimer = nil;
+    }
+    if ([PSMTabBarControl isAnyDragInProgress]) {
+        [self setNeedsDisplay:YES];
+    } else {
+        [self update];
+    }
+}
+
 - (void)setFrame:(NSRect)frame {
     [super setFrame:frame];
     [self syncTabProgressBars];
@@ -1268,8 +1524,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 [_animationTimer invalidate];
             }
             
-            _animationDelta = 0.0f;
-            _animationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
+            NSMutableArray<NSNumber *> *startWidths = [NSMutableArray arrayWithCapacity:cellCount];
+            for (PSMTabBarCell *cell in _cells) {
+                [startWidths addObject:@(cell.frame.size.width)];
+            }
+            [_animationStartWidths release];
+            _animationStartWidths = [startWidths copy];
+            _animationStartTime = [NSDate timeIntervalSinceReferenceDate];
+            _animationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
                                                                target:self
                                                              selector:@selector(_animateCells:)
                                                              userInfo:[self cellWidthsForHorizontalArrangementWithOverflow:_lainOutWithOverflow]
@@ -1341,6 +1603,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         CGFloat width;
         if (cell.isPinned) {
             width = _pinnedTabWidth;
+        } else if (cell.isGroupHeader) {
+            width = [cell desiredWidthOfCell];
         } else {
             width = MAX(_cellMinWidth, MIN([cell desiredWidthOfCell], _cellMaxWidth));
         }
@@ -1363,11 +1627,14 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (BOOL)shouldUseOptimalWidthWithOverflow:(BOOL)withOverflow {
     const CGFloat availableWidth = [self availableCellWidthWithOverflow:withOverflow];
     const NSUInteger pinnedCount = [self numberOfPinnedCells];
-    const NSUInteger unpinnedCount = _cells.count - pinnedCount;
-    const CGFloat pinnedSpace = [self totalPinnedSpaceForPinnedCount:pinnedCount unpinnedCount:unpinnedCount];
+    const CGFloat pinnedSpace = [self totalPinnedSpaceForPinnedCount:pinnedCount unpinnedCount:_cells.count - pinnedCount];
     const CGFloat unpinnedAvailable = availableWidth - pinnedSpace;
-    BOOL canFitAllCellsOptimally = (self.cellOptimumWidth * unpinnedCount <= unpinnedAvailable);
-    return !self.stretchCellsToFit && canFitAllCellsOptimally;
+    CGFloat totalUnpinnedDesiredWidth = 0;
+    for (PSMTabBarCell *c in _cells) {
+        if (c.isPinned) { continue; }
+        totalUnpinnedDesiredWidth += c.isGroupHeader ? [c desiredWidthOfCell] : self.cellOptimumWidth;
+    }
+    return !self.stretchCellsToFit && (totalUnpinnedDesiredWidth <= unpinnedAvailable);
 }
 
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
@@ -1388,8 +1655,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         // No pinned cells
         NSMutableArray<NSNumber *> *newWidths = [NSMutableArray array];
         if ([self shouldUseOptimalWidthWithOverflow:withOverflow]) {
-            for (int i = 0; i < cellCount; i++) {
-                [newWidths addObject:@(_cellOptimumWidth)];
+            for (PSMTabBarCell *c in _cells) {
+                CGFloat w = c.isGroupHeader ? [c desiredWidthOfCell] : _cellOptimumWidth;
+                [newWidths addObject:@(w)];
             }
         } else {
             const BOOL canFitAllCellsMinimally = (self.cellMinWidth * cellCount + intercellSpacing * MAX(0, (cellCount - 1)) <= availableWidth);
@@ -1402,11 +1670,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                     numberOfVisibleCells -= 1;
                 }
             }
-            [self computeCellFramesInContainerOfWidth:availableWidth
-                                 numberOfVisibleCells:numberOfVisibleCells
-                                     intercellSpacing:intercellSpacing
-                                                scale:2.0
-                                               frames:newWidths];
+            [self computeCompressedWidthsForCells:_cells
+                                            count:numberOfVisibleCells
+                                   containerWidth:availableWidth
+                                 intercellSpacing:intercellSpacing
+                                           frames:newWidths];
         }
         return newWidths;
     }
@@ -1421,8 +1689,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (unpinnedCount > 0 && unpinnedContainerWidth > 0) {
         if ([self shouldUseOptimalWidthWithOverflow:withOverflow]) {
             numberOfVisibleUnpinned = unpinnedCount;
-            for (NSUInteger i = 0; i < unpinnedCount; i++) {
-                [unpinnedWidths addObject:@(_cellOptimumWidth)];
+            for (PSMTabBarCell *c in _cells) {
+                if (c.isPinned) { continue; }
+                CGFloat w = c.isGroupHeader ? [c desiredWidthOfCell] : _cellOptimumWidth;
+                [unpinnedWidths addObject:@(w)];
             }
         } else {
             const BOOL canFitAllUnpinned = (self.cellMinWidth * unpinnedCount +
@@ -1438,11 +1708,15 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 numberOfVisibleUnpinned = MAX(0, numberOfVisibleUnpinned);
             }
             if (numberOfVisibleUnpinned > 0) {
-                [self computeCellFramesInContainerOfWidth:unpinnedContainerWidth
-                                     numberOfVisibleCells:numberOfVisibleUnpinned
-                                         intercellSpacing:intercellSpacing
-                                                    scale:2.0
-                                                   frames:unpinnedWidths];
+                NSMutableArray<PSMTabBarCell *> *unpinnedCells = [NSMutableArray array];
+                for (PSMTabBarCell *c in _cells) {
+                    if (!c.isPinned) { [unpinnedCells addObject:c]; }
+                }
+                [self computeCompressedWidthsForCells:unpinnedCells
+                                                count:numberOfVisibleUnpinned
+                                       containerWidth:unpinnedContainerWidth
+                                     intercellSpacing:intercellSpacing
+                                               frames:unpinnedWidths];
             }
         }
     }
@@ -1470,6 +1744,34 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         }
     }
     return result;
+}
+
+- (void)computeCompressedWidthsForCells:(NSArray<PSMTabBarCell *> *)cells
+                                  count:(NSInteger)n
+                         containerWidth:(CGFloat)containerWidth
+                       intercellSpacing:(CGFloat)intercellSpacing
+                                 frames:(NSMutableArray<NSNumber *> *)outWidths {
+    CGFloat groupHeaderTotal = 0;
+    NSInteger regularCount = 0;
+    NSInteger i = 0;
+    for (PSMTabBarCell *c in cells) {
+        if (i >= n) break;
+        if (c.isGroupHeader) {
+            groupHeaderTotal += [c desiredWidthOfCell];
+        } else {
+            regularCount++;
+        }
+        i++;
+    }
+    const CGFloat totalSpacing = (n > 1) ? (n - 1) * intercellSpacing : 0;
+    const CGFloat remaining = MAX(0, containerWidth - groupHeaderTotal - totalSpacing);
+    const CGFloat regularWidth = regularCount > 0 ? floor(remaining / regularCount) : 0;
+    i = 0;
+    for (PSMTabBarCell *c in cells) {
+        if (i >= n) break;
+        [outWidths addObject:c.isGroupHeader ? @([c desiredWidthOfCell]) : @(regularWidth)];
+        i++;
+    }
 }
 
 - (void)computeCellFramesInContainerOfWidth:(CGFloat)containerWidth
@@ -1525,48 +1827,37 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 - (void)_animateCells:(NSTimer *)timer {
     NSArray *targetWidths = [timer userInfo];
-    int i, numberOfVisibleCells = [targetWidths count];
-    float totalChange = 0.0f;
-    BOOL updated = NO;
+    const NSInteger numberOfVisibleCells = [targetWidths count];
+    const NSTimeInterval duration = 0.25;
+    const NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _animationStartTime;
+    const CGFloat progress = MIN(1.0, elapsed / duration);
+    const CGFloat eased = 1.0 - pow(1.0 - progress, 3.0);
 
-    if ([_cells count] > 0) {
-        //compare our target widths with the current widths and move towards the target
-        for (i = 0; i < [_cells count]; i++) {
-            PSMTabBarCell *currentCell = [_cells objectAtIndex:i];
-            NSRect cellFrame = [currentCell frame];
-            cellFrame.origin.x += totalChange;
+    CGFloat totalChange = 0.0;
+    NSInteger i = 0;
+    for (PSMTabBarCell *currentCell in _cells) {
+        NSRect cellFrame = [currentCell frame];
+        cellFrame.origin.x += totalChange;
 
-            if (i < numberOfVisibleCells) {
-                float target = [[targetWidths objectAtIndex:i] floatValue];
-
-                if (currentCell.isPinned) {
-                    // Pinned cells snap to target width immediately - no gradual animation.
-                    totalChange += target - cellFrame.size.width;
-                    cellFrame.size.width = target;
-                    [currentCell setFrame:cellFrame];
-                } else if (fabs(cellFrame.size.width - target) < _animationDelta) {
-                    cellFrame.size.width = target;
-                    totalChange += cellFrame.size.width - target;
-                    [currentCell setFrame:cellFrame];
-                } else if (cellFrame.size.width > target) {
-                    cellFrame.size.width -= _animationDelta;
-                    totalChange -= _animationDelta;
-                    updated = YES;
-                } else if (cellFrame.size.width < target) {
-                    cellFrame.size.width += _animationDelta;
-                    totalChange += _animationDelta;
-                    [currentCell setFrame:cellFrame];
-                    updated = YES;
-                }
+        if (i < numberOfVisibleCells) {
+            const CGFloat target = [[targetWidths objectAtIndex:i] doubleValue];
+            CGFloat newWidth;
+            if (currentCell.isPinned || i >= (NSInteger)_animationStartWidths.count) {
+                // Pinned cells snap to target width immediately - no gradual animation.
+                newWidth = target;
+            } else {
+                const CGFloat start = [_animationStartWidths[i] doubleValue];
+                newWidth = start + (target - start) * eased;
             }
-
-            [currentCell setFrame:cellFrame];
+            totalChange += newWidth - cellFrame.size.width;
+            cellFrame.size.width = newWidth;
         }
 
-        _animationDelta += 4.0f;
+        [currentCell setFrame:cellFrame];
+        i++;
     }
 
-    if (!updated) {
+    if (progress >= 1.0) {
         [self finishUpdateWithRegularWidths:targetWidths
                          widthsWithOverflow:targetWidths];
         [timer invalidate];
@@ -1626,8 +1917,19 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         int tabState = 0;
         if (i < numberOfVisibleCells) {
             // set cell frame
+            const CGFloat fullCellWidth = [[newValues objectAtIndex:i] floatValue];
+            CGFloat animCellWidth;
+            if (cell.cellAlpha >= 1.0) {
+                animCellWidth = fullCellWidth;
+            } else {
+                const CGFloat t = cell.cellAlpha;
+                const CGFloat easedT = [_collapsingCells containsObject:cell]
+                    ? t * t * t                      // easeInCubic — accelerates into collapse
+                    : 1.0 - pow(1.0 - t, 3.0);      // easeOutCubic — decelerates into expansion
+                animCellWidth = fullCellWidth * easedT;
+            }
             if ([self orientation] == PSMTabBarHorizontalOrientation) {
-                cellRect.size.width = [[newValues objectAtIndex:i] floatValue];
+                cellRect.size.width = animCellWidth;
             } else {
                 cellRect.size.width = [self frame].size.width;
                 cellRect.origin.y = [[newValues objectAtIndex:i] floatValue];
@@ -1708,7 +2010,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             }
 
             // next...
-            cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
+            cellRect.origin.x += animCellWidth + intercellSpacing;
 
         } else {
             // set up menu items
@@ -1843,14 +2145,16 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             if ([theEvent clickCount] == 1) {
                 const NSEventModifierFlags mask = NSEventModifierFlagOption;
                 if (_selectsTabsOnMouseDown && (theEvent.modifierFlags & mask) == 0) {
-                    if (cell.state != NSControlStateValueOn) {
-                        _preDragSelectedTabIndex = [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem];
-                    } else {
-                        // Because we always want it to switch tabs, don't save
-                        // the index if you're dragging the current tab.
-                        _preDragSelectedTabIndex = NSNotFound;
+                    // Skip group headers on mouseDown — they need to wait for mouseUp to
+                    // distinguish a single-click toggle from a double-click rename.
+                    if (![[cell.representedObject identifier] isKindOfClass:[iTermTabGroup class]]) {
+                        if (cell.state != NSControlStateValueOn) {
+                            _preDragSelectedTabIndex = [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem];
+                        } else {
+                            _preDragSelectedTabIndex = NSNotFound;
+                        }
+                        [self tabClick:cell];
                     }
-                    [self tabClick:cell];
                 }
             }
         }
@@ -1933,10 +2237,16 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         float dy = fabs(currentPoint.y - trackingStartPoint.y);
         float distance = sqrt(dx * dx + dy * dy);
 
-        if (distance >= self.minimumTabDragDistance && !_didDrag && ![[PSMTabDragAssistant sharedDragAssistant] isDragging] &&
+        if (distance >= self.minimumTabDragDistance && !_didDrag &&
+                ![[PSMTabDragAssistant sharedDragAssistant] isDragging] &&
                 [[self delegate] respondsToSelector:@selector(tabView:shouldDragTabViewItem:fromTabBar:)] &&
                 [[self delegate] tabView:_tabView shouldDragTabViewItem:[cell representedObject] fromTabBar:self]) {
             _didDrag = YES;
+            self.lastDragWasGroupHeader = cell.isGroupHeader;
+            if (cell.isGroupHeader &&
+                [[self delegate] respondsToSelector:@selector(tabView:willBeginDraggingGroupHeaderTabViewItem:)]) {
+                [[self delegate] tabView:_tabView willBeginDraggingGroupHeaderTabViewItem:[cell representedObject]];
+            }
             ILog(@"Start dragging with mouse down event %@ in window %p with frame %@", [self lastMouseDownEvent], self.window, NSStringFromRect(self.window.frame));
             [[PSMTabDragAssistant sharedDragAssistant] startDraggingCell:cell fromTabBar:self withMouseDownEvent:[self lastMouseDownEvent]];
         }
@@ -2008,10 +2318,30 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         [mouseDownCell setCloseButtonPressed:NO];
         switch (theEvent.clickCount) {
             case 1:
+                if (_selectsTabsOnMouseDown && (theEvent.modifierFlags & NSEventModifierFlagCommand) != 0) {
+                    // Cmd+click multi-select was already handled on mouse-down; skip to avoid double-toggle.
+                    return;
+                }
+                if (cell.isGroupHeader) {
+                    // Defer: if a second click arrives before doubleClickInterval, the timer is
+                    // cancelled in case 2 and only the rename dialog fires — no toggle.
+                    [_groupHeaderSingleClickTimer invalidate];
+                    _pendingGroupHeaderClickCell = cell;
+                    _groupHeaderSingleClickTimer =
+                        [NSTimer scheduledTimerWithTimeInterval:[NSEvent doubleClickInterval]
+                                                         target:self
+                                                       selector:@selector(_fireGroupHeaderSingleClick:)
+                                                       userInfo:nil
+                                                        repeats:NO];
+                    return;
+                }
                 [self tabClick:cell];
                 return;
 
             case 2:
+                [_groupHeaderSingleClickTimer invalidate];
+                _groupHeaderSingleClickTimer = nil;
+                _pendingGroupHeaderClickCell = nil;
                 [self tabDoubleClick:cell];
                 return;
 
@@ -2028,12 +2358,30 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (NSMenu *)menuForEvent:(NSEvent *)event
 {
     NSMenu *menu = nil;
-    NSTabViewItem *item = [[self cellForPoint:[self convertPoint:[event locationInWindow] fromView:nil] cellFrame:nil] representedObject];
+    PSMTabBarCell *cell = [self cellForPoint:[self convertPoint:[event locationInWindow] fromView:nil] cellFrame:nil];
+    NSTabViewItem *item = [cell representedObject];
+
+    if (item && cell.isGroupHeader) {
+        if ([[self delegate] respondsToSelector:@selector(tabView:menuForGroupHeaderTabViewItem:)]) {
+            menu = [[self delegate] tabView:_tabView menuForGroupHeaderTabViewItem:item];
+        }
+        return menu;
+    }
 
     if (item && [[self delegate] respondsToSelector:@selector(tabView:menuForTabViewItem:)]) {
         menu = [[self delegate] tabView:_tabView menuForTabViewItem:item];
     }
-    else if (!item) {
+
+    if (_multiSelectedTabViewItems.count > 1 && menu) {
+        [menu addItem:[NSMenuItem separatorItem]];
+        NSString *title = [NSString stringWithFormat:@"Group %lu Selected Tabs", (unsigned long)_multiSelectedTabViewItems.count];
+        NSMenuItem *groupItem = [[NSMenuItem alloc] initWithTitle:title action:@selector(groupMultiSelectedTabs:) keyEquivalent:@""];
+        groupItem.target = self;
+        groupItem.representedObject = [_multiSelectedTabViewItems copy];
+        [menu addItem:groupItem];
+    }
+
+    if (!item) {
         // when the "LSUIElement hack" (issue #954) is enabled, the menu bar is inaccessible,
         // so show it as a context menu when right-clicking empty tabBar region
         if ([[[NSBundle mainBundle] infoDictionary] objectForKey:@"LSUIElement"]) {
@@ -2233,7 +2581,10 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
     _haveInitialDragLocation = NO;
     if (operation != NSDragOperationNone) {
-        [self removeTabForCell:[[PSMTabDragAssistant sharedDragAssistant] draggedCell]];
+        PSMTabBarCell *cell = [[PSMTabDragAssistant sharedDragAssistant] draggedCell];
+        if (cell) {
+            [self removeTabForCell:cell];
+        }
         [[PSMTabDragAssistant sharedDragAssistant] finishDrag];
     } else {
         [[PSMTabDragAssistant sharedDragAssistant] draggedImageEndedAt:aPoint operation:operation];
@@ -2266,7 +2617,83 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     }
 }
 
+- (void)_updateGroupSelectionButton {
+    const NSUInteger count = _multiSelectedTabViewItems.count;
+    if (count < 2) {
+        _groupSelectionButton.hidden = YES;
+        return;
+    }
+    if (!_groupSelectionButton) {
+        _groupSelectionButton = [[PSMGroupPillButton alloc] init];
+        _groupSelectionButton.target = self;
+        _groupSelectionButton.action = @selector(_groupSelectionButtonClicked:);
+        [self addSubview:_groupSelectionButton];
+    }
+    _groupSelectionButton.title = [NSString stringWithFormat:@"Group (%lu)", (unsigned long)count];
+    NSSize s = _groupSelectionButton.intrinsicContentSize;
+    const CGFloat margin = 6.0;
+    NSRect b = self.bounds;
+    _groupSelectionButton.frame = NSMakeRect(NSMaxX(b) - s.width - margin,
+                                              NSMidY(b) - s.height / 2.0,
+                                              s.width, s.height);
+    _groupSelectionButton.hidden = NO;
+    [_groupSelectionButton setNeedsDisplay:YES];
+}
+
+- (void)_groupSelectionButtonClicked:(id)sender {
+    if (_multiSelectedTabViewItems.count < 2) { return; }
+    NSSet *items = [_multiSelectedTabViewItems copy];
+    if ([[self delegate] respondsToSelector:@selector(tabView:groupTabViewItems:)]) {
+        [[self delegate] tabView:_tabView groupTabViewItems:[items allObjects]];
+    }
+    [self clearMultiSelection];
+}
+
+- (void)clearMultiSelection {
+    for (PSMTabBarCell *cell in _cells) {
+        cell.isMultiSelected = NO;
+    }
+    [_multiSelectedTabViewItems removeAllObjects];
+    _groupSelectionButton.hidden = YES;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)groupMultiSelectedTabs:(NSMenuItem *)sender {
+    NSSet<NSTabViewItem *> *items = sender.representedObject;
+    if (!items || items.count < 2) { return; }
+    if ([[self delegate] respondsToSelector:@selector(tabView:groupTabViewItems:)]) {
+        [[self delegate] tabView:_tabView groupTabViewItems:[items allObjects]];
+    }
+    [self clearMultiSelection];
+}
+
 - (void)tabClick:(id)sender {
+    PSMTabBarCell *cell = sender;
+    NSTabViewItem *clickedItem = [cell representedObject];
+    if ([[clickedItem identifier] isKindOfClass:[iTermTabGroup class]]) {
+        if ([[self delegate] respondsToSelector:@selector(tabView:didClickGroupHeaderTabViewItem:)]) {
+            [[self delegate] tabView:_tabView didClickGroupHeaderTabViewItem:clickedItem];
+        }
+        return;
+    }
+
+    const BOOL cmdHeld = ([NSApp currentEvent].modifierFlags & NSEventModifierFlagCommand) != 0;
+    if (cmdHeld) {
+        if (!_multiSelectedTabViewItems) {
+            _multiSelectedTabViewItems = [[NSMutableSet alloc] init];
+        }
+        if ([_multiSelectedTabViewItems containsObject:clickedItem]) {
+            [_multiSelectedTabViewItems removeObject:clickedItem];
+            cell.isMultiSelected = NO;
+        } else {
+            [_multiSelectedTabViewItems addObject:clickedItem];
+            cell.isMultiSelected = YES;
+        }
+        [self _updateGroupSelectionButton];
+        return;
+    }
+
+    [self clearMultiSelection];
     if ([sender representedObject]) {
         [_tabView selectTabViewItem:[sender representedObject]];
         [self update];
@@ -2274,6 +2701,13 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (void)tabDoubleClick:(id)sender {
+    NSTabViewItem *clickedItem = [sender representedObject];
+    if ([[clickedItem identifier] isKindOfClass:[iTermTabGroup class]]) {
+        if ([[self delegate] respondsToSelector:@selector(tabView:doubleClickGroupHeaderTabViewItem:)]) {
+            [[self delegate] tabView:_tabView doubleClickGroupHeaderTabViewItem:clickedItem];
+        }
+        return;
+    }
     if ([[self delegate] respondsToSelector:@selector(tabView:doubleClickTabViewItem:)]) {
         [[self delegate] tabView:[self tabView] doubleClickTabViewItem:[sender representedObject]];
     }
@@ -2498,6 +2932,9 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (BOOL)tabView:(NSTabView *)aTabView shouldSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    if ([[tabViewItem identifier] isKindOfClass:[iTermTabGroup class]]) {
+        return NO;
+    }
     if ([[self delegate] respondsToSelector:@selector(tabView:shouldSelectTabViewItem:)]) {
         return (BOOL)[[self delegate] tabView:aTabView shouldSelectTabViewItem:tabViewItem];
     } else {
@@ -2566,8 +3003,12 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         [self updateTooltipAppearance];
     });
 
+    PSMTabBarCell *cell = [self cellForPoint:point cellFrame:nil];
+    if (cell.isGroupHeader) {
+        return @"";
+    }
     if ([[self delegate] respondsToSelector:@selector(tabView:toolTipForTabViewItem:)]) {
-        return [[self delegate] tabView:[self tabView] toolTipForTabViewItem:[[self cellForPoint:point cellFrame:nil] representedObject]];
+        return [[self delegate] tabView:[self tabView] toolTipForTabViewItem:[cell representedObject]];
     }
     return @"";
 }
