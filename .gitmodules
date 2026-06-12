@@ -58,3 +58,6 @@
 [submodule "Companion/CompanionCore/Sources/CNoise/vendor"]
 	path = Companion/CompanionCore/Sources/CNoise/vendor
 	url = https://github.com/rweather/noise-c.git
+[submodule "submodules/iterm2-companion-relay"]
+	path = submodules/iterm2-companion-relay
+	url = https://github.com/gnachman/iterm2-companion-relay
