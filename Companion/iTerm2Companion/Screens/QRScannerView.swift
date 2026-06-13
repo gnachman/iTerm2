@@ -9,6 +9,7 @@
 
 import SwiftUI
 import AVFoundation
+import os
 
 struct QRScannerView: UIViewControllerRepresentable {
     /// Called on the main queue with each decoded QR payload.
@@ -29,15 +30,76 @@ struct QRScannerView: UIViewControllerRepresentable {
 final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     var onCode: ((String) -> Void)?
     var onCameraError: ((String) -> Void)?
+    private let wantsRunning = OSAllocatedUnfairLock(initialState: false)
+    private var sessionInitialized = false
 
-    private let session = AVCaptureSession()
+    private let _session = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private let sessionQueue = DispatchQueue(label: "com.googlecode.iterm2.companion.capture")
+
+    private func sessionAsync(_ closure: @escaping (AVCaptureSession) -> ()) {
+        sessionQueue.async { [_session] in
+            closure(_session)
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        configureSession()
+        sessionAsync { [weak self] session in
+            guard let self else {
+                return
+            }
+            guard !sessionInitialized else {
+                return
+            }
+            guard let device = AVCaptureDevice.default(for: .video) else {
+                DispatchQueue.main.async { [onCameraError] in
+                    onCameraError?("This device has no usable camera.")
+                }
+                return
+            }
+            let input: AVCaptureDeviceInput
+            do {
+                input = try AVCaptureDeviceInput(device: device)
+            } catch {
+                DispatchQueue.main.async { [onCameraError] in
+                    onCameraError?("Couldn’t open the camera: \(error.localizedDescription)")
+                }
+                return
+            }
+            guard session.canAddInput(input) else {
+                DispatchQueue.main.async { [onCameraError] in
+                    onCameraError?("The camera cannot be used currently.")
+                }
+                return
+            }
+            session.addInput(input)
+
+            let output = AVCaptureMetadataOutput()
+            guard session.canAddOutput(output) else {
+                DispatchQueue.main.async { [onCameraError] in
+                    onCameraError?("Could not start the camera.")
+                }
+                return
+            }
+            session.addOutput(output)
+            output.setMetadataObjectsDelegate(self, queue: .main)
+            output.metadataObjectTypes = [.qr]
+            sessionInitialized = true
+
+            let preview = AVCaptureVideoPreviewLayer(session: session)
+            preview.videoGravity = .resizeAspectFill
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self else {
+                    return
+                }
+                preview.frame = view.bounds
+                view.layer.addSublayer(preview)
+                previewLayer = preview
+            }
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -47,8 +109,15 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        sessionQueue.async { [session] in
-            if session.isRunning { session.stopRunning() }
+        stopRunning()
+    }
+
+    private func stopRunning() {
+        wantsRunning.withLock { $0 = false }
+        sessionAsync { session in
+            if session.isRunning, !self.wantsRunning.withLock({ $0 }) {
+                session.stopRunning()
+            }
         }
     }
 
@@ -57,32 +126,8 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
         previewLayer?.frame = view.bounds
     }
 
-    private func configureSession() {
-        guard let device = AVCaptureDevice.default(for: .video),
-              let input = try? AVCaptureDeviceInput(device: device),
-              session.canAddInput(input) else {
-            onCameraError?("This device has no usable camera.")
-            return
-        }
-        session.addInput(input)
-
-        let output = AVCaptureMetadataOutput()
-        guard session.canAddOutput(output) else {
-            onCameraError?("Could not start the camera.")
-            return
-        }
-        session.addOutput(output)
-        output.setMetadataObjectsDelegate(self, queue: .main)
-        output.metadataObjectTypes = [.qr]
-
-        let preview = AVCaptureVideoPreviewLayer(session: session)
-        preview.videoGravity = .resizeAspectFill
-        preview.frame = view.bounds
-        view.layer.addSublayer(preview)
-        previewLayer = preview
-    }
-
     private func startRunning() {
+        wantsRunning.withLock { $0 = true }
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             guard let self else { return }
             guard granted else {
@@ -91,8 +136,10 @@ final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputOb
                 }
                 return
             }
-            self.sessionQueue.async {
-                if !self.session.isRunning { self.session.startRunning() }
+            sessionAsync { session in
+                if !session.isRunning, self.wantsRunning.withLock({ $0 }) {
+                    session.startRunning()
+                }
             }
         }
     }
