@@ -243,6 +243,14 @@ Tabs, Windows, and UI:
   highlight the focused pane.
 - New Lock Size menu item and per-profile
   preference to prevent window resizing.
+- New Lock Layout advanced setting that
+  freezes a window’s layout: it prevents
+  splitting, adding or closing tabs,
+  reordering tabs, closing or dragging
+  panes, and moving panes or tabs to
+  other windows. Resizing panes, opening
+  new windows, and closing the window
+  still work.
 - You can now choose to show a Proxy icon in
   Compact and Minimal themes.
 - The tab color menu now has a color picker,

@@ -420,6 +420,15 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if ([iTermAdvancedSettingsModel lockLayout] &&
+        [menuItem action] == @selector(newSessionInTabAtIndex:)) {
+        // Frozen layout: refuse to add a tab to a window that already has one.
+        // Opening a new window (no current terminal, or one with no tabs) is fine.
+        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+        if (term && term.tabs.count > 0) {
+            return NO;
+        }
+    }
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;

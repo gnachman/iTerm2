@@ -250,6 +250,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)laxNilPolicyInInterpolatedStrings;
 + (BOOL)leftAlignTitleBarMinimalTahoe;
 + (double)lightModeInactiveTabDarkness;
++ (BOOL)lockLayout;
 + (NSString *)llmPlatform;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;

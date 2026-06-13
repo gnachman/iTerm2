@@ -2451,6 +2451,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)closeSessionWithConfirmation:(PTYSession *)aSession {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        DLog(@"Layout is locked, refusing to close session");
+        return NO;
+    }
     PTYTab *tab = [self tabForSession:aSession];
     if ([[tab sessions] count] == 1) {
         return [self closeTabIfConfirmed:tab];
@@ -7151,6 +7155,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // This isn't a delegate method, but I need the functionality with the added suppressConfirmation
 // flag to avoid showing two warnings in tmux integration mode.
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem suppressConfirmation:(BOOL)suppressConfirmation {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        return NO;
+    }
     PTYTab *aTab = [tabViewItem identifier];
     if (aTab == nil) {
         return NO;
@@ -7163,6 +7170,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     shouldDragTabViewItem:(NSTabViewItem *)tabViewItem
                fromTabBar:(PSMTabBarControl *)tabBarControl
 {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        return NO;
+    }
     return YES;
 }
 
@@ -9548,6 +9558,16 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                targetSession:(PTYSession *)targetSession
                   completion:(void (^)(PTYSession *, BOOL ok))completion
                        ready:(void (^)(PTYSession *, BOOL ok))ready {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        DLog(@"Layout is locked, refusing to split");
+        if (ready) {
+            ready(nil, NO);
+        }
+        if (completion) {
+            completion(nil, NO);
+        }
+        return;
+    }
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         TmuxController *controller = [targetSession tmuxController];
@@ -10338,6 +10358,10 @@ typedef struct {
 }
 
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        DLog(@"Layout is locked, refusing to move tab");
+        return;
+    }
     if (destinationIndex < 0) {
         destinationIndex = [_contentView.tabView numberOfTabViewItems] - 1;
     }
@@ -11775,6 +11799,24 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 // Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        const SEL action = [item action];
+        if (action == @selector(closeCurrentTab:) ||
+            action == @selector(closeCurrentSession:) ||
+            action == @selector(splitVertically:) ||
+            action == @selector(splitHorizontally:) ||
+            action == @selector(openSplitHorizontallySheet:) ||
+            action == @selector(openSplitVerticallySheet:) ||
+            action == @selector(moveTabLeft:) ||
+            action == @selector(moveTabRight:) ||
+            action == @selector(moveTabToNewWindow:) ||
+            action == @selector(moveTabToNewWindowContextualMenuAction:) ||
+            action == @selector(newTabToTheRight:) ||
+            action == @selector(closeOtherTabs:) ||
+            action == @selector(closeTabsToTheRight:)) {
+            return NO;
+        }
+    }
     BOOL result = YES;
     if ([item action] == @selector(detachTmux:) ||
         [item action] == @selector(newTmuxWindow:) ||
@@ -12355,6 +12397,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 // the -tabs array immediately for tmux tabs.
 - (void)closeOtherTabs:(id)sender
 {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        DLog(@"Layout is locked, refusing to close other tabs");
+        return;
+    }
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
     NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
@@ -12369,6 +12415,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (void)closeTabsToTheRight:(id)sender
 {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        DLog(@"Layout is locked, refusing to close tabs to the right");
+        return;
+    }
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
 
@@ -12399,6 +12449,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab {
+    if ([iTermAdvancedSettingsModel lockLayout]) {
+        DLog(@"Layout is locked, refusing to move tab to a new window");
+        return nil;
+    }
     if (aTab == nil) {
         return nil;
     }
@@ -12752,6 +12806,16 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         objectType = iTermWindowObject;
     } else {
         objectType = iTermTabObject;
+    }
+    // When the layout is locked, refuse to add a tab to a window that already
+    // has one (a frozen layout can't grow). The first tab of a brand-new window
+    // (objectType == iTermWindowObject) is still allowed.
+    if ([iTermAdvancedSettingsModel lockLayout] && objectType == iTermTabObject) {
+        DLog(@"Layout is locked, refusing to add a tab");
+        if (completion) {
+            completion(nil, NO);
+        }
+        return nil;
     }
     if (command) {
         profile = [[profile
