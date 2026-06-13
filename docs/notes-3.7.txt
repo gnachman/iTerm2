@@ -15,7 +15,13 @@ Major New Features:
   Companion Device) and connects over an
   encrypted Noise channel so you can read
   and continue your AI chats from your
-  phone.
+  phone. Devices connect through an
+  encrypted relay, so they work even when
+  the Mac and phone are on different
+  networks. Pairing is confirmed by typing
+  a 6-digit code shown on the phone, so a
+  photographed QR code is not enough to
+  pair.
 - In the Jobs view (toolbelt and status bar
   popover) hovering a row shows the full
   command as a tooltip, and pressing space
