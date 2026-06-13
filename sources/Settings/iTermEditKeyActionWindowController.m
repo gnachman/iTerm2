@@ -394,8 +394,8 @@ const CGFloat sideMarginWidth = 40;
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Split" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Split Horizontally with Profile" tag:KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Split Vertically with Profile" tag:KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Split Down with Profile" tag:KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Split Right with Profile" tag:KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Profile" items:[@[

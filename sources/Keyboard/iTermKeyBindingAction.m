@@ -319,16 +319,16 @@ static NSString *GetProfileName(NSString *guid) {
             break;
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
             if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
-                actionString = [NSString stringWithFormat:@"Split Horizontally with \"%@\" Profile", GetProfileName(_parameter)];
+                actionString = [NSString stringWithFormat:@"Split Down with \"%@\" Profile", GetProfileName(_parameter)];
             } else {
-                actionString = @"Split Horizontally with unavailable Profile";
+                actionString = @"Split Down with unavailable Profile";
             }
             break;
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
             if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
-                actionString = [NSString stringWithFormat:@"Split Vertically with \"%@\" Profile", GetProfileName(_parameter)];
+                actionString = [NSString stringWithFormat:@"Split Right with \"%@\" Profile", GetProfileName(_parameter)];
             } else {
-                actionString = @"Split Vertically with unavailable Profile";
+                actionString = @"Split Right with unavailable Profile";
             }
             break;
         case KEY_ACTION_SET_PROFILE:

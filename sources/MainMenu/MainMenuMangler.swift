@@ -60,6 +60,8 @@ class MainMenuMangler: NSObject {
         "Press Option for New Window": "option",
         "Split Horizontally with Current Profile": "square.split.1x2.fill",
         "Split Vertically with Current Profile": "square.split.2x1.fill",
+        "Split Left": "square.split.2x1.fill",
+        "Split Up": "square.split.1x2.fill",
         "Split Horizontally…": "square.split.1x2",
         "Split Vertically…": "square.split.2x1",
         "Log.SaveContents": "square.and.arrow.down",

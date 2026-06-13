@@ -8958,7 +8958,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [_instantReplayWindowController updateInstantReplayView];
 }
 
-- (void)_openSplitSheetForVertical:(BOOL)vertical
+- (void)_openSplitSheetForVertical:(BOOL)vertical before:(BOOL)before
 {
     NSString *guid = [SplitPanel showPanelWithParent:self isVertical:vertical];
     if (guid) {
@@ -8967,7 +8967,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             return;
         }
         [self asyncSplitVertically:vertical
-                            before:NO
+                            before:before
                            profile:profile
                      targetSession:[self currentSession]
                         completion:nil
@@ -9017,12 +9017,22 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (IBAction)openSplitHorizontallySheet:(id)sender
 {
-    [self _openSplitSheetForVertical:NO];
+    [self _openSplitSheetForVertical:NO before:NO];
 }
 
 - (IBAction)openSplitVerticallySheet:(id)sender
 {
-    [self _openSplitSheetForVertical:YES];
+    [self _openSplitSheetForVertical:YES before:NO];
+}
+
+- (IBAction)openSplitUpSheet:(id)sender
+{
+    [self _openSplitSheetForVertical:NO before:YES];
+}
+
+- (IBAction)openSplitLeftSheet:(id)sender
+{
+    [self _openSplitSheetForVertical:YES before:YES];
 }
 
 - (IBAction)addTrigger:(id)sender {
@@ -9703,6 +9713,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)splitVertically:(id)sender {
+    [self splitRight:sender];
+}
+
+- (IBAction)splitHorizontally:(id)sender {
+    [self splitDown:sender];
+}
+
+- (IBAction)splitRight:(id)sender {
     [self asyncSplitVertically:YES
                         before:NO
                        profile:[self profileForSplittingCurrentSession]
@@ -9711,9 +9729,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                          ready:nil];
 }
 
-- (IBAction)splitHorizontally:(id)sender {
+- (IBAction)splitLeft:(id)sender {
+    [self asyncSplitVertically:YES
+                        before:YES
+                       profile:[self profileForSplittingCurrentSession]
+                 targetSession:[[self currentTab] activeSession]
+                    completion:nil
+                         ready:nil];
+}
+
+- (IBAction)splitDown:(id)sender {
     [self asyncSplitVertically:NO
                         before:NO
+                       profile:[self profileForSplittingCurrentSession]
+                 targetSession:[[self currentTab] activeSession]
+                    completion:nil
+                         ready:nil];
+}
+
+- (IBAction)splitUp:(id)sender {
+    [self asyncSplitVertically:NO
+                        before:YES
                        profile:[self profileForSplittingCurrentSession]
                  targetSession:[[self currentTab] activeSession]
                     completion:nil
@@ -11813,7 +11849,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
         result = [self tabForSession:self.currentSession].sessions.count > 1;
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
-               [item action] == @selector(openSplitVerticallySheet:)) {
+               [item action] == @selector(openSplitVerticallySheet:) ||
+               [item action] == @selector(openSplitUpSheet:) ||
+               [item action] == @selector(openSplitLeftSheet:)) {
         result = ![[self currentTab] isTmuxTab];
     } else if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
