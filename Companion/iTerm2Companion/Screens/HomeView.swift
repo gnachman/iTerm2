@@ -73,12 +73,10 @@ private struct ChatRow: View {
 
     private var chat: Chat { entry.chat }
 
-    /// Height of the text column (plus the row's vertical padding), captured
-    /// at layout time so the icon can be sized relative to the cell. The
-    /// icon is excluded from the measurement to avoid a feedback loop.
-    @State private var contentHeight: CGFloat = 56
-
-    private var iconSize: CGFloat { contentHeight * 0.65 }
+    /// Fixed icon size, independent of the row's text. Sizing it to the text
+    /// column made new chats (no snippet yet, so a one-line column) render a
+    /// much smaller icon than older chats with a two-line snippet.
+    private let iconSize: CGFloat = 44
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -100,11 +98,6 @@ private struct ChatRow: View {
                         .lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-            .onGeometryChange(for: CGFloat.self) { proxy in
-                proxy.size.height
-            } action: { height in
-                contentHeight = height + 8
             }
         }
         .padding(.vertical, 4)
