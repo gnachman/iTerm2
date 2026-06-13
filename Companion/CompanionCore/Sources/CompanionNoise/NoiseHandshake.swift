@@ -116,6 +116,11 @@ public enum NoiseHandshake {
                 try noiseCheck(
                     noise_handshakestate_get_handshake_hash(handshake, &hashBytes, hashBytes.count),
                     "get handshake hash")
+                // The peer's static, as the state machine decrypted and stored
+                // it (message 3 for the responder). Read it before split frees
+                // the handshake state. Absent for patterns that convey no
+                // remote static; present for XK on both roles.
+                let remoteStatic = readRemoteStaticPublicKey(handshake)
                 var sendCipher: OpaquePointer?
                 var receiveCipher: OpaquePointer?
                 try noiseCheck(
@@ -128,7 +133,8 @@ public enum NoiseHandshake {
                 return NoiseChannel(transport: transport,
                                     sendCipher: sendCipher,
                                     receiveCipher: receiveCipher,
-                                    handshakeHash: Data(hashBytes))
+                                    handshakeHash: Data(hashBytes),
+                                    remoteStaticPublicKey: remoteStatic)
 
             case CNoiseActionFailed:
                 throw NoiseError(code: CNoiseActionFailed, operation: "handshake failed")
@@ -137,6 +143,26 @@ public enum NoiseHandshake {
                 throw NoiseError(code: action, operation: "unexpected handshake action")
             }
         }
+    }
+
+    /// The remote party's static public key after the handshake, or nil if the
+    /// pattern conveyed none / it isn't set. noise-c stores it in the handshake
+    /// state's remote-public-key DHState once decrypted.
+    private static func readRemoteStaticPublicKey(_ handshake: OpaquePointer?) -> Data? {
+        guard noise_handshakestate_has_remote_public_key(handshake) != 0,
+              let remoteDH = noise_handshakestate_get_remote_public_key_dh(handshake),
+              noise_dhstate_has_public_key(remoteDH) != 0 else {
+            return nil
+        }
+        let length = noise_dhstate_get_public_key_length(remoteDH)
+        guard length > 0 else {
+            return nil
+        }
+        var bytes = [UInt8](repeating: 0, count: length)
+        guard noise_dhstate_get_public_key(remoteDH, &bytes, length) == NOISE_ERROR_NONE else {
+            return nil
+        }
+        return Data(bytes)
     }
 
     private static func writeMessage(_ handshake: OpaquePointer?) throws -> Data {

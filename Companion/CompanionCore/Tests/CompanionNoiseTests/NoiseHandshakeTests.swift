@@ -119,6 +119,33 @@ final class NoiseHandshakeTests: XCTestCase {
         XCTAssertNotEqual(first.phone.handshakeHash, second.phone.handshakeHash)
     }
 
+    /// Each side ends the handshake knowing the other's static public key: the
+    /// mac (responder) learns the phone's static from message 3, which is what
+    /// it pins to authenticate reconnects without trusting the relay.
+    func testHandshakeLearnsPeerStaticPublicKey() async throws {
+        let responderKeys = try NoiseKeyPair.generate()
+        let initiatorKeys = try NoiseKeyPair.generate()
+        let (phoneTransport, macTransport) = connectedPair()
+        let prologue = Data("iterm2-companion/pid:abc123".utf8)
+
+        async let phoneChannel = NoiseHandshake.perform(
+            role: .initiator, transport: phoneTransport,
+            localKeyPair: initiatorKeys, remoteStaticPublicKey: responderKeys.publicKey,
+            prologue: prologue)
+        async let macChannel = NoiseHandshake.perform(
+            role: .responder, transport: macTransport,
+            localKeyPair: responderKeys, remoteStaticPublicKey: nil,
+            prologue: prologue)
+
+        let phone = try await phoneChannel
+        let mac = try await macChannel
+
+        // The mac (responder) recovered the phone's static from message 3.
+        XCTAssertEqual(mac.remoteStaticPublicKey, initiatorKeys.publicKey)
+        // The phone (initiator) ends with the responder static it already knew.
+        XCTAssertEqual(phone.remoteStaticPublicKey, responderKeys.publicKey)
+    }
+
     func testHandshakeAndRoundTrip() async throws {
         let responderKeys = try NoiseKeyPair.generate()
         let initiatorKeys = try NoiseKeyPair.generate()

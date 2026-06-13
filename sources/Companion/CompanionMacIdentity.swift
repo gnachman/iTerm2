@@ -15,29 +15,43 @@ import CompanionNoise
 final class CompanionMacIdentity: NSObject {
     private static let service = "com.googlecode.iterm2.companion"
     private static let account = "mac-noise-static-private-key"
+    // The paired phone's static PUBLIC key, the reconnect authentication anchor.
+    // Public, so not secret, but it lives in the keychain (not UserDefaults)
+    // because its INTEGRITY is what matters: a tampered value would let an
+    // impostor's static be accepted on reconnect. Kept beside the private key it
+    // is matched against.
+    private static let pairedPhoneAccount = "paired-phone-noise-static-public-key"
 
     /// The persisted keypair, generating and storing one on first use.
     static func keyPair() throws -> NoiseKeyPair {
-        if let privateKey = loadPrivateKey() {
+        if let privateKey = load(account: account) {
             return try NoiseKeyPair.from(privateKey: privateKey)
         }
         let generated = try NoiseKeyPair.generate()
-        try storePrivateKey(generated.privateKey)
+        try store(generated.privateKey, account: account)
         return generated
     }
 
     /// Destroy the stored identity (used when unpairing); the next pairing
     /// generates a fresh keypair.
     static func deleteKeyPair() {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account
-        ]
-        SecItemDelete(query as CFDictionary)
+        delete(account: account)
     }
 
-    private static func loadPrivateKey() -> Data? {
+    /// The paired phone's pinned static public key, or nil if none is pinned.
+    static func pairedPhoneStaticPublicKey() -> Data? {
+        load(account: pairedPhoneAccount)
+    }
+
+    static func storePairedPhoneStaticPublicKey(_ key: Data) throws {
+        try store(key, account: pairedPhoneAccount)
+    }
+
+    static func deletePairedPhoneStaticPublicKey() {
+        delete(account: pairedPhoneAccount)
+    }
+
+    private static func load(account: String) -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -53,7 +67,7 @@ final class CompanionMacIdentity: NSObject {
         return data
     }
 
-    private static func storePrivateKey(_ key: Data) throws {
+    private static func store(_ key: Data, account: String) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -66,6 +80,15 @@ final class CompanionMacIdentity: NSObject {
         guard status == errSecSuccess else {
             throw CompanionMacError.keychain(status)
         }
+    }
+
+    private static func delete(account: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+        SecItemDelete(query as CFDictionary)
     }
 }
 

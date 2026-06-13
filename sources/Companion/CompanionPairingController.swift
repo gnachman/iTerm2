@@ -68,6 +68,26 @@ final class CompanionPairingController: NSObject {
         }
     }
 
+    /// The paired phone's Noise static public key, learned and SAS-confirmed at
+    /// pairing. On reconnect the mac requires the initiator to present this same
+    /// static (Noise proves possession of the matching private key), which
+    /// authenticates the phone END-TO-END: a relay-admitted impostor, or a
+    /// QR-photo attacker, completes no session because it cannot present this
+    /// key. The relay is untrusted, so this check, not the relay, is the
+    /// reconnect authentication. Stored in the keychain (not UserDefaults):
+    /// it is public, but its integrity is security-critical, a tampered value
+    /// would authenticate an impostor. Kept beside the mac's private key.
+    private var pairedPhoneStatic: Data? {
+        get { CompanionMacIdentity.pairedPhoneStaticPublicKey() }
+        set {
+            if let newValue {
+                try? CompanionMacIdentity.storePairedPhoneStaticPublicKey(newValue)
+            } else {
+                CompanionMacIdentity.deletePairedPhoneStaticPublicKey()
+            }
+        }
+    }
+
     /// A phone is connected right now.
     var isConnected: Bool { bridge != nil }
     /// A device has paired at some point (it may or may not be connected).
@@ -230,6 +250,7 @@ final class CompanionPairingController: NSObject {
         bridge = nil
         stopAdvertising()
         pairedPID = nil
+        pairedPhoneStatic = nil
         pairingCode = nil
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
@@ -245,6 +266,7 @@ final class CompanionPairingController: NSObject {
         bridge = nil
         stopAdvertising()
         pairedPID = nil
+        pairedPhoneStatic = nil
         pairingCode = nil
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
@@ -414,11 +436,22 @@ final class CompanionPairingController: NSObject {
                     prologue: code.handshakePrologue())
                 DLog("Companion pairing: handshake complete")
 
-                // Fresh pairings (pid not yet persisted) require the user to
-                // type the SAS code the phone is showing; the verdict is the
-                // first frame on the encrypted channel. Reconnects to the
-                // established pairing skip this. See PairingConfirmation.
+                // The relay is untrusted: it cannot vouch for who connected.
+                // Authenticate the phone end-to-end by its Noise static key,
+                // learned (and decrypted) during the handshake. Fail closed if
+                // we somehow did not learn it.
+                guard let phoneStatic = channel.remoteStaticPublicKey else {
+                    DLog("Companion pairing: no phone static key; rejecting")
+                    relayLog("acceptLoop: REJECT, no phone static key from handshake")
+                    await channel.close()
+                    continue
+                }
+
                 if code.pairingID != pairedPID {
+                    // Fresh pairing (pid not yet persisted): the user types the
+                    // SAS code the phone shows; the verdict is the first frame on
+                    // the encrypted channel. On acceptance the phone static is
+                    // pinned below so future reconnects are authenticated.
                     let expected = PairingSAS.code(handshakeHash: channel.handshakeHash)
                     let accepted = await runSASConfirmation(expected: expected)
                     onSASEntryDismissed?(accepted)
@@ -431,6 +464,18 @@ final class CompanionPairingController: NSObject {
                         await channel.close()
                         continue
                     }
+                } else if let pinned = pairedPhoneStatic, pinned != phoneStatic {
+                    // Reconnect whose phone presents a DIFFERENT static than the
+                    // device confirmed at pairing: reject end-to-end, regardless
+                    // of what the relay admitted. This is the reconnect auth that
+                    // SAS bootstrapped; without it a QR-photo attacker reaching
+                    // the relay could complete a session. (A paired device with
+                    // no pinned static yet predates pinning: trusted on first use
+                    // and pinned below.)
+                    DLog("Companion pairing: reconnect static mismatch; rejecting")
+                    relayLog("acceptLoop: REJECT, reconnecting phone static does not match the paired device")
+                    await channel.close()
+                    continue
                 }
                 relayLog("acceptLoop: handshake COMPLETE; creating bridge")
 
@@ -462,6 +507,10 @@ final class CompanionPairingController: NSObject {
                     staleBridge.stop()
                 }
                 pairedPID = code.pairingID
+                // Pin the phone static: fresh pairings record the SAS-confirmed
+                // key; a matched reconnect re-affirms it; a pre-pinning pairing
+                // is captured here on first reconnect (trust on first use).
+                pairedPhoneStatic = phoneStatic
                 onPaired?()
                 // Connected: stop accepting now. The relay room has a single mac
                 // slot, so parking again while connected would displace this very

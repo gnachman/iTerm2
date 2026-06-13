@@ -24,6 +24,14 @@ public final class NoiseChannel: MessageTransport, @unchecked Sendable {
     /// SAS pairing-confirmation code is derived from (PairingSAS).
     public let handshakeHash: Data
 
+    /// The peer's static public key as learned during the handshake. For the
+    /// responder (mac) this is the initiator's (phone's) static, decrypted from
+    /// Noise message 3, which the mac pins at pairing to authenticate reconnects
+    /// end-to-end without trusting the relay. For the initiator it is the
+    /// responder static it already knew (from the QR). nil only if the pattern
+    /// never conveyed a remote static.
+    public let remoteStaticPublicKey: Data?
+
     private let transport: MessageTransport
     // noise-c CipherStates are not internally synchronized and carry a nonce
     // that must advance in lock-step with the peer, so all use is serialized.
@@ -47,11 +55,13 @@ public final class NoiseChannel: MessageTransport, @unchecked Sendable {
     init(transport: MessageTransport,
          sendCipher: OpaquePointer,
          receiveCipher: OpaquePointer,
-         handshakeHash: Data) {
+         handshakeHash: Data,
+         remoteStaticPublicKey: Data?) {
         self.transport = transport
         self.sendCipher = sendCipher
         self.receiveCipher = receiveCipher
         self.handshakeHash = handshakeHash
+        self.remoteStaticPublicKey = remoteStaticPublicKey
     }
 
     deinit {
