@@ -71,11 +71,15 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     /// the gate states replace the QR; otherwise begins a fresh pairing unless
     /// a device is already paired, in which case the unpair flow is offered.
     @objc func showAndBeginPairing() {
+        // Reset state BEFORE showing the window: showWindow makes it key, and
+        // the didBecomeKey observer runs refreshGateState synchronously (same
+        // queue). Resetting currentGate after that would defeat the change
+        // guard and present twice, generating two pairings back to back.
+        installCallbacks()
+        currentGate = nil
         showWindow(nil)
         window?.center()
         NSApp.activate(ignoringOtherApps: true)
-        installCallbacks()
-        currentGate = nil
         refreshGateState()
     }
 
