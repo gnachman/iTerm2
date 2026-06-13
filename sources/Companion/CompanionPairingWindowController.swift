@@ -28,6 +28,11 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     // Shown instead of the QR when AI features are unavailable; reveals the
     // relevant setting. Hidden when there is no remedy (admin-disabled).
     private let gateButton = NSButton(title: "", target: nil, action: nil)
+    // SAS confirmation: shown in place of the QR once the handshake completes,
+    // asking the user to type the code the phone is displaying.
+    private let sasField = NSTextField(string: "")
+    private let sasVerifyButton = NSButton(title: "Verify", target: nil, action: nil)
+    private let sasCancelButton = NSButton(title: "Cancel Pairing", target: nil, action: nil)
     private var gateAction: (() -> Void)?
     private var currentGate: CompanionPairingController.AIGate?
     private var gateObservers: [any NSObjectProtocol] = []
@@ -207,6 +212,54 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         statusLabel.maximumNumberOfLines = 5
         statusLabel.cell?.truncatesLastVisibleLine = true
         content.addSubview(statusLabel)
+
+        sasField.alignment = .center
+        sasField.font = .monospacedDigitSystemFont(ofSize: 28, weight: .medium)
+        sasField.placeholderString = "000000"
+        sasField.frame = NSRect(x: 105, y: 250, width: 150, height: 44)
+        sasField.target = self
+        sasField.action = #selector(sasVerifyPressed(_:))  // Return key verifies.
+        sasField.isHidden = true
+        content.addSubview(sasField)
+
+        sasVerifyButton.target = self
+        sasVerifyButton.action = #selector(sasVerifyPressed(_:))
+        sasVerifyButton.bezelStyle = .rounded
+        sasVerifyButton.keyEquivalent = "\r"
+        sasVerifyButton.frame = NSRect(x: 130, y: 200, width: 100, height: 32)
+        sasVerifyButton.isHidden = true
+        content.addSubview(sasVerifyButton)
+
+        sasCancelButton.target = self
+        sasCancelButton.action = #selector(sasCancelPressed(_:))
+        sasCancelButton.bezelStyle = .rounded
+        sasCancelButton.frame = NSRect(x: 115, y: 160, width: 130, height: 32)
+        sasCancelButton.isHidden = true
+        content.addSubview(sasCancelButton)
+    }
+
+    private func setSASEntryVisible(_ visible: Bool) {
+        sasField.isHidden = !visible
+        sasVerifyButton.isHidden = !visible
+        sasCancelButton.isHidden = !visible
+        if visible {
+            qrImageView.isHidden = true
+            gateButton.isHidden = true
+            unpairButton.isHidden = true
+            instructionsLabel.stringValue = "Type the 6-digit code shown on your iPhone. This confirms you’re pairing with your own phone."
+            sasField.stringValue = ""
+            window?.makeFirstResponder(sasField)
+        }
+    }
+
+    @objc private func sasVerifyPressed(_ sender: Any) {
+        controller.submitSASEntry(sasField.stringValue)
+        sasField.stringValue = ""
+    }
+
+    @objc private func sasCancelPressed(_ sender: Any) {
+        setSASEntryVisible(false)
+        controller.submitSASEntry(nil)
     }
 
     private func installCallbacks() {
@@ -226,6 +279,18 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         }
         controller.onDisconnect = { [weak self] in
             self?.setStatus("Device disconnected.", color: .secondaryLabelColor)
+        }
+        controller.onSASEntryNeeded = { [weak self] in
+            self?.setSASEntryVisible(true)
+        }
+        controller.onSASEntryDismissed = { [weak self] accepted in
+            self?.setSASEntryVisible(false)
+            if !accepted {
+                // Declined or too many mistypes: back to the QR (the same
+                // pairing id keeps listening) so the user can try again.
+                self?.qrImageView.isHidden = false
+                self?.instructionsLabel.stringValue = "In the iTerm2 Companion app on your iPhone, tap Scan and point the camera at this code."
+            }
         }
     }
 

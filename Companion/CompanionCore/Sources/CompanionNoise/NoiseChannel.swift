@@ -19,6 +19,11 @@ import CNoise
 import CompanionProtocol
 
 public final class NoiseChannel: MessageTransport, @unchecked Sendable {
+    /// The handshake transcript digest (h), identical on both peers iff they
+    /// completed the same handshake with no man in the middle. This is what the
+    /// SAS pairing-confirmation code is derived from (PairingSAS).
+    public let handshakeHash: Data
+
     private let transport: MessageTransport
     // noise-c CipherStates are not internally synchronized and carry a nonce
     // that must advance in lock-step with the peer, so all use is serialized.
@@ -41,10 +46,12 @@ public final class NoiseChannel: MessageTransport, @unchecked Sendable {
 
     init(transport: MessageTransport,
          sendCipher: OpaquePointer,
-         receiveCipher: OpaquePointer) {
+         receiveCipher: OpaquePointer,
+         handshakeHash: Data) {
         self.transport = transport
         self.sendCipher = sendCipher
         self.receiveCipher = receiveCipher
+        self.handshakeHash = handshakeHash
     }
 
     deinit {

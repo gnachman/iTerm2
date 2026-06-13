@@ -43,6 +43,13 @@ final class CompanionPairingController: NSObject {
     var onFailed: (@MainActor (String) -> Void)?
     var onDisconnect: (@MainActor () -> Void)?
     var onStatus: (@MainActor (String) -> Void)?
+    /// A fresh pairing finished its handshake and needs the user to type the
+    /// code shown on the phone. The window switches to code-entry UI and calls
+    /// submitSASEntry with what the user typed (nil = user declined).
+    var onSASEntryNeeded: (@MainActor () -> Void)?
+    /// The confirmation resolved (matched, declined, or too many mistypes);
+    /// the window dismisses the entry UI, restoring the QR when not accepted.
+    var onSASEntryDismissed: (@MainActor (_ accepted: Bool) -> Void)?
 
     // Internal (not private): CompanionPushRegistry.devicePaired reads the
     // same default from nonisolated contexts.
@@ -250,10 +257,51 @@ final class CompanionPairingController: NSObject {
         relayLog("stopAdvertising() called (cancelling acceptTask, stopping listener)")
         listenerRetryTask?.cancel()
         listenerRetryTask = nil
+        // An accept loop parked in SAS entry must not leak its continuation.
+        submitSASEntry(nil)
         acceptTask?.cancel()
         acceptTask = nil
         listener?.stop()
         listener = nil
+    }
+
+    // MARK: SAS confirmation
+
+    /// Pending code-entry continuation while a fresh pairing waits for the
+    /// user to type the SAS code shown on the phone.
+    private var sasContinuation: CheckedContinuation<String?, Never>?
+
+    /// The window delivers the user's typed code here (nil = declined). Safe to
+    /// call when no entry is pending.
+    func submitSASEntry(_ code: String?) {
+        sasContinuation?.resume(returning: code)
+        sasContinuation = nil
+    }
+
+    /// Run the mac side of SAS confirmation: prompt for entry and allow a few
+    /// mistypes before giving up. Returns whether the typed code matched.
+    /// The phone SHOWS the code and the mac is input-only: a photographed-QR
+    /// attacker never sees the victim's mac, so the victim has no code to type.
+    private func runSASConfirmation(expected: String) async -> Bool {
+        relayLog("SAS: awaiting code entry")
+        onStatus?("Enter the code shown on your iPhone.")
+        onSASEntryNeeded?()
+        for attempt in 1...3 {
+            let typed = await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
+                sasContinuation = continuation
+            }
+            guard let typed else {
+                relayLog("SAS: entry declined")
+                return false
+            }
+            if typed.trimmingCharacters(in: .whitespacesAndNewlines) == expected {
+                relayLog("SAS: code matched")
+                return true
+            }
+            relayLog("SAS: mismatch (attempt \(attempt))")
+            onStatus?("That code doesn’t match. Check your iPhone and try again.")
+        }
+        return false
     }
 
     private func installLogHandler() {
@@ -365,6 +413,25 @@ final class CompanionPairingController: NSObject {
                     remoteStaticPublicKey: nil,
                     prologue: code.handshakePrologue())
                 DLog("Companion pairing: handshake complete")
+
+                // Fresh pairings (pid not yet persisted) require the user to
+                // type the SAS code the phone is showing; the verdict is the
+                // first frame on the encrypted channel. Reconnects to the
+                // established pairing skip this. See PairingConfirmation.
+                if code.pairingID != pairedPID {
+                    let expected = PairingSAS.code(handshakeHash: channel.handshakeHash)
+                    let accepted = await runSASConfirmation(expected: expected)
+                    onSASEntryDismissed?(accepted)
+                    let verdict: PairingConfirmation = accepted ? .accepted : .rejected
+                    try await channel.send(verdict.encoded())
+                    if !accepted {
+                        DLog("Companion pairing: SAS not confirmed; rejecting")
+                        relayLog("acceptLoop: SAS REJECTED; closing and re-accepting")
+                        onStatus?("Pairing declined.")
+                        await channel.close()
+                        continue
+                    }
+                }
                 relayLog("acceptLoop: handshake COMPLETE; creating bridge")
 
                 let newBridge = CompanionHostBridge(transport: channel)

@@ -141,6 +141,9 @@ final class AppModel {
     var pairingError: String?
     /// Step description for the pairing screen ("Searching for your Mac…").
     var pairingStatus = ""
+    /// The 6-digit SAS confirmation code to display during a fresh pairing.
+    /// Non-nil only while waiting for the user to type it on the Mac.
+    var sasCode: String?
     /// When the in-flight pairing attempt began; drives the elapsed counter.
     var pairingStartedAt: Date?
     /// True while a freshly pushed conversation is waiting for its history.
@@ -388,7 +391,8 @@ final class AppModel {
                     try await establish(code: code,
                                         handshakeTimeout: isReconnect
                                             ? Self.reconnectHandshakeTimeout
-                                            : Self.firstPairHandshakeTimeout)
+                                            : Self.firstPairHandshakeTimeout,
+                                        requireConfirmation: !isReconnect)
                     pairingStatus = "Loading chats"
                     companionLog("Pairing succeeded; loading home")
                     try await loadHome()
@@ -456,8 +460,13 @@ final class AppModel {
     /// finished relaunching is picked up quickly.
     private static let reconnectRetryDelayNanos: UInt64 = 2_000_000_000
 
+    /// How long the phone waits for the user to type the SAS code on the Mac.
+    /// Generous: a human is walking to a keyboard.
+    private static let sasConfirmationTimeout: TimeInterval = 180
+
     private func establish(code: PairingCode,
-                           handshakeTimeout: TimeInterval = firstPairHandshakeTimeout) async throws {
+                           handshakeTimeout: TimeInterval = firstPairHandshakeTimeout,
+                           requireConfirmation: Bool = false) async throws {
         // A retry (PairingView "Try Again") can re-enter establish after a prior
         // attempt already built a client. Tear the old one down so its
         // connection and receive loop do not linger.
@@ -483,6 +492,33 @@ final class AppModel {
                 prologue: code.handshakePrologue())
         }
         companionLog("Handshake complete; channel established")
+        if requireConfirmation {
+            // Fresh pairing: show the SAS code (derived from the handshake
+            // hash, so both ends agree iff there is no man in the middle) and
+            // wait for the Mac's verdict, the first frame on the channel. A
+            // photographed-QR attacker pairs with their own phone, shows a
+            // code the victim never sees, and the victim has nothing to type.
+            sasCode = PairingSAS.code(handshakeHash: channel.handshakeHash)
+            pairingStatus = "Waiting for the code to be entered on your Mac"
+            defer { sasCode = nil }
+            companionLog("Awaiting SAS confirmation from the mac")
+            let verdictData: Data
+            do {
+                verdictData = try await withTimeout(Self.sasConfirmationTimeout, "Pairing confirmation") {
+                    try await channel.receive()
+                }
+            } catch {
+                await channel.close()
+                throw error
+            }
+            guard PairingConfirmation.decode(verdictData) == .accepted else {
+                companionLog("Pairing was not accepted on the mac")
+                await channel.close()
+                throw TransportError.connectionFailed(
+                    "The pairing was declined on your Mac. Make sure the code matches and try again.")
+            }
+            companionLog("SAS confirmation accepted")
+        }
         let client = CompanionClient(session: CompanionSession(transport: channel))
         await client.start(onEvent: { [weak self] event in
             Task { @MainActor in

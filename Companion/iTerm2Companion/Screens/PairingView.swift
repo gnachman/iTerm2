@@ -28,6 +28,21 @@ struct PairingView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
+            } else if let sasCode = model.sasCode {
+                // SAS confirmation: the user types this code on the Mac. Shown
+                // big enough to read across the room.
+                Image(systemName: "lock.shield")
+                    .font(.system(size: 44, weight: .light))
+                    .foregroundStyle(.tint)
+                Text(sasCode)
+                    .font(.system(size: 56, weight: .semibold, design: .monospaced))
+                    .kerning(6)
+                    .accessibilityLabel("Pairing code \(sasCode.map(String.init).joined(separator: " "))")
+                Text("Enter this code on your Mac to finish pairing.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
             } else {
                 ProgressView()
                     .controlSize(.large)

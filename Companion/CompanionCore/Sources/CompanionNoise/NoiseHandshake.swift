@@ -109,6 +109,13 @@ public enum NoiseHandshake {
                 try readMessage(handshake, try await transport.receive())
 
             case CNoiseActionSplit:
+                // Capture the transcript digest (h) before split frees the
+                // handshake state; the SAS confirmation code derives from it.
+                // BLAKE2s, so 32 bytes.
+                var hashBytes = [UInt8](repeating: 0, count: 32)
+                try noiseCheck(
+                    noise_handshakestate_get_handshake_hash(handshake, &hashBytes, hashBytes.count),
+                    "get handshake hash")
                 var sendCipher: OpaquePointer?
                 var receiveCipher: OpaquePointer?
                 try noiseCheck(
@@ -120,7 +127,8 @@ public enum NoiseHandshake {
                 }
                 return NoiseChannel(transport: transport,
                                     sendCipher: sendCipher,
-                                    receiveCipher: receiveCipher)
+                                    receiveCipher: receiveCipher,
+                                    handshakeHash: Data(hashBytes))
 
             case CNoiseActionFailed:
                 throw NoiseError(code: CNoiseActionFailed, operation: "handshake failed")

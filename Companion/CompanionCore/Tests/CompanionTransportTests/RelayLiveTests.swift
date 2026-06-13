@@ -90,6 +90,15 @@ final class RelayLiveTests: XCTestCase {
         let macCh = try await macChannel
         let phoneCh = try await phoneChannel
 
+        // SAS confirmation, exactly as the apps do it on a fresh pairing: both
+        // ends derive the same code from the handshake hash, and the mac's
+        // verdict is the first frame on the channel.
+        XCTAssertEqual(PairingSAS.code(handshakeHash: macCh.handshakeHash),
+                       PairingSAS.code(handshakeHash: phoneCh.handshakeHash))
+        try await macCh.send(PairingConfirmation.accepted.encoded())
+        let verdict = try await phoneCh.receive()
+        XCTAssertEqual(PairingConfirmation.decode(verdict), .accepted)
+
         // Application data round-trips through the encrypted channels.
         let ping = Data("hello over cloudflare".utf8)
         try await phoneCh.send(ping)

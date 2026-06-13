@@ -88,6 +88,37 @@ final class NoiseHandshakeTests: XCTestCase {
         XCTAssertEqual(generated.publicKey, rederived.publicKey)
     }
 
+    /// Both peers must derive the same handshake hash (the transcript digest
+    /// the SAS is computed from), and distinct handshakes must not share one.
+    func testHandshakeHashMatchesAcrossPeersAndVariesAcrossHandshakes() async throws {
+        func handshake() async throws -> (phone: NoiseChannel, mac: NoiseChannel) {
+            let responderKeys = try NoiseKeyPair.generate()
+            let initiatorKeys = try NoiseKeyPair.generate()
+            let (phoneTransport, macTransport) = connectedPair()
+            let prologue = Data("iterm2-companion/pid:abc123".utf8)
+            async let phoneChannel = NoiseHandshake.perform(
+                role: .initiator,
+                transport: phoneTransport,
+                localKeyPair: initiatorKeys,
+                remoteStaticPublicKey: responderKeys.publicKey,
+                prologue: prologue)
+            async let macChannel = NoiseHandshake.perform(
+                role: .responder,
+                transport: macTransport,
+                localKeyPair: responderKeys,
+                remoteStaticPublicKey: nil,
+                prologue: prologue)
+            return (try await phoneChannel, try await macChannel)
+        }
+
+        let first = try await handshake()
+        XCTAssertEqual(first.phone.handshakeHash.count, 32)
+        XCTAssertEqual(first.phone.handshakeHash, first.mac.handshakeHash)
+
+        let second = try await handshake()
+        XCTAssertNotEqual(first.phone.handshakeHash, second.phone.handshakeHash)
+    }
+
     func testHandshakeAndRoundTrip() async throws {
         let responderKeys = try NoiseKeyPair.generate()
         let initiatorKeys = try NoiseKeyPair.generate()
