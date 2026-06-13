@@ -58,6 +58,8 @@
 - (NSColor *)colorForCode:(int)theIndex green:(int)green blue:(int)blue colorMode:(ColorMode)theMode bold:(BOOL)isBold faint:(BOOL)isFaint isBackground:(BOOL)isBackground useCustomBoldColor:(BOOL)useCustomBoldColor brightenBold:(BOOL)brightenBold { return [NSColor blackColor]; }
 - (iTermColorMap *)copy { return (iTermColorMap *)self; }
 - (VT100SavedColorsSlot *)savedColorsSlot { return nil; }
+- (VT100TerminalColorValue)resolvedDualModeColor:(iTermDualModeColor)dual { return (VT100TerminalColorValue){0}; }
+- (VT100TerminalColorValue)resolvedColorValue:(VT100TerminalColorValue)value { return value; }
 
 @end
 

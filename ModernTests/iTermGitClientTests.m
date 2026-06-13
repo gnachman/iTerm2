@@ -150,6 +150,10 @@
 }
 
 - (void)testUntrackedFile {
+    // Untracked files still feed the `adds` count (the status bar
+    // shows it) but are intentionally absent from fileStatuses: the
+    // diff menu filters them out, and excluding them keeps rename
+    // detection from hashing every untracked file in the tree.
     [self seedInitialCommit];
     [self writeFile:@"new.txt" contents:@"x"];
     iTermGitState *state = [self readState];
@@ -157,27 +161,23 @@
     XCTAssertEqual(state.adds, 1);
     XCTAssertEqual(state.deletes, 0);
     iTermGitFileStatus *fs = [self find:state.fileStatuses path:@"new.txt"];
-    XCTAssertNotNil(fs);
-    XCTAssertEqual(fs.indexStatus, iTermGitFileChangeKindNone);
-    XCTAssertEqual(fs.workdirStatus, iTermGitFileChangeKindUntracked);
+    XCTAssertNil(fs);
+    XCTAssertEqual(state.fileStatuses.count, 0u);
 }
 
 - (void)testRecurseUntrackedDirsCountsPerFile {
-    // The unified status walk uses RECURSE_UNTRACKED_DIRS so a
-    // directory of N untracked files contributes N to `adds`,
-    // matching `git status --porcelain` rather than the legacy
-    // directory-rollup behavior.
+    // The count walk uses RECURSE_UNTRACKED_DIRS so a directory of N
+    // untracked files contributes N to `adds`, matching
+    // `git status --porcelain` rather than the legacy directory-rollup
+    // behavior. fileStatuses excludes untracked entries, so it stays
+    // empty here even though `adds` is 3.
     [self seedInitialCommit];
     [self writeFile:@"newdir/a.txt" contents:@"1"];
     [self writeFile:@"newdir/b.txt" contents:@"2"];
     [self writeFile:@"newdir/c.txt" contents:@"3"];
     iTermGitState *state = [self readState];
     XCTAssertEqual(state.adds, 3);
-    XCTAssertEqual(state.fileStatuses.count, 3u);
-    for (iTermGitFileStatus *fs in state.fileStatuses) {
-        XCTAssertEqual(fs.workdirStatus, iTermGitFileChangeKindUntracked);
-        XCTAssertEqual(fs.indexStatus, iTermGitFileChangeKindNone);
-    }
+    XCTAssertEqual(state.fileStatuses.count, 0u);
 }
 
 - (void)testStagedAdd {
@@ -263,13 +263,18 @@
     // skipping the entry. Constructing genuinely invalid UTF-8
     // filenames on APFS is hard, so this test exercises the success
     // branch of the same code path with multibyte UTF-8 — confirms
-    // the bridge from C string to NSString preserves the bytes.
+    // the bridge from C string to NSString preserves the bytes. Use a
+    // tracked-then-modified file (not an untracked one) since
+    // fileStatuses now excludes untracked entries.
     [self seedInitialCommit];
-    [self writeFile:@"日本語.txt" contents:@"こんにちは"];
+    [self writeFile:@"日本語.txt" contents:@"こんにちは\n"];
+    [self runGit:@[@"add", @"日本語.txt"]];
+    [self runGit:@[@"commit", @"-q", @"-m", @"add ja"]];
+    [self writeFile:@"日本語.txt" contents:@"さようなら\n"];
     iTermGitState *state = [self readState];
     iTermGitFileStatus *fs = [self find:state.fileStatuses path:@"日本語.txt"];
     XCTAssertNotNil(fs);
-    XCTAssertEqual(fs.workdirStatus, iTermGitFileChangeKindUntracked);
+    XCTAssertEqual(fs.workdirStatus, iTermGitFileChangeKindModified);
 }
 
 #pragma mark - Diff stats (populateDiffStatsOnState:)
@@ -502,6 +507,111 @@
     iTermGitState *state = [self readState];
     XCTAssertEqualObjects(state.ahead, @"");
     XCTAssertEqualObjects(state.behind, @"");
+}
+
+#pragma mark - Untracked exclusion from fileStatuses
+
+// These tests pin the behavior of the HEAD-base fileStatuses pass
+// (populateHeadFileStatusesOnState:): untracked files are excluded
+// from the per-file list (the workgroup diff menu filters them out
+// anyway), but they still feed the `adds` count. Excluding them at the
+// libgit2 level keeps rename detection from hashing every untracked
+// file, which previously made the workgroup diff poll exceed the git
+// timeout in a checkout full of untracked files (it would hang on
+// "Diff session is waiting for changes").
+
+- (void)testTrackedChangeSurvivesAmongUntracked {
+    // A tracked modification must still appear in fileStatuses even
+    // when untracked files are present; only the untracked entries are
+    // dropped. `adds` reflects the untracked files regardless.
+    [self seedInitialCommit];
+    [self writeFile:@"seed.txt" contents:@"v2\n"];
+    [self writeFile:@"untracked1.txt" contents:@"a"];
+    [self writeFile:@"untracked2.txt" contents:@"b"];
+    iTermGitState *state = [self readState];
+    XCTAssertTrue(state.dirty);
+    XCTAssertEqual(state.adds, 2);
+    XCTAssertEqual(state.fileStatuses.count, 1u);
+    iTermGitFileStatus *fs = [self find:state.fileStatuses path:@"seed.txt"];
+    XCTAssertNotNil(fs);
+    XCTAssertEqual(fs.workdirStatus, iTermGitFileChangeKindModified);
+    XCTAssertEqual(fs.indexStatus, iTermGitFileChangeKindNone);
+    XCTAssertNil([self find:state.fileStatuses path:@"untracked1.txt"]);
+    XCTAssertNil([self find:state.fileStatuses path:@"untracked2.txt"]);
+}
+
+- (void)testManyUntrackedWithSingleTrackedModification {
+    // Direct regression guard for the workgroup diff hang: a working
+    // copy with many untracked files (including nested dirs, the
+    // RECURSE_UNTRACKED_DIRS case) plus one tracked change. The diff
+    // list must contain only the tracked file, no matter how many
+    // untracked files are sitting around.
+    [self seedInitialCommit];
+    [self writeFile:@"seed.txt" contents:@"v2\n"];
+    const int untrackedCount = 40;
+    for (int i = 0; i < untrackedCount; i++) {
+        [self writeFile:[NSString stringWithFormat:@"junk/dir%d/file%d.log", i % 4, i]
+               contents:@"noise\n"];
+    }
+    iTermGitState *state = [self readState];
+    XCTAssertEqual(state.adds, untrackedCount);
+    XCTAssertEqual(state.fileStatuses.count, 1u);
+    iTermGitFileStatus *fs = state.fileStatuses.firstObject;
+    XCTAssertEqualObjects(fs.path, @"seed.txt");
+    XCTAssertEqual(fs.workdirStatus, iTermGitFileChangeKindModified);
+}
+
+- (void)testOnlyUntrackedYieldsEmptyFileStatuses {
+    // No tracked changes at all: dirty is true (git status would show
+    // the untracked files) and `adds` counts them, but the diff list
+    // is empty because there's nothing difftool could show.
+    [self seedInitialCommit];
+    [self writeFile:@"a.txt" contents:@"a"];
+    [self writeFile:@"nested/b.txt" contents:@"b"];
+    iTermGitState *state = [self readState];
+    XCTAssertTrue(state.dirty);
+    XCTAssertEqual(state.adds, 2);
+    XCTAssertEqual(state.fileStatuses.count, 0u);
+}
+
+#pragma mark - Rename detection in fileStatuses
+
+- (void)testStagedRenameDetected {
+    // Rename detection (RENAMES_HEAD_TO_INDEX) is preserved by the
+    // untracked-free pass because it pairs the head-side delete with
+    // the index-side add, both tracked. `git mv` records a staged
+    // rename with identical content, so libgit2's similarity scan
+    // collapses it to a single renamed entry.
+    [self seedInitialCommit];
+    [self runGit:@[@"mv", @"seed.txt", @"renamed.txt"]];
+    iTermGitState *state = [self readState];
+    iTermGitFileStatus *fs = [self find:state.fileStatuses path:@"renamed.txt"];
+    XCTAssertNotNil(fs);
+    XCTAssertEqual(fs.indexStatus, iTermGitFileChangeKindRenamed);
+    // The old path should not show up as a separate deletion entry.
+    XCTAssertNil([self find:state.fileStatuses path:@"seed.txt"]);
+}
+
+- (void)testUnstagedFilesystemRenameShowsDeletionNotRename {
+    // A working-tree rename whose destination is untracked (a plain
+    // `mv` on disk, not `git mv`): because untracked files are excluded
+    // from the pass, the new path can't be paired with the old, so the
+    // old path surfaces as a deletion and the new (untracked) path is
+    // absent from fileStatuses. The new file still feeds `adds`. This
+    // is an intentional consequence of excluding untracked files;
+    // difftool couldn't show the untracked destination anyway.
+    [self seedInitialCommit];
+    NSString *from = [self.repoDir stringByAppendingPathComponent:@"seed.txt"];
+    NSString *to = [self.repoDir stringByAppendingPathComponent:@"moved.txt"];
+    NSError *err = nil;
+    [[NSFileManager defaultManager] moveItemAtPath:from toPath:to error:&err];
+    XCTAssertNil(err);
+    iTermGitState *state = [self readState];
+    XCTAssertEqual(state.adds, 1);
+    iTermGitFileStatus *deleted = [self find:state.fileStatuses path:@"seed.txt"];
+    XCTAssertNotNil(deleted);
+    XCTAssertEqual(deleted.workdirStatus, iTermGitFileChangeKindDeleted);
+    XCTAssertNil([self find:state.fileStatuses path:@"moved.txt"]);
 }
 
 @end

@@ -389,6 +389,7 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
              destinationFrameSize:(NSSize)destinationFrameSize
                     sourceRectPtr:(NSRect *)sourceRectPtr
                           margins:(NSEdgeInsets)margins
+                 panelReservation:(CGFloat)panelReservation
                    verticalOffset:(CGFloat)verticalOffset;
 
 // Indicates whether the cursor should take its color from the background (if YES) or text color (if NO).

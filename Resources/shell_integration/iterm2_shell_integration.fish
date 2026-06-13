@@ -34,22 +34,39 @@ end
 
 if begin; status --is-interactive; and not functions -q -- iterm2_status; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen-256color; and test "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != tmux-256color; and test "$TERM" != dumb; and test "$TERM" != linux; end
   begin
+    # OSC 133 aid: per-command identifier the receiver uses to target a
+    # specific mark for D-by-aid (and cascade-close when an outer command
+    # like ssh dies before its inner remote shell's D arrives). The salt
+    # is rolled once at shell-source time; the counter increments per
+    # prompt cycle inside iterm2_common_prompt.
+    #
+    # NOTE: fish 4.1+ emits OSC 133 natively and the script's A/C/D
+    # paths short-circuit via is_fish_4_1_or_later. Native fish doesn't
+    # know about aid yet, so on fish 4.1+ the only marker that carries
+    # aid is B (iterm2_prompt_end). That's fine — the receiver still
+    # closes inner marks by the topmost-open path when no aid is present;
+    # the nested-session benefit only kicks in once fish native emits
+    # aid too.
+    set -g ITERM2_AID_SALT (random)(random)
+    set -g ITERM2_AID_COUNTER 0
+    set -g ITERM2_CURRENT_AID "$ITERM2_AID_SALT-0"
+
     function iterm2_status
         if not is_fish_4_1_or_later
-          printf "\033]133;D;%s\007" $argv
+          printf "\033]133;D;%s;aid=%s\007" $argv $ITERM2_CURRENT_AID
         end
     end
 
     # Mark start of prompt
     function iterm2_prompt_mark
         if not is_fish_4_1_or_later
-          printf "\033]133;A;iTerm2\007"
+          printf "\033]133;A;aid=%s\007" $ITERM2_CURRENT_AID
         end
     end
 
     # Mark end of prompt
     function iterm2_prompt_end
-      printf "\033]133;B\007"
+      printf "\033]133;B;aid=%s\007" $ITERM2_CURRENT_AID
     end
 
     # Tell terminal to create a mark at this location
@@ -57,9 +74,9 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
       # For other shells we would output status here but we can't do that in fish.
       if not is_fish_4_1_or_later
         if test "$TERM_PROGRAM" = "iTerm.app"
-            printf "\033]133;C;iTerm2\r\007"
+            printf "\033]133;C;aid=%s\r\007" $ITERM2_CURRENT_AID
         else
-            printf "\033]133;C;iTerm2\007"
+            printf "\033]133;C;aid=%s\007" $ITERM2_CURRENT_AID
         end
       end
     end
@@ -92,7 +109,16 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
     function iterm2_common_prompt
       set -l last_status $status
 
+      # D for the just-finished command uses the OLD aid.
       iterm2_status $last_status
+
+      # Roll the per-command aid AFTER D and BEFORE A/B/C for the
+      # upcoming command get emitted. PS1/A is rendered below; B fires
+      # later in fish_prompt; C fires in iterm2_preexec when the user
+      # presses Enter — all see the same new aid.
+      set -g ITERM2_AID_COUNTER (math $ITERM2_AID_COUNTER + 1)
+      set -g ITERM2_CURRENT_AID "$ITERM2_AID_SALT-$ITERM2_AID_COUNTER"
+
       iterm2_write_remotehost_currentdir_uservars
       if not functions iterm2_fish_prompt | string match -q "*iterm2_prompt_mark*"
         iterm2_prompt_mark
@@ -150,5 +176,5 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and te
 
     iterm2_write_remotehost_currentdir_uservars
   end
-  printf "\033]1337;ShellIntegrationVersion=21;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=22;shell=fish\007"
 end

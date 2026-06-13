@@ -58,22 +58,34 @@ struct AnthropicMessage: Codable, Equatable {
             case .statusUpdate(let statusUpdate):
                 content = .string(statusUpdate.displayString)
             case .file(let file):
-                if file.mimeType.hasPrefix("image/") {
+                // Textual content (including image/svg+xml) goes through as a
+                // plain string. Check this BEFORE the image-prefix branch so
+                // SVGs don't get base64-wrapped as binary images — Anthropic's
+                // image source only accepts raster formats.
+                if MIMETypeIsTextual(file.mimeType) {
+                    content = .string(file.content.lossyString)
+                } else if file.mimeType.hasPrefix("image/") {
+                    // Send any image/* as an image block with its real media
+                    // type. Anthropic accepts jpeg/png/gif/webp and 400s on
+                    // anything else (e.g. image/heic); we let that clean
+                    // rejection surface rather than predicting the set here.
                     let base64Data = file.content.base64EncodedString()
                     content = .array([
                         .image(.init(type: "base64",
                                    media_type: file.mimeType,
                                    data: base64Data))
                     ])
+                } else if file.mimeType == "application/pdf" {
+                    let base64Data = file.content.base64EncodedString()
+                    content = .array([
+                        .document(.init(type: "base64",
+                                        media_type: file.mimeType,
+                                        data: base64Data))
+                    ])
                 } else {
-                    // TODO: Non-image binary attachments fall through to
-                    // lossyString, which mangles binary bytes into a UTF-8
-                    // approximation Anthropic can't actually read. Anthropic
-                    // accepts PDFs natively as document content blocks; if
-                    // we want PDF support, switch to .document(.base64) for
-                    // application/pdf and explicitly reject other binaries
-                    // upstream. Pinned by
-                    // AIRequestBuilderAttachmentTests.testAnthropic_binaryAttachment_fallsBackToText_doesNotCrash.
+                    // Any remaining binary type has no Anthropic content block;
+                    // the provider gate (accepts) refuses these upstream, so
+                    // this is just a well-formed last resort.
                     content = .string(file.content.lossyString)
                 }
             case .fileID(_, let name):
@@ -127,12 +139,26 @@ struct AnthropicMessage: Codable, Equatable {
                     case .statusUpdate:
                         return nil
                     case .file(let file):
-                        if file.mimeType.hasPrefix("image/") {
+                        // Textual content (including image/svg+xml) goes
+                        // through as text. Check this BEFORE the image-prefix
+                        // branch so SVGs aren't sent as binary images.
+                        if MIMETypeIsTextual(file.mimeType) {
+                            return .text(.init(text: file.content.lossyString))
+                        } else if file.mimeType.hasPrefix("image/") {
+                            // Any image/* as an image block with its real media
+                            // type; Anthropic 400s on formats it doesn't accept.
                             let base64Data = file.content.base64EncodedString()
                             return .image(.init(type: "base64",
                                               media_type: file.mimeType,
                                               data: base64Data))
+                        } else if file.mimeType == "application/pdf" {
+                            let base64Data = file.content.base64EncodedString()
+                            return .document(.init(type: "base64",
+                                                   media_type: file.mimeType,
+                                                   data: base64Data))
                         } else {
+                            // No Anthropic content block for this binary; the
+                            // provider gate refuses these upstream.
                             return .text(.init(text: file.content.lossyString))
                         }
                     case .fileID(id: _, name: let name):
@@ -165,6 +191,13 @@ struct AnthropicMessage: Codable, Equatable {
                                                type: .file(.init(name: "image",
                                                                content: data,
                                                                mimeType: image.media_type))))
+                    case .document(let document):
+                        guard let data = Data(base64Encoded: document.data) else { return nil }
+                        return .attachment(.init(inline: false,
+                                               id: UUID().uuidString,
+                                               type: .file(.init(name: "document",
+                                                               content: data,
+                                                               mimeType: document.media_type))))
                     case .toolUse(let toolUse):
                         let inputString = (try? JSONSerialization.data(withJSONObject: toolUse.input))?.lossyString ?? ""
                         let functionCall = LLM.FunctionCall(name: toolUse.name, arguments: inputString, id: toolUse.id)
@@ -202,6 +235,8 @@ struct AnthropicMessage: Codable, Equatable {
                     return text.text
                 case .image(let image):
                     return "[Image: \(image.media_type)]"
+                case .document(let document):
+                    return "[Document: \(document.media_type)]"
                 case .toolUse(let toolUse):
                     return "[Tool Use: \(toolUse.name)]"
                 case .toolResult(let toolResult):
@@ -248,6 +283,7 @@ extension AnthropicMessage {
     enum AnthropicContentBlock: Codable, Equatable {
         case text(AnthropicTextContent)
         case image(AnthropicImageContent)
+        case document(AnthropicDocumentContent)
         case toolUse(AnthropicToolUseContent)
         case toolResult(AnthropicToolResultContent)
 
@@ -261,6 +297,10 @@ extension AnthropicMessage {
                 return AIMetadata.instance.tokens(in: content.text) + 1
             case .image(_):
                 return 1000
+            case .document(_):
+                // PDFs are tokenized server-side; we don't have a useful local
+                // estimate so report a conservative non-trivial number.
+                return 2000
             case .toolUse(_):
                 return 100
             case .toolResult(let content):
@@ -273,6 +313,8 @@ extension AnthropicMessage {
             case .text(let content):
                 try content.encode(to: encoder)
             case .image(let content):
+                try content.encode(to: encoder)
+            case .document(let content):
                 try content.encode(to: encoder)
             case .toolUse(let content):
                 try content.encode(to: encoder)
@@ -292,6 +334,9 @@ extension AnthropicMessage {
             case "image":
                 let imageContent = try AnthropicImageContent(from: decoder)
                 self = .image(imageContent)
+            case "document":
+                let documentContent = try AnthropicDocumentContent(from: decoder)
+                self = .document(documentContent)
             case "tool_use":
                 let toolUseContent = try AnthropicToolUseContent(from: decoder)
                 self = .toolUse(toolUseContent)
@@ -336,6 +381,31 @@ extension AnthropicMessage {
         }
 
         // For backward compatibility
+        var media_type: String { source.media_type }
+        var data: String { source.data }
+
+        enum CodingKeys: String, CodingKey {
+            case type, source
+        }
+    }
+
+    // Anthropic document content block. Used for application/pdf (base64) and
+    // text/plain (for citations). See
+    // https://docs.anthropic.com/en/docs/build-with-claude/pdf-support.
+    struct AnthropicDocumentContent: Codable, Equatable {
+        let type: String = "document"
+        let source: Source
+
+        struct Source: Codable, Equatable {
+            let type: String
+            let media_type: String
+            let data: String
+        }
+
+        init(type: String, media_type: String, data: String) {
+            self.source = Source(type: type, media_type: media_type, data: data)
+        }
+
         var media_type: String { source.media_type }
         var data: String { source.data }
 
@@ -668,7 +738,12 @@ struct AnthropicRequestBuilder {
         var model: String
         var messages: [AnthropicMessage]
         var max_tokens: Int
-        var system: String?
+        // Structured form `[{type: "text", text: ..., cache_control: ...}]`.
+        // Anthropic accepts either the legacy bare string or the array
+        // form on the wire; we use the array form unconditionally so we
+        // can attach cache_control to the system text block. Nil when
+        // the conversation carries no system message (renames, etc.).
+        var system: [AnthropicSystemBlock]?
         var temperature: Double?
         var stream: Bool?
         var tools: [AnthropicTool]?
@@ -676,10 +751,32 @@ struct AnthropicRequestBuilder {
         var disable_parallel_tool_use: Bool?
     }
 
+    // Ephemeral prompt-cache marker. Anthropic caches every token from
+    // the start of the request up through this marker, keyed by exact
+    // byte equivalence. Within a ~5-minute window, subsequent requests
+    // with the same prefix pay 0.1x for those tokens (cache_read)
+    // instead of the full input rate.
+    private struct AnthropicCacheControl: Codable {
+        var type: String  // "ephemeral"
+        static let ephemeral = AnthropicCacheControl(type: "ephemeral")
+    }
+
+    private struct AnthropicSystemBlock: Codable {
+        var type: String  // "text"
+        var text: String
+        var cache_control: AnthropicCacheControl?
+    }
+
     private struct AnthropicTool: Codable {
         var name: String
         var description: String
         var input_schema: JSONSchema
+        // Optional ephemeral marker on the LAST tool in the array — see
+        // body() — so the entire tools array (and everything before it,
+        // i.e. system) caches as one prefix segment. Earlier tools must
+        // leave this nil; each cache_control burns one of the four
+        // breakpoints Anthropic allows per request.
+        var cache_control: AnthropicCacheControl?
     }
 
     private struct AnthropicToolChoice: Codable {
@@ -768,8 +865,8 @@ struct AnthropicRequestBuilder {
 
     // Anthropic requires that every tool_use block in an assistant message be
     // immediately followed by a user message containing the matching tool_result
-    // block (or all of them, for parallel tool_use). Callers (notably Cockpit's
-    // racy persistence) may hand us a layout where a plain user-text message
+    // block (or all of them, for parallel tool_use). Callers (notably the
+    // orchestrator's racy persistence) may hand us a layout where a plain user-text message
     // got persisted between a tool_use and its matching tool_result. Reorder so
     // the tool_result lands immediately after the tool_use, bumping any
     // intervening messages to AFTER the tool_result while preserving their
@@ -843,7 +940,7 @@ struct AnthropicRequestBuilder {
 
     func body() throws -> Data {
         let anthropicMessages = convertMessages(messages)
-        let systemMessage = messages.compactMap { message in
+        let systemMessageText = messages.compactMap { message in
             switch message.role {
             case .system:
                 return message.content
@@ -852,20 +949,66 @@ struct AnthropicRequestBuilder {
             }
         }.first
 
-        let anthropicTools = functions.isEmpty ? nil : functions.map { function in
-            AnthropicTool(
-                name: function.decl.name,
-                description: function.decl.description,
-                input_schema: function.decl.parameters
-            )
+        // Prompt-cache markers.
+        //
+        // Anthropic orders the cacheable prefix as tools → system →
+        // messages. Each cache_control marker creates a breakpoint
+        // that covers everything from the start of that order up to
+        // and including the marked element. So:
+        //
+        //   - Marker on system: covers [tools + system]. This is the
+        //     common-case win — both stable across the chat, the
+        //     entire ~13KB prefix becomes one cache_read.
+        //   - Marker on the LAST tool: covers [tools] only. This is
+        //     the fallback that still hits if the system prompt
+        //     changes (e.g. a future feature that injects a per-turn
+        //     system addendum), because [tools] is a strict prefix of
+        //     [tools + system] and the tools-only segment survives.
+        //
+        // Keep BOTH markers. Dropping the last-tool marker as
+        // "redundant" because the system marker already covers tools
+        // would silently destroy the fallback segment: any system
+        // edit would invalidate everything, and we'd pay
+        // cache_creation on tools again. The tools array (~5KB) is
+        // worth the second breakpoint.
+        //
+        // Earlier tools intentionally carry no marker; each one would
+        // burn a breakpoint, and Anthropic caps the request at four.
+        // Body() with an empty conversation (no system, no tools)
+        // emits no markers at all.
+        let systemBlocks: [AnthropicSystemBlock]?
+        if let systemMessageText {
+            systemBlocks = [
+                AnthropicSystemBlock(
+                    type: "text",
+                    text: systemMessageText,
+                    cache_control: .ephemeral)
+            ]
+        } else {
+            systemBlocks = nil
+        }
+
+        let anthropicTools: [AnthropicTool]?
+        if functions.isEmpty {
+            anthropicTools = nil
+        } else {
+            var tools: [AnthropicTool] = functions.map { function in
+                AnthropicTool(
+                    name: function.decl.name,
+                    description: function.decl.description,
+                    input_schema: function.decl.parameters,
+                    cache_control: nil)
+            }
+            tools[tools.count - 1].cache_control = .ephemeral
+            anthropicTools = tools
         }
 
         let body = Body(
             model: provider.model.name,
             messages: anthropicMessages,
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
-            system: systemMessage,
-            temperature: 0.0,
+            system: systemBlocks,
+            temperature: provider.model.supportsTemperature ? 0.0 : nil,
             stream: stream ? true : nil,
             tools: anthropicTools,
             tool_choice: functions.isEmpty ? nil : .auto
@@ -876,6 +1019,16 @@ struct AnthropicRequestBuilder {
         }
 
         let bodyEncoder = JSONEncoder()
+        // Anthropic prompt caching is keyed on byte-exact prefix match.
+        // Tool input_schema contains a [String: Property] dictionary,
+        // and Swift's Dictionary iteration order is randomized per
+        // process, so without .sortedKeys two requests built from the
+        // same tool list can serialize their tools array with the same
+        // bytes shuffled — making the cache_read path silently never
+        // fire. sortedKeys also gives us reproducible request bodies
+        // for tests. The wire shape is unaffected; Anthropic doesn't
+        // care about key order, only the cache does.
+        bodyEncoder.outputFormatting = [.sortedKeys]
         let bodyData = try bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")
         return bodyData

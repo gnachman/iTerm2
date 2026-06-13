@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"}],\"model\":\"claude-haiku-4-5\",\"temperature\":0,\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"input_schema\":{\"properties\":{},\"required\":[],\"type\":\"object\"},\"name\":\"get_random_word\"}]}",
+  "key" : "6683af67a2e2e380e7512cc9baa678fc0caf78b30ca645dec5b213981002bbad",
+  "response" : {
+    "data" : "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011L2GxncW7keDSBso7q4EeN\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01B2NCgMs1E9AaZwKJqiSFPZ\",\"name\":\"get_random_word\",\"input\":{},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":379,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":30,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

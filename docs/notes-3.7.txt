@@ -9,8 +9,31 @@ to version 3.6.7 and duplicates some items in
 betas since then.
 
 Major New Features:
+- In the Jobs view (toolbelt and status bar
+  popover) hovering a row shows the full
+  command as a tooltip, and pressing space
+  opens a popover with the full command,
+  process ID, start time, working
+  directory, environment variables, and a
+  list of open files and network
+  connections.
+
+- In an orchestration-mode AI chat you can now
+  @-mention a terminal session: type @ to get a
+  window/tab/pane outline with a live preview,
+  and the picked session is inserted as a single
+  token that the AI receives as a session
+  reference.
+
 - Tabs can now be placed on the right side
   of the window.
+
+- Sending or copying clippings now prefixes
+  each one with its title in bold Markdown and
+  separates multiple clippings with a
+  configurable string (default is a line of
+  two dashes). See the Clipping Separator
+  advanced setting.
 
 - A new Tab Status system was added. Sessions
   can now report status that appears on their
@@ -21,7 +44,11 @@ Major New Features:
   drag-to-reorder popover, status is
   aggregated across split panes, and it is
   auto-cleared on shell prompt or session
-  termination.
+  termination. The toolbelt’s settings popover
+  also has a Merge Workgroup Statuses option
+  that collapses each workgroup to a single
+  row, showing the status of whichever
+  session in it changed most recently.
 
 - Session Notes were added: floating,
   draggable, resizable, collapsible multiline
@@ -37,6 +64,22 @@ Major New Features:
 
 - Claude Code integration was added.
   This is still a work in progress as of 3.7.0beta1.
+
+- In AI chat orchestration mode, references
+  to a session or workgroup now appear as a
+  clickable link, marked with a terminal
+  icon, showing its current name instead of
+  a raw identifier. Clicking the link
+  reveals that session. The tool-call
+  activity lines (e.g. “Reading screen of
+  …”) now use these same links, and show
+  “[defunct session]” once the target is
+  gone instead of leaking a raw GUID.
+
+- A new AI chat created without a session to
+  link to now offers to enable orchestration
+  mode, mirroring the link offer shown when a
+  session is available.
 
 - Workgroups let you configure a session
   to be transformed into a group of related
@@ -71,10 +114,24 @@ Major New Features:
   on first launch and the entry has been
   removed from Settings.
 
+- The Code Review system prompt is now
+  editable in Settings > General > AI >
+  Prompts. It defaults to the bundled
+  prompt and is passed to Claude Code at
+  launch.
+
 - Switching to a Code Review peer that is
   still showing its prompt overlay now
   focuses the prompt text field so you can
   start typing immediately.
+
+- Workgroups now survive a restart. When
+  the app relaunches (for example after a
+  Sparkle upgrade), an active workgroup is
+  rebuilt: its Diff and Code Review peers,
+  split/tab children, toolbar, and peer
+  switching all come back with their
+  content intact.
 
 - Clippings now keep history. An archive
   button in the clippings panel snapshots
@@ -228,9 +285,33 @@ Triggers Improvements:
   matching.
 
 AI Improvements:
+- Chats in the AI chat list now get an icon
+  drawn by your AI model from the chat
+  title. Chats without one show a default
+  icon. The prompt can be edited in
+  Settings > General > AI > Prompts.
+- The AI command safety check now uses your
+  configured AI model. It runs deterministic
+  terminal rules first and only asks the model
+  when those rules cannot decide. It can send
+  commands to your (possibly cloud) provider, so
+  it is opt-in. Users who already enabled it keep
+  using free on-device Apple Intelligence and are
+  asked once whether to switch to their model.
+- Command safety auto-allow now requires every
+  segment of a compound command to be read-only,
+  so a safe command followed by a dangerous one
+  (or a redirection or substitution) is no longer
+  silently auto-run.
 - AI chat can connect to LAN-hosted models
   over HTTP.
 - Add DeepSeek v4-flash and v4-pro models.
+- Added the latest AI models: OpenAI GPT-5.5
+  and GPT-5.5 Pro, Anthropic Claude Opus 4.8,
+  Opus 4.7, and Sonnet 4.6, and Google Gemini
+  3.5 Flash and Gemini 3.1 Pro. Default models
+  now point at GPT-5.5, Claude Opus 4.8, and
+  Gemini 3.5 Flash.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to
   enable. Reasoning summaries appear live in
@@ -256,6 +337,24 @@ AI Improvements:
   override built-in headers with the same
   name. Values are stored unencrypted in
   iTerm2’s preferences.
+- PDF chat attachments now work on Anthropic.
+  Previously the bytes were mangled into a
+  UTF-8 approximation; PDFs are now sent as
+  native document content blocks. The chat
+  attachment picker also disables files the
+  current AI provider cannot accept, and
+  rejected drag-and-drop attachments now show
+  an explanatory alert instead of vanishing
+  silently.
+- New advanced setting “Log raw AI API
+  requests and responses to disk” captures
+  full-fidelity AI wire traffic (headers,
+  body, streamed chunks, response, timing) to
+  ~/Library/Application Support/iTerm2/
+  AIChatWire/ for debugging. Off by default;
+  the log includes API keys and prompt
+  content verbatim, so delete the files when
+  finished.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the
@@ -268,7 +367,9 @@ Python API Improvements:
   one or more tabs to a target layout in a
   single transaction. Supports swapping panes,
   rearranging the split tree, and moving
-  sessions across tabs and windows.
+  sessions across tabs and windows. New
+  sessions can be created in place with
+  new_session leaves.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.
@@ -429,6 +530,33 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Copying selected text from a porthole (such as
+  rendered markdown) now works in apps that
+  prefer rich text.
+- Clicking in a porthole in an inactive split
+  pane now activates that pane.
+- Fixed several crashes: registering a profile
+  hotkey for a profile with no GUID, loading a
+  profile whose default-bookmark value is a
+  boolean, listing processes over SSH when a
+  process has an empty command, drawing margin
+  background colors with a nil color, a crash when
+  macOS rejected presentation options during a
+  Spaces transition (now retried once it settles),
+  and a divide-by-zero when the Metal view has a
+  zero-size drawable.
+- iTerm2 no longer spuriously offers to reset
+  terminal state or restore the tab and window
+  title when the local hostname changes (for
+  example when mDNS renames your .local host)
+  or when you run sudo. Any two localhosts are
+  now treated as the same host.
+- AI chat no longer fails with a tool_use_id
+  error after an auto-approved command. The
+  tool call was dropped from saved history
+  while its result was kept; the prompt is now
+  repaired when reloaded, healing chats saved
+  by earlier versions too.
 - Session notes now keep their distance from
   the top-right corner of a session when it
   is resized, instead of from the bottom-left.
@@ -509,6 +637,15 @@ Bug Fixes:
   appearance variant of the profile key so
   it persists until OSC 110/111 or a manual
   reset clears it.
+- The Cockpit orchestrator’s send_text tool
+  now routes payloads containing control bytes
+  (ESC, Ctrl-C, etc.) as raw keystrokes instead
+  of bracketed pastes. The previous wrap turned
+  embedded control bytes into literal pasted
+  data, so e.g. sending ESC :q ENTER to a vim
+  session inserted “^[:q” as text instead of
+  quitting. Pure prompt-style text still goes
+  through as a paste, as Ink-based TUIs expect.
 - Showing the clippings panel in a window
   zoomed to fit the display no longer grows
   the window horizontally. The tab content
@@ -545,6 +682,19 @@ Bug Fixes:
   solid color view, which refreshes the color
   in updateLayer under the correct drawing
   appearance.
+- The heavy window border no longer leaves its
+  corners unbordered on low-opacity windows. The
+  corner-radius detector failed on transparent
+  windows (their interior is not opaque enough),
+  so the border fell back to a wrong radius and
+  the corner arc was clipped away. Detection now
+  works at any opacity, with a better per-OS
+  fallback radius. Issue 12882.
+- The heavy window border now stays flush with
+  the window edges instead of sometimes drawing
+  as a smaller inner rounded rectangle. Its view
+  could be left at a stale size and was not kept
+  in sync with the window. Issue 12882.
 - The legacy (non-GPU) renderer now invalidates
   only the lines that actually changed, instead
   of repainting the entire view on every cell
@@ -1050,3 +1200,225 @@ Bug Fixes:
   stays put as new lines come in.
 - Fix black, unreadable text in the
   Script Console Logs tab in dark mode.
+- Session Stats now shows the correct
+  keyboard shortcut for workgroup peers
+  that have a custom peer-switch
+  shortcut configured, instead of always
+  showing the built-in ⌥⇧⌘ number.
+- Jobs toolbelt and the status bar job
+  popover gain a “Notify on Termination”
+  right-click option. Monitored jobs show
+  a bell next to their name, and when the
+  chosen process exits a modal alert names
+  the job and process ID.
+- The badge no longer hides behind the
+  clippings panel. It now right-aligns
+  at the inner edge of the right-gutter
+  panel area in both the legacy and GPU
+  renderers.
+- AI text-typing tools (send_text in
+  orchestration mode and
+  insert_text_at_cursor in
+  session-bound mode) now accept a
+  small backslash-escape vocabulary so
+  the agent can drive control keys.
+  Recognized: \\ for a literal
+  backslash, \n, \r, \t, and \uXXXX
+  (four hex digits) for any Unicode
+  scalar. Set append_newline to false
+  for a standalone control key (e.g.
+  Escape) so iTerm2 doesn’t tack a
+  newline onto it. Lets the agent
+  send things
+  like  for Ctrl-D,  for
+  Ctrl-Z,  for Ctrl-L, and
+   for Escape.
+- Implement start_session for the
+  orchestrator. The agent can now
+  spawn a new window, tab, or
+  vertical split via the existing
+  start_session tool. Every spawn
+  prompts for user approval inline
+  in the chat, with the placement
+  and command (if any) shown in the
+  prompt. Returns the new session’s
+  synthetic workgroup_id so the
+  agent can immediately drive the
+  new session with the other tools.
+
+- Dropping a file onto the AI chat
+  text field now offers to attach it
+  when the current backend supports
+  that file type, instead of always
+  inserting its path as text. The
+  choice can be remembered.
+
+- AI chat can now attach images to
+  OpenAI models (vision), and audio
+  to OpenAI audio models on the
+  chat-completions API. Attachment
+  support is now decided by modality
+  rather than a per-format allow
+  list: if a backend can carry an
+  image, PDF, audio, or video block,
+  you can attach it, and an
+  unsupported file is reported by the
+  model instead of being silently
+  refused.
+- Announcements now become narrower
+  when the clippings panel is visible
+  so they no longer overlap it.
+- Python API: GetPromptResponse now
+  has excluded_subranges, listing the
+  cell regions inside the command
+  range that the shell marked as
+  non-input via OSC 133;A;k=s|c|r
+  (PS2 prefixes, right-prompt cells).
+  Available on responses to
+  async_get_last_prompt and
+  async_get_prompt_by_id. Always
+  empty on PromptMonitor.PROMPT
+  notifications — fetch via the RPC
+  after a COMMAND_END notification
+  for the populated value.
+- OSC 133 aid= now tracks nested
+  shell-integration sessions: a local
+  shell that runs ssh into a remote
+  shell with shell integration (or a
+  REPL that emits its own A/B/C/D)
+  no longer confuses iTerm2's mark
+  bookkeeping when the inner D's
+  arrive before the outer's. Each
+  mark carries the aid from its
+  A/B/C/D markers and a parentAid
+  pointing at the open mark it
+  nested under. D;aid=X closes the
+  matching command instead of the
+  topmost. If an outer command dies
+  (ssh tunnel drop, etc.) without
+  the inner ever closing, the outer
+  D cascade-closes every still-open
+  mark whose parentAid chain leads
+  back to it so no inner mark leaks
+  as still-running.
+- Disable automatic text substitutions
+  in the AI chat input field, so things
+  like -- no longer turn into an em
+  dash and smart quotes, autocorrect,
+  and text replacements stay off.
+- Fix a bug where installing the Claude
+  Code integration added its workgroup
+  triggers to the settings UI but never
+  wrote them back to user defaults, so
+  they vanished on the next launch.
+  Uninstalling had the mirror bug. Both
+  now flush the profile model to disk.
+- The default AI timeout is now 5 minutes
+  instead of 30 seconds, giving slow
+  models and long responses more time to
+  complete before giving up.
+- AI orchestration: opening a new session
+  with no command no longer prompts for
+  permission. When the agent supplies a
+  command, the auto-mode safety check
+  vets it and approves automatically if
+  it passes, only prompting otherwise.
+- The Claude Code integration setup
+  wizard is easier to navigate. Show
+  Toolbelt can now be skipped, the
+  default button reflects whether each
+  step is already done (Install when it
+  is not, Next/Close when it is), and
+  the Before You Start sheet has an
+  always-visible link to a web page
+  explaining the whole integration.
+
+- The Cockpit orchestrator can now
+  watch sessions that report no
+  status (plain TUIs, coding agents
+  that don't emit status, bare
+  shells). register_watch falls back
+  to reading the screen with a quiet
+  background AI poller and delivers
+  the usual status_update when the
+  target state is reached, instead of
+  noisily polling in the chat. It
+  gives up after five minutes with a
+  watch_timed_out update.
+- Workgroup code-review/diff sessions no
+  longer hang on “waiting for changes” in
+  a checkout full of untracked files. The
+  per-file diff list now excludes
+  untracked files, so git rename detection
+  no longer hashes every untracked file in
+  the tree and the poll finishes within
+  the git timeout.
+- The Workgroups settings pane has a
+  help button in the bottom-right
+  corner that opens the Workgroups
+  documentation.
+- Next/Previous Pane (cmd-[ and cmd-])
+  work again after using Session >
+  Restart Session on a maximized pane.
+  Restart gives the session a new GUID,
+  and the maximized reading-order list
+  was keyed by GUID, so it could no
+  longer find the restarted pane. The
+  order now tracks panes in a way that
+  survives a restart and other in-place
+  session swaps.
+- Fix a bug where Fold All and Clear
+  Buffer left inline views (such as
+  imgcat images) behind. Folded views
+  are now hidden and restored on
+  unfold.
+- Fix a bug where the Jobs toolbelt was
+  empty after restoring a session until
+  the next job or shell prompt. Restored
+  sessions now populate it immediately.
+- The Session Status toolbelt tool has a
+  bell toggle in its bottom-left corner.
+  When armed, the next time any session’s
+  status (waiting/idle/busy) changes it
+  shows an alert and turns itself back
+  off. A brief flicker that returns to
+  the original status does not count.
+  Window > Notify on Status Change
+  (shift-cmd-X) toggles the same thing
+  from the menu.
+- The Cockpit window now shows each
+  session’s detail string under its
+  name when grouping by status.
+- The Cockpit window has a bell button
+  that arms notify-on-status-change for
+  the selected window or session, and
+  rows show a bell when armed. The
+  per-window watch is shared with the
+  Window menu and the Session Status
+  tool; per-session watches are new.
+  Notify-on-status-change now works
+  whether or not the Session Status
+  toolbelt tool is open.
+- Killing or reloading claude in a Claude
+  Code workgroup peer (such as the Code
+  Review or Diff peer) no longer exits the
+  whole workgroup. The Exit Workgroup
+  trigger has a new leader-only option, set
+  by the Claude Code installer, so only the
+  main session's claude ending tears the
+  workgroup down. Existing setups are
+  upgraded automatically.
+- Job Ended triggers now fire reliably
+  when a foreground job exits, including
+  when it exits together with the
+  session. Job started/ended detection is
+  now event driven (from the process
+  monitor) rather than inferred from the
+  periodic title poll, which could miss a
+  job's termination.
+- The notify-on-status-change alert has a
+  Reveal button that jumps to the session
+  whose status changed. A window watch
+  now covers every session in the window,
+  including ones created after it was
+  armed.

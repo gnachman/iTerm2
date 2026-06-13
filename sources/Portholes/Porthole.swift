@@ -105,6 +105,7 @@ struct PortholeConfig: CustomDebugStringConvertible {
 
 protocol PortholeDelegate: AnyObject {
     func portholeDidAcquireSelection(_ porthole: Porthole)
+    func portholeWantsFirstResponder(_ porthole: Porthole)
     func portholeRemove(_ porthole: Porthole)
     func portholeResize(_ porthole: Porthole)
     func portholeAbsLine(_ porthole: Porthole) -> Int64

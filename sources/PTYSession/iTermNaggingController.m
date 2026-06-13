@@ -1001,7 +1001,7 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
         // Any explicit user action — including closing with the X (selection -1)
         // — should suppress further offers for this sudo invocation.
         if (selection != -2) {
-            _touchIDForSudoDismissed = YES;
+            self->_touchIDForSudoDismissed = YES;
         }
         switch (selection) {
             case 0:  // Run In New Window

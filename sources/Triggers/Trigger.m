@@ -188,6 +188,10 @@ NSString * const kTriggerProvenanceKey = @"provenance";
     return NO;
 }
 
+- (BOOL)hasLeaderOnlyOption {
+    return NO;
+}
+
 - (BOOL)detectsPrompt {
     return NO;
 }

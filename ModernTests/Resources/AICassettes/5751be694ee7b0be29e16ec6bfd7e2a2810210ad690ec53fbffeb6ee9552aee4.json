@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127979,\"messages\":[{\"content\":\"Reply with exactly the single word: BANANA\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"disabled\"}}",
+  "key" : "5751be694ee7b0be29e16ec6bfd7e2a2810210ad690ec53fbffeb6ee9552aee4",
+  "response" : {
+    "data" : "{\"id\":\"c988e3b4-43e9-4960-89d8-0241f9116fd6\",\"object\":\"chat.completion\",\"created\":1780870930,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"BANANA\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":14,\"completion_tokens\":3,\"total_tokens\":17,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":14},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

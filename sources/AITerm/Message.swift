@@ -10,6 +10,37 @@ enum Participant: String, Codable, Hashable {
     case agent
 }
 
+// Carried by Message.Content.watcherEvent. Synthesized by iTerm2
+// (currently: the orchestrator's watcher subsystem) and delivered
+// into the chat as a user-side message so the agent can react. The
+// structured payload lets both the chat UI and the agent's
+// LLM-message translator render their own text without re-parsing a
+// free-form string.
+//
+// Distinct from Message.Body.Attachment.AttachmentType.statusUpdate,
+// which is an inline subpart carrying ephemeral DeepSeek reasoning
+// text — unrelated concepts despite the prior naming collision.
+struct StatusUpdate: Codable, Equatable {
+    enum Reason: String, Codable {
+        case stateReached     // a registered state-watcher fired
+        case watcherDropped   // the watched session is gone (e.g. failed to restore)
+        case watchTimedOut    // a screen-observation watcher gave up after its time cap
+    }
+    var watcherID: String
+    var workgroupID: String
+    var workgroupName: String
+    var roleID: String
+    var roleName: String
+    var reason: Reason
+    // Concrete state name for stateReached (e.g. "idle"). Empty for
+    // watcherDropped (state isn't relevant — the session is gone).
+    var stateReached: String
+    var timestamp: Date
+    // Free-form human-readable detail, used both as the chat-UI body
+    // and as the inner text of the agent-side <status_update> tag.
+    var detail: String
+}
+
 struct ClientLocal: Codable {
     enum Action: Codable {
         case pickingSession
@@ -17,7 +48,35 @@ struct ClientLocal: Codable {
         case notice(String)
         case streamingChanged(StreamingState)
         case offerLink(terminal: Bool, guid: String, name: String?)
+        // Published when a new chat is created without a session to
+        // link to (e.g. the user hit New Chat with no current
+        // terminal, so the .offerLink bubble doesn't apply). Rendered
+        // as a system-message bubble with a single Enable
+        // Orchestration button; tapping it routes through the same
+        // confirmation alert as the menu-driven toggle.
+        case offerOrchestration
         case permissions(terminal: Bool, guid: String)
+        // Inline workgroup-claim prompt published by the orchestrator
+        // dispatcher. Rendered as a bubble with Approve / Deny
+        // buttons. The user's choice comes back as a
+        // UserCommand.workgroupPermissionResponse with the same
+        // requestID. Carrying the workgroup name (resolved at publish
+        // time) means the renderer doesn't need to look it up later
+        // and the message still makes sense if the workgroup is
+        // torn down before the user answers.
+        case workgroupPermissionRequest(requestID: String,
+                                      workgroupID: String,
+                                      workgroupName: String,
+                                      summary: String)
+
+        // The agent has asked the user to switch this chat into
+        // orchestration mode. Rendered as a system-message bubble
+        // with an explanation of what orchestration grants and
+        // Enable / Not Now buttons; the user's choice comes back as
+        // UserCommand.enableOrchestrationResponse with the same
+        // requestID. Published by the request_orchestration_enable
+        // tool, registered only in session-bound mode.
+        case enableOrchestrationRequest(requestID: String)
 
         enum StreamingState: String, Codable {
             case stopped
@@ -30,6 +89,20 @@ struct ClientLocal: Codable {
 
 enum UserCommand: Codable {
     case stop
+    // Response to a ClientLocal.Action.workgroupPermissionRequest. Routed
+    // through the broker so the orchestrator dispatcher (subscribed on
+    // its chat's broker channel) can resume the parked tool-call
+    // continuation. Goes through UserCommand rather than a fresh
+    // Message.Content case so the chat service's existing
+    // "skip-userCommand" filter keeps it from looping back to the LLM.
+    case workgroupPermissionResponse(requestID: String, approved: Bool)
+    // Response to a ClientLocal.Action.enableOrchestrationRequest.
+    // ChatService routes it to the ChatAgent, which resumes the
+    // parked tool-call continuation (the agent's
+    // request_orchestration_enable tool) and, when approved, flips
+    // the chat's orchestrationEnabled flag and transitions itself
+    // in place to orchestration mode.
+    case enableOrchestrationResponse(requestID: String, approved: Bool)
 }
 
 struct Message: Codable {
@@ -54,7 +127,21 @@ struct Message: Codable {
         // markdown is empty on the agent side. The client modifies the message to set markdown
         // as it sees fit.
         case explanationResponse(ExplanationResponse, ExplanationResponse.Update?, markdown: String)
-        case remoteCommandRequest(RemoteCommand, safe: Bool?)
+        // Payload is generic over the stack that produced the call.
+        // Session-bound mode publishes .classic(RemoteCommand); the
+        // orchestrator publishes .external(ExternalRemoteCommand).
+        // The wrapper carries the LLM message, tool name, and markdown
+        // description in a stack-agnostic way; readers that need the
+        // typed RemoteCommand reach for `payload.classic`.
+        case remoteCommandRequest(RemoteCommandPayload, safe: Bool?)
+        // Async watcher event from iTerm2 to the agent
+        // (orchestration-only). Synthesized when a registered watcher
+        // fires (or fails to re-arm on restart). Routed like a
+        // user-author message so the chat service kicks off an agent
+        // turn, but rendered distinctively in the chat UI
+        // (system-message style) so the user can tell it didn't come
+        // from them.
+        case watcherEvent(StatusUpdate)
         // Output/Error, message unique ID, function name, function call ID (used by Responses API but not older APIs)
         case remoteCommandResponse(Result<String, AIError>, UUID, String, LLM.Message.FunctionCallID?)
         case selectSessionRequest(Message, terminal: Bool)  // carries the original message that needs a session
@@ -76,7 +163,7 @@ struct Message: Codable {
             switch self {
             case .plainText, .markdown, .explanationRequest, .remoteCommandRequest, .clientLocal,
                     .renameChat, .userCommand, .setPermissions, .vectorStoreCreated,
-                    .terminalCommand, .multipart:
+                    .terminalCommand, .multipart, .watcherEvent:
                 return self
             case .explanationResponse(let response, var update, let markdown):
                 if let updateID = update?.messageID, let replacement = uuidMap[updateID] {
@@ -141,8 +228,14 @@ struct Message: Codable {
                     return "Client-local: streaming=\(state.rawValue)"
                 case let .offerLink(terminal: terminal, guid: guid, name: name):
                     return "Client-local: offerLink terminal=\(terminal) guid=\(guid) name=\(name.d)"
+                case .offerOrchestration:
+                    return "Client-local: offerOrchestration"
                 case let .permissions(terminal: terminal, guid: guid):
                     return "Client-local: permissions terminal=\(terminal) guid=\(guid)"
+                case let .workgroupPermissionRequest(requestID, workgroupID, workgroupName, _):
+                    return "Client-local: workgroup permission request \(requestID) workgroup=\(workgroupName) (\(workgroupID))"
+                case .enableOrchestrationRequest(let requestID):
+                    return "Client-local: enable orchestration request \(requestID)"
                 }
             case .renameChat(let name):
                 return "Rename chat to \(name)"
@@ -162,6 +255,8 @@ struct Message: Codable {
                 return "Multipart message"
             case .userCommand(let command):
                 return "User command \(command)"
+            case .watcherEvent(let update):
+                return "Watcher event (\(update.reason.rawValue)): \(update.detail.truncatedWithTrailingEllipsis(to: maxLength))"
             }
         }
 
@@ -187,12 +282,15 @@ struct Message: Codable {
                     case .active:
                         "Sending commands to AI automatically"
                     }
-                case .offerLink, .permissions:
+                case .offerLink, .offerOrchestration, .permissions, .workgroupPermissionRequest,
+                        .enableOrchestrationRequest:
                     return nil
                 }
             case .renameChat, .append, .appendAttachment, .commit, .setPermissions,
                     .vectorStoreCreated, .userCommand:
                 return nil
+            case .watcherEvent(let update):
+                return update.detail.truncatedWithTrailingEllipsis(to: maxLength)
             case .remoteCommandResponse:
                 return "Finished executing command"
             case .terminalCommand(let cmd):
@@ -260,7 +358,7 @@ struct Message: Codable {
             true
         case .selectSessionRequest, .remoteCommandRequest, .plainText, .markdown,
                 .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand,
-                .appendAttachment, .multipart:
+                .appendAttachment, .multipart, .watcherEvent:
             false
         }
     }
@@ -273,7 +371,7 @@ struct Message: Codable {
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
                 .commit, .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated, .userCommand:
+                .vectorStoreCreated, .userCommand, .watcherEvent:
             false
         }
     }
@@ -283,15 +381,23 @@ struct Message: Codable {
         return content.snippetText
     }
 
-    mutating func removeStatusUpdates() {
+    // Strip the AttachmentType.statusUpdate subparts (DeepSeek
+    // reasoning summary updates) from a multipart message,
+    // distilling any reasoning text into agentReasoning first.
+    //
+    // Unrelated to Message.Content.watcherEvent — that's a separate
+    // top-level message type, not an attachment subpart, and is
+    // persisted as its own row.
+    mutating func removeReasoningStatusSubparts() {
         if case .multipart(var subparts, let vectorStoreID) = content {
-            // Distill any reasoning-summary status updates into agentReasoning
-            // before stripping them. The status-update path is ephemeral display
-            // state and gets removed at persist time; agentReasoning is durable
-            // and required by DeepSeek's API on every subsequent turn. Without
-            // this distillation step, streaming reasoning would vanish the first
-            // time a follow-up text chunk arrives (because the chat list model
-            // calls removeStatusUpdates before appending each chunk).
+            // Distill reasoning-summary status updates into
+            // agentReasoning before stripping them. The status-update
+            // path is ephemeral display state and gets removed at
+            // persist time; agentReasoning is durable and required by
+            // DeepSeek's API on every subsequent turn. Without this
+            // distillation step, streaming reasoning would vanish the
+            // first time a follow-up text chunk arrives (because the
+            // chat list model calls this before appending each chunk).
             var harvestedReasoning = ""
             for subpart in subparts {
                 guard case .attachment(let attachment) = subpart,
@@ -343,7 +449,7 @@ struct Message: Codable {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
                 .append, .appendAttachment, .commit, .setPermissions, .terminalCommand,
-                .vectorStoreCreated, .userCommand:
+                .vectorStoreCreated, .userCommand, .watcherEvent:
             it_fatalError()
         }
     }
@@ -381,7 +487,7 @@ struct Message: Codable {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
                 .commit, .setPermissions, .terminalCommand, .appendAttachment, .vectorStoreCreated,
-                .userCommand:
+                .userCommand, .watcherEvent:
             it_fatalError()
         }
     }

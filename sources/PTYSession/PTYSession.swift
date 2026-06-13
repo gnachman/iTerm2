@@ -59,6 +59,14 @@ class PTYSessionSwiftState: NSObject {
     // re-present the prompt overlay against the original template.
     var codeReviewRawCommand: String?
 
+    // For .codeReview sessions, the prompt text the user last submitted
+    // from the overlay (which may be a preset or a hand-edited value).
+    // nil until the first submission. When the overlay is re-presented
+    // (toolbar reload, broken-pipe restart) this is used as the default
+    // instead of the store's last-selected preset, so the user's prior
+    // edits are preserved across reloads.
+    var codeReviewLastUsedPrompt: String?
+
     // For .diff sessions whose spawn was deferred (the workgroup's git
     // poller hadn't reported any pending change yet at spawn time), the
     // captured closure that fires the launch request. Cleared by
@@ -118,7 +126,7 @@ extension PTYSession {
             }
 
             if let mark = screen.lastCommandMark(),
-               let command = mark.command,
+               let command = mark.fullCommand,
                mark.hasCode {
                 items.append("The last command exited with status \(mark.code). That command was: \(command)")
             }
@@ -576,7 +584,7 @@ extension PTYSession {
             if entries.count >= limit {
                 return
             }
-            if let command = mark.command {
+            if let command = mark.fullCommand {
                 var entry: [String: String] = ["command": command]
                 let guid = mark.guid
                 if !guid.isEmpty {
@@ -600,7 +608,7 @@ extension PTYSession {
                        "The last command execute can’t be provided because Shell Integration isn’t installed.")
             return
         }
-        guard let command = screen.lastCommandMark()?.command else {
+        guard let command = screen.lastCommandMark()?.fullCommand else {
             try completion("There are no previous command in history", "No previous command is available in this session}s history.")
             return
         }
@@ -632,7 +640,7 @@ extension PTYSession {
         }
         var entries = [[String: String]]()
         screen.enumeratePrompts(from: nil, to: nil) { mark in
-            if let command = mark.command, command.contains(searchCommandHistory.query) {
+            if let command = mark.fullCommand, command.contains(searchCommandHistory.query) {
                 var entry: [String: String] = ["command": command]
                 let guid = mark.guid
                 if !guid.isEmpty {
@@ -729,7 +737,15 @@ extension PTYSession {
 
     func insertTextAtCursorRemoteCommand(insertTextAtCursor: RemoteCommand.InsertTextAtCursor,
                                          completion: @escaping (String, String) throws -> ()) rethrows {
-        writeTaskNoBroadcast(insertTextAtCursor.text)
+        let decoded: String
+        do {
+            decoded = try decodeAIBackslashEscapes(insertTextAtCursor.text)
+        } catch {
+            try completion("Error: \(error). Try again with a corrected text argument.",
+                       "AI tried to insert text but the escape sequence was malformed.")
+            return
+        }
+        writeTaskNoBroadcast(decoded)
         try completion("Inserted", "Text inserted by AI.")
     }
 
@@ -1621,20 +1637,6 @@ extension PTYSession {
     }
 }
 
-extension PTYSession: ResilientCoordinateDataSource {
-    var rcScrollbackOverflow: Int64 { screen.totalScrollbackOverflow() }
-    var rcNumberOfLines: Int32 { screen.numberOfLines() }
-    var rcGuid: String { guid }
-    var rcWidth: Int32 { screen.width() }
-}
-
-extension VT100ScreenMutableState: ResilientCoordinateDataSource {
-    var rcScrollbackOverflow: Int64 { cumulativeScrollbackOverflow }
-    var rcNumberOfLines: Int32 { Int32(numberOfLines) }
-    var rcGuid: String { uniqueIdentifier }
-    var rcWidth: Int32 { Int32(width) }
-}
-
 extension PTYSession: AutomaticProfileSwitchingSessionDelegate {
     func automaticProfileSwitchingSessionExpressionNeedEvaluation(_ session: AutomaticProfileSwitchingSession) {
         if iTermProfilePreferences.bool(forKey: KEY_PREVENT_APS, inProfile: justProfile) {
@@ -1730,6 +1732,14 @@ extension PTYSession {
     @objc var codeReviewRawCommand: String? {
         get { swiftState.codeReviewRawCommand }
         set { swiftState.codeReviewRawCommand = newValue }
+    }
+
+    // Prompt text last submitted from the code-review overlay; used as the
+    // default when re-presenting the overlay so prior (possibly hand-edited)
+    // input is preserved across reloads. See PTYSession+CodeReviewPrompt.
+    var codeReviewLastUsedPrompt: String? {
+        get { swiftState.codeReviewLastUsedPrompt }
+        set { swiftState.codeReviewLastUsedPrompt = newValue }
     }
 
     // Closure that fires the deferred launch for a .diff-mode session

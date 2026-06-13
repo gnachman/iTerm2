@@ -379,6 +379,7 @@ DEFINE_BOOL(traditionalVisualBell, NO, SECTION_TERMINAL @"Visual bell flashes th
 DEFINE_FLOAT(indicatorFlashInitialAlpha, 0.5, SECTION_TERMINAL @"Initial alpha value when flashing the visual bell or search wraparound indicator");
 DEFINE_FLOAT(timeBetweenBlinks, 0.5, SECTION_TERMINAL @"Cursor blink speed (seconds).");
 DEFINE_BOOL(doNotSetCtype, NO, SECTION_TERMINAL @"Never set the CTYPE environment variable.");
+DEFINE_BOOL(debugShowPromptMarkRangesInLegacyRenderer, NO, SECTION_TERMINAL @"Debug: highlight prompt mark prompt/command/excluded ranges in the legacy (non-GPU) renderer.\nWhen enabled, the legacy renderer overlays a blue outline around each visible prompt mark’s prompt range (OSC 133 A to B), a green outline around its command range (B to C), and a red outline around each excluded subrange (PS2 prefixes and right-prompt regions recorded via OSC 133 k=). Disable the Metal renderer (Settings → General → Magic) to see this. Intended for development and bug reports; leave off in normal use.");
 // For these, 1 is more aggressive and 0 turns the feature off:
 DEFINE_FLOAT(smartCursorColorBgThreshold, 0.5, SECTION_TERMINAL @"Threshold for Smart Cursor Color for background color (0 to 1).\n0 means the cursor’s background color will always be the cell’s text color, while 1 means it will always be black or white.");
 DEFINE_FLOAT(smartCursorColorFgThreshold, 0.75, SECTION_TERMINAL @"Threshold for Smart Cursor Color for text color (0 to 1).\n0 means the cursor’s text color will always be the cell’s background color, while 1 means it will always be black or white.");
@@ -608,6 +609,8 @@ DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");
 DEFINE_STRING(fakeFullyQualifiedDomainName, @"", SECTION_DEBUGGING @"Override the local hostname used for localhost detection.\nWhen non-empty, the app behaves as though [NSHost fullyQualifiedDomainName] returns this value. Lets you test how localhost detection reacts to a hostname change without actually renaming your computer. Affects hosts reported after you change it; leave empty to use the real hostname.");
+DEFINE_BOOL(aiChatVerboseConsoleLogging, NO, SECTION_DEBUGGING @"Log AI chat traffic to the system console.\nEmits per-turn user / agent / tool entries via NSFuckingLog so you can trace exactly what the agent received and produced. Useful for debugging tool dispatch and history translation. Off by default; turn on only while reproducing an issue.");
+DEFINE_BOOL(aiChatRawWireLogging, NO, SECTION_DEBUGGING @"Log raw AI API requests and responses to disk.\nWrites every byte sent to and received from the AI vendor (full request headers, body, streaming chunks, final response, errors, and timing) to ~/Library/Application Support/iTerm2/AIChatWire/. One log file per app launch; rotate or delete it yourself when done. WARNING: the log captures Authorization / API-key headers and full prompt + response content verbatim. Off by default; turn on only while reproducing an issue and delete the files when finished.");
 #if DEBUG
 DEFINE_STRING(alternateSSHIntegrationScript, @"", SECTION_DEBUGGING @"Alternate SSH integration python script");
 #endif
@@ -762,6 +765,9 @@ DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, SECTION_PASTEBOARD @"Delay in se
 DEFINE_BOOL(copyWithStylesByDefault, NO, SECTION_PASTEBOARD @"Copy to pasteboard on selection includes color and font style.");
 DEFINE_BOOL(copyBackgroundColor, YES, SECTION_PASTEBOARD @"Exclude the default background color when text is copied with color and font style?\nWhen off, the default background color will be left unset. Non-default background colors will remain.");
 DEFINE_INT(pasteHistoryMaxOptions, 20, SECTION_PASTEBOARD @"Number of entries to save in Paste History.\n");
+DEFINE_STRING(clippingSeparator, @"\\n--\\n",
+              SECTION_PASTEBOARD @"Separator inserted between multiple clippings when sending or copying them.\n"
+              @"The value should use Vim syntax, such as \\n for newline and \\e for escape.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, SECTION_PASTEBOARD @"Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, SECTION_PASTEBOARD @"Pressing a key will remove the selection.");
 DEFINE_BOOL(pastingClearsSelection, YES, SECTION_PASTEBOARD @"Pasting text will remove the selection.");

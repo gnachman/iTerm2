@@ -12,6 +12,12 @@ class iTermAsyncStringConversion: NSObject {
 
     private let mutex = Mutex()
     private var state: State = .pending
+    // Completion-delivery coordination, distinct from `state` (which tracks the
+    // converted buffer). `completed` is set once the conversion has run;
+    // `delivered` guards against firing the handler more than once.
+    private var completed = false
+    private var delivered = false
+    private var _completionHandler: (() -> Void)?
 
     // Captured inputs for conversion (used by background block or sync resolve).
     private let string: AnyObject
@@ -20,7 +26,26 @@ class iTermAsyncStringConversion: NSObject {
     private let capturedConfig: VT100StringConversionConfig
 
     @objc let byteCount: Int
-    @objc var completionHandler: (() -> Void)?
+
+    // The handler may be assigned after init (callers commonly do
+    // `let c = init(...); c.completionHandler = ...`), and the conversion runs
+    // on a background queue kicked off in init. So the conversion can finish
+    // before the handler is set. Deliver exactly once: fire here if the work is
+    // already done, otherwise the background completion fires it. Without this,
+    // a handler set after an already-finished conversion would never run (e.g.
+    // VT100Parser's outstanding-bytes counter would never be decremented).
+    @objc var completionHandler: (() -> Void)? {
+        get { mutex.sync { _completionHandler } }
+        set {
+            let fire: (() -> Void)? = mutex.sync {
+                _completionHandler = newValue
+                guard completed, !delivered, let handler = newValue else { return nil }
+                delivered = true
+                return handler
+            }
+            fire?()
+        }
+    }
 
     @objc init(string: AnyObject,
                stringLength: Int,
@@ -40,8 +65,21 @@ class iTermAsyncStringConversion: NSObject {
                 guard case .pending = state else { return }
                 state = .complete(performConversion())
             }
-            completionHandler?()
+            deliverCompletion()
         }
+    }
+
+    /// Marks the conversion complete and fires the handler if one is already
+    /// set and hasn't fired. The matching delivery for a handler set *after*
+    /// completion happens in the completionHandler setter.
+    private func deliverCompletion() {
+        let fire: (() -> Void)? = mutex.sync {
+            completed = true
+            guard !delivered, let handler = _completionHandler else { return nil }
+            delivered = true
+            return handler
+        }
+        fire?()
     }
 
     /// Always returns a valid result. Called on mutation thread.

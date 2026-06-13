@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":8000,\"messages\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\"}],\"model\":\"deepseek-chat\",\"stream\":false,\"temperature\":0}",
+  "key" : "967a1f8cd56d861481a74d315a70d6dbb4b0ffaaf4bc911ea61b5a1a9d6485e1",
+  "response" : {
+    "data" : "{\"id\":\"e239d66b-722c-4a47-92fd-a6894d0e9d42\",\"object\":\"chat.completion\",\"created\":1780870842,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"OK.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":15,\"completion_tokens\":2,\"total_tokens\":17,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":15},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

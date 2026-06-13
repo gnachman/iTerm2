@@ -162,6 +162,12 @@ class TextViewPorthole: NSObject {
             }
             self.delegate?.portholeDidAcquireSelection(self)
         }
+        textView.onMouseDown = { [weak self] in
+            guard let self = self else {
+                return
+            }
+            self.delegate?.portholeWantsFirstResponder(self)
+        }
         containerView.closeCallback = { [weak self] in
             if let self = self {
                 self.delegate?.portholeRemove(self)
@@ -412,13 +418,25 @@ extension TextViewPorthole: Porthole {
     func copy(as mode: PortholeCopyMode) {
         let ranges = textView.selectedRanges.map { $0.rangeValue }
         let attributedStrings = ranges.map { textView.attributedString().attributedSubstring(from: $0) }
-        let pboard = NSPasteboard.general
-        pboard.clearContents()
-        pboard.declareTypes([.multipleTextSelection, .rtf], owner: nil)
         let strings = attributedStrings.map { $0.string }
         let linesPerGroup = strings.map { string in
             return string.components(separatedBy: "\n").count
         }
+
+        // Declare the content type that matches what each mode actually writes. The plain-text
+        // modes write an NSString, so they must advertise .string. Declaring .rtf for them would
+        // leave RTF-preferring paste targets (e.g. TextEdit) requesting RTF data that is never
+        // provided, which looks like copy doing nothing.
+        let contentType: NSPasteboard.PasteboardType
+        switch mode {
+        case .plainText, .controlSequences:
+            contentType = .string
+        case .attributedString:
+            contentType = .rtf
+        }
+        let pboard = NSPasteboard.general
+        pboard.clearContents()
+        pboard.declareTypes([.multipleTextSelection, contentType], owner: nil)
         pboard.setPropertyList(linesPerGroup,
                                forType: .multipleTextSelection)
 

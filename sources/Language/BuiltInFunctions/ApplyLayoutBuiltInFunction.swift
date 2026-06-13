@@ -104,8 +104,8 @@ class ApplyLayoutBuiltInFunction: iTermBuiltInFunction {
             return "The 'new_tabs' field is not supported by apply_layout"
         case .newWindowsNotSupported:
             return "The 'new_windows' field is not supported by apply_layout"
-        case .newSessionLeafNotSupported:
-            return "'new_session' leaves are not supported by apply_layout"
+        case .unknownProfile(let guid):
+            return "Unknown profile: \(guid)"
         }
     }
 }

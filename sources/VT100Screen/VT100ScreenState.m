@@ -51,6 +51,7 @@ NSString *const kScreenStatePromptStateKey = @"Prompt State";
 NSString *const kScreenStateBlockStartAbsLineKey = @"Block start lines";
 NSString *const kScreenStateKittyImageDrawsKey = @"Kitty Image Draws";
 NSString *const kScreenStateProgressKey = @"Progress Bar State";
+NSString *const kScreenStateOpenAidStackKey = @"Open Aid Stack";
 
 NSString *VT100ScreenTerminalStateKeyVT100Terminal = @"VT100Terminal";
 NSString *VT100ScreenTerminalStateKeySavedColors = @"SavedColors";
@@ -61,8 +62,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 
 @implementation VT100ScreenState {
     id<iTermMarkCacheReading> _markCache;
+    NSString *_rcGuid;
 }
 
+@synthesize openAidStack = _openAidStack;
 @synthesize printBuffer = _printBuffer;
 @synthesize lastBell = _lastBell;
 @synthesize pasteboardString = _pasteboardString;
@@ -158,10 +161,33 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:queue];
         _namedMarks = [[iTermMutableArrayOfWeakObjects alloc] init];
+        // OSC 133 aid stack: shared between base and mutable subclass via
+        // self.openAidStack. Initialized here so subclass init can mutate
+        // the array through the property getter.
+        _openAidStack = [NSMutableArray array];
         _blockStartAbsLine = [NSMutableDictionary dictionary];
         _fakePromptDetectedAbsLine = -1;
+        // Generate a fresh main-thread RC pool guid. Subclasses
+        // (VT100ScreenMutableState) override -rcGuid to return their
+        // mutation-thread uniqueIdentifier instead; this ivar then goes
+        // unused on the subclass but is harmless.
+        _rcGuid = [[[NSUUID UUID] UUIDString] copy];
     }
     return self;
+}
+
+// Always returns the inherited _rcGuid ivar, even when called on
+// VT100ScreenMutableState (which overrides -rcGuid in
+// VT100ScreenState+RCDataSource to return its uniqueIdentifier). Lets
+// the immutable-snapshot init path carry the stable main-thread pool
+// guid across snapshots — see initWithState:predecessor:.
+//
+// The iTermResilientCoordinateDataSource protocol methods (rcGuid,
+// rcWidth, rcNumberOfLines, rcScrollbackOverflow) are implemented in
+// VT100ScreenState+RCDataSource.m. -rcGuid there forwards to this
+// getter.
+- (NSString *)mainThreadPoolGuid {
+    return _rcGuid;
 }
 
 - (id<iTermMarkCacheReading>)markCache {
@@ -248,6 +274,12 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _blockStartAbsLine = [source.blockStartAbsLine copy];
     }
     _progress = source.progress;
+    // OSC 133 aid: deep copy the stack so the main-thread view (used by the
+    // encoder for kScreenStateOpenAidStackKey) doesn't share storage with
+    // the mutation-thread NSMutableArray that setPromptStartLine: / D-close
+    // paths mutate. Strings are immutable so a shallow copy is fine for
+    // their contents.
+    _openAidStack = [source.openAidStack copy];
     if (source.namedMarksDirty) {
         _namedMarks = [source.namedMarks compactMap:^NSObject * _Nonnull(NSObject * _Nonnull obj) {
             id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
@@ -424,6 +456,11 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
         [self copyFastStuffFrom:source];
         [self copySlowStuffFrom:source];
+        // Carry the main-thread RC pool guid across snapshots. The
+        // predecessor (if any) already holds the stable guid; otherwise
+        // inherit from the mutable source's own main-thread pool guid.
+        // Stays distinct from source.uniqueIdentifier (mutation pool).
+        _rcGuid = [(predecessor.mainThreadPoolGuid ?: source.mainThreadPoolGuid) copy];
         DLog(@"Copy mutable to immutable");
     }
     return self;
@@ -648,7 +685,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
         }
         for (id<IntervalTreeObject> obj in objects) {
             VT100ScreenMark *mark = [VT100ScreenMark castFrom:obj];
-            if (mark && mark.command != nil) {
+            if (mark && mark.firstLineOfCommand != nil) {
                 return mark;
             }
         }
@@ -668,7 +705,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
         }
         for (id<IntervalTreeObject> obj in objects) {
             VT100ScreenMark *mark = [VT100ScreenMark castFrom:obj];
-            if (mark && mark.command != nil) {
+            if (mark && mark.firstLineOfCommand != nil) {
                 return mark;
             }
         }
@@ -931,7 +968,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
         for (id<IntervalTreeObject> obj in objects) {
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
                 id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
-                if (mark.command) {
+                if (mark.firstLineOfCommand) {
                     DLog(@"Found mark %@ in line number range %@", mark,
                          VT100GridRangeDescription([self lineNumberRangeOfInterval:obj.entry.interval]));
                     _lastCommandMark = mark;
@@ -1000,33 +1037,27 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 }
 
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
-    NSEnumerator *enumerator = [self.markCache enumerateFrom:mark.entry.interval.limit];
-    for (id<iTermMark> nextMark in enumerator) {
-        if (![nextMark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
-            continue;
+    id<VT100ScreenMarkReading> nextScreenMark = [self nextNonDescendantPromptMarkAfter:mark];
+    if (nextScreenMark) {
+        VT100GridCoordRange range;
+        BOOL ok = NO;
+        range.start = VT100GridCoordFromAbsCoord(mark.outputStart, self.cumulativeScrollbackOverflow, &ok);
+        if (!ok) {
+            range.start = [self coordRangeForInterval:mark.entry.interval].end;
+            range.start.x = 0;
+            range.start.y++;
         }
-        id<VT100ScreenMarkReading> nextScreenMark = (id<VT100ScreenMarkReading>)nextMark;
-        if (nextScreenMark.isPrompt) {
-            VT100GridCoordRange range;
-            BOOL ok = NO;
-            range.start = VT100GridCoordFromAbsCoord(mark.outputStart, self.cumulativeScrollbackOverflow, &ok);
-            if (!ok) {
-                range.start = [self coordRangeForInterval:mark.entry.interval].end;
-                range.start.x = 0;
-                range.start.y++;
-            }
-            range.end = [self coordRangeForInterval:nextScreenMark.entry.interval].start;
-            if (nextScreenMark.lineStyle) {
-                DLog(@"Move end up one line for line-style mark at next prompt");
-                range.end.y -= 1;
-            }
-            // Ensure end is not before start to avoid negative range lengths.
-            if (range.end.y < range.start.y) {
-                range.end.y = range.start.y;
-                range.end.x = range.start.x;
-            }
-            return range;
+        range.end = [self coordRangeForInterval:nextScreenMark.entry.interval].start;
+        if (nextScreenMark.lineStyle) {
+            DLog(@"Move end up one line for line-style mark at next prompt");
+            range.end.y -= 1;
         }
+        // Ensure end is not before start to avoid negative range lengths.
+        if (range.end.y < range.start.y) {
+            range.end.y = range.start.y;
+            range.end.x = range.start.x;
+        }
+        return range;
     }
 
     // Command must still be running with no subsequent prompt.
@@ -1150,6 +1181,38 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return nil;
 }
 
+- (id<VT100ScreenMarkReading>)nextNonDescendantPromptMarkAfter:(id<VT100ScreenMarkReading>)anchor {
+    if (!anchor) {
+        return nil;
+    }
+    NSString *anchorAid = anchor.aid;
+    if (!anchorAid) {
+        // Anchor has no aid: nothing to filter by. Match legacy behavior.
+        return [self promptMarkAfterScreenMark:anchor];
+    }
+    // Each prompt mark carries its full ancestor chain (captured at A time),
+    // so descendant testing is a direct membership check. No need to walk
+    // the interval tree to dereference parents, which means folds and
+    // ancestor pruning don't break the answer.
+    const long long pos = MAX(0, anchor.entry.interval.limit);
+    for (NSArray *objects in [self.intervalTree forwardLocationEnumeratorAt:pos]) {
+        for (id element in objects) {
+            if (![element conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+                continue;
+            }
+            id<VT100ScreenMarkReading> candidate = element;
+            if (!candidate.isPrompt) {
+                continue;
+            }
+            if ([candidate.ancestorAids containsObject:anchorAid]) {
+                continue;
+            }
+            return candidate;
+        }
+    }
+    return nil;
+}
+
 - (id<VT100ScreenMarkReading>)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading>)predecessor {
     if (!predecessor) {
         return nil;
@@ -1190,7 +1253,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                                       range:(out VT100GridWindowedRange *)rangeOut {
     id<VT100ScreenMarkReading> mark = [self screenMarkOnLine:coord.y];
     const VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
-    if (mustHaveCommand && mark.command == nil) {
+    if (mustHaveCommand && mark.firstLineOfCommand == nil) {
         return nil;
     }
     if (mark.promptRange.start.x >= 0 && VT100GridCoordRangeContainsCoord(range, coord)) {

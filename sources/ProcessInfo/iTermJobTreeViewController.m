@@ -23,6 +23,32 @@
 #import "NSTextField+iTerm.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+@protocol iTermJobTreeOutlineViewDelegate <NSOutlineViewDelegate>
+// Sent when the user presses space with a row selected. Hosts use this to toggle
+// the per-job info popover.
+- (void)jobTreeOutlineViewToggleInfoPopover:(NSOutlineView *)outlineView;
+@end
+
+// An outline view that turns the space bar into a request to show the info
+// popover for the selected job. Everything else falls through to NSOutlineView
+// (including type-select for other keys).
+@interface iTermJobTreeOutlineView : NSOutlineView
+@end
+
+@implementation iTermJobTreeOutlineView
+- (void)keyDown:(NSEvent *)event {
+    if (self.selectedRow >= 0 &&
+        [event.charactersIgnoringModifiers isEqualToString:@" "]) {
+        id delegate = self.delegate;
+        if ([delegate respondsToSelector:@selector(jobTreeOutlineViewToggleInfoPopover:)]) {
+            [delegate jobTreeOutlineViewToggleInfoPopover:self];
+            return;
+        }
+    }
+    [super keyDown:event];
+}
+@end
+
 static const int kDefaultSignal = 9;
 static int gSignalsToList[] = {
      1, // SIGHUP
@@ -35,6 +61,10 @@ static int gSignalsToList[] = {
 
 @interface iTermJobTreeTextTableCellView: NSTableCellView
 + (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner;
+// Re-renders SF Symbol attachments tagged with iTermDynamicProfileSymbolName so
+// they tint correctly for the current selection state and appearance. Call after
+// changing the text field's attributed value.
+- (void)it_updateDynamicSymbolTint;
 @end
 
 @interface iTermJobTreeImageTableCellView: iTermJobTreeTextTableCellView
@@ -190,7 +220,7 @@ static int gSignalsToList[] = {
 
 @end
 
-@interface iTermJobTreeViewController ()<NSOutlineViewDelegate, NSOutlineViewDataSource>
+@interface iTermJobTreeViewController ()<iTermJobTreeOutlineViewDelegate, NSOutlineViewDataSource>
 @end
 
 @interface iTermJobProxy : NSObject
@@ -257,6 +287,8 @@ static int gSignalsToList[] = {
     IBOutlet NSView *_vev;
     IBOutlet NSView *_signalContainer;
     iTermGraphicSource *_graphicSource;
+    NSPopover *_infoPopover;
+    NSButton *_inspectButton;
 }
 
 - (instancetype)initWithProcessID:(pid_t)pid
@@ -265,11 +297,38 @@ static int gSignalsToList[] = {
     if (self) {
         _pid = pid;
         _animateChanges = YES;
+        _toolbarHeight = 38;
+        _controlsBottomMargin = 8;
+        _useVisualEffectView = YES;
         _graphicSource = [[iTermGraphicSource alloc] init];
         _graphicSource.disableTinting = YES;
         _processInfoProvider = processInfoProvider;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(jobTerminationMonitorStateDidChange:)
+                                                     name:iTermJobTerminationMonitor.stateDidChangeNotificationName
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)jobTerminationMonitorStateDidChange:(NSNotification *)notification {
+    // Re-render visible job rows so the indicator appears or disappears. This also keeps
+    // separate views (e.g. the toolbelt and a status bar popover) in sync, and removes
+    // the bell as soon as a watched process exits.
+    if (!_outlineView) {
+        return;
+    }
+    const NSRange rows = [_outlineView rowsInRect:_outlineView.visibleRect];
+    for (NSInteger row = rows.location; row < NSMaxRange(rows); row++) {
+        id item = [_outlineView itemAtRow:row];
+        if (item) {
+            [_outlineView reloadItem:item];
+        }
+    }
 }
 
 - (void)awakeFromNib {
@@ -278,7 +337,10 @@ static int gSignalsToList[] = {
         _outlineView.style = NSTableViewStyleInset;
     }
     _outlineView.backgroundColor = [NSColor clearColor];
-    if (_useGlassEffectView) {
+    if (!_useVisualEffectView) {
+        [_vev removeFromSuperview];
+        _vev = nil;
+    } else if (_useGlassEffectView) {
         if (@available(macOS 26, *)) {
             NSGlassEffectView *glassView = [[NSGlassEffectView alloc] initWithFrame:_vev.frame];
             glassView.autoresizingMask = _vev.autoresizingMask;
@@ -287,21 +349,36 @@ static int gSignalsToList[] = {
             _vev = glassView;
         }
     }
+    NSImage *magnifyingGlass = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
+                                    accessibilityDescription:@"Inspect"];
+    _inspectButton = [NSButton buttonWithImage:magnifyingGlass target:self action:@selector(inspect:)];
+    _inspectButton.bordered = NO;
+    _inspectButton.imageScaling = NSImageScaleProportionallyDown;
+    _inspectButton.toolTip = @"Inspect the selected process";
+    _inspectButton.refusesFirstResponder = YES;
+    [self.view addSubview:_inspectButton];
     [self updateKillButtonEnabled];
 }
 
 - (void)viewDidLayout {
     [super viewDidLayout];
     NSView *superview = _signalContainer.superview;
-    const CGFloat scrollViewBottom = NSMinY(_outlineView.enclosingScrollView.frame);
     NSRect frame = _signalContainer.frame;
     frame.origin.x = round((NSWidth(superview.bounds) - NSWidth(frame)) / 2.0);
-    frame.origin.y = round(scrollViewBottom / 2.0 - NSHeight(frame) / 2.0);
+    frame.origin.y = self.controlsBottomMargin;
     _signalContainer.frame = frame;
+
+    // Inspect button in the bottom-right corner, vertically centered on the
+    // signal controls.
+    const CGFloat side = 22;
+    const CGFloat rightMargin = 8;
+    _inspectButton.frame = NSMakeRect(NSWidth(self.view.bounds) - rightMargin - side,
+                                      round(NSMidY(frame) - side / 2.0),
+                                      side, side);
 }
 
 - (void)viewDidAppear {
-    kill_.enabled = (_outlineView.selectedRow != -1);
+    [self updateKillButtonEnabled];
 
     if (!_timer) {
         __weak __typeof(self) weakSelf = self;
@@ -315,6 +392,8 @@ static int gSignalsToList[] = {
 - (void)viewDidDisappear {
     [_timer invalidate];
     _timer = nil;
+    [_infoPopover close];
+    _infoPopover = nil;
 }
 
 - (BOOL)anySelectedProcessHasChildren {
@@ -499,8 +578,10 @@ static int gSignalsToList[] = {
 }
 
 - (void)updateKillButtonEnabled {
-    signal_.enabled = _outlineView.selectedRowIndexes.count > 0;
-    kill_.enabled = (_outlineView.selectedRowIndexes.count > 0 && [signal_ isValid]);
+    const BOOL hasSelection = _outlineView.selectedRowIndexes.count > 0;
+    signal_.enabled = hasSelection;
+    kill_.enabled = (hasSelection && [signal_ isValid]);
+    _inspectButton.enabled = hasSelection;
 }
 
 - (void)setFont:(NSFont *)font {
@@ -534,8 +615,11 @@ static int gSignalsToList[] = {
         _outlineView.frame = frame;
     }
 
-    const CGFloat toolbarHeight = NSMaxY(kill_.frame);
-    _outlineView.enclosingScrollView.frame = NSMakeRect(0, toolbarHeight, self.view.frame.size.width, self.view.frame.size.height - toolbarHeight);
+    const CGFloat toolbarHeight = self.toolbarHeight;
+    _outlineView.enclosingScrollView.frame = NSMakeRect(0,
+                                                        toolbarHeight,
+                                                        self.view.frame.size.width,
+                                                        MAX(0, self.view.frame.size.height - toolbarHeight));
 }
 
 #pragma mark - Actions
@@ -545,7 +629,23 @@ static int gSignalsToList[] = {
         menuItem.action == @selector(copyProcessID:)) {
         return [_outlineView clickedRow] >= 0;
     }
+    if (menuItem.action == @selector(toggleNotifyOnTermination:)) {
+        iTermJobProxy *info = [self clickedJob];
+        const BOOL monitoring = (info.pid != 0 &&
+                                 [[iTermJobTerminationMonitor sharedInstance] isMonitoringProcessID:info.pid]);
+        menuItem.state = monitoring ? NSControlStateValueOn : NSControlStateValueOff;
+        return info.pid != 0;
+    }
     return [super validateMenuItem:menuItem];
+}
+
+- (iTermJobProxy *)clickedJob {
+    const int row = [_outlineView clickedRow];
+    if (row < 0) {
+        return nil;
+    }
+    id item = [_outlineView itemAtRow:row];
+    return item ?: _root;
 }
 
 - (IBAction)copyJobName:(id)sender {
@@ -582,6 +682,56 @@ static int gSignalsToList[] = {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
     [pboard setString:[@(info.pid) stringValue] forType:NSPasteboardTypeString];
+}
+
+- (IBAction)toggleNotifyOnTermination:(id)sender {
+    iTermJobProxy *info = [self clickedJob];
+    if (!info.pid) {
+        return;
+    }
+    iTermJobTerminationMonitor *monitor = [iTermJobTerminationMonitor sharedInstance];
+    if ([monitor isMonitoringProcessID:info.pid]) {
+        [monitor stopMonitoringProcessID:info.pid];
+    } else {
+        [monitor beginMonitoringProcessID:info.pid name:(info.name ?: info.fullName)];
+    }
+    // Changing the monitor posts a state-change notification, which reloads the affected
+    // rows to show or hide the indicator (see jobTerminationMonitorStateDidChange:).
+}
+
+#pragma mark - Info popover
+
+- (IBAction)inspect:(id)sender {
+    [self jobTreeOutlineViewToggleInfoPopover:_outlineView];
+}
+
+- (void)jobTreeOutlineViewToggleInfoPopover:(NSOutlineView *)outlineView {
+    if (_infoPopover.shown) {
+        [_infoPopover close];
+        _infoPopover = nil;
+        return;
+    }
+    const NSInteger row = _outlineView.selectedRow;
+    if (row < 0) {
+        return;
+    }
+    iTermJobProxy *job = [_outlineView itemAtRow:row] ?: _root;
+    if (!job.pid) {
+        return;
+    }
+    // Prefer the unescaped display command; fall back to whatever we have.
+    NSString *fullCommand = ([iTermLSOF displayCommandForProcess:job.pid execName:nil] ?:
+                             job.fullName) ?: job.name;
+    iTermJobInfoPopoverViewController *vc =
+        [[iTermJobInfoPopoverViewController alloc] initWithPid:job.pid
+                                                   fullCommand:fullCommand];
+    NSPopover *popover = [[NSPopover alloc] init];
+    popover.appearance = self.view.effectiveAppearance;
+    popover.behavior = NSPopoverBehaviorTransient;
+    popover.contentViewController = vc;
+    const NSRect rect = [_outlineView rectOfRow:row];
+    [popover showRelativeToRect:rect ofView:_outlineView preferredEdge:NSRectEdgeMaxX];
+    _infoPopover = popover;
 }
 
 #pragma mark - NSOutlineViewDataSource
@@ -621,6 +771,8 @@ static int gSignalsToList[] = {
     NSString *string;
     NSImage *image = nil;
     const BOOL isJob = [tableColumn.identifier isEqualToString:@"job"];
+    const BOOL monitored = (isJob && info.pid &&
+                            [[iTermJobTerminationMonitor sharedInstance] isMonitoringProcessID:info.pid]);
     if (isJob) {
         string = info.fullName ?: @"(terminated)";
         NSImage *rawImage = [_graphicSource imageForJobName:info.name];
@@ -647,7 +799,47 @@ static int gSignalsToList[] = {
         string = [string substringToIndex:256];
     }
     string = [string stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    return [self tableCellViewWithString:string image:image isJob:isJob];
+    NSTableCellView *cell = [self tableCellViewWithString:string image:image isJob:isJob];
+    if (monitored) {
+        // Prefix the name with a monochrome SF Symbol bell so it is obvious the
+        // job is being watched. An SF Symbol attachment (rather than an emoji
+        // glyph) is guaranteed to render, and tagging it with
+        // iTermDynamicProfileSymbolName lets the cell retint it to follow the
+        // row's selection state and light/dark appearance.
+        NSFont *font = self.font ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        NSMutableAttributedString *attributed = [[self monitorIndicatorPrefixWithFont:font] mutableCopy];
+        [attributed appendAttributedString:[[NSAttributedString alloc] initWithString:string
+                                                                           attributes:@{ NSFontAttributeName: font }]];
+        cell.textField.attributedStringValue = attributed;
+        [(iTermJobTreeTextTableCellView *)cell it_updateDynamicSymbolTint];
+    } else if (isJob) {
+        // A reused job cell may still hold an attributed bell from when it was
+        // monitored, so reset it to plain text.
+        cell.textField.stringValue = string;
+    }
+    // Hovering any cell in the row reveals the full, untruncated command (the
+    // visible text is clipped to the column width and capped at 256 chars).
+    cell.toolTip = info.fullName ?: @"(terminated)";
+    return cell;
+}
+
+- (NSAttributedString *)monitorIndicatorPrefixWithFont:(NSFont *)font {
+    NSImage *bell = [NSImage it_imageForSymbolName:@"bell"
+                            accessibilityDescription:@"Will notify when this job terminates"];
+    if (!bell) {
+        return [[NSAttributedString alloc] initWithString:@""];
+    }
+    NSImage *sized = [bell imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPointSize:font.pointSize
+                                                                                                       weight:NSFontWeightRegular]] ?: bell;
+    NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+    attachment.image = sized;
+    NSMutableAttributedString *result =
+        [[NSAttributedString attributedStringWithAttachment:attachment] mutableCopy];
+    // The cell rerenders this attachment with a selection- and appearance-aware
+    // color whenever its background style or effective appearance changes.
+    [result addAttribute:iTermDynamicProfileSymbolName value:@"bell" range:NSMakeRange(0, result.length)];
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
+    return result;
 }
 
 - (NSTableCellView *)tableCellViewWithString:(NSString *)string image:(NSImage *)image isJob:(BOOL)isJob {
@@ -687,7 +879,9 @@ static int gSignalsToList[] = {
 
 @end
 
-@implementation iTermJobTreeTextTableCellView
+@implementation iTermJobTreeTextTableCellView {
+    BOOL _emphasized;
+}
 
 + (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner {
     iTermJobTreeTextTableCellView *view = [tableView makeViewWithIdentifier:NSStringFromClass(self) owner:owner];
@@ -706,6 +900,25 @@ static int gSignalsToList[] = {
     view.textField.stringValue = string;
     [view layoutSubviews];
     return view;
+}
+
+- (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
+    [super setBackgroundStyle:backgroundStyle];
+    _emphasized = (backgroundStyle == NSBackgroundStyleEmphasized);
+    [self it_updateDynamicSymbolTint];
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    [self it_updateDynamicSymbolTint];
+}
+
+- (void)it_updateDynamicSymbolTint {
+    // Full strength and the bell's natural (font-derived) size, unlike the smaller,
+    // dimmed profile symbols.
+    [self.textField it_retintDynamicSymbolAttachmentsForEmphasized:_emphasized
+                                                             alpha:1
+                                                        symbolSize:NSZeroSize];
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
@@ -731,13 +944,16 @@ static int gSignalsToList[] = {
     if (!view) {
         view = [self viewWithString:string font:font from:tableView owner:owner];
     }
-    NSImageView *imageView = [[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 2, 2)];
-    if (image) {
-        imageView.image = image;
+    // Reuse the existing image view on a recycled cell; creating a new one each time
+    // would leave the prior image views stacked up as orphaned subviews.
+    NSImageView *imageView = view.imageView;
+    if (!imageView) {
+        imageView = [[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 2, 2)];
+        imageView.alphaValue = 0.75;
+        [view addSubview:imageView];
+        view.imageView = imageView;
     }
-    imageView.alphaValue = 0.75;
-    [view addSubview:imageView];
-    view.imageView = imageView;
+    imageView.image = image;
     [view layoutSubviews];
     return view;
 }

@@ -18,6 +18,7 @@
 #import "NSStringITerm.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenState+Private.h"
+#import "VT100ScreenState+RCDataSource.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
@@ -741,11 +742,24 @@ typedef struct {
 
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
     DLog(@"begin preservePrompt=%@ modifyContent=%@", @(preservePrompt), @(modifyContent));
+    [self invalidatePendingPromptState];
     [self resetPreservingPrompt:preservePrompt modifyContent:modifyContent];
 }
 
 - (void)terminalDidReset {
+    [self invalidatePendingPromptState];
     self.progress = VT100ScreenProgressStopped;
+}
+
+// Centralized cleanup for OSC 133 in-flight state. Called from the FTCS
+// boundaries that close a prompt cycle (C / D / abort) and from terminal
+// reset paths (RIS / soft reset / preserve-prompt reset). Leaves
+// `lastPromptLine` alone — that's used by other paths to find a finished
+// mark — and only clears state that's meaningful only across an open
+// non-initial prompt or an A→B window.
+- (void)invalidatePendingPromptState {
+    self.currentPromptKind = VT100PromptKindInitial;
+    self.pendingNonInitialPromptStart = nil;
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
@@ -2109,12 +2123,256 @@ typedef struct {
     } name:@"clear captured output"];
 }
 
-- (void)terminalPromptDidStart:(BOOL)wasInCommand {
-    DLog(@"begin");
-    [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
-                                                 self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
-              wasInCommand:wasInCommand
-         detectedByTrigger:NO];
+// Compute the BFS closure over `aid`'s parentAid descendants in the
+// currently-open registry. Returns the set of every aid that should
+// close along with `aid` (including `aid` itself).
+- (NSSet<NSString *> *)aidClosureForCloseOfAid:(NSString *)aid {
+    DLog(@"aidClosureForCloseOfAid:%@ marksByAid.keys=%@", aid, self.marksByAid.allKeys);
+    NSMutableSet<NSString *> *closing = [NSMutableSet setWithObject:aid];
+    BOOL added = YES;
+    while (added) {
+        added = NO;
+        for (NSString *candidate in self.marksByAid.allKeys) {
+            if ([closing containsObject:candidate]) {
+                continue;
+            }
+            VT100ScreenMark *m = self.marksByAid[candidate];
+            if (m.parentAid != nil && [closing containsObject:m.parentAid]) {
+                DLog(@"aidClosureForCloseOfAid: pulling in %@ (parentAid=%@ already closing)",
+                     candidate, m.parentAid);
+                [closing addObject:candidate];
+                added = YES;
+            }
+        }
+    }
+    DLog(@"aidClosureForCloseOfAid:%@ -> %@", aid, closing);
+    return closing;
+}
+
+// Close a specific open mark by aid (the close-by-aid path for D;aid=X),
+// then cascade-close any open marks whose parentAid chain leads back to
+// `aid`. The target mark gets `code` (if non-nil) and an endDate set;
+// cascade-closed marks get endDate only (no exit-code claim). Removes
+// all closed aids from the registry and the open-aid stack.
+- (void)setReturnCodeForAidMark:(NSString *)aid code:(NSNumber * _Nullable)code {
+    DLog(@"setReturnCodeForAidMark:%@ code=%@", aid, code);
+    VT100ScreenMark *target = self.marksByAid[aid];
+    if (target == nil) {
+        DLog(@"setReturnCodeForAidMark: no mark for aid=%@; returning early", aid);
+        return;
+    }
+    NSSet<NSString *> *closing = [self aidClosureForCloseOfAid:aid];
+    NSDate *now = [NSDate date];
+    // Close the target with code + notifications, mirroring
+    // setReturnCodeOfLastCommand:'s shape so observers see the same
+    // intervalTreeDidRemove/Add pair and screenCommandDidExitWithCode call.
+    DLog(@"setReturnCodeForAidMark: closing target aid=%@ mark=%@", aid, target);
+    [self closeAidMark:target code:code endDate:now isTarget:YES];
+    // Close cascade descendants with endDate only (no exit-code claim).
+    for (NSString *otherAid in closing) {
+        if ([otherAid isEqualToString:aid]) {
+            continue;
+        }
+        VT100ScreenMark *m = self.marksByAid[otherAid];
+        DLog(@"setReturnCodeForAidMark: cascade-closing descendant aid=%@ mark=%@",
+             otherAid, m);
+        [self closeAidMark:m code:nil endDate:now isTarget:NO];
+    }
+    // Drop registry + stack entries for everything we closed.
+    for (NSString *closedAid in closing) {
+        [self.marksByAid removeObjectForKey:closedAid];
+        [self.openAidStack removeObject:closedAid];
+    }
+    DLog(@"setReturnCodeForAidMark end: marksByAid.count=%@ openAidStack=%@",
+         @(self.marksByAid.count), self.openAidStack);
+}
+
+// D-while-inCommand_ variant: shell emitted D before C, meaning the
+// command never reached the output phase. Removes the targeted mark
+// from the interval tree (matching commandWasAborted's shape) and
+// cascade-closes descendants the same way as the code-bearing path.
+- (void)closeAidMarkAsAbort:(NSString *)aid {
+    DLog(@"closeAidMarkAsAbort:%@", aid);
+    VT100ScreenMark *target = self.marksByAid[aid];
+    if (target == nil) {
+        DLog(@"closeAidMarkAsAbort: no mark for aid=%@; returning early", aid);
+        return;
+    }
+    NSSet<NSString *> *closing = [self aidClosureForCloseOfAid:aid];
+    NSDate *now = [NSDate date];
+    // Descendants close quietly (endDate only). The target itself goes
+    // through the full commandWasAborted-equivalent path so it's removed
+    // from the tree and observers see the abort notification.
+    for (NSString *otherAid in closing) {
+        if ([otherAid isEqualToString:aid]) {
+            continue;
+        }
+        VT100ScreenMark *m = self.marksByAid[otherAid];
+        DLog(@"closeAidMarkAsAbort: cascade-closing descendant aid=%@ mark=%@",
+             otherAid, m);
+        [self closeAidMark:m code:nil endDate:now isTarget:NO];
+        // Registry cleanup for cascade entries: the marks stay in the tree
+        // (only endDate set), so -didRemoveObjectFromIntervalTree: doesn't
+        // fire for them. Drop the entries explicitly here.
+        [self.marksByAid removeObjectForKey:otherAid];
+        [self.openAidStack removeObject:otherAid];
+    }
+    // Mirror commandWasAborted's full cleanup: remove the mark + fire
+    // screenCommandDidAbortOnLine:, then reset commandStartCoord and
+    // close the command's interval so downstream state (Cmd-K's
+    // commandStartCoord.x check, prompt-state-machine, etc.) tracks
+    // the post-abort world the same way as the aid-less path.
+    DLog(@"closeAidMarkAsAbort: aborting target aid=%@ mark=%@", aid, target);
+    [self abortSpecificAidMark:target];
+    [self invalidateCommandStartCoordWithoutSideEffects];
+    [self didUpdatePromptLocation];
+    [self commandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+    // The target's mark.entry is now nil (removed by abortSpecificAidMark).
+    // pruneAidRegistry drops it from marksByAid + openAidStack.
+    [self pruneAidRegistry];
+    DLog(@"closeAidMarkAsAbort end");
+}
+
+// Abort one specific mark. Mirrors commandWasAborted but operates on
+// `target` rather than reading lastPromptMark, so it works for the
+// close-by-aid case where the target may not be the topmost open one.
+// Pulls `command` from the mark's already-captured fullCommand /
+// firstLineOfCommand instead of re-extracting via contentInRange:,
+// which avoids needing to call a private VT100ScreenMutableState helper
+// from this category.
+- (void)abortSpecificAidMark:(VT100ScreenMark *)target {
+    DLog(@"abortSpecificAidMark: target=%@ aid=%@", target, target.aid);
+    const VT100GridRange lineRange = [self lineNumberRangeOfInterval:target.entry.interval];
+    const int line = lineRange.location;
+    const VT100GridCoordRange outputRange = [self rangeOfOutputForCommandMark:target];
+    NSString *command = target.fullCommand ?: target.firstLineOfCommand ?: @"";
+
+    const int relativeLine = [self coordRangeForInterval:target.entry.interval].start.y;
+    const NSInteger absLine = relativeLine + self.cumulativeScrollbackOverflow;
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
+        [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(target)
+                                             onLine:absLine];
+    } name:@"aid abort 1"];
+    DLog(@"abortSpecificAidMark: removing %@ from tree (line=%@ relativeLine=%@)",
+         target, @(line), @(relativeLine));
+    [self.mutableIntervalTree removeObject:target];
+    [self.mutableSavedIntervalTree removeObject:target];
+    [self.mutableMarkCache removeMark:target onLine:relativeLine];
+    id<VT100ScreenMarkReading> doppelganger = target.doppelganger;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenCommandDidAbortOnLine:line
+                                  outputRange:outputRange
+                                      command:command
+                                         mark:doppelganger];
+    } name:@"aid abort 2"];
+}
+
+// Set endDate (always) and code (when non-nil) on `mark`. Fire the same
+// side-effect notifications setReturnCodeOfLastCommand: emits when
+// `isTarget` is YES. Cascade-closed marks (`isTarget == NO`) get only an
+// endDate + the returnCodePromise rejection — no exit-code observer
+// churn, no command-end notification (the cascade itself isn't a
+// command-end signal, the outer command's close-by-aid is).
+//
+// The remove+add interval-tree side effect is intentional: the observer
+// API only has add/remove (no didChangeType), and setting code switches
+// the mark's iTermIntervalTreeObjectType between "running"/"manual" and
+// "success"/"error". The remove+add pair signals that transition to
+// observers that draw a colored bar in the gutter. Mirrors the
+// setReturnCodeOfLastCommand: pattern at VT100ScreenMutableState.m:3661.
+- (void)closeAidMark:(VT100ScreenMark *)mark
+                code:(NSNumber * _Nullable)code
+             endDate:(NSDate *)endDate
+            isTarget:(BOOL)isTarget {
+    DLog(@"closeAidMark: mark=%@ aid=%@ code=%@ isTarget=%@",
+         mark, mark.aid, code, @(isTarget));
+    id<VT100ScreenMarkReading> doppelganger = mark.doppelganger;
+    const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+    const iTermIntervalTreeObjectType originalType = iTermIntervalTreeObjectTypeForObject(mark);
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> obj) {
+        VT100ScreenMark *m = (VT100ScreenMark *)obj;
+        m.endDate = endDate;
+        if (code != nil) {
+            m.code = code.intValue;
+        } else {
+            // Cascade-closed: no exit code known. Reject the
+            // returnCodePromise now so awaiters (CommandInfoViewController,
+            // PTYSession's exit-status hooks) resolve at close-time
+            // rather than at mark dealloc.
+            DLog(@"closeAidMark: cascade path — calling markAbandoned on %@", m);
+            [m markAbandoned];
+        }
+    }];
+    if (!isTarget) {
+        DLog(@"closeAidMark: cascade descendant — skipping target notifications");
+        return;
+    }
+    // Close-by-aid: point lastCommandMark at the just-closed target so
+    // consumers (PTYSession.swift's lastExitStatus / rerunLastCommand,
+    // PTYSession.m's offscreen-command-line render) see the right
+    // command in nested sessions. The legacy non-aid path
+    // (setReturnCodeOfLastCommand:) implicitly stays consistent because
+    // it operates on self.lastCommandMark; the aid path may target an
+    // arbitrary mark, so we update explicitly.
+    DLog(@"closeAidMark: updating lastCommandMark to %@", mark);
+    self.lastCommandMark = mark;
+    const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(mark);
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
+        [observer intervalTreeDidRemoveObjectOfType:originalType onLine:line];
+        [observer intervalTreeDidAddObjectOfType:type onLine:line];
+    } name:@"close aid mark (target)"];
+    id<VT100RemoteHostReading> remoteHost = [[self remoteHostOnLine:self.numberOfLines] doppelganger];
+    const int notifyCode = code != nil ? code.intValue : 0;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenDidUpdateReturnCodeForMark:doppelganger remoteHost:remoteHost];
+        // screenCommandDidExitWithCode always fires for the target so
+        // command-finished triggers + Python COMMAND_END subscribers see
+        // every close-by-aid. With the parser synthesizing 0 for the
+        // no-code D forms, the code argument is always meaningful here;
+        // we keep the explicit "0 when unknown" default as a safety net.
+        [delegate screenCommandDidExitWithCode:notifyCode mark:doppelganger];
+    } name:@"close aid mark notify"];
+}
+
+// FTCS A
+- (void)terminalPromptDidStart:(BOOL)wasInCommand
+                          kind:(VT100PromptKind)kind
+                     freshLine:(BOOL)freshLine
+                           aid:(NSString * _Nullable)aid {
+    DLog(@"begin kind=%@ freshLine=%@ aid=%@", @(kind), @(freshLine), aid);
+    self.currentPromptKind = kind;
+    // .unknown means the parser saw a k= value it doesn't recognize (typo,
+    // future kind a newer shell-integration emits, etc.). Per the design,
+    // unknown folds to .initial at the receiver: better to over-create a
+    // mark than to silently drop a prompt the user is sitting at. The
+    // alternative ("paste-unblock-only") would mean a single bad k= byte
+    // permanently hides a prompt from navigation/Cmd-Shift-Up.
+    if (kind == VT100PromptKindInitial || kind == VT100PromptKindUnknown) {
+        self.pendingNonInitialPromptStart = nil;
+        [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                                     self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
+                  wasInCommand:wasInCommand
+             detectedByTrigger:NO
+                     freshLine:freshLine
+                           aid:aid];
+        return;
+    }
+    // Non-initial (secondary/continuation/right): the user is mid-command.
+    // Don't create a mark, don't touch lastPromptLine, currentPromptRange,
+    // lastCommandOutputRange, or any prompt-state-machine state. Record the
+    // cursor coord (resilient so it survives a resize between A and B) so
+    // the matching B can append (start, cursor) as an excluded subrange on
+    // the active prompt mark, and route to paste-unblock so Advanced Paste
+    // with "Wait for shell prompt" can advance past PS2 / right prompts
+    // (issue 5749).
+    const VT100GridAbsCoord start =
+        VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                              self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+    self.pendingNonInitialPromptStart =
+        [[iTermResilientCoordinate alloc] initWithDataSource:self absCoord:start];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenPromptOfNonInitialKindDidStart:kind];
+    } name:@"non-initial prompt start"];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
@@ -2133,9 +2391,120 @@ typedef struct {
     DLog(@"tabsts are now %@", self.tabStops);
 }
 
+// FTCS B
 - (void)terminalCommandDidStart {
-    DLog(@"begin");
+    DLog(@"begin currentPromptKind=%@", @(self.currentPromptKind));
+    const VT100PromptKind kind = self.currentPromptKind;
+    self.currentPromptKind = VT100PromptKindInitial;
+    // .unknown rides the initial path here too: the A handler above already
+    // ran the initial branch and did not set pendingNonInitialPromptStart,
+    // so we must take the initial commandDidStart path or the prompt-state
+    // machine won't transition into enteringCommand.
+    if (kind != VT100PromptKindInitial && kind != VT100PromptKindUnknown) {
+        // This B closes a non-initial prompt (PS2 line, right-prompt). The
+        // user hasn't started a new command, they're still typing the same
+        // logical one. Record the closed cell range as an excluded subrange
+        // on the active prompt mark so selection/share/AI consumers can
+        // subtract these from the typed-command region. PR 4 will plumb
+        // through the consumer side.
+        [self recordPendingExcludedSubrangeForNonInitialB];
+        return;
+    }
     [self commandDidStart];
+}
+
+// Appends an excluded subrange of pendingNonInitialPromptStart...cursor to 
+// the mark on lastPromptLine.
+- (void)recordPendingExcludedSubrangeForNonInitialB {
+    iTermResilientCoordinate *pending = self.pendingNonInitialPromptStart;
+    self.pendingNonInitialPromptStart = nil;
+    if (!pending) {
+        // Defensive: a non-initial B with no preceding non-initial A. Tolerate.
+        DLog(@"non-initial B with no pending start; ignoring");
+        return;
+    }
+    // The pending RC may have been invalidated between A and B by a
+    // clear-to-end, scrolled off, or otherwise promoted to .invalid by a
+    // notification that ran on the mutation thread mid-OSC-burst.
+    // ResilientCoordinate.coord returns VT100GridAbsCoordInvalid (-1, -1)
+    // for any status != .valid; writing a (-1, -1)-anchored subrange onto
+    // a real prompt mark would be worse than dropping the event.
+    if (pending.status != StatusValid) {
+        DLog(@"pending non-initial start RC no longer valid (status=%@); dropping",
+             @(pending.status));
+        return;
+    }
+    // Snapshot the closing coord. Build both pool variants below.
+    const VT100GridAbsCoord endCoord =
+        VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                              self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+    const VT100GridAbsCoord startCoord = pending.coord;
+    const VT100GridAbsCoordRange absRange =
+        VT100GridAbsCoordRangeMake(startCoord.x, startCoord.y, endCoord.x, endCoord.y);
+
+    // Locate the active primary prompt mark via lastPromptLine and append.
+    // Guard against the prompt mark having scrolled off (long multi-line
+    // command where the primary A's line was pushed out of the visible
+    // history before its closing B fired). The relative-line conversion
+    // below would underflow into a huge value otherwise; screenMarkOnLine:
+    // would then do an out-of-range markCache lookup.
+    const long long absLine = self.lastPromptLine;
+    if (absLine < 0) {
+        DLog(@"no active prompt mark; dropping excluded subrange");
+        return;
+    }
+    const long long relativeLine = absLine - self.cumulativeScrollbackOverflow;
+    if (relativeLine < 0 || relativeLine > INT_MAX) {
+        DLog(@"prompt mark scrolled off (absLine=%@, overflow=%@); dropping excluded subrange",
+             @(absLine), @(self.cumulativeScrollbackOverflow));
+        return;
+    }
+    id<VT100ScreenMarkReading> mark = [self screenMarkOnLine:(int)relativeLine];
+    if (!mark) {
+        DLog(@"no mark on lastPromptLine %@; dropping excluded subrange", @(absLine));
+        return;
+    }
+    // lastPromptLine is not reset by FTCS C/D, so it can still point at a
+    // *finished* mark when a stray non-initial A/B arrives after a full
+    // cycle (some shells emit right-prompt redraws on idle). Only attach
+    // to a mark that's still in its "being built" state — same predicate
+    // setPromptStartLine: uses to decide whether to reuse a mark.
+    if (mark.firstLineOfCommand != nil) {
+        DLog(@"prompt mark on line %@ already has a command; dropping stray excluded subrange",
+             @(absLine));
+        return;
+    }
+    // Build one bound RCRange (mutation pool, against `self`) for the
+    // progenitor, then derive an unbound twin via -unboundCopy for the
+    // doppelganger. The EventuallyConsistentIntervalTree's mutate side
+    // effect binds the unbound twin to the main-thread pool's dataSource
+    // right after this closure runs on the doppelganger side. The
+    // mutation thread no longer reaches for self.mainThreadCopy here.
+    iTermResilientCoordinateRange *mutationRange =
+        [[iTermResilientCoordinateRange alloc] initWithDataSource:self absRange:absRange];
+    iTermResilientCoordinateRange *unboundRange = [mutationRange unboundCopy];
+
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        VT100ScreenMark *m = (VT100ScreenMark *)obj;
+        // Discriminate by the authoritative iTermMark.isDoppelganger
+        // property rather than by identity comparison against the
+        // captured `mark` reference. mutateObject:'s contract today
+        // invokes the closure once with the progenitor and once with
+        // its doppelganger, but a future refactor that always hands
+        // user closures the doppelganger would silently flip identity
+        // comparisons into the wrong branch and append two unbound
+        // ranges to the progenitor.
+        if (!m.isDoppelganger) {
+            // Mutation-thread side: append the already-bound RC.
+            [m appendExcludedSubrange:mutationRange];
+        } else {
+            // Main-thread side: append the unbound RC. The tree's
+            // mutate side-effect wrapper (in JournalingIntervalTree.swift)
+            // binds it to the main-pool DS via the holder protocol
+            // immediately after this closure returns.
+            [m appendExcludedSubrange:unboundRange];
+        }
+    }];
 }
 
 // FTCS C
@@ -2143,11 +2512,25 @@ typedef struct {
 // output<D>
 - (void)terminalCommandDidEnd {
     DLog(@"begin");
+    [self invalidatePendingPromptState];
     [self commandDidEnd];
 }
 
-- (void)terminalAbortCommand {
-    DLog(@"FinalTerm: terminalAbortCommand");
+- (void)terminalAbortCommandWithAid:(NSString * _Nullable)aid {
+    DLog(@"FinalTerm: terminalAbortCommand aid=%@", aid);
+    [self invalidatePendingPromptState];
+    // If aid targets a known open mark, abort that mark specifically + its
+    // descendants. Otherwise (common case for malformed sequences without
+    // aid) fall through to the legacy "abort topmost" path. Registry
+    // cleanup for aid'd marks happens automatically via
+    // -didRemoveObjectFromIntervalTree: as their marks leave the tree.
+    if (aid != nil && self.marksByAid[aid] != nil) {
+        DLog(@"terminalAbortCommandWithAid: routing to close-by-aid abort path");
+        [self closeAidMarkAsAbort:aid];
+        return;
+    }
+    DLog(@"terminalAbortCommandWithAid: aid=%@ not in registry; falling through "
+         @"to legacy commandWasAborted", aid);
     [self commandWasAborted];
 }
 
@@ -2171,9 +2554,29 @@ typedef struct {
     // TODO
 }
 
-- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
-    DLog(@"begin");
-    [self setReturnCodeOfLastCommand:returnCode];
+- (void)terminalReturnCodeOfLastCommandWas:(NSNumber * _Nullable)returnCode
+                                       aid:(NSString * _Nullable)aid {
+    DLog(@"begin returnCode=%@ aid=%@", returnCode, aid);
+    [self invalidatePendingPromptState];
+    if (aid != nil && self.marksByAid[aid] != nil) {
+        DLog(@"terminalReturnCodeOfLastCommandWas: routing to close-by-aid path "
+             @"for aid=%@", aid);
+        [self setReturnCodeForAidMark:aid code:returnCode];
+        return;
+    }
+    // No aid match: fall through to today's "close topmost" path. The
+    // legacy method requires a code, so we only reach it when returnCode
+    // is non-nil. (If both returnCode and aid are nil the parser declined
+    // to dispatch.)
+    if (returnCode != nil) {
+        DLog(@"terminalReturnCodeOfLastCommandWas: aid=%@ not in registry; "
+             @"falling through to legacy setReturnCodeOfLastCommand:%@",
+             aid, returnCode);
+        [self setReturnCodeOfLastCommand:returnCode.intValue];
+    } else {
+        DLog(@"terminalReturnCodeOfLastCommandWas: returnCode nil and no aid "
+             @"match; dropping (shouldn't happen — parser declined to dispatch)");
+    }
 }
 
 - (void)terminalFinalTermCommand:(NSArray *)argv {

@@ -308,6 +308,16 @@ iTermCommandInfoViewControllerDelegate>
 
     y = correctedY / self.lineHeight;
 
+    // If the scrollview's viewport height disagrees with rows*lineHeight (as can
+    // happen after instant replay leaves the grid out of sync with the view; see
+    // -[PTYTab showLiveSession:inPlaceOf:]), adjustedVisibleRect and
+    // scrollviewVisibleRect are based on inconsistent geometry and this y will be
+    // off by a few lines from the row the user sees under the cursor.
+    DLog(@"coordForPoint: locInTV=%@ adjustedVisibleRect=%@ scrollviewVisibleRect=%@ lineHeight=%@ relativeY=%@ correctedY=%@ -> y=%d (numberOfLines=%@)",
+         NSStringFromPoint(locationInTextView), NSStringFromRect(adjustedVisibleRect),
+         NSStringFromRect(scrollviewVisibleRect), @(self.lineHeight), @(relativeY),
+         @(correctedY), y, @([self.dataSource numberOfLines]));
+
     int limit;
     if (allowRightMarginOverflow) {
         limit = width;

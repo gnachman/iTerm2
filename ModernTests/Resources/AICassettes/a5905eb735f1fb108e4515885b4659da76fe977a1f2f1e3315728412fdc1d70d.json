@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/responses\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"input\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\",\"type\":\"message\"}],\"max_output_tokens\":127979,\"model\":\"gpt-5.2-pro\",\"stream\":false,\"tool_choice\":\"none\",\"tools\":[]}",
+  "key" : "a5905eb735f1fb108e4515885b4659da76fe977a1f2f1e3315728412fdc1d70d",
+  "response" : {
+    "data" : "{\n  \"id\": \"resp_057aec24821c5cdc006a25f1f4f9f88199873dd0452e4ae0a7\",\n  \"object\": \"response\",\n  \"created_at\": 1780871669,\n  \"status\": \"completed\",\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1780871671,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": null,\n  \"max_output_tokens\": 127979,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5.2-pro-2025-12-11\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"msg_057aec24821c5cdc006a25f1f777e4819994e2472a5ca24c5a\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"OK\"\n        }\n      ],\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"24h\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"none\",\n  \"tools\": [],\n  \"top_logprobs\": 0,\n  \"top_p\": 0.98,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 16,\n    \"input_tokens_details\": {\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 5,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 0\n    },\n    \"total_tokens\": 21\n  },\n  \"user\": null,\n  \"metadata\": {}\n}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

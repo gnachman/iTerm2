@@ -98,7 +98,11 @@ class ClaudeCodeOnboarding: NSObject {
     private var introDisclosureButton: NSButton?
     private var introDisclosureLabel: NSTextField?
     private var introDetailsLabel: NSTextField?
+    private var introHelpLink: LinkButton?
     private var introContinueButton: NSButton?
+
+    private static let integrationHelpURL =
+        "https://iterm2.com/claude-code-integration.html"
 
     // MARK: - Public API
 
@@ -246,6 +250,10 @@ class ClaudeCodeOnboarding: NSObject {
     static func uninstallTriggers() -> Bool {
         if let shared = ProfileModel.sharedInstance() {
             removeOurWorkgroupTriggers(from: shared)
+            // Persist the removal. Like install, removeOurWorkgroupTriggers
+            // only mutates the in-memory model via setObject:forKey:inBookmark:;
+            // without flush the triggers reappear on the next launch.
+            shared.flush()
         }
         if let sessions = ProfileModel.sessionsInstance() {
             removeOurWorkgroupTriggers(from: sessions)
@@ -270,24 +278,52 @@ class ClaudeCodeOnboarding: NSObject {
             guard let triggers = profile[KEY_TRIGGERS] as? [[String: Any]] else {
                 continue
             }
-            let filtered = triggers.filter { dict in
-                guard let action = dict[kTriggerActionKey] as? String else { return true }
-                if action == "iTermEnterWorkgroupTrigger",
-                   let param = dict[kTriggerParameterKey] as? String,
-                   param == ClaudeCodeWorkgroupTemplate.ID.workgroup {
-                    return false
-                }
-                if action == "iTermExitWorkgroupTrigger",
-                   let params = dict[kTriggerEventParamsKey] as? [String: Any],
-                   (params["jobName"] as? String) == "claude" {
-                    return false
-                }
-                return true
-            }
+            let filtered = removingClaudeWorkgroupTriggers(triggers)
             if filtered.count != triggers.count {
                 model.setObject(filtered, forKey: KEY_TRIGGERS, inBookmark: profile)
             }
         }
+    }
+
+    // True iff the trigger dict is one of the Claude Code workgroup triggers
+    // this installer manages (our Enter trigger pointing at the Claude Code
+    // workgroup, or an Exit trigger filtered on "claude"). Matches regardless
+    // of the leaderOnly flag so an older, pre-leaderOnly Exit trigger is still
+    // recognized (and thus removed/replaced on reinstall and uninstall).
+    private static func isClaudeWorkgroupTrigger(_ dict: [String: Any]) -> Bool {
+        guard let action = dict[kTriggerActionKey] as? String else { return false }
+        if action == "iTermEnterWorkgroupTrigger",
+           (dict[kTriggerParameterKey] as? String) == ClaudeCodeWorkgroupTemplate.ID.workgroup {
+            return true
+        }
+        if action == "iTermExitWorkgroupTrigger",
+           let params = dict[kTriggerEventParamsKey] as? [String: Any],
+           (params["jobName"] as? String) == "claude" {
+            return true
+        }
+        return false
+    }
+
+    private static func removingClaudeWorkgroupTriggers(_ triggers: [[String: Any]]) -> [[String: Any]] {
+        return triggers.filter { !isClaudeWorkgroupTrigger($0) }
+    }
+
+    // Add our Enter/Exit triggers to a profile, first removing any older copies
+    // (e.g. an Exit trigger from before leaderOnly existed) so a reinstall
+    // upgrades in place. TriggerController.add dedupes by exact dictionary, so
+    // without this strip a flagless Exit trigger would survive *alongside* the
+    // new leaderOnly one and keep firing on peers.
+    private static func addClaudeWorkgroupTriggers(_ triggers: [Trigger],
+                                                   toProfileWithGUID guid: String,
+                                                   in model: ProfileModel) {
+        if let profile = model.bookmark(withGuid: guid),
+           let existing = profile[KEY_TRIGGERS] as? [[String: Any]] {
+            let stripped = removingClaudeWorkgroupTriggers(existing)
+            if stripped.count != existing.count {
+                model.setObject(stripped, forKey: KEY_TRIGGERS, inBookmark: profile)
+            }
+        }
+        TriggerController.add(triggers, toProfileWithGUID: guid, in: model)
     }
 
     // True iff every install-eligible profile has both our Enter
@@ -328,11 +364,14 @@ class ClaudeCodeOnboarding: NSObject {
                     hasEnter = true
                 } else if action == "iTermExitWorkgroupTrigger",
                           let params = dict[kTriggerEventParamsKey] as? [String: Any],
-                          (params["jobName"] as? String) == "claude" {
+                          (params["jobName"] as? String) == "claude",
+                          (params[ExitWorkgroupTrigger.leaderOnlyParamKey] as? NSNumber)?.boolValue == true {
                     // Match the installer's scope: an Exit trigger
                     // filtered on "claude". A user-added Exit trigger
                     // for some other job is unrelated and shouldn't
-                    // count as "already installed."
+                    // count as "already installed." The leaderOnly
+                    // requirement also makes a pre-leaderOnly install
+                    // read as not-installed, so reinstalling upgrades it.
                     hasExit = true
                 }
             }
@@ -543,6 +582,96 @@ class ClaudeCodeOnboarding: NSObject {
         // %(extra)s expansion in the nightly build script).
         return version.range(of: #"^3\.7\.\d{8}-nightly$"#,
                              options: .regularExpression) != nil
+    }
+
+    // True for versions that predate the Exit Workgroup leaderOnly flag, which
+    // shipped after 3.7.0beta3 and the 2026-06-08 nightly. Used to backfill the
+    // flag exactly once, on the upgrade transition.
+    private static func versionStringIsPreLeaderOnly(_ version: String) -> Bool {
+        if version == "3.7.0beta1" || version == "3.7.0beta2" || version == "3.7.0beta3" {
+            return true
+        }
+        // Format: "3.7.YYYYMMDD-nightly".
+        let prefix = "3.7."
+        let suffix = "-nightly"
+        if version.hasPrefix(prefix), version.hasSuffix(suffix) {
+            let dateString = String(version.dropFirst(prefix.count).dropLast(suffix.count))
+            if dateString.count == 8, let date = Int(dateString) {
+                return date <= 20260608
+            }
+        }
+        return false
+    }
+
+    // One-time backfill: set leaderOnly on existing Claude Code Exit Workgroup
+    // triggers for users upgrading from a build that predates the flag. The
+    // pre-leaderOnly installer wrote an Exit trigger that fires on any session
+    // (including peers); without this, upgraders would keep the buggy behavior
+    // until they manually reinstalled. Mirrors migrateIntegrationCompletedFlag-
+    // IfNeeded: gated on the previous-launch version so it runs exactly on the
+    // upgrade transition and never re-flips a flag the user later cleared. It
+    // writes profiles (KEY_TRIGGERS), so it touches only install-eligible
+    // profiles and only when the flag is actually missing.
+    @objc static func migrateExitTriggersToLeaderOnlyIfNeeded() {
+        guard let previousVersion = iTermPreferences.appVersionBeforeThisLaunch(),
+              versionStringIsPreLeaderOnly(previousVersion) else {
+            return
+        }
+        var changed = false
+        if let shared = ProfileModel.sharedInstance() {
+            changed = upgradeExitTriggersToLeaderOnly(in: shared) || changed
+        }
+        if let sessions = ProfileModel.sessionsInstance() {
+            changed = upgradeExitTriggersToLeaderOnly(in: sessions) || changed
+        }
+        guard changed else {
+            return
+        }
+        DLog("Onboarding: migrated Exit Workgroup triggers to leaderOnly (previous launch was pre-leaderOnly build \(previousVersion))")
+        ProfileModel.sharedInstance()?.flush()
+        NotificationCenter.default.post(name: NSNotification.Name(kReloadAllProfiles),
+                                        object: nil)
+    }
+
+    // Set leaderOnly on every Claude Code Exit Workgroup trigger in `model`
+    // that lacks it. Returns whether any profile changed. Skips non-rewritable
+    // dynamic profiles (regenerated from disk), matching install/uninstall.
+    private static func upgradeExitTriggersToLeaderOnly(in model: ProfileModel) -> Bool {
+        var any = false
+        for profile in model.bookmarks() {
+            if profileIsDynamic(profile),
+               !iTermProfilePreferences.bool(forKey: KEY_DYNAMIC_PROFILE_REWRITABLE,
+                                             inProfile: profile) {
+                continue
+            }
+            guard let triggers = profile[KEY_TRIGGERS] as? [[String: Any]] else {
+                continue
+            }
+            var changed = false
+            let updated: [[String: Any]] = triggers.map { dict in
+                // Only the installer's Exit trigger (Job Ended: claude). A
+                // regex/user-added Exit trigger has no claude jobName and is
+                // left alone, so we never force the flag onto a hand-made one.
+                guard (dict[kTriggerActionKey] as? String) == "iTermExitWorkgroupTrigger",
+                      var params = dict[kTriggerEventParamsKey] as? [String: Any],
+                      (params["jobName"] as? String) == "claude" else {
+                    return dict
+                }
+                if (params[ExitWorkgroupTrigger.leaderOnlyParamKey] as? NSNumber)?.boolValue == true {
+                    return dict
+                }
+                params[ExitWorkgroupTrigger.leaderOnlyParamKey] = NSNumber(value: true)
+                var newDict = dict
+                newDict[kTriggerEventParamsKey] = params
+                changed = true
+                return newDict
+            }
+            if changed {
+                model.setObject(updated, forKey: KEY_TRIGGERS, inBookmark: profile)
+                any = true
+            }
+        }
+        return any
     }
 
     @objc static func show() {
@@ -763,6 +892,17 @@ class ClaudeCodeOnboarding: NSObject {
         details.isHidden = true
         introDetailsLabel = details
 
+        // Always-visible link to the full writeup, regardless of the
+        // disclosure state. Sits below the "What gets changed" row so
+        // users who want the whole story can read it on the web.
+        let helpLink = LinkButton(title: "Learn more about the Claude Code integration",
+                                  target: self,
+                                  action: #selector(openIntegrationHelp(_:)))
+        helpLink.font = NSFont.systemFont(ofSize: 13)
+        helpLink.configureLinkAppearance()
+        helpLink.sizeToFit()
+        introHelpLink = helpLink
+
         let continueButton = NSButton(title: "Continue",
                                       target: self,
                                       action: #selector(dismissIntroSheet(_:)))
@@ -784,6 +924,7 @@ class ClaudeCodeOnboarding: NSObject {
         contentView.addSubview(disclosure)
         contentView.addSubview(disclosureLabel)
         contentView.addSubview(details)
+        contentView.addSubview(helpLink)
         contentView.addSubview(continueButton)
         sheetWindow.contentView = contentView
 
@@ -814,6 +955,7 @@ class ClaudeCodeOnboarding: NSObject {
               let disclosure = introDisclosureButton,
               let disclosureLabel = introDisclosureLabel,
               let details = introDetailsLabel,
+              let helpLink = introHelpLink,
               let continueButton = introContinueButton else { return }
 
         let sheetWidth: CGFloat = 540
@@ -822,6 +964,7 @@ class ClaudeCodeOnboarding: NSObject {
         let leadGap: CGFloat = 12
         let disclosureGap: CGFloat = 16
         let detailsGap: CGFloat = 8
+        let linkGap: CGFloat = 12
         let buttonGap: CGFloat = 20
         let disclosureRowHeight = max(disclosure.frame.height,
                                       disclosureLabel.frame.height)
@@ -836,6 +979,8 @@ class ClaudeCodeOnboarding: NSObject {
             height += detailsGap
             height += details.frame.height
         }
+        height += linkGap
+        height += helpLink.frame.height
         height += buttonGap
         height += continueButton.frame.height
         height += bottomPadding
@@ -860,6 +1005,9 @@ class ClaudeCodeOnboarding: NSObject {
             y -= details.frame.height
             details.frame.origin = NSPoint(x: sheetPadding, y: y)
         }
+        y -= linkGap
+        y -= helpLink.frame.height
+        helpLink.frame.origin = NSPoint(x: sheetPadding, y: y)
         continueButton.frame.origin = NSPoint(
             x: sheetWidth - sheetPadding - continueButton.frame.width,
             y: bottomPadding)
@@ -868,6 +1016,12 @@ class ClaudeCodeOnboarding: NSObject {
     @objc private func toggleIntroDetails(_ sender: NSButton) {
         introDetailsLabel?.isHidden = (sender.state == .off)
         layoutIntroSheet()
+    }
+
+    @objc private func openIntegrationHelp(_ sender: Any?) {
+        if let url = URL(string: Self.integrationHelpURL) {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @objc private func dismissIntroSheet(_ sender: Any?) {
@@ -879,6 +1033,7 @@ class ClaudeCodeOnboarding: NSObject {
         introDisclosureButton = nil
         introDisclosureLabel = nil
         introDetailsLabel = nil
+        introHelpLink = nil
         introContinueButton = nil
         updateUI()
     }
@@ -956,7 +1111,12 @@ class ClaudeCodeOnboarding: NSObject {
             nextButton.isEnabled = true
         } else {
             nextButton.title = "Next"
-            nextButton.isEnabled = completedSteps.contains(currentStep)
+            // Show Toolbelt is optional: Next is always enabled so the
+            // user can skip it. The default-button logic below keeps
+            // Show as the default until the toolbelt has actually been
+            // shown, then promotes Next to the default.
+            nextButton.isEnabled =
+                completedSteps.contains(currentStep) || currentStep == .showToolbelt
         }
 
         if completedSteps.contains(currentStep) {
@@ -1078,6 +1238,25 @@ class ClaudeCodeOnboarding: NSObject {
         }
         DLog("Onboarding: cc-status symlink \(symlinkURL.path) -> \(bundlePath)")
         return symlinkURL.path
+    }
+
+    // True iff the cc-status symlink exists and resolves to a file that is
+    // still present. The launch-time refresh only re-points the symlink when
+    // this launch is a newer version than the last (so an older build never
+    // downgrades the deployed cc-status); this lets it also repair a symlink
+    // that broke for a version-independent reason — the bundle it pointed at
+    // was moved, renamed, or deleted — regardless of version.
+    @objc
+    static func ccStatusSymlinkIsHealthy() -> Bool {
+        let fm = FileManager.default
+        guard let dotDir = fm.homeDirectoryDotDir() else {
+            return false
+        }
+        let symlinkPath = (dotDir as NSString).appendingPathComponent("cc-status")
+        guard let target = try? fm.destinationOfSymbolicLink(atPath: symlinkPath) else {
+            return false
+        }
+        return fm.fileExists(atPath: target)
     }
 
     /// Hook event names that cc-status handles.
@@ -1437,8 +1616,10 @@ class ClaudeCodeOnboarding: NSObject {
         }
 
         DLog("Onboarding: guidsToInstall = \(guidsToInstall)")
-        for guid in guidsToInstall {
-            TriggerController.add([enter, exit], toProfileWithGUID: guid)
+        if let shared = ProfileModel.sharedInstance() {
+            for guid in guidsToInstall {
+                Self.addClaudeWorkgroupTriggers([enter, exit], toProfileWithGUID: guid, in: shared)
+            }
         }
         // Push the same triggers into divorced session profiles
         // whose canonical parent the user picked. Without this, an
@@ -1529,9 +1710,9 @@ class ClaudeCodeOnboarding: NSObject {
             }
             DLog("Onboarding: divorcedGuidsToUpdate = \(divorcedGuidsToUpdate)")
             for divorcedGuid in divorcedGuidsToUpdate {
-                TriggerController.add([enter, exit],
-                                      toProfileWithGUID: divorcedGuid,
-                                      in: sessions)
+                Self.addClaudeWorkgroupTriggers([enter, exit],
+                                                toProfileWithGUID: divorcedGuid,
+                                                in: sessions)
             }
         }
         // setObject:forKey:inBookmark: posts iTermProfileDidChange and
@@ -1544,6 +1725,7 @@ class ClaudeCodeOnboarding: NSObject {
         // until the session is closed and reopened. Mirrors what
         // TriggerController's import paths do after a batch add.
         if !guidsToInstall.isEmpty {
+            ProfileModel.sharedInstance()?.flush()
             NotificationCenter.default.post(
                 name: NSNotification.Name(kReloadAllProfiles),
                 object: nil)
@@ -1610,7 +1792,11 @@ class ClaudeCodeOnboarding: NSObject {
             kTriggerParameterKey: "",
             kTriggerPartialLineKey: NSNumber(value: false),
             kTriggerDisabledKey: NSNumber(value: false),
-            kTriggerEventParamsKey: ["jobName": "claude"]
+            // leaderOnly: only the workgroup leader's claude ending tears the
+            // workgroup down. Peers (Code Review, Diff) inherit this trigger
+            // via the profile, and their own claude ending or reloading must
+            // not exit the whole workgroup.
+            kTriggerEventParamsKey: ["jobName": "claude", "leaderOnly": NSNumber(value: true)]
         ])
     }
 
@@ -1703,10 +1889,39 @@ private class OnboardingScrim: NSView {
     init(cutoutView: NSView) {
         self.cutoutView = cutoutView
         super.init(frame: .zero)
+        // The cutout is computed in draw() from the cutout view's live
+        // geometry. When the toolbelt is freshly shown its Session
+        // Status tool gets its real frame on a layout pass that can
+        // land after our first draw, leaving the highlight punched out
+        // of a zero-sized rect. Watch the cutout view (and its toolbelt
+        // ancestor) for frame changes and redraw, mirroring how
+        // iTermPrefsScrim invalidates itself when its target moves.
+        cutoutView.postsFrameChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(cutoutGeometryDidChange(_:)),
+            name: NSView.frameDidChangeNotification,
+            object: cutoutView)
+        if let toolbelt = cutoutView.superview {
+            toolbelt.postsFrameChangedNotifications = true
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(cutoutGeometryDidChange(_:)),
+                name: NSView.frameDidChangeNotification,
+                object: toolbelt)
+        }
     }
 
     required init?(coder: NSCoder) {
         it_fatalError()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func cutoutGeometryDidChange(_ notification: Notification) {
+        needsDisplay = true
     }
 
     override var isOpaque: Bool { false }

@@ -10,10 +10,10 @@
 #import "iTermKeyBindingAction.h"
 #import "ProfileModel.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 extern NSString *const kKeyBindingsChangedNotification;
 extern NSString *const iTermKeyMappingsLeaderDidChange;
-
-NS_ASSUME_NONNULL_BEGIN
 
 @class iTermKeyBindingAction;
 @class iTermKeystroke;

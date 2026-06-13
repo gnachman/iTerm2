@@ -54,6 +54,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)populateFromStatusListOnState:(iTermGitState *)state
                   includeFileStatuses:(BOOL)includeFileStatuses;
 
+// Populate `state.fileStatuses` (HEAD base) for the workgroup diff
+// menu. Excludes untracked files: the menu filters them out anyway,
+// and omitting them keeps rename detection from hashing every
+// untracked file in the tree (which can exceed the git timeout in a
+// working copy full of large untracked files). Preserves the
+// staged/unstaged column distinction, unlike the non-HEAD
+// populateFileStatusesAgainstBase: path. Invoked by
+// populateFromStatusListOnState: when fileStatuses are requested.
+- (BOOL)populateHeadFileStatusesOnState:(iTermGitState *)state;
+
 // Populate on state: linesInserted, linesDeleted, filesAdded, filesModified,
 // filesDeleted by diffing HEAD's tree against workdir-with-index. Returns NO
 // if diffing fails or there is no HEAD commit.

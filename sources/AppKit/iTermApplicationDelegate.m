@@ -1414,6 +1414,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         DLog(@"Window restoration is totally complete");
         [_untitledWindowStateMachine didFinishRestoringWindows];
         ScreenCharGarbageCollectImages();
+        [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
     }];
 }
 
@@ -1508,7 +1509,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     // Ensure hotkeys are registered.
     [iTermAppHotKeyProvider sharedInstance];
-    [iTermOpenQuicklyHotKeyProvider sharedInstance];
+    (void)[iTermOpenQuicklyHotKeyProvider sharedInstance];
     [iTermHotKeyProfileBindingController sharedInstance];
 
     if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
@@ -1569,6 +1570,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
             DLog(@"Running post-retoration completion block from appDidFinishLaunching");
             [self restoreBuriedSessionsState];
+            [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
                 _orphansAdopted = YES;
                 [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
@@ -1581,6 +1583,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         }];
     } else {
         [self restoreBuriedSessionsState];
+        [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
     }
     if ([iTermAPIHelper isEnabled]) {
         [iTermAPIHelper sharedInstance];  // starts the server. Won't ask the user since it's enabled.
@@ -1609,6 +1612,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     // (called constantly) can read user defaults instead of re-
     // walking ~/.claude/settings.json or every profile's trigger list.
     [iTermClaudeCodeOnboarding reconcileHooksCache];
+    // Backfill the leader-only flag on existing Claude Code Exit Workgroup
+    // triggers for users upgrading from a build that predates it. Runs before
+    // reconcileTriggersCache so the cached "triggers installed" flag reflects
+    // the migrated (now-flagged) state this launch rather than next launch.
+    [iTermClaudeCodeOnboarding migrateExitTriggersToLeaderOnlyIfNeeded];
     [iTermClaudeCodeOnboarding reconcileTriggersCache];
 
     // Sticky claudeCodeIntegrationCompleted flag was added after
@@ -1624,16 +1632,25 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     // ~/.claude/settings.json hooks reference a stable cc-status
     // symlink in iTerm2's dot dir; we keep it pointed at the running
-    // app's bundle binary. Refresh it on every launch so a moved /
-    // renamed / replaced iTerm2.app still resolves correctly the next
-    // time a hook fires. Gated on the (NoSync) cached install flag —
-    // the vast majority of users never install the cc-status hook,
-    // and they shouldn't pay the cost of touching the dot dir and a
-    // symlink on every launch. reconcileHooksCache above just
-    // refreshed the flag from disk, so a manual edit of
-    // ~/.claude/settings.json is detected next launch.
+    // app's bundle binary. Only re-point it when this launch is a
+    // newer version than the previous one, so launching an older
+    // build never downgrades the deployed cc-status. We still repair
+    // the symlink on any launch when it is missing or resolves to a
+    // bundle that was moved, renamed, or deleted. Gated on the
+    // (NoSync) cached install flag — the vast majority of users never
+    // install the cc-status hook, and they shouldn't pay the cost of
+    // touching the dot dir and a symlink on every launch.
+    // reconcileHooksCache above just refreshed the flag from disk, so
+    // a manual edit of ~/.claude/settings.json is detected next launch.
     if ([iTermClaudeCodeOnboarding hooksAlreadyInstalled]) {
-        [iTermClaudeCodeOnboarding ensureCCStatusSymlink];
+        NSString *previousVersion = [iTermPreferences appVersionBeforeThisLaunch];
+        NSString *currentVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+        const BOOL launchedNewerVersion =
+            (previousVersion == nil) ||
+            (currentVersion != nil && [self version:currentVersion newerThan:previousVersion]);
+        if (launchedNewerVersion || ![iTermClaudeCodeOnboarding ccStatusSymlinkIsHealthy]) {
+            [iTermClaudeCodeOnboarding ensureCCStatusSymlink];
+        }
     }
     [iTermClaudeWatcher start];
     [[iTermClaudeIntegrationHealthMonitor instance] start];
@@ -1748,6 +1765,15 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
     DLog(@"orphansAdopted=%@", @(_orphansAdopted));
+    // Reconstruct any ready workgroups BEFORE orphan adoption. Workgroup
+    // peers run in servers too; reconstruct reattaches them, which moves
+    // their server children out of the adopter's unattachedChildren set.
+    // If adoption ran first it would pull the live diff/code-review peers
+    // into stray standalone windows instead of back into the workgroup.
+    // Doing it explicitly here (rather than relying on the coordinator's
+    // own notification observer firing first) makes the ordering
+    // deterministic.
+    [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
     if (!_orphansAdopted && [[iTermController sharedInstance] numberOfDecodesPending] == 0) {
         _orphansAdopted = YES;
         [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];

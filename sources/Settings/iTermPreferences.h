@@ -85,7 +85,8 @@ typedef NS_ENUM(NSUInteger, iTermAIAPI) {
     iTermAIAPIEarlyO1 = 4,
     iTermAIAPILlama = 5,
     iTermAIAPIDeepSeek = 6,
-    iTermAIAPIAnthropic = 7
+    iTermAIAPIAnthropic = 7,
+    iTermAIAPIAppleIntelligence = 8
 };
 
 typedef NS_ENUM(NSUInteger, iTermAIVendor) {
@@ -93,7 +94,8 @@ typedef NS_ENUM(NSUInteger, iTermAIVendor) {
     iTermAIVendorGemini = 1,
     iTermAIVendorOpenAI = 2,
     iTermAIVendorLlama = 3,
-    iTermAIVendorAnthropic = 4
+    iTermAIVendorAnthropic = 4,
+    iTermAIVendorApple = 5
 };
 
 typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
@@ -104,6 +106,9 @@ typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
     iTermAIPromptAIChatBrowser = 4,
     iTermAIPromptAIChatReadOnlyTerminalBrowser = 5,
     iTermAIPromptAIChatReadWriteTerminalBrowser = 6,
+    iTermAIPromptAIChatOrchestration = 7,
+    iTermAIPromptCodeReviewSystem = 8,
+    iTermAIPromptChatIcon = 9,
 };
 
 typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {
@@ -146,7 +151,19 @@ extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminal;
 extern NSString *const kPreferenceKeyAIPromptAIChatBrowser;
 extern NSString *const kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
 extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+extern NSString *const kPreferenceKeyAIPromptAIChatOrchestration;
 extern NSString *const kPreferenceKeyAIPromptCodeReview;
+extern NSString *const kPreferenceKeyAIPromptCodeReviewSystem;
+extern NSString *const kPreferenceKeyAIPromptChatIcon;
+// The shipped default for kPreferenceKeyAIPromptChatIcon. Exposed so
+// tests can verify the template independent of the machine's defaults.
+extern NSString *iTermDefaultAIPromptChatIcon;
+// Names of the variables (in the interpolated-string "ai" scope) that
+// templated prompts must reference. Shared by the feature code that
+// supplies the value and the Settings warning that checks the template
+// references it, so the two cannot drift.
+extern NSString *const iTermAIPromptVariablePrompt;   // Engage AI: the user's query
+extern NSString *const iTermAIPromptVariableSubject;  // Chat List Icon: the chat's title
 extern NSString *const kPreferenceKeyAIPromptPlaceholder;  // not a real setting, just there to make the prefs UI infra happy
 extern NSString *const kPreferenceKeyAIModel;
 extern NSString *const kPreferenceKeyAITokenLimit;
@@ -207,6 +224,17 @@ extern NSString *const kPreferenceKeyAIVectorStore;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
+
+// Local (NoSync) flags that govern where the AI command-safety check runs.
+// These form a privacy boundary (on-device vs. configured provider), so they
+// are shared constants rather than scattered string literals: a typo fails to
+// build instead of silently mis-routing. Read/written via
+// [iTermUserDefaults userDefaults] (not the registered-defaults map) from both
+// Swift and ObjC.
+extern NSString *const kPreferenceKeyAISafetyCheckUsesAppleIntelligence;  // boolean: route the side-query on-device
+extern NSString *const kPreferenceKeyAISafetyCheckProviderSwitchPending;  // boolean: still owe the user the switch prompt
+extern NSString *const kPreferenceKeyAISafetyCheckProviderMigrationDone;  // boolean: one-time provider migration ran
+extern NSString *const kPreferenceKeyAISafetyCheckNagComplete;  // boolean: opt-in nag already shown
 extern NSString *const kPreferenceKeyAICustomHeadersEnabled;  // boolean
 extern NSString *const kPreferenceKeyAICustomHeaders;  // NSArray of NSDictionary with "name"/"value" NSString entries
 extern NSString *const kPreferenceKeyOpenTmuxWindowsAsTabsInAttachingWindow;  // PHONY

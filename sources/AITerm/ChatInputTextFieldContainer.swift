@@ -54,7 +54,11 @@ class ChatInputTextFieldContainer: NSView {
 
     let textView: ChatInputTextView = {
         let tv = ChatInputTextView(frame: .zero)
-        tv.isRichText = false
+        // Rich text is required so @-mention tokens (ChatSessionMentionAttachment)
+        // survive in the storage. Typed text is kept plain via typingAttributes
+        // below, and paste is forced to plain text (see ChatInputTextView.paste).
+        tv.isRichText = true
+        tv.importsGraphics = false
         tv.isEditable = true
         tv.isSelectable = true
         tv.drawsBackground = false
@@ -63,7 +67,18 @@ class ChatInputTextFieldContainer: NSView {
         tv.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         tv.textContainer?.widthTracksTextView = true
         tv.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        // Keep typed text plain regardless of any attributes carried by an
+        // adjacent @-mention token.
+        tv.typingAttributes = [.font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
+                               .foregroundColor: NSColor.labelColor]
         tv.allowsUndo = true
+        tv.isAutomaticDashSubstitutionEnabled = false
+        tv.isAutomaticQuoteSubstitutionEnabled = false
+        tv.isAutomaticTextReplacementEnabled = false
+        tv.isAutomaticSpellingCorrectionEnabled = false
+        tv.isAutomaticDataDetectionEnabled = false
+        tv.isAutomaticLinkDetectionEnabled = false
+        tv.smartInsertDeleteEnabled = false
         return tv
     }()
 
@@ -96,12 +111,37 @@ class ChatInputTextFieldContainer: NSView {
         }
     }
 
+    // The full attributed contents, including any @-mention tokens. Used to
+    // save/restore per-chat drafts so a pending message (tokens and all)
+    // survives switching chats. The setter resets typing attributes so text
+    // typed after a restore stays plain.
+    var attributedStringValue: NSAttributedString {
+        get {
+            // NSTextView.attributedString() hands back the live textStorage by
+            // reference, so callers that stash it (e.g. per-chat drafts) would
+            // see it mutate as the field changes. Return an immutable snapshot.
+            NSAttributedString(attributedString: textView.attributedString())
+        }
+        set {
+            textView.textStorage?.setAttributedString(newValue)
+            textView.typingAttributes = [.font: textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize),
+                                         .foregroundColor: NSColor.labelColor]
+            setNeedsLayoutNow()
+        }
+    }
+
+    // Getter returns the sendable form: each @-mention token is serialized back
+    // to "@<guid>" (see NSAttributedString.chatMentionSerialized) while all other
+    // runs contribute their literal text. The setter installs plain text only;
+    // restored drafts therefore appear as literal text without live tokens.
     var stringValue: String {
         get {
-            textView.string
+            textView.attributedString().chatMentionSerialized()
         }
         set {
             textView.string = newValue
+            textView.typingAttributes = [.font: textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize),
+                                         .foregroundColor: NSColor.labelColor]
             setNeedsLayoutNow()
         }
     }
@@ -258,6 +298,29 @@ class ChatInputTextFieldContainer: NSView {
 class ChatInputTextView: ShiftEnterTextView {
     var sendAction: Selector?
     weak var sendTarget: AnyObject?
+
+    // Invoked when file URLs are dropped onto the text view. Return true if
+    // the drop was fully handled (the text view should insert nothing);
+    // return false to fall back to NSTextView's default behavior of inserting
+    // the dropped file paths as plain text.
+    var onDropFileURLs: (([URL]) -> Bool)?
+
+    // A plain-text NSTextView accepts file drops by inserting their paths as
+    // text. Intercept here so the owner can offer to attach backend-supported
+    // files instead. We only divert when onDropFileURLs claims the drop;
+    // otherwise (or for non-file drags like selected text) the default path is
+    // preserved exactly.
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if let handler = onDropFileURLs,
+           let urls = sender.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self],
+            options: [.urlReadingFileURLsOnly: true]) as? [URL],
+           !urls.isEmpty,
+           handler(urls) {
+            return true
+        }
+        return super.performDragOperation(sender)
+    }
 
     // Bind the undo stack to this text view's lifetime. NSUndoManager holds
     // undo targets unowned(unsafe), so registering text-edit undo on a shared

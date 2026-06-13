@@ -218,17 +218,58 @@ extension PTYTextView: ExternalSearchResultsController {
         if porthole.delegate === self {
             porthole.delegate = nil
         }
-        porthole.view.removeFromSuperview()
+        Self.removePortholeViewWithoutAnimation(porthole.view)
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
         self.delegate?.textViewDidAddOrRemovePorthole()
+    }
+
+    // Reclaim a porthole that was hidden (e.g. folded) and whose fold was then
+    // permanently removed without going through unfold (Clear Buffer, scrollback
+    // overflow). prunePortholes deliberately skips hidden portholes since it
+    // can't tell "will return via unfold" from "gone forever"; the destruction
+    // site knows, and signals here.
+    @objc(forciblyRemovePortholeWithUniqueIdentifier:)
+    func forciblyRemovePorthole(uniqueIdentifier: String) {
+        DLog("forciblyRemovePorthole(\(uniqueIdentifier))")
+        // Drop the registry references unconditionally. This is the whole point
+        // of the signal: break the doppelganger retain cycle (registry -> mark
+        // doppelganger -> progenitor) so the progenitor mark carried in the
+        // destroyed fold's savedITOs can deinit. It must run even when no view
+        // was ever hydrated into `portholes` (e.g. a session restored with the
+        // region already folded, then cleared before it was displayed), because
+        // then there is nothing else that will ever free it.
+        PortholeRegistry.instance.remove(uniqueIdentifier)
+        guard let index = typedPortholes.firstIndex(where: { $0.uniqueIdentifier == uniqueIdentifier }) else {
+            return
+        }
+        let porthole = typedPortholes[index]
+        Self.removePortholeViewWithoutAnimation(porthole.view)
+        portholes.removeObject(at: index)
+    }
+
+    // The porthole container is layer-backed, so a plain removeFromSuperview
+    // plays Core Animation's implicit order-out fade. That looks wrong when a
+    // porthole goes away as part of folding or clearing, where the surrounding
+    // text disappears instantly. Suppress the implicit action so it matches.
+    private static func removePortholeViewWithoutAnimation(_ view: NSView) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        view.removeFromSuperview()
+        CATransaction.commit()
     }
 
     @objc
     func unhidePorthole(_ objcPorthole: ObjCPorthole) {
         DLog("unhidePorthole(\(objcPorthole))")
         let porthole = objcPorthole as! Porthole
-        precondition(portholes.contains(porthole))
-        precondition(porthole.view.superview != self)
+        guard portholes.contains(porthole) else {
+            DLog("Not unhiding porthole we don't own")
+            return
+        }
+        guard porthole.view.superview != self else {
+            DLog("Porthole is already shown; nothing to unhide")
+            return
+        }
         addPortholeView(porthole)
     }
 
@@ -407,10 +448,29 @@ extension PTYTextView: ExternalSearchResultsController {
         DLog("prunePortholes")
         let registry = PortholeRegistry.instance
         let indexes = typedPortholes.indexes { porthole in
-            registry.mark(for: porthole.uniqueIdentifier) == nil
+            // Folded (and alt-screen-swapped) portholes are deliberately hidden:
+            // their view is detached from the textview and their mark is retained
+            // for restore. Never prune those; they come back via unhidePorthole.
+            guard porthole.view.superview === self else {
+                return false
+            }
+            // Otherwise a porthole should live only while its mark occupies a
+            // valid location in the accessible interval tree. coordRange(of:)
+            // returns invalid once the mark has been removed (Clear Buffer,
+            // deletion, or scrolled into the dustbin). We key off this rather
+            // than the registry mark being deallocated: the progenitor mark can
+            // outlive its removal from the tree (it's retained via its
+            // doppelganger), so waiting for dealloc would leave the view behind.
+            let coordRange = dataSource?.coordRange(of: porthole) ?? VT100GridCoordRangeInvalid
+            return coordRange == VT100GridCoordRangeInvalid
         }
         for i in indexes {
-            typedPortholes[i].view.removeFromSuperview()
+            let porthole = typedPortholes[i]
+            Self.removePortholeViewWithoutAnimation(porthole.view)
+            // Drop the registry's references too. Normally this happens when the
+            // mark deinits, but that can be delayed indefinitely by the
+            // doppelganger, which would leak the porthole and its saved lines.
+            registry.remove(porthole.uniqueIdentifier)
         }
         portholes.removeObjects(at: indexes)
         DLog("done")
@@ -732,6 +792,13 @@ extension PTYTextView: PortholeDelegate {
             }
             other.removeSelection()
         }
+    }
+
+    func portholeWantsFirstResponder(_ porthole: Porthole) {
+        // Clicking inside a porthole should activate its split pane. The porthole's text view
+        // refuses first responder, so make this text view first responder on its behalf.
+        DLog("portholeWantsFirstResponder")
+        window?.makeFirstResponder(self)
     }
 
     func portholeRemove(_ porthole: Porthole) {
@@ -1141,7 +1208,7 @@ extension PTYTextView {
         }
 
         // First command (truncated)
-        if let cmd = firstMark?.command, !cmd.isEmpty {
+        if let cmd = firstMark?.firstLineOfCommand, !cmd.isEmpty {
             parts.append(String(cmd.prefix(20)))
         }
 
@@ -1150,7 +1217,7 @@ extension PTYTextView {
         parts.append("…\(lineCount) line\(lineCount > 1 ? "s" : "")…")
 
         // Last command if different
-        if let lastCmd = lastMark?.command,
+        if let lastCmd = lastMark?.firstLineOfCommand,
            !lastCmd.isEmpty,
            lastMark !== firstMark {
             parts.append(String(lastCmd.prefix(20)))

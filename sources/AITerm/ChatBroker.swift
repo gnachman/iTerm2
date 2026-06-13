@@ -4,12 +4,7 @@
 //
 //  Created by George Nachman on 2/12/25.
 //
-// This is a diagram of the architecture of AI chat. There is a client and server side
-// even though both run in the same process. This is to compartmentalize information so
-// that the "agent" doesn't gain dependencies on the whole rest of the app.
-// The ChatListModel also spans both client and "server" since it would be silly
-// to keep two copies of messages.
-//
+// Architecture diagram:
 //
 //                                (App)
 //                                  |
@@ -31,45 +26,61 @@
 //                           `-------------'
 //                                  |
 //                                  V
+//                  ChatAgent (session-bound or orchestration mode)
 //                            .-----------.
 //                            | ChatAgent |
 //                            `-----------'
 //                                  |
 //                                  V
-//                             nce  (AITerm)
+//                              (AITerm)
 
 // The ChatBroker bridges the imaginary line between client and server.
 // It also ensure the model is up to date.
+@MainActor
 class ChatBroker {
+    let listModel: ChatListModel
+    private var subs = [Subscription]()
+    var processors = [(message: Message, chatID: String, partial: Bool) -> (Message?)]()
+
     private static var _instance: ChatBroker?
     static var instance: ChatBroker? {
-        if _instance == nil {
-            _instance = ChatBroker()
+        if _instance == nil,
+           let lm = ChatListModel.instance {
+            _instance = ChatBroker(listModel: lm)
         }
         return _instance
     }
-    private var subs = [Subscription]()
-    var processors = [(message: Message, chatID: String, partial: Bool) -> (Message?)]()
-    private let listModel: ChatListModel
 
-    init?() {
-        guard let listModel = ChatListModel.instance else {
-            return nil
-        }
+    init(listModel: ChatListModel) {
         self.listModel = listModel
     }
+
+    // Boot the chat service so messages have somewhere to land, and
+    // the orchestrator client so .remoteCommandRequest(.external(...))
+    // messages have an app-side consumer. ChatService routes by
+    // Chat.orchestrationEnabled once it's running; OrchestratorClient
+    // listens for external tool calls regardless of the chat's mode
+    // (a session-bound chat never emits them, but a chat that flips
+    // to orchestration mid-conversation will).
+    func ensureServiceRunning() {
+        _ = ChatService.instance
+        _ = OrchestratorClient.instance
+    }
+
+    // MARK: - Lifecycle
 
     func delete(chatID: String) throws {
         try listModel.delete(chatID: chatID)
     }
+
+    // MARK: - Chat creation
 
     func create(chatWithTitle title: String,
                 terminalSessionGuid: String?,
                 browserSessionGuid: String?,
                 permissions: String,  // use "" as default
                 initialMessages: [Message]) throws -> String {
-        // Ensure the service is running
-        _ = ChatService.instance
+        ensureServiceRunning()
 
         let rce = RemoteCommandExecutor.instance
         let chat = Chat(title: title,
@@ -103,10 +114,11 @@ class ChatBroker {
         return chat.id
     }
 
+    // MARK: - Publish
+
     func publish(message: Message, toChatID chatID: String, partial: Bool) throws {
         DLog("Publish \(message.shortDescription)")
-        // Ensure the service is running
-        _ = ChatService.instance
+        ensureServiceRunning()
 
         var processed = message
         for processor in processors {
@@ -118,7 +130,8 @@ class ChatBroker {
             }
         }
         try listModel.append(message: processed, toChatID: chatID)
-        for sub in subs {
+        let snapshot = subs
+        for sub in snapshot {
             if sub.chatID == chatID || sub.chatID == nil {
                 sub.closure?(.delivery(processed, chatID))
             }
@@ -131,14 +144,16 @@ class ChatBroker {
         TypingStatusModel.instance.set(isTyping: typingStatus,
                                        participant: participant,
                                        chatID: chatID)
-        for sub in subs {
+        let snapshot = subs
+        for sub in snapshot {
             if sub.chatID == chatID || sub.chatID == nil {
                 sub.closure?(.typingStatus(typingStatus, participant))
             }
         }
     }
 
-    func requestRegistration(chatID: String, completion: @escaping (AITermController.Registration?) -> ()) {
+    func requestRegistration(chatID: String,
+                             completion: @escaping (AITermController.Registration?) -> ()) {
         for sub in subs {
             if sub.chatID == chatID, let provider = sub.registrationProvider {
                 provider.registrationProviderRequestRegistration(completion)
@@ -146,6 +161,8 @@ class ChatBroker {
             }
         }
     }
+
+    // MARK: - Subscriptions
 
     class Subscription {
         let chatID: String?
@@ -200,6 +217,7 @@ class ChatBroker {
     }
 }
 
+// Convenience publishers
 
 extension ChatBroker {
     func publishMessageFromAgent(chatID: String, content: Message.Content) throws {

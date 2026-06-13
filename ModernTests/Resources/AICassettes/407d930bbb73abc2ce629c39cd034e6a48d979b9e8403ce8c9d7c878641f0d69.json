@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127988,\"messages\":[{\"content\":\"Quote the bolded phrase.\\n<iterm2:attachment file=\\\"magic.md\\\" type=\\\"text\\\/markdown\\\">\\n# Magic\\n\\nThe phrase is **pinecone-42**.\\n\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"disabled\"}}",
+  "key" : "407d930bbb73abc2ce629c39cd034e6a48d979b9e8403ce8c9d7c878641f0d69",
+  "response" : {
+    "data" : "{\"id\":\"4ef67a07-4896-4e53-b4a9-ac4ac9d21a38\",\"object\":\"chat.completion\",\"created\":1780870724,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The bolded phrase is **pinecone-42**.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":48,\"completion_tokens\":11,\"total_tokens\":59,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":48},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

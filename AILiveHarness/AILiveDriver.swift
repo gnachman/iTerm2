@@ -38,6 +38,13 @@ struct AILiveRunResult {
     /// loaded — not whatever happens to be in the keychain singleton. Empty
     /// string if the request didn't carry an Authorization header.
     var capturedAuthorizationHeaders: [String]
+    /// Raw inbound response body strings (one per HTTP request captured by
+    /// iTermAIClient.liveObserver). For streaming requests this is the
+    /// concatenated stream chunks; for non-streaming requests this is the
+    /// single response body. Exposed so tests can parse server-emitted
+    /// usage fields (e.g. cache_creation_input_tokens / cache_read_input_tokens
+    /// for Anthropic prompt caching).
+    var capturedResponseBodies: [String]
     /// Reasoning text surfaced via the dedicated didReceiveReasoning delegate
     /// channel. Populated for both streaming (final accumulated reasoning)
     /// and non-streaming. Distinct from `reasoningText` below which derives
@@ -104,6 +111,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
     private let startTime = Date()
     private var capturedRequestBodies: [String] = []
     private var capturedAuthorizationHeaders: [String] = []
+    private var capturedResponseBodies: [String] = []
     /// Reasoning text delivered via aitermController(_:didReceiveReasoning:).
     /// Distinct from the attachment-derived `reasoningText` on the result;
     /// this path fires for non-streaming responses and for the final
@@ -235,6 +243,9 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
             driver?.consume(capture: capture)
         }
         defer { iTermAIClient.liveObserver = nil }
+        // The cassette interceptor + recorder are installed once per test in
+        // AILiveHarness.setUpWithError (so chat-queue tests that bypass this
+        // driver are covered too), not here.
 
         let effectiveStream = streaming && controller.supportsStreaming
         controller.request(messages: messages, stream: effectiveStream)
@@ -256,6 +267,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                elapsed: Date().timeIntervalSince(driver.startTime),
                                capturedRequestBodies: driver.capturedRequestBodies,
                                capturedAuthorizationHeaders: driver.capturedAuthorizationHeaders,
+                               capturedResponseBodies: driver.capturedResponseBodies,
                                deliveredReasoning: driver.receivedReasoning)
     }
 
@@ -346,6 +358,9 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
 
     private func consume(capture: iTermAIClient.LiveCapture) {
         captureSeq += 1
+        // Recording is handled by AICassetteSession's responseRecorder hook
+        // (installed in setUpWithError), not here, so it covers chat-queue
+        // tests that don't run through this driver.
         // Stash the raw request body so tests can assert on wire shape
         // without having to fish it out of xcresult attachments.
         switch capture.request.body {
@@ -363,6 +378,18 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
             capture.request.headers["Authorization"]
             ?? capture.request.headers["authorization"]
             ?? "")
+        // Stash the response body so tests can inspect server-emitted
+        // usage / cache fields. For streaming requests this is the
+        // concatenated SSE chunks (the LiveCapture's response.data field
+        // for streaming is the joined stream); for non-streaming requests
+        // this is the single response body.
+        if let response = capture.response {
+            capturedResponseBodies.append(response.data)
+        } else if !capture.streamChunks.isEmpty {
+            capturedResponseBodies.append(capture.streamChunks.joined())
+        } else {
+            capturedResponseBodies.append("")
+        }
         let mode = streamingRequested ? "stream" : "noStream"
         let safeModel = AILiveDriver.sanitize(modelName)
         let safeScenario = AILiveDriver.sanitize(scenarioTag)
@@ -395,20 +422,37 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         if scenarioTag.hasPrefix("refusal"),
            AILiveDriver.configFlag("REFRESH_REFUSAL_FIXTURES"),
            let projectRoot = AILiveDriver.projectRoot() {
-            let fixturesDir = (projectRoot as NSString)
-                .appendingPathComponent("ModernTests")
-                + "/Resources/SafetyRefusalFixtures"
-            try? FileManager.default.createDirectory(
-                atPath: fixturesDir, withIntermediateDirectories: true)
-            let vendor = AILiveDriver.guessVendor(modelName: modelName) ?? "unknown"
-            let fixtureName = "\(vendor)_\(safeModel)_\(safeScenario)_\(mode).json"
-            let fixtureURL = URL(fileURLWithPath: fixturesDir)
-                .appendingPathComponent(fixtureName)
-            do {
-                try data.write(to: fixtureURL, options: .atomic)
-                print("[live] saved refusal fixture: \(fixtureURL.path)")
-            } catch {
-                print("[live] failed to write refusal fixture \(fixtureURL.path): \(error)")
+            // Only persist an actual refusal response. A request that failed
+            // at the transport layer (timeout, connection reset), returned an
+            // HTTP error (e.g. gpt-5.5-pro 400s the phishing prompt under
+            // OpenAI's cyber_policy block), or has an empty body is not a
+            // refusal to parse; writing it would poison the offline parser
+            // test (AISafetyRefusalParserTests) with a fixture that can never
+            // produce a message. Skip it so a refresh leaves the prior good
+            // fixture in place rather than overwriting it with garbage.
+            let responseBody = capture.response?.data ?? ""
+            let httpError = capture.response?.error ?? ""
+            if capture.error != nil || !httpError.isEmpty || responseBody.isEmpty {
+                let reason = capture.error?.reason
+                    ?? (httpError.isEmpty ? "empty body" : httpError)
+                print("[live] skipping refusal fixture for \(modelName): "
+                      + "request failed (\(reason))")
+            } else {
+                let fixturesDir = (projectRoot as NSString)
+                    .appendingPathComponent("ModernTests")
+                    + "/Resources/SafetyRefusalFixtures"
+                try? FileManager.default.createDirectory(
+                    atPath: fixturesDir, withIntermediateDirectories: true)
+                let vendor = AILiveDriver.guessVendor(modelName: modelName) ?? "unknown"
+                let fixtureName = "\(vendor)_\(safeModel)_\(safeScenario)_\(mode).json"
+                let fixtureURL = URL(fileURLWithPath: fixturesDir)
+                    .appendingPathComponent(fixtureName)
+                do {
+                    try data.write(to: fixtureURL, options: .atomic)
+                    print("[live] saved refusal fixture: \(fixtureURL.path)")
+                } catch {
+                    print("[live] failed to write refusal fixture \(fixtureURL.path): \(error)")
+                }
             }
         }
     }
@@ -419,8 +463,8 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
     }
 
     private static func configValue(_ key: String) -> String? {
-        let configPath = (NSTemporaryDirectory() as NSString)
-            .appendingPathComponent("iterm2-ai-live.json")
+        // See AILiveHarness.configPath() for why /tmp.
+        let configPath = "/tmp/iterm2-ai-live.json"
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else {

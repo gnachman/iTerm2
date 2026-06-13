@@ -19,7 +19,7 @@ struct LLMFileUploader {
                                                           apiKey: apiKey,
                                                           fileName: fileName,
                                                           content: content)
-        case .completions, .chatCompletions, .gemini, .earlyO1, .llama, .deepSeek, .anthropic:
+        case .completions, .chatCompletions, .gemini, .earlyO1, .llama, .deepSeek, .anthropic, .appleIntelligence:
             return nil
         @unknown default:
             return nil

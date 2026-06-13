@@ -2,6 +2,7 @@
 #import "VT100Screen.h"
 #import "VT100Screen+Private.h"
 #import "VT100Screen+Search.h"
+#import "VT100ScreenMutableState+RCDataSource.h"
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
@@ -78,6 +79,40 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _animatedLines = [[NSMutableIndexSet alloc] init];
         _state = [_mutableState copy];
         _mutableState.mainThreadCopy = _state;
+        // Wire the main-thread RC pool's dataSource onto the interval trees
+        // so their add/mutate side effects can bind unresolved RCs on
+        // doppelgangers without each call site reaching for mainThreadCopy.
+        // VT100ScreenState conforms to iTermResilientCoordinateDataSource
+        // (declared in VT100ScreenState.h).
+        _mutableState.mutableIntervalTree.mainThreadDataSource =
+            (id<iTermResilientCoordinateDataSource>)_state;
+        // Mutation-pool DS: wired so mutate/add hooks can bind unbound
+        // RCs on the progenitor side without each setter site having to
+        // pass a DS by hand. VT100ScreenMutableState conforms to
+        // iTermResilientCoordinateDataSource.
+        _mutableState.mutableIntervalTree.mutationThreadDataSource =
+            (id<iTermResilientCoordinateDataSource>)_mutableState;
+        // Saved-tree DSes: give the saved interval tree its OWN RC
+        // pool guids so the resize broadcast (built against
+        // self.linebuffer, i.e. primary content) doesn't invalidate
+        // alt-content marks that live in the saved tree. The saved
+        // tree's broadcast uses altScreenLineBuffer; both broadcasts
+        // share the same backing widths / overflow, but route to
+        // different observer sets via the distinct guids.
+        // VT100Screen.m is in the non-ARC target; the alloc's +1 must
+        // be balanced. The strong setter retains for us, so autorelease
+        // here so the +1 is paired and we don't leak the data source
+        // (and its guid string) for every session.
+        _mutableState.savedTreeMutationThreadDataSource =
+            [[[iTermSavedTreeRCDataSource alloc] initWithGuid:[[NSUUID UUID] UUIDString]
+                                                      backing:(id<iTermResilientCoordinateDataSource>)_mutableState] autorelease];
+        _mutableState.savedTreeMainThreadDataSource =
+            [[[iTermSavedTreeRCDataSource alloc] initWithGuid:[[NSUUID UUID] UUIDString]
+                                                      backing:(id<iTermResilientCoordinateDataSource>)_state] autorelease];
+        _mutableState.mutableSavedIntervalTree.mainThreadDataSource =
+            _mutableState.savedTreeMainThreadDataSource;
+        _mutableState.mutableSavedIntervalTree.mutationThreadDataSource =
+            _mutableState.savedTreeMutationThreadDataSource;
         _syncDistributor = [[iTermSyncDistributor alloc] init];
         _searchEngine = [[iTermSearchEngine alloc] initWithDataSource:self syncDistributor:_syncDistributor];
 
@@ -1100,7 +1135,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     VT100GridAbsCoordRange range;
     range.start = [self absCoordRangeForInterval:mark.entry.interval].start;
 
-    id<VT100ScreenMarkReading> successor = [self promptMarkAfterScreenMark:mark];
+    id<VT100ScreenMarkReading> successor = [_state nextNonDescendantPromptMarkAfter:mark];
     if (successor) {
         range.end = [self absCoordRangeForInterval:successor.entry.interval].start;
         range.end.y -= 1;
@@ -1490,6 +1525,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                kScreenStatePromptStateKey: _state.promptStateDictionary ?: [NSNull null],
                kScreenStateBlockStartAbsLineKey: _state.blockStartAbsLine ?: @{},
                kScreenStateProgressKey: @(_state.progress),
+               // OSC 133 aid plumbing: persist the stack of currently-open
+               // aids. We rebuild marksByAid from this on restore rather
+               // than walking the tree for "endDate==nil" marks, which is
+               // unreliable. Empty for shells that don't emit aid.
+               kScreenStateOpenAidStackKey: _state.openAidStack ?: @[],
             };
             dict = [dict dictionaryByRemovingNullValues];
             [encoder mergeDictionary:dict];
@@ -1589,6 +1629,13 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
 - (VT100ScreenState *)immutableState {
     return _state;
+}
+
+- (id<iTermResilientCoordinateDataSource>)resilientCoordinateDataSource {
+    // _state is the main-thread VT100ScreenState wired as the main-thread
+    // interval tree's RC pool data source (see -commonInit). Its rcGuid is the
+    // mainThreadPoolGuid the resize / fold / clear broadcasts target.
+    return (id<iTermResilientCoordinateDataSource>)_state;
 }
 
 - (BOOL)stateIsShared {
@@ -2288,8 +2335,8 @@ launchCoprocessWithCommand:(NSString *)command
     [self.delegate triggerSideEffectEnterWorkgroupWithIdentifier:workgroupUniqueIdentifier];
 }
 
-- (void)triggerSessionExitWorkgroup:(Trigger *)trigger {
-    [self.delegate triggerSideEffectExitWorkgroup];
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger leaderOnly:(BOOL)leaderOnly {
+    [self.delegate triggerSideEffectExitWorkgroupLeaderOnly:leaderOnly];
 }
 
 - (void)triggerSession:(Trigger *)trigger

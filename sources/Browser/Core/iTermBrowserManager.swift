@@ -219,9 +219,11 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
         // Inject the cloak first in the page world so it runs before any
         // of the bridges below and before any page script. In challenge
-        // frames (Cloudflare Turnstile, hCaptcha, etc.) it sets
-        // window.__iTermBrowserCloak and strips window.webkit so the
-        // probe sees a clean Safari surface.
+        // frames (Cloudflare Turnstile, hCaptcha, etc.) it strips
+        // window.webkit so the probe sees a clean Safari surface. The
+        // bridges below independently make the same challenge-frame
+        // decision rather than reading a shared window flag, which would
+        // itself be a detectable fingerprint.
         let cloakJS = iTermBrowserTemplateLoader.loadTemplate(named: "cloak-page-world",
                                                               type: "js",
                                                               substitutions: [:])

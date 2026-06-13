@@ -416,6 +416,37 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
 // defaults has values for these settings they will not be changed by this
 // function.
 + (void)migrateAISettings {
+    // One-time: the AI command safety check used to run on-device via Apple
+    // Intelligence (free); it can now use the configured AI model instead
+    // (more accurate, but may incur provider charges). Runs regardless of
+    // whether AI is currently enabled.
+    //
+    // Only grandfather the free on-device behavior when Apple Intelligence is
+    // actually working on this Mac right now. That is the only case where the
+    // 3.6 check was really running on-device. If it is not working now (too old
+    // or ineligible hardware, Apple Intelligence turned off in System Settings,
+    // or the model not yet downloaded) the 3.6 check was a no-op that returned
+    // "safe" here, so there is no on-device behavior to preserve: clear the
+    // (syncing) pref and the nag flag so the standard opt-in nag re-fires and
+    // the user knowingly chooses the configured-model behavior. This avoids
+    // both a silent cloud send and a fail-closed dead end.
+    NSUserDefaults *safetyDefaults = [iTermUserDefaults userDefaults];
+    if (![safetyDefaults boolForKey:kPreferenceKeyAISafetyCheckProviderMigrationDone]) {
+        [safetyDefaults setBool:YES forKey:kPreferenceKeyAISafetyCheckProviderMigrationDone];
+        if ([iTermPreferences boolForKey:kPreferenceKeyAISafetyCheck]) {
+            if ([iTermAIAvailabilityProbe check]) {
+                // Genuine on-device user: keep using Apple Intelligence and ask
+                // before the next checked command whether to switch to the paid
+                // model (see RemoteCommand.isSafe).
+                [safetyDefaults setBool:YES forKey:kPreferenceKeyAISafetyCheckUsesAppleIntelligence];
+                [safetyDefaults setBool:YES forKey:kPreferenceKeyAISafetyCheckProviderSwitchPending];
+            } else {
+                [iTermPreferences setObject:nil forKey:kPreferenceKeyAISafetyCheck];
+                [safetyDefaults removeObjectForKey:kPreferenceKeyAISafetyCheckNagComplete];
+            }
+        }
+    }
+
     if ([iTermSecureUserDefaults.instance enableAI]) {
         // A default configuration has no model or URL set.
         iTermAIModel *model;

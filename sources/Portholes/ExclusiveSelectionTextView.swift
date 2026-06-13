@@ -9,7 +9,15 @@ import Foundation
 
 @objc class ExclusiveSelectionTextView: NSTextView {
     var didAcquireSelection: (() -> ())?
+    var onMouseDown: (() -> ())?
     private var removingSelection = false
+
+    override func mouseDown(with event: NSEvent) {
+        // The text view refuses first responder, so clicking it does not activate the containing
+        // split pane by itself. Give the porthole a chance to do that here.
+        onMouseDown?()
+        super.mouseDown(with: event)
+    }
 
     func removeSelection() {
         removingSelection = true

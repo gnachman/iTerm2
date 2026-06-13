@@ -40,6 +40,7 @@
 @protocol iTermFilterDestination;
 @protocol iTermLargeContentProvider;
 @protocol iTermMark;
+@protocol iTermResilientCoordinateDataSource;
 @class iTermSlownessDetector;
 @class iTermTerminalContentSnapshot;
 @class iTermTokenExecutor;
@@ -126,6 +127,13 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) VT100ScreenMutableState *mutableState;  // for tests
 @property (nonatomic, readonly) VT100ScreenState *immutableState;  // for tests
 @property (nonatomic, readonly) VT100ScreenProgress progress;
+
+// Data source for ResilientCoordinates that should track the screen's
+// committed (main-thread) content across resize / scrollback / fold edits,
+// e.g. global search results. Backed by the main-thread interval tree's RC
+// pool, so coordinates bound to it observe the same resize / fold / clear
+// broadcasts the on-screen marks do. Main thread only.
+@property (nonatomic, readonly) id<iTermResilientCoordinateDataSource> resilientCoordinateDataSource;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.

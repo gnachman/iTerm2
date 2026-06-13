@@ -291,29 +291,124 @@ class iTermAIClient {
         set { _liveObserver.set(newValue) }
     }
 
+    // What a cassette replay hands back in place of a live round-trip:
+    // the stream chunks to re-emit (empty for non-streaming) and the final
+    // outcome as either a response body or an error reason.
+    struct ReplayDelivery {
+        var streamChunks: [String]
+        var response: WebResponse?
+        var errorReason: String?
+    }
+
+    // Replay hook used exclusively by the AI live test harness
+    // (AICassetteSession) to serve recorded vendor responses without
+    // spending money on the network. Same compile-in rationale as
+    // liveObserver: always present so test code can install it regardless
+    // of build configuration; nothing in the shipping app sets it, so the
+    // branch below is one optional read per request in release.
+    //
+    // Returning nil means "no cassette, proceed live". Returning a delivery
+    // short-circuits the plugin entirely and replays the recorded outcome.
+    private static let _requestInterceptor =
+        MutableAtomicObject<((WebRequest, Bool) -> ReplayDelivery?)?>(nil)
+    static var requestInterceptor: ((WebRequest, Bool) -> ReplayDelivery?)? {
+        get { _requestInterceptor.value }
+        set { _requestInterceptor.set(newValue) }
+    }
+
+    // Recording hook used by the cassette harness to persist the outcome of
+    // a live (non-replayed) round-trip. Separate from liveObserver so that
+    // test paths which don't run through AILiveDriver (e.g. the ChatBroker /
+    // ChatAgent queue tests, which never set liveObserver) still get their
+    // traffic recorded. Fired once per completed live request with the final
+    // capture. Like the other hooks, nothing in the shipping app sets it.
+    private static let _responseRecorder = MutableAtomicObject<((LiveCapture) -> Void)?>(nil)
+    static var responseRecorder: ((LiveCapture) -> Void)? {
+        get { _responseRecorder.value }
+        set { _responseRecorder.set(newValue) }
+    }
+
     func request(webRequest: WebRequest,
                  stream: ((String) -> ())?,
                  completion: @escaping (Result<WebResponse, PluginError>) -> ()) -> Cancellation {
         let cancellation = Cancellation()
         let observer = Self.liveObserver
-        let captureBox: LiveCaptureBox? = observer.map { _ in
-            LiveCaptureBox(LiveCapture(request: webRequest,
-                                       streaming: stream != nil,
-                                       streamChunks: [],
-                                       response: nil,
-                                       error: nil,
-                                       elapsed: 0))
+        let recorder = Self.responseRecorder
+        // Build the capture if anything wants it: the observer (AILiveDriver
+        // result extraction) or the recorder (cassette persistence). Either
+        // alone is enough, so chat-queue tests, which set only the recorder,
+        // still accumulate stream chunks and a final response.
+        let captureBox: LiveCaptureBox? = (observer != nil || recorder != nil)
+            ? LiveCaptureBox(LiveCapture(request: webRequest,
+                                         streaming: stream != nil,
+                                         streamChunks: [],
+                                         response: nil,
+                                         error: nil,
+                                         elapsed: 0))
+            : nil
+        // Cassette replay: if the harness installed an interceptor and it
+        // has a recording for this request, replay it instead of touching
+        // the plugin/network. We still drive the streaming closure and the
+        // liveObserver so downstream parsers and the driver see the same
+        // sequence of events they would on a live call.
+        if let interceptor = Self.requestInterceptor,
+           let delivery = interceptor(webRequest, stream != nil) {
+            let result: Result<WebResponse, PluginError>
+            if let errorReason = delivery.errorReason {
+                result = .failure(PluginError(reason: errorReason))
+            } else if let response = delivery.response {
+                result = .success(response)
+            } else {
+                result = .failure(PluginError(reason: "Cassette delivery had neither response nor error"))
+            }
+            executionQueue.async {
+                if cancellation.canceled {
+                    DispatchQueue.main.async { completion(.failure(.cancelled)) }
+                    return
+                }
+                if let stream {
+                    for chunk in delivery.streamChunks { stream(chunk) }
+                }
+                DispatchQueue.main.async {
+                    if let observer, let captureBox {
+                        captureBox.capture.streamChunks = delivery.streamChunks
+                        switch result {
+                        case .success(let r): captureBox.capture.response = r
+                        case .failure(let e): captureBox.capture.error = e
+                        }
+                        observer(captureBox.capture)
+                    }
+                    completion(result)
+                }
+            }
+            return cancellation
         }
+        // Stable per-call ID so the disk wire log can correlate the
+        // request, every streamed chunk, and the final response /
+        // error across interleaved concurrent calls. The cost of
+        // generating it when logging is off is one UUID per call,
+        // which is negligible next to the round-trip itself.
+        let callID = UUID()
+        let wireLogger = AIChatWireLogger.instance
+        wireLogger.logRequest(callID: callID, request: webRequest)
         let startTime = Date()
         let emit: (Result<WebResponse, PluginError>) -> Void = { result in
+            let elapsed = Date().timeIntervalSince(startTime)
+            switch result {
+            case .success(let r):
+                wireLogger.logSuccess(callID: callID, response: r, elapsed: elapsed)
+            case .failure(let e):
+                wireLogger.logFailure(callID: callID, error: e, elapsed: elapsed)
+            }
             DispatchQueue.main.async {
-                if let observer, let captureBox {
+                if let captureBox {
                     switch result {
                     case .success(let r): captureBox.capture.response = r
                     case .failure(let e): captureBox.capture.error = e
                     }
-                    captureBox.capture.elapsed = Date().timeIntervalSince(startTime)
-                    observer(captureBox.capture)
+                    captureBox.capture.elapsed = elapsed
+                    observer?(captureBox.capture)
+                    recorder?(captureBox.capture)
                 }
                 completion(result)
             }
@@ -330,6 +425,7 @@ class iTermAIClient {
                     }
                     let wrappedStream: ((String) -> ())? = stream.map { downstream in
                         return { chunk in
+                            wireLogger.logStreamChunk(callID: callID, chunk: chunk)
                             captureBox?.capture.streamChunks.append(chunk)
                             downstream(chunk)
                         }

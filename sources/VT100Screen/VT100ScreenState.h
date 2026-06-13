@@ -50,10 +50,12 @@ extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 extern NSString *const kScreenStateBlockStartAbsLineKey;
 extern NSString *const kScreenStateKittyImageDrawsKey;
 extern NSString *const kScreenStateProgressKey;
+extern NSString *const kScreenStateOpenAidStackKey;
 
 @class IntervalTree;
 @class iTermMutableArrayOfWeakObjects;
 @class iTermOrderEnforcer;
+@class iTermResilientCoordinateRange;
 @protocol iTermMarkCacheReading;
 @class iTermMarkCache;
 @protocol iTermBlockMarkReading;
@@ -198,6 +200,9 @@ extern NSString *const kScreenStateProgressKey;
 @property (nonatomic, readonly) NSInteger blocksGeneration;
 @property (nonatomic, readonly, copy) NSArray<iTermKittyImageDraw *> *kittyImageDraws;
 @property (nonatomic, readonly) VT100ScreenProgress progress;
+// OSC 133 aid stack — readonly view for the encoder. See VT100ScreenMutableState's
+// openAidStack for the full invariant.
+@property (nonatomic, readonly) NSArray<NSString *> *openAidStack;
 
 @end
 
@@ -260,6 +265,14 @@ extern NSString *const kScreenStateProgressKey;
     VT100GridDelegate,
     VT100ScreenState,
     iTermTextDataSource>
+
+// Always returns the main-thread pool guid even on
+// VT100ScreenMutableState, where -rcGuid is overridden to return the
+// mutation-thread uniqueIdentifier. Used by initWithState:predecessor:
+// to copy the stable main-thread guid across snapshots, and by
+// PTYSession's main-pool RC post sites to get the right guid without
+// going through the protocol method.
+@property (nonatomic, readonly) NSString *mainThreadPoolGuid;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (void)mergeFrom:(VT100ScreenMutableState *)source;
@@ -359,6 +372,18 @@ extern NSString *const kScreenStateProgressKey;
                                                 range:(out VT100GridWindowedRange * _Nullable)rangeOut;
 - (id<VT100ScreenMarkReading> _Nullable)commandMarkAtOrBeforeLine:(int)line;
 - (id<VT100ScreenMarkReading> _Nullable)promptMarkAfterScreenMark:(id<VT100ScreenMarkReading> _Nullable)predecessor;
+
+// Like promptMarkAfterScreenMark:, but for use when computing the
+// extent of one command. If `anchor` has an OSC 133 `aid=`, this
+// skips any successor prompt mark whose `parentAid` chain leads back
+// to `anchor.aid`, returning the next *sibling-or-shallower* prompt
+// instead. The intent: for an outer `ssh localhost` mark, the
+// successor used to bound its command range should be the prompt that
+// appears AFTER ssh exits, not the inner remote shell's first prompt
+// inside the ssh session. When `anchor.aid` is nil, behavior matches
+// promptMarkAfterScreenMark: exactly.
+- (id<VT100ScreenMarkReading> _Nullable)nextNonDescendantPromptMarkAfter:(id<VT100ScreenMarkReading> _Nullable)anchor;
+
 - (id<VT100ScreenMarkReading> _Nullable)screenMarkAfterScreenMark:(id<VT100ScreenMarkReading> _Nullable)predecessor;
 - (id<VT100ScreenMarkReading> _Nullable)screenMarkBeforeScreenMark:(id<VT100ScreenMarkReading>)successor;
 - (NSArray<id<PTYAnnotationReading>> *)annotationsOnAbsLine:(long long)absLine;

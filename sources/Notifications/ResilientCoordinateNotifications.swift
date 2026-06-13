@@ -23,9 +23,6 @@ class RCNotificationNames: NSObject {
 
     /// Screen was cleared from an absolute line to the end.
     @objc static let clearToEnd = NSNotification.Name("iTermRCClearToEnd")
-
-    /// The data source is being deallocated.
-    @objc static let dataSourceDealloc = NSNotification.Name("iTermRCDataSourceDealloc")
 }
 
 // MARK: - Posting Helpers
@@ -75,12 +72,3 @@ class RCClearToEndNotification: NSObject {
     }
 }
 
-/// Helpers for posting data-source-dealloc notifications to ResilientCoordinate.
-@objc(iTermRCDataSourceDeallocNotification)
-class RCDataSourceDeallocNotification: NSObject {
-    @objc static func post(guid: String) {
-        NotificationCenter.default.post(
-            name: RCNotificationNames.dataSourceDealloc,
-            object: guid)
-    }
-}

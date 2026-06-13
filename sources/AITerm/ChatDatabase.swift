@@ -19,24 +19,26 @@ class ObjCChatDatabase: NSObject {
 
     @objc(unlinkSessionGuid:)
     static func unlink(sessionGuid: String) {
-        guard let instance = ChatDatabase.instance,
-        let chats = instance.chats else {
-            return
-        }
-        for i in 0..<chats.count {
-            let chat = chats[i]
-            if chat.terminalSessionGuid == sessionGuid || chat.browserSessionGuid == sessionGuid {
-                var temp = chats[i]
-                let wasTerminal = temp.terminalSessionGuid != nil
-                temp.terminalSessionGuid = nil
-                temp.browserSessionGuid = nil
-                do {
-                    try chats.set(at: i, temp)
-                    try? ChatBroker.instance?.publishNotice(
-                        chatID: temp.id,
-                        notice: "This chat is no longer linked to a \(wasTerminal ? "terminal" : "web browser") session.")
-                } catch {
-                    DLog("\(error)")
+        MainActor.assumeIsolated {
+            guard let instance = ChatDatabase.instance,
+            let chats = instance.chats else {
+                return
+            }
+            for i in 0..<chats.count {
+                let chat = chats[i]
+                if chat.terminalSessionGuid == sessionGuid || chat.browserSessionGuid == sessionGuid {
+                    var temp = chats[i]
+                    let wasTerminal = temp.terminalSessionGuid != nil
+                    temp.terminalSessionGuid = nil
+                    temp.browserSessionGuid = nil
+                    do {
+                        try chats.set(at: i, temp)
+                        try? ChatBroker.instance?.publishNotice(
+                            chatID: temp.id,
+                            notice: "This chat is no longer linked to a \(wasTerminal ? "terminal" : "web browser") session.")
+                    } catch {
+                        DLog("\(error)")
+                    }
                 }
             }
         }
@@ -69,7 +71,7 @@ class ChatDatabase {
     fileprivate var terminalSessionToChatMap = [String: Set<String>]()
     fileprivate var browserSessionToChatMap = [String: Set<String>]()
 
-    init?(url: URL){
+    init?(url: URL) {
         db = iTermSqliteDatabaseImpl(url: url, lockName: "chatdb-lock")
         if !db.lock() {
             return nil
@@ -79,7 +81,7 @@ class ChatDatabase {
         }
 
         if !createTables() {
-            DLog("FAILED TO CREATE TABLES, CLOSING CHAT DB")
+            DLog("FAILED TO CREATE TABLES, CLOSING CHAT DB at \(url.path)")
             db.close()
             return nil
         }
@@ -103,28 +105,28 @@ class ChatDatabase {
         do {
             do {
                 try db.executeUpdate(Chat.schema(), withArguments: [])
-                let migrations = Chat.migrations(existingColumns:
-                                                    listColumns(
-                                                        resultSet: try db.executeQuery(
-                                                            Chat.tableInfoQuery(),
-                                                            withArguments: [])))
-                for migration in migrations {
+                let chatMigrations = Chat.migrations(existingColumns:
+                                                         listColumns(
+                                                             resultSet: try db.executeQuery(
+                                                                 Chat.tableInfoQuery(),
+                                                                 withArguments: [])))
+                for migration in chatMigrations {
                     try db.executeUpdate(migration.query, withArguments: migration.args)
                 }
             }
-            
-            do {
-                try db.executeUpdate(Message.schema(), withArguments: [])
-                let migrations = Message.migrations(existingColumns:
-                                                    listColumns(
-                                                        resultSet: try db.executeQuery(
-                                                            Message.tableInfoQuery(),
-                                                            withArguments: [])))
-                for migration in migrations {
-                    try db.executeUpdate(migration.query, withArguments: migration.args)
-                }
-            }
+
             try db.executeUpdate(Message.schema(), withArguments: [])
+
+            do {
+                let messageMigrations = Message.migrations(existingColumns:
+                                                           listColumns(
+                                                               resultSet: try db.executeQuery(
+                                                                   Message.tableInfoQuery(),
+                                                                   withArguments: [])))
+                for migration in messageMigrations {
+                    try db.executeUpdate(migration.query, withArguments: migration.args)
+                }
+            }
 
             return true
         } catch {
@@ -252,15 +254,21 @@ extension ChatDatabase: DatabaseBackedArrayDelegate {
             terminalSessionToChatMap[guid, default: Set()].insert(chat.id)
             NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
         }
+        if let guid = chat.browserSessionGuid {
+            browserSessionToChatMap[guid, default: Set()].insert(chat.id)
+        }
     }
-    
+
     func databaseBackedArray(didRemoveElement chat: Chat) {
         if let guid = chat.terminalSessionGuid {
             terminalSessionToChatMap[guid]?.remove(chat.id)
             NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
         }
+        if let guid = chat.browserSessionGuid {
+            browserSessionToChatMap[guid]?.remove(chat.id)
+        }
     }
-    
+
     func databaseBackedArray(didModifyElement newValue: Chat, oldValue: Chat) {
         if let guid = oldValue.terminalSessionGuid {
             terminalSessionToChatMap[guid]?.remove(oldValue.id)
@@ -269,6 +277,12 @@ extension ChatDatabase: DatabaseBackedArrayDelegate {
         if let guid = newValue.terminalSessionGuid {
             terminalSessionToChatMap[guid, default: Set()].insert(newValue.id)
             NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+        if let guid = oldValue.browserSessionGuid {
+            browserSessionToChatMap[guid]?.remove(oldValue.id)
+        }
+        if let guid = newValue.browserSessionGuid {
+            browserSessionToChatMap[guid, default: Set()].insert(newValue.id)
         }
     }
 }

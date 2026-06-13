@@ -75,18 +75,84 @@ final class iTermWorkgroupController: NSObject {
         return true
     }
 
+    // Reconstruct a workgroup from already-restored sessions (app
+    // relaunch). Idempotent: if `leader` already hosts an instance,
+    // returns it untouched. Registration in `instances` is the last
+    // step and is synchronous, so the instance (and the peer port it
+    // transitively retains) stays alive — both back-pointers on the
+    // sessions are weak. The caller (WorkgroupRestorationCoordinator)
+    // resolves the config and the member sessions, and is responsible
+    // for refreshing the toolbar on the active (in-pane) session.
+    @discardableResult
+    func adopt(workgroup: iTermWorkgroup,
+               leader: PTYSession,
+               instanceUniqueIdentifier: String,
+               activeIdentifier: String,
+               gitBase: String,
+               peerSessionsByConfigID: [String: PTYSession],
+               nonPeerSessionsByConfigID: [String: PTYSession],
+               spawner: WorkgroupSessionSpawner = DefaultWorkgroupSessionSpawner()) -> iTermWorkgroupInstance? {
+        let key = ObjectIdentifier(leader)
+        if let existing = instances[key] {
+            return existing
+        }
+        guard let instance = iTermWorkgroupInstance.adopt(
+            workgroup: workgroup,
+            leader: leader,
+            instanceUniqueIdentifier: instanceUniqueIdentifier,
+            activeIdentifier: activeIdentifier,
+            gitBase: gitBase,
+            peerSessionsByConfigID: peerSessionsByConfigID,
+            nonPeerSessionsByConfigID: nonPeerSessionsByConfigID,
+            spawner: spawner) else {
+            DLog("iTermWorkgroupController: failed to adopt \(workgroup.uniqueIdentifier)")
+            return nil
+        }
+        instances[key] = instance
+        return instance
+    }
+
     @objc
     func exit(on session: PTYSession) {
-        guard let instance = instances.removeValue(forKey: ObjectIdentifier(session)) else {
+        let leader = leaderSession(for: session)
+        guard let instance = instances.removeValue(forKey: ObjectIdentifier(leader)) else {
             return
         }
         instance.teardown()
+        // Refresh the toolbar on the session the user acted on (which may
+        // be a peer or child, not the leader) as well as the leader.
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
     }
 
     @objc
     func workgroupInstance(on session: PTYSession) -> iTermWorkgroupInstance? {
-        return instances[ObjectIdentifier(session)]
+        return instances[ObjectIdentifier(leaderSession(for: session))]
+    }
+
+    // The instance is keyed by its leader, but callers (the Exit
+    // Workgroup menu, triggers) often act on whatever session is
+    // focused — which can be a non-leader peer (after the user switched
+    // peers, or after restoring a workgroup that was saved on a peer) or
+    // a split/tab child. Every workgroup member carries a back-pointer
+    // to its instance, whose mainSession is the leader, so resolve
+    // through that. Falls back to the session itself when it isn't a
+    // member, leaving non-member lookups (the common case) unchanged.
+    private func leaderSession(for session: PTYSession) -> PTYSession {
+        return session.workgroupInstance?.mainSession ?? session
+    }
+
+    // All active workgroup instances, sorted by instance-unique
+    // identifier so iteration order is stable across calls. The
+    // underlying dictionary's value-iteration order is unspecified and
+    // shifts after any mutation, which would surface as the cockpit's
+    // workgroup-mode tree spuriously reordering itself on every
+    // refresh. Sorting here means every caller gets a deterministic
+    // order without having to remember to sort at the call site.
+    @objc
+    var allInstances: [iTermWorkgroupInstance] {
+        return instances.values.sorted {
+            $0.instanceUniqueIdentifier < $1.instanceUniqueIdentifier
+        }
     }
 
     // Look up the main (leader) session for the active workgroup

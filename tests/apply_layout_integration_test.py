@@ -20,6 +20,7 @@ Usage:
 
 import asyncio
 import inspect
+import os
 import sys
 import traceback
 import typing
@@ -847,16 +848,118 @@ async def test_new_windows_field_rejected(h: Harness) -> None:
         await h.app.async_apply_layout(spec)
 
 
-async def test_new_session_leaf_rejected(h: Harness) -> None:
+def new_leaf(profile_guid: str, command: typing.Optional[str] = None) -> dict:
+    info: typing.Dict[str, typing.Any] = {"profile": profile_guid}
+    if command is not None:
+        info["command"] = command
+    return {"new_session": info}
+
+
+async def test_new_session_leaf_creates_session(h: Harness) -> None:
+    """A new_session leaf creates a brand-new live session in place, next
+    to an existing one, in a single apply_layout call."""
+    window = await h.make_window()
+    tab = window.current_tab
+    a = tab.sessions[0]
+    guid = (await a.async_get_profile()).guid
+
+    spec = {"tabs": [reshape(tab.tab_id, vsplit(
+        leaf(a.session_id),
+        new_leaf(guid)))]}
+    await h.app.async_apply_layout(spec)
+
+    h.app = await h.refresh()
+    tab = find_tab(h.app, tab.tab_id)
+    assert_equal(len(tab.sessions), 2, "tab should have two panes")
+    ids = [s.session_id for s in tab.sessions]
+    assert_true(a.session_id in ids, "original session should survive")
+    new_ids = [sid for sid in ids if sid != a.session_id]
+    assert_equal(len(new_ids), 1, "exactly one new session created")
+    # New pane is the second child (right of the original).
+    label = labeler({a.session_id: 'a', new_ids[0]: 'new'})
+    assert_equal(tree_shape(tab.root, label),
+                 ('V', [('S', 'a'), ('S', 'new')]))
+    # Confirm the new session has a live shell.
+    new_session = find_session(h.app, new_ids[0])
+    await write_marker(new_session, "NEWPANE_OK")
+
+
+async def test_new_session_unknown_profile_rejected(h: Harness) -> None:
+    """A new_session leaf naming a profile GUID that doesn't exist is
+    rejected up front, before any mutation."""
     window = await h.make_window()
     tab = window.current_tab
     a = tab.sessions[0]
 
     spec = {"tabs": [reshape(tab.tab_id, vsplit(
         leaf(a.session_id),
-        {"new_session": {"profile": "Default"}}))]}
-    async with assert_raises(iterm2.rpc.RPCException, "new_session"):
+        new_leaf("not-a-real-profile-guid")))]}
+    async with assert_raises(iterm2.rpc.RPCException, "profile"):
         await h.app.async_apply_layout(spec)
+
+
+async def test_new_session_honors_profile_home_directory(h: Harness) -> None:
+    """A new_session honors its profile's working-directory mode rather than
+    always inheriting the neighbor's directory.
+
+    Set the profile to Home, move the neighbor pane to a distinctive
+    directory, then create a new_session next to it. The new pane must
+    start in the home directory. (The earlier behavior forced the
+    neighbor's directory regardless of the profile, which this guards
+    against.)
+    """
+    window = await h.make_window()
+    tab = window.current_tab
+    anchor = tab.sessions[0]
+    profile = await anchor.async_get_profile()
+    guid = profile.guid
+    home = os.path.expanduser("~")
+
+    # Move the neighbor somewhere distinctive so "inherit the neighbor"
+    # would be both possible and obviously wrong.
+    await anchor.async_send_text("cd /tmp\n")
+    await asyncio.sleep(1.5)  # let iTerm2 observe the new cwd
+
+    # The getter returns the raw stored value (a string like "No"); the
+    # setter wants an InitialWorkingDirectory enum. Normalize so the
+    # restore in `finally` round-trips correctly.
+    raw_mode = profile.initial_directory_mode
+    original_mode = (raw_mode if isinstance(raw_mode, iterm2.InitialWorkingDirectory)
+                     else iterm2.InitialWorkingDirectory(raw_mode))
+    try:
+        await profile.async_set_initial_directory_mode(
+            iterm2.InitialWorkingDirectory.INITIAL_WORKING_DIRECTORY_HOME)
+
+        spec = {"tabs": [reshape(tab.tab_id, vsplit(
+            leaf(anchor.session_id), new_leaf(guid)))]}
+        await h.app.async_apply_layout(spec)
+        await asyncio.sleep(1.5)
+
+        h.app = await h.refresh()
+        tab = find_tab(h.app, tab.tab_id)
+        new_ids = [s.session_id for s in tab.sessions
+                   if s.session_id != anchor.session_id]
+        assert_equal(len(new_ids), 1, "exactly one new session")
+        new_session = find_session(h.app, new_ids[0])
+
+        # Print $PWD with a unique, shell-safe marker (no <,>,= ambiguity).
+        marker = "CWDMARK_" + new_ids[0][:8].replace("-", "")
+        await new_session.async_send_text(f"echo {marker}=$PWD\n")
+
+        needle = f"{marker}={home}"
+        deadline = asyncio.get_event_loop().time() + 5.0
+        seen = False
+        while asyncio.get_event_loop().time() < deadline:
+            if await screen_contains(new_session, needle):
+                seen = True
+                break
+            await asyncio.sleep(0.1)
+        assert_true(
+            seen,
+            f"new pane should start in home ({home}); never saw {needle!r}. "
+            "If it landed in /tmp it wrongly inherited the neighbor.")
+    finally:
+        await profile.async_set_initial_directory_mode(original_mode)
 
 
 async def test_validation_failure_does_not_mutate(h: Harness) -> None:

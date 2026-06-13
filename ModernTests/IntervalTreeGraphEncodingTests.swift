@@ -719,14 +719,18 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     func testVT100ScreenMarkRoundTrip() {
         let mark = VT100ScreenMark()
         mark.isPrompt = true
-        mark.command = "ls -la"
+        mark.firstLineOfCommand = "ls -la"
+        mark.fullCommand = "ls -la"
         mark.code = 0
         mark.name = "Test Mark"
 
         verifyRoundTrip(mark, interval: Interval(location: 100, length: 50)) { original, restored in
             XCTAssertEqual(restored.guid, original.guid, "GUID should be preserved")
             XCTAssertEqual(restored.isPrompt, original.isPrompt, "isPrompt should be preserved")
-            XCTAssertEqual(restored.command, original.command, "command should be preserved")
+            XCTAssertEqual(restored.firstLineOfCommand, original.firstLineOfCommand,
+                           "firstLineOfCommand should be preserved")
+            XCTAssertEqual(restored.fullCommand, original.fullCommand,
+                           "fullCommand should be preserved")
             XCTAssertEqual(restored.code, original.code, "code should be preserved")
             XCTAssertEqual(restored.name, original.name, "name should be preserved")
         }
@@ -777,10 +781,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: VT100RemoteHost Round-Trip
 
     func testVT100RemoteHostRoundTrip() {
-        guard let remoteHost = VT100RemoteHost(username: "testuser", hostname: "testhost.example.com") else {
-            XCTFail("Failed to create VT100RemoteHost")
-            return
-        }
+        let remoteHost = VT100RemoteHost(username: "testuser", hostname: "testhost.example.com")
 
         verifyRoundTrip(remoteHost, interval: Interval(location: 600, length: 10)) { original, restored in
             XCTAssertEqual(restored.username, original.username, "username should be preserved")
@@ -855,11 +856,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Create two VT100RemoteHost objects with identical content
         // This is a realistic scenario - multiple prompts showing the same remote host
-        guard let host1 = VT100RemoteHost(username: "admin", hostname: "server.example.com"),
-              let host2 = VT100RemoteHost(username: "admin", hostname: "server.example.com") else {
-            XCTFail("Failed to create VT100RemoteHost objects")
-            return
-        }
+        let host1 = VT100RemoteHost(username: "admin", hostname: "server.example.com")
+        let host2 = VT100RemoteHost(username: "admin", hostname: "server.example.com")
 
         // Each object should have a unique GUID even though content is identical
         XCTAssertNotEqual(host1.stableIdentifier, host2.stableIdentifier,
@@ -910,14 +908,11 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let tree = IntervalTree()
 
         // Create two hosts at host1.com
-        guard let hostA1 = VT100RemoteHost(username: "user", hostname: "host1.com"),
-              let hostA2 = VT100RemoteHost(username: "user", hostname: "host1.com"),
-              // And two hosts at host2.com
-              let hostB1 = VT100RemoteHost(username: "user", hostname: "host2.com"),
-              let hostB2 = VT100RemoteHost(username: "user", hostname: "host2.com") else {
-            XCTFail("Failed to create VT100RemoteHost objects")
-            return
-        }
+        let hostA1 = VT100RemoteHost(username: "user", hostname: "host1.com")
+        let hostA2 = VT100RemoteHost(username: "user", hostname: "host1.com")
+        // And two hosts at host2.com
+        let hostB1 = VT100RemoteHost(username: "user", hostname: "host2.com")
+        let hostB2 = VT100RemoteHost(username: "user", hostname: "host2.com")
 
         tree.add(hostA1, with: Interval(location: 100, length: 50))
         tree.add(hostA2, with: Interval(location: 200, length: 50))
@@ -956,7 +951,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Add one of each Swift-visible type
         // Note: iTermCapturedOutputMark and VT100WorkingDirectory are not in bridging header
         let screenMark = VT100ScreenMark()
-        screenMark.command = "echo test"
+        screenMark.firstLineOfCommand = "echo test"
+        screenMark.fullCommand = "echo test"
 
         let annotation = PTYAnnotation()
         annotation.stringValue = "Note"
@@ -968,10 +964,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 3, imageCodes: [], width: 80)
 
-        guard let remoteHost = VT100RemoteHost(username: "user", hostname: "host") else {
-            XCTFail("Failed to create VT100RemoteHost")
-            return
-        }
+        let remoteHost = VT100RemoteHost(username: "user", hostname: "host")
 
         let portholeMark = PortholeMark("porthole-all-test", width: 80)
 
@@ -1023,7 +1016,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Verify key properties preserved
         let restoredScreenMark = restoredObjects.compactMap { $0 as? VT100ScreenMark }.first!
-        XCTAssertEqual(restoredScreenMark.command, "echo test")
+        XCTAssertEqual(restoredScreenMark.firstLineOfCommand, "echo test")
+        XCTAssertEqual(restoredScreenMark.fullCommand, "echo test")
 
         let restoredAnnotation = restoredObjects.compactMap { $0 as? PTYAnnotation }.first!
         XCTAssertEqual(restoredAnnotation.stringValue, "Note")

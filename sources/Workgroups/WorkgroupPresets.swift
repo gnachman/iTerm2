@@ -112,7 +112,12 @@ enum WorkgroupPresets {
             parentID: rootID,
             kind: .peer,
             profileGUID: nil,
-            command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(iterm2.appBundlePath)/Contents/Resources/code-review-system-prompt.txt' --settings '\\(iterm2.appBundlePath)/Contents/Resources/code-review-settings.txt'",
+            // `codeReviewSystemPromptFile` is bound at launch in
+            // PTYSession.wrappedCommandForCodeReview to a temp file
+            // holding the user-editable system prompt (Settings >
+            // General > AI > Prompts), defaulting to the bundled
+            // code-review-system-prompt.txt.
+            command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(codeReviewSystemPromptFile)' --settings '\\(iterm2.appBundlePath)/Contents/Resources/code-review-settings.txt'",
             urlString: "",
             toolbarItems: [.modeSwitcher,
                            .reload(WorkgroupToolbarShortcut.reloadDefault)],

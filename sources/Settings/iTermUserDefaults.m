@@ -47,6 +47,7 @@ static NSString *const iTermUserDefaultsKeyLastShutdownWasClean = @"NoSyncLastSh
 static NSString *const iTermUserDefaultsKeyWorkgroupsData = @"Workgroups";
 static NSString *const iTermUserDefaultsKeyWorkgroupShortcutsBackfilled = @"NoSyncWorkgroupShortcutsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled = @"NoSyncClaudeCodeDiffModeBackfilled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled = @"NoSyncClaudeCodeReviewSystemPromptCommandBackfilled";
 
 @implementation iTermUserDefaults
 
@@ -373,6 +374,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeDiffModeBackfilled:(BOOL)value {
     [self.userDefaults setBool:value
                         forKey:iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled];
+}
+
++ (BOOL)claudeCodeReviewSystemPromptCommandBackfilled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled];
+}
+
++ (void)setClaudeCodeReviewSystemPromptCommandBackfilled:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled];
 }
 
 + (BOOL)lastShutdownWasClean {

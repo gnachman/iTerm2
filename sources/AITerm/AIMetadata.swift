@@ -146,10 +146,17 @@ class AIMetadata: NSObject {
         }
         var vectorStoreConfig: VectorStoreConfig = .disabled
         var vendor: iTermAIVendor?
+
+        // Some Anthropic generations (Opus 4.7 and later) deprecated the
+        // `temperature` request parameter and return HTTP 400 if it is
+        // present. Models that still accept it leave this true; models
+        // that reject it set it false so the request builder omits the
+        // field. Defaults to true so existing entries are unaffected.
+        var supportsTemperature: Bool = true
     }
 
     static var recommendedOpenAIModel: Model {
-        return AIMetadata.gpt5_4
+        return AIMetadata.gpt5_5
     }
 
     static var recommendedDeepSeekModel: Model {
@@ -157,7 +164,7 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedGeminiModel: Model {
-        return AIMetadata.gemini_3_flash
+        return AIMetadata.gemini_3_5_flash
     }
 
     static var recommendedLlamaModel: Model {
@@ -165,7 +172,11 @@ class AIMetadata: NSObject {
     }
 
     static var recommendedAnthropicModel: Model {
-        return AIMetadata.claude_4_6_opus
+        return AIMetadata.claude_4_8_opus
+    }
+
+    static var recommendedAppleModel: Model {
+        return AIMetadata.appleOnDevice
     }
 
     static var alternateOpenAIModels: [Model] {
@@ -198,6 +209,30 @@ class AIMetadata: NSObject {
         }
     }
 
+    static var alternateAppleModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .apple
+        }
+    }
+
+    private static let gpt5_5 = Model(
+        name: "gpt-5.5",
+        contextWindowTokens: 1_050_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
+    private static let gpt5_5_pro = Model(
+        name: "gpt-5.5-pro",
+        contextWindowTokens: 1_050_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.openai.com/v1/responses",
+        api: .responses,
+        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
+        vendor: .openAI
+    )
     private static let gpt5_4 = Model(
         name: "gpt-5.4",
         contextWindowTokens: 1_050_000,
@@ -430,6 +465,26 @@ class AIMetadata: NSObject {
         vendor: .gemini
     )
 
+    private static let gemini_3_5_flash = Model(
+        name: "gemini-3.5-flash",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 65_536,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
+
+    private static let gemini_3_1_pro = Model(
+        name: "gemini-3.1-pro-preview",
+        contextWindowTokens: 1_048_576,
+        maxResponseTokens: 65_536,
+        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+        api: .gemini,
+        features: [.functionCalling, .streaming],
+        vendor: .gemini
+    )
+
     private static let gemini_3_pro = Model(
         name: "gemini-3-pro-preview",
         contextWindowTokens: 1_048_576,
@@ -471,10 +526,39 @@ class AIMetadata: NSObject {
     )
 
 
+    private static let claude_4_8_opus = Model(
+        name: "claude-opus-4-8",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic,
+        supportsTemperature: false
+    )
+    private static let claude_4_7_opus = Model(
+        name: "claude-opus-4-7",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 128_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic,
+        supportsTemperature: false
+    )
     private static let claude_4_6_opus = Model(
         name: "claude-opus-4-6",
         contextWindowTokens: 200_000,
         maxResponseTokens: 128_000,
+        url: "https://api.anthropic.com/v1/messages",
+        api: .anthropic,
+        features: [.functionCalling, .streaming],
+        vendor: .anthropic
+    )
+    private static let claude_4_6_sonnet = Model(
+        name: "claude-sonnet-4-6",
+        contextWindowTokens: 200_000,
+        maxResponseTokens: 64_000,
         url: "https://api.anthropic.com/v1/messages",
         api: .anthropic,
         features: [.functionCalling, .streaming],
@@ -545,8 +629,29 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .deepSeek
     )
+
+    // MARK: - Apple Intelligence (on-device)
+
+    // Runs through Apple's on-device Foundation Models framework rather than
+    // an HTTP endpoint, so `url` is unused and the request/response is handled
+    // by a bypass in AITermController. Feature-limited on purpose: no
+    // streaming, no function calling, no attachments. Used today only to power
+    // the command safety classifier (see AISafetyClassifierBackend). Token
+    // limits are modest because the on-device model has a small context.
+    private static let appleOnDevice = Model(
+        name: "apple-on-device",
+        contextWindowTokens: 8192,
+        maxResponseTokens: 1024,
+        url: "",
+        api: .appleIntelligence,
+        features: [],
+        vendor: .apple
+    )
+
     let models: [Model] = [
         // The first model will be the default.
+        AIMetadata.gpt5_5,
+        AIMetadata.gpt5_5_pro,
         AIMetadata.gpt5_4,
         AIMetadata.gpt5_3_codex,
         AIMetadata.gpt5_2,
@@ -565,6 +670,8 @@ class AIMetadata: NSObject {
         AIMetadata.o4_mini,
 
         // MARK: - Google Models
+        AIMetadata.gemini_3_5_flash,
+        AIMetadata.gemini_3_1_pro,
         AIMetadata.gemini_3_pro,
         AIMetadata.gemini_3_flash,
         AIMetadata.gemini_2_5_flash_lite,
@@ -585,7 +692,10 @@ class AIMetadata: NSObject {
 
 
         // MARK: - Anthropic Models
+        AIMetadata.claude_4_8_opus,
+        AIMetadata.claude_4_7_opus,
         AIMetadata.claude_4_6_opus,
+        AIMetadata.claude_4_6_sonnet,
         AIMetadata.claude_4_5_sonnet,
         AIMetadata.claude_4_5_haiku,
         AIMetadata.claude_4_sonnet,
@@ -606,10 +716,19 @@ class AIMetadata: NSObject {
         // #llama-streaming-functions
         AIMetadata.llama_4_latest,
         AIMetadata.llama_3_3_latest,
+
+        // MARK: - Apple Intelligence
+        AIMetadata.appleOnDevice,
     ]
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {
         for model in models {
+            // Apple Intelligence is an on-device classifier-only backend, not a
+            // general chat model. Keep it in `models` so the safety classifier
+            // can resolve it by name, but never surface it in the model picker.
+            if model.vendor == .apple {
+                continue
+            }
             closure(model.name, model.contextWindowTokens, model.url)
         }
     }

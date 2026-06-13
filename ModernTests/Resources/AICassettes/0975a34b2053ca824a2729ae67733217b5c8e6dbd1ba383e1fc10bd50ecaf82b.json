@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127964,\"messages\":[{\"content\":\"What magic phrase is inside the file in this archive? Quote it verbatim.\\n<iterm2:attachment file=\\\"magic.zip\\\" type=\\\"application\\\/zip\\\">\\nPK\\u0003\\u0004\\u0014\\u0000\\u0000\\u0000\\b\\u0000b`�\\\\�TAX�\\u0000\\u0000\\u0000\\\"L\\u0000\\u0000\\t\\u0000\\u001c\\u0000magic.txtUT\\t\\u0000\\u0003�\\u0011'j�\\u0011'jux\\u000b\\u0000\\u0001\\u0004�\\u0001\\u0000\\u0000\\u0004\\u0014\\u0000\\u0000\\u0000�α\\r�0\\u0014@��)�\\u0002��2J\\u0016���%�-��J&HMq�=��4ϥ����cig�y��'�Ԏ~��*���)��(��(��(��(��(��(��(��(�������8�Z��ۙ�\\u001c��K�V���\\u001c���S\\u0014EQ\\u0014EQ\\u0014EQ\\u0014EQ\\u0014EQ\\u0014EQ\\u0014EQ\\u0014EQ\\u0014EQ��\\u0017PK\\u0001\\u0002\\u001e\\u0003\\u0014\\u0000\\u0000\\u0000\\b\\u0000b`�\\\\�TAX�\\u0000\\u0000\\u0000\\\"L\\u0000\\u0000\\t\\u0000\\u0018\\u0000\\u0000\\u0000\\u0000\\u0000\\u0001\\u0000\\u0000\\u0000��\\u0000\\u0000\\u0000\\u0000magic.txtUT\\u0005\\u0000\\u0003�\\u0011'jux\\u000b\\u0000\\u0001\\u0004�\\u0001\\u0000\\u0000\\u0004\\u0014\\u0000\\u0000\\u0000PK\\u0005\\u0006\\u0000\\u0000\\u0000\\u0000\\u0001\\u0000\\u0001\\u0000O\\u0000\\u0000\\u0000�\\u0000\\u0000\\u0000\\u0000\\u0000\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"disabled\"}}",
+  "key" : "0975a34b2053ca824a2729ae67733217b5c8e6dbd1ba383e1fc10bd50ecaf82b",
+  "response" : {
+    "data" : "{\"id\":\"b3da3e84-13b3-425a-8864-fc26ea61a933\",\"object\":\"chat.completion\",\"created\":1780945444,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The magic phrase inside the file is:\\n\\n**`The magic words are SQUEAMISH OSSIFRAGE`**\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":290,\"completion_tokens\":25,\"total_tokens\":315,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":290},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

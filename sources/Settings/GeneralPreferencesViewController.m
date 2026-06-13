@@ -1008,7 +1008,6 @@ enum {
                     key:kPreferenceKeyAISafetyCheck
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
-    _aiSafetyCheck.enabled = [iTermAIAvailabilityProbe check];
 
     info = [self defineControl:_aiCustomHeadersEnabled
                            key:kPreferenceKeyAICustomHeadersEnabled
@@ -1037,23 +1036,66 @@ enum {
     [self updateAIEnabled];
 }
 
-- (NSString *)keyForCurrentlySelectedAIPrompt {
+// The single source of per-prompt metadata: the preference key plus,
+// for prompts whose template must interpolate a feature-supplied
+// variable, that variable's bare name (in the "ai" scope) and a
+// sentence explaining what replaces it. The switch is exhaustive so
+// adding a prompt forces this method to be updated; everything else
+// (warning logic, reset, editor binding) derives from it. The
+// \(ai.<name>) wrapper and the shared "must contain" sentence are
+// composed once in updateAIPromptWarning. Out params may be NULL.
+- (NSString *)keyForCurrentlySelectedAIPromptGetting:(NSString **)variableName
+                                  variableExplanation:(NSString **)variableExplanation {
+    NSString *name = nil;
+    NSString *explanation = nil;
+    NSString *key;
     switch ((iTermAIPrompt)_promptSelector.selectedTag) {
         case iTermAIPromptEngageAI:
-            return kPreferenceKeyAIPrompt;
+            name = iTermAIPromptVariablePrompt;
+            explanation = @"The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \\(ai.prompt).”";
+            key = kPreferenceKeyAIPrompt;
+            break;
         case iTermAIPromptAIChat:
-            return kPreferenceKeyAIPromptAIChat;
+            key = kPreferenceKeyAIPromptAIChat;
+            break;
         case iTermAIPromptAIChatReadOnlyTerminal:
-            return kPreferenceKeyAIPromptAIChatReadOnlyTerminal;
+            key = kPreferenceKeyAIPromptAIChatReadOnlyTerminal;
+            break;
         case iTermAIPromptAIChatReadWriteTerminal:
-            return kPreferenceKeyAIPromptAIChatReadWriteTerminal;
+            key = kPreferenceKeyAIPromptAIChatReadWriteTerminal;
+            break;
         case iTermAIPromptAIChatBrowser:
-            return kPreferenceKeyAIPromptAIChatBrowser;
+            key = kPreferenceKeyAIPromptAIChatBrowser;
+            break;
         case iTermAIPromptAIChatReadOnlyTerminalBrowser:
-            return kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
+            key = kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
+            break;
         case iTermAIPromptAIChatReadWriteTerminalBrowser:
-            return kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+            key = kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+            break;
+        case iTermAIPromptAIChatOrchestration:
+            key = kPreferenceKeyAIPromptAIChatOrchestration;
+            break;
+        case iTermAIPromptCodeReviewSystem:
+            key = kPreferenceKeyAIPromptCodeReviewSystem;
+            break;
+        case iTermAIPromptChatIcon:
+            name = iTermAIPromptVariableSubject;
+            explanation = @"The chat’s title will replace it when speaking to the AI.";
+            key = kPreferenceKeyAIPromptChatIcon;
+            break;
     }
+    if (variableName) {
+        *variableName = name;
+    }
+    if (variableExplanation) {
+        *variableExplanation = explanation;
+    }
+    return key;
+}
+
+- (NSString *)keyForCurrentlySelectedAIPrompt {
+    return [self keyForCurrentlySelectedAIPromptGetting:NULL variableExplanation:NULL];
 }
 
 - (BOOL)canCustomizeAPI {
@@ -1190,6 +1232,7 @@ enum {
     _aiFeatureHostedWebSearch.enabled = allowed;
     _aiFeatureFunctionCalling.enabled = allowed;
     _aiFeatureStreamingResponses.enabled = allowed;
+    _aiSafetyCheck.enabled = allowed;
     _vectorStore.enabled = allowed;
 
     [self updateCoarseAIModelSettingsEnabled];
@@ -1220,13 +1263,22 @@ enum {
 }
 
 - (void)updateAIPromptWarning {
-    if ([[self keyForCurrentlySelectedAIPrompt] isEqualToString:kPreferenceKeyAIPrompt]) {
-        if ([[self stringForKey:kPreferenceKeyAIPrompt] containsString:@"\\(ai.prompt)"]) {
-            _aiPromptWarning.alphaValue = 0.0;
-        } else {
-            _aiPromptWarning.alphaValue = 1.0;
-        }
+    NSString *variableName = nil;
+    NSString *explanation = nil;
+    NSString *key = [self keyForCurrentlySelectedAIPromptGetting:&variableName
+                                             variableExplanation:&explanation];
+    NSString *requiredVariable =
+        variableName ? [NSString stringWithFormat:@"\\(ai.%@)", variableName] : nil;
+    if (requiredVariable && ![[self stringForKey:key] containsString:requiredVariable]) {
+        _aiPromptWarning.toolTip =
+            [NSString stringWithFormat:@"The prompt must contain the substring %@. %@",
+             requiredVariable, explanation];
+        _aiPromptWarning.alphaValue = 1.0;
     } else {
+        // Clear the tooltip as well as fading: alpha 0 doesn't remove
+        // the view from hit-testing, so a stale tooltip would still
+        // answer hover/click on the invisible warning.
+        _aiPromptWarning.toolTip = nil;
         _aiPromptWarning.alphaValue = 0.0;
     }
 }
@@ -1755,10 +1807,11 @@ enum {
 
 - (IBAction)resetAIPrompt:(id)sender {
     NSString *key = [self keyForCurrentlySelectedAIPrompt];
-    [self setString:[iTermPreferences defaultObjectForKey:key]
-             forKey:key];
-    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:iTermDefaultAIPrompt
+    NSString *defaultValue = [iTermPreferences defaultObjectForKey:key] ?: @"";
+    [self setString:defaultValue forKey:key];
+    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:defaultValue
                                                                                    attributes:_aiPrompt.typingAttributes]];
+    [self updateAIPromptWarning];
 }
 
 - (IBAction)aiPromptHelp:(id)sender {

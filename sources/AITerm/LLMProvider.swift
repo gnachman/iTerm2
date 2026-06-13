@@ -144,6 +144,15 @@ struct LLMProvider {
         if MIMETypeIsTextual(mimeType) {
             return false
         }
+        // Images/audio/video are consumed inline (vision / audio content
+        // blocks), never ingested into a vector store. A vector store is
+        // text retrieval and can't "see" an image, so uploading one there is
+        // useless. Excluding them here keeps an image attachment on the
+        // inline input_image path even when an OpenAI vector store is
+        // configured.
+        if mimeType.hasPrefix("image/") || mimeType.hasPrefix("audio/") || mimeType.hasPrefix("video/") {
+            return false
+        }
         if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) &&
             (model.api == .responses) &&
             model.vectorStoreConfig != .disabled {
@@ -153,24 +162,128 @@ struct LLMProvider {
     }
 
     func fileTypeIsSupported(extension ext: String) -> Bool {
-        if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) {
+        // Unknown extensions fall back to application/octet-stream, not
+        // text/plain. Text-only vendors' accepts(mimeType:) allowlist
+        // then rejects them at the gate instead of letting an unknown
+        // binary slip through and get base64-wrapped as lossy text. Users
+        // with a genuinely text-like unknown extension (.yaml, .toml,
+        // ...) will see "unsupported file" and can either rename the
+        // file or paste its contents inline; that's a strictly safer
+        // default than silently shipping bytes that may render as
+        // garbage in the LLM's input.
+        let mime = extensionToMime[ext] ?? "application/octet-stream"
+        return accepts(mimeType: mime)
+    }
+
+    func accepts(mimeType: String) -> Bool {
+        // Capability is gated at the MODALITY + serializer level, not per
+        // image/audio sub-format and not per model. The principle, chosen
+        // deliberately: err toward allowing an attachment whenever this
+        // vendor's request format can carry it as a typed content block, and
+        // let the backend reject an unsupported sub-format or a non-capable
+        // model with a clean HTTP error that surfaces in the chat. We do NOT
+        // try to predict which specific model supports vision/audio, so a
+        // newer model than we know about (or a custom one pointed at a known
+        // host) works automatically. The only things still refused here are
+        // opaque binaries with no typed representation; those fall back to
+        // path insertion / the vector-store upload path rather than being
+        // base64-mangled into a text block.
+
+        // Textual content (including image/svg+xml, which is XML text) is
+        // always acceptable: it inlines as a text block on any vendor.
+        if MIMETypeIsTextual(mimeType) {
             return true
         }
-        guard let mime = extensionToMime[ext] else {
-            return false
+        if mimeType == "application/pdf" {
+            return supportsPDFAttachments
         }
-        return MIMETypeIsTextual(mime)
+        if mimeType.hasPrefix("image/") {
+            return supportsInlineImageBlock
+        }
+        if mimeType.hasPrefix("audio/") {
+            return acceptsInlineAudio(mimeType: mimeType)
+        }
+        if mimeType.hasPrefix("video/") {
+            return supportsInlineVideoBlock
+        }
+        // Vector-store-backed providers can ingest arbitrary other binaries
+        // by uploading them and referencing by file ID.
+        return shouldUploadFile(mimeType: mimeType)
     }
+
+    var supportsPDFAttachments: Bool {
+        let url = URL(string: model.url)
+        if LLMMetadata.hostIsOpenAIAPI(url: url) {
+            return true
+        }
+        if LLMMetadata.hostIsAnthropicAIAPI(url: url) {
+            return true
+        }
+        if LLMMetadata.hostIsGoogleAIAPI(url: url) {
+            return true
+        }
+        return false
+    }
+
+    // Whether this vendor's request serializer can carry an inline image
+    // content block for any image/* MIME. We send the bytes with their real
+    // media type and let the vendor reject sub-formats it doesn't accept
+    // (e.g. Anthropic 400s on image/heic, Gemini on image/tiff). This is
+    // serializer capability, not model capability: every current chat model
+    // on these hosts is multimodal, and an unknown future one inherits
+    // support here for free. Image-shaped MIMEs that are really text
+    // (image/svg+xml) are handled by the textual branch of accepts() first.
+    var supportsInlineImageBlock: Bool {
+        let url = URL(string: model.url)
+        return LLMMetadata.hostIsAnthropicAIAPI(url: url)
+            || LLMMetadata.hostIsGoogleAIAPI(url: url)
+            || LLMMetadata.hostIsOpenAIAPI(url: url)
+    }
+
+    // Gemini accepts video via inlineData; no other wired vendor takes video.
+    var supportsInlineVideoBlock: Bool {
+        LLMMetadata.hostIsGoogleAIAPI(url: URL(string: model.url))
+    }
+
+    // Audio is the one modality we still gate by sub-format. Unlike images
+    // (where we can always emit a well-formed image block and let the vendor
+    // reject the sub-format), OpenAI's input_audio block has a closed
+    // {wav, mp3} format enum, so the serializer can only represent those two
+    // and there is no well-formed request to send for, say, audio/ogg.
+    // Gemini's inlineData passes the MIME through, so it takes any audio/*.
+    // OpenAI audio is also chat-completions-only: the Responses API has no
+    // audio input, so it is gated on the protocol too.
+    func acceptsInlineAudio(mimeType: String) -> Bool {
+        let url = URL(string: model.url)
+        if LLMMetadata.hostIsGoogleAIAPI(url: url) {
+            return true
+        }
+        if LLMMetadata.hostIsOpenAIAPI(url: url) && model.api == .chatCompletions {
+            return Self.openAIInputAudioMimeTypes.contains(mimeType)
+        }
+        return false
+    }
+
+    // MIME types representable by OpenAI's chat-completions input_audio block,
+    // whose format field is a closed enum of "wav" / "mp3".
+    static let openAIInputAudioMimeTypes: Set<String> = [
+        "audio/wav", "audio/x-wav", "audio/mpeg", "audio/mp3"
+    ]
 
     func shouldInlineBase64EncodedFile(mimeType: String) -> Bool {
         if shouldUploadFile(mimeType: mimeType) {
             return false
         }
-        // OpenAI lets you attach a binary PDF, but I don't think anyone else does.
+        // On OpenAI Responses with a vector store configured, the non-textual
+        // attachments that should be sent inline (rather than uploaded to the
+        // store) are PDFs (input_file) and images (input_image vision).
+        // Marking them inline here, combined with excluding them from
+        // shouldUploadFile above, makes the prep pipeline re-add them as
+        // inline .file subparts so the serializer emits the typed block.
         if LLMMetadata.hostIsOpenAIAPI(url: URL(string: model.url)) &&
             (model.api == .responses) &&
             model.vectorStoreConfig != .disabled {
-            return mimeType == "application/pdf"
+            return mimeType == "application/pdf" || mimeType.hasPrefix("image/")
         }
         return false
     }
@@ -215,6 +328,10 @@ struct LLMProvider {
             return DeepSeekResponseParser()
         case .anthropic:
             return AnthropicResponseParser()
+        case .appleIntelligence:
+            // On-device; AITermController handles the response directly and
+            // never parses HTTP data for this provider.
+            it_fatalError("Apple Intelligence does not parse HTTP responses")
         @unknown default:
             it_fatalError()
         }
@@ -243,6 +360,10 @@ struct LLMProvider {
 
         case .anthropic:
             return AnthropicStreamingResponseParser()
+
+        case .appleIntelligence:
+            // On-device and non-streaming; never reached.
+            return nil
 
         @unknown default:
             return nil

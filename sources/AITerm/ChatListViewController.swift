@@ -147,6 +147,18 @@ class ChatListViewController: NSViewController {
             guard let self else {
                 return
             }
+            // A change scoped to one chat (an icon arrival) carries its
+            // ID and cannot affect row height, order, or selection;
+            // reload just that row. A full reload here is expensive: it
+            // re-measures every row via the prototype cell, refetching
+            // snippets and resubscribing each one to the broker.
+            if let changedID = notification.userInfo?[ChatListModel.chatIDUserInfoKey] as? String {
+                if let i = dataSource?.chatListViewController(self, indexOfChatID: changedID) {
+                    tableView.reloadData(forRowIndexes: IndexSet(integer: i),
+                                         columnIndexes: IndexSet(integer: 0))
+                }
+                return
+            }
             ignoreSelectionChange = true
             let chatID = self.selectedChatID
             self.tableView.reloadData()

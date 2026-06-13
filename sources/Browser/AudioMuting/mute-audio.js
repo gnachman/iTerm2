@@ -2,9 +2,10 @@
     'use strict';
     // Skip the AudioContext / Audio / createElement wraps in challenge
     // frames so the probe does not see them as non-native and so the
-    // audio fingerprint runs against unmodified WebAudio. Flag set by
-    // cloak-page-world.js.
-    if (window.__iTermBrowserCloak === true) {
+    // audio fingerprint runs against unmodified WebAudio. We recompute
+    // the challenge-frame test here rather than reading a window flag,
+    // because any such flag would itself be a detectable fingerprint.
+    if ({{INCLUDE:challenge-frame-detection.js}}) {
         return;
     }
     try {

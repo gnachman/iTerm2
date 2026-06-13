@@ -628,8 +628,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                       virtualOffset:virtualOffset];
 
         for (NSInteger j = i; j < MIN(i + rows, backgroundRunArrays.count); j++) {
-            NSColor *leftColor = (!extend || runArray.array[0].isDefault) ? defaultColor : runArray.array[0].backgroundColor;
-            NSColor *rightColor = (!extend || runArray.array.lastObject.isDefault) ? defaultColor : runArray.array.lastObject.backgroundColor;
+            iTermBoxedBackgroundColorRun *firstRun = runArray.array.firstObject;
+            iTermBoxedBackgroundColorRun *lastRun = runArray.array.lastObject;
+            NSColor *leftColor = (!extend || !firstRun || firstRun.isDefault) ? defaultColor : (firstRun.backgroundColor ?: defaultColor);
+            NSColor *rightColor = (!extend || !lastRun || lastRun.isDefault) ? defaultColor : (lastRun.backgroundColor ?: defaultColor);
             NSArray<NSColor *> *colors = @[ leftColor, rightColor ];
 
             [self drawMarginsForLine:backgroundRunArrays[j].line
@@ -1345,7 +1347,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             NSRect rect;
             rect.origin.x = 0;
             int buttonCells = iTermTextDrawingHelperLineStyleMarkRightInsetCells;
-            if (!mark.command.length) {
+            if (!mark.hasNonEmptyCommand) {
                 buttonCells = 0;
             }
             rect.size.width = leftMargin.size.width + self.cellSize.width * (self.gridSize.width - buttonCells);
@@ -1462,11 +1464,17 @@ const CGFloat commandRegionOutlineThickness = 2.0;
              destinationFrameSize:(NSSize)textViewSize
                     sourceRectPtr:(NSRect *)sourceRectPtr
                           margins:(NSEdgeInsets)margins
+                 panelReservation:(CGFloat)panelReservation
                    verticalOffset:(CGFloat)verticalOffset{
     if (NSEqualSizes(NSZeroSize, imageSize)) {
         return NSZeroRect;
     }
-    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - margins.right,
+    // Shrink the available width by the panel reservation so the badge
+    // right-aligns at the inner edge of the right-gutter panel area (e.g. the
+    // clippings panel) instead of at the very right edge of PTYTextView, which
+    // would put it behind the panel. This mirrors how timestamps and
+    // indicators clear the panels.
+    NSRect destination = NSMakeRect(textViewSize.width - panelReservation - imageSize.width - margins.right,
                                     kiTermIndicatorStandardHeight + margins.top + verticalOffset,
                                     imageSize.width,
                                     imageSize.height);
@@ -1487,6 +1495,7 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                                    destinationFrameSize:_frame.size
                                           sourceRectPtr:&source
                                                 margins:NSEdgeInsetsMake(self.badgeTopMargin, 0, 0, self.badgeRightMargin)
+                                       panelReservation:self.panelReservation
                                          verticalOffset:virtualOffset];
     if (NSEqualSizes(NSZeroSize, intersection.size)) {
         return NSZeroSize;

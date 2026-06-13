@@ -40,6 +40,23 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     }
     private let _derivative: IntervalTree
 
+    /// Main-thread RC pool's dataSource. Wired by VT100Screen.init alongside
+    /// `_mutableState.mainThreadCopy = _state`. The add / mutate / bulkMutate
+    /// side-effect closures bind any unresolved ResilientCoordinates on the
+    /// doppelganger to this dataSource right after the user code has run,
+    /// so individual call sites don't have to remember to bind. Weak: the
+    /// tree outlives no one important, but the immutable state survives the
+    /// mutable state long enough that we never want to keep it alive.
+    @objc weak var mainThreadDataSource: ResilientCoordinateDataSource?
+
+    /// Mutation-thread RC pool's dataSource. Wired by VT100Screen.init.
+    /// Used by add/mutate hooks to bind unresolved RCs on the
+    /// PROGENITOR right after the user code has run on the mutation
+    /// thread. Without this, RC fields on the progenitor would stay
+    /// unbound and miss fold/unfold/resize notifications (consumers
+    /// that read the progenitor would see stale coords).
+    @objc weak var mutationThreadDataSource: ResilientCoordinateDataSource?
+
     @objc(initWithSideEffectPerformer:derivativeIntervalTree:)
     init(_ sideEffectPerformer: EventuallyConsistentIntervalTreeSideEffectPerformer,
          derivative: IntervalTree) {
@@ -65,6 +82,9 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     @objc
     override func add(_ object: IntervalTreeObject, with interval: Interval) {
         super.add(object, with: interval)
+        // Bind any unbound RCs the caller built before insertion. The
+        // doppelganger side is bound later by the addSideEffect closure.
+        bindUnresolvedRCsOnProgenitor(object)
         let copyOfInterval = interval.copy(with: nil) as! Interval
         addSideEffect(object, closure: { doppelganger, derivative in
             derivative.add(doppelganger, with: copyOfInterval)
@@ -101,11 +121,15 @@ class EventuallyConsistentIntervalTree: IntervalTree {
 #if DEBUG
         super.sanityCheck()
 #endif
-        closure(object as! IntervalTreeObject)
+        let mutable = object as! IntervalTreeObject
+        closure(mutable)
+        // Bind any unbound RCs the closure attached to the progenitor.
+        // (The doppelganger side is handled later by addSideEffect.)
+        bindUnresolvedRCsOnProgenitor(mutable)
 #if DEBUG
         super.sanityCheck()
 #endif
-        addSideEffect(object as! IntervalTreeObject, closure: { doppelganger, _ in
+        addSideEffect(mutable, closure: { doppelganger, _ in
             closure(doppelganger)
         }, name: "mutate object")
     }
@@ -119,7 +143,9 @@ class EventuallyConsistentIntervalTree: IntervalTree {
 #if DEBUG
             super.sanityCheck()
 #endif
-            closure(object as! IntervalTreeObject)
+            let mutable = object as! IntervalTreeObject
+            closure(mutable)
+            bindUnresolvedRCsOnProgenitor(mutable)
 #if DEBUG
             super.sanityCheck()
 #endif
@@ -185,6 +211,10 @@ super.sanityCheck()
         sideEffectPerformer?.addSideEffect( { [weak self] in
             if let self = self {
                 closure(doppelganger, self._derivative)
+                // After user code (which may have appended unbound RCs onto
+                // the doppelganger), bind any unresolved RCs to the
+                // main-thread pool. Idempotent — already-bound RCs no-op.
+                self.bindUnresolvedDoppelgangerRCs(on: doppelganger)
             }
         },
                                             name:name)
@@ -198,10 +228,29 @@ super.sanityCheck()
             if let self = self {
                 for (i, doppelganger) in doppelgangers.enumerated() {
                     closure(i, doppelganger, self._derivative)
+                    self.bindUnresolvedDoppelgangerRCs(on: doppelganger)
                 }
             }
         },
                                            name: name)
+    }
+
+    private func bindUnresolvedDoppelgangerRCs(on object: IntervalTreeObject) {
+        guard let mainDS = mainThreadDataSource else { return }
+        guard let holder = object as? ResilientCoordinateHolder else { return }
+        holder.bindUnresolvedResilientCoordinates(to: mainDS)
+    }
+
+    /// Mutation-thread equivalent: bind unresolved RCs on the progenitor
+    /// side using `mutationThreadDataSource`. Idempotent — RCs that are
+    /// already bound (or unresolved-with-mark cases) no-op. Called by
+    /// `add` and `mutate` right after the synchronous progenitor closure
+    /// has run, so setters that build unbound RCs immediately get
+    /// observers attached and start tracking shifts.
+    fileprivate func bindUnresolvedRCsOnProgenitor(_ object: IntervalTreeObject) {
+        guard let mutDS = mutationThreadDataSource else { return }
+        guard let holder = object as? ResilientCoordinateHolder else { return }
+        holder.bindUnresolvedResilientCoordinates(to: mutDS)
     }
 }
 

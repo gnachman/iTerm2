@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "VT100GridTypes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermSelection;
 
 typedef NS_ENUM(NSInteger, iTermSelectionMode) {
@@ -50,10 +52,13 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 
 - (long long)selectionTotalScrollbackOverflow;
 
-// Returns the indexes of cells on the given line containing the given (non-complex) character.
-- (NSIndexSet *)selectionIndexesOnAbsoluteLine:(long long)line
-                           containingCharacter:(unichar)c
-                                       inRange:(NSRange)range;
+// Returns the indexes of cells on the given line containing the given
+// (non-complex) character. Conformers may return nil when `line` is out of
+// the current scrollback range (PTYTextView does this for absLine values
+// that fall outside [totalScrollbackOverflow, +INT_MAX]).
+- (nullable NSIndexSet *)selectionIndexesOnAbsoluteLine:(long long)line
+                                    containingCharacter:(unichar)c
+                                                inRange:(NSRange)range;
 
 - (void)liveSelectionDidEnd;
 
@@ -79,7 +84,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Represents multiple discontiguous regions of selected text.
 @interface iTermSelection : NSObject <NSCopying>
 
-@property(nonatomic, assign) id<iTermSelectionDelegate> delegate;
+@property(nullable, nonatomic, assign) id<iTermSelectionDelegate> delegate;
 
 // If set, the selection is currently being extended.
 @property(nonatomic, readonly) BOOL extending;
@@ -202,3 +207,5 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 - (BOOL)absCoord:(VT100GridAbsCoord)a isBeforeAbsCoord:(VT100GridAbsCoord)b;
 
 @end
+
+NS_ASSUME_NONNULL_END

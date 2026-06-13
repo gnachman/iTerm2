@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"function_call\":\"auto\",\"max_tokens\":8000,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"},{\"reasoning_content\":\"The user wants me to call the get_random_word tool and then include the returned word in my reply.\",\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"arguments\":\"{}\",\"name\":\"get_random_word\"},\"id\":\"call_00_HPTh1FYIX4aTaPjcE1Ql4406\",\"type\":\"function\"}]},{\"content\":\"MAGENTA-LARK-77\",\"role\":\"tool\",\"tool_call_id\":\"call_00_HPTh1FYIX4aTaPjcE1Ql4406\"}],\"model\":\"deepseek-reasoner\",\"stream\":false,\"temperature\":0,\"tools\":[{\"function\":{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "85005ac1bcc1c0381fc769cf0fa43cf36dd923e80371076c7b0230cf9d168340",
+  "response" : {
+    "data" : "{\"id\":\"6ae58e1d-0f0c-47be-bd47-d93471f44172\",\"object\":\"chat.completion\",\"created\":1780870945,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The random word generated is **MAGENTA-LARK-77**. That's what the tool returned!\",\"reasoning_content\":\"The tool returned \\\"MAGENTA-LARK-77\\\". I need to include this exact word in my reply.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":367,\"completion_tokens\":47,\"total_tokens\":414,\"prompt_tokens_details\":{\"cached_tokens\":256},\"completion_tokens_details\":{\"reasoning_tokens\":24},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":111},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

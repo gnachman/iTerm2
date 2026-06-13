@@ -12,14 +12,22 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# ShellIntegrationVersion=1;shell=xonsh
+# ShellIntegrationVersion=2;shell=xonsh
 
 class _iTerm2Xonsh:
     """iTerm2 integration with Xonsh shell."""
 
     def __init__(self):
-        self.version = 1
+        self.version = 2
         self.stdout = @.imp.sys.__stdout__
+
+        # OSC 133 aid: per-command identifier the receiver uses to target a
+        # specific mark for D-by-aid (and cascade-close when an outer
+        # command like ssh dies before its inner remote shell's D
+        # arrives).
+        self.aid_salt = @.imp.os.urandom(4).hex()
+        self.aid_counter = 0
+        self.current_aid = f"{self.aid_salt}-0"
 
         self.add_iterm2_to_env()
         if self.is_iterm2_interactive():
@@ -131,10 +139,13 @@ class _iTerm2Xonsh:
         self.set_vars({"ShellIntegrationVersion": str(self.version), "shell": "xonsh"})
 
     def write_preexec_osc(self):
-        self.write_osc("133;C;", cr=True)
+        self.write_osc(f"133;C;aid={self.current_aid}", cr=True)
 
     def write_return_code_osc(self, return_code):
-        self.write_osc(f"133;D;{return_code}")
+        # Uses the OLD aid (the one in effect for the just-finished command);
+        # _event_pre_prompt rolls AFTER this fires so the next A/B/C uses
+        # the new aid.
+        self.write_osc(f"133;D;{return_code};aid={self.current_aid}")
 
     # Integrations
 
@@ -143,8 +154,14 @@ class _iTerm2Xonsh:
         Official prompt-toolkit example:
         https://github.com/prompt-toolkit/python-prompt-toolkit/blob/c7c629c38b22b5f22a0a5e80a1ae7e758ac595bb/examples/prompts/finalterm-shell-integration.py
         """
-        $PROMPT_FIELDS['iterm2_prompt_start'] = "\001" + "\033]133;A\a" + "\002"
-        $PROMPT_FIELDS['iterm2_prompt_end'] = "\001" + "\033]133;B\a" + "\002"
+        # Callable fields are evaluated each prompt render, so A/B pick up
+        # the current aid that _event_pre_prompt just rolled.
+        $PROMPT_FIELDS['iterm2_prompt_start'] = lambda: (
+            "\001" + f"\033]133;A;aid={self.current_aid}\a" + "\002"
+        )
+        $PROMPT_FIELDS['iterm2_prompt_end'] = lambda: (
+            "\001" + f"\033]133;B;aid={self.current_aid}\a" + "\002"
+        )
 
     def add_iterm2_to_prompt(self):
         if isinstance($PROMPT, str) and 'iterm2_prompt_start' not in $PROMPT:
@@ -164,6 +181,12 @@ class _iTerm2Xonsh:
                 shell_type = @.env.get('SHELL_TYPE', '')
                 self.print_err(f'iTerm2 Integration: SHELL_TYPE {repr(shell_type)} not supported.')
             return
+        # Roll the per-command aid AFTER post_command's D has fired (with
+        # the old aid) and BEFORE the next prompt is rendered (A/B will
+        # see the new value via the PROMPT_FIELDS lambdas). on_precommand
+        # then emits C with the same new aid before the command runs.
+        self.aid_counter += 1
+        self.current_aid = f"{self.aid_salt}-{self.aid_counter}"
         self.add_iterm2_to_prompt()
         self.set_state()
 

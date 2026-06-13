@@ -136,7 +136,15 @@ struct CompletionsMessage: Codable, Equatable {
             case .statusUpdate(let statusUpdate):
                 content = .string(statusUpdate.displayString)
             case .file(let file):
-                content = .string(file.content.lossyString)
+                // Binary images and audio become typed content parts (vision /
+                // input_audio); textual (incl. image/svg+xml) and everything
+                // else keep the legacy string body.
+                if !MIMETypeIsTextual(file.mimeType),
+                   file.mimeType.hasPrefix("image/") || Self.openAIAudioFormat(forMime: file.mimeType) != nil {
+                    content = .array([Self.contentPart(forFile: file)])
+                } else {
+                    content = .string(file.content.lossyString)
+                }
             case .fileID(_, let name):
                 content = .string("A file named \(name) (content unavailable)")
             }
@@ -202,17 +210,7 @@ struct CompletionsMessage: Codable, Equatable {
                     case .statusUpdate:
                         break
                     case .file(let file):
-                        if file.mimeType == "application/pdf" {
-                            let base64Data = file.content.base64EncodedString()
-                            contentParts.append(.file(.init(
-                                file_data: "data:\(file.mimeType);base64,\(base64Data)",
-                                filename: file.name)))
-                        } else {
-                            var value = "<iterm2:attachment file=\"\(file.name)\" type=\"\(file.mimeType)\">\n"
-                            value += file.content.lossyString
-                            value += "\n</iterm2:attachment>"
-                            contentParts.append(.text(.init(text: value)))
-                        }
+                        contentParts.append(Self.contentPart(forFile: file))
                     case .fileID(id: _, name: let name):
                         contentParts.append(.text(.init(text: "A file named \(name) (content unavailable)")))
                     }
@@ -259,6 +257,24 @@ struct CompletionsMessage: Codable, Equatable {
                                                  type: .file(.init(name: file.filename,
                                                                    content: Data(base64Encoded: file.file_data) ?? Data(),
                                                                    mimeType: "application/octet-stream"))))
+                    case .imageURL(let image):
+                        // Responses don't normally carry image_url; keep the
+                        // mapping total and round-trip the bytes when we can.
+                        if let (mime, data) = Self.decodeDataURL(image.url) {
+                            return .attachment(.init(inline: false,
+                                                     id: UUID().uuidString,
+                                                     type: .file(.init(name: "image",
+                                                                       content: data,
+                                                                       mimeType: mime))))
+                        }
+                        return .text(image.url)
+                    case .inputAudio(let audio):
+                        let mime = audio.format == "wav" ? "audio/wav" : "audio/mpeg"
+                        return .attachment(.init(inline: false,
+                                                 id: UUID().uuidString,
+                                                 type: .file(.init(name: "audio",
+                                                                   content: Data(base64Encoded: audio.data) ?? Data(),
+                                                                   mimeType: mime))))
                     }
                 }
                 if parts.count == 1 {
@@ -299,9 +315,69 @@ struct CompletionsMessage: Codable, Equatable {
                     value += (Data(base64Encoded: file.file_data) ?? Data()).lossyString
                     value += "\n</iterm2:attachment>"
                     return value
+                case .imageURL:
+                    return "[image]"
+                case .inputAudio:
+                    return "[audio]"
                 }
             }.joined(separator: "\n")
         }
+    }
+
+    // Map a user attachment file to the right chat-completions content part:
+    // image/* -> image_url (vision), wav/mp3 -> input_audio, PDF -> file,
+    // anything else -> the legacy <iterm2:attachment> text wrapper. Used by
+    // both the multipart and top-level attachment encode paths.
+    static func contentPart(forFile file: LLM.Message.Attachment.AttachmentType.File) -> ContentPart {
+        let mime = file.mimeType
+        // Textual content (including image/svg+xml and application/xml) must
+        // NOT take the image/audio binary branches. SVG starts with image/
+        // but is XML text; OpenAI's image_url 400s it ("unsupported image").
+        // Send it (and any other text) through the wrapper text part.
+        if !MIMETypeIsTextual(mime) {
+            if mime.hasPrefix("image/") {
+                let base64 = file.content.base64EncodedString()
+                return .imageURL(.init(url: "data:\(mime);base64,\(base64)"))
+            }
+            if let format = openAIAudioFormat(forMime: mime) {
+                return .inputAudio(.init(data: file.content.base64EncodedString(), format: format))
+            }
+            if mime == "application/pdf" {
+                let base64 = file.content.base64EncodedString()
+                return .file(.init(file_data: "data:\(mime);base64,\(base64)", filename: file.name))
+            }
+        }
+        var value = "<iterm2:attachment file=\"\(file.name)\" type=\"\(mime)\">\n"
+        value += file.content.lossyString
+        value += "\n</iterm2:attachment>"
+        return .text(.init(text: value))
+    }
+
+    // OpenAI's input_audio.format is a closed enum of "wav" / "mp3"; returns
+    // nil for any other audio MIME (those are refused by the provider gate).
+    static func openAIAudioFormat(forMime mime: String) -> String? {
+        switch mime {
+        case "audio/wav", "audio/x-wav":
+            return "wav"
+        case "audio/mpeg", "audio/mp3":
+            return "mp3"
+        default:
+            return nil
+        }
+    }
+
+    // Parse "data:<mime>;base64,<payload>" back into its MIME and bytes.
+    static func decodeDataURL(_ string: String) -> (String, Data)? {
+        guard string.hasPrefix("data:"), let comma = string.firstIndex(of: ",") else {
+            return nil
+        }
+        let meta = string[string.index(string.startIndex, offsetBy: 5)..<comma]
+        let payload = String(string[string.index(after: comma)...])
+        let mime = meta.split(separator: ";").first.map(String.init) ?? "application/octet-stream"
+        guard let data = Data(base64Encoded: payload) else {
+            return nil
+        }
+        return (mime, data)
     }
 }
 
@@ -484,17 +560,26 @@ extension CompletionsMessage {
     enum ContentPart: Codable, Equatable {
         case text(TextContent)
         case file(FileContent)
+        // OpenAI chat-completions vision: {"type":"image_url","image_url":{"url":"data:..."}}
+        case imageURL(ImageURLContent)
+        // OpenAI chat-completions audio (audio models only):
+        // {"type":"input_audio","input_audio":{"data":"<base64>","format":"wav"|"mp3"}}
+        case inputAudio(InputAudioContent)
 
         private enum CodingKeys: String, CodingKey {
             case type
             case text
             case file
+            case imageURL = "image_url"
+            case inputAudio = "input_audio"
         }
 
         var approximateTokenCount: Int {
             switch self {
             case .text(let content): return AIMetadata.instance.tokens(in: content.text) + 1
             case .file(let file): return AIMetadata.instance.tokens(in: file.file_data + file.filename) + 1
+            case .imageURL(let content): return AIMetadata.instance.tokens(in: content.url) + 1
+            case .inputAudio(let content): return AIMetadata.instance.tokens(in: content.data) + 1
             }
         }
 
@@ -507,6 +592,12 @@ extension CompletionsMessage {
             case .file(let content):
                 try container.encode("file", forKey: .type)
                 try container.encode(content, forKey: .file)
+            case .imageURL(let content):
+                try container.encode("image_url", forKey: .type)
+                try container.encode(content, forKey: .imageURL)
+            case .inputAudio(let content):
+                try container.encode("input_audio", forKey: .type)
+                try container.encode(content, forKey: .inputAudio)
             }
         }
 
@@ -521,6 +612,10 @@ extension CompletionsMessage {
             case "file":
                 let fileContent = try container.decode(FileContent.self, forKey: .file)
                 self = .file(fileContent)
+            case "image_url":
+                self = .imageURL(try container.decode(ImageURLContent.self, forKey: .imageURL))
+            case "input_audio":
+                self = .inputAudio(try container.decode(InputAudioContent.self, forKey: .inputAudio))
             default:
                 throw DecodingError.dataCorruptedError(
                     forKey: .type,
@@ -548,6 +643,15 @@ extension CompletionsMessage {
             case file_data
             case filename
         }
+    }
+
+    struct ImageURLContent: Codable, Equatable {
+        let url: String  // data:<mime>;base64,<...> or a remote URL
+    }
+
+    struct InputAudioContent: Codable, Equatable {
+        let data: String    // base64 encoded bytes
+        let format: String  // "wav" or "mp3"
     }
 
 }

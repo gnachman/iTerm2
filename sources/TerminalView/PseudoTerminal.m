@@ -1262,6 +1262,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+- (IBAction)toggleNotifyOnStatusChange:(id)sender {
+    // Armed state is centralized so this works whether or not the Status
+    // toolbelt tool is visible.
+    [[iTermNotifyOnStatusChangeController instance] toggleWindowArmedForGuid:self.terminalGuid];
+}
+
 - (void)popupWillClose:(iTermPopupWindowController *)popup {
     if (popup == pbHistoryView) {
         [pbHistoryView autorelease];
@@ -11789,6 +11795,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
         return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.currentSession.profile.profileType] count] > 0;
+    } else if ([item action] == @selector(toggleNotifyOnStatusChange:)) {
+        const BOOL armed = [[iTermNotifyOnStatusChangeController instance] isWindowArmedForGuid:self.terminalGuid];
+        [item setState:armed ? NSControlStateValueOn : NSControlStateValueOff];
+        return YES;
     } else if ([item action] == @selector(toggleSizeLocked:)) {
         [item setState:_sizeLocked ? NSControlStateValueOn : NSControlStateValueOff];
         return self.windowTypeSupportsSizeLock;

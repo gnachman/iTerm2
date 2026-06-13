@@ -42,6 +42,13 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     private var outerColumn: ChatManualStackView!
 
     weak var delegate: ChatInputViewDelegate?
+
+    // Returns whether the current chat is in orchestration mode. The @-mention
+    // session picker only activates when this returns true. Read lazily on every
+    // keystroke so runtime orchestration toggles are reflected immediately.
+    var orchestrationEnabledProvider: (() -> Bool)?
+    private let mentionPicker = ChatMentionPickerController()
+
     var stoppable = false {
         didSet {
             updateSendButtonEnabled()
@@ -104,6 +111,9 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.placeholder = "Type a message…"
         inputTextFieldContainer.isEnabled = false
         inputTextFieldContainer.textView.delegate = self
+        inputTextFieldContainer.textView.onDropFileURLs = { [weak self] urls in
+            self?.handleTextViewFileDrop(urls) ?? false
+        }
 
         sendButton = SendButton(image: sendImage, target: self, action: #selector(sendButtonClicked))
         // .scaleNone keeps the symbol at the configured pointSize. With
@@ -321,6 +331,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     }
 
     func clear() {
+        mentionPicker.hide()
         stringValue = ""
         attachmentsView.files.removeAll()
         updateAttachmentsView()
@@ -355,8 +366,10 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             guard response == .OK, let self else {
                 return
             }
+            var rejected: [URL] = []
             for item in panel.items {
                 guard AITermController.provider?.fileTypeIsSupported(extension: item.filename.pathExtension.lowercased()) == true else {
+                    rejected.append(URL(fileURLWithPath: item.filename))
                     continue
                 }
                 let placeholder = attachmentsView.addPlaceholder(filename: item.filename,
@@ -371,6 +384,9 @@ class ChatInputView: NSView, NSTextFieldDelegate {
                     updateAttachmentsView()
                     updateSendButtonEnabled()
                 }
+            }
+            if !rejected.isEmpty {
+                presentRejectedAttachments(rejected)
             }
             updateAttachmentsView()
             updateSendButtonEnabled()
@@ -389,7 +405,14 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     private func updateSendButtonEnabled() {
         let hasPlaceholder = attachmentsView.files.anySatisfies { $0.isPlaceholder }
-        sendButton.isEnabled = stoppable || (!inputTextFieldContainer.stringValue.isEmpty && !hasPlaceholder)
+        // Mirror sendButtonClicked's whitespace-trim rule: a field
+        // containing only spaces / newlines isn't a sendable message,
+        // so the button shouldn't be active either. Without this the
+        // user can click Send on a whitespace-only field and the click
+        // is silently no-oped by the trim in ChatViewController.
+        let trimmed = inputTextFieldContainer.stringValue
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        sendButton.isEnabled = stoppable || (!trimmed.isEmpty && !hasPlaceholder)
         if stoppable {
             sendButton.image = stopImage
             hintLabel.isHidden = true
@@ -461,9 +484,91 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         return nil
     }
 
+    // Called when files are dropped directly onto the text view. A plain-text
+    // NSTextView would otherwise insert the file paths as text. For files the
+    // current backend can accept as attachments, offer to attach them instead
+    // (the choice is rememberable). Returns true if we handled the drop, or
+    // false to let the text view insert the paths as before.
+    private func handleTextViewFileDrop(_ urls: [URL]) -> Bool {
+        let provider = AITermController.provider
+        let supported = urls.filter {
+            provider?.fileTypeIsSupported(extension: $0.pathExtension.lowercased()) == true
+        }
+        // Nothing the backend accepts: keep the legacy behavior and let the
+        // text view insert every path as text.
+        guard !supported.isEmpty else {
+            return false
+        }
+        // Consume the drop now (suppressing the text view's default path
+        // insertion) and decide asynchronously: iTermWarning.show with a
+        // window spins a nested sheet-modal loop, which would block the drag
+        // session if run here inside performDragOperation. Deferring to the
+        // next runloop mirrors presentRejectedAttachments' async sheet. When
+        // the choice has been remembered the warning returns immediately with
+        // no UI, so this just adds an imperceptible one-tick delay.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+            let selection = iTermWarning.show(
+                withTitle: dropPromptTitle(for: supported),
+                actions: ["Attach", "Insert Path"],
+                accessory: nil,
+                identifier: "NoSyncAIChatAttachDroppedFile",
+                silenceable: .kiTermWarningTypePermanentlySilenceable,
+                heading: supported.count == 1 ? "Attach File?" : "Attach Files?",
+                window: window)
+            if selection == .kiTermWarningSelection0 {
+                addFiles(from: supported)
+                // Preserve any unsupported files in the same drop by inserting
+                // their paths as text, since we consumed the whole drop.
+                insertFilePathsAsText(urls.filter { !supported.contains($0) })
+            } else {
+                // Insert Path: insert every dropped path as text, matching the
+                // legacy behavior.
+                insertFilePathsAsText(urls)
+            }
+        }
+        return true
+    }
+
+    private func dropPromptTitle(for urls: [URL]) -> String {
+        if urls.count == 1 {
+            return "Add “\(urls[0].lastPathComponent)” to your message as an attachment, or insert its path as text?"
+        }
+        return "Add the \(urls.count) dropped files to your message as attachments, or insert their paths as text?"
+    }
+
+    private func insertFilePathsAsText(_ urls: [URL]) {
+        guard !urls.isEmpty else {
+            return
+        }
+        let textView = inputTextFieldContainer.textView
+        let joined = urls.map { $0.path }.joined(separator: " ")
+        let range = textView.selectedRange()
+        if textView.shouldChangeText(in: range, replacementString: joined) {
+            textView.insertText(joined, replacementRange: range)
+            textView.didChangeText()
+        }
+    }
+
     private func addFiles(from urls: [URL]) {
-        var attachments = attachmentsView.files
+        let provider = AITermController.provider
+        var accepted: [URL] = []
+        var rejected: [URL] = []
         for url in urls {
+            let ext = url.pathExtension.lowercased()
+            if provider?.fileTypeIsSupported(extension: ext) == true {
+                accepted.append(url)
+            } else {
+                rejected.append(url)
+            }
+        }
+        if !rejected.isEmpty {
+            presentRejectedAttachments(rejected)
+        }
+        var attachments = attachmentsView.files
+        for url in accepted {
             let path = url.path
             if !attachments.contains(.regular(path)) {
                 attachments.append(.regular(path))
@@ -472,6 +577,20 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         attachmentsView.files = attachments
         updateAttachmentsView()
         updateSendButtonEnabled()
+    }
+
+    private func presentRejectedAttachments(_ urls: [URL]) {
+        guard let window else { return }
+        let names = urls.map { $0.lastPathComponent }.joined(separator: ", ")
+        let providerName = AITermController.provider?.displayName ?? "the current AI provider"
+        let alert = NSAlert()
+        alert.messageText = urls.count == 1
+            ? "Attachment not supported"
+            : "Attachments not supported"
+        alert.informativeText = "\(providerName) doesn’t accept this file type as a chat attachment: \(names)."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.beginSheetModal(for: window)
     }
 
     var isEnabled: Bool {
@@ -488,14 +607,45 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             inputTextFieldContainer.stringValue
         }
         set {
+            mentionPicker.hide()
             inputTextFieldContainer.stringValue = newValue
             updateSendButtonEnabled()
             heightDidChange()
         }
     }
 
+    // The attributed input (including @-mention tokens), for saving/restoring a
+    // per-chat draft across chat switches.
+    var attributedStringValue: NSAttributedString {
+        get {
+            inputTextFieldContainer.attributedStringValue
+        }
+        set {
+            mentionPicker.hide()
+            inputTextFieldContainer.attributedStringValue = newValue
+            updateSendButtonEnabled()
+            heightDidChange()
+        }
+    }
+
+    func setAttachedFiles(_ files: [HorizontalFileListView.File]) {
+        attachmentsView.files = files
+        updateAttachmentsView()
+        updateSendButtonEnabled()
+    }
+
     func makeTextViewFirstResponder() {
         window?.makeFirstResponder(inputTextFieldContainer.textView)
+    }
+
+    // Surface the @-mention feature where it's available: orchestration chats
+    // get a placeholder that advertises it. Call when the chat loads and
+    // whenever orchestration is toggled.
+    func refreshPlaceholder() {
+        let orchestration = orchestrationEnabledProvider?() ?? false
+        inputTextFieldContainer.placeholder = orchestration
+            ? "Type a message, or @ to mention a session…"
+            : "Type a message…"
     }
 
     private func revealSelectedRange() {
@@ -549,6 +699,26 @@ extension ChatInputView {
 
 extension ChatInputView: NSTextViewDelegate {
     func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        // While the @-mention picker is open it owns the arrow/Return/Tab/Escape
+        // keys: they drive the list rather than the text view or the send action.
+        if mentionPicker.isVisible {
+            switch commandSelector {
+            case #selector(NSResponder.moveDown(_:)):
+                mentionPicker.moveSelectionDown()
+                return true
+            case #selector(NSResponder.moveUp(_:)):
+                mentionPicker.moveSelectionUp()
+                return true
+            case #selector(NSResponder.insertNewline(_:)), #selector(NSResponder.insertTab(_:)):
+                mentionPicker.commitSelection()
+                return true
+            case #selector(NSResponder.cancelOperation(_:)):
+                mentionPicker.hide()
+                return true
+            default:
+                break
+            }
+        }
         if commandSelector == #selector(NSResponder.insertNewline(_:))
             && !iTermApplication.shared().it_modifierFlags.contains(.shift)
             && sendButton.isEnabled {
@@ -565,6 +735,7 @@ extension ChatInputView: NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         updateSendButtonEnabled()
         heightDidChange()
+        updateMentionPicker()
         delegate?.textDidChange()
     }
 
@@ -572,5 +743,151 @@ extension ChatInputView: NSTextViewDelegate {
         DispatchQueue.main.async {
             self.revealSelectedRange()
         }
+        // Moving the caret (e.g. a click) out of an @-mention context dismisses
+        // the picker; moving into one shows it.
+        updateMentionPicker()
+    }
+}
+
+// MARK: - @-mention session picker
+extension ChatInputView {
+    // A run beginning with "@" immediately before the caret, if any. `atIndex`
+    // is the location of the "@"; `query` is the text typed after it (no
+    // whitespace, since a space ends the mention being composed).
+    private func mentionQueryContext() -> (atIndex: Int, query: String)? {
+        let tv = inputTextFieldContainer.textView
+        let selection = tv.selectedRange()
+        guard selection.length == 0 else {
+            return nil
+        }
+        let caret = selection.location
+        let ns = tv.string as NSString
+        guard caret <= ns.length else {
+            return nil
+        }
+        let atChar = UInt16(UnicodeScalar("@").value)
+        var i = caret
+        while i > 0 {
+            let c = ns.character(at: i - 1)
+            if c == atChar {
+                let atIndex = i - 1
+                // The "@" must start a word: at the very start, or right after
+                // whitespace or another token.
+                if atIndex == 0 || isMentionBoundary(ns.character(at: atIndex - 1)) {
+                    let query = ns.substring(with: NSRange(location: i, length: caret - i))
+                    return (atIndex, query)
+                }
+                return nil
+            }
+            // A whitespace/newline or attachment glyph before reaching "@" means
+            // the caret isn't inside a mention being composed.
+            if isMentionBoundary(c) {
+                return nil
+            }
+            i -= 1
+        }
+        return nil
+    }
+
+    private func isMentionBoundary(_ unichar: unichar) -> Bool {
+        if unichar == 0xFFFC {
+            // Object replacement character: an existing attachment/token.
+            return true
+        }
+        guard let scalar = UnicodeScalar(unichar) else {
+            return false
+        }
+        return CharacterSet.whitespacesAndNewlines.contains(scalar)
+    }
+
+    private func updateMentionPicker() {
+        guard orchestrationEnabledProvider?() == true,
+              window != nil,
+              let context = mentionQueryContext() else {
+            mentionPicker.hide()
+            return
+        }
+        if mentionPicker.isVisible {
+            mentionPicker.update(query: context.query)
+        } else {
+            mentionPicker.show(anchorView: inputTextFieldContainer,
+                               query: context.query) { [weak self] guid, displayName in
+                self?.insertMention(guid: guid, displayName: displayName)
+            }
+        }
+    }
+
+    private func insertMention(guid: String, displayName: String) {
+        let tv = inputTextFieldContainer.textView
+        guard let context = mentionQueryContext() else {
+            return
+        }
+        let caret = tv.selectedRange().location
+        let replaceRange = NSRange(location: context.atIndex, length: caret - context.atIndex)
+        let font = tv.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let color = resolvedMentionColor()
+        let mention = NSMutableAttributedString(
+            attributedString: ChatSessionMentionAttachment.attributedString(
+                guid: guid,
+                displayName: displayName,
+                font: font,
+                color: color))
+        // A trailing space so the next keystroke isn't swallowed into the token.
+        mention.append(NSAttributedString(string: " ",
+                                          attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        guard tv.shouldChangeText(in: replaceRange, replacementString: mention.string) else {
+            return
+        }
+        tv.textStorage?.replaceCharacters(in: replaceRange, with: mention)
+        tv.didChangeText()
+        let newCaret = replaceRange.location + mention.length
+        tv.setSelectedRange(NSRange(location: newCaret, length: 0))
+        tv.typingAttributes = [.font: font, .foregroundColor: NSColor.labelColor]
+        updateSendButtonEnabled()
+        heightDidChange()
+    }
+
+    // The token images bake in the link color resolved for one appearance, so
+    // they don't follow a light/dark switch on their own. Re-render every
+    // mention token when the effective appearance changes.
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        rerenderMentionTokens()
+    }
+
+    private func rerenderMentionTokens() {
+        let textView = inputTextFieldContainer.textView
+        guard let storage = textView.textStorage, storage.length > 0 else {
+            return
+        }
+        let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let color = resolvedMentionColor()
+        let fullRange = NSRange(location: 0, length: storage.length)
+        var ranges: [NSRange] = []
+        storage.enumerateAttribute(.attachment, in: fullRange) { value, range, _ in
+            guard let mention = value as? ChatSessionMentionAttachment else {
+                return
+            }
+            mention.renderImage(font: font, color: color)
+            ranges.append(range)
+        }
+        guard !ranges.isEmpty else {
+            return
+        }
+        // Updating an attachment's image doesn't invalidate the layout
+        // manager's cached glyph, so force a redraw of each token's range.
+        for range in ranges {
+            textView.layoutManager?.invalidateDisplay(forCharacterRange: range)
+        }
+    }
+
+    // The session-link color baked into the token image, resolved for the text
+    // view's current appearance so the frozen image matches light/dark.
+    private func resolvedMentionColor() -> NSColor {
+        var color = NSColor.linkColor
+        inputTextFieldContainer.textView.effectiveAppearance.performAsCurrentDrawingAppearance {
+            color = NSColor.linkColor.usingColorSpace(.sRGB) ?? NSColor.linkColor
+        }
+        return color
     }
 }

@@ -6,33 +6,40 @@
 //  PseudoTerminal, and iTermController to perform the actual mutations
 //  the layout-application API needs.
 //
-//  Current scope: layouts may reference live sessions only. Layouts
-//  with `.newSession` leaves are rejected by the resolver; the
-//  mutator's create-new-* methods all throw
-//  `LayoutMutatorError.newSessionNotSupported`. Adding inline session/
-//  tab/window creation requires a headless session-creation primitive
-//  that does not exist yet.
+//  Current scope: layouts may reference live sessions and create new
+//  ones inline (`.newSession` leaves). `createNewSession` mints a
+//  started, tab-less session and stashes it in `detachedSessions` so
+//  the normal attach/adoption path splices it into the destination tab
+//  (the same machinery used for cross-tab moves). Creating whole new
+//  tabs/windows is still unsupported; those methods throw
+//  `LayoutMutatorError.newTabOrWindowNotSupported`.
 //
 
 import Foundation
 
 enum LayoutMutatorError: Error, LocalizedError {
-    case newSessionNotSupported
+    case newTabOrWindowNotSupported
     case unknownSession(guid: String)
     case unknownTab(guid: String)
     case unknownWindow(guid: String)
+    case unknownProfile(guid: String)
+    case noContextForNewSession
     case sessionWithoutOwningTab(guid: String)
 
     var errorDescription: String? {
         switch self {
-        case .newSessionNotSupported:
-            return "Creating new sessions via apply_layout is not supported; only existing sessions may appear as leaves."
+        case .newTabOrWindowNotSupported:
+            return "Creating new tabs or windows via apply_layout is not supported."
         case .unknownSession(let guid):
             return "Unknown session: \(guid)"
         case .unknownTab(let guid):
             return "Unknown tab: \(guid)"
         case .unknownWindow(let guid):
             return "Unknown window: \(guid)"
+        case .unknownProfile(let guid):
+            return "Unknown profile: \(guid)"
+        case .noContextForNewSession:
+            return "Cannot create a new session: there is no existing window to size it against."
         case .sessionWithoutOwningTab(let guid):
             return "Session \(guid) has no owning tab"
         }
@@ -44,6 +51,8 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
 
     private let controller: iTermController
     private var detachedSessions: [String: PTYSession] = [:]   // guid → session
+    private var detachedSessionSourceTab: [String: String] = [:]   // guid → tab it left
+    private var createdSessionGUIDs: Set<String> = []   // sessions minted this transaction
     private var emptyTabsToClose: Set<String> = []
 
     @objc init(controller: iTermController) {
@@ -62,20 +71,41 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         // We currently rely on each PTYTab.replaceViewHierarchy doing
         // its own bracketing.
         detachedSessions.removeAll()
+        detachedSessionSourceTab.removeAll()
+        createdSessionGUIDs.removeAll()
         emptyTabsToClose.removeAll()
     }
 
     func endTransaction() {
+        // Terminate sessions we minted this transaction that were never
+        // adopted into a tab. Adoption (in attachTree) removes a session
+        // from detachedSessions, so a created GUID still present here means
+        // its tab's attach never ran or failed — leaving a running shell
+        // in no tab and no view hierarchy, about to lose its only strong
+        // reference below. Kill it rather than leak a headless zombie.
+        //
+        // This is scoped to sessions WE created: detachedSessions also
+        // holds real user sessions that were detached as cross-tab movers,
+        // and those must never be terminated here (an aborted move should
+        // leave the user's session intact, not destroy it).
+        for guid in createdSessionGUIDs {
+            if let session = detachedSessions[guid] {
+                session.terminate()
+            }
+        }
+
         // Close any tabs that became empty during the transaction (e.g.
         // a tab that lost all its sessions via cross-tab moves).
         for tabID in emptyTabsToClose {
             guard let tab = controller.tab(withID: tabID),
                   let window = controller.window(for: tab) else { continue }
-            if (tab.sessions() as? [PTYSession])?.isEmpty ?? true {
+            if tab.sessions()?.isEmpty ?? true {
                 window.close(tab)
             }
         }
         detachedSessions.removeAll()
+        detachedSessionSourceTab.removeAll()
+        createdSessionGUIDs.removeAll()
         emptyTabsToClose.removeAll()
     }
 
@@ -88,13 +118,141 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         }
         tab.remove(session)
         detachedSessions[guid] = session
-        if (tab.sessions() as? [PTYSession])?.isEmpty ?? true {
+        detachedSessionSourceTab[guid] = tabID
+        if tab.sessions()?.isEmpty ?? true {
             emptyTabsToClose.insert(tabID)
         }
     }
 
-    func createNewSession(profileGUID: String, command: String?) throws -> String {
-        throw LayoutMutatorError.newSessionNotSupported
+    func createNewSession(profileGUID: String,
+                          command: String?,
+                          destinationTabGUID: String?) throws -> String {
+        guard let profile = ProfileModel.sharedInstance()?.bookmark(withGuid: profileGUID) else {
+            throw LayoutMutatorError.unknownProfile(guid: profileGUID)
+        }
+
+        // Pick a reference session to make the new one behave like a split:
+        // a neighbor in the destination tab supplies both a provisional
+        // size and a working directory to inherit.
+        //
+        // The cross-tab detach phase runs BEFORE this (see
+        // LayoutTransaction.execute), so a destination-tab session that's
+        // moving away has already been removed from the tab. Prefer a
+        // session that is staying in the destination tab; if the tab was
+        // emptied by those moves, fall back to a former occupant of that
+        // tab (still the right "previous directory" for the recycle case);
+        // only then to an unrelated session. Size is provisional either way
+        // (attachTree's arrangeSplitPanesEvenly recomputes it on attach), so
+        // a wrong reference only affects cwd, which these fallbacks keep
+        // tied to the destination tab.
+        let destinationTab = destinationTabGUID.flatMap { controller.tab(withID: $0) }
+        let formerOccupant: PTYSession? = destinationTabGUID.flatMap { destGUID in
+            detachedSessions.first { detachedSessionSourceTab[$0.key] == destGUID }?.value
+        }
+        let window = destinationTab.flatMap { controller.window(for: $0) }
+            ?? controller.currentTerminal
+            ?? controller.terminals().first
+        let reference =
+            (destinationTab?.sessions() as? [PTYSession])?.first
+            ?? formerOccupant
+            ?? window?.allSessions().first
+            ?? controller.terminals().first?.allSessions().first
+        guard let reference, let window else {
+            throw LayoutMutatorError.noContextForNewSession
+        }
+
+        // Mint a started, tab-less session. This mirrors the proven
+        // workgroup-peer path (PTYSession.makeWorkgroupPeer): create via
+        // the factory, give it a provisional size and a window to parent
+        // its view to, then launch with windowController:nil so it is
+        // born outside any tab.
+        let factory = iTermSessionFactory()
+        let newSession = factory.newSession(withProfile: profile, parent: reference)
+        let provisionalSize = reference.view?.bounds.size ?? NSSize(width: 400, height: 300)
+        newSession.setScreenSize(provisionalSize, parent: window)
+        newSession.setSize(reference.screen.size)
+        newSession.setPreferencesFromAddressBookEntry(profile)
+        newSession.loadInitialColorTableAndResetCursorGuide()
+
+        // Stash it where attachTree's walk/adoption looks (the same dict
+        // used for cross-tab movers). The view already exists (created by
+        // setScreenSize), so adoption can splice it straight in.
+        let guid = newSession.guid
+        detachedSessions[guid] = newSession
+        // Remember we minted this one so endTransaction can terminate it if
+        // the plan aborts before it's adopted into a tab.
+        createdSessionGUIDs.insert(guid)
+
+        // Resolve the working directory honoring the profile's mode (Home,
+        // Custom, or Reuse-previous), using the reference session's
+        // directory as the "previous" PWD so the recycle case lands next
+        // to its neighbor, like an interactive split.
+        //
+        // We compute it ourselves and FORCE the result (forceUseOldCWD)
+        // rather than letting the launcher do it: the request uses
+        // canPrompt:false because an API context can't answer prompts, and
+        // iTermSessionFactory.computeWorkingDirectory short-circuits to an
+        // empty directory whenever it can't prompt, skipping the profile's
+        // directory mode entirely. Forcing the value we computed restores
+        // the profile-honoring behavior without any prompt.
+        //
+        // Evaluation may be async, but the session and its view already
+        // exist, so the attach phase that runs right after we return does
+        // not depend on the shell having launched yet.
+        let oldPWD = reference.currentLocalWorkingDirectory ?? ""
+
+        // Run the command the way the user would type it: wrapped in a
+        // login shell so their interactive PATH, aliases, and dotfiles are
+        // sourced. This matches makeWorkgroupPeer (the path this mirrors).
+        // A nil/empty command leaves the profile's normal command/shell in
+        // place.
+        let wrappedCommand: String?
+        if let command, !command.isEmpty {
+            wrappedCommand = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
+        } else {
+            wrappedCommand = nil
+        }
+
+        // Launch the shell in a fully-resolved directory, forced so the
+        // canPrompt:false short-circuit in the factory doesn't drop it.
+        func launch(inDirectory pwd: String) {
+            let request = iTermSessionAttachOrLaunchRequest(
+                session: newSession,
+                canPrompt: false,
+                objectType: .paneObject,
+                hasServerConnection: false,
+                serverConnection: iTermGeneralServerConnection(),
+                urlString: nil,
+                allowURLSubs: false,
+                environment: nil,
+                customShell: nil,
+                oldCWD: pwd,
+                forceUseOldCWD: true,
+                command: wrappedCommand,
+                isUTF8: nil,
+                substitutions: nil,
+                windowController: nil,
+                ready: nil) { _, _ in }
+            factory.attachOrLaunch(with: request)
+        }
+
+        if let initialDirectory = iTermInitialDirectory(fromProfile: profile,
+                                                        objectType: .paneObject) {
+            initialDirectory.evaluate(withOldPWD: oldPWD,
+                                      scope: newSession.genericScope,
+                                      substitutions: nil) { [initialDirectory] pwd in
+                // Keep initialDirectory alive across the async evaluation
+                // (evaluate does not retain itself; cf. iTermSessionFactory).
+                _ = initialDirectory
+                launch(inDirectory: pwd ?? oldPWD)
+            }
+        } else {
+            // No profile directory object (unexpected): best-effort recycle
+            // of the neighbor's directory.
+            launch(inDirectory: oldPWD)
+        }
+
+        return guid
     }
 
     func attachTree(toTab tabID: String, layout: LayoutNode) throws {
@@ -115,7 +273,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         // tree, so a subsequent `terminateSession(b)` would throw
         // `unknownSession` against a session that's still alive.
         let referencedGuids = collectReferencedGuids(layout)
-        let preExisting = (tab.sessions() as? [PTYSession]) ?? []
+        let preExisting = tab.sessions() ?? []
         for session in preExisting {
             let guid = session.guid
             if !referencedGuids.contains(guid) {
@@ -154,7 +312,7 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         // apply_layout calls into no-ops because they read the OLD
         // session ordering.
         if sessionsToAdopt.isEmpty,
-           let firstSession = (tab.sessions() as? [PTYSession])?.first {
+           let firstSession = tab.sessions()?.first {
             NotificationCenter.default.post(
                 name: .iTermSessionDidChangeTab,
                 object: firstSession)
@@ -177,16 +335,18 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
         case .session(let guid):
             return .session(guid: guid)
         case .newSession:
-            throw LayoutMutatorError.newSessionNotSupported
+            // Unreachable: materializeNewSessions rewrites every
+            // .newSession leaf to .session before attach runs.
+            throw LayoutMutatorError.newTabOrWindowNotSupported
         }
     }
 
     func createNewTab(windowGUID: String, index: Int?, layout: LayoutNode) throws -> String {
-        throw LayoutMutatorError.newSessionNotSupported
+        throw LayoutMutatorError.newTabOrWindowNotSupported
     }
 
     func createNewWindow(profileGUID: String, frame: NSRect?, layout: LayoutNode) throws -> String {
-        throw LayoutMutatorError.newSessionNotSupported
+        throw LayoutMutatorError.newTabOrWindowNotSupported
     }
 
     func terminateSession(_ guid: String) throws {
@@ -273,7 +433,9 @@ final class iTermLayoutMutator: NSObject, LayoutMutator {
                 throw LayoutMutatorError.unknownSession(guid: guid)
             }
         case .newSession:
-            throw LayoutMutatorError.newSessionNotSupported
+            // Unreachable: materializeNewSessions rewrites every
+            // .newSession leaf to .session before attach runs.
+            throw LayoutMutatorError.newTabOrWindowNotSupported
         }
     }
 

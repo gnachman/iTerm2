@@ -58,6 +58,19 @@ final class AISafetyRefusalParserTests: XCTestCase {
                 continue
             }
 
+            // Skip captures that failed at the transport layer (timeout,
+            // connection reset): response.body is empty and response.error
+            // carries the transport failure. That's not a refusal to parse,
+            // so it would only ever fail the parser. The streaming test
+            // already skips these via the empty-streamChunks guard. Such a
+            // capture should not have been written in the first place
+            // (AILiveDriver now guards against it), but stay resilient to any
+            // that predate that guard.
+            if let transportError = response["error"] as? String,
+               !transportError.isEmpty {
+                continue
+            }
+
             // The body in the fixture was already parsed-as-JSON for
             // readability when serialized; re-encode it for the parser.
             let bodyData: Data

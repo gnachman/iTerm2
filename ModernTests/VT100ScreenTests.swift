@@ -1639,6 +1639,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
+    func screenResizeResilientCoordinates(forSavedTree convert: @escaping (VT100GridAbsCoord) -> VT100GridAbsCoord,
+                                          guid savedTreeMainGuid: String) {
+
+    }
+
     func screenSetTabStatus(_ status: VT100TabStatusUpdate) {
 
     }
@@ -1903,7 +1908,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenPromptDidStart(atLine line: Int32) {
 
     }
-    
+
+    func screenPromptOfNonInitialKindDidStart(_ kind: VT100PromptKind) {
+
+    }
+
     func screenPromptDidEnd(withMark mark: any VT100ScreenMarkReading) {
 
     }
@@ -2294,7 +2303,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
-    func triggerSideEffectExitWorkgroup() {
+    func triggerSideEffectExitWorkgroupLeaderOnly(_ leaderOnly: Bool) {
 
     }
 

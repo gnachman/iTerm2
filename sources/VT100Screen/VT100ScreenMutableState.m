@@ -10,6 +10,20 @@
 #import "VT100ScreenMutableState+Resizing.h"
 #import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100ScreenState+Private.h"
+#import "VT100ScreenState+RCDataSource.h"
+#import "VT100ScreenMutableState+RCDataSource.h"
+
+@implementation iTermSavedTreeRCDataSource
+- (instancetype)initWithGuid:(NSString *)guid
+                     backing:(id<iTermResilientCoordinateDataSource>)backing {
+    self = [super init];
+    if (self) {
+        _guid = [guid copy];
+        _backing = backing;
+    }
+    return self;
+}
+@end
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
@@ -79,6 +93,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     NSString *_lastPushedHostname;
 }
 
+// Implemented by the superclass (VT100ScreenState), which owns the backing
+// ivar. We only redeclare it here with a covariant NSMutableArray type.
+@dynamic openAidStack;
+
 // performingJoinedBlock is now centralized in iTermGCD.
 // Provide convenience accessors for compatibility with existing callers.
 + (BOOL)performingJoinedBlock {
@@ -95,6 +113,14 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _uniqueIdentifier = [[NSUUID UUID] UUIDString];
+        // The base class's initForMutationOnQueue: already set a fresh
+        // _rcGuid (main-thread pool). Don't touch it here; the override of
+        // -rcGuid below returns _uniqueIdentifier so the mutation-thread
+        // pool gets its own stable guid distinct from the main-thread one.
+        _pendingNonInitialPromptStart = nil;
+        _marksByAid = [NSMutableDictionary dictionary];
+        // _openAidStack is owned and initialized by the base class
+        // (VT100ScreenState) so the base's openAidStack getter sees it.
         _queue = queue;
         _executorUpdate = [[VT100ScreenTokenExecutorUpdate alloc] init];
         __weak __typeof(self) weakSelf = self;
@@ -144,8 +170,12 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     return self;
 }
 
-- (void)dealloc {
-    [iTermRCDataSourceDeallocNotification postWithGuid:_uniqueIdentifier];
+// ResilientCoordinateDataSource override — the mutation-thread pool uses
+// uniqueIdentifier as its rcGuid, distinct from the base class's main-thread
+// _rcGuid. ObjC method dispatch (not Swift extension) is required for the
+// override to participate in protocol witness selection at runtime.
+- (NSString *)rcGuid {
+    return _uniqueIdentifier;
 }
 
 - (NSString *)description {
@@ -1832,6 +1862,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
+    // Aid registry: every removed mark's entry was already dropped via
+    // -willRemoveScreenMarksFromIntervalTree: as the removes fired above.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenResetTailFind];
         [delegate screenClearHighlights];
@@ -1893,7 +1925,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
-        [self setPromptStartLine:self.numberOfScrollbackLines detectedByTrigger:detectedByTrigger];
+        [self setPromptStartLine:self.numberOfScrollbackLines detectedByTrigger:detectedByTrigger aid:nil];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [self.terminal resetSavedCursorPositions];
@@ -2863,6 +2895,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         DLog(@"Removed %@ from:\n%@", obj, [NSThread callStackSymbols]);
     }
+    // OSC 133 aid registry maintenance does NOT happen here. Several
+    // operations (replaceMark:, changeHeightOfMark:, reallyReplaceRange:)
+    // temporarily remove a mark and immediately re-add it; dropping the
+    // aid entry on every removal would corrupt the registry for those
+    // patterns. Cleanup happens explicitly at the bulk-clear paths
+    // (clearScrollbackBuffer, clearBufferSavingPrompt:, finishResetting,
+    // removePromptMarksBelowLine:) via -pruneAidRegistry, and at the
+    // close-by-aid / abort-by-aid paths via direct registry mutation.
     const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:interval];
     iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
     if (type != iTermIntervalTreeObjectTypeUnknown) {
@@ -2871,6 +2911,35 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [observer intervalTreeDidRemoveObjectOfType:type
                                                  onLine:line];
         } name:@"did remove object from interval tree"];
+    }
+}
+
+// When a fold mark is removed FOR GOOD (Clear Buffer, scrollback overflow) -
+// as opposed to unfolded - any portholes it stashed in its savedITOs will
+// never be unhidden, so their hidden views and (leaked) marks must be
+// reclaimed. Call this ONLY from genuinely-permanent removal sites. It must
+// NOT be wired into -didRemoveObjectFromIntervalTree:, which is shared with
+// temporary remove+re-add patterns (e.g. the marksToMove shift in
+// -reallyClearFromAbsoluteLineToEnd:): reclaiming there would destroy the
+// portholes of a fold that is about to be re-added, and the later unfold would
+// find the registry entry gone and silently lose the content. (Unfold itself
+// removes the fold mark via -[mutableIntervalTree bulkRemoveObjects:], which
+// reaches neither this method nor -didRemoveObjectFromIntervalTree:.)
+- (void)reclaimPortholesCarriedByPermanentlyRemovedFold:(id<IntervalTreeObject>)obj {
+    iTermFoldMark *foldMark = [iTermFoldMark castFrom:obj];
+    if (!foldMark) {
+        return;
+    }
+    for (iTermSavedIntervalTreeObject *saved in foldMark.savedITOs) {
+        id<IntervalTreeObject> carried = saved.object;
+        if (iTermIntervalTreeObjectTypeForObject(carried) != iTermIntervalTreeObjectTypePorthole) {
+            continue;
+        }
+        id<IntervalTreeImmutableObject> doppelganger = carried.doppelganger;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> _Nonnull observer) {
+            [observer intervalTreeDidPermanentlyRemoveHiddenObject:doppelganger
+                                                            ofType:iTermIntervalTreeObjectTypePorthole];
+        } name:@"fold destroyed: reclaim carried porthole"];
     }
 }
 
@@ -2892,6 +2961,24 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             }];
             self.namedMarksDirty = YES;
         }
+        // OSC 133 aid: drop registry entries for any aid'd mark leaving
+        // the tree. Centralised here because every PERMANENT removal goes
+        // through -removeObjectFromIntervalTree: / -removeObjectsFromIntervalTree:,
+        // which fire this hook before calling -[mutableIntervalTree removeObject:].
+        // Temporary remove+add patterns (replaceMark:, changeHeightOfMark:,
+        // reallyReplaceRange:, intervalTree's internal bulk-move) call
+        // -[mutableIntervalTree removeObject:] / bulkRemoveObjects: directly
+        // and BYPASS this hook, so the registry stays correct for those
+        // (mark survives the operation, entry is re-set by the matching
+        // addObject:). commandWasAborted: / abortSpecificAidMark: also use
+        // the direct path; they do their own explicit registry cleanup.
+        if (screenMark.aid != nil &&
+            self.marksByAid[screenMark.aid] == screenMark) {
+            DLog(@"willRemoveScreenMarks: dropping aid=%@ for removed mark %@",
+                 screenMark.aid, screenMark);
+            [self.marksByAid removeObjectForKey:screenMark.aid];
+            [self.openAidStack removeObject:screenMark.aid];
+        }
     }];
 }
 
@@ -2911,6 +2998,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         const BOOL removed = [self.mutableIntervalTree removeObject:obj];
         assert(removed);
         [self didRemoveObjectFromIntervalTree:obj formerInterval:interval];
+        // This is a permanent removal (its sole caller drops marksToRemove for
+        // good while returning marksToMove to be re-added elsewhere), so a fold
+        // removed here is gone: reclaim any portholes it carried.
+        [self reclaimPortholesCarriedByPermanentlyRemovedFold:obj];
     }];
 }
 
@@ -2976,18 +3067,27 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // FTCS C
 - (void)commandDidEndWithRange:(VT100GridCoordRange)range {
-    NSString *command = [self commandInRange:range];
+    id<VT100ScreenMarkReading> mark = nil;
+    if (range.start.x != -1) {
+        mark = [self screenMarkOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
+    }
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                               excludingSubranges:mark.excludedSubranges];
+    if (!command && range.start.x != -1) {
+        command = @"";
+    }
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
          command, VT100GridCoordRangeDescription(range));
-    id<VT100ScreenMarkReading> mark = nil;
+
     if (command) {
         NSString *trimmedCommand =
-        [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
-            mark = [self screenMarkOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
-            if (mark && !mark.command) {
-                // This code path should not be taken with auto-composer because mark.command gets
-                // set prior to sending the command.
+            if (mark && !mark.firstLineOfCommand) {
+                // This code path should not be taken with auto-composer because mark.firstLineOfCommand
+                // gets set prior to sending the command.
                 const VT100GridAbsCoordRange commandRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
                 VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
                                                                       self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
@@ -2995,11 +3095,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     outputStart.x = 0;
                     outputStart.y += 1;
                 }
+                // Single-line preview is the first \n-delimited segment of
+                // the already-cleaned command. Deriving from command (rather
+                // than a separate -commandInRange: extraction) keeps the two
+                // consistent and honors excludedSubranges on the preview too
+                // — a right-prompt on the primary row no longer leaks in.
+                NSRange firstNewline = [command rangeOfString:@"\n"];
+                NSString *firstLine = (firstNewline.location != NSNotFound)
+                    ? [command substringToIndex:firstNewline.location]
+                    : command;
                 DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                      self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
                     VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-                    mark.command = command;
+                    mark.firstLineOfCommand = firstLine;
+                    mark.fullCommand = command;
                     mark.commandRange = commandRange;
                     mark.outputStart = outputStart;
                     // If you change this also update -setCommand:startingAt:inMark:
@@ -3070,6 +3180,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             DLog(@"remove innaccessible objects: %@", obj);
             const BOOL removed = [self removeObjectFromIntervalTree:obj];
             assert(removed);
+            // Scrolled into the dustbin: a fold removed here is gone for good,
+            // so reclaim any portholes it carried.
+            [self reclaimPortholesCarriedByPermanentlyRemovedFold:obj];
         }
     }
     DLog(@"End");
@@ -3088,7 +3201,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)assignCurrentCommandEndDate {
     id<VT100ScreenMarkReading> screenMark = self.lastCommandMark;
     NSDate *now = [NSDate date];
-    if (screenMark.command != nil && !screenMark.endDate) {
+    if (screenMark.firstLineOfCommand != nil && !screenMark.endDate) {
         [self.mutableIntervalTree mutateObject:screenMark block:^(id<IntervalTreeObject> _Nonnull obj) {
             ((VT100ScreenMark *)obj).endDate = now;
         }];
@@ -3148,7 +3261,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)removeUnusedPromptMarkOnLine:(int)line {
     VT100ScreenMark *mark = [self promptMarkOnLine:line];
-    if (!mark || mark.hasCode || mark.command != nil || mark.lineStyle != self.config.useLineStyleMarks) {
+    if (!mark || mark.hasCode || mark.firstLineOfCommand != nil || mark.lineStyle != self.config.useLineStyleMarks) {
         return;
     }
     [self removeObjectFromIntervalTree:mark];
@@ -3171,8 +3284,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return [lines componentsJoinedByString:@"\n"];
 }
 
-- (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger {
-    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
+- (VT100ScreenMark *)setPromptStartLine:(int)line
+                      detectedByTrigger:(BOOL)detectedByTrigger
+                                    aid:(NSString * _Nullable)aid {
+    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine. aid=%@", line, aid);
     // Reset this in case it's taking the "real" shell integration path.
     self.fakePromptDetectedAbsLine = -1;
     const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
@@ -3188,22 +3303,85 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     VT100ScreenMark *mark = nil;
     VT100ScreenMark *existing = [VT100ScreenMark castFrom:[self screenMarkOnLine:line]];
     DLog(@"Set prompt at line %d\n%@", line, [NSThread callStackSymbols]);
-    if (existing && existing.command == nil) {
+    if (existing && existing.firstLineOfCommand == nil) {
         mark = existing;
         DLog(@"Reuse existing %@", existing);
     } else {
         mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
         DLog(@"Create new %@", mark);
     }
+    // Compute aid bookkeeping outside the mutate block so the openAidStack
+    // / marksByAid updates happen alongside, in one pass. parentAid is the
+    // current deepest-open aid (the topmost stack entry that isn't this
+    // mark itself). On collision (same aid already in registry — bad shell
+    // hygiene, two unrelated sessions colliding), last-write-wins and the
+    // previous owner loses its tracking.
+    //
+    // Mark reuse: when a prompt redraws (firstLineOfCommand == nil),
+    // setPromptStartLine: reuses the existing mark. If that mark already
+    // had aid=Y, we'd leak marksByAid[Y] -> markL forever. Drop the OLD
+    // aid first so the registry doesn't keep a phantom pointing at a
+    // mark whose aid changed under it (to a new value, or to nil).
+    NSString *previousAid = mark.aid;
+    if (previousAid != nil && ![previousAid isEqualToString:aid]) {
+        DLog(@"setPromptStartLine: mark reuse; dropping previous aid=%@ "
+             @"(replaced by aid=%@)", previousAid, aid);
+        [self.marksByAid removeObjectForKey:previousAid];
+        [self.openAidStack removeObject:previousAid];
+    }
+    NSString *parentAid = nil;
+    NSArray<NSString *> *ancestorAids = nil;
+    if (aid != nil) {
+        if (self.marksByAid[aid] != nil) {
+            DLog(@"setPromptStartLine: aid=%@ already in registry; overwriting "
+                 @"(collision — shell script bug)", aid);
+            [self.openAidStack removeObject:aid];
+        }
+        parentAid = self.openAidStack.lastObject;
+        // Snapshot the open-aid stack before pushing this mark's own aid:
+        // that's exactly the ancestor chain. Outermost at index 0; deepest
+        // (== parentAid) at .lastObject. Captured here so it survives folds
+        // and ancestor pruning without depending on re-walking the tree.
+        ancestorAids = self.openAidStack.count > 0 ? [self.openAidStack copy] : nil;
+        DLog(@"setPromptStartLine: aid=%@ parentAid=%@ ancestorAids=%@ "
+             @"openAidStack(before push)=%@",
+             aid, parentAid, ancestorAids, self.openAidStack);
+    }
     if (mark) {
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
+        NSString *aidForMutate = aid;
+        NSString *parentAidForMutate = parentAid;
+        NSArray<NSString *> *ancestorAidsForMutate = ancestorAids;
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
             VT100ScreenMark *mark = (VT100ScreenMark *)obj;
             [mark setIsPrompt:YES];
             mark.promptRange = promptRange;
             mark.promptDetectedByTrigger = detectedByTrigger;
             mark.lineStyle = lineStyle;
+            // Primary prompt — kind=.initial on the mark itself. .unknown is
+            // the "this field doesn't apply" default for VT100ScreenMarks
+            // created for non-prompt user bookmarks.
+            mark.kind = VT100PromptKindInitial;
+            // OSC 133 aid plumbing for nested shell-integration sessions.
+            // nil values reset the field on a reused mark so a previous
+            // cycle's aid doesn't leak into a fresh one.
+            mark.aid = aidForMutate;
+            mark.parentAid = parentAidForMutate;
+            mark.ancestorAids = ancestorAidsForMutate;
+
+            // Treat this as a fresh prompt: if we're reusing an existing
+            // mark (some shells redraw their prompt on every keystroke),
+            // any excluded subranges from the previous logical cycle must
+            // not leak into the new one. Reuse already resets kind, promptRange,
+            // promptDetectedByTrigger, and lineStyle above; this field joins them.
+            mark.excludedSubranges = nil;
         }];
+        if (aid != nil) {
+            self.marksByAid[aid] = mark;
+            [self.openAidStack addObject:aid];
+            DLog(@"setPromptStartLine: pushed aid=%@; openAidStack(after)=%@",
+                 aid, self.openAidStack);
+        }
     }
     [self didUpdatePromptLocation];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
@@ -3237,11 +3415,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // FTCS A
 - (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
                          wasInCommand:(BOOL)wasInCommand
-                    detectedByTrigger:(BOOL)detectedByTrigger {
-    DLog(@"FinalTerm: promptDidStartAt");
+                    detectedByTrigger:(BOOL)detectedByTrigger
+                            freshLine:(BOOL)freshLine
+                                  aid:(NSString * _Nullable)aid {
+    DLog(@"FinalTerm: promptDidStartAt freshLine=%@", @(freshLine));
     VT100GridAbsCoord coord = initialCoord;
     BOOL didAnything = NO;
-    if (initialCoord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
+    if (freshLine && initialCoord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
         [self appendCarriageReturnLineFeed];
         coord.x = 0;
         coord.y += 1;
@@ -3281,7 +3461,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // they are, the cursor might be far from the prompt by now.
     const int line = detectedByTrigger ? initialCoord.y : self.numberOfScrollbackLines + self.cursorY - 1;
     VT100ScreenMark *mark = [self setPromptStartLine:line
-                                   detectedByTrigger:detectedByTrigger];
+                                   detectedByTrigger:detectedByTrigger
+                                                 aid:aid];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [self.terminal resetGraphicRendition];
     }
@@ -3842,6 +4023,55 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     DLog(@"after moving temp to saved, saved:\n%@", self.mutableSavedIntervalTree);
 
+    // Rebind RC fields on each migrated mark's progenitor: marks that
+    // were in primary and went to saved must now observe the saved
+    // pool guid; marks that were in saved and came to primary must
+    // observe the primary pool guid. (The tree's add hook only calls
+    // bindUnresolved, which is idempotent and no-ops since the RCs
+    // were already bound to the source pool. We need an explicit
+    // rebind.)
+    id<iTermResilientCoordinateDataSource> primaryMutDS =
+        (id<iTermResilientCoordinateDataSource>)self;
+    id<iTermResilientCoordinateDataSource> savedMutDS =
+        (id<iTermResilientCoordinateDataSource>)self.savedTreeMutationThreadDataSource;
+    NSMutableArray<id<IntervalTreeObject>> *primaryToSaved = [NSMutableArray array];
+    for (iTermTuple<id<IntervalTreeObject>, Interval *> *tuple in formerlyInPrimary) {
+        id<IntervalTreeObject> obj = tuple.firstObject;
+        [primaryToSaved addObject:obj];
+        if (savedMutDS && [obj conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+            [(id<iTermResilientCoordinateHolder>)obj rebindResilientCoordinatesToDataSource:savedMutDS];
+        }
+    }
+    for (id<IntervalTreeObject> obj in revealedObjects) {
+        if (primaryMutDS && [obj conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+            [(id<iTermResilientCoordinateHolder>)obj rebindResilientCoordinatesToDataSource:primaryMutDS];
+        }
+    }
+
+    // Doppelganger side: rebind synchronously inside the joined block.
+    // Deferring this via addSideEffect: meant the doppelganger was still
+    // bound to the source pool when subsequent broadcasts in the same
+    // reallySetSize: posted on the destination pool, so the
+    // doppelganger missed them and ended up out-of-sync with the
+    // progenitor (which we just rebound above). We are joined-on-main
+    // here, so directly mutating main-thread observer state is safe.
+    id<iTermResilientCoordinateDataSource> primaryMainDS =
+        (id<iTermResilientCoordinateDataSource>)self.mainThreadCopy;
+    id<iTermResilientCoordinateDataSource> savedMainDS =
+        (id<iTermResilientCoordinateDataSource>)self.savedTreeMainThreadDataSource;
+    for (id<IntervalTreeObject> progenitor in primaryToSaved) {
+        id doppelganger = [(id)progenitor doppelganger];
+        if (savedMainDS && [doppelganger conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+            [(id<iTermResilientCoordinateHolder>)doppelganger rebindResilientCoordinatesToDataSource:savedMainDS];
+        }
+    }
+    for (id<IntervalTreeObject> progenitor in revealedObjects) {
+        id doppelganger = [(id)progenitor doppelganger];
+        if (primaryMainDS && [doppelganger conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+            [(id<iTermResilientCoordinateHolder>)doppelganger rebindResilientCoordinatesToDataSource:primaryMainDS];
+        }
+    }
+
     // Let delegate know about changes.
     for (id<IntervalTreeObject> ito in revealedObjects) {
         const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(ito.doppelganger);
@@ -3926,7 +4156,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
         [strongSelf insertNewlinesBeforeAddingPromptMarkAfterPrompt:YES];
         [strongSelf setPromptStartLine:strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1
-                     detectedByTrigger:NO];
+                     detectedByTrigger:NO
+                                   aid:nil];
     }];
 }
 
@@ -3968,6 +4199,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                              mark:screenMark];
         } name:@"command was aborted 2"];
     }
+    [self pruneAidRegistry];
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
@@ -4133,7 +4365,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)setCommand:(NSString *)command
         startingAt:(VT100GridAbsCoord)startAbsCoord
             inMark:(VT100ScreenMark *)screenMark {
-    screenMark.command = [command stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSString *trimmed = [command stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    // Auto-composer hands us the user's typed command directly as a
+    // string — there's no cell extraction involved, and the auto-composer
+    // doesn't go through the PS2 cycle so excludedSubranges aren't a
+    // concern. Both fields receive the same value; firstLineOfCommand
+    // gets truncated at the first newline for consumers that need a
+    // single-line preview.
+    NSRange firstNewline = [trimmed rangeOfString:@"\n"];
+    NSString *firstLine = (firstNewline.location != NSNotFound)
+        ? [trimmed substringToIndex:firstNewline.location]
+        : trimmed;
+    screenMark.firstLineOfCommand = firstLine;
+    screenMark.fullCommand = trimmed;
     const int width = self.width;
 
     const int len = [self lengthOfStringInCells:command];
@@ -4306,7 +4550,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             removedIntervalTreeObjects:nil
             removedLines:nil
             markProvider:^id<iTermWidthSavingMark> _Nullable{
-        return (id<iTermWidthSavingMark>)mark.doppelganger;
+        // Return the progenitor. The mutation-thread linesShifted post site uses
+        // this directly (so mutation-pool RCs land on the progenitor, whose
+        // `entry` is safe to read on the mutation thread). The main-thread
+        // side-effect path inside replaceRange:withLines:... flips to
+        // `.doppelganger` before posting on the main thread.
+        return (id<iTermWidthSavingMark>)mark;
     }
             reason:reason];
     if (mark.entry) {
@@ -4315,6 +4564,26 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableIntervalTree removeObject:mark];
     }
     [self addSavedIntervalTreeObjects:savedITOs baseLine:range.start.y];
+
+    // Re-show any porthole views that were hidden when this region was folded.
+    // See the matching -intervalTreeDidHideObject: site in -reallyReplaceRange:.
+    for (iTermSavedIntervalTreeObject *saved in savedITOs) {
+        id<IntervalTreeObject> obj = saved.object;
+        if (iTermIntervalTreeObjectTypeForObject(obj) != iTermIntervalTreeObjectTypePorthole) {
+            continue;
+        }
+        if (!obj.entry.interval) {
+            // Wasn't actually re-added (e.g. it had scrolled into the dustbin).
+            continue;
+        }
+        id<IntervalTreeImmutableObject> doppelganger = obj.doppelganger;
+        const long long line = [self absCoordRangeForInterval:obj.entry.interval].start.y;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> _Nonnull observer) {
+            [observer intervalTreeDidUnhideObject:doppelganger
+                                           ofType:iTermIntervalTreeObjectTypePorthole
+                                           onLine:line];
+        } name:@"unfold: unhide porthole"];
+    }
 
     if (commandMark && commandMarkInterval) {
         DLog(@"Add command mark %@ back at %@", commandMark, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:commandMarkInterval]));
@@ -4387,15 +4656,24 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     NSArray<ScreenCharArray *> *savedLines = nil;
     NSSet<NSNumber *> *imageCodes = [self imageCodesUsedInAbsRange:absRange];
     __block iTermFoldMark *createdFoldMark = nil;
+    __block void (^deferredPost)(void) = nil;
     const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
                                                       withLines:lines
                                      removedIntervalTreeObjects:&savedITOs
                                                    removedLines:&savedLines
                                                    markProvider:^id<iTermWidthSavingMark> _Nullable{
-        return (id<iTermWidthSavingMark>)createdFoldMark.doppelganger;
+        // Return the progenitor. See the matching note in unfoldMark:.
+        return (id<iTermWidthSavingMark>)createdFoldMark;
     }
-                                                         reason:iTermLinesShiftedReasonFold];
+                                                         reason:iTermLinesShiftedReasonFold
+                                                deferredPostOut:&deferredPost];
     if (!VT100GridAbsCoordRangeIsValid(markRange)) {
+        if (deferredPost) {
+            // Fire the notification anyway so any RC observers can react;
+            // markProvider will return nil but the shift-up branch is still
+            // meaningful for coords below the (zero-delta) range.
+            deferredPost();
+        }
         return;
     }
 
@@ -4425,6 +4703,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                              width:self.width];
         [self.mutableIntervalTree addObject:mark withInterval:interval];
         createdFoldMark = mark;
+    }
+    // Fire the mutation-thread linesShifted notification now that
+    // createdFoldMark is assigned. Without this, RCs whose coord lands
+    // inside the folded range never see the FoldMark on the progenitor
+    // side (the doppelganger gets a separate main-thread repost from
+    // PTYSession that carries the doppelganger mark).
+    if (deferredPost) {
+        deferredPost();
     }
     if (self.config.useLineStyleMarks) {
         [self movePromptUnderComposerIfNeeded];
@@ -4459,15 +4745,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     NSArray<iTermSavedIntervalTreeObject *> *savedITOs = nil;
     __block PortholeMark *createdMark = nil;
+    __block void (^deferredPost)(void) = nil;
     const VT100GridAbsCoordRange markRange = [self replaceRange:absRange
                                                       withLines:lines
                                      removedIntervalTreeObjects:&savedITOs
                                                    removedLines:nil
                                                    markProvider:^id<iTermWidthSavingMark> _Nullable{
-        return (id<iTermWidthSavingMark>)createdMark.doppelganger;
+        // Return the progenitor. See the matching note in unfoldMark:.
+        return (id<iTermWidthSavingMark>)createdMark;
     }
-                                                         reason:iTermLinesShiftedReasonPortholeAdded];
+                                                         reason:iTermLinesShiftedReasonPortholeAdded
+                                                deferredPostOut:&deferredPost];
     if (!VT100GridAbsCoordRangeIsValid(markRange)) {
+        if (deferredPost) {
+            deferredPost();
+        }
         return;
     }
     porthole.savedITOs = savedITOs;
@@ -4475,6 +4767,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     PortholeMark *mark = [[PortholeMark alloc] init:porthole.uniqueIdentifier width:self.width];
     [self.mutableIntervalTree addObject:mark withInterval:interval];
     createdMark = mark;
+    // Now that createdMark is assigned, fire the deferred mutation-thread
+    // linesShifted notification with the PortholeMark in userInfo.
+    if (deferredPost) {
+        deferredPost();
+    }
     if (self.config.useLineStyleMarks) {
         [self movePromptUnderComposerIfNeeded];
     }
@@ -4500,7 +4797,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             removedIntervalTreeObjects:nil
             removedLines:nil
             markProvider:^id<iTermWidthSavingMark> _Nullable{
-        return (id<iTermWidthSavingMark>)mark.doppelganger;
+        // Return the progenitor. See the matching note in unfoldMark:.
+        return (id<iTermWidthSavingMark>)mark;
     }
             reason:iTermLinesShiftedReasonPortholeResized];
 
@@ -4534,22 +4832,48 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                           removedLines:(out NSArray<ScreenCharArray *> **)removedLines
                           markProvider:(id<iTermWidthSavingMark> _Nullable (^ _Nullable)(void))markProvider
                                 reason:(iTermLinesShiftedReason)reason {
+    return [self replaceRange:absRange
+                    withLines:replacementLines
+   removedIntervalTreeObjects:removedIntervalTreeObjects
+                 removedLines:removedLines
+                 markProvider:markProvider
+                       reason:reason
+              deferredPostOut:nil];
+}
+
+- (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
+                             withLines:(NSArray<ScreenCharArray *> *)replacementLines
+            removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
+                          removedLines:(out NSArray<ScreenCharArray *> **)removedLines
+                          markProvider:(id<iTermWidthSavingMark> _Nullable (^ _Nullable)(void))markProvider
+                                reason:(iTermLinesShiftedReason)reason
+                       deferredPostOut:(out void (^ _Nullable __strong * _Nullable)(void))deferredPostOut {
     __block VT100GridAbsCoordRange result;
     __block NSArray<iTermSavedIntervalTreeObject *> *removedMarks = nil;
     __block NSArray<ScreenCharArray *> *removedSCAs = nil;
+    __block void (^localPost)(void) = nil;
     [self performBlockWithoutTriggers:^{
         result = [self reallyReplaceRange:absRange
                                 withLines:replacementLines
                removedIntervalTreeObjects:&removedMarks
                              removedLines:&removedSCAs
                              markProvider:markProvider
-                                   reason:reason];
+                                   reason:reason
+                          deferredPostOut:&localPost];
     }];
     if (removedIntervalTreeObjects) {
         *removedIntervalTreeObjects = removedMarks;
     }
     if (removedLines) {
         *removedLines = removedSCAs;
+    }
+    if (deferredPostOut) {
+        // Hand the deferred post to the caller; they invoke it after
+        // assigning createdFoldMark / createdMark.
+        *deferredPostOut = localPost;
+    } else if (localPost) {
+        // No caller-side mark to defer for: fire immediately.
+        localPost();
     }
     return result;
 }
@@ -4559,7 +4883,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                   removedIntervalTreeObjects:(out NSArray<iTermSavedIntervalTreeObject *> **)removedIntervalTreeObjects
                                 removedLines:(out NSArray<ScreenCharArray *> **)removedLines
                                 markProvider:(id<iTermWidthSavingMark> _Nullable (^ _Nullable)(void))markProvider
-                                      reason:(iTermLinesShiftedReason)reason {
+                                      reason:(iTermLinesShiftedReason)reason
+                             deferredPostOut:(out void (^ _Nullable __strong * _Nullable)(void))deferredPostOut {
     DLog(@"reallyReplaceRange:%@ withLines:%@", VT100GridAbsCoordRangeDescription(absRange), replacementLines);
 
     const long long overflow = self.cumulativeScrollbackOverflow;
@@ -4578,7 +4903,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
              removedIntervalTreeObjects:removedIntervalTreeObjects
                            removedLines:removedLines
                            markProvider:markProvider
-                                 reason:reason];
+                                 reason:reason
+                        deferredPostOut:deferredPostOut];
     }
 
     DLog(@"Before replacing range:");
@@ -4616,6 +4942,27 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                       startLine:absRange.start.y
                                                                screenCharArrays:removedSCAs
                                                                           width:self.width];
+    }
+    // A porthole inside a fold keeps its mark alive (it is retained by the
+    // fold's savedITOs and restored on unfold), so -prunePortholes can never
+    // free its view via the registry. The bulkRemoveObjects: below also skips
+    // the per-object removal hook, so nothing would otherwise tell the view to
+    // go away. Hide the porthole views here; -replaceMark:withLines:savedITOs:
+    // fires the matching unhide on unfold. Scoped to folds so porthole add /
+    // resize (which also pass through here) are unaffected.
+    if (reason == iTermLinesShiftedReasonFold) {
+        for (id<IntervalTreeObject> obj in objectsToRemove) {
+            if (iTermIntervalTreeObjectTypeForObject(obj) != iTermIntervalTreeObjectTypePorthole) {
+                continue;
+            }
+            id<IntervalTreeImmutableObject> doppelganger = obj.doppelganger;
+            const long long line = [self absCoordRangeForInterval:obj.entry.interval].start.y;
+            [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> _Nonnull observer) {
+                [observer intervalTreeDidHideObject:doppelganger
+                                             ofType:iTermIntervalTreeObjectTypePorthole
+                                             onLine:line];
+            } name:@"fold: hide porthole"];
+        }
     }
     [self.mutableIntervalTree bulkRemoveObjects:objectsToRemove];
 
@@ -4747,11 +5094,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableIntervalTree addObject:commandMark withInterval:commandMarkInterval];
     }
 
-    // Adjust command ranges of subsequent commands
+    // Adjust internal screen state below the replaced range. Mark fields
+    // (commandRange, promptRange, outputStart) now back onto
+    // ResilientCoordinate storage and self-update via the linesShifted
+    // notification posted further down; no bespoke per-mark shift needed.
     const long long originalLength = absRange.end.y - absRange.start.y + 1;
     const long long newLength = replacementLines.count;
     const long long delta = newLength - originalLength;
-    [self shiftCommandRangesBelowAbsLine:absRange.start.y + 1 by:delta];
 
     // Also adjust absolute coordinate state that tracks the current command/prompt.
     // These are separate from the command ranges stored in marks.
@@ -4848,29 +5197,57 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             return result;
         };
 
-        // Post immediately for mutation-thread ResilientCoordinates.
-        {
+        // Mutation-thread linesShifted post. markProvider() can return
+        // nil at THIS point for fold and porthole-add because the caller
+        // assigns createdFoldMark / createdMark AFTER replaceRange
+        // returns. Defer the post into a block; the caller invokes it
+        // once the mark is in place. (For callers that don't supply a
+        // deferredPostOut, post immediately — preserves the existing
+        // behavior for porthole-resized and other markProvider:nil
+        // paths.)
+        __weak __typeof(self) weakSelf = self;
+        const long long capturedAbsLine = absLine;
+        const int32_t capturedDelta = delta;
+        const iTermLinesShiftedReason capturedReason = reason;
+        const NSRange capturedReplacedRange = replacedRange;
+        VT100GridCoord (^capturedConverter)(VT100GridCoord) = [converter copy];
+        void (^postBlock)(void) = ^{
+            __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
             id<iTermWidthSavingMark> mark = markProvider ? markProvider() : nil;
             NSMutableDictionary *userInfo = [@{
-                iTermLinesShiftedNotification.absLineKey: @(absLine),
-                iTermLinesShiftedNotification.deltaKey: @(delta),
-                iTermLinesShiftedNotification.reasonKey: @(reason),
-                iTermLinesShiftedNotification.replacedRangeKey: [NSValue valueWithRange:replacedRange],
-                iTermLinesShiftedNotification.converterKey: [converter copy]
+                iTermLinesShiftedNotification.absLineKey: @(capturedAbsLine),
+                iTermLinesShiftedNotification.deltaKey: @(capturedDelta),
+                iTermLinesShiftedNotification.reasonKey: @(capturedReason),
+                iTermLinesShiftedNotification.replacedRangeKey: [NSValue valueWithRange:capturedReplacedRange],
+                iTermLinesShiftedNotification.converterKey: capturedConverter
             } mutableCopy];
             if (mark) {
                 userInfo[iTermLinesShiftedNotification.markKey] = mark;
             }
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermRCNotificationNames.linesShifted
-                                                                object:self.uniqueIdentifier
+                                                                object:strongSelf.uniqueIdentifier
                                                               userInfo:userInfo];
+        };
+        if (deferredPostOut) {
+            *deferredPostOut = [postBlock copy];
+        } else {
+            postBlock();
         }
 
         [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            id<iTermWidthSavingMark> mark = markProvider ? markProvider() : nil;
+            // markProvider() returns the PROGENITOR. Flip to the doppelganger
+            // for the main-thread side: PTYSession.m's screenDidShiftLinesAtAbsLine:
+            // re-posts the notification on the main thread, and main-pool RCs
+            // must store the doppelganger fold/porthole mark (not the
+            // progenitor, which lives in the mutation tree).
+            id<iTermWidthSavingMark> progenitor = markProvider ? markProvider() : nil;
+            id<iTermWidthSavingMark> markForMainPool = (id<iTermWidthSavingMark>)progenitor.doppelganger;
             [delegate screenDidShiftLinesAtAbsLine:absLine
                                                 by:delta
-                                              mark:mark
+                                              mark:markForMainPool
                                             reason:reason
                                      replacedRange:replacedRange
                                          converter:converter];
@@ -4878,22 +5255,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 
     return resultingRange;
-}
-
-- (void)shiftCommandRangesBelowAbsLine:(long long)startLine by:(long long)delta {
-    Interval *i = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeMake(0, startLine, 0, startLine)];
-    for (id<iTermMark> unsafeMark in [self.mutableMarkCache enumerateFrom:i.location]) {
-        [self.mutableIntervalTree mutateObject:unsafeMark block:^(id<IntervalTreeObject> mark) {
-            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
-            if (!screenMark) {
-                return;
-            }
-            VT100GridAbsCoordRange range = screenMark.commandRange;
-            range.start.y += delta;
-            range.end.y += delta;
-            screenMark.commandRange = range;
-        }];
-    }
 }
 
 // If an object starts on or before the line `startingAfter` then its start stays put but its end
@@ -5663,6 +6024,20 @@ lengthExcludingInBandSignaling:data.length
 
     if (screenState) {
         self.progress = [screenState[kScreenStateProgressKey] integerValue];
+        // OSC 133 aid: restore the open-aid stack. marksByAid rebuilds from
+        // this in fixUpDeserializedIntervalTree:'s aid pass.
+        [self.openAidStack removeAllObjects];
+        NSArray<NSString *> *restoredAidStack = [NSArray castFrom:screenState[kScreenStateOpenAidStackKey]];
+        if (restoredAidStack.count > 0) {
+            for (id obj in restoredAidStack) {
+                if ([obj isKindOfClass:[NSString class]]) {
+                    [self.openAidStack addObject:obj];
+                }
+            }
+            DLog(@"restoreFromDictionary: restored openAidStack=%@", self.openAidStack);
+        } else {
+            DLog(@"restoreFromDictionary: no openAidStack in saved state (pre-feature or empty)");
+        }
         [self.blockStartAbsLine it_mergeFrom:[NSDictionary castFrom:screenState[kScreenStateBlockStartAbsLineKey]] ?: @{}];
         self.blocksGeneration = 1;
         self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
@@ -5692,7 +6067,12 @@ lengthExcludingInBandSignaling:data.length
         self.shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 
 
-        // Try graph decoding first (new format with delta encoding), fall back to dictionary format
+        // Try graph decoding first (new format with delta encoding), fall back to dictionary format.
+        // Decoded RCs come back unbound — fixUpDeserializedIntervalTree:
+        // binds the progenitors' RCs to `self` (mutation pool), and the
+        // EventuallyConsistentIntervalTree's add side effect binds the
+        // doppelgangers' RCs to the main pool when each mark goes into
+        // the derivative tree.
         NSDictionary *intervalTreeDict = screenState[kScreenStateIntervalTreeKey];
         if (![self.mutableIntervalTree restoreFromGraphRecord:intervalTreeDict
                                                        offset:0
@@ -5701,7 +6081,9 @@ lengthExcludingInBandSignaling:data.length
         }
         [self fixUpDeserializedIntervalTree:self.mutableIntervalTree
                                     visible:YES
-                      guidOfLastCommandMark:guidOfLastCommandMark];
+                      guidOfLastCommandMark:guidOfLastCommandMark
+                    progenitorRCDataSource:(id<iTermResilientCoordinateDataSource>)self
+                          mainRCDataSource:(id<iTermResilientCoordinateDataSource>)self.mainThreadCopy];
 
         NSDictionary *savedIntervalTreeDict = screenState[kScreenStateSavedIntervalTreeKey];
         if (![self.mutableSavedIntervalTree restoreFromGraphRecord:savedIntervalTreeDict
@@ -5709,9 +6091,14 @@ lengthExcludingInBandSignaling:data.length
                                                largeContentProvider:largeContentProvider]) {
             [self.mutableSavedIntervalTree restoreFromDictionary:savedIntervalTreeDict];
         }
+        // Saved-tree marks bind to the saved-tree RC pool (its own guid) so
+        // their RCs receive the saved-tree resize broadcast — never the
+        // primary-tree one.
         [self fixUpDeserializedIntervalTree:self.mutableSavedIntervalTree
                                     visible:NO
-                      guidOfLastCommandMark:guidOfLastCommandMark];
+                      guidOfLastCommandMark:guidOfLastCommandMark
+                    progenitorRCDataSource:(id<iTermResilientCoordinateDataSource>)self.savedTreeMutationThreadDataSource
+                          mainRCDataSource:(id<iTermResilientCoordinateDataSource>)self.savedTreeMainThreadDataSource];
 
         Interval *interval = [self lastPromptMark].entry.interval;
         if (interval) {
@@ -5809,12 +6196,32 @@ lengthExcludingInBandSignaling:data.length
 // Materialize portholes.
 - (void)fixUpDeserializedIntervalTree:(iTermEventuallyConsistentIntervalTree *)intervalTree
                               visible:(BOOL)visible
-                guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {
+                guidOfLastCommandMark:(NSString *)guidOfLastCommandMark
+                  progenitorRCDataSource:(id<iTermResilientCoordinateDataSource>)progenitorRCDataSource
+                       mainRCDataSource:(id<iTermResilientCoordinateDataSource>)mainRCDataSource {
     assert(VT100ScreenMutableState.performingJoinedBlock);
     id<VT100RemoteHostReading> lastRemoteHost = nil;
     NSMutableDictionary<NSString *, id<CapturedOutputReading>> *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
+    // Collect maps for ResilientCoordinate fold/porthole resolution. Decoded
+    // RCs that referenced a fold or porthole come up in .unresolvedFold /
+    // .unresolvedPorthole; we hand them their target marks after the first
+    // pass below has seen every object in this tree.
+    NSMutableDictionary<NSString *, iTermFoldMark *> *foldMarksByGuid = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, PortholeMark *> *portholeMarksByGuid = [NSMutableDictionary dictionary];
+    NSMutableArray<id<iTermResilientCoordinateHolder>> *rcHolders = [NSMutableArray array];
     for (NSArray *objects in [intervalTree forwardLimitEnumerator]) {
         for (id<IntervalTreeImmutableObject> object in objects) {
+            // Decoded marks come back with `.unresolvedCoord` /
+            // `.unresolvedFold` / `.unresolvedPorthole` RCs. Collect
+            // every holder so we can bind the progenitors' RCs to
+            // `self` (mutation pool) at the end of this pass. The
+            // EventuallyConsistentIntervalTree's add side effect (already
+            // queued by restoreFromGraphRecord's tree.addObject) binds the
+            // doppelgangers' RCs to the main pool when each side effect
+            // fires.
+            if ([object conformsToProtocol:@protocol(iTermResilientCoordinateHolder)]) {
+                [rcHolders addObject:(id<iTermResilientCoordinateHolder>)object];
+            }
             if ([object isKindOfClass:[VT100RemoteHost class]]) {
                 lastRemoteHost = (id<VT100RemoteHostReading>)object;
             } else if ([object isKindOfClass:[VT100ScreenMark class]]) {
@@ -5829,7 +6236,7 @@ lengthExcludingInBandSignaling:data.length
                         markGuidToCapturedOutput[capturedOutput.markGuid] = capturedOutput;
                     }
                 }
-                if (screenMark.command) {
+                if (screenMark.firstLineOfCommand) {
                     // Find the matching object in command history and link it.
                     id<VT100RemoteHostReading> lastRemoteHostDoppelganger = lastRemoteHost.doppelganger;
                     id<VT100ScreenMarkReading> screenMarkDoppelganger = screenMark.doppelganger;
@@ -5876,10 +6283,183 @@ lengthExcludingInBandSignaling:data.length
             } else if ([object isKindOfClass:[iTermFoldMark class]]) {
                 iTermFoldMark *foldMark = (iTermFoldMark *)object;
                 [foldMark recursivelyClearProvisionalFlagForSavedImageMarks];
+                if (foldMark.guid) {
+                    // Store PROGENITORS in the map. Mutation-pool RCs hold
+                    // progenitor fold marks; main-pool RCs hold doppelganger
+                    // fold marks. The doppelganger pass below transforms via
+                    // `.doppelganger` for the main-pool lookup.
+                    foldMarksByGuid[foldMark.guid] = foldMark;
+                }
+            } else if ([object isKindOfClass:[PortholeMark class]]) {
+                PortholeMark *portholeMark = (PortholeMark *)object;
+                if (portholeMark.guid) {
+                    portholeMarksByGuid[portholeMark.guid] = portholeMark;
+                }
             }
         }
     }
+
+    // Pass 2: bind + resolve PROGENITORS' RCs against `self` (mutation pool).
+    // The doppelganger pass below mirrors this for the main pool. Must run
+    // inside the joined block so no main-thread observer interleaves.
+    assert(VT100ScreenMutableState.performingJoinedBlock);
+
+    if (rcHolders.count == 0) {
+        return;
+    }
+
+    for (id<iTermResilientCoordinateHolder> holder in rcHolders) {
+        [holder bindUnresolvedResilientCoordinatesToDataSource:progenitorRCDataSource];
+    }
+    iTermFoldMark * _Nullable (^progenitorFoldLookup)(NSString *) =
+        ^iTermFoldMark * _Nullable(NSString *guid) {
+            return foldMarksByGuid[guid];  // progenitor
+        };
+    PortholeMark * _Nullable (^progenitorPortholeLookup)(NSString *) =
+        ^PortholeMark * _Nullable(NSString *guid) {
+            return portholeMarksByGuid[guid];  // progenitor
+        };
+    for (id<iTermResilientCoordinateHolder> holder in rcHolders) {
+        VT100ScreenMark *mark = [VT100ScreenMark castFrom:holder];
+        if (!mark) {
+            continue;
+        }
+        [mark resolveUnresolvedRCsWithFoldMarkLookup:progenitorFoldLookup
+                                  portholeMarkLookup:progenitorPortholeLookup];
+    }
+
+    // Pass 3: bind + resolve DOPPELGANGERS' RCs against the main pool.
+    // EventuallyConsistentIntervalTree's add-side-effect hook already
+    // calls bind on the doppelganger when each holder is added to the
+    // derivative tree, but bind is idempotent. We do it here too so the
+    // doppelganger's fold/porthole resolution can happen synchronously
+    // in the joined block — otherwise a main-thread paint between the
+    // joined block ending and the add side-effect firing could observe
+    // unresolved fold/porthole endpoints on the doppelganger.
+    id<iTermResilientCoordinateDataSource> mainDS = mainRCDataSource;
+    if (!mainDS) {
+        return;
+    }
+    iTermFoldMark * _Nullable (^doppelgangerFoldLookup)(NSString *) =
+        ^iTermFoldMark * _Nullable(NSString *guid) {
+            iTermFoldMark *progenitor = foldMarksByGuid[guid];
+            return (iTermFoldMark *)progenitor.doppelganger;
+        };
+    PortholeMark * _Nullable (^doppelgangerPortholeLookup)(NSString *) =
+        ^PortholeMark * _Nullable(NSString *guid) {
+            PortholeMark *progenitor = portholeMarksByGuid[guid];
+            return (PortholeMark *)progenitor.doppelganger;
+        };
+    for (id<iTermResilientCoordinateHolder> holder in rcHolders) {
+        VT100ScreenMark *mark = [VT100ScreenMark castFrom:holder];
+        if (!mark) {
+            continue;
+        }
+        VT100ScreenMark *dop = (VT100ScreenMark *)mark.doppelganger;
+        [dop bindUnresolvedResilientCoordinatesToDataSource:mainDS];
+        [dop resolveUnresolvedRCsWithFoldMarkLookup:doppelgangerFoldLookup
+                                 portholeMarkLookup:doppelgangerPortholeLookup];
+    }
+    // Rebuild OSC 133 aid registry + open-aid stack from the restored marks.
+    // marksByAid is intentionally not serialized to avoid drift between the
+    // saved dict and the actual interval-tree state; reconstruct it here so
+    // any subsequent D;aid=X close-by-aid path finds its target.
+    [self rebuildAidStateFromIntervalTree];
 }
+
+// Drop registry entries whose mark is no longer in the tree. The bulk
+// paths (clearScrollbackBuffer, clearBufferSavingPrompt:, etc.) call
+// this after their interval-tree mutations to keep marksByAid +
+// openAidStack in sync with reality.
+- (void)pruneAidRegistry {
+    DLog(@"pruneAidRegistry begin: marksByAid.count=%@ openAidStack=%@",
+         @(self.marksByAid.count), self.openAidStack);
+    NSMutableArray<NSString *> *survivingStack = [NSMutableArray array];
+    for (NSString *aid in self.openAidStack) {
+        VT100ScreenMark *m = self.marksByAid[aid];
+        if (m == nil || m.entry == nil) {
+            DLog(@"pruneAidRegistry: dropping aid=%@ (mark=%@ entry=%@)",
+                 aid, m, m.entry);
+            [self.marksByAid removeObjectForKey:aid];
+            continue;
+        }
+        [survivingStack addObject:aid];
+    }
+    [self.openAidStack removeAllObjects];
+    [self.openAidStack addObjectsFromArray:survivingStack];
+    // Also drop any marksByAid entries not in the (now-pruned) stack —
+    // defensive against scenarios where an entry was added without going
+    // through setPromptStartLine:.
+    NSMutableArray<NSString *> *orphans = [NSMutableArray array];
+    NSSet<NSString *> *liveAids = [NSSet setWithArray:self.openAidStack];
+    for (NSString *aid in self.marksByAid.allKeys) {
+        if (![liveAids containsObject:aid]) {
+            [orphans addObject:aid];
+        }
+    }
+    for (NSString *aid in orphans) {
+        DLog(@"pruneAidRegistry: dropping orphan marksByAid[%@] (not in stack)", aid);
+        [self.marksByAid removeObjectForKey:aid];
+    }
+    DLog(@"pruneAidRegistry end: marksByAid.count=%@ openAidStack=%@",
+         @(self.marksByAid.count), self.openAidStack);
+}
+
+// Rebuild marksByAid from the (already-restored) openAidStack. The stack
+// is the source of truth for which aids are open; we just need to map
+// each aid back to the matching mark in the freshly-restored interval
+// tree. Aids in the stack whose mark didn't survive restoration get
+// dropped from the stack too — they can't be opened anymore.
+//
+// Doesn't rely on mark.endDate as an "is open" signal: that field is
+// asynchronously stamped by assignCurrentCommandEndDate (which fires on
+// the NEXT prompt-start) and isn't a reliable open/closed flag at
+// arbitrary save points.
+- (void)rebuildAidStateFromIntervalTree {
+    DLog(@"rebuildAidStateFromIntervalTree begin: restoredStack=%@", self.openAidStack);
+    [self.marksByAid removeAllObjects];
+    if (self.openAidStack.count == 0) {
+        DLog(@"rebuildAidStateFromIntervalTree: empty stack, nothing to rebuild");
+        return;
+    }
+    // Single tree walk into an aid → mark dictionary.
+    NSMutableDictionary<NSString *, VT100ScreenMark *> *byAid =
+        [NSMutableDictionary dictionary];
+    NSEnumerator *enumerator = [self.intervalTree forwardLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            if (![obj isKindOfClass:[VT100ScreenMark class]]) {
+                continue;
+            }
+            VT100ScreenMark *mark = obj;
+            if (mark.aid != nil) {
+                byAid[mark.aid] = mark;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    DLog(@"rebuildAidStateFromIntervalTree: found %@ aid'd marks in tree: %@",
+         @(byAid.count), byAid.allKeys);
+    // Walk the stored stack: for every aid whose mark survived, populate
+    // marksByAid. Aids that lost their mark drop out of the stack.
+    NSMutableArray<NSString *> *survivingStack = [NSMutableArray array];
+    for (NSString *aid in self.openAidStack) {
+        VT100ScreenMark *mark = byAid[aid];
+        if (mark == nil) {
+            DLog(@"rebuildAidStateFromIntervalTree: aid=%@ lost its mark during "
+                 @"restoration; dropping from stack", aid);
+            continue;
+        }
+        self.marksByAid[aid] = mark;
+        [survivingStack addObject:aid];
+    }
+    [self.openAidStack removeAllObjects];
+    [self.openAidStack addObjectsFromArray:survivingStack];
+    DLog(@"rebuildAidStateFromIntervalTree end: marksByAid.count=%@ openAidStack=%@",
+         @(self.marksByAid.count), self.openAidStack);
+}
+
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
@@ -6661,7 +7241,12 @@ launchCoprocessWithCommand:(NSString *)command
 
     // Simulate FinalTerm A:
     // We pass YES for wasInCommand to avoid getting an extra newline added at the cursor.
-    VT100ScreenMark *mark = [self promptDidStartAt:range.start wasInCommand:YES detectedByTrigger:YES];
+    // freshLine:YES matches the FTCS_PROMPT_START ('A') variant.
+    VT100ScreenMark *mark = [self promptDidStartAt:range.start
+                                      wasInCommand:YES
+                                 detectedByTrigger:YES
+                                         freshLine:YES
+                                               aid:nil];
     mark.promptDetectedByTrigger = YES;
     self.fakePromptDetectedAbsLine = range.start.y;
 
@@ -6811,9 +7396,9 @@ launchCoprocessWithCommand:(NSString *)command
     } name:@"trigger enter workgroup"];
 }
 
-- (void)triggerSessionExitWorkgroup:(Trigger *)trigger {
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger leaderOnly:(BOOL)leaderOnly {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate triggerSideEffectExitWorkgroup];
+        [delegate triggerSideEffectExitWorkgroupLeaderOnly:leaderOnly];
     } name:@"trigger exit workgroup"];
 }
 

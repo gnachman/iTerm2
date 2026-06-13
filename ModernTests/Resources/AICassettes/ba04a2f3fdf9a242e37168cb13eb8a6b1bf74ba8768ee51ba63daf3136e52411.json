@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Quote the bolded phrase.\"},{\"text\":\"# Magic\\n\\nThe phrase is **pinecone-42**.\\n\"}],\"role\":\"user\"}]}",
+  "key" : "ba04a2f3fdf9a242e37168cb13eb8a6b1bf74ba8768ee51ba63daf3136e52411",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"`pinecone-42`\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 21,\n    \"candidatesTokenCount\": 7,\n    \"totalTokenCount\": 60,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 21\n      }\n    ],\n    \"thoughtsTokenCount\": 32,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"U-4lauThNsfVz7IPnPrIqAE\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

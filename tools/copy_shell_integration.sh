@@ -23,6 +23,12 @@ fi
 popd
 
 (cd submodules/iTerm2-shell-integration/ && make)
+# The submodule's top-level Makefile only handles utilities (it2ssh). The bash
+# integration script is assembled from source/bash.0, bash-preexec.sh, and
+# source/bash.1 by the shell_integration/Makefile, so it has to be invoked
+# separately or edits to source/bash.{0,1} silently never reach the assembled
+# `bash` file (and therefore never reach Resources/).
+(cd submodules/iTerm2-shell-integration/shell_integration/ && make)
 cp $SUBMODULE/shell_integration/bash  Resources/shell_integration/iterm2_shell_integration.bash
 cp $SUBMODULE/shell_integration/fish  Resources/shell_integration/iterm2_shell_integration.fish
 cp $SUBMODULE/shell_integration/tcsh  Resources/shell_integration/iterm2_shell_integration.tcsh

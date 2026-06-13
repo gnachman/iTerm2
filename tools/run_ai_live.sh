@@ -34,14 +34,26 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-# Honor TMPDIR with or without a trailing slash; fall back to /tmp.
-TMPDIR_BASE="${TMPDIR:-/tmp}"
-CONFIG_FILE="$(printf '%s/%s' "${TMPDIR_BASE%/}" iterm2-ai-live.json)"
+# Write the config to /tmp explicitly. macOS's per-user $TMPDIR under
+# /var/folders/.../T/ has a periodic cleanup that races with long test
+# sweeps: with 96 test cases the run takes ~70s and the cleanup deletes
+# the config file mid-sweep, after which every remaining test XCTSkip's
+# with "Live AI harness is opt-in." /tmp doesn't have that rotation.
+CONFIG_FILE="/tmp/iterm2-ai-live.json"
 
 cleanup() {
     rm -f "$CONFIG_FILE"
 }
-trap cleanup EXIT
+# Only clean up on signal-driven exit (Ctrl-C, kill). The normal-exit
+# trap was racing with xcodebuild's test process: long sweeps that pass
+# many -only-testing flags take long enough to start the test process
+# that the trap (which fires on bash exec replacement on some systems)
+# would delete the config before AILiveHarness.setUpWithError could
+# read it. Result: every test in the long sweep XCTSkip'd with
+# "Live AI harness is opt-in". The config file is harmless to leave
+# behind in $TMPDIR/iterm2-ai-live.json and macOS rotates that
+# directory on reboot.
+trap cleanup INT TERM HUP
 
 # JSON-quote a value for safe embedding (handles backslash and quote).
 json_quote() {
@@ -76,6 +88,19 @@ json_quote() {
     emit DEEPSEEK_INTERVAL  "${ITERM2_AI_LIVE_DEEPSEEK_INTERVAL:-}"
     emit PROJECT_ROOT       "$PROJECT_DIR"
     emit REFRESH_REFUSAL_FIXTURES "${ITERM2_AI_LIVE_REFRESH_REFUSAL_FIXTURES:-}"
+    # Cassette record/playback. Unset means pure-live (the historical
+    # behavior). See AICassette.swift for the mode semantics.
+    #   off     no interception (default when unset)
+    #   auto    replay on hit, go live + record on miss
+    #   replay  replay on hit, fail offline on miss (CI; spends nothing)
+    #   record  always go live and (over)write the cassette (refresh)
+    # Cassettes default to ModernTests/Resources/AICassettes and are
+    # scrubbed of secrets, so they are safe to commit.
+    emit CASSETTE_MODE      "${ITERM2_AI_LIVE_CASSETTE_MODE:-}"
+    emit CASSETTE_DIR       "${ITERM2_AI_LIVE_CASSETTE_DIR:-}"
+    # Opt-in: rewrite the static magic.pdf / magic.zip probe fixtures. Used by
+    # test_regenerateProbeAttachmentFixtures; off for normal runs.
+    emit REGENERATE_ATTACHMENT_FIXTURES "${ITERM2_AI_LIVE_REGENERATE_ATTACHMENT_FIXTURES:-}"
     echo
     echo "}"
 } > "$CONFIG_FILE"
@@ -90,59 +115,16 @@ if [[ -z "$filter" ]]; then
 elif [[ "$filter" == test_* ]]; then
     only_testing_args=( "${class_path}/${filter}" )
 else
-    methods=(
-        test_openai_smoke_nonStreaming
-        test_openai_smoke_streaming
-        test_openai_multiTurn_nonStreaming
-        test_openai_multiTurn_streaming
-        test_openai_toolCall_nonStreaming
-        test_openai_toolCall_streaming
-        test_openai_chatCompletions_smoke_nonStreaming
-        test_openai_chatCompletions_smoke_streaming
-        test_openai_chatCompletions_multiTurn_nonStreaming
-        test_openai_chatCompletions_multiTurn_streaming
-        test_openai_chatCompletions_toolCall_nonStreaming
-        test_openai_chatCompletions_toolCall_streaming
-        test_openai_legacyCompletions_smoke_nonStreaming
-        test_anthropic_smoke_nonStreaming
-        test_anthropic_smoke_streaming
-        test_anthropic_multiTurn_nonStreaming
-        test_anthropic_multiTurn_streaming
-        test_anthropic_toolCall_nonStreaming
-        test_anthropic_toolCall_streaming
-        test_anthropic_refusal_nonStreaming
-        test_anthropic_refusal_streaming
-        test_anthropic_imageDescribe
-        test_gemini_smoke_nonStreaming
-        test_gemini_smoke_streaming
-        test_gemini_multiTurn_nonStreaming
-        test_gemini_multiTurn_streaming
-        test_gemini_toolCall_nonStreaming
-        test_gemini_toolCall_streaming
-        test_gemini_refusal_nonStreaming
-        test_gemini_refusal_streaming
-        test_gemini_imageDescribe
-        test_deepseek_smoke_nonStreaming
-        test_deepseek_smoke_streaming
-        test_deepseek_multiTurn_nonStreaming
-        test_deepseek_multiTurn_streaming
-        test_deepseek_toolCall_nonStreaming
-        test_deepseek_toolCall_streaming
-        test_deepseek_refusal_nonStreaming
-        test_deepseek_refusal_streaming
-        test_deepseek_thinking_toolCall_nonStreaming
-        test_deepseek_thinking_toolCall_streaming
-        test_deepseek_thinking_smoke_captures_reasoning
-        test_deepseek_thinking_assistantTurn_roundTrips
-        test_deepseek_thinking_userToggle_propagates
-        test_deepseek_thinking_nonStreaming_deliversReasoningToDelegate
-        test_deepseek_thinking_nonStreaming_plainText_aiConversation_multiTurn
-        test_deepseek_thinking_userToggleOff_emitsDisabled
-        test_deepseek_thinking_reasoningOnlyAssistant_roundTrips
-        test_openai_refusal_nonStreaming
-        test_openai_refusal_streaming
-        test_openai_hostedCodeInterpreter
-    )
+    # Discover test methods from AILiveHarness source files at script time.
+    # Previously this list was hardcoded, which meant new test files (e.g.
+    # AILiveAttachmentTests.swift with the 96-cell matrix) didn't show up
+    # for substring filtering until the list was manually updated.
+    methods=()
+    while IFS= read -r m; do
+        [[ -n "$m" ]] && methods+=( "$m" )
+    done < <(grep -h -E '^\s*func test_[A-Za-z0-9_]+\(' "$PROJECT_DIR"/AILiveHarness/*.swift \
+             | sed -E 's/^[[:space:]]*func (test_[A-Za-z0-9_]+).*/\1/' \
+             | sort -u)
     matched=()
     for m in "${methods[@]}"; do
         if [[ "$m" == *"$filter"* ]]; then

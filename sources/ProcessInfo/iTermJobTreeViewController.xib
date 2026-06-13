@@ -26,14 +26,14 @@
                     <rect key="frame" x="0.0" y="0.0" width="480" height="266"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 </visualEffectView>
-                <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="4fR-ry-Sex">
+                <scrollView borderType="line" autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="4fR-ry-Sex">
                     <rect key="frame" x="0.0" y="38" width="480" height="228"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" drawsBackground="NO" id="f7I-tG-N0T">
                         <rect key="frame" x="0.0" y="0.0" width="480" height="228"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" tableStyle="fullWidth" columnReordering="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="4a9-KI-W3k" viewBased="YES" indentationPerLevel="16" outlineTableColumn="5d6-Bf-wD7" id="5Km-gR-LVc">
+                            <outlineView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" tableStyle="fullWidth" columnReordering="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="4a9-KI-W3k" viewBased="YES" indentationPerLevel="16" outlineTableColumn="5d6-Bf-wD7" id="5Km-gR-LVc" customClass="iTermJobTreeOutlineView">
                                 <rect key="frame" x="0.0" y="0.0" width="480" height="203"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
@@ -142,6 +142,12 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="copyProcessID:" target="-2" id="1CB-qe-KGJ"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Notify on Termination" id="ntf-01-trm">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="toggleNotifyOnTermination:" target="-2" id="ntf-02-act"/>
                     </connections>
                 </menuItem>
             </items>

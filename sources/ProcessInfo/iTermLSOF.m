@@ -18,10 +18,16 @@
 #import "NSStringITerm.h"
 #include <arpa/inet.h>
 #include <libproc.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/proc_info.h>
 #include <sys/sysctl.h>
+#include <sys/un.h>
+
+@implementation iTermProcessFileDescriptor
+@end
 
 @interface iTermLSOFProxy: NSObject<iTermProcessDataSource>
 @end
@@ -159,6 +165,190 @@
         argv[0] = [command substringFromIndex:lastSlash.location + 1];
     }
     return argv;
+}
+
++ (NSArray<NSString *> *)environmentForProcess:(pid_t)pid {
+    const int argmax = [self maximumLengthOfProcargs];
+    if (argmax < 0) {
+        return nil;
+    }
+    char *procargs = [self procargsForProcess:pid];
+    if (procargs == nil) {
+        return nil;
+    }
+
+    // Consume argc.
+    size_t offset = 0;
+    int nargs = 0;
+    memmove(&nargs, procargs + offset, sizeof(int));
+    offset += sizeof(int);
+
+    // Skip exec_path and its trailing nulls.
+    while (offset < (size_t)argmax && procargs[offset] != 0) {
+        ++offset;
+    }
+    while (offset < (size_t)argmax && procargs[offset] == 0) {
+        ++offset;
+    }
+    if (offset >= (size_t)argmax) {
+        return @[];
+    }
+
+    // Skip the argv strings (nargs null-terminated entries).
+    int argsConsumed = 0;
+    while (offset < (size_t)argmax && argsConsumed < nargs) {
+        if (procargs[offset] == 0) {
+            ++argsConsumed;
+        }
+        ++offset;
+    }
+
+    // Skip any padding nulls before the environment block.
+    while (offset < (size_t)argmax && procargs[offset] == 0) {
+        ++offset;
+    }
+
+    // The remaining null-terminated strings are the environment, terminated by
+    // an empty string (i.e. a double null).
+    NSMutableArray<NSString *> *env = [NSMutableArray array];
+    char *start = procargs + offset;
+    while (offset < (size_t)argmax) {
+        if (procargs[offset] == 0) {
+            if (start[0] == 0) {
+                break;
+            }
+            NSString *entry = [NSString stringWithUTF8String:start];
+            if (entry) {
+                [env addObject:entry];
+            }
+            start = procargs + offset + 1;
+        }
+        ++offset;
+    }
+    return env;
+}
+
+static NSString *iTermTCPStateString(int state) {
+    static NSArray<NSString *> *names;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Indices match the tcpstates enum in <sys/proc_info.h>.
+        names = @[ @"CLOSED", @"LISTEN", @"SYN_SENT", @"SYN_RCVD", @"ESTABLISHED",
+                   @"CLOSE_WAIT", @"FIN_WAIT_1", @"CLOSING", @"LAST_ACK",
+                   @"FIN_WAIT_2", @"TIME_WAIT" ];
+    });
+    if (state >= 0 && state < (int)names.count) {
+        return names[state];
+    }
+    return [NSString stringWithFormat:@"%d", state];
+}
+
+static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL local) {
+    char buf[INET6_ADDRSTRLEN] = { 0 };
+    const int port = ntohs((uint16_t)(local ? in->insi_lport : in->insi_fport));
+    if (in->insi_vflag & INI_IPV6) {
+        const struct in6_addr *addr = local ? &in->insi_laddr.ina_6 : &in->insi_faddr.ina_6;
+        inet_ntop(AF_INET6, addr, buf, sizeof(buf));
+        return [NSString stringWithFormat:@"[%s]:%d", buf, port];
+    }
+    const struct in_addr *addr = local ? &in->insi_laddr.ina_46.i46a_addr4 : &in->insi_faddr.ina_46.i46a_addr4;
+    inet_ntop(AF_INET, addr, buf, sizeof(buf));
+    return [NSString stringWithFormat:@"%s:%d", buf, port];
+}
+
++ (void)populateDescriptor:(iTermProcessFileDescriptor *)descriptor
+            fromSocketInfo:(const struct socket_info *)si {
+    switch (si->soi_kind) {
+        case SOCKINFO_TCP: {
+            const struct tcp_sockinfo *tcp = &si->soi_proto.pri_tcp;
+            descriptor.type = @"TCP";
+            descriptor.detail = [NSString stringWithFormat:@"%@ → %@ (%@)",
+                                 iTermSocketEndpointString(&tcp->tcpsi_ini, YES),
+                                 iTermSocketEndpointString(&tcp->tcpsi_ini, NO),
+                                 iTermTCPStateString(tcp->tcpsi_state)];
+            break;
+        }
+        case SOCKINFO_IN: {
+            const struct in_sockinfo *in = &si->soi_proto.pri_in;
+            descriptor.type = (si->soi_protocol == IPPROTO_UDP) ? @"UDP" : @"IP";
+            descriptor.detail = [NSString stringWithFormat:@"%@ → %@",
+                                 iTermSocketEndpointString(in, YES),
+                                 iTermSocketEndpointString(in, NO)];
+            break;
+        }
+        case SOCKINFO_UN: {
+            const struct un_sockinfo *un = &si->soi_proto.pri_un;
+            descriptor.type = @"unix";
+            descriptor.detail = [NSString stringWithUTF8String:un->unsi_addr.ua_sun.sun_path] ?: @"";
+            break;
+        }
+        default:
+            descriptor.type = @"socket";
+            descriptor.detail = @"";
+            break;
+    }
+}
+
++ (iTermProcessFileDescriptor *)descriptorForFd:(const struct proc_fdinfo *)fdinfo pid:(pid_t)pid {
+    iTermProcessFileDescriptor *descriptor = [[iTermProcessFileDescriptor alloc] init];
+    descriptor.fd = fdinfo->proc_fd;
+    descriptor.detail = @"";
+    switch (fdinfo->proc_fdtype) {
+        case PROX_FDTYPE_VNODE: {
+            descriptor.type = @"file";
+            struct vnode_fdinfowithpath info;
+            const int rc = proc_pidfdinfo(pid, fdinfo->proc_fd, PROC_PIDFDVNODEPATHINFO, &info, sizeof(info));
+            if (rc == sizeof(info)) {
+                descriptor.detail = [NSString stringWithUTF8String:info.pvip.vip_path] ?: @"";
+            }
+            break;
+        }
+        case PROX_FDTYPE_SOCKET: {
+            descriptor.type = @"socket";
+            struct socket_fdinfo info;
+            const int rc = proc_pidfdinfo(pid, fdinfo->proc_fd, PROC_PIDFDSOCKETINFO, &info, sizeof(info));
+            if (rc == sizeof(info)) {
+                [self populateDescriptor:descriptor fromSocketInfo:&info.psi];
+            }
+            break;
+        }
+        case PROX_FDTYPE_PIPE:
+            descriptor.type = @"pipe";
+            break;
+        case PROX_FDTYPE_KQUEUE:
+            descriptor.type = @"kqueue";
+            break;
+        case PROX_FDTYPE_PSEM:
+            descriptor.type = @"sem";
+            break;
+        case PROX_FDTYPE_PSHM:
+            descriptor.type = @"shm";
+            break;
+        default:
+            descriptor.type = @"other";
+            break;
+    }
+    return descriptor;
+}
+
++ (NSArray<iTermProcessFileDescriptor *> *)fileDescriptorsForProcess:(pid_t)pid {
+    const int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (bufferSize <= 0) {
+        return nil;
+    }
+    struct proc_fdinfo *fds = (struct proc_fdinfo *)iTermMalloc(bufferSize);
+    const int bytesReturned = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds, bufferSize);
+    if (bytesReturned <= 0) {
+        free(fds);
+        return nil;
+    }
+    const int count = bytesReturned / (int)sizeof(struct proc_fdinfo);
+    NSMutableArray<iTermProcessFileDescriptor *> *result = [NSMutableArray array];
+    for (int i = 0; i < count; i++) {
+        [result addObject:[self descriptorForFd:&fds[i] pid:pid]];
+    }
+    free(fds);
+    return result;
 }
 
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {

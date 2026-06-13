@@ -30,6 +30,12 @@ private class FakePorthole: NSObject, ObjCPorthole {
 class ResilientCoordinateTests: XCTestCase {
     private var session: PTYSession!
     private var screen: VT100Screen!
+    // Forwards the RC-protocol getters to the live screen so RCs constructed
+    // by the test fixture bind to the main-thread pool with the same guid
+    // production uses. Previously this lived as a PTYSession extension; that
+    // surface was dead in production (only this test consumed it) and has
+    // been pulled in here.
+    private var rcDataSource: ScreenBackedRCDataSource!
 
     private static let charPool = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
     private func expectedChar(forLine line: Int) -> Character {
@@ -62,9 +68,11 @@ class ResilientCoordinateTests: XCTestCase {
             }
         })
         screen = session.screen
+        rcDataSource = ScreenBackedRCDataSource(screen: screen)
     }
 
     override func tearDown() {
+        rcDataSource = nil
         session = nil
         screen = nil
         super.tearDown()
@@ -73,7 +81,7 @@ class ResilientCoordinateTests: XCTestCase {
     // MARK: - Helpers
 
     private func makeCoord(x: Int32 = 0, absY: Int64) -> ResilientCoordinate {
-        return ResilientCoordinate(dataSource: session,
+        return ResilientCoordinate(dataSource: rcDataSource,
                                   absCoord: VT100GridAbsCoordMake(x, absY))
     }
 
@@ -178,10 +186,6 @@ class ResilientCoordinateTests: XCTestCase {
         }
         sc.changeHeight(of: mark, to: Int32(newHeight))
         sc.performBlock(joinedThreads: { _, _, _ in })
-    }
-
-    private func postSessionDealloc() {
-        RCDataSourceDeallocNotification.post(guid: session.guid)
     }
 
     // MARK: - Basic Status
@@ -383,6 +387,65 @@ class ResilientCoordinateTests: XCTestCase {
         XCTAssertEqual(rc.status, .inFold)
     }
 
+    /// The unfold handler decides whether to restore an RC's fold by
+    /// comparing the notification's FoldMark to the RC's stored mark
+    /// via `===` (reference identity), NOT `.guid` equality. That
+    /// distinction is load-bearing: mutation-pool RCs store the
+    /// progenitor and only the progenitor-flavored linesShifted post
+    /// (mutation thread) should restore them; main-pool RCs store the
+    /// doppelganger and only the doppelganger-flavored post (main
+    /// thread, via the delegate side effect) should restore them. If
+    /// the check ever drifted to guid equality, both pools would
+    /// react to either post and a half-resolved cross-pool state
+    /// could appear briefly during a fold/unfold cycle.
+    ///
+    /// Targeted regression for that contract: post an unfold
+    /// notification carrying a *different FoldMark instance with the
+    /// same guid* as the one the RC stores. The RC must stay in fold.
+    /// Then prove the harness is otherwise wired correctly by running
+    /// the real screen-level unfold and watching it restore the RC.
+    func testUnfoldForeignFoldMarkInstanceDoesNotRestoreOurFold() {
+        let rc = makeCoord(absY: 22)
+        let range = fold(startLine: 20, endLine: 24)
+        XCTAssertEqual(rc.status, .inFold,
+                       "Setup: RC must enter the fold after fold()")
+        guard let storedFoldMark = rc.foldInfo?.mark else {
+            XCTFail("Setup: RC must carry a stored fold mark while in fold")
+            return
+        }
+
+        // Phantom: a different FoldMark instance that shares the
+        // stored mark's guid via the copy initializer. Identity
+        // (`===`) rejects; guid equality would not.
+        let phantom = FoldMark(storedFoldMark)
+        XCTAssertFalse(phantom === storedFoldMark,
+                       "Setup: phantom must be a distinct reference")
+        XCTAssertEqual(phantom.guid, storedFoldMark.guid,
+                       "Setup: phantom must share the guid")
+
+        let identityConverter: @convention(block) (VT100GridCoord) -> VT100GridCoord = { $0 }
+        NotificationCenter.default.post(
+            name: LinesShiftedNotification.name,
+            object: rcDataSource.rcGuid,
+            userInfo: [
+                LinesShiftedNotification.absLineKey: NSNumber(value: Int64(range.location)),
+                LinesShiftedNotification.deltaKey: NSNumber(value: Int32(range.length)),
+                LinesShiftedNotification.reasonKey: NSNumber(value: iTermLinesShiftedReason.unfold.rawValue),
+                LinesShiftedNotification.replacedRangeKey: NSValue(range: range),
+                LinesShiftedNotification.converterKey: identityConverter,
+                LinesShiftedNotification.markKey: phantom,
+            ])
+        XCTAssertEqual(rc.status, .inFold,
+                       "A phantom unfold whose FoldMark is a different instance must NOT restore our fold (identity, not guid)")
+
+        // Harness check: the real screen.removeFolds DOES restore,
+        // proving the only behavioral difference above was the mark
+        // instance.
+        unfold(range: range)
+        XCTAssertEqual(rc.status, .valid,
+                       "Real unfold via the screen API restores the RC, confirming identity was the only thing that differed")
+    }
+
     // MARK: - Multiple Folds
 
     func testMultipleFoldsInSequence() {
@@ -485,16 +548,16 @@ class ResilientCoordinateTests: XCTestCase {
     // MARK: - Porthole: Mark deallocation
 
     /// Tests the WeakBox mechanism: when the captured PortholeMark is deallocated,
-    /// the RC reports .retired. Uses a synthetic notification because the real screen
+    /// the RC reports .invalid. Uses a synthetic notification because the real screen
     /// API keeps the mark alive in the interval tree.
-    func testPortholeMarkDeallocatedReturnsRetired() {
+    func testPortholeMarkDeallocatedReturnsInvalid() {
         let rc = makeCoord(absY: 22)
         autoreleasepool {
             let mark = PortholeMark(UUID().uuidString, width: screen.width())
             let converter: @convention(block) (VT100GridCoord) -> VT100GridCoord = { $0 }
             NotificationCenter.default.post(
                 name: LinesShiftedNotification.name,
-                object: session.guid,
+                object: rcDataSource.rcGuid,
                 userInfo: [
                     LinesShiftedNotification.absLineKey: NSNumber(value: Int64(20)),
                     LinesShiftedNotification.deltaKey: NSNumber(value: Int32(-4)),
@@ -506,7 +569,7 @@ class ResilientCoordinateTests: XCTestCase {
             XCTAssertEqual(rc.status, .inPorthole)
             PortholeRegistry.instance.remove(mark.uniqueIdentifier)
         }
-        XCTAssertEqual(rc.status, .retired)
+        XCTAssertEqual(rc.status, .invalid)
     }
 
     // MARK: - Multiple Portholes
@@ -550,9 +613,13 @@ class ResilientCoordinateTests: XCTestCase {
             mutableState.appendCarriageReturnLineFeed()
         })
         let sc = s.screen
+        // RC holds dataSource weakly. Pin `ds` for the rest of the test so
+        // ARC doesn't release it after the constructor returns.
+        let ds = ScreenBackedRCDataSource(screen: sc)
+        defer { _ = ds }
 
         // RC at (5, 1) → 'p'
-        let rc = ResilientCoordinate(dataSource: s, absCoord: VT100GridAbsCoordMake(5, 1))
+        let rc = ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoordMake(5, 1))
         XCTAssertEqual(rc.status, .valid)
         assertChar(at: rc, equals: "p", screen: sc)
 
@@ -579,9 +646,12 @@ class ResilientCoordinateTests: XCTestCase {
         })
         let sc = s.screen
 
+        let ds = ScreenBackedRCDataSource(screen: sc)
+        defer { _ = ds }
+
         // 't' is the last char of each 20-char line. At width 5 it's at x=4, y=3
         // of each 4-line group. The last group starts at y=36, so 't' is at (4, 39).
-        let rc = ResilientCoordinate(dataSource: s, absCoord: VT100GridAbsCoordMake(4, 39))
+        let rc = ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoordMake(4, 39))
         XCTAssertEqual(rc.status, .valid)
         assertChar(at: rc, equals: "t", screen: sc)
 
@@ -617,7 +687,7 @@ class ResilientCoordinateTests: XCTestCase {
         let converter: @convention(block) (VT100GridAbsCoord) -> VT100GridAbsCoord = { _ in
             VT100GridAbsCoordInvalid
         }
-        RCResizeNotification.post(guid: session.guid, converter: converter)
+        RCResizeNotification.post(guid: rcDataSource.rcGuid, converter: converter)
         XCTAssertEqual(rc.status, .invalid)
     }
 
@@ -660,48 +730,23 @@ class ResilientCoordinateTests: XCTestCase {
         XCTAssertEqual(rc.status, .inPorthole)
     }
 
-    // MARK: - Session Dealloc
+    // MARK: - Weak DataSource Reference
 
-    func testSessionDeallocMakesInvalid() {
-        let rc = makeCoord(absY: 30)
-        postSessionDealloc()
+    /// When the dataSource deallocs, the RC's weak ref auto-zeros and
+    /// `status` returns `.invalid`. Uses a minimal local data source so we
+    /// can deterministically drop it (PTYSession's reference graph makes
+    /// reliable dealloc in a unit test impractical).
+    func testInvalidWhenDataSourceDeallocated() {
+        let rc: ResilientCoordinate
+        do {
+            let ds = TestDataSource(guid: "ephemeral", width: 80, lines: 100)
+            rc = ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoordMake(0, 5))
+            XCTAssertEqual(rc.status, .valid)
+        }
+        // ds is released here. Drain an autoreleasepool so any deferred
+        // releases happen before the assertion.
+        autoreleasepool { }
         XCTAssertEqual(rc.status, .invalid)
-    }
-
-    func testSessionDeallocStopsObservingNotifications() {
-        let rc = makeCoord(absY: 30)
-        postSessionDealloc()
-        XCTAssertEqual(rc.status, .invalid)
-        fold(startLine: 10, endLine: 14)
-        XCTAssertEqual(rc.status, .invalid)
-    }
-
-    // MARK: - Weak Session Reference
-
-    func testRetiredWhenSessionDeallocated() {
-        var tempSession: PTYSession? = makeSession()
-        let tempGuid = tempSession!.guid
-        tempSession!.screen.performBlock(joinedThreads: { _, mutableState, _ in
-            for _ in 0..<10 {
-                mutableState.appendString(atCursor: "line")
-                mutableState.appendCarriageReturnLineFeed()
-            }
-        })
-
-        let rc = ResilientCoordinate(dataSource: tempSession!, absCoord: VT100GridAbsCoordMake(0, 5))
-        XCTAssertEqual(rc.status, .valid)
-
-        // Simulate session teardown: the dealloc notification sets location = .invalid.
-        RCDataSourceDeallocNotification.post(guid: tempGuid)
-        XCTAssertEqual(rc.status, .invalid)
-
-        // After releasing the last strong reference, the weak ref may be zeroed
-        // immediately or deferred to the next autorelease pool drain.
-        // .invalid (session still alive) and .retired (session gone) are both correct.
-        tempSession = nil
-        let status = rc.status
-        XCTAssertTrue(status == .invalid || status == .retired,
-                      "Expected .invalid or .retired after session teardown, got \(status)")
     }
 
     // MARK: - Scrollback Overflow
@@ -730,10 +775,10 @@ class ResilientCoordinateTests: XCTestCase {
                 mutableState.appendCarriageReturnLineFeed()
             }
         })
-        // The fold mark should be gone or the RC should be retired/invalid.
+        // The fold mark should be gone or the RC should be invalid.
         let status = rc.status
-        XCTAssertTrue(status == .retired || status == .invalid || status == .inFold,
-                      "Expected .retired, .invalid, or .inFold (mark survived), got \(status)")
+        XCTAssertTrue(status == .invalid || status == .inFold,
+                      "Expected .invalid or .inFold (mark survived), got \(status)")
     }
 
     func testPortholeThenScrollbackOverflow() {
@@ -748,8 +793,8 @@ class ResilientCoordinateTests: XCTestCase {
             }
         })
         let status = rc.status
-        XCTAssertTrue(status == .retired || status == .invalid || status == .inPorthole,
-                      "Expected .retired, .invalid, or .inPorthole (mark survived), got \(status)")
+        XCTAssertTrue(status == .invalid || status == .inPorthole,
+                      "Expected .invalid or .inPorthole (mark survived), got \(status)")
     }
 
     // MARK: - Accessor edge cases
@@ -962,8 +1007,10 @@ class ResilientCoordinateTests: XCTestCase {
         XCTAssertEqual(dump0[0], "abcdefghij")
         XCTAssertTrue(dump0[2].hasPrefix("uvwxy"))
 
+        let ds = ScreenBackedRCDataSource(screen: localScreen)
+        defer { _ = ds }
         // RC at (4, 2) — 'y', the last char of the wrapped line.
-        let rc = ResilientCoordinate(dataSource: localSession, absCoord: VT100GridAbsCoordMake(4, 2))
+        let rc = ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoordMake(4, 2))
         XCTAssertEqual(rc.status, .valid)
 
         // 1. Fold lines 0-2.
@@ -993,8 +1040,10 @@ class ResilientCoordinateTests: XCTestCase {
             mutableState.appendCarriageReturnLineFeed()
         })
         let sc = s.screen
+        let ds = ScreenBackedRCDataSource(screen: sc)
+        defer { _ = ds }
 
-        let rc = ResilientCoordinate(dataSource: s, absCoord: VT100GridAbsCoordMake(4, 2))
+        let rc = ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoordMake(4, 2))
         XCTAssertEqual(rc.status, .valid)
 
         // Add porthole replacing lines 0-2, saving original lines first.
@@ -1110,7 +1159,9 @@ class ResilientCoordinateTests: XCTestCase {
             }
         })
         let sc = s.screen
-        let rc = ResilientCoordinate(dataSource: s, absCoord: VT100GridAbsCoordMake(0, 0))
+        let ds = ScreenBackedRCDataSource(screen: sc)
+        defer { _ = ds }
+        let rc = ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoordMake(0, 0))
         XCTAssertEqual(rc.status, .valid)
 
         // Narrow dramatically so lines reflow and overflow the scrollback.
@@ -1129,5 +1180,210 @@ class ResilientCoordinateTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(rc.coord.y, overflow,
                                         "Coord \(rc.coord.y) is below overflow \(overflow)")
         }
+    }
+
+    // MARK: - dictionaryValue / from(dictionary:) direct bridge
+
+    private func makeFoldMark() -> FoldMark {
+        return FoldMark(savedLines: nil,
+                        savedITOs: [],
+                        promptLength: 0,
+                        imageCodes: Set<Int32>(),
+                        width: 80)
+    }
+
+    /// Treat the dict shape as a contract: must match what `JSONEncoder` +
+    /// `JSONSerialization` produced before the bridge was specialized. If
+    /// these helpers ever diverge from Codable, every test below tightens
+    /// to that diff.
+    private func codableDict(of rc: ResilientCoordinate) -> NSDictionary {
+        let data = try! JSONEncoder().encode(rc)
+        return try! JSONSerialization.jsonObject(with: data, options: []) as! NSDictionary
+    }
+    private func codableDict(of range: ResilientCoordinateRange) -> NSDictionary {
+        let data = try! JSONEncoder().encode(range)
+        return try! JSONSerialization.jsonObject(with: data, options: []) as! NSDictionary
+    }
+
+    func test_dict_coord_shapeMatchesCodable() {
+        let ds = TestDataSource(guid: "ds", width: 80, lines: 100)
+        let rc = ResilientCoordinate(dataSource: ds,
+                                     absCoord: VT100GridAbsCoord(x: 7, y: 42))
+        XCTAssertEqual(rc.dictionaryValue, codableDict(of: rc))
+        // Round-trip via the direct path: same coord comes back.
+        let restored = ResilientCoordinate.from(dictionary: rc.dictionaryValue)!
+        let loadDS = TestDataSource(guid: "load", width: 80, lines: 100)
+        restored.bind(to: loadDS)
+        XCTAssertEqual(restored.status, .valid)
+        XCTAssertEqual(restored.coord.x, 7)
+        XCTAssertEqual(restored.coord.y, 42)
+        _ = loadDS  // keep alive — RC holds dataSource weakly
+    }
+
+    func test_dict_unresolvedCoord_decodesAsCoord() {
+        // .unresolvedCoord and .coord share the wire shape — both go out
+        // as kind="coord". A pre-bind RC decodes identically to a bound one.
+        let rc = ResilientCoordinate(unboundAbsCoord: VT100GridAbsCoord(x: 1, y: 2))
+        XCTAssertEqual(rc.dictionaryValue, codableDict(of: rc))
+        let restored = ResilientCoordinate.from(dictionary: rc.dictionaryValue)!
+        XCTAssertEqual(restored.status, .unresolved)
+    }
+
+    func test_dict_invalid_shapeMatchesCodable() {
+        // No public way to construct an .invalid RC at init, but a dead
+        // WeakBox in .fold encodes as kind="invalid" — exercise that path.
+        let saveDS = TestDataSource(guid: "save", width: 80, lines: 100)
+        let rc: ResilientCoordinate
+        do {
+            let foldMark = makeFoldMark()
+            let dop = foldMark.doppelganger() as! FoldMark
+            rc = ResilientCoordinate(dataSource: saveDS,
+                                     enclosingFold: dop,
+                                     coord: VT100GridCoord(x: 1, y: 0))
+            _ = foldMark
+            _ = dop
+        }
+        // foldMark and dop both go out of scope here; the WeakBox should
+        // zero out and encode produces .invalid.
+        let dict = rc.dictionaryValue
+        XCTAssertEqual(dict, codableDict(of: rc))
+        XCTAssertEqual(dict["kind"] as? String, "invalid")
+        let restored = ResilientCoordinate.from(dictionary: dict)!
+        XCTAssertEqual(restored.status, .invalid)
+    }
+
+    func test_dict_unresolvedFold_shapeMatchesCodable() {
+        // Re-build an unresolved-fold RC via the dict path (the live .fold
+        // case requires a FoldMark; the unresolved variant lets us check
+        // the wire shape directly).
+        let seed: NSDictionary = [
+            "kind": "fold",
+            "markGuid": "fake-fold-guid",
+            "innerX": NSNumber(value: Int32(2)),
+            "innerY": NSNumber(value: Int32(3)),
+        ]
+        let rc = ResilientCoordinate.from(dictionary: seed)!
+        XCTAssertEqual(rc.dictionaryValue, codableDict(of: rc))
+        XCTAssertEqual(rc.dictionaryValue["kind"] as? String, "fold")
+        XCTAssertEqual(rc.dictionaryValue["markGuid"] as? String, "fake-fold-guid")
+    }
+
+    func test_dict_unresolvedPorthole_shapeMatchesCodable() {
+        let seed: NSDictionary = [
+            "kind": "porthole",
+            "markGuid": "fake-porthole-guid",
+            "innerX": NSNumber(value: Int32(4)),
+            "innerY": NSNumber(value: Int32(5)),
+        ]
+        let rc = ResilientCoordinate.from(dictionary: seed)!
+        XCTAssertEqual(rc.dictionaryValue, codableDict(of: rc))
+        XCTAssertEqual(rc.dictionaryValue["kind"] as? String, "porthole")
+    }
+
+    func test_dict_liveFold_shapeMatchesCodable() {
+        let foldMark = makeFoldMark()
+        let dop = foldMark.doppelganger() as! FoldMark
+        let ds = TestDataSource(guid: "ds", width: 80, lines: 100)
+        let rc = ResilientCoordinate(dataSource: ds,
+                                     enclosingFold: dop,
+                                     coord: VT100GridCoord(x: 9, y: 1))
+        XCTAssertEqual(rc.dictionaryValue, codableDict(of: rc))
+        XCTAssertEqual(rc.dictionaryValue["markGuid"] as? String, foldMark.guid)
+    }
+
+    func test_range_dict_shapeMatchesCodable() {
+        let ds = TestDataSource(guid: "ds", width: 80, lines: 100)
+        let range = ResilientCoordinateRange(
+            start: ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoord(x: 0, y: 5)),
+            end: ResilientCoordinate(dataSource: ds, absCoord: VT100GridAbsCoord(x: 7, y: 5)))
+        XCTAssertEqual(range.dictionaryValue, codableDict(of: range))
+
+        let restored = ResilientCoordinateRange.from(dictionary: range.dictionaryValue)!
+        let loadDS = TestDataSource(guid: "load", width: 80, lines: 100)
+        restored.start.bind(to: loadDS)
+        restored.end.bind(to: loadDS)
+        XCTAssertEqual(restored.start.coord.x, 0)
+        XCTAssertEqual(restored.end.coord.x, 7)
+        _ = loadDS  // keep alive — RC holds dataSource weakly
+    }
+
+    // Defensive cases on the decoder
+
+    func test_dict_missingKind_returnsNil() {
+        let dict: NSDictionary = ["absX": 1, "absY": 2]
+        XCTAssertNil(ResilientCoordinate.from(dictionary: dict))
+    }
+
+    func test_dict_unknownKind_returnsNil() {
+        let dict: NSDictionary = ["kind": "horseshoe", "absX": 1, "absY": 2]
+        XCTAssertNil(ResilientCoordinate.from(dictionary: dict))
+    }
+
+    func test_dict_coordMissingFields_returnsNil() {
+        let dict: NSDictionary = ["kind": "coord", "absX": 1] // absY missing
+        XCTAssertNil(ResilientCoordinate.from(dictionary: dict))
+    }
+
+    func test_dict_foldMissingGuid_returnsNil() {
+        let dict: NSDictionary = ["kind": "fold", "innerX": 1, "innerY": 2]
+        XCTAssertNil(ResilientCoordinate.from(dictionary: dict))
+    }
+
+    func test_range_dict_missingStart_returnsNil() {
+        let dict: NSDictionary = [
+            "end": ["kind": "coord", "absX": 1, "absY": 2] as NSDictionary,
+        ]
+        XCTAssertNil(ResilientCoordinateRange.from(dictionary: dict))
+    }
+
+    /// Backwards-compat: a dict written by the OLD JSON-round-trip path
+    /// (NSNumber values produced by JSONSerialization, NSString keys) must
+    /// still decode through the new direct decoder.
+    func test_dict_acceptsJSONSerializationProducedShape() {
+        let ds = TestDataSource(guid: "ds", width: 80, lines: 100)
+        let rc = ResilientCoordinate(dataSource: ds,
+                                     absCoord: VT100GridAbsCoord(x: 11, y: 13))
+        let viaJSON = codableDict(of: rc)
+        let restored = ResilientCoordinate.from(dictionary: viaJSON)!
+        let loadDS = TestDataSource(guid: "load", width: 80, lines: 100)
+        restored.bind(to: loadDS)
+        XCTAssertEqual(restored.coord.x, 11)
+        XCTAssertEqual(restored.coord.y, 13)
+        _ = loadDS  // keep alive — RC holds dataSource weakly
+    }
+}
+
+/// ResilientCoordinateDataSource that forwards the four protocol getters to
+/// a live VT100Screen. Used by the suite-wide test fixture so RCs the tests
+/// build land in the same main-thread pool as production RCs do.
+///
+/// Holds a strong screen reference because the RC keeps a weak dataSource;
+/// the test class owns one instance for the duration of each test.
+@objc private class ScreenBackedRCDataSource: NSObject, ResilientCoordinateDataSource {
+    private let screen: VT100Screen
+    init(screen: VT100Screen) {
+        self.screen = screen
+        super.init()
+    }
+    var rcGuid: String { screen.immutableState.mainThreadPoolGuid }
+    var rcWidth: Int32 { screen.width() }
+    var rcNumberOfLines: Int32 { screen.numberOfLines() }
+    var rcScrollbackOverflow: Int64 { screen.totalScrollbackOverflow() }
+}
+
+/// Minimal ResilientCoordinateDataSource for tests that need a dataSource
+/// they can deterministically release (PTYSession's reference graph makes
+/// reliable dealloc in a unit test impractical).
+@objc private class TestDataSource: NSObject, ResilientCoordinateDataSource {
+    let rcGuid: String
+    let rcWidth: Int32
+    let rcNumberOfLines: Int32
+    var rcScrollbackOverflow: Int64 = 0
+
+    init(guid: String, width: Int32, lines: Int32) {
+        self.rcGuid = guid
+        self.rcWidth = width
+        self.rcNumberOfLines = lines
+        super.init()
     }
 }

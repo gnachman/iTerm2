@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"What magic phrase is inside the file in this archive? Quote it verbatim.\"},{\"inlineData\":{\"data\":\"UEsDBBQAAAAIAGJgyFzcVEFYkgAAACJMAAAJABwAbWFnaWMudHh0VVQJAAPoESdq6BEnanV4CwABBPUBAAAEFAAAAO3OsQ2DMBRAwZ4p\\\/gKhiDJKFrDAgCWwLcj+SiZITXH9Pen1NM+lrrGXmmNpZ8x52dMnx9SOfubrKq2O0SmKoiiKoiiKoiiKoiiKoiiKoiiKoiiKoiiKoqibqeG95TjSWqbo25muHOWK\\\/kumVvPj9RyHu55TFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVRFEVR\\\/9UXUEsBAh4DFAAAAAgAYmDIXNxUQViSAAAAIkwAAAkAGAAAAAAAAQAAAKSBAAAAAG1hZ2ljLnR4dFVUBQAD6BEnanV4CwABBPUBAAAEFAAAAFBLBQYAAAAAAQABAE8AAADVAAAAAAA=\",\"mime_type\":\"application\\\/zip\"}}],\"role\":\"user\"}]}",
+  "key" : "7d60bdb591114f5c1607eb381e5afc68f5eb1c01ef84f9716a35c40024d5ef06",
+  "response" : {
+    "data" : "{\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Unsupported MIME type: application\/zip\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n",
+    "error" : "HTTP request failed with status 400."
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

@@ -121,7 +121,7 @@ extern NSString * const kTriggerProvenanceKey;
 - (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status;
 - (void)triggerSession:(Trigger *)trigger
     enterWorkgroupWithIdentifier:(NSString *)workgroupUniqueIdentifier;
-- (void)triggerSessionExitWorkgroup:(Trigger *)trigger;
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger leaderOnly:(BOOL)leaderOnly;
 @end
 
 @interface Trigger : NSObject<iTermObject>
@@ -145,6 +145,11 @@ extern NSString * const kTriggerProvenanceKey;
 @property (nullable, nonatomic, retain) NSColor *backgroundColor;
 @property (nonatomic, readonly) BOOL instantTriggerCanFireMultipleTimesPerLine;
 @property (nonatomic, readonly) BOOL isIdempotent;
+
+// Whether this trigger exposes the "leader only" option in its editor (and
+// honors it at fire time). Defaults to NO; the Exit Workgroup trigger
+// overrides it.
+@property (nonatomic, readonly) BOOL hasLeaderOnlyOption;
 @property (class, nonatomic, readonly) NSString *title;
 @property (nonatomic, weak) id<iTermTriggerDelegate> delegate;
 @property (nonatomic, readonly) BOOL detectsPrompt;

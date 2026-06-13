@@ -51,6 +51,9 @@ class iTermOpenPanel: NSObject {
     static var panels = [iTermOpenPanel]()
     var isSelectable: ((RemoteFile) -> Bool)?
     private var sshFilePanel: SSHFilePanel?
+    // NSOpenPanel only weakly retains its delegate; this strong reference keeps
+    // the delegate alive while the system panel is on screen.
+    private var systemPanelDelegate: NSObject?
     private var _directoryURL: URL?
     @objc var directoryURL: URL? {
         get { return _directoryURL }
@@ -300,6 +303,26 @@ class iTermOpenPanel: NSObject {
     }
 }
 
+// Adapts the iTermOpenPanel `isSelectable` predicate (which takes a RemoteFile,
+// matching the SSH panel's API) to NSOpenSavePanelDelegate. Folders always pass
+// so the user can navigate; selection of folders is gated by canChooseDirectories
+// on the panel itself.
+@MainActor
+private final class SystemPanelSelectabilityDelegate: NSObject, NSOpenSavePanelDelegate {
+    let isSelectable: (RemoteFile) -> Bool
+
+    init(isSelectable: @escaping (RemoteFile) -> Bool) {
+        self.isSelectable = isSelectable
+    }
+
+    func panel(_ sender: Any, shouldEnable url: URL) -> Bool {
+        if url.hasDirectoryPath {
+            return true
+        }
+        return isSelectable(RemoteFile(kind: .file(.init()), absolutePath: url.path))
+    }
+}
+
 // MARK: - Private Extension
 @MainActor
 private extension iTermOpenPanel {
@@ -355,14 +378,23 @@ private extension iTermOpenPanel {
                    handler: @escaping (NSApplication.ModalResponse, [URL]?) -> Void) {
         Self.panels.append(self)
         let openPanel = NSOpenPanel()
-        
+
         // Copy settings
         openPanel.canChooseDirectories = canChooseDirectories
         openPanel.canChooseFiles = canChooseFiles
         openPanel.allowsMultipleSelection = allowsMultipleSelection
         openPanel.allowedContentTypes = allowedContentTypes
         openPanel.showsHiddenFiles = showsHiddenFiles
-        
+
+        // Honor isSelectable in the system NSOpenPanel path too. The SSH panel
+        // already consults this predicate; without a delegate here the picker
+        // would happily let the user select a file we'd silently discard.
+        if let isSelectable {
+            let delegate = SystemPanelSelectabilityDelegate(isSelectable: isSelectable)
+            systemPanelDelegate = delegate
+            openPanel.delegate = delegate
+        }
+
         if let directoryURL = directoryURL {
             openPanel.directoryURL = directoryURL
         }
@@ -385,6 +417,7 @@ private extension iTermOpenPanel {
             if switchingPanels {
                 return
             }
+            systemPanelDelegate = nil
             if response == .OK {
                 handler(response, openPanel.urls)
             } else {

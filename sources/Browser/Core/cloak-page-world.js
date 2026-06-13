@@ -1,50 +1,21 @@
 // cloak-page-world.js
 // Runs first in the .page world. In frames belonging to known
 // browser-fingerprinting / captcha endpoints (Cloudflare Turnstile,
-// hCaptcha, etc.) it hides our message-handler surface and sets
-// window.__iTermBrowserCloak so the other page-world bridges (console
+// hCaptcha, etc.) it strips window.webkit so the challenge probe sees a
+// surface that matches stock Safari. The page-world bridges (console
 // wrap, Notification polyfill, geolocation polyfill, audio mute /
-// monitor) skip installation. The result is a frame whose JS surface
-// is indistinguishable from a vanilla WKWebView running Safari.
+// monitor) make the same challenge-frame decision independently using
+// the shared challenge-frame-detection snippet, so we do not communicate
+// through any window property: a marker on window would itself be a
+// detectable fingerprint (real Safari has no such property), defeating
+// the purpose of the cloak.
 
 (function() {
     'use strict';
     try {
-        const href = String(window.location.href || '');
-        const host = String(window.location.hostname || '').toLowerCase();
-
-        // Hostname checks for providers that dedicate an entire host to
-        // the challenge surface.
-        const isChallengeHost =
-            /(^|\.)challenges\.cloudflare\.com$/.test(host) ||
-            /(^|\.)hcaptcha\.com$/.test(host) ||
-            /(^|\.)arkoselabs\.com$/.test(host) ||
-            /(^|\.)funcaptcha\.com$/.test(host);
-
-        // Path checks for providers that serve the challenge as a
-        // sub-path of a general-purpose host. Google reCAPTCHA v2/v3
-        // is primarily served from www.google.com/recaptcha/ and
-        // www.gstatic.com/recaptcha/; recaptcha.net is the regional
-        // fallback. This single test catches all three.
-        const isChallengePath =
-            /\/recaptcha\//i.test(href) ||
-            /\/cdn-cgi\/challenge-platform\//i.test(href) ||
-            /__cf_chl_/.test(href);
-
-        const isChallengeFrame = isChallengeHost || isChallengePath;
-
-        if (!isChallengeFrame) {
+        if (!({{INCLUDE:challenge-frame-detection.js}})) {
             return;
         }
-
-        try {
-            Object.defineProperty(window, '__iTermBrowserCloak', {
-                value: true,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            });
-        } catch (e) {}
 
         // Real Safari does not expose window.webkit. WKWebView does, and
         // anything we register on window.webkit.messageHandlers (e.g.
@@ -52,18 +23,14 @@
         // iTerm2ConsoleLog) is enumerable from the page. Strip the whole
         // namespace inside the challenge frame so the probe sees a
         // surface that matches stock Safari.
+        // On current WKWebView window.webkit is a configurable property,
+        // so the delete removes it cleanly and the namespace is gone. We
+        // intentionally do not install a stand-in if the delete ever
+        // fails: an own "webkit" property whose value is undefined is a
+        // cleaner fingerprint than the original (real Safari has no such
+        // property at all), so it would defeat the purpose of the cloak.
         try {
             delete window.webkit;
-        } catch (e) {}
-        try {
-            if ('webkit' in window) {
-                Object.defineProperty(window, 'webkit', {
-                    value: undefined,
-                    writable: true,
-                    configurable: true,
-                    enumerable: false
-                });
-            }
         } catch (e) {}
     } catch (e) {}
 })();

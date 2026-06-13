@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\"}],\"model\":\"claude-sonnet-4-0\",\"temperature\":0}",
+  "key" : "8a2892fecc7634f237c8a734ee899c5ca7b1ce9a4360fcd5956c248d02ba86e4",
+  "response" : {
+    "data" : "{\"model\":\"claude-sonnet-4-20250514\",\"id\":\"msg_01P2gdudhrywNXLoH7py73XW\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"OK.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":18,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

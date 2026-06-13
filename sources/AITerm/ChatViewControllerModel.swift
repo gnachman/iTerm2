@@ -11,12 +11,17 @@ protocol ChatViewControllerModelDelegate: AnyObject {
     func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet)
 }
 
+// Per-chat model that drives the chat view's table. Owns the
+// in-memory items array (messages, date separators, typing
+// indicator), translates streaming updates into rate-limited row
+// reloads, and exposes session-binding accessors that the
+// session-bound code paths in ChatViewController read.
 class ChatViewControllerModel {
     weak var delegate: ChatViewControllerModelDelegate?
     private let listModel: ChatListModel
     // Avoid streaming so quickly that we bog down recalculating textview geometry and parsing markdown.
     private let rateLimit = iTermRateLimitedUpdate(name: "reloadCell", minimumInterval: 1)
-    private var pendingItemIdentities = Set<ChatViewControllerModel.Item.Identity>()
+    private var pendingItemIdentities = Set<Item.Identity>()
     var lastStreamingState = ClientLocal.Action.StreamingState.stopped
 
     enum Item: CustomDebugStringConvertible {
@@ -91,15 +96,11 @@ class ChatViewControllerModel {
     }
 
     var terminalSessionGuid: String? {
-        get {
-            listModel.chat(id: chatID)?.terminalSessionGuid
-        }
+        listModel.chat(id: chatID)?.terminalSessionGuid
     }
 
     var browserSessionGuid: String? {
-        get {
-            listModel.chat(id: chatID)?.browserSessionGuid
-        }
+        listModel.chat(id: chatID)?.browserSessionGuid
     }
 
     func setTerminalSessionGuid(_ newValue: String?) throws {
@@ -126,26 +127,38 @@ class ChatViewControllerModel {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
                     .clientLocal, .renameChat, .commit, .setPermissions, .terminalCommand,
-                    .multipart, .vectorStoreCreated:
+                    .multipart, .vectorStoreCreated, .watcherEvent:
                 return
             }
         }
     }
 
-    init(chat: Chat, listModel: ChatListModel) {
+    init(chatID: String, listModel: ChatListModel) {
         self.listModel = listModel
-        chatID = chat.id
+        self.chatID = chatID
         var lastDate: DateComponents?
         if let messages = listModel.messages(forChat: chatID, createIfNeeded: false) {
+            // An auto-approved/denied tool call now persists its
+            // .remoteCommandRequest for history completeness, but a request
+            // that has already been resolved (its .remoteCommandResponse is
+            // present) must not surface as an interactive Allow/Deny prompt.
+            // Hide any such resolved request; live delivery never carries
+            // these (ChatClient persists them without broker delivery), so
+            // this only affects the rebuild/reload path.
+            let resolvedRequestIDs = Self.resolvedRequestIDs(in: messages)
             for message in messages {
                 if message.hiddenFromClient {
+                    continue
+                }
+                if case .remoteCommandRequest = message.content,
+                   resolvedRequestIDs.contains(message.uniqueID) {
                     continue
                 }
                 let date = message.dateErasingTime
                 if alwaysAppendDate || lastDate != date {
                     items.append(.date(date))
                 }
-                ChatViewControllerModel.assertMessageTypeAllowed(message)
+                Self.assertMessageTypeAllowed(message)
                 items.append(.message(Item.UpdatableMessage(message)))
                 lastDate = Calendar.current.dateComponents([.year, .month, .day], from: message.sentDate)
                 if case .clientLocal(let cl) = message.content,
@@ -155,6 +168,20 @@ class ChatViewControllerModel {
             }
         }
         initializeItemsDelegate()
+    }
+
+    // The set of request uniqueIDs that already have a matching
+    // .remoteCommandResponse (keyed by requestUUID). A request in this set has
+    // been resolved and should not render as an interactive prompt. Pure and
+    // static so it can be unit-tested without a ChatListModel.
+    static func resolvedRequestIDs<S: Sequence>(in messages: S) -> Set<UUID>
+    where S.Element == Message {
+        Set(messages.compactMap { message -> UUID? in
+            if case .remoteCommandResponse(_, let requestUUID, _, _) = message.content {
+                return requestUUID
+            }
+            return nil
+        })
     }
 
     private func initializeItemsDelegate() {
@@ -219,7 +246,7 @@ class ChatViewControllerModel {
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .commit,
                 .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated,
-                .userCommand:
+                .userCommand, .watcherEvent:
             break
         }
         let saved = showTypingIndicator

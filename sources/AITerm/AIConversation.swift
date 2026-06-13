@@ -218,6 +218,20 @@ struct AIConversation {
 
     func cancelOutstandingOperation() {
         controller.cancelOutstandingOperation()
+        // controller.cancelOutstandingOperation routes through
+        // handle(.cancel), which the state machine ignores in
+        // .ground state (AITerm.swift:227-229). We can be in
+        // .ground because parseStreamingResponse(final:true) moved
+        // here after dispatching a function_call that's still
+        // parked in the function-dispatch layer (the
+        // pendingRemoteCommands map in ChatAgent). The delegate
+        // callback never fired so our completion is stuck. Fire it
+        // directly if the delegate still thinks there's a request
+        // in flight. Idempotent: aitermControllerDidCancelOutstandingRequest
+        // is a no-op when busy is already false.
+        if delegate.busy {
+            delegate.aitermControllerDidCancelOutstandingRequest(controller)
+        }
     }
     private func cancel() {
         controller.cancel()
@@ -301,10 +315,6 @@ struct AIConversation {
 
     mutating func complete(_ completion: @escaping (Result<AIConversation, Error>) -> ()) {
         complete(streaming: nil, completion: completion)
-    }
-
-    mutating func stop() {
-        controller.cancel()
     }
 
     mutating func complete(streaming: ((LLM.StreamingUpdate, String?) -> ())?,
@@ -395,5 +405,40 @@ struct AIConversation {
             return truncate(messages: [lastMessage], maxTokens: maxTokens)
         }
         return truncate(messages: messages, maxTokens: maxTokens)
+    }
+}
+
+// MARK: - One-shot completion
+
+// Retention for fire-and-forget conversations: AIConversation is a value
+// type that owns a controller doing async work, so somebody must keep a
+// copy alive until the completion runs. Main-thread only.
+private enum AIConversationOneShotRetention {
+    static var retained = [UUID: AIConversation]()
+}
+
+extension AIConversation {
+    // Completes a fire-and-forget conversation, retaining it (and the
+    // controller it owns) until the completion has run. Use this instead
+    // of a hand-rolled stored property or static dictionary: complete is
+    // mutating and can run its callback synchronously (e.g. when no
+    // registration exists), so a caller that stores the conversation and
+    // then mutates that same storage from inside the callback traps under
+    // exclusivity enforcement. This helper calls complete on a local
+    // copy, stores it afterward, and releases on the next runloop turn,
+    // which keeps the ordering correct in the synchronous case too. Call
+    // on the main thread.
+    static func completeOneShot(_ conversation: AIConversation,
+                                completion: @escaping (Result<AIConversation, Error>) -> ()) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        var mutable = conversation
+        let token = UUID()
+        mutable.complete { result in
+            DispatchQueue.main.async {
+                AIConversationOneShotRetention.retained.removeValue(forKey: token)
+            }
+            completion(result)
+        }
+        AIConversationOneShotRetention.retained[token] = mutable
     }
 }

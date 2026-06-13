@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"function_call\":\"auto\",\"max_tokens\":127839,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"},{\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"arguments\":\"{}\",\"name\":\"get_random_word\"},\"id\":\"call_00_sjxIlYnGtSOKtrBey6uu0790\",\"type\":\"function\"}]},{\"content\":\"MAGENTA-LARK-77\",\"role\":\"tool\",\"tool_call_id\":\"call_00_sjxIlYnGtSOKtrBey6uu0790\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"disabled\"},\"tools\":[{\"function\":{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "7323780b13a23b94167c4fabdc35e896ab847f8b08b2442b530414b9849be3bd",
+  "response" : {
+    "data" : "{\"id\":\"8be23e84-8d37-42da-b7db-cfbe9e306acd\",\"object\":\"chat.completion\",\"created\":1780870933,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The random word returned by the tool is **MAGENTA-LARK-77**. That's quite a colorful and whimsical combination!\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":345,\"completion_tokens\":28,\"total_tokens\":373,\"prompt_tokens_details\":{\"cached_tokens\":256},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":89},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

@@ -7,7 +7,7 @@
 //  on every subsequent request; iTerm2 stores it on the durable
 //  `Message.agentReasoning` field (round-tripped through Codable JSON in
 //  SQLite) and harvests streamed reasoning out of ephemeral statusUpdate
-//  subparts in `removeStatusUpdates`. These tests anchor that contract so it
+//  subparts in `removeReasoningStatusSubparts`. These tests anchor that contract so it
 //  can't silently regress.
 //
 
@@ -59,10 +59,10 @@ final class AIChatMessagePersistenceTests: XCTestCase {
         XCTAssertEqual(decoded.author, .agent)
     }
 
-    // MARK: - Streaming harvest at removeStatusUpdates
+    // MARK: - Streaming harvest at removeReasoningStatusSubparts
 
     /// During streaming, reasoning arrives as one or more statusUpdate
-    /// subparts. The first text chunk to arrive triggers removeStatusUpdates;
+    /// subparts. The first text chunk to arrive triggers removeReasoningStatusSubparts;
     /// the harvested reasoning must move into agentReasoning before the
     /// statusUpdate subparts are stripped, or the reasoning is lost from the
     /// persisted message and the next turn 400s.
@@ -86,7 +86,7 @@ final class AIChatMessagePersistenceTests: XCTestCase {
             sentDate: Date(),
             uniqueID: UUID())
 
-        message.removeStatusUpdates()
+        message.removeReasoningStatusSubparts()
 
         XCTAssertEqual(message.agentReasoning, "First, then the conclusion.")
         // Status updates should be gone; visible body remains.
@@ -103,7 +103,7 @@ final class AIChatMessagePersistenceTests: XCTestCase {
     }
 
     /// A second harvest must append, not replace. Streaming runs may emit
-    /// status updates in batches, separated by removeStatusUpdates calls.
+    /// status updates in batches, separated by removeReasoningStatusSubparts calls.
     func testRemoveStatusUpdates_appendsReasoningAcrossCalls() {
         let firstWave = LLM.Message.Attachment(
             inline: true,
@@ -115,7 +115,7 @@ final class AIChatMessagePersistenceTests: XCTestCase {
             content: .multipart([.attachment(firstWave)], vectorStoreID: nil),
             sentDate: Date(),
             uniqueID: UUID())
-        message.removeStatusUpdates()
+        message.removeReasoningStatusSubparts()
         XCTAssertEqual(message.agentReasoning, "wave one. ")
 
         let secondWave = LLM.Message.Attachment(
@@ -126,11 +126,11 @@ final class AIChatMessagePersistenceTests: XCTestCase {
             message.content = .multipart(subparts + [.attachment(secondWave)],
                                          vectorStoreID: vsid)
         }
-        message.removeStatusUpdates()
+        message.removeReasoningStatusSubparts()
         XCTAssertEqual(message.agentReasoning, "wave one. wave two.")
     }
 
-    /// removeStatusUpdates must not invent agentReasoning when no
+    /// removeReasoningStatusSubparts must not invent agentReasoning when no
     /// reasoningSummaryUpdate subparts are present, even if other
     /// statusUpdate kinds (e.g. webSearchStarted) are.
     func testRemoveStatusUpdates_doesNotSetAgentReasoning_forUnrelatedStatusUpdates() {
@@ -144,7 +144,7 @@ final class AIChatMessagePersistenceTests: XCTestCase {
             content: .multipart([.attachment(webSearch)], vectorStoreID: nil),
             sentDate: Date(),
             uniqueID: UUID())
-        message.removeStatusUpdates()
+        message.removeReasoningStatusSubparts()
         XCTAssertNil(message.agentReasoning)
     }
 

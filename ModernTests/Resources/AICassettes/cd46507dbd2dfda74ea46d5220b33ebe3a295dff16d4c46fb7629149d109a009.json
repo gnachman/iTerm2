@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127968,\"messages\":[{\"content\":\"Briefly explain why the sky is blue. Reply in one short sentence.\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"enabled\"}}",
+  "key" : "cd46507dbd2dfda74ea46d5220b33ebe3a295dff16d4c46fb7629149d109a009",
+  "response" : {
+    "data" : "{\"id\":\"25154d91-bad3-44bd-8210-be5cd0d4ce1d\",\"object\":\"chat.completion\",\"created\":1780870914,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The sky appears blue because sunlight is scattered by Earth's atmosphere, and blue light is scattered more strongly than other colors due to its shorter wavelength.\",\"reasoning_content\":\"We need to answer why the sky is blue in one short sentence. The Rayleigh scattering explanation: sunlight scatters off atmospheric particles, and shorter wavelengths (blue) scatter more than longer wavelengths (red), making the sky appear blue.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":19,\"completion_tokens\":76,\"total_tokens\":95,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":46},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":19},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

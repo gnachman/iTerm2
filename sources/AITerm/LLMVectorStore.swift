@@ -13,7 +13,7 @@ struct LLMVectorStoreBatchStatusChecker {
 
     init?(provider: LLMProvider, apiKey: String, batchID: String, vectorStoreID: String) {
         switch provider.model.api {
-        case .chatCompletions, .completions, .earlyO1, .gemini, .llama, .deepSeek, .anthropic:
+        case .chatCompletions, .completions, .earlyO1, .gemini, .llama, .deepSeek, .anthropic, .appleIntelligence:
             return nil
         case .responses:
             self.provider = provider
@@ -71,7 +71,7 @@ struct LLMVectorStoreAdder {
 
     init?(provider: LLMProvider, apiKey: String, fileIDs: [String], vectorStoreID: String) {
         switch provider.model.api {
-        case .chatCompletions, .completions, .earlyO1, .gemini, .llama, .deepSeek, .anthropic:
+        case .chatCompletions, .completions, .earlyO1, .gemini, .llama, .deepSeek, .anthropic, .appleIntelligence:
             return nil
         case .responses:
             self.provider = provider
@@ -164,7 +164,7 @@ struct LLMVectorStoreCreator {
 
     func body() throws -> Data? {
         switch provider.model.api {
-        case .chatCompletions, .completions, .earlyO1, .gemini, .llama, .deepSeek, .anthropic:
+        case .chatCompletions, .completions, .earlyO1, .gemini, .llama, .deepSeek, .anthropic, .appleIntelligence:
             return nil
         case .responses:
             let payload: [String: String] = ["name": name]

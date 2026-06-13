@@ -380,6 +380,13 @@ extension iTermMetalView {
         guard let metalLayerBox else {
             return nil
         }
+        // A zero-dimension drawable size makes QuartzCore's nextDrawable divide by
+        // a drawable dimension and crash with EXC_ARITHMETIC. There's nothing to
+        // draw at that size, so skip the frame.
+        let drawableSize = metalLayerBox.drawableSize
+        guard drawableSize.width >= 1, drawableSize.height >= 1 else {
+            return nil
+        }
         let context = metalLayerBox.layerContext
         var timedOut = false
         while !timedOut {

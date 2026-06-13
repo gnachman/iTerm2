@@ -96,29 +96,37 @@ NSString *const iTermDynamicProfileSymbolName = @"iTermDynamicProfileSymbolName"
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle {
     [super setBackgroundStyle:backgroundStyle];
     _emphasized = (backgroundStyle == NSBackgroundStyleEmphasized);
-    if (@available(macOS 12.0, *)) {
-        [self updateSymbolImagesForEmphasized:_emphasized];
-    }
+    [self.textField it_retintDynamicSymbolAttachmentsForEmphasized:_emphasized
+                                                             alpha:0.75
+                                                        symbolSize:NSMakeSize(16, 16)];
 }
 
 - (void)viewDidChangeEffectiveAppearance {
     [super viewDidChangeEffectiveAppearance];
-    if (@available(macOS 12.0, *)) {
-        [self updateSymbolImagesForEmphasized:_emphasized];
-    }
+    [self.textField it_retintDynamicSymbolAttachmentsForEmphasized:_emphasized
+                                                             alpha:0.75
+                                                        symbolSize:NSMakeSize(16, 16)];
 }
 
-- (void)updateSymbolImagesForEmphasized:(BOOL)emphasized API_AVAILABLE(macos(12.0)) {
+@end
+
+@implementation NSTextField(iTermDynamicSymbol)
+
+- (void)it_retintDynamicSymbolAttachmentsForEmphasized:(BOOL)emphasized
+                                                 alpha:(CGFloat)alpha
+                                            symbolSize:(NSSize)symbolSize {
     [self.effectiveAppearance performAsCurrentDrawingAppearance:^{
-        [self updateSymbolImagesForEmphasizedImpl:emphasized];
+        [self it_retintDynamicSymbolAttachmentsImplForEmphasized:emphasized alpha:alpha symbolSize:symbolSize];
     }];
 }
 
-- (void)updateSymbolImagesForEmphasizedImpl:(BOOL)emphasized API_AVAILABLE(macos(12.0)) {
-    NSAttributedString *original = self.textField.attributedStringValue;
+- (void)it_retintDynamicSymbolAttachmentsImplForEmphasized:(BOOL)emphasized
+                                                     alpha:(CGFloat)alpha
+                                                symbolSize:(NSSize)symbolSize {
+    NSAttributedString *original = self.attributedStringValue;
     NSMutableAttributedString *m = [original mutableCopy];
     __block BOOL changed = NO;
-    // Enumerate in reverse so ranges stay valid after replacement
+    // Enumerate in reverse so ranges stay valid after replacement.
     [original enumerateAttribute:NSAttachmentAttributeName
                          inRange:NSMakeRange(0, original.length)
                          options:NSAttributedStringEnumerationReverse
@@ -132,12 +140,16 @@ NSString *const iTermDynamicProfileSymbolName = @"iTermDynamicProfileSymbolName"
         if (!symbolName) {
             return;
         }
-        NSColor *color = emphasized ? [[NSColor alternateSelectedControlTextColor] colorWithAlphaComponent:0.75]
-                                    : [[NSColor labelColor] colorWithAlphaComponent:0.75];
+        NSColor *base = emphasized ? [NSColor alternateSelectedControlTextColor] : [NSColor labelColor];
+        NSColor *color = alpha < 1 ? [base colorWithAlphaComponent:alpha] : base;
         NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithHierarchicalColor:color];
         NSImage *image = [[NSImage imageWithSystemSymbolName:symbolName accessibilityDescription:nil]
                           imageWithSymbolConfiguration:config];
-        image.size = NSMakeSize(16, 16);
+        if (symbolSize.width > 0 && symbolSize.height > 0) {
+            image.size = symbolSize;
+        } else {
+            image.size = attachment.image.size;
+        }
         NSTextAttachment *newAttachment = [[NSTextAttachment alloc] init];
         newAttachment.image = image;
         NSMutableAttributedString *replacement = [[NSMutableAttributedString alloc]
@@ -147,7 +159,7 @@ NSString *const iTermDynamicProfileSymbolName = @"iTermDynamicProfileSymbolName"
         changed = YES;
     }];
     if (changed) {
-        self.textField.attributedStringValue = m;
+        self.attributedStringValue = m;
     }
 }
 

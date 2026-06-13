@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash:streamGenerateContent?alt=sse&key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Reply with exactly the single word: PINEAPPLE\"}],\"role\":\"user\"}]}",
+  "key" : "f6717d38c015dc595e956c201de8d263d770c9bf46b0df674b6ab6fa17a6e6cc",
+  "response" : {
+    "data" : "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"PINEAPPLE\"}],\"role\": \"model\"},\"finishReason\": \"STOP\",\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 11,\"candidatesTokenCount\": 3,\"totalTokenCount\": 39,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 11}],\"thoughtsTokenCount\": 25,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.5-flash\",\"responseId\": \"QPAlaqT4B9CN_PUP67GjuQo\"}\r\n\r\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+    "data: {\"candidates\": [{\"content\": {\"parts\": [{\"text\": \"PINEAPPLE\"}],\"role\": \"model\"},\"finishReason\": \"STOP\",\"index\": 0}],\"usageMetadata\": {\"promptTokenCount\": 11,\"candidatesTokenCount\": 3,\"totalTokenCount\": 39,\"promptTokensDetails\": [{\"modality\": \"TEXT\",\"tokenCount\": 11}],\"thoughtsTokenCount\": 25,\"serviceTier\": \"standard\"},\"modelVersion\": \"gemini-2.5-flash\",\"responseId\": \"QPAlaqT4B9CN_PUP67GjuQo\"}\r\n\r\n"
+  ],
+  "streaming" : true
+}

@@ -807,6 +807,7 @@ const int kColorMapAnsiBrightModifier = 8;
 @dynamic darkMode;
 @dynamic generation;
 @dynamic harmonize;
+@dynamic backgroundIsDark;
 
 - (instancetype)initWithSource:(iTermColorMap *)source {
     _impl = [[iTermColorMapSanitizingAdapterImpl alloc] initWithSource:source];

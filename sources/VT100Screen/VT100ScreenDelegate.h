@@ -71,7 +71,7 @@ typedef NS_ENUM(NSInteger, iTermLinesShiftedReason) {
 - (void)triggerSideEffectShowCapturedOutputTool;
 - (void)triggerSessionSetBufferInput:(BOOL)shouldBuffer;
 - (void)triggerSideEffectEnterWorkgroupWithIdentifier:(NSString * _Nonnull)workgroupUniqueIdentifier;
-- (void)triggerSideEffectExitWorkgroup;
+- (void)triggerSideEffectExitWorkgroupLeaderOnly:(BOOL)leaderOnly;
 
 @end
 
@@ -294,6 +294,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenPromptDidStartAtLine:(int)line;
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading> _Nonnull)mark;
 
+// Called for OSC 133;A / 133;P with a non-initial `k=` attribute
+// (secondary/continuation/right/unknown). The receiver should NOT treat this
+// as a new prompt for mark navigation, prompt subscriptions, or the prompt
+// state machine; the only required side effect is unblocking any paste-with-
+// wait-for-prompt operation currently waiting on the next prompt-start.
+- (void)screenPromptOfNonInitialKindDidStart:(VT100PromptKind)kind
+    NS_SWIFT_NAME(screenPromptOfNonInitialKindDidStart(_:));
+
 - (void)screenStealFocus;
 
 - (void)screenSetProfileToProfileNamed:(NSString * _Nonnull)value;
@@ -505,6 +513,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (BOOL)screenOffscreenCommandLineShouldBeVisibleForCurrentCommand;
 - (void)screenUpdateBlock:(NSString * _Nonnull)blockID action:(iTermUpdateBlockAction)action;
 - (void)screenResizeResilientCoordinates:(VT100GridAbsCoord(^ _Nonnull)(VT100GridAbsCoord))convert;
+
+// Same as -screenResizeResilientCoordinates: but for the saved
+// interval tree's RC pool. The delegate should post on the saved-tree
+// MAIN guid (distinct from the primary main pool guid). Called once
+// per resize, AFTER the primary broadcast. `convert` is built against
+// the alt-screen linebuffer so it correctly resolves alt-content
+// marks that currently live in the saved tree.
+- (void)screenResizeResilientCoordinatesForSavedTree:(VT100GridAbsCoord(^ _Nonnull)(VT100GridAbsCoord))convert
+                                                guid:(NSString * _Nonnull)savedTreeMainGuid;
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate * _Nonnull)status;
 

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"},{\"content\":[{\"text\":\"Sure! Let me fetch a random word for you right now.\",\"type\":\"text\"},{\"id\":\"toolu_01WvuLcGvzjCDyb1C7GBucET\",\"input\":{},\"name\":\"get_random_word\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"MAGENTA-LARK-77\",\"tool_use_id\":\"toolu_01WvuLcGvzjCDyb1C7GBucET\",\"type\":\"tool_result\"}],\"role\":\"user\"}],\"model\":\"claude-sonnet-4-6\",\"temperature\":0,\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"input_schema\":{\"properties\":{},\"required\":[],\"type\":\"object\"},\"name\":\"get_random_word\"}]}",
+  "key" : "2df44e51ab7b464b5ba16a8ea5953bf619dea754a4548f11afd8131632e29a38",
+  "response" : {
+    "data" : "{\"model\":\"claude-sonnet-4-6\",\"id\":\"msg_01AU35PwCASDDXZV35DALkRD\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"The random word (or phrase) returned is: **MAGENTA-LARK-77**! 🎉\\n\\nIt's quite a unique and creative combination — I can almost imagine a **MAGENTA-LARK-77** being some kind of futuristic spacecraft or a rare, colorful bird species discovered in a sci-fi universe. What do you think it sounds like to you?\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":453,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":89,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

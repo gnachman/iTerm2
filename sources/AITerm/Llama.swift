@@ -150,12 +150,12 @@ struct LlamaBodyRequestBuilder {
                 switch part {
                 case .text(let textContent):
                     switch combined.last {
-                    case .none, .file:
+                    case .none, .file, .imageURL, .inputAudio:
                         combined.append(part)
                     case .text(let existingTextContent):
                         combined[combined.count - 1] = .text(.init(text: existingTextContent.text + "\n" + textContent.text))
                     }
-                case .file:
+                case .file, .imageURL, .inputAudio:
                     combined.append(part)
                 }
             }

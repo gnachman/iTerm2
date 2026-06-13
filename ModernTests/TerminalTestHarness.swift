@@ -65,6 +65,97 @@ class TerminalTestHarness {
         })
     }
 
+    // MARK: - FinalTerm / OSC 133 shell integration
+
+    /// Send FinalTerm A (prompt start). Cursor position at call time is where the
+    /// prompt mark is created. `freshLine:true` matches OSC 133;A; pass `false`
+    /// to simulate OSC 133;P (no implicit CR+LF if cursor is mid-line). Pass a
+    /// non-nil `aid` to simulate OSC 133;A;aid=<id> from an aid-emitting shell.
+    func sendPromptStart(wasInCommand: Bool = false,
+                         kind: VT100PromptKind = .initial,
+                         freshLine: Bool = true,
+                         aid: String? = nil) {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalPromptDidStart(wasInCommand,
+                                                kind: kind,
+                                                freshLine: freshLine,
+                                                aid: aid)
+        })
+    }
+
+    /// Send FinalTerm B (command read start / prompt end). Cursor position at call time
+    /// marks where the user's typed command begins.
+    func sendCommandStart() {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalCommandDidStart()
+        })
+    }
+
+    /// Send FinalTerm C (command read end / output start). Cursor position at call time
+    /// marks where command output begins.
+    func sendCommandEnd() {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalCommandDidEnd()
+        })
+    }
+
+    /// Send FinalTerm D;<code> (return code). Pass `aid` to take the
+    /// close-by-aid path (close the mark with that aid + cascade-close
+    /// descendants); nil aid uses today's topmost-open behavior. Pass
+    /// nil for `code` to simulate `D;aid=X` (no integer exit code) — the
+    /// target mark closes but its hasCode stays false.
+    func sendReturnCode(_ code: Int32?, aid: String? = nil) {
+        let boxed: NSNumber? = code.map { NSNumber(value: $0) }
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalReturnCode(ofLastCommandWas: boxed, aid: aid)
+        })
+    }
+
+    /// Send FinalTerm D-while-inCommand (the abort path). Drives the
+    /// receiver directly because the parser's `inCommand_` state is
+    /// VT100Terminal-internal and isn't reachable from this harness's
+    /// other helpers.
+    func sendAbort(aid: String? = nil) {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalAbortCommand(withAid: aid)
+        })
+    }
+
+    /// Append literal text at cursor.
+    func appendText(_ text: String) {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendString(atCursor: text)
+        })
+    }
+
+    /// Move cursor to a new line (CR+LF).
+    func newline() {
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.appendCarriageReturnLineFeed()
+        })
+    }
+
+    // MARK: - State accessors for assertions
+
+    /// The most recent mark that represents a command (may be running or finished).
+    var lastCommandMark: (any VT100ScreenMarkReading)? {
+        return screen.lastCommandMark()
+    }
+
+    /// The most recent prompt mark.
+    var lastPromptMark: (any VT100ScreenMarkReading)? {
+        return screen.lastPromptMark()
+    }
+
+    /// All VT100ScreenMarks currently in the interval tree.
+    func allScreenMarks() -> [VT100ScreenMark] {
+        var result: [VT100ScreenMark] = []
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            result = mutableState.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
+        })
+        return result
+    }
+
     /// Synchronize threads and execute pending side effects
     func sync() {
         screen.performBlock(joinedThreads: { _, _, _ in })

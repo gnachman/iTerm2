@@ -137,6 +137,22 @@ class iTermBrowserGeolocationHandler: NSObject {
         let origin = message.frameInfo.securityOrigin
         let frame = message.frameInfo
         Task {
+            // clearWatch and cancelOperation only stop in-flight work; they
+            // never start location access, so they must run regardless of
+            // permission state. Requesting permission here would let a
+            // teardown call pop a prompt, and gating it behind a denial
+            // would leak the watch. Handle them before the permission gate.
+            switch type {
+            case "clearWatch":
+                await handleClearWatch(messageDict: messageDict)
+                return
+            case "cancelOperation":
+                await handleCancelOperation(messageDict: messageDict)
+                return
+            default:
+                break
+            }
+
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: origin)
             let permission = await iTermBrowserPermissionManager(user: user).requestPermission(
                 for: .geolocation,
@@ -159,10 +175,6 @@ class iTermBrowserGeolocationHandler: NSObject {
                 await handleGetCurrentPosition(webView: webView, frame: frame, messageDict: messageDict)
             case "watchPosition":
                 await handleWatchPosition(webView: webView, frame: frame, messageDict: messageDict)
-            case "clearWatch":
-                await handleClearWatch(messageDict: messageDict)
-            case "cancelOperation":
-                await handleCancelOperation(messageDict: messageDict)
             default:
                 DLog("Unknown geolocation message type: \(type)")
             }

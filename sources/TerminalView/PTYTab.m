@@ -240,9 +240,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSMutableArray<PTYSession *> *_sessionsWithDeferredFontChanges;
     iTermVariableScope<iTermTabScope> *_variablesScope;
 
-    // Capture of the session reading order when a session is maximized.
-    // Used so next/previous session will work consistently post-maximization.
-    NSArray<NSString *> *_orderedGUIDs;
+    // Reading order of the panes, captured when a session is maximized, so
+    // next/previous-pane keeps working while maximized (the live split geometry
+    // is gone then). Stored as idMap_ keys rather than session GUIDs or raw
+    // SessionViews: idMap_ is the structure every while-maximized mutation
+    // already keeps current (peer swaps; synthetic-session teardown in
+    // -showLiveSession:inPlaceOf:), so resolving the order through it survives a
+    // pane getting a new GUID (Session > Restart Session, see -[PTYSession
+    // replaceTerminatedShellWithNewInstance]) or a new SessionView (synthetic
+    // sessions) without this snapshot drifting out of date. A raw-GUID or
+    // raw-SessionView snapshot would silently stop resolving the changed pane
+    // and break -sessionInDirection: (cmd-[ / cmd-]).
+    NSArray<NSNumber *> *_orderedSessionIDs;
     iTermBuiltInFunctions *_methods;
     iTermTmuxOptionMonitor *_tmuxTitleMonitor;
     BOOL _pinned;
@@ -689,6 +698,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return [self.viewToSessionMap objectForKey:sessionView];
 }
 
+// The idMap_ key whose stashed SessionView is `view`, or nil. Used to record the
+// maximized reading order (_orderedSessionIDs) by stable key rather than by a
+// SessionView/GUID that a later swap could invalidate. Only meaningful while
+// idMap_ is populated (i.e. maximized).
+- (NSNumber *)idMapKeyForView:(SessionView *)view {
+    for (NSNumber *key in idMap_) {
+        if (idMap_[key] == view) {
+            return key;
+        }
+    }
+    return nil;
+}
+
 - (NSRect)absoluteFrame {
     NSRect result;
     result.origin = [root_ convertPoint:NSMakePoint(0, 0) toView:nil];
@@ -1004,8 +1026,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (NSArray *)orderedSessions {
     if ([iTermAdvancedSettingsModel navigatePanesInReadingOrder]) {
         if (self.isMaximized) {
-            return [_orderedGUIDs mapWithBlock:^id(NSString *guid) {
-                return [self sessionWithGUID:guid];
+            return [_orderedSessionIDs mapWithBlock:^id(NSNumber *idMapKey) {
+                SessionView *sessionView = idMap_[idMapKey];
+                return sessionView ? [self sessionForSessionView:sessionView] : nil;
             }];
         }
         BOOL useTrueReadingOrder = !root_.isVertical;
@@ -1077,6 +1100,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSArray *orderedSessions = [self orderedSessions];
     NSUInteger index = [orderedSessions indexOfObject:[self activeSession]];
     if (index == NSNotFound) {
+        // Should not happen: the active session is always a registered pane, and
+        // -orderedSessions re-derives sessions from the live SessionViews. Log
+        // loudly if the maximized snapshot ever drifts out of sync again.
+        DLog(@"sessionInDirection: activeSession %@ (guid=%@) not found in orderedSessions. "
+             @"isMaximized=%@ activeIsTrackedPane=%@ activeKeyInSnapshot=%@ "
+             @"orderedSessions=%@ sessions=%@ orderedSessionIDs=%@",
+             self.activeSession, self.activeSession.guid, @(isMaximized_),
+             @([[self sessions] containsObject:self.activeSession]),
+             @([_orderedSessionIDs containsObject:[self idMapKeyForView:self.activeSession.view]]),
+             orderedSessions, [self sessions], _orderedSessionIDs);
         return nil;
     }
     index = (index + orderedSessions.count + offset) % orderedSessions.count;
@@ -1685,6 +1718,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ addObject:oldView];
     [parentSplit replaceSubview:oldView with:newView];
 
+    // NOTE: We set newView.frame to oldView.frame above. If they are equal in
+    // size then -resizeSubviewsWithOldSize: does not fire, so the synthetic
+    // session's scrollview frame is NOT re-fit to the new view here. Watch for a
+    // mismatch between the grid (rows) and the scrollview height: if they
+    // disagree, click hit-testing (coordForPoint:) and the userScroll=NO/YES
+    // drawing paths will be off by (rows - scrollviewHeight/lineHeight) lines.
+    DLog(@"IR enter swap: synthetic=%p grid=%dx%d view.frame=%@ scrollview.frame=%@ | live=%p grid=%dx%d",
+         newSession, newSession.columns, newSession.rows,
+         NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame),
+         oldSession, oldSession.columns, oldSession.rows);
+
     [newSession.nameController setNeedsUpdate];
 
     newSession.liveSession = oldSession;
@@ -1728,6 +1772,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)setDvrInSession:(PTYSession*)newSession {
     PTYSession *oldSession = activeSession_;
     [self replaceActiveSessionWithSyntheticSession:newSession];
+
+    // The synthetic session was created at a default size and swapped in with
+    // newView.frame = oldView.frame, which usually does not fire
+    // -resizeSubviewsWithOldSize:. Its SessionView can have different chrome than
+    // the live session's (e.g. no per-pane status bar), so its grid (copied from
+    // the live session) may not fill its view: the scrollview ends up a few rows
+    // taller than the grid. During instant replay that makes click hit-testing
+    // (-coordForPoint:) select the wrong line. Fit the grid to the view here so
+    // they agree; -setDvr: below then resizes to the recorded frame size (which
+    // adjusts the window so the replayed content fills the view).
+    if (!self.isTmuxTab) {
+        [self fitSessionToCurrentViewSize:newSession];
+    }
+    [newSession.view layoutContentsForNewlyActiveSession];
+
     [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
 }
 
@@ -1738,10 +1797,25 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     SessionView* oldView = [replaySession view];
     SessionView* newView = [liveSession view];
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
+    DLog(@"IR exit swap (before): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@ | synthetic=%p view.frame=%@",
+         liveSession, liveSession.columns, liveSession.rows,
+         NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame),
+         replaySession, NSStringFromRect(oldView.frame));
     newView.frame = oldView.frame;
     [parentSplit replaceSubview:oldView with:newView];
     [hiddenLiveViews_ removeObject:newView];
     activeSession_ = liveSession;
+
+    // As in -replaceActiveSessionWithSyntheticSession:, setting newView.frame to
+    // an equal-sized oldView.frame skips -resizeSubviewsWithOldSize:, so the live
+    // session's scrollview frame is NOT re-fit to the restored view. Unlike the
+    // peer-swap path (-sessionActivateSession:), this path does not call
+    // -fitSessionToCurrentViewSize: or -layoutContentsForNewlyActiveSession, so a
+    // stale scrollview height (off by a few lines from rows*lineHeight) survives
+    // the exit from instant replay. Log it so the mismatch is visible.
+    DLog(@"IR exit swap (after): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
+         liveSession, liveSession.columns, liveSession.rows,
+         NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame));
 
     [fakeParentWindow_ rejoin:realParentWindow_];
     replaySession.liveSession = nil;
@@ -1759,6 +1833,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             break;
         }
     }
+
+    // The view swap above set newView.frame = oldView.frame, which usually does
+    // not change size and so does not fire -resizeSubviewsWithOldSize:. Because
+    // the synthetic and live SessionViews can have different chrome (e.g. a
+    // per-pane status bar), the live session's grid and scrollview can be left
+    // inconsistent: the scrollview height no longer matches rows*lineHeight. That
+    // makes the userScroll=NO bottommost-rect drawing disagree with the
+    // userScroll=YES scroll-position drawing, so the first click after leaving
+    // instant replay jumps the content by a few lines. Re-fit exactly as the
+    // peer-swap path (-sessionActivateSession:) does.
+    if (!self.isTmuxTab) {
+        [self fitSessionToCurrentViewSize:liveSession];
+    }
+    [liveSession.view layoutContentsForNewlyActiveSession];
+    DLog(@"IR exit swap (refit): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
+         liveSession, liveSession.columns, liveSession.rows,
+         NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame));
 }
 
 #pragma mark - Screenshot Mode
@@ -5340,15 +5431,19 @@ typedef struct {
     assert(!idMap_);
     assert(!isMaximized_);
 
-    _orderedGUIDs = [[self orderedSessions] mapWithBlock:^id(PTYSession *session) {
-        return session.guid;
-    }];
-
     SessionView* temp = [activeSession_ view];
     savedSize_ = [temp frame].size;
 
     idMap_ = [[NSMutableDictionary alloc] init];
     savedArrangement_ = [self arrangementConstructingIdMap:YES contents:NO];
+
+    // Capture the reading order as idMap_ keys now that idMap_ is populated, while
+    // still unmaximized so -orderedSessions returns true reading order. See the
+    // _orderedSessionIDs declaration for why we anchor on idMap_ keys.
+    _orderedSessionIDs = [[self orderedSessions] mapWithBlock:^id(PTYSession *session) {
+        return [self idMapKeyForView:session.view];
+    }];
+
     isMaximized_ = YES;
 
     NSRect oldRootFrame = [root_ frame];
@@ -5432,6 +5527,7 @@ typedef struct {
 
     idMap_ = nil;
     savedArrangement_ = nil;
+    _orderedSessionIDs = nil;
     isMaximized_ = NO;
 
     [[root_ window] makeFirstResponder:[activeSession_ mainResponder]];

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127961,\"messages\":[{\"content\":\"Think briefly about why ice floats on water and reply with one short sentence.\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"enabled\"}}",
+  "key" : "028ec3088278f6838a9f5acae6e12c071b64a623ff205f825186eab5e6fd0f80",
+  "response" : {
+    "data" : "{\"id\":\"638d5b8f-98ca-4f41-b30d-422f6d632017\",\"object\":\"chat.completion\",\"created\":1780870912,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Ice floats because it is less dense than liquid water due to hydrogen bonding creating an open crystalline structure.\",\"reasoning_content\":\"We need to explain why ice floats on water in one short sentence. The reason is that ice is less dense than liquid water due to hydrogen bonding creating an open crystalline structure. So one sentence: Ice floats because it is less dense than liquid water due to the hydrogen bonds forming a crystalline structure that expands upon freezing.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":19,\"completion_tokens\":84,\"total_tokens\":103,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":63},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":19},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

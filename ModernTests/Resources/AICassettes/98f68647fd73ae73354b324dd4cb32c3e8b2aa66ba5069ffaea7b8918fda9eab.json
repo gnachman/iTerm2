@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":127942,\"messages\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\"},{\"content\":\"OK.\",\"role\":\"assistant\"},{\"content\":\"What color did I just tell you was my favorite? Answer with one word.\",\"role\":\"user\"}],\"model\":\"claude-opus-4-7\"}",
+  "key" : "98f68647fd73ae73354b324dd4cb32c3e8b2aa66ba5069ffaea7b8918fda9eab",
+  "response" : {
+    "data" : "{\"model\":\"claude-opus-4-7\",\"id\":\"msg_01FrApDgLbfPo2JSRb9gVZAn\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Chartreuse.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":63,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":11,\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

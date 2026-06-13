@@ -5,6 +5,96 @@
 //  Created by George Nachman on 8/18/25.
 //
 
+// Generic wrapper around "a remote command the LLM wants to run".
+// Two flavors:
+//   - .classic: session-bound mode's typed RemoteCommand. Its Content
+//     enum drives permission checks, safety classification, markdown
+//     rendering, and the per-tool argument shape known at compile time.
+//   - .external: any other stack's tool call (today: the orchestration
+//     mode's tool surface). Args travel as opaque JSON. Renders via
+//     the wrapper's markdownDescription.
+//
+// Codable shape:
+//   - .classic encodes as a bare RemoteCommand (no envelope) so existing
+//     chat databases round-trip without migration.
+//   - .external encodes with a "kind": "external" discriminator on the
+//     same object level; init(from:) checks for it and routes
+//     accordingly, falling back to the legacy classic shape.
+enum RemoteCommandPayload {
+    case classic(RemoteCommand)
+    case external(ExternalRemoteCommand)
+
+    var llmMessage: LLM.Message {
+        switch self {
+        case .classic(let rc): rc.llmMessage
+        case .external(let ext): ext.llmMessage
+        }
+    }
+
+    // Tool name as the LLM sees it. For .classic this is the typed
+    // Content's functionName; for .external it's whatever the
+    // orchestrator's tool definition registered.
+    var name: String {
+        switch self {
+        case .classic(let rc): rc.content.functionName
+        case .external(let ext): ext.name
+        }
+    }
+
+    var markdownDescription: String {
+        switch self {
+        case .classic(let rc): rc.markdownDescription
+        case .external(let ext): ext.markdownDescription
+        }
+    }
+
+    // Convenience for AITerm-side readers that need typed Content
+    // access (safety check, permission category, etc.). Returns nil
+    // for external payloads — readers that don't have a sensible
+    // fallback should treat that as "skip this message".
+    var classic: RemoteCommand? {
+        if case .classic(let rc) = self { return rc }
+        return nil
+    }
+}
+
+struct ExternalRemoteCommand: Codable {
+    // Discriminator. Always "external"; used by RemoteCommandPayload's
+    // custom decoder to tell this shape apart from a bare RemoteCommand.
+    var kind: String = "external"
+    var llmMessage: LLM.Message
+    var name: String
+    var argsJSON: String
+    var markdownDescription: String
+}
+
+extension RemoteCommandPayload: Codable {
+    private enum DiscriminatorKey: String, CodingKey {
+        case kind
+    }
+
+    init(from decoder: Decoder) throws {
+        if let container = try? decoder.container(keyedBy: DiscriminatorKey.self),
+           let kind = try? container.decode(String.self, forKey: .kind),
+           kind == "external" {
+            let ext = try ExternalRemoteCommand(from: decoder)
+            self = .external(ext)
+            return
+        }
+        let rc = try RemoteCommand(from: decoder)
+        self = .classic(rc)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        switch self {
+        case .classic(let rc):
+            try rc.encode(to: encoder)
+        case .external(let ext):
+            try ext.encode(to: encoder)
+        }
+    }
+}
+
 struct RemoteCommand: Codable {
     struct IsAtPrompt: Codable {}
     struct ExecuteCommand: Codable { var command: String = "" }
@@ -207,9 +297,6 @@ struct RemoteCommand: Codable {
     var content: Content
 
     var needsSafetyCheck: Bool {
-        if #unavailable(macOS 26) {
-            return false
-        }
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
@@ -223,8 +310,11 @@ struct RemoteCommand: Codable {
         }
     }
 
+    // `force` makes the safety check mandatory regardless of the user
+    // preference (used for orchestration chats, where autonomous command
+    // execution always gets checked).
     @MainActor
-    func isSafe() async -> Bool {
+    func isSafe(force: Bool) async -> Bool {
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
@@ -234,13 +324,18 @@ struct RemoteCommand: Codable {
                 .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
             return true
         case .executeCommand(let command):
-            if #available(macOS 26, *) {
-                if AIAvailabilityProbe.check() {
-                    let nagKey = "NoSyncAISafetyCheckNagComplete"
+            // The safety check uses the configured conversation model, so it is
+            // available whenever AI is set up (not tied to any specific vendor
+            // or OS version).
+            if iTermAITermGatekeeper.allowed {
+                // Orchestration chats are checked unconditionally, so don't nag
+                // about the opt-in preference there.
+                if !force {
+                    let nagKey = kPreferenceKeyAISafetyCheckNagComplete
                     if iTermUserDefaults.userDefaults().object(forKey: kPreferenceKeyAISafetyCheck) == nil &&
                         !iTermUserDefaults.userDefaults().bool(forKey: nagKey) {
                         let selection = iTermWarning.show(
-                            withTitle: "iTerm2 can use Apple Intelligence to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, commands may be sent to Apple’s servers for safety checking.",
+                            withTitle: "iTerm2 can use AI to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, each proposed command will be sent to your configured AI provider for a safety check.",
                             actions: ["OK", "Cancel"],
                             accessory: nil,
                             identifier: nil,
@@ -252,13 +347,49 @@ struct RemoteCommand: Codable {
                             iTermPreferences.setBool(true, forKey: kPreferenceKeyAISafetyCheck)
                         }
                     }
-                    if iTermPreferences.bool(forKey: kPreferenceKeyAISafetyCheck) {
-                        return await CommandSafetyChecker.check(command.command)
+                }
+                if force || iTermPreferences.bool(forKey: kPreferenceKeyAISafetyCheck) {
+                    if !force {
+                        Self.maybePromptToSwitchSafetyProvider()
                     }
+                    return await CommandSafetyChecker.check(command.command)
                 }
             }
             return true
         }
+    }
+
+    // Users who enabled the safety check while it ran on-device via Apple
+    // Intelligence (free) are asked once, before the next checked command,
+    // whether to switch to the configured model (more accurate, but may incur
+    // provider charges). Declining keeps Apple Intelligence. The migration in
+    // iTermMigrationHelper sets the pending flag and the Apple default.
+    @MainActor
+    private static func maybePromptToSwitchSafetyProvider() {
+        let defaults = iTermUserDefaults.userDefaults()
+        guard defaults.bool(forKey: kPreferenceKeyAISafetyCheckProviderSwitchPending) else {
+            return
+        }
+        // Only present the choice when on-device is actually available here.
+        // If it is not (the pref synced from an Apple Intelligence Mac, or the
+        // model is temporarily not ready), leave the prompt pending so we do
+        // not offer "Keep Apple Intelligence" where it cannot work. Until then
+        // the side-query fails closed rather than falling back to the cloud.
+        guard AIAvailabilityProbe.check() else {
+            return
+        }
+        defaults.set(false, forKey: kPreferenceKeyAISafetyCheckProviderSwitchPending)
+        let selection = iTermWarning.show(
+            withTitle: "Until now, iTerm2 checked the safety of AI-suggested commands on your Mac using Apple Intelligence, at no cost. It can now use your configured AI model instead, which is more accurate but sends each checked command to your AI provider and may incur charges.\n\nSwitch to your configured model? If you decline, iTerm2 keeps using Apple Intelligence.",
+            actions: ["Switch to My Model", "Keep Apple Intelligence"],
+            accessory: nil,
+            identifier: nil,
+            silenceable: .kiTermWarningTypePersistent,
+            heading: "Command Safety Checking Has Changed",
+            window: nil)
+        // Selection 0 == switch to the configured model; 1 == keep Apple.
+        defaults.set(selection != .kiTermWarningSelection0,
+                     forKey: kPreferenceKeyAISafetyCheckUsesAppleIntelligence)
     }
 
     var markdownDescription: String {
@@ -484,7 +615,7 @@ extension RemoteCommand.Content {
         case .setClipboard(_):
             ["text": "The text to copy to the clipboard."]
         case .insertTextAtCursor(_):
-            ["text": "The text to insert at the cursor position. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."]
+            ["text": "The text to insert at the cursor position. Supports a small backslash-escape vocabulary so you can send control keys and special characters: \\\\ for a literal backslash, \\n for newline, \\r for carriage return, \\t for tab, and \\uXXXX (four hex digits, JSON-style) for any Unicode scalar. Examples: \\u0004 for Ctrl-D / EOF, \\u001a for Ctrl-Z, \\u000c for Ctrl-L, \\u001b for Escape. Consider whether execute_command would be a better choice, especially when running a command at the shell prompt since insert_text_at_cursor does not return the output to you."]
         case .deleteCurrentLine(_):
             [:]
         case .getManPage(_):

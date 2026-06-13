@@ -89,10 +89,17 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
 }
 
 - (void)update {
-    [self updateWithSanityCheck:YES];
+    [self updateWithSanityCheck:YES attempt:0];
 }
 
-- (void)updateWithSanityCheck:(BOOL)sanityCheck {
+// Trampoline for the deferred retry scheduled when we can't set presentation
+// options yet (see -setApplicationPresentationFlagsWithHiddenDock:...:attempt:).
+// The attempt count rides along in the perform argument so we eventually stop.
+- (void)retryUpdateWithAttempt:(NSNumber *)attempt {
+    [self updateWithSanityCheck:YES attempt:attempt.intValue];
+}
+
+- (void)updateWithSanityCheck:(BOOL)sanityCheck attempt:(int)attempt {
     DLog(@"BEGIN update sanityCheck=%@", @(sanityCheck));
     if ([[NSScreen screens] count] == 0) {
         DLog(@"No screens attached");
@@ -132,13 +139,14 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
         // hidden. The easiest way to reproduce it is to turn off input broadcasting.
         DLog(@"Schedule sanity check for next spin of the runlooop. Showing the dock while hidden and no screen has the dock and there is a full screen window.");
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self updateWithSanityCheck:NO];
+            [self updateWithSanityCheck:NO attempt:0];
         });
     }
 
     [self setApplicationPresentationFlagsWithHiddenDock:shouldHideDock
                                                 menuBar:shouldHideMenuBar
-                                         screenWithDock:screenWithDock];
+                                         screenWithDock:screenWithDock
+                                                attempt:attempt];
     DLog(@"END update");
 }
 
@@ -201,7 +209,7 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
 }
 
 - (void)forceShowMenuBarAndDock {
-    [self setApplicationPresentationFlagsWithHiddenDock:NO menuBar:NO screenWithDock:nil];
+    [self setApplicationPresentationFlagsWithHiddenDock:NO menuBar:NO screenWithDock:nil attempt:0];
 }
 
 NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
@@ -224,7 +232,8 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
 
 - (void)setApplicationPresentationFlagsWithHiddenDock:(BOOL)shouldHideDock
                                               menuBar:(BOOL)shouldHideMenuBar
-                                       screenWithDock:(NSScreen *)screenWithDock {
+                                       screenWithDock:(NSScreen *)screenWithDock
+                                              attempt:(int)attempt {
     DLog(@"setting options: hide dock=%@ hide menu bar=%@", @(shouldHideDock), @(shouldHideMenuBar));
 
     const NSApplicationPresentationOptions mask = (NSApplicationPresentationAutoHideMenuBar |
@@ -260,8 +269,38 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
             presentationOptions |= NSApplicationPresentationAutoHideMenuBar;
         }
     }
-    DLog(@"Set presentation options from %@ to %@", PODescription(NSApp.presentationOptions), PODescription(presentationOptions));
 
+    // These options are only valid when the dock is hidden (auto-hidden or fully
+    // hidden). We never set them ourselves, but macOS can transiently include them
+    // in NSApp.presentationOptions during a Spaces transition, and the mask above
+    // carries them into our computed options. Setting that invalid combination
+    // would make AppKit raise, which could leave it in a bad state, so detect it
+    // and try again in a second, by which time the transition has normally settled
+    // and the bits are gone. cancelPrevious keeps at most one retry pending.
+    const NSApplicationPresentationOptions requiresHiddenDock =
+        (NSApplicationPresentationDisableForceQuit |
+         NSApplicationPresentationDisableMenuBarTransparency |
+         NSApplicationPresentationDisableProcessSwitching |
+         NSApplicationPresentationDisableSessionTermination);
+    const NSApplicationPresentationOptions dockHidden =
+        (NSApplicationPresentationAutoHideDock | NSApplicationPresentationHideDock);
+    if ((presentationOptions & requiresHiddenDock) && !(presentationOptions & dockHidden)) {
+        static const int maxAttempts = 10;
+        if (attempt >= maxAttempts) {
+            DLog(@"Still can't set valid presentation options %@ after %d attempts; giving up until the next update",
+                 PODescription(presentationOptions), attempt);
+            return;
+        }
+        DLog(@"Would set invalid presentation options %@ (dock not hidden); deferring (attempt %d) until Spaces transition settles",
+             PODescription(presentationOptions), attempt);
+        // retryUpdateWithAttempt: is the only delayed perform on this object, so a
+        // target-wide cancel keeps at most one retry pending regardless of count.
+        [NSObject cancelPreviousPerformRequestsWithTarget:self];
+        [self performSelector:@selector(retryUpdateWithAttempt:) withObject:@(attempt + 1) afterDelay:1.0];
+        return;
+    }
+
+    DLog(@"Set presentation options from %@ to %@", PODescription(NSApp.presentationOptions), PODescription(presentationOptions));
     NSApp.presentationOptions = presentationOptions;
 }
 

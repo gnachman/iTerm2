@@ -39,8 +39,6 @@
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "iTermWindowSizeView.h"
 
-static const CGFloat iTermWindowBorderRadius = 12;
-
 const CGFloat iTermStandardButtonsViewHeight = 25;
 const CGFloat iTermStandardButtonsViewWidth = 69;
 const CGFloat iTermStoplightHotboxWidth = iTermStandardButtonsViewWidth + 28 + 24;
@@ -278,7 +276,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         _windowBorderView = [[iTermWindowBorderView alloc] initWithFrame:self.bounds];
         _windowBorderView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         _windowBorderView.cornerRadius =
-            [iTermAdvancedSettingsModel squareWindowCorners] ? 0 : iTermWindowBorderRadius;
+            [iTermAdvancedSettingsModel squareWindowCorners] ? 0 : [iTermWindowCornerRadiusDetector fallbackCornerRadius];
         [self addSubview:_windowBorderView];
 
         if (@available(macOS 10.15, *)) {} else {
@@ -821,7 +819,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     NSWindow *window = self.window;
     NSNumber *cached = (window == nil) ? nil : [iTermWindowCornerRadiusDetector cachedCornerRadiusFor:window];
     if (cached == nil) {
-        return iTermWindowBorderRadius;
+        return [iTermWindowCornerRadiusDetector fallbackCornerRadius];
     }
     return MAX(0, cached.doubleValue);
 }
@@ -853,6 +851,12 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
 
     _windowBorderView.hidden = NO;
+    // The border view's autoresizing does not reliably track the root view (it
+    // can be left at a stale size from an earlier window size), which would
+    // stroke the heavy border as an inner rectangle inset from the real window
+    // edge. layoutSubviews positions every other subview explicitly, so do the
+    // same here and keep the border flush with the window bounds.
+    _windowBorderView.frame = self.bounds;
     _windowBorderView.borderWidth = 2;
     _windowBorderView.outset = 1;
     _windowBorderView.cornerRadius = [self resolvedWindowBorderCornerRadius];
@@ -1575,6 +1579,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
 
     _backgroundImage.frame = self.bounds;
+    _windowBorderView.frame = self.bounds;
     [self layoutWindowPaneDecorations];
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is

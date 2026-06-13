@@ -21,3 +21,11 @@ If both `Run Commands` and `Type for You` are set to `Never` then the prompts th
 If all the terminal-related permissions are set to `Never` then neither `Full Terminal` nor `Read-Only Terminal` prompts will be used.
 
 By process of elimination, you can determine which prompt applies to your situation.
+
+## Code Review System Prompt
+
+When a workspace has a member with the Code Review role, this prompt goes in the system message and tells the agent how to update iTerm2 with its findings.
+
+## Chat List Icon
+
+This prompt asks the AI to draw an SVG icon for a chat just after a title has been chosen for it. The icon is rasterized and shown next to the chat's name in the chat list. The syntax is that of interpolated strings, and `\(ai.subject)` takes the value of the chat's title. The response must contain an SVG document; anything around it is ignored, and if no renderable SVG is found the chat keeps the default icon.

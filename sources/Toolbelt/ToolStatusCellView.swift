@@ -7,7 +7,18 @@
 
 import Foundation
 
+// Indicator-only image view that never intercepts mouse clicks, so a
+// click on the bell still selects/reveals the row like clicking the text.
+private final class ToolStatusPassthroughImageView: NSImageView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
+    }
+}
+
 class ToolStatusCellView: NSTableCellView {
+    // Shown at the leading edge when this session has notify-on-change
+    // armed, mirroring the Cockpit's row indicator.
+    private let bellView = ToolStatusPassthroughImageView()
     private let dotView = NSImageView()
     // Optional peer-group label inserted between the dot and the
     // session name when the session belongs to a multi-peer workgroup.
@@ -19,6 +30,8 @@ class ToolStatusCellView: NSTableCellView {
     private let detailLabel = NSTextField(wrappingLabelWithString: "")
 
     private let margin: CGFloat = 4
+    private let bellSize: CGFloat = 12
+    private let bellSpacing: CGFloat = 3
     private let dotSize: CGFloat = 10
     private let dotNameSpacing: CGFloat = 4
     // Gap between the peer label and the session name.
@@ -32,6 +45,15 @@ class ToolStatusCellView: NSTableCellView {
         let font = NSFont.it_toolbelt()
 
         super.init(frame: frame)
+
+        let bellConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
+        bellView.image = NSImage(systemSymbolName: SFSymbol.bellBadge.rawValue,
+                                 accessibilityDescription: "Notify on status change armed")?
+            .withSymbolConfiguration(bellConfig)
+        bellView.imageScaling = .scaleProportionallyDown
+        bellView.contentTintColor = .controlAccentColor
+        bellView.isHidden = true
+        addSubview(bellView)
 
         dotView.imageScaling = .scaleProportionallyDown
         addSubview(dotView)
@@ -83,14 +105,20 @@ class ToolStatusCellView: NSTableCellView {
     private func updateShortcutColor() {
         if backgroundStyle == .emphasized {
             shortcutLabel.textColor = NSColor.white.withAlphaComponent(0.7)
+            bellView.contentTintColor = .alternateSelectedControlTextColor
         } else {
             shortcutLabel.textColor = .tertiaryLabelColor
+            bellView.contentTintColor = .controlAccentColor
         }
+    }
+
+    private var bellReserve: CGFloat {
+        return bellView.isHidden ? 0 : (bellSize + bellSpacing)
     }
 
     private var textLeft: CGFloat {
         let dotWidth = dotView.isHidden ? 0 : (dotSize + dotNameSpacing)
-        return margin + dotWidth
+        return margin + bellReserve + dotWidth
     }
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -149,10 +177,16 @@ class ToolStatusCellView: NSTableCellView {
                                          height: nameLabel.frame.height)
         }
 
-        // Dot — vertically centered with name label
+        // Bell — leading edge, vertically centered with the name row.
+        if !bellView.isHidden {
+            let bellY = y + (nameLabel.frame.height - bellSize) / 2
+            bellView.frame = NSRect(x: margin, y: bellY, width: bellSize, height: bellSize)
+        }
+
+        // Dot — vertically centered with name label, after the bell.
         if !dotView.isHidden {
             let dotY = y + (nameLabel.frame.height - dotSize) / 2
-            dotView.frame = NSRect(x: margin, y: dotY, width: dotSize, height: dotSize)
+            dotView.frame = NSRect(x: margin + bellReserve, y: dotY, width: dotSize, height: dotSize)
         }
 
         y += nameLabel.frame.height + rowSpacing
@@ -204,8 +238,10 @@ class ToolStatusCellView: NSTableCellView {
                    shortcut: String?,
                    statusText: String?,
                    statusColor: NSColor?,
-                   detail: String?) {
+                   detail: String?,
+                   armed: Bool) {
         nameLabel.set(interpolatedString: #"\(iterm2.private.session_name(session: id))"#, scope: scope)
+        bellView.isHidden = !armed
         dotView.image = dotImage
         dotView.isHidden = dotImage == nil
 

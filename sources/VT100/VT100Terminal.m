@@ -4694,6 +4694,87 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     }
 }
 
+// Parse the OSC 133 `aid=<id>` Semantic Prompt attribute out of the args
+// past the command character. Empty value (`aid=`) and absence both yield
+// nil. The value is treated as opaque — we don't validate or normalize it
+// beyond returning the substring after the `=`. Compatible with any
+// argument order; we sweep all args.
+- (NSString * _Nullable)aidFromArgs:(NSArray<NSString *> *)args {
+    for (NSUInteger i = 1; i < args.count; i++) {
+        iTermTuple<NSString *, NSString *> *pair = [args[i] keyValuePair];
+        if (!pair) {
+            continue;
+        }
+        if (![pair.firstObject isEqualToString:@"aid"]) {
+            continue;
+        }
+        NSString *val = pair.secondObject;
+        if (val.length == 0) {
+            DLog(@"aidFromArgs:%@ -> nil (empty value)", args);
+            return nil;
+        }
+        DLog(@"aidFromArgs:%@ -> %@", args, val);
+        return val;
+    }
+    DLog(@"aidFromArgs:%@ -> nil (no aid= key)", args);
+    return nil;
+}
+
+// Extract the integer exit code from OSC 133;D args. Today's wire format
+// is `D;<code>` (positional, args[1]) or `D` (no code). With aid=<id>
+// added, the args can be `D;<code>;aid=<id>` or `D;aid=<id>;<code>` or
+// even `D;aid=<id>` (no code). Walk args past the command char: the first
+// positional (non-key=value) arg that parses as an integer is the code.
+// Returns nil if no such arg is present.
+- (NSNumber * _Nullable)exitCodeFromArgs:(NSArray<NSString *> *)args {
+    for (NSUInteger i = 1; i < args.count; i++) {
+        NSString *arg = args[i];
+        if (arg.length == 0) {
+            continue;
+        }
+        if ([arg keyValuePair] != nil) {
+            // A key=value attribute (aid=, k=, cl=, ...) — not a positional code.
+            continue;
+        }
+        NSScanner *scanner = [NSScanner scannerWithString:arg];
+        int code = 0;
+        if ([scanner scanInt:&code] && scanner.isAtEnd) {
+            DLog(@"exitCodeFromArgs:%@ -> %d (from arg[%@]=%@)", args, code, @(i), arg);
+            return @(code);
+        }
+    }
+    DLog(@"exitCodeFromArgs:%@ -> nil (no positional integer)", args);
+    return nil;
+}
+
+// Parse the OSC 133 `k=<kind>` Semantic Prompt attribute out of the args
+// past the command character. Other attributes (aid=, cl=, redraw=,
+// click_events=, future additions) are silently ignored. An empty value or
+// no `k=` at all yields .initial; an unrecognized first char yields .unknown.
+- (VT100PromptKind)promptKindFromArgs:(NSArray<NSString *> *)args {
+    for (NSUInteger i = 1; i < args.count; i++) {
+        iTermTuple<NSString *, NSString *> *pair = [args[i] keyValuePair];
+        if (!pair) {
+            continue;
+        }
+        if (![pair.firstObject isEqualToString:@"k"]) {
+            continue;
+        }
+        NSString *val = pair.secondObject;
+        if (val.length == 0) {
+            return VT100PromptKindInitial;
+        }
+        switch ([val characterAtIndex:0]) {
+            case 'i': return VT100PromptKindInitial;
+            case 's': return VT100PromptKindSecondary;
+            case 'c': return VT100PromptKindContinuation;
+            case 'r': return VT100PromptKindRight;
+            default:  return VT100PromptKindUnknown;
+        }
+    }
+    return VT100PromptKindInitial;
+}
+
 - (void)executeFinalTermToken:(VT100Token *)token {
     NSString *value = token.string;
     NSArray *args = [value componentsSeparatedByString:@";"];
@@ -4711,42 +4792,121 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     // <A>prompt<B>
     switch ([command characterAtIndex:0]) {
         case 'A':
-            // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
-            self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
-            self.dirty = YES;
-            const BOOL wasInCommand = inCommand_;
-            inCommand_ = NO;  // Issue 7954
-            self.alternateScrollMode = NO;  // Avoid leaving it on when ssh dies.
-            [_delegate terminalPromptDidStart:wasInCommand];
+        case 'N':
+        case 'P': {
+            // FTCS_PROMPT_START. Three Semantic-Prompt variants:
+            //   'A' — prompt-start with fresh-line behavior (may insert a CR+LF
+            //         if the cursor isn't at column 0, gated downstream by the
+            //         shouldPlacePromptAtFirstColumn user pref).
+            //   'N' — like 'A' but spec-defined to also implicitly terminate
+            //         a pending command (matched via `aid=`). The wider
+            //         ecosystem (WezTerm, Ghostty, iTerm2 today) treats N
+            //         identically to A behaviorally — every emulator parses
+            //         the aid but discards it on N. We follow that
+            //         convention. The aid pipeline is fully wired for D
+            //         (close-by-aid + cascade for the nested-shell case);
+            //         re-evaluate N if a shell starts emitting it with
+            //         aid expecting receivers to act.
+            //   'P' — prompt-start without fresh-line; never forces CR+LF
+            //         regardless of pref. Intended to follow an earlier A/N.
+            //
+            // All three honor the Semantic Prompt `k=<kind>` attribute.
+            // Unrecognized kind values fold to .unknown; the receiver treats
+            // .unknown like .initial (mark-creating) rather than dropping it,
+            // so a single bad byte in a k= value can't hide a prompt from
+            // navigation.
+            //
+            // VT100Terminal doesn't track which kind is currently "open" —
+            // that's the delegate's responsibility. We only branch here on
+            // the parsed kind to gate the VT100Terminal-local side effects
+            // (soft alt-screen, alt-scroll, inCommand_), since those are
+            // properties of VT100Terminal, not of the delegate.
+            const char cmd = [command characterAtIndex:0];
+            const BOOL freshLine = (cmd == 'A' || cmd == 'N');
+            VT100PromptKind kind = [self promptKindFromArgs:args];
+            NSString *aid = [self aidFromArgs:args];
+            BOOL wasInCommand = NO;
+            if (kind == VT100PromptKindInitial) {
+                self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
+                self.dirty = YES;
+                wasInCommand = inCommand_;
+                inCommand_ = NO;  // Issue 7954
+                self.alternateScrollMode = NO;  // Avoid leaving it on when ssh dies.
+            }
+            // Non-initial: don't disturb inCommand_, soft alt-screen, or alt-scroll.
+            // The user is mid-command (PS2 line, right-prompt, etc.).
+            [_delegate terminalPromptDidStart:wasInCommand kind:kind freshLine:freshLine aid:aid];
             break;
+        }
 
-        case 'B':
+        case 'B': {
             // Sequence marking the start of the command read from the command prompt
-            // (FTCS_COMMAND_START)
+            // (FTCS_COMMAND_START). Whether this B is closing an initial or
+            // non-initial A is the delegate's business — we just dispatch.
+            // The redundant inCommand_=YES on a non-initial B is harmless
+            // because inCommand_ stays YES across a real command's PS2 lines
+            // anyway.
+            //
+            // aid= is parsed and accepted on B by the spec, but the receiver
+            // doesn't need it: A already created the mark and stamped its
+            // aid + parentAid. Re-stamping at B would just be churn.
             [_delegate terminalCommandDidStart];
             self.dirty = YES;
             inCommand_ = YES;
             break;
+        }
 
-        case 'C':
-            // Sequence marking the end of the command read from the command prompt (FTCS_COMMAND_END)
+        case 'C': {
+            // Sequence marking the end of the command read from the command prompt (FTCS_COMMAND_END).
+            // aid= is accepted but ignored for the same reason as B above.
             if (inCommand_) {
                 [_delegate terminalCommandDidEnd];
                 self.dirty = YES;
                 inCommand_ = NO;
             }
             break;
+        }
 
-        case 'D':
-            // Return code of last command
+        case 'D': {
+            // Return code of last command, optionally with aid=. Today's
+            // wire format `D;<code>` and the spec extension `D;<code>;aid=X`
+            // (or any arg order) both parse correctly via the helpers.
+            NSString *aid = [self aidFromArgs:args];
             if (inCommand_) {
-                [_delegate terminalAbortCommand];
+                DLog(@"D inCommand_=YES (no C between B and D) -> abort path aid=%@", aid);
+                [_delegate terminalAbortCommandWithAid:aid];
                 self.dirty = YES;
                 inCommand_ = NO;
-            } else if (args.count >= 2) {
-                int returnCode = [args[1] intValue];
-                [_delegate terminalReturnCodeOfLastCommandWas:returnCode];
+                break;
             }
+            NSNumber *returnCode = [self exitCodeFromArgs:args];
+            // No-code synthesis. Three forms benefit:
+            //   1. `D;`     — prior code did `[@"" intValue]` = 0 (legacy
+            //                 compat for malformed shells).
+            //   2. `D;abc`  — prior code did `[@"abc" intValue]` = 0 (same).
+            //   3. `D;aid=X` — spec allows omitting the code, but the
+            //                  receiver needs one to fire
+            //                  screenCommandDidExitWithCode and fulfill
+            //                  returnCodePromise. Synthesizing 0 matches
+            //                  the bare-`D;` legacy compat for the
+            //                  "command done, no code claim" semantic.
+            //
+            // Bare `D` (args.count == 1) still dispatches nothing — there's
+            // no semicolon, the shell didn't intend to close anything.
+            if (returnCode == nil && args.count >= 2) {
+                DLog(@"D no-code synthesis: returnCode nil but args.count=%@; "
+                     @"using @0 (legacy compat for `D;`, `D;abc`, `D;aid=X`)",
+                     @(args.count));
+                returnCode = @0;
+            }
+            if (returnCode != nil || aid != nil) {
+                DLog(@"D dispatch: returnCode=%@ aid=%@", returnCode, aid);
+                [_delegate terminalReturnCodeOfLastCommandWas:returnCode aid:aid];
+            } else {
+                DLog(@"D drop (no code, no aid, malformed): args=%@", args);
+            }
+            break;
+        }
 
         case 'E':
             // Semantic text is starting.

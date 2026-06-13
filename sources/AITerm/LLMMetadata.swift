@@ -77,6 +77,8 @@ class LLMMetadata: NSObject {
             return AIMetadata.alternateLlamaModels
         case .anthropic:
             return AIMetadata.alternateAnthropicModels
+        case .apple:
+            return AIMetadata.alternateAppleModels
         case .none:
             return []
         @unknown default:
@@ -98,6 +100,8 @@ class LLMMetadata: NSObject {
                 return AIMetadata.recommendedLlamaModel
             case .anthropic:
                 return AIMetadata.recommendedAnthropicModel
+            case .apple:
+                return AIMetadata.recommendedAppleModel
             @unknown default:
                 return nil
             }

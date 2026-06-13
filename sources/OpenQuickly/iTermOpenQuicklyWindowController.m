@@ -15,6 +15,7 @@
 #import "iTermOpenQuicklyTextField.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSessionLauncher.h"
+#import "iTermSessionPreviewPanel.h"
 #import "iTermSnippetsMenuController.h"
 #import "DebugLogging.h"
 #import "NSAppearance+iTerm.h"
@@ -39,31 +40,6 @@
 
 @end
 
-// Flipped NSView so the preview container can lay out subviews from the top.
-@interface iTermOpenQuicklyPreviewView : NSView
-@end
-
-@implementation iTermOpenQuicklyPreviewView
-- (BOOL)isFlipped { return YES; }
-@end
-
-// Width of the preview side panel when shown.
-static const CGFloat kOpenQuicklyPreviewWidth = 400;
-// Inset around the preview snapshot inside its container.
-static const CGFloat kOpenQuicklyPreviewInset = 12;
-// Layout metrics for the labels block above the preview image. Shared between
-// previewWindowFrameForParentFrame: (which sizes the window) and
-// layoutPreviewContent (which places the subviews) so they can't drift.
-static const CGFloat kOpenQuicklyPreviewTitleHeight = 18;
-static const CGFloat kOpenQuicklyPreviewDetailHeight = 14;
-static const CGFloat kOpenQuicklyPreviewLabelGap = 2;
-static const CGFloat kOpenQuicklyPreviewGapBelowLabels = 8;
-
-static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
-    return kOpenQuicklyPreviewTitleHeight + kOpenQuicklyPreviewLabelGap +
-           kOpenQuicklyPreviewDetailHeight + kOpenQuicklyPreviewGapBelowLabels;
-}
-
 @implementation iTermOpenQuicklyWindowController {
     // Text field where queries are entered
     IBOutlet iTermOpenQuicklyTextField *_textField;
@@ -79,17 +55,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     iTermOpenQuicklyTextView *_textView;  // custom field editor
 
     // Preview side panel (a child window) shown when the highlighted row maps to a session.
-    NSPanel *_previewWindow;
-    NSImageView *_previewImageView;
-    NSTextField *_previewTitleLabel;
-    NSTextField *_previewDetailLabel;
-    BOOL _previewVisible;
-    BOOL _previewWindowAttached;
-    // Cache the most recently snapshotted session so we don't re-render the
-    // grid on every keystroke when the selected row maps to the same session.
-    // Cleared by -teardownPreviewWindow, which every dismissal path goes through,
-    // so the cache cannot survive across Open Quickly invocations.
-    NSString *_cachedPreviewSessionGuid;
+    iTermSessionPreviewPanel *_previewPanel;
     // Last row -refreshPreview was called for. Used to detect selection changes
     // that were dropped while _suppressSelectionPreviewUpdates was set.
     NSInteger _previewRefreshedForRow;
@@ -112,6 +78,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     if (self) {
         _model = [[iTermOpenQuicklyModel alloc] init];
         _model.delegate = self;
+        _previewPanel = [[iTermSessionPreviewPanel alloc] init];
         _previewRefreshedForRow = NSNotFound;
     }
     return self;
@@ -184,74 +151,8 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     }
 }
 
-- (void)buildPreviewWindow {
-    if (_previewWindow) {
-        return;
-    }
-    NSRect frame = NSMakeRect(0, 0, kOpenQuicklyPreviewWidth, 400);
-    _previewWindow = [[NSPanel alloc] initWithContentRect:frame
-                                                styleMask:NSWindowStyleMaskBorderless | NSWindowStyleMaskNonactivatingPanel
-                                                  backing:NSBackingStoreBuffered
-                                                    defer:YES];
-    _previewWindow.opaque = NO;
-    _previewWindow.backgroundColor = [NSColor clearColor];
-    _previewWindow.hasShadow = YES;
-    _previewWindow.releasedWhenClosed = NO;
-    _previewWindow.hidesOnDeactivate = YES;
-    _previewWindow.movableByWindowBackground = NO;
-    _previewWindow.becomesKeyOnlyIfNeeded = YES;
-
-    iTermOpenQuicklyPreviewView *contentView = [[iTermOpenQuicklyPreviewView alloc] initWithFrame:frame];
-    contentView.wantsLayer = YES;
-    contentView.layer.cornerRadius = 10;
-    contentView.layer.masksToBounds = YES;
-    _previewWindow.contentView = contentView;
-
-    NSVisualEffectView *visual = [[NSVisualEffectView alloc] initWithFrame:contentView.bounds];
-    visual.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-    if (@available(macOS 10.16, *)) {
-        visual.material = NSVisualEffectMaterialMenu;
-    } else {
-        visual.material = NSVisualEffectMaterialSheet;
-    }
-    visual.state = NSVisualEffectStateActive;
-    visual.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [contentView addSubview:visual];
-
-    _previewTitleLabel = [NSTextField labelWithString:@""];
-    _previewTitleLabel.translatesAutoresizingMaskIntoConstraints = YES;
-    _previewTitleLabel.font = [NSFont boldSystemFontOfSize:13];
-    _previewTitleLabel.textColor = [NSColor labelColor];
-    _previewTitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-    _previewTitleLabel.backgroundColor = [NSColor clearColor];
-    _previewTitleLabel.drawsBackground = NO;
-    [contentView addSubview:_previewTitleLabel];
-
-    _previewDetailLabel = [NSTextField labelWithString:@""];
-    _previewDetailLabel.translatesAutoresizingMaskIntoConstraints = YES;
-    _previewDetailLabel.font = [NSFont systemFontOfSize:11];
-    _previewDetailLabel.textColor = [NSColor secondaryLabelColor];
-    _previewDetailLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-    _previewDetailLabel.backgroundColor = [NSColor clearColor];
-    _previewDetailLabel.drawsBackground = NO;
-    [contentView addSubview:_previewDetailLabel];
-
-    _previewImageView = [[NSImageView alloc] initWithFrame:NSZeroRect];
-    _previewImageView.imageScaling = NSImageScaleProportionallyUpOrDown;
-    // Align top so the image sits flush with the labels above and any vertical
-    // slack lands at the bottom of the preview.
-    _previewImageView.imageAlignment = NSImageAlignTop;
-    _previewImageView.wantsLayer = YES;
-    _previewImageView.layer.cornerRadius = 4;
-    _previewImageView.layer.masksToBounds = YES;
-    _previewImageView.layer.borderColor = [[NSColor separatorColor] CGColor];
-    _previewImageView.layer.borderWidth = 0.5;
-    [contentView addSubview:_previewImageView];
-}
-
 - (void)presentWindow {
-    [self teardownPreviewWindow];
-    [self buildPreviewWindow];
+    [_previewPanel teardown];
     [_model removeAllItems];
     [_table reloadData];
     self.window.appearance = [NSAppearance it_appearanceForCurrentTheme];
@@ -335,13 +236,11 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
 - (void)resizeWindowAnimatedToFrame:(NSValue *)frame {
     NSRect parentFrame = frame.rectValue;
     [self.window setFrame:parentFrame display:YES animate:YES];
-    if (_previewVisible) {
+    if (_previewPanel.visible) {
         // setFrame:display:animate:YES on the borderless NSPanel doesn't reliably
         // animate the resize, so snap directly to the new frame after the parent's
         // animation completes.
-        NSRect previewFrame = [self previewWindowFrameForParentFrame:parentFrame];
-        [_previewWindow setFrame:previewFrame display:YES];
-        [self layoutPreviewContent];
+        [_previewPanel repositionForParentFrame:parentFrame];
     }
     _suppressSelectionPreviewUpdates = NO;
     // setFrame:display:animate:YES pumps the run loop while it blocks, so the
@@ -428,135 +327,25 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     NSInteger row = _table.selectedRow;
     _previewRefreshedForRow = row;
     PTYSession *session = [self previewSessionForRow:row];
-    BOOL wasVisible = _previewVisible;
     if (session) {
-        if (![session.guid isEqualToString:_cachedPreviewSessionGuid]) {
-            // Re-render only when the highlighted session actually changes; the
-            // grid render is non-trivial and -update fires on every keystroke.
-            // Only cache the guid on a successful render so a transient nil
-            // (e.g. textview not yet laid out) doesn't lock in a blank preview.
-            NSImage *image = [session terminalContentSnapshot];
-            _previewImageView.image = image;
-            _cachedPreviewSessionGuid = image ? [session.guid copy] : nil;
-        }
-        _previewTitleLabel.stringValue = session.name ?: @"";
-        _previewDetailLabel.stringValue = [self previewDetailForSession:session];
-        _previewVisible = YES;
+        [_previewPanel showForSession:session
+                                title:session.name ?: @""
+                               detail:[self previewDetailForSession:session]
+                          parentFrame:self.window.frame
+                         parentWindow:self.window];
     } else {
-        _previewImageView.image = nil;
-        _previewTitleLabel.stringValue = @"";
-        _previewDetailLabel.stringValue = @"";
-        _cachedPreviewSessionGuid = nil;
-        _previewVisible = NO;
+        [_previewPanel hide];
     }
-    if (_previewVisible) {
-        [self attachPreviewWindowIfNeeded];
-        [self repositionPreviewWindow];
-        if (!wasVisible) {
-            [_previewWindow orderFront:nil];
-        }
-    } else if (wasVisible) {
-        [_previewWindow orderOut:nil];
-    }
-}
-
-- (void)attachPreviewWindowIfNeeded {
-    if (_previewWindowAttached || _previewWindow == nil) {
-        return;
-    }
-    [self.window addChildWindow:_previewWindow ordered:NSWindowAbove];
-    _previewWindowAttached = YES;
-}
-
-- (NSRect)previewWindowFrameForParentFrame:(NSRect)parentFrame {
-    const CGFloat gap = 8;
-    const CGFloat inset = kOpenQuicklyPreviewInset;
-    const CGFloat labelsBlockHeight = iTermOpenQuicklyPreviewLabelsBlockHeight();
-    const CGFloat innerWidth = kOpenQuicklyPreviewWidth - 2 * inset;
-
-    // Size the image area to the snapshot's aspect ratio so a tall session
-    // gets a tall preview and a short session gets a short preview.
-    CGFloat imageHeight = 240;
-    NSImage *image = _previewImageView.image;
-    if (image && image.size.width > 0) {
-        imageHeight = innerWidth * (image.size.height / image.size.width);
-    }
-    CGFloat windowHeight = inset + labelsBlockHeight + imageHeight + inset;
-    NSScreen *screen = self.window.screen ?: [NSScreen mainScreen];
-    const NSRect visibleFrame = screen.visibleFrame;
-    const CGFloat maxHeight = MAX(visibleFrame.size.height - 24, 300);
-    windowHeight = MIN(MAX(windowHeight, 200), maxHeight);
-
-    // Prefer the right side of the parent; flip to the left if the right side
-    // would extend off-screen, and clamp horizontally to the visible frame.
-    CGFloat originX = NSMaxX(parentFrame) + gap;
-    if (originX + kOpenQuicklyPreviewWidth > NSMaxX(visibleFrame)) {
-        const CGFloat leftOriginX = NSMinX(parentFrame) - gap - kOpenQuicklyPreviewWidth;
-        if (leftOriginX >= NSMinX(visibleFrame)) {
-            originX = leftOriginX;
-        } else {
-            originX = NSMaxX(visibleFrame) - kOpenQuicklyPreviewWidth;
-        }
-    }
-    originX = MAX(originX, NSMinX(visibleFrame));
-
-    CGFloat originY = NSMaxY(parentFrame) - windowHeight;
-    originY = MIN(MAX(originY, NSMinY(visibleFrame)), NSMaxY(visibleFrame) - windowHeight);
-
-    return NSMakeRect(originX, originY, kOpenQuicklyPreviewWidth, windowHeight);
-}
-
-- (void)repositionPreviewWindow {
-    if (_previewWindow == nil) {
-        return;
-    }
-    [_previewWindow setFrame:[self previewWindowFrameForParentFrame:self.window.frame]
-                     display:YES];
-    [self layoutPreviewContent];
-}
-
-- (void)layoutPreviewContent {
-    NSView *contentView = _previewWindow.contentView;
-    if (contentView == nil) {
-        return;
-    }
-    const CGFloat inset = kOpenQuicklyPreviewInset;
-    const CGFloat innerWidth = contentView.bounds.size.width - 2 * inset;
-    _previewTitleLabel.frame = NSMakeRect(inset, inset, innerWidth, kOpenQuicklyPreviewTitleHeight);
-    _previewDetailLabel.frame = NSMakeRect(inset,
-                                            inset + kOpenQuicklyPreviewTitleHeight + kOpenQuicklyPreviewLabelGap,
-                                            innerWidth,
-                                            kOpenQuicklyPreviewDetailHeight);
-    const CGFloat imageY = inset + iTermOpenQuicklyPreviewLabelsBlockHeight();
-    const CGFloat imageHeight = MAX(contentView.bounds.size.height - imageY - inset, 0);
-    _previewImageView.frame = NSMakeRect(inset, imageY, innerWidth, imageHeight);
 }
 
 // Bound to the close button.
 - (IBAction)close:(id)sender {
-    [self teardownPreviewWindow];
+    [_previewPanel teardown];
     // Use orderOut, not close. -close on a non-activating panel can leave the
     // window in a state where the window-server refuses to re-elevate it on
     // subsequent shows from a background app (iTermProfileHotKey's floating
     // panel uses the same pattern).
     [self.window orderOut:nil];
-}
-
-- (void)teardownPreviewWindow {
-    if (_previewWindowAttached) {
-        [self.window removeChildWindow:_previewWindow];
-        _previewWindowAttached = NO;
-    }
-    // Destroy the panel and rebuild it on the next presentation. orderOut alone
-    // has proven unreliable for borderless NSPanels here; stale window state
-    // can leave ghost panels on screen across opens.
-    [_previewWindow close];
-    _previewWindow = nil;
-    _previewImageView = nil;
-    _previewTitleLabel = nil;
-    _previewDetailLabel = nil;
-    _previewVisible = NO;
-    _cachedPreviewSessionGuid = nil;
 }
 
 // Observes NSWorkspaceActiveSpaceDidChangeNotification once. When the Space
@@ -572,7 +361,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
                                  queue:NSOperationQueue.mainQueue
                             usingBlock:^(NSNotification *note) {
         if (token) {
-            [center removeObserver:token];
+            [NSWorkspace.sharedWorkspace.notificationCenter removeObserver:token];
             token = nil;
         }
         // Two spins of the runloop, then re-activate if some other app stole
@@ -591,7 +380,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         if (token) {
-            [center removeObserver:token];
+            [NSWorkspace.sharedWorkspace.notificationCenter removeObserver:token];
             token = nil;
         }
     });
@@ -840,7 +629,7 @@ static CGFloat iTermOpenQuicklyPreviewLabelsBlockHeight(void) {
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
-    [self teardownPreviewWindow];
+    [_previewPanel teardown];
     [self.window orderOut:nil];
 }
 

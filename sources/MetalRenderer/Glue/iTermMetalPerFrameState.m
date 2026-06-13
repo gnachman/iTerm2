@@ -295,6 +295,7 @@ typedef struct {
                                                                                                  0,
                                                                                                  0,
                                                                                                  drawingHelper.badgeRightMargin)
+                                                               panelReservation:drawingHelper.panelReservation
                                                                  verticalOffset:0];
     }
 }

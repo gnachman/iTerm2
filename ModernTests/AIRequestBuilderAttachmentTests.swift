@@ -116,11 +116,9 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         XCTAssertEqual(source?["data"] as? String, Self.imageBase64)
     }
 
-    /// Non-image binary attachment falls back to text. The fallback uses
-    /// lossyString which mangles binary bytes, but the encoder MUST NOT
-    /// crash and the resulting message must still be a valid Anthropic
-    /// content array.
-    func testAnthropic_binaryAttachment_fallsBackToText_doesNotCrash() throws {
+    /// PDF attachments serialize as a native Anthropic document content
+    /// block (base64 source, media_type application/pdf), not text.
+    func testAnthropic_pdfAttachment_asDocumentBlock() throws {
         let model = try model(named: "claude-haiku-4-5")
         let attachment = file(name: "x.pdf", mime: "application/pdf", bytes: Self.pdfBytes)
         let message = LLM.Message(responseID: nil, role: .user, body: .attachment(attachment))
@@ -132,14 +130,119 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         let json = try decode(bodyData)
         let messages = (json["messages"] as? [[String: Any]]) ?? []
         XCTAssertEqual(messages.count, 1)
-        // The Anthropic encoder collapses single-attachment file bodies into
-        // a string content. Whatever shape, just confirm the request is
-        // still valid and didn't drop the role.
         XCTAssertEqual(messages[0]["role"] as? String, "user")
-        XCTAssertNotNil(messages[0]["content"])
+        guard let blocks = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content for document block; got \(String(describing: messages[0]["content"]))")
+            return
+        }
+        XCTAssertEqual(blocks.count, 1)
+        XCTAssertEqual(blocks[0]["type"] as? String, "document")
+        let source = blocks[0]["source"] as? [String: Any]
+        XCTAssertEqual(source?["type"] as? String, "base64")
+        XCTAssertEqual(source?["media_type"] as? String, "application/pdf")
+        XCTAssertEqual(source?["data"] as? String, Self.pdfBase64,
+                       "PDF bytes lost or re-encoded incorrectly")
+    }
+
+    /// SVG attachments are XML text (image/svg+xml has the +xml suffix that
+    /// MIMETypeIsTextual recognizes) and must NOT be sent as a binary image
+    /// block — Anthropic's image source only accepts jpeg/png/gif/webp and
+    /// would 400. Pinned because the obvious "anything that starts with
+    /// image/ is an image" branch produced exactly that 400 in production.
+    func testAnthropic_svgAttachment_asText_notImageBlock() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let svg = Data("<svg xmlns=\"http://www.w3.org/2000/svg\"/>".utf8)
+        let attachment = file(name: "x.svg", mime: "image/svg+xml", bytes: svg)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("What is this?"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try AnthropicRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(messages.count, 1)
+        guard let blocks = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content for multipart")
+            return
+        }
+        // Two text blocks, no image block.
+        XCTAssertEqual(blocks.count, 2)
+        XCTAssertEqual(blocks[0]["type"] as? String, "text")
+        XCTAssertEqual(blocks[1]["type"] as? String, "text",
+                       "SVG must be sent as text, not as an image block; got \(blocks[1])")
+        XCTAssertNil(blocks[1]["source"],
+                     "SVG block must not carry an image-style source")
+        XCTAssertEqual(blocks[1]["text"] as? String,
+                       "<svg xmlns=\"http://www.w3.org/2000/svg\"/>")
+    }
+
+    /// PDF inside a multipart body emits a text part followed by a
+    /// document part (mirrors the image case).
+    func testAnthropic_multipart_textThenPdf_asDocumentBlock() throws {
+        let model = try model(named: "claude-haiku-4-5")
+        let attachment = file(name: "x.pdf", mime: "application/pdf", bytes: Self.pdfBytes)
+        let body: LLM.Message.Body = .multipart([
+            .text("Read this:"),
+            .attachment(attachment),
+        ])
+        let message = LLM.Message(responseID: nil, role: .user, body: body)
+        let bodyData = try AnthropicRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(messages.count, 1)
+        guard let blocks = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content for multipart")
+            return
+        }
+        XCTAssertEqual(blocks.count, 2)
+        XCTAssertEqual(blocks[0]["type"] as? String, "text")
+        XCTAssertEqual(blocks[0]["text"] as? String, "Read this:")
+        XCTAssertEqual(blocks[1]["type"] as? String, "document")
+        let source = blocks[1]["source"] as? [String: Any]
+        XCTAssertEqual(source?["media_type"] as? String, "application/pdf")
+        XCTAssertEqual(source?["data"] as? String, Self.pdfBase64)
     }
 
     // MARK: - Gemini
+
+    /// SVG and other textual MIMEs must NOT be sent as inlineData on
+    /// Gemini. Gemini's inlineData enforces a binary-format allowlist and
+    /// 400s with "Unsupported MIME type: image/svg+xml" / "application/xml"
+    /// otherwise. Textual content goes through a text Part instead.
+    /// Pinned because this regression spent a sprint masquerading as a
+    /// vendor outage. Same root cause as the Anthropic SVG bug.
+    func testGemini_svgAttachment_asText_notInlineData() throws {
+        let model = try model(named: "gemini-3-flash-preview")
+        let svg = Data("<svg xmlns=\"http://www.w3.org/2000/svg\"/>".utf8)
+        let attachment = file(name: "x.svg", mime: "image/svg+xml", bytes: svg)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Describe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+        let contents = (json["contents"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(contents.count, 1)
+        let parts = (contents[0]["parts"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(parts.count, 2, "expected text part + text part for SVG")
+        XCTAssertEqual(parts[0]["text"] as? String, "Describe:")
+        XCTAssertNotNil(parts[1]["text"], "SVG must be sent as text, not inlineData; got \(parts[1])")
+        XCTAssertNil(parts[1]["inlineData"],
+                     "SVG must NOT carry inlineData; Gemini's inlineData allowlist rejects image/svg+xml")
+        XCTAssertEqual(parts[1]["text"] as? String,
+                       "<svg xmlns=\"http://www.w3.org/2000/svg\"/>")
+    }
 
     /// Gemini encodes any binary file as inlineData with mime_type +
     /// base64-encoded data. Distinct from text-content blocks.
@@ -254,6 +357,125 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         }
         XCTAssertTrue(foundFileContent,
                       "expected a base64-encoded PDF file content block; body: \(json)")
+    }
+
+    /// Image attachment through the Responses API serializes as an
+    /// input_image content part with a base64 data URL (vision), NOT an
+    /// input_file (which the API 400s for image MIMEs).
+    func testOpenAIResponses_imageAttachment_asInputImage() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let attachment = file(name: "x.png", mime: "image/png", bytes: Self.imageBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Describe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ResponsesBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false,
+            hostedTools: HostedTools(),
+            previousResponseID: nil,
+            shouldThink: nil).body()
+        let json = try decode(bodyData)
+        let input = (json["input"] as? [[String: Any]]) ?? []
+        var foundImage = false
+        for item in input {
+            guard let content = item["content"] as? [[String: Any]] else { continue }
+            for part in content where part["type"] as? String == "input_image" {
+                let url = part["image_url"] as? String
+                XCTAssertNotNil(url, "input_image must carry image_url; got \(part)")
+                XCTAssertTrue(url?.hasPrefix("data:image/png;base64,") == true,
+                              "expected base64 data URL; got \(String(describing: url))")
+                XCTAssertTrue(url?.hasSuffix(Self.imageBase64) == true,
+                              "image bytes lost or re-encoded")
+                foundImage = true
+            }
+        }
+        XCTAssertTrue(foundImage, "no input_image part found; body: \(json)")
+    }
+
+    // MARK: - OpenAI chat-completions
+
+    /// Image attachment through the chat-completions builder serializes as
+    /// an image_url content part with a base64 data URL.
+    func testOpenAIChat_imageAttachment_asImageURL() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let attachment = file(name: "x.png", mime: "image/png", bytes: Self.imageBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Describe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(messages.count, 1)
+        guard let parts = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content; got \(String(describing: messages[0]["content"]))")
+            return
+        }
+        let imagePart = parts.first { $0["type"] as? String == "image_url" }
+        XCTAssertNotNil(imagePart, "no image_url part; got \(parts)")
+        let url = (imagePart?["image_url"] as? [String: Any])?["url"] as? String
+        XCTAssertTrue(url?.hasPrefix("data:image/png;base64,") == true,
+                      "expected base64 data URL; got \(String(describing: url))")
+        XCTAssertTrue(url?.hasSuffix(Self.imageBase64) == true,
+                      "image bytes lost or re-encoded")
+    }
+
+    /// MP3 attachment through the chat-completions builder serializes as an
+    /// input_audio content part with format "mp3" and base64 data.
+    func testOpenAIChat_audioAttachment_asInputAudio() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let audioBytes = Data("ID3fake-mp3-bytes".utf8)
+        let attachment = file(name: "x.mp3", mime: "audio/mpeg", bytes: audioBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Transcribe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        guard let parts = messages[0]["content"] as? [[String: Any]] else {
+            XCTFail("expected array content; got \(String(describing: messages[0]["content"]))")
+            return
+        }
+        let audioPart = parts.first { $0["type"] as? String == "input_audio" }
+        XCTAssertNotNil(audioPart, "no input_audio part; got \(parts)")
+        let audio = audioPart?["input_audio"] as? [String: Any]
+        XCTAssertEqual(audio?["format"] as? String, "mp3")
+        XCTAssertEqual(audio?["data"] as? String, audioBytes.base64EncodedString())
+    }
+
+    /// WAV maps to format "wav" (the other half of OpenAI's closed
+    /// input_audio format enum; mp3 is covered above).
+    func testOpenAIChat_audioWavAttachment_asInputAudio() throws {
+        let model = try model(named: "gpt-4o-mini")
+        let audioBytes = Data("RIFFfake-wav-bytes".utf8)
+        let attachment = file(name: "x.wav", mime: "audio/wav", bytes: audioBytes)
+        let message = LLM.Message(responseID: nil, role: .user, body: .multipart([
+            .text("Transcribe:"),
+            .attachment(attachment),
+        ]))
+        let bodyData = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        let json = try decode(bodyData)
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        let parts = (messages[0]["content"] as? [[String: Any]]) ?? []
+        let audio = (parts.first { $0["type"] as? String == "input_audio" })?["input_audio"] as? [String: Any]
+        XCTAssertEqual(audio?["format"] as? String, "wav")
+        XCTAssertEqual(audio?["data"] as? String, audioBytes.base64EncodedString())
     }
 
     // MARK: - DeepSeek (chat-completions style)

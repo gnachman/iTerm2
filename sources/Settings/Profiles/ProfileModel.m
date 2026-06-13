@@ -538,7 +538,7 @@ static NSInteger gLessLoggingCount;
         theIndex = [bookmarks_ count];
         [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
     }
-    NSString* isDeprecatedDefaultBookmark = [bookmark objectForKey:KEY_DEFAULT_BOOKMARK];
+    NSString* isDeprecatedDefaultBookmark = [NSString castFrom:[bookmark objectForKey:KEY_DEFAULT_BOOKMARK]];
 
     // The call to setDefaultByGuid may add a journal entry so make sure this one comes first.
     BookmarkJournalEntry *e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD

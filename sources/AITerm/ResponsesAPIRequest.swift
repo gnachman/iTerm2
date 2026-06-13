@@ -1709,15 +1709,17 @@ struct ResponsesBodyRequestBuilder {
                             if mimeTypeIsTextual(file.mimeType) {
                                 return .inputText(.init(text: file.content.lossyString))
                             }
-                            // TODO: OpenAI Responses rejects inline image MIME types
-                            // (e.g. image/png) via input_file. Production code never
-                            // reaches this branch with an image because
-                            // MessagePrepPipeline pre-uploads non-PDF binaries and
-                            // replaces them with .fileID. If we ever change that
-                            // (e.g. switch to vision API direct input for cheaper
-                            // image calls), images need to use input_image with an
-                            // image_url instead of input_file with file_data.
-                            // Caught by AILiveHarness.test_openai_imageDescribe (currently skipped).
+                            // Images use input_image with a base64 data URL
+                            // (vision). input_file is for documents (PDF); the
+                            // Responses API 400s an image MIME sent via
+                            // input_file. The provider keeps images off the
+                            // vector-store upload path (shouldUploadFile) so
+                            // they reach this inline branch.
+                            if file.mimeType.hasPrefix("image/") {
+                                return .inputImage(.init(
+                                    detail: .auto,
+                                    imageURL: "data:\(file.mimeType);base64," + file.content.base64EncodedString()))
+                            }
                             return .inputFile(.init(fileData: "data:\(file.mimeType);base64," +  file.content.base64EncodedString(),
                                                     filename: file.name))
                         case .fileID(let fileID, _):

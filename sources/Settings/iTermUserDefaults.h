@@ -86,6 +86,13 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // NoSync for the same reason as workgroupShortcutsBackfilled.
 @property (class, nonatomic) BOOL claudeCodeDiffModeBackfilled;
 
+// Latched once the one-time migration that rewrites the Claude Code
+// workgroup's Code Review command to read its system prompt from the
+// user-editable temp file (codeReviewSystemPromptFile) instead of the
+// bundled code-review-system-prompt.txt has run. NoSync for the same
+// reason as workgroupShortcutsBackfilled.
+@property (class, nonatomic) BOOL claudeCodeReviewSystemPromptCommandBackfilled;
+
 // Returns whether the previous process exited cleanly. The value is latched on
 // first access: the on-disk flag is read then immediately reset so that if this
 // process crashes before +markShutdownAsClean is called, the next launch will

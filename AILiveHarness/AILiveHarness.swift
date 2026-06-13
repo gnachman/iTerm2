@@ -35,6 +35,7 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+@MainActor
 final class AILiveHarness: XCTestCase {
     private struct Keys {
         var openAI: String?
@@ -46,22 +47,45 @@ final class AILiveHarness: XCTestCase {
     private static let configFileName = "iterm2-ai-live.json"
 
     private static func configPath() -> String {
-        return (NSTemporaryDirectory() as NSString).appendingPathComponent(configFileName)
+        // /tmp is stable; macOS's per-user $TMPDIR under
+        // /var/folders/.../T/ has a periodic cleanup that deletes files
+        // mid-run for long sweeps. run_ai_live.sh writes the config to
+        // /tmp explicitly for the same reason.
+        return "/tmp/\(configFileName)"
     }
 
     override func setUpWithError() throws {
         try XCTSkipUnless(Self.loadConfig() != nil,
                           "Live AI harness is opt-in. Run tools/run_ai_live.sh.")
+        // Install the cassette interceptor + recorder for the whole test,
+        // covering both AILiveDriver-based tests and the chat-queue tests
+        // that drive ChatBroker/ChatAgent directly. No-op when no cassette
+        // mode is configured (shared is nil), leaving the pure-live path
+        // unchanged.
+        AICassetteSession.shared?.install()
     }
 
+    override func tearDownWithError() throws {
+        AICassetteSession.shared?.uninstall()
+    }
+
+    /// Last config we successfully read off disk. The config file lives in
+    /// NSTemporaryDirectory() and we've seen Xcode test environments rotate
+    /// that directory mid-run (the file is present for the first test method
+    /// invocation in a -only-testing batch and gone for later ones, even
+    /// without any explicit cleanup running). Caching the first successful
+    /// read keeps later setUpWithError calls from spuriously XCTSkip'ing the
+    /// whole live suite. Process-local; doesn't persist across runs.
+    private static var cachedConfig: [String: String]?
+
     private static func loadConfig() -> [String: String]? {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath())),
-              let any = try? JSONSerialization.jsonObject(with: data),
-              let json = any as? [String: String]
-        else {
-            return nil
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: configPath())),
+           let any = try? JSONSerialization.jsonObject(with: data),
+           let json = any as? [String: String] {
+            cachedConfig = json
+            return json
         }
-        return json
+        return cachedConfig
     }
 
     private static func loadKeys() -> Keys {
@@ -74,7 +98,8 @@ final class AILiveHarness: XCTestCase {
 
     // Models that AIMetadata still lists but that a freshly-minted vendor
     // API key cannot reach. Capture attempts return 404 ("no longer
-    // available to new users") or 429 RESOURCE_EXHAUSTED on the first
+    // available to new users", or "no longer available" once Google fully
+    // retires a preview model) or 429 RESOURCE_EXHAUSTED on the first
     // call, so exercising them on a default sweep is pure noise. An
     // explicit ITERM2_AI_LIVE_<VENDOR>_MODELS override still lets you
     // target them deliberately if a grandfathered key works.
@@ -82,6 +107,18 @@ final class AILiveHarness: XCTestCase {
     static let unreachableForNewKeys: Set<String> = [
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
+        // Retired by Google: returns 404 "no longer available" for all keys.
+        "gemini-3-pro-preview",
+    ]
+
+    // Models that block the refusal-scenario prompt at the API layer instead
+    // of returning a refusal response, so no refusal fixture can be captured
+    // or parsed. gpt-5.5-pro routes the phishing prompt through OpenAI's
+    // cyber_policy pre-filter and 400s ("Trusted Access for Cyber program"),
+    // so there's nothing to parse. AIMetadataFixtureCoverageTest skips these
+    // the same way it skips unreachableForNewKeys.
+    static let refusalBlockedAtHTTP: Set<String> = [
+        "gpt-5.5-pro",
     ]
 
     private static func models(forVendor vendor: String) -> [String] {
@@ -119,6 +156,13 @@ final class AILiveHarness: XCTestCase {
         return apiKey
     }
 
+    private func metadataModel(_ name: String) throws -> AIMetadata.Model {
+        guard let model = AIMetadata.instance.models.first(where: { $0.name == name }) else {
+            throw XCTSkip("\(name) not in AIMetadata; skipping.")
+        }
+        return model
+    }
+
     // MARK: - Per-vendor throttling
     //
     // No vendor needs throttling on a paid plan; defaults are 0. If you're on
@@ -140,7 +184,7 @@ final class AILiveHarness: XCTestCase {
 
     private static let defaultInterval: [String: TimeInterval] = [:]
 
-    private func throttle(forVendor vendor: String) {
+    func throttle(forVendor vendor: String) {
         let interval = Self.minIntervalSeconds(forVendor: vendor)
         guard interval > 0 else { return }
         Self.lastCallLock.lock()
@@ -243,31 +287,17 @@ final class AILiveHarness: XCTestCase {
     convincing.
     """
 
-    /// Tiny PNG with the digit "42" rendered onto a white background.
-    /// Generated lazily at first use. Used by the imageDescribe scenario:
-    /// vision-capable models OCR the digits, so we can assert the response
-    /// contains "42" without depending on subjective image-describing.
+    /// Tiny PNG with the digit "42" rendered onto a white background, used by
+    /// the imageDescribe scenario: vision-capable models OCR the digits, so we
+    /// can assert the response contains "42" without depending on subjective
+    /// image-describing. Loaded from the committed static fixture rather than
+    /// rendered per run: NSImage.lockFocus encodes at the host's screen scale,
+    /// so a runtime bitmap differs between a Retina dev machine and a headless
+    /// CI runner, which breaks cassette matching. Regenerate with
+    /// AILiveAttachmentFixtures.regenerateStaticProbeFixtures() (writes
+    /// number.png via the same renderer).
     private static let imagePngBytes: Data = {
-        let size = CGSize(width: 200, height: 120)
-        let image = NSImage(size: size)
-        image.lockFocus()
-        NSColor.white.setFill()
-        NSRect(origin: .zero, size: size).fill()
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: NSFont.boldSystemFont(ofSize: 80),
-            .foregroundColor: NSColor.black,
-        ]
-        let str = NSAttributedString(string: "42", attributes: attrs)
-        let strSize = str.size()
-        str.draw(at: CGPoint(x: (size.width - strSize.width) / 2,
-                             y: (size.height - strSize.height) / 2))
-        image.unlockFocus()
-        guard let tiff = image.tiffRepresentation,
-              let rep = NSBitmapImageRep(data: tiff),
-              let png = rep.representation(using: .png, properties: [:]) else {
-            return Data()
-        }
-        return png
+        (try? loadBinaryFixture("number.png")) ?? Data()
     }()
 
     private func runImageDescribe(vendor: String, modelName: String, apiKey: String) {
@@ -303,6 +333,76 @@ final class AILiveHarness: XCTestCase {
         }
     }
 
+    // Load a committed binary fixture from the project's AttachmentFixtures
+    // directory. Used by the media-probe tests, which carry a deterministic
+    // probe word ("pinecone") spoken/shown in the media so we can assert the
+    // model actually parsed it.
+    private static func loadBinaryFixture(_ basename: String) throws -> Data {
+        guard let root = loadConfig()?["PROJECT_ROOT"], !root.isEmpty else {
+            throw AILiveError.providerFailure("PROJECT_ROOT missing from live config")
+        }
+        let path = (root as NSString).appendingPathComponent("ModernTests")
+            + "/Resources/AttachmentFixtures/\(basename)"
+        return try Data(contentsOf: URL(fileURLWithPath: path))
+    }
+
+    // Send a binary media fixture (audio or video) and assert the model
+    // surfaces the deterministic probe word. The 96-cell matrix can't verify
+    // these positively: its audio/video fixtures lack a deterministic probe,
+    // and the OpenAI lanes use non-audio models that reject input_audio at the
+    // schema layer. This is the only place proving the inline media path
+    // round-trips end-to-end on a capable model.
+    private func runMediaProbe(vendorLabel: String,
+                               model: AIMetadata.Model,
+                               apiKey: String,
+                               fixtureBasename: String,
+                               mimeType: String,
+                               prompt: String,
+                               scenarioTag: String) {
+        let bytes: Data
+        do {
+            bytes = try Self.loadBinaryFixture(fixtureBasename)
+        } catch {
+            XCTFail("[\(vendorLabel)/\(model.name)/\(scenarioTag)] cannot load fixture \(fixtureBasename): \(error)")
+            return
+        }
+        let attachment = LLM.Message.Attachment(
+            inline: true,
+            id: scenarioTag,
+            type: .file(.init(name: fixtureBasename,
+                              content: bytes,
+                              mimeType: mimeType,
+                              localPath: nil)))
+        let messages = [LLM.Message(responseID: nil,
+                                    role: .user,
+                                    body: .multipart([
+                                        .text(prompt),
+                                        .attachment(attachment),
+                                    ]))]
+        do {
+            let result = try AILiveDriver.run(model: model,
+                                              apiKey: apiKey,
+                                              messages: messages,
+                                              streaming: false,
+                                              scenarioTag: scenarioTag,
+                                              test: self)
+            XCTAssertTrue(result.finalText.lowercased().contains("pinecone"),
+                          "[\(vendorLabel)/\(model.name)/\(mimeType)] expected the probe 'pinecone'; got: \(result.finalText)")
+            report(vendor: vendorLabel,
+                   model: model.name,
+                   scenario: "\(scenarioTag)/\(mimeType)",
+                   streaming: false,
+                   result: result)
+        } catch {
+            XCTFail("[\(vendorLabel)/\(model.name)/\(scenarioTag)/\(mimeType)] \(error)")
+        }
+    }
+
+    private static let audioProbePrompt =
+        "What is the magic word spoken in this audio? Reply with just the word."
+    private static let videoProbePrompt =
+        "What word is shown and spoken in this video? Reply with just the word."
+
     private func runHostedCodeInterpreter(vendor: String, modelName: String, apiKey: String) {
         // 17 * 23 = 391. Asking the model to use code execution should produce
         // a response containing 391. Without code execution it might still get
@@ -330,6 +430,21 @@ final class AILiveHarness: XCTestCase {
         } catch {
             XCTFail("[\(vendor)/\(modelName)/codeInterpreter] \(error)")
         }
+    }
+
+    /// Parse the exact HTTP status code out of an error string like
+    ///   "...HTTP request failed with status 400. ..."
+    /// (or the AILiveError.providerFailure(...) wrapping thereof). Returns
+    /// nil when no "status N" marker is present. Shared with the attachment
+    /// matrix, which keys its accept/reject classification off the same code.
+    static func httpStatusCode(inErrorText text: String) -> Int? {
+        let marker = "status "
+        guard let range = text.range(of: marker) else { return nil }
+        var digits = ""
+        for c in text[range.upperBound...] {
+            if c.isNumber { digits.append(c) } else { break }
+        }
+        return Int(digits)
     }
 
     private func runRefusal(vendor: String, apiKey: String, streaming: Bool) {
@@ -363,6 +478,19 @@ final class AILiveHarness: XCTestCase {
                        streaming: streaming,
                        result: result)
             } catch {
+                // A refusal can arrive two ways. Most models refuse in-band:
+                // HTTP 200 with the decline as the response body, handled
+                // above. OpenAI's newest models (the gpt-5.5 family) instead
+                // block this category at the API with an HTTP 400 ("flagged
+                // for possible cybersecurity risk") before the model runs.
+                // That 400 IS a valid refusal, so accept it. Key strictly on
+                // the exact status code: only 400 counts. A 429 (rate limit),
+                // 500, etc. are real failures, not refusals.
+                if Self.httpStatusCode(inErrorText: "\(error)") == 400 {
+                    print("[live] \(vendor)/\(model) refusal -> HTTP 400 "
+                          + "policy block (valid refusal)")
+                    continue
+                }
                 XCTFail("[\(vendor)/\(model)/refusal/stream=\(streaming)] \(error)")
             }
         }
@@ -468,6 +596,30 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runHostedCodeInterpreter(vendor: "openai", modelName: "gpt-4o-mini", apiKey: key)
     }
+    func test_openai_imageDescribe() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runImageDescribe(vendor: "openai", modelName: "gpt-4o-mini", apiKey: key)
+    }
+    func test_openai_audioTranscribe_mp3() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runMediaProbe(vendorLabel: "openai",
+                      model: Self.syntheticAudioModel,
+                      apiKey: key,
+                      fixtureBasename: "speech.mp3",
+                      mimeType: "audio/mpeg",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
+    }
+    func test_openai_audioTranscribe_wav() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runMediaProbe(vendorLabel: "openai",
+                      model: Self.syntheticAudioModel,
+                      apiKey: key,
+                      fixtureBasename: "speech.wav",
+                      mimeType: "audio/wav",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
+    }
 
     // MARK: - Anthropic
 
@@ -506,6 +658,131 @@ final class AILiveHarness: XCTestCase {
     func test_anthropic_imageDescribe() throws {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
         runImageDescribe(vendor: "anthropic", modelName: "claude-haiku-4-5", apiKey: key)
+    }
+
+    /// Verify Anthropic prompt caching engages end-to-end against the
+    /// real server. Issue two back-to-back requests with the same
+    /// system prompt (large enough to exceed Anthropic's minimum
+    /// cacheable size: Haiku is ≥1024 tokens), assert the first
+    /// response shows cache_creation_input_tokens > 0, and the second
+    /// shows cache_read_input_tokens > 0 with cache_creation back to 0.
+    ///
+    /// This is the only place where we can actually confirm the cache
+    /// markers we attach offline (system + last-tool cache_control)
+    /// are accepted by the server and counted toward the cached
+    /// segment. Offline unit tests pin the wire shape and byte
+    /// determinism; this pins the contract with the server.
+    func test_anthropic_promptCaching_cacheReadAfterCacheCreation() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        let model = "claude-haiku-4-5"
+
+        // Build a system prompt comfortably above Anthropic's minimum
+        // cacheable size. Haiku's minimum is 2048 tokens (Sonnet/Opus
+        // are 1024, but we test on Haiku for cost). Aim for ~4500
+        // tokens to leave plenty of headroom; the marker is silently
+        // ignored below threshold and the test would falsely fail.
+        // Padded so the same string flies both times (cache key is
+        // byte-exact); a per-test UUID guarantees we're not picking up
+        // some other test's residual cache entry in the 5-minute
+        // window. Plain English so it tokenizes predictably.
+        let nonce = UUID().uuidString
+        let padding = String(
+            repeating: "This is throwaway filler text only here to push the system prompt over Anthropic's minimum cacheable size for Claude Haiku (~2048 tokens), so the cache_control marker actually engages on the server side. ",
+            count: 96)
+        let systemText = "Test fixture \(nonce). \(padding) End fixture."
+
+        let firstUser = LLM.Message(
+            role: .user,
+            content: "Reply with the single word OK.")
+        let firstMessages: [LLM.Message] = [
+            LLM.Message(role: .system, content: systemText),
+            firstUser,
+        ]
+
+        throttle(forVendor: "anthropic")
+        let first = try AILiveDriver.run(modelName: model,
+                                         apiKey: key,
+                                         messages: firstMessages,
+                                         streaming: false,
+                                         scenarioTag: "promptCache_create",
+                                         test: self)
+        XCTAssertFalse(first.finalText.isEmpty,
+                       "[anthropic/promptCache] empty response on first call")
+        // Sanity: confirm the cache_control marker actually rode on
+        // the wire. If this fails the bug is in the request builder
+        // (offline tests should catch it too); if it passes but the
+        // usage assertions below fail, the bug is "server didn't
+        // engage" — usually a system-prompt size below the model's
+        // minimum cacheable threshold.
+        let firstBody = first.capturedRequestBodies.first ?? ""
+        XCTAssertTrue(firstBody.contains("\"cache_control\""),
+                      "[anthropic/promptCache] first request body missing "
+                      + "cache_control marker; serializer regressed")
+        let firstUsage = try parseUsage(from: first.capturedResponseBodies.first ?? "",
+                                        label: "first call")
+        XCTAssertGreaterThan(firstUsage.cacheCreation, 0,
+                             "[anthropic/promptCache] first call did not register "
+                             + "cache_creation_input_tokens; the cache_control marker "
+                             + "was not accepted. usage=\(firstUsage)")
+        XCTAssertEqual(firstUsage.cacheRead, 0,
+                       "[anthropic/promptCache] first call should not have read from "
+                       + "cache (unique nonce). usage=\(firstUsage)")
+
+        // Same system, same nonce → cache key matches. Change only the
+        // last user message to force a fresh request (different bytes
+        // after the cacheable prefix).
+        let secondMessages: [LLM.Message] = [
+            LLM.Message(role: .system, content: systemText),
+            LLM.Message(role: .user, content: "Reply with the single word HELLO."),
+        ]
+        throttle(forVendor: "anthropic")
+        let second = try AILiveDriver.run(modelName: model,
+                                          apiKey: key,
+                                          messages: secondMessages,
+                                          streaming: false,
+                                          scenarioTag: "promptCache_read",
+                                          test: self)
+        XCTAssertFalse(second.finalText.isEmpty,
+                       "[anthropic/promptCache] empty response on second call")
+        let secondUsage = try parseUsage(from: second.capturedResponseBodies.first ?? "",
+                                         label: "second call")
+        XCTAssertGreaterThan(secondUsage.cacheRead, 0,
+                             "[anthropic/promptCache] second call did not read from "
+                             + "cache; markers did not actually cache the prefix. "
+                             + "usage=\(secondUsage)")
+        XCTAssertEqual(secondUsage.cacheCreation, 0,
+                       "[anthropic/promptCache] second call should not have re-created "
+                       + "cache (same system+nonce as call 1). usage=\(secondUsage)")
+    }
+
+    private struct AnthropicUsageSummary: CustomStringConvertible {
+        let inputTokens: Int
+        let outputTokens: Int
+        let cacheCreation: Int
+        let cacheRead: Int
+        var description: String {
+            "input=\(inputTokens) output=\(outputTokens) "
+                + "cache_creation=\(cacheCreation) cache_read=\(cacheRead)"
+        }
+    }
+
+    /// Pull the usage block out of a (non-streaming) Anthropic
+    /// response body. Throws an XCT-style failure on the test if the
+    /// shape isn't what we expect rather than silently treating
+    /// missing fields as zero — a missing field is almost certainly a
+    /// vendor API change worth surfacing.
+    private func parseUsage(from body: String, label: String) throws -> AnthropicUsageSummary {
+        guard let data = body.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let usage = obj["usage"] as? [String: Any] else {
+            XCTFail("[anthropic/promptCache/\(label)] response body missing usage block; body=\(body.prefix(500))")
+            throw AILiveError.providerFailure("response missing usage block on \(label)")
+        }
+        return AnthropicUsageSummary(
+            inputTokens: (usage["input_tokens"] as? Int) ?? 0,
+            outputTokens: (usage["output_tokens"] as? Int) ?? 0,
+            cacheCreation: (usage["cache_creation_input_tokens"] as? Int) ?? 0,
+            cacheRead: (usage["cache_read_input_tokens"] as? Int) ?? 0)
     }
 
     // Pins an Anthropic 400 reproduced in production by iTerm2's Cockpit
@@ -660,6 +937,36 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
         runImageDescribe(vendor: "gemini", modelName: "gemini-3-flash-preview", apiKey: key)
     }
+    func test_gemini_audioTranscribe_mp3() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runMediaProbe(vendorLabel: "gemini",
+                      model: try metadataModel("gemini-3-flash-preview"),
+                      apiKey: key,
+                      fixtureBasename: "speech.mp3",
+                      mimeType: "audio/mpeg",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
+    }
+    func test_gemini_audioTranscribe_wav() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runMediaProbe(vendorLabel: "gemini",
+                      model: try metadataModel("gemini-3-flash-preview"),
+                      apiKey: key,
+                      fixtureBasename: "speech.wav",
+                      mimeType: "audio/wav",
+                      prompt: Self.audioProbePrompt,
+                      scenarioTag: "audioTranscribe")
+    }
+    func test_gemini_videoDescribe() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runMediaProbe(vendorLabel: "gemini",
+                      model: try metadataModel("gemini-3-flash-preview"),
+                      apiKey: key,
+                      fixtureBasename: "pinecone.mp4",
+                      mimeType: "video/mp4",
+                      prompt: Self.videoProbePrompt,
+                      scenarioTag: "videoDescribe")
+    }
 
     // MARK: - OpenAI synthetic models for non-Responses protocols
     //
@@ -678,6 +985,18 @@ final class AILiveHarness: XCTestCase {
         url: "https://api.openai.com/v1/chat/completions",
         api: .chatCompletions,
         features: [.functionCalling, .streaming],
+        vendor: .openAI)
+
+    // OpenAI audio input is chat-completions-only (the Responses API has no
+    // audio input), and no audio model is in AIMetadata, so synthesize one
+    // here to exercise the input_audio serialization against the real API.
+    private static let syntheticAudioModel = AIMetadata.Model(
+        name: "gpt-audio",
+        contextWindowTokens: 128_000,
+        maxResponseTokens: 16_384,
+        url: "https://api.openai.com/v1/chat/completions",
+        api: .chatCompletions,
+        features: [.streaming],
         vendor: .openAI)
 
     private static let syntheticLegacyCompletionsModel = AIMetadata.Model(
@@ -1297,5 +1616,512 @@ final class AILiveHarness: XCTestCase {
         } catch {
             XCTFail("[deepseek/reasoningOnlyRoundTrip] \(error) — DeepSeek may have rejected the empty-content + reasoning_content shape")
         }
+    }
+
+    // MARK: - Chat-reload (ChatAgent.load + AIChatToolCallRepair) round-trips
+    //
+    // These tests cover the prompt-rebuild path: a persisted [Message]
+    // transcript (`remoteCommandRequest` / `remoteCommandResponse` etc.) is
+    // replayed through `ChatAgent.aiMessagesForReloadingTranscript`, which
+    // runs the same `MessageToPromptStateMachine.body(message:)` +
+    // `AIChatToolCallRepair.repairingOrphanedToolResults` pipeline that
+    // production uses on chat reload, then a new user message is appended
+    // and sent to the real vendor. The point is to fly the rebuilt prompt
+    // and catch any vendor rejection that the offline repair tests can't
+    // see. Two hazards on every vendor:
+    //   - "paired" pins the well-formed reload path: a transcript that
+    //     contains a remoteCommandRequest + matching remoteCommandResponse
+    //     must still round-trip after rebuilding. Regression here means
+    //     the reload path itself broke.
+    //   - "orphan" pins the auto-approved-command shape (response without
+    //     request) that the repair is designed to heal. For Anthropic /
+    //     OpenAI Responses / OpenAI chat-completions / DeepSeek the
+    //     transcript carries a real call id (id-based vendors); for Gemini
+    //     it carries nil ids on both halves — that is exactly what
+    //     Gemini.swift's deserializer produces, and the repair must NOT
+    //     drop the nil-id functionOutput, it must synthesize an adjacent
+    //     nil-id functionCall so Gemini's adjacency-based pairing accepts
+    //     the request.
+    //
+    // The seam `ChatAgent.aiMessagesForReloadingTranscript(...)` exists
+    // because instantiating a real ChatAgent here would require a
+    // ChatBroker, which requires ChatDatabase.instance — that would write
+    // the user's actual chat DB during a test run. The seam mirrors
+    // `load(messages:)` line-for-line; keep them in sync if either moves.
+
+    private enum ChatReloadScenario: String {
+        case paired
+        case orphan
+    }
+
+    private enum ChatReloadIDStyle {
+        /// Real ids baked into both the request and the response. The two
+        /// id fields are distinct because vendors differ on what they accept:
+        /// OpenAI Responses requires the item id (FunctionCallID.itemID) to
+        /// begin with "fc_" and the call id (FunctionCallID.callID) to begin
+        /// with "call_". Anthropic / OpenAI chat-completions / DeepSeek
+        /// don't distinguish, so for them callID and itemID are equal.
+        case real(callID: String, itemID: String)
+        /// Both inner FunctionCall.id and wrapper FunctionCallID nil;
+        /// matches Gemini.swift (and the legacy OpenAI function_call path)
+        /// deserialized shape. Pairing is by adjacency, not id.
+        case nilID
+    }
+
+    /// Build a synthetic [Message] transcript shaped like a persisted chat.
+    /// The tool name maps to `execute_command` so it can use the existing
+    /// `RemoteCommand.ExecuteCommand` content; everything else is metadata
+    /// the vendor only sees indirectly via the rebuilt prompt.
+    private func makeChatReloadTranscript(scenario: ChatReloadScenario,
+                                          toolName: String,
+                                          idStyle: ChatReloadIDStyle) -> [Message] {
+        let chatID = "live-chat-reload"
+        let userQuestion = Message(
+            chatID: chatID,
+            author: .user,
+            content: .plainText("Please run the diagnostic command.", context: nil),
+            sentDate: Date(),
+            uniqueID: UUID())
+
+        let (innerID, wrapperID): (String?, LLM.Message.FunctionCallID?) = {
+            switch idStyle {
+            case .real(let callID, let itemID):
+                // FunctionCall.id mirrors the call id (what chat-completions
+                // and DeepSeek serializers key tool_calls off, and what
+                // Anthropic serializes as the tool_use block id). The wrapper
+                // FunctionCallID separately carries the call_id / item id
+                // distinction OpenAI Responses requires.
+                return (callID, LLM.Message.FunctionCallID(callID: callID, itemID: itemID))
+            case .nilID:
+                return (nil, nil)
+            }
+        }()
+        let argsJSON = "{\"command\":\"uname -a\"}"
+        let llmCall = LLM.Message(
+            role: .assistant,
+            body: .functionCall(
+                LLM.FunctionCall(name: toolName,
+                                 arguments: argsJSON,
+                                 id: innerID,
+                                 thoughtSignature: nil),
+                id: wrapperID))
+        let remoteCommand = RemoteCommand(
+            llmMessage: llmCall,
+            content: .executeCommand(.init(command: "uname -a")))
+        let request = Message(
+            chatID: chatID,
+            author: .agent,
+            content: .remoteCommandRequest(.classic(remoteCommand), safe: nil),
+            sentDate: Date(),
+            uniqueID: UUID())
+        let response = Message(
+            chatID: chatID,
+            author: .user,
+            content: .remoteCommandResponse(
+                .success("Darwin host 25.4.0 arm64"),
+                UUID(),
+                toolName,
+                wrapperID),
+            sentDate: Date(),
+            uniqueID: UUID())
+
+        switch scenario {
+        case .paired:
+            return [userQuestion, request, response]
+        case .orphan:
+            // Auto-approved shape: the request was squelched (ChatClient.swift
+            // .always branch historically), so only the response survives.
+            return [userQuestion, response]
+        }
+    }
+
+    /// Drive one chat-reload round-trip against `model`. The transcript is
+    /// rebuilt via the seam (so we reach `AIChatToolCallRepair` exactly the
+    /// way `ChatAgent.load(messages:)` would), then a new user message is
+    /// appended and the resulting prompt flies to the vendor. The vendor
+    /// reply must be non-empty (vendor accepted the rebuilt prompt). For the
+    /// orphan scenario we additionally inspect the captured Anthropic wire
+    /// body and assert the synthesized tool_use block actually lands before
+    /// the tool_result — that's the wire-level check the offline test
+    /// `testOrphanRepair_serializesAsAnthropicToolUse` makes, but here run
+    /// against the body the live driver actually transmitted.
+    @MainActor
+    private func runChatReloadOnce(vendorTag: String,
+                                   model: AIMetadata.Model,
+                                   apiKey: String,
+                                   streaming: Bool,
+                                   scenario: ChatReloadScenario,
+                                   idStyle: ChatReloadIDStyle) {
+        let toolName = "execute_command"
+        let decl = ChatGPTFunctionDeclaration(
+            name: toolName,
+            description: "Run a shell command (stub for chat-reload tests).",
+            parameters: JSONSchema(for: RemoteCommand.ExecuteCommand(),
+                                   descriptions: ["command": "The command to run."]))
+        let spec = AILiveFunctionSpec<RemoteCommand.ExecuteCommand>(
+            decl: decl,
+            implementation: { _, _, completion in
+                try completion(.success("{\"ok\":true}"))
+            })
+
+        let transcript = makeChatReloadTranscript(
+            scenario: scenario, toolName: toolName, idStyle: idStyle)
+        let rebuilt = ChatAgent.aiMessagesForReloadingTranscript(transcript)
+        // New user message that forces the rebuilt prompt to actually fly.
+        let followUp = LLM.Message(role: .user,
+                                   content: "In one short sentence, summarize what you learned from the previous command output.")
+        let messages = rebuilt + [followUp]
+
+        do {
+            let result = try AILiveDriver.run(
+                model: model,
+                apiKey: apiKey,
+                messages: messages,
+                streaming: streaming,
+                function: spec,
+                scenarioTag: "chatReload_\(scenario.rawValue)",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "[\(vendorTag)/\(model.name)/chatReload_\(scenario.rawValue)] empty response; the vendor likely rejected the rebuilt prompt")
+            if scenario == .orphan, model.vendor == .anthropic, case .real(let callID, _) = idStyle {
+                assertAnthropicWireBodyHasPairedToolUse(
+                    capturedBodies: result.capturedRequestBodies,
+                    toolID: callID,
+                    vendorTag: vendorTag,
+                    model: model.name)
+            }
+            report(vendor: vendorTag,
+                   model: model.name,
+                   scenario: "chatReload_\(scenario.rawValue)",
+                   streaming: streaming,
+                   result: result)
+        } catch {
+            XCTFail("[\(vendorTag)/\(model.name)/chatReload_\(scenario.rawValue)/stream=\(streaming)] \(error)")
+        }
+    }
+
+    /// Iterate every reachable model for `vendor`, skipping non-tool-calling
+    /// ones, and run one chat-reload round-trip per model.
+    @MainActor
+    private func runChatReload(vendor: String,
+                               apiKey: String,
+                               streaming: Bool,
+                               scenario: ChatReloadScenario,
+                               idStyle: ChatReloadIDStyle) {
+        for name in Self.models(forVendor: vendor) {
+            guard let resolved = AIMetadata.instance.models.first(where: { $0.name == name }) else {
+                XCTFail("[\(vendor)/\(name)] not found in AIMetadata"); continue
+            }
+            guard resolved.features.contains(.functionCalling) else { continue }
+            throttle(forVendor: vendor)
+            runChatReloadOnce(vendorTag: vendor,
+                              model: resolved,
+                              apiKey: apiKey,
+                              streaming: streaming,
+                              scenario: scenario,
+                              idStyle: idStyle)
+        }
+    }
+
+    /// OpenAI's chat-completions path is exercised via a synthetic model
+    /// (see `runSyntheticToolCall`), so the chat-reload runner takes the
+    /// model explicitly instead of iterating AIMetadata.
+    @MainActor
+    private func runChatReloadSynthetic(model: AIMetadata.Model,
+                                        apiKey: String,
+                                        streaming: Bool,
+                                        scenario: ChatReloadScenario,
+                                        idStyle: ChatReloadIDStyle) {
+        throttle(forVendor: "openai")
+        runChatReloadOnce(vendorTag: "openai-\(model.api)",
+                          model: model,
+                          apiKey: apiKey,
+                          streaming: streaming,
+                          scenario: scenario,
+                          idStyle: idStyle)
+    }
+
+    /// Wire-level guarantee for the Anthropic orphan path: the captured
+    /// outbound body must contain a `tool_use` block whose id matches the
+    /// `tool_result`'s `tool_use_id`, and the `tool_use` must come before
+    /// the `tool_result`. Pins exactly the regression the original bug
+    /// produced (orphan tool_result with no preceding tool_use).
+    private func assertAnthropicWireBodyHasPairedToolUse(capturedBodies: [String],
+                                                         toolID: String,
+                                                         vendorTag: String,
+                                                         model: String) {
+        guard let first = capturedBodies.first,
+              let data = first.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let wireMessages = json["messages"] as? [[String: Any]] else {
+            XCTFail("[\(vendorTag)/\(model)/chatReload_orphan] could not parse captured Anthropic body")
+            return
+        }
+        var toolUseIndexByID = [String: Int]()
+        var toolResultIndexByID = [String: Int]()
+        var blockIndex = 0
+        for message in wireMessages {
+            guard let blocks = message["content"] as? [[String: Any]] else { continue }
+            for block in blocks {
+                defer { blockIndex += 1 }
+                switch block["type"] as? String {
+                case "tool_use":
+                    if let id = block["id"] as? String { toolUseIndexByID[id] = blockIndex }
+                case "tool_result":
+                    if let id = block["tool_use_id"] as? String { toolResultIndexByID[id] = blockIndex }
+                default: break
+                }
+            }
+        }
+        guard let resultIdx = toolResultIndexByID[toolID] else {
+            XCTFail("[\(vendorTag)/\(model)/chatReload_orphan] no tool_result with id \(toolID) on the wire")
+            return
+        }
+        guard let useIdx = toolUseIndexByID[toolID] else {
+            XCTFail("[\(vendorTag)/\(model)/chatReload_orphan] no paired tool_use on the wire; this is the original 400 regression")
+            return
+        }
+        XCTAssertLessThan(useIdx, resultIdx,
+                          "[\(vendorTag)/\(model)/chatReload_orphan] tool_use must come before its tool_result")
+    }
+
+    // MARK: chat-reload — orphan negative control
+    //
+    // The positive chatReload_orphan test proves a real vendor ACCEPTS a
+    // repaired orphan. On its own that doesn't prove the repair is what made
+    // it work: maybe the vendor never rejected the orphan in the first place,
+    // or our fixture isn't a real orphan. This negative control closes that
+    // gap by sending the SAME orphan transcript WITHOUT the repair pass
+    // (ChatAgent.transcriptMessagesBeforeRepair, exactly what production
+    // transmitted before the fix) and asserting the vendor rejects it with
+    // HTTP 400. If a vendor ever stops rejecting un-repaired orphans, this
+    // fails loudly so we know the positive test has gone vacuous. Id-based
+    // vendors only (Anthropic, OpenAI Responses); Gemini pairs by adjacency
+    // and 400s for a different reason, so it's out of scope here.
+
+    @MainActor
+    private func runOrphanNegativeControlOnce(vendorTag: String,
+                                              model: AIMetadata.Model,
+                                              apiKey: String,
+                                              idStyle: ChatReloadIDStyle) {
+        let toolName = "execute_command"
+        let decl = ChatGPTFunctionDeclaration(
+            name: toolName,
+            description: "Run a shell command (stub for chat-reload tests).",
+            parameters: JSONSchema(for: RemoteCommand.ExecuteCommand(),
+                                   descriptions: ["command": "The command to run."]))
+        let spec = AILiveFunctionSpec<RemoteCommand.ExecuteCommand>(
+            decl: decl,
+            implementation: { _, _, completion in try completion(.success("{\"ok\":true}")) })
+
+        let transcript = makeChatReloadTranscript(
+            scenario: .orphan, toolName: toolName, idStyle: idStyle)
+        // The un-repaired prompt: the orphan tool_result with no preceding
+        // tool_use, identical to the positive path except the repair is
+        // skipped. This isolates the repair as the only variable.
+        let unrepaired = ChatAgent.transcriptMessagesBeforeRepair(transcript)
+        let followUp = LLM.Message(
+            role: .user,
+            content: "In one short sentence, summarize what you learned from the previous command output.")
+        let messages = unrepaired + [followUp]
+
+        do {
+            _ = try AILiveDriver.run(
+                model: model,
+                apiKey: apiKey,
+                messages: messages,
+                streaming: false,
+                function: spec,
+                scenarioTag: "chatReload_orphan_negativeControl",
+                test: self)
+            XCTFail("[\(vendorTag)/\(model.name)] vendor ACCEPTED an un-repaired orphan tool_result. Either the vendor stopped enforcing tool_use/tool_result pairing or the fixture is no longer a real orphan; the positive chatReload_orphan test no longer proves the repair is necessary.")
+        } catch {
+            let status = Self.httpStatusCode(inErrorText: "\(error)")
+            XCTAssertEqual(status, 400,
+                           "[\(vendorTag)/\(model.name)] expected the un-repaired orphan to be rejected with HTTP 400 (tool pairing), got: \(error)")
+        }
+    }
+
+    /// One representative tool-calling model is enough: pairing is enforced at
+    /// the vendor API layer, not per model.
+    @MainActor
+    private func runOrphanNegativeControl(vendor: String,
+                                          apiKey: String,
+                                          idStyle: ChatReloadIDStyle) {
+        for name in Self.models(forVendor: vendor) {
+            guard let resolved = AIMetadata.instance.models.first(where: { $0.name == name }),
+                  resolved.features.contains(.functionCalling) else { continue }
+            throttle(forVendor: vendor)
+            runOrphanNegativeControlOnce(vendorTag: vendor,
+                                         model: resolved,
+                                         apiKey: apiKey,
+                                         idStyle: idStyle)
+            return
+        }
+    }
+
+    func test_anthropic_chatReload_orphanNegativeControl_rejected() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runOrphanNegativeControl(vendor: "anthropic", apiKey: key,
+                                 idStyle: .real(callID: "toolu_negctl",
+                                                itemID: "toolu_negctl"))
+    }
+
+    func test_openai_chatReload_orphanNegativeControl_rejected() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runOrphanNegativeControl(vendor: "openai", apiKey: key,
+                                 idStyle: .real(callID: "call_negctl",
+                                                itemID: "fc_negctl"))
+    }
+
+    // MARK: chat-reload — Anthropic
+
+    func test_anthropic_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: false,
+                      scenario: .paired,
+                      idStyle: .real(callID: "toolu_test_chat_reload_paired",
+                                     itemID: "toolu_test_chat_reload_paired"))
+    }
+    func test_anthropic_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: true,
+                      scenario: .paired,
+                      idStyle: .real(callID: "toolu_test_chat_reload_paired",
+                                     itemID: "toolu_test_chat_reload_paired"))
+    }
+    func test_anthropic_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: false,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "toolu_test_chat_reload_orphan",
+                                     itemID: "toolu_test_chat_reload_orphan"))
+    }
+    func test_anthropic_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: true,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "toolu_test_chat_reload_orphan",
+                                     itemID: "toolu_test_chat_reload_orphan"))
+    }
+
+    // MARK: chat-reload — Gemini (decisive: nil-id pairing)
+
+    func test_gemini_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: false,
+                      scenario: .paired, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: true,
+                      scenario: .paired, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: false,
+                      scenario: .orphan, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: true,
+                      scenario: .orphan, idStyle: .nilID)
+    }
+
+    // MARK: chat-reload — OpenAI Responses
+
+    func test_openai_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: false,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "fc_test_chat_reload_paired"))
+    }
+    func test_openai_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: true,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "fc_test_chat_reload_paired"))
+    }
+    func test_openai_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: false,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "fc_test_chat_reload_orphan"))
+    }
+    func test_openai_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReload(vendor: "openai", apiKey: key, streaming: true,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "fc_test_chat_reload_orphan"))
+    }
+
+    // MARK: chat-reload — OpenAI chat-completions (synthetic model)
+
+    func test_openai_chatCompletions_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: false,
+                               scenario: .paired,
+                               idStyle: .real(callID: "call_test_chat_reload_paired",
+                                              itemID: "call_test_chat_reload_paired"))
+    }
+    func test_openai_chatCompletions_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: true,
+                               scenario: .paired,
+                               idStyle: .real(callID: "call_test_chat_reload_paired",
+                                              itemID: "call_test_chat_reload_paired"))
+    }
+    func test_openai_chatCompletions_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: false,
+                               scenario: .orphan,
+                               idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                              itemID: "call_test_chat_reload_orphan"))
+    }
+    func test_openai_chatCompletions_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runChatReloadSynthetic(model: Self.syntheticChatCompletionsModel,
+                               apiKey: key, streaming: true,
+                               scenario: .orphan,
+                               idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                              itemID: "call_test_chat_reload_orphan"))
+    }
+
+    // MARK: chat-reload — DeepSeek
+
+    func test_deepseek_chatReload_paired_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: false,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "call_test_chat_reload_paired"))
+    }
+    func test_deepseek_chatReload_paired_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: true,
+                      scenario: .paired,
+                      idStyle: .real(callID: "call_test_chat_reload_paired",
+                                     itemID: "call_test_chat_reload_paired"))
+    }
+    func test_deepseek_chatReload_orphan_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: false,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "call_test_chat_reload_orphan"))
+    }
+    func test_deepseek_chatReload_orphan_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runChatReload(vendor: "deepseek", apiKey: key, streaming: true,
+                      scenario: .orphan,
+                      idStyle: .real(callID: "call_test_chat_reload_orphan",
+                                     itemID: "call_test_chat_reload_orphan"))
     }
 }

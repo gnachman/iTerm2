@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":8000,\"messages\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\"},{\"content\":\"OK.\",\"role\":\"assistant\"},{\"content\":\"What color did I just tell you was my favorite? Answer with one word.\",\"role\":\"user\"}],\"model\":\"deepseek-reasoner\",\"stream\":false,\"temperature\":0}",
+  "key" : "f31cf99beb396b6c262adfcff98660cd5abeae5e23810b6bc5c85df02b334ed4",
+  "response" : {
+    "data" : "{\"id\":\"c8bd0370-01ac-4182-9b25-4d5938bc73fc\",\"object\":\"chat.completion\",\"created\":1780870849,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"chartreuse\",\"reasoning_content\":\"We need to answer with one word. User said favorite color is chartreuse. So answer: chartreuse.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":37,\"completion_tokens\":28,\"total_tokens\":65,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":24},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":37},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

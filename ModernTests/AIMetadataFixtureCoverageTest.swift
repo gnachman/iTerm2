@@ -33,13 +33,19 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
         for model in AIMetadata.instance.models {
             // Skip vendors that don't make sense to fixture-capture:
             //   - llama:  local Ollama, no real "refusal" semantics
+            //   - apple:  on-device classifier-only backend, no HTTP request
+            //             to capture a refusal from
             //   - none:   shouldn't happen, but skip rather than crash
-            guard let vendor = model.vendor, vendor != .llama else { continue }
+            guard let vendor = model.vendor, vendor != .llama, vendor != .apple else { continue }
             // Skip models that are deprecated to new keys. They still work
             // for grandfathered accounts so we keep the AIMetadata entry,
             // but a fixture can't be captured from a fresh API key. The list
             // is short and easy to revisit when Google fully removes a model.
             if AILiveHarness.unreachableForNewKeys.contains(model.name) { continue }
+            // Skip models that block the refusal prompt at the API layer
+            // (HTTP 400) rather than returning a refusal: there's no refusal
+            // response to capture or parse. See AILiveHarness.refusalBlockedAtHTTP.
+            if AILiveHarness.refusalBlockedAtHTTP.contains(model.name) { continue }
             let vendorString = AIMetadataFixtureCoverageTest.vendorSlug(for: vendor)
             let safeModel = AIMetadataFixtureCoverageTest.sanitize(model.name)
             // Filenames are <vendor>_<safeModel>_refusal_<mode>_<seq>.json.
