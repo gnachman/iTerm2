@@ -879,6 +879,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _eventTriggerEvaluator.fireTriggerHandler = ^(Trigger *trigger, NSArray<NSString *> *capturedStrings, BOOL useInterpolation) {
             [weakScreen fireEventTrigger:trigger capturedStrings:capturedStrings useInterpolation:useInterpolation];
         };
+        // Lets the variable-changed match type observe session variables.
+        _eventTriggerEvaluator.variableScope = self.genericScope;
         _sshState = iTermSSHStateNone;
         _hostStack = [[NSMutableArray alloc] init];
         [iTermCPUUtilization instanceForSessionID:_guid];

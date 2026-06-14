@@ -30,6 +30,8 @@ NSString * const kTriggerPerformanceKey = @"performance";
 NSString * const kTriggerEventParamsKey = @"eventParams";
 NSString * const kTriggerJobKey = @"job";
 NSString * const kTriggerProvenanceKey = @"provenance";
+NSString * const kTriggerVariableNameKey = @"variableName";
+NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
 
 @interface Trigger()
 @end
@@ -711,6 +713,16 @@ NSString * const kTriggerProvenanceKey = @"provenance";
     NSString *commandRegex = self.eventParams[@"commandRegex"];
     if (commandRegex && commandRegex.length > 0) {
         [parts addObject:[NSString stringWithFormat:@"command /%@/", commandRegex]];
+    }
+
+    // Variable name and value regex (for variable changed triggers)
+    NSString *variableName = self.eventParams[kTriggerVariableNameKey];
+    if (variableName && variableName.length > 0) {
+        [parts addObject:[NSString stringWithFormat:@"%@", variableName]];
+    }
+    NSString *variableValueRegex = self.eventParams[kTriggerVariableValueRegexKey];
+    if (variableValueRegex && variableValueRegex.length > 0) {
+        [parts addObject:[NSString stringWithFormat:@"matching /%@/", variableValueRegex]];
     }
 
     // Progress bar filter

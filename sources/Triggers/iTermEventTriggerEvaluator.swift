@@ -63,6 +63,14 @@ class EventTriggerEvaluator: NSObject {
     /// Closure to fire a trigger. Set by PTYSession to forward to VT100Screen.
     @objc var fireTriggerHandler: ((Trigger, [String], Bool) -> Void)?
 
+    /// The owning session's variable scope. Set by PTYSession. Used to observe
+    /// arbitrary variables for the variable-changed match type.
+    @objc weak var variableScope: iTermVariableScope?
+
+    /// Variable references kept alive for variable-changed triggers. One per
+    /// enabled variable-changed trigger that names a variable.
+    private var variableReferences: [iTermVariableReference<AnyObject>] = []
+
     /// All event triggers grouped by match type
     private var eventTriggers: [iTermTriggerMatchType: [Trigger]] = [:]
 
@@ -92,6 +100,7 @@ class EventTriggerEvaluator: NSObject {
     deinit {
         DLog("[\(sessionDescription)] EventTriggerEvaluator deallocated")
         invalidateAllTimers()
+        teardownVariableObservers()
     }
 
     // MARK: - Loading Triggers
@@ -125,6 +134,9 @@ class EventTriggerEvaluator: NSObject {
 
         // Start idle timers for idle/activity-after-idle triggers
         startIdleTimers()
+
+        // Register observers for variable-changed triggers
+        setupVariableObservers()
     }
 
     /// Check if there are any event triggers loaded
@@ -506,6 +518,71 @@ class EventTriggerEvaluator: NSObject {
                 DLog("[\(sessionDescription)] Progress bar filter did not match for trigger \(trigger.action)")
             }
         }
+    }
+
+    // MARK: - Variable Observation
+
+    /// Tear down all variable-changed observers. Safe to call repeatedly.
+    private func teardownVariableObservers() {
+        for ref in variableReferences {
+            ref.onChangeBlock = nil
+            ref.removeAllLinks()
+        }
+        variableReferences.removeAll()
+    }
+
+    /// Register an observer for each enabled variable-changed trigger that
+    /// names a variable. The reference fires its change block whenever the
+    /// named variable's value changes in the session scope (including when a
+    /// previously-unset variable becomes set), at which point we apply the
+    /// trigger's optional value regex and fire if it matches.
+    private func setupVariableObservers() {
+        teardownVariableObservers()
+
+        guard let scope = variableScope else {
+            DLog("[\(sessionDescription)] No variable scope set; cannot observe variable-changed triggers")
+            return
+        }
+        guard let triggers = eventTriggers[.eventVariableChanged] else {
+            return
+        }
+
+        for trigger in triggers where !trigger.disabled {
+            guard let name = trigger.eventParams?[kTriggerVariableNameKey] as? String, !name.isEmpty else {
+                DLog("[\(sessionDescription)] Skip variable-changed trigger \(trigger.action) because no variable name is set")
+                continue
+            }
+            let ref = iTermVariableReference<AnyObject>(path: name, vendor: scope)
+            // Set the change block after creating the reference so we don't
+            // fire for the variable's current value at load time.
+            ref.onChangeBlock = { [weak self, weak trigger] in
+                guard let self = self, let trigger = trigger else { return }
+                self.variableChanged(trigger: trigger, name: name)
+            }
+            DLog("[\(sessionDescription)] Observing variable '\(name)' for trigger \(trigger.action)")
+            variableReferences.append(ref)
+        }
+    }
+
+    private func variableChanged(trigger: Trigger, name: String) {
+        guard !disabled else {
+            DLog("[\(sessionDescription)] Disabled, skipping variable changed trigger")
+            return
+        }
+        guard !trigger.disabled else {
+            return
+        }
+        let value = variableScope?.stringValue(forVariableName: name) ?? ""
+        DLog("[\(sessionDescription)] Variable '\(name)' changed to '\(value)'")
+        if matchesVariableValueFilter(trigger: trigger, value: value) {
+            fireTrigger(trigger, capturedStrings: [value, name])
+        } else {
+            DLog("[\(sessionDescription)] Value '\(value)' did not match filter for trigger \(trigger.action)")
+        }
+    }
+
+    private func matchesVariableValueFilter(trigger: Trigger, value: String) -> Bool {
+        return matchesRegexParam(trigger: trigger, paramKey: kTriggerVariableValueRegexKey, value: value)
     }
 
     // MARK: - Timer Management

@@ -277,6 +277,8 @@ Tabs, Windows, and UI:
 Triggers Improvements:
 - Event-based triggers can fire on events such as
   a session ending or a hostname change.
+- A trigger can now match when a session variable
+  changes to a value matching a regex.
 - Triggers can be imported and exported as
   .it2triggers files.
 - A regex can now be used to define word
