@@ -193,15 +193,27 @@ final class AppModel {
     // origin (off-LAN reach). RaceTransportConnector uses whichever connects
     // first; nothing else in the app knows which transport won. Injectable for
     // tests; production uses CompanionTransports.connector(for:).
-    private let connectorForCode: (PairingCode) -> TransportConnector
+    private let connectorForCode: (PairingCode, _ pairingTicket: String?) -> TransportConnector
 
-    init(connectorForCode: @escaping (PairingCode) -> TransportConnector = {
+    /// App Attest primitives for the relay attestation client. Off-device these
+    /// are inert (isSupported == false), so attestation degrades to open mode.
+    private let appAttestService: AppAttestService
+    private let attestKeyStore: AttestKeyStore
+
+    init(appAttestService: AppAttestService = DeviceCheckAppAttestService(),
+         attestKeyStore: AttestKeyStore = UserDefaultsAttestKeyStore(),
+         connectorForCode: @escaping (PairingCode, String?) -> TransportConnector = {
         // Sign relay joins once a room secret exists (established room); nil
         // before first registration keeps an open-mode join. existingRoomSecret
         // does not mint, so the first connect joins open-mode and the secret is
-        // minted during that first session.
-        CompanionTransports.connector(for: $0, roomSecret: { PhoneIdentity.existingRoomSecret() })
+        // minted during that first session. The pairing ticket (when present)
+        // is the App Attest admission proof for a fresh pairing under attestation.
+        CompanionTransports.connector(for: $0,
+                                      roomSecret: { PhoneIdentity.existingRoomSecret() },
+                                      pairingTicket: $1)
     }) {
+        self.appAttestService = appAttestService
+        self.attestKeyStore = attestKeyStore
         self.connectorForCode = connectorForCode
         // Route the transport/crypto layers' diagnostics into the unified log
         // (visible in Console.app and `log stream`).
@@ -497,7 +509,8 @@ final class AppModel {
 
         let identity = try PhoneIdentity.keyPair()
         companionLog("Connecting (discovery + TCP\(code.relayOrigin != nil ? " + relay" : ""))…")
-        let connector = connectorForCode(code)
+        let pairingTicket = await pairingTicketIfNeeded(code)
+        let connector = connectorForCode(code, pairingTicket)
         let transport = try await connector.connect(
             to: PairingRendezvous(pairingID: code.pairingID),
             timeout: 30)
@@ -557,6 +570,32 @@ final class AppModel {
         await lockRelayRoom(client: client, code: code, registrationToken: registrationToken)
     }
 
+    /// For a fresh pairing, earn the single-use App Attest admission ticket the
+    /// relay requires of a genuine app. Returns nil (an empty proof, the
+    /// open-mode path) when the pairing is already established (reconnects sign
+    /// with the room secret), there is no relay, or the device cannot attest /
+    /// the relay is not enforcing attestation. Best-effort: a failure logs and
+    /// returns nil, surfacing as an ordinary admission failure iff the relay
+    /// actually required the ticket.
+    private func pairingTicketIfNeeded(_ code: PairingCode) async -> String? {
+        guard let relayOrigin = code.relayOrigin, !roomVerifierRegistered else { return nil }
+        let roomName = RelayRoom.name(responderStaticPublicKey: code.responderStaticPublicKey,
+                                      pairingID: code.pairingID)
+        let client = RelayAttestationClient(origin: relayOrigin,
+                                            service: appAttestService,
+                                            store: attestKeyStore)
+        do {
+            if let ticket = try await client.obtainTicket(roomName: roomName) {
+                companionLog("App Attest ticket obtained for pairing admission")
+                return ticket
+            }
+            return nil
+        } catch {
+            companionLog("App Attest ticket unavailable: \(String(describing: error))")
+            return nil
+        }
+    }
+
     /// Courier the room secret to the mac (every connect, idempotent) and, on a
     /// fresh pairing, register the verifier so the relay room is locked to this
     /// pairing. Best-effort: failures leave the room open-mode and are retried
@@ -604,6 +643,10 @@ final class AppModel {
         struct Body: Encodable {
             var registrationToken: String
             var verifier: String
+            // Present only under attestation; a nil optional is omitted, so an
+            // open-mode register sends just the token and verifier.
+            var challenge: String?
+            var assertion: String?
         }
         guard let url = URL(string: relayOrigin + "/register") else { return false }
         var request = URLRequest(url: url)
@@ -612,9 +655,16 @@ final class AppModel {
         request.setValue(roomName, forHTTPHeaderField: "x-relay-room")
         request.timeoutInterval = 15
         let verifier = RelayJoin.verifier(roomSecret: roomSecret).base64EncodedString()
+        // Prove current possession of the attested key (the relay requires this
+        // under attestation; nil in open mode). Best-effort: a failure leaves
+        // an open-mode register, which the relay rejects iff it requires it.
+        let attestation = try? await RelayAttestationClient(
+            origin: relayOrigin, service: appAttestService, store: attestKeyStore)
+            .registerAssertion(roomName: roomName)
         do {
             request.httpBody = try JSONEncoder().encode(
-                Body(registrationToken: registrationToken, verifier: verifier))
+                Body(registrationToken: registrationToken, verifier: verifier,
+                     challenge: attestation?.challenge, assertion: attestation?.assertion))
             let (data, response) = try await URLSession.shared.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? -1
             let body = String(data: data, encoding: .utf8) ?? ""
