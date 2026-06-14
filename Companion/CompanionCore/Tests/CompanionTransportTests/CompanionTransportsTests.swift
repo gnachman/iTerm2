@@ -110,3 +110,36 @@ final class CompanionTransportsTests: XCTestCase {
                        "If the LAN path is re-enabled, update this expectation.")
     }
 }
+
+extension CompanionTransportsTests {
+    private func challenge() -> RelayAdmission.Challenge {
+        RelayAdmission.Challenge(nonce: Data(repeating: 9, count: 32))
+    }
+
+    func test_admissionProof_signsWhenRoomSecretPresent_ignoringTicket() throws {
+        // An established room signs its join; a stale ticket must never override
+        // a real signature.
+        let secret = Data(repeating: 1, count: 32)
+        let proof = try CompanionTransports.admissionProof(
+            role: .phone, challenge: challenge(), roomName: "room",
+            origin: "https://relay.example", roomSecret: secret, pairingTicket: "tkt")
+        XCTAssertNotNil(proof.signature)
+        XCTAssertNil(proof.ticket)
+    }
+
+    func test_admissionProof_presentsTicketForFreshPairing() throws {
+        let proof = try CompanionTransports.admissionProof(
+            role: .phone, challenge: challenge(), roomName: "room",
+            origin: "https://relay.example", roomSecret: nil, pairingTicket: "tkt-9")
+        XCTAssertNil(proof.signature)
+        XCTAssertEqual(proof.ticket, "tkt-9")
+    }
+
+    func test_admissionProof_isEmptyForOpenModePairing() throws {
+        let proof = try CompanionTransports.admissionProof(
+            role: .phone, challenge: challenge(), roomName: "room",
+            origin: "https://relay.example", roomSecret: nil, pairingTicket: nil)
+        XCTAssertNil(proof.signature)
+        XCTAssertNil(proof.ticket)
+    }
+}

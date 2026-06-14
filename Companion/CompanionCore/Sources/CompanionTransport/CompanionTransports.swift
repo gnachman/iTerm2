@@ -45,6 +45,25 @@ public enum CompanionTransports {
         return RelayAdmission.Proof(ticket: nil, signature: signature)
     }
 
+    /// The admission proof for a phone, choosing the credential by room state:
+    /// an established room (roomSecret present) signs the transcript; a fresh
+    /// pairing under attestation presents its single-use App Attest ticket; an
+    /// open-mode pairing presents nothing. A signature always wins, since an
+    /// established room never needs a ticket.
+    static func admissionProof(role: RelayJoin.Role,
+                               challenge: RelayAdmission.Challenge,
+                               roomName: String,
+                               origin: String,
+                               roomSecret: Data?,
+                               pairingTicket: String?) throws -> RelayAdmission.Proof {
+        let signed = try signedProof(role: role, challenge: challenge, roomName: roomName,
+                                     origin: origin, roomSecret: roomSecret)
+        if signed.signature != nil {
+            return signed
+        }
+        return RelayAdmission.Proof(ticket: pairingTicket, signature: nil)
+    }
+
     /// Phone side: the connector stack for a scanned (or stored) pairing code.
     /// Relay only (unless the LAN path is re-enabled); the relay connector is
     /// present only when the code carries a relay origin.
@@ -52,20 +71,23 @@ public enum CompanionTransports {
     /// - roomSecret: returns the persisted room secret once the pairing is
     ///   established (the phone registered its verifier), so reconnects sign
     ///   their join. Returns nil during/before first pairing (open-mode join).
+    /// - pairingTicket: the single-use App Attest admission ticket the phone
+    ///   earned (RelayAttestationClient) for a fresh pairing under attestation;
+    ///   nil for open mode or for reconnects (which sign with roomSecret).
     public static func connector(for code: PairingCode,
                                  session: URLSession = .shared,
-                                 roomSecret: (@Sendable () -> Data?)? = nil) -> TransportConnector {
+                                 roomSecret: (@Sendable () -> Data?)? = nil,
+                                 pairingTicket: String? = nil) -> TransportConnector {
         var connectors: [TransportConnector] = []
         if useLocalNetworkTransport {
             connectors.append(BonjourTransportConnector())
         }
         if let relayOrigin = code.relayOrigin {
-            let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? =
-                roomSecret.map { secret in
-                    { @Sendable challenge, roomName in
-                        try signedProof(role: .phone, challenge: challenge, roomName: roomName,
-                                        origin: relayOrigin, roomSecret: secret())
-                    }
+            let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) =
+                { @Sendable challenge, roomName in
+                    try admissionProof(role: .phone, challenge: challenge, roomName: roomName,
+                                       origin: relayOrigin, roomSecret: roomSecret?(),
+                                       pairingTicket: pairingTicket)
                 }
             connectors.append(RelayTransportConnector(relayOrigin: relayOrigin,
                                                       responderStaticKey: code.responderStaticPublicKey,
