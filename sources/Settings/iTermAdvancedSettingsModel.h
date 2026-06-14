@@ -384,6 +384,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)quickPasteDelayBetweenCalls;
 + (BOOL)remapModifiersWithoutEventTap;
 + (BOOL)rememberTmuxWindowSizes;
++ (BOOL)tmuxWindowsOpenInBackground;
 + (BOOL)removeAddTabButton;
 + (BOOL)reportOnFirstMouse;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;

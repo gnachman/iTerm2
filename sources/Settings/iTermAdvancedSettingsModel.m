@@ -701,6 +701,7 @@ DEFINE_BOOL(pollForTmuxForegroundJob, NO, SECTION_TMUX @"Poll for foreground job
 DEFINE_STRING(tmuxTitlePrefix, @"↣ ", SECTION_TMUX @"Insert this string at the start of tab and window titles to indicate tmux integration.");
 DEFINE_BOOL(tmuxIncludeClientNameInWindowTitle, YES, SECTION_TMUX @"When using tmux integration, should the tmux client name (typically the name of the attaching session or the host name) appear in brackets in the window title?");
 DEFINE_BOOL(rememberTmuxWindowSizes, YES, SECTION_TMUX @"Remember window sizes in tmux integration?\nRequires tmux 2.9 or later. The “variable window size” advanced setting must be enabled.");
+DEFINE_BOOL(tmuxWindowsOpenInBackground, NO, SECTION_TMUX @"Open tmux windows and tabs in the background?\nWhen enabled, attaching with tmux -CC (or when tmux creates a new window) will reveal the window or tab without moving keyboard focus to it. Focus stays on the attaching session.");
 
 #define SECTION_SSH @"SSH Integration: "
 
