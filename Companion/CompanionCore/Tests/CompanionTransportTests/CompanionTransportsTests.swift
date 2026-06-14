@@ -26,6 +26,80 @@ final class CompanionTransportsTests: XCTestCase {
         XCTAssertEqual(race.connectors.map(\.transportName), ["relay"])
     }
 
+    func test_signedProof_isEmptyWithoutRoomSecret() throws {
+        let challenge = RelayAdmission.Challenge(nonce: Data(repeating: 9, count: 32))
+        let proof = try CompanionTransports.signedProof(
+            role: .phone, challenge: challenge, roomName: "room", origin: "https://relay.example",
+            roomSecret: nil)
+        XCTAssertNil(proof.signature)
+        XCTAssertNil(proof.ticket)
+    }
+
+    func test_signedProof_signsTranscriptVerifiableByTheRegisteredVerifier() throws {
+        // The signature the client sends must verify against the verifier the
+        // relay stores, over the same transcript the relay reconstructs.
+        let roomSecret = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+        let nonce = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+        let challenge = RelayAdmission.Challenge(nonce: nonce)
+        let roomName = "abcd"
+        let origin = "https://relay.example"
+
+        let proof = try CompanionTransports.signedProof(
+            role: .mac, challenge: challenge, roomName: roomName, origin: origin,
+            roomSecret: roomSecret)
+        let signature = try XCTUnwrap(proof.signature)
+
+        let transcript = RelayJoin.transcript(role: .mac, nonce: nonce,
+                                              roomName: roomName, origin: origin)
+        XCTAssertTrue(RelayJoin.verify(signature: signature,
+                                       transcript: transcript,
+                                       verifier: RelayJoin.verifier(roomSecret: roomSecret)))
+        // A different role's transcript must NOT verify (the role is bound in).
+        let phoneTranscript = RelayJoin.transcript(role: .phone, nonce: nonce,
+                                                   roomName: roomName, origin: origin)
+        XCTAssertFalse(RelayJoin.verify(signature: signature,
+                                        transcript: phoneTranscript,
+                                        verifier: RelayJoin.verifier(roomSecret: roomSecret)))
+    }
+
+    // Adversarial: a proof signed with the wrong secret, or checked against a
+    // tampered transcript, must fail verification, the same threats the relay's
+    // established.test.js asserts, pinned here at the client signing layer.
+    func test_signedProof_doesNotVerifyAgainstADifferentRoomSecret() throws {
+        let secret = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+        let otherSecret = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+        let nonce = Data(repeating: 3, count: 32)
+        let proof = try CompanionTransports.signedProof(
+            role: .phone, challenge: RelayAdmission.Challenge(nonce: nonce),
+            roomName: "room", origin: "https://relay.example", roomSecret: secret)
+        let transcript = RelayJoin.transcript(role: .phone, nonce: nonce,
+                                              roomName: "room", origin: "https://relay.example")
+        XCTAssertFalse(RelayJoin.verify(signature: try XCTUnwrap(proof.signature),
+                                        transcript: transcript,
+                                        verifier: RelayJoin.verifier(roomSecret: otherSecret)))
+    }
+
+    func test_signedProof_doesNotVerifyWithTamperedTranscriptFields() throws {
+        let secret = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+        let nonce = Data(repeating: 5, count: 32)
+        let proof = try CompanionTransports.signedProof(
+            role: .phone, challenge: RelayAdmission.Challenge(nonce: nonce),
+            roomName: "roomA", origin: "https://relay.example", roomSecret: secret)
+        let signature = try XCTUnwrap(proof.signature)
+        let verifier = RelayJoin.verifier(roomSecret: secret)
+
+        // Each tampered field independently breaks verification.
+        let wrongNonce = RelayJoin.transcript(role: .phone, nonce: Data(repeating: 6, count: 32),
+                                              roomName: "roomA", origin: "https://relay.example")
+        let wrongRoom = RelayJoin.transcript(role: .phone, nonce: nonce,
+                                             roomName: "roomB", origin: "https://relay.example")
+        let wrongOrigin = RelayJoin.transcript(role: .phone, nonce: nonce,
+                                               roomName: "roomA", origin: "https://evil.example")
+        for tampered in [wrongNonce, wrongRoom, wrongOrigin] {
+            XCTAssertFalse(RelayJoin.verify(signature: signature, transcript: tampered, verifier: verifier))
+        }
+    }
+
     func test_connector_isEmpty_whenNoRelayOriginAndNoLAN() throws {
         // With the LAN path off and no relay origin there is no transport at
         // all: connect() fails fast rather than silently using Bonjour.

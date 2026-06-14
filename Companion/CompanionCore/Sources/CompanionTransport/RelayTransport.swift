@@ -24,6 +24,11 @@ import CompanionProtocol
 /// once the peer has actually sent something, matching local-network accept
 /// semantics.
 public final class RelayTransport: MessageTransport, @unchecked Sendable {
+    /// The one-time relay registration token the DO minted at admission (phone
+    /// role only). The phone presents it to /register to register its verifier;
+    /// nil for the mac and for already-established rooms that mint none.
+    public let registrationToken: String?
+
     private let task: URLSessionWebSocketTask
     private let lock = UnfairLock()
     private var pendingFirstFrame: Data?
@@ -34,9 +39,10 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     private var closeWaiters: [CheckedContinuation<Void, Never>] = []
     private var closeSignaled = false
 
-    init(task: URLSessionWebSocketTask, firstFrame: Data? = nil) {
+    init(task: URLSessionWebSocketTask, firstFrame: Data? = nil, registrationToken: String? = nil) {
         self.task = task
         self.pendingFirstFrame = firstFrame
+        self.registrationToken = registrationToken
     }
 
     public func send(_ frame: Data) async throws {
@@ -234,10 +240,10 @@ public struct RelayTransportConnector: TransportConnector {
         // In a transport race, the loser's task is cancelled; tear the socket
         // down so a half-open relay join doesn't linger (and free the room slot).
         return try await withTaskCancellationHandler {
-            _ = try await RelayAdmissionClient.admit(task: task, role: .phone) { challenge in
+            let result = try await RelayAdmissionClient.admit(task: task, role: .phone) { challenge in
                 try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
             }
-            return RelayTransport(task: task)
+            return RelayTransport(task: task, registrationToken: result.registrationToken)
         } onCancel: {
             task.cancel(with: .goingAway, reason: nil)
         }
@@ -261,6 +267,7 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
     private let roomName: String
     private let session: URLSession
     private let onParked: (@Sendable () -> Void)?
+    private let joinProof: (@Sendable (RelayAdmission.Challenge, _ roomName: String) throws -> RelayAdmission.Proof)?
     private let lock = UnfairLock()
     private var stopped = false
     private var current: URLSessionWebSocketTask?
@@ -269,14 +276,18 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
     /// - onParked: invoked once admission completes and the listener is parked
     ///   in the room (before it blocks awaiting the peer's first frame). The
     ///   mac is now reachable through the relay; the phone may join.
+    /// - joinProof: signs the mac's park for an established room (where the relay
+    ///   requires every join to be signed); nil/empty for pairing-mode rooms.
     public init(relayOrigin: String,
                 roomName: String,
                 session: URLSession = .shared,
-                onParked: (@Sendable () -> Void)? = nil) {
+                onParked: (@Sendable () -> Void)? = nil,
+                joinProof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? = nil) {
         self.relayOrigin = relayOrigin
         self.roomName = roomName
         self.session = session
         self.onParked = onParked
+        self.joinProof = joinProof
     }
 
     public func accept() async throws -> MessageTransport {
@@ -307,8 +318,8 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
         // instead of leaving a dangling park.
         return try await withTaskCancellationHandler {
             defer { lock.withLock { if current === task { current = nil } } }
-            _ = try await RelayAdmissionClient.admit(task: task, role: .mac) { _ in
-                RelayAdmission.Proof(ticket: nil, signature: nil)
+            _ = try await RelayAdmissionClient.admit(task: task, role: .mac) { challenge in
+                try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
             }
             // Parked: the mac now holds the mac slot and is reachable through the
             // relay. Signal before blocking, since the next step waits on the peer.
