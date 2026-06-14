@@ -193,7 +193,7 @@ final class AppModel {
     // origin (off-LAN reach). RaceTransportConnector uses whichever connects
     // first; nothing else in the app knows which transport won. Injectable for
     // tests; production uses CompanionTransports.connector(for:).
-    private let connectorForCode: (PairingCode, _ pairingTicket: String?) -> TransportConnector
+    private let connectorForCode: (PairingCode, _ pairingTicket: String?, _ established: Bool) -> TransportConnector
 
     /// App Attest primitives for the relay attestation client. Off-device these
     /// are inert (isSupported == false), so attestation degrades to open mode.
@@ -202,15 +202,16 @@ final class AppModel {
 
     init(appAttestService: AppAttestService = DeviceCheckAppAttestService(),
          attestKeyStore: AttestKeyStore = UserDefaultsAttestKeyStore(),
-         connectorForCode: @escaping (PairingCode, String?) -> TransportConnector = {
-        // Sign relay joins once a room secret exists (established room); nil
-        // before first registration keeps an open-mode join. existingRoomSecret
-        // does not mint, so the first connect joins open-mode and the secret is
-        // minted during that first session. The pairing ticket (when present)
-        // is the App Attest admission proof for a fresh pairing under attestation.
-        CompanionTransports.connector(for: $0,
-                                      roomSecret: { PhoneIdentity.existingRoomSecret() },
-                                      pairingTicket: $1)
+         connectorForCode: @escaping (PairingCode, String?, Bool) -> TransportConnector = { code, ticket, established in
+        // Sign the relay join only once THIS room is established (its verifier
+        // is registered). Before that a fresh pairing must present the App
+        // Attest ticket (or an empty proof in open mode), not a signature from
+        // the device's global room secret, since the room has no verifier yet
+        // and the relay would reject a signature under attestation.
+        CompanionTransports.connector(
+            for: code,
+            roomSecret: { established ? PhoneIdentity.existingRoomSecret() : nil },
+            pairingTicket: ticket)
     }) {
         self.appAttestService = appAttestService
         self.attestKeyStore = attestKeyStore
@@ -232,15 +233,28 @@ final class AppModel {
     private static let storedKeyDefault = "PairedResponderStaticKey"
     private static let storedPIDDefault = "PairedPairingID"
     private static let storedRelayOriginDefault = "PairedRelayOrigin"
-    private static let roomVerifierRegisteredDefault = "RelayRoomVerifierRegistered"
+    // The relay room name whose verifier this device has registered. Per ROOM,
+    // not a global flag: pairing to a different Mac (a new pid, e.g. after the
+    // user re-scans a QR) is a different room and must register (and, under
+    // attestation, attest) its own verifier instead of inheriting a stale
+    // "done" from the previous pairing. NoSync: local device state, not config.
+    private static let registeredRoomDefault = "NoSyncRelayRegisteredRoom"
 
-    /// Whether this pairing's verifier has been registered with the relay (the
-    /// room is established). Gates the one-time /register POST so reconnects
-    /// don't re-POST; stays false until a registration actually succeeds, so a
-    /// failed attempt is retried on the next connect (self-healing).
-    private var roomVerifierRegistered: Bool {
-        get { UserDefaults.standard.bool(forKey: Self.roomVerifierRegisteredDefault) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.roomVerifierRegisteredDefault) }
+    private func roomName(for code: PairingCode) -> String {
+        RelayRoom.name(responderStaticPublicKey: code.responderStaticPublicKey,
+                       pairingID: code.pairingID)
+    }
+
+    /// Whether this pairing's verifier is registered with the relay (the room is
+    /// established). Gates the one-time /register POST and the pairing-time
+    /// attestation; false until a registration actually succeeds, so a failed
+    /// attempt is retried on the next connect (self-healing).
+    private func verifierRegistered(for code: PairingCode) -> Bool {
+        UserDefaults.standard.string(forKey: Self.registeredRoomDefault) == roomName(for: code)
+    }
+
+    private func markVerifierRegistered(for code: PairingCode) {
+        UserDefaults.standard.set(roomName(for: code), forKey: Self.registeredRoomDefault)
     }
 
     /// The pairing from the last successful handshake. The responder key is
@@ -275,7 +289,7 @@ final class AppModel {
         defaults.removeObject(forKey: Self.storedKeyDefault)
         defaults.removeObject(forKey: Self.storedPIDDefault)
         defaults.removeObject(forKey: Self.storedRelayOriginDefault)
-        defaults.removeObject(forKey: Self.roomVerifierRegisteredDefault)
+        defaults.removeObject(forKey: Self.registeredRoomDefault)
     }
 
     /// Called once at launch: if a pairing is stored, reconnect to it instead
@@ -508,9 +522,14 @@ final class AppModel {
         }
 
         let identity = try PhoneIdentity.keyPair()
-        companionLog("Connecting (discovery + TCP\(code.relayOrigin != nil ? " + relay" : ""))…")
+        let established = verifierRegistered(for: code)
+        companionLog("Connecting (discovery + TCP\(code.relayOrigin != nil ? " + relay" : ""))… "
+            + "room \(established ? "established (will sign join)" : "fresh (will attest/empty proof)")")
         let pairingTicket = await pairingTicketIfNeeded(code)
-        let connector = connectorForCode(code, pairingTicket)
+        let connector = connectorForCode(code, pairingTicket, established)
+        companionLog("Admission proof: "
+            + (pairingTicket != nil ? "App Attest ticket"
+               : established ? "join signature" : "empty (open mode)"))
         let transport = try await connector.connect(
             to: PairingRendezvous(pairingID: code.pairingID),
             timeout: 30)
@@ -578,20 +597,30 @@ final class AppModel {
     /// returns nil, surfacing as an ordinary admission failure iff the relay
     /// actually required the ticket.
     private func pairingTicketIfNeeded(_ code: PairingCode) async -> String? {
-        guard let relayOrigin = code.relayOrigin, !roomVerifierRegistered else { return nil }
-        let roomName = RelayRoom.name(responderStaticPublicKey: code.responderStaticPublicKey,
-                                      pairingID: code.pairingID)
+        guard let relayOrigin = code.relayOrigin else {
+            companionLog("Attestation: no relay origin in code; skipping ticket")
+            return nil
+        }
+        guard !verifierRegistered(for: code) else {
+            companionLog("Attestation: room already established; no ticket needed (reconnect signs)")
+            return nil
+        }
+        companionLog("Attestation: fresh pairing, attempting App Attest ticket "
+            + "(device supports App Attest: \(appAttestService.isSupported))")
+        let roomName = roomName(for: code)
         let client = RelayAttestationClient(origin: relayOrigin,
                                             service: appAttestService,
                                             store: attestKeyStore)
         do {
             if let ticket = try await client.obtainTicket(roomName: roomName) {
-                companionLog("App Attest ticket obtained for pairing admission")
+                companionLog("Attestation: App Attest ticket obtained for pairing admission")
                 return ticket
             }
+            companionLog("Attestation: no ticket (open-mode relay or unsupported device); "
+                + "joining with an empty proof")
             return nil
         } catch {
-            companionLog("App Attest ticket unavailable: \(String(describing: error))")
+            companionLog("Attestation: ticket request FAILED: \(String(describing: error))")
             return nil
         }
     }
@@ -610,21 +639,27 @@ final class AppModel {
             // Ack-before-register: wait until the mac has stored the secret (and
             // can sign its parks) before establishing the room. The reverse
             // would let the room go established with the mac unable to park.
+            companionLog("Relay room: couriering room secret to the mac…")
             try await client.registerRoomSecret(secret)
-            // Register once, the first connect after pairing (or the first with
-            // this build, migrating an older pairing). Reconnects re-courier the
-            // secret but skip /register. The relay mints a token on every admit,
-            // so the flag, not the token, decides.
-            if !roomVerifierRegistered, let registrationToken {
+            companionLog("Relay room: mac acked the room secret")
+            // Register once, the first connect after pairing. Reconnects
+            // re-courier the secret but skip /register. The relay mints a token
+            // on every admit, so the per-room flag, not the token, decides.
+            if verifierRegistered(for: code) {
+                companionLog("Relay room: verifier already registered for this room; done")
+            } else if let registrationToken {
+                companionLog("Relay room: registering verifier (token present)…")
                 let registered = await registerRelayVerifier(
                     roomSecret: secret,
                     registrationToken: registrationToken,
                     relayOrigin: relayOrigin,
-                    roomName: RelayRoom.name(responderStaticPublicKey: code.responderStaticPublicKey,
-                                             pairingID: code.pairingID))
+                    roomName: roomName(for: code))
                 if registered {
-                    roomVerifierRegistered = true
+                    markVerifierRegistered(for: code)
                 }
+            } else {
+                companionLog("Relay room: no registration token (not a relay admission); "
+                    + "verifier registration deferred")
             }
         } catch {
             companionLog("Relay room lock deferred: \(String(describing: error))")
@@ -661,6 +696,8 @@ final class AppModel {
         let attestation = try? await RelayAttestationClient(
             origin: relayOrigin, service: appAttestService, store: attestKeyStore)
             .registerAssertion(roomName: roomName)
+        companionLog("Relay /register: verifier \(verifier.prefix(12))…, "
+            + "assertion \(attestation != nil ? "present" : "absent (open mode)")")
         do {
             request.httpBody = try JSONEncoder().encode(
                 Body(registrationToken: registrationToken, verifier: verifier,

@@ -20,6 +20,7 @@
 
 import Foundation
 import CryptoKit
+import CompanionProtocol
 
 public enum RelayAttestationError: Error, Equatable {
     case malformedResponse
@@ -94,16 +95,23 @@ public struct RelayAttestationClient: Sendable {
     /// (and pins no key) when the device cannot attest or the relay is in open
     /// mode, so the caller falls back to an empty proof.
     public func obtainTicket(roomName: String) async throws -> String? {
-        guard service.isSupported else { return nil }
+        guard service.isSupported else {
+            CompanionLog.log("obtainTicket: device cannot attest (isSupported=false)")
+            return nil
+        }
 
         let challenge = try await fetchChallenge(roomName: roomName)
         let clientDataHash = Self.clientDataHash(challenge: challenge, origin: origin)
+        CompanionLog.log("obtainTicket: generating App Attest key…")
         let keyId = try await service.generateKey()
+        CompanionLog.log("obtainTicket: key \(keyId.prefix(12))…; calling attestKey (Apple round trip)…")
         let attestation = try await service.attestKey(keyId, clientDataHash: clientDataHash)
+        CompanionLog.log("obtainTicket: attestation produced (\(attestation.count) bytes); POST /attest…")
 
         let (status, body) = try await http.post(
             path: "/attest", roomName: roomName,
             json: ["challenge": challenge, "attestationObject": attestation.base64EncodedString()])
+        CompanionLog.log("obtainTicket: /attest -> HTTP \(status)\(status == 200 ? "" : " (\(errorMessage(body) ?? ""))")")
 
         switch status {
         case 200:
@@ -112,9 +120,11 @@ public struct RelayAttestationClient: Sendable {
             }
             // Pin the attested key so the register assertion reuses it.
             store.setKeyId(keyId, forRoom: roomName)
+            CompanionLog.log("obtainTicket: ticket minted; key pinned for room")
             return ticket
         case 400 where errorMessage(body) == "attestation disabled":
             // Open-mode relay: no ticket needed, and nothing to pin.
+            CompanionLog.log("obtainTicket: relay in open mode; no ticket")
             return nil
         default:
             throw RelayAttestationError.http(status, errorMessage(body) ?? "")
@@ -126,19 +136,31 @@ public struct RelayAttestationClient: Sendable {
     /// (open mode / unsupported device), so the caller registers with the token
     /// alone.
     public func registerAssertion(roomName: String) async throws -> (challenge: String, assertion: String)? {
-        guard service.isSupported, let keyId = store.keyId(forRoom: roomName) else { return nil }
-
+        guard service.isSupported else {
+            CompanionLog.log("registerAssertion: device cannot attest; open-mode register")
+            return nil
+        }
+        guard let keyId = store.keyId(forRoom: roomName) else {
+            CompanionLog.log("registerAssertion: no pinned key for room; open-mode register")
+            return nil
+        }
         let challenge = try await fetchChallenge(roomName: roomName)
         let clientDataHash = Self.clientDataHash(challenge: challenge, origin: origin)
+        CompanionLog.log("registerAssertion: signing with key \(keyId.prefix(12))…")
         let assertion = try await service.generateAssertion(keyId, clientDataHash: clientDataHash)
+        CompanionLog.log("registerAssertion: assertion produced (\(assertion.count) bytes)")
         return (challenge, assertion.base64EncodedString())
     }
 
     // MARK: -
 
     private func fetchChallenge(roomName: String) async throws -> String {
+        CompanionLog.log("attestation: POST /attest/challenge…")
         let (status, body) = try await http.post(path: "/attest/challenge", roomName: roomName, json: nil)
-        guard status == 200 else { throw RelayAttestationError.http(status, errorMessage(body) ?? "") }
+        guard status == 200 else {
+            CompanionLog.log("attestation: /attest/challenge -> HTTP \(status) (\(errorMessage(body) ?? ""))")
+            throw RelayAttestationError.http(status, errorMessage(body) ?? "")
+        }
         guard let challenge = decode(body, AttestResponse.self)?.challenge else {
             throw RelayAttestationError.malformedResponse
         }
