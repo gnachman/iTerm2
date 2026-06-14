@@ -21,11 +21,9 @@ final class RoomNameTests: XCTestCase {
                        RelayRoom.name(responderStaticPublicKey: rs, pairingID: pid))
     }
 
-    func test_matchesLabelledSha256OfRsAndPid() {
-        // roomName = SHA256("iterm2-room-v1" || rs || pid), lowercase hex.
-        var preimage = Data("iterm2-room-v1".utf8)
-        preimage.append(rs)
-        preimage.append(Data(pid.utf8))
+    func test_matchesCanonicalSha256OfRsAndPid() {
+        // roomName = SHA256(canonical("iterm2-room", [rs, pid])), lowercase hex.
+        let preimage = CanonicalEncoding.encode(domain: "iterm2-room", [rs, Data(pid.utf8)])
         let expected = SHA256.hash(data: preimage)
             .map { String(format: "%02x", $0) }.joined()
         XCTAssertEqual(RelayRoom.name(responderStaticPublicKey: rs, pairingID: pid), expected)

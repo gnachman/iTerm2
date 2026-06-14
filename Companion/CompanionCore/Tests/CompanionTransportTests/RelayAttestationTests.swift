@@ -178,11 +178,12 @@ final class RelayAttestationTests: XCTestCase {
     // MARK: clientDataHash agreement
 
     func test_clientDataHash_matchesWorkerReconstruction() {
-        // SHA256(challengeBytes || origin). The Worker recomputes this exactly;
-        // any divergence breaks attestation, so pin the formula.
+        // SHA256(canonical("iterm2-relay-attest", [challengeBytes, origin])).
+        // The Worker recomputes this exactly; any divergence breaks attestation,
+        // so pin the formula.
         let challenge = Data("hello".utf8).base64EncodedString()
-        var preimage = Data("hello".utf8)
-        preimage.append(Data(origin.utf8))
+        let preimage = CanonicalEncoding.encode(domain: "iterm2-relay-attest",
+                                                [Data("hello".utf8), Data(origin.utf8)])
         let expected = Data(SHA256.hash(data: preimage))
         XCTAssertEqual(RelayAttestationClient.clientDataHash(challenge: challenge, origin: origin), expected)
     }

@@ -14,10 +14,6 @@ import Foundation
 import CryptoKit
 
 public enum RelayJoin {
-    /// Wire protocol version of the join exchange. Bumping it lets future
-    /// admission changes be distinguished from v1.
-    public static let version: UInt8 = 1
-
     public enum Role: UInt8 {
         case mac = 1
         case phone = 2
@@ -44,19 +40,17 @@ public enum RelayJoin {
         signingKey(roomSecret: roomSecret).publicKey.rawRepresentation
     }
 
-    /// The bytes a join (or rotate/delete) signs. Binding room name and origin
-    /// makes the key useless outside this room and relay. Layout is
-    /// unambiguous: every field before the trailing variable-length origin is
-    /// fixed (version 1, role 1, nonce, 64-char hex room name).
+    /// The bytes a join signs. Binding room name and origin makes the key
+    /// useless outside this room and relay. Length-prefixed and domain-separated,
+    /// so no field boundary is ambiguous and a join signature can never be
+    /// confused with a delete (a distinct domain) or any other signed message.
     public static func transcript(role: Role,
                                   nonce: Data,
                                   roomName: String,
                                   origin: String) -> Data {
-        var data = Data([version, role.rawValue])
-        data.append(nonce)
-        data.append(Data(roomName.utf8))
-        data.append(Data(origin.utf8))
-        return data
+        CanonicalEncoding.encode(domain: "iterm2-relay-join",
+                                 [Data([role.rawValue]), nonce,
+                                  Data(roomName.utf8), Data(origin.utf8)])
     }
 
     /// Verify a join signature against the stored verifier.

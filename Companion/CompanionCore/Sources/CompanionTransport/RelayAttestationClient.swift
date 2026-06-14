@@ -84,10 +84,14 @@ public struct RelayAttestationClient: Sendable {
     }
 
     /// The clientDataHash both ends bind into the App Attest nonce:
-    /// SHA256(challengeBytes || origin). `challenge` is the relay's base64 nonce.
+    /// SHA256(canonical("iterm2-relay-attest", [challengeBytes, origin])).
+    /// `challenge` is the relay's base64 nonce. Length-prefixed/domain-separated
+    /// so the challenge/origin boundary is unambiguous; the worker reconstructs
+    /// the identical bytes.
     public static func clientDataHash(challenge: String, origin: String) -> Data {
-        var preimage = Data(base64Encoded: challenge) ?? Data()
-        preimage.append(Data(origin.utf8))
+        let preimage = CanonicalEncoding.encode(domain: "iterm2-relay-attest",
+                                                [Data(base64Encoded: challenge) ?? Data(),
+                                                 Data(origin.utf8)])
         return Data(SHA256.hash(data: preimage))
     }
 

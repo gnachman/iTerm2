@@ -54,10 +54,9 @@ final class RelayJoinTests: XCTestCase {
 
     func test_transcriptLayout() {
         let t = RelayJoin.transcript(role: .phone, nonce: nonce, roomName: roomName, origin: origin)
-        var expected = Data([RelayJoin.version, RelayJoin.Role.phone.rawValue])
-        expected.append(nonce)
-        expected.append(Data(roomName.utf8))
-        expected.append(Data(origin.utf8))
+        let expected = CanonicalEncoding.encode(
+            domain: "iterm2-relay-join",
+            [Data([RelayJoin.Role.phone.rawValue]), nonce, Data(roomName.utf8), Data(origin.utf8)])
         XCTAssertEqual(t, expected)
     }
 
