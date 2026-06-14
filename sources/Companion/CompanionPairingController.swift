@@ -38,6 +38,12 @@ final class CompanionPairingController: NSObject {
 
     private(set) var pairingCode: PairingCode?
 
+    /// True while a fresh-pairing QR is being shown (from startPairing until the
+    /// pairing completes or the window is torn down via stopAdvertising). It
+    /// distinguishes "a QR is up, keep its park alive" from a stale pairingCode
+    /// left over after the window closed, so retry re-parks only a live pairing.
+    private var freshPairingActive = false
+
     // Set by the window controller; all invoked on the main actor.
     var onPaired: (@MainActor () -> Void)?
     var onFailed: (@MainActor (String) -> Void)?
@@ -92,6 +98,16 @@ final class CompanionPairingController: NSObject {
     var isConnected: Bool { bridge != nil }
     /// A device has paired at some point (it may or may not be connected).
     var hasPairedDevice: Bool { pairedPID != nil }
+
+    /// The pairing id the mac should currently be parked for: the established
+    /// device, or, during a fresh pairing, the QR being shown. Retry uses this
+    /// so a dropped park is re-established in BOTH states, waiting for a first
+    /// scan and after pairing. nil means there is nothing to listen for.
+    private var desiredListeningPID: String? {
+        if let pairedPID { return pairedPID }
+        if freshPairingActive { return pairingCode?.pairingID }
+        return nil
+    }
 
     /// The same three gates iTermAITermGatekeeper.check() applies, evaluated
     /// without its alerts. Pairing (and even listening for a paired device) is
@@ -161,10 +177,10 @@ final class CompanionPairingController: NSObject {
         // bridge's onClose nils `bridge` before calling here, so a genuine
         // reconnect (after the connection is gone) still proceeds; only callers
         // firing while connected (launch races, gate changes) are held off.
-        guard acceptTask == nil, bridge == nil, let pid = pairedPID else {
+        guard acceptTask == nil, bridge == nil, let pid = desiredListeningPID else {
             relayLog("resume: SKIP guard "
                      + "(acceptTaskNil=\(acceptTask == nil) bridgeNil=\(bridge == nil) "
-                     + "hasPID=\(pairedPID != nil))")
+                     + "hasPID=\(desiredListeningPID != nil))")
             return
         }
         do {
@@ -185,7 +201,7 @@ final class CompanionPairingController: NSObject {
     private var listenerRetryTask: Task<Void, Never>?
 
     private func scheduleListenerRetry() {
-        guard listenerRetryTask == nil, pairedPID != nil else {
+        guard listenerRetryTask == nil, desiredListeningPID != nil else {
             return
         }
         listenerRetryTask = Task { [weak self] in
@@ -208,6 +224,9 @@ final class CompanionPairingController: NSObject {
                                pairingID: pairingID,
                                relayOrigin: Self.configuredRelayOrigin())
         pairingCode = code
+        // A live QR is up: keep its park retried until the phone pairs or the
+        // window is torn down (stopAdvertising clears this).
+        freshPairingActive = true
 
 #if DEBUG
         // Development automation hook: the iOS simulator has no camera, so
@@ -279,6 +298,10 @@ final class CompanionPairingController: NSObject {
     /// pairing window calls this when it closes.
     func stopAdvertising() {
         relayLog("stopAdvertising() called (cancelling acceptTask, stopping listener)")
+        // Teardown of the current advertising intent: a fresh-pairing QR is no
+        // longer live, so retry must not re-park it. An established pairing
+        // (pairedPID) is unaffected and still drives reconnect.
+        freshPairingActive = false
         listenerRetryTask?.cancel()
         listenerRetryTask = nil
         // An accept loop parked in SAS entry must not leak its continuation.
@@ -512,6 +535,9 @@ final class CompanionPairingController: NSObject {
                     staleBridge.stop()
                 }
                 pairedPID = code.pairingID
+                // Now established: reconnect is keyed on pairedPID, so the
+                // fresh-pairing intent is done.
+                freshPairingActive = false
                 // Pin the phone static: fresh pairings record the SAS-confirmed
                 // key; a matched reconnect re-affirms it; a pre-pinning pairing
                 // is captured here on first reconnect (trust on first use).
