@@ -25,8 +25,13 @@ enum OrchestrationMentionRenderer {
     // longer hex/dash run that merely starts like a UUID.
     private static let uuidPattern =
         "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
+    // Both prefixes are owned elsewhere (the workgroup mint and the
+    // introspection payload builder); referencing the constants keeps
+    // mention parsing from silently breaking if either ever changes.
+    private static let workgroupPrefix = iTermWorkgroupInstance.instanceIDPrefix
+    private static let sessionPrefix = WorkgroupIntrospection.syntheticWorkgroupIDPrefix
     private static let regex = try! NSRegularExpression(
-        pattern: "@(session:|wg-)?(\(uuidPattern))(?![0-9A-Fa-f-])")
+        pattern: "@(\(NSRegularExpression.escapedPattern(for: sessionPrefix))|\(NSRegularExpression.escapedPattern(for: workgroupPrefix)))?(\(uuidPattern))(?![0-9A-Fa-f-])")
 
     // The marker keystroke for the in-process click handler lives on
     // ClickableTextView (see ToolCodecierge.swift). Using the same key
@@ -184,15 +189,15 @@ enum OrchestrationMentionRenderer {
     // Live resolver: looks the identifier up in the running app.
     private static func liveResolve(prefix: String?, uuid: String) -> Resolved? {
         switch prefix {
-        case "wg-":
-            return resolveWorkgroup(instanceID: "wg-" + uuid)
-        case "session:":
+        case workgroupPrefix:
+            return resolveWorkgroup(instanceID: workgroupPrefix + uuid)
+        case sessionPrefix:
             return resolveSession(guid: uuid)
         default:
             // A bare UUID is almost always a session_guid; fall back to
-            // treating it as a workgroup instance id whose "wg-" prefix
-            // the model dropped.
-            return resolveSession(guid: uuid) ?? resolveWorkgroup(instanceID: "wg-" + uuid)
+            // treating it as a workgroup instance id whose prefix the
+            // model dropped.
+            return resolveSession(guid: uuid) ?? resolveWorkgroup(instanceID: workgroupPrefix + uuid)
         }
     }
 

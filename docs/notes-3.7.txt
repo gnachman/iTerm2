@@ -1427,3 +1427,24 @@ Bug Fixes:
   now covers every session in the window,
   including ones created after it was
   armed.
+- Workgroups are now tracked by a stable
+  identifier, so a workgroup whose main
+  session had already closed can still
+  be exited and torn down instead of
+  leaking and stranding its remaining
+  sessions invisibly.
+- Session lookup now also searches
+  buried sessions' workgroup peer ports
+  and the workgroup registry, so a peer
+  whose only visible sibling was buried
+  can still be found and revealed, e.g.
+  from the Session Status tool.
+- A Session Status row whose session
+  cannot be found renders blank instead
+  of showing a recycled row's content.
+- Switching between workgroup peers no
+  longer wipes a session's entry from
+  the Session Status tool. The per-tab
+  status rollup was borrowing the
+  session's identity and clearing it
+  when the visible peer changed.

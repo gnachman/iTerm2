@@ -88,6 +88,17 @@ class iTermSessionTabStatus: NSObject {
         var detailText: String? = nil
     }
     private var state = State()
+    // Whether mutations post the global iTermSessionTabStatusDidChange
+    // notification. True for a real per-session status (the one
+    // SessionStatusController tracks by sessionID). False for the
+    // tab-internal aggregate rollup produced by copyStatus(): that
+    // copy borrows the winning session's sessionID, so if it
+    // broadcast, its clear() (PTYTab.updateAggregatedTabStatus, when
+    // the tab's active session changes to one with no status — e.g. a
+    // workgroup peer swap) would post a "no active status" for that
+    // sessionID and make SessionStatusController drop the real
+    // session's still-live status.
+    private let broadcastsChanges: Bool
     @objc var hasIndicator: Bool {
         get {
             state.hasIndicator
@@ -147,6 +158,13 @@ class iTermSessionTabStatus: NSObject {
 
     @objc init(sessionID: String) {
         self.sessionID = sessionID
+        self.broadcastsChanges = true
+        super.init()
+    }
+
+    private init(sessionID: String, broadcastsChanges: Bool) {
+        self.sessionID = sessionID
+        self.broadcastsChanges = broadcastsChanges
         super.init()
     }
 
@@ -219,6 +237,9 @@ class iTermSessionTabStatus: NSObject {
     @objc static let didChangeNotificationName = NSNotification.Name("iTermSessionTabStatusDidChange")
 
     private func notify() {
+        guard broadcastsChanges else {
+            return
+        }
         NotificationCenter.default.post(name: Self.didChangeNotificationName, object: self)
     }
 
@@ -309,7 +330,11 @@ class iTermSessionTabStatus: NSObject {
     }
 
     @objc func copyStatus() -> iTermSessionTabStatus {
-        let copy = iTermSessionTabStatus(sessionID: sessionID)
+        // The copy is the tab-internal aggregate; it must not broadcast
+        // (see broadcastsChanges) so its clear()/changes don't make
+        // SessionStatusController drop the source session's real status.
+        let copy = iTermSessionTabStatus(sessionID: sessionID,
+                                         broadcastsChanges: false)
         copy.hasIndicator = hasIndicator
         copy.indicatorColor = indicatorColor
         copy.statusText = statusText

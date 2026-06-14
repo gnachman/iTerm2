@@ -263,6 +263,12 @@ static iTermController *gSharedInstance;
     return [self anyTmuxSession] != nil;
 }
 
+// Deliberately NOT routed through enumerateSessionLookupLocations:
+// (which would pay for the peer-port passes just to discard them) and
+// not through -allSessions (which flat-maps every window's sessions
+// into a fresh array before the scan starts). This runs on every
+// menu-validation pass via haveTmuxConnection, so iterate window by
+// window and return at the first hit.
 - (PTYSession *)anyTmuxSession {
     for (PseudoTerminal *terminal in _terminalWindows) {
         for (PTYSession *session in [terminal allSessions]) {
@@ -1495,20 +1501,71 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)revealSessionWithGUID:(NSString *)guid {
-    for (PseudoTerminal *window in [self terminals]) {
-        for (PTYSession *session in window.allSessions) {
-            if ([session.guid isEqualToString:guid]) {
-                [session reveal];
-                return;
+    // anySessionWithGUID: searches tabs, buried sessions, and peer
+    // ports; -reveal knows how to surface all three (a port-only peer
+    // is activated into its group's pane).
+    [[self anySessionWithGUID:guid] reveal];
+}
+
+- (void)reviveSessionIntoWindow:(PTYSession *)session {
+    PseudoTerminal *term = nil;
+    if (_frontTerminalWindowController && ![_frontTerminalWindowController isHotKeyWindow]) {
+        term = _frontTerminalWindowController;
+    } else {
+        // The front window is a hotkey window (it auto-hides, so a
+        // revived tab there would vanish with it) or there is none;
+        // find any regular window.
+        for (PseudoTerminal *candidate in _terminalWindows) {
+            if (![candidate isHotKeyWindow]) {
+                term = candidate;
+                break;
             }
         }
     }
-    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        if ([session.guid isEqualToString:guid]) {
-            [session reveal];
-            return;
-        }
+    if (!term) {
+        const iTermPercentage percentage = (iTermPercentage){ .width = -1, .height = -1 };
+        const iTermWindowType windowType = iTermWindowDefaultType();
+        [self reviveSession:session
+        inNewWindowWithType:windowType
+            savedWindowType:windowType
+                 percentage:percentage
+                     screen:-1
+               terminalGuid:nil];
+        return;
     }
+    [term addRevivedSession:session];
+    [term fitWindowToTabs];
+}
+
+- (PseudoTerminal *)reviveSession:(PTYSession *)session
+              inNewWindowWithType:(iTermWindowType)windowType
+                  savedWindowType:(iTermWindowType)savedWindowType
+                       percentage:(iTermPercentage)percentage
+                           screen:(int)screen
+                     terminalGuid:(NSString *)terminalGuid {
+    PseudoTerminal *term = [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                            windowType:windowType
+                                                       savedWindowType:savedWindowType
+                                                            percentage:percentage
+                                                                screen:screen
+                                                               profile:nil];
+    if (!term) {
+        DLog(@"Failed to create a window to revive %@", session);
+        return nil;
+    }
+    [self addTerminalWindow:term];
+    if (terminalGuid) {
+        // Deliberately conditional: the pre-refactor buried-restore
+        // path assigned restorableSession.terminalGuid unconditionally,
+        // which could blank the window's freshly minted identity to
+        // nil. Keeping the minted guid when no saved one exists is the
+        // intended behavior — window arrangement encoding and
+        // window-matching consumers expect a non-nil terminalGuid.
+        term.terminalGuid = terminalGuid;
+    }
+    [term addRevivedSession:session];
+    [term fitWindowToTabs];
+    return term;
 }
 
 - (PTYSession *)sessionWithGUID:(NSString *)identifier {
@@ -1523,24 +1580,96 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (PTYSession *)anySessionWithGUID:(NSString *)identifier {
-    PTYSession *direct = [self sessionWithGUID:identifier];
-    if (direct) {
-        return direct;
-    }
-    for (PTYSession *buried in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        if ([buried.guid isEqualToString:identifier]) {
-            return buried;
+    __block PTYSession *result = nil;
+    [self enumerateSessionLookupLocations:^(PTYSession *session,
+                                            iTermSessionLookupLocation location,
+                                            BOOL *stop) {
+        if ([session.guid isEqualToString:identifier]) {
+            result = session;
+            *stop = YES;
         }
-    }
-    for (PseudoTerminal *term in self.terminals) {
-        for (PTYSession *session in term.allSessions) {
-            PTYSession *peer = [session.peerPort peerSessionWithGUID:identifier];
-            if (peer) {
-                return peer;
+    }];
+    return result;
+}
+
+- (void)enumerateSessionLookupLocations:(void (^NS_NOESCAPE)(PTYSession *session,
+                                                             iTermSessionLookupLocation location,
+                                                             BOOL *stop))block {
+    // Pass order is the search precedence documented on
+    // iTermSessionLookupLocation. The peer-port passes cover workgroup
+    // peers that are in no tab and not registered in
+    // iTermBuriedSessions (addBuriedSession: drops sessions that have
+    // no window yet, which is how non-active peers are born); buried
+    // sessions' ports matter because the user can bury the only
+    // in-tab member of a peer group, leaving the rest reachable
+    // exclusively through the buried member's port.
+    // `visit` is the single dispatch point: it owns the stop check so
+    // a future change to how stop is honored (or a new yield-time
+    // invariant) lands in one place. Each leg is fetched lazily —
+    // most lookups hit in the tab pass, and a miss is guaranteed for
+    // every blank Session Status row on every reload, so the later
+    // legs shouldn't be materialized until needed.
+    __block BOOL stop = NO;
+    void (^visit)(NSArray<PTYSession *> *, iTermSessionLookupLocation) =
+        ^(NSArray<PTYSession *> *sessions, iTermSessionLookupLocation location) {
+            if (stop) {
+                return;
             }
+            for (PTYSession *session in sessions) {
+                block(session, location, &stop);
+                if (stop) {
+                    return;
+                }
+            }
+        };
+    // Tab pass: iterate window by window rather than flattening every
+    // window's sessions up front via -allSessions. The common case (a
+    // GUID-lookup hit) returns from an early window without building a
+    // combined array; the more expensive legs below are reached only on
+    // a miss.
+    for (PseudoTerminal *term in _terminalWindows) {
+        visit(term.allSessions, iTermSessionLookupLocationTab);
+        if (stop) {
+            return;
         }
     }
-    return nil;
+    NSArray<PTYSession *> *buriedSessions = [[iTermBuriedSessions sharedInstance] buriedSessions];
+    visit(buriedSessions, iTermSessionLookupLocationBuried);
+    for (PseudoTerminal *term in _terminalWindows) {
+        for (PTYSession *session in term.allSessions) {
+            if (stop) {
+                return;
+            }
+            visit(session.peerPort.realizedPeerSessions,
+                  iTermSessionLookupLocationTabPeerPort);
+        }
+    }
+    for (PTYSession *session in buriedSessions) {
+        if (stop) {
+            return;
+        }
+        visit(session.peerPort.realizedPeerSessions,
+              iTermSessionLookupLocationBuriedPeerPort);
+    }
+    if (stop) {
+        return;
+    }
+    // The registry pass reaches peers of a workgroup whose realized
+    // members are all windowless and unburied (born-buried peers are
+    // deliberately not registered in iTermBuriedSessions), which no
+    // in-tab or buried session's port can surface. The controller
+    // strongly retains each instance, and each instance its ports, so
+    // reachability here doesn't depend on which member happens to be
+    // in a tab.
+    for (iTermWorkgroupInstance *instance in iTermWorkgroupController.instance.allInstances) {
+        for (PTYSessionPeerPort *port in instance.allPeerPorts) {
+            if (stop) {
+                return;
+            }
+            visit(port.realizedPeerSessions,
+                  iTermSessionLookupLocationWorkgroupRegistryPort);
+        }
+    }
 }
 
 - (void)workspaceWillPowerOff:(NSNotification *)notification {

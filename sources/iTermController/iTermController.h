@@ -183,22 +183,69 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 - (PTYSession *)sessionWithGUID:(NSString *)identifier;
 
+// Where -enumerateSessionLookupLocations: found a session. Declared
+// in search-precedence order: in-tab sessions win over buried ones,
+// which win over sessions reachable only through a peer port; the
+// workgroup registry's ports come last because they cover sessions no
+// in-tab or buried member can reach (a workgroup whose realized
+// members are all windowless and unburied).
+typedef NS_ENUM(NSInteger, iTermSessionLookupLocation) {
+    iTermSessionLookupLocationTab,
+    iTermSessionLookupLocationBuried,
+    iTermSessionLookupLocationTabPeerPort,
+    iTermSessionLookupLocationBuriedPeerPort,
+    iTermSessionLookupLocationWorkgroupRegistryPort,
+};
+
+// The single authority on every place a live PTYSession can be found.
+// Yields each session (possibly more than once — a peer can be both
+// in a tab and in its port) with the location it was found in, in
+// precedence order. Consumed by -anySessionWithGUID: (and through it
+// -revealSessionWithGUID:) and the unresolvable-session diagnosis
+// dump, so the GUID lookup and its diagnosis search the same set of
+// places and cannot drift from each other.
+- (void)enumerateSessionLookupLocations:(void (^NS_NOESCAPE)(PTYSession *session,
+                                                             iTermSessionLookupLocation location,
+                                                             BOOL *stop))block;
+
 // Like -sessionWithGUID: but also finds (a) buried sessions and
-// (b) workgroup peers reachable through any in-tab session's peer
-// port. Use this when the caller needs a stable handle on a session
-// regardless of whether it's currently visible in a tab — e.g. the
-// Session Status toolbelt, which displays rows for buried/non-visible
-// peers and needs to resolve them to a PTYSession to render the row
-// or activate the peer on click. Peers can be invisible to both
-// -sessionWithGUID: and iTermBuriedSessions (the
-// addBuriedSession path silently drops sessions when
-// restorableSessionForSession returns nil), but their peer port still
-// holds a strong reference, which is why the third leg matters.
+// (b) workgroup peers reachable through any in-tab or buried
+// session's peer port or through the workgroup registry's ports. Use
+// this when the caller needs a stable handle on a session regardless
+// of whether it's currently visible in a tab — e.g. the Session
+// Status toolbelt, which displays rows for buried/non-visible peers
+// and needs to resolve them to a PTYSession to render the row or
+// activate the peer on click. Peers can be invisible to both
+// -sessionWithGUID: and iTermBuriedSessions (the addBuriedSession
+// path silently drops sessions when restorableSessionForSession
+// returns nil), but their peer port still holds a strong reference,
+// which is why the peer-port legs matter.
 - (PTYSession *)anySessionWithGUID:(NSString *)identifier;
 
 // sessionID is of the form "w0t0p0:guid"
 - (void)revealSessionID:(NSString *)sessionID;
 - (void)revealSessionWithGUID:(NSString *)guid;
+
+// Gives a windowless, unburied session a home: a tab of the frontmost
+// non-hotkey terminal window, or a fresh window of the user's default
+// type when no suitable window exists. Used by -[PTYSession reveal] to
+// surface workgroup members reachable only through the workgroup
+// registry.
+- (void)reviveSessionIntoWindow:(PTYSession *)session;
+
+// The shared create-window-and-revive tail: makes a window with the
+// given geometry, registers it, applies `terminalGuid` when non-nil
+// (the buried-restore path preserves the saved window's identity),
+// adds `session` as a revived tab, and fits the window. Returns the
+// new window controller, or nil if creation failed. Callers layer
+// their own restorable-state extras (window title, fullscreen) on the
+// result.
+- (PseudoTerminal *)reviveSession:(PTYSession *)session
+              inNewWindowWithType:(iTermWindowType)windowType
+                  savedWindowType:(iTermWindowType)savedWindowType
+                       percentage:(iTermPercentage)percentage
+                           screen:(int)screen
+                     terminalGuid:(NSString *)terminalGuid;
 
 void OnHotKeyEvent(void);
 

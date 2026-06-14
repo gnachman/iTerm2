@@ -153,17 +153,15 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
     } else {
         // Create a new term and add the session to it.
         DLog(@"Failed to find the terminal by uid. Create a new window and add the session to it.");
-        term = [[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                windowType:restorableSession.windowType
-                                           savedWindowType:restorableSession.savedWindowType
-                                                percentage:restorableSession.percentage
-                                                    screen:restorableSession.screen
-                                                   profile:nil];
+        term = [[iTermController sharedInstance] reviveSession:restorableSession.sessions[0]
+                                           inNewWindowWithType:restorableSession.windowType
+                                               savedWindowType:restorableSession.savedWindowType
+                                                    percentage:restorableSession.percentage
+                                                        screen:restorableSession.screen
+                                                  terminalGuid:restorableSession.terminalGuid];
         if (term) {
-            [[iTermController sharedInstance] addTerminalWindow:term];
-            term.terminalGuid = restorableSession.terminalGuid;
-            [term addRevivedSession:restorableSession.sessions[0]];
-            [term fitWindowToTabs];
+            // Restorable-state extras stay here: the shared revive
+            // helper only handles the create/add/fit sequence.
             if (restorableSession.windowTitle) {
                 [term.scope setValue:restorableSession.windowTitle
                     forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];

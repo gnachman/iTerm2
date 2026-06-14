@@ -14,6 +14,16 @@
 // Rest of the file is Obj-C code path
 #import <Foundation/Foundation.h>
 extern BOOL gDebugLogging;
+
+// Logs the result of `messageBlock` once per (key, debug-logging
+// session). The key set clears each time logging starts, so a
+// diagnosis emitted into an earlier, discarded capture re-emits into
+// the next one. While logging is off this neither logs nor consumes
+// the key, so the one-shot can't be burned before the user enables
+// logging to capture it. The block runs only when the message will
+// actually be logged; expensive diagnostics belong inside it. Dedup
+// is global (one emission per key across all views/windows).
+void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
 #include "iTermCLogging.h"
 
 #define USE_STOPWATCH 0

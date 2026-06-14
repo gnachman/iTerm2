@@ -207,17 +207,28 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         // newly-active peer — otherwise if you tap "Diff" on Main's
         // switcher and later come back to Main, Main's switcher would
         // still show "Diff" highlighted.
+        syncModeSwitchers(to: identifier)
+        // No explicit sessionDidChangeDesiredToolbarItems here:
+        // super.activate's promise handler runs sessionActivate,
+        // which calls updatePaneTitles → setToolbarItems on every
+        // session in the tab. That picks up the per-peer items.
+        return true
+    }
+
+    // The switchers were synced at commit time (above), but the swap
+    // never ran; put the highlight back on the member that is really
+    // active.
+    override func activationDidRollBack(to identifier: String) {
+        syncModeSwitchers(to: identifier)
+    }
+
+    private func syncModeSwitchers(to identifier: String) {
         for views in itemsByPeerID.values {
             for view in views {
                 (view as? WorkgroupModeSwitcherItem)?
                     .setActiveIdentifier(identifier)
             }
         }
-        // No explicit sessionDidChangeDesiredToolbarItems here:
-        // super.activate's promise handler runs sessionActivate,
-        // which calls updatePaneTitles → setToolbarItems on every
-        // session in the tab. That picks up the per-peer items.
-        return true
     }
 
     // The ordered list of toolbar items for a specific peer.
@@ -244,7 +255,18 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         default:
             return false
         }
-        return activate(identifier: peerConfigs[targetIndex].uniqueIdentifier)
+        let identifier = peerConfigs[targetIndex].uniqueIdentifier
+        guard isActivatable(identifier: identifier) else {
+            // The digit names an in-range member of this group, so the
+            // chord belongs to us even though the member's spawn
+            // already failed and there is nothing to switch to.
+            // Returning false would let ⌥⇧⌘<digit> fall through the
+            // dispatch chain and reach the focused shell as input;
+            // consume it as a no-op instead.
+            DLog("iTermWorkgroupPeerPort.activatePeer(byShortcutDigit:): consuming chord for \(identifier), whose spawn failed")
+            return true
+        }
+        return activate(identifier: identifier)
     }
 
     // Number of peers in the group — exposed so the Workgroups menu can
@@ -303,13 +325,35 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     }
 
     private func activatePeer(byOffset offset: Int) -> Bool {
+        guard let target = viableConfigIdentifier(byOffset: offset) else {
+            return false
+        }
+        return activate(identifier: target)
+    }
+
+    // The nearest member in the `offset` direction whose spawn hasn't
+    // already failed, or nil when every other member is dead. Dead
+    // members must be skipped, not targeted: activate() refuses a
+    // rejected spawn without advancing activeSessionIdentifier, so
+    // cycling that lands on one would recompute the same dead target
+    // on every keypress and the user could never get past it in that
+    // direction. Internal so tests can pin the skip without needing a
+    // live activation anchor.
+    func viableConfigIdentifier(byOffset offset: Int) -> String? {
         let count = peerConfigs.count
-        guard count > 1 else { return false }
+        guard count > 1 else { return nil }
         let currentID = activeSessionIdentifier
         let baseIndex = peerConfigs.firstIndex { $0.uniqueIdentifier == currentID } ?? 0
-        // Modulo with sign correction so a negative offset wraps to the end.
-        let targetIndex = ((baseIndex + offset) % count + count) % count
-        return activate(identifier: peerConfigs[targetIndex].uniqueIdentifier)
+        for step in 1..<count {
+            // Modulo with sign correction so a negative offset wraps
+            // to the end.
+            let targetIndex = ((baseIndex + offset * step) % count + count) % count
+            let identifier = peerConfigs[targetIndex].uniqueIdentifier
+            if isActivatable(identifier: identifier) {
+                return identifier
+            }
+        }
+        return nil
     }
 
     // Flat list of every toolbar item view across all peers — used by
@@ -495,7 +539,16 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
 extension iTermWorkgroupPeerPort: WorkgroupModeSwitcherItemDelegate {
     func workgroupModeSwitcher(_ item: WorkgroupModeSwitcherItem,
                                didSelect identifier: String) {
-        _ = activate(identifier: identifier)
+        if !activate(identifier: identifier) {
+            // The control tracks .selectOne, so AppKit already
+            // highlighted the clicked segment before this delegate
+            // ran. A refused activation (spawn already failed, no
+            // anchor to swap on) never commits and never rolls back,
+            // so nothing else would un-highlight the dead segment;
+            // resync every switcher to the member that is really
+            // active.
+            syncModeSwitchers(to: activeSessionIdentifier)
+        }
     }
 }
 

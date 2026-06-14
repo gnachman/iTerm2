@@ -15078,6 +15078,80 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         DLog(@"disinter");
         [[iTermBuriedSessions sharedInstance] restoreSession:self];
     }
+
+    // If this session is a non-visible workgroup peer, its view isn't
+    // in the splitview — setActiveSessionPreservingMaximization can't
+    // do the right thing. Route through the peer port instead, which
+    // swaps this peer's view in, buries the previously-active sibling,
+    // and sets the active session for us. The swap must happen BEFORE
+    // the window-focus logic below: a non-visible peer has no delegate
+    // until it's swapped in, so focusing first would resolve a nil
+    // window (clobbering the current terminal with nil) and leave the
+    // swapped-in peer sitting in a background window.
+    BOOL activatedViaPort = NO;
+    PTYSessionPeerPort *port = self.peerPort;
+    NSString *portIdentifier = [port identifierForSession:self];
+    if (port && portIdentifier && port.activeSession != self) {
+        DLog(@"Activate peer %@ via port", portIdentifier);
+        // activateIdentifier: restores the group's buried anchor
+        // itself if the user buried its only in-tab member, so no
+        // pre-call is needed here.
+        activatedViaPort = [port activateIdentifier:portIdentifier];
+        if (!activatedViaPort) {
+            DLog(@"Port refused to activate %@", portIdentifier);
+        }
+    }
+    // NOT gated on !activatedViaPort: this session is realized (the
+    // port only yields fulfilled members), so the swap — or its silent
+    // decline — already happened synchronously inside the activate
+    // above. If _delegate is still nil here, no asynchronous swap is
+    // coming, and skipping the rescue because activate reported
+    // "success" would make the FIRST click on a declined-swap peer a
+    // silent no-op (only a second click, with activeSession == self by
+    // then, would reach this block).
+    if (port && portIdentifier && !_delegate &&
+        ![[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        if ([port hasRestorableAnchor]) {
+            // A sibling still anchors the group's pane — either it has
+            // a live delegate (a silently-declined swap: PTYTab refuses
+            // while a session-initiated resize holds the lock, or for
+            // tmux clients) or it is buried and restorable. Retry the
+            // swap: activateIdentifier: disinters a buried anchor first
+            // and then swaps. Reviving instead would put two members of
+            // one peer group on screen at once (the windowless one in a
+            // fresh window plus the sibling once it's restored).
+            DLog(@"Retry swap of %@ into the group's anchored pane", portIdentifier);
+            activatedViaPort = [port activateIdentifier:portIdentifier];
+        } else {
+            // Registry-only workgroup member: in no tab, not buried
+            // (born-buried peers are never registered in
+            // iTermBuriedSessions), and the whole group is windowless
+            // so there is no pane to swap into. The session is still
+            // findable (the lookup's workgroup-registry pass), so a
+            // Session Status click can land here; surfacing it
+            // requires giving it a window.
+            DLog(@"Revive windowless workgroup member %@", self.guid);
+            [self disinter];
+            [[iTermController sharedInstance] reviveSessionIntoWindow:self];
+            if (_delegate && port.activeSession != self) {
+                // Re-run the port activation so activeSessionIdentifier
+                // and the mode switchers reflect the revived member.
+                activatedViaPort = [port activateIdentifier:portIdentifier];
+            }
+        }
+    }
+    if (activatedViaPort && !_delegate) {
+        // The activation committed but the swap never took effect, even
+        // after the rescue retry — a persistently-declining swap (tmux
+        // client, or a resize lock still held this runloop). There is
+        // nothing to focus or select; treat the reveal as failed
+        // instead of stealing app focus for an invisible session. The
+        // rescue block above is not gated on the already-active check,
+        // so a later click retries once the decline clears.
+        DLog(@"Reveal of %@ failed: the swap never took effect", self.guid);
+        return;
+    }
+
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     BOOL okToActivateApp = YES;
@@ -15087,31 +15161,30 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)terminal];
         [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
         okToActivateApp = (hotKey.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel);
-    } else {
+    } else if (terminal) {
         DLog(@"Making window current");
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         DLog(@"Making window key and ordering front");
         [[terminal window] makeKeyAndOrderFront:self];
+    } else {
+        // Still no window (e.g. an unfulfilled peer spawn was
+        // activated, so the swap is deferred). Don't pass nil to
+        // setCurrentTerminal: — that clobbers the front-terminal state.
+        DLog(@"No window to focus for %@", self);
     }
     if (okToActivateApp) {
         DLog(@"Activate the app");
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
 
-    // If this session is a non-visible workgroup peer, its view isn't
-    // in the splitview — setActiveSessionPreservingMaximization can't
-    // do the right thing. Route through the peer port instead, which
-    // swaps this peer's view in and burying the previously-active
-    // sibling. The port's sessionActivate then sets the active session
-    // for us, so don't fall through to the plain setActiveSession path.
-    PTYSessionPeerPort *port = self.peerPort;
-    if (port && port.activeSession != self) {
-        NSString *identifier = [port identifierForSession:self];
-        if (identifier) {
-            DLog(@"Activate peer %@ via port", identifier);
-            [port activateIdentifier:identifier];
-            return;
+    if (activatedViaPort) {
+        // The port's sessionActivate already set the active session;
+        // just bring its tab forward.
+        if (!isHotKey) {
+            DLog(@"Selecting tab from delegate %@", _delegate);
+            [_delegate sessionSelectContainingTab];
         }
+        return;
     }
 
     DLog(@"Make this session active in delegate %@", _delegate);
@@ -23444,6 +23517,11 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     // coordinator will rebuild the peer group (adopting the saved
     // members); letting the trigger fire here on a replayed/reattached
     // shell would race it and spawn a duplicate workgroup.
+    // iTermWorkgroupController.enter has the same guard, but this copy
+    // samples the flag NOW, before the dispatch_async below: by the
+    // deferred tick the coordinator may have finished and cleared the
+    // flag, and enter's check would no longer recognize the replayed
+    // trigger as restoration-raced.
     if ([iTermWorkgroupRestoration isRestoringWithGuid:self.guid]) {
         return;
     }

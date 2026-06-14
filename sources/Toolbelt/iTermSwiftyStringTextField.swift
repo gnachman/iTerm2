@@ -34,6 +34,15 @@ class iTermSwiftyStringTextField: NSTextField {
 }
 
 extension iTermSwiftyStringTextField {
+    // Stops evaluating the current interpolated string (if any) and
+    // empties the field. Without invalidating, a recycled field's old
+    // observer could repopulate it after the caller blanked it.
+    func clear() {
+        swiftyString?.invalidate()
+        swiftyString = nil
+        stringValue = ""
+    }
+
     func set(interpolatedString: String, scope: iTermVariableScope) {
         swiftyString?.invalidate()
         swiftyString = iTermSwiftyString(string: interpolatedString,

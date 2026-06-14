@@ -20,18 +20,56 @@ import Foundation
 final class WorkgroupRestorationCoordinator: NSObject {
     @objc(sharedInstance) static let shared = WorkgroupRestorationCoordinator()
 
-    private struct Pending {
+    private final class Pending {
         weak var anchor: PTYSession?
         let descriptor: [AnyHashable: Any]
         // GUIDs of every session involved (anchor + embedded peers +
         // non-peer children) so the Enter Workgroup trigger can be
         // suppressed for all of them until reconstruction finishes.
         let guids: Set<String>
+        // Monotonic timestamp (it_timeSinceBoot) so a wall-clock step
+        // mid-restore can't distort the deadline.
+        let registeredAt: TimeInterval
+        // True once this entry's guids have been removed from the
+        // counted restoring set, so a later drain (deadline then
+        // dealloc, or deadline then reconstruct) can't decrement twice.
+        var restoringGuidsReleased = false
+
+        init(anchor: PTYSession,
+             descriptor: [AnyHashable: Any],
+             guids: Set<String>,
+             registeredAt: TimeInterval) {
+            self.anchor = anchor
+            self.descriptor = descriptor
+            self.guids = guids
+            self.registeredAt = registeredAt
+        }
     }
 
     private var pending: [ObjectIdentifier: Pending] = [:]
-    private var restoringGUIDs = Set<String>()
+    // Counted multiset, not a plain Set: two overlapping descriptors
+    // (restoring the same arrangement twice while it's in flight — the
+    // saved-GUID collision adopt() handles) can both claim a GUID, and
+    // draining one entry must not unblock a GUID the other still
+    // claims. isRestoring(guid:) is true while the count is positive.
+    private var restoringGUIDCounts = [String: Int]()
     private var observing = false
+
+    // Test hook: number of pending entries still tracked. The soft
+    // deadline (below) keeps an entry past its timeout so a slow
+    // restore can still reconstruct, so "pending" and "blocking Enter
+    // Workgroup" are distinct states a test may want to assert apart.
+    var pendingCount: Int { pending.count }
+
+    // How long a pending anchor may wait for its tab/window before the
+    // coordinator gives up and releases its restoring GUIDs. The
+    // refusal in iTermWorkgroupController.enter is keyed on those
+    // GUIDs, so without a deadline an anchor that never gets installed
+    // (e.g. an aborted arrangement decode whose session stays retained
+    // by the undo-close machinery) would block Enter Workgroup for
+    // every named session until relaunch. Internal so tests can
+    // shorten it.
+    var pendingReconstructionTimeout: TimeInterval = 30
 
     private override init() {
         super.init()
@@ -55,14 +93,66 @@ final class WorkgroupRestorationCoordinator: NSObject {
         }
         pending[ObjectIdentifier(anchor)] = Pending(anchor: anchor,
                                                     descriptor: descriptor,
-                                                    guids: guids)
-        restoringGUIDs.formUnion(guids)
+                                                    guids: guids,
+                                                    registeredAt: NSDate.it_timeSinceBoot())
+        for guid in guids {
+            restoringGUIDCounts[guid, default: 0] += 1
+        }
         startObservingIfNeeded()
+        // Registration also happens on mid-session arrangement decodes
+        // (open saved arrangement, undo-close, duplicate tab), which
+        // none of the startup-time reconstruct callers cover. Schedule
+        // a pass for the next tick, when the anchor is installed in its
+        // tab. Without this the entry stays pending forever and its
+        // GUIDs stay in restoringGUIDs, which permanently blocks
+        // iTermWorkgroupController.enter for those sessions. Harmless
+        // during startup restoration: reconstructReadyAnchors() is
+        // idempotent and skips not-yet-ready anchors.
+        DispatchQueue.main.async { [weak self] in
+            self?.reconstructReadyAnchors()
+        }
+        // And one more pass just past the deadline, so a wedged entry
+        // is guaranteed to drain even if no decode notification ever
+        // fires again.
+        DispatchQueue.main.asyncAfter(deadline: .now() + pendingReconstructionTimeout + 1) { [weak self] in
+            self?.reconstructReadyAnchors()
+        }
     }
 
     @objc(isRestoringWithGuid:)
     func isRestoring(guid: String) -> Bool {
-        return restoringGUIDs.contains(guid)
+        return (restoringGUIDCounts[guid] ?? 0) > 0
+    }
+
+    // True iff `session` is itself the anchor of a still-pending
+    // restoration. The manual Enter Workgroup path keys its refusal on
+    // this (object identity) rather than on isRestoring(guid:): a live,
+    // unrelated session can share a GUID with a restoring descriptor
+    // member (saved-with-contents sessions keep their GUIDs), and
+    // refusing it would be a spurious regression of manual entry.
+    func isRestoringAnchor(_ session: PTYSession) -> Bool {
+        // Only while still blocking: a past-deadline entry is kept
+        // (so a slow restore can still reconstruct) but has released
+        // its GUIDs, so it must no longer refuse a manual enter.
+        return pending.values.contains {
+            $0.anchor === session && !$0.restoringGuidsReleased
+        }
+    }
+
+    // Decrement the counted set for `p`'s guids, once. Idempotent so
+    // the deadline (which releases but keeps the entry) and a later
+    // removal can both call it without double-decrementing.
+    private func releaseRestoringGUIDs(_ p: Pending) {
+        guard !p.restoringGuidsReleased else { return }
+        p.restoringGuidsReleased = true
+        for guid in p.guids {
+            guard let count = restoringGUIDCounts[guid] else { continue }
+            if count <= 1 {
+                restoringGUIDCounts[guid] = nil
+            } else {
+                restoringGUIDCounts[guid] = count - 1
+            }
+        }
     }
 
     // MARK: - Reconstruction
@@ -81,20 +171,34 @@ final class WorkgroupRestorationCoordinator: NSObject {
         for (key, p) in Array(pending) {
             guard let anchor = p.anchor else {
                 // Anchor deallocated before we could rebuild — drop it.
+                releaseRestoringGUIDs(p)
                 pending.removeValue(forKey: key)
-                restoringGUIDs.subtract(p.guids)
                 continue
             }
             // Wait until the anchor is installed in a tab inside a real
             // window; reconstruction needs the tab for the leader and
-            // for the eventual peer-swap.
+            // for the eventual peer-swap. Readiness is checked BEFORE
+            // the deadline so an anchor that became ready late (a slow
+            // multi-window startup) is still rebuilt.
             guard anchor.delegate != nil,
                   anchor.delegate?.realParentWindow() != nil else {
+                // Past the deadline and still not ready: release the
+                // GUIDs (a soft limit — stop blocking Enter Workgroup
+                // for every named session) but KEEP the entry, so if
+                // the anchor's window finally installs later the
+                // workgroup is still rebuilt rather than silently lost.
+                // releaseRestoringGUIDs is idempotent, so re-running
+                // this each pass is harmless.
+                if NSDate.it_timeSinceBoot() - p.registeredAt >= pendingReconstructionTimeout,
+                   !p.restoringGuidsReleased {
+                    DLog("WorkgroupRestoration: anchor \(anchor.guid) not ready within \(pendingReconstructionTimeout)s; releasing \(p.guids.count) restoring GUIDs but still awaiting its window")
+                    releaseRestoringGUIDs(p)
+                }
                 continue
             }
             reconstruct(anchor: anchor, descriptor: p.descriptor)
+            releaseRestoringGUIDs(p)
             pending.removeValue(forKey: key)
-            restoringGUIDs.subtract(p.guids)
         }
     }
 
@@ -107,7 +211,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
             return
         }
         let instanceID = (descriptor[K.instanceID] as? String)
-            ?? ("wg-" + UUID().uuidString)
+            ?? iTermWorkgroupInstance.mintInstanceUniqueIdentifier()
         let gitBase = (descriptor[K.gitBase] as? String)
             ?? CCGitBaseSelectorItem.defaultBase
 
@@ -192,13 +296,22 @@ final class WorkgroupRestorationCoordinator: NSObject {
         }
 
         // Non-peer split/tab children restored normally into their tabs;
-        // re-find them by GUID so adopt can re-wire their toolbars.
+        // re-find them by GUID so adopt can re-wire their toolbars. The
+        // workgroupInstance check skips candidates already owned by a
+        // live workgroup: restored-with-contents sessions keep their
+        // saved GUIDs, so restoring an arrangement while its workgroup
+        // is still running can resolve a child GUID to the ORIGINAL
+        // instance's pane (session lookup returns the first match);
+        // adopting it would steal the back-pointer and let this copy's
+        // teardown close the running workgroup's pane. (adopt() guards
+        // this too; checking here avoids even offering the session.)
         var nonPeerSessions: [String: PTYSession] = [:]
         if let nonPeers = descriptor[K.nonPeerChildren] as? [[AnyHashable: Any]] {
             for child in nonPeers {
                 guard let configID = child[K.configID] as? String,
                       let guid = child[K.guid] as? String,
-                      let s = iTermController.sharedInstance()?.session(withGUID: guid) else {
+                      let s = iTermController.sharedInstance()?.session(withGUID: guid),
+                      s.workgroupInstance == nil else {
                     continue
                 }
                 nonPeerSessions[configID] = s

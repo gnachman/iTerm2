@@ -9,25 +9,29 @@ import Foundation
 
 // Indicator-only image view that never intercepts mouse clicks, so a
 // click on the bell still selects/reveals the row like clicking the text.
-private final class ToolStatusPassthroughImageView: NSImageView {
+// Internal (not private) because ToolStatusCellView exposes its bellView
+// to tests.
+final class ToolStatusPassthroughImageView: NSImageView {
     override func hitTest(_ point: NSPoint) -> NSView? {
         return nil
     }
 }
 
 class ToolStatusCellView: NSTableCellView {
+    // Subviews are internal (not private) so ModernTests can assert on
+    // the clear()/configure() blank-state contract directly.
     // Shown at the leading edge when this session has notify-on-change
     // armed, mirroring the Cockpit's row indicator.
-    private let bellView = ToolStatusPassthroughImageView()
-    private let dotView = NSImageView()
+    let bellView = ToolStatusPassthroughImageView()
+    let dotView = NSImageView()
     // Optional peer-group label inserted between the dot and the
     // session name when the session belongs to a multi-peer workgroup.
     // Hidden for solo sessions.
-    private let peerLabel = NSTextField(labelWithString: "")
-    private var nameLabel = iTermSwiftyStringTextField(labelWithString: "")
-    private let shortcutLabel = NSTextField(labelWithString: "")
-    private let statusLabel = NSTextField(labelWithString: "")
-    private let detailLabel = NSTextField(wrappingLabelWithString: "")
+    let peerLabel = NSTextField(labelWithString: "")
+    var nameLabel = iTermSwiftyStringTextField(labelWithString: "")
+    let shortcutLabel = NSTextField(labelWithString: "")
+    let statusLabel = NSTextField(labelWithString: "")
+    let detailLabel = NSTextField(wrappingLabelWithString: "")
 
     private let margin: CGFloat = 4
     private let bellSize: CGFloat = 12
@@ -232,6 +236,36 @@ class ToolStatusCellView: NSTableCellView {
         return NSSize(width: bounds.width, height: maxY + margin / 2)
     }
 
+    // Resets every field to its initial empty state. The single
+    // authority on what blank looks like, used by
+    // ToolStatus.configureCell when it bails on an unresolvable row
+    // without configuring.
+    func clear() {
+        nameLabel.clear()
+        bellView.isHidden = true
+        clearConditionalFields()
+    }
+
+    // The subset of clear() covering the fields configure() assigns
+    // only when content is present. configure() starts here instead of
+    // with the full clear(): nameLabel and bellView are assigned
+    // unconditionally there, and a full clear would pointlessly
+    // invalidate and rebuild the name label's swifty string twice per
+    // configure (which runs twice per row per reload under status
+    // churn).
+    private func clearConditionalFields() {
+        dotView.image = nil
+        dotView.isHidden = true
+        peerLabel.stringValue = ""
+        peerLabel.isHidden = true
+        shortcutLabel.stringValue = ""
+        shortcutLabel.isHidden = true
+        statusLabel.stringValue = ""
+        statusLabel.isHidden = true
+        detailLabel.stringValue = ""
+        detailLabel.isHidden = true
+    }
+
     func configure(scope: iTermVariableScope,
                    dotImage: NSImage?,
                    peerLabel: String?,
@@ -240,32 +274,32 @@ class ToolStatusCellView: NSTableCellView {
                    statusColor: NSColor?,
                    detail: String?,
                    armed: Bool) {
+        // Self-clearing so a recycled cell can't keep a previous
+        // occupant's content; see clearConditionalFields for why this
+        // is not the full clear().
+        clearConditionalFields()
         nameLabel.set(interpolatedString: #"\(iterm2.private.session_name(session: id))"#, scope: scope)
         bellView.isHidden = !armed
-        dotView.image = dotImage
-        dotView.isHidden = dotImage == nil
-
-        let peerText = peerLabel ?? ""
-        self.peerLabel.stringValue = peerText
-        self.peerLabel.isHidden = peerText.isEmpty
-
-        shortcutLabel.stringValue = shortcut ?? ""
-        shortcutLabel.isHidden = (shortcut ?? "").isEmpty
-
-        statusLabel.stringValue = statusText ?? ""
-        if let statusColor {
-            statusLabel.textColor = statusColor
-        } else {
-            statusLabel.textColor = .secondaryLabelColor
+        if let dotImage {
+            dotView.image = dotImage
+            dotView.isHidden = false
         }
-        statusLabel.isHidden = (statusText ?? "").isEmpty
-
+        if let peerLabel, !peerLabel.isEmpty {
+            self.peerLabel.stringValue = peerLabel
+            self.peerLabel.isHidden = false
+        }
+        if let shortcut, !shortcut.isEmpty {
+            shortcutLabel.stringValue = shortcut
+            shortcutLabel.isHidden = false
+        }
+        if let statusText, !statusText.isEmpty {
+            statusLabel.stringValue = statusText
+            statusLabel.textColor = statusColor ?? .secondaryLabelColor
+            statusLabel.isHidden = false
+        }
         if let detail, !detail.isEmpty {
             detailLabel.stringValue = detail
             detailLabel.isHidden = false
-        } else {
-            detailLabel.stringValue = ""
-            detailLabel.isHidden = true
         }
 
         layoutManually()
