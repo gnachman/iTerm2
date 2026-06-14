@@ -58,8 +58,9 @@ final class CompanionPairingController: NSObject {
     var onSASEntryDismissed: (@MainActor (_ accepted: Bool) -> Void)?
 
     // Internal (not private): CompanionPushRegistry.devicePaired reads the
-    // same default from nonisolated contexts.
-    static let pairedPIDKey = "NoSyncCompanionPairedPID"
+    // same default from nonisolated contexts. nonisolated so that read does not
+    // cross actor isolation (an immutable Sendable constant).
+    nonisolated static let pairedPIDKey = "NoSyncCompanionPairedPID"
 
     /// The pairing id of the (single, for now) paired device, persisted so
     /// reconnection survives relaunches. NoSync: device state, not a setting.
@@ -586,7 +587,11 @@ final class CompanionPairingController: NSObject {
                 return "Bonjour/DNS error \(code)"
             case .tls(let status):
                 return "TLS error \(status)"
-            @unknown default:
+            default:
+                // A plain default (not @unknown): NWError has availability-gated
+                // cases (e.g. .wifiAware on macOS 26+) that cannot be named on
+                // the macOS 12 deployment target, so they fall through to the
+                // localizedDescription below.
                 break
             }
         }

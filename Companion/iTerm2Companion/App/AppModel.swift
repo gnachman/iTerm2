@@ -523,7 +523,9 @@ final class AppModel {
     /// the mac is ready, and when it is NOT (mac still relaunching, or a stale
     /// mac socket that swallows the first message), a fast failure lets us retry
     /// promptly instead of stalling ~15s on a message that will never be answered.
-    private static let firstPairHandshakeTimeout: TimeInterval = 15
+    // nonisolated: used as a default argument of establish(), which is
+    // evaluated in a nonisolated context. An immutable Sendable constant.
+    nonisolated private static let firstPairHandshakeTimeout: TimeInterval = 15
     private static let reconnectHandshakeTimeout: TimeInterval = 6
     /// Delay between reconnect attempts. The relay does not notify the phone
     /// when the mac (re)appears and drops a handshake sent before the mac is
