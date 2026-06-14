@@ -284,6 +284,22 @@ final class AppModel {
         }
     }
 
+    /// Erase every piece of carryover identity state before a fresh pairing:
+    /// the stored pairing, the per-room verifier-registration marker, the room
+    /// secret, the attest key pinned for the old room, and the push-relay
+    /// secret. Mirrors the data wipe in handleRemoteUnpair, so a user-initiated
+    /// re-pair is as clean as a Mac-driven unpair, without needing the Mac's
+    /// farewell to have arrived.
+    private func resetForFreshPairing() {
+        companionLog("Fresh pairing: clearing previous pairing key material")
+        if let previous = storedPairingCode {
+            attestKeyStore.setKeyId(nil, forRoom: roomName(for: previous))
+        }
+        forgetStoredPairing()
+        PhoneIdentity.deleteRoomSecret()
+        PhoneIdentity.deletePushRelaySecret()
+    }
+
     func forgetStoredPairing() {
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: Self.storedKeyDefault)
@@ -422,6 +438,16 @@ final class AppModel {
     /// rendezvous + handshake.
     func pair(with code: PairingCode, isReconnect: Bool = false) {
         companionLog("Pairing started (pid \(code.pairingID), reconnect: \(isReconnect))")
+        if !isReconnect {
+            // A fresh pairing (a scanned code, not a reconnect) supersedes any
+            // previous one. Wipe carryover key material up front so the new
+            // pairing starts from a clean slate and never inherits the old
+            // room's secret, verifier registration, or attest key. The phone
+            // cannot depend on the Mac's unpair farewell for this: that message
+            // is delivered only if the phone is connected at unpair time, so an
+            // offline phone would otherwise keep stale state forever.
+            resetForFreshPairing()
+        }
         activePairingCode = code
         activeIsReconnect = isReconnect
         phase = .pairing
