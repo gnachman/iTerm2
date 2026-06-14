@@ -275,6 +275,20 @@ final class CompanionHostBridge {
                 .resume(returning: authorization)
         case .ping:
             send(.pong, requestID: requestID)
+        case .relayRoomSecret(let secret):
+            // Persist the couriered room secret so the mac can sign its relay
+            // parks, then ack so the phone may register its verifier. Idempotent
+            // (re-sent every connect); a store failure simply withholds the ack,
+            // and the phone retries on the next connection.
+            do {
+                try CompanionMacIdentity.storePairedRoomSecret(secret)
+                DLog("Companion bridge: stored relay room secret")
+                send(.relayRoomSecretStored, requestID: requestID)
+            } catch {
+                DLog("Companion bridge: failed to store room secret: \(error)")
+                send(.error(CompanionError(code: .internalError, message: "\(error)")),
+                     requestID: requestID)
+            }
         case .unpairing:
             DLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()

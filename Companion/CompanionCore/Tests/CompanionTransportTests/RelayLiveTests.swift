@@ -237,6 +237,136 @@ final class RelayLiveTests: XCTestCase {
         listener.stop()
     }
 
+    /// End-to-end verifier registration: pair in open mode, register the
+    /// verifier with the minted token, then a SIGNED reconnect is admitted while
+    /// an UNSIGNED one is rejected. Exercises the real wire encodings (verifier,
+    /// signature, nonce base64; transcript bytes) against the live relay, which
+    /// the worker/unit tests can't.
+    func test_registerVerifierThenSignedAdmissionGatesReconnect() async throws {
+        let origin = try relayOrigin()
+        let macStatic = try NoiseKeyPair.generate()
+        let phoneStatic = try NoiseKeyPair.generate()
+        let pid = (0..<8).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
+        let rendezvous = PairingRendezvous(pairingID: pid)
+        let roomName = RelayRoom.name(responderStaticPublicKey: macStatic.publicKey, pairingID: pid)
+        let prologue = PairingCode(responderStaticPublicKey: macStatic.publicKey,
+                                   pairingID: pid).handshakePrologue()
+        let roomSecret = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
+
+        // 1. Open-mode pairing; capture the phone's one-time registration token.
+        let token = try await openPairAndToken(
+            origin: origin, roomName: roomName, rendezvous: rendezvous, prologue: prologue,
+            macStatic: macStatic, phoneStatic: phoneStatic)
+        let registrationToken = try XCTUnwrap(token, "phone admission should mint a registration token")
+
+        // 2. Register the verifier (derived from the room secret).
+        let status = try await postRegister(
+            origin: origin, roomName: roomName, token: registrationToken,
+            verifier: RelayJoin.verifier(roomSecret: roomSecret))
+        XCTAssertEqual(status, 200, "verifier registration should succeed")
+
+        // 3. Signed reconnect: both sides sign their join; admitted and usable.
+        try await signedReconnect(
+            origin: origin, roomName: roomName, rendezvous: rendezvous, prologue: prologue,
+            macStatic: macStatic, phoneStatic: phoneStatic, roomSecret: roomSecret)
+
+        // 4. Adversarial: an UNSIGNED phone join is now rejected. Park a signed
+        //    mac first so the rejection is the signature gate, not "mac offline".
+        let parked = Gate()
+        let macListener = RelayTransportListener(
+            relayOrigin: origin, roomName: roomName,
+            onParked: { Task { await parked.signal() } },
+            joinProof: signingProof(role: .mac, origin: origin, roomSecret: roomSecret))
+        let macAccept = Task { try? await macListener.accept() }
+        await parked.wait()
+        let unsignedConnector = RelayTransportConnector(relayOrigin: origin,
+                                                        responderStaticKey: macStatic.publicKey)
+        do {
+            _ = try await unsignedConnector.connect(to: rendezvous, timeout: 10)
+            XCTFail("an unsigned join must be rejected in an established room")
+        } catch {
+            // Expected: the relay refuses with "signature required".
+        }
+        macAccept.cancel()
+        macListener.stop()
+    }
+
+    private func signingProof(role: RelayJoin.Role, origin: String, roomSecret: Data)
+        -> (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) {
+        { challenge, roomName in
+            try CompanionTransports.signedProof(role: role, challenge: challenge,
+                                                roomName: roomName, origin: origin, roomSecret: roomSecret)
+        }
+    }
+
+    private func postRegister(origin: String, roomName: String, token: String, verifier: Data) async throws -> Int {
+        struct Body: Encodable { var registrationToken: String; var verifier: String }
+        var request = URLRequest(url: URL(string: origin + "/register")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(roomName, forHTTPHeaderField: "x-relay-room")
+        request.httpBody = try JSONEncoder().encode(
+            Body(registrationToken: token, verifier: verifier.base64EncodedString()))
+        let (_, response) = try await URLSession.shared.data(for: request)
+        return (response as? HTTPURLResponse)?.statusCode ?? -1
+    }
+
+    private func openPairAndToken(origin: String, roomName: String, rendezvous: PairingRendezvous,
+                                  prologue: Data, macStatic: NoiseKeyPair, phoneStatic: NoiseKeyPair)
+        async throws -> String? {
+        let parked = Gate()
+        let listener = RelayTransportListener(relayOrigin: origin, roomName: roomName,
+                                              onParked: { Task { await parked.signal() } })
+        let connector = RelayTransportConnector(relayOrigin: origin, responderStaticKey: macStatic.publicKey)
+        async let macChannel: NoiseChannel = {
+            let t = try await listener.accept()
+            return try await NoiseHandshake.perform(role: .responder, transport: t,
+                localKeyPair: macStatic, remoteStaticPublicKey: nil, prologue: prologue)
+        }()
+        await parked.wait()
+        let phoneTransport = try await connector.connect(to: rendezvous, timeout: 10)
+        let token = (phoneTransport as? RelayTransport)?.registrationToken
+        let phone = try await NoiseHandshake.perform(role: .initiator, transport: phoneTransport,
+            localKeyPair: phoneStatic, remoteStaticPublicKey: macStatic.publicKey, prologue: prologue)
+        let mac = try await macChannel
+        try await phone.send(Data("hello".utf8))
+        _ = try await mac.receive()
+        await phone.close()
+        await mac.close()
+        listener.stop()
+        return token
+    }
+
+    private func signedReconnect(origin: String, roomName: String, rendezvous: PairingRendezvous,
+                                 prologue: Data, macStatic: NoiseKeyPair, phoneStatic: NoiseKeyPair,
+                                 roomSecret: Data) async throws {
+        let parked = Gate()
+        let listener = RelayTransportListener(
+            relayOrigin: origin, roomName: roomName,
+            onParked: { Task { await parked.signal() } },
+            joinProof: signingProof(role: .mac, origin: origin, roomSecret: roomSecret))
+        let connector = RelayTransportConnector(
+            relayOrigin: origin, responderStaticKey: macStatic.publicKey,
+            joinProof: signingProof(role: .phone, origin: origin, roomSecret: roomSecret))
+        async let macChannel: NoiseChannel = {
+            let t = try await listener.accept()
+            return try await NoiseHandshake.perform(role: .responder, transport: t,
+                localKeyPair: macStatic, remoteStaticPublicKey: nil, prologue: prologue)
+        }()
+        await parked.wait()
+        let phoneTransport = try await connector.connect(to: rendezvous, timeout: 10)
+        let phone = try await NoiseHandshake.perform(role: .initiator, transport: phoneTransport,
+            localKeyPair: phoneStatic, remoteStaticPublicKey: macStatic.publicKey, prologue: prologue)
+        let mac = try await macChannel
+        let ping = Data("signed reconnect works".utf8)
+        try await phone.send(ping)
+        let got = try await mac.receive()
+        XCTAssertEqual(got, ping)
+        await phone.close()
+        await mac.close()
+        listener.stop()
+    }
+
     /// One full pairing: mac parks (fresh listener, like the controller's
     /// accept-one-then-exit), phone connects, both run the Noise handshake
     /// concurrently. Returns the live channels and the phone's transport (so a

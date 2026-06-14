@@ -139,6 +139,7 @@ actor CompanionSession {
         case .chatListChanged: "chatListChanged"
         case .requestNotificationPermission: "requestNotificationPermission"
         case .pong: "pong"
+        case .relayRoomSecretStored: "relayRoomSecretStored"
         case .unpaired: "unpaired"
         case .error: "error"
         }

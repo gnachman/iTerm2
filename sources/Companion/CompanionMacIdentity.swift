@@ -21,6 +21,9 @@ final class CompanionMacIdentity: NSObject {
     // impostor's static be accepted on reconnect. Kept beside the private key it
     // is matched against.
     private static let pairedPhoneAccount = "paired-phone-noise-static-public-key"
+    // The room secret the phone couriered over the Noise channel. Secret (it
+    // derives the relay join signing key), so the keychain is the right home.
+    private static let roomSecretAccount = "paired-relay-room-secret"
 
     /// The persisted keypair, generating and storing one on first use.
     static func keyPair() throws -> NoiseKeyPair {
@@ -49,6 +52,19 @@ final class CompanionMacIdentity: NSObject {
 
     static func deletePairedPhoneStaticPublicKey() {
         delete(account: pairedPhoneAccount)
+    }
+
+    /// The room secret couriered from the phone (nil if none stored yet).
+    static func pairedRoomSecret() -> Data? {
+        load(account: roomSecretAccount)
+    }
+
+    static func storePairedRoomSecret(_ secret: Data) throws {
+        try store(secret, account: roomSecretAccount)
+    }
+
+    static func deletePairedRoomSecret() {
+        delete(account: roomSecretAccount)
     }
 
     private static func load(account: String) -> Data? {

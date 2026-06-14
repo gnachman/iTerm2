@@ -195,7 +195,13 @@ final class AppModel {
     // tests; production uses CompanionTransports.connector(for:).
     private let connectorForCode: (PairingCode) -> TransportConnector
 
-    init(connectorForCode: @escaping (PairingCode) -> TransportConnector = { CompanionTransports.connector(for: $0) }) {
+    init(connectorForCode: @escaping (PairingCode) -> TransportConnector = {
+        // Sign relay joins once a room secret exists (established room); nil
+        // before first registration keeps an open-mode join. existingRoomSecret
+        // does not mint, so the first connect joins open-mode and the secret is
+        // minted during that first session.
+        CompanionTransports.connector(for: $0, roomSecret: { PhoneIdentity.existingRoomSecret() })
+    }) {
         self.connectorForCode = connectorForCode
         // Route the transport/crypto layers' diagnostics into the unified log
         // (visible in Console.app and `log stream`).
@@ -214,6 +220,16 @@ final class AppModel {
     private static let storedKeyDefault = "PairedResponderStaticKey"
     private static let storedPIDDefault = "PairedPairingID"
     private static let storedRelayOriginDefault = "PairedRelayOrigin"
+    private static let roomVerifierRegisteredDefault = "RelayRoomVerifierRegistered"
+
+    /// Whether this pairing's verifier has been registered with the relay (the
+    /// room is established). Gates the one-time /register POST so reconnects
+    /// don't re-POST; stays false until a registration actually succeeds, so a
+    /// failed attempt is retried on the next connect (self-healing).
+    private var roomVerifierRegistered: Bool {
+        get { UserDefaults.standard.bool(forKey: Self.roomVerifierRegisteredDefault) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.roomVerifierRegisteredDefault) }
+    }
 
     /// The pairing from the last successful handshake. The responder key is
     /// public and the pid is not a secret, so UserDefaults is fine. The relay
@@ -247,6 +263,7 @@ final class AppModel {
         defaults.removeObject(forKey: Self.storedKeyDefault)
         defaults.removeObject(forKey: Self.storedPIDDefault)
         defaults.removeObject(forKey: Self.storedRelayOriginDefault)
+        defaults.removeObject(forKey: Self.roomVerifierRegisteredDefault)
     }
 
     /// Called once at launch: if a pairing is stored, reconnect to it instead
@@ -344,6 +361,9 @@ final class AppModel {
         // Rotate the push secret: the old Mac knows the old one. The next
         // APNs registration re-registers the new hash with the relay.
         PhoneIdentity.deletePushRelaySecret()
+        // Rotate the room secret too; the next pairing mints and registers a
+        // fresh verifier for its (new) room.
+        PhoneIdentity.deleteRoomSecret()
         activePairingCode = nil
         chats = []
         sessions = []
@@ -481,6 +501,9 @@ final class AppModel {
         let transport = try await connector.connect(
             to: PairingRendezvous(pairingID: code.pairingID),
             timeout: 30)
+        // The relay mints this for the phone at admission; present it to
+        // /register. Captured before the handshake wraps the transport.
+        let registrationToken = (transport as? RelayTransport)?.registrationToken
         companionLog("Transport connected; starting Noise handshake…")
         pairingStatus = "Securing the connection"
         let channel = try await withTimeout(handshakeTimeout, "Noise handshake") {
@@ -530,6 +553,87 @@ final class AppModel {
             }
         })
         self.client = client
+
+        await lockRelayRoom(client: client, code: code, registrationToken: registrationToken)
+    }
+
+    /// Courier the room secret to the mac (every connect, idempotent) and, on a
+    /// fresh pairing, register the verifier so the relay room is locked to this
+    /// pairing. Best-effort: failures leave the room open-mode and are retried
+    /// on the next connect (the design's self-healing re-key). Only meaningful
+    /// for the relay transport.
+    private func lockRelayRoom(client: CompanionClient,
+                               code: PairingCode,
+                               registrationToken: String?) async {
+        guard let relayOrigin = code.relayOrigin else { return }
+        do {
+            let secret = try PhoneIdentity.roomSecret()
+            // Ack-before-register: wait until the mac has stored the secret (and
+            // can sign its parks) before establishing the room. The reverse
+            // would let the room go established with the mac unable to park.
+            try await client.registerRoomSecret(secret)
+            // Register once, the first connect after pairing (or the first with
+            // this build, migrating an older pairing). Reconnects re-courier the
+            // secret but skip /register. The relay mints a token on every admit,
+            // so the flag, not the token, decides.
+            if !roomVerifierRegistered, let registrationToken {
+                let registered = await registerRelayVerifier(
+                    roomSecret: secret,
+                    registrationToken: registrationToken,
+                    relayOrigin: relayOrigin,
+                    roomName: RelayRoom.name(responderStaticPublicKey: code.responderStaticPublicKey,
+                                             pairingID: code.pairingID))
+                if registered {
+                    roomVerifierRegistered = true
+                }
+            }
+        } catch {
+            companionLog("Relay room lock deferred: \(String(describing: error))")
+        }
+    }
+
+    /// POST the verifier (public, derived from the room secret) to the relay's
+    /// /register, authenticated by the one-time registration token.
+    /// Returns true if the verifier is registered (a fresh 200, or a 403 that
+    /// reports it is already registered), so the caller stops retrying. Any
+    /// other outcome returns false to retry on the next connect.
+    private func registerRelayVerifier(roomSecret: Data,
+                                       registrationToken: String,
+                                       relayOrigin: String,
+                                       roomName: String) async -> Bool {
+        struct Body: Encodable {
+            var registrationToken: String
+            var verifier: String
+        }
+        guard let url = URL(string: relayOrigin + "/register") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(roomName, forHTTPHeaderField: "x-relay-room")
+        request.timeoutInterval = 15
+        let verifier = RelayJoin.verifier(roomSecret: roomSecret).base64EncodedString()
+        do {
+            request.httpBody = try JSONEncoder().encode(
+                Body(registrationToken: registrationToken, verifier: verifier))
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+            let body = String(data: data, encoding: .utf8) ?? ""
+            if (200..<300).contains(status) {
+                companionLog("Relay verifier registered; room locked to this pairing")
+                return true
+            }
+            // The room is already established (e.g. a prior attempt's POST
+            // landed but its reply was lost): also done, stop retrying.
+            if status == 403, body.contains("already registered") {
+                companionLog("Relay verifier already registered")
+                return true
+            }
+            companionLog("Relay verifier registration rejected (\(status)): \(body)")
+            return false
+        } catch {
+            companionLog("Relay verifier registration failed: \(String(describing: error))")
+            return false
+        }
     }
 
     // MARK: Home
@@ -1187,6 +1291,7 @@ final class AppModel {
         reconnectTask = nil
         forgetStoredPairing()
         PhoneIdentity.deletePushRelaySecret()
+        PhoneIdentity.deleteRoomSecret()
         let oldClient = client
         client = nil
         Task { await oldClient?.close() }

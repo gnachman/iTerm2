@@ -28,6 +28,20 @@ actor CompanionClient {
         _ = try await session.request(.ping)
     }
 
+    /// Courier the relay room secret to the mac and wait for its ack (so the
+    /// mac holds the key to sign its parks before the phone registers V).
+    func registerRoomSecret(_ secret: Data) async throws {
+        let reply = try await session.request(.relayRoomSecret(secret))
+        switch reply {
+        case .relayRoomSecretStored:
+            return
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to room-secret courier")
+        }
+    }
+
     func listChatsAndSessions() async throws -> (chats: [CompanionChatListEntry],
                                                  sessions: [CompanionSessionSummary]) {
         let reply = try await session.request(.listChatsAndSessions)

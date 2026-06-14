@@ -230,6 +230,14 @@ enum CompanionClientMessage: Codable {
     /// Liveness check. Replied to with `.pong`.
     case ping
 
+    /// Couriers the phone-minted relay room secret to the mac (re-sent every
+    /// connect, idempotent). The mac persists it, derives the same relay-join
+    /// signing key, and replies `.relayRoomSecretStored` (correlated by
+    /// requestID). The phone waits for that ack before registering its verifier
+    /// with the relay, so the room is never established while the mac lacks the
+    /// key to park. See docs/companion-relay-design.md.
+    case relayRoomSecret(Data)
+
     /// The phone is unpairing: the mac should forget the pairing and destroy
     /// its key material. No reply; the phone closes after sending.
     case unpairing
@@ -274,6 +282,11 @@ enum CompanionHostMessage: Codable {
 
     /// Reply to `.ping`.
     case pong
+
+    /// Ack of `.relayRoomSecret` (correlated by requestID): the mac persisted
+    /// the room secret and can now sign its relay parks. The phone proceeds to
+    /// register its verifier only after this.
+    case relayRoomSecretStored
 
     /// Unsolicited: the Mac's chat list changed (a chat was renamed, its
     /// icon was generated, or a chat was created/deleted/reordered).

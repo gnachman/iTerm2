@@ -252,6 +252,7 @@ final class CompanionPairingController: NSObject {
         pairedPID = nil
         pairedPhoneStatic = nil
         pairingCode = nil
+        CompanionMacIdentity.deletePairedRoomSecret()
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
         DLog("Companion: unpaired; key material deleted")
@@ -268,6 +269,7 @@ final class CompanionPairingController: NSObject {
         pairedPID = nil
         pairedPhoneStatic = nil
         pairingCode = nil
+        CompanionMacIdentity.deletePairedRoomSecret()
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
         onDisconnect?()
@@ -360,7 +362,10 @@ final class CompanionPairingController: NSObject {
         let listener = try CompanionTransports.listener(
             pairingID: pairingID,
             responderStaticPublicKey: keyPair.publicKey,
-            relayOrigin: relayOrigin)
+            relayOrigin: relayOrigin,
+            // Sign the mac's park once the phone has couriered the room secret
+            // and the room is established; nil keeps an open-mode park.
+            roomSecret: { CompanionMacIdentity.pairedRoomSecret() })
         self.listener = listener
         acceptTask = Task { [weak self] in
             await self?.acceptLoop(listener: listener, keyPair: keyPair, code: code)

@@ -15,6 +15,7 @@ enum PhoneIdentity {
     private static let service = "com.googlecode.iterm2.companion"
     private static let account = "noise-static-private-key"
     private static let pushSecretAccount = "push-relay-secret"
+    private static let roomSecretAccount = "relay-room-secret"
 
     /// Return the persisted keypair, generating and storing one on first use.
     static func keyPair() throws -> NoiseKeyPair {
@@ -53,6 +54,35 @@ enum PhoneIdentity {
 
     static func deletePushRelaySecret() {
         delete(account: pushSecretAccount)
+    }
+
+    /// The 32-byte room secret the phone mints to lock the relay room: it
+    /// derives the join signing key (RelayJoin) and is couriered to the Mac
+    /// over the Noise channel so the Mac can sign its parks too. Generated on
+    /// first use; rotated by deleting it on unpair.
+    static func roomSecret() throws -> Data {
+        if let secret = load(account: roomSecretAccount) {
+            return secret
+        }
+        var secret = Data(count: 32)
+        let status = secret.withUnsafeMutableBytes {
+            SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
+        }
+        guard status == errSecSuccess else {
+            throw NSError(domain: "PhoneIdentity", code: Int(status),
+                          userInfo: [NSLocalizedDescriptionKey: "Could not generate room secret (\(status))"])
+        }
+        try store(secret, account: roomSecretAccount)
+        return secret
+    }
+
+    /// The stored room secret if one has been minted, without minting one.
+    static func existingRoomSecret() -> Data? {
+        load(account: roomSecretAccount)
+    }
+
+    static func deleteRoomSecret() {
+        delete(account: roomSecretAccount)
     }
 
     // MARK: Keychain plumbing
