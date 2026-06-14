@@ -19,6 +19,16 @@
 import Foundation
 import CompanionProtocol
 
+/// A keepalive that pings `task` every 15s, comfortably under the observed
+/// ~30s idle-reap window, so a parked or quiet relay socket stays up. The ping
+/// reports failure once the socket is gone, which ends the loop.
+private func relayKeepalive(for task: URLSessionWebSocketTask) -> RelayKeepalive {
+    RelayKeepalive(intervalNanos: 15_000_000_000) { [weak task] in
+        guard let task else { return false }
+        return await task.sendPingAsync()
+    }
+}
+
 /// One spliced relay connection, presented as a MessageTransport. The optional
 /// pre-buffered first frame lets the responder (mac) return from accept() only
 /// once the peer has actually sent something, matching local-network accept
@@ -30,6 +40,9 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     public let registrationToken: String?
 
     private let task: URLSessionWebSocketTask
+    // Pings the socket so an idle splice (or a parked mac) is not reaped by the
+    // edge. Stopped whenever the connection is signaled closed.
+    private let keepalive: RelayKeepalive?
     private let lock = UnfairLock()
     private var pendingFirstFrame: Data?
     private var closed = false
@@ -39,10 +52,14 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     private var closeWaiters: [CheckedContinuation<Void, Never>] = []
     private var closeSignaled = false
 
-    init(task: URLSessionWebSocketTask, firstFrame: Data? = nil, registrationToken: String? = nil) {
+    init(task: URLSessionWebSocketTask,
+         firstFrame: Data? = nil,
+         registrationToken: String? = nil,
+         keepalive: RelayKeepalive? = nil) {
         self.task = task
         self.pendingFirstFrame = firstFrame
         self.registrationToken = registrationToken
+        self.keepalive = keepalive
     }
 
     public func send(_ frame: Data) async throws {
@@ -122,13 +139,16 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     }
 
     private func signalClosed() {
-        let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
-            if closeSignaled { return [] }
+        let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>]? in
+            if closeSignaled { return nil }
             closeSignaled = true
             let w = closeWaiters
             closeWaiters = []
             return w
         }
+        guard let waiters else { return }
+        // The connection is gone: stop pinging it (idempotent).
+        keepalive?.stop()
         for w in waiters { w.resume() }
     }
 
@@ -243,7 +263,9 @@ public struct RelayTransportConnector: TransportConnector {
             let result = try await RelayAdmissionClient.admit(task: task, role: .phone) { challenge in
                 try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
             }
-            return RelayTransport(task: task, registrationToken: result.registrationToken)
+            let keepalive = relayKeepalive(for: task)
+            keepalive.start()
+            return RelayTransport(task: task, registrationToken: result.registrationToken, keepalive: keepalive)
         } onCancel: {
             task.cancel(with: .goingAway, reason: nil)
         }
@@ -324,17 +346,28 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
             // Parked: the mac now holds the mac slot and is reachable through the
             // relay. Signal before blocking, since the next step waits on the peer.
             onParked?()
+            // Keep the parked socket alive while it waits, possibly long, for the
+            // phone to scan and send msg1; otherwise the edge reaps it (~30s idle)
+            // and the room silently loses its mac.
+            let keepalive = relayKeepalive(for: task)
+            keepalive.start()
             // Block until the phone actually joins and sends its first frame (Noise
             // msg1), so the combined listener doesn't treat an empty parked room as
             // an inbound connection.
-            let firstMessage = try await task.receive()
+            let firstMessage: URLSessionWebSocketTask.Message
+            do {
+                firstMessage = try await task.receive()
+            } catch {
+                keepalive.stop()
+                throw error
+            }
             let firstFrame: Data
             switch firstMessage {
             case .data(let d): firstFrame = d
-            case .string: throw TransportError.malformedFrame
-            @unknown default: throw TransportError.malformedFrame
+            case .string: keepalive.stop(); throw TransportError.malformedFrame
+            @unknown default: keepalive.stop(); throw TransportError.malformedFrame
             }
-            let transport = RelayTransport(task: task, firstFrame: firstFrame)
+            let transport = RelayTransport(task: task, firstFrame: firstFrame, keepalive: keepalive)
             lock.withLock { previous = transport }
             return transport
         } onCancel: {
