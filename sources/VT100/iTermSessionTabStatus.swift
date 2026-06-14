@@ -87,6 +87,11 @@ class iTermSessionTabStatus: NSObject {
         var statusTextColor: iTermSRGBColor = iTermSRGBColor(r: 0, g: 0, b: 0)
         var detailText: String? = nil
     }
+    // Provenance for the current visible state. Non-nil when set by a client-side
+    // shim (today: CodexTitleStatusAdaptor) rather than by an OSC 21337 emitter.
+    // Lets us clear only state we own without trampling a real OSC 21337 status.
+    // Kept outside `State` so equality on visible fields is independent of ownership.
+    private var _synthesizedStatusSource: String? = nil
     private var state = State()
     @objc var hasIndicator: Bool {
         get {
@@ -202,6 +207,11 @@ class iTermSessionTabStatus: NSObject {
         if state == before {
             return false
         }
+        // A real OSC 21337 update that actually changed visible state claims
+        // ownership going forward, so subsequent synthesized clears don't
+        // stomp on it. Updates that don't change anything don't reassign
+        // ownership.
+        _synthesizedStatusSource = nil
         notify()
         return true
     }
@@ -213,7 +223,103 @@ class iTermSessionTabStatus: NSObject {
         hasStatusTextColor = false
         statusTextColor = iTermSRGBColor(r: 0, g: 0, b: 0)
         detailText = nil
+        _synthesizedStatusSource = nil
         notify()
+    }
+
+    // MARK: - Synthesized status (set by client-side adaptors, e.g. Codex title decoder)
+
+    /// State an adaptor maps its agent's lifecycle to. Mirrors the convention Claude
+    /// Code's OSC 21337 emitter uses so synthesized agents render with the same colors
+    /// and labels (orange "Working", blue "Waiting", green "Idle"). `none` means
+    /// "this adaptor owns nothing here right now" and is the value to use after the
+    /// adaptor's process has exited the foreground.
+    @objc(iTermSynthesizedTabStatusState)
+    enum SynthesizedState: Int {
+        case none = 0
+        case working = 1
+        case idle = 2
+        case waiting = 3
+
+        fileprivate var indicatorColor: iTermSRGBColor {
+            switch self {
+            case .none: return iTermSRGBColor(r: 0, g: 0, b: 0)
+            case .working: return iTermSRGBColor(r: 1.0, g: 0.58, b: 0.0)  // #ff9500
+            case .idle:    return iTermSRGBColor(r: 0.0, g: 0.84, b: 0.37) // #00d75f
+            case .waiting: return iTermSRGBColor(r: 0.37, g: 0.53, b: 1.0) // #5f87ff
+            }
+        }
+        fileprivate var statusText: String? {
+            switch self {
+            case .none: return nil
+            case .working: return "Working"
+            case .idle: return "Idle"
+            case .waiting: return "Waiting"
+            }
+        }
+        fileprivate var statusTextColor: iTermSRGBColor {
+            switch self {
+            case .none, .idle: return iTermSRGBColor(r: 0.53, g: 0.53, b: 0.53) // #888888 - dim for idle
+            case .working: return iTermSRGBColor(r: 1.0, g: 0.58, b: 0.0)
+            case .waiting: return iTermSRGBColor(r: 0.37, g: 0.53, b: 1.0)
+            }
+        }
+        fileprivate var hasStatusTextColor: Bool {
+            switch self {
+            case .none: return false
+            case .working, .idle, .waiting: return true
+            }
+        }
+    }
+
+    /// Apply a synthesized status owned by `source`. Returns true iff state changed.
+    ///
+    /// Today only `CodexTitleStatusAdaptor` is a caller; the source-tag design lets
+    /// additional shims coexist later without overwriting each other or a real
+    /// OSC 21337 emitter.
+    @objc(applySynthesizedState:source:)
+    @discardableResult
+    func applySynthesizedStatus(_ newState: SynthesizedState, source: String) -> Bool {
+        if newState == .none {
+            // Only clear what we own.
+            guard _synthesizedStatusSource == source else { return false }
+            let before = state
+            state.hasIndicator = false
+            state.indicatorColor = iTermSRGBColor(r: 0, g: 0, b: 0)
+            state.statusText = nil
+            state.hasStatusTextColor = false
+            state.statusTextColor = iTermSRGBColor(r: 0, g: 0, b: 0)
+            state.detailText = nil
+            _synthesizedStatusSource = nil
+            if state == before { return false }
+            notify()
+            return true
+        }
+        // Don't overwrite a real OSC 21337 status. Any visible status that
+        // we don't own (dot-only or with text) is owned by the emitter.
+        if _synthesizedStatusSource == nil && hasActiveStatus {
+            return false
+        }
+        let before = state
+        state.hasIndicator = true
+        state.indicatorColor = newState.indicatorColor
+        state.statusText = newState.statusText
+        state.hasStatusTextColor = newState.hasStatusTextColor
+        state.statusTextColor = newState.statusTextColor
+        // Reset detailText: if a prior emitter left only `detail` behind
+        // (hasActiveStatus=false), the synthesized state replaces the visible
+        // status and any stale detail would otherwise render next to it.
+        state.detailText = nil
+        if state == before && _synthesizedStatusSource == source {
+            return false
+        }
+        _synthesizedStatusSource = source
+        notify()
+        return true
+    }
+
+    @objc var synthesizedStatusSource: String? {
+        return _synthesizedStatusSource
     }
 
     @objc static let didChangeNotificationName = NSNotification.Name("iTermSessionTabStatusDidChange")
@@ -269,6 +375,14 @@ class iTermSessionTabStatus: NSObject {
 
     @objc func arrangementDictionary() -> NSDictionary? {
         guard hasActiveStatus else {
+            return nil
+        }
+        // Synthesized status (owned by a client-side shim like CodexTitleStatusAdaptor)
+        // must not be persisted: on restore it would be re-instantiated with no
+        // provenance, indistinguishable from a real OSC 21337 status, and locked
+        // against the shim's normal clear-on-loss path. The shim re-derives state
+        // on the next title/foreground update post-restore.
+        if _synthesizedStatusSource != nil {
             return nil
         }
         var dict = [String: Any]()
