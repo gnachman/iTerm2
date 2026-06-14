@@ -143,6 +143,8 @@
                          inContext:iTermVariablesSuggestionContextWindow];
     [self recordUseOfVariableNamed:iTermVariableKeyWindowIsHotkeyWindow
                          inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowTitle
+                         inContext:iTermVariablesSuggestionContextWindow];
 
     // App context
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];

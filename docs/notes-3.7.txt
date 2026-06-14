@@ -419,6 +419,9 @@ Expressions and Variables:
 - A new global variable iterm2.appBundlePath
   exposes the path to iTerm2.app for use in
   interpolated strings.
+- A new window variable window.title holds the
+  rendered window title, alongside the existing
+  session.presentationName and tab.title.
 
 UI Improvements:
 - A new preference hides the session status

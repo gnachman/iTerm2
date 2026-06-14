@@ -2655,6 +2655,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setWindowTitle {
+    // Expose the rendered window title (as shown in the title bar, minus the
+    // window-number/bell decorations and any transient size readout) so it can
+    // be referenced and observed via window.title. This mirrors
+    // session.presentationName and tab.title.
+    [self.scope setValue:[self undecoratedWindowTitle] forVariableNamed:iTermVariableKeyWindowTitle];
+
     NSString *subtitle = (self.canShowSubtitleInTitlebar ? self.currentSession.subtitle : @"") ?: @"";
     if (self.isShowingTransientTitle) {
         DLog(@"showing transient title");

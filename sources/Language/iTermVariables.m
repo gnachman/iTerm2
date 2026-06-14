@@ -106,6 +106,7 @@ NSString *const iTermVariableKeyWindowFrame = @"frame";
 NSString *const iTermVariableKeyWindowStyle = @"style";
 NSString *const iTermVariableKeyWindowNumber = @"number";
 NSString *const iTermVariableKeyWindowIsHotkeyWindow = @"isHotkeyWindow";
+NSString *const iTermVariableKeyWindowTitle = @"title";
 
 // NOTE: If you add here, also update +recordBuiltInVariables and (if needed) -[ProfilesSessionPreferencesViewController prenatalPathSource]
 
