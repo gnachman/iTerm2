@@ -258,8 +258,12 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     }
 
     @objc private func sasCancelPressed(_ sender: Any) {
-        setSASEntryVisible(false)
-        controller.submitSASEntry(nil)
+        // Cancel Pairing aborts the whole flow, so just close the window. That
+        // guarantees the abort regardless of the in-flight SAS state (the
+        // previous "decline this attempt" path could leave a stale message with
+        // no QR). windowWillClose -> stopAdvertising unblocks the SAS wait and
+        // stops the listener; the phone is disconnected when the mac leaves.
+        close()
     }
 
     private func installCallbacks() {
