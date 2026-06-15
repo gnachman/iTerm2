@@ -501,7 +501,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         content.addSubview(qrImageView)
 
         checkmarkImageView.imageScaling = .scaleProportionallyUpOrDown
-        checkmarkImageView.frame = NSRect(x: 115, y: 264, width: 130, height: 130)
+        checkmarkImageView.frame = NSRect(x: 115, y: 274, width: 130, height: 130)
         let checkConfig = NSImage.SymbolConfiguration(pointSize: 96, weight: .regular)
         let checkImage = NSImage(systemSymbolName: SFSymbol.checkmarkCircleFill.rawValue,
                                  accessibilityDescription: "Companion device connection status")?
