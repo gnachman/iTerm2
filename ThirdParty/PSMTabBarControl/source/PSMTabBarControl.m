@@ -260,7 +260,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
     // drawing style
     NSTimer *_animationTimer;
-    float _animationDelta;
+    NSArray<NSNumber *> *_animationStartWidths; // cell widths captured when the resize animation began
+    NSTimeInterval _animationStartTime;
 
     // fade-in / slide-in animation for new cells (group expand only)
     NSMutableSet<PSMTabBarCell *> *_fadingInCells;
@@ -523,6 +524,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [_style release];
     [_tooltips release];
     _tooltips = nil;
+    [_animationStartWidths release];
     [_fadingInCells release];
     [_collapsingCells release];
     [_collapseCompletions release];
@@ -1359,6 +1361,15 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSArray<void (^)(void)> *completions = [[_collapseCompletions copy] autorelease];
     [_collapseCompletions removeAllObjects];
     for (void (^cb)(void) in completions) { cb(); }
+}
+
+- (NSRect)frameOfCellForTabViewItem:(NSTabViewItem *)item {
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell.representedObject isEqual:item]) {
+            return cell.frame;
+        }
+    }
+    return NSZeroRect;
 }
 
 - (void)_fireGroupHeaderSingleClick:(NSTimer *)timer {
@@ -2324,7 +2335,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 }
                 if (cell.isGroupHeader) {
                     // Defer: if a second click arrives before doubleClickInterval, the timer is
-                    // cancelled in case 2 and only the rename dialog fires — no toggle.
+                    // cancelled in case 2 so a double-click toggles collapse instead of opening
+                    // the management popover that a lone single-click would.
                     [_groupHeaderSingleClickTimer invalidate];
                     _pendingGroupHeaderClickCell = cell;
                     _groupHeaderSingleClickTimer =

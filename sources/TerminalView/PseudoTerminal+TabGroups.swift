@@ -111,6 +111,10 @@ extension PseudoTerminal {
 
     @objc func newTabInGroup(_ sender: Any?) {
         guard let group = tabGroupFromSender(sender) else { return }
+        newTab(inGroup: group)
+    }
+
+    func newTab(inGroup group: iTermTabGroup) {
         let profile = currentSession()?.profile ?? ProfileModel.sharedInstance().defaultProfile()
         asyncCreateTab(withProfile: profile,
                        withCommand: nil,
@@ -124,6 +128,10 @@ extension PseudoTerminal {
 
     @objc func closeTabGroup(_ sender: Any?) {
         guard let group = tabGroupFromSender(sender) else { return }
+        closeGroup(group)
+    }
+
+    @objc func closeGroup(_ group: iTermTabGroup) {
         if group.isCollapsed {
             expandGroupSilently(group)
         }
@@ -141,29 +149,54 @@ extension PseudoTerminal {
 
     @objc func showRenameGroupSheet(_ sender: Any?) {
         guard let group = tabGroupFromSender(sender) else { return }
-        showEditGroupSheet(group: group)
+        showManageGroupPopover(for: group)
     }
 
-    private func showEditGroupSheet(group: iTermTabGroup) {
+    // Chrome-style transient popover anchored to the group header chip. Name and
+    // colour edits apply live; the action rows reuse the same group operations as
+    // the context menu and close the popover.
+    @objc func showManageGroupPopover(for group: iTermTabGroup) {
         let vc = iTermCreateTabGroupViewController(initialColor: group.color,
                                                    initialName: group.name,
-                                                   editMode: true)
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 340, height: 180),
-                            styleMask: [.titled, .docModalWindow],
-                            backing: .buffered,
-                            defer: false)
-        panel.appearance = sheetAppearance
-        panel.contentViewController = vc
-        vc.completion = { [weak self, weak panel] result in
-            guard let self, let panel else { return }
-            self.window?.endSheet(panel)
-            guard let (name, color) = result else { return }
+                                                   manageMode: true)
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.contentViewController = vc
+        // Match the window's light/dark theme so the popover never clashes with
+        // the active tab style (minimal, compact, dark, light, …).
+        popover.appearance = sheetAppearance
+        weak let weakPopover = popover
+
+        vc.onNameChange = { [weak self] name in
+            guard let self else { return }
             group.name = name
-            group.color = color
             group.headerTabViewItem.label = name
             self.updateTabGroupDecorations()
         }
-        window?.beginSheet(panel) { _ in }
+        vc.onColorChange = { [weak self] color in
+            guard let self else { return }
+            group.color = color
+            self.updateTabGroupDecorations()
+        }
+        vc.onNewTabInGroup = { [weak self] in
+            weakPopover?.close()
+            self?.newTab(inGroup: group)
+        }
+        vc.onUngroup = { [weak self] in
+            weakPopover?.close()
+            self?.deleteTabGroup(group)
+        }
+        vc.onCloseGroup = { [weak self] in
+            weakPopover?.close()
+            self?.closeGroup(group)
+        }
+
+        let tabBar = contentView.tabBarControl
+        var anchorRect = tabBar.frameOfCell(for: group.headerTabViewItem)
+        if anchorRect.isEmpty {
+            anchorRect = tabBar.bounds
+        }
+        popover.show(relativeTo: anchorRect, of: tabBar, preferredEdge: .maxY)
     }
 
     @objc func reconcileGroupsAfterReorder() {

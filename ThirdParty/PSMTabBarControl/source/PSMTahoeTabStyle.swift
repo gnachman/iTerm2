@@ -786,6 +786,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 let cell = drawableCells.remove(at: i)
                 drawableCells.append(cell)
             }
+            // Soft group wash sits behind the tabs so it never competes with the
+            // per-tab loading bar (which owns the top edge).
+            drawGroupContainerFills(bar: bar)
             for cell in drawableCells {
                 cell.draw(withFrame: cell.frame, in: bar)
             }
@@ -807,20 +810,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             for i in 0..<(sorted.count - 1) {
                 drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
             }
-            drawGroupUnderlines(bar: bar)
+            drawGroupContainerBorders(bar: bar)
             if let selectedCell = drawableCells.first, selectedCell.state == .on {
                 selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
             }
         }
     }
 
-    // Chrome-style connected underline: one rounded line in the group colour running
-    // from the header beneath all of its member tabs.
-    private func drawGroupUnderlines(bar: PSMTabBarControl) {
+    // A group reads as a Chrome-style tinted container — a region, not a line —
+    // so it can never be confused with or collide against the per-tab loading
+    // bar. Each contiguous run of (header + its member cells) yields one rounded
+    // container: a soft fill drawn behind the tabs and a crisp outline over them.
+    private func groupRuns(bar: PSMTabBarControl) -> [(rect: NSRect, color: NSColor)] {
         guard _orientation == .horizontalOrientation,
               let cells = bar.cells() as? [PSMTabBarCell] else {
-            return
+            return []
         }
+        var runs: [(rect: NSRect, color: NSColor)] = []
         var i = 0
         while i < cells.count {
             let header = cells[i]
@@ -838,15 +844,31 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 runRect = runRect.union(member.frame)
                 j += 1
             }
-            let inset = 4.0
-            let thickness = 2.5
-            let lineRect = NSRect(x: runRect.minX + inset,
-                                  y: runRect.maxY - thickness,
-                                  width: runRect.width - inset * 2,
-                                  height: thickness)
-            groupColor.set()
-            NSBezierPath(roundedRect: lineRect, xRadius: thickness / 2, yRadius: thickness / 2).fill()
+            runs.append((runRect, groupColor))
             i = j
+        }
+        return runs
+    }
+
+    private func groupContainerPath(for runRect: NSRect) -> NSBezierPath {
+        let containerRect = runRect.insetBy(dx: 2, dy: 3)
+        let radius = 6.0
+        return NSBezierPath(roundedRect: containerRect, xRadius: radius, yRadius: radius)
+    }
+
+    private func drawGroupContainerFills(bar: PSMTabBarControl) {
+        for run in groupRuns(bar: bar) {
+            run.color.withAlphaComponent(0.15).setFill()
+            groupContainerPath(for: run.rect).fill()
+        }
+    }
+
+    private func drawGroupContainerBorders(bar: PSMTabBarControl) {
+        for run in groupRuns(bar: bar) {
+            let path = groupContainerPath(for: run.rect)
+            path.lineWidth = 1.0
+            run.color.withAlphaComponent(0.55).setStroke()
+            path.stroke()
         }
     }
 

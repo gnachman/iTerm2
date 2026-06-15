@@ -27,12 +27,23 @@ import Cocoa
     private var doneButton: NSButton!
     private var ownsColorPanel = false
     private let isEditMode: Bool
+    private let isManageMode: Bool
     private let initialName: String
 
-    init(initialColor: NSColor? = nil, initialName: String = "", editMode: Bool = false) {
+    // Manage-mode (popover) callbacks. Name and colour apply live as the user
+    // edits; the action closures run the corresponding group operation. All are
+    // ignored in the create/edit sheet, which commits via `completion` instead.
+    var onNameChange: ((String) -> Void)?
+    var onColorChange: ((NSColor) -> Void)?
+    var onNewTabInGroup: (() -> Void)?
+    var onUngroup: (() -> Void)?
+    var onCloseGroup: (() -> Void)?
+
+    init(initialColor: NSColor? = nil, initialName: String = "", editMode: Bool = false, manageMode: Bool = false) {
         customColorIndex = swatchColors.count
         customColor = NSColor(srgbRed: 0.5, green: 0.5, blue: 0.5, alpha: 1)
         isEditMode = editMode
+        isManageMode = manageMode
         self.initialName = initialName
         super.init(nibName: nil, bundle: nil)
         guard let c = initialColor?.usingColorSpace(.sRGB) else { return }
@@ -54,6 +65,7 @@ import Cocoa
         customColorIndex = swatchColors.count
         customColor = NSColor(srgbRed: 0.5, green: 0.5, blue: 0.5, alpha: 1)
         isEditMode = false
+        isManageMode = false
         initialName = ""
         super.init(coder: coder)
     }
@@ -63,6 +75,10 @@ import Cocoa
     }
 
     override func loadView() {
+        if isManageMode {
+            loadManageView()
+            return
+        }
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 340, height: 180))
         self.view = container
 
@@ -130,6 +146,101 @@ import Cocoa
         customColorButton.layer?.backgroundColor = customColor.cgColor
     }
 
+    // Chrome-style management popover: name + colour swatches + group actions in
+    // a single transient surface. Name and colour apply live; actions invoke the
+    // corresponding closure (the presenter closes the popover).
+    private func loadManageView() {
+        let padding: CGFloat = 14
+        let swatchRowWidth = CGFloat(customColorIndex) * swatchDiameter
+            + CGFloat(customColorIndex - 1) * swatchSpacing
+            + swatchSpacing + swatchDiameter
+        let contentWidth = swatchRowWidth
+
+        nameField = NSTextField()
+        nameField.placeholderString = "Name this group (optional)"
+        nameField.stringValue = initialName
+        nameField.delegate = self
+        nameField.translatesAutoresizingMaskIntoConstraints = false
+
+        let swatchRow = buildSwatchRow()
+        swatchRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let newTabButton = makeActionButton(title: "New tab in group",
+                                             symbol: "plus.square.on.square",
+                                             action: #selector(newTabInGroupClicked(_:)))
+        let ungroupButton = makeActionButton(title: "Ungroup",
+                                             symbol: "rectangle.dashed",
+                                             action: #selector(ungroupClicked(_:)))
+        let closeGroupButton = makeActionButton(title: "Close group",
+                                                symbol: "xmark.square",
+                                                action: #selector(closeGroupClicked(_:)))
+
+        let topSeparator = makeSeparator()
+
+        let stack = NSStackView(views: [
+            nameField,
+            swatchRow,
+            topSeparator,
+            newTabButton,
+            ungroupButton,
+            closeGroupButton,
+        ])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.setCustomSpacing(12, after: swatchRow)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let container = NSView()
+        self.view = container
+        container.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: container.topAnchor, constant: padding),
+            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: padding),
+            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -padding),
+            stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -padding),
+
+            nameField.widthAnchor.constraint(equalToConstant: contentWidth),
+            swatchRow.widthAnchor.constraint(equalToConstant: swatchRowWidth),
+            swatchRow.heightAnchor.constraint(equalToConstant: swatchDiameter),
+            topSeparator.widthAnchor.constraint(equalToConstant: contentWidth),
+        ])
+
+        updateSwatchSelection()
+        customColorButton.layer?.backgroundColor = customColor.cgColor
+        container.layoutSubtreeIfNeeded()
+        preferredContentSize = container.fittingSize
+    }
+
+    private func makeActionButton(title: String, symbol: String, action: Selector) -> NSButton {
+        let button = NSButton(title: " \(title)", target: self, action: action)
+        button.isBordered = false
+        button.bezelStyle = .regularSquare
+        button.alignment = .left
+        button.imagePosition = .imageLeading
+        button.contentTintColor = .labelColor
+        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }
+
+    private func makeSeparator() -> NSBox {
+        let box = NSBox()
+        box.boxType = .separator
+        box.translatesAutoresizingMaskIntoConstraints = false
+        return box
+    }
+
+    @objc private func newTabInGroupClicked(_ sender: Any?) { onNewTabInGroup?() }
+    @objc private func ungroupClicked(_ sender: Any?) { onUngroup?() }
+    @objc private func closeGroupClicked(_ sender: Any?) { onCloseGroup?() }
+
+    private func notifyColorChange() {
+        guard isManageMode else { return }
+        onColorChange?(selectedColorIndex == customColorIndex ? customColor : swatchColors[selectedColorIndex].0)
+    }
+
     private func buildSwatchRow() -> NSView {
         let container = NSView()
         for (index, (color, _)) in swatchColors.enumerated() {
@@ -184,11 +295,13 @@ import Cocoa
     @objc private func swatchClicked(_ sender: NSButton) {
         selectedColorIndex = sender.tag
         updateSwatchSelection()
+        notifyColorChange()
     }
 
     @objc private func customColorActivated(_ sender: NSButton) {
         selectedColorIndex = customColorIndex
         updateSwatchSelection()
+        notifyColorChange()
         let panel = NSColorPanel.shared
         panel.color = customColor
         panel.setTarget(self)
@@ -202,6 +315,7 @@ import Cocoa
         customColorButton.layer?.backgroundColor = customColor.cgColor
         if selectedColorIndex == customColorIndex {
             updateSwatchSelection()
+            notifyColorChange()
         }
     }
 
@@ -232,4 +346,9 @@ import Cocoa
     }
 }
 
-extension iTermCreateTabGroupViewController: NSTextFieldDelegate {}
+extension iTermCreateTabGroupViewController: NSTextFieldDelegate {
+    func controlTextDidChange(_ obj: Notification) {
+        guard isManageMode else { return }
+        onNameChange?(nameField.stringValue.trimmingCharacters(in: .whitespaces))
+    }
+}

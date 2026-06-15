@@ -8143,9 +8143,28 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (![group isKindOfClass:[iTermTabGroup class]]) {
         return;
     }
-    NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""] autorelease];
-    [item setRepresentedObject:group];
-    [self showRenameGroupSheet:item];
+    // Hold the guard so that tabView:didSelectTabViewItem: doesn't run
+    // autoManageGroupCollapseForTab mid-operation and undo our expand.
+    self.groupCollapseManaging = YES;
+    [self toggleCollapseGroup:group];
+    self.groupCollapseManaging = NO;
+
+    if (!group.isCollapsed) {
+        PTYTab *firstMember = nil;
+        for (PTYTab *tab in [self tabs]) {
+            if ([group.memberTabIDs containsObject:@(tab.uniqueId)]) {
+                firstMember = tab;
+                break;
+            }
+        }
+        if (firstMember) {
+            // Collapse other groups first, then select so the selection sticks.
+            [self autoManageGroupCollapseForTab:firstMember];
+            if (firstMember.tabViewItem) {
+                [_contentView.tabView selectTabViewItem:firstMember.tabViewItem];
+            }
+        }
+    }
 }
 
 - (void)tabView:(NSTabView *)tabView groupTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems {
@@ -8185,28 +8204,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (![group isKindOfClass:[iTermTabGroup class]]) {
         return;
     }
-    // Hold the guard so that tabView:didSelectTabViewItem: doesn't run
-    // autoManageGroupCollapseForTab mid-operation and undo our expand.
-    self.groupCollapseManaging = YES;
-    [self toggleCollapseGroup:group];
-    self.groupCollapseManaging = NO;
-
-    if (!group.isCollapsed) {
-        PTYTab *firstMember = nil;
-        for (PTYTab *tab in [self tabs]) {
-            if ([group.memberTabIDs containsObject:@(tab.uniqueId)]) {
-                firstMember = tab;
-                break;
-            }
-        }
-        if (firstMember) {
-            // Collapse other groups first, then select so the selection sticks.
-            [self autoManageGroupCollapseForTab:firstMember];
-            if (firstMember.tabViewItem) {
-                [_contentView.tabView selectTabViewItem:firstMember.tabViewItem];
-            }
-        }
-    }
+    // Single click on the group chip opens the management popover (Chrome-style);
+    // double click toggles collapse (see doubleClickGroupHeaderTabViewItem:).
+    [self showManageGroupPopoverFor:group];
 }
 
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {

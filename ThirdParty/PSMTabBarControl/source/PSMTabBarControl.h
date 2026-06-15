@@ -247,6 +247,10 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)cancelCollapseAnimation;
 - (BOOL)isTabBarHidden;
 
+// Frame of the cell displaying the given tab view item, in the receiver's
+// coordinate system. Returns NSZeroRect if no cell currently shows the item.
+- (NSRect)frameOfCellForTabViewItem:(NSTabViewItem *)item;
+
 // internal bindings methods also used by the tab drag assistant
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
