@@ -28,7 +28,7 @@
                                     <action selector="showTipOfTheDay:" target="201" id="mc2-ec-uGY"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Pair Companion Device" identifier="Pair Companion Device" id="Cmp-n0-De1">
+                            <menuItem title="Companion Device Settings" identifier="Pair Companion Device" id="Cmp-n0-De1">
                                 <connections>
                                     <action selector="pairCompanionDevice:" target="201" id="Cmp-n0-Ac1"/>
                                 </connections>

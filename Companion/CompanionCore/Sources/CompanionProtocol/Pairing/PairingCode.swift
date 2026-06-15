@@ -3,7 +3,7 @@
 //  CompanionCore
 //
 //  Parses the iterm2://pair URL encoded in the QR code that the macOS app
-//  displays from iTerm2 > Pair Companion Device. The phone scans this code and
+//  displays from iTerm2 > Companion Device Settings. The phone scans this code and
 //  uses the parsed values to drive the Noise XK handshake (phone = initiator).
 //
 //  Example:

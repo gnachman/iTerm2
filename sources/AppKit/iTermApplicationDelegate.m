@@ -117,6 +117,7 @@
 #import "iTermScriptImporter.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSecureKeyboardEntryController.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTermServiceProvider.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
@@ -1481,6 +1482,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     // If a companion device is paired, quietly listen so it can reconnect.
     [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
+    // Give the Companion Device Settings menu item a Mac-and-iPhone glyph.
+    NSMenuItem *companionItem = [self menuItemWithAction:@selector(pairCompanionDevice:)
+                                                 inMenu:[NSApp mainMenu]];
+    companionItem.image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLaptopcomputerAndIphone)
+                                  accessibilityDescription:@"Companion Device Settings"];
     if (IsTouchBarAvailable()) {
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
     }
@@ -2383,6 +2389,23 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
+}
+
+// Depth-first search for the menu item wired to a given action, so a
+// xib-defined item can be configured in code without an outlet.
+- (NSMenuItem *)menuItemWithAction:(SEL)action inMenu:(NSMenu *)menu {
+    for (NSMenuItem *item in menu.itemArray) {
+        if (item.action == action) {
+            return item;
+        }
+        if (item.submenu) {
+            NSMenuItem *found = [self menuItemWithAction:action inMenu:item.submenu];
+            if (found) {
+                return found;
+            }
+        }
+    }
+    return nil;
 }
 
 - (IBAction)pairCompanionDevice:(id)sender {

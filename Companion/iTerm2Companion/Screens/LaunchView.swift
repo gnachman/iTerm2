@@ -25,7 +25,7 @@ struct LaunchView: View {
 
             VStack(alignment: .leading, spacing: 18) {
                 InstructionRow(number: 1,
-                               text: "On your Mac, choose the menu item iTerm2 > Pair Companion Device. A QR code appears.")
+                               text: "On your Mac, choose the menu item iTerm2 > Companion Device Settings. A QR code appears.")
                 InstructionRow(number: 2, text: "Tap the Scan button below.")
                 InstructionRow(number: 3, text: "Point the camera at the QR code.")
             }

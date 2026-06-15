@@ -25,6 +25,8 @@ struct CompanionPlugin {
 
     private let bundleID = "com.googlecode.iterm2.iTermCompanion"
     let client: CompanionPluginClient
+    /// Where the verified plugin .app lives on disk (for "Reveal in Finder").
+    let bundleURL: URL
 
     /// Cached: the plugin is found and verified once, then reused.
     static func instance() -> Result<CompanionPlugin, PluginError> {
@@ -69,6 +71,7 @@ struct CompanionPlugin {
         }
         try CompanionPlugin.checkSignature(message: codeData, signature: signature)
         self.client = CompanionPluginClient(code: code)
+        self.bundleURL = bundleURL
     }
 
     private static func checkSignature(message: Data, signature: Data) throws {

@@ -161,10 +161,36 @@ final class CompanionPairingController: NSObject {
     private func gateMayHaveChanged() {
         if Self.gate() == .allowed {
             resumePairedListeningIfNeeded()
-        } else if acceptTask != nil {
-            DLog("Companion: AI features became unavailable; stopping listener")
-            stopAdvertising()
+            return
         }
+        // Gate closed (AI disabled, admin policy, etc.): stop serving. Drop a
+        // live connection too, not just the accept loop. Keep the pairing keys:
+        // these gates are reversible, unlike unpair(), so re-enabling lets the
+        // same device reconnect. Two exceptions delete key material instead, and
+        // both happen before this runs so there is nothing left to tear down
+        // here: turning off the consent checkbox (handled in the pairing window)
+        // and the plugin disappearing (see unpairIfPluginMissing).
+        guard bridge != nil || acceptTask != nil else { return }
+        DLog("Companion: gate closed; dropping any live connection and stopping listener")
+        if bridge != nil {
+            bridge?.stop()
+            bridge = nil
+            onDisconnect?()
+        }
+        stopAdvertising()
+    }
+
+    /// If a device is paired but the consent plugin is gone, unpair and delete
+    /// all key material. The plugin is the egress path and the capability, so
+    /// removing it must not leave a usable pairing behind. The plugin's presence
+    /// is cached (a success is only re-probed on reload), so this is meaningful
+    /// at the points that force a re-probe: app launch and the window's Check
+    /// Again. Consent-off is enforced separately by the pairing window.
+    func unpairIfPluginMissing() {
+        guard hasPairedDevice, !CompanionPlugin.instance().isSuccess else { return }
+        DLog("Companion: consent plugin missing; unpairing and deleting key material")
+        relayLog("unpairIfPluginMissing: plugin gone, unpairing")
+        unpair()
     }
 
     /// Called at app launch (and after disconnects): if a device is paired,
@@ -172,6 +198,9 @@ final class CompanionPairingController: NSObject {
     @objc func resumePairedListeningIfNeeded() {
         installLogHandler()
         relayLog("resumePairedListeningIfNeeded called")
+        // If the plugin vanished while we were away, tear the pairing down rather
+        // than silently keeping the keys around for a feature that can't run.
+        unpairIfPluginMissing()
         guard Self.gate() == .allowed else {
             DLog("Companion: not listening; AI features are unavailable")
             relayLog("resume: SKIP (AI gate not allowed)")

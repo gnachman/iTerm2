@@ -9,10 +9,10 @@ to version 3.6.7 and duplicates some items in
 betas since then.
 
 Major New Features:
-- Pair Companion Device: a new iOS app,
+- Companion Device Settings: a new iOS app,
   iTerm2 Companion, pairs with your Mac by
-  scanning a QR code (iTerm2 > Pair
-  Companion Device) and connects over an
+  scanning a QR code (iTerm2 > Companion
+  Device Settings) and connects over an
   encrypted Noise channel so you can read
   and continue your AI chats from your
   phone. Devices connect through an

@@ -43,7 +43,7 @@ struct ScanningView: View {
 
                 Spacer()
 
-                Text("Select iTerm2 > Pair Companion Device on your Mac")
+                Text("Select iTerm2 > Companion Device Settings on your Mac")
                     .font(.headline)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.white)
@@ -89,7 +89,7 @@ struct ScanningView: View {
         do {
             let code = try PairingCode.parse(string)
             if model.isUsedPairingCode(code) {
-                errorMessage = "That code was already used. Choose iTerm2 > Pair Companion Device on your Mac to get a fresh one."
+                errorMessage = "That code was already used. Choose iTerm2 > Companion Device Settings on your Mac to get a fresh one."
                 return
             }
             handled = true
