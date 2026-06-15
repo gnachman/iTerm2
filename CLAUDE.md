@@ -32,3 +32,5 @@
 - User Defaults keys that should only be stored locally begin with the prefix NoSync. If a user chooses to load prefs from a custom location (e.g., Dropbox) they may be prompted to write settings when a non-NoSync key changes. To avoid disrupting them in this manner, user defaults that are not actual configuration settings (e.g., a list of recent items) get a NoSync prefix.
 - When adding temporary code for debugging, use NSFuckingLog instead of NSLog because NSLog truncates long output. Logging code that is intended to remain long-term should use DLog.
 - Do not use an SF Symbols name as a string literal. Get it using SFSymbolGetString in Objective C or the SFSymbol enum in Swift.
+- Don't use sleep to solve concurrency problems.
+- Tests should not be flaky. Don't write tests that will fail if the system is slower than usual.
