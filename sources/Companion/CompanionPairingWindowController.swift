@@ -290,6 +290,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     /// bottom settings section alone.
     private func hideTopContent() {
         gateButton.isHidden = true
+        gateButton.keyEquivalent = ""
         qrImageView.isHidden = true
         checkmarkImageView.isHidden = true
         unpairButton.isHidden = true
@@ -298,10 +299,11 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         sasCancelButton.isHidden = true
     }
 
-    /// A blocked gate: no live QR. Fill the QR area with a dimmed, blurred
-    /// placeholder (so the layout has no empty hole) and show the explanation
-    /// plus, for the AI prerequisites, a remedy button centered over it. The
-    /// bottom settings section is untouched; updateSettingsSection keeps it current.
+    /// A blocked gate: no live QR. When there is a remedy (e.g. Authenticate),
+    /// show a prominent default button on a clean background so it is obviously
+    /// the thing to click. Otherwise fill the QR area with a dimmed, blurred
+    /// placeholder so the layout has no empty hole. The bottom settings section
+    /// is untouched; updateSettingsSection keeps it current.
     private func showBlockedTop(_ message: String,
                                 remedyTitle: String? = nil,
                                 remedyAction: (() -> Void)? = nil) {
@@ -309,20 +311,27 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         // advertising it.
         controller.stopAdvertising()
         hideTopContent()
-        qrImageView.image = placeholderQRImage
-        qrImageView.alphaValue = 0.18
-        qrImageView.isHidden = false
         instructionsLabel.stringValue = message
         setStatus("", color: .secondaryLabelColor)
         gateAction = remedyAction
         if let remedyTitle {
+            // A clean background and a larger default (accent-highlighted) button:
+            // the dimmed placeholder QR would camouflage a plain push button.
             gateButton.title = remedyTitle
+            gateButton.controlSize = .large
+            gateButton.keyEquivalent = "\r"
             gateButton.sizeToFit()
-            gateButton.frame = NSRect(x: (360 - gateButton.frame.width - 24) / 2,
+            let width = gateButton.frame.width + 48
+            gateButton.frame = NSRect(x: (360 - width) / 2,
                                       y: 280,
-                                      width: gateButton.frame.width + 24,
-                                      height: 32)
+                                      width: width,
+                                      height: gateButton.frame.height)
             gateButton.isHidden = false
+        } else {
+            // Nothing to click: fill the QR area with the dimmed placeholder.
+            qrImageView.image = placeholderQRImage
+            qrImageView.alphaValue = 0.18
+            qrImageView.isHidden = false
         }
     }
 
