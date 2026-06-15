@@ -15,6 +15,7 @@
 import AppKit
 import CompanionProtocol
 import CoreImage
+import LocalAuthentication
 
 @MainActor
 @objc(iTermCompanionPairingWindowController)
@@ -62,6 +63,9 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     private lazy var placeholderQRImage: NSImage = Self.makePlaceholderQRImage()
     private var gateAction: (() -> Void)?
     private var currentGate: CompanionPairingController.Gate?
+    // True while the biometric/password sheet for a fresh pairing is up, so a
+    // poll or re-key does not stack a second prompt.
+    private var pairingAuthInFlight = false
     private var gateObservers: [any NSObjectProtocol] = []
     // The plugin check is a filesystem probe with no change notification, so we
     // poll for it while the window is open (and refresh the settings section).
@@ -160,7 +164,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             if controller.isConnected || controller.hasPairedDevice {
                 showPairedState()
             } else {
-                beginFreshPairing()
+                startFreshPairingFlow()
             }
         }
     }
@@ -439,6 +443,61 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         checkmarkImageView.contentTintColor = controller.isConnected ? .systemGreen : .tertiaryLabelColor
     }
 
+    /// Require the device owner to authenticate before showing a fresh pairing
+    /// QR, so brief physical access to an unlocked Mac is not enough to pair a
+    /// new device. Authentication uses biometrics when available and falls back
+    /// to the device passcode/login password.
+    private func startFreshPairingFlow() {
+        guard !pairingAuthInFlight else { return }
+        pairingAuthInFlight = true
+        // The system sheet appears over the window; show a neutral prompt behind.
+        showBlockedTop("Authenticate to pair a companion device with this Mac.")
+        Task { [weak self] in
+            guard let self else { return }
+            let authenticated = await self.authenticateToPair()
+            self.pairingAuthInFlight = false
+            // The gate may have changed while the sheet was up (consent revoked,
+            // a device reconnected, the window closed): only show the QR if a
+            // fresh pairing is still what's wanted.
+            guard self.window?.isVisible == true,
+                  self.currentGate == .allowed,
+                  !self.controller.hasPairedDevice else {
+                return
+            }
+            if authenticated {
+                self.beginFreshPairing()
+            } else {
+                self.showBlockedTop("Authentication is required to pair a companion device.",
+                                    remedyTitle: "Authenticate") { [weak self] in
+                    self?.startFreshPairingFlow()
+                }
+            }
+        }
+    }
+
+    private func authenticateToPair() async -> Bool {
+        let context = LAContext()
+        var error: NSError?
+        // .deviceOwnerAuthentication uses biometrics when available and falls
+        // back to the device passcode/login password otherwise.
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+            // No biometrics and no passcode configured: there is nothing to
+            // authenticate against, so let pairing proceed (the Mac is unsecured
+            // regardless).
+            DLog("Companion: no device authentication available (\(error?.localizedDescription ?? "none")); proceeding")
+            return true
+        }
+        return await withCheckedContinuation { continuation in
+            context.evaluatePolicy(.deviceOwnerAuthentication,
+                                   localizedReason: "pair a companion device with this Mac") { success, authError in
+                if let authError {
+                    DLog("Companion: pairing authentication failed: \(authError.localizedDescription)")
+                }
+                continuation.resume(returning: success)
+            }
+        }
+    }
+
     private func beginFreshPairing() {
         hideTopContent()
         qrImageView.alphaValue = 1.0
@@ -455,7 +514,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
 
     @objc private func unpairPressed(_ sender: Any) {
         controller.unpair()
-        beginFreshPairing()
+        startFreshPairingFlow()
     }
 
     func windowWillClose(_ notification: Notification) {
