@@ -1482,6 +1482,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     // If a companion device is paired, quietly listen so it can reconnect.
     [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
+    // Surface paired-device presence (menu bar status item + connect toast).
+    [[iTermCompanionPresenceController shared] start];
     // Give the Companion Device Settings menu item a Mac-and-iPhone glyph.
     NSMenuItem *companionItem = [self menuItemWithAction:@selector(pairCompanionDevice:)
                                                  inMenu:[NSApp mainMenu]];

@@ -26,6 +26,15 @@ import CompanionTransport
 final class CompanionPairingController: NSObject {
     @objc static let shared = CompanionPairingController()
 
+    /// Posted (on the main thread) whenever the paired/connected state changes,
+    /// so the presence UI (menu bar status item + toast) can update. Observers
+    /// read hasPairedDevice / isConnected for the current state.
+    @objc static let presenceDidChange = Notification.Name("iTermCompanionPresenceDidChange")
+
+    private func notifyPresenceChanged() {
+        NotificationCenter.default.post(name: Self.presenceDidChange, object: nil)
+    }
+
     private var listener: TransportListener?
     private var acceptTask: Task<Void, Never>?
     private var bridge: CompanionHostBridge? {
@@ -33,6 +42,8 @@ final class CompanionPairingController: NSObject {
             // Mirrored where the (nonisolated) tool-registration path can
             // read it.
             CompanionPushRegistry.setPhoneConnected(bridge != nil)
+            // Connection state changed: refresh the presence UI.
+            notifyPresenceChanged()
         }
     }
 
@@ -309,6 +320,7 @@ final class CompanionPairingController: NSObject {
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
         DLog("Companion: unpaired; key material deleted")
+        notifyPresenceChanged()
     }
 
     /// The phone unpaired itself: mirror unpair() minus the farewell (the
@@ -326,6 +338,7 @@ final class CompanionPairingController: NSObject {
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
         onDisconnect?()
+        notifyPresenceChanged()
     }
 
     /// Stop advertising and accepting. Does NOT touch a connected bridge; the
