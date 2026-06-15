@@ -128,12 +128,15 @@ enum AttachmentLane: String, CaseIterable {
         case .deepseek:
             return try lookup("deepseek-v4-flash")
         case .llama:
-            // Local Ollama. llama4:latest is the multimodal default; its
-            // url is http://localhost:11434/api/chat. The lane only runs when
-            // LLAMA_API_KEY is set (see keyOrSkipForLane): on a record run that
-            // means Ollama must be up; on replay the request is served from a
+            // Local Ollama, url http://localhost:11434/api/chat. Pinned to
+            // llama3.3:latest: the multimodal llama4 (67GB) does not fit in
+            // 64GB RAM and is unusably slow, and llama3.3 is the llama-family
+            // model in AIMetadata that fits. It is text-only, so the lane
+            // covers the text cells; the binary/image cells stay skipped (see
+            // the matrix). The lane only runs when LLAMA_API_KEY is set (see
+            // keyOrSkipForLane): a record run needs Ollama up; replay serves a
             // committed cassette and never reaches the network.
-            return try lookup("llama4:latest")
+            return try lookup("llama3.3:latest")
         }
     }
 
@@ -310,20 +313,18 @@ enum AttachmentMatrix {
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
 
-        // MARK: llama (local Ollama, llama4:latest)
+        // MARK: llama (local Ollama, llama3.3:latest — text cells only)
         //
-        // Llama reuses the chat-completions CompletionsMessage shape (image_url
-        // / input_audio / file parts) but posts to Ollama's native /api/chat,
-        // which carries images in a separate `images` field, so it is unknown
-        // up front whether Ollama consumes the attachment or ignores it. These
-        // expectations are CALIBRATION PLACEHOLDERS: the text cells are safe
-        // (text content passes through and the probe is read), the binary cells
-        // are guessed as accepted-but-garbled (request accepted, attachment not
-        // surfaced). The first record run prints `[live] llama <kind>:
-        // expected=.. actual=..` for each cell; reconcile any drift by editing
-        // these to match what Ollama actually did, then the replay/CI run is
-        // green. audio/video/octet stay skipped: their fixtures have no
-        // deterministic probe, so accept-vs-garble is indistinguishable.
+        // Pinned to the text-only llama3.3 because the multimodal llama4 does
+        // not fit in 64GB RAM. The lane therefore covers the text-shaped cells
+        // (the model reads the text content and echoes the probe); the binary
+        // and image cells are skipped here rather than recorded, since a
+        // text-only model can't meaningfully process them and recording garbled
+        // output adds no signal. If a vision model that fits in RAM is later
+        // pinned (e.g. llava / llama3.2-vision), flip the image cells on and
+        // record them. The text expectations are calibration placeholders: the
+        // record run prints `[live] llama <kind>: expected=.. actual=..`;
+        // reconcile any drift before committing the cassettes.
         .llama: [
             .textPlain:        .acceptsAndExtractsProbe,
             .textMarkdown:     .acceptsAndExtractsProbe,
@@ -331,15 +332,15 @@ enum AttachmentMatrix {
             .applicationXML:   .acceptsAndExtractsProbe,
             .imageSVG:         .acceptsAndExtractsProbe,
             .yamlAsUnknown:    .acceptsAndExtractsProbe,
-            .imagePNG:         .acceptsButGarbled,
-            .imageWEBP:        .acceptsButGarbled,
-            .imageHEIC:        .acceptsButGarbled,
-            .imageTIFF:        .acceptsButGarbled,
-            .applicationPDF:   .acceptsButGarbled,
+            .imagePNG:         .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .imageWEBP:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .imageHEIC:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .imageTIFF:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .applicationPDF:   .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
             .audioMPEG:        .skipped(reason: "synth mp3 fixture has no deterministic content probe; garbled vs. heard is indistinguishable"),
             .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),
-            .applicationDOCX:  .acceptsButGarbled,
-            .applicationZIP:   .acceptsButGarbled,
+            .applicationDOCX:  .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
+            .applicationZIP:   .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
     ]
