@@ -33,6 +33,20 @@ public enum PasswordManagerProtocol {
         }
     }
 
+    public struct AddAccountToggle: Codable {
+        public var key: String
+        public var label: String
+        public var note: String?
+        public var defaultValue: Bool
+
+        public init(key: String, label: String, note: String?, defaultValue: Bool) {
+            self.key = key
+            self.label = label
+            self.note = note
+            self.defaultValue = defaultValue
+        }
+    }
+
     // A custom setting for your adapter.
     public struct SettingsField: Codable {
         public var key: String
@@ -79,9 +93,10 @@ public enum PasswordManagerProtocol {
         public var persistsCredentials: Bool?
         public var customCommands: [CustomCommand]?
         public var settingsFields: [SettingsField]?
+        public var addAccountToggles: [AddAccountToggle]?
 
         public init(protocolVersion: Int, name: String, requiresMasterPassword: Bool, canSetPasswords: Bool, userAccounts: [UserAccount]?, needsPathToDatabase: Bool, databaseExtension: String?, needsPathToExecutable: String?,
-                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil) {
+                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil, addAccountToggles: [AddAccountToggle]? = nil) {
             self.protocolVersion = protocolVersion
             self.name = name
             self.requiresMasterPassword = requiresMasterPassword
@@ -97,6 +112,7 @@ public enum PasswordManagerProtocol {
             self.persistsCredentials = persistsCredentials
             self.customCommands = customCommands
             self.settingsFields = settingsFields
+            self.addAccountToggles = addAccountToggles
         }
     }
 
@@ -232,6 +248,8 @@ public enum PasswordManagerProtocol {
         public var userName: String
         public var accountName: String
         public var password: String?
+
+        public var flags: [String: Bool]?
     }
 
     public struct AddAccountResponse: Codable {

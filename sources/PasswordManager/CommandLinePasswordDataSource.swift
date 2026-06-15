@@ -914,6 +914,17 @@ class CommandLinePasswordDataSource: NSObject {
         let userName: String
         let accountName: String
         let password: String
+        let flags: [String: Bool]
+
+        init(userName: String,
+             accountName: String,
+             password: String,
+             flags: [String: Bool] = [:]) {
+            self.userName = userName
+            self.accountName = accountName
+            self.password = password
+            self.flags = flags
+        }
     }
 
     struct Password {
@@ -954,11 +965,13 @@ class CommandLinePasswordDataSource: NSObject {
                      userName: String,
                      accountName: String,
                      password: String,
+                     flags: [String: Bool] = [:],
                      context: RecipeExecutionContext,
                      completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         let inputs = AddRequest(userName: userName,
                                 accountName: accountName,
-                                password: password)
+                                password: password,
+                                flags: flags)
         configuration.addAccountRecipe.transformAsync(context: context, inputs: inputs) { accountIdentifier, maybeError in
             configuration.listAccountsRecipe.invalidateRecipe()
             if let error = maybeError {
