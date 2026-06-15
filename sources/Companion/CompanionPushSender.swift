@@ -33,24 +33,27 @@ enum CompanionPushSender {
               let secret = CompanionPushRegistry.relaySecretHex else {
             throw SendError(message: "No paired phone is registered for notifications.")
         }
-        var request = URLRequest(url: CompanionPushRelay.pushURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 15
-        request.httpBody = try JSONEncoder().encode(PushRequest(token: token,
-                                                                secret: secret,
-                                                                title: title,
-                                                                body: body))
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw SendError(message: "The push relay returned a non-HTTP response.")
+        // Route through the consent plugin: it is the companion's only outbound
+        // HTTP path, so the push goes the same way as the relay socket.
+        guard case .success(let plugin) = CompanionPlugin.instance() else {
+            throw SendError(message: "The companion plugin is not installed.")
         }
-        guard (200..<300).contains(http.statusCode) else {
-            let detail = (try? JSONDecoder().decode(RelayReply.self, from: data))?.error
-                ?? String(data: data, encoding: .utf8)
-                ?? ""
-            DLog("Companion push: relay rejected send (\(http.statusCode)): \(detail)")
-            throw SendError(message: "The push relay refused the notification (\(http.statusCode)): \(detail)")
+        let bodyJSON = String(decoding: try JSONEncoder().encode(PushRequest(token: token,
+                                                                             secret: secret,
+                                                                             title: title,
+                                                                             body: body)),
+                              as: UTF8.self)
+        let response = try await plugin.client.request(method: "POST",
+                                                       url: CompanionPushRelay.pushURL.absoluteString,
+                                                       headers: ["Content-Type": "application/json"],
+                                                       body: bodyJSON)
+        // The plugin reports a 2xx as an empty error; anything else carries
+        // "HTTP <status>" (or a transport error), with the body in `data`.
+        guard response.error.isEmpty else {
+            let detail = (try? JSONDecoder().decode(RelayReply.self, from: Data(response.data.utf8)))?.error
+                ?? response.data
+            DLog("Companion push: relay rejected send (\(response.error)): \(detail)")
+            throw SendError(message: "The push relay refused the notification (\(response.error)): \(detail)")
         }
         DLog("Companion push: delivered “\(title)” via relay")
     }
