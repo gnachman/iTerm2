@@ -75,7 +75,7 @@ public enum CompanionTransports {
     ///   earned (RelayAttestationClient) for a fresh pairing under attestation;
     ///   nil for open mode or for reconnects (which sign with roomSecret).
     public static func connector(for code: PairingCode,
-                                 session: URLSession = .shared,
+                                 webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                                  roomSecret: (@Sendable () -> Data?)? = nil,
                                  pairingTicket: String? = nil) -> TransportConnector {
         var connectors: [TransportConnector] = []
@@ -92,7 +92,7 @@ public enum CompanionTransports {
             connectors.append(RelayTransportConnector(relayOrigin: relayOrigin,
                                                       responderStaticKey: code.responderStaticPublicKey,
                                                       joinProof: proof,
-                                                      session: session))
+                                                      webSocketFactory: webSocketFactory))
         }
         return RaceTransportConnector(connectors)
     }
@@ -112,7 +112,7 @@ public enum CompanionTransports {
     public static func listener(pairingID: String,
                                 responderStaticPublicKey: Data,
                                 relayOrigin: String?,
-                                session: URLSession = .shared,
+                                webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                                 onParked: (@Sendable () -> Void)? = nil,
                                 roomSecret: (@Sendable () -> Data?)? = nil) throws -> TransportListener {
         var listeners: [TransportListener] = []
@@ -132,7 +132,7 @@ public enum CompanionTransports {
                 }
             listeners.append(RelayTransportListener(relayOrigin: relayOrigin,
                                                     roomName: roomName,
-                                                    session: session,
+                                                    webSocketFactory: webSocketFactory,
                                                     onParked: onParked,
                                                     joinProof: proof))
         }
