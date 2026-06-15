@@ -174,7 +174,11 @@ extension AILiveHarness {
         case "gemini":    envKey = "GEMINI_API_KEY"
         case "deepseek":  envKey = "DEEPSEEK_API_KEY"
         case "llama":
-            throw XCTSkip("Llama lane has no live API wiring.")
+            // Ollama needs no real key, but LLAMA_API_KEY gates the lane (and
+            // satisfies the driver's Registration, which requires a non-empty
+            // value): set it to enable a record run against a local Ollama, and
+            // the CI replay config sets a dummy so cassettes are exercised.
+            envKey = "LLAMA_API_KEY"
         default:
             throw XCTSkip("Unknown vendor \(lane.keyVendor)")
         }

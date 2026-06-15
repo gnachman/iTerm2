@@ -39,7 +39,9 @@
 //    deepseek         deepseek-v4-flash. Chat-completions-like; non-text
 //                     binaries get wrapped in <iterm2:attachment> via
 //                     lossyString.
-//    llama            Local-only, no live API key wiring. Cells skip.
+//    llama            Local Ollama (llama4:latest, /api/chat). Runs only
+//                     when LLAMA_API_KEY is set: a record run needs Ollama
+//                     up; replay serves committed cassettes with no Ollama.
 //
 //  Skip semantics: a missing vendor API key skips the lane via
 //  keyOrSkip. A failure within a cell fails the corresponding XCTest
@@ -126,9 +128,12 @@ enum AttachmentLane: String, CaseIterable {
         case .deepseek:
             return try lookup("deepseek-v4-flash")
         case .llama:
-            // No live key wiring; resolveModel is only called after
-            // keyOrSkip has skipped the lane, so this never executes.
-            throw AttachmentMatrixError.lanePermanentlySkipped("llama is local-only, no live API")
+            // Local Ollama. llama4:latest is the multimodal default; its
+            // url is http://localhost:11434/api/chat. The lane only runs when
+            // LLAMA_API_KEY is set (see keyOrSkipForLane): on a record run that
+            // means Ollama must be up; on replay the request is served from a
+            // committed cassette and never reaches the network.
+            return try lookup("llama4:latest")
         }
     }
 
@@ -305,24 +310,37 @@ enum AttachmentMatrix {
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
 
-        // MARK: llama (no live wiring; every cell skips)
+        // MARK: llama (local Ollama, llama4:latest)
+        //
+        // Llama reuses the chat-completions CompletionsMessage shape (image_url
+        // / input_audio / file parts) but posts to Ollama's native /api/chat,
+        // which carries images in a separate `images` field, so it is unknown
+        // up front whether Ollama consumes the attachment or ignores it. These
+        // expectations are CALIBRATION PLACEHOLDERS: the text cells are safe
+        // (text content passes through and the probe is read), the binary cells
+        // are guessed as accepted-but-garbled (request accepted, attachment not
+        // surfaced). The first record run prints `[live] llama <kind>:
+        // expected=.. actual=..` for each cell; reconcile any drift by editing
+        // these to match what Ollama actually did, then the replay/CI run is
+        // green. audio/video/octet stay skipped: their fixtures have no
+        // deterministic probe, so accept-vs-garble is indistinguishable.
         .llama: [
-            .textPlain:        .skipped(reason: "llama lane has no live API wiring"),
-            .textMarkdown:     .skipped(reason: "llama lane has no live API wiring"),
-            .applicationJSON:  .skipped(reason: "llama lane has no live API wiring"),
-            .applicationXML:   .skipped(reason: "llama lane has no live API wiring"),
-            .imageSVG:         .skipped(reason: "llama lane has no live API wiring"),
-            .yamlAsUnknown:    .skipped(reason: "llama lane has no live API wiring"),
-            .imagePNG:         .skipped(reason: "llama lane has no live API wiring"),
-            .imageWEBP:        .skipped(reason: "llama lane has no live API wiring"),
-            .imageHEIC:        .skipped(reason: "llama lane has no live API wiring"),
-            .imageTIFF:        .skipped(reason: "llama lane has no live API wiring"),
-            .applicationPDF:   .skipped(reason: "llama lane has no live API wiring"),
-            .audioMPEG:        .skipped(reason: "llama lane has no live API wiring"),
-            .videoMP4:         .skipped(reason: "llama lane has no live API wiring"),
-            .applicationDOCX:  .skipped(reason: "llama lane has no live API wiring"),
-            .applicationZIP:   .skipped(reason: "llama lane has no live API wiring"),
-            .applicationOctet: .skipped(reason: "llama lane has no live API wiring"),
+            .textPlain:        .acceptsAndExtractsProbe,
+            .textMarkdown:     .acceptsAndExtractsProbe,
+            .applicationJSON:  .acceptsAndExtractsProbe,
+            .applicationXML:   .acceptsAndExtractsProbe,
+            .imageSVG:         .acceptsAndExtractsProbe,
+            .yamlAsUnknown:    .acceptsAndExtractsProbe,
+            .imagePNG:         .acceptsButGarbled,
+            .imageWEBP:        .acceptsButGarbled,
+            .imageHEIC:        .acceptsButGarbled,
+            .imageTIFF:        .acceptsButGarbled,
+            .applicationPDF:   .acceptsButGarbled,
+            .audioMPEG:        .skipped(reason: "synth mp3 fixture has no deterministic content probe; garbled vs. heard is indistinguishable"),
+            .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),
+            .applicationDOCX:  .acceptsButGarbled,
+            .applicationZIP:   .acceptsButGarbled,
+            .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
     ]
 
