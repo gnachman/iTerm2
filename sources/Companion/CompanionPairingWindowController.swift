@@ -50,13 +50,13 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     private let consentCheckbox = NSButton(checkboxWithTitle: "Allow companion device pairing",
                                            target: nil,
                                            action: nil)
-    // The plugin setting: a status detail line above a row of two buttons
-    // (Reveal in Finder / Download Plugin…, and Check Again). Always shown.
+    // The plugin setting: a status line (with a reload icon to its left that
+    // re-checks the plugin) above a Reveal in Finder / Download Plugin… button.
+    // Always shown.
     private let pluginDetailLabel = NSTextField(labelWithString: "")
-    private let pluginActionButtonA = NSButton(title: "", target: nil, action: nil)
-    private let pluginActionButtonB = NSButton(title: "", target: nil, action: nil)
-    private var pluginActionA: (() -> Void)?
-    private var pluginActionB: (() -> Void)?
+    private let recheckButton = NSButton()
+    private let pluginActionButton = NSButton(title: "", target: nil, action: nil)
+    private var pluginAction: (() -> Void)?
 
     // A blurred, dimmed fake QR shown in blocked states so the QR area is filled
     // with an obviously-inactive placeholder rather than a big empty hole.
@@ -186,58 +186,54 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     // MARK: Bottom settings section
 
     /// Refresh the always-visible settings section from the current state: the
-    /// consent checkbox and the plugin status with its action buttons.
+    /// consent checkbox and the plugin status with its reload icon and button.
     private func updateSettingsSection() {
         consentCheckbox.state = SecureUserDefaults.instance.enableCompanionPairing.value ? .on : .off
 
         if CompanionPlugin.instance().isSuccess {
             pluginDetailLabel.stringValue = "iTerm2 Companion plugin installed and working ✅"
             pluginDetailLabel.textColor = .systemGreen
-            layoutRowButtons([
-                ("Reveal in Finder", { [weak self] in self?.revealPluginInFinder() }),
-                ("Check Again", { [weak self] in self?.recheckPlugin() }),
-            ])
+            setPluginAction(title: "Reveal in Finder") { [weak self] in self?.revealPluginInFinder() }
         } else {
             pluginDetailLabel.stringValue = "iTerm2 Companion plugin not installed"
             pluginDetailLabel.textColor = .secondaryLabelColor
-            layoutRowButtons([
-                ("Download Plugin…", {
-                    if let url = URL(string: "https://iterm2.com/companion-plugin.html") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }),
-                ("Check Again", { [weak self] in self?.recheckPlugin() }),
-            ])
+            setPluginAction(title: "Download Plugin…") {
+                if let url = URL(string: "https://iterm2.com/companion-plugin.html") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
         }
+        layoutPluginStatusRow()
     }
 
-    /// Lay out the two plugin buttons centered as a single group on one row, in
-    /// the bottom settings section just below pluginDetailLabel.
-    private func layoutRowButtons(_ rowButtons: [(title: String, action: () -> Void)]) {
-        let buttons = [pluginActionButtonA, pluginActionButtonB]
-        pluginActionA = rowButtons.count > 0 ? rowButtons[0].action : nil
-        pluginActionB = rowButtons.count > 1 ? rowButtons[1].action : nil
-        let gap: CGFloat = 12
-        var widths: [CGFloat] = []
-        for (i, rowButton) in rowButtons.enumerated() {
-            buttons[i].title = rowButton.title
-            buttons[i].sizeToFit()
-            widths.append(buttons[i].frame.width + 24)
-        }
-        let total = widths.reduce(0, +) + gap * CGFloat(max(0, rowButtons.count - 1))
-        var x = (360 - total) / 2
-        for i in rowButtons.indices {
-            buttons[i].frame = NSRect(x: x, y: 18, width: widths[i], height: 32)
-            x += widths[i] + gap
-        }
+    /// Configure the primary plugin button (Reveal in Finder / Download Plugin…),
+    /// centered on its own row below the status line.
+    private func setPluginAction(title: String, action: @escaping () -> Void) {
+        pluginAction = action
+        pluginActionButton.title = title
+        pluginActionButton.sizeToFit()
+        let width = pluginActionButton.frame.width + 24
+        pluginActionButton.frame = NSRect(x: (360 - width) / 2, y: 18, width: width, height: 32)
     }
 
-    @objc private func pluginActionAPressed(_ sender: Any) {
-        pluginActionA?()
+    /// Lay out the reload icon and the status label as one centered group, the
+    /// icon to the left of the message.
+    private func layoutPluginStatusRow() {
+        let iconSize: CGFloat = 16
+        let gap: CGFloat = 6
+        pluginDetailLabel.sizeToFit()
+        let labelWidth = min(pluginDetailLabel.frame.width, 320 - iconSize - gap)
+        let x = (360 - (iconSize + gap + labelWidth)) / 2
+        recheckButton.frame = NSRect(x: x, y: 61, width: iconSize, height: iconSize)
+        pluginDetailLabel.frame = NSRect(x: x + iconSize + gap, y: 60, width: labelWidth, height: 18)
     }
 
-    @objc private func pluginActionBPressed(_ sender: Any) {
-        pluginActionB?()
+    @objc private func pluginActionPressed(_ sender: Any) {
+        pluginAction?()
+    }
+
+    @objc private func recheckPressed(_ sender: Any) {
+        recheckPlugin()
     }
 
     /// Force an immediate plugin re-check instead of waiting for the poll. A
@@ -647,21 +643,26 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                                        height: 20)
         content.addSubview(consentCheckbox)
 
-        pluginDetailLabel.alignment = .center
+        pluginDetailLabel.alignment = .left
         pluginDetailLabel.font = .systemFont(ofSize: 12)
         pluginDetailLabel.lineBreakMode = .byTruncatingTail
         pluginDetailLabel.frame = NSRect(x: 20, y: 60, width: 320, height: 18)
         content.addSubview(pluginDetailLabel)
 
-        pluginActionButtonA.target = self
-        pluginActionButtonA.action = #selector(pluginActionAPressed(_:))
-        pluginActionButtonA.bezelStyle = .rounded
-        content.addSubview(pluginActionButtonA)
+        recheckButton.target = self
+        recheckButton.action = #selector(recheckPressed(_:))
+        recheckButton.isBordered = false
+        recheckButton.imageScaling = .scaleProportionallyDown
+        recheckButton.image = NSImage(systemSymbolName: SFSymbol.arrowClockwise.rawValue,
+                                      accessibilityDescription: "Check again")?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 12, weight: .regular))
+        recheckButton.toolTip = "Check again for the plugin"
+        content.addSubview(recheckButton)
 
-        pluginActionButtonB.target = self
-        pluginActionButtonB.action = #selector(pluginActionBPressed(_:))
-        pluginActionButtonB.bezelStyle = .rounded
-        content.addSubview(pluginActionButtonB)
+        pluginActionButton.target = self
+        pluginActionButton.action = #selector(pluginActionPressed(_:))
+        pluginActionButton.bezelStyle = .rounded
+        content.addSubview(pluginActionButton)
 
         // Pre-populate the settings section so it is correct before the first
         // gate evaluation (and even if the window is shown without pairing).
