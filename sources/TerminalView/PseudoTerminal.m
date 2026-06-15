@@ -391,6 +391,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     BOOL _anyPaneIsTransparent;
     BOOL _windowDidResize;
     iTermSuppressMakeCurrentTerminal _suppressMakeCurrentTerminal;
+
+    // Set while a tmux tab/window is being inserted and the user has asked that
+    // tmux windows open in the background. Causes -insertTab:atIndex: to reveal
+    // the tab/window without moving keyboard focus to it.
+    BOOL _openingTmuxTabOrWindowInBackground;
     BOOL _deallocing;
     iTermOrderEnforcer *_proxyIconOrderEnforcer;
     BOOL _restorableStateInvalid;
@@ -3637,11 +3642,19 @@ ITERM_WEAKLY_REFERENCEABLE
                   name:(NSString *)name {
     DLog(@"begin loadTmuxLayout");
     [self beginTmuxOriginatedResize];
-    PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
-                                  visibleLayout:visibleParseTree
-                                     inTerminal:self
-                                     tmuxWindow:window
-                                 tmuxController:tmuxController];
+    const BOOL savedOpeningTmuxTabOrWindowInBackground = _openingTmuxTabOrWindowInBackground;
+    _openingTmuxTabOrWindowInBackground = [iTermAdvancedSettingsModel tmuxWindowsOpenInBackground];
+    PTYTab *tab = nil;
+    @try {
+        tab = [PTYTab openTabWithTmuxLayout:parseTree
+                              visibleLayout:visibleParseTree
+                                 inTerminal:self
+                                 tmuxWindow:window
+                             tmuxController:tmuxController];
+    }
+    @finally {
+        _openingTmuxTabOrWindowInBackground = savedOpeningTmuxTabOrWindowInBackground;
+    }
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
     DLog(@"loadTmuxLayout: window frame before lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
@@ -11526,6 +11539,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     PtyLog(@"insertTab:atIndex:%d", anIndex);
     assert(aTab);
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
+        const BOOL openingInBackground = _openingTmuxTabOrWindowInBackground;
         for (PTYSession* aSession in [aTab sessions]) {
             [aSession setIgnoreResizeNotifications:YES];
         }
@@ -11537,7 +11551,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         const int safeIndex = MAX(0, MIN(_contentView.tabView.tabViewItems.count, anIndex));
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:safeIndex];
         [aTabViewItem release];
-        if (_automaticallySelectNewTabs || _contentView.tabView.tabViewItems.count == 1) {
+        BOOL selectNewTab = (_automaticallySelectNewTabs ||
+                             _contentView.tabView.tabViewItems.count == 1);
+        if (openingInBackground && _contentView.tabView.tabViewItems.count > 1) {
+            // The user asked that tmux tabs open in the background. Leave the
+            // currently selected tab focused.
+            selectNewTab = NO;
+        }
+        if (selectNewTab) {
             [_contentView.tabView selectTabViewItemAtIndex:safeIndex];
         }
         if (self.windowInitialized && !_restoringWindow) {
@@ -11558,6 +11579,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                 } else {
                     DLog(@"already rolling in or still being created - no need to do anything");
                 }
+            } else if (openingInBackground) {
+                DLog(@"Opening tmux window in background. Reveal it without taking key focus.");
+                NSWindow *keyWindow = NSApp.keyWindow;
+                if (keyWindow && keyWindow != self.window) {
+                    [self.window orderWindow:NSWindowBelow relativeTo:keyWindow.windowNumber];
+                } else {
+                    [[self window] orderFront:self];
+                }
             } else {
                 DLog(@"not a hidden hotkey window. Just order front.");
                 [[self window] makeKeyAndOrderFront:self];
@@ -11565,7 +11594,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone) {
+        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone &&
+            !openingInBackground) {
             [[iTermController sharedInstance] setCurrentTerminal:self];
         }
     }
