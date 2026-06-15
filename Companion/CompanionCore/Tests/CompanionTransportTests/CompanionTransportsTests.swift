@@ -18,12 +18,11 @@ final class CompanionTransportsTests: XCTestCase {
                     relayOrigin: relayOrigin)
     }
 
-    func test_connector_isRelayOnly_whenRelayOriginPresent() throws {
-        // Relay is currently the sole transport; Bonjour is switched off.
+    func test_connector_isRelay_whenRelayOriginPresent() {
+        // Relay is the sole transport.
         let connector = CompanionTransports.connector(
             for: makeCode(relayOrigin: "https://relay.example"))
-        let race = try XCTUnwrap(connector as? RaceTransportConnector)
-        XCTAssertEqual(race.connectors.map(\.transportName), ["relay"])
+        XCTAssertEqual(connector.transportName, "relay")
     }
 
     func test_signedProof_isEmptyWithoutRoomSecret() throws {
@@ -100,14 +99,16 @@ final class CompanionTransportsTests: XCTestCase {
         }
     }
 
-    func test_connector_isEmpty_whenNoRelayOriginAndNoLAN() throws {
-        // With the LAN path off and no relay origin there is no transport at
-        // all: connect() fails fast rather than silently using Bonjour.
+    func test_connector_isUnavailable_whenNoRelayOrigin() async {
+        // No relay origin means no transport at all: connect() fails fast.
         let connector = CompanionTransports.connector(for: makeCode(relayOrigin: nil))
-        let race = try XCTUnwrap(connector as? RaceTransportConnector)
-        XCTAssertEqual(race.connectors.map(\.transportName), [])
-        XCTAssertFalse(CompanionTransports.useLocalNetworkTransport,
-                       "If the LAN path is re-enabled, update this expectation.")
+        XCTAssertEqual(connector.transportName, "none")
+        do {
+            _ = try await connector.connect(to: PairingRendezvous(pairingID: "abcd1234"), timeout: 1)
+            XCTFail("expected connect to fail when there is no transport")
+        } catch {
+            // Expected.
+        }
     }
 }
 

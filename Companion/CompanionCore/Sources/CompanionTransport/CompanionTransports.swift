@@ -6,12 +6,10 @@
 //  build their connector (phone) and listener (mac) stacks here, so the rule
 //  lives in one tested spot instead of being duplicated in the app layers.
 //
-//  Currently the relay is the ONLY active transport: it reaches the mac
-//  regardless of network topology (NAT, corporate wifi that blocks peer-to-peer
-//  discovery, off-LAN), and reliability matters more than the latency the
-//  local-network path would save. The Bonjour connector/listener are kept in
-//  the package, switched off behind `useLocalNetworkTransport`, so bringing the
-//  LAN fast path back later (raced alongside the relay) is a one-line change.
+//  The relay is the only transport: it reaches the mac regardless of network
+//  topology (NAT, corporate wifi that blocks peer-to-peer discovery, off-LAN),
+//  and reliability matters more than the latency a local-network path would
+//  save.
 //
 
 import Foundation
@@ -19,11 +17,6 @@ import CryptoKit
 import CompanionProtocol
 
 public enum CompanionTransports {
-    /// Whether to also race the local-network (Bonjour) transport. Off for now;
-    /// the relay is the sole transport so a pairing works the same on any
-    /// network. Flip to true to restore Bonjour as a latency optimization.
-    public static let useLocalNetworkTransport = false
-
     /// Build the admission proof for a role: a signature over the bound
     /// transcript when a roomSecret is available (established room), else an
     /// empty proof (open/pairing-mode room). The relay verifies the signature
@@ -64,9 +57,9 @@ public enum CompanionTransports {
         return RelayAdmission.Proof(ticket: pairingTicket, signature: nil)
     }
 
-    /// Phone side: the connector stack for a scanned (or stored) pairing code.
-    /// Relay only (unless the LAN path is re-enabled); the relay connector is
-    /// present only when the code carries a relay origin.
+    /// Phone side: the connector for a scanned (or stored) pairing code. Relay
+    /// only; returns a connector that fails fast when the code carries no relay
+    /// origin (there is no other transport).
     ///
     /// - roomSecret: returns the persisted room secret once the pairing is
     ///   established (the phone registered its verifier), so reconnects sign
@@ -78,30 +71,24 @@ public enum CompanionTransports {
                                  webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                                  roomSecret: (@Sendable () -> Data?)? = nil,
                                  pairingTicket: String? = nil) -> TransportConnector {
-        var connectors: [TransportConnector] = []
-        if useLocalNetworkTransport {
-            connectors.append(BonjourTransportConnector())
+        guard let relayOrigin = code.relayOrigin else {
+            return UnavailableTransportConnector()
         }
-        if let relayOrigin = code.relayOrigin {
-            let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) =
-                { @Sendable challenge, roomName in
-                    try admissionProof(role: .phone, challenge: challenge, roomName: roomName,
-                                       origin: relayOrigin, roomSecret: roomSecret?(),
-                                       pairingTicket: pairingTicket)
-                }
-            connectors.append(RelayTransportConnector(relayOrigin: relayOrigin,
-                                                      responderStaticKey: code.responderStaticPublicKey,
-                                                      joinProof: proof,
-                                                      webSocketFactory: webSocketFactory))
-        }
-        return RaceTransportConnector(connectors)
+        let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) =
+            { @Sendable challenge, roomName in
+                try admissionProof(role: .phone, challenge: challenge, roomName: roomName,
+                                   origin: relayOrigin, roomSecret: roomSecret?(),
+                                   pairingTicket: pairingTicket)
+            }
+        return RelayTransportConnector(relayOrigin: relayOrigin,
+                                       responderStaticKey: code.responderStaticPublicKey,
+                                       joinProof: proof,
+                                       webSocketFactory: webSocketFactory)
     }
 
-    /// Mac side: the listener stack for a pairing. Parks in the relay room when
-    /// a relay origin is configured (and advertises on the local network only
-    /// if the LAN path is re-enabled). With one listener it is returned bare;
-    /// with several, CombinedTransportListener yields whichever a phone reaches
-    /// first.
+    /// Mac side: the listener for a pairing. Parks in the relay room when a
+    /// relay origin is configured; otherwise returns a listener that fails fast
+    /// (there is no other transport).
     ///
     /// - onParked: forwarded to the relay listener (fires once the mac holds
     ///   the room's mac slot); nil when no relay is configured.
@@ -115,30 +102,41 @@ public enum CompanionTransports {
                                 webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                                 onParked: (@Sendable () -> Void)? = nil,
                                 roomSecret: (@Sendable () -> Data?)? = nil) throws -> TransportListener {
-        var listeners: [TransportListener] = []
-        if useLocalNetworkTransport {
-            listeners.append(try BonjourTransportListener(pairingID: pairingID,
-                                                          version: PairingCode.supportedVersion))
+        guard let relayOrigin else {
+            return UnavailableTransportListener()
         }
-        if let relayOrigin {
-            let roomName = RelayRoom.name(responderStaticPublicKey: responderStaticPublicKey,
-                                          pairingID: pairingID)
-            let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? =
-                roomSecret.map { secret in
-                    { @Sendable challenge, room in
-                        try signedProof(role: .mac, challenge: challenge, roomName: room,
-                                        origin: relayOrigin, roomSecret: secret())
-                    }
+        let roomName = RelayRoom.name(responderStaticPublicKey: responderStaticPublicKey,
+                                      pairingID: pairingID)
+        let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? =
+            roomSecret.map { secret in
+                { @Sendable challenge, room in
+                    try signedProof(role: .mac, challenge: challenge, roomName: room,
+                                    origin: relayOrigin, roomSecret: secret())
                 }
-            listeners.append(RelayTransportListener(relayOrigin: relayOrigin,
-                                                    roomName: roomName,
-                                                    webSocketFactory: webSocketFactory,
-                                                    onParked: onParked,
-                                                    joinProof: proof))
-        }
-        if listeners.count == 1 {
-            return listeners[0]
-        }
-        return CombinedTransportListener(listeners)
+            }
+        return RelayTransportListener(relayOrigin: relayOrigin,
+                                      roomName: roomName,
+                                      webSocketFactory: webSocketFactory,
+                                      onParked: onParked,
+                                      joinProof: proof)
     }
+}
+
+/// Returned when a pairing has no usable transport (the code carries no relay
+/// origin). Connecting or accepting fails fast instead of silently doing
+/// nothing, preserving the old behavior of an empty transport set.
+private struct UnavailableTransportConnector: TransportConnector {
+    let transportName = "none"
+    func connect(to rendezvous: PairingRendezvous,
+                 timeout: TimeInterval) async throws -> MessageTransport {
+        throw TransportError.connectionFailed("No transport configured (no relay origin)")
+    }
+}
+
+private final class UnavailableTransportListener: TransportListener {
+    let transportName = "none"
+    func accept() async throws -> MessageTransport {
+        throw TransportError.connectionFailed("No transport configured (no relay origin)")
+    }
+    func stop() {}
 }

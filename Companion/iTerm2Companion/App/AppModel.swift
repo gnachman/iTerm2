@@ -188,11 +188,10 @@ final class AppModel {
 
     private var client: CompanionClient?
 
-    // How the phone reaches the mac, built per pairing code: the local-network
-    // connector always, plus the relay connector when the code carries a relay
-    // origin (off-LAN reach). RaceTransportConnector uses whichever connects
-    // first; nothing else in the app knows which transport won. Injectable for
-    // tests; production uses CompanionTransports.connector(for:).
+    // How the phone reaches the mac, built per pairing code: the relay connector
+    // when the code carries a relay origin (off-LAN reach), else a connector that
+    // fails fast. Injectable for tests; production uses
+    // CompanionTransports.connector(for:).
     private let connectorForCode: (PairingCode, _ pairingTicket: String?, _ established: Bool) -> TransportConnector
 
     /// App Attest primitives for the relay attestation client. Off-device these
