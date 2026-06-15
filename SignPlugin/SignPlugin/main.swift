@@ -79,7 +79,7 @@ do {
         generate()
 
     case "verify":
-        guard CommandLine.arguments.count == 4 else {
+        guard CommandLine.arguments.count == 5 else {
             print("usage: SignPlugin verify pubkey signature msgpath", to: &standardError)
             exit(1)
         }
