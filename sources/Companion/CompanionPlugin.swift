@@ -1,0 +1,94 @@
+//
+//  CompanionPlugin.swift
+//  iTerm2
+//
+//  Discovers, signature-verifies, and version-checks the companion consent
+//  plugin, modeled on the AI plugin (AIPluginClient.swift). The plugin is a
+//  separate signed .app; iTerm2 finds it by bundle id, loads its JavaScript,
+//  and verifies an EdDSA signature against a key baked into iTerm2 before
+//  running any of it. The shipped binary has no relay endpoint, so installing
+//  the plugin is the consent and the capability.
+//
+
+import CryptoKit
+import JavaScriptCore
+import CompanionTransport
+
+struct CompanionPlugin {
+    static private var _instance = MutableAtomicObject<Result<CompanionPlugin, PluginError>?>(nil)
+
+    // TODO: replace with the real Curve25519 public key once the companion
+    // plugin keypair is generated and the JS is signed (SignPlugin). Until then
+    // the signature check fails closed, so the feature stays gated off.
+    private static let publicKeyB64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+    private let bundleID = "com.googlecode.iterm2.iTermCompanion"
+    let client: CompanionPluginClient
+
+    /// Cached: the plugin is found and verified once, then reused.
+    static func instance() -> Result<CompanionPlugin, PluginError> {
+        _instance.mutableAccess { result in
+            if case .success(let plugin) = result { return .success(plugin) }
+            let loaded = load()
+            result = loaded
+            return loaded
+        }
+    }
+
+    static func reload() {
+        _instance.mutableAccess { $0 = load() }
+    }
+
+    private static func load() -> Result<CompanionPlugin, PluginError> {
+        do {
+            return .success(try CompanionPlugin())
+        } catch let error as PluginError {
+            DLog("\(error.reason)")
+            return .failure(error)
+        } catch {
+            return .failure(PluginError(reason: error.localizedDescription))
+        }
+    }
+
+    init() throws {
+        guard let bundleURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            throw PluginError(reason: "Companion plugin not installed")
+        }
+        let jsURL = bundleURL.appendingPathComponent("Contents/Resources/iTermCompanionPlugin.js")
+        guard let codeData = try? Data(contentsOf: jsURL) else {
+            throw PluginError(reason: "Companion plugin code missing or unreadable")
+        }
+        guard let code = String(data: codeData, encoding: .utf8) else {
+            throw PluginError(reason: "Companion plugin code is not valid UTF-8")
+        }
+        let signatureURL = bundleURL.appendingPathComponent("Contents/Resources/iTermCompanionPlugin.sig")
+        guard let signatureB64 = try? String(contentsOf: signatureURL),
+              let signature = Data(base64Encoded: signatureB64.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            throw PluginError(reason: "Companion plugin signature missing or malformed")
+        }
+        try CompanionPlugin.checkSignature(message: codeData, signature: signature)
+        self.client = CompanionPluginClient(code: code)
+    }
+
+    private static func checkSignature(message: Data, signature: Data) throws {
+        guard let keyData = Data(base64Encoded: publicKeyB64),
+              let publicKey = try? Curve25519.Signing.PublicKey(rawRepresentation: keyData),
+              publicKey.isValidSignature(signature, for: message) else {
+            throw PluginError(reason: "The companion plugin's signature is invalid. Reinstall the plugin or upgrade iTerm2.")
+        }
+        DLog("Companion plugin signature is good")
+    }
+
+    /// A relay socket factory that routes all egress through this plugin.
+    func webSocketFactory() -> RelayWebSocketFactory {
+        PluginRelayWebSocketFactory(client: client)
+    }
+
+    func version() async throws -> Decimal {
+        let string = try await client.version()
+        guard let decimal = Decimal(string: string) else {
+            throw PluginError(reason: "Invalid companion plugin version: \(string)")
+        }
+        return decimal
+    }
+}
