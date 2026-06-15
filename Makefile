@@ -481,6 +481,21 @@ pwmadapters: force
 companion-plugin: force
 	cd iTermCompanion && WEBSITE_DOWNLOADS="$(ITERM2_WEBSITE)/downloads/companion-plugin" ./build.sh
 
+# Archive the iOS Companion app (Release) and export a signed App Store .ipa,
+# the same Release product Xcode's Archive produces (production aps-environment).
+# Upload it separately (Xcode Organizer, Transporter, or `xcrun altool
+# --upload-app`); that step needs App Store Connect credentials.
+companion-iphone-archive: force
+	cd Companion && xcodebuild -project iTerm2Companion.xcodeproj -scheme iTerm2Companion \
+	  -configuration Release -destination 'generic/platform=iOS' \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive -allowProvisioningUpdates archive
+	cd Companion && xcodebuild -exportArchive \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive \
+	  -exportOptionsPlist ExportOptions.plist \
+	  -exportPath Build/ios/export -allowProvisioningUpdates
+	@echo "Archive: Companion/Build/ios/iTerm2Companion.xcarchive"
+	@echo "IPA:     Companion/Build/ios/export/"
+
 it2cli: force
 	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 	cp it2cli/.build/release/it2 it2cli/bin
