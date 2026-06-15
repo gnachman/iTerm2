@@ -17,10 +17,11 @@ import CompanionTransport
 struct CompanionPlugin {
     static private var _instance = MutableAtomicObject<Result<CompanionPlugin, PluginError>?>(nil)
 
-    // TODO: replace with the real Curve25519 public key once the companion
-    // plugin keypair is generated and the JS is signed (SignPlugin). Until then
-    // the signature check fails closed, so the feature stays gated off.
-    private static let publicKeyB64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    // The Curve25519 public key the plugin's JS is signed against. The matching
+    // private key is held out-of-band (not in the repo); the plugin .app bundles
+    // iTermCompanionPlugin.{js,sig} and the signature is verified before any of
+    // the plugin runs.
+    private static let publicKeyB64 = "GHS0N02DR3kF7u3gqB5GF52dmre/oUkJuarQzEv8crw="
 
     private let bundleID = "com.googlecode.iterm2.iTermCompanion"
     let client: CompanionPluginClient
