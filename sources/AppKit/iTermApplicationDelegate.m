@@ -1484,11 +1484,13 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
     // Surface paired-device presence (menu bar status item + connect toast).
     [[iTermCompanionPresenceController shared] start];
-    // Give the Companion Device Settings menu item a Mac-and-iPhone glyph.
-    NSMenuItem *companionItem = [self menuItemWithAction:@selector(pairCompanionDevice:)
-                                                 inMenu:[NSApp mainMenu]];
-    companionItem.image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLaptopcomputerAndIphone)
-                                  accessibilityDescription:@"Companion Device Settings"];
+    // Give the Companion Device Settings menu item its glyph and hide it when
+    // the feature is disabled; keep it in sync if the setting changes.
+    [self updateCompanionMenuItem];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateCompanionMenuItem)
+                                                 name:iTermAdvancedSettingsDidChange
+                                               object:nil];
     if (IsTouchBarAvailable()) {
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
     }
@@ -2408,6 +2410,16 @@ static iTermKeyEventReplayer *gReplayer;
         }
     }
     return nil;
+}
+
+// Give the Companion Device Settings menu item its glyph and hide it entirely
+// when companion pairing is disabled (the admin/feature-flag gate).
+- (void)updateCompanionMenuItem {
+    NSMenuItem *companionItem = [self menuItemWithAction:@selector(pairCompanionDevice:)
+                                                 inMenu:[NSApp mainMenu]];
+    companionItem.image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLaptopcomputerAndIphone)
+                                  accessibilityDescription:@"Companion Device Settings"];
+    companionItem.hidden = ![iTermAdvancedSettingsModel companionPairingAllowed];
 }
 
 - (IBAction)pairCompanionDevice:(id)sender {

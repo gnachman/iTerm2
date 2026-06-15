@@ -18,6 +18,7 @@ final class CompanionPresenceController: NSObject {
 
     private var statusItem: NSStatusItem?
     private var observer: (any NSObjectProtocol)?
+    private var settingsObserver: (any NSObjectProtocol)?
     private var wasConnected = false
     private var controller: CompanionPairingController { .shared }
 
@@ -33,6 +34,16 @@ final class CompanionPresenceController: NSObject {
                 self?.refresh(animated: true)
             }
         }
+        // The admin/feature-flag gate can hide the whole feature; track it so the
+        // status item appears and disappears with it (no toast for a flag flip).
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name(iTermAdvancedSettingsDidChange),
+            object: nil,
+            queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.refresh(animated: false)
+            }
+        }
         wasConnected = controller.isConnected
         // animated: false so launching with a device already connected does not
         // pop a toast for a connection that did not just happen.
@@ -40,8 +51,10 @@ final class CompanionPresenceController: NSObject {
     }
 
     private func refresh(animated: Bool) {
-        let paired = controller.hasPairedDevice
-        let connected = controller.isConnected
+        // When companion pairing is disabled there is no presence to show, even
+        // if a stale pairing from before it was disabled still exists.
+        let paired = controller.hasPairedDevice && iTermAdvancedSettingsModel.companionPairingAllowed()
+        let connected = controller.isConnected && paired
 
         if paired {
             updateStatusItem(connected: connected)
