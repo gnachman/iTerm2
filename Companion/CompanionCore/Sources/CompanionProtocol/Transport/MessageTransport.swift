@@ -3,10 +3,10 @@
 //  CompanionCore
 //
 //  The transport abstraction. The companion protocol is deliberately not tied
-//  to a single channel: a transport may be direct TCP (local network /
-//  Bonjour), an iCloud / CloudKit relay, or a remote server. A transport moves
-//  opaque, ordered, reliable frames between the two paired peers and knows
-//  nothing about Noise or the application protocol layered above it.
+//  to a single channel: a transport may be the relay, an iCloud / CloudKit
+//  rendezvous, or a remote server. A transport moves opaque, ordered, reliable
+//  frames between the two paired peers and knows nothing about Noise or the
+//  application protocol layered above it.
 //
 //  Layering:
 //    MessageTransport   - opaque frames between peers (this file)
@@ -39,10 +39,6 @@ public enum TransportError: Error, Equatable, LocalizedError {
     case malformedFrame
     /// The transport-specific connection attempt failed.
     case connectionFailed(String)
-    /// The operating system's local network privacy denied Bonjour access
-    /// (kDNSServiceErr_NoAuth). The user has to grant permission in system
-    /// settings; the apps attach platform-specific instructions.
-    case localNetworkAccessDenied
 
     public var errorDescription: String? {
         switch self {
@@ -54,8 +50,6 @@ public enum TransportError: Error, Equatable, LocalizedError {
             return "Received a malformed frame"
         case .connectionFailed(let reason):
             return reason
-        case .localNetworkAccessDenied:
-            return "The operating system denied local network access"
         }
     }
 }

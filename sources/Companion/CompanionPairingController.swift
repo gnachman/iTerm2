@@ -617,13 +617,8 @@ final class CompanionPairingController: NSObject {
         }
     }
 
-    /// Convert transport errors into actionable text. The transport layer
-    /// translates the OS's Bonjour denial into a typed case; attach the
-    /// macOS-specific remediation here.
+    /// Convert transport errors into actionable text.
     private static func userFacingDescription(of error: Error) -> String {
-        if case TransportError.localNetworkAccessDenied = error {
-            return "macOS denied local network access. Open System Settings > Privacy & Security > Local Network and enable iTerm2, then try again."
-        }
         if let transport = error as? TransportError {
             return transport.errorDescription ?? "\(error)"
         }

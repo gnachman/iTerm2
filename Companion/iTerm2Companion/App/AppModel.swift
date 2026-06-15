@@ -1489,9 +1489,6 @@ final class AppModel {
     }
 
     func userMessage(for error: Error) -> String {
-        if case TransportError.localNetworkAccessDenied = error {
-            return "Local network access is off. Enable it in Settings > Privacy & Security > Local Network > iTerm2 Companion, then try again."
-        }
         if let transport = error as? TransportError {
             return transport.errorDescription ?? "The connection to your Mac was interrupted."
         }

@@ -50,12 +50,5 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>iTerm2 Companion uses the camera to scan the pairing QR code shown by iTerm2 on your Mac.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>iTerm2 Companion finds and connects to iTerm2 on your Mac over your local network.</string>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_iterm2cmpn._tcp</string>
-		<string>_iterm2cmpn._tcp.</string>
-	</array>
 </dict>
 </plist>

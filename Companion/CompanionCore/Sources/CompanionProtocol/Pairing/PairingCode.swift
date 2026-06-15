@@ -28,9 +28,10 @@ public struct PairingCode: Equatable, Sendable {
     public let pairingID: String
 
     /// The relay origin (scheme + host + optional port, e.g.
-    /// "https://relay.example.com") this pairing should use for off-LAN
-    /// connectivity, or nil for a LAN-only (Bonjour) pairing. Canonicalized at
-    /// parse time: https only, no userinfo/path/query/fragment.
+    /// "https://relay.example.com") this pairing uses to reach the peer, or nil
+    /// if none is configured (in which case the pairing cannot connect, the
+    /// relay is the only transport). Canonicalized at parse time: https only, no
+    /// userinfo/path/query/fragment.
     public let relayOrigin: String?
 
     public init(responderStaticPublicKey: Data,

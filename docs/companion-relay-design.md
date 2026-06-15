@@ -2,6 +2,12 @@
 
 Status: agreed design (revised after six security reviews), not yet
 implemented.
+
+NOTE (historical): the LAN / Bonjour (`_iterm2cmpn._tcp`) transport and
+the connector/listener race described below were NOT shipped. The relay
+is the only transport: it works on any network topology, and the extra
+moving parts of a raced LAN path were not worth the latency saved. The
+LAN/Bonjour discussion is retained here only as design rationale.
 Scope: remote (off-LAN) communication between a paired Mac and
 iPhone, including pairing on networks that forbid peer-to-peer
 traffic.
