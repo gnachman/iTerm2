@@ -41,3 +41,11 @@ NOTARIZED_ZIP=iTermCompanion-${VERSION}.zip
 xcrun stapler staple iTermCompanion.app
 zip -ry $NOTARIZED_ZIP iTermCompanion.app
 echo `pwd`/${NOTARIZED_ZIP}
+
+# Publish into the website repo's downloads folder when asked (e.g. `make
+# companion-plugin`).
+if [ -n "$WEBSITE_DOWNLOADS" ]; then
+    mkdir -p "$WEBSITE_DOWNLOADS" || die "Could not create $WEBSITE_DOWNLOADS"
+    cp "$NOTARIZED_ZIP" "$WEBSITE_DOWNLOADS/" || die "Could not copy zip to $WEBSITE_DOWNLOADS"
+    echo "Copied to $WEBSITE_DOWNLOADS/${NOTARIZED_ZIP}"
+fi

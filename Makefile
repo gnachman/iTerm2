@@ -3,6 +3,8 @@ PATH := /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
+# Local checkout of the iterm2-website repo, where built plugins are published.
+ITERM2_WEBSITE ?= $(HOME)/iterm2-website
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
@@ -472,6 +474,12 @@ endif
 
 pwmadapters: force
 	cd pwmplugin/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
+
+# Build, notarize, staple, and zip the companion consent plugin, then copy the
+# notarized zip into the website repo's downloads folder. build.sh prompts for
+# the notarization password, the EdDSA signing key, and the version.
+companion-plugin: force
+	cd iTermCompanion && WEBSITE_DOWNLOADS="$(ITERM2_WEBSITE)/downloads/companion-plugin" ./build.sh
 
 it2cli: force
 	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
