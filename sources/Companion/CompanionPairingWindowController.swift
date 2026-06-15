@@ -34,7 +34,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     private let sasVerifyButton = NSButton(title: "Verify", target: nil, action: nil)
     private let sasCancelButton = NSButton(title: "Cancel Pairing", target: nil, action: nil)
     private var gateAction: (() -> Void)?
-    private var currentGate: CompanionPairingController.AIGate?
+    private var currentGate: CompanionPairingController.Gate?
     private var gateObservers: [any NSObjectProtocol] = []
     // The plugin check is a filesystem probe with no change notification, so
     // while a blocked state is showing we poll for it.
@@ -92,27 +92,40 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     /// .allowed would needlessly regenerate the QR and pairing id).
     private func refreshGateState() {
         guard window?.isVisible == true else { return }
-        let gate = CompanionPairingController.aiGate()
+        let gate = CompanionPairingController.gate()
         guard gate != currentGate else { return }
         let wasBlocked = currentGate != nil && currentGate != .allowed
         currentGate = gate
         DLog("Companion pairing window: gate is now \(gate)")
         switch gate {
-        case .adminDisabled:
+        case .aiAdminDisabled:
             // No remedy to offer: this is an administrator decision.
             showGate(message: "Generative AI features have been disabled. Check with your system administrator.",
                      buttonTitle: nil,
                      action: nil)
-        case .pluginMissing:
+        case .aiPluginMissing:
             showGate(message: "You must install the AI plugin before you can pair a companion device.",
                      buttonTitle: "Reveal in Settings") {
                 PreferencePanel.sharedInstance().openToPreference(withKey: kPhonyPreferenceKeyInstallAIPlugin)
             }
-        case .consentNeeded:
+        case .aiConsentNeeded:
             showGate(message: "You must enable AI features in settings before you can pair a companion device.",
                      buttonTitle: "Reveal") {
                 PreferencePanel.sharedInstance().openToPreference(withKey: kPreferenceKeyEnableAI)
             }
+        case .companionAdminDisabled:
+            // No remedy to offer: this is an administrator decision.
+            showGate(message: "Companion device pairing has been disabled. Check with your system administrator.",
+                     buttonTitle: nil,
+                     action: nil)
+        case .companionPluginMissing:
+            showGate(message: "You must install the iTerm2 Companion plugin before you can pair a device.",
+                     buttonTitle: nil,
+                     action: nil)
+        case .companionConsentNeeded:
+            showGate(message: "You must enable companion device pairing in settings before you can pair a device.",
+                     buttonTitle: nil,
+                     action: nil)
         case .allowed:
             stopGatePolling()
             _ = wasBlocked  // The presentation below is correct either way.

@@ -110,26 +110,30 @@ final class CompanionPairingController: NSObject {
         return nil
     }
 
-    /// The same three gates iTermAITermGatekeeper.check() applies, evaluated
-    /// without its alerts. Pairing (and even listening for a paired device) is
-    /// pointless without working AI features.
-    enum AIGate: Equatable {
+    /// Everything that must hold to pair, or even listen for a paired device.
+    /// Mirrors the AI feature's gating (admin setting + signed plugin + secure
+    /// consent) twice: the AI prerequisite (the companion bridges AI chat) and
+    /// the companion feature itself. Distinct cases so the UI names the remedy.
+    enum Gate: Equatable {
         case allowed
-        case adminDisabled
-        case pluginMissing
-        case consentNeeded
+        case aiAdminDisabled
+        case aiPluginMissing
+        case aiConsentNeeded
+        case companionAdminDisabled
+        case companionPluginMissing
+        case companionConsentNeeded
     }
 
-    static func aiGate() -> AIGate {
-        if !iTermAdvancedSettingsModel.generativeAIAllowed() {
-            return .adminDisabled
-        }
-        if !iTermAITermGatekeeper.pluginInstalled() {
-            return .pluginMissing
-        }
-        if !SecureUserDefaults.instance.enableAI.value {
-            return .consentNeeded
-        }
+    static func gate() -> Gate {
+        // AI prerequisites.
+        if !iTermAdvancedSettingsModel.generativeAIAllowed() { return .aiAdminDisabled }
+        if !iTermAITermGatekeeper.pluginInstalled() { return .aiPluginMissing }
+        if !SecureUserDefaults.instance.enableAI.value { return .aiConsentNeeded }
+        // Companion-specific: admin policy, the signed companion plugin (the
+        // only outbound path to the relay), and the user's secure opt-in.
+        if !iTermAdvancedSettingsModel.companionPairingAllowed() { return .companionAdminDisabled }
+        if !CompanionPlugin.instance().isSuccess { return .companionPluginMissing }
+        if !SecureUserDefaults.instance.enableCompanionPairing.value { return .companionConsentNeeded }
         return .allowed
     }
 
@@ -155,7 +159,7 @@ final class CompanionPairingController: NSObject {
     }
 
     private func gateMayHaveChanged() {
-        if Self.aiGate() == .allowed {
+        if Self.gate() == .allowed {
             resumePairedListeningIfNeeded()
         } else if acceptTask != nil {
             DLog("Companion: AI features became unavailable; stopping listener")
@@ -168,7 +172,7 @@ final class CompanionPairingController: NSObject {
     @objc func resumePairedListeningIfNeeded() {
         installLogHandler()
         relayLog("resumePairedListeningIfNeeded called")
-        guard Self.aiGate() == .allowed else {
+        guard Self.gate() == .allowed else {
             DLog("Companion: not listening; AI features are unavailable")
             relayLog("resume: SKIP (AI gate not allowed)")
             return
@@ -368,7 +372,7 @@ final class CompanionPairingController: NSObject {
     private func relayLog(_ message: String) {
         NSFuckingLog("%@", "COMPANIONRELAY \(message) "
                      + "[bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) "
-                     + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.aiGate())]")
+                     + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]")
     }
 
     private func startListening(pairingID: String) throws {
@@ -383,10 +387,20 @@ final class CompanionPairingController: NSObject {
         let roomName = relayOrigin == nil ? "n/a"
             : RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
         relayLog("startListening pid=\(pairingID) relayOrigin=\(relayOrigin ?? "nil") room=\(roomName)")
+        // Route relay egress through the consent plugin (the only outbound path).
+        // startListening is only reached when the gate is allowed, so the plugin
+        // is installed and verified; fall back defensively just in case.
+        let webSocketFactory: RelayWebSocketFactory
+        if case .success(let plugin) = CompanionPlugin.instance() {
+            webSocketFactory = plugin.webSocketFactory()
+        } else {
+            webSocketFactory = URLSessionRelayWebSocketFactory()
+        }
         let listener = try CompanionTransports.listener(
             pairingID: pairingID,
             responderStaticPublicKey: keyPair.publicKey,
             relayOrigin: relayOrigin,
+            webSocketFactory: webSocketFactory,
             // Sign the mac's park once the phone has couriered the room secret
             // and the room is established; nil keeps an open-mode park.
             roomSecret: { CompanionMacIdentity.pairedRoomSecret() })
