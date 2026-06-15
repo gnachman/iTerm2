@@ -143,6 +143,11 @@ class FilteringUpdater: HexAddressFormatting {
     }
 
     func didAppendToLineBuffer() {
+        // Extend the stopping point to cover the newly appended content. Without this, a search
+        // that is already in progress (lastPosition == nil, status == .Searching) would stop at the
+        // stale stopAt computed before the append and never examine the new line. For a bounded
+        // absLineRange this is a no-op since computedStopAt stays pinned to the range boundary.
+        stopAt = computedStopAt
         if lastPosition != nil && ![.Searching, .Matched].contains(context.status) {
             // Ensure the next call to update() is able to continue searching even though the last
             // search did not return any results.

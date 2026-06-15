@@ -535,6 +535,10 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- A live filter no longer drops content that
+  arrives while it is mid-search; such lines
+  could previously be missing from the filtered
+  view until more output came in.
 - Copying selected text from a porthole (such as
   rendered markdown) now works in apps that
   prefer rich text.
