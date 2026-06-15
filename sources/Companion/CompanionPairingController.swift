@@ -388,20 +388,15 @@ final class CompanionPairingController: NSObject {
     private func installLogHandler() {
         CompanionLog.handler = { message in
             DLog("\(message)")
-            // TEMP DEBUG: mirror the transport/crypto layer's logs to NSLog too,
-            // tagged so the relay lifecycle is greppable without the giant DLog.
-            NSFuckingLog("%@", "COMPANIONRELAY transport: \(message)")
         }
     }
 
-    /// TEMP DEBUG: one-line, greppable trace of the relay lifecycle, stamped
-    /// with the state that actually drives the single-mac-slot logic. Filter the
-    /// system log with: `log stream --predicate 'eventMessage CONTAINS "COMPANIONRELAY"'`
-    /// (or grep stderr for COMPANIONRELAY).
+    /// One-line trace of the relay lifecycle, stamped with the state that drives
+    /// the single-mac-slot logic.
     private func relayLog(_ message: String) {
-        NSFuckingLog("%@", "COMPANIONRELAY \(message) "
-                     + "[bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) "
-                     + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]")
+        DLog("Companion relay: \(message) "
+             + "[bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) "
+             + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]")
     }
 
     private func startListening(pairingID: String) throws {
