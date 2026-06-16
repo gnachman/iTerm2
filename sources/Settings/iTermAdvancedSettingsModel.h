@@ -191,6 +191,14 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 
 + (BOOL)enableSemanticHistoryOnNetworkMounts;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
++ (BOOL)enableBlackhole;
++ (int)blackholeSizeMode;
++ (double)blackholeRadius;
++ (double)blackholeLensDepth;
++ (double)blackholeTokenAreaMin;
++ (double)blackholeTokenAreaMax;
++ (double)blackholeWorkArea;
++ (int)blackholeFPS;
 + (BOOL)enableZoomMenu;
 + (BOOL)escapeWithQuotes;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;

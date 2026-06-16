@@ -13,6 +13,8 @@
 #import "iTermBackgroundColorRenderer.h"
 #import "iTermBadgeRenderer.h"
 #import "iTermBroadcastStripesRenderer.h"
+#import "Renderers/iTermBlackholeRenderer.h"
+#import "Renderers/iTermBlackholeRenderer.m"
 #import "iTermCopyBackgroundRenderer.h"
 #import "iTermCursorGuideRenderer.h"
 #import "iTermCursorRenderer.h"
@@ -109,6 +111,10 @@ typedef struct {
 @end
 
 @implementation iTermMetalDriver {
+    iTermBlackholeRenderer *_blackholeRenderer;
+    NSColor *_lastCursorColor;
+    NSTimeInterval _cursorColorChangeTime;
+
     iTermMarginRenderer *_marginRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
@@ -217,6 +223,7 @@ typedef struct {
         _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:device];
         _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:device];
         _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:device];
+        _blackholeRenderer = [[iTermBlackholeRenderer alloc] initWithDevice:device];
         _indicatorRenderer = [[iTermIndicatorRenderer alloc] initWithDevice:device];
         _broadcastStripesRenderer = [[iTermBroadcastStripesRenderer alloc] initWithDevice:device];
         _cursorGuideRenderer = [[iTermCursorGuideRenderer alloc] initWithDevice:device];
@@ -696,7 +703,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     // behind text and we need to use the fancy subpixel antialiasing algorithm, create it now.
     // This has to be done before updates so the copyBackgroundRenderer's `enabled` flag can be
     // set properly.
-    if (!iTermTextIsMonochrome()) {
+    if (!iTermTextIsMonochrome() || [iTermAdvancedSettingsModel enableBlackhole]) {
         [frameData createIntermediateRenderPassDescriptor];
         [frameData createTemporaryRenderPassDescriptor];
     }
@@ -812,7 +819,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 }
 
 - (BOOL)shouldCreateIntermediateRenderPassDescriptor:(iTermMetalFrameData *)frameData {
-    return !iTermTextIsMonochrome();
+    return !iTermTextIsMonochrome() || [iTermAdvancedSettingsModel enableBlackhole];
 }
 
 - (void)updateRenderersForNewFrameData:(iTermMetalFrameData *)frameData {
@@ -897,7 +904,10 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 }
 
 - (id<MTLTexture>)destinationTextureForFrameData:(iTermMetalFrameData *)frameData {
-    if (frameData.debugInfo) {
+    if (!frameData.destinationDrawable) {
+        return nil;
+    }
+    if (frameData.debugInfo || [iTermAdvancedSettingsModel enableBlackhole]) {
         // Render to offscreen first
         MTLPixelFormat pixelFormat;
         if ([iTermAdvancedSettingsModel hdrCursor]) {
@@ -905,17 +915,23 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         } else {
             pixelFormat = MTLPixelFormatBGRA8Unorm;
         }
-        MTLTextureDescriptor *textureDescriptor =
-            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixelFormat
-                                                               width:frameData.destinationDrawable.texture.width
-                                                              height:frameData.destinationDrawable.texture.height
-                                                           mipmapped:NO];
-        id<MTLTexture> texture = [frameData.device newTextureWithDescriptor:textureDescriptor];
+        id<MTLTexture> texture = [frameData.fullSizeTexturePool requestTextureOfSize:simd_make_uint2((uint)frameData.destinationDrawable.texture.width, (uint)frameData.destinationDrawable.texture.height)];
+        if (!texture) {
+            MTLTextureDescriptor *textureDescriptor =
+                [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixelFormat
+                                                                   width:frameData.destinationDrawable.texture.width
+                                                                  height:frameData.destinationDrawable.texture.height
+                                                               mipmapped:NO];
+            textureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+            texture = [frameData.device newTextureWithDescriptor:textureDescriptor];
+            [frameData.fullSizeTexturePool stampTextureWithGeneration:texture];
+        }
         texture.label = @"Offscreen destination";
         [iTermTexture setBytesPerRow:frameData.destinationDrawable.texture.width * 4
                          rawDataSize:frameData.destinationDrawable.texture.width * frameData.destinationDrawable.texture.height * 4
                      samplesPerPixel:4
                           forTexture:texture];
+        frameData.blackholeOffscreenTexture = texture;
         return texture;
     } else {
         // Render directly to drawable
@@ -1362,8 +1378,8 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         return;
     }
     _copyBackgroundRenderer.enabled = (frameData.intermediateRenderPassDescriptor != nil);
-    // Enable copy-to-drawable when using deferred drawable acquisition
-    _copyToDrawableRenderer.enabled = frameData.deferCurrentDrawable;
+    // Enable copy-to-drawable when using deferred drawable acquisition or blackhole
+    _copyToDrawableRenderer.enabled = frameData.deferCurrentDrawable || [iTermAdvancedSettingsModel enableBlackhole];
     _underlineCompositeRenderer.enabled = [iTermAdvancedSettingsModel useMultiPassUnderlineRenderer];
 }
 
@@ -2232,7 +2248,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
     const int pass = frameData.currentPass;
 
     BOOL useTemporaryTexture;
-    if (iTermTextIsMonochrome()) {
+    if (iTermTextIsMonochrome() && ![iTermAdvancedSettingsModel enableBlackhole]) {
         useTemporaryTexture = NO;
     } else {
         useTemporaryTexture = YES;
@@ -2469,7 +2485,7 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
     DLog(@"Finish drawing frameData %@", frameData);
     BOOL shouldCopyToDrawable = YES;
 
-    if (iTermTextIsMonochromeOnMojave()) {
+    if (iTermTextIsMonochromeOnMojave() && ![iTermAdvancedSettingsModel enableBlackhole]) {
         shouldCopyToDrawable = NO;
     }
 
@@ -2490,9 +2506,59 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         [frameData.renderEncoder endEncoding];
 
         [self updateRenderEncoderForCurrentPass:frameData label:@"Copy to drawable"];
-        [self drawRenderer:_copyToDrawableRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+
+        if ([iTermAdvancedSettingsModel enableBlackhole]) {
+            @autoreleasepool {
+                iTermBlackholeRendererTransientState *tState = [_blackholeRenderer createTransientStateForConfiguration:frameData.cellConfiguration commandBuffer:frameData.commandBuffer];
+                [frameData setTransientState:tState forRenderer:_blackholeRenderer];
+                iTermCopyToDrawableRendererTransientState *dState = [frameData transientStateForRenderer:_copyToDrawableRenderer];
+                tState.sourceTexture = dState.sourceTexture ?: frameData.destinationTexture;
+
+                iTermBlackholeUniforms uniforms;
+                memset(&uniforms, 0, sizeof(uniforms));
+                uniforms.resolution = simd_make_float2(tState.sourceTexture.width, tState.sourceTexture.height);
+                static NSTimeInterval sBaseTime = 0;
+                if (sBaseTime == 0) {
+                    sBaseTime = [NSDate timeIntervalSinceReferenceDate];
+                }
+                uniforms.time = (float)([NSDate timeIntervalSinceReferenceDate] - sBaseTime);
+                uniforms.timeDelta = 0.016; // rough estimate
+
+                NSColor *c = [frameData.perFrameState metalDriverCursorInfo].cursorColor ?: [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1];
+                NSColor *rgbC = [c colorUsingColorSpace:[NSColorSpace sRGBColorSpace]] ?: [NSColor colorWithSRGBRed:0 green:0 blue:0 alpha:1];
+                if (![_lastCursorColor isEqual:rgbC]) {
+                    _lastCursorColor = rgbC;
+                    _cursorColorChangeTime = uniforms.time;
+                }
+                uniforms.currentCursorColor = simd_make_float4(rgbC.redComponent, rgbC.greenComponent, rgbC.blueComponent, rgbC.alphaComponent);
+                uniforms.previousCursorColor = simd_make_float4(rgbC.redComponent, rgbC.greenComponent, rgbC.blueComponent, rgbC.alphaComponent);
+                uniforms.timeCursorChange = uniforms.time - _cursorColorChangeTime;
+                uniforms.sizeMode = (int)[iTermAdvancedSettingsModel blackholeSizeMode];
+                uniforms.holeRadius = [iTermAdvancedSettingsModel blackholeRadius];
+                uniforms.lensDepth = [iTermAdvancedSettingsModel blackholeLensDepth];
+                uniforms.tokenAreaMin = [iTermAdvancedSettingsModel blackholeTokenAreaMin];
+                uniforms.tokenAreaMax = [iTermAdvancedSettingsModel blackholeTokenAreaMax];
+                uniforms.workArea = [iTermAdvancedSettingsModel blackholeWorkArea];
+
+                tState.uniforms = uniforms;
+                [_blackholeRenderer drawWithFrameData:frameData transientState:tState];
+
+                // Force continuous redrawing to ensure the shader animation is smooth.
+                // Minimum framerate is bounded by iTerm2's activeUpdateCadence.
+                double fps = [iTermAdvancedSettingsModel blackholeFPS];
+                double minFps = [iTermAdvancedSettingsModel activeUpdateCadence];
+                if (fps < minFps) {
+                    fps = minFps;
+                }
+                if (fps > 0) {
+                    self.needsDrawAfterDuration = MIN(self.needsDrawAfterDuration, 1.0/fps);
+                }
+            }
+        } else {
+            [self drawRenderer:_copyToDrawableRenderer
+                     frameData:frameData
+                          stat:iTermMetalFrameDataStatPqEnqueueCopyToDrawable];
+        }
     }
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToDrawable ofBlock:^{
         DLog(@"  endEncoding %@", frameData);

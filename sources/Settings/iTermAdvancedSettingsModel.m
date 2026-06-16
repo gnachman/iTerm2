@@ -448,6 +448,16 @@ DEFINE_BOOL(showPinnedIndicator, NO, SECTION_HOTKEY @"Show indicator for pinned 
 
 #pragma mark General
 
+#define SECTION_BLACKHOLE @"Blackhole: "
+DEFINE_BOOL(enableBlackhole, NO, SECTION_BLACKHOLE @"Enable Blackhole background effect.\nYou must restart iTerm2 or open a new window for it to take full effect.");
+DEFINE_INT(blackholeSizeMode, 2, SECTION_BLACKHOLE @"Blackhole Size Mode.\n0=Pomodoro, 1=Tokens (OSC 12), 2=Demo.");
+DEFINE_FLOAT(blackholeRadius, 0.04, SECTION_BLACKHOLE @"Blackhole Radius (default 0.04).");
+DEFINE_FLOAT(blackholeLensDepth, 13.0, SECTION_BLACKHOLE @"Blackhole Lens Depth (default 13.0).");
+DEFINE_FLOAT(blackholeTokenAreaMin, 0.005, SECTION_BLACKHOLE @"Token Mode Area Min (default 0.005).");
+DEFINE_FLOAT(blackholeTokenAreaMax, 0.05, SECTION_BLACKHOLE @"Token Mode Area Max (default 0.05).");
+DEFINE_FLOAT(blackholeWorkArea, 0.33, SECTION_BLACKHOLE @"Protected Work Area at bottom (0.0 to 1.0, default 0.33).");
+DEFINE_INT(blackholeFPS, 60, SECTION_BLACKHOLE @"Blackhole Animation FPS (minimum is iTerm2's active update cadence, default 60).");
+
 #define SECTION_GENERAL @"General: "
 
 DEFINE_SETTABLE_STRING(searchCommand, SearchCommand, @"https://google.com/search?q=%@", SECTION_GENERAL @"Template for URL of search engine.\niTerm2 replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");

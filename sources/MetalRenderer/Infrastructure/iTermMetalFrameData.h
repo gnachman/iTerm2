@@ -154,6 +154,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 #endif
 @property (nonatomic, strong, nullable) id<CAMetalDrawable> destinationDrawable;
 @property (nonatomic, strong, nullable) id<MTLTexture> destinationTexture;
+@property (nonatomic, strong, nullable) id<MTLTexture> blackholeOffscreenTexture;
 @property (nonatomic, strong, nullable) MTLRenderPassDescriptor *renderPassDescriptor;
 @property (nonatomic, strong, nullable) MTLRenderPassDescriptor *debugRealRenderPassDescriptor;
 @property (nonatomic, readonly, nullable) iTermMetalBufferPoolContext *framePoolContext;

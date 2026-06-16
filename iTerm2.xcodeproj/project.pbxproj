@@ -1767,6 +1767,7 @@
 		A62A7A092F98838F007CAA0B /* iTermText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F32F98838F007CAA0B /* iTermText.metal */; };
 		A62A7A0A2F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E42F98838F007CAA0B /* iTermBackgroundImage.metal */; };
 		A62A7A0B2F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CAA0B /* iTermBackgroundColor.metal */; };
+		A62A7A0B2F98838F007CBB0C /* iTermBlackhole.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CBB0C /* iTermBlackhole.metal */; };
 		A62A7A0C2F98838F007CAA0B /* iTermTimestamps.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F62F98838F007CAA0B /* iTermTimestamps.metal */; };
 		A62A7A0D2F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79EB2F98838F007CAA0B /* iTermFulScreenFlash.metal */; };
 		A62A7A0E2F98838F007CAA0B /* iTermBlock.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E62F98838F007CAA0B /* iTermBlock.metal */; };
@@ -1792,6 +1793,7 @@
 		A62A7A222F98838F007CAA0B /* iTermText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F32F98838F007CAA0B /* iTermText.metal */; };
 		A62A7A232F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E42F98838F007CAA0B /* iTermBackgroundImage.metal */; };
 		A62A7A242F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CAA0B /* iTermBackgroundColor.metal */; };
+		A62A7A242F98838F007CBB0C /* iTermBlackhole.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CBB0C /* iTermBlackhole.metal */; };
 		A62A7A252F98838F007CAA0B /* iTermTimestamps.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F62F98838F007CAA0B /* iTermTimestamps.metal */; };
 		A62A7A262F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79EB2F98838F007CAA0B /* iTermFulScreenFlash.metal */; };
 		A62A7A272F98838F007CAA0B /* iTermBlock.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E62F98838F007CAA0B /* iTermBlock.metal */; };
@@ -1817,6 +1819,7 @@
 		A62A7A3B2F98838F007CAA0B /* iTermText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F32F98838F007CAA0B /* iTermText.metal */; };
 		A62A7A3C2F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E42F98838F007CAA0B /* iTermBackgroundImage.metal */; };
 		A62A7A3D2F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CAA0B /* iTermBackgroundColor.metal */; };
+		A62A7A3D2F98838F007CBB0C /* iTermBlackhole.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CBB0C /* iTermBlackhole.metal */; };
 		A62A7A3E2F98838F007CAA0B /* iTermTimestamps.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F62F98838F007CAA0B /* iTermTimestamps.metal */; };
 		A62A7A3F2F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79EB2F98838F007CAA0B /* iTermFulScreenFlash.metal */; };
 		A62A7A402F98838F007CAA0B /* iTermBlock.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E62F98838F007CAA0B /* iTermBlock.metal */; };
@@ -1840,6 +1843,7 @@
 		A62A7A522F98838F007CAA0B /* iTermText.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F32F98838F007CAA0B /* iTermText.metal */; };
 		A62A7A532F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E42F98838F007CAA0B /* iTermBackgroundImage.metal */; };
 		A62A7A542F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CAA0B /* iTermBackgroundColor.metal */; };
+		A62A7A542F98838F007CBB0C /* iTermBlackhole.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E32F98838F007CBB0C /* iTermBlackhole.metal */; };
 		A62A7A552F98838F007CAA0B /* iTermTimestamps.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79F62F98838F007CAA0B /* iTermTimestamps.metal */; };
 		A62A7A562F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79EB2F98838F007CAA0B /* iTermFulScreenFlash.metal */; };
 		A62A7A572F98838F007CAA0B /* iTermBlock.metal in Sources */ = {isa = PBXBuildFile; fileRef = A62A79E62F98838F007CAA0B /* iTermBlock.metal */; };
@@ -7246,6 +7250,7 @@
 		A62A79AE2F98835A007CAA0B /* UnderlineCompositeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnderlineCompositeRenderer.swift; sourceTree = "<group>"; };
 		A62A79AF2F98835A007CAA0B /* UnderlineRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnderlineRenderer.swift; sourceTree = "<group>"; };
 		A62A79E32F98838F007CAA0B /* iTermBackgroundColor.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = iTermBackgroundColor.metal; sourceTree = "<group>"; };
+		A62A79E32F98838F007CBB0C /* iTermBlackhole.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = iTermBlackhole.metal; sourceTree = "<group>"; };
 		A62A79E42F98838F007CAA0B /* iTermBackgroundImage.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = iTermBackgroundImage.metal; sourceTree = "<group>"; };
 		A62A79E52F98838F007CAA0B /* iTermBadge.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = iTermBadge.metal; sourceTree = "<group>"; };
 		A62A79E62F98838F007CAA0B /* iTermBlock.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = iTermBlock.metal; sourceTree = "<group>"; };
@@ -9655,28 +9660,8 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = PerformanceTests;
-			sourceTree = "<group>";
-		};
-		A6A723AF2DC04C2200A8115D /* ModernTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = ModernTests;
-			sourceTree = "<group>";
-		};
+		9C0F690213C696BCC28C2EDF /* PerformanceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PerformanceTests; sourceTree = "<group>"; };
+		A6A723AF2DC04C2200A8115D /* ModernTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ModernTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -9858,7 +9843,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0464AB0D006CD2EC7F000001 = {
+		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
 				A6BAB25D2F8CCCD10063FA7F /* cc-status */,
@@ -11909,6 +11894,7 @@
 				A62A79F12F98838F007CAA0B /* iTermShaderTypes.h */,
 				A62A79F42F98838F007CAA0B /* iTermTextShaderCommon.h */,
 				A62A79E32F98838F007CAA0B /* iTermBackgroundColor.metal */,
+				A62A79E32F98838F007CBB0C /* iTermBlackhole.metal */,
 				A62A79E42F98838F007CAA0B /* iTermBackgroundImage.metal */,
 				A62A79E52F98838F007CAA0B /* iTermBadge.metal */,
 				A62A79E62F98838F007CAA0B /* iTermBlock.metal */,
@@ -17552,7 +17538,6 @@
 					};
 					759637992593AE0700E278CC = {
 						CreatedOnToolsVersion = 12.3;
-						DevelopmentTeam = H7V7XYVQ7D;
 						LastSwiftMigration = 1410;
 						ProvisioningStyle = Automatic;
 					};
@@ -17567,12 +17552,10 @@
 					};
 					A60593B1257DF9A500CACEE6 = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
 					};
 					A663197722FF349700C502BD = {
 						CreatedOnToolsVersion = 10.2;
-						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
 					};
 					A66717851DCE36C3000CE608 = {
@@ -17581,7 +17564,6 @@
 					};
 					A6866B6623CAA10A00ACD94C = {
 						CreatedOnToolsVersion = 11.3;
-						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
 					};
 					A69FEEB92E123B8700AFF7A8 = {
@@ -17616,7 +17598,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 0464AB0D006CD2EC7F000001;
+			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			packageReferences = (
 				A62E3BC62E1CC674002DF8C3 /* XCLocalSwiftPackageReference "WebExtensionsFramework" */,
 			);
@@ -19982,6 +19964,7 @@
 				A62A7A092F98838F007CAA0B /* iTermText.metal in Sources */,
 				A62A7A0A2F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */,
 				A62A7A0B2F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */,
+				A62A7A0B2F98838F007CBB0C /* iTermBlackhole.metal in Sources */,
 				A62A7A0C2F98838F007CAA0B /* iTermTimestamps.metal in Sources */,
 				A62A7A0D2F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */,
 				A62A7A0E2F98838F007CAA0B /* iTermBlock.metal in Sources */,
@@ -20017,6 +20000,7 @@
 				A62A7A3B2F98838F007CAA0B /* iTermText.metal in Sources */,
 				A62A7A3C2F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */,
 				A62A7A3D2F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */,
+				A62A7A3D2F98838F007CBB0C /* iTermBlackhole.metal in Sources */,
 				A62A7A3E2F98838F007CAA0B /* iTermTimestamps.metal in Sources */,
 				A62A7A3F2F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */,
 				A62A7A402F98838F007CAA0B /* iTermBlock.metal in Sources */,
@@ -20073,6 +20057,7 @@
 				A62A7A522F98838F007CAA0B /* iTermText.metal in Sources */,
 				A62A7A532F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */,
 				A62A7A542F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */,
+				A62A7A542F98838F007CBB0C /* iTermBlackhole.metal in Sources */,
 				A62A7A552F98838F007CAA0B /* iTermTimestamps.metal in Sources */,
 				A62A7A562F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */,
 				A62A7A572F98838F007CAA0B /* iTermBlock.metal in Sources */,
@@ -20857,6 +20842,7 @@
 				A62A7A222F98838F007CAA0B /* iTermText.metal in Sources */,
 				A62A7A232F98838F007CAA0B /* iTermBackgroundImage.metal in Sources */,
 				A62A7A242F98838F007CAA0B /* iTermBackgroundColor.metal in Sources */,
+				A62A7A242F98838F007CBB0C /* iTermBlackhole.metal in Sources */,
 				A62A7A252F98838F007CAA0B /* iTermTimestamps.metal in Sources */,
 				A62A7A262F98838F007CAA0B /* iTermFulScreenFlash.metal in Sources */,
 				A62A7A272F98838F007CAA0B /* iTermBlock.metal in Sources */,
@@ -22130,12 +22116,13 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -22851,10 +22838,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -22934,10 +22923,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -22967,6 +22958,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -23008,10 +23000,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23041,6 +23035,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -23082,10 +23077,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23115,6 +23112,7 @@
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -23156,9 +23154,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23221,9 +23221,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23278,9 +23280,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23335,9 +23339,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -23421,12 +23427,13 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -23943,8 +23950,10 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -24013,8 +24022,10 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -24075,8 +24086,10 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -24137,8 +24150,10 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -24447,10 +24462,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -24534,10 +24551,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -24614,10 +24633,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -24694,10 +24715,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -25118,10 +25141,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -25200,10 +25225,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -25274,10 +25301,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -25348,10 +25377,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -26174,13 +26205,13 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -26273,12 +26304,13 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = H7V7XYVQ7D;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				FRAMEWORK_SEARCH_PATHS = (

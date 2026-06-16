@@ -167,4 +167,21 @@ typedef struct {
     float scale;
 } iTermUnderlineSpanInfo;
 
+typedef struct {
+    vector_float2 resolution;
+    float time;
+    float timeDelta;
+    vector_float2 currentCursorPosition;
+    vector_float2 previousCursorPosition;
+    vector_float4 currentCursorColor;
+    vector_float4 previousCursorColor;
+    float timeCursorChange;
+    int sizeMode;
+    float holeRadius;
+    float lensDepth;
+    float tokenAreaMin;
+    float tokenAreaMax;
+    float workArea;
+} iTermBlackholeUniforms;
+
 #endif

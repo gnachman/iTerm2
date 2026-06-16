@@ -407,6 +407,9 @@ static NSInteger gNextFrameDataNumber;
     if (self.underlineOffscreenRPD) {
         [self.fullSizeTexturePool returnTexture:self.underlineOffscreenRPD.colorAttachments[0].texture];
     }
+    if (self.blackholeOffscreenTexture) {
+        [self.fullSizeTexturePool returnTexture:self.blackholeOffscreenTexture];
+    }
 #if ENABLE_STATS
     double duration;
 
