@@ -679,6 +679,41 @@ class VT100ScreenTests: XCTestCase {
         })
     }
 
+    func testCommandMarkAtReturnsNilWhenLineIsOutOfBounds() {
+        let screen = self.screen(width: 10, height: 4)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var range = VT100GridWindowedRange()
+            let negative = mutableState.commandMark(at: VT100GridCoordMake(0, -1),
+                                                    mustHaveCommand: false,
+                                                    range: &range)
+            XCTAssertNil(negative)
+
+            let tooLargeY = mutableState.numberOfLines
+            let tooLarge = mutableState.commandMark(at: VT100GridCoordMake(0, tooLargeY),
+                                                    mustHaveCommand: false,
+                                                    range: &range)
+            XCTAssertNil(tooLarge)
+        })
+    }
+
+    func testCommandMarkAtReturnsNilWhenNoMarkOnLine() {
+        let screen = self.screen(width: 10, height: 4)
+
+        appendLinesNoNewline([
+            "https://example.com",
+            "next line"
+        ], screen: screen)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var range = VT100GridWindowedRange()
+            let mark = mutableState.commandMark(at: VT100GridCoordMake(0, 0),
+                                                mustHaveCommand: true,
+                                                range: &range)
+            XCTAssertNil(mark)
+        })
+    }
+
     private func commonNoteResizeRegressionTest(initialRange range1: VT100GridCoordRange,
                                                 intermediateRange range2: VT100GridCoordRange) {
         var screen = self.screen(width: 80, height: 25)
