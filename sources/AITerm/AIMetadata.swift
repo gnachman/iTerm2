@@ -601,15 +601,6 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .anthropic
     )
-    private static let claude_4_opus = Model(
-        name: "claude-opus-4-0",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 32_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
     // Deprecated by DeepSeek on 2026-07-24; remove after that date
     private static let deepseek_coder = Model(
         name: "deepseek-coder",
@@ -700,7 +691,6 @@ class AIMetadata: NSObject {
         AIMetadata.claude_4_5_haiku,
         AIMetadata.claude_4_sonnet,
         AIMetadata.claude_4_1_opus,
-        AIMetadata.claude_4_opus,
 
         // MARK: - Local Models (via Ollama)
 
