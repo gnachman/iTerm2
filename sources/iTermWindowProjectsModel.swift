@@ -117,7 +117,7 @@ final class iTermWindowProject: NSObject, Codable {
     }
 
     @objc static func thumbnailURL(for uuid: UUID) -> URL {
-        return thumbnailsDirectoryURL.appendingPathComponent("\(uuid.uuidString).jpg")
+        return thumbnailsDirectoryURL.appendingPathComponent("\(uuid.uuidString).png")
     }
 
     static func deleteThumbnail(for uuid: UUID) {
@@ -156,8 +156,8 @@ final class iTermWindowProject: NSObject, Codable {
         
         NSGraphicsContext.restoreGraphicsState()
         
-        if let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.5]) {
-            try? jpegData.write(to: thumbnailURL(for: uuid))
+        if let pngData = bitmapRep.representation(using: .png, properties: [:]) {
+            try? pngData.write(to: thumbnailURL(for: uuid))
         }
     }
 
