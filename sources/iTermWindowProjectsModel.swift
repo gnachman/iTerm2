@@ -199,7 +199,7 @@ final class iTermWindowProject: NSObject, Codable {
 
     /// Returns all currently open windows associated with `project`.
     func liveWindows(for project: iTermWindowProject) -> [PseudoTerminal] {
-        let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
+        let all = iTermController.sharedInstance().terminals() ?? []
         return all.filter { t in
             guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
             return liveAssociations[wn] == project.id
@@ -208,7 +208,7 @@ final class iTermWindowProject: NSObject, Codable {
 
     /// True if `project` has at least one open window associated with it.
     func hasLiveWindows(for project: iTermWindowProject) -> Bool {
-        let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
+        let all = iTermController.sharedInstance().terminals() ?? []
         return all.contains { t in
             guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
             return liveAssociations[wn] == project.id
@@ -239,7 +239,7 @@ final class iTermWindowProject: NSObject, Codable {
             liveAssociations.removeValue(forKey: wn)
             return
         }
-        let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
+        let all = iTermController.sharedInstance().terminals() ?? []
         guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
             liveAssociations.removeValue(forKey: wn)
             return
@@ -281,26 +281,54 @@ final class iTermWindowProject: NSObject, Codable {
     // MARK: Restoration
 
     func restoreWindow(_ archived: iTermArchivedWindow) {
-        if let parent = parentProject(of: archived) {
-            parent.lastUsed = Date()
-            save()
-        }
+        guard let project = parentProject(of: archived) else { return }
         guard let arrangement = archived.arrangement else { return }
-        iTermController.sharedInstance().tryOpenArrangement(
-            arrangement,
-            named: nil,
-            asTabsInWindow: nil)
+        
+        let lionFullScreen = PseudoTerminal.arrangementIsLionFullScreen(arrangement)
+        PseudoTerminal.performWhenWindowCreationIsSafe(forLionFullScreen: lionFullScreen) { [weak self] in
+            guard let self = self else { return }
+            guard let term = PseudoTerminal(
+                arrangement: arrangement,
+                named: nil,
+                forceOpeningHotKeyWindow: false) else { return }
+            
+            iTermController.sharedInstance().addTerminalWindow(term)
+            
+            // Remove the archived window from the project's list so it cannot be restored twice!
+            project.windows.removeAll { $0.id == archived.id }
+            
+            // Associate the newly opened window with the project!
+            if let wn = term.window()?.windowNumber, wn > 0 {
+                self.liveAssociations[wn] = project.id
+            }
+            
+            project.lastUsed = Date()
+            self.save()
+        }
     }
 
     func restoreAllWindows(in project: iTermWindowProject) {
         project.lastUsed = Date()
-        for archived in project.windows {
+        let windowsToRestore = project.windows
+        for archived in windowsToRestore {
             guard let arrangement = archived.arrangement else { continue }
-            iTermController.sharedInstance().tryOpenArrangement(
-                arrangement,
-                named: nil,
-                asTabsInWindow: nil)
+            let lionFullScreen = PseudoTerminal.arrangementIsLionFullScreen(arrangement)
+            PseudoTerminal.performWhenWindowCreationIsSafe(forLionFullScreen: lionFullScreen) { [weak self] in
+                guard let self = self else { return }
+                guard let term = PseudoTerminal(
+                    arrangement: arrangement,
+                    named: nil,
+                    forceOpeningHotKeyWindow: false) else { return }
+                
+                iTermController.sharedInstance().addTerminalWindow(term)
+                
+                if let wn = term.window()?.windowNumber, wn > 0 {
+                    self.liveAssociations[wn] = project.id
+                    NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+                }
+            }
         }
+        project.windows.removeAll()
         save()
     }
 
