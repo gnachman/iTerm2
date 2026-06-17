@@ -1,0 +1,15 @@
+{
+  "name": "iterm2-relay-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled Worker that watches the room relay's aggregate metrics (no logs, no PII) and emails on cap-approach, error spikes, or traffic anomalies.",
+  "scripts": {
+    "test": "vitest run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4",
+    "wrangler": "^4.0.0"
+  }
+}

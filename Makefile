@@ -3,6 +3,8 @@ PATH := /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
+# Local checkout of the iterm2-website repo, where built plugins are published.
+ITERM2_WEBSITE ?= $(HOME)/iterm2-website
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
@@ -261,6 +263,7 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
+	cp plists/dev-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" && \
 	chmod -R go+rX $(BUILD_DIR)/Development
 
@@ -277,6 +280,12 @@ Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO
 	chmod -R go+rX $(BUILD_DIR)/Nightly
+
+companion-iphone: force
+	Companion/tools/run_on_iphone.sh $(COMPANION_DEVICE)
+
+open: Development
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(notdir $(CURDIR))
 
 run: Development
 	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
@@ -465,6 +474,27 @@ endif
 
 pwmadapters: force
 	cd pwmplugin/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
+
+# Build, notarize, staple, and zip the companion consent plugin, then copy the
+# notarized zip into the website repo's downloads folder. build.sh prompts for
+# the notarization password, the EdDSA signing key, and the version.
+companion-plugin: force
+	cd iTermCompanion && WEBSITE_DOWNLOADS="$(ITERM2_WEBSITE)/downloads/companion-plugin" ./build.sh
+
+# Archive the iOS Companion app (Release) and export a signed App Store .ipa,
+# the same Release product Xcode's Archive produces (production aps-environment).
+# Upload it separately (Xcode Organizer, Transporter, or `xcrun altool
+# --upload-app`); that step needs App Store Connect credentials.
+companion-iphone-archive: force
+	cd Companion && xcodebuild -project iTerm2Companion.xcodeproj -scheme iTerm2Companion \
+	  -configuration Release -destination 'generic/platform=iOS' \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive -allowProvisioningUpdates archive
+	cd Companion && xcodebuild -exportArchive \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive \
+	  -exportOptionsPlist ExportOptions.plist \
+	  -exportPath Build/ios/export -allowProvisioningUpdates
+	@echo "Archive: Companion/Build/ios/iTerm2Companion.xcarchive"
+	@echo "IPA:     Companion/Build/ios/export/"
 
 it2cli: force
 	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh

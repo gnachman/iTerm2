@@ -63,10 +63,20 @@ struct GetScreenContentsArgs: Codable {
 
 struct RegisterWatchArgs: Codable {
     let sessionGuid: String
-    let targetState: SessionState
+    // Exactly one of targetState / condition must be supplied; the
+    // dispatcher validates and rejects otherwise.
+    let targetState: SessionState?
+    // Plain-English condition judged by reading the screen, e.g.
+    // "emacs has exited and a shell prompt is showing".
+    let condition: String?
+    // The user asked to be alerted: push to the paired phone when the
+    // watch fires.
+    let notifyUser: Bool?
     enum CodingKeys: String, CodingKey {
         case sessionGuid = "session_guid"
         case targetState = "target_state"
+        case condition
+        case notifyUser = "notify_user"
     }
 }
 
@@ -109,12 +119,8 @@ struct StartSessionArgs: Codable {
 
 // MARK: - Enums
 
-enum SessionState: String, Codable {
-    case idle
-    case working
-    case waiting
-    case unknown   // emitted by dispatcher; not accepted as input
-}
+// SessionState moved to WorkgroupWatcher.swift (shared with the iOS
+// companion app).
 
 enum SpawnWindowChoice: String, Codable {
     case new
@@ -127,6 +133,16 @@ enum SessionKind: String, Codable {
     case shell                       // linear scrollback is the source of truth
     case tui                         // interactive app; only the rendered screen is meaningful
     case other                       // fallback when classification fails
+}
+
+// Where a session's idle/working/waiting status comes from. Surfaced on
+// list_workgroups and get_state so the agent knows whether `status` is
+// authoritative (the program announces it via OSC 21337 / the cc-status
+// hook) or a guess derived from indicators, and can pick the right
+// register_watch form accordingly.
+enum StatusSource: String, Codable {
+    case reported   // machine-readable; state watchers fire on exact transitions
+    case inferred   // best-effort guess; state watchers fall back to screen observation
 }
 
 // MARK: - Tool names
@@ -149,6 +165,8 @@ enum ToolName: String, CaseIterable {
     case registerWatch = "register_watch"
     case unregisterWatch = "unregister_watch"
     case listWatches = "list_watches"
+    case notify = "notify"
+    case requestNotificationPermission = "request_notification_permission"
 }
 
 // MARK: - Command
@@ -180,6 +198,14 @@ enum OrchestratorCommand {
     case unregisterWatch(watcherID: String)
     case listWatches
 
+    // Push a notification to the user's paired companion phone. Only
+    // offered to the model while a companion phone is paired.
+    case notify(NotifyArgs)
+
+    // Ask the user (via their connected phone) for notification permission.
+    // Only offered while a phone is connected but cannot yet receive pushes.
+    case requestNotificationPermission
+
     // Categorization drives the safety/dispatch policy.
     enum Category {
         case readOnly       // no claim, no special handling
@@ -200,6 +226,10 @@ enum OrchestratorCommand {
             return .spawn
         case .registerWatch, .unregisterWatch, .listWatches:
             return .watcher
+        case .notify, .requestNotificationPermission:
+            // These touch the user's own phone, not a session, so they
+            // need no claim or prompt (iOS shows its own permission UI).
+            return .readOnly
         }
     }
 
@@ -227,10 +257,18 @@ enum OrchestratorCommand {
         case .listWorkgroups, .getState, .getScreenContents,
                 .listWorkgroupClippings,
                 .startSession,
-                .registerWatch, .unregisterWatch, .listWatches:
+                .registerWatch, .unregisterWatch, .listWatches,
+                .notify, .requestNotificationPermission:
             return .none
         }
     }
+}
+
+// MARK: - Notify
+
+struct NotifyArgs: Codable {
+    let title: String
+    let body: String
 }
 
 // MARK: - Result
@@ -317,7 +355,10 @@ struct WatcherDescription: Codable {
     let workgroupName: String
     let roleID: String
     let roleName: String
-    let targetState: SessionState
+    // Exactly one of targetState / condition is set, mirroring the
+    // register_watch form that created the watcher.
+    let targetState: SessionState?
+    let condition: String?
     let registeredAt: String  // ISO 8601
     enum CodingKeys: String, CodingKey {
         case watcherID = "watcher_id"
@@ -326,6 +367,7 @@ struct WatcherDescription: Codable {
         case roleID = "role_id"
         case roleName = "role_name"
         case targetState = "target_state"
+        case condition
         case registeredAt = "registered_at"
     }
 }
@@ -381,6 +423,9 @@ struct SessionSummary: Codable {
     let sessionGuid: String
     let kind: SessionKind
     let status: SessionState
+    // Whether `status` is announced by the program (reported) or a
+    // best-effort guess (inferred). See StatusSource.
+    let statusSource: StatusSource
     let lastActivityISO: String?
     let currentCommand: String?
     // Same surface as SessionStateInfo.pendingAction. Carried on the
@@ -394,6 +439,7 @@ struct SessionSummary: Codable {
         case sessionGuid = "session_guid"
         case kind
         case status
+        case statusSource = "status_source"
         case lastActivityISO = "last_activity_iso"
         case currentCommand = "current_command"
         case pendingAction = "pending_action"
@@ -407,6 +453,9 @@ struct SessionStateInfo: Codable {
     let roleName: String
     let kind: SessionKind
     let status: SessionState
+    // Whether `status` is announced by the program (reported) or a
+    // best-effort guess (inferred). See StatusSource.
+    let statusSource: StatusSource
     let lastActivityISO: String?
     let currentCommand: String?
     let lastMessage: String?  // last cc-status detail for CC sessions
@@ -422,6 +471,7 @@ struct SessionStateInfo: Codable {
         case roleName = "role_name"
         case kind
         case status
+        case statusSource = "status_source"
         case lastActivityISO = "last_activity_iso"
         case currentCommand = "current_command"
         case lastMessage = "last_message"

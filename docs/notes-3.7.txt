@@ -9,150 +9,70 @@ to version 3.6.7 and duplicates some items in
 betas since then.
 
 Major New Features:
-- In the Jobs view (toolbelt and status bar
-  popover) hovering a row shows the full
-  command as a tooltip, and pressing space
-  opens a popover with the full command,
-  process ID, start time, working
-  directory, environment variables, and a
-  list of open files and network
-  connections.
+- Companion App: a new iOS app, iTerm2 Buddy,
+  pairs with your Mac by scanning a QR code
+  (iTerm2 > Companion Device Settings) and
+  connects over an encrypted Noise channel so you
+  can interact with iTerm2 via AI chat from your
+  phone.
+  Devices connect through an encrypted relay, so
+  they work even when the Mac and phone are on
+  different
+  networks, and end-to-end encryption ensures that
+  your data is only visible to you.
 
-- In an orchestration-mode AI chat you can now
-  @-mention a terminal session: type @ to get a
-  window/tab/pane outline with a live preview,
-  and the picked session is inserted as a single
-  token that the AI receives as a session
-  reference.
+- There's a new kind of AI chat called
+  "orchestration" which can view all your
+  sessions and operate iTerm2 for you.
 
-- Tabs can now be placed on the right side
-  of the window.
+- Claude Code integration was added. It enables
+  the new Session Status feature for claude code
+  sessions so you can see at a glance which
+  instance is waiting for you. It also ties in
+  with the new Workflows feature to facilitate
+  viewing diffs and performing code reviews. It
+  ties in with clippings so that AI-authored code
+  review comments can easily be sent back to
+  Claude code.
 
-- Sending or copying clippings now prefixes
-  each one with its title in bold Markdown and
-  separates multiple clippings with a
-  configurable string (default is a line of
-  two dashes). See the Clipping Separator
-  advanced setting.
-
-- A new Tab Status system was added. Sessions
-  can now report status that appears on their
-  tab with a custom subtitle, color, and dot
-  icon. Triggers can set tab status from
-  output, a new Session Status toolbelt tool
-  lets you configure priority sorting with a
-  drag-to-reorder popover, status is
-  aggregated across split panes, and it is
-  auto-cleared on shell prompt or session
-  termination. The toolbelt’s settings popover
-  also has a Merge Workgroup Statuses option
-  that collapses each workgroup to a single
-  row, showing the status of whichever
-  session in it changed most recently.
+- A new Session Status system was added. Sessions
+  can now report status that appears on their tab
+  with a custom subtitle, color, and dot icon.
+  Status can be set by a control sequence, the it2
+  command, or by triggers. The Session Status tool
+  lets you view the status of all sessions in a
+  window at a glance and the new Cockpit window
+  lets you browse status across windows.
 
 - Session Notes were added: floating,
   draggable, resizable, collapsible multiline
   text notes attached to a session that
-  persist across restarts. A global or
-  per-session toggle is available in the
-  Notes toolbelt tool.
+  persist across restarts.
 
 - You can now run multiple concurrent
   instances of iTerm2 side by side with
   independent settings. Launch with
   --suite=com.iterm2.unique-id-of-your-choice.
 
-- Claude Code integration was added.
-  This is still a work in progress as of 3.7.0beta1.
+- The new Workgroups feature let you define how to
+  transform a session into a cluster of related
+  sessions. When a session enters a Workgroup, the
+  cluster of related sessions is created. They can 
+  be in split panes, separate tabs, or "peers"
+  which are like tabs within a split pane.
+  Sessions in a workgroup have a unique name, a
+  custom command, a customizable toolbar, and can
+  even have custom behavior such as to drive AI
+  code review or perform in-terminal diffs of a
+  git repo.
 
-- In AI chat orchestration mode, references
-  to a session or workgroup now appear as a
-  clickable link, marked with a terminal
-  icon, showing its current name instead of
-  a raw identifier. Clicking the link
-  reveals that session. The tool-call
-  activity lines (e.g. “Reading screen of
-  …”) now use these same links, and show
-  “[defunct session]” once the target is
-  gone instead of leaking a raw GUID.
-
-- A new AI chat created without a session to
-  link to now offers to enable orchestration
-  mode, mirroring the link offer shown when a
-  session is available.
-
-- Workgroups let you configure a session
-  to be transformed into a group of related
-  sessions — peers, split panes, or tabs —
-  each with its own toolbar. Configure
-  them in Settings > Shortcuts >
-  Workgroups. Still a work in progress.
-
-- Enter Workgroup and Exit Workgroup are
-  also available as URL-regex triggers on
-  browser profiles, so a navigation event
-  can change the active workgroup.
-
-- Workgroup sessions now have a Mode
-  setting. The new Code Review mode shows
-  an in-session prompt overlay with a Start
-  button before the program runs; the
-  entered text is exposed as the variable
-  codeReviewPrompt for swifty interpolation
-  in the command. The Claude Code
-  workgroup’s review peer uses this mode
-  by default.
-
-- The Code Review prompt overlay can save
-  multiple named prompts. A pulldown menu
-  on the overlay loads any saved prompt;
-  a dedicated Manage Prompts… window
-  handles add/rename/edit/reorder/delete.
-  The single Code Review prompt previously
-  managed in Settings > General > AI >
-  Prompts is migrated to a Default entry
-  on first launch and the entry has been
-  removed from Settings.
-
-- The Code Review system prompt is now
-  editable in Settings > General > AI >
-  Prompts. It defaults to the bundled
-  prompt and is passed to Claude Code at
-  launch.
-
-- Switching to a Code Review peer that is
-  still showing its prompt overlay now
-  focuses the prompt text field so you can
-  start typing immediately.
-
-- Workgroups now survive a restart. When
-  the app relaunches (for example after a
-  Sparkle upgrade), an active workgroup is
-  rebuilt: its Diff and Code Review peers,
-  split/tab children, toolbar, and peer
-  switching all come back with their
-  content intact.
-
-- Clippings now keep history. An archive
-  button in the clippings panel snapshots
-  the current list and clears it; back and
-  forward buttons walk the history. The
-  new `it2 session archive-clippings`
-  command and matching `iterm2.archive_
-  clippings` API call do the same. Claude
-  Code reviews now automatically archive
-  before each pass, so each review starts
-  with a clean list while old findings
-  remain reachable.
-
-- The clippings and inline AI chat panels
-  can now be resized by dragging their left
-  edge. The chosen width is remembered per
-  machine.
-
-- The Shell > Workgroups submenu now has
-  an Exit Workgroup item to leave the
-  current session’s workgroup.
+- Clippings is a new side panel that contains a
+  list of items formatted as markdown. They're a
+  useful place to store text that you need
+  temporarily.
+  The Claude Code integration uses Clippings to
+  store code review comments so they can be shared
+  between related sessions in a Workgroup.
 
 - The new Fold All menu item folds everything
   (aside from folds at the very top of history).
@@ -171,22 +91,6 @@ Major New Features:
   session to a configured directory when it
   closes.  Restoring an archive reopens the
   session’s scrollback in a new window.
-
-- Panes can be locked to prevent accidental drag
-  and drop.
-
-- Tabs can be pinned so they stay put and are
-  protected from reordering.
-
-- You can now assign a "job" to a trigger, which
-  ensures the trigger is only active when that job
-  is running. This makes it possible, for example,
-  to write triggers that are only active while
-  Claude Code is running.
-
-- Most window types support initial size as a
-  percentage of the screen (used to be only number
-  of rows and columns).
 
 New Features in Terminal Sessions:
 - Double-width and double-height lines
@@ -215,7 +119,7 @@ New Features in Terminal Sessions:
   the JSON value 2 as base64.
 - OSC 52 clipboard query responses now work
   with tmux 3.6+ in tmux integration.
-- Added OSC 21337 for tab status. Send
+- Added OSC 21337 for session status. Send
   OSC 21337 ; indicator=<#rrggbb> ;
   status=<text> ; status-color=<#rrggbb> ST
   to set the tab’s dot indicator, subtitle,
@@ -232,17 +136,21 @@ New Features in Terminal Sessions:
   previously rounded to whole minutes.
 
 Tabs, Windows, and UI:
-- Closing a pinned tab now requires
-  confirmation, whether via the close
-  button, middle-click, ⌘W, or quitting
-  the app. The dialog identifies the tab
-  as pinned so the prompt is clear.
+- Most window types support initial size as a
+  percentage of the screen (used to be only number
+  of rows and columns).
+- Tabs can be pinned so they stay put and are
+  protected from reordering.
+- New Lock Size menu item and per-profile
+  preference to prevent window resizing.
+- Panes can be locked to prevent accidental drag
+  and drop.
+- Tabs can now be placed on the right side
+  of the window.
 - The control-sequence-controlled progress
   indicator is now shown in the tab bar.
 - An active pane border can be displayed to
   highlight the focused pane.
-- New Lock Size menu item and per-profile
-  preference to prevent window resizing.
 - You can now choose to show a Proxy icon in
   Compact and Minimal themes.
 - The tab color menu now has a color picker,
@@ -253,15 +161,14 @@ Tabs, Windows, and UI:
   broadcast.
 - New key binding action to send text without
   broadcasting.
-- The Cycle Tabs Forward and Cycle Tabs
-  Backward key actions now have a help
-  button explaining their tap-vs-hold
-  behavior.
+- The Cycle Tabs Forward and Cycle Tabs Backward
+  key actions now have a help button explaining
+  their tap-vs-hold behavior.
 - Nerd Font glyphs are now rendered in pane title
   bars and tabs.
-- A unified dock badge combines bell count
-  and tab status, and the old 999 cap on the
-  bell count was removed.
+- A unified dock badge combines bell count and tab
+  status, and the old 999 cap on the bell count
+  was removed.
 - Split pane icons were added to the context
   menu.
 - Hold Option when clicking a Split button in the
@@ -272,6 +179,14 @@ Tabs, Windows, and UI:
   folder of images at a configurable interval.
   Pick a folder instead of a file in
   Settings > Profiles > Window > Background.
+- In the Jobs view (toolbelt and status bar
+  popover) hovering on a row shows the full
+  command as a tooltip, and pressing space
+  opens a popover with the full command,
+  process ID, start time, working
+  directory, environment variables, and a
+  list of open files and network
+  connections.
 
 
 Triggers Improvements:
@@ -285,6 +200,12 @@ Triggers Improvements:
   characters for a trigger.
 - Nulls are now treated as spaces in trigger regex
   matching.
+- You can now assign a "job" to a trigger, which
+  ensures the trigger is only active when that job
+  is running. This makes it possible, for example,
+  to write triggers that are only active while
+  Claude Code is running.
+
 
 AI Improvements:
 - Chats in the AI chat list now get an icon
@@ -300,37 +221,15 @@ AI Improvements:
   it is opt-in. Users who already enabled it keep
   using free on-device Apple Intelligence and are
   asked once whether to switch to their model.
-- Command safety auto-allow now requires every
-  segment of a compound command to be read-only,
-  so a safe command followed by a dangerous one
-  (or a redirection or substitution) is no longer
-  silently auto-run.
 - AI chat can connect to LAN-hosted models
   over HTTP.
-- Add DeepSeek v4-flash and v4-pro models.
-- Added the latest AI models: OpenAI GPT-5.5
-  and GPT-5.5 Pro, Anthropic Claude Opus 4.8,
-  Opus 4.7, and Sonnet 4.6, and Google Gemini
-  3.5 Flash and Gemini 3.1 Pro. Default models
-  now point at GPT-5.5, Claude Opus 4.8, and
-  Gemini 3.5 Flash.
+- AI models updated.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to
   enable. Reasoning summaries appear live in
   the conversation and round-trip correctly
   on multi-turn tool calls (fixes a 400 from
   the API when reasoning_content was missing).
-- Chat-completions function calling now uses
-  the modern tools/tool_choice request shape
-  instead of the deprecated functions/
-  function_call shape. All current vendors
-  (OpenAI, DeepSeek, recent Ollama, recent
-  llama.cpp, recent vLLM) support this.
-  If you point iTerm2 at an older self-hosted
-  OpenAI-compatible server that only
-  understands functions/function_call, tool
-  calls will stop working until you upgrade
-  the backend.
 - The “Configure AI Model Manually…” popover
   now has a section for custom HTTP headers
   that are appended to every AI request (chat,
@@ -340,23 +239,6 @@ AI Improvements:
   name. Values are stored unencrypted in
   iTerm2’s preferences.
 - PDF chat attachments now work on Anthropic.
-  Previously the bytes were mangled into a
-  UTF-8 approximation; PDFs are now sent as
-  native document content blocks. The chat
-  attachment picker also disables files the
-  current AI provider cannot accept, and
-  rejected drag-and-drop attachments now show
-  an explanatory alert instead of vanishing
-  silently.
-- New advanced setting “Log raw AI API
-  requests and responses to disk” captures
-  full-fidelity AI wire traffic (headers,
-  body, streamed chunks, response, timing) to
-  ~/Library/Application Support/iTerm2/
-  AIChatWire/ for debugging. Off by default;
-  the log includes API keys and prompt
-  content verbatim, so delete the files when
-  finished.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the
@@ -384,6 +266,7 @@ Shell Integration Improvements:
 - A new it2 command-line utility lets you perform
   common actions like creating a window at the
   command line. Run `it2 --help` for details.
+  It's automatically in your path.
 
 SSH Integration Improvements:
 - Better passphrase handling for SCP and
@@ -430,7 +313,6 @@ UI Improvements:
   in the Session Status toolbelt tool.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
-- Prettier, animated toasts.
 - Rename dialogs, the pane menu, and the context
   menu now respect dark/light mode.
 - Tab colors are written to all appearance
@@ -457,11 +339,12 @@ Search and Selection Improvements:
 - Folded content is searched in global search.
 - URL search results extend across soft boundaries
   such as tmux pane dividers.
-- “$” is now a default URL character for detecting
-  URL boundaries.
+- “$” is now considered part of a URL. Used when
+  detecting URL boundaries for cmd-click.
 - Search results refresh after window resize.
-- Fix Cmd+G skipping matches after tail find.
-- New “Copy or Paste” pointer action.
+- Fix Cmd+G skipping matches sometimes.
+- New “Copy or Paste” pointer action. If there's a
+  selection, it copies. Otherwise, it pastes.
 - New pointer action to copy link address.
 
 Menus and Miscellaneous:
@@ -469,10 +352,16 @@ Menus and Miscellaneous:
   current tab or at the end (opposite of the
   default).
 - New “Always show alerts with remembered
-  selections” option.
+  selections” option. This temporarily turns off
+  the "Remember my selection" feature of alert
+  boxes that you already saved in case you change
+  your mind and want to make a different
+  selection.
 - New “Buffer input by default” profile setting
   with menu item, indicator, and trigger
-  integration.
+  integration. Buffering causes text you type to
+  be stored until buffering is disabled by
+  selecting Shell > Toggle Buffer Input.
 - "Copy" menu item on status bar components to
   copy relevant information.
 - Smart selection action URL is shown on hover.
@@ -497,8 +386,10 @@ Core Improvements:
 - Prompt for local-network permission on launch.
 
 Settings Improvements:
-- Window frames are remembered per-profile to
-  prevent cross-contamination.
+- Window frames are remembered per-profile rather
+  than globally. When you open a window, the
+  default frame will come from a previous window
+  with that profile, if possible.
 - Font zoom is preserved during Automatic Profile
   Switching.
 - User-set colors are remembered separately
@@ -513,7 +404,7 @@ Settings Improvements:
   variables (API keys, GEM_HOME, etc.) before
   the command starts.
 - A linked AI chat can be hosted inline in
-  its session’s right gutter. Use the chat
+  its session’s right margin. Use the chat
   menu’s “Put Chat in Linked Session” item
   and toggle visibility from View > Show
   Inline Chat.
@@ -1354,6 +1245,17 @@ Bug Fixes:
   noisily polling in the chat. It
   gives up after five minutes with a
   watch_timed_out update.
+- The Cockpit orchestrator's watchers
+  can now watch for a plain-English
+  condition (e.g. “emacs has exited”),
+  judged by reading the screen, in
+  addition to idle/working/waiting
+  states. Sessions also report whether
+  their status is announced by the
+  program or merely inferred, so the
+  agent picks the reliable watch form
+  instead of misreading a splash
+  screen as “idle”.
 - Workgroup code-review/diff sessions no
   longer hang on “waiting for changes” in
   a checkout full of untracked files. The

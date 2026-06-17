@@ -219,6 +219,7 @@ enum WorkgroupIntrospection {
             roleName: resolved.roleName,
             kind: kind(for: resolved.session),
             status: state(for: resolved.session),
+            statusSource: statusSource(for: resolved.session),
             lastActivityISO: nil,
             currentCommand: currentCommand(for: resolved.session),
             lastMessage: lastMessage(for: resolved.session),
@@ -234,6 +235,7 @@ enum WorkgroupIntrospection {
             sessionGuid: session.guid,
             kind: kind(for: session),
             status: state(for: session),
+            statusSource: statusSource(for: session),
             lastActivityISO: nil,
             currentCommand: currentCommand(for: session),
             pendingAction: pendingActionDescription(for: session))
@@ -425,6 +427,13 @@ enum WorkgroupIntrospection {
             return false
         }
         return text == "idle" || text == "working" || text == "waiting"
+    }
+
+    // The agent-facing form of reportsSessionStatus, carried on
+    // list_workgroups and get_state output so the agent can tell whether
+    // `status` is authoritative before deciding how to watch a session.
+    static func statusSource(for session: PTYSession) -> StatusSource {
+        return reportsSessionStatus(session) ? .reported : .inferred
     }
 
     // Human-readable hint describing what the role is currently

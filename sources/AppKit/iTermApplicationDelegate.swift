@@ -113,6 +113,8 @@ extension iTermApplicationDelegate {
             Tip(identifier: "Find Cursor",
                 imageName: "FindCursorMenuTip",
                 text: "Highlights the location of the cursor and unhides it if it is currently hidden."),
+            Tip(identifier: "Always Show Alerts with Remembered Selections",
+                text: "When you check **Suppress this message permanently** or **Remember my choice** in an alert, iTerm2 stops showing that alert and automatically reuses your saved response. Enabling this temporarily ignores those remembered selections so the alerts appear again, letting you see them or make a different choice. It stays on until you turn it back off."),
             Tip(identifier: "Show Annotations",
                 imageName: "AnnotationsMenuTip",
                 text: "Annotations are inline markup. When closed, they appear as a yellow underline; when open, they look like yellow stickies where you can write memos about content in the terminal window."),

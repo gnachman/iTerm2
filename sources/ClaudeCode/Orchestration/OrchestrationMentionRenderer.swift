@@ -17,21 +17,8 @@ import AppKit
 import Foundation
 
 enum OrchestrationMentionRenderer {
-    // Matches "@" followed by a session/workgroup identifier:
-    //   @<uuid>           a session_guid
-    //   @session:<uuid>   a synthetic single-session workgroup_id
-    //   @wg-<uuid>        a real workgroup instance id
-    // The trailing lookahead keeps us from matching only a prefix of a
-    // longer hex/dash run that merely starts like a UUID.
-    private static let uuidPattern =
-        "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
-    // Both prefixes are owned elsewhere (the workgroup mint and the
-    // introspection payload builder); referencing the constants keeps
-    // mention parsing from silently breaking if either ever changes.
-    private static let workgroupPrefix = iTermWorkgroupInstance.instanceIDPrefix
-    private static let sessionPrefix = WorkgroupIntrospection.syntheticWorkgroupIDPrefix
-    private static let regex = try! NSRegularExpression(
-        pattern: "@(\(NSRegularExpression.escapedPattern(for: sessionPrefix))|\(NSRegularExpression.escapedPattern(for: workgroupPrefix)))?(\(uuidPattern))(?![0-9A-Fa-f-])")
+    // The mention syntax itself lives in MentionParser, which is shared with
+    // the Companion app so the phone recognizes exactly the same mentions.
 
     // The marker keystroke for the in-process click handler lives on
     // ClickableTextView (see ToolCodecierge.swift). Using the same key
@@ -46,6 +33,10 @@ enum OrchestrationMentionRenderer {
         // workgroup this is its leader session, so clicking surfaces the
         // workgroup's main session.
         let revealGuid: String
+        // The workgroup instance id when the mention names a real workgroup.
+        // The Mac click handler doesn't need it (it reveals the leader), but
+        // the Companion bridge does: the phone opens a member list instead.
+        var workgroupID: String? = nil
     }
 
     // Maps a parsed mention to a live entity, or nil when it no longer
@@ -67,16 +58,15 @@ enum OrchestrationMentionRenderer {
                      linkColor: NSColor,
                      resolve: Resolver) -> NSAttributedString {
         let ns = input.string as NSString
-        let fullRange = NSRange(location: 0, length: ns.length)
-        let matches = regex.matches(in: input.string, range: fullRange)
-        guard !matches.isEmpty else {
+        let mentions = MentionParser.mentions(in: input.string)
+        guard !mentions.isEmpty else {
             return input
         }
 
         let result = NSMutableAttributedString()
         var cursor = 0
-        for match in matches {
-            let whole = match.range
+        for mention in mentions {
+            let whole = mention.range
             if whole.location > cursor {
                 result.append(input.attributedSubstring(
                     from: NSRange(location: cursor, length: whole.location - cursor)))
@@ -85,12 +75,8 @@ enum OrchestrationMentionRenderer {
             // of the mention so the replacement matches the surrounding
             // text.
             let baseAttributes = input.attributes(at: whole.location, effectiveRange: nil)
-            let prefix = match.range(at: 1).location == NSNotFound
-                ? nil
-                : ns.substring(with: match.range(at: 1))
-            let uuid = ns.substring(with: match.range(at: 2))
 
-            if let resolved = resolve(prefix, uuid) {
+            if let resolved = resolve(mention.prefix, mention.uuid) {
                 result.append(linkString(for: resolved,
                                          baseAttributes: baseAttributes,
                                          linkColor: linkColor))
@@ -186,18 +172,28 @@ enum OrchestrationMentionRenderer {
 
     // MARK: - Resolution
 
+    /// Resolves a wire-form identifier (a mention without its "@") to a live
+    /// entity. Used by the Companion bridge so the phone shows the same names
+    /// and reveal targets the Mac renders.
+    static func resolve(identifier: String) -> Resolved? {
+        guard let (prefix, uuid) = MentionParser.split(identifier: identifier) else {
+            return nil
+        }
+        return liveResolve(prefix: prefix, uuid: uuid)
+    }
+
     // Live resolver: looks the identifier up in the running app.
     private static func liveResolve(prefix: String?, uuid: String) -> Resolved? {
         switch prefix {
-        case workgroupPrefix:
-            return resolveWorkgroup(instanceID: workgroupPrefix + uuid)
-        case sessionPrefix:
+        case "wg-":
+            return resolveWorkgroup(instanceID: "wg-" + uuid)
+        case "session:":
             return resolveSession(guid: uuid)
         default:
             // A bare UUID is almost always a session_guid; fall back to
-            // treating it as a workgroup instance id whose prefix the
-            // model dropped.
-            return resolveSession(guid: uuid) ?? resolveWorkgroup(instanceID: workgroupPrefix + uuid)
+            // treating it as a workgroup instance id whose "wg-" prefix
+            // the model dropped.
+            return resolveSession(guid: uuid) ?? resolveWorkgroup(instanceID: "wg-" + uuid)
         }
     }
 
@@ -219,6 +215,8 @@ enum OrchestrationMentionRenderer {
         }
         let raw = instance.workgroup.name
         let name = raw.isEmpty ? "Untitled workgroup" : raw
-        return Resolved(displayName: name, revealGuid: leader.guid)
+        return Resolved(displayName: name,
+                        revealGuid: leader.guid,
+                        workgroupID: instanceID)
     }
 }

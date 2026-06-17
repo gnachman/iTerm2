@@ -122,6 +122,25 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         self.client = client
         super.init(window: nil)
         chatListViewController.dataSource = model
+
+        // The window's own delete flow clears the conversation view itself,
+        // but a chat can also be deleted out from under us (the companion
+        // phone today; anything else tomorrow). Without this the view keeps
+        // showing, and interacting with, a chat that no longer exists.
+        NotificationCenter.default.addObserver(
+            forName: ChatListModel.chatWasDeleted,
+            object: nil,
+            queue: .main) { [weak self] notification in
+                MainActor.assumeIsolated {
+                    guard let self,
+                          let deletedID = notification.userInfo?[ChatListModel.chatIDUserInfoKey] as? String,
+                          self.chatViewController.chatID == deletedID else {
+                        return
+                    }
+                    DLog("Displayed chat \(deletedID) was deleted externally; clearing the view")
+                    self.chatViewController.load(chatID: nil)
+                }
+            }
     }
 
     convenience init(from decoder: any Decoder) throws {
@@ -299,7 +318,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         chatViewController.chatToolbar.titleLabel.stringValue = title
     }
 
-    private func createNewChat(offerGuid guid: String?) {
+    private func createNewChat(offerGuid guid: String?, enableOrchestration: Bool = false) {
         do {
             let chatID = try client.create(chatWithTitle: "New Chat",
                                            terminalSessionGuid: nil,
@@ -308,6 +327,12 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
                                            permissions: "")
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
+            if enableOrchestration {
+                // The "try orchestration" entry point: don't just offer it,
+                // turn it on so the user lands in an orchestration chat.
+                chatViewController.enableOrchestration()
+                return
+            }
             if let guid, let session = iTermController.sharedInstance().anySession(withGUID: guid) {
                 let terminal = !session.isBrowserSession()
                 let name = session.name
@@ -320,6 +345,18 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         } catch {
             DLog("\(error)")
         }
+    }
+
+    // Open a brand-new chat with orchestration already enabled. The caller is
+    // expected to have shown the window first (showChatWindow), which is gated
+    // by iTermAITermGatekeeper; if AI is disabled the window never appeared, so
+    // bail rather than silently creating a chat behind the warning.
+    @objc
+    func createNewOrchestrationChat() {
+        guard window?.isVisible == true else {
+            return
+        }
+        createNewChat(offerGuid: nil, enableOrchestration: true)
     }
 
     @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
