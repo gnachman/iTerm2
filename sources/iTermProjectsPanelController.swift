@@ -210,7 +210,9 @@ final class iTermProjectsOutlineController: NSViewController,
         // Drag source + destination
         outlineView.setDraggingSourceOperationMask(.every, forLocal: true)
         outlineView.setDraggingSourceOperationMask(.every, forLocal: false)
-        outlineView.registerForDraggedTypes([kLiveWindowDragType, kProjectGroupDragType])
+        outlineView.registerForDraggedTypes([kLiveWindowDragType,
+                                             kArchivedWindowDragType,
+                                             kProjectGroupDragType])
 
         scrollView.documentView = outlineView
 
@@ -593,7 +595,7 @@ final class iTermProjectsOutlineController: NSViewController,
         reload()
     }
 
-    // MARK: Drag Source (left → right: restore)
+    // MARK: Drag Source
 
     func outlineView(_ outlineView: NSOutlineView,
                      pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
@@ -602,27 +604,40 @@ final class iTermProjectsOutlineController: NSViewController,
             pb.setString(box.window.id.uuidString, forType: kArchivedWindowDragType)
             return pb
         }
+        if let box = item as? iTermLiveWindowBox {
+            guard let wn = box.terminal.window()?.windowNumber, wn > 0 else { return nil }
+            let pb = NSPasteboardItem()
+            pb.setString(String(wn), forType: kLiveWindowDragType)
+            return pb
+        }
         if let project = item as? iTermWindowProject {
             let pb = NSPasteboardItem()
             pb.setString(project.id.uuidString, forType: kProjectDragType)
             return pb
         }
-        // Live window boxes are not draggable from the left pane — use right pane for that
         return nil
     }
 
-    // MARK: Drop Destination (right → left: archive or close-all)
+    // MARK: Drop Destination
 
     func outlineView(_ outlineView: NSOutlineView,
                      validateDrop info: NSDraggingInfo,
                      proposedItem item: Any?,
                      proposedChildIndex index: Int) -> NSDragOperation {
         let pb = info.draggingPasteboard
-        // Live window dropped onto a project → archive + close
+        
+        // Live window dropped onto a project
         if pb.availableType(from: [kLiveWindowDragType]) != nil,
            item is iTermWindowProject {
             return .move
         }
+        
+        // Archived window dropped onto a project
+        if pb.availableType(from: [kArchivedWindowDragType]) != nil,
+           item is iTermWindowProject {
+            return .move
+        }
+        
         // Project group dropped anywhere on left → close all
         if pb.availableType(from: [kProjectGroupDragType]) != nil {
             // Redirect to root if dropped on a leaf or nothing
@@ -640,8 +655,9 @@ final class iTermProjectsOutlineController: NSViewController,
                      item: Any?,
                      childIndex index: Int) -> Bool {
         let pb = info.draggingPasteboard
+        let isInternalDrag = (info.draggingSource as? NSOutlineView) === outlineView
 
-        // Drop live window onto project → archive + close
+        // Drop live window onto project
         if let wnStr    = pb.string(forType: kLiveWindowDragType),
            let wn       = Int(wnStr),
            let project  = item as? iTermWindowProject {
@@ -649,8 +665,26 @@ final class iTermProjectsOutlineController: NSViewController,
             guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
                 return false
             }
-            iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true)
+            if isInternalDrag {
+                // Dragged from left to left (reassociate / reassign project, keep open!)
+                iTermWindowProjectsModel.shared.associateWindow(terminal, with: project)
+            } else {
+                // Dragged from right to left (archive + close!)
+                iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true)
+            }
             return true
+        }
+
+        // Drop archived window onto project
+        if let uuidStr  = pb.string(forType: kArchivedWindowDragType),
+           let uuid     = UUID(uuidString: uuidStr),
+           let project  = item as? iTermWindowProject {
+            if let (archived, oldProject) = iTermWindowProjectsModel.shared.archivedWindow(id: uuid) {
+                oldProject.windows.removeAll { $0.id == archived.id }
+                project.windows.append(archived)
+                iTermWindowProjectsModel.shared.save()
+                return true
+            }
         }
 
         // Drop project group → close-all for that project
