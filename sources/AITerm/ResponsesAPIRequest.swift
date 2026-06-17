@@ -1872,6 +1872,13 @@ struct ResponsesBodyRequestBuilder {
             }
         }
         let bodyEncoder = JSONEncoder()
+        // OpenAI prompt caching needs a byte-exact prefix match, and the
+        // tools array serializes [String: Property] / [String: AnyCodable]
+        // dictionaries whose iteration order is randomized per process.
+        // Without .sortedKeys the same tool list can serialize with keys
+        // shuffled, silently breaking the cache_read path. See the
+        // matching note on the Anthropic path in CompletionsAnthropic.swift.
+        bodyEncoder.outputFormatting = [.sortedKeys]
         let bodyData = try! bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")
 //        print(bodyData.lossyString)
