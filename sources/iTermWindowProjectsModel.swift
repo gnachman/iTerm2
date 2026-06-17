@@ -107,6 +107,60 @@ final class iTermWindowProject: NSObject, Codable {
         return dir.appendingPathComponent("WindowProjects.json")
     }
 
+    private static var thumbnailsDirectoryURL: URL {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory,
+                                               in: .userDomainMask)[0]
+        let dir = support.appendingPathComponent("iTerm2").appendingPathComponent("WindowProjectThumbnails")
+        try? FileManager.default.createDirectory(at: dir,
+                                                 withIntermediateDirectories: true)
+        return dir
+    }
+
+    @objc static func thumbnailURL(for uuid: UUID) -> URL {
+        return thumbnailsDirectoryURL.appendingPathComponent("\(uuid.uuidString).jpg")
+    }
+
+    static func deleteThumbnail(for uuid: UUID) {
+        try? FileManager.default.removeItem(at: thumbnailURL(for: uuid))
+    }
+
+    static func saveThumbnail(for windowNumber: Int, uuid: UUID) {
+        guard windowNumber > 0 else { return }
+        let windowID = CGWindowID(windowNumber)
+        guard let cgImage = CGWindowListCreateImage(.null, .optionIncludingWindow, windowID, [.boundsIgnoreFraming, .bestResolution]) else { return }
+        
+        let aspectW: CGFloat = 320
+        let aspectH = cgImage.height == 0 ? 200 : aspectW * CGFloat(cgImage.height) / CGFloat(cgImage.width)
+        let size = NSSize(width: aspectW, height: min(aspectH, 240))
+        
+        guard let bitmapRep = NSBitmapImageRep(bitmapDataPlanes: nil,
+                                                pixelsWide: Int(size.width),
+                                                pixelsHigh: Int(size.height),
+                                                bitsPerSample: 8,
+                                                samplesPerPixel: 4,
+                                                hasAlpha: true,
+                                                isPlanar: false,
+                                                colorSpaceName: .calibratedRGB,
+                                                bytesPerRow: 0,
+                                                bitsPerPixel: 0) else { return }
+        
+        bitmapRep.size = size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
+        
+        let nsImage = NSImage(cgImage: cgImage, size: .zero)
+        nsImage.draw(in: NSRect(origin: .zero, size: size),
+                     from: .zero,
+                     operation: .copy,
+                     fraction: 1.0)
+        
+        NSGraphicsContext.restoreGraphicsState()
+        
+        if let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.5]) {
+            try? jpegData.write(to: thumbnailURL(for: uuid))
+        }
+    }
+
     private override init() {
         super.init()
         load()
@@ -159,8 +213,18 @@ final class iTermWindowProject: NSObject, Codable {
         save()
     }
 
+    private func deleteThumbnails(for project: iTermWindowProject) {
+        for w in project.windows {
+            Self.deleteThumbnail(for: w.id)
+        }
+        for sub in project.children {
+            deleteThumbnails(for: sub)
+        }
+    }
+
     @discardableResult
     func deleteProject(_ project: iTermWindowProject) -> Bool {
+        deleteThumbnails(for: project)
         if removeProject(project, from: &rootProjects) {
             save()
             return true
@@ -228,7 +292,9 @@ final class iTermWindowProject: NSObject, Codable {
             let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
             let title = terminal.window()?.title ?? "Window"
-            project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
+            let uuid = UUID()
+            Self.saveThumbnail(for: wn, uuid: uuid)
+            project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
             terminal.close()
         }
@@ -255,7 +321,9 @@ final class iTermWindowProject: NSObject, Codable {
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
         let title = window.title.isEmpty ? "Window" : window.title
-        project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
+        let uuid = UUID()
+        Self.saveThumbnail(for: wn, uuid: uuid)
+        project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
         liveAssociations.removeValue(forKey: wn)
         project.lastUsed = Date()
         save()
@@ -273,7 +341,9 @@ final class iTermWindowProject: NSObject, Codable {
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
             
             let title = terminal.window()?.title ?? "Window"
-            project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
+            let uuid = UUID()
+            Self.saveThumbnail(for: wn, uuid: uuid)
+            project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
         }
         save()
@@ -286,14 +356,17 @@ final class iTermWindowProject: NSObject, Codable {
     func archiveWindow(_ terminal: PseudoTerminal,
                        to project: iTermWindowProject,
                        andClose close: Bool) {
-        if let wn = terminal.window()?.windowNumber, wn > 0 {
+        let wn = terminal.window()?.windowNumber ?? 0
+        if wn > 0 {
             liveAssociations.removeValue(forKey: wn)
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
         let title = terminal.window()?.title ?? "Window"
-        let entry = iTermArchivedWindow(name: title, arrangement: arrangement)
+        let uuid = UUID()
+        Self.saveThumbnail(for: wn, uuid: uuid)
+        let entry = iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement)
         project.windows.append(entry)
         project.lastUsed = Date()
         save()
@@ -304,6 +377,7 @@ final class iTermWindowProject: NSObject, Codable {
 
     func removeWindow(_ window: iTermArchivedWindow, from project: iTermWindowProject) {
         project.windows.removeAll { $0.id == window.id }
+        Self.deleteThumbnail(for: window.id)
         save()
     }
 
@@ -325,6 +399,7 @@ final class iTermWindowProject: NSObject, Codable {
             
             // Remove the archived window from the project's list so it cannot be restored twice!
             project.windows.removeAll { $0.id == archived.id }
+            Self.deleteThumbnail(for: archived.id)
             
             // Associate the newly opened window with the project!
             if let wn = term.window()?.windowNumber, wn > 0 {
@@ -356,6 +431,7 @@ final class iTermWindowProject: NSObject, Codable {
                     NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
                 }
             }
+            Self.deleteThumbnail(for: archived.id)
         }
         project.windows.removeAll()
         save()

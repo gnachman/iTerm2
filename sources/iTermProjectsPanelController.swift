@@ -690,13 +690,21 @@ final class iTermProjectsOutlineController: NSViewController,
     private func showPreview(forRow row: Int) {
         let item = outlineView.item(atRow: row)
 
-        if let box = item as? iTermArchivedWindowBox,
-           let arrangement = box.window.arrangement {
+        if let box = item as? iTermArchivedWindowBox {
             let rowRect = outlineView.rect(ofRow: row)
             guard rowRect != .zero else { return }
-            let pv = ArrangementPreviewView(frame: NSRect(x: 0, y: 0, width: 320, height: 200))
-            pv.setArrangement([arrangement as Any])
-            showPopover(contentView: pv, anchor: rowRect, preferredEdge: .maxX)
+            let fileURL = iTermWindowProjectsModel.thumbnailURL(for: box.window.id)
+            if FileManager.default.fileExists(atPath: fileURL.path),
+               let img = NSImage(contentsOf: fileURL) {
+                let iv = NSImageView(frame: NSRect(x: 0, y: 0, width: 320, height: img.size.height))
+                iv.image = img
+                iv.imageScaling = .scaleProportionallyUpOrDown
+                showPopover(contentView: iv, anchor: rowRect, preferredEdge: .maxX)
+            } else if let arrangement = box.window.arrangement {
+                let pv = ArrangementPreviewView(frame: NSRect(x: 0, y: 0, width: 320, height: 200))
+                pv.setArrangement([arrangement as Any])
+                showPopover(contentView: pv, anchor: rowRect, preferredEdge: .maxX)
+            }
             return
         }
 
