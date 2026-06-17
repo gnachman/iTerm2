@@ -1,4 +1,7 @@
-ORIG_PATH := $(PATH)
+ifndef ORIG_PATH
+  ORIG_PATH := $(PATH)
+endif
+export ORIG_PATH
 PATH := /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
@@ -56,6 +59,8 @@ ifeq ($(NATIVE_ARCH),arm64)
 else
   RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
+
+RUST_TOOLCHAIN_BIN = $(HOME)/.rustup/toolchains/stable-$(RUST_NATIVE_TARGET)/bin
 
 .PHONY: clean all backup-old-iterm restart
 
@@ -286,13 +291,22 @@ paranoid-NMSSH: force
 
 ifdef UNIVERSAL
 librailroad_dsl: force
-	$(RUSTUP) target add x86_64-apple-darwin
-	$(RUSTUP) target add aarch64-apple-darwin
-	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target aarch64-apple-darwin && $(RUSTUP) run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	if [ -n "$(RUSTUP)" ]; then $(RUSTUP) target add x86_64-apple-darwin; fi
+	if [ -n "$(RUSTUP)" ]; then $(RUSTUP) target add aarch64-apple-darwin; fi
+	cd submodules/railroad_dsl && \
+	PATH="$(RUST_TOOLCHAIN_BIN):$(ORIG_PATH):$(PATH)" cargo build --release --target aarch64-apple-darwin && \
+	PATH="$(RUST_TOOLCHAIN_BIN):$(ORIG_PATH):$(PATH)" cargo build --release --target x86_64-apple-darwin && \
+	lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && \
+	cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && \
+	install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 else
 librailroad_dsl: force
-	$(RUSTUP) target add $(RUST_NATIVE_TARGET)
-	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target $(RUST_NATIVE_TARGET) && cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	if [ -n "$(RUSTUP)" ]; then $(RUSTUP) target add $(RUST_NATIVE_TARGET); fi
+	cd submodules/railroad_dsl && \
+	PATH="$(RUST_TOOLCHAIN_BIN):$(ORIG_PATH):$(PATH)" cargo build --release --target $(RUST_NATIVE_TARGET) && \
+	cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && \
+	cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && \
+	install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 endif
 
 pwmadapters: force
