@@ -115,6 +115,11 @@ final class iTermWindowProject: NSObject, Codable {
             selector: #selector(windowWillClose(_:)),
             name: NSWindow.willCloseNotification,
             object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillTerminate(_:)),
+            name: NSApplication.willTerminateNotification,
+            object: nil)
     }
 
     // MARK: Persistence
@@ -253,6 +258,24 @@ final class iTermWindowProject: NSObject, Codable {
         project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
         liveAssociations.removeValue(forKey: wn)
         project.lastUsed = Date()
+        save()
+    }
+
+    @objc private func applicationWillTerminate(_ note: Notification) {
+        let all = iTermController.sharedInstance().terminals() ?? []
+        for terminal in all {
+            guard let wn = terminal.window()?.windowNumber, wn > 0,
+                  let projectID = liveAssociations[wn],
+                  let project = project(id: projectID) else { continue }
+            
+            PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+            
+            let title = terminal.window()?.title ?? "Window"
+            project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
+            liveAssociations.removeValue(forKey: wn)
+        }
         save()
     }
 
