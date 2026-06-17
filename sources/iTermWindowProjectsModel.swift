@@ -219,7 +219,7 @@ final class iTermWindowProject: NSObject, Codable {
     func closeProject(_ project: iTermWindowProject) {
         for terminal in liveWindows(for: project) {
             guard let wn = terminal.window()?.windowNumber else { continue }
-            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false) ?? [:]
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             let title = terminal.window()?.title ?? "Window"
             project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
@@ -244,7 +244,7 @@ final class iTermWindowProject: NSObject, Codable {
             liveAssociations.removeValue(forKey: wn)
             return
         }
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false) ?? [:]
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         let title = window.title.isEmpty ? "Window" : window.title
         project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
         liveAssociations.removeValue(forKey: wn)
@@ -262,7 +262,7 @@ final class iTermWindowProject: NSObject, Codable {
         if let wn = terminal.window()?.windowNumber, wn > 0 {
             liveAssociations.removeValue(forKey: wn)
         }
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false) ?? [:]
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         let title = terminal.window()?.title ?? "Window"
         let entry = iTermArchivedWindow(name: title, arrangement: arrangement)
         project.windows.append(entry)
