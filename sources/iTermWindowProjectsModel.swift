@@ -199,7 +199,7 @@ final class iTermWindowProject: NSObject, Codable {
 
     /// Returns all currently open windows associated with `project`.
     func liveWindows(for project: iTermWindowProject) -> [PseudoTerminal] {
-        let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+        let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
         return all.filter { t in
             guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
             return liveAssociations[wn] == project.id
@@ -208,7 +208,7 @@ final class iTermWindowProject: NSObject, Codable {
 
     /// True if `project` has at least one open window associated with it.
     func hasLiveWindows(for project: iTermWindowProject) -> Bool {
-        let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+        let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
         return all.contains { t in
             guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
             return liveAssociations[wn] == project.id
@@ -219,7 +219,7 @@ final class iTermWindowProject: NSObject, Codable {
     func closeProject(_ project: iTermWindowProject) {
         for terminal in liveWindows(for: project) {
             guard let wn = terminal.window()?.windowNumber else { continue }
-            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false)
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false) ?? [:]
             let title = terminal.window()?.title ?? "Window"
             project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
@@ -239,12 +239,12 @@ final class iTermWindowProject: NSObject, Codable {
             liveAssociations.removeValue(forKey: wn)
             return
         }
-        let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+        let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
         guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
             liveAssociations.removeValue(forKey: wn)
             return
         }
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false)
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false) ?? [:]
         let title = window.title.isEmpty ? "Window" : window.title
         project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
         liveAssociations.removeValue(forKey: wn)
@@ -262,7 +262,7 @@ final class iTermWindowProject: NSObject, Codable {
         if let wn = terminal.window()?.windowNumber, wn > 0 {
             liveAssociations.removeValue(forKey: wn)
         }
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false)
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: false) ?? [:]
         let title = terminal.window()?.title ?? "Window"
         let entry = iTermArchivedWindow(name: title, arrangement: arrangement)
         project.windows.append(entry)

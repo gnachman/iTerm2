@@ -645,7 +645,7 @@ final class iTermProjectsOutlineController: NSViewController,
         if let wnStr    = pb.string(forType: kLiveWindowDragType),
            let wn       = Int(wnStr),
            let project  = item as? iTermWindowProject {
-            let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+            let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
             guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
                 return false
             }
@@ -786,7 +786,7 @@ final class iTermOpenWindowsController: NSViewController,
     private var groups: [iTermOpenProjectGroup] = []
 
     private var terminals: [PseudoTerminal] {
-        (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+        (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
     }
 
     var selectedTerminal: PseudoTerminal? {
@@ -1175,7 +1175,7 @@ final class iTermOpenWindowsController: NSViewController,
 
         // Live window → reassign or disassociate
         if let wnStr = pb.string(forType: kLiveWindowDragType), let wn = Int(wnStr) {
-            let all = (iTermController.sharedInstance().terminals as? [PseudoTerminal]) ?? []
+            let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
             guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
                 return false
             }
