@@ -219,7 +219,9 @@ final class iTermWindowProject: NSObject, Codable {
     func closeProject(_ project: iTermWindowProject) {
         for terminal in liveWindows(for: project) {
             guard let wn = terminal.window()?.windowNumber else { continue }
+            PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
             let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
             let title = terminal.window()?.title ?? "Window"
             project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
@@ -244,7 +246,9 @@ final class iTermWindowProject: NSObject, Codable {
             liveAssociations.removeValue(forKey: wn)
             return
         }
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
         let title = window.title.isEmpty ? "Window" : window.title
         project.windows.append(iTermArchivedWindow(name: title, arrangement: arrangement))
         liveAssociations.removeValue(forKey: wn)
@@ -262,7 +266,9 @@ final class iTermWindowProject: NSObject, Codable {
         if let wn = terminal.window()?.windowNumber, wn > 0 {
             liveAssociations.removeValue(forKey: wn)
         }
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
         let title = terminal.window()?.title ?? "Window"
         let entry = iTermArchivedWindow(name: title, arrangement: arrangement)
         project.windows.append(entry)

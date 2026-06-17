@@ -77,6 +77,7 @@
 #import "VT100Terminal.h"
 #import "VT100Token.h"
 #import "WindowArrangements.h"
+#import "PseudoTerminal.h"
 #import "WindowControllerInterface.h"
 #import "iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -6313,7 +6314,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (includeContents) {
         __block int numberOfLinesDropped = 0;
         if (!self.isBrowserSession) {
-            const BOOL unlimited = [options[PTYSessionArrangementOptionsUnlimitedHistory] boolValue];
+            const BOOL unlimited = [options[PTYSessionArrangementOptionsUnlimitedHistory] boolValue] || [PseudoTerminal useUnlimitedHistoryForArrangement];
             [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {

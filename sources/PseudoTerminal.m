@@ -3048,6 +3048,16 @@ ITERM_WEAKLY_REFERENCEABLE
     return [PseudoTerminal _windowTypeForArrangement:arrangement percentage:&dummy] == WINDOW_TYPE_LION_FULL_SCREEN;
 }
 
+static BOOL gUseUnlimitedHistoryForArrangement = NO;
+
++ (BOOL)useUnlimitedHistoryForArrangement {
+    return gUseUnlimitedHistoryForArrangement;
+}
+
++ (void)setUseUnlimitedHistoryForArrangement:(BOOL)use {
+    gUseUnlimitedHistoryForArrangement = use;
+}
+
 + (BOOL)shouldRestoreHotKeyWindowWithGUID:(NSString *)guid {
     if (!guid) {
         // Something went wrong and we don't know the GUID. Or you just upgraded and a GUID wasn't

@@ -167,6 +167,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 + (void)performWhenWindowCreationIsSafeForLionFullScreen:(BOOL)lionFullScreen
                                                    block:(void (^)(void))block;
 
++ (BOOL)useUnlimitedHistoryForArrangement;
++ (void)setUseUnlimitedHistoryForArrangement:(BOOL)use;
+
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
