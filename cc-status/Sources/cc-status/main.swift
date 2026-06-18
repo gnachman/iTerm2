@@ -81,8 +81,8 @@ default:
 }
 
 // Build and run it2 invocation.
-var args = [
-    "it2", "set-status",
+var it2Args = [
+    "set-status",
     "--session", sessionID,
     "--status", status,
     "--dot-color", dotColor,
@@ -90,12 +90,13 @@ var args = [
 ]
 // Pass --detail only when cc-status has an opinion; empty string explicitly clears.
 if let detail = detail {
-    args.append(contentsOf: ["--detail", detail])
+    it2Args.append(contentsOf: ["--detail", detail])
 }
 
+let it2 = resolveIt2()
 let process = Process()
-process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-process.arguments = args
+process.executableURL = it2.executable
+process.arguments = it2.leadingArgs + it2Args
 do {
     try process.run()
 } catch {
@@ -105,6 +106,35 @@ do {
 process.waitUntilExit()
 if process.terminationStatus != 0 {
     FileHandle.standardError.write(Data("cc-status: it2 exited \(process.terminationStatus) for \(eventName)\n".utf8))
+}
+
+// MARK: - it2 resolution
+
+/// Locate the it2 binary to run.
+///
+/// cc-status is invoked through a stable symlink in iTerm2's dot dir that points
+/// at <bundle>/Contents/Resources/utilities/cc-status, and it2 ships right next
+/// to it in that same directory. Resolving it2 relative to our own realpath is
+/// robust against $PATH not containing the utilities dir: anything in a shell rc
+/// that rewrites PATH (mise, asdf, perlbrew, …) drops the entry iTerm2 injects,
+/// which would otherwise make `/usr/bin/env it2` fail to find it2 and — because
+/// we exit 0 on a failed launch — silently leave the Session Status tool empty.
+///
+/// Returns the absolute it2 path when the sibling is present and executable;
+/// otherwise falls back to a PATH lookup via /usr/bin/env so a hand-installed it2
+/// still works if the bundle layout ever changes.
+func resolveIt2() -> (executable: URL, leadingArgs: [String]) {
+    let fm = FileManager.default
+    // Claude Code invokes the hook by its absolute command path, so argv[0] is
+    // the dot-dir symlink; resolvingSymlinksInPath follows it into the bundle.
+    let argv0 = CommandLine.arguments.first ?? "cc-status"
+    let resolved = URL(fileURLWithPath: argv0).resolvingSymlinksInPath()
+    let sibling = resolved.deletingLastPathComponent()
+        .appendingPathComponent("it2")
+    if fm.isExecutableFile(atPath: sibling.path) {
+        return (sibling, [])
+    }
+    return (URL(fileURLWithPath: "/usr/bin/env"), ["it2"])
 }
 
 // MARK: - Detail formatting
