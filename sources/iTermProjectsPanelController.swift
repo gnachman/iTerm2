@@ -153,6 +153,7 @@ final class iTermProjectsOutlineController: NSViewController,
     private var restoreButton       = NSButton()
     private var restoreAllButton    = NSButton()
     private var closeProjectButton  = NSButton()
+    private var freezeProjectButton = NSButton()
 
     private var sortOrder   = ProjectSortOrder.recent
     private var sortSegment = NSSegmentedControl()
@@ -311,11 +312,13 @@ final class iTermProjectsOutlineController: NSViewController,
                   action: #selector(restoreAllInProject(_:)))
         configure(&closeProjectButton,  label: "Close All",   tip: "Close and archive all open windows in selected project",
                   action: #selector(closeSelectedProject(_:)))
+        configure(&freezeProjectButton, label: "Freeze All",  tip: "Close and archive all open windows in selected project (Keep running jobs)",
+                  action: #selector(freezeSelectedProjectAndKeepJobs(_:)))
 
         let spacer = NSView()
         let stack  = NSStackView(views: [addProjectButton, addSubprojectButton, deleteButton,
                                          spacer,
-                                         restoreButton, restoreAllButton, closeProjectButton])
+                                         restoreButton, restoreAllButton, closeProjectButton, freezeProjectButton])
         stack.orientation = .horizontal
         stack.spacing     = 4
         stack.edgeInsets  = NSEdgeInsets(top: 0, left: 6, bottom: 0, right: 6)
@@ -506,7 +509,27 @@ final class iTermProjectsOutlineController: NSViewController,
             showAlert("No open windows are associated with “\(project.name)“.")
             return
         }
-        iTermWindowProjectsModel.shared.closeProject(project)
+        let keepJobs = NSEvent.modifierFlags.contains(.option)
+        iTermWindowProjectsModel.shared.closeProject(project, keepJobsRunning: keepJobs)
+        reload()
+    }
+
+    @objc private func freezeSelectedProjectAndKeepJobs(_ sender: Any?) {
+        guard let project = selectedProject else { return }
+        guard iTermWindowProjectsModel.shared.hasLiveWindows(for: project) else {
+            showAlert("No open windows are associated with “\(project.name)“.")
+            return
+        }
+        iTermWindowProjectsModel.shared.closeProject(project, keepJobsRunning: true)
+        reload()
+    }
+
+    @objc private func freezeAndKeepJobsLiveWindow(_ sender: Any?) {
+        guard let liveBox = selectedLiveBox else { return }
+        iTermWindowProjectsModel.shared.archiveWindow(liveBox.terminal,
+                                                      to: liveBox.project,
+                                                      andClose: true,
+                                                      keepJobsRunning: true)
         reload()
     }
 
@@ -538,6 +561,10 @@ final class iTermProjectsOutlineController: NSViewController,
                                         action: #selector(closeAndArchiveLiveWindow(_:)),
                                         keyEquivalent: "")
             menu.addItem(archiveItem)
+            let freezeItem = NSMenuItem(title: "Freeze & Keep Jobs Running",
+                                        action: #selector(freezeAndKeepJobsLiveWindow(_:)),
+                                        keyEquivalent: "")
+            menu.addItem(freezeItem)
             let disItem = NSMenuItem(title: "Disassociate from Project",
                                      action: #selector(disassociateLiveWindow(_:)),
                                      keyEquivalent: "")
@@ -550,6 +577,9 @@ final class iTermProjectsOutlineController: NSViewController,
             if iTermWindowProjectsModel.shared.hasLiveWindows(for: project) {
                 menu.addItem(NSMenuItem(title: "Close All Open Windows",
                                        action: #selector(closeSelectedProject(_:)),
+                                       keyEquivalent: ""))
+                menu.addItem(NSMenuItem(title: "Freeze All (Keep Jobs Running)",
+                                       action: #selector(freezeSelectedProjectAndKeepJobs(_:)),
                                        keyEquivalent: ""))
             }
             menu.addItem(.separator())
@@ -768,9 +798,12 @@ final class iTermProjectsOutlineController: NSViewController,
         restoreButton.isEnabled       = hasArchived
         restoreAllButton.isEnabled    = hasProject
         if let proj = selectedProject {
-            closeProjectButton.isEnabled = iTermWindowProjectsModel.shared.hasLiveWindows(for: proj)
+            let hasLive = iTermWindowProjectsModel.shared.hasLiveWindows(for: proj)
+            closeProjectButton.isEnabled = hasLive
+            freezeProjectButton.isEnabled = hasLive
         } else {
             closeProjectButton.isEnabled = false
+            freezeProjectButton.isEnabled = false
         }
     }
 
@@ -1110,6 +1143,9 @@ final class iTermOpenWindowsController: NSViewController,
                 menu.addItem(NSMenuItem(title: "Close & Archive to Project",
                                        action: #selector(closeAndArchiveSelected(_:)),
                                        keyEquivalent: ""))
+                menu.addItem(NSMenuItem(title: "Freeze to Project (Keep Jobs Running)",
+                                       action: #selector(freezeAndKeepJobsSelected(_:)),
+                                       keyEquivalent: ""))
                 menu.addItem(NSMenuItem(title: "Disassociate from Project",
                                        action: #selector(disassociateSelected(_:)),
                                        keyEquivalent: ""))
@@ -1118,6 +1154,9 @@ final class iTermOpenWindowsController: NSViewController,
             if let proj = group.project {
                 menu.addItem(NSMenuItem(title: "Close All in “\(proj.name)”",
                                        action: #selector(closeSelectedGroup(_:)),
+                                       keyEquivalent: ""))
+                menu.addItem(NSMenuItem(title: "Freeze All in “\(proj.name)” (Keep Jobs)",
+                                       action: #selector(freezeSelectedGroupAndKeepJobs(_:)),
                                        keyEquivalent: ""))
                 menu.addItem(.separator())
                 menu.addItem(NSMenuItem(title: "Disassociate All from “\(proj.name)”",
@@ -1141,6 +1180,12 @@ final class iTermOpenWindowsController: NSViewController,
         iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true, keepJobsRunning: keepJobs)
     }
 
+    @objc private func freezeAndKeepJobsSelected(_ sender: Any?) {
+        guard let terminal = selectedTerminal,
+              let project  = iTermWindowProjectsModel.shared.project(for: terminal) else { return }
+        iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true, keepJobsRunning: true)
+    }
+
     @objc private func disassociateSelected(_ sender: Any?) {
         guard let terminal = selectedTerminal else { return }
         iTermWindowProjectsModel.shared.disassociateWindow(terminal)
@@ -1150,6 +1195,11 @@ final class iTermOpenWindowsController: NSViewController,
         guard let proj = selectedGroup?.project else { return }
         let keepJobs = NSEvent.modifierFlags.contains(.option)
         iTermWindowProjectsModel.shared.closeProject(proj, keepJobsRunning: keepJobs)
+    }
+
+    @objc private func freezeSelectedGroupAndKeepJobs(_ sender: Any?) {
+        guard let proj = selectedGroup?.project else { return }
+        iTermWindowProjectsModel.shared.closeProject(proj, keepJobsRunning: true)
     }
 
     @objc private func disassociateSelectedGroup(_ sender: Any?) {
