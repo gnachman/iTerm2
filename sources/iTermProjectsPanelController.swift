@@ -346,7 +346,10 @@ final class iTermProjectsOutlineController: NSViewController,
             object: nil)
     }
 
-    func reload() { outlineView.reloadData() }
+    func reload() {
+        outlineView.reloadData()
+        updateButtons()
+    }
 
     // MARK: NSOutlineViewDataSource
 
@@ -499,28 +502,50 @@ final class iTermProjectsOutlineController: NSViewController,
     }
 
     @objc func restoreAllInProject(_ sender: Any?) {
-        guard let project = selectedProject else { return }
-        iTermWindowProjectsModel.shared.restoreAllWindows(in: project)
+        if let project = selectedProject {
+            iTermWindowProjectsModel.shared.restoreAllWindows(in: project)
+        } else {
+            // Sensible fallback: Restore ALL archived windows across ALL projects!
+            let model = iTermWindowProjectsModel.shared
+            for project in model.rootProjects {
+                model.restoreAllWindows(in: project)
+            }
+        }
+        reload()
     }
 
     @objc private func closeSelectedProject(_ sender: Any?) {
-        guard let project = selectedProject else { return }
-        guard iTermWindowProjectsModel.shared.hasLiveWindows(for: project) else {
-            showAlert("No open windows are associated with “\(project.name)“.")
-            return
-        }
         let keepJobs = NSEvent.modifierFlags.contains(.option)
-        iTermWindowProjectsModel.shared.closeProject(project, keepJobsRunning: keepJobs)
+        if let project = selectedProject {
+            guard iTermWindowProjectsModel.shared.hasLiveWindows(for: project) else {
+                showAlert("No open windows are associated with “\(project.name)“.")
+                return
+            }
+            iTermWindowProjectsModel.shared.closeProject(project, keepJobsRunning: keepJobs)
+        } else {
+            // Sensible fallback: Close and archive ALL associated windows in ALL projects!
+            let model = iTermWindowProjectsModel.shared
+            for project in model.rootProjects {
+                model.closeProject(project, keepJobsRunning: keepJobs)
+            }
+        }
         reload()
     }
 
     @objc private func freezeSelectedProjectAndKeepJobs(_ sender: Any?) {
-        guard let project = selectedProject else { return }
-        guard iTermWindowProjectsModel.shared.hasLiveWindows(for: project) else {
-            showAlert("No open windows are associated with “\(project.name)“.")
-            return
+        if let project = selectedProject {
+            guard iTermWindowProjectsModel.shared.hasLiveWindows(for: project) else {
+                showAlert("No open windows are associated with “\(project.name)“.")
+                return
+            }
+            iTermWindowProjectsModel.shared.closeProject(project, keepJobsRunning: true)
+        } else {
+            // Sensible fallback: Freeze ALL associated windows in ALL projects!
+            let model = iTermWindowProjectsModel.shared
+            for project in model.rootProjects {
+                model.closeProject(project, keepJobsRunning: true)
+            }
         }
-        iTermWindowProjectsModel.shared.closeProject(project, keepJobsRunning: true)
         reload()
     }
 
@@ -790,20 +815,38 @@ final class iTermProjectsOutlineController: NSViewController,
 
     // MARK: Helpers
 
+    private var anyProjectHasLiveWindows: Bool {
+        return iTermWindowProjectsModel.shared.rootProjects.contains { p in
+            iTermWindowProjectsModel.shared.hasLiveWindows(for: p)
+        }
+    }
+
+    private var anyProjectHasArchivedWindows: Bool {
+        return iTermWindowProjectsModel.shared.rootProjects.contains { p in
+            p.totalWindowCount > 0
+        }
+    }
+
     private func updateButtons() {
         let hasProject  = selectedProject != nil
         let hasArchived = selectedArchivedBox != nil
+        
         addSubprojectButton.isEnabled = hasProject
         deleteButton.isEnabled        = hasProject || hasArchived
         restoreButton.isEnabled       = hasArchived
-        restoreAllButton.isEnabled    = hasProject
+        
+        // Restore All is enabled if a project is selected OR if there are any archived windows at all to restore!
+        restoreAllButton.isEnabled    = hasProject || anyProjectHasArchivedWindows
+        
         if let proj = selectedProject {
             let hasLive = iTermWindowProjectsModel.shared.hasLiveWindows(for: proj)
             closeProjectButton.isEnabled = hasLive
             freezeProjectButton.isEnabled = hasLive
         } else {
-            closeProjectButton.isEnabled = false
-            freezeProjectButton.isEnabled = false
+            // Fallback: If nothing is selected, enable if ANY project has live windows!
+            let hasLiveAnywhere = anyProjectHasLiveWindows
+            closeProjectButton.isEnabled = hasLiveAnywhere
+            freezeProjectButton.isEnabled = hasLiveAnywhere
         }
     }
 
