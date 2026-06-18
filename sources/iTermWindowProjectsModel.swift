@@ -344,7 +344,6 @@ final class iTermWindowProject: NSObject, Codable {
             
             let title = terminal.window()?.title ?? "Window"
             let uuid = UUID()
-            Self.saveThumbnail(for: wn, uuid: uuid)
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
         }
