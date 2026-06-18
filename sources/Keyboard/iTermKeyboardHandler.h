@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef struct {
     BOOL hasActionableKeyMapping;
+    BOOL hasBypassKeyMapping;
     iTermOptionKeyBehavior leftOptionKey;
     iTermOptionKeyBehavior rightOptionKey;
     BOOL autorepeatMode;

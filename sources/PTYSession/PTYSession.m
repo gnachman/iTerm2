@@ -11900,6 +11900,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [[self _keyBindingActionForEvent:event] isActionable];
 }
 
+- (BOOL)keyMapsToBypassActionForEvent:(NSEvent *)event {
+    return [self _keyBindingActionForEvent:event].keyAction == KEY_ACTION_BYPASS;
+}
+
 - (BOOL)shouldRespectTerminalMetaSendsEscape {
     if (![iTermAdvancedSettingsModel supportDecsetMetaSendsEscape]) {
         return NO;

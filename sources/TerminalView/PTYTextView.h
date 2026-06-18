@@ -91,6 +91,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)keyUp:(NSEvent *)event;
 - (void)textViewhandleSpecialKeyDown:(NSEvent *)event;
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event;
+- (BOOL)keyMapsToBypassActionForEvent:(NSEvent *)event;
 - (iTermOptionKeyBehavior)optionKey;
 - (iTermOptionKeyBehavior)rightOptionKey;
 // Contextual menu
