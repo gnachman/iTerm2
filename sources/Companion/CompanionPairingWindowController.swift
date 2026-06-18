@@ -142,6 +142,14 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             // connection, which can change WITHOUT the gate changing (the phone
             // quitting or reconnecting), so keep it current on each poll.
             if gate == .allowed, controller.hasPairedDevice {
+                // Paired and allowed but neither connected nor listening means
+                // the background park has stopped (e.g. it never restarted after
+                // a launch-time gate miss); kick it back to life so the phone can
+                // reconnect. resumePairedListeningIfNeeded is guarded, so this is
+                // a no-op while connected or already listening.
+                if !controller.isConnected, !controller.isListening {
+                    controller.resumePairedListeningIfNeeded()
+                }
                 updatePairedConnectionText()
             }
             return
@@ -486,10 +494,19 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     /// connection. Safe to call repeatedly; used to reflect the phone connecting
     /// or dropping while the gate (still .allowed) does not change.
     private func updatePairedConnectionText() {
-        instructionsLabel.stringValue = controller.isConnected
-            ? "A companion device is paired and connected."
-            : "A companion device is paired but not currently connected."
-        checkmarkImageView.contentTintColor = controller.isConnected ? .systemGreen : .tertiaryLabelColor
+        if controller.isConnected {
+            instructionsLabel.stringValue = "A companion device is paired and connected."
+            checkmarkImageView.contentTintColor = .systemGreen
+        } else if controller.isListening {
+            // Parked at the relay, just waiting for the phone to come back.
+            instructionsLabel.stringValue = "A companion device is paired. Waiting for it to connect."
+            checkmarkImageView.contentTintColor = .tertiaryLabelColor
+        } else {
+            // Not listening at all: the phone cannot reach this Mac. The poll in
+            // refreshGateState nudges a resume, so word it as transient.
+            instructionsLabel.stringValue = "A companion device is paired but iTerm2 isn’t listening for it yet. Reconnecting…"
+            checkmarkImageView.contentTintColor = .systemYellow
+        }
     }
 
     /// Require the device owner to authenticate before showing a fresh pairing

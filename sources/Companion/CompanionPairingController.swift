@@ -124,6 +124,12 @@ final class CompanionPairingController: NSObject {
     var isConnected: Bool { bridge != nil }
     /// A device has paired at some point (it may or may not be connected).
     var hasPairedDevice: Bool { pairedPID != nil }
+    /// The mac currently holds (or is actively re-establishing) a relay park, so
+    /// a paired phone can reach it. Distinguishes the healthy "paired, parked,
+    /// just waiting for the phone" state from "paired but not listening at all"
+    /// (the phone cannot reconnect). Both have bridge == nil and would otherwise
+    /// look identical in the UI.
+    var isListening: Bool { acceptTask != nil || listenerRetryTask != nil }
 
     /// The pairing id the mac should currently be parked for: the established
     /// device, or, during a fresh pairing, the QR being shown. Retry uses this
@@ -575,30 +581,39 @@ final class CompanionPairingController: NSObject {
                     self.listener = nil
                 }
                 acceptTask = nil
+                // Only a cancelled accept task is a deliberate local teardown:
+                // stopAdvertising() cancels it, and that is the single path
+                // reached by unpair, a gate close, a peer unpair, and the
+                // pairing window closing. EVERY other failure, including
+                // TransportError.closed, is the relay or edge closing our parked
+                // socket from under us (idle reap past the keepalive, a relay
+                // redeploy, a network change, sleep/wake) and must be recovered
+                // from, not mistaken for a local teardown. Conflating the two
+                // left the mac silently dark: paired, not parked, and
+                // unreachable by the phone until the next relaunch.
+                let cancelled = Task.isCancelled || error is CancellationError
                 // A fresh-pairing park that dies without our cancelling it means
                 // the relay tore the room down (e.g. the anti-grind cycle cap
                 // tripped). Re-advertise under a new pid rather than going dark,
                 // so a photographed QR cannot keep targeting the dead room.
-                if !Task.isCancelled, !(error is CancellationError),
-                   freshPairingActive, bridge == nil {
+                if !cancelled, freshPairingActive, bridge == nil {
                     relayLog("acceptLoop: fresh-pairing park closed by relay; regenerating pid")
                     regenerateFreshPairing(reason: "park-closed")
                     return
                 }
-                // A closed listener is always a deliberate teardown (stop or
-                // unpair), regardless of which error shape the cancellation
-                // surfaced as; only genuine failures reach the user.
-                let intentional = Task.isCancelled
-                    || error is CancellationError
-                    || (error as? TransportError) == .closed
-                DLog("Companion pairing: accept ended: \(error), cancelled=\(Task.isCancelled), intentional=\(intentional)")
-                relayLog("acceptLoop EXIT via accept() error (intentional=\(intentional)): \(error)")
-                if !intentional {
-                    onFailed?(Self.userFacingDescription(of: error))
-                    // The background listener for a paired device must come
-                    // back on its own (e.g. after sleep/wake kills it).
-                    scheduleListenerRetry()
+                DLog("Companion pairing: accept ended: \(error), cancelled=\(cancelled)")
+                relayLog("acceptLoop EXIT via accept() error (cancelled=\(cancelled)): \(error)")
+                if cancelled {
+                    return
                 }
+                // A genuine park loss while a device is still paired. Re-park so
+                // the phone can reconnect; without this the mac goes silently
+                // dark. A closed park is routine churn, so retry quietly and
+                // surface only real faults (e.g. a connection/DNS failure).
+                if (error as? TransportError) != .closed {
+                    onFailed?(Self.userFacingDescription(of: error))
+                }
+                scheduleListenerRetry()
                 return
             }
             do {
