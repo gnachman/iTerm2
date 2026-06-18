@@ -213,13 +213,15 @@ final class iTermWindowProject: NSObject, Codable {
 
     // MARK: Persistence
 
-    func save() {
+    func save(postNotification: Bool = true) {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = .prettyPrinted
         guard let data = try? encoder.encode(rootProjects) else { return }
         try? data.write(to: Self.saveURL)
-        NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+        if postNotification {
+            NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
+        }
     }
 
     private func load() {
@@ -382,7 +384,7 @@ final class iTermWindowProject: NSObject, Codable {
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
         }
-        save()
+        save(postNotification: false)
     }
 
     // MARK: Window Archiving
