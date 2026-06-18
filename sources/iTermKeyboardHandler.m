@@ -248,6 +248,16 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         return YES;
     }
 
+    if (context.hasBypassKeyMapping) {
+        // The keystroke is bound to "Bypass Terminal". Never route it to the
+        // controller: that path consumes it as a no-op and the event never
+        // reaches Cocoa. We want macOS to handle it normally, so return NO even
+        // for function/arrow/numeric-keypad keys that keyMapperShouldBypassPreCocoa
+        // would otherwise send pre-Cocoa to the delegate. Issue 12884.
+        DLog(@"context.hasBypassKeyMapping");
+        return NO;
+    }
+
     return [_keyMapper keyMapperShouldBypassPreCocoaForEvent:event];
 }
 
@@ -357,7 +367,11 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 
     // Control+Key doesn't work right with custom keyboard layouts. Handle ctrl+key here for the
     // standard combinations.
-    if ([self shouldAllowPreCocoaKeyMappingForEvent:event]) {
+    //
+    // Skip this entirely for "Bypass Terminal" bindings: sending a pre-Cocoa string (a control
+    // code or keypad sequence) to the terminal is exactly what bypass is meant to prevent. Let the
+    // event fall through to Cocoa so macOS handles it normally. Issue 12884.
+    if (!context.hasBypassKeyMapping && [self shouldAllowPreCocoaKeyMappingForEvent:event]) {
         NSString *string = [_keyMapper keyMapperStringForPreCocoaEvent:event];
         if (string) {
             const NSRange markedRange = [self.delegate keyboardHandlerMarkedTextRange:self];
