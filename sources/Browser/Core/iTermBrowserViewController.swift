@@ -844,19 +844,23 @@ extension iTermBrowserViewController {
 
     private func layoutSubviews() {
         let bounds = view.bounds
-        
+
         // Background view - full coverage
         backgroundView.frame = bounds
-        
-        // Toolbar - top, full width, 44pt height
-        toolbar.frame = NSRect(x: 0, y: bounds.height - 44,
-                              width: bounds.width, height: 44)
-        
-        // WebView - below toolbar
+
+        let showToolbar = profileObserver.value(KEY_BROWSER_SHOW_TOOLBAR) == true
+        let toolbarHeight: CGFloat = showToolbar ? 44 : 0
+        toolbar.isHidden = !showToolbar
+
+        // Toolbar - top, full width
+        toolbar.frame = NSRect(x: 0, y: bounds.height - toolbarHeight,
+                              width: bounds.width, height: toolbarHeight)
+
+        // WebView - below toolbar (full height when toolbar is hidden)
         browserManager.webView.frame = NSRect(x: 0, y: 0,
                                             width: bounds.width,
-                                            height: bounds.height - 44)
-        
+                                            height: bounds.height - toolbarHeight)
+
         // Shade view - full coverage
         shadeView.frame = bounds
     }

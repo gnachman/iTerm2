@@ -358,6 +358,7 @@ typedef struct {
             KEY_DYNAMIC_PROFILE_REWRITABLE,
             KEY_DYNAMIC_PROFILE,
             KEY_BROWSER_DEV_NULL,
+            KEY_BROWSER_SHOW_TOOLBAR,
             KEY_INSTANT_REPLAY,
         ];
         NSArray *number = @[
@@ -1169,6 +1170,7 @@ typedef struct {
 
                   KEY_BROWSER_ZOOM: @100,
                   KEY_BROWSER_DEV_NULL: @NO,
+                  KEY_BROWSER_SHOW_TOOLBAR: @YES,
                   KEY_BROWSER_EXTENSIONS_ROOT: [NSNull null],
                   KEY_BROWSER_EXTENSION_ACTIVE_IDS: @[],
                   KEY_WIDTH: @1000,
