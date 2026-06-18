@@ -2384,15 +2384,33 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         }
     }
 
+    // When select_tab is unset or true, preserve the historical behavior of
+    // selecting the new tab and ordering its window front. When false, create the
+    // tab in the background: no selection, no window raise.
+    const BOOL select = request.hasSelectTab ? request.selectTab : YES;
     iTermSessionLauncher *launcher = [[iTermSessionLauncher alloc] initWithProfile:profile windowController:term];
     launcher.canActivate = NO;
+    // canActivate only suppresses cross-app activation; makeKey controls the
+    // in-app window raise in -[iTermSessionLauncher makeKeyAndActivateIfNeeded:].
+    // For a background tab don't make its window key/front.
+    launcher.makeKey = select;
     launcher.makeSession = ^(NSDictionary * _Nonnull profile, PseudoTerminal * _Nonnull term, void (^ _Nonnull didMakeSession)(PTYSession * _Nullable)) {
         profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
+        // This block bypasses the launcher's own automaticallySelectNewTabs
+        // handling, so set both flags on term directly around the create.
+        const BOOL savedSelect = term.automaticallySelectNewTabs;
+        const BOOL savedOrderFront = term.automaticallyOrderFrontNewTabs;
+        term.automaticallySelectNewTabs = select;
+        term.automaticallyOrderFrontNewTabs = select;
         [term asyncCreateTabWithProfile:profile
                             withCommand:nil
                             environment:nil
                                tabIndex:nil
-                         didMakeSession:^(PTYSession *session) { didMakeSession(session); }
+                         didMakeSession:^(PTYSession *session) {
+                             term.automaticallySelectNewTabs = savedSelect;
+                             term.automaticallyOrderFrontNewTabs = savedOrderFront;
+                             didMakeSession(session);
+                         }
                              completion:nil];
     };
     __weak __typeof(self) weakSelf = self;

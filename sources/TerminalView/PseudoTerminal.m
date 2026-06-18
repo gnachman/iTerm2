@@ -463,6 +463,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {
         _automaticallySelectNewTabs = YES;
+        _automaticallyOrderFrontNewTabs = YES;
         self.autoCommandHistorySessionGuid = nil;
     }
     return self;
@@ -563,6 +564,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _titlebarAccessoryNanny.windowController = self;
     _titlebarAccessoryNanny.defaultHeight = [self desiredTabBarHeight];
     _automaticallySelectNewTabs = YES;
+    _automaticallyOrderFrontNewTabs = YES;
     _creationTime = [NSDate it_timeSinceBoot];
     const iTermWindowType windowType = iTermThemedWindowType(unsafeWindowType);
     iTermWindowType savedWindowType = iTermThemedWindowType(unsafeSavedWindowType);
@@ -11558,14 +11560,19 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                 } else {
                     DLog(@"already rolling in or still being created - no need to do anything");
                 }
-            } else {
+            } else if (_automaticallyOrderFrontNewTabs || self.tabs.count == 1) {
                 DLog(@"not a hidden hotkey window. Just order front.");
                 [[self window] makeKeyAndOrderFront:self];
             }
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone) {
+        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone &&
+            (_automaticallyOrderFrontNewTabs || self.tabs.count == 1)) {
+            // A background tab (automaticallyOrderFrontNewTabs == NO) should not
+            // become the current terminal: doing so moves iTerm's current-window
+            // pointer to it, which clients observe as a focus/window steal even
+            // though the window itself was not ordered front above.
             [[iTermController sharedInstance] setCurrentTerminal:self];
         }
     }
