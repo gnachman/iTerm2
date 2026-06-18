@@ -3504,6 +3504,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }];
     [_view release];  // This balances a retain in -terminate.
     [[self retain] autorelease];
+    _shell.orphanOnDealloc = self.orphanOnDealloc;
     [_shell stop];
     _shell.delegate = nil;
     [_textview setDataSource:nil];

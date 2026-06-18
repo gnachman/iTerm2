@@ -583,9 +583,11 @@ final class iTermProjectsOutlineController: NSViewController,
 
     @objc private func closeAndArchiveLiveWindow(_ sender: Any?) {
         guard let liveBox = selectedLiveBox else { return }
+        let keepJobs = NSEvent.modifierFlags.contains(.option)
         iTermWindowProjectsModel.shared.archiveWindow(liveBox.terminal,
                                                       to: liveBox.project,
-                                                      andClose: true)
+                                                      andClose: true,
+                                                      keepJobsRunning: keepJobs)
         reload()
     }
 
@@ -670,7 +672,8 @@ final class iTermProjectsOutlineController: NSViewController,
                 iTermWindowProjectsModel.shared.associateWindow(terminal, with: project)
             } else {
                 // Dragged from right to left (archive + close!)
-                iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true)
+                let keepJobs = NSEvent.modifierFlags.contains(.option)
+                iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true, keepJobsRunning: keepJobs)
             }
             return true
         }
@@ -1134,7 +1137,8 @@ final class iTermOpenWindowsController: NSViewController,
     @objc private func closeAndArchiveSelected(_ sender: Any?) {
         guard let terminal = selectedTerminal,
               let project  = iTermWindowProjectsModel.shared.project(for: terminal) else { return }
-        iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true)
+        let keepJobs = NSEvent.modifierFlags.contains(.option)
+        iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true, keepJobsRunning: keepJobs)
     }
 
     @objc private func disassociateSelected(_ sender: Any?) {
@@ -1144,7 +1148,8 @@ final class iTermOpenWindowsController: NSViewController,
 
     @objc private func closeSelectedGroup(_ sender: Any?) {
         guard let proj = selectedGroup?.project else { return }
-        iTermWindowProjectsModel.shared.closeProject(proj)
+        let keepJobs = NSEvent.modifierFlags.contains(.option)
+        iTermWindowProjectsModel.shared.closeProject(proj, keepJobsRunning: keepJobs)
     }
 
     @objc private func disassociateSelectedGroup(_ sender: Any?) {

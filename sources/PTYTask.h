@@ -153,6 +153,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 // No reading or writing allowed for now.
 @property(atomic, assign) BOOL paused;
+@property(atomic, assign) BOOL orphanOnDealloc;
 @property(nonatomic, readonly) BOOL isSessionRestorationPossible;
 @property(nonatomic, readonly) id sessionRestorationIdentifier;
 

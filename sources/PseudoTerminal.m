@@ -1963,6 +1963,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)close {
+    if (self.orphanJobsOnClose) {
+        for (PTYSession *session in [self allSessions]) {
+            session.orphanOnDealloc = YES;
+        }
+    }
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];

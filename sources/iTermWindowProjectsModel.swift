@@ -285,7 +285,7 @@ final class iTermWindowProject: NSObject, Codable {
     }
 
     /// Closes and archives every open window currently associated with `project`.
-    func closeProject(_ project: iTermWindowProject) {
+    func closeProject(_ project: iTermWindowProject, keepJobsRunning: Bool = false) {
         for terminal in liveWindows(for: project) {
             guard let wn = terminal.window()?.windowNumber else { continue }
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
@@ -296,6 +296,8 @@ final class iTermWindowProject: NSObject, Codable {
             Self.saveThumbnail(for: wn, uuid: uuid)
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
+            
+            terminal.orphanJobsOnClose = keepJobsRunning
             terminal.close()
         }
         project.lastUsed = Date()
@@ -355,7 +357,8 @@ final class iTermWindowProject: NSObject, Codable {
     /// Any existing live association is cleared.
     func archiveWindow(_ terminal: PseudoTerminal,
                        to project: iTermWindowProject,
-                       andClose close: Bool) {
+                       andClose close: Bool,
+                       keepJobsRunning: Bool = false) {
         let wn = terminal.window()?.windowNumber ?? 0
         if wn > 0 {
             liveAssociations.removeValue(forKey: wn)
@@ -371,6 +374,7 @@ final class iTermWindowProject: NSObject, Codable {
         project.lastUsed = Date()
         save()
         if close {
+            terminal.orphanJobsOnClose = keepJobsRunning
             terminal.close()
         }
     }

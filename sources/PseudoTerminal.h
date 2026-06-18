@@ -93,6 +93,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Are we in the process of restoring a window with NSWindowRestoration? If so, do not order
 // the window as it may be minimized (issue 5258)
 @property(nonatomic) BOOL restoringWindow;
+@property(nonatomic) BOOL orphanJobsOnClose;
 
 // Set to YES when the window has been created but window:didDecodeRestorableState: hasn't been
 // called yet.

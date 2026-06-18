@@ -103,7 +103,9 @@ static void HandleSigChld(int n) {
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders? It is not clear from git history why killpg is used here and
     // not in other places. I suspect it's what we ought to use everywhere.
-    [self.jobManager killWithMode:iTermJobManagerKillingModeProcessGroup];
+    if (!self.orphanOnDealloc) {
+        [self.jobManager killWithMode:iTermJobManagerKillingModeProcessGroup];
+    }
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -383,11 +385,13 @@ static void HandleSigChld(int n) {
     DLog(@"stop %@", self);
     self.paused = NO;
     [self.loggingHelper stop];
-    [self killWithMode:iTermJobManagerKillingModeRegular];
+    if (!self.orphanOnDealloc) {
+        [self killWithMode:iTermJobManagerKillingModeRegular];
 
-    // Ensure the server is broken out of accept()ing for future connections
-    // in case the child doesn't die right away.
-    [self killWithMode:iTermJobManagerKillingModeBrokenPipe];
+        // Ensure the server is broken out of accept()ing for future connections
+        // in case the child doesn't die right away.
+        [self killWithMode:iTermJobManagerKillingModeBrokenPipe];
+    }
 
     [self closeFileDescriptorAndDeregisterIfPossible];
 }
