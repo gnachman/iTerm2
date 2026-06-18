@@ -34,25 +34,25 @@ class iTermWindowProjectsTests: XCTestCase {
         XCTAssertEqual(model.rootProjects.count, 0)
         
         // 2. Create a root project
-        let projectA = model.createProject(named: "Client-A")
+        let projectA = model.createProject(named: "Project-A")
         XCTAssertEqual(model.rootProjects.count, 1)
-        XCTAssertEqual(model.rootProjects[0].name, "Client-A")
+        XCTAssertEqual(model.rootProjects[0].name, "Project-A")
         XCTAssertEqual(model.rootProjects[0].id, projectA.id)
         
         // 3. Create a nested child project
-        let subProject = model.createProject(named: "External-Pentest", parent: projectA)
+        let subProject = model.createProject(named: "Sub-Project-B", parent: projectA)
         XCTAssertEqual(projectA.children.count, 1)
-        XCTAssertEqual(projectA.children[0].name, "External-Pentest")
+        XCTAssertEqual(projectA.children[0].name, "Sub-Project-B")
         XCTAssertEqual(projectA.children[0].id, subProject.id)
         
         // 4. Lookups
         let foundProject = model.project(id: subProject.id)
         XCTAssertNotNil(foundProject)
-        XCTAssertEqual(foundProject?.name, "External-Pentest")
+        XCTAssertEqual(foundProject?.name, "Sub-Project-B")
         
         // 5. Rename project
-        model.renameProject(subProject, to: "Internal-Adversary")
-        XCTAssertEqual(projectA.children[0].name, "Internal-Adversary")
+        model.renameProject(subProject, to: "Sub-Project-B-Renamed")
+        XCTAssertEqual(projectA.children[0].name, "Sub-Project-B-Renamed")
         
         // 6. Delete project
         let deleted = model.deleteProject(projectA)
@@ -69,8 +69,8 @@ class iTermWindowProjectsTests: XCTestCase {
         ]
         
         // Create an archived window
-        let archived = iTermArchivedWindow(name: "Scope-Scan", arrangement: dummyArrangement)
-        XCTAssertEqual(archived.name, "Scope-Scan")
+        let archived = iTermArchivedWindow(name: "Window-A", arrangement: dummyArrangement)
+        XCTAssertEqual(archived.name, "Window-A")
         XCTAssertNotNil(archived.arrangement)
         
         // Verify arrangement values survive base64 plist encoding/decoding cycle
@@ -83,16 +83,16 @@ class iTermWindowProjectsTests: XCTestCase {
     
     func testProjectHierarchyWindowCascading() {
         let model = iTermWindowProjectsModel.shared
-        let root = model.createProject(named: "RedTeam")
+        let root = model.createProject(named: "Project-C")
         let dummyArrangement: [AnyHashable: Any] = ["Columns": 80]
         
-        let archivedWin = iTermArchivedWindow(name: "Hydra-Brute", arrangement: dummyArrangement)
+        let archivedWin = iTermArchivedWindow(name: "Window-B", arrangement: dummyArrangement)
         root.windows.append(archivedWin)
         
         // Verify we can find the archived window inside the tree
         let found = model.archivedWindow(id: archivedWin.id)
         XCTAssertNotNil(found)
-        XCTAssertEqual(found?.0.name, "Hydra-Brute")
+        XCTAssertEqual(found?.0.name, "Window-B")
         XCTAssertEqual(found?.1.id, root.id)
         
         // Verify we find parent project of the window
