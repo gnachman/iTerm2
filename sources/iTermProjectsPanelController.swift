@@ -300,19 +300,19 @@ final class iTermProjectsOutlineController: NSViewController,
             bar.heightAnchor.constraint(equalToConstant: 32),
         ])
 
-        configure(&addProjectButton,    label: "+",           tip: "New project",
+        configure(&addProjectButton,    label: "+",           tip: "New project", target: self,
                   action: #selector(addProject(_:)))
-        configure(&addSubprojectButton, label: "+sub",        tip: "New sub-project under selection",
+        configure(&addSubprojectButton, label: "+sub",        tip: "New sub-project under selection", target: self,
                   action: #selector(addSubproject(_:)))
-        configure(&deleteButton,        label: "−",           tip: "Delete selection",
+        configure(&deleteButton,        label: "−",           tip: "Delete selection", target: self,
                   action: #selector(deleteSelected(_:)))
-        configure(&restoreButton,       label: "Restore",     tip: "Restore selected archived window",
+        configure(&restoreButton,       label: "Restore",     tip: "Restore selected archived window", target: self,
                   action: #selector(restoreSelectedWindow(_:)))
-        configure(&restoreAllButton,    label: "Restore All", tip: "Restore all archived windows in selected project",
+        configure(&restoreAllButton,    label: "Restore All", tip: "Restore all archived windows in selected project", target: self,
                   action: #selector(restoreAllInProject(_:)))
-        configure(&closeProjectButton,  label: "Close All",   tip: "Close and archive all open windows in selected project",
+        configure(&closeProjectButton,  label: "Close All",   tip: "Close and archive all open windows in selected project", target: self,
                   action: #selector(closeSelectedProject(_:)))
-        configure(&freezeProjectButton, label: "Freeze All",  tip: "Close and archive all open windows in selected project (Keep running jobs)",
+        configure(&freezeProjectButton, label: "Freeze All",  tip: "Close and archive all open windows in selected project (Keep running jobs)", target: self,
                   action: #selector(freezeSelectedProjectAndKeepJobs(_:)))
 
         let spacer = NSView()
@@ -1043,6 +1043,7 @@ final class iTermOpenWindowsController: NSViewController,
         configure(&associateButton,
                   label: "Associate with Project",
                   tip: "Mark the selected open window as belonging to the selected project (auto-archives on close)",
+                  target: self,
                   action: #selector(associateSelected(_:)))
 
         let stack = NSStackView(views: [statusLabel, NSView(), associateButton])
@@ -1514,8 +1515,9 @@ private func makeSectionHeader(_ title: String) -> NSView {
 private func configure(_ button: inout NSButton,
                         label: String,
                         tip: String,
+                        target: Any?,
                         action: Selector) {
-    button = NSButton(title: label, target: nil, action: action)
+    button = NSButton(title: label, target: target as AnyObject?, action: action)
     button.bezelStyle  = .inline
     button.controlSize = .small
     button.toolTip     = tip
