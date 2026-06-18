@@ -17,13 +17,15 @@ class iTermWindowProjectsTests: XCTestCase {
         // 1. Back up any existing in-memory projects
         savedProjects = model.rootProjects
         
-        // 2. Clear rootProjects for a clean test environment (loads from WindowProjects_test.json)
-        model.rootProjects = []
+        // 2. Clear rootProjects for a clean test environment by deleting them via the public API
+        while !model.rootProjects.isEmpty {
+            model.deleteProject(model.rootProjects[0])
+        }
     }
     
     override func tearDown() {
         // Restore user's original projects back to the singleton
-        iTermWindowProjectsModel.shared.rootProjects = savedProjects
+        iTermWindowProjectsModel.shared.testOnlySetRootProjects(savedProjects)
         super.tearDown()
     }
     
@@ -103,5 +105,15 @@ class iTermWindowProjectsTests: XCTestCase {
         model.removeWindow(archivedWin, from: root)
         XCTAssertEqual(root.windows.count, 0)
         XCTAssertNil(model.archivedWindow(id: archivedWin.id))
+    }
+    
+    func testUnlimitedHistoryFlag() {
+        XCTAssertFalse(PseudoTerminal.useUnlimitedHistoryForArrangement())
+        
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
+        XCTAssertTrue(PseudoTerminal.useUnlimitedHistoryForArrangement())
+        
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+        XCTAssertFalse(PseudoTerminal.useUnlimitedHistoryForArrangement())
     }
 }

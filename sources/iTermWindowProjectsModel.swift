@@ -94,6 +94,11 @@ final class iTermWindowProject: NSObject, Codable {
 
     private(set) var rootProjects: [iTermWindowProject] = []
 
+    func testOnlySetRootProjects(_ projects: [iTermWindowProject]) {
+        self.rootProjects = projects
+        save()
+    }
+
     /// Runtime-only mapping: NSWindow.windowNumber → project UUID.
     /// Not persisted — live associations reset when the app restarts.
     private var liveAssociations: [Int: UUID] = [:]
