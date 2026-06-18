@@ -39,6 +39,30 @@ struct iTermArchivedWindow: Codable {
             options: [],
             format: nil)) as? [AnyHashable: Any]
     }
+
+    /// Returns true if this archived window contains live background server process IDs.
+    var isOrphanedAndRunning: Bool {
+        guard let arrangement = arrangement else { return false }
+        return hasLiveServerPID(in: arrangement)
+    }
+
+    private func hasLiveServerPID(in value: Any) -> Bool {
+        if let dict = value as? [String: Any] {
+            if let pidNum = dict["Server PID"] as? Int, pidNum > 0 {
+                if kill(pid_t(pidNum), 0) == 0 {
+                    return true
+                }
+            }
+            for val in dict.values {
+                if hasLiveServerPID(in: val) { return true }
+            }
+        } else if let array = value as? [Any] {
+            for val in array {
+                if hasLiveServerPID(in: val) { return true }
+            }
+        }
+        return false
+    }
 }
 
 // MARK: - Window Project Node

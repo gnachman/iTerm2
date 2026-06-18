@@ -430,10 +430,15 @@ final class iTermProjectsOutlineController: NSViewController,
             let formatter = RelativeDateTimeFormatter()
             formatter.unitsStyle = .abbreviated
             let age = formatter.localizedString(for: box.window.timestamp, relativeTo: Date())
-            cell.textField?.stringValue = "\(box.window.name)  \(age)"
+            
+            let isRunning = box.window.isOrphanedAndRunning
+            let suffix = isRunning ? "  [Active]" : ""
+            cell.textField?.stringValue = "\(box.window.name)  \(age)\(suffix)"
             cell.textField?.font        = .systemFont(ofSize: NSFont.systemFontSize)
-            cell.textField?.textColor   = .secondaryLabelColor
-            cell.imageView?.image       = NSImage(systemSymbolName: "terminal",
+            cell.textField?.textColor   = isRunning ? .labelColor : .secondaryLabelColor
+            
+            let iconName = isRunning ? "terminal.fill" : "terminal"
+            cell.imageView?.image       = NSImage(systemSymbolName: iconName,
                                                   accessibilityDescription: nil)
         }
         return cell
