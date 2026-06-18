@@ -1000,39 +1000,57 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     if ([self isActive]) {
         DLog(@"Application already active. Run completion block synchronously");
         completion();
-    } else {
-        __block id observer;
-        DLog(@"activateAppWithCompletion");
-        _activated = NO;
-        _activationStartTime = [NSDate it_timeSinceBoot];
-        __weak __typeof(self) weakSelf = self;
-        observer = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
-                                                                     object:nil
-                                                                      queue:NULL
-                                                                 usingBlock:^(NSNotification * _Nonnull note) {
-            __strong __typeof(self) strongSelf = weakSelf;
-            if (!strongSelf) {
-                return;
-            }
-            strongSelf->_activated = YES;
-            DLog(@"Application did become active. Invoke completion block");
-            completion();
-            DLog(@"Application did become active completion block finished. Removing observer.");
-            [[NSNotificationCenter defaultCenter] removeObserver:observer];
-        }];
-
-        // On macOS 14 we have to wait a spin or it doesn't work on modifier double-tap although
-        // it still works for a carbon hotkey (issue 11129).
-        // I have no freaking idea why. Smells like an OS bug to me. If anyone every investigates
-        // this further, [self activateIgnoringOtherApps:YES] and [NSApp activate] *also* fail when
-        // a carbon hotkey is pressed. I considered filing a radar but I think wishing on a star
-        // would be a better use of my time so I'll do that instead.
-        DLog(@"activateAppWithCompletion doing dispatch_async");
-        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0];
+        return;
     }
+    DLog(@"activateAppWithCompletion");
+    _activated = NO;
+    _activationStartTime = [NSDate it_timeSinceBoot];
+
+    // `finish` runs the completion block exactly once, whether activation succeeds (the
+    // notification fires) or we eventually give up (see activateWithRetry:). Without the
+    // give-up path running it, an activation that never completes (for example while the
+    // screen is locked and loginwindow owns focus) would leak the completion block. For
+    // hotkey windows that left _rollingIn stuck at YES and the window ordered front but
+    // stuck at alpha 0, permanently breaking the hotkey. See issue 12879.
+    __block BOOL done = NO;
+    __block id observer = nil;
+    void (^finish)(void) = ^{
+        if (done) {
+            return;
+        }
+        done = YES;
+        if (observer) {
+            [[NSNotificationCenter defaultCenter] removeObserver:observer];
+            observer = nil;
+        }
+        completion();
+    };
+
+    __weak __typeof(self) weakSelf = self;
+    observer = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
+                                                                 object:nil
+                                                                  queue:NULL
+                                                             usingBlock:^(NSNotification * _Nonnull note) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_activated = YES;
+        DLog(@"Application did become active. Invoke completion block");
+        finish();
+    }];
+
+    // On macOS 14 we have to wait a spin or it doesn't work on modifier double-tap although
+    // it still works for a carbon hotkey (issue 11129).
+    // I have no freaking idea why. Smells like an OS bug to me. If anyone every investigates
+    // this further, [self activateIgnoringOtherApps:YES] and [NSApp activate] *also* fail when
+    // a carbon hotkey is pressed. I considered filing a radar but I think wishing on a star
+    // would be a better use of my time so I'll do that instead.
+    DLog(@"activateAppWithCompletion doing dispatch_async");
+    [self performSelector:@selector(activateWithRetry:) withObject:[finish copy] afterDelay:0];
 }
 
-- (void)activateWithRetry:(id)ignore {
+- (void)activateWithRetry:(void (^)(void))finish {
     if (_activated) {
         DLog(@"Already activated");
         return;
@@ -1042,15 +1060,13 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     const NSTimeInterval elapsed = [NSDate it_timeSinceBoot] - _activationStartTime;
     if (elapsed < 2.0) {
         DLog(@"rescheduling with interval 0");
-        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0];
-    } else if (elapsed < 2.0) {
-        DLog(@"rescheduling with interval 0.1");
-        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0.1];
+        [self performSelector:@selector(activateWithRetry:) withObject:finish afterDelay:0];
     } else if (elapsed < 6.0) {
-        DLog(@"rescheduling with interval 0.5");
-        [self performSelector:@selector(activateWithRetry:) withObject:nil afterDelay:0.2];
+        DLog(@"rescheduling with interval 0.2");
+        [self performSelector:@selector(activateWithRetry:) withObject:finish afterDelay:0.2];
     } else {
-        DLog(@"giving up");
+        DLog(@"giving up; running completion anyway so callers don't get stuck");
+        finish();
     }
 }
 
