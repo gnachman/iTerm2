@@ -283,6 +283,20 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
 }
 
+- (void)updateHeightWithDefault:(CGFloat)defaultHeight {
+    if (@available(macOS 26, *)) {
+        if (self.orientation == PSMTabBarVerticalOrientation) {
+            self.style.orientation = self.orientation;
+            const CGFloat styleHeight = self.style.tabBarHeight;
+            if (styleHeight > 0) {
+                self.height = styleHeight;
+                return;
+            }
+        }
+    }
+    self.height = defaultHeight;
+}
+
 #pragma mark - Private
 
 - (BOOL)cellAllowsTabProgressBar:(PSMTabBarCell *)cell {
