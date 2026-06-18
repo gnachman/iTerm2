@@ -98,19 +98,25 @@ final class iTermWindowProject: NSObject, Codable {
     /// Not persisted — live associations reset when the app restarts.
     private var liveAssociations: [Int: UUID] = [:]
 
+    private static var isTesting: Bool {
+        return NSClassFromString("XCTestCase") != nil
+    }
+
     private static var saveURL: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory,
                                                in: .userDomainMask)[0]
         let dir = support.appendingPathComponent("iTerm2")
         try? FileManager.default.createDirectory(at: dir,
                                                  withIntermediateDirectories: true)
-        return dir.appendingPathComponent("WindowProjects.json")
+        let filename = isTesting ? "WindowProjects_test.json" : "WindowProjects.json"
+        return dir.appendingPathComponent(filename)
     }
 
     private static var thumbnailsDirectoryURL: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory,
                                                in: .userDomainMask)[0]
-        let dir = support.appendingPathComponent("iTerm2").appendingPathComponent("WindowProjectThumbnails")
+        let folderName = isTesting ? "WindowProjectThumbnails_test" : "WindowProjectThumbnails"
+        let dir = support.appendingPathComponent("iTerm2").appendingPathComponent(folderName)
         try? FileManager.default.createDirectory(at: dir,
                                                  withIntermediateDirectories: true)
         return dir

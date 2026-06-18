@@ -9,14 +9,22 @@ import XCTest
 @testable import iTerm2SharedARC
 
 class iTermWindowProjectsTests: XCTestCase {
+    private var savedProjects: [iTermWindowProject] = []
     
     override func setUp() {
         super.setUp()
-        // Start with a clean slate by deleting all existing projects
         let model = iTermWindowProjectsModel.shared
-        for p in model.rootProjects {
-            model.deleteProject(p)
-        }
+        // 1. Back up any existing in-memory projects
+        savedProjects = model.rootProjects
+        
+        // 2. Clear rootProjects for a clean test environment (loads from WindowProjects_test.json)
+        model.rootProjects = []
+    }
+    
+    override func tearDown() {
+        // Restore user's original projects back to the singleton
+        iTermWindowProjectsModel.shared.rootProjects = savedProjects
+        super.tearDown()
     }
     
     func testProjectCRUD() {
