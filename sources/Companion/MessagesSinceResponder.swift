@@ -21,16 +21,10 @@
 import Foundation
 
 enum MessagesSinceResponder {
-    /// One display-ready message for the phone to render as its own notification.
-    struct Preview: Equatable {
-        let uniqueID: UUID
-        let author: Participant
-        let body: String
-    }
-
     struct Result: Equatable {
-        /// Newest first, at most `limit` entries.
-        let previews: [Preview]
+        /// Newest first, at most `limit` entries. CompanionMessagePreview is the
+        /// wire type, so summarize produces exactly what the reply ships.
+        let previews: [CompanionMessagePreview]
         /// More visible messages existed than `limit` (so the NSE may add a
         /// "+N more" hint). A floor when the caller's fetch window was itself
         /// capped (the true surplus can be larger).
@@ -46,9 +40,9 @@ enum MessagesSinceResponder {
         let visible = fetched.filter { !$0.hiddenFromClient }
         let shown = visible.prefix(limit)
         let previews = shown.map { message in
-            Preview(uniqueID: message.uniqueID,
-                    author: message.author,
-                    body: message.content.snippetText(maxLength: bodyMaxLength) ?? "")
+            CompanionMessagePreview(uniqueID: message.uniqueID,
+                                    author: message.author,
+                                    body: message.content.snippetText(maxLength: bodyMaxLength) ?? "")
         }
         return Result(previews: Array(previews), truncated: visible.count > limit)
     }

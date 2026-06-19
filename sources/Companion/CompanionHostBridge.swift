@@ -289,6 +289,8 @@ final class CompanionHostBridge {
                 send(.error(CompanionError(code: .internalError, message: "\(error)")),
                      requestID: requestID)
             }
+        case .messagesSince(let collapseToken, let seq, let limit):
+            handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit, requestID: requestID)
         case .unpairing:
             DLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
@@ -356,6 +358,55 @@ final class CompanionHostBridge {
             }
         }
         send(.history(chatID: chatID, messages: history(chatID: chatID)),
+             requestID: requestID)
+    }
+
+    /// Relay-push: resolve the opaque per-chat collapse token back to a chat,
+    /// fetch its messages with seq > the phone's watermark, and reply with short
+    /// attachment-free previews + the chat's title + its max seq. Any
+    /// unresolvable case (no room secret, chat system unavailable, token matches
+    /// no chat) replies with empty previews, which the NSE renders as the generic
+    /// fallback. See docs/push.txt section 2.
+    private func handleMessagesSince(collapseToken: String,
+                                     seq: Int64,
+                                     limit: Int,
+                                     requestID: UInt64?) {
+        let empty = CompanionHostMessage.messagesSince(chatName: "", previews: [],
+                                                       maxSeq: 0, truncated: false)
+        guard let roomSecret = CompanionMacIdentity.pairedRoomSecret(),
+              let model = ChatListModel.instance,
+              let db = ChatDatabase.instance else {
+            send(empty, requestID: requestID)
+            return
+        }
+        // Recompute HMAC(roomSecret, chatID) over the mac's chats to find the
+        // one whose token the phone pushed. The chatID never crossed the wire.
+        var resolved: Chat?
+        for index in 0..<model.count {
+            let chat = model.chat(at: index)
+            if CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chat.id) == collapseToken {
+                resolved = chat
+                break
+            }
+        }
+        guard let chat = resolved else {
+            send(empty, requestID: requestID)
+            return
+        }
+        // Over-fetch a window (hiddenFromClient can't be filtered in SQL) so
+        // hidden bookkeeping rows don't crowd out visible ones.
+        let windowLimit = max(limit, 1) * 20
+        let (windowMessages, maxSeq) = db.messagesSince(chatID: chat.id,
+                                                        sinceSeq: seq,
+                                                        windowLimit: windowLimit)
+        let result = MessagesSinceResponder.summarize(fetched: windowMessages,
+                                                      limit: limit,
+                                                      bodyMaxLength: 200)
+        let truncated = result.truncated || windowMessages.count >= windowLimit
+        send(.messagesSince(chatName: chat.title,
+                            previews: result.previews,
+                            maxSeq: maxSeq,
+                            truncated: truncated),
              requestID: requestID)
     }
 

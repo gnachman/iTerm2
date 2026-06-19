@@ -140,6 +140,7 @@ actor CompanionSession {
         case .requestNotificationPermission: "requestNotificationPermission"
         case .pong: "pong"
         case .relayRoomSecretStored: "relayRoomSecretStored"
+        case .messagesSince: "messagesSince"
         case .unpaired: "unpaired"
         case .error: "error"
         }

@@ -86,6 +86,25 @@ actor CompanionClient {
         }
     }
 
+    /// Relay-push: fetch new messages for the chat identified by the opaque
+    /// per-chat collapse token, with seq greater than the phone's per-chat
+    /// watermark. Returns short attachment-free previews plus the chat's title
+    /// and current max seq (the watermark advances to maxSeq). Empty previews
+    /// mean nothing new (or the token matched no chat) -> show the fallback.
+    func messagesSince(collapseToken: String, seq: Int64, limit: Int) async throws
+        -> (chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool) {
+        let reply = try await session.request(.messagesSince(collapseToken: collapseToken,
+                                                             seq: seq, limit: limit))
+        switch reply {
+        case .messagesSince(let chatName, let previews, let maxSeq, let truncated):
+            return (chatName, previews, maxSeq, truncated)
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to messagesSince")
+        }
+    }
+
     func unsubscribe(chatID: String) async throws {
         try await session.send(.unsubscribe(chatID: chatID))
     }

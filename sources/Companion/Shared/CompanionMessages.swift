@@ -173,6 +173,23 @@ enum CompanionNewChatMode: Codable, Equatable {
     case session(guid: String)
 }
 
+/// One display-ready message in a `.messagesSince` reply: a short body (built
+/// Mac-side via Content.snippetText, so attachments are byte-free placeholders
+/// and long turns are truncated) plus the bits the NSE needs to render and
+/// de-duplicate one notification. Carries no attachment bytes and no full
+/// Message, by design (docs/push.txt section 2).
+struct CompanionMessagePreview: Codable, Equatable {
+    var uniqueID: UUID
+    var author: Participant
+    var body: String
+
+    init(uniqueID: UUID, author: Participant, body: String) {
+        self.uniqueID = uniqueID
+        self.author = author
+        self.body = body
+    }
+}
+
 /// Sent by the phone (client) to the mac (host).
 enum CompanionClientMessage: Codable {
     /// Home screen: ask for the chat list and the session list in one round
@@ -253,6 +270,13 @@ enum CompanionClientMessage: Codable {
     /// key to park. See docs/companion-relay-design.md.
     case relayRoomSecret(Data)
 
+    /// Relay-push: the NSE asks for new messages in the chat identified by the
+    /// opaque per-chat collapse token (HMAC(roomSecret, chatID)), with seq
+    /// greater than the phone's per-chat watermark. Replied to with
+    /// `.messagesSince`. The token (not a chatID) is sent so the chatID never
+    /// appears in the APNs payload; the mac resolves it back to a chat.
+    case messagesSince(collapseToken: String, seq: Int64, limit: Int)
+
     /// The phone is unpairing: the mac should forget the pairing and destroy
     /// its key material. No reply; the phone closes after sending.
     case unpairing
@@ -319,6 +343,14 @@ enum CompanionHostMessage: Codable {
     /// forget its stored pairing and return to the scan screen. Sent (and
     /// flushed) just before the mac closes the connection.
     case unpaired
+
+    /// Reply to `.messagesSince`: short, display-ready previews (one
+    /// notification each on the phone), the chat's display title, the chat's
+    /// current max seq (the per-chat watermark advances to this), and whether
+    /// more visible messages existed than the limit. Empty previews mean nothing
+    /// new, or the token matched no chat; either way the NSE shows the generic
+    /// fallback.
+    case messagesSince(chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool)
 
     /// An error, optionally correlated to a request via the envelope.
     case error(CompanionError)
