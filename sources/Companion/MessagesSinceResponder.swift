@@ -37,13 +37,16 @@ enum MessagesSinceResponder {
     ///   - limit: maximum previews to return (one notification each).
     ///   - bodyMaxLength: per-message body cap passed to snippetText.
     static func summarize(fetched: [Message], limit: Int, bodyMaxLength: Int) -> Result {
+        // Defensive: prefix(_:) traps on a negative count. Callers should clamp
+        // untrusted limits, but the helper must not be a trap either.
+        let cap = max(limit, 0)
         let visible = fetched.filter { !$0.hiddenFromClient }
-        let shown = visible.prefix(limit)
+        let shown = visible.prefix(cap)
         let previews = shown.map { message in
             CompanionMessagePreview(uniqueID: message.uniqueID,
                                     author: message.author,
                                     body: message.content.snippetText(maxLength: bodyMaxLength) ?? "")
         }
-        return Result(previews: Array(previews), truncated: visible.count > limit)
+        return Result(previews: Array(previews), truncated: visible.count > cap)
     }
 }

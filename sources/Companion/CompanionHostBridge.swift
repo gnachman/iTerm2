@@ -369,14 +369,26 @@ final class CompanionHostBridge {
     /// fallback. See docs/push.txt section 2.
     private func handleMessagesSince(collapseToken: String,
                                      seq: Int64,
-                                     limit: Int,
+                                     limit rawLimit: Int,
                                      requestID: UInt64?) {
-        let empty = CompanionHostMessage.messagesSince(chatName: "", previews: [],
-                                                       maxSeq: 0, truncated: false)
-        guard let roomSecret = CompanionMacIdentity.pairedRoomSecret(),
-              let model = ChatListModel.instance,
-              let db = ChatDatabase.instance else {
-            send(empty, requestID: requestID)
+        // Clamp the wire-supplied limit before any arithmetic or prefix(): it is
+        // untrusted (any paired device sets it). A negative value would trap
+        // Sequence.prefix(_:), and a value near Int.max would overflow the *20
+        // window multiply below - both crashing the main-actor bridge.
+        let limit = min(max(rawLimit, 1), 500)
+
+        // Transient mac-side failures (creds not loaded yet, chat model not
+        // built at startup) reply .error, NOT an empty success: the NSE rethrows
+        // .error and shows the fallback WITHOUT touching its per-chat watermark,
+        // so a startup race can't look like "nothing new" and drop the cursor.
+        guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
+            send(.error(CompanionError(code: .internalError, message: "No room secret stored")),
+                 requestID: requestID)
+            return
+        }
+        guard let model = ChatListModel.instance, let db = ChatDatabase.instance else {
+            send(.error(CompanionError(code: .internalError, message: "Chat system unavailable")),
+                 requestID: requestID)
             return
         }
         // Recompute HMAC(roomSecret, chatID) over the mac's chats to find the
@@ -390,12 +402,16 @@ final class CompanionHostBridge {
             }
         }
         guard let chat = resolved else {
-            send(empty, requestID: requestID)
+            // Genuine "no such chat" (deleted, or the app never synced it): an
+            // empty success -> the NSE shows the fallback. maxSeq 0 is safe
+            // because the watermark is max-merged and never lowered (section 8).
+            send(.messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false),
+                 requestID: requestID)
             return
         }
         // Over-fetch a window (hiddenFromClient can't be filtered in SQL) so
         // hidden bookkeeping rows don't crowd out visible ones.
-        let windowLimit = max(limit, 1) * 20
+        let windowLimit = limit * 20
         let (windowMessages, maxSeq) = db.messagesSince(chatID: chat.id,
                                                         sinceSeq: seq,
                                                         windowLimit: windowLimit)

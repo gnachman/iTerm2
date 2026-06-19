@@ -71,4 +71,16 @@ final class MessagesSinceResponderTests: XCTestCase {
         XCTAssertEqual(r.previews.count, 3)
         XCTAssertFalse(r.truncated)
     }
+
+    /// A non-positive limit must not trap prefix(_:) (the wire limit is
+    /// untrusted); it yields no previews and reports truncated when any visible
+    /// message existed.
+    func testSummarize_nonPositiveLimitDoesNotTrap() {
+        let msgs = (0..<3).map { msg(.markdown("m\($0)")) }
+        for badLimit in [0, -5, Int.min] {
+            let r = MessagesSinceResponder.summarize(fetched: msgs, limit: badLimit, bodyMaxLength: 100)
+            XCTAssertTrue(r.previews.isEmpty, "limit \(badLimit) should yield no previews")
+            XCTAssertTrue(r.truncated, "limit \(badLimit): 3 visible > 0 shown -> truncated")
+        }
+    }
 }
