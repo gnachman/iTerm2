@@ -2,81 +2,73 @@
 //  KeychainAccessGroupMigrationTests.swift
 //  CompanionCore
 //
-//  The add-then-delete access-group migration: it moves items into the target
-//  group, is idempotent, and is crash-safe (a crash after add / before delete
-//  leaves the item readable, and the next run completes the move).
+//  The access-group migration copies items into the target group, is idempotent,
+//  and - critically - NEVER destroys the target copy. The fake keychain models
+//  real SecItem semantics: an unscoped (nil) read/delete spans ALL of the app's
+//  access groups. A migration that deleted with a nil group would wipe the copy
+//  it just added; these tests would catch that.
 //
 
 import XCTest
 @testable import CompanionProtocol
 
-private struct Slot: Hashable { let account: String; let group: String? }
-
+/// Models the keychain as account -> (group -> data), with the app's default
+/// group as "". nil access group is UNSCOPED (spans all groups), as SecItem does.
 private final class FakeKeychain: KeychainItemStore {
-    var items: [Slot: Data] = [:]
-    /// When set, throw on the delete of this (account, default-group) slot once,
-    /// to simulate a crash after add / before delete.
-    var failDefaultDeleteForAccount: String?
+    static let defaultGroup = ""
+    var items: [String: [String: Data]] = [:]
 
     func read(account: String, accessGroup: String?) throws -> Data? {
-        items[Slot(account: account, group: accessGroup)]
+        let byGroup = items[account] ?? [:]
+        if let group = accessGroup { return byGroup[group] }
+        return byGroup[Self.defaultGroup] ?? byGroup.values.first   // unscoped: any group
     }
     func add(account: String, accessGroup: String?, data: Data) throws {
-        items[Slot(account: account, group: accessGroup)] = data   // duplicate == overwrite == success
+        items[account, default: [:]][accessGroup ?? Self.defaultGroup] = data
     }
     func delete(account: String, accessGroup: String?) throws {
-        if accessGroup == nil, account == failDefaultDeleteForAccount {
-            failDefaultDeleteForAccount = nil
-            throw NSError(domain: "crash", code: 1)
+        if let group = accessGroup {
+            items[account]?[group] = nil
+        } else {
+            items[account] = nil   // unscoped: removes from EVERY group
         }
-        items[Slot(account: account, group: accessGroup)] = nil
     }
+    func value(account: String, group: String) -> Data? { items[account]?[group] }
 }
 
 final class KeychainAccessGroupMigrationTests: XCTestCase {
     private let group = "group.test"
 
-    func testMovesItemFromDefaultToTarget() throws {
+    func testCopiesDefaultIntoTargetGroup() throws {
         let kc = FakeKeychain()
-        kc.items[Slot(account: "k", group: nil)] = Data([1, 2, 3])
-
+        try kc.add(account: "k", accessGroup: nil, data: Data([1, 2, 3]))   // default-group install
         try KeychainAccessGroupMigration.migrate(accounts: ["k"], toGroup: group, store: kc)
-
-        XCTAssertEqual(kc.items[Slot(account: "k", group: group)], Data([1, 2, 3]))
-        XCTAssertNil(kc.items[Slot(account: "k", group: nil)], "default-group copy removed")
+        XCTAssertEqual(kc.value(account: "k", group: group), Data([1, 2, 3]))
     }
 
-    func testIdempotent() throws {
+    func testReMigrationKeepsTargetCopy() throws {
+        // The reported bug: on the launch after creds are in the App Group, the
+        // "already migrated" cleanup did delete(nil), which (spanning all groups)
+        // destroyed the App Group copy. Re-running must NOT lose it.
         let kc = FakeKeychain()
-        kc.items[Slot(account: "k", group: nil)] = Data([9])
+        try kc.add(account: "k", accessGroup: nil, data: Data([7]))
         try KeychainAccessGroupMigration.migrate(accounts: ["k"], toGroup: group, store: kc)
-        // Second run is a no-op: still present in target, nothing in default.
         try KeychainAccessGroupMigration.migrate(accounts: ["k"], toGroup: group, store: kc)
-        XCTAssertEqual(kc.items[Slot(account: "k", group: group)], Data([9]))
-        XCTAssertNil(kc.items[Slot(account: "k", group: nil)])
+        try KeychainAccessGroupMigration.migrate(accounts: ["k"], toGroup: group, store: kc)
+        XCTAssertEqual(kc.value(account: "k", group: group), Data([7]),
+                       "the App Group copy must survive repeated migrations")
+    }
+
+    func testIdempotentWhenAlreadyInTarget() throws {
+        let kc = FakeKeychain()
+        try kc.add(account: "k", accessGroup: group, data: Data([9]))   // already migrated
+        try KeychainAccessGroupMigration.migrate(accounts: ["k"], toGroup: group, store: kc)
+        XCTAssertEqual(kc.value(account: "k", group: group), Data([9]))
     }
 
     func testNoOpWhenNothingToMigrate() throws {
         let kc = FakeKeychain()
         try KeychainAccessGroupMigration.migrate(accounts: ["absent"], toGroup: group, store: kc)
-        XCTAssertTrue(kc.items.isEmpty)
-    }
-
-    func testCrashAfterAddBeforeDeleteIsRecoverable() throws {
-        let kc = FakeKeychain()
-        kc.items[Slot(account: "k", group: nil)] = Data([7])
-        kc.failDefaultDeleteForAccount = "k"   // crash on the delete after add
-
-        XCTAssertThrowsError(
-            try KeychainAccessGroupMigration.migrate(accounts: ["k"], toGroup: group, store: kc))
-
-        // Mid-crash state: readable in BOTH groups, never lost.
-        XCTAssertEqual(kc.items[Slot(account: "k", group: group)], Data([7]))
-        XCTAssertEqual(kc.items[Slot(account: "k", group: nil)], Data([7]))
-
-        // Next run sees it in the target and finishes (removes the leftover).
-        try KeychainAccessGroupMigration.migrate(accounts: ["k"], toGroup: group, store: kc)
-        XCTAssertEqual(kc.items[Slot(account: "k", group: group)], Data([7]))
-        XCTAssertNil(kc.items[Slot(account: "k", group: nil)])
+        XCTAssertNil(kc.value(account: "absent", group: group))
     }
 }
