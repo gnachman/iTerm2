@@ -116,4 +116,33 @@ class iTermWindowProjectsTests: XCTestCase {
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
         XCTAssertFalse(PseudoTerminal.useUnlimitedHistoryForArrangement())
     }
+
+    func testIsOrphanedAndRunning() {
+        // 1. Test with a dead/non-existent PID (e.g. 999999)
+        let deadArrangement: [AnyHashable: Any] = [
+            "Tabs": [
+                [
+                    "Navigation": [
+                        "Server PID": 999999
+                    ]
+                ]
+            ]
+        ]
+        let archivedDead = iTermArchivedWindow(name: "DeadWindow", arrangement: deadArrangement)
+        XCTAssertFalse(archivedDead.isOrphanedAndRunning, "Window with a non-existent PID should not be detected as running")
+        
+        // 2. Test with a live PID (our own running test process PID is guaranteed to be alive!)
+        let livePID = Int(ProcessInfo.processInfo.processIdentifier)
+        let liveArrangement: [AnyHashable: Any] = [
+            "Tabs": [
+                [
+                    "Navigation": [
+                        "Server PID": livePID
+                    ]
+                ]
+            ]
+        ]
+        let archivedLive = iTermArchivedWindow(name: "LiveWindow", arrangement: liveArrangement)
+        XCTAssertTrue(archivedLive.isOrphanedAndRunning, "Window with our own running process PID should be detected as active")
+    }
 }
