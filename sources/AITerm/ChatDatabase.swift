@@ -118,13 +118,23 @@ class ChatDatabase {
             try db.executeUpdate(Message.schema(), withArguments: [])
 
             do {
-                let messageMigrations = Message.migrations(existingColumns:
-                                                           listColumns(
-                                                               resultSet: try db.executeQuery(
-                                                                   Message.tableInfoQuery(),
-                                                                   withArguments: [])))
+                // Read the existing columns once: it drives both the plain
+                // ADD COLUMN migrations and the seq rebuild below. For a brand
+                // new database schema() just created the table WITH seq, so this
+                // already contains "seq" and the rebuild is skipped.
+                let existingColumns = listColumns(
+                    resultSet: try db.executeQuery(Message.tableInfoQuery(),
+                                                   withArguments: []))
+                let messageMigrations = Message.migrations(existingColumns: existingColumns)
                 for migration in messageMigrations {
                     try db.executeUpdate(migration.query, withArguments: migration.args)
+                }
+                // The seq column (INTEGER PRIMARY KEY AUTOINCREMENT) cannot be
+                // added with ALTER TABLE, so pre-seq databases need a table
+                // rebuild. Run it AFTER the ADD COLUMN migrations above so the
+                // copied rows already have responseID/agentReasoning.
+                if !existingColumns.isEmpty && !existingColumns.contains(Message.Columns.seq.rawValue) {
+                    try migrateAddSeqColumnToMessage()
                 }
             }
 
@@ -132,6 +142,43 @@ class ChatDatabase {
         } catch {
             DLog("\(error)")
             return false
+        }
+    }
+
+    // Rebuild the Message table to add the seq AUTOINCREMENT primary key
+    // (SQLite forbids adding one with ALTER TABLE). The whole rebuild runs in
+    // ONE transaction: SQLite DDL is transactional, so a crash or error
+    // mid-migration rolls back to the intact original table rather than leaving
+    // a half-built or emptied one. Rows are copied in rowid order so seq is
+    // backfilled in arrival order; the engine assigns 1..N and tracks the max
+    // in sqlite_sequence, so subsequent inserts never reuse a value.
+    private func migrateAddSeqColumnToMessage() throws {
+        let c = Message.Columns.self
+        let copiedColumns = [
+            c.uniqueID, c.author, c.chatID, c.content,
+            c.sentDate, c.responseID, c.agentReasoning
+        ].map { $0.rawValue }.joined(separator: ", ")
+        // Throwing transaction: begins, runs the closure, commits; any throw
+        // from executeUpdate rolls back and rethrows, so a failure leaves the
+        // original Message table intact.
+        try db.transaction {
+            try db.executeUpdate("""
+                create table Message_new
+                    (\(c.seq.rawValue) integer primary key autoincrement,
+                     \(c.uniqueID.rawValue) text,
+                     \(c.author.rawValue) text not null,
+                     \(c.chatID.rawValue) text not null,
+                     \(c.content.rawValue) text not null,
+                     \(c.sentDate.rawValue) integer not null,
+                     \(c.responseID.rawValue) text,
+                     \(c.agentReasoning.rawValue) text)
+                """, withArguments: [])
+            try db.executeUpdate("""
+                insert into Message_new (\(copiedColumns))
+                select \(copiedColumns) from Message order by rowid
+                """, withArguments: [])
+            try db.executeUpdate("drop table Message", withArguments: [])
+            try db.executeUpdate("alter table Message_new rename to Message", withArguments: [])
         }
     }
 

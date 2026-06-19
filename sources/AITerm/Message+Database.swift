@@ -17,12 +17,20 @@ extension Message: iTermDatabaseElement {
         case chatID
         case responseID
         case agentReasoning
+        // A global, monotonic, delete-immune sequence the relay-push feature
+        // uses as a watermark cursor. INTEGER PRIMARY KEY AUTOINCREMENT: SQLite
+        // assigns it on every insert and (unlike bare rowid or a plain INTEGER
+        // PRIMARY KEY) never reuses a value, even after the top row is deleted.
+        // It is a DB-only column: not present on the shared Message struct and
+        // not bound by appendQuery/updateQuery, so the engine owns it.
+        case seq
     }
 
     static func schema() -> String {
         """
         create table if not exists Message
-            (\(Columns.uniqueID.rawValue) text,
+            (\(Columns.seq.rawValue) integer primary key autoincrement,
+             \(Columns.uniqueID.rawValue) text,
              \(Columns.author.rawValue) text not null,
              \(Columns.chatID.rawValue) text not null,
              \(Columns.content.rawValue) text not null,
