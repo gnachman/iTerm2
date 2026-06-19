@@ -29,6 +29,23 @@
 // heals old and new conversations on every vendor without any serialization
 // change.
 enum AIChatToolCallRepair {
+    // The output body used to stand in for a tool call whose result never
+    // arrived (an abandoned `.ask`, or a parked request cleared on the next
+    // user message). Shared with ChatAgent.translate so the live reload path
+    // and the repair pass emit identical filler text.
+    static let interruptedToolCallOutput =
+        "[iTerm2 was restarted before this tool call completed. "
+        + "The call did not finish; assume no side effects took place "
+        + "and re-issue if needed.]"
+
+    // Repair both orphan directions a rebuilt prompt can contain: a tool_result
+    // with no matching tool_use, and a tool_use with no matching tool_result.
+    // Results are repaired first so a synthesized tool_use (paired with its
+    // result) is never itself mistaken for an orphan call.
+    static func repairingOrphanedToolPairs(_ messages: [LLM.Message]) -> [LLM.Message] {
+        return repairingOrphanedToolCalls(repairingOrphanedToolResults(messages))
+    }
+
     // Walk the rebuilt prompt and ensure every tool_result has a partner the
     // vendor will accept. For results that carry a call id (Anthropic / OpenAI
     // Responses style), require a matching prior tool_use of the same id and
@@ -72,7 +89,83 @@ enum AIChatToolCallRepair {
         return result
     }
 
+    // The mirror image of repairingOrphanedToolResults: ensure every tool_use
+    // has a tool_result the vendor will accept after it. OpenAI-style
+    // chat-completions vendors (DeepSeek, legacy OpenAI) reject an assistant
+    // tool_calls message that isn't immediately followed by a tool message for
+    // each tool_call_id with HTTP 400 "insufficient tool messages following
+    // tool_calls message" (GitLab #12883). A persisted tool call can lose its
+    // result when it never completed: an `.ask` the user abandoned, or a parked
+    // request cleared by cancelPendingCommands on the next user message. For a
+    // call that carries an id, "answered" means some tool_result anywhere
+    // carries that id; for a nil-id (Gemini / legacy OpenAI) call it means the
+    // immediately following message is a tool_result, matching the adjacency
+    // those vendors pair on. Unanswered calls get a synthesized interrupted
+    // output inserted immediately after them; well-formed pairs pass through.
+    static func repairingOrphanedToolCalls(_ messages: [LLM.Message]) -> [LLM.Message] {
+        // Every callID some tool_result answers (id-based pairing). Computed up
+        // front: a result legitimately follows its call, so orphan-hood can't be
+        // decided in a single forward pass without looking ahead.
+        var answeredCallIDs = Set<String>()
+        for message in messages {
+            answeredCallIDs.formUnion(consumedToolResultCallIDs(message.body))
+        }
+        var result = [LLM.Message]()
+        result.reserveCapacity(messages.count)
+        for (index, message) in messages.enumerated() {
+            result.append(message)
+            // Only the bare functionCall shape occurs on the reload/restore
+            // path (one per .remoteCommandRequest). Leave multipart and other
+            // bodies untouched rather than guess where to splice a result.
+            guard case .functionCall(let call, let wrapper) = message.body else {
+                continue
+            }
+            let callID = call.id ?? wrapper?.callID
+            let answered: Bool
+            let outputID: LLM.Message.FunctionCallID?
+            if let callID {
+                answered = answeredCallIDs.contains(callID)
+                // Mirror what the result side expects: a result keyed off the
+                // same callID. Reuse the call's wrapper when it has one so the
+                // itemID round-trips; otherwise synthesize from the inner id.
+                outputID = wrapper ?? LLM.Message.FunctionCallID(callID: callID, itemID: callID)
+            } else {
+                // Position-based (nil-id Gemini / legacy OpenAI): the call is
+                // paired iff a tool_result immediately follows it.
+                answered = (index + 1 < messages.count) && bodyIsToolResult(messages[index + 1].body)
+                outputID = nil
+            }
+            if !answered {
+                result.append(LLM.Message(
+                    role: .function,
+                    body: .functionOutput(name: call.name ?? "",
+                                          output: interruptedToolCallOutput,
+                                          id: outputID)))
+            }
+        }
+        return result
+    }
+
     // MARK: - Private
+
+    // Every callID this message answers as a tool_result (id-based), recursing
+    // into multipart. Used to decide whether a tool_use is orphaned.
+    private static func consumedToolResultCallIDs(_ body: LLM.Message.Body) -> [String] {
+        switch body {
+        case .functionOutput(_, _, let id):
+            return id.map { [$0.callID] } ?? []
+        case .multipart(let parts):
+            return parts.flatMap { consumedToolResultCallIDs($0) }
+        case .uninitialized, .text, .functionCall, .attachment:
+            return []
+        }
+    }
+
+    // True when the body carries a tool_result (directly or, defensively,
+    // inside a multipart). Used for the nil-id adjacency check.
+    private static func bodyIsToolResult(_ body: LLM.Message.Body) -> Bool {
+        return consumedToolResult(body) != nil
+    }
 
     // A placeholder tool_use to pair with an orphaned result. The real request
     // is unrecoverable by the time we reload: an auto-approved command dropped

@@ -514,7 +514,176 @@ extension AILiveHarness {
         print("[orphan-tool-test] broker log:\n\(dump)")
     }
 
+    /// Repros GitLab issue #12883: with DeepSeek, asking the AI chat to
+    /// run a command and then sending a follow-up turn fails with HTTP
+    /// 400 "An assistant message with 'tool_calls' must be followed by
+    /// tool messages responding to each 'tool_call_id' (insufficient tool
+    /// messages following tool_calls message)".
+    ///
+    /// Mechanism (client side, not the model): a tool call that never
+    /// gets a response — e.g. an `.ask` request the user abandons, or a
+    /// parked request cleared by `cancelPendingCommands` on the next
+    /// user message — stays in the transcript as an orphan
+    /// `.remoteCommandRequest`. On the next turn `ChatAgent.translate`
+    /// emits it as an assistant `functionCall` but appends the
+    /// synthesized "interrupted" `functionOutput` at the END of the
+    /// message array (ChatAgent.swift:451-466) instead of immediately
+    /// after the call. When any persisted message sits between the
+    /// orphan call and the end of history, the wire order becomes
+    /// `assistant tool_calls → user/agent text → … → tool output`, which
+    /// DeepSeek (and the legacy OpenAI chat-completions path) reject for
+    /// breaking tool_call→tool_output adjacency. Anthropic, Gemini, and
+    /// the OpenAI Responses API pair by id and tolerate it, which is why
+    /// the issue is reported only against DeepSeek.
+    ///
+    /// The turn is pinned to a DeepSeek model via the user message's
+    /// `configuration.model` (ChatAgent forwards it to
+    /// AIConversation.providerOverride), so the repro doesn't depend on
+    /// whichever provider the test environment defaults to. The
+    /// transcript is seeded via `initialMessages` (the same on-disk shape
+    /// a reloaded chat would have) so the repro is deterministic and
+    /// costs a single round-trip. The orphan call is followed by two more
+    /// messages, which is exactly what forces the synthesized output past
+    /// them to the end.
+    ///
+    /// FAILS while translate appends orphan filler at the end; PASSES
+    /// once the synthesized output is inserted adjacent to its call.
+    func test_chat_orphanToolCallBeforeLaterMessages_doesNotPoisonNextTurn() throws {
+        // Issue #12883 is DeepSeek-specific: it's the vendor whose
+        // chat-completions endpoint enforces tool_call→tool_output
+        // adjacency. Pin the turn to a DeepSeek model so the malformed
+        // order is actually rejected; skip if there's no DeepSeek key.
+        guard let apiKey = Self.configValue("DEEPSEEK_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No DEEPSEEK_API_KEY; issue #12883 only reproduces against DeepSeek")
+        }
+        // Prefer a non-thinking DeepSeek model to keep the round-trip
+        // focused on message ordering rather than reasoning round-trip.
+        let deepSeekModel = AIMetadata.instance.models.first(where: {
+            $0.vendor == .deepSeek && !$0.features.contains(.configurableThinking)
+        }) ?? AIMetadata.instance.models.first(where: { $0.vendor == .deepSeek })
+        guard let deepSeekModel else {
+            throw XCTSkip("No DeepSeek model in AIMetadata")
+        }
+        guard let broker = ChatBroker.instance else {
+            throw XCTSkip("ChatBroker.instance unavailable")
+        }
+
+        // Build a transcript that already holds an orphan tool call
+        // (a .remoteCommandRequest with no matching .remoteCommandResponse)
+        // followed by two more persisted messages. The trailing messages
+        // are what push translate's synthesized output to the end and
+        // break adjacency.
+        let orphanCallID = "call_orphan_\(UUID().uuidString.prefix(8))"
+        let initialMessages: [Message] = [
+            seedUserText("Run a quick command for me."),
+            seedOrphanToolCall(callID: orphanCallID, command: "ls"),
+            seedUserText("Actually never mind that, let's just chat instead."),
+            seedAgentText("Sure, happy to chat. What's on your mind?"),
+        ]
+
+        let recorder = BrokerEventRecorder()
+        let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
+            recorder.record(update)
+        }
+        defer { listenAll.unsubscribe() }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live orphan-tool-call test \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "queue-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: initialMessages)
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+
+        let registrationProvider = TestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID,
+                                               registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        // Send a brand-new user turn. Rebuilding history for it walks the
+        // seeded transcript and (with the bug) ships the orphan call far
+        // from its synthesized output.
+        let sawTurnEnd = expectation(description: "agent turn ends (typing=false)")
+        recorder.onEntry = { entry, _ in
+            if case .typing(let isTyping, let participant) = entry,
+               !isTyping, participant == .agent {
+                sawTurnEnd.fulfill()
+            }
+        }
+
+        var trigger = userText(chatID: chatID,
+                               body: "What is 1 + 1? Reply with just the digit.")
+        trigger.configuration = Message.Configuration(hostedWebSearchEnabled: false,
+                                                      vectorStoreIDs: [],
+                                                      model: deepSeekModel.name,
+                                                      shouldThink: false)
+        try broker.publish(message: trigger, toChatID: chatID, partial: false)
+        wait(for: [sawTurnEnd], timeout: 90)
+
+        let dump = recorder.summary(formatContent: short)
+        print("[orphan-tool-call-test] broker log (model=\(deepSeekModel.name)):\n\(dump)")
+
+        // A vendor rejection surfaces as ChatAgent's committed error
+        // message: "🛑 I ran into a problem: <error>". For DeepSeek the
+        // error text carries "insufficient tool messages" / status 400.
+        let errorDelivery = recorder.firstDelivery { msg in
+            guard msg.author == .agent, let text = msg.content.simpleText else { return false }
+            let lower = text.lowercased()
+            return text.contains("🛑")
+                || lower.contains("insufficient tool")
+                || lower.contains("must be followed by tool")
+                || lower.contains("status 400")
+        }
+        if let errorDelivery,
+           case .delivery(let msg, _) = recorder.entries[errorDelivery] {
+            XCTFail("""
+                Next turn was poisoned by the orphan tool call (issue #12883). \
+                The agent replied with an error instead of answering: \
+                \(msg.content.simpleText ?? "<non-text>"). \
+                translate() appended the synthesized tool output at the end of \
+                history instead of adjacent to its tool call, so DeepSeek \
+                (\(deepSeekModel.name)) rejected the malformed message order. \
+                Full log printed above.
+                """)
+        }
+    }
+
     // MARK: - Helpers
+
+    /// A function-call id wrapper matching how vendors round-trip ids.
+    private func seedFcid(_ s: String) -> LLM.Message.FunctionCallID {
+        LLM.Message.FunctionCallID(callID: s, itemID: s)
+    }
+
+    /// A persisted assistant tool call with NO matching response: the
+    /// orphan that issue #12883 is about. chatID is a placeholder;
+    /// broker.create rewrites it to the real chat id.
+    private func seedOrphanToolCall(callID: String, command: String) -> Message {
+        let llm = LLM.Message(
+            role: .assistant,
+            body: .functionCall(LLM.FunctionCall(name: "execute_command",
+                                                 arguments: "{\"command\":\"\(command)\"}",
+                                                 id: callID,
+                                                 thoughtSignature: nil),
+                                id: seedFcid(callID)))
+        let rc = RemoteCommand(llmMessage: llm,
+                               content: .executeCommand(.init(command: command)))
+        return Message(chatID: "seed",
+                       author: .agent,
+                       content: .remoteCommandRequest(.classic(rc), safe: nil),
+                       sentDate: Date(),
+                       uniqueID: UUID())
+    }
+
+    private func seedUserText(_ s: String) -> Message {
+        Message(chatID: "seed", author: .user, content: .markdown(s),
+                sentDate: Date(), uniqueID: UUID())
+    }
+
+    private func seedAgentText(_ s: String) -> Message {
+        Message(chatID: "seed", author: .agent, content: .markdown(s),
+                sentDate: Date(), uniqueID: UUID())
+    }
 
     private func userText(chatID: String, body: String) -> Message {
         return Message(chatID: chatID,

@@ -274,6 +274,96 @@ final class AIChatToolCallRepairTests: XCTestCase {
         assertEveryToolResultIsPaired(output)
     }
 
+    // MARK: - Orphan tool_call (call with no result) — GitLab #12883
+
+    /// An id-based tool_use whose result never arrived, followed by later
+    /// messages, must gain a synthesized tool_result IMMEDIATELY after the
+    /// call. Leaving the call unanswered (or deferring the result past the
+    /// trailing messages) 400s DeepSeek/OpenAI chat-completions with
+    /// "insufficient tool messages following tool_calls message".
+    func testIdBasedOrphanCall_synthesizesAdjacentResult() {
+        let input = [
+            text("run a command", role: .user),
+            toolUse("toolu_orphan", args: "{\"command\":\"ls\"}"),
+            text("actually never mind, let's chat", role: .user),
+            text("Sure!", role: .assistant),
+        ]
+        let output = AIChatToolCallRepair.repairingOrphanedToolCalls(input)
+        guard let callIndex = output.firstIndex(where: { emittedToolUseID($0) == "toolu_orphan" }) else {
+            XCTFail("tool_use vanished")
+            return
+        }
+        XCTAssertLessThan(callIndex + 1, output.count, "orphan call has nothing after it")
+        XCTAssertTrue(isToolResult(output[callIndex + 1], id: "toolu_orphan"),
+                      "the orphan tool_use's result must immediately follow it")
+    }
+
+    /// A well-formed id-based pair must be left untouched by the call repair.
+    func testIdBasedPair_callRepairLeavesUnchanged() {
+        let input = [
+            toolUse("toolu_ok", args: "{\"command\":\"ls\"}"),
+            toolResult("toolu_ok"),
+        ]
+        let output = AIChatToolCallRepair.repairingOrphanedToolCalls(input)
+        XCTAssertEqual(output.count, 2, "no message should be added to a well-formed pair")
+    }
+
+    /// The synthesized result must carry role .function so DeepSeek serializes
+    /// it as a "tool" message; a .user role would re-trigger the 400.
+    func testIdBasedOrphanCall_synthesizedResultRoleIsFunction() {
+        let input = [toolUse("toolu_x", name: "get_current_directory")]
+        let output = AIChatToolCallRepair.repairingOrphanedToolCalls(input)
+        guard let resultIndex = output.firstIndex(where: { isToolResult($0, id: "toolu_x") }) else {
+            XCTFail("expected a synthesized tool_result")
+            return
+        }
+        XCTAssertEqual(output[resultIndex].role, .function,
+                       "synthesized tool_result must be role .function")
+        if case .functionOutput(let name, _, _) = output[resultIndex].body {
+            XCTAssertEqual(name, "get_current_directory")
+        } else {
+            XCTFail("expected a functionOutput body")
+        }
+    }
+
+    /// A nil-id (Gemini / legacy OpenAI) call with no adjacent result gets a
+    /// nil-id result inserted right after it, preserving adjacency pairing.
+    func testNilIdOrphanCall_synthesizesAdjacentNilIdResult() {
+        let input = [
+            toolUse(nil, name: "execute_command", args: "{\"command\":\"ls\"}"),
+            text("ok thanks", role: .user),
+        ]
+        let output = AIChatToolCallRepair.repairingOrphanedToolCalls(input)
+        guard case .functionCall = output[0].body else {
+            XCTFail("expected the call preserved at index 0"); return
+        }
+        guard case .functionOutput(_, _, let id) = output[1].body else {
+            XCTFail("expected a synthesized functionOutput at index 1, got \(output[1].body)"); return
+        }
+        XCTAssertNil(id, "Gemini-shaped synth result must keep its id nil")
+    }
+
+    /// Two orphan calls interleaved with text each get their own adjacent
+    /// result, and repairingOrphanedToolPairs heals both directions at once.
+    func testRepairPairs_mixedOrphans_allHealed() {
+        let input = [
+            toolUse("toolu_call_only"),          // orphan call
+            text("hmm", role: .assistant),
+            toolResult("toolu_result_only"),     // orphan result
+        ]
+        let output = AIChatToolCallRepair.repairingOrphanedToolPairs(input)
+        assertEveryToolResultIsPaired(output)
+        // The orphan call gained a following result...
+        guard let callIdx = output.firstIndex(where: { emittedToolUseID($0) == "toolu_call_only" }) else {
+            XCTFail("orphan call vanished"); return
+        }
+        XCTAssertTrue(isToolResult(output[callIdx + 1], id: "toolu_call_only"),
+                      "orphan call must be answered immediately after it")
+        // ...and the orphan result gained a preceding call.
+        XCTAssertTrue(output.contains { emittedToolUseID($0) == "toolu_result_only" },
+                      "orphan result must gain a synthesized tool_use")
+    }
+
     // MARK: - Anthropic wire format (the decisive id-based test)
 
     /// Build the real Anthropic request body from a repaired orphan and assert

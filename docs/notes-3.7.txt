@@ -434,6 +434,9 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- AI chat with DeepSeek no longer fails with an
+  "insufficient tool messages" error after a tool
+  call that was interrupted or left unapproved.
 - A live filter no longer drops content that
   arrives while it is mid-search; such lines
   could previously be missing from the filtered
