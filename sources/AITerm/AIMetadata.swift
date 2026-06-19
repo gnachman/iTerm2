@@ -582,16 +582,6 @@ class AIMetadata: NSObject {
         features: [.functionCalling, .streaming],
         vendor: .anthropic
     )
-    private static let claude_4_sonnet = Model(
-        name: "claude-sonnet-4-0",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 64_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-
     private static let claude_4_1_opus = Model(
         name: "claude-opus-4-1",
         contextWindowTokens: 200_000,
@@ -689,7 +679,6 @@ class AIMetadata: NSObject {
         AIMetadata.claude_4_6_sonnet,
         AIMetadata.claude_4_5_sonnet,
         AIMetadata.claude_4_5_haiku,
-        AIMetadata.claude_4_sonnet,
         AIMetadata.claude_4_1_opus,
 
         // MARK: - Local Models (via Ollama)
