@@ -326,14 +326,8 @@ final class iTermWindowProject: NSObject, Codable {
         for terminal in liveWindows(for: project) {
             guard let wn = terminal.window()?.windowNumber else { continue }
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-            var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-            if let firstSession = terminal.allSessions()?.first as? PTYSession {
-                arrangement["Archive"] = [
-                    "columns": firstSession.screen.width,
-                    "rows": firstSession.screen.height
-                ]
-            }
             let title = terminal.window()?.title ?? "Window"
             let uuid = UUID()
             Self.saveThumbnail(for: wn, uuid: uuid)
@@ -363,14 +357,8 @@ final class iTermWindowProject: NSObject, Codable {
             return
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-        if let firstSession = terminal.allSessions()?.first as? PTYSession {
-            arrangement["Archive"] = [
-                "columns": firstSession.screen.width,
-                "rows": firstSession.screen.height
-            ]
-        }
         let title = window.title.isEmpty ? "Window" : window.title
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
@@ -388,14 +376,8 @@ final class iTermWindowProject: NSObject, Codable {
                   let project = project(id: projectID) else { continue }
             
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-            var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-            if let firstSession = terminal.allSessions()?.first as? PTYSession {
-                arrangement["Archive"] = [
-                    "columns": firstSession.screen.width,
-                    "rows": firstSession.screen.height
-                ]
-            }
             
             let title = terminal.window()?.title ?? "Window"
             let uuid = UUID()
@@ -418,14 +400,8 @@ final class iTermWindowProject: NSObject, Codable {
             liveAssociations.removeValue(forKey: wn)
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-        if let firstSession = terminal.allSessions()?.first as? PTYSession {
-            arrangement["Archive"] = [
-                "columns": firstSession.screen.width,
-                "rows": firstSession.screen.height
-            ]
-        }
         let title = terminal.window()?.title ?? "Window"
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
