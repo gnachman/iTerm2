@@ -19,11 +19,12 @@ sleep 3
 # 2. Spawn a terminal window and run our unique loop
 echo "2. Launching a terminal window with a long-running countdown..."
 UNIQUE_ID="ColdStorageTestLoop-$(date +%s)"
-osascript <<EOD
-tell application "iTerm2"
-    tell current window
+osascript <<'EOD'
+tell application "/Users/ysaxon/Library/Developer/Xcode/DerivedData/iTerm2-hghphmhudlrmuogydilxgbnitkjo/Build/Products/Development/iTerm2.app"
+    set newWindow to (create window with default profile)
+    tell newWindow
         tell current session
-            write text "for i in {1..1000}; do echo 'Integration-Test-Count: \$i'; sleep 1; done"
+            write text "for i in {1..1000}; do echo \"Integration-Test-Count: $i\"; sleep 1; done"
         end tell
     end tell
 end tell
@@ -33,7 +34,7 @@ sleep 3
 # 3. Associate the window with our test project
 echo "3. Associating window with project '$TEST_PROJECT'..."
 osascript <<EOD
-tell application "iTerm2"
+tell application "/Users/ysaxon/Library/Developer/Xcode/DerivedData/iTerm2-hghphmhudlrmuogydilxgbnitkjo/Build/Products/Development/iTerm2.app"
     tell current window
         -- We trigger the Associate with Project menu or panel actions
         -- To make it robust, we create the project and map it
