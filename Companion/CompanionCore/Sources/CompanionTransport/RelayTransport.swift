@@ -185,11 +185,16 @@ enum RelayAdmissionClient {
     static func admit(
         ws: RelayWebSocket,
         role: RelayAdmission.Role,
+        nonDisplacing: Bool = false,
         proofFor: (RelayAdmission.Challenge) throws -> RelayAdmission.Proof
     ) async throws -> RelayAdmission.Result {
         ws.resume()
 
-        try await sendJSON(ws, RelayAdmission.Hello(v: protocolVersion, role: role))
+        // Pass nil (not false) when displacing so the field is omitted: the wire
+        // stays identical to pre-nonDisplacing clients and older relays.
+        try await sendJSON(ws, RelayAdmission.Hello(v: protocolVersion,
+                                                    role: role,
+                                                    nonDisplacing: nonDisplacing ? true : nil))
         let challenge: RelayAdmission.Challenge = try await receiveJSON(ws)
         let proof = try proofFor(challenge)
         try await sendJSON(ws, proof)
@@ -228,20 +233,27 @@ public struct RelayTransportConnector: TransportConnector {
     private let relayOrigin: String
     private let responderStaticKey: Data
     private let joinProof: (@Sendable (RelayAdmission.Challenge, _ roomName: String) throws -> RelayAdmission.Proof)?
+    private let nonDisplacing: Bool
     private let webSocketFactory: RelayWebSocketFactory
 
     /// - responderStaticKey: the mac's static public key (rs from the QR),
     ///   needed to derive the room pseudonym.
     /// - joinProof: nil for pairing (empty proof); supply for established-room
     ///   reconnects to return a signed proof.
+    /// - nonDisplacing: when true, the relay rejects the join if the phone slot
+    ///   is occupied instead of displacing it. Set only by the NSE, so it yields
+    ///   to a foreground app; the app uses the default (false) and reclaims the
+    ///   slot.
     /// - webSocketFactory: supplies the outbound socket; defaults to URLSession.
     public init(relayOrigin: String,
                 responderStaticKey: Data,
                 joinProof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? = nil,
+                nonDisplacing: Bool = false,
                 webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory()) {
         self.relayOrigin = relayOrigin
         self.responderStaticKey = responderStaticKey
         self.joinProof = joinProof
+        self.nonDisplacing = nonDisplacing
         self.webSocketFactory = webSocketFactory
     }
 
@@ -256,7 +268,9 @@ public struct RelayTransportConnector: TransportConnector {
         // In a transport race, the loser's task is cancelled; tear the socket
         // down so a half-open relay join doesn't linger (and free the room slot).
         return try await withTaskCancellationHandler {
-            let result = try await RelayAdmissionClient.admit(ws: ws, role: .phone) { challenge in
+            let result = try await RelayAdmissionClient.admit(ws: ws,
+                                                              role: .phone,
+                                                              nonDisplacing: nonDisplacing) { challenge in
                 try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
             }
             let keepalive = relayKeepalive(for: ws)
