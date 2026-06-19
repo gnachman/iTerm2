@@ -278,26 +278,53 @@ final class AppModel {
     /// public and the pid is not a secret, so UserDefaults is fine. The relay
     /// origin is persisted too so an off-LAN reconnect after relaunch can still
     /// reach the mac through the relay (not just the local network).
+    /// The pairing code lives in the shared App Group suite so the NSE can read
+    /// it to reconnect; falls back to the App Group when unavailable.
+    private var pairingDefaults: UserDefaults {
+        UserDefaults(suiteName: PhoneIdentity.appGroup) ?? .standard
+    }
+
     var storedPairingCode: PairingCode? {
-        let defaults = UserDefaults.standard
-        guard let key = defaults.data(forKey: Self.storedKeyDefault),
+        let shared = pairingDefaults
+        let std = UserDefaults.standard
+        // Read the App Group suite, falling back to app-only defaults for a
+        // pre-migration install (migratePairingCodeToAppGroup copies it over).
+        guard let key = shared.data(forKey: Self.storedKeyDefault) ?? std.data(forKey: Self.storedKeyDefault),
               key.count == 32,
-              let pid = defaults.string(forKey: Self.storedPIDDefault) else {
+              let pid = shared.string(forKey: Self.storedPIDDefault) ?? std.string(forKey: Self.storedPIDDefault) else {
             return nil
         }
-        return PairingCode(responderStaticPublicKey: key,
-                           pairingID: pid,
-                           relayOrigin: defaults.string(forKey: Self.storedRelayOriginDefault))
+        let relayOrigin = shared.string(forKey: Self.storedRelayOriginDefault)
+            ?? std.string(forKey: Self.storedRelayOriginDefault)
+        return PairingCode(responderStaticPublicKey: key, pairingID: pid, relayOrigin: relayOrigin)
     }
 
     private func storePairing(_ code: PairingCode) {
-        let defaults = UserDefaults.standard
+        let defaults = pairingDefaults
         defaults.set(code.responderStaticPublicKey, forKey: Self.storedKeyDefault)
         defaults.set(code.pairingID, forKey: Self.storedPIDDefault)
         if let relayOrigin = code.relayOrigin {
             defaults.set(relayOrigin, forKey: Self.storedRelayOriginDefault)
         } else {
             defaults.removeObject(forKey: Self.storedRelayOriginDefault)
+        }
+    }
+
+    /// One-time copy of the pairing code from app-only defaults into the App
+    /// Group suite (so the NSE can read it). Idempotent; runs at launch.
+    private func migratePairingCodeToAppGroup() {
+        guard let shared = UserDefaults(suiteName: PhoneIdentity.appGroup) else { return }
+        let std = UserDefaults.standard
+        guard shared.data(forKey: Self.storedKeyDefault) == nil,
+              let key = std.data(forKey: Self.storedKeyDefault) else {
+            return
+        }
+        shared.set(key, forKey: Self.storedKeyDefault)
+        if let pid = std.string(forKey: Self.storedPIDDefault) {
+            shared.set(pid, forKey: Self.storedPIDDefault)
+        }
+        if let relayOrigin = std.string(forKey: Self.storedRelayOriginDefault) {
+            shared.set(relayOrigin, forKey: Self.storedRelayOriginDefault)
         }
     }
 
@@ -318,11 +345,15 @@ final class AppModel {
     }
 
     func forgetStoredPairing() {
-        let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: Self.storedKeyDefault)
-        defaults.removeObject(forKey: Self.storedPIDDefault)
-        defaults.removeObject(forKey: Self.storedRelayOriginDefault)
-        defaults.removeObject(forKey: Self.registeredRoomDefault)
+        // Clear the pairing code from both the App Group suite and app-only
+        // defaults (legacy location). The registered-room marker is NoSync /
+        // app-only and stays in standard.
+        for defaults in [pairingDefaults, UserDefaults.standard] {
+            defaults.removeObject(forKey: Self.storedKeyDefault)
+            defaults.removeObject(forKey: Self.storedPIDDefault)
+            defaults.removeObject(forKey: Self.storedRelayOriginDefault)
+        }
+        UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
     }
 
     /// Build the best-effort relay delete-room call for the current pairing, or
@@ -348,6 +379,11 @@ final class AppModel {
     /// Called once at launch: if a pairing is stored, reconnect to it instead
     /// of demanding a fresh QR scan.
     func handleLaunch() {
+        // Move the NSE-shared keychain items and the pairing code into the App
+        // Group, once, at launch (idempotent + crash-safe), before any reconnect
+        // reads them.
+        PhoneIdentity.migrateSharedItemsToAppGroup()
+        migratePairingCodeToAppGroup()
         guard phase == .launch, pairingTask == nil else { return }
         guard let code = storedPairingCode else { return }
         companionLog("Reconnecting to stored pairing (pid \(code.pairingID))")
