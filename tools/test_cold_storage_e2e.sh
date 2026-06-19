@@ -24,7 +24,7 @@ tell application "/Users/ysaxon/Library/Developer/Xcode/DerivedData/iTerm2-hghph
     set newWindow to (create window with default profile)
     tell newWindow
         tell current session
-            write text "for i in {1..1000}; do echo \"Integration-Test-Count: $i\"; sleep 1; done"
+            write text "sleep 1001"
         end tell
     end tell
 end tell
@@ -43,7 +43,7 @@ end tell
 EOD
 
 # Let's verify our countdown loop is actively running on the system
-PID=$(ps aux | grep "Integration-Test-Count" | grep -v grep | awk '{print $2}')
+PID=$(ps aux | grep "sleep 1001" | grep -v grep | awk '{print $2}')
 if [ -z "$PID" ]; then
     echo "❌ Error: Countdown process was not found running! Is 'Run Jobs in Servers' enabled?"
     exit 1
@@ -70,7 +70,7 @@ sleep 2
 
 # 5. ASSERTION: Process Survival
 echo "5. Verifying process survival (Orphan Verification)..."
-SURVIVED_PID=$(ps aux | grep "Integration-Test-Count" | grep -v grep | awk '{print $2}')
+SURVIVED_PID=$(ps aux | grep "sleep 1001" | grep -v grep | awk '{print $2}')
 if [ "$PID" = "$SURVIVED_PID" ]; then
     echo "✅ SUCCESS: Background process group $PID survived cold storage closure!"
 else
