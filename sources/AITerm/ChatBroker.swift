@@ -133,7 +133,7 @@ class ChatBroker {
         let snapshot = subs
         for sub in snapshot {
             if sub.chatID == chatID || sub.chatID == nil {
-                sub.closure?(.delivery(processed, chatID))
+                sub.closure?(.delivery(processed, chatID, partial: partial))
             }
         }
     }
@@ -197,11 +197,15 @@ class ChatBroker {
         var debugDescription: String {
             switch self {
             case let .typingStatus(typing, participant): "\(participant) typing=\(typing)"
-            case let .delivery(message, chat): "Message in \(chat) - \(message.snippetText ?? "[empty]")"
+            case let .delivery(message, chat, partial): "Message in \(chat) (partial=\(partial)) - \(message.snippetText ?? "[empty]")"
             }
         }
         case typingStatus(Bool, Participant)
-        case delivery(Message, String)
+        // `partial` mirrors ChatBroker.publish(partial:): true for streaming
+        // deltas and the streamed turn's opening message, false for a committed
+        // final message. Subscribers that must distinguish a streamed turn's
+        // start from a non-streamed final (e.g. the push notifier) need it.
+        case delivery(Message, String, partial: Bool)
     }
 
     func subscribe(chatID: String?,

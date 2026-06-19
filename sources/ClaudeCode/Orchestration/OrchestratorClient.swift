@@ -102,7 +102,7 @@ final class OrchestratorClient {
     // MARK: - Broker handler
 
     private func handle(update: ChatBroker.Update) {
-        guard case let .delivery(message, chatID) = update else { return }
+        guard case let .delivery(message, chatID, _) = update else { return }
         guard message.author == .agent else { return }
         guard case let .remoteCommandRequest(payload, _) = message.content else { return }
         guard case let .external(ext) = payload else { return }

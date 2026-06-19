@@ -591,7 +591,7 @@ extension ChatViewController {
                     }
                     var shouldScroll = true
                     switch update {
-                    case let .delivery(message, _):
+                    case let .delivery(message, _, _):
                         // Hidden-from-client messages (setPermissions,
                         // remoteCommandResponse, renameChat, commit,
                         // vectorStoreCreated, userCommand) don't appear in

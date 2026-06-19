@@ -441,7 +441,7 @@ final class CompanionHostBridge {
 
     private func handleBrokerUpdate(_ update: ChatBroker.Update, chatID: String) {
         switch update {
-        case .delivery(let message, let deliveredChatID):
+        case .delivery(let message, let deliveredChatID, _):
             // Mirror the Mac UI: bookkeeping messages are not rendered there
             // and are not forwarded here. Streaming .append deltas are visible
             // (not hidden) and flow through.

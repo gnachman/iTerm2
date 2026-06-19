@@ -233,6 +233,10 @@ final class CompanionPairingController: NSObject {
         // from the keychain into memory now so later background sends never
         // prompt. Idempotent, so reconnect-driven calls are no-ops.
         CompanionPushRegistry.loadSecretAtLaunch()
+        // Watch the broker so a completed agent turn (or a permission request)
+        // can nudge an away phone. Idempotent; gated so it does nothing unless
+        // paired, away, and notifications are authorized.
+        CompanionAgentActivityNotifier.start()
         // If the plugin vanished while we were away, tear the pairing down rather
         // than silently keeping the keys around for a feature that can't run.
         unpairIfPluginMissing()

@@ -257,7 +257,7 @@ final class OrchestratorDispatcher {
     @MainActor
     private func handle(brokerUpdate update: ChatBroker.Update) {
         if tornDown { return }
-        guard case let .delivery(message, _) = update,
+        guard case let .delivery(message, _, _) = update,
               message.author == .user,
               case let .userCommand(command) = message.content,
               case let .workgroupPermissionResponse(requestID, approved) = command else {
