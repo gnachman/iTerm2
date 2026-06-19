@@ -2,24 +2,27 @@
 //  ReconnectProbe.swift
 //  iTerm2 Companion Push Service (Notification Service Extension)
 //
-//  TEMPORARY memory-spike (docs/push.txt Verification gate 0). Reconnects over
-//  the relay + Noise channel using credentials the app exported to the shared
-//  App Group container, logging os_proc_available_memory() before and after so
-//  we can see how much of the NSE's ~24 MB budget the connect + Noise handshake
-//  consume. No fetch yet: the message payload is bounded to a few KB by design
-//  (Mac-side strip + truncate), so the connect/handshake floor is the unknown.
-//  Remove with the rest of the spike scaffolding.
+//  Memory-spike + reconnect probe (docs/push.txt Verification gate 0).
+//  Reconnects over the relay + Noise channel using the real shared credentials
+//  (the Noise key + room secret from the App Group keychain group, the pairing
+//  code from the App Group defaults - section 7), joining NON-displacing so it
+//  yields to a foreground app. Logs os_proc_available_memory() across the
+//  connect + handshake. No fetch yet: that arrives with the real NSE shell
+//  (section 6), which replaces this probe.
 //
 
 import Foundation
 import os
+import Security
 import CompanionProtocol
 import CompanionNoise
 import CompanionTransport
 
 enum ReconnectProbe {
     private static let appGroup = "group.com.googlecode.iterm2.companion"
-    private static let fileName = "spike-creds.json"
+    private static let keychainService = "com.googlecode.iterm2.companion"
+    private static let noiseAccount = "noise-static-private-key"
+    private static let roomSecretAccount = "relay-room-secret"
     private static let log = Logger(subsystem: "com.googlecode.iterm2.companion.PushService",
                                     category: "spike")
 
@@ -73,7 +76,8 @@ enum ReconnectProbe {
         let secretProvider: @Sendable () -> Data? = { roomSecret }
         let connector = CompanionTransports.connector(
             for: code,
-            roomSecret: secretProvider)
+            roomSecret: secretProvider,
+            nonDisplacing: true)
         let transport = try await connector.connect(
             to: PairingRendezvous(pairingID: code.pairingID),
             timeout: 10)
@@ -89,29 +93,40 @@ enum ReconnectProbe {
     }
 
     private static func loadCreds() -> Creds? {
-        guard let container = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: appGroup) else {
-            log.error("no App Group container")
+        guard let defaults = UserDefaults(suiteName: appGroup),
+              let responderKey = defaults.data(forKey: "PairedResponderStaticKey"),
+              responderKey.count == 32,
+              let pairingID = defaults.string(forKey: "PairedPairingID") else {
+            log.error("no pairing code in App Group defaults")
             return nil
         }
-        let url = container.appendingPathComponent(fileName)
-        guard let data = try? Data(contentsOf: url),
-              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let rkB64 = obj["responderStaticPublicKey"] as? String,
-              let responderKey = Data(base64Encoded: rkB64),
-              let pairingID = obj["pairingID"] as? String,
-              let pkB64 = obj["noisePrivateKey"] as? String,
-              let noisePrivateKey = Data(base64Encoded: pkB64) else {
-            log.error("no/invalid spike creds in container")
+        guard let noisePrivateKey = keychainData(account: noiseAccount) else {
+            log.error("no Noise key in App Group keychain")
             return nil
         }
-        let relayOrigin = obj["relayOrigin"] as? String
-        let roomSecret = (obj["roomSecret"] as? String).flatMap { Data(base64Encoded: $0) }
         return Creds(responderKey: responderKey,
                      pairingID: pairingID,
-                     relayOrigin: relayOrigin,
+                     relayOrigin: defaults.string(forKey: "PairedRelayOrigin"),
                      noisePrivateKey: noisePrivateKey,
-                     roomSecret: roomSecret)
+                     roomSecret: keychainData(account: roomSecretAccount))
+    }
+
+    /// Read a 32-byte item from the shared App Group keychain access group.
+    private static func keychainData(account: String) -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: account,
+            kSecAttrAccessGroup as String: appGroup,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data, data.count == 32 else {
+            return nil
+        }
+        return data
     }
 
     /// os_proc_available_memory() returns the bytes this process may still
