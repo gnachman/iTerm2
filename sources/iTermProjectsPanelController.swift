@@ -147,13 +147,13 @@ final class iTermProjectsOutlineController: NSViewController,
 
     private(set) var outlineView = NSOutlineView()
     private var scrollView       = NSScrollView()
-    private var addProjectButton    = NSButton()
-    private var addSubprojectButton = NSButton()
-    private var deleteButton        = NSButton()
-    private var restoreButton       = NSButton()
-    private var restoreAllButton    = NSButton()
-    private var closeProjectButton  = NSButton()
-    private var freezeProjectButton = NSButton()
+    var addProjectButton    = NSButton()
+    var addSubprojectButton = NSButton()
+    var deleteButton        = NSButton()
+    var restoreButton       = NSButton()
+    var restoreAllButton    = NSButton()
+    var closeProjectButton  = NSButton()
+    var freezeProjectButton = NSButton()
 
     private var sortOrder   = ProjectSortOrder.recent
     private var sortSegment = NSSegmentedControl()
@@ -300,19 +300,19 @@ final class iTermProjectsOutlineController: NSViewController,
             bar.heightAnchor.constraint(equalToConstant: 32),
         ])
 
-        configure(&addProjectButton,    label: "+",           tip: "New project",
+        configure(&addProjectButton,    label: "+",           tip: "New project", target: self,
                   action: #selector(addProject(_:)))
-        configure(&addSubprojectButton, label: "+sub",        tip: "New sub-project under selection",
+        configure(&addSubprojectButton, label: "+sub",        tip: "New sub-project under selection", target: self,
                   action: #selector(addSubproject(_:)))
-        configure(&deleteButton,        label: "−",           tip: "Delete selection",
+        configure(&deleteButton,        label: "−",           tip: "Delete selection", target: self,
                   action: #selector(deleteSelected(_:)))
-        configure(&restoreButton,       label: "Restore",     tip: "Restore selected archived window",
+        configure(&restoreButton,       label: "Restore",     tip: "Restore selected archived window", target: self,
                   action: #selector(restoreSelectedWindow(_:)))
-        configure(&restoreAllButton,    label: "Restore All", tip: "Restore all archived windows in selected project",
+        configure(&restoreAllButton,    label: "Restore All", tip: "Restore all archived windows in selected project", target: self,
                   action: #selector(restoreAllInProject(_:)))
-        configure(&closeProjectButton,  label: "Close All",   tip: "Close and archive all open windows in selected project",
+        configure(&closeProjectButton,  label: "Close All",   tip: "Close and archive all open windows in selected project", target: self,
                   action: #selector(closeSelectedProject(_:)))
-        configure(&freezeProjectButton, label: "Freeze All",  tip: "Close and archive all open windows in selected project (Keep running jobs)",
+        configure(&freezeProjectButton, label: "Freeze All",  tip: "Close and archive all open windows in selected project (Keep running jobs)", target: self,
                   action: #selector(freezeSelectedProjectAndKeepJobs(_:)))
 
         let spacer = NSView()
@@ -419,7 +419,7 @@ final class iTermProjectsOutlineController: NSViewController,
                                                   accessibilityDescription: nil)
 
         } else if let liveBox = item as? iTermLiveWindowBox {
-            let title = liveBox.terminal.window()?.title ?? "Window"
+            let title = liveBox.terminal.ptyWindow()?.title ?? "Window"
             cell.textField?.stringValue = title
             cell.textField?.font        = .boldSystemFont(ofSize: NSFont.systemFontSize)
             cell.textField?.textColor   = .labelColor
@@ -458,7 +458,7 @@ final class iTermProjectsOutlineController: NSViewController,
         if let box = item as? iTermArchivedWindowBox {
             iTermWindowProjectsModel.shared.restoreWindow(box.window)
         } else if let liveBox = item as? iTermLiveWindowBox {
-            liveBox.terminal.window()?.makeKeyAndOrderFront(nil)
+            liveBox.terminal.ptyWindow()?.makeKeyAndOrderFront(nil)
         }
     }
 
@@ -638,7 +638,7 @@ final class iTermProjectsOutlineController: NSViewController,
     }
 
     @objc private func bringLiveWindowToFront(_ sender: Any?) {
-        selectedLiveBox?.terminal.window()?.makeKeyAndOrderFront(nil)
+        selectedLiveBox?.terminal.ptyWindow()?.makeKeyAndOrderFront(nil)
     }
 
     @objc private func closeAndArchiveLiveWindow(_ sender: Any?) {
@@ -667,7 +667,7 @@ final class iTermProjectsOutlineController: NSViewController,
             return pb
         }
         if let box = item as? iTermLiveWindowBox {
-            guard let wn = box.terminal.window()?.windowNumber, wn > 0 else { return nil }
+            guard let wn = box.terminal.ptyWindow()?.windowNumber, wn > 0 else { return nil }
             let pb = NSPasteboardItem()
             pb.setString(String(wn), forType: kLiveWindowDragType)
             return pb
@@ -724,7 +724,7 @@ final class iTermProjectsOutlineController: NSViewController,
            let wn       = Int(wnStr),
            let project  = item as? iTermWindowProject {
             let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
-            guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
+            guard let terminal = all.first(where: { $0.ptyWindow()?.windowNumber == wn }) else {
                 return false
             }
             if isInternalDrag {
@@ -806,7 +806,7 @@ final class iTermProjectsOutlineController: NSViewController,
         }
 
         if let liveBox = item as? iTermLiveWindowBox,
-           let nsWindow = liveBox.terminal.window(),
+           let nsWindow = liveBox.terminal.ptyWindow(),
            nsWindow.windowNumber > 0 {
             showLivePreview(windowNumber: CGWindowID(nsWindow.windowNumber),
                             anchor: outlineView.rect(ofRow: row),
@@ -1043,6 +1043,7 @@ final class iTermOpenWindowsController: NSViewController,
         configure(&associateButton,
                   label: "Associate with Project",
                   tip: "Mark the selected open window as belonging to the selected project (auto-archives on close)",
+                  target: self,
                   action: #selector(associateSelected(_:)))
 
         let stack = NSStackView(views: [statusLabel, NSView(), associateButton])
@@ -1146,7 +1147,7 @@ final class iTermOpenWindowsController: NSViewController,
             } else {
                 cell = makeWindowCell(identifier: id)
             }
-            cell.textField?.stringValue = terminal.window()?.title ?? "Window"
+            cell.textField?.stringValue = terminal.ptyWindow()?.title ?? "Window"
             cell.imageView?.image       = NSImage(systemSymbolName: "terminal",
                                                   accessibilityDescription: nil)
             return cell
@@ -1218,7 +1219,7 @@ final class iTermOpenWindowsController: NSViewController,
     }
 
     @objc private func bringSelectedToFront(_ sender: Any?) {
-        selectedTerminal?.window()?.makeKeyAndOrderFront(nil)
+        selectedTerminal?.ptyWindow()?.makeKeyAndOrderFront(nil)
     }
 
     @objc private func closeAndArchiveSelected(_ sender: Any?) {
@@ -1262,7 +1263,7 @@ final class iTermOpenWindowsController: NSViewController,
     func outlineView(_ outlineView: NSOutlineView,
                      pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
         if let terminal = item as? PseudoTerminal {
-            guard let wn = terminal.window()?.windowNumber, wn > 0 else { return nil }
+            guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0 else { return nil }
             let pb = NSPasteboardItem()
             pb.setString(String(wn), forType: kLiveWindowDragType)
             return pb
@@ -1321,7 +1322,7 @@ final class iTermOpenWindowsController: NSViewController,
         // Live window → reassign or disassociate
         if let wnStr = pb.string(forType: kLiveWindowDragType), let wn = Int(wnStr) {
             let all = (iTermController.sharedInstance().terminals() as? [PseudoTerminal]) ?? []
-            guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
+            guard let terminal = all.first(where: { $0.ptyWindow()?.windowNumber == wn }) else {
                 return false
             }
             if let group = item as? iTermOpenProjectGroup, let proj = group.project {
@@ -1378,7 +1379,7 @@ final class iTermOpenWindowsController: NSViewController,
 
     private func showPreview(forRow row: Int) {
         guard let terminal = outlineView.item(atRow: row) as? PseudoTerminal,
-              let nsWindow  = terminal.window(),
+              let nsWindow  = terminal.ptyWindow(),
               nsWindow.windowNumber > 0 else { return }
         let rowRect = outlineView.rect(ofRow: row)
         guard rowRect != .zero else { return }
@@ -1514,8 +1515,9 @@ private func makeSectionHeader(_ title: String) -> NSView {
 private func configure(_ button: inout NSButton,
                         label: String,
                         tip: String,
+                        target: Any?,
                         action: Selector) {
-    button = NSButton(title: label, target: nil, action: action)
+    button = NSButton(title: label, target: target as AnyObject?, action: action)
     button.bezelStyle  = .inline
     button.controlSize = .small
     button.toolTip     = tip

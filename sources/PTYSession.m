@@ -1969,6 +1969,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
                 tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
+                aSession->_isArchive = NO;
+                [aSession->_screen setTerminalEnabled:YES];
             } else {
                 if (isTmuxGateway) {
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

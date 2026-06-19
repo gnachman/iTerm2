@@ -284,21 +284,21 @@ final class iTermWindowProject: NSObject, Codable {
     /// Marks `terminal` as belonging to `project` without closing it.
     /// When the window later closes, it will be auto-archived to this project.
     func associateWindow(_ terminal: PseudoTerminal, with project: iTermWindowProject) {
-        guard let wn = terminal.window()?.windowNumber, wn > 0 else { return }
+        guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0 else { return }
         liveAssociations[wn] = project.id
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
     }
 
     /// Removes the project association from `terminal`, leaving the window open but untracked.
     func disassociateWindow(_ terminal: PseudoTerminal) {
-        guard let wn = terminal.window()?.windowNumber, wn > 0,
+        guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0,
               liveAssociations.removeValue(forKey: wn) != nil else { return }
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
     }
 
     /// Returns the project `terminal` is currently associated with, or nil.
     func project(for terminal: PseudoTerminal) -> iTermWindowProject? {
-        guard let wn = terminal.window()?.windowNumber, wn > 0,
+        guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0,
               let pid = liveAssociations[wn] else { return nil }
         return project(id: pid)
     }
@@ -307,7 +307,7 @@ final class iTermWindowProject: NSObject, Codable {
     func liveWindows(for project: iTermWindowProject) -> [PseudoTerminal] {
         let all = iTermController.sharedInstance().terminals() ?? []
         return all.filter { t in
-            guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
+            guard let wn = t.ptyWindow()?.windowNumber, wn > 0 else { return false }
             return liveAssociations[wn] == project.id
         }
     }
@@ -316,7 +316,7 @@ final class iTermWindowProject: NSObject, Codable {
     func hasLiveWindows(for project: iTermWindowProject) -> Bool {
         let all = iTermController.sharedInstance().terminals() ?? []
         return all.contains { t in
-            guard let wn = t.window()?.windowNumber, wn > 0 else { return false }
+            guard let wn = t.ptyWindow()?.windowNumber, wn > 0 else { return false }
             return liveAssociations[wn] == project.id
         }
     }
@@ -324,11 +324,17 @@ final class iTermWindowProject: NSObject, Codable {
     /// Closes and archives every open window currently associated with `project`.
     func closeProject(_ project: iTermWindowProject, keepJobsRunning: Bool = false) {
         for terminal in liveWindows(for: project) {
-            guard let wn = terminal.window()?.windowNumber else { continue }
+            guard let wn = terminal.ptyWindow()?.windowNumber else { continue }
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-            let title = terminal.window()?.title ?? "Window"
+            if let firstSession = terminal.allSessions()?.first as? PTYSession {
+                arrangement["Archive"] = [
+                    "columns": firstSession.columns,
+                    "rows": firstSession.rows
+                ]
+            }
+            let title = terminal.ptyWindow()?.title ?? "Window"
             let uuid = UUID()
             Self.saveThumbnail(for: wn, uuid: uuid)
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
@@ -352,13 +358,19 @@ final class iTermWindowProject: NSObject, Codable {
             return
         }
         let all = iTermController.sharedInstance().terminals() ?? []
-        guard let terminal = all.first(where: { $0.window()?.windowNumber == wn }) else {
+        guard let terminal = all.first(where: { $0.ptyWindow()?.windowNumber == wn }) else {
             liveAssociations.removeValue(forKey: wn)
             return
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+        if let firstSession = terminal.allSessions()?.first as? PTYSession {
+            arrangement["Archive"] = [
+                "columns": firstSession.columns,
+                "rows": firstSession.rows
+            ]
+        }
         let title = window.title.isEmpty ? "Window" : window.title
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
@@ -369,17 +381,23 @@ final class iTermWindowProject: NSObject, Codable {
     }
 
     @objc private func applicationWillTerminate(_ note: Notification) {
-        let all = iTermController.sharedInstance().terminals() ?? []
+        guard let all = iTermController.sharedInstance().terminals() else { return }
         for terminal in all {
-            guard let wn = terminal.window()?.windowNumber, wn > 0,
+            guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0,
                   let projectID = liveAssociations[wn],
                   let project = project(id: projectID) else { continue }
             
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+            if let firstSession = terminal.allSessions()?.first as? PTYSession {
+                arrangement["Archive"] = [
+                    "columns": firstSession.columns,
+                    "rows": firstSession.rows
+                ]
+            }
             
-            let title = terminal.window()?.title ?? "Window"
+            let title = terminal.ptyWindow()?.title ?? "Window"
             let uuid = UUID()
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
@@ -395,14 +413,20 @@ final class iTermWindowProject: NSObject, Codable {
                        to project: iTermWindowProject,
                        andClose close: Bool,
                        keepJobsRunning: Bool = false) {
-        let wn = terminal.window()?.windowNumber ?? 0
+        let wn = terminal.ptyWindow()?.windowNumber ?? 0
         if wn > 0 {
             liveAssociations.removeValue(forKey: wn)
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-        let title = terminal.window()?.title ?? "Window"
+        if let firstSession = terminal.allSessions()?.first as? PTYSession {
+            arrangement["Archive"] = [
+                "columns": firstSession.columns,
+                "rows": firstSession.rows
+            ]
+        }
+        let title = terminal.ptyWindow()?.title ?? "Window"
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
         let entry = iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement)
@@ -442,7 +466,7 @@ final class iTermWindowProject: NSObject, Codable {
             Self.deleteThumbnail(for: archived.id)
             
             // Associate the newly opened window with the project!
-            if let wn = term.window()?.windowNumber, wn > 0 {
+            if let wn = term.ptyWindow()?.windowNumber, wn > 0 {
                 self.liveAssociations[wn] = project.id
             }
             
@@ -466,7 +490,7 @@ final class iTermWindowProject: NSObject, Codable {
                 
                 iTermController.sharedInstance().addTerminalWindow(term)
                 
-                if let wn = term.window()?.windowNumber, wn > 0 {
+                if let wn = term.ptyWindow()?.windowNumber, wn > 0 {
                     self.liveAssociations[wn] = project.id
                     NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
                 }
