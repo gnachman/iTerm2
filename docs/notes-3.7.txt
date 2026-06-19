@@ -1365,3 +1365,7 @@ Bug Fixes:
   status rollup was borrowing the
   session's identity and clearing it
   when the visible peer changed.
+- Sort JSON keys in the Responses API
+  request so OpenAI prompt caching gets
+  a stable prefix and reliably hits the
+  cache.
