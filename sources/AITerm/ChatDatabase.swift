@@ -182,6 +182,35 @@ class ChatDatabase {
         }
     }
 
+    /// For the relay-push messagesSince responder: a newest-first window of a
+    /// chat's messages with seq greater than `sinceSeq`, plus the chat's current
+    /// max seq. Decodes Message rows (which ignore the seq column); the caller
+    /// drops hidden rows and trims to previews. `windowLimit` over-fetches so
+    /// hidden rows don't crowd out visible ones.
+    func messagesSince(chatID: String,
+                       sinceSeq: Int64,
+                       windowLimit: Int) -> (messages: [Message], maxSeq: Int64) {
+        var messages = [Message]()
+        let (sql, args) = Message.messagesSinceQuery(chatID: chatID, seq: sinceSeq, windowLimit: windowLimit)
+        if let rs = try? db.executeQuery(sql, withArguments: args) {
+            while rs.next() {
+                if let message = Message(dbResultSet: rs) {
+                    messages.append(message)
+                }
+            }
+            rs.close()
+        }
+        var maxSeq: Int64 = 0
+        let (maxSQL, maxArgs) = Message.maxSeqQuery(chatID: chatID)
+        if let rs = try? db.executeQuery(maxSQL, withArguments: maxArgs) {
+            if rs.next() {
+                maxSeq = rs.longLongInt(forColumn: "maxseq")
+            }
+            rs.close()
+        }
+        return (messages, maxSeq)
+    }
+
     private func popuplateSessionToChatMap() {
         let sql =
         """

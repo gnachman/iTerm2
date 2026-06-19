@@ -131,4 +131,34 @@ final class ChatMessageSeqTests: XCTestCase {
         XCTAssertEqual(rows.map { $0.seq }, [1, 2, 3],
                        "seq must backfill 1..N in rowid order; got \(rows.map { $0.seq })")
     }
+
+    func testMessagesSince_scopedNewestFirstWindowedWithMaxSeq() throws {
+        let dir = try makeTempDir()
+        let chatdb = try XCTUnwrap(ChatDatabase(url: dir.appendingPathComponent("chatdb.sqlite")))
+        // Interleave two chats so we exercise the chatID scope. Resulting seqs:
+        // a1=1, b1=2, a2=3, a3=4.
+        let a1 = UUID(), a2 = UUID(), a3 = UUID(), b1 = UUID()
+        try insertMessage(chatdb.db, chatID: "A", uniqueID: a1)
+        try insertMessage(chatdb.db, chatID: "B", uniqueID: b1)
+        try insertMessage(chatdb.db, chatID: "A", uniqueID: a2)
+        try insertMessage(chatdb.db, chatID: "A", uniqueID: a3)
+
+        // All of A, newest first; maxSeq is A's tip (4), not B's.
+        let all = chatdb.messagesSince(chatID: "A", sinceSeq: 0, windowLimit: 10)
+        XCTAssertEqual(all.messages.map { $0.uniqueID }, [a3, a2, a1])
+        XCTAssertEqual(all.maxSeq, 4)
+
+        // windowLimit caps the row count (still newest first).
+        let windowed = chatdb.messagesSince(chatID: "A", sinceSeq: 0, windowLimit: 2)
+        XCTAssertEqual(windowed.messages.map { $0.uniqueID }, [a3, a2])
+
+        // sinceSeq is a strict watermark: seq > 3 excludes a2 (seq 3) and a1.
+        let since = chatdb.messagesSince(chatID: "A", sinceSeq: 3, windowLimit: 10)
+        XCTAssertEqual(since.messages.map { $0.uniqueID }, [a3])
+
+        // A chat with no rows yields nothing and maxSeq 0.
+        let empty = chatdb.messagesSince(chatID: "ZZZ", sinceSeq: 0, windowLimit: 10)
+        XCTAssertTrue(empty.messages.isEmpty)
+        XCTAssertEqual(empty.maxSeq, 0)
+    }
 }

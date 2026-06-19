@@ -15,6 +15,21 @@
 
 import Foundation
 import CompanionProtocol
+import CryptoKit
+
+/// The opaque, per-chat APNs collapse id for the relay-push feature:
+/// HMAC-SHA256(roomSecret, chatID), hex, truncated to 128 bits. Computed
+/// identically on the Mac (push sender + host token resolver) and the phone
+/// (per-chat watermark key + NSE), so the chatID never leaves the device in the
+/// clear while same-chat pushes still coalesce and different chats stay
+/// distinct. 32 hex chars, well under the APNs 64-byte collapse-id limit.
+public enum CompanionCollapseToken {
+    public static func make(roomSecret: Data, chatID: String) -> String {
+        let code = HMAC<SHA256>.authenticationCode(for: Data(chatID.utf8),
+                                                   using: SymmetricKey(data: roomSecret))
+        return Data(code).prefix(16).map { String(format: "%02x", $0) }.joined()
+    }
+}
 
 /// What a terminal session looks like on the wire. PTYSession itself cannot
 /// cross, so this is the protocol's projection of one (used by the phone's

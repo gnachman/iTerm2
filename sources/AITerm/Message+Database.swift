@@ -60,6 +60,26 @@ extension Message: iTermDatabaseElement {
         ("select * from Message where chatID=?", [chatID])
     }
 
+    /// Newest-first window of a chat's rows with seq greater than `seq`, for the
+    /// relay-push messagesSince responder. Over-fetches (windowLimit) because
+    /// hiddenFromClient is a computed property and cannot be filtered in SQL;
+    /// the responder drops hidden rows and keeps the newest visible ones.
+    static func messagesSinceQuery(chatID: String, seq: Int64, windowLimit: Int) -> (String, [Any?]) {
+        ("""
+         select * from Message
+         where \(Columns.chatID.rawValue)=? and \(Columns.seq.rawValue)>?
+         order by \(Columns.seq.rawValue) desc limit ?
+         """,
+         [chatID, seq, windowLimit])
+    }
+
+    /// The chat's highest seq (0 if the chat has no rows). The watermark jumps
+    /// to this tip so a backlog can't re-notify.
+    static func maxSeqQuery(chatID: String) -> (String, [Any?]) {
+        ("select max(\(Columns.seq.rawValue)) as maxseq from Message where \(Columns.chatID.rawValue)=?",
+         [chatID])
+    }
+
     static func tableInfoQuery() -> String {
         "PRAGMA table_info(Message)"
     }
