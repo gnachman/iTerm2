@@ -57,6 +57,22 @@ iTermTriggerScopeProvider> {
     iTermKittyImageController *_kittyImageController;
     // When YES, terminal input is collected into printBuffer for ANSI print commands.
     BOOL _collectInputForPrinting;
+    // Absolute line of the bottommost fold ANYWHERE in the buffer (grid or history), or -1 if there
+    // are no folds at all. Cached so the cursor-moved-above-a-fold check (which runs on every
+    // cursor-positioning command) is a few integer compares instead of an interval-tree query. The hot
+    // check derives grid-membership by comparing against the current grid-top absolute line, so
+    // ordinary scrolling and lines moving between the line buffer and the grid need NO invalidation:
+    // absolute coordinates don't change when a line moves between history and grid, only the split
+    // does. _foldCacheDirty must be set by any event that changes the fold SET or a fold's absolute
+    // COORDINATE. Two chokepoints cover most of it: -shiftIntervalTreeObjectsInRange: catches
+    // coordinate relocations (porthole add/resize, composer reflow, fold create/unfold), and
+    // -didRemoveObjectFromIntervalTree: catches fold-mark removals (clear-to-mark, range clears,
+    // overflow). The paths that rebuild or relocate folds WITHOUT going through either set it directly:
+    // reflow, clearScrollbackBuffer (bulkMoveObjects:), removeLastLine, interval-tree deserialization
+    // (session restore), and the alt-screen / tmux grid swap. The value is recomputed lazily on next
+    // use, when the screen state is fully settled.
+    long long _bottommostFoldAbsLine;
+    BOOL _foldCacheDirty;
 }
 
 @property (atomic) BOOL hadCommand;
@@ -103,5 +119,9 @@ iTermTriggerScopeProvider> {
 - (void)performBlockWithoutTriggers:(void (^)(void))block;
 - (void)movePromptUnderComposerIfNeeded;
 - (iTermBlockMark *)mutableBlockMarkWithID:(NSString *)blockID;
+
+// Refresh _bottommostFoldAbsLine from the interval tree. Call after any event that adds, removes, or
+// repositions folds in the grid (fold create/unfold, the fold-preserving scroll, reflow).
+- (void)recomputeBottommostFoldAbsLine;
 
 @end

@@ -485,6 +485,12 @@ Bug Fixes:
   the top of the screen and repaint over it.
   The visible screen is now scrolled into
   history first. Requires shell integration.
+- When such a program moves the cursor above
+  a fold and repaints, the fold is now
+  scrolled into history instead of being
+  overwritten and left with an orphaned
+  unfold icon in the margin. This works even
+  without shell integration installed.
 - The “taking a long time to check state
   restoration” prompt no longer appears so
   readily right after login, when the system

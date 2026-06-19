@@ -6,6 +6,7 @@
 //
 
 #import "VT100ScreenMutableState+Resizing.h"
+#import "VT100ScreenMutableState+Private.h"
 #import "VT100ScreenState+Private.h"
 #import "VT100ScreenState+RCDataSource.h"
 #import "VT100ScreenMutableState+RCDataSource.h"
@@ -742,6 +743,11 @@ static void SwapInt(int *a, int *b) {
         }
 
         [self updateIntervalTreeWithWidth:newSize.width];
+
+        // Reflow rewrote every fold's absolute coordinate, so the cached bottommost-fold line is now
+        // stale. Mark it dirty; it is recomputed lazily on the next cursor move, by which point the
+        // resize has fully settled (grid size and scrollback are still mid-update here).
+        _foldCacheDirty = YES;
 
         if (wasShowingAltScreen) {
             // Return to alt grid.

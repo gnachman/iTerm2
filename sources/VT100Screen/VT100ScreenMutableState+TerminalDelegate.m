@@ -515,10 +515,92 @@ typedef struct {
     [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];
 }
 
+// Like saveScreenToScrollbackIfCursorMovedAboveCommandOutput, but anchored on folds instead of the
+// running command's output, so it works WITHOUT shell integration. A fold is itself evidence of user
+// content worth preserving: collapsed lines whose content lives only in the fold mark. When a program
+// that doesn't use the alternate screen moves the cursor above an in-grid fold (e.g. Claude Code's
+// launch-time CSI H) and then paints over it, the fold's cells get overwritten while its mark survives
+// in the interval tree, leaving an orphaned unfold icon in the margin next to unrelated content. To
+// avoid that we scroll the fold (and everything above it) into history first, where the mark stays
+// valid at its absolute position.
+//
+// This needs none of the command-output path's shell-integration state: not startOfRunningCommandOutput
+// (where output begins) and not appendedTextSinceCommandExecuted (whether this command has drawn, reset
+// only at FTCS C). It is self-limiting instead: the first relocate moves the fold into history, so the
+// fold is no longer in the grid and subsequent cursor moves no-op. That's why it's safe without the
+// "has the program already drawn?" guard the command-output path uses to avoid disturbing a mid-run
+// repaint.
+//
+// Why saveScreenToScrollbackIfCursorMovedAboveCommandOutput didn't already cover this, even with shell
+// integration installed: its appendedTextSinceCommandExecuted gate. That flag is reset at FTCS C and
+// set by the first character a program draws. Claude Code emits FTCS C, then draws its banner, and only
+// THEN homes the cursor to repaint (confirmed in the launch byte stream: ]133;C, then the banner
+// glyphs, then CSI H). So by the time the cursor moves up the flag is YES and that path returns,
+// mistaking the launch-time takeover for a mid-run repaint it must not disturb. (It is additionally
+// inert with no shell integration at all: startOfRunningCommandOutput stays at its (-1,-1) sentinel,
+// set only at FTCS C, so the outputStart.x < 0 gate returns.) When it DOES fire it preserves folds
+// fine: it scrolls via the same scrollWholeScreenUpIntoLineBuffer, and a fold mark rides into history
+// at its absolute coordinate just like any other line. So the gap is only that it bails here, never
+// that it mishandles a fold once it runs.
+//
+// This path makes folds first-class: it has no appendedText gate (it can't use one, and doesn't need
+// one, per the self-limiting note above) and no shell-integration dependency, so it fires for Claude's
+// draw-then-home sequence where the command-output path bails.
+- (void)saveScreenToScrollbackIfCursorMovedAboveFold {
+    // This runs on every cursor-positioning command, so it must be cheap. _bottommostFoldAbsLine is the
+    // cached absolute line of the bottommost in-grid fold (or -1 for none); the interval tree is touched
+    // only by the cold recompute below, and only when _foldCacheDirty was set by a fold create/unfold,
+    // the scroll below, or a reflow.
+    if (!_foldCacheDirty && _bottommostFoldAbsLine < 0) {
+        // Cache is clean and there are no folds at all. The overwhelmingly common case.
+        return;
+    }
+    if (![iTermAdvancedSettingsModel saveScrollbackWhenCursorMovesAbovePrompt]) {
+        return;
+    }
+    if (self.terminalSoftAlternateScreenMode) {
+        // The alternate screen has its own buffer; leave the main scrollback alone.
+        return;
+    }
+    if (_foldCacheDirty) {
+        // Recompute lazily, now that the screen state (grid size, scrollback) is fully settled. Doing
+        // this in the mutating events themselves is fragile because some, like reflow, run mid-resize.
+        [self recomputeBottommostFoldAbsLine];
+        _foldCacheDirty = NO;
+    }
+    if (_bottommostFoldAbsLine < 0) {
+        return;
+    }
+    const long long gridTopAbs = self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines;
+    if (_bottommostFoldAbsLine < gridTopAbs) {
+        // The bottommost fold is in history, not the addressable grid, so there's nothing to preserve.
+        // Do NOT reset the cache: absolute coordinates are stable when a line moves between the line
+        // buffer and the grid, so if a later operation pops the fold's line back into the grid this
+        // same comparison detects it with no invalidation needed.
+        return;
+    }
+    const int bottommostFoldRow = (int)(_bottommostFoldAbsLine - gridTopAbs);
+    if (self.currentGrid.cursor.y > bottommostFoldRow) {
+        // The cursor is below the bottommost fold, so they coexist and a repaint below it is harmless.
+        return;
+    }
+    // Scroll the fold (and everything above it) into history. Mirrors the accounting in
+    // scrollScreenIntoHistory; the fold mark rides along at its absolute position and stays valid.
+    const int linesToScroll = bottommostFoldRow + 1;
+    for (int i = 0; i < linesToScroll; i++) {
+        [self incrementOverflowBy:[self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
+                                                                  unlimitedScrollback:self.unlimitedScrollback]];
+    }
+    // The fold (and any above it) is now in history. Recompute on the next cursor move.
+    _foldCacheDirty = YES;
+    [self setNeedsRedraw];
+}
+
 - (void)terminalMoveCursorToX:(int)x y:(int)y {
     DLog(@"begin x=%@ y=%@", @(x), @(y));
     [self cursorToX:x Y:y];
     [self saveScreenToScrollbackIfCursorMovedAboveCommandOutput];
+    [self saveScreenToScrollbackIfCursorMovedAboveFold];
     [self clearTriggerLine];
     if (self.commandStartCoord.x != -1) {
         [self didUpdatePromptLocation];
