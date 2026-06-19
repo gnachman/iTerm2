@@ -103,11 +103,49 @@ final class CompanionAgentActivityNotifier {
         send(chatID)
     }
 
+    /// Whether a message has real content worth a notification. Inspects the
+    /// actual content/subparts rather than Content.snippetText: snippetText
+    /// returns display PLACEHOLDERS ("Empty message", "Selecting session…") for
+    /// substance-free content, which would let a tool-only / empty agent turn
+    /// fire a spurious push.
     private static func hasDisplayableText(_ message: Message) -> Bool {
-        guard let snippet = message.content.snippetText(maxLength: 8) else {
+        return contentHasSubstance(message.content)
+    }
+
+    private static func contentHasSubstance(_ content: Message.Content) -> Bool {
+        switch content {
+        case .plainText(let text, _), .markdown(let text):
+            return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .explanationResponse(_, _, let markdown):
+            return !markdown.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .multipart(let subparts, _):
+            return subparts.contains { subpartHasSubstance($0) }
+        case .terminalCommand, .watcherEvent:
+            return true
+        // Control / bookkeeping / request content is never a "real reply" worth
+        // a turn-complete push (permission and session requests are handled as
+        // userActionRequired before this is reached).
+        case .remoteCommandRequest, .selectSessionRequest, .remoteCommandResponse,
+                .explanationRequest, .clientLocal, .renameChat, .append, .appendAttachment,
+                .commit, .userCommand, .setPermissions, .vectorStoreCreated:
             return false
         }
-        return !snippet.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private static func subpartHasSubstance(_ subpart: Message.Subpart) -> Bool {
+        switch subpart {
+        case .plainText(let text), .markdown(let text):
+            return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .attachment(let attachment):
+            switch attachment.type {
+            case .file, .fileID, .code:
+                return true
+            case .statusUpdate:
+                return false   // ephemeral reasoning/status, not a real reply
+            }
+        case .context:
+            return false       // user-context only, not displayable
+        }
     }
 
     // MARK: Production wiring

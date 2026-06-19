@@ -85,6 +85,38 @@ final class CompanionAgentActivityNotifierTests: XCTestCase {
         XCTAssertTrue(sends.isEmpty)
     }
 
+    func testStreamedCommit_doesNotFireWhenTargetIsSubstanceFreeMultipart() {
+        let cases: [Message.Content] = [
+            .multipart([], vectorStoreID: nil),
+            .multipart([.context("just context")], vectorStoreID: nil),
+            .multipart([.attachment(LLM.Message.Attachment(
+                inline: true, id: "s",
+                type: .statusUpdate(.reasoningSummaryUpdate("thinking"))))], vectorStoreID: nil),
+        ]
+        for content in cases {
+            sends = []
+            resolveResult = msg(content)
+            makeNotifier().handle(message: msg(.commit(UUID())), chatID: "c", partial: false)
+            XCTAssertTrue(sends.isEmpty, "tool-only / empty multipart must not fire: \(content)")
+        }
+    }
+
+    func testNonStreamedMultipart_firesOnRealSubstance() {
+        // A file attachment renders as "📄 name" - real, displayable content.
+        let file = LLM.Message.Attachment.AttachmentType.File(
+            name: "report.pdf", content: Data(), mimeType: "application/pdf", localPath: nil)
+        let withFile = Message.Content.multipart(
+            [.attachment(LLM.Message.Attachment(inline: true, id: "f", type: .file(file)))],
+            vectorStoreID: nil)
+        makeNotifier().handle(message: msg(withFile), chatID: "c", partial: false)
+        XCTAssertEqual(sends, ["c"])
+
+        sends = []
+        let withText = Message.Content.multipart([.markdown("here you go")], vectorStoreID: nil)
+        makeNotifier().handle(message: msg(withText), chatID: "c", partial: false)
+        XCTAssertEqual(sends, ["c"])
+    }
+
     // MARK: Permission / input requests
 
     func testSessionSelectionRequest_fires() {
