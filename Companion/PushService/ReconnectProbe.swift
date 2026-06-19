@@ -1,14 +1,17 @@
 //
-//  ReconnectProbe.swift
+//  ReconnectProbe.swift  (defines NSEFetcher)
 //  iTerm2 Companion Push Service (Notification Service Extension)
 //
-//  Memory-spike + reconnect probe (docs/push.txt Verification gate 0).
-//  Reconnects over the relay + Noise channel using the real shared credentials
-//  (the Noise key + room secret from the App Group keychain group, the pairing
-//  code from the App Group defaults - section 7), joining NON-displacing so it
-//  yields to a foreground app. Logs os_proc_available_memory() across the
-//  connect + handshake. No fetch yet: that arrives with the real NSE shell
-//  (section 6), which replaces this probe.
+//  NSEFetcher: the NSE's one network operation. Reads the shared credentials
+//  (Noise key + room secret from the App Group keychain group, pairing code
+//  from the App Group defaults), reconnects to the Mac NON-displacing over the
+//  relay + Noise channel, sends the slim messagesSince request, and returns the
+//  reply for PushFetchCoordinator. It holds the channel/transport so the shell
+//  can HARD-cancel on its deadline (URLSession's receive ignores cooperative
+//  cancellation). Package-only: no chat-model types.
+//
+//  (Filename kept from the memory-spike probe to avoid a project-file churn; the
+//  type is NSEFetcher.)
 //
 
 import Foundation
@@ -18,101 +21,102 @@ import CompanionProtocol
 import CompanionNoise
 import CompanionTransport
 
-enum ReconnectProbe {
-    private static let appGroup = "group.com.googlecode.iterm2.companion"
-    private static let keychainService = "com.googlecode.iterm2.companion"
-    private static let noiseAccount = "noise-static-private-key"
-    private static let roomSecretAccount = "relay-room-secret"
+actor NSEFetcher {
+    enum FetchError: Error { case noCreds }
+
+    private let appGroup: String
+    private let keychainService = "com.googlecode.iterm2.companion"
+    private let noiseAccount = "noise-static-private-key"
+    private let roomSecretAccount = "relay-room-secret"
     private static let log = Logger(subsystem: "com.googlecode.iterm2.companion.PushService",
-                                    category: "spike")
+                                    category: "nse")
 
-    private enum ProbeError: Error { case noCreds, deadline }
+    private var channel: NoiseChannel?
+    private var transport: MessageTransport?
 
-    private struct Creds {
-        let responderKey: Data
-        let pairingID: String
-        let relayOrigin: String?
-        let noisePrivateKey: Data
-        let roomSecret: Data?
+    init(appGroup: String) {
+        self.appGroup = appGroup
     }
 
-    static func run(deadline: Duration) async {
-        logMem("start")
-        do {
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                group.addTask { try await connectAndHandshake() }
-                group.addTask {
-                    try await Task.sleep(for: deadline)
-                    throw ProbeError.deadline
-                }
-                // Wait for the first task to finish (connect success/failure or
-                // the deadline), then cancel the other. CAVEAT: cancelAll() only
-                // sets the cooperative cancel flag; it does NOT unblock a
-                // connectAndHandshake() stuck in URLSessionWebSocketTask.receive()
-                // (which ignores Swift cancellation). So on a mid-handshake stall
-                // this still awaits the connect child until URLSession's own
-                // timeout - run() is NOT hard-bounded by `deadline`. The production
-                // NSE must hard-cancel the transport instead (docs/push.txt
-                // section 6); tolerated here as throwaway measurement code.
-                try await group.next()
-                group.cancelAll()
-            }
-        } catch {
-            log.error("probe failed: \(String(describing: error), privacy: .public)")
+    func fetch(collapseToken token: String,
+               sinceSeq: Int64,
+               limit: Int) async throws -> PushFetchCoordinator<NSEMessagesSince.Preview>.Reply {
+        guard let creds = loadCreds() else {
+            Self.log.error("no shared credentials; cannot reconnect")
+            throw FetchError.noCreds
         }
-        logMem("end")
-    }
-
-    private static func connectAndHandshake() async throws {
-        guard let creds = loadCreds() else { throw ProbeError.noCreds }
-        let code = PairingCode(responderStaticPublicKey: creds.responderKey,
-                               pairingID: creds.pairingID,
-                               relayOrigin: creds.relayOrigin)
-        let identity = try NoiseKeyPair.from(privateKey: creds.noisePrivateKey)
-        // Capture the optional secret by value; a closure returning nil is
-        // equivalent to passing no provider (open-mode join), so we avoid a
-        // nil-vs-closure ternary that crashes type inference.
         let roomSecret = creds.roomSecret
         let secretProvider: @Sendable () -> Data? = { roomSecret }
-        let connector = CompanionTransports.connector(
-            for: code,
-            roomSecret: secretProvider,
-            nonDisplacing: true)
+        let connector = CompanionTransports.connector(for: creds.code,
+                                                      roomSecret: secretProvider,
+                                                      nonDisplacing: true)
         let transport = try await connector.connect(
-            to: PairingRendezvous(pairingID: code.pairingID),
+            to: PairingRendezvous(pairingID: creds.code.pairingID),
             timeout: 10)
-        logMem("transport connected")
+        self.transport = transport
         let channel = try await NoiseHandshake.perform(
             role: .initiator,
             transport: transport,
-            localKeyPair: identity,
-            remoteStaticPublicKey: code.responderStaticPublicKey,
-            prologue: code.handshakePrologue())
-        logMem("handshake complete")
-        await channel.close()
+            localKeyPair: creds.identity,
+            remoteStaticPublicKey: creds.code.responderStaticPublicKey,
+            prologue: creds.code.handshakePrologue())
+        self.channel = channel
+
+        let requestID: UInt64 = 1
+        try await channel.send(NSEMessagesSince.encodeRequest(
+            requestID: requestID, collapseToken: token, seq: sinceSeq, limit: limit))
+
+        // Read frames until our reply arrives, ignoring any unsolicited frames
+        // (deliveries / typing status). receive() throws when the channel is
+        // closed (deadline hard-cancel, or the app displaced us), surfacing as a
+        // fetch failure -> fallback.
+        while true {
+            let frame = try await channel.receive()
+            if let (rid, reply) = try? NSEMessagesSince.decodeReply(frame), rid == nil || rid == requestID {
+                return .init(chatName: reply.chatName,
+                             previews: reply.previews,
+                             maxSeq: reply.maxSeq,
+                             truncated: reply.truncated)
+            }
+        }
     }
 
-    private static func loadCreds() -> Creds? {
+    /// Hard-cancel: closing the channel/transport unblocks a stalled receive().
+    func cancel() async {
+        await channel?.close()
+        await transport?.close()
+    }
+
+    /// Normal teardown after a completed fetch.
+    func close() async {
+        await channel?.close()
+    }
+
+    // MARK: Credentials (App Group)
+
+    private struct Creds {
+        let code: PairingCode
+        let identity: NoiseKeyPair
+        let roomSecret: Data?
+    }
+
+    private func loadCreds() -> Creds? {
         guard let defaults = UserDefaults(suiteName: appGroup),
               let responderKey = defaults.data(forKey: "PairedResponderStaticKey"),
               responderKey.count == 32,
-              let pairingID = defaults.string(forKey: "PairedPairingID") else {
-            log.error("no pairing code in App Group defaults")
+              let pairingID = defaults.string(forKey: "PairedPairingID"),
+              let noisePrivateKey = keychainData(account: noiseAccount),
+              let identity = try? NoiseKeyPair.from(privateKey: noisePrivateKey) else {
             return nil
         }
-        guard let noisePrivateKey = keychainData(account: noiseAccount) else {
-            log.error("no Noise key in App Group keychain")
-            return nil
-        }
-        return Creds(responderKey: responderKey,
-                     pairingID: pairingID,
-                     relayOrigin: defaults.string(forKey: "PairedRelayOrigin"),
-                     noisePrivateKey: noisePrivateKey,
-                     roomSecret: keychainData(account: roomSecretAccount))
+        let code = PairingCode(responderStaticPublicKey: responderKey,
+                               pairingID: pairingID,
+                               relayOrigin: defaults.string(forKey: "PairedRelayOrigin"))
+        return Creds(code: code, identity: identity, roomSecret: keychainData(account: roomSecretAccount))
     }
 
     /// Read a 32-byte item from the shared App Group keychain access group.
-    private static func keychainData(account: String) -> Data? {
+    private func keychainData(account: String) -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
@@ -127,14 +131,5 @@ enum ReconnectProbe {
             return nil
         }
         return data
-    }
-
-    /// os_proc_available_memory() returns the bytes this process may still
-    /// allocate before iOS jetsam-kills it: a direct read of headroom against
-    /// the extension's hard ceiling.
-    private static func logMem(_ label: String) {
-        let available = os_proc_available_memory()
-        let mb = Double(available) / (1024 * 1024)
-        log.log("MEM[\(label, privacy: .public)] available=\(mb, privacy: .public) MB (\(available, privacy: .public) bytes)")
     }
 }
