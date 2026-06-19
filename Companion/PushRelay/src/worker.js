@@ -12,6 +12,11 @@
 //      pairing channel. Re-registering overwrites: only a caller who knows
 //      the token can do so, and tokens are unguessable.
 //
+//    /push/mutable {token, secret, collapse}
+//      Called by the MAC for the Notification Service Extension: a content-free
+//      mutable-content push with a generic fallback alert, collapsed per chat by
+//      the opaque `collapse` id. Same auth + rate limit as /push; no title/body.
+//
 //    /push      {token, secret, title, body}
 //      Called by the MAC. The relay verifies sha256(secret) matches the
 //      registration, rate-limits per token, and forwards to APNs. So a push
@@ -55,6 +60,8 @@ export default {
           return await register(payload, env, request);
         case "/push":
           return await push(payload, env);
+        case "/push/mutable":
+          return await pushMutable(payload, env);
         default:
           return json(404, { error: "no such endpoint" });
       }
@@ -119,6 +126,7 @@ function registrationTtlSeconds(env) {
     : DEFAULT_REGISTRATION_TTL_SECONDS;
 }
 
+// Legacy plaintext push (the notify tool): a visible alert carrying title/body.
 async function push(payload, env) {
   const { token, secret, title, body } = payload;
   if (!isHex(token, 32, 256) || !isHex(secret, 64, 64)) {
@@ -127,24 +135,74 @@ async function push(payload, env) {
   if (typeof title !== "string" || typeof body !== "string") {
     return json(400, { error: "title and body are required strings" });
   }
+  const auth = await authorizeDevice(token, secret, env);
+  if (auth.error) return auth.error;
+  if (await overPushRateLimit(token, env)) return json(429, { error: "rate limited" });
+  return deliverToAPNs(env, token, auth.record, {
+    aps: { alert: { title, body }, sound: "default" },
+  });
+}
 
+// Content-free "mutable" push for the Notification Service Extension. The aps
+// payload carries NO real content: just mutable-content + a generic fallback
+// alert, collapsed per chat by an opaque collapse id (HMAC(roomSecret, chatID),
+// computed on the device - the relay never sees the chatID). The NSE wakes,
+// fetches the real content over Noise, and rewrites the notification; if it
+// can't, the fallback shows. Sound is omitted (the NSE adds it on delivery, so
+// the silent push doesn't double-buzz). Auth and rate limit are shared with
+// /push; the legacy /push payload is untouched.
+async function pushMutable(payload, env) {
+  const { token, secret, collapse } = payload;
+  if (!isHex(token, 32, 256) || !isHex(secret, 64, 64)) {
+    return json(400, { error: "bad token or secret" });
+  }
+  if (!isHex(collapse, 1, 64)) {
+    return json(400, { error: "bad collapse id" });
+  }
+  const auth = await authorizeDevice(token, secret, env);
+  if (auth.error) return auth.error;
+  if (await overPushRateLimit(token, env)) return json(429, { error: "rate limited" });
+  return deliverToAPNs(
+    env,
+    token,
+    auth.record,
+    {
+      aps: {
+        "mutable-content": 1,
+        alert: { title: "iTerm2 Buddy", body: "Your agent has an update." },
+      },
+    },
+    { "apns-collapse-id": collapse }
+  );
+}
+
+// Look up + authenticate a device. Returns { record } or { error: Response }.
+async function authorizeDevice(token, secret, env) {
   const record = await env.PUSH_KV.get(`device:${token}`, "json");
   if (!record) {
-    return json(403, { error: "unknown device token" });
+    return { error: json(403, { error: "unknown device token" }) };
   }
   if ((await sha256Hex(secret)) !== record.secretHash) {
-    return json(403, { error: "bad secret" });
+    return { error: json(403, { error: "bad secret" }) };
   }
+  return { record };
+}
 
-  // Per-token rate limit. KV is eventually consistent, so this is a soft
-  // limit, but it stops runaway loops cold.
+// Per-token soft rate limit (KV is eventually consistent, but it stops runaway
+// loops cold). Returns true when over the limit.
+async function overPushRateLimit(token, env) {
   const bucket = `rl:${token}:${Math.floor(Date.now() / 60000)}`;
   const count = parseInt((await env.PUSH_KV.get(bucket)) || "0", 10);
   if (count >= PUSHES_PER_MINUTE) {
-    return json(429, { error: "rate limited" });
+    return true;
   }
   await env.PUSH_KV.put(bucket, String(count + 1), { expirationTtl: 120 });
+  return false;
+}
 
+// POST an aps payload to APNs for a device. extraHeaders adds per-call headers
+// such as apns-collapse-id. Returns a Response to relay back to the caller.
+async function deliverToAPNs(env, token, record, apsBody, extraHeaders = {}) {
   const host = record.sandbox
     ? "api.sandbox.push.apple.com"
     : "api.push.apple.com";
@@ -155,13 +213,9 @@ async function push(payload, env) {
       "apns-topic": env.APNS_TOPIC,
       "apns-push-type": "alert",
       "apns-priority": "10",
+      ...extraHeaders,
     },
-    body: JSON.stringify({
-      aps: {
-        alert: { title, body },
-        sound: "default",
-      },
-    }),
+    body: JSON.stringify(apsBody),
   });
   if (response.ok) {
     return json(200, { ok: true });

@@ -169,11 +169,21 @@ final class CompanionAgentActivityNotifier {
                 return messages[index]
             },
             send: { chatID in
-                // TODO(section 5): send the content-free mutable push with
-                // apns-collapse-id = CompanionCollapseToken.make(roomSecret,
-                // chatID) via CompanionPushSender's /push/mutable path. Until
-                // that lands, log the decision so the wiring is observable.
-                DLog("CompanionAgentActivityNotifier: would push away phone for chat \(chatID)")
+                // Content-free mutable push, collapsed per chat by the opaque
+                // token so the chatID never leaves the device. The NSE fetches
+                // and renders the real content over Noise.
+                guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
+                    DLog("CompanionAgentActivityNotifier: no room secret; skipping push for \(chatID)")
+                    return
+                }
+                let collapse = CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chatID)
+                Task {
+                    do {
+                        try await CompanionPushSender.sendMutable(collapse: collapse)
+                    } catch {
+                        DLog("CompanionAgentActivityNotifier: mutable push failed for \(chatID): \(error)")
+                    }
+                }
             })
         shared = notifier
         notifier.subscription = ChatClient.instance?.subscribe(chatID: nil,
