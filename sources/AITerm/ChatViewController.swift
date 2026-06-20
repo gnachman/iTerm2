@@ -603,6 +603,13 @@ extension ChatViewController {
                             model.appendMessage(message)
                         } else if case .commit = message.content {
                             model.commit()
+                        } else if case .remoteCommandResponse(_, let requestID, _, _) = message.content {
+                            // The response itself is hidden, but it answers a
+                            // visible remoteCommandRequest whose Allow/Deny
+                            // buttons must now disable. This fires for a decision
+                            // made on the companion phone too (the only path that
+                            // doesn't optimistically disable the cell on click).
+                            self.reloadCell(forMessageID: requestID)
                         }
                         if case .renameChat(let newName) = message.content {
                             // Update window title when chat is renamed. Skip
@@ -1491,6 +1498,24 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     // stack-specific part; everything else (timestamp formatting,
     // multipart subpart construction, regular-flavor attributed-string
     // creation) is pure per-Message.
+    /// Whether a .remoteCommandResponse has been recorded for the request with
+    /// `requestID`. Scans the chat's full message list (which, unlike the
+    /// display items, retains hiddenFromClient responses). Cheap in practice:
+    /// only called for the rare remoteCommandRequest cells that are on screen.
+    private func remoteCommandRequestWasAnswered(_ requestID: UUID) -> Bool {
+        guard let chatID,
+              let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return false
+        }
+        for message in messages {
+            if case .remoteCommandResponse(_, let answeredID, _, _) = message.content,
+               answeredID == requestID {
+                return true
+            }
+        }
+        return false
+    }
+
     func rendition(for message: Message, isLast: Bool) -> MessageRendition {
         var enableButtons = isLast
         var editable = false
@@ -1565,6 +1590,19 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 // Enable / Not Now stay tappable until the user answers.
                 // No additional gating beyond isLast.
                 break
+            }
+        case .remoteCommandRequest:
+            // Disable the Allow/Deny buttons once the request has been answered,
+            // not just when it stops being the last message. A local click
+            // optimistically disables the cell's buttons immediately, but a
+            // decision made on the companion phone (or a fast command whose only
+            // follow-up is a hidden .remoteCommandResponse) never touches this
+            // cell and can leave the request as the last visible message - so
+            // without this the buttons stay live after the phone already
+            // answered. "Answered" == a .remoteCommandResponse exists for this
+            // request's UUID.
+            if enableButtons, remoteCommandRequestWasAnswered(message.uniqueID) {
+                enableButtons = false
             }
         default:
             break
