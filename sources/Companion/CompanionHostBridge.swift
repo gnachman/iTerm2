@@ -430,9 +430,14 @@ final class CompanionHostBridge {
         let windowMessages = reset
             ? db.messagesSince(chatID: chat.id, sinceSeq: 0, windowLimit: windowLimit).messages
             : probe.messages
-        let result = MessagesSinceResponder.summarize(fetched: windowMessages,
-                                                      limit: limit,
-                                                      bodyMaxLength: 200)
+        let result = MessagesSinceResponder.summarize(
+            fetched: windowMessages,
+            limit: limit,
+            bodyMaxLength: 200,
+            // Render @<guid> mentions to the live session/workgroup name, the
+            // same names the chat UI shows, so the lock screen never shows a raw
+            // guid. nil (unresolved) -> "[defunct session]".
+            resolveMention: { OrchestrationMentionRenderer.resolve(identifier: $0)?.displayName })
         let truncated = result.truncated || windowMessages.count >= windowLimit
         // Counts/flags only; never chat title or message bodies.
         DLog("Companion bridge: messagesSince -> \(result.previews.count) preview(s), maxSeq=\(maxSeq), truncated=\(truncated), reset=\(reset)")

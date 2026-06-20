@@ -36,12 +36,23 @@ enum MessagesSinceResponder {
         let truncated: Bool
     }
 
+    /// Headroom added to the snippet length so an @-mention straddling the body
+    /// cap is rendered (to a short name) BEFORE the final truncation, rather than
+    /// being cut mid-UUID and left as raw "@<partial>". A mention is ~45 chars.
+    private static let mentionHeadroom = 80
+
     /// - Parameters:
     ///   - fetched: rows for the chat with seq greater than the phone's
     ///     watermark, ordered NEWEST FIRST (seq DESC).
     ///   - limit: maximum previews to return (one notification each).
-    ///   - bodyMaxLength: per-message body cap passed to snippetText.
-    static func summarize(fetched: [Message], limit: Int, bodyMaxLength: Int) -> Result {
+    ///   - bodyMaxLength: per-message body cap (after mention rendering).
+    ///   - resolveMention: maps a mention identifier (text after "@") to the
+    ///     entity's current name, or nil if it no longer resolves. Defaults to
+    ///     unresolved (so a mention renders as "[defunct session]").
+    static func summarize(fetched: [Message],
+                          limit: Int,
+                          bodyMaxLength: Int,
+                          resolveMention: (String) -> String? = { _ in nil }) -> Result {
         // Defensive: prefix(_:) traps on a negative count. Callers should clamp
         // untrusted limits, but the helper must not be a trap either.
         let cap = max(limit, 0)
@@ -50,10 +61,16 @@ enum MessagesSinceResponder {
         // with the agent reply that triggered the push.
         let visible = fetched.filter { !$0.hiddenFromClient && $0.author == .agent }
         let shown = visible.prefix(cap)
-        let previews = shown.map { message in
-            CompanionMessagePreview(uniqueID: message.uniqueID,
-                                    author: message.author,
-                                    body: message.content.snippetText(maxLength: bodyMaxLength) ?? "")
+        let snippetLimit = max(bodyMaxLength, 0) + mentionHeadroom
+        let previews = shown.map { message -> CompanionMessagePreview in
+            let raw = message.content.snippetText(maxLength: snippetLimit) ?? ""
+            // Render @-mentions to "🖥 name" before truncating, so the lock
+            // screen shows the session name instead of a raw guid.
+            let rendered = MentionPlainTextRenderer.render(raw, resolve: resolveMention)
+            return CompanionMessagePreview(
+                uniqueID: message.uniqueID,
+                author: message.author,
+                body: rendered.truncatedWithTrailingEllipsis(to: bodyMaxLength))
         }
         return Result(previews: Array(previews), truncated: visible.count > cap)
     }

@@ -101,4 +101,58 @@ final class MessagesSinceResponderTests: XCTestCase {
         XCTAssertTrue(r.previews.isEmpty)
         XCTAssertFalse(r.truncated, "user messages are not 'visible' surplus")
     }
+
+    private let guid = "550E8400-E29B-41D4-A716-446655440000"
+
+    func testSummarize_rendersResolvedMentionAsSessionName() {
+        let m = msg(.markdown("see @\(guid) for details"))
+        let r = MessagesSinceResponder.summarize(fetched: [m], limit: 10, bodyMaxLength: 200,
+                                                 resolveMention: { _ in "Build Server" })
+        let body = r.previews.first?.body ?? ""
+        XCTAssertFalse(body.contains(guid), "raw guid must not appear: \(body)")
+        XCTAssertTrue(body.contains("Build Server"), body)
+        XCTAssertTrue(body.contains(MentionPlainTextRenderer.sessionPrefix), body)
+    }
+
+    func testSummarize_rendersUnresolvedMentionAsDefunct() {
+        let m = msg(.markdown("see @\(guid) please"))
+        let r = MessagesSinceResponder.summarize(fetched: [m], limit: 10, bodyMaxLength: 200)
+        let body = r.previews.first?.body ?? ""
+        XCTAssertFalse(body.contains(guid), body)
+        XCTAssertTrue(body.contains("[defunct session]"), body)
+    }
+
+    func testSummarize_rendersMentionStraddlingTheBodyCap() {
+        // A mention starting just before the cap must still be rendered (not cut
+        // mid-uuid), thanks to the snippet headroom.
+        let prefix = String(repeating: "x", count: 195)
+        let m = msg(.markdown(prefix + " @\(guid) tail"))
+        let r = MessagesSinceResponder.summarize(fetched: [m], limit: 10, bodyMaxLength: 200,
+                                                 resolveMention: { _ in "S1" })
+        let body = r.previews.first?.body ?? ""
+        XCTAssertFalse(body.contains("@550E8400"), "mention must not be left half-rendered: \(body)")
+    }
+}
+
+final class MentionPlainTextRendererTests: XCTestCase {
+    private let guid = "550E8400-E29B-41D4-A716-446655440000"
+
+    func testNoMentionsReturnsInputUnchanged() {
+        let s = "plain text, no mentions"
+        XCTAssertEqual(MentionPlainTextRenderer.render(s, resolve: { _ in "x" }), s)
+    }
+
+    func testReplacesMultipleMentionsPreservingSurroundingText() {
+        let other = "660E8400-E29B-41D4-A716-446655440001"
+        let input = "a @\(guid) b @\(other) c"
+        let out = MentionPlainTextRenderer.render(input) { id in
+            id == self.guid ? "One" : "Two"
+        }
+        XCTAssertEqual(out, "a \(MentionPlainTextRenderer.sessionPrefix)One b \(MentionPlainTextRenderer.sessionPrefix)Two c")
+    }
+
+    func testUnresolvedBecomesDefunct() {
+        XCTAssertEqual(MentionPlainTextRenderer.render("x @\(guid)", resolve: { _ in nil }),
+                       "x [defunct session]")
+    }
 }
