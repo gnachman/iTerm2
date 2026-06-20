@@ -525,4 +525,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenSetTabStatus:(VT100TabStatusUpdate * _Nonnull)status;
 
+// Re-evaluate the Codex title-status shim for the given terminal title. Fired
+// by the built-in Codex title-changed trigger; updates synthesized tab status.
+- (void)screenApplyCodexTitleStatusWithTitle:(NSString * _Nonnull)title;
+
 @end

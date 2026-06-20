@@ -2330,6 +2330,10 @@ launchCoprocessWithCommand:(NSString *)command
     [self.delegate screenSetTabStatus:status];
 }
 
+- (void)triggerSession:(Trigger *)trigger applyCodexTitleStatusWithTitle:(NSString *)title {
+    [self.delegate screenApplyCodexTitleStatusWithTitle:title];
+}
+
 - (void)triggerSession:(Trigger *)trigger
     enterWorkgroupWithIdentifier:(NSString *)workgroupUniqueIdentifier {
     [self.delegate triggerSideEffectEnterWorkgroupWithIdentifier:workgroupUniqueIdentifier];

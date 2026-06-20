@@ -37,6 +37,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     private var sequenceIdTextField: NSTextField?
     private var directoryRegexTextField: NSTextField?
     private var hostRegexTextField: NSTextField?
+    private var titleRegexTextField: NSTextField?
     private var userRegexTextField: NSTextField?
     private var commandRegexTextField: NSTextField?
     private var notificationMessageRegexTextField: NSTextField?
@@ -104,6 +105,7 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         sequenceIdTextField = nil
         directoryRegexTextField = nil
         hostRegexTextField = nil
+        titleRegexTextField = nil
         userRegexTextField = nil
         commandRegexTextField = nil
         notificationMessageRegexTextField = nil
@@ -118,6 +120,8 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
             addDirectoryRegexUI()
         case .eventHostChanged:
             addHostRegexUI()
+        case .eventTitleChanged:
+            addTitleRegexUI()
         case .eventUserChanged:
             addUserRegexUI()
         case .eventIdle, .eventActivityAfterIdle:
@@ -281,6 +285,26 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         stackView.addArrangedSubview(row)
 
         let helpLabel = NSTextField(labelWithString: "Regular expression to match the hostname")
+        helpLabel.translatesAutoresizingMaskIntoConstraints = false
+        helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        helpLabel.textColor = .secondaryLabelColor
+        stackView.addArrangedSubview(helpLabel)
+    }
+
+    private func addTitleRegexUI() {
+        let row = createRow(label: "Title:")
+
+        let textField = NSTextField()
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.placeholderString = ".*"
+        textField.widthAnchor.constraint(greaterThanOrEqualToConstant: 150).isActive = true
+        textField.delegate = self
+        titleRegexTextField = textField
+
+        row.addArrangedSubview(textField)
+        stackView.addArrangedSubview(row)
+
+        let helpLabel = NSTextField(labelWithString: "Regular expression to match the terminal title")
         helpLabel.translatesAutoresizingMaskIntoConstraints = false
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
@@ -473,6 +497,12 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 params["hostRegex"] = regex
             }
 
+        case .eventTitleChanged:
+            let regex = titleRegexTextField?.stringValue ?? ""
+            if !regex.isEmpty {
+                params["titleRegex"] = regex
+            }
+
         case .eventUserChanged:
             let regex = userRegexTextField?.stringValue ?? ""
             if !regex.isEmpty {
@@ -560,6 +590,11 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 hostRegexTextField?.stringValue = regex
             }
 
+        case .eventTitleChanged:
+            if let regex = params["titleRegex"] as? String {
+                titleRegexTextField?.stringValue = regex
+            }
+
         case .eventUserChanged:
             if let regex = params["userRegex"] as? String {
                 userRegexTextField?.stringValue = regex
@@ -606,6 +641,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Directory Changed"
         case .eventHostChanged:
             return "Host Changed"
+        case .eventTitleChanged:
+            return "Title Changed"
         case .eventUserChanged:
             return "User Changed"
         case .eventIdle:
@@ -644,6 +681,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Fires when the working directory changes."
         case .eventHostChanged:
             return "Fires when connecting to a different host via SSH."
+        case .eventTitleChanged:
+            return "Fires when the terminal title (OSC 0/1/2) changes."
         case .eventUserChanged:
             return "Fires when the current user changes (su/sudo)."
         case .eventIdle:
@@ -688,7 +727,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             NSNumber(value: iTermTriggerMatchType.eventNotificationPosted.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventProgressBarChanged.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventJobStarted.rawValue),
-            NSNumber(value: iTermTriggerMatchType.eventJobEnded.rawValue)
+            NSNumber(value: iTermTriggerMatchType.eventJobEnded.rawValue),
+            NSNumber(value: iTermTriggerMatchType.eventTitleChanged.rawValue)
         ]
     }
 
