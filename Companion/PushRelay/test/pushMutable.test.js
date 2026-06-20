@@ -42,6 +42,43 @@ describe("POST /push/mutable", () => {
     expect(res.body.ok).toBe(true);
   });
 
+  it("forwards an optional nonce as a top-level custom key outside aps", async () => {
+    const { token, secret } = await registerDevice();
+    fetchMock
+      .get("https://api.push.apple.com")
+      .intercept({
+        path: `/3/device/${token}`,
+        method: "POST",
+        body: (value) => {
+          const obj = JSON.parse(value);
+          return obj.n === "deadbeef" && obj.aps["mutable-content"] === 1;
+        },
+      })
+      .reply(200, "");
+    const res = await post("/push/mutable", { token, secret, collapse: "abcd", nonce: "deadbeef" });
+    expect(res.status).toBe(200);
+  });
+
+  it("omits the nonce key when none is supplied (older senders)", async () => {
+    const { token, secret } = await registerDevice();
+    fetchMock
+      .get("https://api.push.apple.com")
+      .intercept({
+        path: `/3/device/${token}`,
+        method: "POST",
+        body: (value) => JSON.parse(value).n === undefined,
+      })
+      .reply(200, "");
+    const res = await post("/push/mutable", { token, secret, collapse: "abcd" });
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects a non-hex nonce", async () => {
+    const { token, secret } = await registerDevice();
+    const res = await post("/push/mutable", { token, secret, collapse: "abcd", nonce: "NOPE!" });
+    expect(res.status).toBe(400);
+  });
+
   it("routes a sandbox registration to Apple's sandbox host", async () => {
     const { token, secret } = await registerDevice({ sandbox: true });
     fetchMock

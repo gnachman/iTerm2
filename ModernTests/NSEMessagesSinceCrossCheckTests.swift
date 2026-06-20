@@ -62,11 +62,39 @@ final class NSEMessagesSinceCrossCheckTests: XCTestCase {
     }
 
     func testProductionRequestMatchesWireVector() throws {
-        let env = ClientEnvelope(requestID: 9, payload: .messagesSince(collapseToken: "tok", seq: 5, limit: 10))
+        let env = ClientEnvelope(requestID: 9,
+                                 payload: .messagesSince(collapseToken: "tok", seq: 5, limit: 10, nonce: "ab12"))
         let produced = try object(encoder().encode(env))
         let vector = try object(
-            #"{"requestID":9,"payload":{"messagesSince":{"collapseToken":"tok","seq":5,"limit":10}}}"#
+            #"{"requestID":9,"payload":{"messagesSince":{"collapseToken":"tok","seq":5,"limit":10,"nonce":"ab12"}}}"#
                 .data(using: .utf8)!)
         XCTAssertEqual(produced, vector, "production request must match the slim NSE wire vector")
+    }
+
+    // The NSE encodes the request via the slim mirror; the mac decodes it via the
+    // production enum. The mac must accept a request that carries the nonce...
+    func testProductionDecodesRequestWithNonce() throws {
+        let vector = #"{"requestID":9,"payload":{"messagesSince":{"collapseToken":"tok","seq":5,"limit":10,"nonce":"ab12"}}}"#
+            .data(using: .utf8)!
+        let env = try decoder().decode(ClientEnvelope.self, from: vector)
+        guard case let .messagesSince(token, seq, limit, nonce) = env.payload else {
+            return XCTFail("expected .messagesSince, got \(env.payload)")
+        }
+        XCTAssertEqual(token, "tok")
+        XCTAssertEqual(seq, 5)
+        XCTAssertEqual(limit, 10)
+        XCTAssertEqual(nonce, "ab12")
+    }
+
+    // ...and a request that OMITS it (an older NSE, or a push that carried no
+    // nonce), decoding the nonce as nil rather than failing.
+    func testProductionDecodesRequestWithoutNonce() throws {
+        let vector = #"{"requestID":9,"payload":{"messagesSince":{"collapseToken":"tok","seq":5,"limit":10}}}"#
+            .data(using: .utf8)!
+        let env = try decoder().decode(ClientEnvelope.self, from: vector)
+        guard case let .messagesSince(_, _, _, nonce) = env.payload else {
+            return XCTFail("expected .messagesSince, got \(env.payload)")
+        }
+        XCTAssertNil(nonce, "a nonce-less request must decode (cross-version), not throw")
     }
 }

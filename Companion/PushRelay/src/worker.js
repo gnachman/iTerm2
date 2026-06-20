@@ -152,28 +152,35 @@ async function push(payload, env) {
 // the silent push doesn't double-buzz). Auth and rate limit are shared with
 // /push; the legacy /push payload is untouched.
 async function pushMutable(payload, env) {
-  const { token, secret, collapse } = payload;
+  const { token, secret, collapse, nonce } = payload;
   if (!isHex(token, 32, 256) || !isHex(secret, 64, 64)) {
     return json(400, { error: "bad token or secret" });
   }
   if (!isHex(collapse, 1, 64)) {
     return json(400, { error: "bad collapse id" });
   }
+  // Optional one-time nonce: the NSE echoes it back over the relay so the mac
+  // can recognize its own solicited fetch and skip the presence warning. Opaque
+  // to the relay; just validated as hex and forwarded in the payload. Older
+  // senders omit it (no behavior change).
+  if (nonce !== undefined && !isHex(nonce, 1, 64)) {
+    return json(400, { error: "bad nonce" });
+  }
   const auth = await authorizeDevice(token, secret, env);
   if (auth.error) return auth.error;
   if (await overPushRateLimit(token, env)) return json(429, { error: "rate limited" });
-  return deliverToAPNs(
-    env,
-    token,
-    auth.record,
-    {
-      aps: {
-        "mutable-content": 1,
-        alert: { title: "iTerm2 Buddy", body: "Your agent has an update." },
-      },
+  const apsBody = {
+    aps: {
+      "mutable-content": 1,
+      alert: { title: "iTerm2 Buddy", body: "Your agent has an update." },
     },
-    { "apns-collapse-id": collapse }
-  );
+  };
+  // Custom top-level key the NSE reads from the delivered notification's
+  // userInfo. Outside `aps` per APNs convention.
+  if (nonce !== undefined) {
+    apsBody.n = nonce;
+  }
+  return deliverToAPNs(env, token, auth.record, apsBody, { "apns-collapse-id": collapse });
 }
 
 // Look up + authenticate a device. Returns { record } or { error: Response }.

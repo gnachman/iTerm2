@@ -48,6 +48,21 @@ final class CompanionHostBridge {
     /// Called when the phone announces it is unpairing.
     var onPeerUnpaired: (@MainActor () -> Void)?
 
+    /// Called exactly once, on this connection's FIRST request, to classify it
+    /// for the presence warning: `solicited` is true only for a messagesSince
+    /// that presented a valid one-time push nonce (the mac's own NSE fetch).
+    /// Any other first request - subscribe, publish, a nonce-less or bad-nonce
+    /// messagesSince - is unsolicited (the owner warns). See docs/push.txt.
+    var onConnectionClassified: (@MainActor (_ solicited: Bool) -> Void)?
+    private var didClassify = false
+
+    /// Report the connection's classification once; later requests are ignored.
+    private func classifyOnce(solicited: Bool) {
+        guard !didClassify else { return }
+        didClassify = true
+        onConnectionClassified?(solicited)
+    }
+
     init(transport: MessageTransport) {
         self.transport = transport
     }
@@ -214,6 +229,14 @@ final class CompanionHostBridge {
 
     private func handle(_ envelope: ClientEnvelope) {
         let requestID = envelope.requestID
+        // Classify the connection on its first request (for the presence
+        // warning). messagesSince classifies itself based on its nonce; every
+        // other request is interactive presence -> unsolicited.
+        if case .messagesSince = envelope.payload {
+            // handled in handleMessagesSince once the nonce is checked
+        } else {
+            classifyOnce(solicited: false)
+        }
         switch envelope.payload {
         case .listChatsAndSessions:
             send(.chatsAndSessions(chats: chatEntries(),
@@ -289,8 +312,9 @@ final class CompanionHostBridge {
                 send(.error(CompanionError(code: .internalError, message: "\(error)")),
                      requestID: requestID)
             }
-        case .messagesSince(let collapseToken, let seq, let limit):
-            handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit, requestID: requestID)
+        case .messagesSince(let collapseToken, let seq, let limit, let nonce):
+            handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit,
+                                nonce: nonce, requestID: requestID)
         case .unpairing:
             DLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
@@ -371,7 +395,15 @@ final class CompanionHostBridge {
     private func handleMessagesSince(collapseToken: String,
                                      seq: Int64,
                                      limit rawLimit: Int,
+                                     nonce: String?,
                                      requestID: UInt64?) {
+        // Classify FIRST, before any early return: a connection that presents a
+        // valid one-time push nonce is the mac's OWN solicited NSE fetch (no
+        // presence warning); a missing/forged nonce is unsolicited (warn), even
+        // if the fetch then errors. consume() is single-use.
+        let solicited = nonce.map { CompanionPushNonceRegistry.shared.consume($0) } ?? false
+        classifyOnce(solicited: solicited)
+
         // Clamp the wire-supplied limit before any arithmetic or prefix(): it is
         // untrusted (any paired device sets it). A negative value would trap
         // Sequence.prefix(_:), and a value near Int.max would overflow the *20

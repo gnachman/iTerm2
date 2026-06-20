@@ -76,7 +76,11 @@ final class NotificationService: UNNotificationServiceExtension {
         // request identifier to the apns-collapse-id.
         let token = request.identifier
         threadID = token
-        NSELog.log("didReceive push; token=\(token.prefix(8))")
+        // One-time nonce the mac placed in the push; echoed back so the mac
+        // recognizes this fetch as its own (no presence warning). Absent for an
+        // older sender.
+        let nonce = request.content.userInfo["n"] as? String
+        NSELog.log("didReceive push; token=\(token.prefix(8)) nonce=\(nonce == nil ? "no" : "yes")")
         let fetcher = NSEFetcher(appGroup: Self.appGroup)
         self.fetcher = fetcher
 
@@ -87,7 +91,7 @@ final class NotificationService: UNNotificationServiceExtension {
         }
         let coordinator = PushFetchCoordinator<NSEMessagesSince.Preview>(
             watermarks: WatermarkStore(backing: backing),
-            fetch: { try await fetcher.fetch(collapseToken: $0, sinceSeq: $1, limit: $2) })
+            fetch: { try await fetcher.fetch(collapseToken: $0, sinceSeq: $1, limit: $2, nonce: nonce) })
 
         task = Task { [weak self] in
             // Race the work against an internal deadline. On timeout we HARD

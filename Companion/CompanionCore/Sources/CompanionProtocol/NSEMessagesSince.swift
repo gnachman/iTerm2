@@ -49,21 +49,27 @@ public enum NSEMessagesSince {
                 let collapseToken: String
                 let seq: Int64
                 let limit: Int
+                // One-time nonce from the push so the mac recognizes its own
+                // solicited fetch. Optional: omitted when nil (struct encode uses
+                // encodeIfPresent), keeping the wire identical to older NSEs.
+                let nonce: String?
             }
         }
     }
 
     /// The request frame the host expects:
-    /// {"requestID":N,"payload":{"messagesSince":{"collapseToken":…,"seq":…,"limit":…}}}
+    /// {"requestID":N,"payload":{"messagesSince":{"collapseToken":…,"seq":…,"limit":…[,"nonce":…]}}}
     public static func encodeRequest(requestID: UInt64,
                                      collapseToken: String,
                                      seq: Int64,
-                                     limit: Int) throws -> Data {
+                                     limit: Int,
+                                     nonce: String? = nil) throws -> Data {
         try WireCoding.encode(RequestEnvelope(
             requestID: requestID,
             payload: .init(messagesSince: .init(collapseToken: collapseToken,
                                                 seq: seq,
-                                                limit: limit))))
+                                                limit: limit,
+                                                nonce: nonce))))
     }
 
     // MARK: Reply

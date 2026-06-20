@@ -275,7 +275,12 @@ enum CompanionClientMessage: Codable {
     /// greater than the phone's per-chat watermark. Replied to with
     /// `.messagesSince`. The token (not a chatID) is sent so the chatID never
     /// appears in the APNs payload; the mac resolves it back to a chat.
-    case messagesSince(collapseToken: String, seq: Int64, limit: Int)
+    ///
+    /// `nonce` is the one-time value the mac placed in the triggering push and
+    /// the NSE echoes back, so the mac can recognize its OWN solicited fetch and
+    /// skip the presence warning. Optional for cross-version compatibility: an
+    /// older NSE (or a push that carried none) omits it, decoding as nil.
+    case messagesSince(collapseToken: String, seq: Int64, limit: Int, nonce: String?)
 
     /// The phone is unpairing: the mac should forget the pairing and destroy
     /// its key material. No reply; the phone closes after sending.

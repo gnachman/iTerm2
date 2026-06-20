@@ -185,9 +185,14 @@ final class CompanionAgentActivityNotifier {
                     return
                 }
                 let collapse = CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chatID)
+                // A one-time nonce so the mac recognizes the NSE fetch this push
+                // triggers as its own (solicited) and skips the presence warning.
+                // Only the phone receives the push, so only the real NSE can echo
+                // it back; see CompanionPushNonceRegistry.
+                let nonce = CompanionPushNonceRegistry.shared.makeNonce()
                 Task {
                     do {
-                        try await CompanionPushSender.sendMutable(collapse: collapse)
+                        try await CompanionPushSender.sendMutable(collapse: collapse, nonce: nonce)
                         DLog("CompanionAgentActivityNotifier: sent mutable push for \(chatID)")
                     } catch {
                         DLog("CompanionAgentActivityNotifier: mutable push failed for \(chatID): \(error)")

@@ -35,6 +35,22 @@ final class CompanionPairingController: NSObject {
         NotificationCenter.default.post(name: Self.presenceDidChange, object: nil)
     }
 
+    /// How the current connection should be treated by the presence warning.
+    /// A connection only counts as user-visible presence once it is .interactive;
+    /// a .solicited NSE fetch (the mac's own push response) is invisible. See
+    /// docs/push.txt and CompanionPushNonceRegistry.
+    enum ConnectionPresence {
+        case none         // no connection
+        case pending      // connected, not yet classified (within the grace window)
+        case solicited    // the mac's own NSE fetch (valid push nonce): no warning
+        case interactive  // a real/unexpected connection: warn
+    }
+    private(set) var connectionPresence: ConnectionPresence = .none
+    private var classificationGraceTask: Task<Void, Never>?
+    /// A connection that neither presents a valid nonce nor does anything within
+    /// this window is treated as interactive (a silent lurker is warn-worthy).
+    private static let classificationGraceNanos: UInt64 = 3_000_000_000
+
     private var listener: TransportListener?
     private var acceptTask: Task<Void, Never>?
     private var bridge: CompanionHostBridge? {
@@ -42,9 +58,42 @@ final class CompanionPairingController: NSObject {
             // Mirrored where the (nonisolated) tool-registration path can
             // read it.
             CompanionPushRegistry.setPhoneConnected(bridge != nil)
+            // Reset presence classification for the new connection (or clear it).
+            if let bridge {
+                connectionPresence = .pending
+                startClassificationGrace(for: bridge)
+            } else {
+                connectionPresence = .none
+                classificationGraceTask?.cancel()
+                classificationGraceTask = nil
+            }
             // Connection state changed: refresh the presence UI.
             notifyPresenceChanged()
         }
+    }
+
+    /// After the grace window, an unclassified (still pending) connection is
+    /// escalated to .interactive so it surfaces. A solicited/interactive
+    /// classification arriving first cancels this.
+    private func startClassificationGrace(for connection: CompanionHostBridge) {
+        classificationGraceTask?.cancel()
+        classificationGraceTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: Self.classificationGraceNanos)
+            guard let self, !Task.isCancelled else { return }
+            guard self.bridge === connection, self.connectionPresence == .pending else { return }
+            self.connectionPresence = .interactive
+            self.notifyPresenceChanged()
+        }
+    }
+
+    /// The bridge classified its connection on the first request. solicited ==
+    /// valid push nonce (the mac's own fetch); otherwise warn.
+    private func connectionDidClassify(_ connection: CompanionHostBridge, solicited: Bool) {
+        guard bridge === connection, connectionPresence == .pending else { return }
+        classificationGraceTask?.cancel()
+        classificationGraceTask = nil
+        connectionPresence = solicited ? .solicited : .interactive
+        notifyPresenceChanged()
     }
 
     private(set) var pairingCode: PairingCode?
@@ -704,6 +753,10 @@ final class CompanionPairingController: NSObject {
                 }
                 newBridge.onPeerUnpaired = { [weak self] in
                     self?.peerDidUnpair()
+                }
+                newBridge.onConnectionClassified = { [weak self, weak newBridge] solicited in
+                    guard let self, let newBridge else { return }
+                    self.connectionDidClassify(newBridge, solicited: solicited)
                 }
                 newBridge.start()
                 let staleBridge = bridge

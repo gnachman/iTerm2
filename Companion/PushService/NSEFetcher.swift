@@ -36,7 +36,8 @@ actor NSEFetcher {
 
     func fetch(collapseToken token: String,
                sinceSeq: Int64,
-               limit: Int) async throws -> PushFetchCoordinator<NSEMessagesSince.Preview>.Reply {
+               limit: Int,
+               nonce: String?) async throws -> PushFetchCoordinator<NSEMessagesSince.Preview>.Reply {
         guard let creds = loadCreds() else {
             NSELog.log("no shared credentials; cannot reconnect")
             throw FetchError.noCreds
@@ -63,7 +64,7 @@ actor NSEFetcher {
 
         let requestID: UInt64 = 1
         try await channel.send(NSEMessagesSince.encodeRequest(
-            requestID: requestID, collapseToken: token, seq: sinceSeq, limit: limit))
+            requestID: requestID, collapseToken: token, seq: sinceSeq, limit: limit, nonce: nonce))
 
         // Read frames until our reply arrives. A correlated error reply fails
         // FAST (the host signals transient startup races as .error and does not

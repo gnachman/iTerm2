@@ -27,6 +27,9 @@ enum CompanionPushSender {
         var token: String
         var secret: String
         var collapse: String
+        /// One-time nonce the NSE echoes back over the relay so the mac can
+        /// recognize its own solicited fetch (omitted when nil).
+        var nonce: String?
     }
 
     private struct RelayReply: Decodable {
@@ -45,10 +48,11 @@ enum CompanionPushSender {
     /// Content-free push that wakes the phone's Notification Service Extension,
     /// collapsed per chat by the opaque token (HMAC(roomSecret, chatID)). No
     /// content crosses the relay; the NSE fetches it over Noise.
-    static func sendMutable(collapse: String) async throws {
+    static func sendMutable(collapse: String, nonce: String?) async throws {
         let (token, secret) = try credentials()
         try await post(url: CompanionPushRelay.mutablePushURL,
-                       request: MutablePushRequest(token: token, secret: secret, collapse: collapse),
+                       request: MutablePushRequest(token: token, secret: secret,
+                                                   collapse: collapse, nonce: nonce),
                        label: "mutable (collapse \(collapse))")
     }
 
