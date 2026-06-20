@@ -93,6 +93,13 @@ final class NotificationService: UNNotificationServiceExtension {
                     group.addTask { await coordinator.run(collapseToken: token) }
                     group.addTask {
                         try? await Task.sleep(for: Self.deadline)
+                        // Only hard-cancel if the deadline ACTUALLY elapsed. When
+                        // the work finishes first, group.cancelAll() cancels this
+                        // task: the sleep throws, try? swallows it, and without
+                        // this guard we'd fall through and cancel() a channel that
+                        // already delivered - firing a spurious "hard-cancel" on
+                        // every successful fetch.
+                        if Task.isCancelled { return .fallback }
                         await fetcher.cancel()
                         return .fallback
                     }
