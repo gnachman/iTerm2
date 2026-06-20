@@ -36,6 +36,7 @@ enum NSELog {
         }
         return CompanionFileLogWriter(
             directory: container.appendingPathComponent("Logs", isDirectory: true),
+            label: "nse",
             isEnabled: {
                 UserDefaults(suiteName: CompanionSharedIdentifiers.appGroup)?
                     .object(forKey: CompanionFileLogWriter.enabledKey) as? Bool ?? true

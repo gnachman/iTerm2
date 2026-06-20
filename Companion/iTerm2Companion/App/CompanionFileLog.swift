@@ -110,7 +110,7 @@ final class CompanionFileLog: @unchecked Sendable {
         values.isExcludedFromBackup = true
         try? dir.setResourceValues(values)
         prune()
-        let url = dir.appendingPathComponent(LogFileNaming.fileName(for: Date()))
+        let url = dir.appendingPathComponent(LogFileNaming.fileName(for: Date(), label: "app"))
         fm.createFile(atPath: url.path, contents: nil)
         handle = try? FileHandle(forWritingTo: url)
         let timer = DispatchSource.makeTimerSource(queue: queue)

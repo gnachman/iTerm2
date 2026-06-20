@@ -25,10 +25,29 @@ final class LogFileNamingTests: XCTestCase {
         XCTAssertEqual(parsed!.timeIntervalSince1970, when.timeIntervalSince1970, accuracy: 1.0)
     }
 
+    func test_labeledNameShapeAndRoundTrip() {
+        let when = Date(timeIntervalSince1970: 1_781_640_000)
+        let name = LogFileNaming.fileName(for: when, label: "nse")
+        XCTAssertNotNil(name.range(of: #"^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-nse\.log$"#,
+                                   options: .regularExpression), name)
+        // The label-tagged name still parses back to the same instant.
+        let parsed = LogFileNaming.date(from: name)
+        XCTAssertEqual(parsed?.timeIntervalSince1970 ?? -1, when.timeIntervalSince1970, accuracy: 1.0)
+    }
+
+    func test_labeledFilesAreExpiredByTimestamp() {
+        let now = Date(timeIntervalSince1970: 1_781_640_000)
+        let oldNSE = LogFileNaming.fileName(for: now.addingTimeInterval(-15 * 86400), label: "nse")
+        let recentApp = LogFileNaming.fileName(for: now.addingTimeInterval(-1 * 86400), label: "app")
+        let expired = LogFileNaming.expired([oldNSE, recentApp], now: now, maxAgeDays: 14)
+        XCTAssertEqual(expired, [oldNSE])
+    }
+
     func test_parsingRejectsNonLogAndGarbage() {
         XCTAssertNil(LogFileNaming.date(from: "notes.txt"))
         XCTAssertNil(LogFileNaming.date(from: "hello.log"))
         XCTAssertNil(LogFileNaming.date(from: "2026-13-40_99-99-99.log"))
+        XCTAssertNil(LogFileNaming.date(from: "garbage-nse.log"))
     }
 
     func test_expiredPicksOnlyFilesOlderThanTheWindow() {

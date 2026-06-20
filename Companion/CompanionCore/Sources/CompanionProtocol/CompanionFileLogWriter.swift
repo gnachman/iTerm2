@@ -20,13 +20,17 @@ public final class CompanionFileLogWriter: @unchecked Sendable {
     private static let retentionDays = 14
 
     private let directory: URL
+    private let label: String?
     private let isEnabled: () -> Bool
     private let lock = NSLock()
     private var fileURL: URL?
     private var prunedAndOpened = false
 
-    public init(directory: URL, isEnabled: @escaping () -> Bool) {
+    /// - label: tags this writer's file names (e.g. "nse") so they are
+    ///   distinguishable from another writer's when gathered together.
+    public init(directory: URL, label: String? = nil, isEnabled: @escaping () -> Bool) {
         self.directory = directory
+        self.label = label
         self.isEnabled = isEnabled
     }
 
@@ -74,7 +78,7 @@ public final class CompanionFileLogWriter: @unchecked Sendable {
                 try? fm.removeItem(at: directory.appendingPathComponent(name))
             }
         }
-        let url = directory.appendingPathComponent(LogFileNaming.fileName(for: Date()))
+        let url = directory.appendingPathComponent(LogFileNaming.fileName(for: Date(), label: label))
         if !fm.fileExists(atPath: url.path) {
             fm.createFile(atPath: url.path, contents: nil)
         }
