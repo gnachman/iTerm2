@@ -37,7 +37,6 @@
 		8F4CF0BDEC2C0B80A2D81179 /* CompanionTransport in Frameworks */ = {isa = PBXBuildFile; productRef = B6B192F7AC1A41A20B972238 /* CompanionTransport */; };
 		907D788ED30FB455F04CF597 /* LaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A63C83AA13E583E9BE1A3D /* LaunchView.swift */; };
 		A28F8FAE03C27CC1088475B8 /* WorkgroupWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969B8C22B79D7C1929B7DE1A /* WorkgroupWatcher.swift */; };
-		A6B667EE2FE4F87E00A48D35 /* SpikeCredentialExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B667ED2FE4F87E00A48D35 /* SpikeCredentialExport.swift */; };
 		A6F733B22FE4F475008441ED /* PushService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A6F733AB2FE4F475008441ED /* PushService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AEA57C95A686D516F061CCEE /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F0367E6521567120B3BF05 /* QRScannerView.swift */; };
 		BCAC32E11E927DCC5E74A28A /* RemoteCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2C97B70ADFB001DAAE37592 /* RemoteCommand.swift */; };
@@ -116,7 +115,6 @@
 		A036182D7E7035DE88387064 /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A2C97B70ADFB001DAAE37592 /* RemoteCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RemoteCommand.swift; path = sources/AITerm/RemoteCommand.swift; sourceTree = "<group>"; };
 		A3B14CF98655654318C06432 /* TerminalCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TerminalCommand.swift; path = sources/AITerm/TerminalCommand.swift; sourceTree = "<group>"; };
-		A6B667ED2FE4F87E00A48D35 /* SpikeCredentialExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeCredentialExport.swift; sourceTree = "<group>"; };
 		A6F733AB2FE4F475008441ED /* PushService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PushService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A7ACD526299252E0732D1779 /* ScanningView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanningView.swift; sourceTree = "<group>"; };
 		ADE240F5507B1D96C3F2E615 /* SessionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
@@ -135,7 +133,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A6F733B62FE4F475008441ED /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		A6F733B62FE4F475008441ED /* Exceptions for "PushService" folder in "PushService" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -145,7 +143,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A6F733AC2FE4F475008441ED /* PushService */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A6F733B62FE4F475008441ED /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PushService; sourceTree = "<group>"; };
+		A6F733AC2FE4F475008441ED /* PushService */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A6F733B62FE4F475008441ED /* Exceptions for "PushService" folder in "PushService" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PushService;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -241,7 +250,6 @@
 		5D6999E2EBB700BD250EE94B /* Connection */ = {
 			isa = PBXGroup;
 			children = (
-				A6B667ED2FE4F87E00A48D35 /* SpikeCredentialExport.swift */,
 				85665D0E72B401EE56BAFF45 /* CompanionClient.swift */,
 				3F4C078E19397FAC1112AAA7 /* PhoneIdentity.swift */,
 			);
@@ -429,7 +437,6 @@
 				F840E446186274A715C2BC98 /* PhoneIdentity.swift in Sources */,
 				F16572D5A347A1D8D093A085 /* JSONValue.swift in Sources */,
 				3D3B241D2F33F3412C9A5438 /* MacShims.swift in Sources */,
-				A6B667EE2FE4F87E00A48D35 /* SpikeCredentialExport.swift in Sources */,
 				48B44593508149D5D655C1DE /* MacTypeShadows.swift in Sources */,
 				E22582FD78F87B2D90E9A085 /* ConversationView.swift in Sources */,
 				5C8908D283572E2C9B8A87C8 /* CreateView.swift in Sources */,

@@ -53,6 +53,11 @@ enum PhoneIdentity {
     /// Destroy the stored identity (used when disconnecting); the next pairing
     /// generates a fresh keypair.
     static func deleteKeyPair() {
+        // Wipe everywhere on unpair/rotation: the nil-accessGroup SecItemDelete
+        // omits kSecAttrAccessGroup, so it spans ALL of the app's access groups
+        // (the App Group copy AND any leftover pre-migration default-group copy).
+        // (Here that span is wanted - unlike the migration, which must not delete
+        // with nil; see KeychainAccessGroupMigration.)
         delete(account: account, accessGroup: appGroup)
         delete(account: account, accessGroup: nil)
     }
