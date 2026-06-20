@@ -355,6 +355,12 @@ final class AppModel {
             defaults.removeObject(forKey: Self.storedRelayOriginDefault)
         }
         UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
+        // Drop the per-chat push watermarks (shared with the NSE): they are keyed
+        // by the old room secret and meaningless once unpaired. reset() clears by
+        // prefix, so it does not need the (possibly already-deleted) room secret.
+        if let backing = UserDefaultsWatermarkBacking(appGroup: PhoneIdentity.appGroup) {
+            WatermarkStore(backing: backing).reset()
+        }
     }
 
     /// Build the best-effort relay delete-room call for the current pairing, or

@@ -200,15 +200,19 @@ class ChatDatabase {
             }
             rs.close()
         }
-        var maxSeq: Int64 = 0
-        let (maxSQL, maxArgs) = Message.maxSeqQuery(chatID: chatID)
-        if let rs = try? db.executeQuery(maxSQL, withArguments: maxArgs) {
+        return (messages, maxSeq(chatID: chatID))
+    }
+
+    /// The chat's current max seq (0 if it has no messages).
+    func maxSeq(chatID: String) -> Int64 {
+        let (sql, args) = Message.maxSeqQuery(chatID: chatID)
+        if let rs = try? db.executeQuery(sql, withArguments: args) {
+            defer { rs.close() }
             if rs.next() {
-                maxSeq = rs.longLongInt(forColumn: "maxseq")
+                return rs.longLongInt(forColumn: "maxseq")
             }
-            rs.close()
         }
-        return (messages, maxSeq)
+        return 0
     }
 
     private func popuplateSessionToChatMap() {

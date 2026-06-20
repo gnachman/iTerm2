@@ -292,8 +292,11 @@ enum CompanionHostMessage: Codable {
     /// Reply to `.createChat`.
     case chatCreated(entry: CompanionChatListEntry)
 
-    /// Reply to `.subscribe`: the existing visible messages, oldest first.
-    case history(chatID: String, messages: [Message])
+    /// Reply to `.subscribe`: the existing visible messages, oldest first, plus
+    /// the chat's current max seq so the phone can advance its per-chat push
+    /// watermark (subscribing == viewing the chat == read up to maxSeq), keeping
+    /// the NSE from re-notifying already-read turns. See docs/push.txt section 8.
+    case history(chatID: String, messages: [Message], maxSeq: Int64)
 
     /// Unsolicited: a message was delivered to a subscribed chat. Mirrors
     /// ChatBroker.Update.delivery(Message, chatID). `partial` is true for

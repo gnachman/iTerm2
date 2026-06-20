@@ -357,7 +357,8 @@ final class CompanionHostBridge {
                 self?.handleBrokerUpdate(update, chatID: chatID)
             }
         }
-        send(.history(chatID: chatID, messages: history(chatID: chatID)),
+        let maxSeq = ChatDatabase.instance?.maxSeq(chatID: chatID) ?? 0
+        send(.history(chatID: chatID, messages: history(chatID: chatID), maxSeq: maxSeq),
              requestID: requestID)
     }
 

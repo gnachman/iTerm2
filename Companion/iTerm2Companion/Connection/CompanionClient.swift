@@ -77,13 +77,28 @@ actor CompanionClient {
     func subscribe(chatID: String) async throws -> [Message] {
         let reply = try await session.request(.subscribe(chatID: chatID))
         switch reply {
-        case .history(_, let messages):
+        case .history(let chatID, let messages, let maxSeq):
+            // Viewing a chat == reading it: advance the per-chat push watermark
+            // to the chat's tip so the NSE won't re-notify these messages.
+            Self.advancePushWatermark(chatID: chatID, toMaxSeq: maxSeq)
             return messages
         case .error(let error):
             throw error
         default:
             throw CompanionError(code: .badRequest, message: "Unexpected reply to subscribe request")
         }
+    }
+
+    /// Max-merge the per-chat push watermark in the App Group (shared with the
+    /// NSE). The token is HMAC(roomSecret, chatID), computed the same way the
+    /// mac collapses pushes, so the chatID never has to cross to the NSE.
+    private static func advancePushWatermark(chatID: String, toMaxSeq maxSeq: Int64) {
+        guard let roomSecret = PhoneIdentity.existingRoomSecret(),
+              let backing = UserDefaultsWatermarkBacking(appGroup: PhoneIdentity.appGroup) else {
+            return
+        }
+        let token = CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chatID)
+        WatermarkStore(backing: backing).advance(token: token, to: maxSeq)
     }
 
     // (The NSE talks messagesSince over the slim NSEMessagesSince mirror, not
