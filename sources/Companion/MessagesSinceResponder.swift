@@ -16,6 +16,11 @@
 //    - Visibility: hiddenFromClient messages (bookkeeping like .commit /
 //      .remoteCommandResponse) are dropped in Swift, because hiddenFromClient is
 //      a computed property over decoded content and cannot be filtered in SQL.
+//    - Authorship: only AGENT messages are previewed. A push fires for an agent
+//      turn, but messagesSince returns everything new since the watermark - which
+//      includes the user's own message(s) that preceded the reply (and watcher
+//      events, which are user-authored). Notifying the user about their own
+//      messages is wrong, so they are dropped here.
 //
 
 import Foundation
@@ -40,7 +45,10 @@ enum MessagesSinceResponder {
         // Defensive: prefix(_:) traps on a negative count. Callers should clamp
         // untrusted limits, but the helper must not be a trap either.
         let cap = max(limit, 0)
-        let visible = fetched.filter { !$0.hiddenFromClient }
+        // Only agent messages: never notify the user about their own messages
+        // (or user-authored watcher events) that messagesSince swept up along
+        // with the agent reply that triggered the push.
+        let visible = fetched.filter { !$0.hiddenFromClient && $0.author == .agent }
         let shown = visible.prefix(cap)
         let previews = shown.map { message in
             CompanionMessagePreview(uniqueID: message.uniqueID,

@@ -83,4 +83,22 @@ final class MessagesSinceResponderTests: XCTestCase {
             XCTAssertTrue(r.truncated, "limit \(badLimit): 3 visible > 0 shown -> truncated")
         }
     }
+
+    func testSummarize_dropsUserAuthoredMessages() {
+        // A push fires for an agent turn, but messagesSince sweeps up the user's
+        // own preceding message too. The user must not be notified about it.
+        let userMsg = msg(.markdown("my question"), author: .user)
+        let agentMsg = msg(.markdown("the answer"), author: .agent)
+        let r = MessagesSinceResponder.summarize(fetched: [agentMsg, userMsg],
+                                                 limit: 10, bodyMaxLength: 100)
+        XCTAssertEqual(r.previews.map { $0.uniqueID }, [agentMsg.uniqueID])
+        XCTAssertFalse(r.truncated)
+    }
+
+    func testSummarize_allUserAuthoredYieldsNoPreviews() {
+        let msgs = (0..<3).map { msg(.markdown("m\($0)"), author: .user) }
+        let r = MessagesSinceResponder.summarize(fetched: msgs, limit: 10, bodyMaxLength: 100)
+        XCTAssertTrue(r.previews.isEmpty)
+        XCTAssertFalse(r.truncated, "user messages are not 'visible' surplus")
+    }
 }
