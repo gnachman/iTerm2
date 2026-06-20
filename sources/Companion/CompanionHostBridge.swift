@@ -377,17 +377,22 @@ final class CompanionHostBridge {
         // Sequence.prefix(_:), and a value near Int.max would overflow the *20
         // window multiply below - both crashing the main-actor bridge.
         let limit = min(max(rawLimit, 1), 500)
+        // Flow logging only; never message content. The token prefix lets you
+        // correlate with the push-sender's "delivered mutable (collapse ...)".
+        DLog("Companion bridge: messagesSince request (collapse \(collapseToken.prefix(8)), seq=\(seq), limit=\(limit))")
 
         // Transient mac-side failures (creds not loaded yet, chat model not
         // built at startup) reply .error, NOT an empty success: the NSE rethrows
         // .error and shows the fallback WITHOUT touching its per-chat watermark,
         // so a startup race can't look like "nothing new" and drop the cursor.
         guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
+            DLog("Companion bridge: messagesSince -> error (no room secret stored)")
             send(.error(CompanionError(code: .internalError, message: "No room secret stored")),
                  requestID: requestID)
             return
         }
         guard let model = ChatListModel.instance, let db = ChatDatabase.instance else {
+            DLog("Companion bridge: messagesSince -> error (chat system unavailable)")
             send(.error(CompanionError(code: .internalError, message: "Chat system unavailable")),
                  requestID: requestID)
             return
@@ -406,6 +411,7 @@ final class CompanionHostBridge {
             // Genuine "no such chat" (deleted, or the app never synced it): an
             // empty success -> the NSE shows the fallback. maxSeq 0 is safe
             // because the watermark is max-merged and never lowered (section 8).
+            DLog("Companion bridge: messagesSince -> no chat matched the collapse token (of \(model.count) chats); empty reply")
             send(.messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
                  requestID: requestID)
             return
@@ -428,6 +434,8 @@ final class CompanionHostBridge {
                                                       limit: limit,
                                                       bodyMaxLength: 200)
         let truncated = result.truncated || windowMessages.count >= windowLimit
+        // Counts/flags only; never chat title or message bodies.
+        DLog("Companion bridge: messagesSince -> \(result.previews.count) preview(s), maxSeq=\(maxSeq), truncated=\(truncated), reset=\(reset)")
         send(.messagesSince(chatName: chat.title,
                             previews: result.previews,
                             maxSeq: maxSeq,
