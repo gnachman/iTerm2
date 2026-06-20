@@ -21169,6 +21169,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _statusBarViewController.layout.advancedConfiguration.backgroundColor;
 }
 
+- (nullable NSColor *)statusBarEdgeSeparatorColor {
+    return [[iTermTheme sharedInstance] statusBarEdgeSeparatorColorForTabStyle:[self.view.window.ptyWindow it_tabStyle]];
+}
+
 - (void)updateStatusBarStyle {
     [_statusBarViewController updateColors];
     [self invalidateStatusBar];

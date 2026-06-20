@@ -159,6 +159,9 @@ Tabs, Windows, and UI:
   indicator is now shown in the tab bar.
 - An active pane border can be displayed to
   highlight the focused pane.
+- The status bar can now draw a separator line
+  between itself and the terminal content. Enable
+  it in the status bar layout’s advanced settings.
 - You can now choose to show a Proxy icon in
   Compact and Minimal themes.
 - The tab color menu now has a color picker,

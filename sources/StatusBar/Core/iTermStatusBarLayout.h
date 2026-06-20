@@ -33,6 +33,11 @@ extern NSString *const iTermStatusBarLayoutKeyAdvancedConfiguration;
 @property (nonatomic) iTermStatusBarAutoRainbowStyle autoRainbowStyle;
 @property (nonatomic) BOOL removeEmptyComponents;
 
+// Draw a 1pt separator line between the status bar and the adjacent terminal
+// content. When the status bar is on top the line is drawn along its bottom
+// edge; when on the bottom it is drawn along its top edge.
+@property (nonatomic) BOOL drawSeparatorBetweenStatusBarAndTerminal;
+
 + (instancetype)advancedConfigurationFromDictionary:(NSDictionary *)dict;
 + (NSFont *)defaultFont;
 
