@@ -57,6 +57,9 @@ final class NotificationService: UNNotificationServiceExtension {
     private var fallbackContent: UNNotificationContent?
     private var fetcher: NSEFetcher?
     private var task: Task<Void, Never>?
+    /// Per-chat collapse token (the push identifier). Used as the notification
+    /// threadIdentifier so iOS groups all of a chat's notifications together.
+    private var threadID: String?
 
     override func didReceive(_ request: UNNotificationRequest,
                              withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
@@ -71,6 +74,7 @@ final class NotificationService: UNNotificationServiceExtension {
         // The per-chat collapse token: for a remote notification iOS sets the
         // request identifier to the apns-collapse-id.
         let token = request.identifier
+        threadID = token
         NSELog.log("didReceive push; token=\(token.prefix(8))")
         let fetcher = NSEFetcher(appGroup: Self.appGroup)
         self.fetcher = fetcher
@@ -148,6 +152,8 @@ final class NotificationService: UNNotificationServiceExtension {
             content.title = chatName
             content.body = body(for: preview, appendMore: truncated && index == older.count - 1)
             content.sound = .default
+            // Group all of this chat's notifications under one thread.
+            if let threadID { content.threadIdentifier = threadID }
             let id = "\(newest.uniqueID.uuidString)-\(preview.uniqueID.uuidString)"
             let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
             UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
@@ -180,6 +186,9 @@ final class NotificationService: UNNotificationServiceExtension {
         task?.cancel()
         guard let handler else { return }
         if let mutable = content as? UNMutableNotificationContent {
+            // Group all of this chat's notifications under one thread (also keeps
+            // the generic fallback in the chat's thread).
+            if let threadID { mutable.threadIdentifier = threadID }
             customize(mutable)
             handler(mutable)
         } else {
