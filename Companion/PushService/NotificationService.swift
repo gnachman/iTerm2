@@ -48,11 +48,12 @@ final class NotificationService: UNNotificationServiceExtension {
         // The per-chat collapse token: for a remote notification iOS sets the
         // request identifier to the apns-collapse-id.
         let token = request.identifier
+        Self.log.info("didReceive push; token=\(token.prefix(8), privacy: .public)")
         let fetcher = NSEFetcher(appGroup: Self.appGroup)
         self.fetcher = fetcher
 
         guard let backing = UserDefaultsWatermarkBacking(appGroup: Self.appGroup) else {
-            Self.log.error("no App Group; delivering fallback")
+            Self.log.error("no App Group container; delivering fallback")
             deliverFallback()
             return
         }
@@ -82,6 +83,7 @@ final class NotificationService: UNNotificationServiceExtension {
     }
 
     override func serviceExtensionTimeWillExpire() {
+        Self.log.error("serviceExtensionTimeWillExpire; cancelling and delivering fallback")
         Task { await fetcher?.cancel() }
         deliverFallback()
     }
@@ -91,8 +93,11 @@ final class NotificationService: UNNotificationServiceExtension {
     private func deliver(_ decision: PushFetchCoordinator<NSEMessagesSince.Preview>.Decision) {
         switch decision {
         case .fallback:
+            Self.log.info("decision=fallback; delivering generic notification")
             deliverFallback()
         case let .content(chatName, previews, truncated):
+            // Counts only; never the chat name or message bodies.
+            Self.log.info("decision=content; \(previews.count, privacy: .public) preview(s), truncated=\(truncated, privacy: .public)")
             deliverContent(chatName: chatName, previews: previews, truncated: truncated)
         }
     }

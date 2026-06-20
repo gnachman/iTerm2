@@ -47,6 +47,7 @@ actor NSEFetcher {
             Self.log.error("no shared credentials; cannot reconnect")
             throw FetchError.noCreds
         }
+        Self.log.info("fetch: connecting non-displacing (since=\(sinceSeq, privacy: .public), limit=\(limit, privacy: .public))")
         let roomSecret = creds.roomSecret
         let secretProvider: @Sendable () -> Data? = { roomSecret }
         let connector = CompanionTransports.connector(for: creds.code,
@@ -56,6 +57,7 @@ actor NSEFetcher {
             to: PairingRendezvous(pairingID: creds.code.pairingID),
             timeout: 10)
         self.transport = transport
+        Self.log.info("fetch: transport connected; starting handshake")
         let channel = try await NoiseHandshake.perform(
             role: .initiator,
             transport: transport,
@@ -63,6 +65,7 @@ actor NSEFetcher {
             remoteStaticPublicKey: creds.code.responderStaticPublicKey,
             prologue: creds.code.handshakePrologue())
         self.channel = channel
+        Self.log.info("fetch: handshake complete; sending request")
 
         let requestID: UInt64 = 1
         try await channel.send(NSEMessagesSince.encodeRequest(
@@ -79,14 +82,17 @@ actor NSEFetcher {
             guard let outcome = try? NSEMessagesSince.decodeReply(frame) else { continue }
             switch outcome {
             case let .messages(rid, reply) where rid == nil || rid == requestID:
+                Self.log.info("fetch: reply with \(reply.previews.count, privacy: .public) preview(s), maxSeq=\(reply.maxSeq, privacy: .public), reset=\(reply.reset, privacy: .public)")
                 return .init(chatName: reply.chatName,
                              previews: reply.previews,
                              maxSeq: reply.maxSeq,
                              truncated: reply.truncated,
                              reset: reply.reset)
             case let .error(rid) where rid == nil || rid == requestID:
+                Self.log.error("fetch: host returned an error reply; failing fast")
                 throw FetchError.hostError
             default:
+                Self.log.debug("fetch: skipping unrelated frame")
                 continue
             }
         }
@@ -94,6 +100,7 @@ actor NSEFetcher {
 
     /// Hard-cancel: closing the channel/transport unblocks a stalled receive().
     func cancel() async {
+        Self.log.error("fetch: hard-cancel (deadline or displaced)")
         await channel?.close()
         await transport?.close()
     }

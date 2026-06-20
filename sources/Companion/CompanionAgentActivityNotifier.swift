@@ -86,20 +86,27 @@ final class CompanionAgentActivityNotifier {
 
     /// Apply gating + per-chat debounce and fire send(chatID) when warranted.
     func handle(message: Message, chatID: String, partial: Bool) {
+        // Flow logging only; never the message content.
         guard let trigger = trigger(for: message, partial: partial, chatID: chatID) else {
+            DLog("CompanionAgentActivityNotifier: no trigger for delivery in \(chatID) (partial=\(partial), author=\(message.author))")
             return
         }
         // Gate last: don't even consult the debounce when we wouldn't send.
-        guard gate() else { return }
+        guard gate() else {
+            DLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) gated off (not paired, phone connected, or notifications off)")
+            return
+        }
         let now = clock()
         if trigger == .turnComplete,
            let last = lastFire[chatID],
            now.timeIntervalSince(last) < debounceInterval {
+            DLog("CompanionAgentActivityNotifier: turnComplete in \(chatID) debounced (\(Int(now.timeIntervalSince(last)))s < \(Int(debounceInterval))s)")
             return
         }
         // userActionRequired bypasses the debounce but still updates it, so an
         // immediately-following turn-complete in the same chat doesn't double-fire.
         lastFire[chatID] = now
+        DLog("CompanionAgentActivityNotifier: firing \(trigger) push for \(chatID)")
         send(chatID)
     }
 
@@ -154,6 +161,7 @@ final class CompanionAgentActivityNotifier {
     /// chats and, on a qualifying event, sends a content-free push (section 5).
     static func start() {
         guard shared == nil else { return }
+        DLog("CompanionAgentActivityNotifier: starting; subscribing to all chats")
         let notifier = CompanionAgentActivityNotifier(
             gate: {
                 CompanionPushRegistry.devicePaired
@@ -180,6 +188,7 @@ final class CompanionAgentActivityNotifier {
                 Task {
                     do {
                         try await CompanionPushSender.sendMutable(collapse: collapse)
+                        DLog("CompanionAgentActivityNotifier: sent mutable push for \(chatID)")
                     } catch {
                         DLog("CompanionAgentActivityNotifier: mutable push failed for \(chatID): \(error)")
                     }
