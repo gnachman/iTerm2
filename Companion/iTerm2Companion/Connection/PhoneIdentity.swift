@@ -17,11 +17,13 @@ import CompanionNoise
 import CompanionProtocol
 
 enum PhoneIdentity {
-    private static let service = "com.googlecode.iterm2.companion"
-    private static let account = "noise-static-private-key"
+    // Shared identifiers (single source of truth in CompanionProtocol) so the
+    // NSE reads exactly the same items. pushSecretAccount is app-only.
+    private static let service = CompanionSharedIdentifiers.keychainService
+    private static let account = CompanionSharedIdentifiers.noiseStaticPrivateKeyAccount
     private static let pushSecretAccount = "push-relay-secret"
-    private static let roomSecretAccount = "relay-room-secret"
-    static let appGroup = "group.com.googlecode.iterm2.companion"
+    private static let roomSecretAccount = CompanionSharedIdentifiers.roomSecretAccount
+    static let appGroup = CompanionSharedIdentifiers.appGroup
 
     /// Accounts shared with the NSE (stored in the App Group keychain group).
     private static let sharedAccounts = [account, roomSecretAccount]

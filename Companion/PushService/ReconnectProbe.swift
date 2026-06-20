@@ -22,12 +22,14 @@ import CompanionNoise
 import CompanionTransport
 
 actor NSEFetcher {
-    enum FetchError: Error { case noCreds }
+    enum FetchError: Error { case noCreds, hostError }
 
+    // Shared identifiers come from CompanionProtocol so they can't drift from
+    // the app's PhoneIdentity / AppModel.
     private let appGroup: String
-    private let keychainService = "com.googlecode.iterm2.companion"
-    private let noiseAccount = "noise-static-private-key"
-    private let roomSecretAccount = "relay-room-secret"
+    private let keychainService = CompanionSharedIdentifiers.keychainService
+    private let noiseAccount = CompanionSharedIdentifiers.noiseStaticPrivateKeyAccount
+    private let roomSecretAccount = CompanionSharedIdentifiers.roomSecretAccount
     private static let log = Logger(subsystem: "com.googlecode.iterm2.companion.PushService",
                                     category: "nse")
 
@@ -66,17 +68,25 @@ actor NSEFetcher {
         try await channel.send(NSEMessagesSince.encodeRequest(
             requestID: requestID, collapseToken: token, seq: sinceSeq, limit: limit))
 
-        // Read frames until our reply arrives, ignoring any unsolicited frames
-        // (deliveries / typing status). receive() throws when the channel is
-        // closed (deadline hard-cancel, or the app displaced us), surfacing as a
-        // fetch failure -> fallback.
+        // Read frames until our reply arrives. A correlated error reply fails
+        // FAST (the host signals transient startup races as .error and does not
+        // close the channel, so without this we'd block until the deadline).
+        // Unsolicited frames (deliveries / typing) are skipped. receive() throws
+        // when the channel is closed (deadline hard-cancel, or the app displaced
+        // us), surfacing as a fetch failure -> fallback.
         while true {
             let frame = try await channel.receive()
-            if let (rid, reply) = try? NSEMessagesSince.decodeReply(frame), rid == nil || rid == requestID {
+            guard let outcome = try? NSEMessagesSince.decodeReply(frame) else { continue }
+            switch outcome {
+            case let .messages(rid, reply) where rid == nil || rid == requestID:
                 return .init(chatName: reply.chatName,
                              previews: reply.previews,
                              maxSeq: reply.maxSeq,
                              truncated: reply.truncated)
+            case let .error(rid) where rid == nil || rid == requestID:
+                throw FetchError.hostError
+            default:
+                continue
             }
         }
     }
@@ -102,16 +112,16 @@ actor NSEFetcher {
 
     private func loadCreds() -> Creds? {
         guard let defaults = UserDefaults(suiteName: appGroup),
-              let responderKey = defaults.data(forKey: "PairedResponderStaticKey"),
+              let responderKey = defaults.data(forKey: CompanionSharedIdentifiers.pairedResponderKeyDefault),
               responderKey.count == 32,
-              let pairingID = defaults.string(forKey: "PairedPairingID"),
+              let pairingID = defaults.string(forKey: CompanionSharedIdentifiers.pairedPairingIDDefault),
               let noisePrivateKey = keychainData(account: noiseAccount),
               let identity = try? NoiseKeyPair.from(privateKey: noisePrivateKey) else {
             return nil
         }
         let code = PairingCode(responderStaticPublicKey: responderKey,
                                pairingID: pairingID,
-                               relayOrigin: defaults.string(forKey: "PairedRelayOrigin"))
+                               relayOrigin: defaults.string(forKey: CompanionSharedIdentifiers.pairedRelayOriginDefault))
         return Creds(code: code, identity: identity, roomSecret: keychainData(account: roomSecretAccount))
     }
 

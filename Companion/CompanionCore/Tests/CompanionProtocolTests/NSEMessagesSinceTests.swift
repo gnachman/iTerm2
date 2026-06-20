@@ -2,9 +2,9 @@
 //  NSEMessagesSinceTests.swift
 //  CompanionCore
 //
-//  The slim NSE request/reply mirror. These pin its own shape; a separate
-//  cross-check (in the app's ModernTests) asserts it stays byte-compatible with
-//  the production CompanionClientMessage/CompanionHostMessage enums.
+//  The slim NSE request/reply mirror. These pin its own shape and its reply
+//  classification (messages / error / other); a separate ModernTests cross-check
+//  asserts it stays byte-compatible with the production enums.
 //
 
 import XCTest
@@ -22,34 +22,46 @@ final class NSEMessagesSinceTests: XCTestCase {
         XCTAssertEqual(args["limit"] as? Int, 10)
     }
 
-    func testDecodeReply() throws {
+    func testDecodesMessagesReply() throws {
         let json = """
         {"requestID":42,"payload":{"messagesSince":{"chatName":"Chat A",
         "previews":[{"uniqueID":"550E8400-E29B-41D4-A716-446655440000","author":"agent","body":"hi"}],
         "maxSeq":7,"truncated":true}}}
         """.data(using: .utf8)!
-        let result = try XCTUnwrap(NSEMessagesSince.decodeReply(json))
-        XCTAssertEqual(result.requestID, 42)
-        XCTAssertEqual(result.reply.chatName, "Chat A")
-        XCTAssertEqual(result.reply.maxSeq, 7)
-        XCTAssertTrue(result.reply.truncated)
-        XCTAssertEqual(result.reply.previews.count, 1)
-        XCTAssertEqual(result.reply.previews[0].author, "agent")
-        XCTAssertEqual(result.reply.previews[0].body, "hi")
-        XCTAssertEqual(result.reply.previews[0].uniqueID,
+        guard case let .messages(requestID, reply) = try NSEMessagesSince.decodeReply(json) else {
+            return XCTFail("expected .messages")
+        }
+        XCTAssertEqual(requestID, 42)
+        XCTAssertEqual(reply.chatName, "Chat A")
+        XCTAssertEqual(reply.maxSeq, 7)
+        XCTAssertTrue(reply.truncated)
+        XCTAssertEqual(reply.previews.first?.author, "agent")
+        XCTAssertEqual(reply.previews.first?.body, "hi")
+        XCTAssertEqual(reply.previews.first?.uniqueID,
                        UUID(uuidString: "550E8400-E29B-41D4-A716-446655440000"))
     }
 
-    func testNonMessagesSinceReplyDecodesAsNil() throws {
+    func testErrorReplyIsClassifiedAsError() throws {
         let json = #"{"requestID":1,"payload":{"error":{"code":"badRequest","message":"x"}}}"#.data(using: .utf8)!
-        XCTAssertNil(try NSEMessagesSince.decodeReply(json))
+        guard case let .error(requestID) = try NSEMessagesSince.decodeReply(json) else {
+            return XCTFail("expected .error")
+        }
+        XCTAssertEqual(requestID, 1)
     }
 
-    func testEmptyPreviewsReply() throws {
+    func testUnsolicitedFrameIsOther() throws {
+        let json = #"{"payload":{"typingStatus":{"isTyping":true,"participant":"agent","chatID":"c"}}}"#
+            .data(using: .utf8)!
+        XCTAssertEqual(try NSEMessagesSince.decodeReply(json), .other)
+    }
+
+    func testEmptyPreviewsMessagesReply() throws {
         let json = #"{"requestID":2,"payload":{"messagesSince":{"chatName":"","previews":[],"maxSeq":0,"truncated":false}}}"#
             .data(using: .utf8)!
-        let result = try XCTUnwrap(NSEMessagesSince.decodeReply(json))
-        XCTAssertTrue(result.reply.previews.isEmpty)
-        XCTAssertEqual(result.reply.maxSeq, 0)
+        guard case let .messages(_, reply) = try NSEMessagesSince.decodeReply(json) else {
+            return XCTFail("expected .messages")
+        }
+        XCTAssertTrue(reply.previews.isEmpty)
+        XCTAssertEqual(reply.maxSeq, 0)
     }
 }

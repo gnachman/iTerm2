@@ -67,22 +67,39 @@ public enum NSEMessagesSince {
 
     // MARK: Reply
 
+    /// The kind of host reply frame, so the NSE can fail FAST on a correlated
+    /// error instead of waiting out its deadline.
+    public enum ReplyOutcome: Equatable {
+        case messages(requestID: UInt64?, reply: Reply)
+        /// The host replied with an error (e.g. a transient startup-race case).
+        case error(requestID: UInt64?)
+        /// Some other / unsolicited frame (delivery, typing) - keep waiting.
+        case other
+    }
+
     private struct ReplyEnvelope: Decodable {
         let requestID: UInt64?
         let payload: Payload
         struct Payload: Decodable {
-            // Present only when the host's reply is a messagesSince; an error or
-            // any other case decodes this as nil (key absent).
+            // Present only for a messagesSince reply.
             let messagesSince: Reply?
+            // Presence (not contents) marks an error reply.
+            let error: ErrorProbe?
+            struct ErrorProbe: Decodable {}
         }
     }
 
-    /// Decode a host reply frame, returning the messagesSince reply and its
-    /// correlating requestID iff that is what the host sent. Returns nil for an
-    /// error reply or any other host message (the NSE treats that as fallback).
-    public static func decodeReply(_ data: Data) throws -> (requestID: UInt64?, reply: Reply)? {
+    /// Classify a host reply frame. A messagesSince reply carries its data; an
+    /// error reply is recognized so the caller fails fast; anything else is an
+    /// unrelated frame to skip.
+    public static func decodeReply(_ data: Data) throws -> ReplyOutcome {
         let envelope = try WireCoding.decode(ReplyEnvelope.self, from: data)
-        guard let reply = envelope.payload.messagesSince else { return nil }
-        return (envelope.requestID, reply)
+        if let reply = envelope.payload.messagesSince {
+            return .messages(requestID: envelope.requestID, reply: reply)
+        }
+        if envelope.payload.error != nil {
+            return .error(requestID: envelope.requestID)
+        }
+        return .other
     }
 }

@@ -24,7 +24,7 @@ import CompanionNoise
 import CompanionTransport
 
 final class NotificationService: UNNotificationServiceExtension {
-    private static let appGroup = "group.com.googlecode.iterm2.companion"
+    private static let appGroup = CompanionSharedIdentifiers.appGroup
     private static let deadline: Duration = .seconds(12)
     private static let log = Logger(subsystem: "com.googlecode.iterm2.companion.PushService",
                                     category: "nse")

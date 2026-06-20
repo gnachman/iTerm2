@@ -243,9 +243,10 @@ final class AppModel {
 
     // MARK: Stored pairing
 
-    private static let storedKeyDefault = "PairedResponderStaticKey"
-    private static let storedPIDDefault = "PairedPairingID"
-    private static let storedRelayOriginDefault = "PairedRelayOrigin"
+    // Shared with the NSE (single source of truth in CompanionProtocol).
+    private static let storedKeyDefault = CompanionSharedIdentifiers.pairedResponderKeyDefault
+    private static let storedPIDDefault = CompanionSharedIdentifiers.pairedPairingIDDefault
+    private static let storedRelayOriginDefault = CompanionSharedIdentifiers.pairedRelayOriginDefault
     /// The canonical relay host. A pairing whose relay host differs from this is
     /// shown in punycode at confirmation time so a homograph host cannot
     /// masquerade as the real one.
