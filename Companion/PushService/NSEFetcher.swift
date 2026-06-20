@@ -1,5 +1,5 @@
 //
-//  ReconnectProbe.swift  (defines NSEFetcher)
+//  NSEFetcher.swift
 //  iTerm2 Companion Push Service (Notification Service Extension)
 //
 //  NSEFetcher: the NSE's one network operation. Reads the shared credentials
@@ -9,9 +9,6 @@
 //  reply for PushFetchCoordinator. It holds the channel/transport so the shell
 //  can HARD-cancel on its deadline (URLSession's receive ignores cooperative
 //  cancellation). Package-only: no chat-model types.
-//
-//  (Filename kept from the memory-spike probe to avoid a project-file churn; the
-//  type is NSEFetcher.)
 //
 
 import Foundation
