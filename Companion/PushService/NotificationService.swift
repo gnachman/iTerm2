@@ -23,11 +23,34 @@ import CompanionProtocol
 import CompanionNoise
 import CompanionTransport
 
+/// NSE logging: mirrors to the unified log (live debugging) and to a file in the
+/// shared App Group Logs directory (email-able later from the app's Settings).
+/// Plain strings only - never message content.
+enum NSELog {
+    private static let osLog = Logger(subsystem: "com.googlecode.iterm2.companion.PushService",
+                                      category: "nse")
+    private static let writer: CompanionFileLogWriter? = {
+        guard let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: CompanionSharedIdentifiers.appGroup) else {
+            return nil
+        }
+        return CompanionFileLogWriter(
+            directory: container.appendingPathComponent("Logs", isDirectory: true),
+            isEnabled: {
+                UserDefaults(suiteName: CompanionSharedIdentifiers.appGroup)?
+                    .object(forKey: CompanionFileLogWriter.enabledKey) as? Bool ?? true
+            })
+    }()
+
+    static func log(_ message: String) {
+        osLog.log("\(message, privacy: .public)")
+        writer?.log("[nse] " + message)
+    }
+}
+
 final class NotificationService: UNNotificationServiceExtension {
     private static let appGroup = CompanionSharedIdentifiers.appGroup
     private static let deadline: Duration = .seconds(12)
-    private static let log = Logger(subsystem: "com.googlecode.iterm2.companion.PushService",
-                                    category: "nse")
 
     private let lock = NSLock()
     private var contentHandler: ((UNNotificationContent) -> Void)?
@@ -48,12 +71,12 @@ final class NotificationService: UNNotificationServiceExtension {
         // The per-chat collapse token: for a remote notification iOS sets the
         // request identifier to the apns-collapse-id.
         let token = request.identifier
-        Self.log.info("didReceive push; token=\(token.prefix(8), privacy: .public)")
+        NSELog.log("didReceive push; token=\(token.prefix(8))")
         let fetcher = NSEFetcher(appGroup: Self.appGroup)
         self.fetcher = fetcher
 
         guard let backing = UserDefaultsWatermarkBacking(appGroup: Self.appGroup) else {
-            Self.log.error("no App Group container; delivering fallback")
+            NSELog.log("no App Group container; delivering fallback")
             deliverFallback()
             return
         }
@@ -83,7 +106,7 @@ final class NotificationService: UNNotificationServiceExtension {
     }
 
     override func serviceExtensionTimeWillExpire() {
-        Self.log.error("serviceExtensionTimeWillExpire; cancelling and delivering fallback")
+        NSELog.log("serviceExtensionTimeWillExpire; cancelling and delivering fallback")
         Task { await fetcher?.cancel() }
         deliverFallback()
     }
@@ -93,11 +116,11 @@ final class NotificationService: UNNotificationServiceExtension {
     private func deliver(_ decision: PushFetchCoordinator<NSEMessagesSince.Preview>.Decision) {
         switch decision {
         case .fallback:
-            Self.log.info("decision=fallback; delivering generic notification")
+            NSELog.log("decision=fallback; delivering generic notification")
             deliverFallback()
         case let .content(chatName, previews, truncated):
             // Counts only; never the chat name or message bodies.
-            Self.log.info("decision=content; \(previews.count, privacy: .public) preview(s), truncated=\(truncated, privacy: .public)")
+            NSELog.log("decision=content; \(previews.count) preview(s), truncated=\(truncated)")
             deliverContent(chatName: chatName, previews: previews, truncated: truncated)
         }
     }
