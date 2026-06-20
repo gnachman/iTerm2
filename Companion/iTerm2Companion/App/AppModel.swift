@@ -329,20 +329,25 @@ final class AppModel {
         }
     }
 
-    /// Erase every piece of carryover identity state before a fresh pairing:
-    /// the stored pairing, the per-room verifier-registration marker, the room
-    /// secret, the attest key pinned for the old room, and the push-relay
-    /// secret. Mirrors the data wipe in handleRemoteUnpair, so a user-initiated
-    /// re-pair is as clean as a Mac-driven unpair, without needing the Mac's
-    /// farewell to have arrived.
     private func resetForFreshPairing() {
-        companionLog("Fresh pairing: clearing previous pairing key material")
-        if let previous = storedPairingCode {
-            attestKeyStore.setKeyId(nil, forRoom: roomName(for: previous))
-        }
-        forgetStoredPairing()
+        companionLog("Fresh pairing: clearing all previous key material")
+        wipeAllKeyMaterial()
+    }
+
+    /// Erase EVERY piece of key material on this device, for a clean fresh start
+    /// (the user may be unpairing because of a compromise): the Noise identity,
+    /// the room secret, the push-relay secret, and all attest key ids, plus - via
+    /// forgetStoredPairing - the pairing code, the verifier-registration marker,
+    /// and the per-chat push watermarks. Every unpair / re-pair path calls this
+    /// so none leaves anything behind. The keychain deletes use a nil access
+    /// group, so they span all the app's access groups (the App Group copy AND
+    /// any leftover pre-migration default-group copy).
+    private func wipeAllKeyMaterial() {
+        attestKeyStore.removeAll()
+        PhoneIdentity.deleteKeyPair()
         PhoneIdentity.deleteRoomSecret()
         PhoneIdentity.deletePushRelaySecret()
+        forgetStoredPairing()
     }
 
     func forgetStoredPairing() {
@@ -482,14 +487,10 @@ final class AppModel {
             }
             await relayDelete?()
         }
-        forgetStoredPairing()
-        PhoneIdentity.deleteKeyPair()
-        // Rotate the push secret: the old Mac knows the old one. The next
-        // APNs registration re-registers the new hash with the relay.
-        PhoneIdentity.deletePushRelaySecret()
-        // Rotate the room secret too; the next pairing mints and registers a
-        // fresh verifier for its (new) room.
-        PhoneIdentity.deleteRoomSecret()
+        // Wipe ALL key material (the relay delete-room call above already
+        // captured the room secret it needs). The next pairing mints a fresh
+        // Noise identity, room secret, push secret, and verifier registration.
+        wipeAllKeyMaterial()
         activePairingCode = nil
         chats = []
         sessions = []
@@ -1541,9 +1542,7 @@ final class AppModel {
         companionLog("Unpaired by the Mac")
         reconnectTask?.cancel()
         reconnectTask = nil
-        forgetStoredPairing()
-        PhoneIdentity.deletePushRelaySecret()
-        PhoneIdentity.deleteRoomSecret()
+        wipeAllKeyMaterial()
         let oldClient = client
         client = nil
         Task { await oldClient?.close() }
