@@ -26,7 +26,7 @@ final class NSEMessagesSinceTests: XCTestCase {
         let json = """
         {"requestID":42,"payload":{"messagesSince":{"chatName":"Chat A",
         "previews":[{"uniqueID":"550E8400-E29B-41D4-A716-446655440000","author":"agent","body":"hi"}],
-        "maxSeq":7,"truncated":true}}}
+        "maxSeq":7,"truncated":true,"reset":false}}}
         """.data(using: .utf8)!
         guard case let .messages(requestID, reply) = try NSEMessagesSince.decodeReply(json) else {
             return XCTFail("expected .messages")
@@ -35,6 +35,7 @@ final class NSEMessagesSinceTests: XCTestCase {
         XCTAssertEqual(reply.chatName, "Chat A")
         XCTAssertEqual(reply.maxSeq, 7)
         XCTAssertTrue(reply.truncated)
+        XCTAssertFalse(reply.reset)
         XCTAssertEqual(reply.previews.first?.author, "agent")
         XCTAssertEqual(reply.previews.first?.body, "hi")
         XCTAssertEqual(reply.previews.first?.uniqueID,
@@ -56,12 +57,13 @@ final class NSEMessagesSinceTests: XCTestCase {
     }
 
     func testEmptyPreviewsMessagesReply() throws {
-        let json = #"{"requestID":2,"payload":{"messagesSince":{"chatName":"","previews":[],"maxSeq":0,"truncated":false}}}"#
+        let json = #"{"requestID":2,"payload":{"messagesSince":{"chatName":"","previews":[],"maxSeq":0,"truncated":false,"reset":true}}}"#
             .data(using: .utf8)!
         guard case let .messages(_, reply) = try NSEMessagesSince.decodeReply(json) else {
             return XCTFail("expected .messages")
         }
         XCTAssertTrue(reply.previews.isEmpty)
         XCTAssertEqual(reply.maxSeq, 0)
+        XCTAssertTrue(reply.reset)
     }
 }

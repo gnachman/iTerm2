@@ -37,12 +37,18 @@ public struct PushFetchCoordinator<Preview> {
         public let previews: [Preview]
         public let maxSeq: Int64
         public let truncated: Bool
+        /// The host resolved the chat but our watermark was beyond its tip (the
+        /// chat DB rewound). Reset the watermark DOWN to maxSeq rather than
+        /// max-merging. The host sets this ONLY for a resolved chat, so the
+        /// maxSeq:0 of a token-matched-no-chat reply does not trigger a reset.
+        public let reset: Bool
 
-        public init(chatName: String, previews: [Preview], maxSeq: Int64, truncated: Bool) {
+        public init(chatName: String, previews: [Preview], maxSeq: Int64, truncated: Bool, reset: Bool) {
             self.chatName = chatName
             self.previews = previews
             self.maxSeq = maxSeq
             self.truncated = truncated
+            self.reset = reset
         }
     }
 
@@ -70,12 +76,19 @@ public struct PushFetchCoordinator<Preview> {
         let limit = (existing == nil) ? firstRunLimit : normalLimit
         do {
             let reply = try await fetch(token, sinceSeq, limit)
-            // Advance the watermark to the chat's tip on ANY successful fetch
-            // (even an empty one) so a backlog can't re-notify. advance is a
-            // max-merge, so a maxSeq of 0 (token matched no chat) never lowers an
-            // existing value. A failed fetch throws and leaves the watermark
-            // untouched (the transient-failure case in the host reply).
-            watermarks.advance(token: token, to: reply.maxSeq)
+            if reply.reset {
+                // The host resolved the chat but our watermark was past its tip
+                // (the chat DB was lost/recreated and seq restarted). Reset DOWN
+                // to the new tip; max-merge would keep the stale-high value and
+                // we'd never notify again.
+                watermarks.set(token: token, to: reply.maxSeq)
+            } else {
+                // Advance to the chat's tip on ANY successful fetch (even empty)
+                // so a backlog can't re-notify. max-merge, so a maxSeq of 0
+                // (token matched no chat) never lowers an existing value. A
+                // failed fetch throws and leaves the watermark untouched.
+                watermarks.advance(token: token, to: reply.maxSeq)
+            }
             if reply.previews.isEmpty {
                 return .fallback
             }

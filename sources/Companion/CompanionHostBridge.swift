@@ -405,16 +405,24 @@ final class CompanionHostBridge {
             // Genuine "no such chat" (deleted, or the app never synced it): an
             // empty success -> the NSE shows the fallback. maxSeq 0 is safe
             // because the watermark is max-merged and never lowered (section 8).
-            send(.messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false),
+            send(.messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
                  requestID: requestID)
             return
         }
         // Over-fetch a window (hiddenFromClient can't be filtered in SQL) so
         // hidden bookkeeping rows don't crowd out visible ones.
         let windowLimit = limit * 20
-        let (windowMessages, maxSeq) = db.messagesSince(chatID: chat.id,
-                                                        sinceSeq: seq,
-                                                        windowLimit: windowLimit)
+        let probe = db.messagesSince(chatID: chat.id, sinceSeq: seq, windowLimit: windowLimit)
+        let maxSeq = probe.maxSeq
+        // The phone's watermark is PAST the chat's tip: the chat DB was lost or
+        // recreated and seq restarted below it. Signal a reset (only possible for
+        // a resolved chat, so it can't be confused with the maxSeq:0 of a
+        // no-such-chat reply) and re-fetch from the start so the NSE shows the
+        // current newest and resets its stale-high watermark down to maxSeq.
+        let reset = seq > maxSeq
+        let windowMessages = reset
+            ? db.messagesSince(chatID: chat.id, sinceSeq: 0, windowLimit: windowLimit).messages
+            : probe.messages
         let result = MessagesSinceResponder.summarize(fetched: windowMessages,
                                                       limit: limit,
                                                       bodyMaxLength: 200)
@@ -422,7 +430,8 @@ final class CompanionHostBridge {
         send(.messagesSince(chatName: chat.title,
                             previews: result.previews,
                             maxSeq: maxSeq,
-                            truncated: truncated),
+                            truncated: truncated,
+                            reset: reset),
              requestID: requestID)
     }
 

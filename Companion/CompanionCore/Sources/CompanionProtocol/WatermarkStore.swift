@@ -54,6 +54,15 @@ public final class WatermarkStore {
         return candidate
     }
 
+    /// Unconditionally set a watermark, including LOWERING it. Used only to
+    /// reset when the host reports the chat DB rewound (seq restarted below the
+    /// stored value), which the monotonic advance() would otherwise ignore -
+    /// leaving the watermark stuck above the new seq space so nothing ever
+    /// re-notifies.
+    public func set(token: String, to value: Int64) {
+        backing.setWatermarkValue(value, forKey: Self.prefix + token)
+    }
+
     /// Forget all per-chat watermarks (on unpair).
     public func reset() {
         backing.removeWatermarks(matchingPrefix: Self.prefix)

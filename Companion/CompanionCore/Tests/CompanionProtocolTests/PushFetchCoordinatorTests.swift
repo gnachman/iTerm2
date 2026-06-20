@@ -34,7 +34,7 @@ final class PushFetchCoordinatorTests: XCTestCase {
     func testContentDecisionAndWatermarkAdvance() async {
         let store = makeStore()
         let coord = PushFetchCoordinator<Int>(watermarks: store) { _, _, _ in
-            .init(chatName: "Chat A", previews: [1, 2], maxSeq: 9, truncated: true)
+            .init(chatName: "Chat A", previews: [1, 2], maxSeq: 9, truncated: true, reset: false)
         }
         let decision = await coord.run(collapseToken: "tok")
         guard case let .content(name, previews, truncated) = decision else {
@@ -49,7 +49,7 @@ final class PushFetchCoordinatorTests: XCTestCase {
     func testEmptyReplyIsFallbackButStillAdvances() async {
         let store = makeStore()
         let coord = PushFetchCoordinator<Int>(watermarks: store) { _, _, _ in
-            .init(chatName: "", previews: [], maxSeq: 4, truncated: false)
+            .init(chatName: "", previews: [], maxSeq: 4, truncated: false, reset: false)
         }
         let decision = await coord.run(collapseToken: "tok")
         guard case .fallback = decision else { return XCTFail("expected fallback") }
@@ -71,7 +71,7 @@ final class PushFetchCoordinatorTests: XCTestCase {
         let coord = PushFetchCoordinator<Int>(watermarks: store, normalLimit: 10, firstRunLimit: 1) { _, since, limit in
             captured.sinceSeq = since
             captured.limit = limit
-            return .init(chatName: "A", previews: [1], maxSeq: 3, truncated: true)
+            return .init(chatName: "A", previews: [1], maxSeq: 3, truncated: true, reset: false)
         }
         _ = await coord.run(collapseToken: "tok")
         XCTAssertEqual(captured.sinceSeq, 0)
@@ -84,7 +84,7 @@ final class PushFetchCoordinatorTests: XCTestCase {
         let coord = PushFetchCoordinator<Int>(watermarks: store, normalLimit: 10, firstRunLimit: 1) { _, since, limit in
             captured.sinceSeq = since
             captured.limit = limit
-            return .init(chatName: "A", previews: [], maxSeq: 5, truncated: false)
+            return .init(chatName: "A", previews: [], maxSeq: 5, truncated: false, reset: false)
         }
         _ = await coord.run(collapseToken: "tok")
         XCTAssertEqual(captured.sinceSeq, 5)
@@ -94,10 +94,23 @@ final class PushFetchCoordinatorTests: XCTestCase {
     func testTokenMatchedNoChatDoesNotLowerWatermark() async {
         let store = makeStore(seed: ["tok": 8])
         let coord = PushFetchCoordinator<Int>(watermarks: store) { _, _, _ in
-            .init(chatName: "", previews: [], maxSeq: 0, truncated: false)   // no chat resolved
+            .init(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false)   // no chat resolved
         }
         let decision = await coord.run(collapseToken: "tok")
         guard case .fallback = decision else { return XCTFail("expected fallback") }
         XCTAssertEqual(store.watermark(forToken: "tok"), 8, "max-merge never lowers")
+    }
+
+    func testHostResetLowersWatermarkToNewTip() async {
+        // The chat DB rewound: the host signals reset=true with a maxSeq BELOW
+        // our stale-high watermark. We must LOWER the watermark to the new tip,
+        // not max-merge (which would leave it stuck and never re-notify).
+        let store = makeStore(seed: ["tok": 500])
+        let coord = PushFetchCoordinator<Int>(watermarks: store) { _, _, _ in
+            .init(chatName: "Chat A", previews: [1], maxSeq: 5, truncated: false, reset: true)
+        }
+        let decision = await coord.run(collapseToken: "tok")
+        guard case .content = decision else { return XCTFail("expected content") }
+        XCTAssertEqual(store.watermark(forToken: "tok"), 5, "reset lowers the watermark to the new tip")
     }
 }

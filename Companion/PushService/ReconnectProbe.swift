@@ -82,7 +82,8 @@ actor NSEFetcher {
                 return .init(chatName: reply.chatName,
                              previews: reply.previews,
                              maxSeq: reply.maxSeq,
-                             truncated: reply.truncated)
+                             truncated: reply.truncated,
+                             reset: reply.reset)
             case let .error(rid) where rid == nil || rid == requestID:
                 throw FetchError.hostError
             default:

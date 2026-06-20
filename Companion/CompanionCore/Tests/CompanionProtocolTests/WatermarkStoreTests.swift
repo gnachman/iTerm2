@@ -41,6 +41,15 @@ final class WatermarkStoreTests: XCTestCase {
         XCTAssertEqual(store.watermark(forToken: "t"), 20)
     }
 
+    func testSetLowersUnconditionally() {
+        let store = WatermarkStore(backing: MemoryBacking())
+        store.advance(token: "t", to: 500)
+        store.set(token: "t", to: 5)   // chat DB rewound: reset DOWN
+        XCTAssertEqual(store.watermark(forToken: "t"), 5, "set lowers (unlike advance)")
+        store.set(token: "t", to: 0)
+        XCTAssertEqual(store.watermark(forToken: "t"), 0)
+    }
+
     func testOrderIndependentConvergence() {
         let a = WatermarkStore(backing: MemoryBacking())
         a.advance(token: "t", to: 7)

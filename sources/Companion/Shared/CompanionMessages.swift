@@ -350,7 +350,7 @@ enum CompanionHostMessage: Codable {
     /// more visible messages existed than the limit. Empty previews mean nothing
     /// new, or the token matched no chat; either way the NSE shows the generic
     /// fallback.
-    case messagesSince(chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool)
+    case messagesSince(chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool, reset: Bool)
 
     /// An error, optionally correlated to a request via the envelope.
     case error(CompanionError)

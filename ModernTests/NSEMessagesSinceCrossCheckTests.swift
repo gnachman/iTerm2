@@ -35,28 +35,30 @@ final class NSEMessagesSinceCrossCheckTests: XCTestCase {
         let host = CompanionHostMessage.messagesSince(chatName: "Chat A",
                                                       previews: [preview],
                                                       maxSeq: 7,
-                                                      truncated: true)
+                                                      truncated: true,
+                                                      reset: false)
         let produced = try object(encoder().encode(HostEnvelope(requestID: 42, payload: host)))
         let vector = try object("""
         {"requestID":42,"payload":{"messagesSince":{"chatName":"Chat A",
         "previews":[{"uniqueID":"550E8400-E29B-41D4-A716-446655440000","author":"agent","body":"hello"}],
-        "maxSeq":7,"truncated":true}}}
+        "maxSeq":7,"truncated":true,"reset":false}}}
         """.data(using: .utf8)!)
         XCTAssertEqual(produced, vector, "production reply must match the slim NSE wire vector")
     }
 
     func testProductionDecodesReplyVector() throws {
         let vector = """
-        {"requestID":42,"payload":{"messagesSince":{"chatName":"Chat A","previews":[],"maxSeq":7,"truncated":false}}}
+        {"requestID":42,"payload":{"messagesSince":{"chatName":"Chat A","previews":[],"maxSeq":7,"truncated":false,"reset":true}}}
         """.data(using: .utf8)!
         let envelope = try decoder().decode(HostEnvelope.self, from: vector)
-        guard case let .messagesSince(chatName, previews, maxSeq, truncated) = envelope.payload else {
+        guard case let .messagesSince(chatName, previews, maxSeq, truncated, reset) = envelope.payload else {
             return XCTFail("expected .messagesSince, got \(envelope.payload)")
         }
         XCTAssertEqual(chatName, "Chat A")
         XCTAssertTrue(previews.isEmpty)
         XCTAssertEqual(maxSeq, 7)
         XCTAssertFalse(truncated)
+        XCTAssertTrue(reset)
     }
 
     func testProductionRequestMatchesWireVector() throws {

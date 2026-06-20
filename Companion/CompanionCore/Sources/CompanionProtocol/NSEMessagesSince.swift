@@ -35,6 +35,7 @@ public enum NSEMessagesSince {
         public let previews: [Preview]
         public let maxSeq: Int64
         public let truncated: Bool
+        public let reset: Bool
     }
 
     // MARK: Request
