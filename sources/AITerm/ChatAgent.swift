@@ -852,6 +852,35 @@ class ChatAgent {
             guard let self else {
                 return
             }
+            #if ITERM_DEBUG
+            // TEMPORARY probe (Development builds only — ITERM_DEBUG is set only
+            // in the Development config, not Beta/Nightly/Deployment, and this
+            // target never defines DEBUG): a turn that completes while
+            // an orchestration tool call is still parked is the bug we're
+            // chasing — the agent swaps in a fresh conversation on completion
+            // and the parked tool's eventual result resumes a dead controller.
+            // Log the result shape, the last message body kind, and how many
+            // tool calls are still parked so a reproduction pins the trigger.
+            do {
+                let kind: String
+                switch result {
+                case .success: kind = "success"
+                case .failure(let e):
+                    kind = (e is PendingCommandCanceled) ? "cancelled" : "failure(\(e))"
+                }
+                let lastBody: String
+                switch result.successValue?.messages.last?.body {
+                case .some(.functionCall(let call, _)): lastBody = "functionCall(\(call.name ?? "?"))"
+                case .some(.text(let t)): lastBody = "text(\(OrchestrationToolProvider.snippet(of: String(t.prefix(60)))))"
+                case .some(.multipart): lastBody = "multipart"
+                case .some(.functionOutput): lastBody = "functionOutput"
+                case .some(.attachment): lastBody = "attachment"
+                case .some(.uninitialized): lastBody = "uninitialized"
+                case .none: lastBody = "none"
+                }
+                NSFuckingLog("ChatAgent.complete done: result=\(kind) lastBody=\(lastBody) parkedToolCalls=\(self.pendingRemoteCommands.count) needsRenaming=\(needsRenaming)")
+            }
+            #endif
             if result.failureValue is PendingCommandCanceled {
                 completion(nil)
                 return
