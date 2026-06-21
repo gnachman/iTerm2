@@ -144,30 +144,41 @@ final class NotificationService: UNNotificationServiceExtension {
     private func deliverContent(chatName: String,
                                 previews: [NSEMessagesSince.Preview],
                                 truncated: Bool) {
-        guard let newest = previews.first else {
+        // previews arrive newest-first; deliver them CHRONOLOGICALLY (oldest
+        // first) so each notification's delivery timestamp matches message order.
+        // A local notification (add) is stamped with the time it is added, so the
+        // newest must be added LAST to be the most-recent notification (top of the
+        // shade). The oldest goes through contentHandler, whose notification keeps
+        // the push's ARRIVAL time (earliest) and the collapse id - so it anchors
+        // the bottom and carries the "+ more older messages" hint.
+        let chronological = Array(previews.reversed())   // oldest -> newest
+        guard let oldest = chronological.first else {
             deliverFallback()
             return
         }
-        // Schedule the older messages (and a "+N more" hint when truncated) as
-        // their own notifications with distinct ids, so they don't replace each
-        // other or the collapse-id'd one delivered via contentHandler.
-        let older = Array(previews.dropFirst())
-        for (index, preview) in older.enumerated() {
+        let rest = Array(chronological.dropFirst())      // may be empty
+        for (index, preview) in rest.enumerated() {
+            let isNewest = index == rest.count - 1
             let content = UNMutableNotificationContent()
             content.title = chatName
-            content.body = body(for: preview, appendMore: truncated && index == older.count - 1)
-            content.sound = .default
-            // Group all of this chat's notifications under one thread.
+            content.body = preview.body
+            // One sound per batch, on the newest message, so a 5-message fetch
+            // does not play five sounds at once.
+            content.sound = isNewest ? .default : nil
             if let threadID { content.threadIdentifier = threadID }
-            let id = "\(newest.uniqueID.uuidString)-\(preview.uniqueID.uuidString)"
-            let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
+            // Keyed by the message's own uniqueID so a re-fetched message
+            // replaces rather than duplicates.
+            let request = UNNotificationRequest(identifier: preview.uniqueID.uuidString,
+                                                content: content, trigger: nil)
             UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
         }
-        // The newest goes through contentHandler (keeps the push's collapse id).
+        // The oldest of the batch via contentHandler (earliest timestamp -> bottom).
         deliverFinal { content in
             content.title = chatName
-            content.body = self.body(for: newest, appendMore: truncated && older.isEmpty)
-            content.sound = .default
+            content.body = self.body(for: oldest, appendMore: truncated)
+            // Sound only if this is the single message in the batch (otherwise the
+            // newest, added above, carries the sound).
+            content.sound = rest.isEmpty ? .default : nil
         }
     }
 
