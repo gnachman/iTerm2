@@ -557,7 +557,7 @@ Bug Fixes:
   appearance variant of the profile key so
   it persists until OSC 110/111 or a manual
   reset clears it.
-- The Cockpit orchestrator’s send_text tool
+- The orchestrator’s send_text tool
   now routes payloads containing control bytes
   (ESC, Ctrl-C, etc.) as raw keystrokes instead
   of bracketed pastes. The previous wrap turned
@@ -566,6 +566,14 @@ Bug Fixes:
   session inserted “^[:q” as text instead of
   quitting. Pure prompt-style text still goes
   through as a paste, as Ink-based TUIs expect.
+- The orchestrator’s get_screen_contents
+  tool now marks faint text with ⟨dim⟩…⟨/dim⟩ and
+  the cursor with ⟨cursor⟩. Inline shell
+  suggestions and ghost completions are rendered
+  faint and used to be indistinguishable from
+  text the user actually typed, so the agent
+  would sometimes mistake a suggestion for an
+  entered command.
 - Showing the clippings panel in a window
   zoomed to fit the display no longer grows
   the window horizontally. The tab content
@@ -1253,7 +1261,7 @@ Bug Fixes:
   always-visible link to a web page
   explaining the whole integration.
 
-- The Cockpit orchestrator can now
+- The orchestrator can now
   watch sessions that report no
   status (plain TUIs, coding agents
   that don't emit status, bare
@@ -1265,7 +1273,7 @@ Bug Fixes:
   noisily polling in the chat. It
   gives up after five minutes with a
   watch_timed_out update.
-- The Cockpit orchestrator's watchers
+- The orchestrator's watchers
   can now watch for a plain-English
   condition (e.g. “emacs has exited”),
   judged by reading the screen, in

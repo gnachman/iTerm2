@@ -466,7 +466,7 @@ enum WorkgroupIntrospection {
         // the line index.
         let scrollback = session.screen.numberOfScrollbackLines()
         let height = session.screen.height()
-        return extractScreenText(of: session,
+        return extractScreenText(ofScreen: session.screen,
                                   fromLine: scrollback,
                                   toLine: scrollback + height)
     }
@@ -481,8 +481,26 @@ enum WorkgroupIntrospection {
         let total = session.screen.numberOfLines()
         let clamped = Int32(max(1, min(2000, lines)))
         let start = max(Int32(0), total - clamped)
-        return extractScreenText(of: session, fromLine: start, toLine: total)
+        return extractScreenText(ofScreen: session.screen, fromLine: start, toLine: total)
     }
+
+    // Markup tokens woven into the extracted text so the agent can tell
+    // rendered decoration apart from real content. The angle-bracket
+    // characters are U+27E8/U+27E9 (mathematical angle brackets), which
+    // effectively never occur in real terminal output, so a literal
+    // occurrence won't be confused with our markup. These tokens are
+    // documented in the get_screen_contents tool description; keep the
+    // two in sync.
+    private static let dimOpenMarkup = "\u{27E8}dim\u{27E9}"
+    private static let dimCloseMarkup = "\u{27E8}/dim\u{27E9}"
+    private static let cursorMarkup = "\u{27E8}cursor\u{27E9}"
+    private static let imagePlaceholder = "\u{27E8}image\u{27E9}"
+
+    // Attribute key used to ferry the per-cell faint bit out of the
+    // extractor's attributeProvider and into renderAttributed. Internal
+    // (not private) only so unit tests can synthesize faint runs to feed
+    // renderAttributed directly.
+    static let faintAttributeKey = NSAttributedString.Key("iTermIntrospectionFaint")
 
     // Pull text for a half-open line range [fromLine, toLine) using
     // iTermTextExtractor. This is the same path PTYSession's
@@ -498,20 +516,35 @@ enum WorkgroupIntrospection {
     // representation, so we pass a non-nil attributeProvider to get
     // an NSAttributedString that carries NSTextAttachment markers at
     // image positions, then collapse consecutive cells of the same
-    // image into a single "[image]" placeholder.
-    private static func extractScreenText(of session: PTYSession,
-                                           fromLine startY: Int32,
-                                           toLine endY: Int32) -> String {
+    // image into a single ⟨image⟩ placeholder.
+    //
+    // The attributeProvider also tags faint (dim/SGR-2) cells so
+    // renderAttributed can wrap them in ⟨dim⟩…⟨/dim⟩. Inline shell
+    // suggestions (zsh-autosuggestions, fish autosuggest) and ghost
+    // completions in TUIs like Claude Code are rendered faint; without
+    // this marker they look byte-for-byte identical to text the user
+    // actually typed, which routinely fools an agent reading the screen.
+    // We also request the per-character grid coords so we can splice in
+    // a ⟨cursor⟩ marker at the cursor's position.
+    //
+    // Takes the VT100Screen rather than the owning PTYSession so unit
+    // tests can drive it with a screen built from raw terminal input.
+    static func extractScreenText(ofScreen screen: VT100Screen,
+                                  fromLine startY: Int32,
+                                  toLine endY: Int32) -> String {
         guard endY > startY else { return "" }
-        let extractor = iTermTextExtractor(dataSource: session.screen)
+        let extractor = iTermTextExtractor(dataSource: screen)
         let range = VT100GridWindowedRange(
             coordRange: VT100GridCoordRange(
                 start: VT100GridCoord(x: 0, y: startY),
                 end: VT100GridCoord(x: 0, y: endY)),
             columnWindow: VT100GridRange(location: 0, length: 0))
+        let coords = GridCoordArray()
         let content = extractor.content(
             in: range,
-            attributeProvider: { _, _, _ in [:] },
+            attributeProvider: { theChar, _, _ in
+                ScreenCharIsFaint(theChar) ? [faintAttributeKey: true] : [:]
+            },
             nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
             pad: false,
             includeLastNewline: false,
@@ -519,11 +552,16 @@ enum WorkgroupIntrospection {
             cappedAtSize: -1,
             truncateTail: false,
             continuationChars: nil,
-            coords: nil,
+            coords: coords,
             deduplicateDECDHL: true)
         let raw: String
         if let attributed = content as? NSAttributedString {
-            raw = collapseImageAttachments(attributed)
+            let cursorIndex = cursorMarkupIndex(coords: coords,
+                                                screen: screen,
+                                                fromLine: startY,
+                                                toLine: endY,
+                                                length: attributed.length)
+            raw = renderAttributed(attributed, cursorIndex: cursorIndex)
         } else if let plain = content as? String {
             raw = plain
         } else {
@@ -532,32 +570,112 @@ enum WorkgroupIntrospection {
         return stripTrailingBlankLines(raw)
     }
 
-    // Walk an attributed string and emit text verbatim, replacing
-    // runs of NSTextAttachment image cells with a single "[image]"
-    // placeholder per distinct image. The extractor builds a fresh
-    // NSTextAttachment per cell (so enumerateAttribute yields one
-    // run per cell), but every cell of the same image points its
-    // NSTextAttachment.image at the same NSImage instance — use
-    // identity comparison to dedupe.
-    private static func collapseImageAttachments(_ attributed: NSAttributedString) -> String {
+    // Returns the index into the attributed string where a ⟨cursor⟩
+    // marker should be spliced, or nil if the cursor is outside the
+    // extracted range. `coords` is the extractor's per-character grid
+    // coordinate array; it stays length-aligned with the attributed
+    // string (image attachments contribute one coord per
+    // object-replacement char). cursorX/cursorY from the screen are
+    // 1-based, matching PTYSession's own usage.
+    //
+    // Priority: (1) the first character at/after the cursor on the
+    // cursor's own line — this lands the marker exactly before a faint
+    // suggestion that begins at the cursor. (2) Otherwise just past the
+    // last character on the cursor line — the common "cursor sits at end
+    // of typed input, no suggestion" case, so the marker shouldn't jump
+    // to the next line. (3) Otherwise the start of the next line, or end
+    // of string. Coords are emitted in reading order (line-major), so a
+    // single forward pass suffices.
+    private static func cursorMarkupIndex(coords: GridCoordArray,
+                                          screen: VT100Screen,
+                                          fromLine startY: Int32,
+                                          toLine endY: Int32,
+                                          length: Int) -> Int? {
+        let cursorY = Int32(screen.numberOfScrollbackLines())
+            + Int32(screen.cursorY()) - 1
+        guard cursorY >= startY, cursorY < endY else { return nil }
+        let cursorX = Int32(screen.cursorX()) - 1
+        let count = min(coords.count, length)
+        var lastOnLineEnd: Int? = nil
+        for i in 0..<count {
+            let c = coords[i]
+            if c.y < cursorY {
+                continue
+            }
+            if c.y == cursorY {
+                if c.x >= cursorX {
+                    return i
+                }
+                lastOnLineEnd = i + 1
+            } else {
+                // Past the cursor line; everything on it has been seen.
+                return lastOnLineEnd ?? i
+            }
+        }
+        return lastOnLineEnd ?? length
+    }
+
+    // Walk an attributed string and emit text verbatim, replacing runs
+    // of NSTextAttachment image cells with a single ⟨image⟩ placeholder
+    // per distinct image, wrapping faint runs in ⟨dim⟩…⟨/dim⟩, and
+    // splicing a ⟨cursor⟩ marker at cursorIndex. The extractor builds a
+    // fresh NSTextAttachment per cell, but every cell of the same image
+    // points its NSTextAttachment.image at the same NSImage instance, so
+    // identity comparison dedupes consecutive image cells.
+    // Internal (not private) so unit tests can verify ⟨image⟩ markup,
+    // which is impractical to produce from a real screen in a test.
+    static func renderAttributed(_ attributed: NSAttributedString,
+                                 cursorIndex: Int?) -> String {
         let result = NSMutableString()
+        var dimIsOpen = false
         var lastImageID: ObjectIdentifier? = nil
-        attributed.enumerateAttribute(
-            .attachment,
-            in: NSRange(location: 0, length: attributed.length),
-            options: []
-        ) { value, range, _ in
-            if let attachment = value as? NSTextAttachment {
+        let length = attributed.length
+        var location = 0
+        while location < length {
+            var runRange = NSRange(location: 0, length: 0)
+            let attrs = attributed.attributes(at: location, effectiveRange: &runRange)
+            let runStart = location
+            let runEnd = runRange.location + runRange.length
+            let attachment = attrs[.attachment] as? NSTextAttachment
+            let isImage = attachment != nil
+            // Image cells carry no faint semantics; treat them as not dim.
+            let wantDim = !isImage && (attrs[faintAttributeKey] as? Bool == true)
+            if wantDim && !dimIsOpen {
+                result.append(dimOpenMarkup)
+                dimIsOpen = true
+            } else if !wantDim && dimIsOpen {
+                result.append(dimCloseMarkup)
+                dimIsOpen = false
+            }
+            if let attachment {
+                if let ci = cursorIndex, ci >= runStart, ci < runEnd {
+                    result.append(cursorMarkup)
+                }
                 let id = attachment.image.map { ObjectIdentifier($0) }
                 if id == nil || id != lastImageID {
-                    result.append("[image]")
+                    result.append(imagePlaceholder)
                     lastImageID = id
                 }
             } else {
-                let substring = attributed.attributedSubstring(from: range).string
-                result.append(substring)
                 lastImageID = nil
+                let runText = attributed.attributedSubstring(
+                    from: NSRange(location: runStart, length: runEnd - runStart)).string as NSString
+                if let ci = cursorIndex, ci >= runStart, ci < runEnd {
+                    let splitOffset = ci - runStart
+                    result.append(runText.substring(to: splitOffset))
+                    result.append(cursorMarkup)
+                    result.append(runText.substring(from: splitOffset))
+                } else {
+                    result.append(runText as String)
+                }
             }
+            location = runEnd
+        }
+        if dimIsOpen {
+            result.append(dimCloseMarkup)
+        }
+        if cursorIndex == length {
+            result.append(cursorMarkup)
         }
         return result as String
     }

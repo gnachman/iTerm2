@@ -94,7 +94,7 @@ extension OrchestratorCommand {
 
         ToolDefinition(
             name: ToolName.getScreenContents.rawValue,
-            description: "Get the visible contents of a session. For Claude Code sessions, returns a synthesized view of recent hook events (assistant messages, tool calls). For shell sessions, returns scrollback. For TUI sessions, returns a snapshot of the rendered screen with is_snapshot=true; there is no history beyond what's currently displayed. The result includes a kind field so you know how to read the text.",
+            description: "Get the visible contents of a session. For Claude Code sessions, returns a synthesized view of recent hook events (assistant messages, tool calls). For shell sessions, returns scrollback. For TUI sessions, returns a snapshot of the rendered screen with is_snapshot=true; there is no history beyond what's currently displayed. The result includes a kind field so you know how to read the text.\n\nThe text uses a few markup tokens (the angle brackets are U+27E8/U+27E9 and effectively never occur in real terminal output):\n\u{27E8}dim\u{27E9}\u{2026}\u{27E8}/dim\u{27E9} wraps faint/dimmed text. This is how shells and TUIs render inline suggestions and ghost completions (zsh-autosuggestions, fish autosuggest, Claude Code's suggested reply, etc.). \n\u{27E8}cursor\u{27E9} marks the text cursor's position. \n\u{27E8}image\u{27E9} stands in for an inline image. These tokens are inserted by iTerm2 and are not literally present on the screen.",
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
                 ("lines", integer("Number of trailing lines to return for shell sessions. Default 100. Ignored for tui/claude-code kinds.")),
