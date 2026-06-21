@@ -922,14 +922,16 @@ final class AppModel {
             verdict = try await withTimeout(15, "Version handshake") {
                 try await client.handshakeVersion()
             }
-        } catch is CancellationError {
-            throw CancellationError()   // deliberate teardown: not a version problem
-        } catch {
-            // The handshake didn't cleanly complete: an older Mac that can't
-            // handle .hello (drops it or replies "unsupported"), an unexpected
-            // reply, or a timeout. Fail CLOSED to the upgrade panel rather than an
-            // opaque failure; Retry re-attempts and recovers if it was transient.
-            companionLog("Version handshake failed (\(error)); assuming the Mac app must upgrade")
+        } catch let error as CompanionError {
+            // The Mac RESPONDED but with a rejection or a reply we can't make
+            // sense of (an older Mac that decodes .hello as .unsupported and
+            // replies .error, or any unexpected reply): the peer is there but
+            // incompatible -> upgrade. This is distinct from a transport problem:
+            // a network drop / truncated handshake / timeout throws a
+            // TransportError (and cancellation a CancellationError), which we let
+            // propagate to the normal pairing retry path - we do NOT claim "upgrade
+            // the Mac" just because the connection dropped.
+            companionLog("Version handshake rejected by Mac (\(error)); Mac app must upgrade")
             phase = .needsUpgrade(.mac)
             return
         }
