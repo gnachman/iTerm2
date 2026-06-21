@@ -69,9 +69,31 @@ final class RelayKeepalive: @unchecked Sendable {
 extension URLSessionWebSocketTask {
     /// Send one WebSocket ping; resolves true when the pong returns, false on any
     /// error (a closed or broken socket).
+    ///
+    /// URLSession may invoke the pong handler MORE THAN ONCE - notably when the
+    /// task is cancelled while a ping is in flight (a pong/error callback plus a
+    /// cancellation callback). Resuming a CheckedContinuation twice is fatal, so a
+    /// one-shot guard ensures exactly one resume.
     func sendPingAsync() async -> Bool {
-        await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
-            self.sendPing { error in cont.resume(returning: error == nil) }
+        let once = PingResumeOnce()
+        return await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+            self.sendPing { error in
+                if once.claim() { cont.resume(returning: error == nil) }
+            }
+        }
+    }
+}
+
+/// One-shot guard: the first claim() wins, later ones are no-ops, so a
+/// multiply-invoked completion handler resumes its continuation only once.
+private final class PingResumeOnce: @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var fired = false
+    func claim() -> Bool {
+        lock.withLock {
+            if fired { return false }
+            fired = true
+            return true
         }
     }
 }

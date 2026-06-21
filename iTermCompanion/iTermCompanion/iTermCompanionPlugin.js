@@ -71,7 +71,20 @@ function wsRecv(id) {
 }
 
 function wsSend(id, isBinary, data) { hostWsSend(id, isBinary, data); }
-function wsClose(id) { hostWsClose(id); delete _conns[id]; }
+function wsClose(id) {
+  hostWsClose(id);
+  const c = _conns[id];
+  if (c) {
+    // Settle any in-flight wsRecv so its awaiter on the Swift side doesn't leak
+    // its continuation (and hang forever). A proactive close/cancel - e.g. the
+    // keepalive tearing down a dead socket - happens without a host _onClosed
+    // callback, so resolve pending waiters as closed here.
+    while (c.waiters.length) {
+      c.waiters.shift()({ closed: { code: 1000, reason: "closed" } });
+    }
+  }
+  delete _conns[id];
+}
 function wsPing(id) {
   return new Promise((resolve) => {
     hostWsPing(id, (ok) => resolve(JSON.stringify({ ok: ok })));
