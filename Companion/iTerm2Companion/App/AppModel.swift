@@ -917,8 +917,21 @@ final class AppModel {
         // storePairing still runs (caller) - after the user upgrades, a reconnect
         // gets a compatible handshake and proceeds to home.
         let client = try await currentClient(label: "Version handshake")
-        let verdict = try await withTimeout(15, "Version handshake") {
-            try await client.handshakeVersion()
+        let verdict: CompanionProtocolVersion.Compatibility
+        do {
+            verdict = try await withTimeout(15, "Version handshake") {
+                try await client.handshakeVersion()
+            }
+        } catch is CancellationError {
+            throw CancellationError()   // deliberate teardown: not a version problem
+        } catch {
+            // The handshake didn't cleanly complete: an older Mac that can't
+            // handle .hello (drops it or replies "unsupported"), an unexpected
+            // reply, or a timeout. Fail CLOSED to the upgrade panel rather than an
+            // opaque failure; Retry re-attempts and recovers if it was transient.
+            companionLog("Version handshake failed (\(error)); assuming the Mac app must upgrade")
+            phase = .needsUpgrade(.mac)
+            return
         }
         switch verdict {
         case .compatible:
