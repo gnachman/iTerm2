@@ -47,6 +47,7 @@ extern NSString *const TERMINAL_ARRANGEMENT_TOOLBELT;
 extern NSString *const TERMINAL_ARRANGEMENT_SCROLLER_WIDTH;
 extern NSString *const TERMINAL_ARRANGEMENT_MINIATURIZED;
 extern NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED;
+extern NSString *const TERMINAL_ARRANGEMENT_LAYOUT_LOCKED;
 
 @interface PseudoTerminal() {
     // Is this a full screen window?
@@ -110,6 +111,11 @@ extern NSString *const TERMINAL_ARRANGEMENT_SIZE_LOCKED;
 
     // When YES, the window cannot be resized by the user.
     BOOL _sizeLocked;
+
+    // When YES, the window’s layout is frozen: tabs and panes can’t be added,
+    // closed, reordered, dragged, or moved between windows. Mutually exclusive
+    // with _sizeLocked.
+    BOOL _layoutLocked;
 }
 
 @property (nonatomic, retain) NSCustomTouchBarItem *tabsTouchBarItem;

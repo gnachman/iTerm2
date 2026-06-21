@@ -1,0 +1,18 @@
+iTerm2 Buddy (Companion App) Release Notes
+
+New Features:
+- Voice dictation in chat. Tap the microphone
+  in the message bar to dictate instead of type.
+  The first time, it offers to download a small
+  speech model; after that, tapping the mic
+  starts listening right away.
+  Transcription runs entirely on your device
+  using Whisper, with no cloud and no cost. Your
+  audio never leaves the phone.
+  While listening you get a level meter and
+  haptic feedback, the text appears as you speak,
+  and tapping send (or leaving the chat) stops
+  recording.
+  Choose or remove the speech model under
+  Settings > Voice Input. Only models that run
+  well on this device are listed.

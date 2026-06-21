@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttp:\/\/localhost:11434\/api\/chat\ncontent-type: application\/json\n\n{\"max_tokens\":127976,\"messages\":[{\"content\":\"Quote the text inside the <magic> element shown.\\n<iterm2:attachment file=\\\"magic.xml\\\" type=\\\"application\\\/xml\\\">\\n<?xml version=\\\"1.0\\\"?><root><magic>pinecone-42<\\\/magic><\\\/root>\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"llama3.3:latest\",\"stream\":false}",
+  "key" : "c2b30a46228c43751a02cbc5379793e6d06d4ba0523361c8182911c91db26ea2",
+  "response" : {
+    "data" : "{\"model\":\"llama3.3:latest\",\"created_at\":\"2026-06-15T22:25:59.406212Z\",\"message\":{\"role\":\"assistant\",\"content\":\"The text inside the `\\u003cmagic\\u003e` element is:\\n\\n`pinecone-42`\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":2814546458,\"load_duration\":117529792,\"prompt_eval_count\":66,\"prompt_eval_duration\":876636000,\"eval_count\":17,\"eval_duration\":1806941000}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

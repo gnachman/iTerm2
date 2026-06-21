@@ -17,15 +17,6 @@ fileprivate protocol ToolCodeciergeSessionDelegate: AnyObject {
     var sessionWindow: NSWindow? { get }
 }
 
-struct TerminalCommand: Codable {
-    var username: String?
-    var hostname: String?
-    var directory: String?
-    var command: String
-    var output: String
-    var exitCode: Int32
-    var url: URL
-}
 
 @objc(iTermToolCodecierge)
 class ToolCodecierge: NSView, ToolbeltTool {
@@ -646,11 +637,6 @@ extension ToolCodecierge: ToolCodeciergeSessionDelegate {
     }
 }
 
-extension String {
-    var escapedForMarkdownCode: String {
-        return replacingOccurrences(of: "`", with: "\\`")
-    }
-}
 
 class CodeciergeOnboardingView: NSView {
     private let startCallback: () -> ()

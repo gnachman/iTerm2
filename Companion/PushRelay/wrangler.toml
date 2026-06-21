@@ -1,0 +1,66 @@
+# iTerm2 Buddy push relay: a Cloudflare Worker that holds the APNs signing
+# key (which cannot ship in the open-source app) and forwards notification
+# requests from the Mac to Apple. See src/worker.js for the protocol.
+#
+# One-time setup:
+#
+#   1. APNs key (developer.apple.com > Certificates, Identifiers & Profiles
+#      > Keys > +): create a key with the Apple Push Notifications service
+#      enabled. Download the .p8 (only offered once) and note the Key ID on
+#      that page and your Team ID (top right / Membership).
+#
+#   2. Cloudflare (free plan is fine):
+#        npm install -g wrangler
+#        wrangler login
+#
+#   3. KV namespace (stores device registrations and rate-limit buckets):
+#        cd Companion/PushRelay
+#        wrangler kv namespace create PUSH_KV
+#      Paste the id it prints into the kv_namespaces entry below.
+#
+#   4. Secrets:
+#        wrangler secret put APNS_TEAM_ID    # e.g. H7V7XYVQ7D
+#        wrangler secret put APNS_KEY_ID     # the 10-char Key ID from step 1
+#        wrangler secret put APNS_P8         # paste the .p8 file's full
+#                                            # contents, BEGIN/END lines included
+#
+#   5. Deploy:
+#        wrangler deploy
+#      Note the printed URL (https://iterm2-push-relay.<account>.workers.dev)
+#      and set it in sources/Companion/Shared/CompanionPushRelay.swift.
+
+name = "iterm2-push-relay"
+main = "src/worker.js"
+compatibility_date = "2026-01-01"
+
+# No log retention (privacy / GDPR). The worker emits no console output and
+# Workers Logs is disabled; explicitly false so the platform default cannot
+# turn it on. Logpush is not configured (off).
+[observability]
+enabled = false
+
+[vars]
+# Must match the app's bundle identifier (the apns-topic header).
+APNS_TOPIC = "com.googlecode.iterm2.companion"
+# Device registrations self-expire after this idle window (seconds) so abandoned
+# or junk entries do not accumulate in KV. The phone re-registers on every
+# connection to the Mac, so an active pairing refreshes this long before it
+# lapses. 90 days = 7776000. Minimum 60 (KV's floor); invalid falls back to 90d.
+REGISTRATION_TTL_SECONDS = "7776000"
+
+[[kv_namespaces]]
+binding = "PUSH_KV"
+id = "0564faeca1d447e593ed49f43a1b45bd"
+
+# Abuse cap on POST /register (worker.js): at most ~10 registrations per minute
+# per client IP, so a flood of random tokens cannot fill KV or burn the write
+# budget. The limiter is local to each Cloudflare datacenter (a soft per-colo
+# limit, like the per-token /push limit) and keys on the IP without logging it.
+# NOTE: verify this stanza against your wrangler version's Rate Limiting docs
+# (the binding has moved between releases); `simple.period` supports 10 or 60
+# only. It activates on `wrangler deploy`; until then the worker runs without it.
+[[unsafe.bindings]]
+name = "REGISTER_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }

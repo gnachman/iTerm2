@@ -2,12 +2,14 @@
 //  ScreenWatchPoller.swift
 //  iTerm2SharedARC
 //
-//  Drives a headless AIConversation to decide when a status-less session
-//  has reached a target state by reading its rendered screen. This is the
-//  fallback the orchestrator dispatcher uses when a watched session reports
-//  no machine-readable status (no OSC 21337 / cc-status), so the exact
-//  tab-status-transition path can't fire. See OrchestratorDispatcher's
-//  startScreenPoll / screenPollFinished and WorkgroupIntrospection.reportsSessionStatus.
+//  Drives a headless AIConversation to decide when a session has reached
+//  its watch goal by reading its rendered screen. Used in two cases:
+//  state watchers on sessions that report no machine-readable status (no
+//  OSC 21337 / cc-status, so the exact tab-status-transition path can't
+//  fire), and plain-English condition watchers, which are always judged
+//  from the screen regardless of status reporting. See
+//  OrchestratorDispatcher's startScreenPoll / screenPollFinished and
+//  WorkgroupIntrospection.reportsSessionStatus.
 //
 //  Why a model instead of a screen-stability heuristic: a coding agent (or
 //  any program) churns silently while working — `sleep 10` leaves the screen
@@ -105,8 +107,8 @@ final class ScreenWatchPoller {
 
     private func run() async {
         let start = Date()
-        log("Started: watching by screen observation for target "
-            + "'\(watcher.targetState.rawValue)' (session reports no status).")
+        log("Started: watching by screen observation for "
+            + watcher.goalDescription + ".")
         var pollIndex = 0
         var first: Capture?
         var previous: Capture?
@@ -114,7 +116,7 @@ final class ScreenWatchPoller {
             let elapsed = Date().timeIntervalSince(start)
             if elapsed >= Self.deadline {
                 log("Timed out after \(Int(elapsed))s without reaching "
-                    + "'\(watcher.targetState.rawValue)'.")
+                    + watcher.goalDescription + ".")
                 onTimedOut()
                 return
             }
@@ -176,8 +178,7 @@ final class ScreenWatchPoller {
     // REACHED/NOT_YET in the same conversation before giving up as unknown.
     private func evaluate(window: [Capture], kind: SessionKind) async -> Verdict {
         var conversation = AIConversation(registrationProvider: nil)
-        conversation.systemMessage = Self.systemPrompt(
-            targetState: watcher.targetState)
+        conversation.systemMessage = Self.systemPrompt(for: watcher)
         conversation.shouldThink = false
         conversation.add(text: Self.userPrompt(window: window, kind: kind),
                          role: .user)
@@ -251,12 +252,23 @@ final class ScreenWatchPoller {
         return .unknown
     }
 
-    // Target-specific instruction. The detection logic INVERTS by target:
-    // an activity indicator means "reached" for working but "not yet" for
-    // idle, so each target spells out its own positive evidence rather than
-    // sharing one finished-centric description.
-    private static func detectionInstruction(targetState: SessionState) -> String {
-        switch targetState {
+    // Goal-specific instruction. For state watchers the detection logic
+    // INVERTS by target: an activity indicator means "reached" for working
+    // but "not yet" for idle, so each target spells out its own positive
+    // evidence rather than sharing one finished-centric description.
+    // Condition watchers get the caller's plain-English condition verbatim.
+    private static func detectionInstruction(for watcher: WorkgroupWatcher) -> String {
+        if let condition = watcher.condition {
+            return "Your target is this plain-English condition, judged from "
+                + "the rendered screen:\n\n"
+                + condition + "\n\n"
+                + "Conclude REACHED only when the screen positively shows the "
+                + "condition is satisfied. If the screen is ambiguous, or the "
+                + "condition describes something that has not visibly happened "
+                + "yet, answer NOT_YET. Do not reinterpret the condition as a "
+                + "generic idle/busy check; judge exactly what it says."
+        }
+        switch watcher.targetState ?? .idle {
         case .waiting:
             return "Your target: the program is BLOCKED waiting for the user "
                 + "to answer a prompt or make a choice — a question, "
@@ -284,12 +296,11 @@ final class ScreenWatchPoller {
         }
     }
 
-    private static func systemPrompt(targetState: SessionState) -> String {
+    private static func systemPrompt(for watcher: WorkgroupWatcher) -> String {
         return """
         You are a silent monitor inside iTerm2. You are watching one terminal \
         session that an automated orchestrator is driving. The program in it \
-        (often a coding agent or another interactive TUI) does NOT report a \
-        machine-readable status, so the only way to tell what it is doing is by \
+        (often a coding agent or another interactive TUI) is being judged by \
         reading its rendered screen.
 
         Background on reading these screens: a program that is actively working \
@@ -302,7 +313,7 @@ final class ScreenWatchPoller {
         sleeping or waiting on a subprocess). Judge from positive evidence on \
         screen, not from the mere absence of change.
 
-        \(detectionInstruction(targetState: targetState))
+        \(detectionInstruction(for: watcher))
 
         Respond with EXACTLY one word on the first line: REACHED if the target \
         condition is satisfied, or NOT_YET if it is not. You may add a brief \

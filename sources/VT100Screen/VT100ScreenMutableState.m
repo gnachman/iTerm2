@@ -113,6 +113,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _uniqueIdentifier = [[NSUUID UUID] UUIDString];
+        _bottommostFoldAbsLine = -1;
         // The base class's initForMutationOnQueue: already set a fresh
         // _rcGuid (main-thread pool). Don't touch it here; the override of
         // -rcGuid below returns _uniqueIdentifier so the mutation-thread
@@ -1859,6 +1860,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self.linebuffer clear];
     [self resetScrollbackOverflow];
+    // The bulkMoveObjects above rewrote every surviving fold's absolute coordinate, so the cached
+    // bottommost-fold line is stale.
+    _foldCacheDirty = YES;
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
@@ -2107,6 +2111,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (numberOfLinesAppended <= 0) {
         return;
     }
+    // removeLastRawLine below can shift fold coordinates (this is a grid->buffer->grid reshuffle, not a
+    // plain line move), so the cached bottommost-fold line must be recomputed.
+    _foldCacheDirty = YES;
     [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(self.width - 1,
                                                       self.height - 1)
@@ -2261,6 +2268,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.currentGrid.cursor = self.primaryGrid.cursor;
 
     [self swapOnscreenIntervalTreeObjects];
+    // The swap moved on-screen folds between the primary and saved interval trees.
+    _foldCacheDirty = YES;
     [self reloadMarkCache];
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
@@ -2281,6 +2290,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.currentGrid = self.primaryGrid;
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self swapOnscreenIntervalTreeObjects];
+    // The swap restored the primary buffer's on-screen folds into the live interval tree.
+    _foldCacheDirty = YES;
     [self reloadMarkCache];
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
@@ -2894,6 +2905,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)didRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj formerInterval:(Interval *)interval {
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         DLog(@"Removed %@ from:\n%@", obj, [NSThread callStackSymbols]);
+    }
+    if ([obj isKindOfClass:[iTermFoldMark class]]) {
+        // Central chokepoint for fold-mark removal. Reached by removeObjectFromIntervalTree:,
+        // removeObjectsFromIntervalTree:, and removeIntervalTreeObjectsInRange:/InAbsRange: (e.g.
+        // reallyClearFromAbsoluteLineToEnd:, which deletes an in-grid fold in place without touching
+        // scrollback). bulkRemoveObjects: (unfold) bypasses this but sets the flag itself. Harmless on
+        // the temporary remove+re-add patterns: a redundant recompute, never a wrong value.
+        _foldCacheDirty = YES;
     }
     // OSC 133 aid registry maintenance does NOT happen here. Several
     // operations (replaceMark:, changeHeightOfMark:, reallyReplaceRange:)
@@ -4614,8 +4633,24 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self replaceMark:mark
             withLines:mark.savedLines ?: @[]
             savedITOs:mark.savedITOs];
+    _foldCacheDirty = YES;
     [self reloadMarkCache];
     [self setNeedsRedraw];
+}
+
+// See _bottommostFoldAbsLine in VT100ScreenMutableState+Private.h. Cold path, called lazily from the
+// cursor-positioning check when _foldCacheDirty is set; the hot check otherwise just reads the value.
+// Scans the WHOLE buffer (grid + history), not just the grid, so the cached line survives a fold
+// scrolling into history and is still correct if it later scrolls back into the grid.
+- (void)recomputeBottommostFoldAbsLine {
+    NSArray<iTermFoldMark *> *folds = [self foldMarksInRange:NSMakeRange(self.cumulativeScrollbackOverflow,
+                                                                         self.numberOfLines)
+                                                         max:NSUIntegerMax];
+    long long maxAbs = -1;
+    for (iTermFoldMark *fold in folds) {
+        maxAbs = MAX(maxAbs, [self absCoordRangeForInterval:fold.entry.interval].start.y);
+    }
+    _bottommostFoldAbsLine = maxAbs;
 }
 
 // Performs a fold operation
@@ -4703,6 +4738,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                              width:self.width];
         [self.mutableIntervalTree addObject:mark withInterval:interval];
         createdFoldMark = mark;
+        _foldCacheDirty = YES;
     }
     // Fire the mutation-thread linesShifted notification now that
     // createdFoldMark is assigned. Without this, RCs whose coord lands
@@ -5265,6 +5301,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             downByLines:(int)deltaLines {
     DLog(@"shiftIntervalTreeObjectsInRange:%@ startingAfter:%@ downByLines:%@",
          VT100GridCoordRangeDescription(inputRange), @(startingAfter), @(deltaLines));
+    // This is the common chokepoint for relocating interval-tree objects by a line delta (porthole
+    // add/resize via reallyReplaceRange:, the composer reflow in ensureContentEndsAt:/clearForComposer,
+    // and fold create/unfold). Any of these can move a fold's absolute coordinate, so invalidate the
+    // bottommost-fold cache here. Idempotent with the create/unfold callers that also set it (needed
+    // for their zero-delta case, which doesn't reach this method).
+    _foldCacheDirty = YES;
     Interval *intervalToMove =
     [self intervalForGridCoordRange:inputRange];
 
@@ -6200,6 +6242,9 @@ lengthExcludingInBandSignaling:data.length
                   progenitorRCDataSource:(id<iTermResilientCoordinateDataSource>)progenitorRCDataSource
                        mainRCDataSource:(id<iTermResilientCoordinateDataSource>)mainRCDataSource {
     assert(VT100ScreenMutableState.performingJoinedBlock);
+    // Restoration deserializes fold marks straight into the tree at fresh coordinates, bypassing the
+    // interactive create path, so the cached bottommost-fold line must be recomputed.
+    _foldCacheDirty = YES;
     id<VT100RemoteHostReading> lastRemoteHost = nil;
     NSMutableDictionary<NSString *, id<CapturedOutputReading>> *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
     // Collect maps for ResilientCoordinate fold/porthole resolution. Decoded
@@ -6757,6 +6802,8 @@ lengthExcludingInBandSignaling:data.length
         // Mark all cells dirty to force a full resync during mergeFrom:.
         [self.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
         [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
+        // The grid swap changes which buffer the on-screen folds belong to.
+        _foldCacheDirty = YES;
     }
 
     NSNumber *altSavedX = state[kStateDictAltSavedCX];

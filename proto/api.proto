@@ -1598,6 +1598,11 @@ message CreateTabRequest {
 
   // Modifies the profile to customize its behavior just for this session.
   repeated ProfileProperty custom_profile_properties = 5;
+
+  // If false, create the tab in the background: do not select it and do not
+  // bring its window to the front. Unset or true preserves the default
+  // behavior (select the new tab and order its window front).
+  optional bool select_tab = 6;
 }
 
 message CreateTabResponse {

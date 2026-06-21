@@ -43,6 +43,15 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
     private var notificationMessageRegexTextField: NSTextField?
     private var progressBarFilterPopup: NSPopUpButton?
     private var jobNameTextField: NSTextField?
+    private var variableNameTextField: NSTextField?
+    private var variableValueRegexTextField: NSTextField?
+
+    // Completion support for the variable-name field. Mirrors the auto-
+    // complete behavior of iTermFunctionCallTextFieldDelegate but for a bare
+    // variable path (not an interpolated string).
+    private let variablePathSource = iTermVariableHistory.pathSource(for: .session)
+    private var isAutocompleting = false
+    private var suppressAutocomplete = false
 
     // MARK: - Initialization
 
@@ -111,6 +120,8 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         notificationMessageRegexTextField = nil
         progressBarFilterPopup = nil
         jobNameTextField = nil
+        variableNameTextField = nil
+        variableValueRegexTextField = nil
 
         // Add appropriate UI for this event type
         switch matchType {
@@ -136,6 +147,8 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
             addProgressBarFilterUI()
         case .eventJobStarted, .eventJobEnded:
             addJobNameUI()
+        case .eventVariableChanged:
+            addVariableChangedUI()
         default:
             // No parameters needed for other event types
             addNoParametersLabel()
@@ -190,6 +203,46 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
         helpLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         helpLabel.textColor = .secondaryLabelColor
         stackView.addArrangedSubview(helpLabel)
+    }
+
+    private func addVariableChangedUI() {
+        // Variable name row (with completion).
+        let nameRow = createRow(label: "Variable:")
+
+        let nameField = NSTextField()
+        nameField.translatesAutoresizingMaskIntoConstraints = false
+        nameField.placeholderString = "user.myVar"
+        nameField.widthAnchor.constraint(greaterThanOrEqualToConstant: 150).isActive = true
+        nameField.delegate = self
+        variableNameTextField = nameField
+
+        nameRow.addArrangedSubview(nameField)
+        stackView.addArrangedSubview(nameRow)
+
+        let nameHelp = NSTextField(labelWithString: "Name of the session variable to watch")
+        nameHelp.translatesAutoresizingMaskIntoConstraints = false
+        nameHelp.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        nameHelp.textColor = .secondaryLabelColor
+        stackView.addArrangedSubview(nameHelp)
+
+        // Value regex row.
+        let valueRow = createRow(label: "Value:")
+
+        let valueField = NSTextField()
+        valueField.translatesAutoresizingMaskIntoConstraints = false
+        valueField.placeholderString = ".*"
+        valueField.widthAnchor.constraint(greaterThanOrEqualToConstant: 150).isActive = true
+        valueField.delegate = self
+        variableValueRegexTextField = valueField
+
+        valueRow.addArrangedSubview(valueField)
+        stackView.addArrangedSubview(valueRow)
+
+        let valueHelp = NSTextField(labelWithString: "Regular expression the new value must match (leave blank to match any change)")
+        valueHelp.translatesAutoresizingMaskIntoConstraints = false
+        valueHelp.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        valueHelp.textColor = .secondaryLabelColor
+        stackView.addArrangedSubview(valueHelp)
     }
 
     private func addDirectoryRegexUI() {
@@ -431,9 +484,60 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 if digitsOnly != textField.stringValue {
                     textField.stringValue = digitsOnly
                 }
+            } else if textField === variableNameTextField,
+                      let fieldEditor = obj.userInfo?["NSFieldEditor"] as? NSTextView {
+                // Offer variable-name completions as the user types, but not
+                // while deleting (it's disruptive to re-suggest on backspace).
+                if !isAutocompleting && !suppressAutocomplete {
+                    isAutocompleting = true
+                    fieldEditor.complete(nil)
+                    isAutocompleting = false
+                }
+                suppressAutocomplete = false
             }
         }
         onParametersChanged?()
+    }
+
+    func control(_ control: NSControl,
+                 textView: NSTextView,
+                 completions words: [String],
+                 forPartialWordRange charRange: NSRange,
+                 indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String] {
+        guard control === variableNameTextField else {
+            return words
+        }
+        // Don't preselect; preselection causes pathological behavior when
+        // typing a period.
+        index.pointee = -1
+
+        let full = textView.string as NSString
+        // We can't sensibly complete in the middle of the value.
+        guard NSMaxRange(charRange) == full.length else {
+            return []
+        }
+        // pathSource wants the full path typed so far (including any leading
+        // components like "user."), not just the partial word after the last
+        // dot, which is what charRange covers.
+        let typed = full.substring(to: NSMaxRange(charRange))
+        let matches = variablePathSource(typed)
+        let completions = matches.map { (path: String) -> String in
+            (path as NSString).substring(from: charRange.location)
+        }
+        return completions.sorted()
+    }
+
+    func control(_ control: NSControl,
+                 textView: NSTextView,
+                 doCommandBy commandSelector: Selector) -> Bool {
+        if control === variableNameTextField &&
+            (commandSelector == #selector(NSResponder.deleteBackward(_:)) ||
+             commandSelector == #selector(NSResponder.deleteForward(_:)) ||
+             commandSelector == #selector(NSResponder.deleteWordBackward(_:)) ||
+             commandSelector == #selector(NSResponder.deleteWordForward(_:))) {
+            suppressAutocomplete = true
+        }
+        return false
     }
 
     // MARK: - Parameter Collection
@@ -529,6 +633,16 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 params["jobName"] = jobName
             }
 
+        case .eventVariableChanged:
+            let variableName = variableNameTextField?.stringValue ?? ""
+            if !variableName.isEmpty {
+                params[kTriggerVariableNameKey] = variableName
+            }
+            let valueRegex = variableValueRegexTextField?.stringValue ?? ""
+            if !valueRegex.isEmpty {
+                params[kTriggerVariableValueRegexKey] = valueRegex
+            }
+
         default:
             break
         }
@@ -619,6 +733,14 @@ class EventTriggerParameterView: NSView, NSTextFieldDelegate {
                 jobNameTextField?.stringValue = jobName
             }
 
+        case .eventVariableChanged:
+            if let variableName = params[kTriggerVariableNameKey] as? String {
+                variableNameTextField?.stringValue = variableName
+            }
+            if let valueRegex = params[kTriggerVariableValueRegexKey] as? String {
+                variableValueRegexTextField?.stringValue = valueRegex
+            }
+
         default:
             break
         }
@@ -665,6 +787,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Job Started"
         case .eventJobEnded:
             return "Job Ended"
+        case .eventVariableChanged:
+            return "Variable Changed"
         default:
             return "Unknown Event"
         }
@@ -705,6 +829,8 @@ class EventTriggerMatchTypeHelper: NSObject {
             return "Fires when a process matching the job filter enters the foreground-job ancestry chain."
         case .eventJobEnded:
             return "Fires when a process matching the job filter leaves the foreground-job ancestry chain."
+        case .eventVariableChanged:
+            return "Fires when a session variable changes to a value matching the regex."
         default:
             return ""
         }
@@ -728,6 +854,7 @@ class EventTriggerMatchTypeHelper: NSObject {
             NSNumber(value: iTermTriggerMatchType.eventProgressBarChanged.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventJobStarted.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventJobEnded.rawValue),
+            NSNumber(value: iTermTriggerMatchType.eventVariableChanged.rawValue),
             NSNumber(value: iTermTriggerMatchType.eventTitleChanged.rawValue)
         ]
     }

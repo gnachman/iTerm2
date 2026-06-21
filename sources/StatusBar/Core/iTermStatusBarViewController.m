@@ -66,6 +66,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     iTermStatusBarView *view = [[iTermStatusBarView alloc] initWithFrame:NSZeroRect];
     view.separatorColor = _layout.advancedConfiguration.separatorColor;
     view.backgroundColor = _layout.advancedConfiguration.backgroundColor;
+    view.drawsSeparatorBetweenStatusBarAndTerminal = _layout.advancedConfiguration.drawSeparatorBetweenStatusBarAndTerminal;
     self.view = view;
 }
 
@@ -300,6 +301,7 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
         [view.component statusBarTerminalBackgroundColorDidChange];
     }
     [[iTermStatusBarView castFrom:self.view] setSeparatorColor:[self.delegate statusBarSeparatorColor]];
+    [[iTermStatusBarView castFrom:self.view] setEdgeSeparatorColor:[self.delegate statusBarEdgeSeparatorColor]];
     [[iTermStatusBarView castFrom:self.view] setBackgroundColor:[self.delegate statusBarBackgroundColor]];
     _autoRainbowController.darkBackground = [self.delegate statusBarHasDarkBackground];
     [self.delegate statusBarDidUpdate];

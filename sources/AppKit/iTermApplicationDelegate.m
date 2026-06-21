@@ -117,6 +117,7 @@
 #import "iTermScriptImporter.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSecureKeyboardEntryController.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTermServiceProvider.h"
 #import "iTermSessionFactory.h"
 #import "iTermSessionLauncher.h"
@@ -420,6 +421,19 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    const SEL action = [menuItem action];
+    if (action == @selector(newSessionInTabAtIndex:) ||
+        action == @selector(newSession:) ||
+        action == @selector(newSessionWithSameProfile:)) {
+        // When the current window's layout is locked, refuse to add a tab to a
+        // window that already has one. Opening a brand-new window (no current
+        // terminal, or one with no tabs) is unaffected, and so are the New
+        // Window commands, which use different selectors.
+        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+        if (term.layoutLocked && term.tabs.count > 0) {
+            return NO;
+        }
+    }
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
@@ -1479,6 +1493,17 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
+    // If a companion device is paired, quietly listen so it can reconnect.
+    [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
+    // Surface paired-device presence (menu bar status item + connect toast).
+    [[iTermCompanionPresenceController shared] start];
+    // Give the Companion Device Settings menu item its glyph and hide it when
+    // the feature is disabled; keep it in sync if the setting changes.
+    [self updateCompanionMenuItem];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateCompanionMenuItem)
+                                                 name:iTermAdvancedSettingsDidChange
+                                               object:nil];
     if (IsTouchBarAvailable()) {
         NSApp.automaticCustomizeTouchBarMenuItemEnabled = YES;
     }
@@ -2381,6 +2406,37 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
     [suUpdater checkForUpdates:(sender)];
+}
+
+// Depth-first search for the menu item wired to a given action, so a
+// xib-defined item can be configured in code without an outlet.
+- (NSMenuItem *)menuItemWithAction:(SEL)action inMenu:(NSMenu *)menu {
+    for (NSMenuItem *item in menu.itemArray) {
+        if (item.action == action) {
+            return item;
+        }
+        if (item.submenu) {
+            NSMenuItem *found = [self menuItemWithAction:action inMenu:item.submenu];
+            if (found) {
+                return found;
+            }
+        }
+    }
+    return nil;
+}
+
+// Give the Companion Device Settings menu item its glyph and hide it entirely
+// when companion pairing is disabled (the admin/feature-flag gate).
+- (void)updateCompanionMenuItem {
+    NSMenuItem *companionItem = [self menuItemWithAction:@selector(pairCompanionDevice:)
+                                                 inMenu:[NSApp mainMenu]];
+    companionItem.image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLaptopcomputerAndIphone)
+                                  accessibilityDescription:@"Companion Device Settings"];
+    companionItem.hidden = ![iTermAdvancedSettingsModel companionPairingAllowed];
+}
+
+- (IBAction)pairCompanionDevice:(id)sender {
+    [[iTermCompanionPairingWindowController shared] showAndBeginPairing];
 }
 
 - (IBAction)installClaudeCodeIntegration:(id)sender {

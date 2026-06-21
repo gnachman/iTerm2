@@ -172,6 +172,16 @@ struct MessageToPromptStateMachine {
         if !payload.detail.isEmpty {
             lines.append("Detail: \(xmlEscapeText(payload.detail))")
         }
+        if payload.pushed == true {
+            lines.append("Note: iTerm2 already sent a push notification to the user's iPhone for this event. Do not send another.")
+        } else if payload.pushed == false {
+            lines.append("Note: the user asked for a push notification but notifications are unavailable right now, so make sure they see this in chat.")
+        } else if CompanionPushRegistry.canNotify {
+            // The model reliably summarizes into the chat but tends not to
+            // reach for notify on its own; remind it at exactly the moment
+            // it matters, and only when a push could actually be delivered.
+            lines.append("Note: the user may be away from their Mac. If they asked to be told when this happened, also send a push notification with the notify tool.")
+        }
         lines.append("</status_update>")
         return lines.joined(separator: "\n")
     }

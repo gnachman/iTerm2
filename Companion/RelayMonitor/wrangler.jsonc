@@ -1,0 +1,56 @@
+{
+	// iTerm2 relay monitor: a scheduled Worker that watches the room relay's
+	// aggregate metrics and emails on cap-approach / error spikes / traffic
+	// anomalies. See src/worker.js for setup (secrets + KV).
+	"name": "iterm2-relay-monitor",
+	"main": "src/worker.js",
+	"compatibility_date": "2025-09-06",
+	// Runs every 15 minutes. Cap + error checks each run; the weekly baseline
+	// records one sample per completed hour (guarded against duplicate runs).
+	"triggers": {
+		"crons": [
+			"*/15 * * * *"
+		]
+	},
+	// Observability ON here (unlike the relay): this Worker handles NO user
+	// traffic and stores no PII, so logging its own operation is safe and lets you
+	// debug the monitor itself. The relay stays logless.
+	"observability": {
+		"enabled": true
+	},
+	"kv_namespaces": [
+		{
+			// Holds alert cooldown state + the rolling per-hour-of-week baseline.
+			// Create with: wrangler kv namespace create MONITOR_KV  (paste the id here)
+			"binding": "MONITOR_KV",
+			"id": "8370b5a41414467796639243836d16bd"
+		}
+	],
+	"vars": {
+		// Cloudflare account id (dashboard URL or `wrangler whoami`) and the relay
+		// Worker's script name to query metrics for.
+		"ACCOUNT_ID": "fd2981af5d94d04f7535c150ada305bc",
+		"SCRIPT_NAME": "iterm2-companion-relay",
+		// Email endpoints (Resend). ALERT_FROM must be on a domain verified in
+		// Resend (e.g. alerts@iterm2.com).
+		"ALERT_FROM": "iTerm2 Relay Monitor <alerts@iterm2.com>",
+		"ALERT_TO": "gnachman@gmail.com",
+		// Free Workers daily request cap; warn/critical at these fractions.
+		"DAILY_REQUEST_CAP": "100000",
+		"REQUEST_WARN_FRAC": "0.7",
+		"REQUEST_CRIT_FRAC": "0.9",
+		// Error-rate alert: ratio over the last completed hour, with a volume floor.
+		"ERROR_RATIO": "0.05",
+		"ERROR_MIN_REQUESTS": "100",
+		// Anomaly: spike if >= 3x the baseline, drop if <= 0.3x; only once the
+		// baseline has >= 14 samples (about two weeks) and is >= 50 req/hour.
+		"SPIKE_FACTOR": "3",
+		"DROP_FACTOR": "0.3",
+		"MIN_BASELINE": "50",
+		"MIN_SAMPLES": "14",
+		"MAX_SAMPLES": "6",
+		// Do not re-send the same alert within this many minutes (escalation to
+		// critical bypasses it).
+		"COOLDOWN_MINUTES": "360"
+	}
+}

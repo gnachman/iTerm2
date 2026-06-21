@@ -5458,6 +5458,7 @@ class CreateTabRequest(_message.Message):
     TAB_INDEX_FIELD_NUMBER: _builtins.int
     COMMAND_FIELD_NUMBER: _builtins.int
     CUSTOM_PROFILE_PROPERTIES_FIELD_NUMBER: _builtins.int
+    SELECT_TAB_FIELD_NUMBER: _builtins.int
     profile_name: _builtins.str
     """Leave unset to use the default profile."""
     window_id: _builtins.str
@@ -5474,6 +5475,11 @@ class CreateTabRequest(_message.Message):
     def command(self, value: _builtins.str) -> None:
         """If not set, the profile's command will be used. Use custom_profile_properties instead."""
 
+    select_tab: _builtins.bool
+    """If false, create the tab in the background: do not select it and do not
+    bring its window to the front. Unset or true preserves the default
+    behavior (select the new tab and order its window front).
+    """
     @_builtins.property
     def custom_profile_properties(self) -> _containers.RepeatedCompositeFieldContainer[Global___ProfileProperty]:
         """Modifies the profile to customize its behavior just for this session."""
@@ -5486,10 +5492,11 @@ class CreateTabRequest(_message.Message):
         tab_index: _builtins.int | None = ...,
         command: _builtins.str | None = ...,
         custom_profile_properties: _abc.Iterable[Global___ProfileProperty] | None = ...,
+        select_tab: _builtins.bool | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["command", b"command", "profile_name", b"profile_name", "tab_index", b"tab_index", "window_id", b"window_id"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal["command", b"command", "profile_name", b"profile_name", "select_tab", b"select_tab", "tab_index", b"tab_index", "window_id", b"window_id"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["command", b"command", "custom_profile_properties", b"custom_profile_properties", "profile_name", b"profile_name", "tab_index", b"tab_index", "window_id", b"window_id"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["command", b"command", "custom_profile_properties", b"custom_profile_properties", "profile_name", b"profile_name", "select_tab", b"select_tab", "tab_index", b"tab_index", "window_id", b"window_id"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 

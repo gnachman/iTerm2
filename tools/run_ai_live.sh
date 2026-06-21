@@ -78,6 +78,10 @@ json_quote() {
     emit ANTHROPIC_API_KEY "${ANTHROPIC_API_KEY:-}"
     emit GEMINI_API_KEY    "${GEMINI_API_KEY:-}"
     emit DEEPSEEK_API_KEY  "${DEEPSEEK_API_KEY:-}"
+    # Ollama needs no real key; any non-empty value enables the llama lane.
+    # Set LLAMA_API_KEY=ollama (with Ollama running) to record the llama
+    # attachment cassettes; leave it unset to skip the lane.
+    emit LLAMA_API_KEY     "${LLAMA_API_KEY:-}"
     emit OPENAI_MODELS      "${ITERM2_AI_LIVE_OPENAI_MODELS:-}"
     emit ANTHROPIC_MODELS   "${ITERM2_AI_LIVE_ANTHROPIC_MODELS:-}"
     emit GEMINI_MODELS      "${ITERM2_AI_LIVE_GEMINI_MODELS:-}"

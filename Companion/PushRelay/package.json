@@ -1,0 +1,17 @@
+{
+  "name": "iterm2-push-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker holding the APNs signing key for iTerm2 Buddy. Registers per-device push secrets and forwards Mac-originated notifications to Apple. See src/worker.js.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.71",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.0.0"
+  }
+}

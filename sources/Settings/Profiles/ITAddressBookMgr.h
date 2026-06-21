@@ -581,9 +581,13 @@ typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
     // selects the process name to watch for (e.g. "claude").
     iTermTriggerMatchTypeEventJobStarted = 113,
     iTermTriggerMatchTypeEventJobEnded = 114,
+    // Fires when a session-scope variable changes value. The trigger's
+    // eventParams select which variable to watch ("variableName") and an
+    // optional regex its new value must match ("variableValueRegex").
+    iTermTriggerMatchTypeEventVariableChanged = 115,
     // Terminal title (OSC 0/1/2) changed. The optional titleRegex param
     // filters which titles fire; with no regex it fires on every change.
-    iTermTriggerMatchTypeEventTitleChanged = 115,
+    iTermTriggerMatchTypeEventTitleChanged = 116,
 };
 
 static inline BOOL iTermTriggerMatchTypeIsEvent(iTermTriggerMatchType type) {

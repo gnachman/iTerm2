@@ -138,4 +138,130 @@ class SaveScreenWhenCursorMovesAboveOutputTests: XCTestCase {
                         ".....",
                         "....."].joined(separator: "\n"))
     }
+
+    // MARK: - Folds (no shell integration required)
+
+    private func foldCount(_ screen: VT100Screen) -> Int {
+        var n = 0
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            n = ms.intervalTree.allObjects().compactMap { $0 as? FoldMark }.count
+        })
+        return n
+    }
+
+    private func scrollbackLines(_ screen: VT100Screen) -> Int {
+        var n = 0
+        screen.performBlock(joinedThreads: { _, ms, _ in n = Int(ms.numberOfScrollbackLines) })
+        return n
+    }
+
+    /// Number of fold marks whose line currently lives in the addressable grid (at or below the top
+    /// of the visible screen): the ones at risk of being overwritten and orphaned by a repaint.
+    private func foldsInGrid(_ screen: VT100Screen) -> Int {
+        var n = 0
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            let gridTopAbs = ms.cumulativeScrollbackOverflow + Int64(ms.numberOfScrollbackLines)
+            n = ms.intervalTree.allObjects().filter { obj in
+                guard let fold = obj as? FoldMark, let interval = fold.entry?.interval else { return false }
+                return ms.absCoordRange(for: interval).start.y >= gridTopAbs
+            }.count
+        })
+        return n
+    }
+
+    private func makeScreenWithFold() -> VT100Screen {
+        let screen = VT100Screen()
+        session.screen = screen
+        screen.delegate = session
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms.terminalEnabled = true
+            ms.terminal!.termType = "xterm"
+            screen.destructivelySetScreenWidth(5, height: 6, mutableState: ms)
+            for line in ["AAAA", "BBBB", "CCCC", "DDDD"] {
+                ms.appendString(atCursor: line)
+                ms.appendCarriageReturnLineFeed()
+            }
+        })
+        // Fold BBBB and CCCC (abs lines 1...2) into one placeholder. No FTCS was sent, so there is
+        // no shell integration: the command-output path cannot fire and the fold is the only anchor.
+        screen.foldAbsLineRange(NSRange(location: 1, length: 1))
+        screen.performBlock(joinedThreads: { _, _, _ in })
+        return screen
+    }
+
+    /// A program that doesn't use the alternate screen homes the cursor above an in-grid fold and
+    /// repaints. Even with no shell integration, the fold must be scrolled into history (preserving
+    /// its mark) instead of being overwritten in place and leaving an orphaned unfold icon.
+    func testScrollsFoldIntoHistoryWithoutShellIntegration() {
+        let screen = makeScreenWithFold()
+
+        XCTAssertLessThan(screen.startOfRunningCommandOutput.x, 0,
+                          "setup: no shell integration, so the command-output path cannot fire")
+        XCTAssertEqual(foldCount(screen), 1, "setup: one fold")
+        XCTAssertEqual(scrollbackLines(screen), 0, "setup: nothing in history yet")
+        XCTAssertEqual(foldsInGrid(screen), 1, "setup: the fold is in the grid")
+
+        feed(screen, "\u{1b}[H")   // CSI H: move cursor to top-left, above the fold
+
+        XCTAssertEqual(foldCount(screen), 1, "the fold must be preserved, not destroyed")
+        XCTAssertGreaterThan(scrollbackLines(screen), 0, "the fold and content above it scrolled into history")
+        XCTAssertEqual(foldsInGrid(screen), 0, "no fold left in the grid to be orphaned")
+    }
+
+    /// Control: while the cursor stays below the bottommost fold they coexist, so a repaint below the
+    /// fold must not scroll anything into history.
+    func testDoesNotScrollWhenCursorStaysBelowFold() {
+        let screen = makeScreenWithFold()
+        let before = scrollbackLines(screen)
+
+        feed(screen, "\u{1b}[4;1H")   // move the cursor to a row below the fold
+
+        XCTAssertEqual(scrollbackLines(screen), before, "must not scroll when the cursor is below the fold")
+        XCTAssertEqual(foldsInGrid(screen), 1, "the fold remains in the grid, coexisting with the cursor")
+    }
+
+    /// The actual reported scenario: shell integration IS installed, but the program (Claude Code)
+    /// emits FTCS C, draws its banner, and only THEN homes the cursor to repaint. The banner draw sets
+    /// appendedTextSinceCommandExecuted, so saveScreenToScrollbackIfCursorMovedAboveCommandOutput bails
+    /// at its mid-run-repaint guard. The fold path doesn't consult that flag, so it must still preserve
+    /// the fold.
+    func testScrollsFoldIntoHistoryWhenProgramDrawsThenHomesWithShellIntegration() {
+        let screen = VT100Screen()
+        session.screen = screen
+        screen.delegate = session
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms.terminalEnabled = true
+            ms.terminal!.termType = "xterm"
+            screen.destructivelySetScreenWidth(5, height: 8, mutableState: ms)
+            for line in ["TOP0", "TOP1", "TOP2", "PMPT"] {
+                ms.appendString(atCursor: line)
+                ms.appendCarriageReturnLineFeed()
+            }
+        })
+        // Fold the top prior content (TOP0, TOP1) into one placeholder at the top of the grid.
+        screen.foldAbsLineRange(NSRange(location: 0, length: 1))
+        screen.performBlock(joinedThreads: { _, _, _ in })
+
+        // Shell integration: establish a running command (FTCS C), which sets the output start and
+        // resets appendedTextSinceCommandExecuted, mirroring a real shell launching `claude`.
+        screen.performBlock(joinedThreads: { _, ms, _ in
+            ms.setCoordinateOfCommandStart(VT100GridAbsCoord(x: 0, y: 2))
+            ms.terminalCommandDidEnd()
+        })
+        XCTAssertGreaterThanOrEqual(screen.startOfRunningCommandOutput.x, 0,
+                                    "setup: shell integration established an output start")
+        XCTAssertEqual(foldsInGrid(screen), 1, "setup: the fold is in the grid")
+
+        // The program draws its banner BEFORE homing the cursor. This sets the appended-text flag, which
+        // is exactly what makes the command-output preservation path bail.
+        feed(screen, "BANNER")
+
+        // Now it homes the cursor above the fold and repaints.
+        feed(screen, "\u{1b}[H")
+
+        XCTAssertEqual(foldCount(screen), 1, "fold preserved")
+        XCTAssertEqual(foldsInGrid(screen), 0,
+                       "fold scrolled into history even though the command-output path bailed on appendedText")
+    }
+
 }

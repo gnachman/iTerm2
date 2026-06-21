@@ -72,14 +72,14 @@ do {
         sign(privateEdKey: privateKey, message: message)
 
     case "generate":
-        guard CommandLine.arguments.count == 1 else {
+        guard CommandLine.arguments.count == 2 else {
             print("usage: SignPlugin generate", to: &standardError)
             exit(1)
         }
         generate()
 
     case "verify":
-        guard CommandLine.arguments.count == 4 else {
+        guard CommandLine.arguments.count == 5 else {
             print("usage: SignPlugin verify pubkey signature msgpath", to: &standardError)
             exit(1)
         }

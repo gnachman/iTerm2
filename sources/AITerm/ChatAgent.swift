@@ -337,10 +337,11 @@ class ChatAgent {
                 break
             }
         }
-        // Pair any orphaned tool_result with a synthesized tool_use so the
-        // vendor doesn't reject the rebuilt prompt. Heals conversations that
-        // were serialized before this fix as well as new ones.
-        conversation.messages = AIChatToolCallRepair.repairingOrphanedToolResults(
+        // Pair any orphaned tool_result with a synthesized tool_use, and any
+        // orphaned tool_use with a synthesized tool_result, so the vendor
+        // doesn't reject the rebuilt prompt. Heals conversations that were
+        // serialized before this fix as well as new ones.
+        conversation.messages = AIChatToolCallRepair.repairingOrphanedToolPairs(
             translate(messages: messages))
 
         switch mode {
@@ -376,6 +377,10 @@ class ChatAgent {
         var aiMessages: [AITermController.Message] = []
         var pendingByRequestID: [UUID: PendingRequest] = [:]
         var orderedPendingIDs: [UUID] = []
+        // aiMessages index of each request's functionCall, so an orphan's
+        // synthesized output can be inserted right after its call rather
+        // than at the end of the transcript (see the orphan filler loop).
+        var callIndexByRequestID: [UUID: Int] = [:]
 
         for message in messages {
             switch message.content {
@@ -386,6 +391,7 @@ class ChatAgent {
             case .remoteCommandRequest(let payload, safe: _):
                 guard let call = payload.llmMessage.function_call else { continue }
                 let fcID = payload.llmMessage.functionCallID
+                callIndexByRequestID[message.uniqueID] = aiMessages.count
                 aiMessages.append(AITermController.Message(
                     responseID: nil,
                     role: .assistant,
@@ -448,21 +454,35 @@ class ChatAgent {
             }
         }
 
-        // Synthesize orphan filler outputs in insertion order so the
-        // function-call/output pairing remains legible.
+        // Pair every still-orphaned request with a synthesized
+        // "interrupted" output inserted IMMEDIATELY AFTER its function
+        // call, not at the end of the transcript. OpenAI-style
+        // chat-completions vendors (DeepSeek, legacy OpenAI) require an
+        // assistant tool_calls message to be followed directly by the
+        // tool output for each tool_call_id; appending the filler at the
+        // end leaves any intervening user/assistant message between the
+        // call and its output, which DeepSeek rejects with HTTP 400
+        // "insufficient tool messages following tool_calls message"
+        // (GitLab #12883). Collect (index, message) first, then insert in
+        // descending index order so an earlier insertion doesn't shift
+        // the target index of a later one.
+        var orphanInserts: [(index: Int, message: AITermController.Message)] = []
         for requestID in orderedPendingIDs {
-            guard let pending = pendingByRequestID.removeValue(forKey: requestID) else {
+            guard let pending = pendingByRequestID.removeValue(forKey: requestID),
+                  let callIndex = callIndexByRequestID[requestID] else {
                 continue
             }
-            aiMessages.append(AITermController.Message(
+            let filler = AITermController.Message(
                 responseID: nil,
                 role: .function,
                 body: .functionOutput(
                     name: pending.name,
-                    output: "[iTerm2 was restarted before this tool call completed. "
-                          + "The call did not finish; assume no side effects took place "
-                          + "and re-issue if needed.]",
-                    id: pending.functionCallID)))
+                    output: AIChatToolCallRepair.interruptedToolCallOutput,
+                    id: pending.functionCallID))
+            orphanInserts.append((callIndex + 1, filler))
+        }
+        for insert in orphanInserts.sorted(by: { $0.index > $1.index }) {
+            aiMessages.insert(insert.message, at: insert.index)
         }
 
         return aiMessages
@@ -832,6 +852,35 @@ class ChatAgent {
             guard let self else {
                 return
             }
+            #if ITERM_DEBUG
+            // TEMPORARY probe (Development builds only — ITERM_DEBUG is set only
+            // in the Development config, not Beta/Nightly/Deployment, and this
+            // target never defines DEBUG): a turn that completes while
+            // an orchestration tool call is still parked is the bug we're
+            // chasing — the agent swaps in a fresh conversation on completion
+            // and the parked tool's eventual result resumes a dead controller.
+            // Log the result shape, the last message body kind, and how many
+            // tool calls are still parked so a reproduction pins the trigger.
+            do {
+                let kind: String
+                switch result {
+                case .success: kind = "success"
+                case .failure(let e):
+                    kind = (e is PendingCommandCanceled) ? "cancelled" : "failure(\(e))"
+                }
+                let lastBody: String
+                switch result.successValue?.messages.last?.body {
+                case .some(.functionCall(let call, _)): lastBody = "functionCall(\(call.name ?? "?"))"
+                case .some(.text(let t)): lastBody = "text(\(OrchestrationToolProvider.snippet(of: String(t.prefix(60)))))"
+                case .some(.multipart): lastBody = "multipart"
+                case .some(.functionOutput): lastBody = "functionOutput"
+                case .some(.attachment): lastBody = "attachment"
+                case .some(.uninitialized): lastBody = "uninitialized"
+                case .none: lastBody = "none"
+                }
+                NSFuckingLog("ChatAgent.complete done: result=\(kind) lastBody=\(lastBody) parkedToolCalls=\(self.pendingRemoteCommands.count) needsRenaming=\(needsRenaming)")
+            }
+            #endif
             if result.failureValue is PendingCommandCanceled {
                 completion(nil)
                 return
@@ -1207,7 +1256,7 @@ extension ChatAgent {
     }
 
     static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
-        return AIChatToolCallRepair.repairingOrphanedToolResults(
+        return AIChatToolCallRepair.repairingOrphanedToolPairs(
             transcriptMessagesBeforeRepair(messages))
     }
 }

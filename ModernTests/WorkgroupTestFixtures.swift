@@ -15,7 +15,9 @@ import XCTest
 // the mapping from config UUID → live session, so tests can resolve
 // any config node to its runtime session without going through the
 // real iTermSessionFactory / PseudoTerminal machinery.
-final class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
+// Non-final so sabotage subclasses (e.g. TerminateDuringSpawnSpawner)
+// can inject failures at precise points in the spawn sequence.
+class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
     enum SpawnKind { case peer, split, tab }
 
     struct SpawnRecord {
@@ -50,12 +52,43 @@ final class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
         return sessionsByConfigID[id]
     }
 
+    // Config IDs whose spawnPeer returns an UNFULFILLED promise instead
+    // of an immediately-realized session. Tests fulfill them later via
+    // fulfillPendingPeer to exercise the late-fulfillment paths (the
+    // didTeardown guard in attachBackPointers, the invalidated guard in
+    // PTYSessionPeerPort's init fan-out, activation rollback). The real
+    // spawner is asynchronous in exactly this way: makeWorkgroupPeer
+    // resolves the parent's PWD before fulfilling.
+    var pendingPeerConfigIDs: Set<String> = []
+    private var pendingSeals: [String: iTermPromiseSeal] = [:]
+
+    func fulfillPendingPeer(configID: String, with session: PTYSession) {
+        guard let seal = pendingSeals.removeValue(forKey: configID) else {
+            return
+        }
+        sessionsByConfigID[configID] = session
+        seal.fulfill(session)
+    }
+
+    // Fails a pending peer's spawn the way the real spawner does when
+    // the parent dies mid-spawn or its profile/view is missing.
+    func rejectPendingPeer(configID: String) {
+        pendingSeals.removeValue(forKey: configID)?
+            .reject(NSError(domain: "WorkgroupTestFixtures", code: 1))
+    }
+
     func spawnPeer(parent: PTYSession,
                    config: iTermWorkgroupSessionConfig,
                    workgroupInstanceID: String) -> iTermPromise<PTYSession> {
+        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
+        if pendingPeerConfigIDs.contains(config.uniqueIdentifier) {
+            records.append(SpawnRecord(kind: .peer, parent: parent, config: config, session: nil))
+            return iTermPromise<PTYSession> { seal in
+                pendingSeals[config.uniqueIdentifier] = seal
+            }
+        }
         let session = makeSession()
         sessionsByConfigID[config.uniqueIdentifier] = session
-        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
         records.append(SpawnRecord(kind: .peer, parent: parent, config: config, session: session))
         return iTermPromise<PTYSession>(value: session)
     }
@@ -87,6 +120,92 @@ final class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
         // wiring goes. We never start its shell; the spawner doesn't
         // call launch, and tests don't drive session.terminate().
         return sessionFactory()
+    }
+}
+
+// MARK: - TerminateDuringSpawnSpawner
+
+// Posts iTermSessionWillTerminate for a chosen session synchronously
+// inside the first spawnSplit, simulating a member dying while the
+// entry spawn loop is still running. iTermWorkgroupInstance's
+// observer is live at that point (registered in its init, which runs
+// before spawnNonPeerChildren), so this deterministically drives the
+// mid-spawn teardown reentrancy paths: enter() must not register the
+// torn-down instance, and children must not be pointed at the corpse.
+final class TerminateDuringSpawnSpawner: FakeWorkgroupSpawner {
+    var terminateTarget: (() -> PTYSession?)?
+
+    override func spawnSplit(parent: PTYSession,
+                             config: iTermWorkgroupSessionConfig,
+                             settings: SplitSettings,
+                             workgroupInstanceID: String) -> PTYSession? {
+        if let provider = terminateTarget, let target = provider() {
+            terminateTarget = nil
+            NotificationCenter.default.post(
+                name: NSNotification.Name.iTermSessionWillTerminate,
+                object: target)
+        }
+        return super.spawnSplit(parent: parent,
+                                config: config,
+                                settings: settings,
+                                workgroupInstanceID: workgroupInstanceID)
+    }
+}
+
+// MARK: - TerminateDuringPeerSpawnSpawner
+
+// Like TerminateDuringSpawnSpawner, but the sabotage fires inside
+// spawnPeer instead of spawnSplit — the window where a nested peer
+// group's peers are being spawned for a host that is already installed
+// in the window. Drives the registerNestedPeerPort teardown backstop:
+// the host must be closed as a stray and the port invalidated, not
+// appended to the dead instance.
+final class TerminateDuringPeerSpawnSpawner: FakeWorkgroupSpawner {
+    var terminateTarget: (() -> PTYSession?)?
+
+    override func spawnPeer(parent: PTYSession,
+                            config: iTermWorkgroupSessionConfig,
+                            workgroupInstanceID: String) -> iTermPromise<PTYSession> {
+        if let provider = terminateTarget, let target = provider() {
+            terminateTarget = nil
+            NotificationCenter.default.post(
+                name: NSNotification.Name.iTermSessionWillTerminate,
+                object: target)
+        }
+        return super.spawnPeer(parent: parent,
+                               config: config,
+                               workgroupInstanceID: workgroupInstanceID)
+    }
+}
+
+// MARK: - RollbackSpyPort
+
+// Lets activation-rollback tests drive PTYSessionPeerPort.activate's
+// commit path without a real tab: hasActivationAnchor is the seam the
+// production class exposes because PTYSessionDelegate cannot be
+// stubbed (about a hundred required methods). Records every
+// activationDidRollBack so tests can assert the subclass hook (the
+// mode-switcher resync contract) fired.
+final class RollbackSpyPort: PTYSessionPeerPort {
+    var rolledBackTo: [String] = []
+
+    override func hasActivationAnchor() -> Bool {
+        return true
+    }
+
+    override func activationDidRollBack(to identifier: String) {
+        rolledBackTo.append(identifier)
+    }
+}
+
+// Drives PTYSessionPeerPort.hasRestorableAnchor without the
+// iTermBuriedSessions singleton: isBuried is the production seam, so a
+// test marks whichever members it wants treated as buried.
+final class BuriedSeamSpyPort: PTYSessionPeerPort {
+    var buried: [PTYSession] = []
+
+    override func isBuried(_ session: PTYSession) -> Bool {
+        return buried.contains { $0 === session }
     }
 }
 
@@ -337,6 +456,12 @@ class WorkgroupEntryTestBase: XCTestCase {
     }
 
     override func tearDown() {
+        // Every workgroup test sweeps the controller's registry
+        // invariants for free: no torn-down instance registered, keys
+        // matching, leader back-pointers resolving. A violation here
+        // points at whatever the test just did, instead of surfacing
+        // as a ghost in some later test (or in the field).
+        iTermWorkgroupController.instance.checkConsistency()
         // Drop strong refs in a defined order so deinit never has to
         // look at a partially-released graph.
         instance = nil

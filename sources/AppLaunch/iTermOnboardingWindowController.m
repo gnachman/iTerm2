@@ -13,29 +13,70 @@
 #import "ProfileModel.h"
 #import "SessionView.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermClickableTextField.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSessionLauncher.h"
 #import "iTermUserDefaults.h"
+#import "iTermWarning.h"
 
 static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnboardingWindowHasBeenShown34";
 
 static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
-    NSURL *url = [NSURL URLWithString:@"iterm2-about:onboarding-intro"];
-
-    if ([path isEqualToString:@"/browser"]) {
-        if (![iTermBrowserGateway browserAllowedCheckingIfNot:YES]) {
-            if ([iTermBrowserGateway shouldOfferPlugin]) {
-                [iTermBrowserGateway offerPlugin];
-                return;
-            }
+    if ([path isEqualToString:@"companion"]) {
+        if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
+            [iTermWarning showWarningWithTitle:@"Generative AI features have been disabled. Talk to your enterprise system administrator."
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Feature Unavailable"
+                                        window:window];
+            return;
         }
-        [[iTermController sharedInstance] openURL:url
-                                           target:nil
-                                        openStyle:iTermOpenStyleTab
-                                           select:YES];
+        if (![iTermAdvancedSettingsModel companionPairingAllowed]) {
+            [iTermWarning showWarningWithTitle:@"Companion device pairing has been disabled. Talk to your enterprise system administrator."
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Feature Unavailable"
+                                        window:window];
+            return;
+        }
+        [[iTermCompanionPairingWindowController shared] showAndBeginPairing];
+        return;
+    }
+    if ([path isEqualToString:@"claudecode"]) {
+        // show is idempotent: it pre-marks already-completed steps, so the
+        // same entry point serves a fresh install and a reinstall/repair of
+        // an existing one. (The menu splits Install/Reinstall only for
+        // labeling; both call through to here.)
+        [iTermClaudeCodeOnboarding show];
+        return;
+    }
+    if ([path isEqualToString:@"screenshot"]) {
+        if (![iTermController sharedInstance].currentTerminal) {
+            [iTermWarning showWarningWithTitle:@"You need an open terminal window to make a screenshot."
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"No Terminal Window"
+                                        window:window];
+            return;
+        }
+        [NSApp sendAction:@selector(makeScreenshot:) to:nil from:nil];
+        return;
+    }
+    if ([path isEqualToString:@"orchestration"]) {
+        // Show the chat window (gated by the AI gatekeeper), then open a fresh
+        // chat with orchestration already turned on. createNewOrchestrationChat
+        // no-ops if the gatekeeper kept the window from appearing.
+        [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
+        [[iTermChatWindowController instanceShowingErrors:NO] createNewOrchestrationChat];
         return;
     }
 }
@@ -70,7 +111,7 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
         url = [NSURL castFrom:urlOrString];
     }
     if ([url.scheme isEqualToString:@"iterm2whatsnew"]) {
-        iTermOpenWhatsNewURL(url.path, self.window);
+        iTermOpenWhatsNewURL(url.resourceSpecifier, self.window);
         return;
     }
     [super openURL:url];

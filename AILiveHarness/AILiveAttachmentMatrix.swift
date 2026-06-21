@@ -39,7 +39,9 @@
 //    deepseek         deepseek-v4-flash. Chat-completions-like; non-text
 //                     binaries get wrapped in <iterm2:attachment> via
 //                     lossyString.
-//    llama            Local-only, no live API key wiring. Cells skip.
+//    llama            Local Ollama (llama4:latest, /api/chat). Runs only
+//                     when LLAMA_API_KEY is set: a record run needs Ollama
+//                     up; replay serves committed cassettes with no Ollama.
 //
 //  Skip semantics: a missing vendor API key skips the lane via
 //  keyOrSkip. A failure within a cell fails the corresponding XCTest
@@ -126,9 +128,15 @@ enum AttachmentLane: String, CaseIterable {
         case .deepseek:
             return try lookup("deepseek-v4-flash")
         case .llama:
-            // No live key wiring; resolveModel is only called after
-            // keyOrSkip has skipped the lane, so this never executes.
-            throw AttachmentMatrixError.lanePermanentlySkipped("llama is local-only, no live API")
+            // Local Ollama, url http://localhost:11434/api/chat. Pinned to
+            // llama3.3:latest: the multimodal llama4 (67GB) does not fit in
+            // 64GB RAM and is unusably slow, and llama3.3 is the llama-family
+            // model in AIMetadata that fits. It is text-only, so the lane
+            // covers the text cells; the binary/image cells stay skipped (see
+            // the matrix). The lane only runs when LLAMA_API_KEY is set (see
+            // keyOrSkipForLane): a record run needs Ollama up; replay serves a
+            // committed cassette and never reaches the network.
+            return try lookup("llama3.3:latest")
         }
     }
 
@@ -305,24 +313,35 @@ enum AttachmentMatrix {
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
 
-        // MARK: llama (no live wiring; every cell skips)
+        // MARK: llama (local Ollama, llama3.3:latest — text cells only)
+        //
+        // Pinned to the text-only llama3.3 because the multimodal llama4 does
+        // not fit in 64GB RAM. The lane therefore covers the text-shaped cells
+        // (the model reads the text content and echoes the probe); the binary
+        // and image cells are skipped here rather than recorded, since a
+        // text-only model can't meaningfully process them and recording garbled
+        // output adds no signal. If a vision model that fits in RAM is later
+        // pinned (e.g. llava / llama3.2-vision), flip the image cells on and
+        // record them. The text expectations are calibration placeholders: the
+        // record run prints `[live] llama <kind>: expected=.. actual=..`;
+        // reconcile any drift before committing the cassettes.
         .llama: [
-            .textPlain:        .skipped(reason: "llama lane has no live API wiring"),
-            .textMarkdown:     .skipped(reason: "llama lane has no live API wiring"),
-            .applicationJSON:  .skipped(reason: "llama lane has no live API wiring"),
-            .applicationXML:   .skipped(reason: "llama lane has no live API wiring"),
-            .imageSVG:         .skipped(reason: "llama lane has no live API wiring"),
-            .yamlAsUnknown:    .skipped(reason: "llama lane has no live API wiring"),
-            .imagePNG:         .skipped(reason: "llama lane has no live API wiring"),
-            .imageWEBP:        .skipped(reason: "llama lane has no live API wiring"),
-            .imageHEIC:        .skipped(reason: "llama lane has no live API wiring"),
-            .imageTIFF:        .skipped(reason: "llama lane has no live API wiring"),
-            .applicationPDF:   .skipped(reason: "llama lane has no live API wiring"),
-            .audioMPEG:        .skipped(reason: "llama lane has no live API wiring"),
-            .videoMP4:         .skipped(reason: "llama lane has no live API wiring"),
-            .applicationDOCX:  .skipped(reason: "llama lane has no live API wiring"),
-            .applicationZIP:   .skipped(reason: "llama lane has no live API wiring"),
-            .applicationOctet: .skipped(reason: "llama lane has no live API wiring"),
+            .textPlain:        .acceptsAndExtractsProbe,
+            .textMarkdown:     .acceptsAndExtractsProbe,
+            .applicationJSON:  .acceptsAndExtractsProbe,
+            .applicationXML:   .acceptsAndExtractsProbe,
+            .imageSVG:         .acceptsAndExtractsProbe,
+            .yamlAsUnknown:    .acceptsAndExtractsProbe,
+            .imagePNG:         .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .imageWEBP:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .imageHEIC:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .imageTIFF:        .skipped(reason: "llama lane pinned to text-only llama3.3; image cells need a vision model that fits in RAM"),
+            .applicationPDF:   .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
+            .audioMPEG:        .skipped(reason: "synth mp3 fixture has no deterministic content probe; garbled vs. heard is indistinguishable"),
+            .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),
+            .applicationDOCX:  .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
+            .applicationZIP:   .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
+            .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
     ]
 

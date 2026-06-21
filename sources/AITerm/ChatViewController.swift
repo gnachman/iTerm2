@@ -2846,6 +2846,15 @@ extension ChatViewController {
     // the agent teardown would write the dispatcher's stale caches
     // back to disk, undoing the clear. dropAgent first → dispatcher
     // deinits, unsubscribes its observers, can no longer persist.
+    // Turn on orchestration for the currently loaded chat. Used by the
+    // "try orchestration" onboarding entry point, which creates a fresh
+    // chat and switches it straight into orchestration rather than merely
+    // offering it. setOrchestrationEnabled is fileprivate; this is the
+    // cross-file door into it.
+    func enableOrchestration() {
+        setOrchestrationEnabled(true)
+    }
+
     fileprivate func setOrchestrationEnabled(_ enabled: Bool) {
         guard let chatID else { return }
         if streaming {

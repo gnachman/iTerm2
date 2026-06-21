@@ -23,6 +23,10 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermStatusBarViewControllerDelegate<NSObject>
 - (NSColor *)statusBarDefaultTextColor;
 - (nullable NSColor *)statusBarSeparatorColor;
+// Color for the separator line drawn between the status bar and the terminal
+// content. nil means use the system separator color (matches the workgroup
+// toolbar in non-minimal themes).
+- (nullable NSColor *)statusBarEdgeSeparatorColor;
 - (NSColor *)statusBarBackgroundColor;
 - (NSColor *)statusBarTerminalBackgroundColor;
 - (NSFont *)statusBarTerminalFont;

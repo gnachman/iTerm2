@@ -72,25 +72,29 @@ private let sessionGuidSchema: [String: Any] =
 // MARK: - Tool list
 
 extension OrchestratorCommand {
-    static let allToolDefinitions: [ToolDefinition] = [
+    // Computed (not a stored let) because parts of the text depend on
+    // runtime state: push-related guidance only appears when a companion
+    // device is paired. Evaluated at agent creation, like the tool list
+    // itself.
+    static var allToolDefinitions: [ToolDefinition] { [
 
         // -------- Discovery --------
 
         ToolDefinition(
             name: ToolName.listWorkgroups.rawValue,
-            description: "List all active workgroups and their member sessions. Each session reports its role within the workgroup, current status (idle/working/waiting), and kind (claude-code/shell/tui/other). Standalone sessions appear as single-session workgroups with a synthetic ID prefixed \u{201C}session:\u{201D}.",
+            description: "List all active workgroups and their member sessions. Each session reports its role within the workgroup, current status (idle/working/waiting), status_source, and kind (claude-code/shell/tui/other). status_source says how much to trust `status`: \u{201C}reported\u{201D} means the program announces its own status (accurate, and state watchers fire on exact transitions); \u{201C}inferred\u{201D} means iTerm2 is guessing from indicators, so `status` is unreliable (e.g. a program waiting at a splash screen looks \u{201C}idle\u{201D}). Standalone sessions appear as single-session workgroups with a synthetic ID prefixed \u{201C}session:\u{201D}.",
             inputSchema: emptyObjectSchema),
 
         ToolDefinition(
             name: ToolName.getState.rawValue,
-            description: "Get rich state for a single session, including the last cc-status detail message for Claude Code sessions.",
+            description: "Get rich state for a single session, including the last cc-status detail message for Claude Code sessions. The status_source field says whether `status` is announced by the program itself (\u{201C}reported\u{201D}, trustworthy) or guessed from indicators (\u{201C}inferred\u{201D}, unreliable).",
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
             ], required: ["session_guid"])),
 
         ToolDefinition(
             name: ToolName.getScreenContents.rawValue,
-            description: "Get the visible contents of a session. For Claude Code sessions, returns a synthesized view of recent hook events (assistant messages, tool calls). For shell sessions, returns scrollback. For TUI sessions, returns a snapshot of the rendered screen with is_snapshot=true; there is no history beyond what's currently displayed. The result includes a kind field so you know how to read the text.",
+            description: "Get the visible contents of a session. For Claude Code sessions, returns a synthesized view of recent hook events (assistant messages, tool calls). For shell sessions, returns scrollback. For TUI sessions, returns a snapshot of the rendered screen with is_snapshot=true; there is no history beyond what's currently displayed. The result includes a kind field so you know how to read the text.\n\nThe text uses a few markup tokens (the angle brackets are U+27E8/U+27E9 and effectively never occur in real terminal output):\n\u{27E8}dim\u{27E9}\u{2026}\u{27E8}/dim\u{27E9} wraps faint/dimmed text. This is how shells and TUIs render inline suggestions and ghost completions (zsh-autosuggestions, fish autosuggest, Claude Code's suggested reply, etc.). \n\u{27E8}cursor\u{27E9} marks the text cursor's position. \n\u{27E8}image\u{27E9} stands in for an inline image. These tokens are inserted by iTerm2 and are not literally present on the screen.",
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
                 ("lines", integer("Number of trailing lines to return for shell sessions. Default 100. Ignored for tui/claude-code kinds.")),
@@ -160,7 +164,7 @@ extension OrchestratorCommand {
 
         ToolDefinition(
             name: ToolName.registerWatch.rawValue,
-            description: "Register an async watcher for a session reaching a particular state (idle / working / waiting). This call returns immediately and does NOT block your turn. When the watched state is reached, iTerm2 delivers a `<status_update>...</status_update>` message into the chat as a separate turn; treat that as a system event from iTerm2 (not a new user request) and respond with a brief summary to the user. Watchers are de-duplicated on (session, target_state): registering the same watch twice returns the existing watcher_id. If the target is already in the desired state at registration time, the watcher fires immediately. Watchers persist across iTerm2 restarts; if a watched session can't be restored, you get a status_update with reason=\u{201C}watcher_dropped\u{201D}. Sessions that report no machine-readable status (plain TUIs, coding agents that don't emit status, bare shells) are watched by reading the screen instead; this still returns immediately and you still get a status_update, but if the target isn't reached within a few minutes you get reason=\u{201C}watch_timed_out\u{201D} and can re-register. Either way, do NOT poll yourself.",
+            description: "Register an async watcher on a session. Supply exactly ONE of target_state or condition. This call returns immediately and does NOT block your turn. When the watch fires, iTerm2 delivers a `<status_update>...</status_update>` message into the chat as a separate turn; treat that as a system event from iTerm2 (not a new user request) and respond with a brief summary to the user.\(CompanionPushRegistry.devicePaired ? " When the user asked to be told or alerted when this happens, set notify_user=true: iTerm2 then sends a push notification to their iPhone automatically when the watch fires (a chat reply alone won't reach a user who is away from the Mac). If notifications aren't enabled yet, call request_notification_permission before registering." : "") Choosing the form: use target_state (idle/working/waiting) when the session's status_source is \u{201C}reported\u{201D} (see list_workgroups / get_state) — the watch then fires on the program's own exact status transitions. When status_source is \u{201C}inferred\u{201D}, or when what you're waiting for isn't really an idle/working/waiting transition (e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}, \u{201C}the build printed a success or failure line\u{201D}, \u{201C}a password prompt appeared\u{201D}), prefer condition: a plain-English description that an AI judge evaluates by periodically reading the session's screen. Inferred idle/busy is ambiguous (a program parked at a splash screen counts as \u{201C}idle\u{201D}), so a specific condition is far more accurate there. Screen-judged watches (all condition watches, and target_state watches on \u{201C}inferred\u{201D} sessions) time out after a few minutes with reason=\u{201C}watchTimedOut\u{201D}; re-register to keep waiting. Watchers are de-duplicated on (session, target_state, condition): registering the same watch twice returns the existing watcher_id. If the goal is already satisfied at registration time, the watcher fires immediately. Watchers persist across iTerm2 restarts; if a watched session can't be restored, you get a status_update with reason=\u{201C}watcherDropped\u{201D}. Either way, do NOT poll yourself.",
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
                 // "unknown" is included in the enum so the schema matches
@@ -168,8 +172,11 @@ extension OrchestratorCommand {
                 // get_state output), but it isn't a transition target;
                 // the dispatcher rejects watch registrations for
                 // "unknown" with a clear error.
-                ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. \u{201C}unknown\u{201D} is shown by get_state when a session has no tab status yet, but it is not a watchable transition.", enumValues: ["idle", "working", "waiting", "unknown"])),
-            ], required: ["session_guid", "target_state"])),
+                ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. \u{201C}unknown\u{201D} is shown by get_state when a session has no tab status yet, but it is not a watchable transition. Mutually exclusive with condition.", enumValues: ["idle", "working", "waiting", "unknown"])),
+                ("condition", string("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state.")),
+            ] + (CompanionPushRegistry.devicePaired ? [
+                ("notify_user", boolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself.")),
+            ] : []), required: ["session_guid"])),
 
         ToolDefinition(
             name: ToolName.unregisterWatch.rawValue,
@@ -182,5 +189,24 @@ extension OrchestratorCommand {
             name: ToolName.listWatches.rawValue,
             description: "List every async watcher currently registered for this chat.",
             inputSchema: emptyObjectSchema),
-    ]
+
+        // -------- Companion phone --------
+
+        // The push tools are conditionally offered (see
+        // OrchestrationToolProvider's filter): notify whenever a companion
+        // phone is paired, request_notification_permission only while a
+        // phone is connected but cannot yet receive pushes.
+        ToolDefinition(
+            name: ToolName.notify.rawValue,
+            description: "Send a push notification to the user's iPhone (their paired iTerm2 companion device). Use it to alert the user to something that needs their attention when they may be away from the Mac: a long-running task finished, a session is waiting on input, or an error needs their decision. Keep it brief; it renders as a standard iOS notification. Do not use it for routine progress updates. If it fails because notifications aren't enabled, call request_notification_permission first.",
+            inputSchema: object([
+                ("title", string("Short notification title, a few words.")),
+                ("body", string("Notification body, one or two sentences.")),
+            ], required: ["title", "body"])),
+
+        ToolDefinition(
+            name: ToolName.requestNotificationPermission.rawValue,
+            description: "Ask the user, on their paired iPhone, for permission to receive notifications. Call this before the first notify when the user asks to be alerted about something (e.g. \u{201C}let me know when my job finishes\u{201D}) and notifications aren't enabled yet. iOS shows its standard permission dialog on the phone; this returns the outcome. If the user previously declined, the dialog cannot be shown again and they must enable notifications in iOS Settings, which the result will say. This is a valuable feature that users won't discover on their own, so offer this when they ask to be notified (for example, if you create a watcher, you should probably request notification permission). If the result is a decline, accept it: do not call this again or lobby the user about Settings unless they bring it up.",
+            inputSchema: emptyObjectSchema),
+    ] }
 }

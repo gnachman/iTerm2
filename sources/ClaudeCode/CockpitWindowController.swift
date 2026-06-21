@@ -311,8 +311,10 @@ class CockpitWindowController: NSWindowController {
         // peers via the peer-port fallback. PTYSession.reveal handles
         // peer activation internally (swaps the peer into its tab via
         // peerPort.activate), so we don't have to disambiguate active
-        // vs inactive peers here. revealSession(withGUID:) on the
-        // controller would miss inactive peers entirely.
+        // vs inactive peers here. (The controller's
+        // revealSession(withGUID:) is nowadays the same lookup + reveal;
+        // resolving the session here just lets us bail explicitly when
+        // the guid no longer exists.)
         guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
             return
         }

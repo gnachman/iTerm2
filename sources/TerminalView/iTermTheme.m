@@ -250,6 +250,18 @@
     }
 }
 
+#pragma mark Status Bar Edge Separator Color
+
+- (nullable NSColor *)statusBarEdgeSeparatorColorForTabStyle:(id<PSMTabStyle>)tabStyle {
+    if (!self.useMinimalStyle) {
+        // Callers fall back to the system separator color, which matches the
+        // workgroup toolbar's dividers in the non-minimal themes.
+        return nil;
+    }
+    PSMMinimalTabStyle *minimalStyle = [PSMMinimalTabStyle castFrom:tabStyle];
+    return [minimalStyle outlineColor];
+}
+
 #pragma mark - Private
 
 #pragma mark Session Decoration Background Color

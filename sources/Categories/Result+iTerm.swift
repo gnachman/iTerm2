@@ -4,6 +4,11 @@
 //
 //  Created by George Nachman on 2/25/25.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only). 
+//
+
+import Foundation
 
 extension Result: @retroactive Codable where Success: Codable, Failure: Codable {
     enum CodingKeys: String, CodingKey {

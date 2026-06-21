@@ -1641,6 +1641,16 @@ extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
         guard let session = delegate?.browserViewControllerSession(self) else {
             return
         }
+        // Route through the shared menu/trigger policy seam rather than
+        // re-implementing "not already in a workgroup" inline, so a
+        // future refusal predicate on the controller can't silently
+        // miss this path. canEnterFromUI also covers the restoring and
+        // unusable-workgroup cases.
+        guard iTermWorkgroupController.instance.canEnterFromUI(
+                workgroupUniqueIdentifier: uniqueIdentifier, on: session) else {
+            DLog("browserTriggerEnterWorkgroup: refused for workgroup \(uniqueIdentifier) on session \(session.guid)")
+            return
+        }
         iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: uniqueIdentifier,
                                                 on: session)
     }

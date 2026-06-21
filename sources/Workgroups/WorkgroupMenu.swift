@@ -66,7 +66,7 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
               update item: NSMenuItem,
               at index: Int,
               shouldCancel: Bool) -> Bool {
-        item.isEnabled = canEnter
+        item.isEnabled = shouldEnable(item: item)
         return false
     }
 
@@ -76,12 +76,21 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
     // there's no current terminal window.
     @objc
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        return canEnter
+        return shouldEnable(item: menuItem)
     }
 
-    private var canEnter: Bool {
+    private func shouldEnable(item: NSMenuItem) -> Bool {
         guard let session = currentSession() else { return false }
-        return session.workgroupInstance == nil
+        guard let id = item.representedObject as? String else {
+            // Not a per-workgroup entry (e.g. the parent menu item).
+            return true
+        }
+        // The shared menu/trigger policy: in no workgroup yet AND the
+        // controller would proceed. Routing through the one seam keeps
+        // this enable check, the browser/terminal triggers, and enter()
+        // itself from drifting as refusal predicates evolve.
+        return iTermWorkgroupController.instance.canEnterFromUI(
+            workgroupUniqueIdentifier: id, on: session)
     }
 
     // MARK: - Action

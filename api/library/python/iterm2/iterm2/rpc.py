@@ -169,7 +169,8 @@ async def async_create_tab(
         window=None,
         index=None,
         command=None,
-        profile_customizations=None):
+        profile_customizations=None,
+        select=True):
     """
     Creates a new tab or window.
 
@@ -181,11 +182,15 @@ async def async_create_tab(
     command: The command to run in the new session, or None for its default
         behavior.
     profile_customizations: None, or a dictionary of overrides.
+    select: If True (the default), select the new tab and order its window to
+        the front. If False, create the tab in the background without moving
+        keyboard focus. A brand-new window is always ordered front.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
     request = _alloc_request()
     request.create_tab_request.SetInParent()
+    request.create_tab_request.select_tab = select
     if profile is not None:
         request.create_tab_request.profile_name = profile
     if window is not None:

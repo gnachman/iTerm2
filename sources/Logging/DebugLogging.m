@@ -26,6 +26,9 @@ static NSMutableString* gDebugLogStr = nil;
 
 static NSMutableDictionary *gPinnedMessages;
 BOOL gDebugLogging = NO;
+// Keys already emitted by DLogOncePerLoggingSession this logging
+// session. Guarded by GetDebugLogLock(); cleared in StartDebugLogging.
+static NSMutableSet<NSString *> *gOncePerLoggingSessionKeys;
 
 static NSRecursiveLock *GetDebugLogLock(void) {
     static NSRecursiveLock *gDebugLogLock = nil;
@@ -338,6 +341,10 @@ static void StartDebugLogging(void) {
         }
         gDebugLogStr = [[NSMutableString alloc] init];
         gDebugLogging = !gDebugLogging;
+        // A new logging session re-arms every once-per-session
+        // diagnostic: whatever was emitted into a previous capture
+        // left with that capture.
+        [gOncePerLoggingSessionKeys removeAllObjects];
         WriteDebugLogHeader();
     }
     [GetDebugLogLock() unlock];
@@ -355,6 +362,27 @@ static BOOL StopDebugLogging(void) {
     }
     [GetDebugLogLock() unlock];
     return result;
+}
+
+void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void)) {
+    if (!gDebugLogging) {
+        return;
+    }
+    BOOL shouldLog = NO;
+    [GetDebugLogLock() lock];
+    if (gDebugLogging) {
+        if (!gOncePerLoggingSessionKeys) {
+            gOncePerLoggingSessionKeys = [NSMutableSet set];
+        }
+        if (![gOncePerLoggingSessionKeys containsObject:key]) {
+            [gOncePerLoggingSessionKeys addObject:key];
+            shouldLog = YES;
+        }
+    }
+    [GetDebugLogLock() unlock];
+    if (shouldLog) {
+        DLog(@"%@", messageBlock());
+    }
 }
 
 void TurnOnDebugLoggingSilently(void) {

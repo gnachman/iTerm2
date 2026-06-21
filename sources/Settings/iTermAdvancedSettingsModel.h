@@ -224,6 +224,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fullHeightCursor;
 + (BOOL)fullWidthFlags;
 + (BOOL)generativeAIAllowed;
++ (BOOL)companionPairingAllowed;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (void)setGitTimeout:(double)value;

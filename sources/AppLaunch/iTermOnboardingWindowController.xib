@@ -132,24 +132,25 @@
                 <outlet property="view" destination="fTJ-RA-Rgc" id="sJ3-30-6Ba"/>
             </connections>
         </pagecontroller>
-        <customView id="uKS-OK-cAN" userLabel="Web" customClass="iTermOnboardingView">
+        <customView id="uKS-OK-cAN" userLabel="Companion" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq" userLabel="Web">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq" userLabel="Title">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="TODO" id="LXN-RX-ZgC">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Companion iPhone App" id="LXN-RX-ZgC">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" customClass="iTermOnboardingTextField">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" userLabel="Detail" customClass="iTermOnboardingTextField">
                     <rect key="frame" x="18" y="20" width="589" height="48"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="TODO" id="0Bk-78-p2L">
+                    <textFieldCell key="cell" alignment="center" id="0Bk-78-p2L">
                         <font key="font" metaFont="system"/>
+                        <string key="title">Use iTerm2 while you are apart from your Mac. You can control it via AI chat, view session content, and receive push notifications. End-to-end encryption keeps your data safe. &lt;a href="iterm2whatsnew:companion"&gt;Try it now!&lt;/a&gt;</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -160,19 +161,19 @@
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jRF-f4-nke">
                     <rect key="frame" x="20" y="76" width="585" height="205"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Web" id="Q5w-FO-7Jc"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Companion" id="Q5w-FO-7Jc"/>
                 </imageView>
             </subviews>
             <point key="canvasLocation" x="-175.5" y="-384.5"/>
         </customView>
-        <customView id="Cc0-Vj-shB" userLabel="AI Chat" customClass="iTermOnboardingView">
+        <customView id="Cc0-Vj-shB" userLabel="Claude Code" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi" userLabel="Title">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="TODO" id="hKz-h7-CcP">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Claude Code Integration" id="hKz-h7-CcP">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -181,13 +182,14 @@
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yrA-gS-7pH">
                     <rect key="frame" x="20" y="43" width="577" height="257"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Chat" id="Igz-7Y-Uwf"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-ClaudeCode" id="Igz-7Y-Uwf"/>
                 </imageView>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u" customClass="iTermOnboardingTextField">
-                    <rect key="frame" x="49" y="20" width="558" height="41"/>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u" userLabel="Detail" customClass="iTermOnboardingTextField">
+                    <rect key="frame" x="49" y="13" width="558" height="51"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="TODO" id="Lvg-vI-G64">
+                    <textFieldCell key="cell" alignment="center" id="Lvg-vI-G64">
                         <font key="font" metaFont="system"/>
+                        <string key="title">The Claude Code integration organizes multiple related sessions—such as code review and reading diffs—into a customizable UI. It also exposes Claude’s status so you can easily find instances that are blocked on your attention. &lt;a href="iterm2whatsnew:claudecode"&gt;Try it now!&lt;/a&gt;</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -198,24 +200,25 @@
             </subviews>
             <point key="canvasLocation" x="494.5" y="-385.5"/>
         </customView>
-        <customView id="U46-lc-cJw" userLabel="RTL" customClass="iTermOnboardingView">
+        <customView id="U46-lc-cJw" userLabel="Screenshot" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="344"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt" userLabel="Title">
                     <rect key="frame" x="18" y="290" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="TODO" id="VcV-iJ-Nlq">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Screenshots" id="VcV-iJ-Nlq">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP" customClass="iTermOnboardingTextField">
-                    <rect key="frame" x="30" y="20" width="577" height="41"/>
+                    <rect key="frame" x="30" y="10" width="577" height="32"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="TODO" id="d4H-cG-h3K">
+                    <textFieldCell key="cell" alignment="center" id="d4H-cG-h3K">
                         <font key="font" metaFont="system"/>
+                        <string key="title">The new Screenshots feature simplifies creating a PNG of your terminal content. It supports redactions and highlights. Use &lt;a href="iterm2whatsnew:screenshot"&gt;Session &gt; Make Screenshot&lt;/a&gt; to activate it.</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -226,29 +229,30 @@
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GpA-wZ-e6o">
                     <rect key="frame" x="30" y="50" width="577" height="238"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-RTL" id="UR7-vx-L4E"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Screenshot" id="UR7-vx-L4E"/>
                 </imageView>
             </subviews>
             <point key="canvasLocation" x="1166.5" y="-386"/>
         </customView>
-        <customView id="olY-Zn-0Bl" userLabel="Command Palette" customClass="iTermOnboardingView">
+        <customView id="olY-Zn-0Bl" userLabel="Orchestration" customClass="iTermOnboardingView">
             <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2" userLabel="Command Palette">
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2" userLabel="Title">
                     <rect key="frame" x="18" y="289" width="589" height="34"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="TODO" id="OAI-gn-AQ7" userLabel="tmux Flow Control">
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Orchestration" id="OAI-gn-AQ7" userLabel="tmux Flow Control">
                         <font key="font" metaFont="systemUltraLight" size="28"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu" customClass="iTermOnboardingTextField">
-                    <rect key="frame" x="30" y="28" width="577" height="32"/>
+                    <rect key="frame" x="30" y="12" width="577" height="48"/>
                     <autoresizingMask key="autoresizingMask"/>
-                    <textFieldCell key="cell" alignment="center" title="TODO" id="a2B-NS-5LJ">
+                    <textFieldCell key="cell" alignment="center" id="a2B-NS-5LJ">
                         <font key="font" metaFont="system"/>
+                        <string key="title">A new AI chat mode, Orchestration, lets AI run the show for you. It can create windows, wait for tasks to complete (even in interactive apps), and the new automatic safety checker relieves you of having to respond to almost all permission prompts. &lt;a href="iterm2whatsnew:orchestration"&gt;Try it now!&lt;/a&gt;</string>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
@@ -259,16 +263,16 @@
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vtE-pO-lEk">
                     <rect key="frame" x="53" y="68" width="530" height="220"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-OpenQuickly" id="5d4-4e-NgE"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Orchestration" id="5d4-4e-NgE"/>
                 </imageView>
             </subviews>
             <point key="canvasLocation" x="1866.5" y="-385.5"/>
         </customView>
     </objects>
     <resources>
-        <image name="Onboarding-Chat" width="801" height="422"/>
-        <image name="Onboarding-OpenQuickly" width="534" height="421"/>
-        <image name="Onboarding-RTL" width="581" height="292"/>
-        <image name="Onboarding-Web" width="590" height="371"/>
+        <image name="Onboarding-ClaudeCode" width="720" height="507"/>
+        <image name="Onboarding-Companion" width="472" height="664"/>
+        <image name="Onboarding-Orchestration" width="794" height="520"/>
+        <image name="Onboarding-Screenshot" width="658" height="754"/>
     </resources>
 </document>

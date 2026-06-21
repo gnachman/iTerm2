@@ -7145,6 +7145,7 @@ static NSString *iTermStringFromRange(NSRange range) {
             loadContext:(iTermKeyboardHandlerContext *)context
                forEvent:(NSEvent *)event {
     context->hasActionableKeyMapping = [_delegate hasActionableKeyMappingForEvent:event];
+    context->hasBypassKeyMapping = [_delegate keyMapsToBypassActionForEvent:event];
     context->leftOptionKey = [_delegate optionKey];
     context->rightOptionKey = [_delegate rightOptionKey];
     context->autorepeatMode = [_dataSource terminalAutorepeatMode];

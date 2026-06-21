@@ -449,14 +449,15 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
         iTermWorkgroupController.instance.exit(on: leader)
     }
 
-    // §7.2 — controller's dict key is ObjectIdentifier(leader),
-    // not leader.guid. Drives an actual GUID rotation on the leader
-    // via KVC (-[PTYSession setGuid:] exists in PTYSession.m but is
-    // not surfaced in the public header, so the Swift type-level
-    // property is read-only — KVC dispatches to the unpublished
-    // setter directly). If the controller keyed by GUID, this
-    // lookup would miss after the rotation; ObjectIdentifier
-    // keying makes it stable.
+    // §7.2 — controller resolution is independent of session GUIDs
+    // (it goes through the member's workgroupInstance back-pointer
+    // and the stable instanceUniqueIdentifier key). Drives an actual
+    // GUID rotation on the leader via KVC (-[PTYSession setGuid:]
+    // exists in PTYSession.m but is not surfaced in the public
+    // header, so the Swift type-level property is read-only — KVC
+    // dispatches to the unpublished setter directly). If the
+    // controller keyed by GUID, this lookup would miss after the
+    // rotation.
     func test_7_2_controllerSurvivesLeaderGUIDRotation() {
         let wg = WGFix.wgRootOnly()
         registerWithModel(wg)
@@ -471,7 +472,7 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
                           "Sanity: KVC setter rotated the GUID")
         XCTAssertNotNil(
             iTermWorkgroupController.instance.workgroupInstance(on: leader),
-            "Controller dict keys by ObjectIdentifier(leader); GUID rotation must not invalidate the lookup")
+            "Controller resolves via the workgroupInstance back-pointer and the stable instanceUniqueIdentifier key; GUID rotation must not invalidate the lookup")
         iTermWorkgroupController.instance.exit(on: leader)
     }
 
@@ -825,6 +826,831 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
         // §11.5 — leader still alive after teardown.
         XCTAssertFalse(leader.exited, "Leader should not be terminated by teardown")
         _ = allLives
+    }
+
+    // MARK: - §12 Session-lookup registry pass
+
+    // §12.1 — a workgroup peer that is in no tab and not buried is
+    // still resolvable by GUID, via the lookup's workgroup-registry
+    // pass; after exit it is unreachable again. In the test bundle
+    // there are no terminal windows and nothing is buried, so the
+    // registry leg is provably the one that resolves these.
+    func test_12_1_registryPassResolvesPortOnlyPeers() {
+        let wg = WGFix.wgRootWithPeers(n: 2)
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        XCTAssertTrue(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        let controller = iTermController.sharedInstance()!
+        let peerConfigs = wg.sessions.filter {
+            if case .peer = $0.kind { return true }
+            return false
+        }
+        XCTAssertEqual(peerConfigs.count, 2)
+        var peerGuids: [String] = []
+        for cfg in peerConfigs {
+            let peer = spawner.session(forConfigID: cfg.uniqueIdentifier)!
+            peerGuids.append(peer.guid)
+            XCTAssertTrue(controller.anySession(withGUID: peer.guid) === peer,
+                          "Port-only peer must be findable by GUID")
+            // Prove WHICH leg found it, so a future regression in an
+            // earlier leg can't mask one here.
+            var location: iTermSessionLookupLocation?
+            controller.enumerateSessionLookupLocations { session, loc, stop in
+                if session?.guid == peer.guid {
+                    location = loc
+                    stop?.pointee = true
+                }
+            }
+            XCTAssertEqual(location, .workgroupRegistryPort)
+        }
+        // Parity: the diagnosis dump is built on the same enumerator,
+        // so it must mention every session the lookup can reach.
+        let diagnosis = controller.diagnosis(unresolvableGUID: "no-such-guid")
+        for guid in peerGuids {
+            XCTAssertTrue(diagnosis.contains(guid),
+                          "Diagnosis must list reachable session \(guid)")
+        }
+        // Exit unregisters; nothing remains reachable through the
+        // registry (no ghost).
+        iTermWorkgroupController.instance.exit(on: leader)
+        for guid in peerGuids {
+            XCTAssertNil(controller.anySession(withGUID: guid),
+                         "Exited peer must not be findable")
+        }
+    }
+
+    // §12.2 — when no member of a peer group has a live delegate and
+    // none is buried (the fixture's permanent condition), activate
+    // refuses AND leaves activeSessionIdentifier untouched, so the
+    // port never claims a peer that didn't swap in. This is the
+    // no-desync half of the findable-implies-revealable contract; the
+    // reveal half (window-creating revival of a registry-only peer,
+    // and the buried-anchor rescue) needs real windows and
+    // iTermBuriedSessions state, so it is covered by manual
+    // verification rather than this unit suite.
+    func test_12_2_activateWithoutAnyAnchorRefusesAndKeepsActiveIdentifier() {
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        XCTAssertTrue(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        let port = leader.peerPort!
+        XCTAssertNil(port.sessionDelegate)
+        let peerCfg = wg.sessions.first {
+            if case .peer = $0.kind { return true }
+            return false
+        }!
+        let before = port.activeSessionIdentifier
+        XCTAssertFalse(port.activate(identifier: peerCfg.uniqueIdentifier),
+                       "No anchor anywhere: activate must refuse")
+        XCTAssertEqual(port.activeSessionIdentifier, before,
+                       "A refused activation must not commit")
+    }
+
+    // MARK: - §13 Mid-spawn termination
+
+    // §13.1 — a member dying synchronously while the entry spawn loop
+    // is still running tears the instance down via the
+    // sessionWillTerminate observer; enter() must report failure, not
+    // register the corpse, and not leave any spawned child pointing
+    // at it.
+    func test_13_1_memberDeathMidSpawnAbortsEntryWithoutGhost() {
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let split1 = WGFix.makeSplit(parentID: root.uniqueIdentifier)
+        let split2 = WGFix.makeSplit(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "sabotage", sessions: [root, peer, split1, split2])
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+
+        let saboteur = TerminateDuringSpawnSpawner()
+        saboteur.sessionFactory = { SpyPTYSession(synthetic: false)! }
+        saboteur.terminateTarget = { [weak leader = self.leader] in leader }
+
+        let entered = iTermWorkgroupController.instance.enter(
+            workgroupUniqueIdentifier: wg.uniqueIdentifier,
+            on: leader,
+            spawner: saboteur)
+        XCTAssertFalse(entered,
+                       "enter() must not report success after a mid-spawn teardown")
+
+        // No ghost: the aborted instance is not registered anywhere.
+        let abortedID = saboteur.workgroupInstanceIDsByConfigID.values.first
+        XCTAssertNotNil(abortedID)
+        if let abortedID {
+            XCTAssertNil(
+                iTermWorkgroupController.instance.mainSession(
+                    forInstanceUniqueIdentifier: abortedID))
+            XCTAssertFalse(
+                iTermWorkgroupController.instance.allInstances.contains {
+                    $0.instanceUniqueIdentifier == abortedID
+                })
+        }
+        // Teardown cleaned the leader.
+        XCTAssertNil(leader.workgroupInstance)
+        XCTAssertNil(leader.peerPort)
+        // No spawned session points at the corpse (registerNonPeer's
+        // didTeardown guard; the spawn loop also aborts).
+        for record in saboteur.records {
+            if let session = record.session {
+                XCTAssertNil(session.workgroupInstance,
+                             "\(record.config.displayName) points at a torn-down instance")
+            }
+        }
+        // The realized peer was terminated by teardown exactly once
+        // (didTeardown reentrancy guard held).
+        let spawnedPeer = saboteur.session(forConfigID: peer.uniqueIdentifier) as! SpyPTYSession
+        XCTAssertEqual(spawnedPeer.spy_terminateCount, 1)
+        // The split whose spawn the sabotage interrupted was already
+        // installed by the spawner but could never be registered;
+        // teardown can't reach it, so the spawn path must close the
+        // stray itself (closeStraySpawn; delegate-less in this fixture,
+        // so it terminates directly).
+        let straySplit = saboteur.session(forConfigID: split1.uniqueIdentifier) as! SpyPTYSession
+        XCTAssertEqual(straySplit.spy_terminateCount, 1,
+                       "The mid-spawn stray must be closed, not stranded")
+        // The second split was never spawned at all (the loop aborts).
+        XCTAssertNil(saboteur.session(forConfigID: split2.uniqueIdentifier))
+    }
+
+    // §13.2 — same sabotage, but the interrupted spawn is a split that
+    // HOSTS A NESTED PEER GROUP. The guard must fire before the nested
+    // branch runs: no nested peers spawned into the dead instance (they
+    // would be running, windowless, unreachable shells that nothing
+    // ever terminates), and the stray host itself is closed.
+    func test_13_2_memberDeathDuringNestedHostSpawnSpawnsNoNestedPeers() {
+        let root = WGFix.makeRoot()
+        let host = WGFix.makeSplit(parentID: root.uniqueIdentifier)
+        let nestedPeer = WGFix.makePeer(parentID: host.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "nested-sabotage", sessions: [root, host, nestedPeer])
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+
+        let saboteur = TerminateDuringSpawnSpawner()
+        saboteur.sessionFactory = { SpyPTYSession(synthetic: false)! }
+        saboteur.terminateTarget = { [weak leader = self.leader] in leader }
+
+        XCTAssertFalse(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: saboteur))
+        XCTAssertNil(saboteur.session(forConfigID: nestedPeer.uniqueIdentifier),
+                     "No nested peer may be spawned into a torn-down instance")
+        let hostSession = saboteur.session(forConfigID: host.uniqueIdentifier) as! SpyPTYSession
+        XCTAssertEqual(hostSession.spy_terminateCount, 1,
+                       "The stray nested-group host must be closed")
+        XCTAssertNil(hostSession.workgroupInstance)
+        XCTAssertNil(hostSession.peerPort)
+    }
+
+    // §13.3 — the member dies later still: DURING the nested peer
+    // spawn itself (the host already passed the spawnSplit guard).
+    // registerNestedPeerPort's backstop must invalidate the port
+    // (terminating the just-spawned nested peer), unwind the port
+    // assignment on the host, and close the host as a stray — it was
+    // never registered anywhere, so no teardown sweep can reach it.
+    func test_13_3_memberDeathDuringNestedPeerSpawnClosesHostAndPeers() {
+        let root = WGFix.makeRoot()
+        let host = WGFix.makeSplit(parentID: root.uniqueIdentifier)
+        let nestedPeer = WGFix.makePeer(parentID: host.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "nested-peer-sabotage",
+                            sessions: [root, host, nestedPeer])
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+
+        let saboteur = TerminateDuringPeerSpawnSpawner()
+        saboteur.sessionFactory = { SpyPTYSession(synthetic: false)! }
+        saboteur.terminateTarget = { [weak leader = self.leader] in leader }
+
+        XCTAssertFalse(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: saboteur))
+        let hostSession = saboteur.session(forConfigID: host.uniqueIdentifier) as! SpyPTYSession
+        XCTAssertEqual(hostSession.spy_terminateCount, 1,
+                       "The host must be closed; nothing else can ever reach it")
+        XCTAssertNil(hostSession.peerPort,
+                     "The invalidated port must not stay wired to the host")
+        XCTAssertNil(hostSession.workgroupInstance)
+        let nestedPeerSession = saboteur.session(forConfigID: nestedPeer.uniqueIdentifier) as! SpyPTYSession
+        XCTAssertEqual(nestedPeerSession.spy_terminateCount, 1,
+                       "invalidate() must terminate the spawned nested peer")
+    }
+
+    // MARK: - §14 Late-fulfilling peer spawns
+
+    // §14.1 — a peer whose spawn fulfills after the workgroup exited
+    // must come out clean: no back-pointer to the dead instance
+    // (attachBackPointers' didTeardown guard), no reference to the
+    // invalidated port (the init fan-out's invalidated guard), and
+    // terminated by invalidate()'s deferred kill.
+    func test_14_1_lateFulfillingPeerDoesNotAttachToTornDownWorkgroup() {
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "late", sessions: [root, peer])
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        spawner.pendingPeerConfigIDs = [peer.uniqueIdentifier]
+        XCTAssertTrue(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: spawner))
+        // Exit while the peer's spawn is still unfulfilled. Teardown's
+        // back-pointer sweep only covers realized peers — the gap
+        // under test.
+        iTermWorkgroupController.instance.exit(on: leader)
+
+        let late = SpyPTYSession(synthetic: false)!
+        spawner.fulfillPendingPeer(configID: peer.uniqueIdentifier, with: late)
+        XCTAssertNil(late.workgroupInstance,
+                     "Late fulfillment must not resurrect the instance back-pointer")
+        XCTAssertNil(late.peerPort,
+                     "Late fulfillment must not wire the invalidated port")
+        XCTAssertEqual(late.spy_terminateCount, 1,
+                       "invalidate()'s deferred terminate should kill the late peer")
+    }
+
+    // §14.2 — a committed activation whose peer spawn REJECTS (the
+    // real spawner rejects on session-terminated / missing profile /
+    // missing view) must roll back: then-blocks never run for a
+    // rejected promise, so the catchError leg restores the last
+    // actually-swapped identifier and fires the subclass resync hook.
+    // Uses RollbackSpyPort because committing requires an activation
+    // anchor that unit fixtures cannot provide (see hasActivationAnchor).
+    func test_14_2_rejectedSpawnRollsBackCommittedActivation() {
+        var seal: iTermPromiseSeal?
+        let pending = iTermPromise<PTYSession> { seal = $0 }
+        let port = RollbackSpyPort(
+            peers: ["leaderID": iTermPromise<PTYSession>(value: leader),
+                    "peerID": pending],
+            activeSessionIdentifier: "leaderID",
+            leaderIdentifier: "leaderID")
+        XCTAssertTrue(port.activate(identifier: "peerID"))
+        XCTAssertEqual(port.activeSessionIdentifier, "peerID",
+                       "Activation commits aspirationally")
+        seal?.reject(NSError(domain: "test", code: 1))
+        XCTAssertEqual(port.activeSessionIdentifier, "leaderID",
+                       "Rejection must roll the commit back")
+        XCTAssertEqual(port.rolledBackTo, ["leaderID"],
+                       "The subclass hook must fire so mode switchers resync")
+    }
+
+    // §14.3 — activating a peer whose spawn ALREADY rejected must
+    // refuse without committing. This is the synchronous twin of 14.2:
+    // a settled promise runs callbacks synchronously, so a commit here
+    // would fire the rollback INSIDE activate — before the
+    // iTermWorkgroupPeerPort override's post-super switcher sync,
+    // which would then overwrite the rollback's resync — and the
+    // caller would be told the activation succeeded.
+    func test_14_3_activateOnAlreadyRejectedSpawnRefusesWithoutCommitting() {
+        var seal: iTermPromiseSeal?
+        let rejected = iTermPromise<PTYSession> { seal = $0 }
+        seal?.reject(NSError(domain: "test", code: 1))
+        let port = RollbackSpyPort(
+            peers: ["leaderID": iTermPromise<PTYSession>(value: leader),
+                    "peerID": rejected],
+            activeSessionIdentifier: "leaderID",
+            leaderIdentifier: "leaderID")
+        XCTAssertFalse(port.activate(identifier: "peerID"),
+                       "A peer that can never exist must not report activation success")
+        XCTAssertEqual(port.activeSessionIdentifier, "leaderID",
+                       "Nothing may be committed for a dead peer")
+        XCTAssertEqual(port.rolledBackTo, [],
+                       "Upfront refusal means there is nothing to roll back")
+    }
+
+    // §14.4 — a swap that silently declined (PTYTab refuses while a
+    // resize holds the lock, or for tmux clients) must not be recorded
+    // as the last real swap: a later rollback would restore the
+    // phantom, making activeSession lie and defeating reveal's rescue
+    // gate. recordSwapOutcome is the seam (the swap itself needs a
+    // real PTYTab); the declined outcome is a replacement that never
+    // acquired a delegate.
+    func test_14_4_declinedSwapIsNotRecordedAsLastSwapped() {
+        var seal: iTermPromiseSeal?
+        let pending = iTermPromise<PTYSession> { seal = $0 }
+        let port = RollbackSpyPort(
+            peers: ["leaderID": iTermPromise<PTYSession>(value: leader),
+                    "peerID": pending],
+            activeSessionIdentifier: "leaderID",
+            leaderIdentifier: "leaderID")
+        // Simulate a declined swap of some other member: the
+        // replacement never landed in a tab (delegate stays nil).
+        port.recordSwapOutcome(identifier: "phantomID",
+                               replacement: PTYSession(synthetic: false)!)
+        // Now a committed activation fails; the rollback must restore
+        // the member whose view really occupies the tab ("leaderID"),
+        // not the phantom.
+        XCTAssertTrue(port.activate(identifier: "peerID"))
+        seal?.reject(NSError(domain: "test", code: 1))
+        XCTAssertEqual(port.activeSessionIdentifier, "leaderID")
+        XCTAssertEqual(port.rolledBackTo, ["leaderID"])
+    }
+
+    // §14.5 — peer cycling must skip members whose spawn already
+    // failed: activate() refuses them without advancing, so a cycle
+    // that targets a dead member would wedge there forever (every
+    // keypress recomputes the same dead target).
+    func test_14_5_peerCyclingSkipsDeadMembers() {
+        let wg = WGFix.wgRootWithPeers(n: 2)
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        let peerConfigs = wg.sessions.filter {
+            if case .peer = $0.kind { return true }
+            return false
+        }
+        let deadPeer = peerConfigs[0]
+        let livePeer = peerConfigs[1]
+        spawner.pendingPeerConfigIDs = [deadPeer.uniqueIdentifier]
+        XCTAssertTrue(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        spawner.rejectPendingPeer(configID: deadPeer.uniqueIdentifier)
+        let port = leader.peerPort as! iTermWorkgroupPeerPort
+        let rootID = wg.root!.uniqueIdentifier
+        // Forward from the root: the dead first peer is skipped.
+        XCTAssertEqual(port.viableConfigIdentifier(byOffset: 1),
+                       livePeer.uniqueIdentifier)
+        // Backward from the live peer: skips the dead one, reaches root.
+        port.activeSessionIdentifier = livePeer.uniqueIdentifier
+        XCTAssertEqual(port.viableConfigIdentifier(byOffset: -1), rootID)
+    }
+
+    // §14.7 — the ⌥⇧⌘<digit> chord for a dead peer must be consumed as
+    // a no-op, not refused: activatePeer's Bool propagates up to
+    // iTermApplication's event dispatch, and a false there lets the
+    // chord fall through to the focused shell as input.
+    func test_14_7_digitChordForDeadPeerIsConsumedNotLeaked() {
+        let wg = WGFix.wgRootWithPeers(n: 2)
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        let peerConfigs = wg.sessions.filter {
+            if case .peer = $0.kind { return true }
+            return false
+        }
+        let deadPeer = peerConfigs[0]
+        spawner.pendingPeerConfigIDs = [deadPeer.uniqueIdentifier]
+        XCTAssertTrue(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        spawner.rejectPendingPeer(configID: deadPeer.uniqueIdentifier)
+        let port = leader.peerPort as! iTermWorkgroupPeerPort
+        let before = port.activeSessionIdentifier
+        // peerConfigs order is [root, peer1, peer2]; the dead peer is
+        // at index 1, i.e. digit 2.
+        XCTAssertTrue(port.activatePeer(byShortcutDigit: 2),
+                      "An in-range digit owns the chord even when the member is dead")
+        XCTAssertEqual(port.activeSessionIdentifier, before,
+                       "Nothing may be committed for the dead member")
+        // Out-of-range digits still decline (the chord isn't ours).
+        XCTAssertFalse(port.activatePeer(byShortcutDigit: 7))
+    }
+
+    // §14.6 — clicking the mode-switcher segment of a dead peer:
+    // AppKit highlights the segment before the delegate runs
+    // (.selectOne tracking), and the refused activation never commits
+    // or rolls back, so the didSelect handler itself must resync the
+    // switchers to the really-active member.
+    func test_14_6_refusedSwitcherClickResyncsHighlight() {
+        let root = WGFix.makeRoot(items: [.modeSwitcher])
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "switcher", sessions: [root, peer])
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        spawner.pendingPeerConfigIDs = [peer.uniqueIdentifier]
+        XCTAssertTrue(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        spawner.rejectPendingPeer(configID: peer.uniqueIdentifier)
+        let port = leader.peerPort as! iTermWorkgroupPeerPort
+        let switcher = port.toolbarItems(forPeerID: root.uniqueIdentifier)
+            .compactMap { $0 as? WorkgroupModeSwitcherItem }
+            .first!
+        // Simulate AppKit selecting the clicked (dead) segment, then
+        // the delegate callback.
+        switcher.setActiveIdentifier(peer.uniqueIdentifier)
+        port.workgroupModeSwitcher(switcher, didSelect: peer.uniqueIdentifier)
+        XCTAssertEqual(switcher.selectedIdentifier, root.uniqueIdentifier,
+                       "A refused activation must resync the highlight to the active member")
+        XCTAssertEqual(port.activeSessionIdentifier, root.uniqueIdentifier)
+    }
+
+    // §14.8 — hasRestorableAnchor is true when a sibling is buried even
+    // though no member has a live delegate. reveal() relies on this to
+    // retry the swap (which disinters the buried anchor) instead of
+    // reviving the windowless member into its own window — which would
+    // put two members of one peer group on screen once the buried one
+    // is restored.
+    func test_14_8_hasRestorableAnchorTrueForBuriedSibling() {
+        let a = PTYSession(synthetic: false)!
+        let b = PTYSession(synthetic: false)!
+        let port = BuriedSeamSpyPort(
+            peers: ["a": iTermPromise<PTYSession>(value: a),
+                    "b": iTermPromise<PTYSession>(value: b)],
+            activeSessionIdentifier: "a",
+            leaderIdentifier: "a")
+        // No member has a delegate (unit fixtures have no tabs), and
+        // none is marked buried yet.
+        XCTAssertFalse(port.hasActivationAnchor())
+        XCTAssertFalse(port.hasRestorableAnchor())
+        // Bury b: now the group has a restorable anchor even though
+        // still no live delegate.
+        port.buried = [b]
+        XCTAssertFalse(port.hasActivationAnchor())
+        XCTAssertTrue(port.hasRestorableAnchor())
+    }
+
+    // §14.9 — ownsIdentifier distinguishes "this port owns the id"
+    // (consume a matching peer-switch chord even if the member is
+    // dead/unactivatable) from "not ours" (let the chord fall
+    // through). This is the predicate activatePeer(matching:) uses to
+    // avoid leaking a configured shortcut for a dead peer to the shell.
+    func test_14_9_ownsIdentifierDistinguishesOwnedFromForeign() {
+        let wg = WGFix.wgRootWithPeers(n: 1)
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        let peer = wg.sessions.first {
+            if case .peer = $0.kind { return true }
+            return false
+        }!
+        spawner.pendingPeerConfigIDs = [peer.uniqueIdentifier]
+        XCTAssertTrue(
+            iTermWorkgroupController.instance.enter(
+                workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                on: leader,
+                spawner: spawner))
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        spawner.rejectPendingPeer(configID: peer.uniqueIdentifier)
+        let port = leader.peerPort!
+        // Owned even though the member's spawn rejected (and so
+        // isActivatable is false): the chord still belongs to us.
+        XCTAssertTrue(port.ownsIdentifier(peer.uniqueIdentifier))
+        XCTAssertFalse(port.isActivatable(identifier: peer.uniqueIdentifier))
+        XCTAssertTrue(port.ownsIdentifier(wg.root!.uniqueIdentifier))
+        XCTAssertFalse(port.ownsIdentifier("not-a-member"))
+    }
+
+    // §14.10 — the deferred close used by teardown and
+    // closeStraySpawn must fall back to terminate() when the delegate
+    // has detached by the time the block runs, instead of silently
+    // no-oping and leaking a stray shell.
+    func test_14_10_deferredCloseTerminatesWhenDelegateGone() {
+        let spy = SpyPTYSession(synthetic: false)!
+        // No delegate (the detached-by-tick case) and not exited.
+        XCTAssertNil(spy.delegate)
+        iTermWorkgroupInstance.deferredClose(spy)
+        XCTAssertEqual(spy.spy_terminateCount, 0, "Close is deferred to the next tick")
+        // Drain one main-runloop turn so the async block runs.
+        let drained = expectation(description: "runloop")
+        DispatchQueue.main.async { drained.fulfill() }
+        wait(for: [drained], timeout: 1.0)
+        XCTAssertEqual(spy.spy_terminateCount, 1,
+                       "A delegate-less session must be terminated, not silently skipped")
+    }
+
+    // MARK: - §15 enter()/canEnter parity
+
+    // §15.1 — every refusal predicate refuses through BOTH canEnter
+    // (so UI disables) and enter() (so nothing breaks if UI didn't).
+    // One table; each future refusal added to enterRefusal() gets a
+    // case here instead of a hunt through menu/trigger call sites.
+    func test_15_1_enterAndCanEnterAgreeOnRefusals() {
+        let controller = iTermWorkgroupController.instance
+
+        // Unknown identifier.
+        XCTAssertFalse(controller.canEnter(workgroupUniqueIdentifier: "no-such-workgroup",
+                                           on: leader))
+        XCTAssertFalse(controller.enter(workgroupUniqueIdentifier: "no-such-workgroup",
+                                        on: leader,
+                                        spawner: spawner))
+
+        // Rootless workgroup (corrupted/hand-edited persisted data).
+        let orphanPeer = WGFix.makePeer(parentID: "no-such-parent")
+        let rootless = WGFix.wrap(name: "rootless", sessions: [orphanPeer])
+        registerWithModel(rootless)
+        defer { unregisterFromModel(rootless) }
+        XCTAssertFalse(controller.canEnter(workgroupUniqueIdentifier: rootless.uniqueIdentifier,
+                                           on: leader))
+        XCTAssertFalse(controller.enter(workgroupUniqueIdentifier: rootless.uniqueIdentifier,
+                                        on: leader,
+                                        spawner: spawner))
+
+        // Switching from a non-leader member refuses; from the leader
+        // it is allowed (that's the supported switch path).
+        let wg1 = WGFix.wgRootWithPeers(n: 1)
+        let wg2 = WGFix.wgRootOnly()
+        registerWithModel(wg1)
+        registerWithModel(wg2)
+        defer {
+            unregisterFromModel(wg1)
+            unregisterFromModel(wg2)
+        }
+        XCTAssertTrue(controller.enter(workgroupUniqueIdentifier: wg1.uniqueIdentifier,
+                                       on: leader,
+                                       spawner: spawner))
+        let peerCfg = wg1.sessions.first {
+            if case .peer = $0.kind { return true }
+            return false
+        }!
+        let peerSession = spawner.session(forConfigID: peerCfg.uniqueIdentifier)!
+        XCTAssertFalse(controller.canEnter(workgroupUniqueIdentifier: wg2.uniqueIdentifier,
+                                           on: peerSession))
+        XCTAssertFalse(controller.enter(workgroupUniqueIdentifier: wg2.uniqueIdentifier,
+                                        on: peerSession,
+                                        spawner: spawner))
+        XCTAssertTrue(controller.canEnter(workgroupUniqueIdentifier: wg2.uniqueIdentifier,
+                                          on: leader),
+                      "Leader-side switching is the supported path")
+        controller.exit(on: leader)
+
+        // Mid-restoration refusal, end to end: a session that IS a
+        // pending restoration anchor is refused; draining the entry
+        // (here via the deadline) unblocks it.
+        let coordinator = WorkgroupRestorationCoordinator.shared
+        let savedTimeout = coordinator.pendingReconstructionTimeout
+        defer { coordinator.pendingReconstructionTimeout = savedTimeout }
+        let wg3 = WGFix.wgRootOnly()
+        registerWithModel(wg3)
+        defer { unregisterFromModel(wg3) }
+        coordinator.register(anchor: leader, descriptor: [:])
+        XCTAssertFalse(controller.canEnter(workgroupUniqueIdentifier: wg3.uniqueIdentifier,
+                                           on: leader))
+        XCTAssertFalse(controller.enter(workgroupUniqueIdentifier: wg3.uniqueIdentifier,
+                                        on: leader,
+                                        spawner: spawner))
+        coordinator.pendingReconstructionTimeout = 0
+        coordinator.reconstructReadyAnchors()
+        XCTAssertTrue(controller.canEnter(workgroupUniqueIdentifier: wg3.uniqueIdentifier,
+                                          on: leader))
+        XCTAssertTrue(controller.enter(workgroupUniqueIdentifier: wg3.uniqueIdentifier,
+                                       on: leader,
+                                       spawner: spawner))
+        controller.exit(on: leader)
+    }
+
+    // §15.2 — the idempotent same-workgroup case stays in parity even
+    // after the config is deleted from the model: enter() is a no-op
+    // success (nothing gets torn down or built), so canEnter must
+    // agree rather than reporting the identifier unusable.
+    func test_15_2_sameWorkgroupParitySurvivesConfigDeletion() {
+        let controller = iTermWorkgroupController.instance
+        let wg = WGFix.wgRootOnly()
+        registerWithModel(wg)
+        XCTAssertTrue(controller.enter(workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                                       on: leader,
+                                       spawner: spawner))
+        defer { controller.exit(on: leader) }
+        unregisterFromModel(wg)
+        XCTAssertTrue(controller.canEnter(workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                                          on: leader))
+        XCTAssertTrue(controller.enter(workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                                       on: leader,
+                                       spawner: spawner))
+    }
+
+    // §15.3 — a wedged restoration descriptor (anchor alive but never
+    // installed in a window) must release its GUIDs after the deadline
+    // (so it stops blocking Enter Workgroup) but KEEP the pending entry
+    // so a still-slower restore can reconstruct if the anchor's window
+    // finally installs, rather than silently losing the workgroup.
+    func test_15_3_wedgedDescriptorReleasesGuidsButKeepsEntry() {
+        let coordinator = WorkgroupRestorationCoordinator.shared
+        let savedTimeout = coordinator.pendingReconstructionTimeout
+        defer { coordinator.pendingReconstructionTimeout = savedTimeout }
+        // Flush any dead-anchor leftover entries from earlier tests
+        // (the coordinator is a shared singleton) so the baseline count
+        // is stable across this test's own reconstruct passes.
+        coordinator.reconstructReadyAnchors()
+        let beforeCount = coordinator.pendingCount
+        coordinator.pendingReconstructionTimeout = 0
+        let anchor = PTYSession(synthetic: false)!
+        coordinator.register(
+            anchor: anchor,
+            descriptor: [iTermWorkgroupRestoration.Key.memberGUIDs: [leader.guid]])
+        XCTAssertTrue(coordinator.isRestoring(guid: leader.guid))
+        XCTAssertEqual(coordinator.pendingCount, beforeCount + 1)
+        coordinator.reconstructReadyAnchors()
+        withExtendedLifetime(anchor) {
+            // Soft limit: GUIDs released (Enter Workgroup unblocked)...
+            XCTAssertFalse(coordinator.isRestoring(guid: leader.guid),
+                           "Past-deadline entry must stop blocking Enter Workgroup")
+            // ...but the entry is retained so a late window install can
+            // still reconstruct.
+            XCTAssertEqual(coordinator.pendingCount, beforeCount + 1,
+                           "A slow restore must not be abandoned at the deadline")
+        }
+    }
+
+    // §15.4 — a live, unrelated session whose GUID merely collides with
+    // a restoring descriptor member (saved-with-contents sessions keep
+    // their GUIDs) must NOT be blocked: the refusal keys on anchor
+    // object identity, not GUID membership.
+    func test_15_4_liveSessionWithCollidingRestoringGuidStillEnters() {
+        let controller = iTermWorkgroupController.instance
+        let coordinator = WorkgroupRestorationCoordinator.shared
+        let savedTimeout = coordinator.pendingReconstructionTimeout
+        defer { coordinator.pendingReconstructionTimeout = savedTimeout }
+        let wg = WGFix.wgRootOnly()
+        registerWithModel(wg)
+        defer { unregisterFromModel(wg) }
+        // A DIFFERENT session is the restoration anchor; its descriptor
+        // names `leader`'s guid as a member. `leader` is live and
+        // unrelated.
+        let restoringAnchor = PTYSession(synthetic: false)!
+        coordinator.register(
+            anchor: restoringAnchor,
+            descriptor: [iTermWorkgroupRestoration.Key.memberGUIDs: [leader.guid]])
+        withExtendedLifetime(restoringAnchor) {
+            XCTAssertTrue(coordinator.isRestoring(guid: leader.guid),
+                          "Precondition: the colliding guid is in the restoring set")
+            XCTAssertTrue(controller.canEnter(workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                                              on: leader),
+                          "A live unrelated session must not be blocked by a GUID collision")
+            XCTAssertTrue(controller.enter(workgroupUniqueIdentifier: wg.uniqueIdentifier,
+                                           on: leader,
+                                           spawner: spawner))
+            controller.exit(on: leader)
+        }
+        // Drain the still-pending restoring entry so it can't leak into
+        // other tests through the shared coordinator.
+        coordinator.pendingReconstructionTimeout = 0
+        coordinator.reconstructReadyAnchors()
+    }
+
+    // §15.5 — two overlapping restoration descriptors (the same
+    // arrangement restored twice in flight) both claim a GUID; draining
+    // one entry must NOT unblock a GUID the other still claims. The
+    // restoring set is a counted multiset, not a plain set.
+    func test_15_5_overlappingRestoringDescriptorsCountIndependently() {
+        let coordinator = WorkgroupRestorationCoordinator.shared
+        let savedTimeout = coordinator.pendingReconstructionTimeout
+        defer { coordinator.pendingReconstructionTimeout = savedTimeout }
+        let sharedGuid = leader.guid
+        let descriptor: [AnyHashable: Any] =
+            [iTermWorkgroupRestoration.Key.memberGUIDs: [sharedGuid]]
+        // Two distinct anchors, overlapping descriptors.
+        let anchorA = PTYSession(synthetic: false)!
+        var anchorB: PTYSession? = PTYSession(synthetic: false)!
+        coordinator.register(anchor: anchorA, descriptor: descriptor)
+        coordinator.register(anchor: anchorB!, descriptor: descriptor)
+        XCTAssertTrue(coordinator.isRestoring(guid: sharedGuid))
+        // Drain entry B (its anchor deallocates); A still claims the GUID.
+        anchorB = nil
+        coordinator.reconstructReadyAnchors()
+        withExtendedLifetime(anchorA) {
+            XCTAssertTrue(coordinator.isRestoring(guid: sharedGuid),
+                          "A still-pending entry must keep its GUID claimed")
+        }
+        // Now drain A too (via the deadline); the GUID finally clears.
+        coordinator.pendingReconstructionTimeout = 0
+        coordinator.reconstructReadyAnchors()
+        withExtendedLifetime(anchorA) {
+            XCTAssertFalse(coordinator.isRestoring(guid: sharedGuid),
+                           "Once every claimant drains, the GUID is no longer restoring")
+        }
+    }
+
+    // MARK: - §16 Adopt collision safety
+
+    // §16.1 — a second adopt whose descriptor resolves a child GUID to
+    // a pane that already belongs to a live instance (restoring the
+    // same arrangement twice while the workgroup runs; restored-with-
+    // contents sessions keep their saved GUIDs) must not steal the
+    // pane: its back-pointer stays on the original instance and the
+    // copy's teardown must not close it.
+    func test_16_1_adoptDoesNotStealAnotherInstancesChild() {
+        let controller = iTermWorkgroupController.instance
+
+        // Instance 1 with a split child, entered normally.
+        let root1 = WGFix.makeRoot()
+        let split1 = WGFix.makeSplit(parentID: root1.uniqueIdentifier)
+        let wg1 = WGFix.wrap(name: "original", sessions: [root1, split1])
+        registerWithModel(wg1)
+        defer { unregisterFromModel(wg1) }
+        spawner.sessionFactory = { SpyPTYSession(synthetic: false)! }
+        XCTAssertTrue(controller.enter(workgroupUniqueIdentifier: wg1.uniqueIdentifier,
+                                       on: leader,
+                                       spawner: spawner))
+        defer { controller.exit(on: leader) }
+        let child = spawner.session(forConfigID: split1.uniqueIdentifier) as! SpyPTYSession
+        let inst1 = controller.workgroupInstance(on: leader)!
+        XCTAssertTrue(child.workgroupInstance === inst1)
+
+        // Second instance adopted with the SAME pane offered as its
+        // non-peer child (what a duplicate restore produces).
+        let root2 = WGFix.makeRoot()
+        let split2 = WGFix.makeSplit(parentID: root2.uniqueIdentifier)
+        let wg2 = WGFix.wrap(name: "copy", sessions: [root2, split2])
+        registerWithModel(wg2)
+        defer { unregisterFromModel(wg2) }
+        let leader2 = PTYSession(synthetic: false)!
+        let inst2 = controller.adopt(
+            workgroup: wg2,
+            leader: leader2,
+            instanceUniqueIdentifier: iTermWorkgroupInstance.mintInstanceUniqueIdentifier(),
+            activeIdentifier: root2.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: [:],
+            nonPeerSessionsByConfigID: [split2.uniqueIdentifier: child],
+            spawner: FakeWorkgroupSpawner())
+        XCTAssertNotNil(inst2)
+        XCTAssertTrue(child.workgroupInstance === inst1,
+                      "Adopt must not steal a child registered to another instance")
+
+        // Tearing down the copy leaves the original's pane untouched.
+        controller.exit(on: leader2)
+        XCTAssertTrue(child.workgroupInstance === inst1)
+        XCTAssertEqual(child.spy_terminateCount, 0,
+                       "The copy's teardown must not touch the original's pane")
+    }
+
+    // §16.2 — the PEER half of §16.1: a second adopt whose
+    // peerSessionsByConfigID resolves to a peer that already belongs
+    // to a live instance must not wire it into a second port (the new
+    // port's init fan-out would trip set(peerPort:)'s release-enabled
+    // assert, and the copy's teardown would invalidate the original's
+    // port). The collision is treated as not-restored: the copy spawns
+    // a fresh peer instead.
+    func test_16_2_adoptDoesNotStealAnotherInstancesPeer() {
+        let controller = iTermWorkgroupController.instance
+
+        // Instance 1 with one realized peer, entered normally.
+        let wg1 = WGFix.wgRootWithPeers(n: 1)
+        registerWithModel(wg1)
+        defer { unregisterFromModel(wg1) }
+        spawner.sessionFactory = { SpyPTYSession(synthetic: false)! }
+        XCTAssertTrue(controller.enter(workgroupUniqueIdentifier: wg1.uniqueIdentifier,
+                                       on: leader,
+                                       spawner: spawner))
+        defer { controller.exit(on: leader) }
+        let peer1Cfg = wg1.sessions.first {
+            if case .peer = $0.kind { return true }
+            return false
+        }!
+        let stolenPeer = spawner.session(forConfigID: peer1Cfg.uniqueIdentifier) as! SpyPTYSession
+        let inst1 = controller.workgroupInstance(on: leader)!
+        XCTAssertTrue(stolenPeer.workgroupInstance === inst1)
+        let originalPort = stolenPeer.peerPort
+        XCTAssertNotNil(originalPort)
+
+        // Second instance adopted with the SAME peer session offered
+        // for its own peer slot (what a duplicate restore with kept
+        // GUIDs produces).
+        let wg2 = WGFix.wgRootWithPeers(n: 1)
+        registerWithModel(wg2)
+        defer { unregisterFromModel(wg2) }
+        let peer2Cfg = wg2.sessions.first {
+            if case .peer = $0.kind { return true }
+            return false
+        }!
+        let leader2 = PTYSession(synthetic: false)!
+        let copySpawner = FakeWorkgroupSpawner()
+        copySpawner.sessionFactory = { SpyPTYSession(synthetic: false)! }
+        let inst2 = controller.adopt(
+            workgroup: wg2,
+            leader: leader2,
+            instanceUniqueIdentifier: iTermWorkgroupInstance.mintInstanceUniqueIdentifier(),
+            activeIdentifier: wg2.root!.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: [peer2Cfg.uniqueIdentifier: stolenPeer],
+            nonPeerSessionsByConfigID: [:],
+            spawner: copySpawner)
+        XCTAssertNotNil(inst2)
+        // The original keeps its wiring; the copy got a fresh spawn.
+        XCTAssertTrue(stolenPeer.workgroupInstance === inst1,
+                      "Adopt must not steal a peer registered to another instance")
+        XCTAssertTrue(stolenPeer.peerPort === originalPort)
+        let freshPeer = copySpawner.session(forConfigID: peer2Cfg.uniqueIdentifier) as! SpyPTYSession
+        XCTAssertFalse(freshPeer === stolenPeer)
+
+        // Tearing down the copy kills only its own fresh peer.
+        controller.exit(on: leader2)
+        XCTAssertEqual(stolenPeer.spy_terminateCount, 0,
+                       "The copy's teardown must not touch the original's peer")
+        XCTAssertTrue(stolenPeer.workgroupInstance === inst1)
+        XCTAssertTrue(stolenPeer.peerPort === originalPort)
+        XCTAssertEqual(freshPeer.spy_terminateCount, 1)
     }
 
     // MARK: - Test helpers

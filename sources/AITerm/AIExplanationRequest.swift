@@ -1,10 +1,16 @@
 //
-//  ExplainWithAI.swift
+//  AIExplanationRequest.swift
 //  iTerm2
 //
 //  Created by George Nachman on 2/9/25.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only); Mac-only code (terminal-content
+//  extraction) lives in AIExplanationRequest+Mac.swift. On the phone,
+//  iTermCodableLocatedString is a wire-compatible stand-in.
+//
 
+import Foundation
 
 struct AIExplanationRequest: Codable {
     struct Context: Codable {
@@ -33,16 +39,6 @@ struct AIExplanationRequest: Codable {
         return "Explain \(subjectMatter)"
     }
     
-    private static func content(snapshot: TerminalContentSnapshot,
-                                selection: iTermSelection) -> iTermLocatedString {
-        let extractor = LocatedStringSelectionExtractor(selection: selection,
-                                                        snapshot: snapshot,
-                                                        options: .trimWhitespace,
-                                                        maxBytes: 0,
-                                                        minimumLineNumber: 0)!
-        return extractor.extract()
-    }
-
     private static func escapedContent(_ original: String) -> String {
         return original
             .replacingOccurrences(of: "&", with: "&amp;")
@@ -113,34 +109,5 @@ struct AIExplanationRequest: Codable {
 
     static func conversationalPrompt(userPrompt: String) -> String {
         return "Stop using <annotation> and <response>. I am no longer parsing them. What follows will be a regular conversation. Here is the next prompt from the user: \(userPrompt)"
-    }
-
-    init(command: String?,
-         snapshot: TerminalContentSnapshot,
-         selection: iTermSelection,
-         truncated: Bool,
-         question: String,
-         subjectMatter: String,
-         url: URL?,
-         context: Context) {
-        self.command = command
-        self.question = question
-        self.subjectMatter = subjectMatter
-        self.url = url
-        self.truncated = truncated
-        self.context = context
-        originalString = iTermCodableLocatedString(Self.content(snapshot: snapshot, selection: selection))
-    }
-}
-
-extension Result {
-    init<T, U>(_ or: iTermOr<T, U>) {
-        var actual: Result<Success, Failure>!
-        or.whenFirst { value in
-            actual = .success(value as! Success)
-        } second: { value in
-            actual = .failure(value as! Failure)
-        }
-        self = actual
     }
 }

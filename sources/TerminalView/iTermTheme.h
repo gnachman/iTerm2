@@ -66,6 +66,12 @@ NS_ASSUME_NONNULL_BEGIN
                                                       tabStyle:(id<PSMTabStyle>)tabStyle
                                                  mainAndActive:(BOOL)mainAndActive;
 
+// Color for the separator drawn between the status bar and the terminal
+// content. Returns nil in non-minimal themes, where callers should fall back to
+// the system separator color. In the minimal theme it returns the same color
+// used to outline the selected tab.
+- (nullable NSColor *)statusBarEdgeSeparatorColorForTabStyle:(id<PSMTabStyle>)tabStyle;
+
 @end
 
 NS_ASSUME_NONNULL_END

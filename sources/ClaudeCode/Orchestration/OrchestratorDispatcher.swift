@@ -104,7 +104,8 @@ final class OrchestratorDispatcher {
 
     // Live screen-observation pollers, keyed by watcherID. Created for
     // watchers whose session reports no machine-readable status (see
-    // WorkgroupIntrospection.reportsSessionStatus); each drives a headless
+    // WorkgroupIntrospection.reportsSessionStatus) and for plain-English
+    // condition watchers (always screen-judged); each drives a headless
     // AIConversation that reads the screen and fires the same status_update
     // a tab-status watcher would. Not persisted — a running loop can't be
     // serialized; reconcilePersistedWatchers restarts one for each
@@ -365,7 +366,7 @@ final class OrchestratorDispatcher {
                 watcher: watcher,
                 reason: .watcherDropped,
                 stateReached: "",
-                detail: "Watch dropped: the session for \(watcher.roleName) in \(watcher.workgroupName) terminated before the target state was reached.")
+                detail: "Watch dropped: the session for \(watcher.roleName) in \(watcher.workgroupName) terminated before \(watcher.goalDescription) was reached.")
         }
     }
 
@@ -432,6 +433,31 @@ final class OrchestratorDispatcher {
                                      reason: StatusUpdate.Reason,
                                      stateReached: String,
                                      detail: String) {
+        // A watcher registered with notify_user delivers its own push when
+        // its goal is reached: the model proved unreliable at deciding to
+        // notify after the fact, so the user's registration-time intent is
+        // honored mechanically. Drops/timeouts are not the asked-for event
+        // and stay chat-only.
+        var pushed: Bool?
+        if watcher.notifyUser == true,
+           reason == .stateReached || reason == .conditionMet {
+            if CompanionPushRegistry.canNotify {
+                let title = watcher.workgroupName == watcher.roleName
+                    ? watcher.workgroupName
+                    : "\(watcher.workgroupName): \(watcher.roleName)"
+                let body = detail
+                Task {
+                    do {
+                        try await CompanionPushSender.send(title: title, body: body)
+                    } catch {
+                        DLog("Orchestrator dispatcher: watcher push failed: \(error)")
+                    }
+                }
+                pushed = true
+            } else {
+                pushed = false
+            }
+        }
         let payload = StatusUpdate(
             watcherID: watcher.watcherID,
             workgroupID: watcher.workgroupID,
@@ -441,7 +467,8 @@ final class OrchestratorDispatcher {
             reason: reason,
             stateReached: stateReached,
             timestamp: Date(),
-            detail: detail)
+            detail: detail,
+            pushed: pushed)
         do {
             try broker?.publishMessageFromUser(
                 chatID: chatID,
@@ -486,18 +513,24 @@ final class OrchestratorDispatcher {
         }
         watchers.removeAll { $0.watcherID == watcherID }
         persistWatchers()
-        let target = watcher.targetState.rawValue
         if timedOut {
             publishStatusUpdate(
                 watcher: watcher,
                 reason: .watchTimedOut,
                 stateReached: "",
                 detail: "Watch timed out: \(watcher.roleName) in \(watcher.workgroupName) "
-                    + "did not reach state '\(target)' within 5 minutes. This session "
-                    + "reports no machine-readable status, so it was watched by reading "
-                    + "its screen. Check it with get_screen_contents, or register_watch "
-                    + "again to keep waiting.")
+                    + "did not reach \(watcher.goalDescription) within 5 minutes. It was "
+                    + "watched by reading its screen. Check it with get_screen_contents, "
+                    + "or register_watch again to keep waiting.")
+        } else if let condition = watcher.condition {
+            publishStatusUpdate(
+                watcher: watcher,
+                reason: .conditionMet,
+                stateReached: "",
+                detail: "\(watcher.roleName) in \(watcher.workgroupName) met the watched "
+                    + "condition '\(condition)' (detected by screen observation).")
         } else {
+            let target = watcher.targetState?.rawValue ?? "unknown"
             publishStatusUpdate(
                 watcher: watcher,
                 reason: .stateReached,
@@ -820,6 +853,10 @@ final class OrchestratorDispatcher {
             return .unregisterWatch(watcherID: try decoder.decode(A.self, from: jsonArgs).watcher_id)
         case .listWatches:
             return .listWatches
+        case .notify:
+            return .notify(try decoder.decode(NotifyArgs.self, from: jsonArgs))
+        case .requestNotificationPermission:
+            return .requestNotificationPermission
         }
     }
 
@@ -1062,6 +1099,62 @@ final class OrchestratorDispatcher {
             return doUnregisterWatch(watcherID: watcherID)
         case .listWatches:
             return doListWatches()
+        case .notify(let args):
+            return try await doNotify(args)
+        case .requestNotificationPermission:
+            return try await doRequestNotificationPermission()
+        }
+    }
+
+    // Push a notification to the paired companion phone through the relay.
+    @MainActor
+    private func doNotify(_ args: NotifyArgs) async throws -> OrchestratorResult {
+        guard CompanionPushRegistry.canNotify else {
+            switch (CompanionPairingController.shared.isPhoneConnected, CompanionPushRegistry.authorization) {
+            case (true, .notDetermined):
+                throw OrchestratorError.unsupported(
+                    reason: "Notifications are not enabled on the paired phone yet. Call request_notification_permission first.")
+            case (_, .denied):
+                throw OrchestratorError.unsupported(
+                    reason: "The user has notifications turned off for iTerm2 Buddy. Do not push them about it; they can enable it in iOS Settings if they want alerts.")
+            default:
+                throw OrchestratorError.unsupported(
+                    reason: "No paired companion phone is registered for notifications.")
+            }
+        }
+        do {
+            try await CompanionPushSender.send(title: args.title, body: args.body)
+        } catch {
+            throw OrchestratorError.unsupported(
+                reason: "Notification delivery failed: \(error.localizedDescription)")
+        }
+        return .ack
+    }
+
+    // Have the connected phone show iOS's notification-permission prompt.
+    // Blocks (with a deadline) on the user's answer.
+    @MainActor
+    private func doRequestNotificationPermission() async throws -> OrchestratorResult {
+        if CompanionPushRegistry.canNotify {
+            // Already good to go; don't bother the user.
+            return .ack
+        }
+        guard CompanionPairingController.shared.isPhoneConnected else {
+            throw OrchestratorError.unsupported(
+                reason: "No companion phone is connected right now, so permission cannot be requested.")
+        }
+        let authorization = await CompanionPairingController.shared.requestNotificationPermission()
+        switch authorization {
+        case .authorized:
+            return .ack
+        case .denied:
+            throw OrchestratorError.unsupported(
+                reason: "The user declined notification permission. Do not ask again; iOS only shows the prompt once. If they change their mind they can enable notifications for iTerm2 Buddy in iOS Settings.")
+        case .notDetermined:
+            throw OrchestratorError.unsupported(
+                reason: "The phone could not show the permission prompt.")
+        case nil:
+            throw OrchestratorError.timeout
         }
     }
 
@@ -1109,11 +1202,17 @@ final class OrchestratorDispatcher {
         return .clippings(clippings)
     }
 
-    // Registers an async state watcher. Returns immediately; the
-    // chat receives a status_update when the watched state is
-    // reached. De-duplicated on (sessionGUID, targetState): if a
-    // watcher with the same target/state already exists, return
-    // the existing watcher_id instead of creating a duplicate.
+    // Registers an async watcher. Returns immediately; the chat
+    // receives a status_update when the watch fires. Two forms,
+    // selected by which argument is supplied (exactly one required):
+    //   - target_state: watch for the session reaching idle/working/
+    //     waiting. Exact tab-status transitions when the session
+    //     reports machine-readable status; screen observation otherwise.
+    //   - condition: a plain-English condition judged by screen
+    //     observation, regardless of whether the session reports status.
+    // De-duplicated on (sessionGUID, targetState, condition): if a
+    // watcher with the same goal already exists, return the existing
+    // watcher_id instead of creating a duplicate.
     //
     // If the target is already in the desired state at registration
     // time, fire immediately — the agent's caller-side expectation
@@ -1121,6 +1220,14 @@ final class OrchestratorDispatcher {
     // already-reached counts.
     @MainActor
     private func doRegisterWatch(_ args: RegisterWatchArgs) async throws -> OrchestratorResult {
+        let trimmedCondition = args.condition?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let condition = (trimmedCondition?.isEmpty == false) ? trimmedCondition : nil
+        if (condition == nil) == (args.targetState == nil) {
+            throw OrchestratorError.malformedArgs(reason:
+                "Supply exactly one of target_state (watch for idle/working/waiting) "
+                + "or condition (a plain-English condition judged by reading the screen).")
+        }
         // target_state must be a state we actually transition to. .unknown
         // is part of the enum so we can model "no tabStatus yet" internally
         // and surface it on get_state output, but watchers keyed to it
@@ -1130,22 +1237,27 @@ final class OrchestratorDispatcher {
         if args.targetState == .unknown {
             throw OrchestratorError.malformedArgs(reason:
                 "target_state \u{201C}unknown\u{201D} is reported by get_state but is not a watchable "
-                + "transition. Pick \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D} instead.")
+                + "transition. Pick \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D} instead, "
+                + "or use condition for anything else.")
         }
         let resolved = try resolveSessionOrThrow(args.sessionGuid)
         let session = resolved.session
         let guid = session.guid
         if let existing = watchers.first(where: {
             $0.sessionGUID == guid && $0.targetState == args.targetState
+                && $0.condition == condition
         }) {
             return .watcherRegistered(Self.description(of: existing))
         }
-        // No machine-readable status source: there are no tab-status
-        // transitions to fire on, so fall back to an AI poller that judges
-        // doneness by reading the screen. It fires the same status_update
-        // via screenPollFinished. No seedState / already-reached fast path
-        // here — the poller's first read detects an already-idle session.
-        if !WorkgroupIntrospection.reportsSessionStatus(session) {
+        // Screen-observation path, taken when either:
+        //   - a condition was supplied (conditions are always judged by
+        //     reading the screen, even on status-reporting sessions), or
+        //   - the session has no machine-readable status source, so there
+        //     are no tab-status transitions to fire a state watcher on.
+        // The AI poller fires the same status_update via
+        // screenPollFinished. No seedState / already-reached fast path
+        // here — the poller's first read detects an already-true goal.
+        if condition != nil || !WorkgroupIntrospection.reportsSessionStatus(session) {
             let watcher = WorkgroupWatcher(
                 watcherID: UUID().uuidString,
                 sessionGUID: guid,
@@ -1155,7 +1267,9 @@ final class OrchestratorDispatcher {
                 roleName: resolved.roleName,
                 targetState: args.targetState,
                 registeredAt: Date(),
-                mode: .screenPoll)
+                mode: .screenPoll,
+                condition: condition,
+                notifyUser: args.notifyUser)
             watchers.append(watcher)
             persistWatchers()
             startScreenPoll(for: watcher)
@@ -1184,7 +1298,8 @@ final class OrchestratorDispatcher {
                 roleID: resolved.roleID,
                 roleName: resolved.roleName,
                 targetState: args.targetState,
-                registeredAt: Date())
+                registeredAt: Date(),
+                notifyUser: args.notifyUser)
             let reachedState = currentState.rawValue
             DispatchQueue.main.async { [weak self] in
                 self?.publishStatusUpdate(
@@ -1204,7 +1319,8 @@ final class OrchestratorDispatcher {
             roleID: resolved.roleID,
             roleName: resolved.roleName,
             targetState: args.targetState,
-            registeredAt: Date())
+            registeredAt: Date(),
+            notifyUser: args.notifyUser)
         watchers.append(watcher)
         persistWatchers()
         return .watcherRegistered(Self.description(of: watcher))
@@ -1234,6 +1350,7 @@ final class OrchestratorDispatcher {
             roleID: watcher.roleID,
             roleName: watcher.roleName,
             targetState: watcher.targetState,
+            condition: watcher.condition,
             registeredAt: iso8601.string(from: watcher.registeredAt))
     }
 

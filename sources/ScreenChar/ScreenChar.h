@@ -359,6 +359,12 @@ static inline void ScreenCharSetUnderlineStyle(screen_char_t *sct, VT100Underlin
     sct->underlineStyle1 = (unsigned int)((value >> 2) & 1);
 }
 
+// Swift cannot read C bitfields directly, so expose the faint (SGR 2)
+// appearance bit through a function it can call.
+static inline BOOL ScreenCharIsFaint(screen_char_t sct) {
+    return sct.faint != 0;
+}
+
 // Standard unicode replacement string. Is a double-width character.
 static inline NSString* ReplacementString(void) {
     const unichar kReplacementCharacter = UNICODE_REPLACEMENT_CHAR;

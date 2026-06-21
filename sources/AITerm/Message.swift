@@ -4,6 +4,12 @@
 //
 //  Created by George Nachman on 2/12/25.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only); Mac-only code goes in a sibling file
+//  (the database conformance lives in Message+Database.swift).
+//
+
+import Foundation
 
 enum Participant: String, Codable, Hashable {
     case user
@@ -23,6 +29,7 @@ enum Participant: String, Codable, Hashable {
 struct StatusUpdate: Codable, Equatable {
     enum Reason: String, Codable {
         case stateReached     // a registered state-watcher fired
+        case conditionMet     // a plain-English condition watcher fired
         case watcherDropped   // the watched session is gone (e.g. failed to restore)
         case watchTimedOut    // a screen-observation watcher gave up after its time cap
     }
@@ -33,12 +40,19 @@ struct StatusUpdate: Codable, Equatable {
     var roleName: String
     var reason: Reason
     // Concrete state name for stateReached (e.g. "idle"). Empty for
-    // watcherDropped (state isn't relevant — the session is gone).
+    // the other reasons: conditionMet carries its condition in detail,
+    // and for watcherDropped / watchTimedOut no state was reached.
     var stateReached: String
     var timestamp: Date
     // Free-form human-readable detail, used both as the chat-UI body
     // and as the inner text of the agent-side <status_update> tag.
     var detail: String
+    // Whether iTerm2 already pushed a notification to the paired phone
+    // for this event (the watcher was registered with notify_user).
+    // true = sent; false = asked for but undeliverable; nil = not
+    // requested. Drives the agent-side guidance so the model neither
+    // double-notifies nor stays silent when it shouldn't.
+    var pushed: Bool? = nil
 }
 
 struct ClientLocal: Codable {
@@ -261,7 +275,12 @@ struct Message: Codable {
         }
 
         var snippetText: String? {
-            let maxLength = 40
+            // 40 suits the Mac's narrow chat-list sidebar; the companion
+            // bridge asks for a longer cut for the phone's two-line cells.
+            snippetText(maxLength: 40)
+        }
+
+        func snippetText(maxLength: Int) -> String? {
             switch self {
             case .plainText(let text, _): return text.truncatedWithTrailingEllipsis(to: maxLength)
             case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
@@ -498,133 +517,5 @@ struct Message: Codable {
         uuidMap[uniqueID] = copy.uniqueID
         copy.content = content.clone(uuidMap, messages: messages)
         return copy
-    }
-}
-
-extension Message: iTermDatabaseElement {
-    enum Columns: String {
-        case author
-        case content
-        case sentDate
-        case uniqueID
-        case chatID
-        case responseID
-        case agentReasoning
-    }
-
-    static func schema() -> String {
-        """
-        create table if not exists Message
-            (\(Columns.uniqueID.rawValue) text,
-             \(Columns.author.rawValue) text not null,
-             \(Columns.chatID.rawValue) text not null,
-             \(Columns.content.rawValue) text not null,
-             \(Columns.sentDate.rawValue) integer not null,
-             \(Columns.responseID.rawValue) text,
-             \(Columns.agentReasoning.rawValue) text)
-        """
-    }
-
-    static func migrations(existingColumns: [String]) -> [Migration] {
-        var result = [Migration]()
-        if !existingColumns.contains(Columns.responseID.rawValue) {
-            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.responseID.rawValue) text", args: []))
-        }
-        if !existingColumns.contains(Columns.agentReasoning.rawValue) {
-            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.agentReasoning.rawValue) text", args: []))
-        }
-        return result
-    }
-
-
-    static func fetchAllQuery() -> String {
-        "select * from Message"
-    }
-
-    static func query(forChatID chatID: String) -> (String, [Any?]) {
-        ("select * from Message where chatID=?", [chatID])
-    }
-
-    static func tableInfoQuery() -> String {
-        "PRAGMA table_info(Message)"
-    }
-
-    func appendQuery() -> (String, [Any?]) {
-        let jsonData = try! JSONEncoder().encode(content)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
-        return (
-            """
-            insert into Message (
-                \(Columns.uniqueID.rawValue),
-                \(Columns.author.rawValue),
-                \(Columns.chatID.rawValue),
-                \(Columns.content.rawValue),
-                \(Columns.sentDate.rawValue),
-                \(Columns.responseID.rawValue),
-                \(Columns.agentReasoning.rawValue))
-            values (?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                uniqueID.uuidString,
-                author.rawValue,
-                chatID,
-                jsonString,
-                sentDate.timeIntervalSince1970,
-                responseID,
-                agentReasoning
-            ]
-        )
-    }
-
-    func removeQuery() -> (String, [Any?]) {
-        ("DELETE from Message where \(Columns.uniqueID.rawValue) = ?",
-         [uniqueID.uuidString])
-    }
-
-    func updateQuery() -> (String, [Any?]) {
-        let jsonData = try! JSONEncoder().encode(content)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
-        return (
-            """
-            update Message set \(Columns.author.rawValue) = ?,
-                                \(Columns.chatID.rawValue) = ?,
-                                \(Columns.content.rawValue) = ?,
-                                \(Columns.sentDate.rawValue) = ?,
-                                \(Columns.responseID.rawValue) = ?,
-                                \(Columns.agentReasoning.rawValue) = ?
-            where \(Columns.uniqueID.rawValue) = ?
-            """,
-            [
-                author.rawValue,
-                chatID,
-                jsonString,
-                sentDate.timeIntervalSince1970,
-                responseID,
-                agentReasoning,
-                uniqueID.uuidString,
-            ]
-        )
-    }
-
-    init?(dbResultSet result: iTermDatabaseResultSet) {
-        guard let uniqueIDStr = result.string(forColumn: Columns.uniqueID.rawValue),
-              let uniqueID = UUID(uuidString: uniqueIDStr),
-              let authorStr = result.string(forColumn: Columns.author.rawValue),
-              let chatID = result.string(forColumn: Columns.chatID.rawValue),
-              let author = Participant(rawValue: authorStr),
-              let contentJSON = result.string(forColumn: Columns.content.rawValue),
-              let contentData = contentJSON.data(using: .utf8),
-              let content = try? JSONDecoder().decode(Content.self, from: contentData),
-              let sentDate = result.date(forColumn: Columns.sentDate.rawValue)
-        else {
-            return nil
-        }
-        self.uniqueID = uniqueID
-        self.author = author
-        self.chatID = chatID
-        self.content = content
-        self.sentDate = sentDate
-        self.responseID = result.string(forColumn: Columns.responseID.rawValue)
-        self.agentReasoning = result.string(forColumn: Columns.agentReasoning.rawValue)
     }
 }

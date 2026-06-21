@@ -161,6 +161,21 @@ final class OrchestrationToolProvider: ToolProvider {
     private func registerWorkgroupTools(on conversation: inout AIConversation) {
         guard let invoker = externalInvoker else { return }
         for definition in OrchestratorCommand.allToolDefinitions {
+            // The push tools depend on the paired phone's state. Tools are
+            // bound at agent creation, so a phone pairing mid-conversation
+            // appears on the next agent rebuild; notify is offered whenever
+            // a phone is around (even before permission, since permission
+            // can be granted mid-conversation) and reports a clear error if
+            // pushes still can't be delivered.
+            if definition.name == ToolName.notify.rawValue,
+               !CompanionPushRegistry.phoneIsConnected,
+               !CompanionPushRegistry.canNotify {
+                continue
+            }
+            if definition.name == ToolName.requestNotificationPermission.rawValue,
+               !CompanionPushRegistry.canPromptForPermission || CompanionPushRegistry.canNotify {
+                continue
+            }
             let decl = ChatGPTFunctionDeclaration(
                 name: definition.name,
                 description: definition.description,
@@ -334,6 +349,10 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Kicking off Code Review on " + sessionDescription(args: dict)
                 + " " + promptLabel
         case "register_watch":
+            if let condition = dict["condition"] as? String, !condition.isEmpty {
+                return "Will notify when " + sessionDescription(args: dict)
+                    + " satisfies: " + previewQuote(condition)
+            }
             let state = (dict["target_state"] as? String) ?? "?"
             return "Will notify when " + sessionDescription(args: dict)
                 + " becomes **\(state)**"

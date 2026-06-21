@@ -56,6 +56,37 @@ class ToolStatus: NSView {
     private static let debounceInterval: TimeInterval = 0.05
     private var pendingKeys = Set<String>()
     private var pendingFlush: DispatchWorkItem?
+    // Holds the memoized lookup result weakly, so a key present with a
+    // now-nil session means "was resolved, but that session has since
+    // died" — which resolveSessionForReload reports the same as a miss
+    // (nil), blanking the cell. This makes the memo self-healing for
+    // session deaths: even if some reload path forgets to drop it, a
+    // dead session can never be rendered as alive, and a terminated
+    // session isn't retained for the rest of the cycle.
+    private final class WeakSessionBox {
+        weak var session: PTYSession?
+        init(_ session: PTYSession?) { self.session = session }
+    }
+    // Per-reload session-resolution memo. configureCell runs twice per
+    // row per reload (height pass + view pass) and an unresolvable
+    // GUID pays the full five-leg session-lookup walk on every miss,
+    // so each reload entry point drops the memo and the passes share
+    // one resolution per GUID. The box records known misses too. The
+    // weak box bounds correctness on deaths; the explicit clears (one
+    // per reload entry point) handle the opposite direction, where a
+    // previously-unresolvable GUID becomes resolvable.
+    private var resolvedSessionsForReload: [String: WeakSessionBox] = [:]
+
+    // Internal (not private) so tests can pin the memo/invalidate
+    // contract without standing up the whole toolbelt table pipeline.
+    func resolveSessionForReload(guid: String) -> PTYSession? {
+        if let box = resolvedSessionsForReload[guid] {
+            return box.session
+        }
+        let session = iTermController.sharedInstance()?.anySession(withGUID: guid)
+        resolvedSessionsForReload[guid] = WeakSessionBox(session)
+        return session
+    }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -209,6 +240,7 @@ extension ToolStatus {
         let delegate = toolWrapper()?.delegate?.delegate
         DLog("ToolStatus viewDidMoveToWindow: window=\(window.d), delegate=\(delegate.d), statuses in controller=\(SessionStatusController.instance.statuses.keys.map { $0 })")
         // The fresh reload below is authoritative — drop any in-flight debounced work.
+        resolvedSessionsForReload.removeAll()
         pendingFlush?.cancel()
         pendingFlush = nil
         pendingKeys.removeAll()
@@ -240,6 +272,7 @@ extension ToolStatus {
     @objc func prioritiesDidChange(_ notification: Notification) {
         // Fires for priority-order edits and for toggling workgroup merging.
         // Re-sort the full model, recompute the rendered view, and reload.
+        resolvedSessionsForReload.removeAll()
         statuses.sort()
         rebuildDisplayed()
         _tableView?.reloadData()
@@ -301,6 +334,9 @@ private extension ToolStatus {
         guard let tableView = _tableView, !displayedStatuses.isEmpty else {
             return
         }
+        // Session/tab topology changed (these notifications include
+        // session creation/destruction), so resolvability may have too.
+        resolvedSessionsForReload.removeAll()
         // Active-session changes can shift many rows at once (every
         // peer-of-focus row gains or loses its ⌥⇧⌘N shortcut), so
         // reload all rows rather than chase a per-row diff that has
@@ -352,6 +388,13 @@ private extension ToolStatus {
         case window(String)
     }
 
+    // Note: the session target is NOT gated on the GUID resolving via
+    // anySession(withGUID:). NotifyOnStatusChangeController arms and
+    // fires purely off the status dictionary keyed by GUID, so arming
+    // works even for a session the lookup can't reach (the blank-row
+    // shape); only a genuinely exited session leaves the bell armed
+    // forever, which is harmless and less surprising than silently
+    // rescoping the click to the whole window.
     private var notifyTarget: NotifyTarget? {
         if let row = _tableView?.selectedRow, row >= 0, row < displayedStatuses.count {
             return .session(displayedStatuses[row].sessionID)
@@ -379,24 +422,18 @@ private extension ToolStatus {
     }
 
     @objc private func notifyArmedDidChange(_ notification: Notification) {
+        // This is a reload entry point like the others, so it must
+        // drop the session memo too: a session can exit between
+        // topology notifications, and rendering this reload from the
+        // stale hit would resurrect the recycled-row symptom (and
+        // retain the dead session) until the next flush.
+        resolvedSessionsForReload.removeAll()
         updateNotifyButtonAppearance()
         // Per-session bell indicators may have changed; refresh visible
         // rows (preserves selection/scroll, unlike full reloadData()).
         if let tableView = _tableView, !displayedStatuses.isEmpty {
             tableView.reloadData(forRowIndexes: IndexSet(integersIn: 0..<displayedStatuses.count),
                                  columnIndexes: IndexSet(integer: 0))
-        }
-    }
-
-    private var notifyArmed: Bool {
-        let controller = NotifyOnStatusChangeController.instance
-        switch notifyTarget {
-        case .session(let guid):
-            return controller.isSessionArmed(forGuid: guid)
-        case .window(let guid):
-            return controller.isWindowArmed(forGuid: guid)
-        case nil:
-            return false
         }
     }
 
@@ -413,17 +450,27 @@ private extension ToolStatus {
     }
 
     private func updateNotifyButtonAppearance() {
-        let armed = notifyArmed
+        // Resolve the target once; computing it involves table and
+        // window lookups and this runs on every status flush.
+        let target = notifyTarget
+        let controller = NotifyOnStatusChangeController.instance
+        let armed: Bool
+        let targetingSession: Bool
+        switch target {
+        case .session(let guid):
+            armed = controller.isSessionArmed(forGuid: guid)
+            targetingSession = true
+        case .window(let guid):
+            armed = controller.isWindowArmed(forGuid: guid)
+            targetingSession = false
+        case nil:
+            armed = false
+            targetingSession = false
+        }
         let symbol: SFSymbol = armed ? .bellBadge : .bell
         notifyButton.state = armed ? .on : .off
         notifyButton.image = NSImage(systemSymbolName: symbol.rawValue,
                                      accessibilityDescription: "Notify on status change")
-        let targetingSession: Bool
-        if case .session = notifyTarget {
-            targetingSession = true
-        } else {
-            targetingSession = false
-        }
         if armed {
             notifyButton.toolTip = targetingSession
                 ? "Watching the selected session for a status change. An alert will appear on the next change, then turn this off."
@@ -447,6 +494,7 @@ private extension ToolStatus {
     }
 
     private func flushPendingChanges() {
+        resolvedSessionsForReload.removeAll()
         pendingFlush = nil
         let keys = pendingKeys
         pendingKeys.removeAll()
@@ -766,6 +814,19 @@ private extension ToolStatus {
         return "\(modString)\(tabIndex)"
     }
 
+    // iTermController's generic unresolvable-session topology dump plus
+    // the one line only this tool can add: the status-controller keys.
+    // A status row whose GUID resolves to nothing renders as a blank
+    // cell and its click does nothing, so when that happens this dump
+    // should show which link in the lookup chain is broken (e.g. an
+    // alive session that is in no tab, not buried, and in no reachable
+    // peer port).
+    static func diagnosis(unresolvableGUID guid: String) -> String {
+        let base = iTermController.sharedInstance()?.diagnosis(unresolvableGUID: guid)
+            ?? "Diagnosis for unresolvable session \(guid): no iTermController"
+        return "\(base)\n  status controller keys: \(SessionStatusController.instance.statuses.keys.sorted())"
+    }
+
     // A status belongs in this toolbelt's window iff the session has a
     // *live home* there. The window is authoritative: it walks its
     // tabs and asks each in-tab session's peer port whether it owns
@@ -781,7 +842,22 @@ private extension ToolStatus {
 
     func configureCell(_ cell: ToolStatusCellView, for row: Int) {
         let status = displayedStatuses[row]
-        guard let session = iTermController.sharedInstance()?.anySession(withGUID: status.sessionID) else {
+        guard let session = resolveSessionForReload(guid: status.sessionID) else {
+            // One dump per GUID per debug-logging session: configureCell
+            // runs on every reload and height pass, and undeduped repeats
+            // would rotate the dump out of the capped log. The dedup
+            // lives in DebugLogging (global across windows, re-armed
+            // when a new logging session starts, untouched while logging
+            // is off), and the message block only runs when it will log.
+            // Clicking the row emits an undeduped on-demand dump.
+            DLogOncePerLoggingSession("ToolStatus.unresolvableGUID.\(status.sessionID)") {
+                "ToolStatus configureCell: anySession(withGUID:) failed for guid=\(status.sessionID) statusText=\(status.tabStatus.statusText.d) detail=\(status.tabStatus.detailText.d); blanking the cell\n\(Self.diagnosis(unresolvableGUID: status.sessionID))"
+            }
+            // This path skips configure() (which is self-clearing), so
+            // blank the cell directly: it may be a recycled cell or
+            // the manually reused measuring cell, either of which
+            // would otherwise keep a previous row's content.
+            cell.clear()
             return
         }
         let tabStatus = status.tabStatus
@@ -857,7 +933,13 @@ extension ToolStatus: NSTableViewDelegate {
         }
         let guid = displayedStatuses[row].sessionID
         guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
-            DLog("No session with ID \(guid)")
+            // Deliberately NOT deduped via DLogOncePerLoggingSession:
+            // clicking a blank row is an explicit user action and the
+            // on-demand way to capture a diagnosis (configureCell's
+            // one-shot may have fired before logging was enabled, and
+            // an unreachable session generates no reload that would
+            // re-trigger it).
+            DLog("No session with ID \(guid)\n\(Self.diagnosis(unresolvableGUID: guid))")
             return
         }
         session.reveal()
