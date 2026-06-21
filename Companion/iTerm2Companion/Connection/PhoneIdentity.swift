@@ -98,6 +98,29 @@ enum PhoneIdentity {
         delete(account: roomSecretAccount, accessGroup: nil)
     }
 
+    // MARK: Pairing code (App Group keychain, so it survives an app reinstall
+    // that wipes UserDefaults, and the NSE can read it).
+
+    private static let pairingCodeAccount = CompanionSharedIdentifiers.pairingCodeAccount
+
+    /// The stored pairing code, or nil if none. Decoded from a JSON blob in the
+    /// App Group keychain group.
+    static func pairingCode() -> PairingCode? {
+        guard let data = loadSharedData(account: pairingCodeAccount) else { return nil }
+        return try? JSONDecoder().decode(PairingCode.self, from: data)
+    }
+
+    /// Persist the pairing code (replaces any existing one).
+    static func storePairingCode(_ code: PairingCode) throws {
+        let data = try JSONEncoder().encode(code)
+        try store(data, account: pairingCodeAccount, accessGroup: appGroup)
+    }
+
+    static func deletePairingCode() {
+        delete(account: pairingCodeAccount, accessGroup: appGroup)
+        delete(account: pairingCodeAccount, accessGroup: nil)
+    }
+
     // MARK: Keychain plumbing
 
     private static func randomSecret() throws -> Data {
@@ -117,6 +140,24 @@ enum PhoneIdentity {
     /// migration moves it into the shared group so the NSE can read it.
     private static func loadShared(account: String) -> Data? {
         load(account: account, accessGroup: appGroup) ?? load(account: account, accessGroup: nil)
+    }
+
+    /// Like loadShared, but for variable-length blobs (the pairing code), so it
+    /// does not apply the 32-byte key check `load` enforces.
+    private static func loadSharedData(account: String) -> Data? {
+        loadData(account: account, accessGroup: appGroup) ?? loadData(account: account, accessGroup: nil)
+    }
+
+    private static func loadData(account: String, accessGroup: String?) -> Data? {
+        var query = baseQuery(account: account, accessGroup: accessGroup)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data else {
+            return nil
+        }
+        return data
     }
 
     private static func baseQuery(account: String, accessGroup: String?) -> [String: Any] {

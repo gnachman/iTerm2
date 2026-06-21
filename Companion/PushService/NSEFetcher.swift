@@ -26,6 +26,7 @@ actor NSEFetcher {
     private let keychainService = CompanionSharedIdentifiers.keychainService
     private let noiseAccount = CompanionSharedIdentifiers.noiseStaticPrivateKeyAccount
     private let roomSecretAccount = CompanionSharedIdentifiers.roomSecretAccount
+    private let pairingCodeAccount = CompanionSharedIdentifiers.pairingCodeAccount
 
     private var channel: NoiseChannel?
     private var transport: MessageTransport?
@@ -120,22 +121,22 @@ actor NSEFetcher {
     }
 
     private func loadCreds() -> Creds? {
-        guard let defaults = UserDefaults(suiteName: appGroup),
-              let responderKey = defaults.data(forKey: CompanionSharedIdentifiers.pairedResponderKeyDefault),
-              responderKey.count == 32,
-              let pairingID = defaults.string(forKey: CompanionSharedIdentifiers.pairedPairingIDDefault),
-              let noisePrivateKey = keychainData(account: noiseAccount),
+        // The pairing code now lives in the App Group keychain (a JSON blob), so
+        // it survives an app reinstall; the Noise key + room secret are there too.
+        guard let codeData = keychainData(account: pairingCodeAccount),
+              let code = try? JSONDecoder().decode(PairingCode.self, from: codeData),
+              let noisePrivateKey = keychainData(account: noiseAccount, expectedLength: 32),
               let identity = try? NoiseKeyPair.from(privateKey: noisePrivateKey) else {
             return nil
         }
-        let code = PairingCode(responderStaticPublicKey: responderKey,
-                               pairingID: pairingID,
-                               relayOrigin: defaults.string(forKey: CompanionSharedIdentifiers.pairedRelayOriginDefault))
-        return Creds(code: code, identity: identity, roomSecret: keychainData(account: roomSecretAccount))
+        return Creds(code: code, identity: identity,
+                     roomSecret: keychainData(account: roomSecretAccount, expectedLength: 32))
     }
 
-    /// Read a 32-byte item from the shared App Group keychain access group.
-    private func keychainData(account: String) -> Data? {
+    /// Read an item from the shared App Group keychain access group. When
+    /// `expectedLength` is non-nil the item must be exactly that many bytes (used
+    /// for the 32-byte keys); nil allows a variable-length blob (the pairing code).
+    private func keychainData(account: String, expectedLength: Int? = nil) -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
@@ -146,9 +147,10 @@ actor NSEFetcher {
         ]
         var item: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
-              let data = item as? Data, data.count == 32 else {
+              let data = item as? Data else {
             return nil
         }
+        if let expectedLength, data.count != expectedLength { return nil }
         return data
     }
 }

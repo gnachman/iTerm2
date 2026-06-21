@@ -64,4 +64,25 @@ final class PairingCodeTests: XCTestCase {
         let rebuilt = try PairingCode.parse(original.urlString())
         XCTAssertEqual(original, rebuilt)
     }
+
+    // The pairing code is stored as a JSON blob in the keychain (so it survives
+    // an app reinstall) and decoded by both the app and the NSE, so its Codable
+    // round-trip must be stable.
+    func testCodableRoundTrip() throws {
+        let original = PairingCode(responderStaticPublicKey: Data(repeating: 0xAB, count: 32),
+                                   pairingID: "pid-123",
+                                   relayOrigin: "https://relay.example.com")
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(PairingCode.self, from: data)
+        XCTAssertEqual(decoded, original)
+    }
+
+    func testCodableRoundTripWithNilRelayOrigin() throws {
+        let original = PairingCode(responderStaticPublicKey: Data(repeating: 1, count: 32),
+                                   pairingID: "pid", relayOrigin: nil)
+        let decoded = try JSONDecoder().decode(PairingCode.self,
+                                               from: try JSONEncoder().encode(original))
+        XCTAssertEqual(decoded, original)
+        XCTAssertNil(decoded.relayOrigin)
+    }
 }

@@ -279,17 +279,44 @@ final class AppModel {
     /// public and the pid is not a secret, so UserDefaults is fine. The relay
     /// origin is persisted too so an off-LAN reconnect after relaunch can still
     /// reach the mac through the relay (not just the local network).
-    /// The pairing code lives in the shared App Group suite so the NSE can read
-    /// it to reconnect; falls back to the App Group when unavailable.
-    private var pairingDefaults: UserDefaults {
-        UserDefaults(suiteName: PhoneIdentity.appGroup) ?? .standard
+    /// The pairing code lives in the App Group KEYCHAIN (PhoneIdentity), so it
+    /// survives an app reinstall - which wipes UserDefaults but not the keychain -
+    /// and the NSE can read it. (It used to be in UserDefaults, so reinstalling
+    /// the app forced a re-pair even though the keychain identity survived.)
+    var storedPairingCode: PairingCode? {
+        if let code = PhoneIdentity.pairingCode() {
+            return code
+        }
+        // Fallback: a pairing stored by an older build (UserDefaults). Read it so
+        // the user is not forced to re-pair; migratePairingCodeToKeychain copies
+        // it into the keychain at launch.
+        return legacyUserDefaultsPairingCode()
     }
 
-    var storedPairingCode: PairingCode? {
-        let shared = pairingDefaults
+    private func storePairing(_ code: PairingCode) {
+        do {
+            try PhoneIdentity.storePairingCode(code)
+        } catch {
+            companionLog("Failed to store pairing code in keychain: \(error)")
+        }
+    }
+
+    /// One-time migration of a pairing code stored by an older build in
+    /// UserDefaults into the keychain. Idempotent; runs at launch. Leaves the old
+    /// UserDefaults values in place (forgetStoredPairing clears them on unpair).
+    private func migratePairingCodeToKeychain() {
+        guard PhoneIdentity.pairingCode() == nil,
+              let legacy = legacyUserDefaultsPairingCode() else {
+            return
+        }
+        try? PhoneIdentity.storePairingCode(legacy)
+    }
+
+    /// Read a pairing code left by an older build in UserDefaults (App Group
+    /// suite, then app-only defaults).
+    private func legacyUserDefaultsPairingCode() -> PairingCode? {
+        let shared = UserDefaults(suiteName: PhoneIdentity.appGroup) ?? .standard
         let std = UserDefaults.standard
-        // Read the App Group suite, falling back to app-only defaults for a
-        // pre-migration install (migratePairingCodeToAppGroup copies it over).
         guard let key = shared.data(forKey: Self.storedKeyDefault) ?? std.data(forKey: Self.storedKeyDefault),
               key.count == 32,
               let pid = shared.string(forKey: Self.storedPIDDefault) ?? std.string(forKey: Self.storedPIDDefault) else {
@@ -298,35 +325,6 @@ final class AppModel {
         let relayOrigin = shared.string(forKey: Self.storedRelayOriginDefault)
             ?? std.string(forKey: Self.storedRelayOriginDefault)
         return PairingCode(responderStaticPublicKey: key, pairingID: pid, relayOrigin: relayOrigin)
-    }
-
-    private func storePairing(_ code: PairingCode) {
-        let defaults = pairingDefaults
-        defaults.set(code.responderStaticPublicKey, forKey: Self.storedKeyDefault)
-        defaults.set(code.pairingID, forKey: Self.storedPIDDefault)
-        if let relayOrigin = code.relayOrigin {
-            defaults.set(relayOrigin, forKey: Self.storedRelayOriginDefault)
-        } else {
-            defaults.removeObject(forKey: Self.storedRelayOriginDefault)
-        }
-    }
-
-    /// One-time copy of the pairing code from app-only defaults into the App
-    /// Group suite (so the NSE can read it). Idempotent; runs at launch.
-    private func migratePairingCodeToAppGroup() {
-        guard let shared = UserDefaults(suiteName: PhoneIdentity.appGroup) else { return }
-        let std = UserDefaults.standard
-        guard shared.data(forKey: Self.storedKeyDefault) == nil,
-              let key = std.data(forKey: Self.storedKeyDefault) else {
-            return
-        }
-        shared.set(key, forKey: Self.storedKeyDefault)
-        if let pid = std.string(forKey: Self.storedPIDDefault) {
-            shared.set(pid, forKey: Self.storedPIDDefault)
-        }
-        if let relayOrigin = std.string(forKey: Self.storedRelayOriginDefault) {
-            shared.set(relayOrigin, forKey: Self.storedRelayOriginDefault)
-        }
     }
 
     private func resetForFreshPairing() {
@@ -351,10 +349,11 @@ final class AppModel {
     }
 
     func forgetStoredPairing() {
-        // Clear the pairing code from both the App Group suite and app-only
-        // defaults (legacy location). The registered-room marker is NoSync /
-        // app-only and stays in standard.
-        for defaults in [pairingDefaults, UserDefaults.standard] {
+        // Clear the pairing code from the keychain (current location) and from
+        // both UserDefaults suites (legacy location). The registered-room marker
+        // is NoSync / app-only and stays in standard.
+        PhoneIdentity.deletePairingCode()
+        for defaults in [UserDefaults(suiteName: PhoneIdentity.appGroup), UserDefaults.standard].compactMap({ $0 }) {
             defaults.removeObject(forKey: Self.storedKeyDefault)
             defaults.removeObject(forKey: Self.storedPIDDefault)
             defaults.removeObject(forKey: Self.storedRelayOriginDefault)
@@ -391,11 +390,11 @@ final class AppModel {
     /// Called once at launch: if a pairing is stored, reconnect to it instead
     /// of demanding a fresh QR scan.
     func handleLaunch() {
-        // Move the NSE-shared keychain items and the pairing code into the App
-        // Group, once, at launch (idempotent + crash-safe), before any reconnect
-        // reads them.
+        // Move the NSE-shared keychain items into the App Group group and the
+        // pairing code into the keychain, once, at launch (idempotent +
+        // crash-safe), before any reconnect reads them.
         PhoneIdentity.migrateSharedItemsToAppGroup()
-        migratePairingCodeToAppGroup()
+        migratePairingCodeToKeychain()
         guard phase == .launch, pairingTask == nil else { return }
         guard let code = storedPairingCode else { return }
         companionLog("Reconnecting to stored pairing (pid \(code.pairingID))")

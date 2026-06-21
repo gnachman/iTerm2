@@ -23,8 +23,15 @@ public enum CompanionSharedIdentifiers {
     public static let noiseStaticPrivateKeyAccount = "noise-static-private-key"
     /// Keychain account for the relay room secret (shared with the NSE).
     public static let roomSecretAccount = "relay-room-secret"
+    /// Keychain account for the stored pairing code (responder key, pairing id,
+    /// relay origin) as a JSON blob (shared with the NSE). Kept in the keychain -
+    /// not UserDefaults - so the pairing survives an app reinstall, which wipes
+    /// UserDefaults but not the keychain.
+    public static let pairingCodeAccount = "paired-code"
 
-    /// App Group UserDefaults keys for the stored pairing code (shared with the NSE).
+    /// LEGACY App Group UserDefaults keys for the stored pairing code, read once
+    /// to migrate an existing pairing into the keychain (above). New writes go to
+    /// the keychain; these are cleared on unpair.
     public static let pairedResponderKeyDefault = "PairedResponderStaticKey"
     public static let pairedPairingIDDefault = "PairedPairingID"
     public static let pairedRelayOriginDefault = "PairedRelayOrigin"
