@@ -42,8 +42,9 @@ describe("POST /push/mutable", () => {
     expect(res.body.ok).toBe(true);
   });
 
-  it("forwards an optional nonce as a top-level custom key outside aps", async () => {
+  it("forwards an opaque base64 nonce as a top-level custom key outside aps", async () => {
     const { token, secret } = await registerDevice();
+    const sealed = "q1F3hT+abc/dEF==";   // base64 ciphertext shape (with padding)
     fetchMock
       .get("https://api.push.apple.com")
       .intercept({
@@ -51,11 +52,11 @@ describe("POST /push/mutable", () => {
         method: "POST",
         body: (value) => {
           const obj = JSON.parse(value);
-          return obj.n === "deadbeef" && obj.aps["mutable-content"] === 1;
+          return obj.n === sealed && obj.aps["mutable-content"] === 1;
         },
       })
       .reply(200, "");
-    const res = await post("/push/mutable", { token, secret, collapse: "abcd", nonce: "deadbeef" });
+    const res = await post("/push/mutable", { token, secret, collapse: "abcd", nonce: sealed });
     expect(res.status).toBe(200);
   });
 
@@ -73,9 +74,9 @@ describe("POST /push/mutable", () => {
     expect(res.status).toBe(200);
   });
 
-  it("rejects a non-hex nonce", async () => {
+  it("rejects a nonce that is not valid base64", async () => {
     const { token, secret } = await registerDevice();
-    const res = await post("/push/mutable", { token, secret, collapse: "abcd", nonce: "NOPE!" });
+    const res = await post("/push/mutable", { token, secret, collapse: "abcd", nonce: "not base64!" });
     expect(res.status).toBe(400);
   });
 

@@ -12,14 +12,22 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+private final class MemoryNonceStore: CompanionNonceStore {
+    var saved: [String] = []
+    init(_ initial: [String] = []) { saved = initial }
+    func load() -> [String] { saved }
+    func save(_ nonces: [String]) { saved = nonces }
+}
+
 @MainActor
 final class CompanionPushNonceRegistryTests: XCTestCase {
-    private func makeRegistry(capacity: Int = 1024) -> CompanionPushNonceRegistry {
+    private func makeRegistry(capacity: Int = 1024,
+                              store: CompanionNonceStore = MemoryNonceStore()) -> CompanionPushNonceRegistry {
         var counter = 0
         return CompanionPushNonceRegistry(capacity: capacity, makeRandom: {
             counter += 1
             return "nonce-\(counter)"
-        })
+        }, store: store)
     }
 
     func testIssuedNonceIsConsumedExactlyOnce() {
@@ -70,5 +78,29 @@ final class CompanionPushNonceRegistryTests: XCTestCase {
         XCTAssertNotEqual(a, b)
         XCTAssertTrue(reg.consume(b))
         XCTAssertTrue(reg.consume(a), "consuming one nonce does not invalidate another")
+    }
+
+    func testSurvivesRestartViaStore() {
+        // A push sent before a mac restart must still match the (APNs-delayed)
+        // fetch after it: the nonce is reloaded from the persisted store.
+        let store = MemoryNonceStore()
+        let first = makeRegistry(store: store)
+        let nonce = first.makeNonce()
+        // Simulate a restart: a brand-new registry backed by the same store.
+        let second = CompanionPushNonceRegistry(capacity: 1024,
+                                                makeRandom: { "unused" },
+                                                store: store)
+        XCTAssertTrue(second.consume(nonce), "a persisted nonce survives a restart")
+    }
+
+    func testConsumeIsPersistedSoItCannotReplayAfterRestart() {
+        let store = MemoryNonceStore()
+        let first = makeRegistry(store: store)
+        let nonce = first.makeNonce()
+        XCTAssertTrue(first.consume(nonce))
+        let second = CompanionPushNonceRegistry(capacity: 1024,
+                                                makeRandom: { "unused" },
+                                                store: store)
+        XCTAssertFalse(second.consume(nonce), "a consumed nonce stays consumed across a restart (no replay)")
     }
 }

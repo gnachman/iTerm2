@@ -92,6 +92,14 @@ const isHex = (s, minLen, maxLen) =>
   s.length <= maxLen &&
   /^[0-9a-f]+$/.test(s);
 
+// The push nonce is an opaque base64 ciphertext (sealed under the room secret),
+// not hex; the relay only forwards it, so just bound the length and charset.
+const isBase64 = (s, minLen, maxLen) =>
+  typeof s === "string" &&
+  s.length >= minLen &&
+  s.length <= maxLen &&
+  /^[A-Za-z0-9+/]+={0,2}$/.test(s);
+
 async function register(payload, env, request) {
   const { token, secretHash, sandbox } = payload;
   if (!isHex(token, 32, 256) || !isHex(secretHash, 64, 64)) {
@@ -159,11 +167,11 @@ async function pushMutable(payload, env) {
   if (!isHex(collapse, 1, 64)) {
     return json(400, { error: "bad collapse id" });
   }
-  // Optional one-time nonce: the NSE echoes it back over the relay so the mac
-  // can recognize its own solicited fetch and skip the presence warning. Opaque
-  // to the relay; just validated as hex and forwarded in the payload. Older
-  // senders omit it (no behavior change).
-  if (nonce !== undefined && !isHex(nonce, 1, 64)) {
+  // Optional one-time nonce: a base64 ciphertext (sealed under the room secret)
+  // the NSE decrypts and echoes back over the relay so the mac can recognize its
+  // own solicited fetch and skip the presence warning. Opaque to the relay; just
+  // validated as bounded base64 and forwarded in the payload.
+  if (nonce !== undefined && !isBase64(nonce, 1, 256)) {
     return json(400, { error: "bad nonce" });
   }
   const auth = await authorizeDevice(token, secret, env);

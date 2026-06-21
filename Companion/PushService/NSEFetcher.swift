@@ -37,13 +37,19 @@ actor NSEFetcher {
     func fetch(collapseToken token: String,
                sinceSeq: Int64,
                limit: Int,
-               nonce: String?) async throws -> PushFetchCoordinator<NSEMessagesSince.Preview>.Reply {
+               sealedNonce: String?) async throws -> PushFetchCoordinator<NSEMessagesSince.Preview>.Reply {
         guard let creds = loadCreds() else {
             NSELog.log("no shared credentials; cannot reconnect")
             throw FetchError.noCreds
         }
-        NSELog.log("fetch: connecting non-displacing (since=\(sinceSeq), limit=\(limit))")
         let roomSecret = creds.roomSecret
+        // Open the sealed nonce with the room secret so we can echo the plaintext
+        // back; nil if no nonce came in the push or it fails to open (e.g. the
+        // room secret was rotated) - the mac then warns, which is correct.
+        let nonce = (sealedNonce.flatMap { sealed in
+            roomSecret.flatMap { CompanionPushNonceCrypto.open(sealed, roomSecret: $0) }
+        })
+        NSELog.log("fetch: connecting non-displacing (since=\(sinceSeq), limit=\(limit), nonce=\(nonce == nil ? "no" : "yes"))")
         let secretProvider: @Sendable () -> Data? = { roomSecret }
         let connector = CompanionTransports.connector(for: creds.code,
                                                       roomSecret: secretProvider,

@@ -17,6 +17,7 @@
 //
 
 import Foundation
+import CompanionProtocol
 
 @MainActor
 final class CompanionAgentActivityNotifier {
@@ -189,11 +190,14 @@ final class CompanionAgentActivityNotifier {
                 // triggers as its own (solicited) and skips the presence warning.
                 // Only the phone receives the push, so only the real NSE can echo
                 // it back; retained by capacity (not time) so an APNs-delayed push
-                // still matches. See CompanionPushNonceRegistry.
+                // still matches. SEALED under the room secret so the relay/Apple
+                // (which carry the push but lack the room secret) see only
+                // ciphertext. See CompanionPushNonceRegistry / CompanionPushNonceCrypto.
                 let nonce = CompanionPushNonceRegistry.shared.makeNonce()
+                let sealedNonce = try? CompanionPushNonceCrypto.seal(nonce: nonce, roomSecret: roomSecret)
                 Task {
                     do {
-                        try await CompanionPushSender.sendMutable(collapse: collapse, nonce: nonce)
+                        try await CompanionPushSender.sendMutable(collapse: collapse, nonce: sealedNonce)
                         DLog("CompanionAgentActivityNotifier: sent mutable push for \(chatID)")
                     } catch {
                         DLog("CompanionAgentActivityNotifier: mutable push failed for \(chatID): \(error)")
