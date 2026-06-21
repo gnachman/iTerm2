@@ -663,15 +663,23 @@ final class AILiveHarness: XCTestCase {
     /// Verify Anthropic prompt caching engages end-to-end against the
     /// real server. Issue two back-to-back requests with the same
     /// system prompt (large enough to exceed Anthropic's minimum
-    /// cacheable size: Haiku is ≥1024 tokens), assert the first
+    /// cacheable size: Haiku is ≥2048 tokens), assert the first
     /// response shows cache_creation_input_tokens > 0, and the second
-    /// shows cache_read_input_tokens > 0 with cache_creation back to 0.
+    /// reads the shared prefix back from cache.
+    ///
+    /// We attach two kinds of marker offline: a stable one on the system
+    /// block (and last tool), and a ROLLING one on the last message of
+    /// every request. The second call here changes only its last user
+    /// message, so the shared system prefix is a cache_read while the
+    /// new last message is a small fresh cache_creation (the rolling
+    /// breakpoint, which the *next* turn would read). So we do NOT
+    /// expect cache_creation back to zero on call 2; we expect the
+    /// prefix read to dominate the small tail write.
     ///
     /// This is the only place where we can actually confirm the cache
-    /// markers we attach offline (system + last-tool cache_control)
-    /// are accepted by the server and counted toward the cached
-    /// segment. Offline unit tests pin the wire shape and byte
-    /// determinism; this pins the contract with the server.
+    /// markers we attach offline are accepted by the server and counted
+    /// toward the cached segment. Offline unit tests pin the wire shape
+    /// and byte determinism; this pins the contract with the server.
     func test_anthropic_promptCaching_cacheReadAfterCacheCreation() throws {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
         let model = "claude-haiku-4-5"
@@ -750,9 +758,14 @@ final class AILiveHarness: XCTestCase {
                              "[anthropic/promptCache] second call did not read from "
                              + "cache; markers did not actually cache the prefix. "
                              + "usage=\(secondUsage)")
-        XCTAssertEqual(secondUsage.cacheCreation, 0,
-                       "[anthropic/promptCache] second call should not have re-created "
-                       + "cache (same system+nonce as call 1). usage=\(secondUsage)")
+        // The shared system prefix is read from cache; only the changed
+        // last user message (the rolling breakpoint) is re-created, and
+        // that tail is tiny next to the cached prefix. If the prefix
+        // cache regressed we'd instead see a large cache_creation and a
+        // small/zero cache_read, so require the read to dominate.
+        XCTAssertGreaterThan(secondUsage.cacheRead, secondUsage.cacheCreation,
+                             "[anthropic/promptCache] second call re-created more than it "
+                             + "read; the shared prefix was not reused. usage=\(secondUsage)")
     }
 
     private struct AnthropicUsageSummary: CustomStringConvertible {

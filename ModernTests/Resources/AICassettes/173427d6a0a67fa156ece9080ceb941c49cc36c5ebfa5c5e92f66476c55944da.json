@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-sonnet-4-0\",\"temperature\":0,\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"input_schema\":{\"properties\":{},\"required\":[],\"type\":\"object\"},\"name\":\"get_random_word\"}]}",
+  "key" : "173427d6a0a67fa156ece9080ceb941c49cc36c5ebfa5c5e92f66476c55944da",
+  "response" : {
+    "data" : "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-0\"},\"request_id\":\"req_011CcFbn414Gj9k59SKhaeih\"}",
+    "error" : "HTTP request failed with status 404."
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

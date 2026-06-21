@@ -5,6 +5,18 @@
 //  Created by Claude on 6/17/25.
 //
 
+// Ephemeral prompt-cache marker. Anthropic caches every token from the
+// start of the request up through the block this is attached to, keyed by
+// exact byte equivalence of the content (the cache_control field itself is
+// excluded from the cache key). Subsequent requests with the same prefix
+// pay 0.1x for those tokens (cache_read) instead of the full input rate.
+// Shared by the system/tools breakpoints in AnthropicRequestBuilder and the
+// rolling history breakpoint on message content blocks.
+struct AnthropicCacheControl: Codable, Equatable {
+    var type: String  // "ephemeral"
+    static let ephemeral = AnthropicCacheControl(type: "ephemeral")
+}
+
 struct AnthropicMessage: Codable, Equatable {
     var role: AnthropicRole
     var content: AnthropicContent
@@ -351,24 +363,43 @@ extension AnthropicMessage {
                 )
             }
         }
+
+        // Return a copy of this block with its cache_control set. Used to
+        // attach the rolling history breakpoint to the last block of the
+        // last message; see AnthropicRequestBuilder.markLastMessageForCaching.
+        func settingCacheControl(_ cacheControl: AnthropicCacheControl?) -> AnthropicContentBlock {
+            switch self {
+            case .text(var c): c.cache_control = cacheControl; return .text(c)
+            case .image(var c): c.cache_control = cacheControl; return .image(c)
+            case .document(var c): c.cache_control = cacheControl; return .document(c)
+            case .toolUse(var c): c.cache_control = cacheControl; return .toolUse(c)
+            case .toolResult(var c): c.cache_control = cacheControl; return .toolResult(c)
+            }
+        }
     }
 
     struct AnthropicTextContent: Codable, Equatable {
         let type: String = "text"
         let text: String
+        // nil for all blocks except the rolling history breakpoint. Optional +
+        // synthesized encoding means it's omitted from the wire when nil, so
+        // unmarked blocks serialize byte-for-byte as before.
+        var cache_control: AnthropicCacheControl?
 
-        init(text: String) {
+        init(text: String, cache_control: AnthropicCacheControl? = nil) {
             self.text = text
+            self.cache_control = cache_control
         }
 
         enum CodingKeys: String, CodingKey {
-            case type, text
+            case type, text, cache_control
         }
     }
 
     struct AnthropicImageContent: Codable, Equatable {
         let type: String = "image"
         let source: Source
+        var cache_control: AnthropicCacheControl?
 
         struct Source: Codable, Equatable {
             let type: String
@@ -385,7 +416,7 @@ extension AnthropicMessage {
         var data: String { source.data }
 
         enum CodingKeys: String, CodingKey {
-            case type, source
+            case type, source, cache_control
         }
     }
 
@@ -395,6 +426,7 @@ extension AnthropicMessage {
     struct AnthropicDocumentContent: Codable, Equatable {
         let type: String = "document"
         let source: Source
+        var cache_control: AnthropicCacheControl?
 
         struct Source: Codable, Equatable {
             let type: String
@@ -410,7 +442,7 @@ extension AnthropicMessage {
         var data: String { source.data }
 
         enum CodingKeys: String, CodingKey {
-            case type, source
+            case type, source, cache_control
         }
     }
 
@@ -419,28 +451,32 @@ extension AnthropicMessage {
         let id: String
         let name: String
         let input: [String: Any]
+        var cache_control: AnthropicCacheControl?
 
         static func == (lhs: AnthropicToolUseContent, rhs: AnthropicToolUseContent) -> Bool {
             return lhs.type == rhs.type &&
                    lhs.id == rhs.id &&
                    lhs.name == rhs.name &&
+                   lhs.cache_control == rhs.cache_control &&
                    NSDictionary(dictionary: lhs.input).isEqual(to: rhs.input)
         }
 
         enum CodingKeys: String, CodingKey {
-            case type, id, name, input
+            case type, id, name, input, cache_control
         }
 
-        init(id: String, name: String, input: [String: Any]) {
+        init(id: String, name: String, input: [String: Any], cache_control: AnthropicCacheControl? = nil) {
             self.id = id
             self.name = name
             self.input = input
+            self.cache_control = cache_control
         }
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             id = try container.decode(String.self, forKey: .id)
             name = try container.decode(String.self, forKey: .name)
+            cache_control = try container.decodeIfPresent(AnthropicCacheControl.self, forKey: .cache_control)
 
             // Decode input as Any and convert to [String: Any]
             if container.contains(.input) {
@@ -461,6 +497,7 @@ extension AnthropicMessage {
             try container.encode(id, forKey: .id)
             try container.encode(name, forKey: .name)
             try container.encode(AnyCodable(input), forKey: .input)
+            try container.encodeIfPresent(cache_control, forKey: .cache_control)
         }
     }
 
@@ -468,14 +505,16 @@ extension AnthropicMessage {
         let type: String = "tool_result"
         let tool_use_id: String
         let content: String
+        var cache_control: AnthropicCacheControl?
 
         enum CodingKeys: String, CodingKey {
-            case type, tool_use_id, content
+            case type, tool_use_id, content, cache_control
         }
 
-        init(tool_use_id: String, content: String) {
+        init(tool_use_id: String, content: String, cache_control: AnthropicCacheControl? = nil) {
             self.tool_use_id = tool_use_id
             self.content = content
+            self.cache_control = cache_control
         }
     }
 }
@@ -751,16 +790,6 @@ struct AnthropicRequestBuilder {
         var disable_parallel_tool_use: Bool?
     }
 
-    // Ephemeral prompt-cache marker. Anthropic caches every token from
-    // the start of the request up through this marker, keyed by exact
-    // byte equivalence. Within a ~5-minute window, subsequent requests
-    // with the same prefix pay 0.1x for those tokens (cache_read)
-    // instead of the full input rate.
-    private struct AnthropicCacheControl: Codable {
-        var type: String  // "ephemeral"
-        static let ephemeral = AnthropicCacheControl(type: "ephemeral")
-    }
-
     private struct AnthropicSystemBlock: Codable {
         var type: String  // "text"
         var text: String
@@ -938,8 +967,45 @@ struct AnthropicRequestBuilder {
         }
     }
 
+    // Roll the conversation-history cache breakpoint forward. Anthropic
+    // orders the cacheable prefix as tools → system → messages and reads
+    // the LONGEST matching prefix, ignoring the cache_control field itself
+    // when computing the cache key. So marking the last content block of
+    // the last message caches the entire conversation up to and including
+    // it; on the next turn that block is no longer last (it carries no
+    // marker), but its content bytes are unchanged, so the prior turn's
+    // cached prefix is read at 0.1x instead of re-billed at full rate.
+    //
+    // Only the last block is marked. system + the last tool already use
+    // two of Anthropic's four breakpoints; this is the third. Earlier
+    // messages are never marked: they'd burn breakpoints for prefixes the
+    // rolling marker already covers.
+    //
+    // String content has nowhere to hang a cache_control field, so it is
+    // promoted to a one-element text-block array. Tool-result and other
+    // array-form messages (the bulk of an orchestration transcript) are
+    // marked in place and stay byte-stable across turns.
+    private func markLastMessageForCaching(_ messages: [AnthropicMessage]) -> [AnthropicMessage] {
+        guard var last = messages.last else {
+            return messages
+        }
+        switch last.content {
+        case .string(let text):
+            last.content = .array([.text(.init(text: text, cache_control: .ephemeral))])
+        case .array(var blocks):
+            guard let lastBlock = blocks.last else {
+                return messages
+            }
+            blocks[blocks.count - 1] = lastBlock.settingCacheControl(.ephemeral)
+            last.content = .array(blocks)
+        }
+        var result = messages
+        result[result.count - 1] = last
+        return result
+    }
+
     func body() throws -> Data {
-        let anthropicMessages = convertMessages(messages)
+        let anthropicMessages = markLastMessageForCaching(convertMessages(messages))
         let systemMessageText = messages.compactMap { message in
             switch message.role {
             case .system:

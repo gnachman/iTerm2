@@ -234,6 +234,12 @@ AI Improvements:
   asked once whether to switch to their model.
 - AI chat can connect to LAN-hosted models
   over HTTP.
+- Anthropic prompt caching now also covers the
+  conversation history, not just the system
+  prompt and tools. A rolling cache breakpoint
+  on the latest message lets long chats reread
+  the prior turns from cache instead of paying
+  full input price every turn.
 - AI models updated.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to

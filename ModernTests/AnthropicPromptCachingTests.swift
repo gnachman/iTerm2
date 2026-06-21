@@ -324,13 +324,60 @@ final class AnthropicPromptCachingTests: XCTestCase {
                        "Identical inputs produced different bytes; cache_read will never fire")
     }
 
-    // MARK: - Messages are NOT cached
+    // MARK: - Conversation history caching (rolling breakpoint)
 
-    /// User and assistant messages must not carry cache_control. They
-    /// change every turn, so marking them would burn cache_creation on
-    /// every request with no hit on the next one. (A future change may
-    /// mark history boundaries, but that's a separate breakpoint.)
-    func testMessagesCarryNoCacheControl() throws {
+    // The orchestration chat re-sends the whole conversation every turn.
+    // Without a breakpoint in `messages`, that history (tens of thousands
+    // of tokens of accumulated tool results) is billed at full input rate
+    // on every request. We place ONE ephemeral marker on the last content
+    // block of the last message each turn. Anthropic excludes cache_control
+    // from the cache key and reads the longest matching prefix, so the
+    // marker "rolls" forward: the block marked this turn becomes a cache
+    // read next turn once a newer turn is appended after it.
+
+    /// The last content block of the last message must carry an ephemeral
+    /// cache_control marker. This is the rolling history breakpoint.
+    func testLastMessageCarriesCacheControl() throws {
+        let json = try buildBody(
+            messages: [systemMessage("S"),
+                       userMessage("first"),
+                       LLM.Message(responseID: nil, role: .assistant, content: "answer"),
+                       userMessage("second")],
+            tools: [tool(named: "alpha")])
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        guard let last = messages.last,
+              let content = last["content"] as? [[String: Any]],
+              let lastBlock = content.last else {
+            XCTFail("Last message should serialize content as an array of blocks; got \(String(describing: messages.last?["content"]))")
+            return
+        }
+        XCTAssertEqual(lastBlock["cache_control"] as? [String: String], ephemeral,
+                       "Last content block of the last message must carry cache_control: ephemeral")
+    }
+
+    /// A string-content last message must convert to a single text block
+    /// carrying the marker, with the original text preserved verbatim.
+    /// (String content has nowhere to hang a cache_control field.)
+    func testStringLastMessageConvertsToTextBlockPreservingText() throws {
+        let json = try buildBody(
+            messages: [userMessage("only turn")],
+            tools: [])
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        guard let last = messages.last,
+              let content = last["content"] as? [[String: Any]],
+              let block = content.last else {
+            XCTFail("Expected array content on the last message; got \(String(describing: messages.last?["content"]))")
+            return
+        }
+        XCTAssertEqual(block["type"] as? String, "text")
+        XCTAssertEqual(block["text"] as? String, "only turn")
+        XCTAssertEqual(block["cache_control"] as? [String: String], ephemeral)
+    }
+
+    /// Only the last message carries a marker. Marking earlier messages
+    /// would burn extra breakpoints (capped at 4) and cache history that
+    /// the rolling last-message marker already covers.
+    func testNonLastMessagesCarryNoCacheControl() throws {
         let json = try buildBody(
             messages: [systemMessage("S"),
                        userMessage("hi"),
@@ -338,14 +385,49 @@ final class AnthropicPromptCachingTests: XCTestCase {
                        userMessage("what's 2+2?")],
             tools: [tool(named: "calc")])
         let messages = (json["messages"] as? [[String: Any]]) ?? []
-        XCTAssertGreaterThan(messages.count, 0)
-        for msg in messages {
+        XCTAssertGreaterThan(messages.count, 1)
+        for msg in messages.dropLast() {
             XCTAssertNil(msg["cache_control"],
-                         "Message \(msg["role"] ?? "?") must not carry cache_control")
+                         "Non-last message must not carry cache_control")
             if let content = msg["content"] as? [[String: Any]] {
                 for block in content {
                     XCTAssertNil(block["cache_control"],
-                                 "Message content block must not carry cache_control")
+                                 "Non-last message content block must not carry cache_control")
+                }
+            }
+        }
+    }
+
+    /// The rolling correctness invariant: a message that was the marked
+    /// last message on one turn must carry NO cache_control once a later
+    /// turn is appended and it is no longer last. Because cache_control is
+    /// excluded from the cache key, its content bytes are then identical to
+    /// what was cached, so the prior turn's prefix still produces a read.
+    func testPreviouslyMarkedMessageRevertsWhenNoLongerLast() throws {
+        let later = try buildBody(
+            messages: [systemMessage("S"),
+                       userMessage("first"),
+                       userMessage("second"),
+                       LLM.Message(responseID: nil, role: .assistant, content: "answer"),
+                       userMessage("third")],
+            tools: [])
+        let messages = (later["messages"] as? [[String: Any]]) ?? []
+        for msg in messages {
+            let isSecond: Bool
+            if let s = msg["content"] as? String {
+                isSecond = (s == "second")
+            } else if let arr = msg["content"] as? [[String: Any]] {
+                isSecond = arr.contains { ($0["text"] as? String) == "second" }
+            } else {
+                isSecond = false
+            }
+            guard isSecond else { continue }
+            XCTAssertNil(msg["cache_control"],
+                         "A no-longer-last message must not carry cache_control")
+            if let arr = msg["content"] as? [[String: Any]] {
+                for block in arr {
+                    XCTAssertNil(block["cache_control"],
+                                 "A no-longer-last message's blocks must not carry cache_control")
                 }
             }
         }

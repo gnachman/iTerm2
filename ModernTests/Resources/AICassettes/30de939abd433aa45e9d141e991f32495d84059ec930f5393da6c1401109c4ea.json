@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":127824,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"},{\"content\":[{\"text\":\"I'll get a random word for you.\",\"type\":\"text\"},{\"id\":\"toolu_01VXcbpCK421qMUQygqmzyJn\",\"input\":{},\"name\":\"get_random_word\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"content\":\"MAGENTA-LARK-77\",\"tool_use_id\":\"toolu_01VXcbpCK421qMUQygqmzyJn\",\"type\":\"tool_result\"}],\"role\":\"user\"}],\"model\":\"claude-opus-4-8\",\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"input_schema\":{\"properties\":{},\"required\":[],\"type\":\"object\"},\"name\":\"get_random_word\"}]}",
+  "key" : "30de939abd433aa45e9d141e991f32495d84059ec930f5393da6c1401109c4ea",
+  "response" : {
+    "data" : "{\"model\":\"claude-opus-4-8\",\"id\":\"msg_01Y8HR8vkPXkVgyoe3q7RDhh\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Here's the random word I got: **MAGENTA-LARK-77**\\n\\nFeel free to ask if you'd like another one!\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":464,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":41,\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

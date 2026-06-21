@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":127816,\"messages\":[{\"content\":\"Please run the diagnostic command.\",\"role\":\"user\"},{\"content\":[{\"content\":\"Darwin host 25.4.0 arm64\",\"tool_use_id\":\"toolu_negctl\",\"type\":\"tool_result\"}],\"role\":\"user\"},{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"In one short sentence, summarize what you learned from the previous command output.\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-opus-4-8\",\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Run a shell command (stub for chat-reload tests).\",\"input_schema\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"},\"name\":\"execute_command\"}]}",
+  "key" : "5db32be51cec7a86f17c346cd0a1bd58627309236fb4b768c769c5f6d4ab2078",
+  "response" : {
+    "data" : "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"messages.0.content.1: unexpected `tool_use_id` found in `tool_result` blocks: toolu_negctl. Each `tool_result` block must have a corresponding `tool_use` block in the previous message.\"},\"request_id\":\"req_011CcFbUgX1V4LkyktB49wMx\"}",
+    "error" : "HTTP request failed with status 400."
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

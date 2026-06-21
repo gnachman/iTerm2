@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":127814,\"messages\":[{\"content\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"role\":\"user\"},{\"content\":[{\"text\":\"\\n\\nSure! Let me call the tool to get a random word.\",\"type\":\"text\"},{\"id\":\"toolu_019bcmbmNaysTqnEi8Jtn6Lf\",\"input\":{},\"name\":\"get_random_word\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"content\":\"MAGENTA-LARK-77\",\"tool_use_id\":\"toolu_019bcmbmNaysTqnEi8Jtn6Lf\",\"type\":\"tool_result\"}],\"role\":\"user\"}],\"model\":\"claude-opus-4-6\",\"temperature\":0,\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"input_schema\":{\"properties\":{},\"required\":[],\"type\":\"object\"},\"name\":\"get_random_word\"}]}",
+  "key" : "2cc3efe33d9d80c17f3630e497e66e30f3a387dfeda20a837de99437a95fd2b3",
+  "response" : {
+    "data" : "{\"model\":\"claude-opus-4-6\",\"id\":\"msg_01HCLuqF6CNF3tvCqfokSL8W\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"The random word returned by the tool is: **MAGENTA-LARK-77**. What a fun and quirky made-up word! Would you like me to generate another one?\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":455,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":44,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}
