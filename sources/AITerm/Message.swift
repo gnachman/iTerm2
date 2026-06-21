@@ -11,6 +11,49 @@
 
 import Foundation
 
+/// Thrown by a forward-compat-aware decoder when it encounters an enum case this
+/// build does not know (a newer build added it) - as distinct from a corrupt
+/// body of a KNOWN case. `Message.init(from:)` catches this and degrades the
+/// whole content to `.unsupported`; a real DecodingError (corruption) propagates
+/// so a genuinely broken message surfaces instead of being masked as "newer".
+enum ForwardCompatibilityError: Error {
+    case unknownCase
+}
+
+/// A coding key that accepts any string, for reading the single discriminator
+/// key a synthesized enum encodes its case under (`{"<caseName>": ...}`).
+struct AnyDiscriminatorKey: CodingKey {
+    let stringValue: String
+    init?(stringValue: String) { self.stringValue = stringValue }
+    var intValue: Int? { nil }
+    init?(intValue: Int) { nil }
+}
+
+extension KeyedDecodingContainer {
+    /// Strictly decode `type` from `key`, but FIRST peek the value's single
+    /// discriminator (the case name a synthesized enum encodes under): if it is
+    /// not in `knownDiscriminators`, throw `ForwardCompatibilityError.unknownCase`
+    /// so the caller can degrade to a forward-compat sentinel. A KNOWN
+    /// discriminator whose body fails to decode still throws a normal
+    /// DecodingError, so corruption surfaces instead of masquerading as "newer".
+    /// An unreadable value (not a single-keyed object) also falls through to the
+    /// strict decode and its error.
+    ///
+    /// One implementation of the "peek the discriminator, degrade unknown / decode
+    /// known" forward-compat dance, shared by Message content, ClientLocal.Action,
+    /// and CompanionEnvelope so the three cannot drift apart.
+    func decodeForwardCompatible<T: Decodable>(_ type: T.Type,
+                                               forKey key: Key,
+                                               knownDiscriminators: Set<String>) throws -> T {
+        if let nested = try? nestedContainer(keyedBy: AnyDiscriminatorKey.self, forKey: key),
+           let discriminator = nested.allKeys.first?.stringValue,
+           !knownDiscriminators.contains(discriminator) {
+            throw ForwardCompatibilityError.unknownCase
+        }
+        return try decode(T.self, forKey: key)
+    }
+}
+
 enum Participant: String, Codable, Hashable {
     case user
     case agent
@@ -110,8 +153,35 @@ struct ClientLocal: Codable {
             case active
             case stoppedAutomatically
         }
+
+        /// Discriminators this build knows. Add a line when a case is added (a
+        /// ModernTests exhaustiveness test enforces this). An unknown action makes
+        /// ClientLocal.init throw ForwardCompatibilityError.unknownCase, which
+        /// Message.init turns into `.unsupported` content.
+        static let knownActionKeys: Set<String> = [
+            "pickingSession", "executingCommand", "notice", "streamingChanged",
+            "offerLink", "offerOrchestration", "permissions",
+            "workgroupPermissionRequest", "enableOrchestrationRequest",
+            "orchestrationPermissionGranted",
+        ]
     }
     var action: Action
+}
+
+extension ClientLocal {
+    private enum CodingKeys: String, CodingKey { case action }
+
+    // Custom decode (encode stays synthesized) so a NEWER ClientLocal.Action
+    // (nested inside a known .clientLocal content) is reported as an unknown case
+    // rather than a generic decode failure: Message.init degrades the whole
+    // content to .unsupported for the former but rethrows the latter (a corrupt
+    // body of a KNOWN action), so corruption still surfaces. Declared in an
+    // extension to preserve the memberwise initializer.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        action = try c.decodeForwardCompatible(Action.self, forKey: .action,
+                                               knownDiscriminators: Action.knownActionKeys)
+    }
 }
 
 enum UserCommand: Codable {
@@ -202,6 +272,18 @@ struct Message: Codable {
         // message (and, in a history batch, every sibling message) down
         // with it.
         case unsupported
+
+        /// Discriminators this build knows. Message.init maps a top-level content
+        /// case NOT in this set to `.unsupported` (forward compatibility) but
+        /// decodes a known case strictly (a corrupt body throws). Add a line when
+        /// a case is added (a ModernTests exhaustiveness test enforces this).
+        static let knownContentKeys: Set<String> = [
+            "plainText", "markdown", "explanationRequest", "explanationResponse",
+            "remoteCommandRequest", "watcherEvent", "remoteCommandResponse",
+            "selectSessionRequest", "clientLocal", "renameChat", "append",
+            "appendAttachment", "commit", "userCommand", "setPermissions",
+            "vectorStoreCreated", "terminalCommand", "multipart", "unsupported",
+        ]
 
         func clone(_ uuidMap: [UUID: UUID], messages: [UUID: Message]) -> Content {
             switch self {
@@ -567,13 +649,18 @@ extension Message {
         case inResponseTo, responseID, agentReasoning, configuration
     }
 
-    // Custom decode (encode stays synthesized) so an unrecognized
-    // `content` degrades to .unsupported instead of throwing. This is
-    // the single forward-compatibility boundary: it catches both a
-    // brand-new Content case and a new ClientLocal.Action nested inside
-    // a known .clientLocal, because either makes the content decode
-    // throw and we swallow it here. Other fields stay strict; a message
-    // with a corrupt timestamp is genuinely broken, not merely newer.
+    // Custom decode (encode stays synthesized) so an unrecognized `content`
+    // degrades to .unsupported instead of throwing, WITHOUT also masking a corrupt
+    // body of a known case (a blanket `try?` here would do both). This is the
+    // forward-compatibility boundary for content:
+    //   - an unknown TOP-LEVEL Content case (discriminator not in
+    //     knownContentKeys) -> .unsupported;
+    //   - an unknown case NESTED in a known content (a new ClientLocal.Action)
+    //     surfaces as ForwardCompatibilityError.unknownCase -> .unsupported;
+    //   - any other content decode failure (a corrupt body of a KNOWN case) is
+    //     rethrown, so a genuinely broken message surfaces rather than silently
+    //     becoming "needs a newer version".
+    // Other fields stay strict; a message with a corrupt timestamp is broken.
     //
     // Declared in an extension to preserve the memberwise initializer
     // Message(chatID:author:content:...) that the rest of the app uses.
@@ -581,12 +668,25 @@ extension Message {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         chatID = try c.decode(String.self, forKey: .chatID)
         author = try c.decode(Participant.self, forKey: .author)
-        content = (try? c.decode(Content.self, forKey: .content)) ?? .unsupported
+        content = try Self.decodeContent(from: c)
         sentDate = try c.decode(Date.self, forKey: .sentDate)
         uniqueID = try c.decode(UUID.self, forKey: .uniqueID)
         inResponseTo = try c.decodeIfPresent(String.self, forKey: .inResponseTo)
         responseID = try c.decodeIfPresent(String.self, forKey: .responseID)
         agentReasoning = try c.decodeIfPresent(String.self, forKey: .agentReasoning)
         configuration = try c.decodeIfPresent(Configuration.self, forKey: .configuration)
+    }
+
+    private static func decodeContent(from c: KeyedDecodingContainer<CodingKeys>) throws -> Content {
+        do {
+            return try c.decodeForwardCompatible(Content.self, forKey: .content,
+                                                 knownDiscriminators: Content.knownContentKeys)
+        } catch ForwardCompatibilityError.unknownCase {
+            // An unknown case - top-level (a newer Content) OR nested in a known
+            // content (a newer ClientLocal.Action, which throws this from
+            // ClientLocal.init) - degrades the whole content to the placeholder. A
+            // corrupt body of a KNOWN case throws a DecodingError and propagates.
+            return .unsupported
+        }
     }
 }

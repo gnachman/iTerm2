@@ -42,6 +42,23 @@ actor CompanionClient {
         }
     }
 
+    /// Version handshake: send this build's revision/minimumPeer and evaluate the
+    /// mac's reply from the phone's side. Call FIRST, before any other request.
+    /// .selfMustUpgrade -> upgrade the phone app; .peerMustUpgrade -> upgrade the
+    /// Mac app.
+    func handshakeVersion() async throws -> CompanionProtocolVersion.Compatibility {
+        let reply = try await session.request(.hello(revision: CompanionProtocolVersion.current,
+                                                     minimumPeer: CompanionProtocolVersion.minimumPeer))
+        switch reply {
+        case .hello(let revision, let minimumPeer):
+            return CompanionProtocolVersion.evaluate(peerRevision: revision, peerMinimumPeer: minimumPeer)
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to hello")
+        }
+    }
+
     func listChatsAndSessions() async throws -> (chats: [CompanionChatListEntry],
                                                  sessions: [CompanionSessionSummary]) {
         let reply = try await session.request(.listChatsAndSessions)
@@ -77,7 +94,10 @@ actor CompanionClient {
     func subscribe(chatID: String) async throws -> [Message] {
         let reply = try await session.request(.subscribe(chatID: chatID))
         switch reply {
-        case .history(_, let messages):
+        case .history(let chatID, let messages, let maxSeq):
+            // Viewing a chat == reading it: advance the per-chat push watermark
+            // to the chat's tip so the NSE won't re-notify these messages.
+            Self.advancePushWatermark(chatID: chatID, toMaxSeq: maxSeq)
             return messages
         case .error(let error):
             throw error
@@ -85,6 +105,21 @@ actor CompanionClient {
             throw CompanionError(code: .badRequest, message: "Unexpected reply to subscribe request")
         }
     }
+
+    /// Max-merge the per-chat push watermark in the App Group (shared with the
+    /// NSE). The token is HMAC(roomSecret, chatID), computed the same way the
+    /// mac collapses pushes, so the chatID never has to cross to the NSE.
+    private static func advancePushWatermark(chatID: String, toMaxSeq maxSeq: Int64) {
+        guard let roomSecret = PhoneIdentity.existingRoomSecret(),
+              let backing = UserDefaultsWatermarkBacking(appGroup: PhoneIdentity.appGroup) else {
+            return
+        }
+        let token = CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chatID)
+        WatermarkStore(backing: backing).advance(token: token, to: maxSeq)
+    }
+
+    // (The NSE talks messagesSince over the slim NSEMessagesSince mirror, not
+    // this typed client, so there is no CompanionClient.messagesSince.)
 
     func unsubscribe(chatID: String) async throws {
         try await session.send(.unsubscribe(chatID: chatID))

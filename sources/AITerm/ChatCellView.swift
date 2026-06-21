@@ -89,7 +89,7 @@ class ChatCellView: NSTableCellView {
                     snippet = dataSource?.snippet(forChatID: chatID) ?? ""
                 }
             }
-        case let .delivery(message, _):
+        case let .delivery(message, _, _):
             if !typing, let snippet = message.snippetText {
                 self.snippet = snippet
             }

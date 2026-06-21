@@ -23,28 +23,56 @@ enum CompanionPushSender {
         var body: String
     }
 
+    private struct MutablePushRequest: Encodable {
+        var token: String
+        var secret: String
+        var collapse: String
+        /// One-time nonce the NSE echoes back over the relay so the mac can
+        /// recognize its own solicited fetch (omitted when nil).
+        var nonce: String?
+    }
+
     private struct RelayReply: Decodable {
         var ok: Bool?
         var error: String?
     }
 
+    /// Plaintext alert (the notify tool): the title/body are visible to Apple.
     static func send(title: String, body: String) async throws {
+        let (token, secret) = try credentials()
+        try await post(url: CompanionPushRelay.pushURL,
+                       request: PushRequest(token: token, secret: secret, title: title, body: body),
+                       label: "“\(title)”")
+    }
+
+    /// Content-free push that wakes the phone's Notification Service Extension,
+    /// collapsed per chat by the opaque token (HMAC(roomSecret, chatID)). No
+    /// content crosses the relay; the NSE fetches it over Noise.
+    static func sendMutable(collapse: String, nonce: String?) async throws {
+        let (token, secret) = try credentials()
+        try await post(url: CompanionPushRelay.mutablePushURL,
+                       request: MutablePushRequest(token: token, secret: secret,
+                                                   collapse: collapse, nonce: nonce),
+                       label: "mutable (collapse \(collapse))")
+    }
+
+    private static func credentials() throws -> (token: String, secret: String) {
         guard let token = CompanionPushRegistry.deviceTokenHex,
               let secret = CompanionPushRegistry.relaySecretHex else {
             throw SendError(message: "No paired phone is registered for notifications.")
         }
+        return (token, secret)
+    }
+
+    private static func post(url: URL, request: some Encodable, label: String) async throws {
         // Route through the consent plugin: it is the companion's only outbound
         // HTTP path, so the push goes the same way as the relay socket.
         guard case .success(let plugin) = CompanionPlugin.instance() else {
             throw SendError(message: "The companion plugin is not installed.")
         }
-        let bodyJSON = String(decoding: try JSONEncoder().encode(PushRequest(token: token,
-                                                                             secret: secret,
-                                                                             title: title,
-                                                                             body: body)),
-                              as: UTF8.self)
+        let bodyJSON = String(decoding: try JSONEncoder().encode(request), as: UTF8.self)
         let response = try await plugin.client.request(method: "POST",
-                                                       url: CompanionPushRelay.pushURL.absoluteString,
+                                                       url: url.absoluteString,
                                                        headers: ["Content-Type": "application/json"],
                                                        body: bodyJSON)
         // The plugin reports a 2xx as an empty error; anything else carries
@@ -55,6 +83,6 @@ enum CompanionPushSender {
             DLog("Companion push: relay rejected send (\(response.error)): \(detail)")
             throw SendError(message: "The push relay refused the notification (\(response.error)): \(detail)")
         }
-        DLog("Companion push: delivered “\(title)” via relay")
+        DLog("Companion push: delivered \(label) via relay")
     }
 }

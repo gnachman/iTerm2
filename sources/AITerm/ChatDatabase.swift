@@ -5,6 +5,10 @@
 //  Created by George Nachman on 2/17/25.
 //
 
+enum ChatDatabaseQueryError: Error {
+    case nilResultSet
+}
+
 @objc(iTermChatDatabase)
 class ObjCChatDatabase: NSObject {
     @objc static let redrawTerminalsNotification = Notification.Name("iTermChatDatabaseRedrawTerminals")
@@ -118,21 +122,165 @@ class ChatDatabase {
             try db.executeUpdate(Message.schema(), withArguments: [])
 
             do {
-                let messageMigrations = Message.migrations(existingColumns:
-                                                           listColumns(
-                                                               resultSet: try db.executeQuery(
-                                                                   Message.tableInfoQuery(),
-                                                                   withArguments: [])))
+                // Read the existing columns once: it drives both the plain
+                // ADD COLUMN migrations and the seq rebuild below. For a brand
+                // new database schema() just created the table WITH seq, so this
+                // already contains "seq" and the rebuild is skipped.
+                let existingColumns = listColumns(
+                    resultSet: try db.executeQuery(Message.tableInfoQuery(),
+                                                   withArguments: []))
+                let messageMigrations = Message.migrations(existingColumns: existingColumns)
                 for migration in messageMigrations {
                     try db.executeUpdate(migration.query, withArguments: migration.args)
                 }
+                // The seq column (INTEGER PRIMARY KEY AUTOINCREMENT) cannot be
+                // added with ALTER TABLE, so pre-seq databases need a table
+                // rebuild. Run it AFTER the ADD COLUMN migrations above so the
+                // copied rows already have responseID/agentReasoning.
+                if !existingColumns.isEmpty && !existingColumns.contains(Message.Columns.seq.rawValue) {
+                    try migrateAddSeqColumnToMessage()
+                }
             }
+
+            // Index the push path's per-chat scans (messagesSince window + maxSeq)
+            // and the per-chat history fetch. Only seq (the PK) is indexed
+            // otherwise, so these full-scan the Message table, growing with total
+            // messages across all chats. IF NOT EXISTS: cheap on every open.
+            try db.executeUpdate(
+                "create index if not exists Message_chatID_seq on Message "
+                + "(\(Message.Columns.chatID.rawValue), \(Message.Columns.seq.rawValue))",
+                withArguments: [])
 
             return true
         } catch {
             DLog("\(error)")
             return false
         }
+    }
+
+    // Rebuild the Message table to add the seq AUTOINCREMENT primary key
+    // (SQLite forbids adding one with ALTER TABLE). The whole rebuild runs in
+    // ONE transaction: SQLite DDL is transactional, so a crash or error
+    // mid-migration rolls back to the intact original table rather than leaving
+    // a half-built or emptied one. Rows are copied in rowid order so seq is
+    // backfilled in arrival order; the engine assigns 1..N and tracks the max
+    // in sqlite_sequence, so subsequent inserts never reuse a value.
+    private func migrateAddSeqColumnToMessage() throws {
+        let c = Message.Columns.self
+        let copiedColumns = [
+            c.uniqueID, c.author, c.chatID, c.content,
+            c.sentDate, c.responseID, c.agentReasoning
+        ].map { $0.rawValue }.joined(separator: ", ")
+        // The SELECT coalesces the NOT NULL columns so a single legacy row with a
+        // NULL (the old schema also declares these NOT NULL, so this shouldn't
+        // exist, but a corrupt row would otherwise fail the INSERT and roll back
+        // the whole migration - bricking the DB, since every reopen re-runs and
+        // re-fails). A coerced bad row degrades gracefully instead.
+        let selectColumns = [
+            c.uniqueID.rawValue,
+            "coalesce(\(c.author.rawValue), 'user')",
+            "coalesce(\(c.chatID.rawValue), '')",
+            "coalesce(\(c.content.rawValue), '')",
+            "coalesce(\(c.sentDate.rawValue), 0)",
+            c.responseID.rawValue,
+            c.agentReasoning.rawValue
+        ].joined(separator: ", ")
+        // Throwing transaction: begins, runs the closure, commits; any throw
+        // from executeUpdate rolls back and rethrows, so a failure leaves the
+        // original Message table intact.
+        do {
+            try db.transaction {
+                try db.executeUpdate("""
+                    create table Message_new
+                        (\(c.seq.rawValue) integer primary key autoincrement,
+                         \(c.uniqueID.rawValue) text,
+                         \(c.author.rawValue) text not null,
+                         \(c.chatID.rawValue) text not null,
+                         \(c.content.rawValue) text not null,
+                         \(c.sentDate.rawValue) integer not null,
+                         \(c.responseID.rawValue) text,
+                         \(c.agentReasoning.rawValue) text)
+                    """, withArguments: [])
+                try db.executeUpdate("""
+                    insert into Message_new (\(copiedColumns))
+                    select \(selectColumns) from Message order by rowid
+                    """, withArguments: [])
+                try db.executeUpdate("drop table Message", withArguments: [])
+                try db.executeUpdate("alter table Message_new rename to Message", withArguments: [])
+            }
+        } catch {
+            // Surface loudly: a persistent failure here re-runs and re-fails on
+            // every open, so the chat DB would never open again.
+            DLog("Message seq migration FAILED (chat DB will not open): \(error)")
+            throw error
+        }
+    }
+
+    /// For the relay-push messagesSince responder: a newest-first window of a
+    /// chat's messages with seq greater than `sinceSeq`, plus the chat's current
+    /// max seq. Decodes Message rows (which ignore the seq column); the caller
+    /// drops hidden rows and trims to previews. `windowLimit` over-fetches so
+    /// hidden rows don't crowd out visible ones.
+    ///
+    /// Returns nil on a query FAILURE - distinct from a genuinely empty result
+    /// (`([], 0)`). The caller must not treat a failure as an empty/rewound chat:
+    /// a maxSeq of 0 from a transient error would otherwise look like a chat-DB
+    /// rewind (seq > maxSeq) and force the phone's watermark down to 0.
+    func messagesSince(chatID: String,
+                       sinceSeq: Int64,
+                       windowLimit: Int) -> (messages: [Message], maxSeq: Int64)? {
+        var messages = [Message]()
+        var maxSeqValue: Int64 = 0
+        // One transaction so the window read and the maxSeq read are a single
+        // snapshot. Otherwise a write between them could advance maxSeq past a
+        // message not in the returned window, and the phone would advance its
+        // watermark past an un-previewed message and never notify it. All callers
+        // are @MainActor today, but this invariant must not rest on that.
+        do {
+            try db.transaction {
+                let (sql, args) = Message.messagesSinceQuery(chatID: chatID, seq: sinceSeq, windowLimit: windowLimit)
+                guard let rs = try db.executeQuery(sql, withArguments: args) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                while rs.next() {
+                    if let message = Message(dbResultSet: rs) {
+                        messages.append(message)
+                    }
+                }
+                rs.close()
+                let (maxSQL, maxArgs) = Message.maxSeqQuery(chatID: chatID)
+                guard let maxRS = try db.executeQuery(maxSQL, withArguments: maxArgs) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                defer { maxRS.close() }
+                if maxRS.next() {
+                    maxSeqValue = maxRS.longLongInt(forColumn: "maxseq")
+                }
+            }
+        } catch {
+            // Surface the cause (e.g. a missing seq column if the migration were
+            // ever skipped) so a phone that mysteriously stops getting previews is
+            // diagnosable. Return nil (failure), NOT ([], 0): the caller must be
+            // able to tell a transient error from an empty chat.
+            DLog("Companion: messagesSince failed for chat \(chatID): \(error); returning nil")
+            return nil
+        }
+        return (messages, maxSeqValue)
+    }
+
+    /// The chat's current max seq (0 if it has no messages).
+    func maxSeq(chatID: String) -> Int64 {
+        let (sql, args) = Message.maxSeqQuery(chatID: chatID)
+        do {
+            guard let rs = try db.executeQuery(sql, withArguments: args) else { return 0 }
+            defer { rs.close() }
+            if rs.next() {
+                return rs.longLongInt(forColumn: "maxseq")
+            }
+        } catch {
+            DLog("Companion: maxSeq failed for chat \(chatID): \(error)")
+        }
+        return 0
     }
 
     private func popuplateSessionToChatMap() {

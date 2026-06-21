@@ -19,13 +19,28 @@
 import Foundation
 import CompanionProtocol
 
-/// A keepalive that pings the socket every 15s, comfortably under the observed
-/// ~30s idle-reap window, so a parked or quiet relay socket stays up. The ping
-/// reports failure once the socket is gone, which ends the loop.
-private func relayKeepalive(for ws: RelayWebSocket) -> RelayKeepalive {
-    RelayKeepalive(intervalNanos: 15_000_000_000) { [weak ws] in
+/// The default keepalive ping interval: 15s, comfortably under the observed
+/// ~30s idle-reap window, so a parked or quiet relay socket stays up. Public so
+/// it can be the default for RelayTransportListener's public init.
+public let relayKeepaliveDefaultIntervalNanos: UInt64 = 15_000_000_000
+
+/// A keepalive that pings the socket so a parked or quiet relay socket is not
+/// reaped by the edge. CRUCIALLY, when a ping fails it CANCELS the socket: a
+/// half-open connection (after sleep/wake, a Wi-Fi change, or the edge reaping
+/// the socket without a close frame) leaves a parked `receive()` blocked
+/// forever with no error, so without this teardown the mac's accept() never
+/// throws and the error-driven reconnect path never engages - the documented
+/// "the normal receive()/accept() path surfaces the failure" contract.
+/// Cancelling only a confirmed-dead socket never displaces a live bridge.
+private func relayKeepalive(for ws: RelayWebSocket,
+                            intervalNanos: UInt64 = relayKeepaliveDefaultIntervalNanos) -> RelayKeepalive {
+    RelayKeepalive(intervalNanos: intervalNanos) { [weak ws] in
         guard let ws else { return false }
-        return await ws.sendPing()
+        if await ws.sendPing() { return true }
+        // Ping failed -> the socket is dead. Tear it down so the parked
+        // receive()/accept() throws and the caller's retry path engages.
+        ws.cancel()
+        return false
     }
 }
 
@@ -185,11 +200,16 @@ enum RelayAdmissionClient {
     static func admit(
         ws: RelayWebSocket,
         role: RelayAdmission.Role,
+        nonDisplacing: Bool = false,
         proofFor: (RelayAdmission.Challenge) throws -> RelayAdmission.Proof
     ) async throws -> RelayAdmission.Result {
         ws.resume()
 
-        try await sendJSON(ws, RelayAdmission.Hello(v: protocolVersion, role: role))
+        // Pass nil (not false) when displacing so the field is omitted: the wire
+        // stays identical to pre-nonDisplacing clients and older relays.
+        try await sendJSON(ws, RelayAdmission.Hello(v: protocolVersion,
+                                                    role: role,
+                                                    nonDisplacing: nonDisplacing ? true : nil))
         let challenge: RelayAdmission.Challenge = try await receiveJSON(ws)
         let proof = try proofFor(challenge)
         try await sendJSON(ws, proof)
@@ -228,20 +248,27 @@ public struct RelayTransportConnector: TransportConnector {
     private let relayOrigin: String
     private let responderStaticKey: Data
     private let joinProof: (@Sendable (RelayAdmission.Challenge, _ roomName: String) throws -> RelayAdmission.Proof)?
+    private let nonDisplacing: Bool
     private let webSocketFactory: RelayWebSocketFactory
 
     /// - responderStaticKey: the mac's static public key (rs from the QR),
     ///   needed to derive the room pseudonym.
     /// - joinProof: nil for pairing (empty proof); supply for established-room
     ///   reconnects to return a signed proof.
+    /// - nonDisplacing: when true, the relay rejects the join if the phone slot
+    ///   is occupied instead of displacing it. Set only by the NSE, so it yields
+    ///   to a foreground app; the app uses the default (false) and reclaims the
+    ///   slot.
     /// - webSocketFactory: supplies the outbound socket; defaults to URLSession.
     public init(relayOrigin: String,
                 responderStaticKey: Data,
                 joinProof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? = nil,
+                nonDisplacing: Bool = false,
                 webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory()) {
         self.relayOrigin = relayOrigin
         self.responderStaticKey = responderStaticKey
         self.joinProof = joinProof
+        self.nonDisplacing = nonDisplacing
         self.webSocketFactory = webSocketFactory
     }
 
@@ -256,7 +283,9 @@ public struct RelayTransportConnector: TransportConnector {
         // In a transport race, the loser's task is cancelled; tear the socket
         // down so a half-open relay join doesn't linger (and free the room slot).
         return try await withTaskCancellationHandler {
-            let result = try await RelayAdmissionClient.admit(ws: ws, role: .phone) { challenge in
+            let result = try await RelayAdmissionClient.admit(ws: ws,
+                                                              role: .phone,
+                                                              nonDisplacing: nonDisplacing) { challenge in
                 try joinProof?(challenge, roomName) ?? RelayAdmission.Proof(ticket: nil, signature: nil)
             }
             let keepalive = relayKeepalive(for: ws)
@@ -286,6 +315,7 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
     private let webSocketFactory: RelayWebSocketFactory
     private let onParked: (@Sendable () -> Void)?
     private let joinProof: (@Sendable (RelayAdmission.Challenge, _ roomName: String) throws -> RelayAdmission.Proof)?
+    private let keepaliveIntervalNanos: UInt64
     private let lock = UnfairLock()
     private var stopped = false
     private var current: RelayWebSocket?
@@ -301,12 +331,14 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
                 roomName: String,
                 webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                 onParked: (@Sendable () -> Void)? = nil,
-                joinProof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? = nil) {
+                joinProof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof)? = nil,
+                keepaliveIntervalNanos: UInt64 = relayKeepaliveDefaultIntervalNanos) {
         self.relayOrigin = relayOrigin
         self.roomName = roomName
         self.webSocketFactory = webSocketFactory
         self.onParked = onParked
         self.joinProof = joinProof
+        self.keepaliveIntervalNanos = keepaliveIntervalNanos
     }
 
     public func accept() async throws -> MessageTransport {
@@ -345,8 +377,9 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
             onParked?()
             // Keep the parked socket alive while it waits, possibly long, for the
             // phone to scan and send msg1; otherwise the edge reaps it (~30s idle)
-            // and the room silently loses its mac.
-            let keepalive = relayKeepalive(for: ws)
+            // and the room silently loses its mac. A failed ping cancels the
+            // socket so this parked receive() throws instead of hanging forever.
+            let keepalive = relayKeepalive(for: ws, intervalNanos: keepaliveIntervalNanos)
             keepalive.start()
             // Block until the phone actually joins and sends its first frame (Noise
             // msg1), so the combined listener doesn't treat an empty parked room as

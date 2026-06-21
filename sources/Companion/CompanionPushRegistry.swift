@@ -11,6 +11,7 @@
 //
 
 import Foundation
+import CompanionProtocol
 
 enum CompanionPushRegistry {
     private static let tokenKey = "NoSyncCompanionPushToken"
@@ -68,7 +69,7 @@ enum CompanionPushRegistry {
               let data = CompanionMacIdentity.pairedPushSecret() else {
             return
         }
-        let hex = data.map { String(format: "%02x", $0) }.joined()
+        let hex = data.hexEncodedString()
         secretLock.lock()
         cachedSecretHex = hex
         secretLock.unlock()
@@ -142,6 +143,25 @@ enum CompanionPushRegistry {
         connectionFlag = connected
     }
 
+    /// Whether the connected phone is an INTERACTIVE connection (a foreground app
+    /// session), as opposed to the mac's own solicited NSE fetch (which also holds
+    /// a live bridge). Used to gate turn-complete pushes: suppress for interactive
+    /// (the user is looking), but NOT for a background NSE fetch. Mirrors the
+    /// pairing controller's connectionPresence == .interactive.
+    private static var interactiveFlag = false
+
+    static var interactivePhoneConnected: Bool {
+        connectionLock.lock()
+        defer { connectionLock.unlock() }
+        return interactiveFlag
+    }
+
+    static func setInteractivePhoneConnected(_ interactive: Bool) {
+        connectionLock.lock()
+        defer { connectionLock.unlock() }
+        interactiveFlag = interactive
+    }
+
     /// Apply a pushStatus report from the phone.
     static func update(authorization: CompanionPushAuthorization,
                        token: Data?,
@@ -151,13 +171,13 @@ enum CompanionPushRegistry {
         defaults.set(authorization.rawValue, forKey: authorizationKey)
         defaults.set(sandbox, forKey: sandboxKey)
         if let token {
-            defaults.set(token.map { String(format: "%02x", $0) }.joined(), forKey: tokenKey)
+            defaults.set(token.hexEncodedString(), forKey: tokenKey)
         }
         if let relaySecret {
             do {
                 try CompanionMacIdentity.storePairedPushSecret(relaySecret)
                 defaults.set(true, forKey: hasSecretKey)
-                let hex = relaySecret.map { String(format: "%02x", $0) }.joined()
+                let hex = relaySecret.hexEncodedString()
                 secretLock.lock()
                 cachedSecretHex = hex
                 secretLock.unlock()

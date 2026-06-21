@@ -17,12 +17,20 @@ extension Message: iTermDatabaseElement {
         case chatID
         case responseID
         case agentReasoning
+        // A global, monotonic, delete-immune sequence the relay-push feature
+        // uses as a watermark cursor. INTEGER PRIMARY KEY AUTOINCREMENT: SQLite
+        // assigns it on every insert and (unlike bare rowid or a plain INTEGER
+        // PRIMARY KEY) never reuses a value, even after the top row is deleted.
+        // It is a DB-only column: not present on the shared Message struct and
+        // not bound by appendQuery/updateQuery, so the engine owns it.
+        case seq
     }
 
     static func schema() -> String {
         """
         create table if not exists Message
-            (\(Columns.uniqueID.rawValue) text,
+            (\(Columns.seq.rawValue) integer primary key autoincrement,
+             \(Columns.uniqueID.rawValue) text,
              \(Columns.author.rawValue) text not null,
              \(Columns.chatID.rawValue) text not null,
              \(Columns.content.rawValue) text not null,
@@ -50,6 +58,26 @@ extension Message: iTermDatabaseElement {
 
     static func query(forChatID chatID: String) -> (String, [Any?]) {
         ("select * from Message where chatID=?", [chatID])
+    }
+
+    /// Newest-first window of a chat's rows with seq greater than `seq`, for the
+    /// relay-push messagesSince responder. Over-fetches (windowLimit) because
+    /// hiddenFromClient is a computed property and cannot be filtered in SQL;
+    /// the responder drops hidden rows and keeps the newest visible ones.
+    static func messagesSinceQuery(chatID: String, seq: Int64, windowLimit: Int) -> (String, [Any?]) {
+        ("""
+         select * from Message
+         where \(Columns.chatID.rawValue)=? and \(Columns.seq.rawValue)>?
+         order by \(Columns.seq.rawValue) desc limit ?
+         """,
+         [chatID, seq, windowLimit])
+    }
+
+    /// The chat's highest seq (0 if the chat has no rows). The watermark jumps
+    /// to this tip so a backlog can't re-notify.
+    static func maxSeqQuery(chatID: String) -> (String, [Any?]) {
+        ("select max(\(Columns.seq.rawValue)) as maxseq from Message where \(Columns.chatID.rawValue)=?",
+         [chatID])
     }
 
     static func tableInfoQuery() -> String {

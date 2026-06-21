@@ -83,7 +83,7 @@ class ChatService {
         switch update {
         case .typingStatus:
             break
-        case let .delivery(message, chatID):
+        case let .delivery(message, chatID, _):
             switch message.author {
             case .agent:
                 // Ignore messages from myself

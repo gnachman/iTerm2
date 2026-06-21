@@ -120,6 +120,9 @@ struct RootView: View {
             }
             .tabBarMinimizeBehavior(.onScrollDown)
             .transition(.opacity)
+        case .needsUpgrade(let side):
+            UpgradeRequiredView(side: side)
+                .transition(.opacity)
         }
         }
         .animation(.smooth(duration: 0.35), value: model.phase)

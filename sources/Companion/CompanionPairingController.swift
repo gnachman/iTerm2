@@ -35,6 +35,29 @@ final class CompanionPairingController: NSObject {
         NotificationCenter.default.post(name: Self.presenceDidChange, object: nil)
     }
 
+    /// How the current connection should be treated by the presence warning.
+    /// A connection only counts as user-visible presence once it is .interactive;
+    /// a .solicited NSE fetch (the mac's own push response) is invisible. See
+    /// docs/push.txt and CompanionPushNonceRegistry.
+    enum ConnectionPresence {
+        case none         // no connection
+        case pending      // connected, not yet classified (within the grace window)
+        case solicited    // the mac's own NSE fetch (valid push nonce): no warning
+        case interactive  // a real/unexpected connection: warn
+    }
+    private(set) var connectionPresence: ConnectionPresence = .none {
+        didSet {
+            // Mirror to the (lock-guarded) flag the turn-complete push gate reads,
+            // so it suppresses pushes only for a real interactive session and not
+            // for the mac's own solicited NSE fetch.
+            CompanionPushRegistry.setInteractivePhoneConnected(connectionPresence == .interactive)
+        }
+    }
+    private var classificationGraceTask: Task<Void, Never>?
+    /// A connection that neither presents a valid nonce nor does anything within
+    /// this window is treated as interactive (a silent lurker is warn-worthy).
+    private static let classificationGraceNanos: UInt64 = 3_000_000_000
+
     private var listener: TransportListener?
     private var acceptTask: Task<Void, Never>?
     private var bridge: CompanionHostBridge? {
@@ -42,9 +65,71 @@ final class CompanionPairingController: NSObject {
             // Mirrored where the (nonisolated) tool-registration path can
             // read it.
             CompanionPushRegistry.setPhoneConnected(bridge != nil)
+            // Reset presence classification for the new connection (or clear it).
+            if let bridge {
+                connectionPresence = .pending
+                startClassificationGrace(for: bridge)
+                // A live bridge IS relay presence; start the connected timer if a
+                // park hadn't already (continuous through park -> phone -> repark).
+                if relayConnectedSince == nil { relayConnectedSince = Date() }
+            } else {
+                connectionPresence = .none
+                classificationGraceTask?.cancel()
+                classificationGraceTask = nil
+            }
             // Connection state changed: refresh the presence UI.
             notifyPresenceChanged()
         }
+    }
+
+    /// After the grace window, an unclassified (still pending) connection is
+    /// escalated to .interactive so it surfaces. A solicited/interactive
+    /// classification arriving first cancels this.
+    private func startClassificationGrace(for connection: CompanionHostBridge) {
+        classificationGraceTask?.cancel()
+        classificationGraceTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: Self.classificationGraceNanos)
+            guard let self, !Task.isCancelled else { return }
+            guard self.bridge === connection, self.connectionPresence == .pending else { return }
+            self.connectionPresence = .interactive
+            self.notifyPresenceChanged()
+        }
+    }
+
+    /// Show a modal alert when the companion apps are version-incompatible. The
+    /// verdict is from the mac's side: .peerMustUpgrade -> the phone app is too
+    /// old; .selfMustUpgrade -> iTerm2 is too old. Shown at most once per minute
+    /// so a retrying phone can't spam alerts.
+    private var lastVersionAlert: Date?
+    private func showVersionIncompatibleAlert(_ verdict: CompanionProtocolVersion.Compatibility) {
+        if let last = lastVersionAlert, Date().timeIntervalSince(last) < 60 { return }
+        lastVersionAlert = Date()
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        switch verdict {
+        case .peerMustUpgrade:
+            alert.messageText = "Companion Device Needs an Update"
+            alert.informativeText = "The iTerm2 Buddy app on your phone is too old to connect to "
+                + "this version of iTerm2. Update the iPhone app to continue."
+        case .selfMustUpgrade:
+            alert.messageText = "iTerm2 Needs an Update"
+            alert.informativeText = "This version of iTerm2 is too old to connect to the iTerm2 "
+                + "Buddy app on your phone. Update iTerm2 to continue."
+        case .compatible:
+            return
+        }
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
+    /// The bridge classified its connection on the first request. solicited ==
+    /// valid push nonce (the mac's own fetch); otherwise warn.
+    private func connectionDidClassify(_ connection: CompanionHostBridge, solicited: Bool) {
+        guard bridge === connection, connectionPresence == .pending else { return }
+        classificationGraceTask?.cancel()
+        classificationGraceTask = nil
+        connectionPresence = solicited ? .solicited : .interactive
+        notifyPresenceChanged()
     }
 
     private(set) var pairingCode: PairingCode?
@@ -130,6 +215,27 @@ final class CompanionPairingController: NSObject {
     /// (the phone cannot reconnect). Both have bridge == nil and would otherwise
     /// look identical in the UI.
     var isListening: Bool { acceptTask != nil || listenerRetryTask != nil }
+
+    /// When the mac's CONTINUOUS relay presence began (it parked, or a phone
+    /// bridged), or nil while not connected. Stays set across park -> phone
+    /// connect -> repark; cleared only when a retry is scheduled (a real drop) or
+    /// listening stops. Drives the "connected for…" timer in settings.
+    private(set) var relayConnectedSince: Date?
+    /// When the mac last ATTEMPTED to (re)establish its relay park. Drives the
+    /// "last try…" timer while not connected.
+    private(set) var lastRelayAttempt: Date?
+
+    /// The mac's relay status for the settings UI.
+    enum RelayStatus: Equatable {
+        case idle                          // not paired: nothing to show
+        case connected(since: Date)        // parked / phone-bridged: reachable
+        case reconnecting(lastAttempt: Date?)  // not connected; retrying
+    }
+    var relayStatus: RelayStatus {
+        guard hasPairedDevice else { return .idle }
+        if let since = relayConnectedSince { return .connected(since: since) }
+        return .reconnecting(lastAttempt: lastRelayAttempt)
+    }
 
     /// The pairing id the mac should currently be parked for: the established
     /// device, or, during a fresh pairing, the QR being shown. Retry uses this
@@ -233,6 +339,10 @@ final class CompanionPairingController: NSObject {
         // from the keychain into memory now so later background sends never
         // prompt. Idempotent, so reconnect-driven calls are no-ops.
         CompanionPushRegistry.loadSecretAtLaunch()
+        // Watch the broker so a completed agent turn (or a permission request)
+        // can nudge an away phone. Idempotent; gated so it does nothing unless
+        // paired, away, and notifications are authorized.
+        CompanionAgentActivityNotifier.start()
         // If the plugin vanished while we were away, tear the pairing down rather
         // than silently keeping the keys around for a feature that can't run.
         unpairIfPluginMissing()
@@ -273,6 +383,10 @@ final class CompanionPairingController: NSObject {
         guard listenerRetryTask == nil, desiredListeningPID != nil else {
             return
         }
+        // A retry is scheduled because we are NOT connected: end the connected
+        // timer so settings shows "reconnecting" with the last-attempt time.
+        relayConnectedSince = nil
+        notifyPresenceChanged()
         listenerRetryTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             guard let self, !Task.isCancelled else { return }
@@ -450,6 +564,10 @@ final class CompanionPairingController: NSObject {
         acceptTask = nil
         listener?.stop()
         listener = nil
+        // The park is gone: no relay presence to time. A later resume re-parks and
+        // restarts the timer from a fresh, accurate instant.
+        relayConnectedSince = nil
+        notifyPresenceChanged()
     }
 
     // MARK: SAS confirmation
@@ -517,6 +635,9 @@ final class CompanionPairingController: NSObject {
         let roomName = relayOrigin == nil ? "n/a"
             : RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
         relayLog("startListening pid=\(pairingID) relayOrigin=\(relayOrigin ?? "nil") room=\(roomName)")
+        // Record the attempt for the settings "last try…" timer.
+        lastRelayAttempt = Date()
+        notifyPresenceChanged()
         // Route relay egress through the consent plugin (the only outbound path).
         // startListening is only reached when the gate is allowed, so the plugin
         // is installed and verified; fall back defensively just in case.
@@ -531,6 +652,17 @@ final class CompanionPairingController: NSObject {
             responderStaticPublicKey: keyPair.publicKey,
             relayOrigin: relayOrigin,
             webSocketFactory: webSocketFactory,
+            // Parked = admitted to the relay room = reachable. Start the
+            // connected timer (if a bridge hasn't already), for the settings UI.
+            // onParked fires on the background accept task, so hop to the main
+            // actor this controller is isolated to.
+            onParked: { [weak self] in
+                Task { @MainActor in
+                    guard let self, self.relayConnectedSince == nil else { return }
+                    self.relayConnectedSince = Date()
+                    self.notifyPresenceChanged()
+                }
+            },
             // Sign the mac's park once the phone has couriered the room secret
             // and the room is established; nil keeps an open-mode park.
             roomSecret: { CompanionMacIdentity.pairedRoomSecret() })
@@ -701,6 +833,13 @@ final class CompanionPairingController: NSObject {
                 newBridge.onPeerUnpaired = { [weak self] in
                     self?.peerDidUnpair()
                 }
+                newBridge.onConnectionClassified = { [weak self, weak newBridge] solicited in
+                    guard let self, let newBridge else { return }
+                    self.connectionDidClassify(newBridge, solicited: solicited)
+                }
+                newBridge.onVersionIncompatible = { [weak self] verdict in
+                    self?.showVersionIncompatibleAlert(verdict)
+                }
                 newBridge.start()
                 let staleBridge = bridge
                 bridge = newBridge
@@ -791,7 +930,7 @@ final class CompanionPairingController: NSObject {
         // attacker who knows the long-lived rs.
         var bytes = [UInt8](repeating: 0, count: 8)
         _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
-        return bytes.map { String(format: "%02x", $0) }.joined()
+        return Data(bytes).hexEncodedString()
     }
 
     // MARK: QR rendering

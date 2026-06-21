@@ -19,7 +19,10 @@ final class CompanionPresenceController: NSObject {
     private var statusItem: NSStatusItem?
     private var observer: (any NSObjectProtocol)?
     private var settingsObserver: (any NSObjectProtocol)?
-    private var wasConnected = false
+    /// Whether a "connected" toast is currently showing for the live connection,
+    /// so the matching "disconnected" toast fires only if connect did. A
+    /// solicited NSE fetch never sets this, so it produces neither toast.
+    private var connectToastShown = false
     private var controller: CompanionPairingController { .shared }
 
     /// Begin observing presence changes and create the status item if a device
@@ -44,36 +47,52 @@ final class CompanionPresenceController: NSObject {
                 self?.refresh(animated: false)
             }
         }
-        wasConnected = controller.isConnected
+        connectToastShown = interactivelyPresent(paired: paired)
         // animated: false so launching with a device already connected does not
         // pop a toast for a connection that did not just happen.
         refresh(animated: false)
     }
 
+    /// Whether there is a pairing to show presence for. Companion pairing being
+    /// disabled means no presence even if a stale pairing from before it was
+    /// disabled still exists. Single definition of the gating expression so the
+    /// call sites can't drift.
+    private var paired: Bool {
+        controller.hasPairedDevice && iTermAdvancedSettingsModel.companionPairingAllowed()
+    }
+
+    /// True only for a real/unexpected connection (an interactive app session or
+    /// an unclassified one past its grace window) - NOT a solicited NSE fetch or
+    /// one still being classified. This is what the toast and the lit status-item
+    /// glyph reflect, so a background push fetch neither toasts nor flickers the
+    /// menu bar. Takes `paired` so a caller that already computed it doesn't
+    /// re-evaluate the gating expression.
+    private func interactivelyPresent(paired: Bool) -> Bool {
+        paired && controller.connectionPresence == .interactive
+    }
+
     private func refresh(animated: Bool) {
-        // When companion pairing is disabled there is no presence to show, even
-        // if a stale pairing from before it was disabled still exists.
-        let paired = controller.hasPairedDevice && iTermAdvancedSettingsModel.companionPairingAllowed()
-        let connected = controller.isConnected && paired
+        let paired = self.paired
+        let present = interactivelyPresent(paired: paired)
 
         if paired {
-            updateStatusItem(connected: connected)
+            updateStatusItem(connected: present)
         } else {
             removeStatusItem()
         }
 
-        if animated, connected != wasConnected {
-            if connected {
+        if animated {
+            if present, !connectToastShown {
                 CompanionToast.show(message: "iTerm2 Buddy connected",
                                     symbolName: SFSymbol.laptopcomputerAndIphone.rawValue,
                                     tint: .systemGreen)
-            } else if paired {
+            } else if !present, connectToastShown, paired {
                 CompanionToast.show(message: "iTerm2 Buddy disconnected",
                                     symbolName: SFSymbol.laptopcomputerAndIphone.rawValue,
                                     tint: .secondaryLabelColor)
             }
         }
-        wasConnected = connected
+        connectToastShown = present
     }
 
     private func updateStatusItem(connected: Bool) {

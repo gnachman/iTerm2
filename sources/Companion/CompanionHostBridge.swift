@@ -48,6 +48,30 @@ final class CompanionHostBridge {
     /// Called when the phone announces it is unpairing.
     var onPeerUnpaired: (@MainActor () -> Void)?
 
+    /// Called exactly once, on this connection's FIRST request, to classify it
+    /// for the presence warning: `solicited` is true only for a messagesSince
+    /// that presented a valid one-time push nonce (the mac's own NSE fetch).
+    /// Any other first request - subscribe, publish, a nonce-less or bad-nonce
+    /// messagesSince - is unsolicited (the owner warns). See docs/push.txt.
+    var onConnectionClassified: (@MainActor (_ solicited: Bool) -> Void)?
+    private var didClassify = false
+
+    /// Report the connection's classification once; later requests are ignored.
+    private func classifyOnce(solicited: Bool) {
+        guard !didClassify else { return }
+        didClassify = true
+        onConnectionClassified?(solicited)
+    }
+
+    /// Called when the peer's `.hello` shows the apps are version-incompatible, so
+    /// the mac can show an upgrade alert. The verdict is from the MAC's side:
+    /// .peerMustUpgrade -> upgrade the phone app; .selfMustUpgrade -> upgrade
+    /// iTerm2. Not called when compatible.
+    var onVersionIncompatible: (@MainActor (_ verdict: CompanionProtocolVersion.Compatibility) -> Void)?
+    /// Set once an incompatible hello is seen: the bridge then serves nothing but
+    /// a re-hello, so a stale peer cannot drive an out-of-date protocol.
+    private var versionBlocked = false
+
     init(transport: MessageTransport) {
         self.transport = transport
     }
@@ -214,7 +238,38 @@ final class CompanionHostBridge {
 
     private func handle(_ envelope: ClientEnvelope) {
         let requestID = envelope.requestID
+        // An incompatible peer is served nothing but a re-hello: the phone shows
+        // an upgrade panel and disconnects, but refuse here too so a stale peer
+        // cannot drive an out-of-date protocol.
+        if versionBlocked {
+            if case .hello(let revision, let minimumPeer) = envelope.payload {
+                handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
+            } else {
+                send(.error(CompanionError(code: .badRequest, message: "Companion app upgrade required")),
+                     requestID: requestID)
+            }
+            return
+        }
+        // Classify the connection on its first request (for the presence
+        // warning). messagesSince classifies itself based on its nonce; .hello is
+        // a control handshake (neutral); every other request is interactive
+        // presence -> unsolicited.
         switch envelope.payload {
+        case .messagesSince, .hello:
+            break  // messagesSince classifies after its nonce check; hello is neutral
+        default:
+            classifyOnce(solicited: false)
+        }
+        switch envelope.payload {
+        case .unsupported:
+            // A message type this mac build doesn't recognize (newer phone). The
+            // envelope still decoded, so reply with a correlated error rather than
+            // dropping it silently.
+            DLog("Companion bridge: unsupported client message (peer is newer)")
+            send(.error(CompanionError(code: .badRequest, message: "Unsupported request; app upgrade required")),
+                 requestID: requestID)
+        case .hello(let revision, let minimumPeer):
+            handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
         case .listChatsAndSessions:
             send(.chatsAndSessions(chats: chatEntries(),
                                    sessions: CompanionSessionLister.sessions()),
@@ -289,6 +344,9 @@ final class CompanionHostBridge {
                 send(.error(CompanionError(code: .internalError, message: "\(error)")),
                      requestID: requestID)
             }
+        case .messagesSince(let collapseToken, let seq, let limit, let nonce):
+            handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit,
+                                nonce: nonce, requestID: requestID)
         case .unpairing:
             DLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
@@ -355,7 +413,179 @@ final class CompanionHostBridge {
                 self?.handleBrokerUpdate(update, chatID: chatID)
             }
         }
-        send(.history(chatID: chatID, messages: history(chatID: chatID)),
+        let maxSeq = ChatDatabase.instance?.maxSeq(chatID: chatID) ?? 0
+        send(.history(chatID: chatID, messages: history(chatID: chatID), maxSeq: maxSeq),
+             requestID: requestID)
+    }
+
+    /// Relay-push: resolve the opaque per-chat collapse token back to a chat,
+    /// fetch its messages with seq > the phone's watermark, and reply with short
+    /// attachment-free previews + the chat's title + its max seq. Any
+    /// unresolvable case (no room secret, chat system unavailable, token matches
+    /// no chat) replies with empty previews, which the NSE renders as the generic
+    /// fallback. See docs/push.txt section 2.
+    /// Version handshake. Always reply with our hello (so the phone can evaluate
+    /// from its side), then evaluate from ours; on incompatibility, block further
+    /// service and ask the mac to show an upgrade alert.
+    private func handleHello(peerRevision: Int, peerMinimumPeer: Int, requestID: UInt64?) {
+        send(.hello(revision: CompanionProtocolVersion.current,
+                    minimumPeer: CompanionProtocolVersion.minimumPeer),
+             requestID: requestID)
+        let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
+                                                        peerMinimumPeer: peerMinimumPeer)
+        versionBlocked = (verdict != .compatible)
+        DLog("Companion bridge: hello peer(rev=\(peerRevision), min=\(peerMinimumPeer)) -> \(verdict)")
+        guard verdict != .compatible else { return }
+        // Don't also pop the presence toast for an incompatible peer; the alert
+        // is the user-facing signal. (solicited:true suppresses the toast.)
+        classifyOnce(solicited: true)
+        onVersionIncompatible?(verdict)
+    }
+
+    /// token -> chatID for the CURRENT room secret, so resolving a pushed collapse
+    /// token is O(1) amortized rather than an HMAC over every chat on every fetch
+    /// (repeated on retries). Main-actor-isolated (the whole class is), so no lock.
+    private static var tokenCache: (roomSecret: Data, map: [String: String])?
+
+    /// Resolve a collapse token to its chatID. Rebuilds the cache when the room
+    /// secret rotates, or on a miss (a chat may have been created since the cache
+    /// was built). A stale entry for a deleted chat resolves to a chatID the
+    /// caller then fails to look up - an empty reply, which is correct.
+    private static func resolveChatID(forToken token: String,
+                                      roomSecret: Data,
+                                      model: ChatListModel) -> String? {
+        func rebuilt() -> [String: String] {
+            var map = [String: String](minimumCapacity: model.count)
+            for index in 0..<model.count {
+                let chat = model.chat(at: index)
+                map[CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chat.id)] = chat.id
+            }
+            tokenCache = (roomSecret, map)
+            return map
+        }
+        let map: [String: String]
+        if let cache = tokenCache, cache.roomSecret == roomSecret {
+            map = cache.map
+        } else {
+            map = rebuilt()
+        }
+        if let chatID = map[token] { return chatID }
+        return rebuilt()[token]   // miss: a chat may be new; rebuild once and retry
+    }
+
+    private func handleMessagesSince(collapseToken: String,
+                                     seq: Int64,
+                                     limit rawLimit: Int,
+                                     nonce: String?,
+                                     requestID: UInt64?) {
+        // Classify FIRST, before any early return: a connection that presents a
+        // valid one-time push nonce is the mac's OWN solicited NSE fetch (no
+        // presence warning); a missing/forged nonce is unsolicited (warn), even
+        // if the fetch then errors. Use a NON-consuming peek here: the transient
+        // error paths below leave the watermark untouched so the NSE retries the
+        // SAME push, and the nonce must still be recognized on that retry - so it
+        // is consumed only past the transient guards, on a path that actually
+        // serves a reply. (consume is single-use to block replay after serving.)
+        let solicited = nonce.map { CompanionPushNonceRegistry.shared.contains($0) } ?? false
+        classifyOnce(solicited: solicited)
+
+        // Clamp the wire-supplied limit before any arithmetic or prefix(): it is
+        // untrusted (any paired device sets it). A negative value would trap
+        // Sequence.prefix(_:), and a value near Int.max would overflow the *20
+        // window multiply below - both crashing the main-actor bridge.
+        let limit = min(max(rawLimit, 1), 500)
+        // Flow logging only; never message content. The token prefix lets you
+        // correlate with the push-sender's "delivered mutable (collapse ...)".
+        DLog("Companion bridge: messagesSince request (collapse \(collapseToken.prefix(8)), seq=\(seq), limit=\(limit))")
+
+        // Transient mac-side failures (creds not loaded yet, chat model not
+        // built at startup) reply .error, NOT an empty success: the NSE rethrows
+        // .error and shows the fallback WITHOUT touching its per-chat watermark,
+        // so a startup race can't look like "nothing new" and drop the cursor.
+        // The nonce is NOT consumed on these paths (see above), so the retry is
+        // still recognized as solicited.
+        guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
+            DLog("Companion bridge: messagesSince -> error (no room secret stored)")
+            send(.error(CompanionError(code: .internalError, message: "No room secret stored")),
+                 requestID: requestID)
+            return
+        }
+        guard let model = ChatListModel.instance, let db = ChatDatabase.instance else {
+            DLog("Companion bridge: messagesSince -> error (chat system unavailable)")
+            send(.error(CompanionError(code: .internalError, message: "Chat system unavailable")),
+                 requestID: requestID)
+            return
+        }
+        // Resolve the pushed collapse token to a chat via a cached
+        // token -> chatID map (see resolveChatID), instead of recomputing
+        // HMAC(roomSecret, chatID) for every chat on every fetch. The chatID
+        // never crossed the wire.
+        guard let chatID = Self.resolveChatID(forToken: collapseToken, roomSecret: roomSecret, model: model),
+              let chat = model.chat(id: chatID) else {
+            // Genuine "no such chat" (deleted, or the app never synced it): an
+            // empty success -> the NSE shows the fallback. maxSeq 0 is safe
+            // because the watermark is max-merged and never lowered (section 8). A
+            // served reply, so burn the single-use nonce.
+            if let nonce { _ = CompanionPushNonceRegistry.shared.consume(nonce) }
+            DLog("Companion bridge: messagesSince -> no chat matched the collapse token (of \(model.count) chats); empty reply")
+            send(.messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
+                 requestID: requestID)
+            return
+        }
+        // Over-fetch a window (hiddenFromClient can't be filtered in SQL) so
+        // hidden bookkeeping rows don't crowd out visible ones.
+        let windowLimit = limit * 20
+        // A query FAILURE (nil, distinct from an empty result) is transient -
+        // handle it like the guards above: reply .error, do NOT consume the nonce
+        // (so the NSE's retry of this push is still recognized as solicited), and
+        // do NOT compute reset. A maxSeq of 0 from an error must never look like a
+        // chat-DB rewind (seq > maxSeq) and force the phone's watermark to 0.
+        guard let probe = db.messagesSince(chatID: chat.id, sinceSeq: seq, windowLimit: windowLimit) else {
+            DLog("Companion bridge: messagesSince -> error (chat database query failed)")
+            send(.error(CompanionError(code: .internalError, message: "Chat database unavailable")),
+                 requestID: requestID)
+            return
+        }
+        let maxSeq = probe.maxSeq
+        // The phone's watermark is PAST the chat's tip: the chat DB was lost or
+        // recreated and seq restarted below it. reset is computed ONLY from a
+        // SUCCESSFUL fetch, so a query error can never be confused with a rewind.
+        // Signal a reset (only possible for a resolved chat, so it can't be
+        // confused with the maxSeq:0 of a no-such-chat reply) and re-fetch from
+        // the start so the NSE shows the current newest and resets its stale-high
+        // watermark down to maxSeq.
+        let reset = seq > maxSeq
+        let windowMessages: [Message]
+        if reset {
+            guard let refetched = db.messagesSince(chatID: chat.id, sinceSeq: 0, windowLimit: windowLimit) else {
+                DLog("Companion bridge: messagesSince -> error (reset re-fetch failed)")
+                send(.error(CompanionError(code: .internalError, message: "Chat database unavailable")),
+                     requestID: requestID)
+                return
+            }
+            windowMessages = refetched.messages
+        } else {
+            windowMessages = probe.messages
+        }
+        let result = MessagesSinceResponder.summarize(
+            fetched: windowMessages,
+            limit: limit,
+            bodyMaxLength: 200,
+            // Render @<guid> mentions to the live session/workgroup name, the
+            // same names the chat UI shows, so the lock screen never shows a raw
+            // guid. nil (unresolved) -> "[defunct session]".
+            resolveMention: { OrchestrationMentionRenderer.resolve(identifier: $0)?.displayName })
+        let truncated = result.truncated || windowMessages.count >= windowLimit
+        // Every DB read succeeded and we are about to serve a real reply -> burn
+        // the single-use nonce (after this, a replay can't suppress a warning).
+        if let nonce { _ = CompanionPushNonceRegistry.shared.consume(nonce) }
+        // Counts/flags only; never chat title or message bodies.
+        DLog("Companion bridge: messagesSince -> \(result.previews.count) preview(s), maxSeq=\(maxSeq), truncated=\(truncated), reset=\(reset)")
+        send(.messagesSince(chatName: chat.title,
+                            previews: result.previews,
+                            maxSeq: maxSeq,
+                            truncated: truncated,
+                            reset: reset),
              requestID: requestID)
     }
 
@@ -374,7 +604,7 @@ final class CompanionHostBridge {
 
     private func handleBrokerUpdate(_ update: ChatBroker.Update, chatID: String) {
         switch update {
-        case .delivery(let message, let deliveredChatID):
+        case .delivery(let message, let deliveredChatID, _):
             // Mirror the Mac UI: bookkeeping messages are not rendered there
             // and are not forwarded here. Streaming .append deltas are visible
             // (not hidden) and flow through.

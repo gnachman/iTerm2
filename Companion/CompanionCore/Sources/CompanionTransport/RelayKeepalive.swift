@@ -25,10 +25,15 @@ final class RelayKeepalive: @unchecked Sendable {
 
     /// - intervalNanos: delay between pings. Comfortably under the observed
     ///   idle-reap window so a ping always lands first.
+    /// The smallest interval the loop will use. Task.sleep(0) returns instantly,
+    /// so a 0 interval paired with an always-succeeding ping would busy-spin the
+    /// CPU; clamp to a tiny but nonzero floor so the loop always yields.
+    private static let minimumIntervalNanos: UInt64 = 1_000_000   // 1 ms
+
     /// - ping: sends one keepalive; returns false when the socket is gone, which
     ///   ends the loop (the transport's own error path takes over from there).
     init(intervalNanos: UInt64, ping: @escaping @Sendable () async -> Bool) {
-        self.intervalNanos = intervalNanos
+        self.intervalNanos = max(intervalNanos, Self.minimumIntervalNanos)
         self.ping = ping
     }
 
@@ -69,9 +74,31 @@ final class RelayKeepalive: @unchecked Sendable {
 extension URLSessionWebSocketTask {
     /// Send one WebSocket ping; resolves true when the pong returns, false on any
     /// error (a closed or broken socket).
+    ///
+    /// URLSession may invoke the pong handler MORE THAN ONCE - notably when the
+    /// task is cancelled while a ping is in flight (a pong/error callback plus a
+    /// cancellation callback). Resuming a CheckedContinuation twice is fatal, so a
+    /// one-shot guard ensures exactly one resume.
     func sendPingAsync() async -> Bool {
-        await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
-            self.sendPing { error in cont.resume(returning: error == nil) }
+        let once = PingResumeOnce()
+        return await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+            self.sendPing { error in
+                if once.claim() { cont.resume(returning: error == nil) }
+            }
+        }
+    }
+}
+
+/// One-shot guard: the first claim() wins, later ones are no-ops, so a
+/// multiply-invoked completion handler resumes its continuation only once.
+private final class PingResumeOnce: @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var fired = false
+    func claim() -> Bool {
+        lock.withLock {
+            if fired { return false }
+            fired = true
+            return true
         }
     }
 }

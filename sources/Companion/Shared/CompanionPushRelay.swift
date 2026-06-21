@@ -18,4 +18,6 @@ enum CompanionPushRelay {
 
     static var registerURL: URL { baseURL.appendingPathComponent("register") }
     static var pushURL: URL { baseURL.appendingPathComponent("push") }
+    /// Content-free push that wakes the Notification Service Extension.
+    static var mutablePushURL: URL { baseURL.appendingPathComponent("push/mutable") }
 }

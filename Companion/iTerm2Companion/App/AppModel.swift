@@ -86,11 +86,22 @@ private func withTimeout<T: Sendable>(_ seconds: TimeInterval,
 @Observable
 final class AppModel {
     /// Full-screen phases before (and including arrival at) the chat list.
+    /// Which app the user must upgrade when the companion apps are
+    /// version-incompatible (shown in the full-screen blocking panel).
+    enum UpgradeSide: Equatable {
+        case phone   // this iPhone app is too old
+        case mac     // the Mac's iTerm2 is too old
+    }
+
     enum Phase: Equatable {
         case launch
         case scanning
         case pairing
         case home
+        /// Connected and paired, but the app versions are incompatible: a
+        /// blocking panel tells the user which app to upgrade. Cleared by a
+        /// successful handshake after the upgrade.
+        case needsUpgrade(UpgradeSide)
     }
 
     /// Screens pushed onto the navigation stack once paired. Driving them
@@ -243,9 +254,10 @@ final class AppModel {
 
     // MARK: Stored pairing
 
-    private static let storedKeyDefault = "PairedResponderStaticKey"
-    private static let storedPIDDefault = "PairedPairingID"
-    private static let storedRelayOriginDefault = "PairedRelayOrigin"
+    // Shared with the NSE (single source of truth in CompanionProtocol).
+    private static let storedKeyDefault = CompanionSharedIdentifiers.pairedResponderKeyDefault
+    private static let storedPIDDefault = CompanionSharedIdentifiers.pairedPairingIDDefault
+    private static let storedRelayOriginDefault = CompanionSharedIdentifiers.pairedRelayOriginDefault
     /// The canonical relay host. A pairing whose relay host differs from this is
     /// shown in punycode at confirmation time so a homograph host cannot
     /// masquerade as the real one.
@@ -278,51 +290,92 @@ final class AppModel {
     /// public and the pid is not a secret, so UserDefaults is fine. The relay
     /// origin is persisted too so an off-LAN reconnect after relaunch can still
     /// reach the mac through the relay (not just the local network).
+    /// The pairing code lives in the App Group KEYCHAIN (PhoneIdentity), so it
+    /// survives an app reinstall - which wipes UserDefaults but not the keychain -
+    /// and the NSE can read it. (It used to be in UserDefaults, so reinstalling
+    /// the app forced a re-pair even though the keychain identity survived.)
     var storedPairingCode: PairingCode? {
-        let defaults = UserDefaults.standard
-        guard let key = defaults.data(forKey: Self.storedKeyDefault),
-              key.count == 32,
-              let pid = defaults.string(forKey: Self.storedPIDDefault) else {
-            return nil
+        if let code = PhoneIdentity.pairingCode() {
+            return code
         }
-        return PairingCode(responderStaticPublicKey: key,
-                           pairingID: pid,
-                           relayOrigin: defaults.string(forKey: Self.storedRelayOriginDefault))
+        // Fallback: a pairing stored by an older build (UserDefaults). Read it so
+        // the user is not forced to re-pair; migratePairingCodeToKeychain copies
+        // it into the keychain at launch.
+        return legacyUserDefaultsPairingCode()
     }
 
     private func storePairing(_ code: PairingCode) {
-        let defaults = UserDefaults.standard
-        defaults.set(code.responderStaticPublicKey, forKey: Self.storedKeyDefault)
-        defaults.set(code.pairingID, forKey: Self.storedPIDDefault)
-        if let relayOrigin = code.relayOrigin {
-            defaults.set(relayOrigin, forKey: Self.storedRelayOriginDefault)
-        } else {
-            defaults.removeObject(forKey: Self.storedRelayOriginDefault)
+        do {
+            try PhoneIdentity.storePairingCode(code)
+        } catch {
+            companionLog("Failed to store pairing code in keychain: \(error)")
         }
     }
 
-    /// Erase every piece of carryover identity state before a fresh pairing:
-    /// the stored pairing, the per-room verifier-registration marker, the room
-    /// secret, the attest key pinned for the old room, and the push-relay
-    /// secret. Mirrors the data wipe in handleRemoteUnpair, so a user-initiated
-    /// re-pair is as clean as a Mac-driven unpair, without needing the Mac's
-    /// farewell to have arrived.
-    private func resetForFreshPairing() {
-        companionLog("Fresh pairing: clearing previous pairing key material")
-        if let previous = storedPairingCode {
-            attestKeyStore.setKeyId(nil, forRoom: roomName(for: previous))
+    /// One-time migration of a pairing code stored by an older build in
+    /// UserDefaults into the keychain. Idempotent; runs at launch. Leaves the old
+    /// UserDefaults values in place (forgetStoredPairing clears them on unpair).
+    private func migratePairingCodeToKeychain() {
+        guard PhoneIdentity.pairingCode() == nil,
+              let legacy = legacyUserDefaultsPairingCode() else {
+            return
         }
-        forgetStoredPairing()
+        try? PhoneIdentity.storePairingCode(legacy)
+    }
+
+    /// Read a pairing code left by an older build in UserDefaults (App Group
+    /// suite, then app-only defaults).
+    private func legacyUserDefaultsPairingCode() -> PairingCode? {
+        let shared = UserDefaults(suiteName: PhoneIdentity.appGroup) ?? .standard
+        let std = UserDefaults.standard
+        guard let key = shared.data(forKey: Self.storedKeyDefault) ?? std.data(forKey: Self.storedKeyDefault),
+              key.count == 32,
+              let pid = shared.string(forKey: Self.storedPIDDefault) ?? std.string(forKey: Self.storedPIDDefault) else {
+            return nil
+        }
+        let relayOrigin = shared.string(forKey: Self.storedRelayOriginDefault)
+            ?? std.string(forKey: Self.storedRelayOriginDefault)
+        return PairingCode(responderStaticPublicKey: key, pairingID: pid, relayOrigin: relayOrigin)
+    }
+
+    private func resetForFreshPairing() {
+        companionLog("Fresh pairing: clearing all previous key material")
+        wipeAllKeyMaterial()
+    }
+
+    /// Erase EVERY piece of key material on this device, for a clean fresh start
+    /// (the user may be unpairing because of a compromise): the Noise identity,
+    /// the room secret, the push-relay secret, and all attest key ids, plus - via
+    /// forgetStoredPairing - the pairing code, the verifier-registration marker,
+    /// and the per-chat push watermarks. Every unpair / re-pair path calls this
+    /// so none leaves anything behind. The keychain deletes use a nil access
+    /// group, so they span all the app's access groups (the App Group copy AND
+    /// any leftover pre-migration default-group copy).
+    private func wipeAllKeyMaterial() {
+        attestKeyStore.removeAll()
+        PhoneIdentity.deleteKeyPair()
         PhoneIdentity.deleteRoomSecret()
         PhoneIdentity.deletePushRelaySecret()
+        forgetStoredPairing()
     }
 
     func forgetStoredPairing() {
-        let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: Self.storedKeyDefault)
-        defaults.removeObject(forKey: Self.storedPIDDefault)
-        defaults.removeObject(forKey: Self.storedRelayOriginDefault)
-        defaults.removeObject(forKey: Self.registeredRoomDefault)
+        // Clear the pairing code from the keychain (current location) and from
+        // both UserDefaults suites (legacy location). The registered-room marker
+        // is NoSync / app-only and stays in standard.
+        PhoneIdentity.deletePairingCode()
+        for defaults in [UserDefaults(suiteName: PhoneIdentity.appGroup), UserDefaults.standard].compactMap({ $0 }) {
+            defaults.removeObject(forKey: Self.storedKeyDefault)
+            defaults.removeObject(forKey: Self.storedPIDDefault)
+            defaults.removeObject(forKey: Self.storedRelayOriginDefault)
+        }
+        UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
+        // Drop the per-chat push watermarks (shared with the NSE): they are keyed
+        // by the old room secret and meaningless once unpaired. reset() clears by
+        // prefix, so it does not need the (possibly already-deleted) room secret.
+        if let backing = UserDefaultsWatermarkBacking(appGroup: PhoneIdentity.appGroup) {
+            WatermarkStore(backing: backing).reset()
+        }
     }
 
     /// Build the best-effort relay delete-room call for the current pairing, or
@@ -348,6 +401,11 @@ final class AppModel {
     /// Called once at launch: if a pairing is stored, reconnect to it instead
     /// of demanding a fresh QR scan.
     func handleLaunch() {
+        // Move the NSE-shared keychain items into the App Group group and the
+        // pairing code into the keychain, once, at launch (idempotent +
+        // crash-safe), before any reconnect reads them.
+        PhoneIdentity.migrateSharedItemsToAppGroup()
+        migratePairingCodeToKeychain()
         guard phase == .launch, pairingTask == nil else { return }
         guard let code = storedPairingCode else { return }
         companionLog("Reconnecting to stored pairing (pid \(code.pairingID))")
@@ -439,14 +497,10 @@ final class AppModel {
             }
             await relayDelete?()
         }
-        forgetStoredPairing()
-        PhoneIdentity.deleteKeyPair()
-        // Rotate the push secret: the old Mac knows the old one. The next
-        // APNs registration re-registers the new hash with the relay.
-        PhoneIdentity.deletePushRelaySecret()
-        // Rotate the room secret too; the next pairing mints and registers a
-        // fresh verifier for its (new) room.
-        PhoneIdentity.deleteRoomSecret()
+        // Wipe ALL key material (the relay delete-room call above already
+        // captured the room secret it needs). The next pairing mints a fresh
+        // Noise identity, room secret, push secret, and verifier registration.
+        wipeAllKeyMaterial()
         activePairingCode = nil
         chats = []
         sessions = []
@@ -846,7 +900,93 @@ final class AppModel {
 
     // MARK: Home
 
+    /// From the upgrade panel, after the user has updated an app.
+    ///
+    /// If the upgrade wall came from a FRESH pairing (a scanned QR), return to the
+    /// scanner rather than reconnecting: retrying a fresh pairing means re-scanning
+    /// the (now-updated) Mac's NEW QR - the one just scanned is invalidated, so a
+    /// silent reconnect with that stale code is wrong. A reconnect of an
+    /// already-paired device just reconnects and re-runs the handshake; a
+    /// compatible one proceeds to home, an incompatible one returns to the panel.
+    func retryAfterUpgrade() {
+        guard activeIsReconnect, let code = storedPairingCode else {
+            phase = .scanning
+            return
+        }
+        pair(with: code, isReconnect: true)
+    }
+
+    /// Thrown by the timeout leg of the post-establish `.hello` race, so a genuine
+    /// timeout is distinguishable from a transport drop or a teardown (see loadHome).
+    private struct HelloHandshakeTimedOut: Error {}
+
     func loadHome() async throws {
+        // Version handshake FIRST: if the apps are incompatible, show the blocking
+        // upgrade panel instead of the home screen. Pairing itself succeeded, so
+        // storePairing still runs (caller) - after the user upgrades, a reconnect
+        // gets a compatible handshake and proceeds to home.
+        let client = try await currentClient(label: "Version handshake")
+        // We reach here only AFTER establish() completed the Noise handshake, so
+        // the channel is up and the Mac is authenticated. Race .hello against a
+        // timeout and keep the outcomes distinct:
+        //   - TIMED OUT: the Mac is present but never answers .hello at all - an
+        //     older Mac that predates the handshake. (A network drop in the very
+        //     next operation after a clean establish is far less likely; the Retry
+        //     button recovers that rare false positive.) Treat it as "the Mac must
+        //     upgrade" so a phone-first updater gets a clear panel, not a silent
+        //     reconnect loop.
+        //   - FAILED with a CompanionError: the Mac RESPONDED but with a rejection
+        //     or a reply we can't make sense of (an older Mac that forward-compat-
+        //     decodes .hello as .unsupported and replies .error, or any unexpected
+        //     reply) - also "the Mac must upgrade".
+        //   - FAILED with anything else: a real transport drop (TransportError) or
+        //     a deliberate teardown (CancellationError) propagates to the normal
+        //     pairing retry path. We do NOT claim "upgrade the Mac" just because
+        //     the connection broke.
+        let verdict: CompanionProtocolVersion.Compatibility
+        do {
+            verdict = try await withThrowingTaskGroup(of: CompanionProtocolVersion.Compatibility.self) { group in
+                group.addTask { try await client.handshakeVersion() }
+                group.addTask {
+                    // A genuine elapse throws the sentinel; a cancelled sleep
+                    // (teardown, or cancelAll after the handshake already won)
+                    // throws CancellationError instead, so a teardown is never
+                    // mistaken for a timeout.
+                    try await Task.sleep(nanoseconds: 15 * 1_000_000_000)
+                    throw HelloHandshakeTimedOut()
+                }
+                defer { group.cancelAll() }
+                // First child to finish wins: a verdict, or a thrown error (the
+                // handshake's own, or our timeout sentinel).
+                guard let result = try await group.next() else {
+                    throw CancellationError()
+                }
+                return result
+            }
+        } catch is HelloHandshakeTimedOut {
+            companionLog("Version handshake timed out after a successful establish; assuming the Mac app must upgrade")
+            phase = .needsUpgrade(.mac)
+            return
+        } catch let error as CompanionError {
+            companionLog("Version handshake rejected by Mac (\(error)); Mac app must upgrade")
+            phase = .needsUpgrade(.mac)
+            return
+        }
+        // Any OTHER error - a real transport drop (TransportError) or a deliberate
+        // teardown (CancellationError) - is not an upgrade signal and propagates
+        // out of loadHome to the normal pairing retry path.
+        switch verdict {
+        case .compatible:
+            break
+        case .selfMustUpgrade:
+            companionLog("Version handshake: this phone app must upgrade")
+            phase = .needsUpgrade(.phone)
+            return
+        case .peerMustUpgrade:
+            companionLog("Version handshake: the Mac app must upgrade")
+            phase = .needsUpgrade(.mac)
+            return
+        }
         try await refreshLists()
         navigationPath = []
         if phase != .home {
@@ -1498,9 +1638,7 @@ final class AppModel {
         companionLog("Unpaired by the Mac")
         reconnectTask?.cancel()
         reconnectTask = nil
-        forgetStoredPairing()
-        PhoneIdentity.deletePushRelaySecret()
-        PhoneIdentity.deleteRoomSecret()
+        wipeAllKeyMaterial()
         let oldClient = client
         client = nil
         Task { await oldClient?.close() }

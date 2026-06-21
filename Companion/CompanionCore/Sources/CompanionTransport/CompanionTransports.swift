@@ -70,7 +70,8 @@ public enum CompanionTransports {
     public static func connector(for code: PairingCode,
                                  webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                                  roomSecret: (@Sendable () -> Data?)? = nil,
-                                 pairingTicket: String? = nil) -> TransportConnector {
+                                 pairingTicket: String? = nil,
+                                 nonDisplacing: Bool = false) -> TransportConnector {
         guard let relayOrigin = code.relayOrigin else {
             return UnavailableTransportConnector()
         }
@@ -80,9 +81,12 @@ public enum CompanionTransports {
                                    origin: relayOrigin, roomSecret: roomSecret?(),
                                    pairingTicket: pairingTicket)
             }
+        // nonDisplacing is set only by the NSE, so a background fetch yields to a
+        // foreground app holding the phone slot rather than displacing it.
         return RelayTransportConnector(relayOrigin: relayOrigin,
                                        responderStaticKey: code.responderStaticPublicKey,
                                        joinProof: proof,
+                                       nonDisplacing: nonDisplacing,
                                        webSocketFactory: webSocketFactory)
     }
 

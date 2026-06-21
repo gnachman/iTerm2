@@ -764,7 +764,7 @@ private final class BrokerEventRecorder {
     func record(_ update: ChatBroker.Update) {
         let entry: Entry
         switch update {
-        case .delivery(let message, let chatID):
+        case .delivery(let message, let chatID, _):
             entry = .delivery(message, chatID)
         case .typingStatus(let isTyping, let participant):
             entry = .typing(isTyping, participant)
@@ -840,7 +840,7 @@ private final class FakeToolResponder {
     }
 
     private func handle(_ update: ChatBroker.Update) {
-        guard case .delivery(let message, _) = update else { return }
+        guard case .delivery(let message, _, _) = update else { return }
         guard !responded else { return }
         guard case .remoteCommandRequest(let payload, _) = message.content else { return }
         guard case .classic(let cmd) = payload else { return }

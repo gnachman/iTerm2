@@ -126,6 +126,8 @@ actor CompanionSession {
 
     private func shortName(of message: CompanionHostMessage) -> String {
         switch message {
+        case .unsupported: "unsupported"
+        case .hello: "hello"
         case .chatsAndSessions: "chatsAndSessions"
         case .chatCreated: "chatCreated"
         case .history: "history"
@@ -140,6 +142,7 @@ actor CompanionSession {
         case .requestNotificationPermission: "requestNotificationPermission"
         case .pong: "pong"
         case .relayRoomSecretStored: "relayRoomSecretStored"
+        case .messagesSince: "messagesSince"
         case .unpaired: "unpaired"
         case .error: "error"
         }

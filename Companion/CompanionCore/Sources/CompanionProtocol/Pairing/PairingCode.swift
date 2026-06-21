@@ -12,7 +12,7 @@
 
 import Foundation
 
-public struct PairingCode: Equatable, Sendable {
+public struct PairingCode: Equatable, Sendable, Codable {
     /// The only protocol string this build understands. Anything else means
     /// the codes were produced by a newer macOS app than this phone build.
     public static let supportedProtocol = "Noise_XK_25519_ChaChaPoly_BLAKE2s"

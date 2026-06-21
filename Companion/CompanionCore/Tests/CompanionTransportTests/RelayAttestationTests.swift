@@ -59,6 +59,7 @@ private final class InMemoryKeyStore: AttestKeyStore, @unchecked Sendable {
     private var keys: [String: String] = [:]
     func keyId(forRoom roomName: String) -> String? { keys[roomName] }
     func setKeyId(_ keyId: String?, forRoom roomName: String) { keys[roomName] = keyId }
+    func removeAll() { keys.removeAll() }
 }
 
 /// An in-process relay that speaks the two endpoints the client calls

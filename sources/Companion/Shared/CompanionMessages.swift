@@ -15,6 +15,21 @@
 
 import Foundation
 import CompanionProtocol
+import CryptoKit
+
+/// The opaque, per-chat APNs collapse id for the relay-push feature:
+/// HMAC-SHA256(roomSecret, chatID), hex, truncated to 128 bits. Computed
+/// identically on the Mac (push sender + host token resolver) and the phone
+/// (per-chat watermark key + NSE), so the chatID never leaves the device in the
+/// clear while same-chat pushes still coalesce and different chats stay
+/// distinct. 32 hex chars, well under the APNs 64-byte collapse-id limit.
+public enum CompanionCollapseToken {
+    public static func make(roomSecret: Data, chatID: String) -> String {
+        let code = HMAC<SHA256>.authenticationCode(for: Data(chatID.utf8),
+                                                   using: SymmetricKey(data: roomSecret))
+        return Data(Data(code).prefix(16)).hexEncodedString()
+    }
+}
 
 /// What a terminal session looks like on the wire. PTYSession itself cannot
 /// cross, so this is the protocol's projection of one (used by the phone's
@@ -158,8 +173,37 @@ enum CompanionNewChatMode: Codable, Equatable {
     case session(guid: String)
 }
 
+/// One display-ready message in a `.messagesSince` reply: a short body (built
+/// Mac-side via Content.snippetText, so attachments are byte-free placeholders
+/// and long turns are truncated) plus the bits the NSE needs to render and
+/// de-duplicate one notification. Carries no attachment bytes and no full
+/// Message, by design (docs/push.txt section 2).
+struct CompanionMessagePreview: Codable, Equatable {
+    var uniqueID: UUID
+    var author: Participant
+    var body: String
+
+    init(uniqueID: UUID, author: Participant, body: String) {
+        self.uniqueID = uniqueID
+        self.author = author
+        self.body = body
+    }
+}
+
 /// Sent by the phone (client) to the mac (host).
-enum CompanionClientMessage: Codable {
+enum CompanionClientMessage: Codable, CompanionMessagePayload {
+    /// A message type this build does not recognize (a newer phone sent it). The
+    /// envelope decodes an unknown payload into this so the frame is not dropped;
+    /// the host replies with a correlated error.
+    case unsupported
+
+    /// Version handshake, sent by the phone as its FIRST message after the Noise
+    /// channel is up (before any other request). Carries this build's
+    /// companion-protocol revision and the oldest peer revision it accepts. The
+    /// mac replies with its own `.hello`; each side then decides whether an app
+    /// upgrade is required. See CompanionProtocolVersion.
+    case hello(revision: Int, minimumPeer: Int)
+
     /// Home screen: ask for the chat list and the session list in one round
     /// trip. Replied to with `.chatsAndSessions`.
     case listChatsAndSessions
@@ -238,23 +282,61 @@ enum CompanionClientMessage: Codable {
     /// key to park. See docs/companion-relay-design.md.
     case relayRoomSecret(Data)
 
+    /// Relay-push: the NSE asks for new messages in the chat identified by the
+    /// opaque per-chat collapse token (HMAC(roomSecret, chatID)), with seq
+    /// greater than the phone's per-chat watermark. Replied to with
+    /// `.messagesSince`. The token (not a chatID) is sent so the chatID never
+    /// appears in the APNs payload; the mac resolves it back to a chat.
+    ///
+    /// `nonce` is the one-time value the mac placed in the triggering push and
+    /// the NSE echoes back, so the mac can recognize its OWN solicited fetch and
+    /// skip the presence warning. Optional for cross-version compatibility: an
+    /// older NSE (or a push that carried none) omits it, decoding as nil.
+    case messagesSince(collapseToken: String, seq: Int64, limit: Int, nonce: String?)
+
     /// The phone is unpairing: the mac should forget the pairing and destroy
     /// its key material. No reply; the phone closes after sending.
     case unpairing
+
+    /// Discriminators this build knows. MUST list every case above (except
+    /// `.unsupported` is included so a peer that literally sends it round-trips).
+    /// Add a line here whenever a case is added.
+    static let knownPayloadKeys: Set<String> = [
+        "unsupported", "hello", "listChatsAndSessions", "createChat", "deleteChat",
+        "subscribe", "unsubscribe", "publish", "selectSessionResponse",
+        "remoteCommandDecision", "linkSession", "resolveMentions",
+        "fetchSessionScreenInfo", "fetchSessionContent", "fetchWorkgroupInfo",
+        "fetchSessionTree", "pushStatus", "notificationPermissionResponse", "ping",
+        "relayRoomSecret", "messagesSince", "unpairing",
+    ]
 }
 
 /// Sent by the mac (host) to the phone (client). Either a reply correlated to a
 /// client requestID (carried by the envelope) or an unsolicited event with no
 /// requestID (a subscription delivery).
-enum CompanionHostMessage: Codable {
+enum CompanionHostMessage: Codable, CompanionMessagePayload {
+    /// A message type this build does not recognize (a newer mac sent it). The
+    /// envelope decodes an unknown payload into this so the frame is not dropped;
+    /// the phone ignores it (an unsolicited event) or treats it as an unexpected
+    /// reply.
+    case unsupported
+
+    /// Reply to the phone's `.hello`: the mac's companion-protocol revision and
+    /// the oldest peer revision it accepts, so the phone can decide whether an
+    /// app upgrade is required.
+    case hello(revision: Int, minimumPeer: Int)
+
     /// Reply to `.listChatsAndSessions`.
     case chatsAndSessions(chats: [CompanionChatListEntry], sessions: [CompanionSessionSummary])
 
     /// Reply to `.createChat`.
     case chatCreated(entry: CompanionChatListEntry)
 
-    /// Reply to `.subscribe`: the existing visible messages, oldest first.
-    case history(chatID: String, messages: [Message])
+    /// Reply to `.subscribe`: the existing visible messages, oldest first, plus
+    /// the chat's current max seq so the phone can advance its per-chat push
+    /// watermark (subscribing == viewing the chat == read up to maxSeq), keeping
+    /// the NSE from re-notifying already-read turns. See docs/push.txt section 8.
+    case history(chatID: String, messages: [Message], maxSeq: Int64)
 
     /// Unsolicited: a message was delivered to a subscribed chat. Mirrors
     /// ChatBroker.Update.delivery(Message, chatID). `partial` is true for
@@ -305,20 +387,83 @@ enum CompanionHostMessage: Codable {
     /// flushed) just before the mac closes the connection.
     case unpaired
 
+    /// Reply to `.messagesSince`: short, display-ready previews (one
+    /// notification each on the phone) in CHRONOLOGICAL order (oldest first - the
+    /// previews carry no seq, so the NSE delivers them in this order verbatim),
+    /// the chat's display title, the chat's current max seq (the per-chat
+    /// watermark advances to this), and whether more visible messages existed than
+    /// the limit. Empty previews mean nothing new, or the token matched no chat;
+    /// either way the NSE shows the generic fallback.
+    case messagesSince(chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool, reset: Bool)
+
     /// An error, optionally correlated to a request via the envelope.
     case error(CompanionError)
+
+    /// Discriminators this build knows. Add a line here whenever a case is added.
+    static let knownPayloadKeys: Set<String> = [
+        "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
+        "delivery", "typingStatus", "mentionsResolved", "sessionScreenInfo",
+        "sessionContent", "workgroupInfo", "sessionTree", "pong",
+        "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
+        "unpaired", "messagesSince", "error",
+    ]
 }
 
 /// The framed envelope every application message travels in. `requestID`
 /// correlates a host reply with the client message that triggered it; it is nil
 /// for unsolicited host events (deliveries, typing status).
-struct CompanionEnvelope<Payload: Codable>: Codable {
+/// A companion message that can represent "a message type this build does not
+/// recognize." Lets CompanionEnvelope decode a newer peer's unknown message type
+/// into a sentinel (preserving requestID) instead of failing the whole decode -
+/// Swift's synthesized enum Codable throws on an unknown case, which would
+/// otherwise make one new message type break an older peer entirely.
+protocol CompanionMessagePayload: Codable {
+    static var unsupported: Self { get }
+    /// The discriminator keys (case names) this build recognizes. Synthesized
+    /// enum Codable encodes a case as {"<caseName>": ...}; the envelope decoder
+    /// maps an UNKNOWN discriminator to `.unsupported` (forward compatibility) but
+    /// lets a decode failure of a KNOWN case propagate (a corrupt or newer-content
+    /// body must not be masked as "unsupported"). Keep in sync with the cases.
+    static var knownPayloadKeys: Set<String> { get }
+}
+
+struct CompanionEnvelope<Payload: CompanionMessagePayload>: Codable {
     var requestID: UInt64?
     var payload: Payload
 
     init(requestID: UInt64?, payload: Payload) {
         self.requestID = requestID
         self.payload = payload
+    }
+
+    private enum CodingKeys: String, CodingKey { case requestID, payload }
+
+    // Custom decode for forward compatibility - but ONLY for a genuinely unknown
+    // message TYPE. decodeForwardCompatible peeks the payload's discriminator: an
+    // unknown case (a newer peer's new message type) throws
+    // ForwardCompatibilityError.unknownCase, which we turn into `.unsupported`
+    // with the requestID intact instead of failing the frame. A KNOWN case whose
+    // body fails to decode (malformed, or a newer-content body) throws a
+    // DecodingError that propagates to the read loop's drop-and-log path - a
+    // blanket `try?` here would instead mask it as "unsupported", turning one bad
+    // message into a failed reply (or a spurious "upgrade required"). Encoding
+    // stays synthesized. (Shared with Message/ClientLocal; see
+    // KeyedDecodingContainer.decodeForwardCompatible.)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        requestID = try container.decodeIfPresent(UInt64.self, forKey: .requestID)
+        do {
+            payload = try container.decodeForwardCompatible(Payload.self, forKey: .payload,
+                                                            knownDiscriminators: Payload.knownPayloadKeys)
+        } catch ForwardCompatibilityError.unknownCase {
+            payload = .unsupported
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(requestID, forKey: .requestID)
+        try container.encode(payload, forKey: .payload)
     }
 }
 
