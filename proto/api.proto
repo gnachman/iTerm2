@@ -49,6 +49,7 @@ message ClientOriginatedMessage {
     CloseRequest close_request = 131;
     InvokeFunctionRequest invoke_function_request = 132;
     ListPromptsRequest list_prompts_request = 133;
+    ScreenshotRequest screenshot_request = 134;
   }
 }
 
@@ -95,6 +96,7 @@ message ServerOriginatedMessage {
     CloseResponse close_response = 131;
     InvokeFunctionResponse invoke_function_response = 132;
     ListPromptsResponse list_prompts_response = 133;
+    ScreenshotResponse screenshot_response = 134;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
@@ -1179,6 +1181,31 @@ message GetBufferResponse {
 
   // The returned range
   optional WindowedCoordRange windowed_coord_range = 6;
+}
+
+// Captures an image of a session's current screen contents.
+message ScreenshotRequest {
+  // See documentation on session IDs. "all" not accepted.
+  optional string session = 1;
+
+  // Optional background colour to fill behind the content as a web-style string
+  // like "#rrggbb" (sRGB). When omitted, the session's own background colour is used.
+  optional string background_color = 2;
+}
+
+// Returns a PNG-encoded image of a session's screen.
+message ScreenshotResponse {
+  enum Status {
+    OK = 0;
+    SESSION_NOT_FOUND = 1;
+    REQUEST_MALFORMED = 2;
+    INTERNAL_ERROR = 3;
+  }
+
+  optional Status status = 1 [default = OK];
+
+  // PNG-encoded image data, set when status is OK.
+  optional bytes png = 2;
 }
 
 // Requests metadata about the current shell prompt.

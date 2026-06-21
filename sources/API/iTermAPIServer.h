@@ -26,6 +26,7 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)apiServerGetBuffer:(ITMGetBufferRequest *)request handler:(void (^)(ITMGetBufferResponse *))handler;
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request handler:(void (^)(ITMGetPromptResponse *))handler;
 - (void)apiServerListPrompts:(ITMListPromptsRequest *)request handler:(void (^)(ITMListPromptsResponse *))handler;
+- (void)apiServerScreenshot:(ITMScreenshotRequest *)request handler:(void (^)(ITMScreenshotResponse *))handler;
 - (void)apiServerNotification:(ITMNotificationRequest *)request
                 connectionKey:(NSString *)connectionKey
                       handler:(void (^)(ITMNotificationResponse *))handler;

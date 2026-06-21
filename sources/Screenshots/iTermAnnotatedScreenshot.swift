@@ -374,34 +374,93 @@ class iTermAnnotatedScreenshot: NSObject {
         return saveToDesktop(nsImage: nsImage)
     }
 
-    /// Saves an NSImage to the Desktop as a PNG file
-    @objc static func saveToDesktop(nsImage: NSImage) -> URL? {
-        // Generate filename with timestamp
+    /// A timestamped default filename for a screenshot, e.g. iTerm2-Screenshot-2026-06-21-13-05-22.png
+    @objc static func defaultScreenshotFilename() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
-        let timestamp = formatter.string(from: Date())
-        let filename = "iTerm2-Screenshot-\(timestamp).png"
+        return "iTerm2-Screenshot-\(formatter.string(from: Date())).png"
+    }
 
-        // Get Desktop path
+    /// Encodes an NSImage as PNG data, or nil on failure.
+    @objc static func pngData(from nsImage: NSImage) -> Data? {
+        guard let tiffData = nsImage.tiffRepresentation,
+              let bitmapRep = NSBitmapImageRep(data: tiffData) else {
+            return nil
+        }
+        return bitmapRep.representation(using: .png, properties: [:])
+    }
+
+    /// Saves an NSImage as a timestamped PNG file in the given directory.
+    @objc static func save(nsImage: NSImage, inDirectory directory: URL) -> URL? {
+        let fileURL = directory.appendingPathComponent(defaultScreenshotFilename())
+        return write(nsImage: nsImage, to: fileURL) ? fileURL : nil
+    }
+
+    /// Writes an NSImage as a PNG to a specific file URL. Returns true on success.
+    @objc static func write(nsImage: NSImage, to url: URL) -> Bool {
+        guard let pngData = pngData(from: nsImage) else {
+            return false
+        }
+        do {
+            try pngData.write(to: url)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Saves an NSImage to the Desktop as a PNG file
+    @objc static func saveToDesktop(nsImage: NSImage) -> URL? {
         guard let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first else {
             return nil
         }
+        return save(nsImage: nsImage, inDirectory: desktopURL)
+    }
 
-        let fileURL = desktopURL.appendingPathComponent(filename)
+    // MARK: - Background Fill
 
-        // Create PNG data
-        guard let tiffData = nsImage.tiffRepresentation,
-              let bitmapRep = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
-            return nil
+    /// Composites an image over a solid background colour, filling any transparent
+    /// areas (margins and uncovered regions left by the renderer). Returns the image
+    /// unchanged when the colour is nil or fully transparent.
+    @objc static func applyBackground(to image: NSImage, color: NSColor?) -> NSImage {
+        guard let color = color, color.alphaComponent > 0 else {
+            return image
+        }
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return image
         }
 
-        do {
-            try pngData.write(to: fileURL)
-            return fileURL
-        } catch {
-            return nil
+        let width = cgImage.width
+        let height = cgImage.height
+
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return image
         }
+
+        let cgColor: CGColor
+        if let converted = color.usingColorSpace(.deviceRGB) {
+            cgColor = converted.cgColor
+        } else {
+            cgColor = color.cgColor
+        }
+
+        let fullRect = CGRect(x: 0, y: 0, width: width, height: height)
+        context.setFillColor(cgColor)
+        context.fill(fullRect)
+        context.draw(cgImage, in: fullRect)
+
+        guard let composited = context.makeImage() else {
+            return image
+        }
+        return NSImage(cgImage: composited, size: image.size)
     }
 
     // MARK: - Background Fill

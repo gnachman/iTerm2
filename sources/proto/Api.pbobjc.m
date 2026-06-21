@@ -142,6 +142,8 @@ GPBObjCClassDeclaration(ITMRestartSessionResponse);
 GPBObjCClassDeclaration(ITMSavedArrangementRequest);
 GPBObjCClassDeclaration(ITMSavedArrangementResponse);
 GPBObjCClassDeclaration(ITMScreenUpdateNotification);
+GPBObjCClassDeclaration(ITMScreenshotRequest);
+GPBObjCClassDeclaration(ITMScreenshotResponse);
 GPBObjCClassDeclaration(ITMSelection);
 GPBObjCClassDeclaration(ITMSelectionRequest);
 GPBObjCClassDeclaration(ITMSelectionRequest_GetSelectionRequest);
@@ -565,6 +567,7 @@ BOOL ITMImagePlaceholderType_IsValidValue(int32_t value__) {
 @dynamic closeRequest;
 @dynamic invokeFunctionRequest;
 @dynamic listPromptsRequest;
+@dynamic screenshotRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -602,6 +605,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMCloseRequest *closeRequest;
   ITMInvokeFunctionRequest *invokeFunctionRequest;
   ITMListPromptsRequest *listPromptsRequest;
+  ITMScreenshotRequest *screenshotRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -926,6 +930,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "screenshotRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMScreenshotRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_ScreenshotRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, screenshotRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -997,6 +1010,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic closeResponse;
 @dynamic invokeFunctionResponse;
 @dynamic listPromptsResponse;
+@dynamic screenshotResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -1036,6 +1050,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMCloseResponse *closeResponse;
   ITMInvokeFunctionResponse *invokeFunctionResponse;
   ITMListPromptsResponse *listPromptsResponse;
+  ITMScreenshotResponse *screenshotResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -1367,6 +1382,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .number = ITMServerOriginatedMessage_FieldNumber_ListPromptsResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listPromptsResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "screenshotResponse",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMScreenshotResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_ScreenshotResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, screenshotResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -10530,6 +10554,158 @@ BOOL ITMGetBufferResponse_Status_IsValidValue(int32_t value__) {
     case ITMGetBufferResponse_Status_SessionNotFound:
     case ITMGetBufferResponse_Status_InvalidLineRange:
     case ITMGetBufferResponse_Status_RequestMalformed:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMScreenshotRequest
+
+@implementation ITMScreenshotRequest
+
+@dynamic hasSession, session;
+@dynamic hasBackgroundColor, backgroundColor;
+
+typedef struct ITMScreenshotRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *session;
+  NSString *backgroundColor;
+} ITMScreenshotRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "session",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMScreenshotRequest_FieldNumber_Session,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMScreenshotRequest__storage_, session),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "backgroundColor",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMScreenshotRequest_FieldNumber_BackgroundColor,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMScreenshotRequest__storage_, backgroundColor),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMScreenshotRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMScreenshotRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMScreenshotResponse
+
+@implementation ITMScreenshotResponse
+
+@dynamic hasStatus, status;
+@dynamic hasPng, png;
+
+typedef struct ITMScreenshotResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMScreenshotResponse_Status status;
+  NSData *png;
+} ITMScreenshotResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMScreenshotResponse_Status_EnumDescriptor,
+        .number = ITMScreenshotResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMScreenshotResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasDefaultValue | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "png",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMScreenshotResponse_FieldNumber_Png,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMScreenshotResponse__storage_, png),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBytes,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMScreenshotResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMScreenshotResponse__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMScreenshotResponse_Status
+
+GPBEnumDescriptor *ITMScreenshotResponse_Status_EnumDescriptor(void) {
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000SessionNotFound\000RequestMalformed\000Inte"
+        "rnalError\000";
+    static const int32_t values[] = {
+        ITMScreenshotResponse_Status_Ok,
+        ITMScreenshotResponse_Status_SessionNotFound,
+        ITMScreenshotResponse_Status_RequestMalformed,
+        ITMScreenshotResponse_Status_InternalError,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMScreenshotResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMScreenshotResponse_Status_IsValidValue];
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMScreenshotResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMScreenshotResponse_Status_Ok:
+    case ITMScreenshotResponse_Status_SessionNotFound:
+    case ITMScreenshotResponse_Status_RequestMalformed:
+    case ITMScreenshotResponse_Status_InternalError:
       return YES;
     default:
       return NO;

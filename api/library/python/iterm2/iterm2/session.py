@@ -453,6 +453,31 @@ class Session:
         await iterm2.rpc.async_send_text(
             self.connection, self.__session_id, text, suppress_broadcast)
 
+    async def async_screenshot(
+            self, background_color: typing.Optional[str] = None) -> bytes:
+        """
+        Captures a PNG screenshot of the session's visible screen contents.
+
+        :param background_color: An optional web-style ``"#rrggbb"`` colour to
+            fill behind the content. When `None`, the session's own background
+            colour is used.
+
+        :returns: PNG-encoded image data.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        # pylint: disable=no-member
+        result = await iterm2.rpc.async_screenshot(
+            self.connection,
+            self.session_id,
+            background_color)
+        if (result.screenshot_response.status ==
+                iterm2.api_pb2.ScreenshotResponse.Status.Value("OK")):
+            return result.screenshot_response.png
+        raise iterm2.rpc.RPCException(
+            iterm2.api_pb2.ScreenshotResponse.Status.Name(
+                result.screenshot_response.status))
+
     async def async_split_pane(
             self,
             vertical: bool = False,

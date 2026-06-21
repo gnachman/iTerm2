@@ -142,6 +142,8 @@ CF_EXTERN_C_BEGIN
 @class ITMSavedArrangementRequest;
 @class ITMSavedArrangementResponse;
 @class ITMScreenUpdateNotification;
+@class ITMScreenshotRequest;
+@class ITMScreenshotResponse;
 @class ITMSelection;
 @class ITMSelectionRequest;
 @class ITMSelectionRequest_GetSelectionRequest;
@@ -860,6 +862,23 @@ GPBEnumDescriptor *ITMGetBufferResponse_Status_EnumDescriptor(void);
  **/
 BOOL ITMGetBufferResponse_Status_IsValidValue(int32_t value);
 
+#pragma mark - Enum ITMScreenshotResponse_Status
+
+typedef GPB_ENUM(ITMScreenshotResponse_Status) {
+  ITMScreenshotResponse_Status_Ok = 0,
+  ITMScreenshotResponse_Status_SessionNotFound = 1,
+  ITMScreenshotResponse_Status_RequestMalformed = 2,
+  ITMScreenshotResponse_Status_InternalError = 3,
+};
+
+GPBEnumDescriptor *ITMScreenshotResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMScreenshotResponse_Status_IsValidValue(int32_t value);
+
 #pragma mark - Enum ITMGetPromptResponse_Status
 
 typedef GPB_ENUM(ITMGetPromptResponse_Status) {
@@ -1113,6 +1132,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_CloseRequest = 131,
   ITMClientOriginatedMessage_FieldNumber_InvokeFunctionRequest = 132,
   ITMClientOriginatedMessage_FieldNumber_ListPromptsRequest = 133,
+  ITMClientOriginatedMessage_FieldNumber_ScreenshotRequest = 134,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -1151,6 +1171,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_CloseRequest = 131,
   ITMClientOriginatedMessage_Submessage_OneOfCase_InvokeFunctionRequest = 132,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ListPromptsRequest = 133,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_ScreenshotRequest = 134,
 };
 
 /**
@@ -1232,6 +1253,8 @@ GPB_FINAL @interface ITMClientOriginatedMessage : GPBMessage
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMListPromptsRequest *listPromptsRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMScreenshotRequest *screenshotRequest;
+
 @end
 
 /**
@@ -1278,6 +1301,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_CloseResponse = 131,
   ITMServerOriginatedMessage_FieldNumber_InvokeFunctionResponse = 132,
   ITMServerOriginatedMessage_FieldNumber_ListPromptsResponse = 133,
+  ITMServerOriginatedMessage_FieldNumber_ScreenshotResponse = 134,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -1318,6 +1342,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_CloseResponse = 131,
   ITMServerOriginatedMessage_Submessage_OneOfCase_InvokeFunctionResponse = 132,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ListPromptsResponse = 133,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_ScreenshotResponse = 134,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -1403,6 +1428,8 @@ GPB_FINAL @interface ITMServerOriginatedMessage : GPBMessage
 @property(nonatomic, readwrite, strong, null_resettable) ITMInvokeFunctionResponse *invokeFunctionResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMListPromptsResponse *listPromptsResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMScreenshotResponse *screenshotResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
@@ -4344,6 +4371,55 @@ GPB_FINAL @interface ITMGetBufferResponse : GPBMessage
 @property(nonatomic, readwrite, strong, null_resettable) ITMWindowedCoordRange *windowedCoordRange;
 /** Test to see if @c windowedCoordRange has been set. */
 @property(nonatomic, readwrite) BOOL hasWindowedCoordRange;
+
+@end
+
+#pragma mark - ITMScreenshotRequest
+
+typedef GPB_ENUM(ITMScreenshotRequest_FieldNumber) {
+  ITMScreenshotRequest_FieldNumber_Session = 1,
+  ITMScreenshotRequest_FieldNumber_BackgroundColor = 2,
+};
+
+/**
+ * Captures an image of a session's current screen contents.
+ **/
+GPB_FINAL @interface ITMScreenshotRequest : GPBMessage
+
+/** See documentation on session IDs. "all" not accepted. */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *session;
+/** Test to see if @c session has been set. */
+@property(nonatomic, readwrite) BOOL hasSession;
+
+/**
+ * Optional background colour to fill behind the content as a web-style string
+ * like "#rrggbb" (sRGB). When omitted, the session's own background colour is used.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *backgroundColor;
+/** Test to see if @c backgroundColor has been set. */
+@property(nonatomic, readwrite) BOOL hasBackgroundColor;
+
+@end
+
+#pragma mark - ITMScreenshotResponse
+
+typedef GPB_ENUM(ITMScreenshotResponse_FieldNumber) {
+  ITMScreenshotResponse_FieldNumber_Status = 1,
+  ITMScreenshotResponse_FieldNumber_Png = 2,
+};
+
+/**
+ * Returns a PNG-encoded image of a session's screen.
+ **/
+GPB_FINAL @interface ITMScreenshotResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMScreenshotResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+/** PNG-encoded image data, set when status is OK. */
+@property(nonatomic, readwrite, copy, null_resettable) NSData *png;
+/** Test to see if @c png has been set. */
+@property(nonatomic, readwrite) BOOL hasPng;
 
 @end
 
