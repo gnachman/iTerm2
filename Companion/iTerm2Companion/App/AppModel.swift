@@ -86,11 +86,22 @@ private func withTimeout<T: Sendable>(_ seconds: TimeInterval,
 @Observable
 final class AppModel {
     /// Full-screen phases before (and including arrival at) the chat list.
+    /// Which app the user must upgrade when the companion apps are
+    /// version-incompatible (shown in the full-screen blocking panel).
+    enum UpgradeSide: Equatable {
+        case phone   // this iPhone app is too old
+        case mac     // the Mac's iTerm2 is too old
+    }
+
     enum Phase: Equatable {
         case launch
         case scanning
         case pairing
         case home
+        /// Connected and paired, but the app versions are incompatible: a
+        /// blocking panel tells the user which app to upgrade. Cleared by a
+        /// successful handshake after the upgrade.
+        case needsUpgrade(UpgradeSide)
     }
 
     /// Screens pushed onto the navigation stack once paired. Driving them
@@ -889,7 +900,38 @@ final class AppModel {
 
     // MARK: Home
 
+    /// From the upgrade panel: reconnect and re-run the version handshake (after
+    /// the user has updated an app). A compatible handshake proceeds to home; an
+    /// incompatible one returns to the panel.
+    func retryAfterUpgrade() {
+        guard let code = storedPairingCode else {
+            phase = .scanning
+            return
+        }
+        pair(with: code, isReconnect: true)
+    }
+
     func loadHome() async throws {
+        // Version handshake FIRST: if the apps are incompatible, show the blocking
+        // upgrade panel instead of the home screen. Pairing itself succeeded, so
+        // storePairing still runs (caller) - after the user upgrades, a reconnect
+        // gets a compatible handshake and proceeds to home.
+        let client = try await currentClient(label: "Version handshake")
+        let verdict = try await withTimeout(15, "Version handshake") {
+            try await client.handshakeVersion()
+        }
+        switch verdict {
+        case .compatible:
+            break
+        case .selfMustUpgrade:
+            companionLog("Version handshake: this phone app must upgrade")
+            phase = .needsUpgrade(.phone)
+            return
+        case .peerMustUpgrade:
+            companionLog("Version handshake: the Mac app must upgrade")
+            phase = .needsUpgrade(.mac)
+            return
+        }
         try await refreshLists()
         navigationPath = []
         if phase != .home {

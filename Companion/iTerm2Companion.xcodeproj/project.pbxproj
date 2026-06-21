@@ -21,6 +21,7 @@
 		3D71A7C937B35FA638539B0B /* MailComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */; };
 		3DAD6A8F8E7E0D9E7CDD90D1 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = E3E1F2C0ADCD14F9D2393755 /* WhisperKit */; };
 		3F06C00C36D03C6E93463106 /* CompanionPushRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 465641AD107D063E7DD2A1C5 /* CompanionPushRelay.swift */; };
+		3FED6D999B5E12119428D9D1 /* UpgradeRequiredView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E032AB4B164634905B48697 /* UpgradeRequiredView.swift */; };
 		461469648CC3E9213136AAD9 /* AIExplanationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93134C0A08E84BDB95861B8 /* AIExplanationResponse.swift */; };
 		48B44593508149D5D655C1DE /* MacTypeShadows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADBF604814A5CBED79B600C /* MacTypeShadows.swift */; };
 		491AC0533D5590064E7D128A /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42ECCE549BC946C0443BA106 /* CompanionSession.swift */; };
@@ -105,6 +106,7 @@
 		6B1A92D2DA0130234E239854 /* LLM.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LLM.swift; path = sources/AITerm/LLM.swift; sourceTree = "<group>"; };
 		7836C53444CAE5CDF235737E /* AppIcon.icon */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.iconcomposer.icon; name = AppIcon.icon; path = Resources/AppIcon.icon; sourceTree = "<group>"; };
 		798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MailComposeView.swift; sourceTree = "<group>"; };
+		7E032AB4B164634905B48697 /* UpgradeRequiredView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpgradeRequiredView.swift; sourceTree = "<group>"; };
 		8352A86C7CEC1F3B06ED35B4 /* CompanionMessages.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionMessages.swift; path = sources/Companion/Shared/CompanionMessages.swift; sourceTree = "<group>"; };
 		85665D0E72B401EE56BAFF45 /* CompanionClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionClient.swift; sourceTree = "<group>"; };
 		8635EAF6BB0BB03744749618 /* ConversationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
@@ -198,6 +200,7 @@
 				10114730702BBA43426D5E85 /* SettingsView.swift */,
 				24218D973EDC803C93048735 /* WorkgroupView.swift */,
 				798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */,
+				7E032AB4B164634905B48697 /* UpgradeRequiredView.swift */,
 			);
 			path = Screens;
 			sourceTree = "<group>";
@@ -471,6 +474,7 @@
 				3D71A7C937B35FA638539B0B /* MailComposeView.swift in Sources */,
 				F6C5587117251D6D1B9E4C6A /* WhisperModelManager.swift in Sources */,
 				1A4A5B9A5AFE0E89561BA7E4 /* VoiceCaptureController.swift in Sources */,
+				3FED6D999B5E12119428D9D1 /* UpgradeRequiredView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

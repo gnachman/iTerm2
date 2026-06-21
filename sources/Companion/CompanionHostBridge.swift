@@ -63,6 +63,15 @@ final class CompanionHostBridge {
         onConnectionClassified?(solicited)
     }
 
+    /// Called when the peer's `.hello` shows the apps are version-incompatible, so
+    /// the mac can show an upgrade alert. The verdict is from the MAC's side:
+    /// .peerMustUpgrade -> upgrade the phone app; .selfMustUpgrade -> upgrade
+    /// iTerm2. Not called when compatible.
+    var onVersionIncompatible: (@MainActor (_ verdict: CompanionProtocolVersion.Compatibility) -> Void)?
+    /// Set once an incompatible hello is seen: the bridge then serves nothing but
+    /// a re-hello, so a stale peer cannot drive an out-of-date protocol.
+    private var versionBlocked = false
+
     init(transport: MessageTransport) {
         self.transport = transport
     }
@@ -229,15 +238,31 @@ final class CompanionHostBridge {
 
     private func handle(_ envelope: ClientEnvelope) {
         let requestID = envelope.requestID
+        // An incompatible peer is served nothing but a re-hello: the phone shows
+        // an upgrade panel and disconnects, but refuse here too so a stale peer
+        // cannot drive an out-of-date protocol.
+        if versionBlocked {
+            if case .hello(let revision, let minimumPeer) = envelope.payload {
+                handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
+            } else {
+                send(.error(CompanionError(code: .badRequest, message: "Companion app upgrade required")),
+                     requestID: requestID)
+            }
+            return
+        }
         // Classify the connection on its first request (for the presence
-        // warning). messagesSince classifies itself based on its nonce; every
-        // other request is interactive presence -> unsolicited.
-        if case .messagesSince = envelope.payload {
-            // handled in handleMessagesSince once the nonce is checked
-        } else {
+        // warning). messagesSince classifies itself based on its nonce; .hello is
+        // a control handshake (neutral); every other request is interactive
+        // presence -> unsolicited.
+        switch envelope.payload {
+        case .messagesSince, .hello:
+            break  // messagesSince classifies after its nonce check; hello is neutral
+        default:
             classifyOnce(solicited: false)
         }
         switch envelope.payload {
+        case .hello(let revision, let minimumPeer):
+            handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
         case .listChatsAndSessions:
             send(.chatsAndSessions(chats: chatEntries(),
                                    sessions: CompanionSessionLister.sessions()),
@@ -392,6 +417,24 @@ final class CompanionHostBridge {
     /// unresolvable case (no room secret, chat system unavailable, token matches
     /// no chat) replies with empty previews, which the NSE renders as the generic
     /// fallback. See docs/push.txt section 2.
+    /// Version handshake. Always reply with our hello (so the phone can evaluate
+    /// from its side), then evaluate from ours; on incompatibility, block further
+    /// service and ask the mac to show an upgrade alert.
+    private func handleHello(peerRevision: Int, peerMinimumPeer: Int, requestID: UInt64?) {
+        send(.hello(revision: CompanionProtocolVersion.current,
+                    minimumPeer: CompanionProtocolVersion.minimumPeer),
+             requestID: requestID)
+        let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
+                                                        peerMinimumPeer: peerMinimumPeer)
+        versionBlocked = (verdict != .compatible)
+        DLog("Companion bridge: hello peer(rev=\(peerRevision), min=\(peerMinimumPeer)) -> \(verdict)")
+        guard verdict != .compatible else { return }
+        // Don't also pop the presence toast for an incompatible peer; the alert
+        // is the user-facing signal. (solicited:true suppresses the toast.)
+        classifyOnce(solicited: true)
+        onVersionIncompatible?(verdict)
+    }
+
     private func handleMessagesSince(collapseToken: String,
                                      seq: Int64,
                                      limit rawLimit: Int,

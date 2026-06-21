@@ -192,6 +192,13 @@ struct CompanionMessagePreview: Codable, Equatable {
 
 /// Sent by the phone (client) to the mac (host).
 enum CompanionClientMessage: Codable {
+    /// Version handshake, sent by the phone as its FIRST message after the Noise
+    /// channel is up (before any other request). Carries this build's
+    /// companion-protocol revision and the oldest peer revision it accepts. The
+    /// mac replies with its own `.hello`; each side then decides whether an app
+    /// upgrade is required. See CompanionProtocolVersion.
+    case hello(revision: Int, minimumPeer: Int)
+
     /// Home screen: ask for the chat list and the session list in one round
     /// trip. Replied to with `.chatsAndSessions`.
     case listChatsAndSessions
@@ -291,6 +298,11 @@ enum CompanionClientMessage: Codable {
 /// client requestID (carried by the envelope) or an unsolicited event with no
 /// requestID (a subscription delivery).
 enum CompanionHostMessage: Codable {
+    /// Reply to the phone's `.hello`: the mac's companion-protocol revision and
+    /// the oldest peer revision it accepts, so the phone can decide whether an
+    /// app upgrade is required.
+    case hello(revision: Int, minimumPeer: Int)
+
     /// Reply to `.listChatsAndSessions`.
     case chatsAndSessions(chats: [CompanionChatListEntry], sessions: [CompanionSessionSummary])
 

@@ -42,6 +42,23 @@ actor CompanionClient {
         }
     }
 
+    /// Version handshake: send this build's revision/minimumPeer and evaluate the
+    /// mac's reply from the phone's side. Call FIRST, before any other request.
+    /// .selfMustUpgrade -> upgrade the phone app; .peerMustUpgrade -> upgrade the
+    /// Mac app.
+    func handshakeVersion() async throws -> CompanionProtocolVersion.Compatibility {
+        let reply = try await session.request(.hello(revision: CompanionProtocolVersion.current,
+                                                     minimumPeer: CompanionProtocolVersion.minimumPeer))
+        switch reply {
+        case .hello(let revision, let minimumPeer):
+            return CompanionProtocolVersion.evaluate(peerRevision: revision, peerMinimumPeer: minimumPeer)
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to hello")
+        }
+    }
+
     func listChatsAndSessions() async throws -> (chats: [CompanionChatListEntry],
                                                  sessions: [CompanionSessionSummary]) {
         let reply = try await session.request(.listChatsAndSessions)

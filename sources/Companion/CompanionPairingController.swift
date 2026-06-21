@@ -86,6 +86,32 @@ final class CompanionPairingController: NSObject {
         }
     }
 
+    /// Show a modal alert when the companion apps are version-incompatible. The
+    /// verdict is from the mac's side: .peerMustUpgrade -> the phone app is too
+    /// old; .selfMustUpgrade -> iTerm2 is too old. Shown at most once per minute
+    /// so a retrying phone can't spam alerts.
+    private var lastVersionAlert: Date?
+    private func showVersionIncompatibleAlert(_ verdict: CompanionProtocolVersion.Compatibility) {
+        if let last = lastVersionAlert, Date().timeIntervalSince(last) < 60 { return }
+        lastVersionAlert = Date()
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        switch verdict {
+        case .peerMustUpgrade:
+            alert.messageText = "Companion Device Needs an Update"
+            alert.informativeText = "The iTerm2 Buddy app on your phone is too old to connect to "
+                + "this version of iTerm2. Update the iPhone app to continue."
+        case .selfMustUpgrade:
+            alert.messageText = "iTerm2 Needs an Update"
+            alert.informativeText = "This version of iTerm2 is too old to connect to the iTerm2 "
+                + "Buddy app on your phone. Update iTerm2 to continue."
+        case .compatible:
+            return
+        }
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
     /// The bridge classified its connection on the first request. solicited ==
     /// valid push nonce (the mac's own fetch); otherwise warn.
     private func connectionDidClassify(_ connection: CompanionHostBridge, solicited: Bool) {
@@ -757,6 +783,9 @@ final class CompanionPairingController: NSObject {
                 newBridge.onConnectionClassified = { [weak self, weak newBridge] solicited in
                     guard let self, let newBridge else { return }
                     self.connectionDidClassify(newBridge, solicited: solicited)
+                }
+                newBridge.onVersionIncompatible = { [weak self] verdict in
+                    self?.showVersionIncompatibleAlert(verdict)
                 }
                 newBridge.start()
                 let staleBridge = bridge
