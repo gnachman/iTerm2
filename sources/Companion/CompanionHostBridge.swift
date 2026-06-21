@@ -261,6 +261,13 @@ final class CompanionHostBridge {
             classifyOnce(solicited: false)
         }
         switch envelope.payload {
+        case .unsupported:
+            // A message type this mac build doesn't recognize (newer phone). The
+            // envelope still decoded, so reply with a correlated error rather than
+            // dropping it silently.
+            DLog("Companion bridge: unsupported client message (peer is newer)")
+            send(.error(CompanionError(code: .badRequest, message: "Unsupported request; app upgrade required")),
+                 requestID: requestID)
         case .hello(let revision, let minimumPeer):
             handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
         case .listChatsAndSessions:

@@ -191,7 +191,12 @@ struct CompanionMessagePreview: Codable, Equatable {
 }
 
 /// Sent by the phone (client) to the mac (host).
-enum CompanionClientMessage: Codable {
+enum CompanionClientMessage: Codable, CompanionMessagePayload {
+    /// A message type this build does not recognize (a newer phone sent it). The
+    /// envelope decodes an unknown payload into this so the frame is not dropped;
+    /// the host replies with a correlated error.
+    case unsupported
+
     /// Version handshake, sent by the phone as its FIRST message after the Noise
     /// channel is up (before any other request). Carries this build's
     /// companion-protocol revision and the oldest peer revision it accepts. The
@@ -297,7 +302,13 @@ enum CompanionClientMessage: Codable {
 /// Sent by the mac (host) to the phone (client). Either a reply correlated to a
 /// client requestID (carried by the envelope) or an unsolicited event with no
 /// requestID (a subscription delivery).
-enum CompanionHostMessage: Codable {
+enum CompanionHostMessage: Codable, CompanionMessagePayload {
+    /// A message type this build does not recognize (a newer mac sent it). The
+    /// envelope decodes an unknown payload into this so the frame is not dropped;
+    /// the phone ignores it (an unsolicited event) or treats it as an unexpected
+    /// reply.
+    case unsupported
+
     /// Reply to the phone's `.hello`: the mac's companion-protocol revision and
     /// the oldest peer revision it accepts, so the phone can decide whether an
     /// app upgrade is required.
@@ -380,13 +391,39 @@ enum CompanionHostMessage: Codable {
 /// The framed envelope every application message travels in. `requestID`
 /// correlates a host reply with the client message that triggered it; it is nil
 /// for unsolicited host events (deliveries, typing status).
-struct CompanionEnvelope<Payload: Codable>: Codable {
+/// A companion message that can represent "a message type this build does not
+/// recognize." Lets CompanionEnvelope decode a newer peer's unknown message type
+/// into a sentinel (preserving requestID) instead of failing the whole decode -
+/// Swift's synthesized enum Codable throws on an unknown case, which would
+/// otherwise make one new message type break an older peer entirely.
+protocol CompanionMessagePayload: Codable {
+    static var unsupported: Self { get }
+}
+
+struct CompanionEnvelope<Payload: CompanionMessagePayload>: Codable {
     var requestID: UInt64?
     var payload: Payload
 
     init(requestID: UInt64?, payload: Payload) {
         self.requestID = requestID
         self.payload = payload
+    }
+
+    private enum CodingKeys: String, CodingKey { case requestID, payload }
+
+    // Custom decode so an unknown payload (a message type from a newer peer)
+    // becomes `.unsupported` with the requestID intact, rather than throwing and
+    // dropping the whole frame. Encoding stays synthesized.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        requestID = try container.decodeIfPresent(UInt64.self, forKey: .requestID)
+        payload = (try? container.decode(Payload.self, forKey: .payload)) ?? .unsupported
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(requestID, forKey: .requestID)
+        try container.encode(payload, forKey: .payload)
     }
 }
 
