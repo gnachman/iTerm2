@@ -188,7 +188,8 @@ final class CompanionAgentActivityNotifier {
                 // A one-time nonce so the mac recognizes the NSE fetch this push
                 // triggers as its own (solicited) and skips the presence warning.
                 // Only the phone receives the push, so only the real NSE can echo
-                // it back; see CompanionPushNonceRegistry.
+                // it back; retained by capacity (not time) so an APNs-delayed push
+                // still matches. See CompanionPushNonceRegistry.
                 let nonce = CompanionPushNonceRegistry.shared.makeNonce()
                 Task {
                     do {
