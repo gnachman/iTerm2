@@ -353,11 +353,12 @@ enum CompanionHostMessage: Codable {
     case unpaired
 
     /// Reply to `.messagesSince`: short, display-ready previews (one
-    /// notification each on the phone), the chat's display title, the chat's
-    /// current max seq (the per-chat watermark advances to this), and whether
-    /// more visible messages existed than the limit. Empty previews mean nothing
-    /// new, or the token matched no chat; either way the NSE shows the generic
-    /// fallback.
+    /// notification each on the phone) in CHRONOLOGICAL order (oldest first - the
+    /// previews carry no seq, so the NSE delivers them in this order verbatim),
+    /// the chat's display title, the chat's current max seq (the per-chat
+    /// watermark advances to this), and whether more visible messages existed than
+    /// the limit. Empty previews mean nothing new, or the token matched no chat;
+    /// either way the NSE shows the generic fallback.
     case messagesSince(chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool, reset: Bool)
 
     /// An error, optionally correlated to a request via the envelope.

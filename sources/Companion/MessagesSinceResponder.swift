@@ -27,8 +27,12 @@ import Foundation
 
 enum MessagesSinceResponder {
     struct Result: Equatable {
-        /// Newest first, at most `limit` entries. CompanionMessagePreview is the
-        /// wire type, so summarize produces exactly what the reply ships.
+        /// The newest `limit` messages, but ordered CHRONOLOGICALLY (oldest
+        /// first) - the wire contract for the messagesSince reply. The NSE
+        /// delivers them in this order (previews carry no seq, so it cannot
+        /// re-sort), and chronological is what the lock screen should show.
+        /// CompanionMessagePreview is the wire type, so summarize produces
+        /// exactly what the reply ships.
         let previews: [CompanionMessagePreview]
         /// More visible messages existed than `limit` (so the NSE may add a
         /// "+N more" hint). A floor when the caller's fetch window was itself
@@ -60,7 +64,9 @@ enum MessagesSinceResponder {
         // (or user-authored watcher events) that messagesSince swept up along
         // with the agent reply that triggered the push.
         let visible = fetched.filter { !$0.hiddenFromClient && $0.author == .agent }
-        let shown = visible.prefix(cap)
+        // Keep the NEWEST `cap` (visible is newest-first), then emit them
+        // CHRONOLOGICALLY (oldest first) per the wire contract.
+        let shown = visible.prefix(cap).reversed()
         let snippetLimit = max(bodyMaxLength, 0) + mentionHeadroom
         let previews = shown.map { message -> CompanionMessagePreview in
             let raw = message.content.snippetText(maxLength: snippetLimit) ?? ""

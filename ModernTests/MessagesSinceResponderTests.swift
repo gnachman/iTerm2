@@ -55,13 +55,14 @@ final class MessagesSinceResponderTests: XCTestCase {
         XCTAssertFalse(body.unicodeScalars.contains("\u{0}"), "raw attachment bytes must not leak into the preview")
     }
 
-    func testSummarize_takesNewestLimitAndFlagsTruncated() {
-        // fetched is newest-first; m0 is newest.
+    func testSummarize_takesNewestLimitChronologicallyAndFlagsTruncated() {
+        // fetched is newest-first; m0 is newest. The reply keeps the newest 3
+        // (m0,m1,m2) but emits them CHRONOLOGICALLY (oldest first): m2, m1, m0.
         let msgs = (0..<5).map { msg(.markdown("m\($0)")) }
         let r = MessagesSinceResponder.summarize(fetched: msgs, limit: 3, bodyMaxLength: 100)
         XCTAssertEqual(r.previews.map { $0.uniqueID },
-                       Array(msgs.prefix(3)).map { $0.uniqueID },
-                       "must keep the newest 3 in input order")
+                       [msgs[2], msgs[1], msgs[0]].map { $0.uniqueID },
+                       "keeps the newest 3, ordered oldest-first")
         XCTAssertTrue(r.truncated, "more visible than limit -> truncated")
     }
 

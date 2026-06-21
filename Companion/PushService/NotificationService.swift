@@ -144,19 +144,18 @@ final class NotificationService: UNNotificationServiceExtension {
     private func deliverContent(chatName: String,
                                 previews: [NSEMessagesSince.Preview],
                                 truncated: Bool) {
-        // previews arrive newest-first; deliver them CHRONOLOGICALLY (oldest
-        // first) so each notification's delivery timestamp matches message order.
-        // A local notification (add) is stamped with the time it is added, so the
-        // newest must be added LAST to be the most-recent notification (top of the
-        // shade). The oldest goes through contentHandler, whose notification keeps
-        // the push's ARRIVAL time (earliest) and the collapse id - so it anchors
-        // the bottom and carries the "+ more older messages" hint.
-        let chronological = Array(previews.reversed())   // oldest -> newest
-        guard let oldest = chronological.first else {
+        // previews arrive CHRONOLOGICALLY (oldest first) per the messagesSince
+        // wire contract, which is the order we deliver them in. A local
+        // notification (add) is stamped with the time it is added, so the newest
+        // (last) is added LAST and becomes the most-recent notification (top of
+        // the shade). The oldest goes through contentHandler, whose notification
+        // keeps the push's ARRIVAL time (earliest) and the collapse id - so it
+        // anchors the bottom and carries the "+ more older messages" hint.
+        guard let oldest = previews.first else {
             deliverFallback()
             return
         }
-        let rest = Array(chronological.dropFirst())      // may be empty
+        let rest = Array(previews.dropFirst())           // may be empty
         for (index, preview) in rest.enumerated() {
             let isNewest = index == rest.count - 1
             let content = UNMutableNotificationContent()
