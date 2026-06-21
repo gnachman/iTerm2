@@ -62,6 +62,9 @@ final class CompanionPairingController: NSObject {
             if let bridge {
                 connectionPresence = .pending
                 startClassificationGrace(for: bridge)
+                // A live bridge IS relay presence; start the connected timer if a
+                // park hadn't already (continuous through park -> phone -> repark).
+                if relayConnectedSince == nil { relayConnectedSince = Date() }
             } else {
                 connectionPresence = .none
                 classificationGraceTask?.cancel()
@@ -205,6 +208,27 @@ final class CompanionPairingController: NSObject {
     /// (the phone cannot reconnect). Both have bridge == nil and would otherwise
     /// look identical in the UI.
     var isListening: Bool { acceptTask != nil || listenerRetryTask != nil }
+
+    /// When the mac's CONTINUOUS relay presence began (it parked, or a phone
+    /// bridged), or nil while not connected. Stays set across park -> phone
+    /// connect -> repark; cleared only when a retry is scheduled (a real drop) or
+    /// listening stops. Drives the "connected for…" timer in settings.
+    private(set) var relayConnectedSince: Date?
+    /// When the mac last ATTEMPTED to (re)establish its relay park. Drives the
+    /// "last try…" timer while not connected.
+    private(set) var lastRelayAttempt: Date?
+
+    /// The mac's relay status for the settings UI.
+    enum RelayStatus: Equatable {
+        case idle                          // not paired: nothing to show
+        case connected(since: Date)        // parked / phone-bridged: reachable
+        case reconnecting(lastAttempt: Date?)  // not connected; retrying
+    }
+    var relayStatus: RelayStatus {
+        guard hasPairedDevice else { return .idle }
+        if let since = relayConnectedSince { return .connected(since: since) }
+        return .reconnecting(lastAttempt: lastRelayAttempt)
+    }
 
     /// The pairing id the mac should currently be parked for: the established
     /// device, or, during a fresh pairing, the QR being shown. Retry uses this
@@ -352,6 +376,10 @@ final class CompanionPairingController: NSObject {
         guard listenerRetryTask == nil, desiredListeningPID != nil else {
             return
         }
+        // A retry is scheduled because we are NOT connected: end the connected
+        // timer so settings shows "reconnecting" with the last-attempt time.
+        relayConnectedSince = nil
+        notifyPresenceChanged()
         listenerRetryTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             guard let self, !Task.isCancelled else { return }
@@ -529,6 +557,10 @@ final class CompanionPairingController: NSObject {
         acceptTask = nil
         listener?.stop()
         listener = nil
+        // The park is gone: no relay presence to time. A later resume re-parks and
+        // restarts the timer from a fresh, accurate instant.
+        relayConnectedSince = nil
+        notifyPresenceChanged()
     }
 
     // MARK: SAS confirmation
@@ -596,6 +628,9 @@ final class CompanionPairingController: NSObject {
         let roomName = relayOrigin == nil ? "n/a"
             : RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
         relayLog("startListening pid=\(pairingID) relayOrigin=\(relayOrigin ?? "nil") room=\(roomName)")
+        // Record the attempt for the settings "last try…" timer.
+        lastRelayAttempt = Date()
+        notifyPresenceChanged()
         // Route relay egress through the consent plugin (the only outbound path).
         // startListening is only reached when the gate is allowed, so the plugin
         // is installed and verified; fall back defensively just in case.
@@ -610,6 +645,17 @@ final class CompanionPairingController: NSObject {
             responderStaticPublicKey: keyPair.publicKey,
             relayOrigin: relayOrigin,
             webSocketFactory: webSocketFactory,
+            // Parked = admitted to the relay room = reachable. Start the
+            // connected timer (if a bridge hasn't already), for the settings UI.
+            // onParked fires on the background accept task, so hop to the main
+            // actor this controller is isolated to.
+            onParked: { [weak self] in
+                Task { @MainActor in
+                    guard let self, self.relayConnectedSince == nil else { return }
+                    self.relayConnectedSince = Date()
+                    self.notifyPresenceChanged()
+                }
+            },
             // Sign the mac's park once the phone has couriered the room secret
             // and the room is established; nil keeps an open-mode park.
             roomSecret: { CompanionMacIdentity.pairedRoomSecret() })

@@ -36,6 +36,10 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     // wrappingLabel, not label: a plain label cell is single-line and ignores
     // maximumNumberOfLines, silently truncating long error messages.
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
+    // The mac's live relay status with a ticking timer (connected for…/last try…),
+    // updated once a second by relayStatusTimer while the window is open.
+    private let relayStatusLabel = NSTextField(labelWithString: "")
+    private var relayStatusTimer: Timer?
     private let unpairButton = NSButton(title: "Unpair", target: nil, action: nil)
     // A remedy for the AI/admin prerequisites (e.g. "Reveal in Settings"). The
     // companion plugin and consent have their own controls in the bottom
@@ -81,7 +85,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         // A floating panel so it isn't covered by the What's New onboarding
         // panel (a floating utility NSPanel) when opened from there, matching
         // the Claude Code installer's behavior.
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 360, height: 570),
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 360, height: 600),
                             styleMask: [.titled, .closable],
                             backing: .buffered,
                             defer: false)
@@ -193,11 +197,57 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                 self?.refreshGateState()
             }
         }
+        // A separate 1s tick so the relay status's elapsed time counts smoothly
+        // (the 2s gate poll would skip seconds).
+        relayStatusTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.updateRelayStatusLabel()
+            }
+        }
+        updateRelayStatusLabel()
     }
 
     private func stopGatePolling() {
         gatePollTimer?.invalidate()
         gatePollTimer = nil
+        relayStatusTimer?.invalidate()
+        relayStatusTimer = nil
+    }
+
+    /// Refresh the live relay-status line (connected-for / last-try timers). Shown
+    /// only when paired and the feature is allowed; hidden otherwise.
+    private func updateRelayStatusLabel() {
+        guard window?.isVisible == true,
+              CompanionPairingController.gate() == .allowed else {
+            relayStatusLabel.isHidden = true
+            return
+        }
+        switch controller.relayStatus {
+        case .idle:
+            relayStatusLabel.isHidden = true
+        case .connected(let since):
+            relayStatusLabel.isHidden = false
+            relayStatusLabel.textColor = .secondaryLabelColor
+            relayStatusLabel.stringValue = "Connected to relay for \(Self.elapsed(since))"
+        case .reconnecting(let lastAttempt):
+            relayStatusLabel.isHidden = false
+            relayStatusLabel.textColor = .systemYellow
+            if let lastAttempt {
+                relayStatusLabel.stringValue = "Not connected to relay (last try \(Self.elapsed(lastAttempt)) ago)"
+            } else {
+                relayStatusLabel.stringValue = "Not connected to relay"
+            }
+        }
+    }
+
+    /// Compact elapsed-time string for the relay timers: "5s", "3m 12s",
+    /// "1h 04m". Whole seconds, since the label ticks once a second.
+    private static func elapsed(_ since: Date) -> String {
+        let total = max(0, Int(Date().timeIntervalSince(since)))
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        if h > 0 { return "\(h)h \(String(format: "%02d", m))m" }
+        if m > 0 { return "\(m)m \(String(format: "%02d", s))s" }
+        return "\(s)s"
     }
 
     // MARK: Bottom settings section
@@ -507,6 +557,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             instructionsLabel.stringValue = "A companion device is paired but iTerm2 isn’t listening for it yet. Reconnecting…"
             checkmarkImageView.contentTintColor = .systemYellow
         }
+        updateRelayStatusLabel()
     }
 
     /// Require the device owner to authenticate before showing a fresh pairing
@@ -608,8 +659,18 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         let title = NSTextField(labelWithString: "Companion Device Settings")
         title.font = .boldSystemFont(ofSize: 18)
         title.alignment = .center
-        title.frame = NSRect(x: 20, y: 526, width: 320, height: 28)
+        title.frame = NSRect(x: 20, y: 556, width: 320, height: 28)
         content.addSubview(title)
+
+        // Live relay status with a ticking timer, just under the title. Hidden
+        // until paired (updateRelayStatusLabel manages visibility + text).
+        relayStatusLabel.alignment = .center
+        relayStatusLabel.font = .systemFont(ofSize: 12)
+        relayStatusLabel.textColor = .secondaryLabelColor
+        relayStatusLabel.lineBreakMode = .byTruncatingTail
+        relayStatusLabel.frame = NSRect(x: 20, y: 530, width: 320, height: 18)
+        relayStatusLabel.isHidden = true
+        content.addSubview(relayStatusLabel)
 
         installAppButton.target = self
         installAppButton.action = #selector(installAppPressed(_:))
