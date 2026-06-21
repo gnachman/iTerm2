@@ -139,6 +139,12 @@ final class AppModel {
     var messages: [Message] = []
     var isAgentTyping = false
 
+    /// On-device speech-to-text for the composer. Lazily prepared (download +
+    /// load) on first use, not at launch.
+    let whisperManager = WhisperModelManager()
+    /// Drives live microphone dictation into the composer.
+    let voiceCapture: VoiceCaptureController
+
     /// A user-facing error for the pairing screen. Nil while in progress.
     var pairingError: String?
     /// Step description for the pairing screen ("Searching for your Mac…").
@@ -222,6 +228,7 @@ final class AppModel {
         self.appAttestService = appAttestService
         self.attestKeyStore = attestKeyStore
         self.connectorForCode = connectorForCode
+        self.voiceCapture = VoiceCaptureController(modelManager: whisperManager)
         // Route the transport/crypto layers' diagnostics into the unified log
         // (visible in Console.app and `log stream`).
         CompanionLog.handler = { message in

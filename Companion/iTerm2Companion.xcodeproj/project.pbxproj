@@ -10,6 +10,7 @@
 		0C88E9AF756C21683FEB1BF6 /* AIExplanationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AED2D9CBC65681E48B458F7 /* AIExplanationRequest.swift */; };
 		0FE3B2F4008CF7ACF6978145 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10114730702BBA43426D5E85 /* SettingsView.swift */; };
 		1822ADF68D3A0178CE4CCA1F /* SessionBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A21C6D0017626533817E5E /* SessionBrowserView.swift */; };
+		1A4A5B9A5AFE0E89561BA7E4 /* VoiceCaptureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9845DDD46D6AA61085BA448F /* VoiceCaptureController.swift */; };
 		2A7C547246D31037B9140DF9 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3541E5F2F774361A77015778 /* PairingView.swift */; };
 		2B3EA67EF890DA8EBDA79B70 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 7836C53444CAE5CDF235737E /* AppIcon.icon */; };
 		2B4562DB8E2A411072237E9F /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F47305487EBECCCC106B8E5 /* Message.swift */; };
@@ -17,6 +18,7 @@
 		39940659CD74D5AF58DF503C /* WorkgroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24218D973EDC803C93048735 /* WorkgroupView.swift */; };
 		3D3B241D2F33F3412C9A5438 /* MacShims.swift in Sources */ = {isa = PBXBuildFile; fileRef = E388A9346C1A08CC582B1385 /* MacShims.swift */; };
 		3D71A7C937B35FA638539B0B /* MailComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */; };
+		3DAD6A8F8E7E0D9E7CDD90D1 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = E3E1F2C0ADCD14F9D2393755 /* WhisperKit */; };
 		3F06C00C36D03C6E93463106 /* CompanionPushRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 465641AD107D063E7DD2A1C5 /* CompanionPushRelay.swift */; };
 		461469648CC3E9213136AAD9 /* AIExplanationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93134C0A08E84BDB95861B8 /* AIExplanationResponse.swift */; };
 		48B44593508149D5D655C1DE /* MacTypeShadows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADBF604814A5CBED79B600C /* MacTypeShadows.swift */; };
@@ -49,6 +51,7 @@
 		EF59BE296CCAFFFEA5834B79 /* MentionComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A05BF5FFBB99F8D48F8F63 /* MentionComposerView.swift */; };
 		F16572D5A347A1D8D093A085 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF709FF4160D9B396A413048 /* JSONValue.swift */; };
 		F40D832BDCE75E8A74EDAE72 /* Result+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899C05355E61EEF37D8C265F /* Result+iTerm.swift */; };
+		F6C5587117251D6D1B9E4C6A /* WhisperModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C180C99242A0356C8E0D404 /* WhisperModelManager.swift */; };
 		F840E446186274A715C2BC98 /* PhoneIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4C078E19397FAC1112AAA7 /* PhoneIdentity.swift */; };
 		FF78DC091BDC5967B175AE88 /* CompanionProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 484C4315A31AC3A318C0B784 /* CompanionProtocol */; };
 /* End PBXBuildFile section */
@@ -65,6 +68,7 @@
 		39AEE4EAA532978B0EDD7930 /* iTerm2Companion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2Companion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3AED2D9CBC65681E48B458F7 /* AIExplanationRequest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AIExplanationRequest.swift; path = sources/AITerm/AIExplanationRequest.swift; sourceTree = "<group>"; };
 		3B43AD250E788FB7B7F9B6C1 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		3C180C99242A0356C8E0D404 /* WhisperModelManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WhisperModelManager.swift; sourceTree = "<group>"; };
 		3F4C078E19397FAC1112AAA7 /* PhoneIdentity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PhoneIdentity.swift; sourceTree = "<group>"; };
 		42A05BF5FFBB99F8D48F8F63 /* MentionComposerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionComposerView.swift; sourceTree = "<group>"; };
 		42ECCE549BC946C0443BA106 /* CompanionSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionSession.swift; path = sources/Companion/Shared/CompanionSession.swift; sourceTree = "<group>"; };
@@ -78,6 +82,7 @@
 		8635EAF6BB0BB03744749618 /* ConversationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		899C05355E61EEF37D8C265F /* Result+iTerm.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = "Result+iTerm.swift"; path = "sources/Categories/Result+iTerm.swift"; sourceTree = "<group>"; };
 		969B8C22B79D7C1929B7DE1A /* WorkgroupWatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WorkgroupWatcher.swift; path = sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift; sourceTree = "<group>"; };
+		9845DDD46D6AA61085BA448F /* VoiceCaptureController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VoiceCaptureController.swift; sourceTree = "<group>"; };
 		9A766B60CE969D9AA49989C8 /* iTerm2CompanionApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTerm2CompanionApp.swift; sourceTree = "<group>"; };
 		A036182D7E7035DE88387064 /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A2C97B70ADFB001DAAE37592 /* RemoteCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RemoteCommand.swift; path = sources/AITerm/RemoteCommand.swift; sourceTree = "<group>"; };
@@ -107,6 +112,7 @@
 				FF78DC091BDC5967B175AE88 /* CompanionProtocol in Frameworks */,
 				D12A7AC7EF1CA4DF1A1D8AA0 /* CompanionNoise in Frameworks */,
 				8F4CF0BDEC2C0B80A2D81179 /* CompanionTransport in Frameworks */,
+				3DAD6A8F8E7E0D9E7CDD90D1 /* WhisperKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -146,6 +152,8 @@
 				D8D3FEA6984796DC4CD99692 /* AppModel.swift */,
 				9A766B60CE969D9AA49989C8 /* iTerm2CompanionApp.swift */,
 				C4678F772D92B8DEB080E170 /* CompanionFileLog.swift */,
+				3C180C99242A0356C8E0D404 /* WhisperModelManager.swift */,
+				9845DDD46D6AA61085BA448F /* VoiceCaptureController.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -262,6 +270,7 @@
 				484C4315A31AC3A318C0B784 /* CompanionProtocol */,
 				B0BD45E7D04C87E3457C4170 /* CompanionNoise */,
 				B6B192F7AC1A41A20B972238 /* CompanionTransport */,
+				E3E1F2C0ADCD14F9D2393755 /* WhisperKit */,
 			);
 			productName = iTerm2Companion;
 			productReference = 39AEE4EAA532978B0EDD7930 /* iTerm2Companion.app */;
@@ -287,6 +296,7 @@
 			mainGroup = 61BA42B73669ECE112697985;
 			packageReferences = (
 				4246AC45F3F0AE05D62487DA /* XCLocalSwiftPackageReference "CompanionCore" */,
+				BE69B8FFB370476F7A89C9E6 /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
 			productRefGroup = 1C7EAC61CE1BD48284FCD551 /* Products */;
 			projectDirPath = "";
@@ -352,6 +362,8 @@
 				491AC0533D5590064E7D128A /* CompanionSession.swift in Sources */,
 				C8915B9294C754AD253BBAEC /* CompanionFileLog.swift in Sources */,
 				3D71A7C937B35FA638539B0B /* MailComposeView.swift in Sources */,
+				F6C5587117251D6D1B9E4C6A /* WhisperModelManager.swift in Sources */,
+				1A4A5B9A5AFE0E89561BA7E4 /* VoiceCaptureController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -560,6 +572,17 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		BE69B8FFB370476F7A89C9E6 /* XCRemoteSwiftPackageReference "WhisperKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/WhisperKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		484C4315A31AC3A318C0B784 /* CompanionProtocol */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -575,6 +598,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4246AC45F3F0AE05D62487DA /* XCLocalSwiftPackageReference "CompanionCore" */;
 			productName = CompanionTransport;
+		};
+		E3E1F2C0ADCD14F9D2393755 /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BE69B8FFB370476F7A89C9E6 /* XCRemoteSwiftPackageReference "WhisperKit" */;
+			productName = WhisperKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

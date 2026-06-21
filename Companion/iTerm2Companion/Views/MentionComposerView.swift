@@ -118,6 +118,79 @@ final class MentionComposerController {
         textView.attributedText = NSAttributedString(string: "", attributes: Self.typingAttributes)
         textView.typingAttributes = Self.typingAttributes
         textView.delegate?.textViewDidChange?(textView)
+        liveRange = nil
+        liveNeedsLeadingSpace = false
+    }
+
+    // MARK: - Live dictation
+
+    /// The span of text currently owned by live dictation, so successive partial
+    /// transcripts overwrite it instead of appending. nil when not dictating.
+    private var liveRange: NSRange?
+    /// Whether to prefix the transcript with a space, so dictation that starts
+    /// right after existing non-whitespace text reads as a new word rather than
+    /// being glued on ("note:" + "fix this" -> "note: fix this").
+    private var liveNeedsLeadingSpace = false
+
+    /// Mark the cursor position as the start of a live dictation segment.
+    func beginLiveTranscript() {
+        guard let textView else { return }
+        let location = textView.selectedRange.location
+        liveRange = NSRange(location: location, length: 0)
+        let contents = textView.attributedText.string as NSString
+        if location > 0, location <= contents.length {
+            let preceding = contents.substring(with: NSRange(location: location - 1, length: 1))
+            liveNeedsLeadingSpace = preceding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        } else {
+            liveNeedsLeadingSpace = false
+        }
+    }
+
+    /// Replace the live segment with the latest partial transcript, leaving any
+    /// text the user typed before it untouched.
+    func updateLiveTranscript(_ text: String) {
+        guard let textView, let range = liveRange else { return }
+        let prefix = (liveNeedsLeadingSpace && !text.isEmpty) ? " " : ""
+        let replacement = NSAttributedString(string: prefix + text, attributes: Self.typingAttributes)
+        let updated = NSMutableAttributedString(attributedString: textView.attributedText)
+        // Guard against the range falling outside the current contents (e.g. the
+        // field was cleared underneath us).
+        guard range.location + range.length <= updated.length else {
+            liveRange = nil
+            return
+        }
+        updated.replaceCharacters(in: range, with: replacement)
+        textView.attributedText = updated
+        let newRange = NSRange(location: range.location, length: replacement.length)
+        liveRange = newRange
+        textView.selectedRange = NSRange(location: newRange.location + newRange.length, length: 0)
+        textView.typingAttributes = Self.typingAttributes
+        textView.delegate?.textViewDidChange?(textView)
+        // Keep the newest transcribed text in view. Deferred so it runs after the
+        // self-sizing layout caps the height and enables scrolling; scrolling
+        // synchronously here would be a no-op (the view is still full height).
+        let caret = textView.selectedRange
+        DispatchQueue.main.async { [weak textView] in
+            textView?.scrollRangeToVisible(caret)
+        }
+    }
+
+    /// Finish dictation: leave the inserted text in place as ordinary, editable
+    /// composer content.
+    func endLiveTranscript() {
+        liveRange = nil
+        liveNeedsLeadingSpace = false
+    }
+
+    /// Apply the definitive final transcript and finish. Called directly with the
+    /// value returned by VoiceCaptureController.stop(), rather than relying on the
+    /// asynchronous liveText observer - which fires in a later update pass, after
+    /// the caller has already cleared liveRange or read the draft, dropping the
+    /// final words.
+    func commitLiveTranscript(_ text: String) {
+        updateLiveTranscript(text)
+        liveRange = nil
+        liveNeedsLeadingSpace = false
     }
 }
 
@@ -128,6 +201,11 @@ struct MentionComposerView: UIViewRepresentable {
     /// Bumped by the caller on every edit. Carried here so SwiftUI sees a
     /// changed view value and re-runs sizeThatFits as the draft grows.
     let revision: Int
+    /// While dictating, manual editing is disabled. The live-transcript segment
+    /// is tracked by a fixed range; letting the user edit text before it would
+    /// shift that range and corrupt the field, so editing is locked until
+    /// dictation ends.
+    let isDictating: Bool
     /// Fired on every edit so the caller can refresh its send-button state.
     let onChange: () -> Void
 
@@ -160,7 +238,7 @@ struct MentionComposerView: UIViewRepresentable {
         // Honor SwiftUI's .disabled, which doesn't reach UIKit views on its
         // own through a representable.
         let enabled = context.environment.isEnabled
-        textView.isEditable = enabled
+        textView.isEditable = enabled && !isDictating
         textView.isUserInteractionEnabled = enabled
         if isFocused, !textView.isFirstResponder, enabled {
             textView.becomeFirstResponder()

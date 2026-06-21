@@ -18,6 +18,8 @@ struct ConversationView: View {
     @State private var draftRevision = 0
     @State private var showMentionPicker = false
     @State private var inputFocused = false
+    @State private var dictationProblem: String?
+    @State private var confirmingEnableDictation = false
 
     private var title: String {
         model.chats.first { $0.chat.id == chatID }?.chat.title ?? "Chat"
@@ -34,11 +36,20 @@ struct ConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             model.conversationDidAppear(chatID: chatID)
+            warmDictationModel()
         }
         .onDisappear {
             // Covered by a pushed screen (session view) or popped: drop focus
             // so the keyboard doesn't linger over content it can't edit.
             inputFocused = false
+            // Leaving the chat cancels any in-progress dictation (releases the
+            // mic and audio session) and discards the partial transcript. Use
+            // commitLiveTranscript("") so the inserted live segment is actually
+            // removed (endLiveTranscript only clears tracking, leaving the text).
+            if model.voiceCapture.state != .idle {
+                model.voiceCapture.cancel()
+                composer.commitLiveTranscript("")
+            }
         }
         .sheet(item: $model.sessionPicker) { request in
             SessionPickerSheet(request: request)
@@ -47,6 +58,36 @@ struct ConversationView: View {
             MentionPickerSheet { session in
                 insertMention(session)
             }
+        }
+        .onChange(of: model.voiceCapture.liveText) { _, text in
+            composer.updateLiveTranscript(text)
+            draftIsEmpty = composer.isEmpty
+            draftRevision += 1
+        }
+        // Haptic when dictation actually starts and stops (keyed on the real
+        // state transition, so it fires whether toggled by tap or programmatically).
+        .sensoryFeedback(trigger: model.voiceCapture.state) { old, new in
+            switch (old, new) {
+            case (.idle, .listening):
+                return .impact(weight: .medium, intensity: 0.9)
+            case (.listening, .transcribing), (.listening, .idle):
+                return .impact(weight: .heavy, intensity: 1.0)
+            default:
+                return nil
+            }
+        }
+        .alert("Voice Input", isPresented: Binding(
+            get: { dictationProblem != nil },
+            set: { if !$0 { dictationProblem = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(dictationProblem ?? "")
+        }
+        .alert("Enable Voice Dictation?", isPresented: $confirmingEnableDictation) {
+            Button("Download & Enable") { enableAndDownloadDictation() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Dictation needs a speech model (about 240 MB) downloaded to this device. It runs entirely on your phone, with no cloud and no cost. You can change or remove it later in Settings.")
         }
     }
 
@@ -95,7 +136,8 @@ struct ConversationView: View {
             MentionComposerView(controller: composer,
                                 isFocused: $inputFocused,
                                 placeholder: "Message",
-                                revision: draftRevision) {
+                                revision: draftRevision,
+                                isDictating: model.voiceCapture.state != .idle) {
                 draftIsEmpty = composer.isEmpty
                 draftRevision += 1
             }
@@ -103,6 +145,8 @@ struct ConversationView: View {
             .padding(.vertical, 8)
             .background(Color(.secondarySystemBackground),
                         in: RoundedRectangle(cornerRadius: 18))
+
+            micButton
 
             Button(action: send) {
                 Image(systemName: "arrow.up.circle.fill")
@@ -130,11 +174,150 @@ struct ConversationView: View {
 
     private let typingIndicatorID = "typing-indicator"
 
+    // MARK: - Dictation
+
+    @ViewBuilder
+    private var micButton: some View {
+        let manager = model.whisperManager
+        let listening = model.voiceCapture.state == .listening
+        Button(action: toggleDictation) {
+            switch manager.status {
+            case .downloading, .preparing:
+                ProgressView()
+                    .frame(width: 30, height: 30)
+            default:
+                Image(systemName: listening ? "stop.circle.fill" : "mic.circle.fill")
+                    .font(.system(size: 30))
+                    .foregroundStyle(listening ? Color.red : Color.accentColor)
+                    .scaleEffect(listening ? 1 + CGFloat(model.voiceCapture.audioLevel) * 0.3 : 1)
+                    .animation(.easeOut(duration: 0.1), value: model.voiceCapture.audioLevel)
+            }
+        }
+        .accessibilityLabel(listening ? "Stop dictation" : "Dictate a message")
+        // VU meter floats above the button while listening. The overlay does not
+        // affect layout, and TimelineView polls the live level at display rate
+        // (only while listening, since the overlay exists only then).
+        .overlay(alignment: .top) {
+            if listening {
+                TimelineView(.animation) { _ in
+                    VUMeterView(level: model.voiceCapture.currentInputLevel())
+                }
+                .offset(y: -72)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.15), value: listening)
+    }
+
+    private func toggleDictation() {
+        let manager = model.whisperManager
+        let voice = model.voiceCapture
+
+        // Tapping while listening always stops.
+        if voice.state == .listening {
+            Task {
+                let finalText = await voice.stop()
+                composer.commitLiveTranscript(finalText)
+                draftIsEmpty = composer.isEmpty
+                draftRevision += 1
+            }
+            return
+        }
+        guard voice.state == .idle else { return } // mid-finalize: ignore
+
+        switch manager.status {
+        case .ready:
+            beginDictation()
+        case .downloading, .preparing:
+            break // model is loading; the button shows a spinner
+        case .idle, .failed:
+            guard manager.isDownloaded else {
+                // Not set up yet: ask before enabling and downloading a model.
+                confirmingEnableDictation = true
+                return
+            }
+            // Cached weights but not loaded this session: load+prewarm (the
+            // spinner), then start recording so it is a single tap.
+            Task {
+                await manager.prepare()
+                if case .ready = manager.status {
+                    beginDictation()
+                }
+            }
+        }
+    }
+
+    /// The user agreed to set dictation up from the mic button: enable it, select
+    /// the default model, and start downloading. The mic button shows a spinner
+    /// (driven by the manager's .downloading/.preparing status) until it is ready.
+    private func enableAndDownloadDictation() {
+        model.whisperManager.enableWithDefaultModel()
+        Task {
+            await model.whisperManager.prepare()
+            // Start dictating as soon as the first-run download + load finishes,
+            // so it is one continuous action. Silence is harmless (VAD skips it)
+            // if the user is not ready to speak yet.
+            if case .ready = model.whisperManager.status {
+                beginDictation()
+            }
+        }
+    }
+
+    private func beginDictation() {
+        composer.beginLiveTranscript()
+        Task {
+            do {
+                try await model.voiceCapture.start()
+            } catch {
+                composer.endLiveTranscript()
+                dictationProblem = dictationMessage(for: error)
+                companionLog("Dictation start failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    /// Load the model into memory ahead of the first tap so dictation starts
+    /// instantly. No-op if voice is off, not downloaded, or already loading/ready.
+    private func warmDictationModel() {
+        let manager = model.whisperManager
+        guard manager.isEnabled, manager.isDownloaded else { return }
+        if case .idle = manager.status {
+            Task { await manager.prepare() }
+        }
+    }
+
+    private func dictationMessage(for error: Error) -> String {
+        switch error {
+        case VoiceCaptureError.microphonePermissionDenied:
+            return "Allow microphone access for iTerm2 Buddy in the Settings app to dictate."
+        case VoiceCaptureError.modelNotReady:
+            return "The voice model is not ready yet. Try again in a moment."
+        default:
+            return "Could not start dictation."
+        }
+    }
+
     private func send() {
+        let voice = model.voiceCapture
+        // Sending while dictating finalizes the transcript first so nothing is
+        // dropped, then sends.
+        guard voice.state == .idle else {
+            Task {
+                let finalText = await voice.stop()
+                composer.commitLiveTranscript(finalText)
+                sendComposedDraft()
+            }
+            return
+        }
+        sendComposedDraft()
+    }
+
+    private func sendComposedDraft() {
         let text = composer.serializedText
         companionLog("send(): clearing draft (\(text.count) chars)")
         model.send(text: text)
         composer.clear()
+        draftIsEmpty = composer.isEmpty
     }
 
     /// Insert an @-mention of the chosen session at the cursor as an atomic
@@ -154,6 +337,32 @@ struct ConversationView: View {
                 proxy.scrollTo(last.uniqueID, anchor: .bottom)
             }
         }
+    }
+}
+
+/// A small vertical VU meter: a track that fills bottom-to-top with the live
+/// input level, with green/amber/red zones like a hardware meter.
+private struct VUMeterView: View {
+    let level: Float // 0...1
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                Capsule()
+                    .fill(Color(.systemGray5))
+                Capsule()
+                    .fill(color)
+                    .frame(height: max(2, geo.size.height * CGFloat(min(1, max(0, level)))))
+            }
+        }
+        .frame(width: 12, height: 64)
+        .accessibilityHidden(true)
+    }
+
+    private var color: Color {
+        if level > 0.85 { return .red }
+        if level > 0.6 { return .orange }
+        return .green
     }
 }
 

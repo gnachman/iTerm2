@@ -50,5 +50,7 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>iTerm2 Companion uses the camera to scan the pairing QR code shown by iTerm2 on your Mac.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>iTerm2 Companion uses the microphone to dictate chat messages on this device.</string>
 </dict>
 </plist>
