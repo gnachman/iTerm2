@@ -5189,10 +5189,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     proposedFrameSize.width = tabSize.width + decorationSize.width + internalDecorationSize.width;
     proposedFrameSize.height = tabSize.height + decorationSize.height + internalDecorationSize.height;
 
-    // Apply maximum window size.
-    NSSize maxFrameSize = [self maxFrame].size;
-    proposedFrameSize.height = MIN(maxFrameSize.height, proposedFrameSize.height);
-
     // If snapping, reject the new size if the mouse has not moved at least
     // half the current grid size in a given direction.  This is really
     // important to the feel of the snapping, especially when the window is
