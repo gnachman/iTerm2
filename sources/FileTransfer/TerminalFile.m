@@ -13,6 +13,7 @@
 #import "FutureMethods.h"
 #import "NSSavePanel+iTerm.h"
 #import "RegexKitLite.h"
+#import "iTermWarning.h"
 
 #import <apr-1/apr_base64.h>
 
@@ -26,8 +27,8 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
 @implementation TerminalFileDownload
 
-- (instancetype)initWithName:(NSString *)name size:(NSInteger)size {
-    self = [super initWithName:name size:size];
+- (instancetype)initWithName:(NSString *)name size:(NSInteger)size window:(NSWindow *)window {
+    self = [super initWithName:name size:size window:window];
     if (self) {
         if (self.localPath) {
             [TransferrableFile lockFileName:self.localPath];
@@ -36,36 +37,82 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
     return self;
 }
 
+// Only real downloads (not uploads, which share TerminalFile’s initializer) ask where to save.
+- (BOOL)offersDownloadLocationPrompt {
+    return YES;
+}
+
 @end
 
 @implementation TerminalFile
 
 - (instancetype)initWithName:(NSString *)name size:(NSInteger)size {
+    return [self initWithName:name size:size window:nil];
+}
+
+- (instancetype)initWithName:(NSString *)name size:(NSInteger)size window:(NSWindow *)window {
     self = [super init];
     if (self) {
         if (!name) {
-            NSSavePanel *panel = [NSSavePanel savePanel];
-
-            NSString *path = [self downloadsDirectory];
-            if (path) {
-                NSURL *url = [NSURL fileURLWithPath:path];
-                [NSSavePanel setDirectoryURL:url onceForID:@"TerminalFile" savePanel:panel];
-            }
-            panel.nameFieldStringValue = @"";
-
-            if ([panel runModal] == NSModalResponseOK) {
-                _localPath = [panel.URL.path copy];
-                _filename = [[_localPath lastPathComponent] copy];
-            }
+            // The sender didn’t provide a name, so we have no choice but to ask where to save.
+            [self promptForLocalPathWithSuggestedName:nil];
         } else {
             _filename = [[name lastPathComponent] copy];
-            _localPath = [[self finalDestinationForPath:_filename
-                                   destinationDirectory:[self downloadsDirectory]
-                                                 prompt:YES] copy];
+            if ([self offersDownloadLocationPrompt] && [self shouldPromptForDownloadLocationInWindow:window]) {
+                [self promptForLocalPathWithSuggestedName:_filename];
+            } else {
+                _localPath = [[self finalDestinationForPath:_filename
+                                       destinationDirectory:[self downloadsDirectory]
+                                                     prompt:YES] copy];
+            }
         }
         self.fileSize = size;
     }
     return self;
+}
+
+// Subclasses that represent actual downloads return YES to be offered a save-location choice.
+- (BOOL)offersDownloadLocationPrompt {
+    return NO;
+}
+
+// Asks the user whether to save downloads to the Downloads folder or to choose a destination.
+// The choice is silenceable, so a user can make it permanent in either direction. The question is
+// attached to `window` so it matches the terminal-initiated download confirmation.
+- (BOOL)shouldPromptForDownloadLocationInWindow:(NSWindow *)window {
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"Where would you like to save this download?"
+                                   actions:@[ @"Save to Downloads", @"Choose…" ]
+                                 accessory:nil
+                                identifier:@"NoSyncPromptForDownloadLocation"
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Save Terminal-Initiated Download"
+                                    window:window];
+    return selection == kiTermWarningSelection1;
+}
+
+// Runs a save panel anchored at the downloads directory and records the chosen path. Leaves
+// _localPath nil if the user cancels, which -download treats as a canceled transfer.
+//
+// Unlike the "Save to Downloads" branch, the chosen path is used verbatim: we intentionally trust
+// the user's explicit selection rather than running it through finalDestinationForPath:, which would
+// rename it to "foo (1)" on collision. NSSavePanel already handles the replace-existing-file prompt
+// for on-disk collisions. The one uncovered case, two concurrent terminal downloads the user points
+// at the identical path, is rare enough to accept over surprising the user with a renamed file.
+- (void)promptForLocalPathWithSuggestedName:(NSString *)suggestedName {
+    NSSavePanel *panel = [NSSavePanel savePanel];
+
+    NSString *path = [self downloadsDirectory];
+    if (path) {
+        NSURL *url = [NSURL fileURLWithPath:path];
+        [NSSavePanel setDirectoryURL:url onceForID:@"TerminalFile" savePanel:panel];
+    }
+    panel.nameFieldStringValue = suggestedName ?: @"";
+
+    if ([panel runModal] == NSModalResponseOK) {
+        _localPath = [panel.URL.path copy];
+        _filename = [[_localPath lastPathComponent] copy];
+    }
 }
 
 - (void)dealloc {
@@ -98,11 +145,15 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
 
     if (!self.localPath) {
+        // The user canceled the save panel (or no destination could be chosen). Report the
+        // cancellation and leave self.data nil so appendData: no-ops on any further chunks and
+        // handleEndOfData treats the transfer as canceled instead of trying to write to nil.
         NSError *error;
         error = [self errorWithDescription:@"Canceled."];
         self.error = [error localizedDescription];
         [[FileTransferManager sharedInstance] transferrableFile:self
                                  didFinishTransmissionWithError:error];
+        return;
     }
     self.data = [NSMutableString string];
 }

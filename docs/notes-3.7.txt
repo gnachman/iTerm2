@@ -1423,3 +1423,10 @@ Bug Fixes:
   request so OpenAI prompt caching gets
   a stable prefix and reliably hits the
   cache.
+- Terminal-initiated downloads (it2dl)
+  now ask whether to save to the
+  Downloads folder or to choose a
+  destination. The choice is
+  silenceable, so you can make it
+  always save to Downloads or always
+  show a save panel. Issue 12897.

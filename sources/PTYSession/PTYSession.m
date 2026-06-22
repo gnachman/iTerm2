@@ -15605,7 +15605,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(NSInteger)size preconfirmed:(BOOL)preconfirmed {
     [self.download stop];
     [self.download endOfData];
-    self.download = [[[TerminalFileDownload alloc] initWithName:filename size:size] autorelease];
+    self.download = [[[TerminalFileDownload alloc] initWithName:filename size:size window:_view.window] autorelease];
     self.download.preconfirmed = preconfirmed;
     [self.download download];
 }
