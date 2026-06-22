@@ -1248,6 +1248,7 @@ class iTermScreenshotPanel: NSPanel {
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
             pasteboard.writeObjects([image])
+            close()
         }
     }
 
@@ -1294,9 +1295,9 @@ class iTermScreenshotPanel: NSPanel {
             // Copy to clipboard from temp file
             if let url = url {
                 self.copyToClipboardFromFile(url)
-                // Clean up temp file
                 try? FileManager.default.removeItem(at: url)
             }
+            self.close()
         }
 
         encoder.start()
