@@ -289,7 +289,7 @@ server.serve_forever()
         XCTAssertEqual(accountIdentifier["accountID"] as? String, "classic:NEWUID1234567890")
     }
 
-    func testAddAccountNestedShareSubfoldersUsesNsfRecordAdd() throws {
+    func testAddAccountNestedSharedFoldersUsesNsfRecordAdd() throws {
         let server = try MockKeeperServer()
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass","flags":{"useClassicPermission":false}}"#
         let result = try run("add-account", input: input)
@@ -299,7 +299,7 @@ server.serve_forever()
         XCTAssertEqual(accountIdentifier["accountID"] as? String, "nested:NSFUID123456789")
     }
 
-    func testAddAccountDefaultsToNestedShareSubfolders() throws {
+    func testAddAccountDefaultsToNestedSharedFolders() throws {
         let server = try MockKeeperServer()
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
         let result = try run("add-account", input: input)
