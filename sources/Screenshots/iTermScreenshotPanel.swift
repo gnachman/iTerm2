@@ -1337,7 +1337,9 @@ class iTermScreenshotPanel: NSPanel {
 
     @objc private func saveAsClicked(_ sender: Any) {
         let savePanel = iTermModernSavePanel()
-        savePanel.defaultFilename = iTermAnnotatedScreenshot.defaultScreenshotFilename()
+        let defaultName = iTermAnnotatedScreenshot.defaultScreenshotFilename()
+        savePanel.defaultFilename = defaultName
+        savePanel.nameFieldStringValue = defaultName
         savePanel.canCreateDirectories = true
         savePanel.allowedContentTypes = [.png]
         if let directory = resolvedSaveDirectory() {
