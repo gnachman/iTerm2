@@ -435,8 +435,7 @@ final class AICassetteSession {
 
     private static func fromConfig() -> AICassetteSession? {
         func cfg(_ key: String) -> String? {
-            // See AILiveHarness.configPath() for why /tmp.
-            let path = "/tmp/iterm2-ai-live.json"
+            let path = AILiveHarness.configFilePath()
             guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
                   let json = try? JSONSerialization.jsonObject(with: data)
                     as? [String: String] else {

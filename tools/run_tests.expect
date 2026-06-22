@@ -25,12 +25,15 @@ if {[info exists env(SIGNED)] && $env(SIGNED) eq "1"} {
 # a live-API run. run_ai_live.sh exports ITERM2_AI_LIVE_KEEP_CONFIG=1
 # before invoking this script so its freshly-written config survives.
 if {!([info exists env(ITERM2_AI_LIVE_KEEP_CONFIG)] && $env(ITERM2_AI_LIVE_KEEP_CONFIG) eq "1")} {
-    if {[info exists env(TMPDIR)]} {
-        set tmpdir $env(TMPDIR)
-    } else {
-        set tmpdir /tmp
+    # Delete the config at the path the harness actually reads: the repo root
+    # (AILiveHarness.configFilePath()). The previous version cleared
+    # $TMPDIR/iterm2-ai-live.json, but the harness reads a different file, so the
+    # defense never fired - a stale config (even from another worktree, back when
+    # it lived in shared /tmp) silently turned the live harness on during plain
+    # tests. Scoping the delete to this repo root closes that gap.
+    if {![catch {exec git rev-parse --show-toplevel} repo_root]} {
+        file delete -force [file join [string trim $repo_root] .iterm2-ai-live.json]
     }
-    file delete -force [file join $tmpdir iterm2-ai-live.json]
 }
 
 proc kill_tree {pid} {

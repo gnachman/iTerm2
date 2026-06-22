@@ -44,19 +44,42 @@ final class AILiveHarness: XCTestCase {
         var deepSeek: String?
     }
 
-    private static let configFileName = "iterm2-ai-live.json"
+    nonisolated static let configFileName = ".iterm2-ai-live.json"
 
-    private static func configPath() -> String {
-        // /tmp is stable; macOS's per-user $TMPDIR under
-        // /var/folders/.../T/ has a periodic cleanup that deletes files
-        // mid-run for long sweeps. run_ai_live.sh writes the config to
-        // /tmp explicitly for the same reason.
-        return "/tmp/\(configFileName)"
+    /// The per-worktree config path: `<repo root>/.iterm2-ai-live.json`.
+    ///
+    /// Derived from the compiled source location (`#filePath`) so each git
+    /// worktree reads its OWN config - a leftover config in one checkout can no
+    /// longer silently drive the live harness in another (the failure mode the
+    /// old hardcoded `/tmp` path had). run_tests.expect, running from the repo,
+    /// can delete this exact file defensively. The file is gitignored so live API
+    /// keys can never be committed; `git status --ignored` still surfaces a
+    /// leftover, and setUpWithError logs loudly whenever it's active.
+    ///
+    /// The repo dir is not subject to the periodic `$TMPDIR` reaping that drove
+    /// the original `/tmp` choice. A worktree's `.git` is a file (not a dir), so
+    /// test for existence, not directory-ness.
+    nonisolated static func configFilePath() -> String {
+        let fm = FileManager.default
+        var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        while dir.path != "/" {
+            if fm.fileExists(atPath: dir.appendingPathComponent(".git").path) {
+                return dir.appendingPathComponent(configFileName).path
+            }
+            dir = dir.deletingLastPathComponent()
+        }
+        // Fallback (not inside a repo): beside the harness's parent directory.
+        return URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent(configFileName).path
     }
 
     override func setUpWithError() throws {
         try XCTSkipUnless(Self.loadConfig() != nil,
                           "Live AI harness is opt-in. Run tools/run_ai_live.sh.")
+        // Loud: this hits real vendor APIs and spends money. If you see this in a
+        // plain test run, a stale config leaked in - delete configFilePath().
+        print("⚠️ Live AI harness ACTIVE (real vendor APIs). Config: \(Self.configFilePath())")
         // Install the cassette interceptor + recorder for the whole test,
         // covering both AILiveDriver-based tests and the chat-queue tests
         // that drive ChatBroker/ChatAgent directly. No-op when no cassette
@@ -79,7 +102,7 @@ final class AILiveHarness: XCTestCase {
     private static var cachedConfig: [String: String]?
 
     private static func loadConfig() -> [String: String]? {
-        if let data = try? Data(contentsOf: URL(fileURLWithPath: configPath())),
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: configFilePath())),
            let any = try? JSONSerialization.jsonObject(with: data),
            let json = any as? [String: String] {
             cachedConfig = json

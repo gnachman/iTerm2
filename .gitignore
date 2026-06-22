@@ -82,3 +82,6 @@ emoji-sequences.txt
 /[0-9][0-9][0-9][0-9]/
 /[0-9][0-9][0-9][0-9][0-9]/
 /[0-9][0-9][0-9][0-9][0-9][0-9]/
+
+# Live AI harness config (API keys) written by tools/run_ai_live.sh; never commit.
+.iterm2-ai-live.json

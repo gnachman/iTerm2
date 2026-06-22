@@ -160,8 +160,7 @@ extension AILiveHarness {
     /// Lane-aware key resolver. Re-implements keyOrSkip without exposing
     /// the private Keys struct on AILiveHarness.
     private func keyOrSkipForLane(_ lane: AttachmentLane) throws -> String {
-        // See AILiveHarness.configPath() for why /tmp.
-        let configPath = "/tmp/iterm2-ai-live.json"
+        let configPath = AILiveHarness.configFilePath()
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else {
@@ -213,7 +212,7 @@ extension AILiveHarness {
 
     /// True when the live config opts into fixture regeneration.
     private func regenerateFixturesRequested() -> Bool {
-        let configPath = "/tmp/iterm2-ai-live.json"
+        let configPath = AILiveHarness.configFilePath()
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else { return false }

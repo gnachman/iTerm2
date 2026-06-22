@@ -383,7 +383,7 @@ extension AILiveHarness {
     // run_ai_live.sh. The base harness keeps its own loader private, so this
     // reads the same well-known path directly.
     private static func liveConfigValue(_ key: String) -> String? {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: "/tmp/iterm2-ai-live.json")),
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: AILiveHarness.configFilePath())),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
             return nil
         }
