@@ -1119,18 +1119,29 @@ final class AIParserCombiningTests: XCTestCase {
                       "message after tool_use must contain a tool_result for \(toolID); got \(nextBlocks)")
 
         // Stray status_update must survive, just after the tool_result.
-        let stray = wireMessages.first { m in
-            guard let s = m["content"] as? String else { return false }
-            return s == "stray status update"
-        }
+        let stray = wireMessages.first { wireText($0) == "stray status update" }
         XCTAssertNotNil(stray, "stray user-text message must not be dropped")
 
-        // Final follow-up question must be present too.
-        let final = wireMessages.first { m in
-            guard let s = m["content"] as? String else { return false }
-            return s == "did it work?"
-        }
+        // Final follow-up question must be present too. It's the LAST message, so
+        // it's array-form on the wire (cache breakpoint); match via wireText.
+        let final = wireMessages.first { wireText($0) == "did it work?" }
         XCTAssertNotNil(final, "trailing user follow-up must survive reorder")
+    }
+
+    /// The user-visible text of a wire message, whether its `content` is a plain
+    /// string OR an array of content blocks. markLastMessageForCaching promotes
+    /// the LAST message's string content into a one-element text block carrying
+    /// cache_control, so the trailing message is array-form on the wire.
+    private func wireText(_ message: [String: Any]) -> String? {
+        if let string = message["content"] as? String {
+            return string
+        }
+        if let blocks = message["content"] as? [[String: Any]] {
+            for block in blocks where block["type"] as? String == "text" {
+                if let text = block["text"] as? String { return text }
+            }
+        }
+        return nil
     }
 
     /// When the tool_result is already in the right place (immediately after
@@ -1170,7 +1181,9 @@ final class AIParserCombiningTests: XCTestCase {
         XCTAssertEqual(wireMessages[2]["role"] as? String, "user")
         let blocks2 = try XCTUnwrap(wireMessages[2]["content"] as? [[String: Any]])
         XCTAssertTrue(blocks2.contains { $0["type"] as? String == "tool_result" })
-        XCTAssertEqual(wireMessages[3]["content"] as? String, "thanks")
+        // Trailing message is array-form on the wire (cache breakpoint), so read
+        // its text rather than expecting a bare string.
+        XCTAssertEqual(wireText(wireMessages[3]), "thanks")
     }
 
     /// A tool_use with no matching tool_result anywhere in the conversation
