@@ -189,6 +189,39 @@ final class WorkgroupRestorationTests: WorkgroupEntryTestBase {
         XCTAssertEqual(inst!.peerPort.peerCount, 1 + 2)
     }
 
+    // Regression: a restored (reattached) code-review peer must get
+    // BOTH its mode tag AND its raw command template restored.
+    // codeReviewRawCommand is not persisted on the session arrangement,
+    // and reload of a code-review peer keys off it
+    // (workgroupNavigationDidTapReload) to re-present the prompt
+    // overlay. If adopt() restored the mode but left the command nil,
+    // reload fell through to a plain restart that silently reran the
+    // last prompt with no panel.
+    func test_adopt_restoresCodeReviewRawCommandForReattachedPeer() {
+        let root = WGFix.makeRoot()
+        let reviewCommand = "claude '\\(codeReviewPrompt)'"
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier,
+                                  displayName: "Review",
+                                  command: reviewCommand,
+                                  mode: .codeReview)
+        let wg = WGFix.wrap(name: "wgCodeReviewPeer", sessions: [root, peer])
+        let peerSession = PTYSession(synthetic: false)!
+        let inst = iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: root.uniqueIdentifier,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: [peer.uniqueIdentifier: peerSession],
+            nonPeerSessionsByConfigID: [:])
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+
+        XCTAssertNotNil(inst)
+        XCTAssertTrue(inst!.peerPort.session(forIdentifier: peer.uniqueIdentifier) === peerSession)
+        XCTAssertEqual(peerSession.workgroupSessionMode, .codeReview)
+        // The fix: the raw template is restored so reload can re-present
+        // the prompt overlay instead of restarting the last prompt.
+        XCTAssertEqual(peerSession.codeReviewRawCommand, reviewCommand)
+    }
+
     // encodeState must flag a member that is sitting on a pre-launch
     // overlay (here simulated via a pending diff launch) so restore knows
     // to re-create it fresh instead of adopting a stray shell.

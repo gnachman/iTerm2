@@ -726,6 +726,16 @@ final class iTermWorkgroupInstance: NSObject {
                 // (not persisted on the session arrangement) so reload /
                 // toolbar behavior matches a live workgroup.
                 session.workgroupSessionMode = peer.mode
+                // Restore the raw command template too: reload of a
+                // code-review peer keys off codeReviewRawCommand to
+                // re-present the prompt overlay (see
+                // workgroupNavigationDidTapReload). Without this a
+                // restored peer falls through to a plain restart that
+                // silently reruns the last prompt with no panel. Mirrors
+                // the anchor path in WorkgroupRestorationCoordinator.
+                if peer.mode == .codeReview {
+                    session.codeReviewRawCommand = peer.command
+                }
                 peers[peer.uniqueIdentifier] = iTermPromise<PTYSession>(value: session)
             } else {
                 // Same GUID-collision hazard as the non-peer guard
