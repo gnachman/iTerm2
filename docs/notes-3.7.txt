@@ -443,6 +443,10 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- Clicking a notification posted by a background
+  tab of a dedicated hotkey window now selects the
+  source tab and pane instead of leaving the
+  previously-selected tab in front.
 - AI chat with DeepSeek no longer fails with an
   "insufficient tool messages" error after a tool
   call that was interrupted or left unapproved.

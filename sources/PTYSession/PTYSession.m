@@ -15183,11 +15183,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     if (activatedViaPort) {
         // The port's sessionActivate already set the active session;
-        // just bring its tab forward.
-        if (!isHotKey) {
-            DLog(@"Selecting tab from delegate %@", _delegate);
-            [_delegate sessionSelectContainingTab];
-        }
+        // just bring its tab forward. Select the tab even for hotkey
+        // windows so a notification click from a background tab surfaces
+        // the source tab and pane (Issue 12902).
+        DLog(@"Selecting tab from delegate %@", _delegate);
+        [_delegate sessionSelectContainingTab];
         return;
     }
 
@@ -15199,10 +15199,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // -[iTermFocusOrder setNeedsUpdate]), so the destination window's
     // previously-active sibling is never stamped.
     [_delegate setActiveSessionPreservingMaximization:self];
-    if (!isHotKey) {
-        DLog(@"Selecting tab from delegate %@", _delegate);
-        [_delegate sessionSelectContainingTab];
-    }
+    // Select the tab even for hotkey windows so a notification click
+    // from a background tab surfaces the source tab and pane, instead of
+    // leaving the previously-selected tab in front (Issue 12902).
+    DLog(@"Selecting tab from delegate %@", _delegate);
+    [_delegate sessionSelectContainingTab];
 }
 
 - (void)revealSelection:(iTermSelection *)selection {
