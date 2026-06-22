@@ -334,18 +334,12 @@ final class iTermWindowProject: NSObject, Codable {
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
             
-            // If we are freezing and keeping jobs running, cleanly release the client-side socket connections
+            // Park live children so the thawed window can re-adopt them in-place
+            // (see parkSessionsForReattachment). Must run before close().
             if keepJobsRunning {
-                if let sessions = terminal.allSessions() as? [PTYSession] {
-                    for session in sessions {
-                        if let task = session.shell {
-                            print("[Freeze-Project] Natively closing file descriptors and deregistering task from TaskNotifier...")
-                            task.closeFileDescriptorAndDeregisterIfPossible()
-                        }
-                    }
-                }
+                Self.parkSessionsForReattachment(terminal)
             }
-            
+
             terminal.orphanJobsOnClose = keepJobsRunning
             terminal.close()
         }
@@ -422,22 +416,8 @@ final class iTermWindowProject: NSObject, Codable {
         project.lastUsed = Date()
         save()
         
-        // If freezing while keeping jobs running, park each session's live child
-        // on its (shared) multiserver connection so the thawed window can
-        // re-adopt the running process in-place — without tearing down the
-        // connection or re-handshaking. Controlled by ITERM_WP_PARK so we can
-        // test the pre-fix failure mode (set ITERM_WP_PARK=0).
         if close && keepJobsRunning {
-            let park = (ProcessInfo.processInfo.environment["ITERM_WP_PARK"] ?? "1") != "0"
-            if park, let sessions = terminal.allSessions() as? [PTYSession] {
-                for session in sessions {
-                    guard let task = session.shell else { continue }
-                    let pid = task.parkChildForReattachment()
-                    Self.wpLog("FREEZE park: session=\(session.guid) parkedPid=\(pid) tty=\(task.tty ?? "nil")")
-                }
-            } else {
-                Self.wpLog("FREEZE park: DISABLED (ITERM_WP_PARK=0). Process kept running but NOT parked — thaw is expected to fall back to a fresh shell.")
-            }
+            Self.parkSessionsForReattachment(terminal)
         }
 
         if close {
@@ -447,6 +427,26 @@ final class iTermWindowProject: NSObject, Codable {
     }
 
     // MARK: Freeze/Thaw diagnostics
+
+    /// Parks each of `terminal`'s live multiserver children back onto their
+    /// (shared) connection's unattachedChildren list so a thawed window can
+    /// re-adopt the running process in-place — without closing the fd, tearing
+    /// down the connection, or re-handshaking. Must be called while the sessions
+    /// are still live and BEFORE `terminal.close()`. Gated by ITERM_WP_PARK so
+    /// the pre-fix failure mode stays reproducible (set ITERM_WP_PARK=0).
+    static func parkSessionsForReattachment(_ terminal: PseudoTerminal) {
+        let park = (ProcessInfo.processInfo.environment["ITERM_WP_PARK"] ?? "1") != "0"
+        guard let sessions = terminal.allSessions() as? [PTYSession] else { return }
+        guard park else {
+            Self.wpLog("FREEZE park: DISABLED (ITERM_WP_PARK=0). Process kept running but NOT parked — thaw is expected to fall back to a fresh shell.")
+            return
+        }
+        for session in sessions {
+            guard let task = session.shell else { continue }
+            let pid = task.parkChildForReattachment()
+            Self.wpLog("FREEZE park: session=\(session.guid) parkedPid=\(pid) tty=\(task.tty ?? "nil")")
+        }
+    }
 
     /// Appends a timestamped line to /tmp/iterm_wp.log and the system log so the
     /// freeze/thaw cycle can be inspected without a debugger.
@@ -500,11 +500,13 @@ final class iTermWindowProject: NSObject, Codable {
         var present = false
         var total = -1
         let thread = iTermThread<iTermMainThreadState>.main()
-        let callback = thread.newCallback { (_: Any?, conn: Any?) in
-            if let connection = conn as? iTermMultiServerConnection {
-                let kids = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
-                total = kids.count
-                present = kids.contains { $0.pid == childPid }
+        let callback = thread.newCallback { (_: Any?, value: Any?) in
+            if let result = value as? iTermResult<iTermMultiServerConnection> {
+                result.handleObject({ connection in
+                    let kids = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                    total = kids.count
+                    present = kids.contains { $0.pid == childPid }
+                }, error: { _ in })
             }
             done = true
         }
@@ -659,11 +661,13 @@ final class iTermWindowProject: NSObject, Codable {
         for socketNumber in 1...10 {
             var done = false
             var summary = "socket \(socketNumber): <no connection>"
-            let callback = thread.newCallback { (_: Any?, conn: Any?) in
-                if let connection = conn as? iTermMultiServerConnection {
-                    let kids = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
-                    let pids = kids.map { "\($0.pid)(fd \($0.fd))" }.joined(separator: ", ")
-                    summary = "socket \(socketNumber): serverPid=\(connection.pid) unattachedChildren=[\(pids)]"
+            let callback = thread.newCallback { (_: Any?, value: Any?) in
+                if let result = value as? iTermResult<iTermMultiServerConnection> {
+                    result.handleObject({ connection in
+                        let kids = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                        let pids = kids.map { "\($0.pid)(fd \($0.fd))" }.joined(separator: ", ")
+                        summary = "socket \(socketNumber): serverPid=\(connection.pid) unattachedChildren=[\(pids)]"
+                    }, error: { _ in })
                 }
                 done = true
             }
