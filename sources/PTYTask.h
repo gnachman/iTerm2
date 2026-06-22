@@ -193,6 +193,12 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 - (void)setJobManagerType:(iTermGeneralServerConnectionType)type;
 - (void)closeFileDescriptorAndDeregisterIfPossible;
 
+// In-process freeze/thaw support. Stops reading this task's file descriptor and
+// parks its running child on its multiserver connection (keeping the fd open and
+// the process alive) so a thawed window can re-adopt it. Returns the parked
+// child's pid, or -1 if the task isn't a re-adoptable multiserver child.
+- (pid_t)parkChildForReattachment;
+
 - (instancetype)init;
 
 - (BOOL)hasBrokenPipe;

@@ -913,6 +913,20 @@ static void HandleSigChld(int n) {
     }
 }
 
+- (pid_t)parkChildForReattachment {
+    iTermMultiServerJobManager *multi = [iTermMultiServerJobManager castFrom:self.jobManager];
+    if (!multi) {
+        DLog(@"parkChildForReattachment: job manager %@ is not multiserver; cannot park", self.jobManager);
+        return -1;
+    }
+    // Stop the task notifier from reading this fd, but DO NOT close it — the
+    // child keeps it open so the process can be re-adopted on thaw.
+    [[TaskNotifier sharedInstance] deregisterTask:self];
+    const pid_t pid = [multi parkChildForReattachment];
+    DLog(@"parkChildForReattachment: parked pid %@ for task %@", @(pid), self);
+    return pid;
+}
+
 #pragma mark - iTermLoggingHelper
 
 // NOTE: This can be called before the task is launched. It is not used when logging plain text.

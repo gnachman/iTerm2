@@ -35,6 +35,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)attachToProcessID:(pid_t)pid
                  callback:(iTermCallback<id, iTermFileDescriptorMultiClientChild *> *)callback;
 
+// In-process freeze/thaw support. Re-adds a child that was previously attached
+// (and therefore removed from unattachedChildren) back into the unattached list
+// so a later -attachToProcessID: can re-adopt it WITHOUT tearing down and
+// re-handshaking this connection (which is shared by every session on the
+// daemon). The child's file descriptor is left open by the caller.
+- (void)reinsertUnattachedChild:(iTermFileDescriptorMultiClientChild *)child;
+
 - (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath
                       argv:(char **)argv
