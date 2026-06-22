@@ -87,6 +87,76 @@ To maintain long-term stability, we implemented a dual-layer testing suite:
 
 ---
 
+## 🧠 Key Discoveries & Advanced Dynamic Testing Protocols
+
+During rigorous dynamic manual and programmatic testing of the freeze/thaw cycle in a live macOS workspace, we uncovered several critical behaviors regarding AppKit/Cocoa's responder chain, AppleScript's routing mechanics, and iTerm2's core session re-attachment architecture.
+
+### 1. The Session Re-attachment Verification Rule
+A common pitfall is believing that a restored session has successfully reattached to a background process (such as `sleep <RANDOM_4_DIGIT_ID>`) simply because a terminal window came back on screen with some text. This is often a **false success**.
+
+* **The Fallback Behavior:** If the core reattachment handshake (`tryToAttachToMultiserverWithRestorationIdentifier`) fails, iTerm2 natively falls back to spawning a **brand-new `-zsh` login shell**. When this happens, iTerm2 prints the historical scrollback log (which includes your old sleep command text), but then prints `"Last login..."` followed by a **fresh, active, and interactive shell prompt**.
+* **The True Re-attachment Signature:** If the session has **truly reattached** to the running background process, the terminal screen will be **completely blocked and silent**. You will **not** see a new `"Last login..."` message or a fresh shell prompt at the bottom of the window, because the foreground of that PTY is actively occupied by the running sleep process. You will only get a prompt back *after* the foreground sleep process has exited or been terminated via `kill`.
+
+### 2. Bypassing macOS AppleScript Routing Conflicts
+When running a development build of iTerm2 side-by-side with an active production iTerm2 instance under the same bundle signature (`com.googlecode.iterm2`), standard AppleScript targeting is hijacked:
+* **The Problem:** Writing `tell application "path/to/Development/iTerm2.app" ...` will be resolved by macOS's Launch Services and Apple Event router directly to your **active production iTerm2 window**, routing your test keystrokes and windows into your active production workspace!
+* **The Solution (Direct Keyboard Injection Pattern):** To target the development build exclusively, you must use **direct process ID targeting** and keyboard event simulation:
+  1. Find the development instance's PID dynamically using `pgrep -lf iTerm2`.
+  2. Bring the development process to the front explicitly by PID using System Events:
+     ```applescript
+     tell application "System Events" to set frontmost of (first process whose unix id is DEV_PID) to true
+     ```
+  3. Send keyboard shortcuts (like `Cmd+N` to open a window) directly to the focused window server:
+     ```applescript
+     tell application "System Events" to tell (first process whose unix id is DEV_PID) to keystroke "n" using command down
+     ```
+  4. Type your commands via keystrokes to ensure they land *only* inside the focused development window, avoiding all bundle-routing conflicts!
+
+### 3. AppKit Outline View Selection in AppleScript
+When writing AppleScript to automate GUI selections inside split view panels (such as selecting a project in the left pane or an open window in the right pane):
+* **The Problem:** Calling `select row X of outline 1` is parsed by AppleScript but **ignored** by AppKit's `NSOutlineView`. It does not trigger Cocoa's selection delegate callbacks, leaving the panel controller's `selectedProject` and `selectedTerminal` properties as `nil` and keeping all associated bottom bar action buttons (such as "Associate" and "Freeze All") **disabled**.
+* **The Solution:** You must explicitly modify the low-level `selected` property of the row element itself:
+  ```applescript
+  tell outline 1 of scroll area 1 of splitter group 1 of window "Window Projects"
+      set selected of row X to true
+  end tell
+  ```
+  This immediately forces the AppKit framework to trigger `outlineViewSelectionDidChange:` on the delegate, properly updating the backing Swift model states and cleanly enabling all contextual actions.
+
+### 4. Reproducible Step-by-Step Dynamic Testing Blueprint
+For future manual or automated QA cycles, follow this exact end-to-end verification sequence:
+
+#### Step 1: Establish a Clean Baseline
+1. Kill any active development processes: `pkill -9 -f "Products/Development/iTerm2.app"`.
+2. Launch the development build: `open "/path/to/Development/iTerm2.app"`.
+3. Focus the process by its new PID and close any residual terminal windows using `Cmd+W`.
+4. Query the open windows of the process via System Events to verify that the terminal list is **completely empty** (e.g. only "Crash Reporter" or similar helper views are open).
+
+#### Step 2: Spawn a Highly Unique Background Process
+1. Focus the dev app and send `Cmd+N` to open a fresh terminal window.
+2. Ingest a highly unique, randomized command to prevent mistaking old leftover sleep tasks for our new session (e.g., `/bin/sleep <RANDOM_4_DIGIT_ID>`, such as `/bin/sleep 3281`). Press return.
+3. Verify that the window title is now `"sleep"` and is visible inside the dev process's window list.
+
+#### Step 3: Map and Freeze (Archive)
+1. Open the Window Projects panel via the Window menu.
+2. Verify that the Right Pane (Open Windows) displays `2` rows: the `"Unassociated"` folder and our active sleep window.
+3. Create a unique project name (such as `"Zenith-Workspace"`) using the Left Pane's `"+"` button bottom action.
+4. Select the new project in the Left Pane (set `selected of row X to true`) and our sleep window in the Right Pane.
+5. Click `"Associate with Project"` to map them.
+6. Re-focus the project row in the Left Pane to activate the bottom bar, and click `"Freeze All"`.
+7. Wait 2 seconds and query the dev process's window list. Verify that the sleep window is **actually closed and gone from the screen**.
+8. Run a standard UNIX `ps aux | grep "sleep <RANDOM_4_DIGIT_ID>"` command and verify that the sleep process is **still alive and running on macOS** as an orphaned background task!
+
+#### Step 4: Thaw and Restore
+1. Select the project `"Zenith-Workspace (1 archived)"` row in the Left Pane.
+2. Click the `"Restore All"` button in the bottom bar.
+3. Wait 2 seconds, and verify that the terminal window (named `-zsh`) is **successfully back on screen**.
+4. Read the window's text screen contents immediately. It must show the printed restoration header and active prompt.
+5. Kill the background sleep process (`kill -9 PID_OF_RANDOM_SLEEP_JOB`).
+6. Focus the restored window, inject the command `"uname -s"`, press return, and read the screen to verify that it successfully prints `"Darwin"` and returns a live, fully interactive, unfrozen shell prompt!
+
+---
+
 ## 📂 Separated Git Commit History
 
 All changes have been cleanly committed to your branch (`windowprojects`) as structured, isolated, and modular commits:
