@@ -1006,6 +1006,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)toggleTmuxPausePane;
 
 - (void)addNoteAtCursor;
+- (void)addNoteToSelection;
 - (void)previousMark;
 - (void)nextMark;
 - (void)previousAnnotation;

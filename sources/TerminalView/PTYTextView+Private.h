@@ -81,7 +81,6 @@ NSPopoverDelegate> {
 @property(nonatomic) NSRect lastInvalidatedIMERect;
 @property(nonatomic, strong) NSMutableArray<iTermContentNavigationShortcut *> *contentNavigationShortcuts;
 
-- (void)addNote;
 - (void)updateAlphaValue;
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes;
 - (BOOL)_haveShortSelection;

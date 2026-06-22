@@ -391,6 +391,11 @@ Menus and Miscellaneous:
   time you press ⌘⇧T in full screen, an alert
   explains the change and can restore ⌘⇧T to
   Show Tabs in Fullscreen with a key binding.
+- Added Edit > Marks and Annotations >
+  Annotate Selection, so annotating a
+  selection can now be given a keyboard
+  shortcut. Previously this was only on the
+  right-click menu.
 
 Core Improvements:
 - Significant Metal rendering speedups for

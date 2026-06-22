@@ -9572,6 +9572,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
+- (void)addNoteToSelection {
+    [_textview addNote];
+}
+
 - (void)textViewToggleAnnotations {
     VT100GridCoordRange range =
     VT100GridCoordRangeMake(0,

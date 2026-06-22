@@ -10216,6 +10216,10 @@ typedef struct {
     [[self currentSession] addNoteAtCursor];
 }
 
+- (IBAction)annotateSelection:(id)sender {
+    [[self currentSession] addNoteToSelection];
+}
+
 - (IBAction)nextMark:(id)sender {
     [[self currentSession] nextMark];
 }
@@ -12149,6 +12153,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return self.currentSession != nil && !self.currentSession.view.isBrowser;
     } else if (item.action == @selector(addNamedMark:)) {
         return self.currentSession != nil && [self.currentSession canAddNamedMark];
+    } else if (item.action == @selector(annotateSelection:)) {
+        return !self.currentSession.isBrowserSession && self.currentSession.hasSelection;
     } else if (item.action == @selector(clearBuffer:) ||
                item.action == @selector(clearScrollbackBuffer:) ||
                item.action == @selector(clearToStartOfSelection:) ||

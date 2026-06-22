@@ -728,6 +728,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 - (void)addSearchResult:(SearchResult *)searchResult;
 - (void)removeSearchResultsInRange:(VT100GridAbsCoordRange)range;
 
+// Add an annotation to the current selection. No-op if there is no selection.
+- (void)addNote;
+
 // When a new note is created, call this to add a view for it.
 - (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus visible:(BOOL)visible;
 

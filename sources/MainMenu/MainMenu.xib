@@ -800,6 +800,11 @@ DQ
                                                 <action selector="addNoteAtCursor:" target="-1" id="B5P-c8-bDe"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Annotate Selection" keyEquivalent="" identifier="Marks and Annotations.Annotate Selection" id="aNs-El-c10">
+                                            <connections>
+                                                <action selector="annotateSelection:" target="-1" id="aNs-Ac-t10"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="Dk5-W1-EQg">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
