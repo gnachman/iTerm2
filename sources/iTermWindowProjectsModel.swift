@@ -123,9 +123,22 @@ final class iTermWindowProject: NSObject, Codable {
         save()
     }
 
-    /// Runtime-only mapping: NSWindow.windowNumber → project UUID.
-    /// Not persisted — live associations reset when the app restarts.
-    private var liveAssociations: [Int: UUID] = [:]
+    /// Persisted mapping: stable PseudoTerminal.terminalGuid → project UUID.
+    /// Keyed by GUID (not window number) so an open associated window that is
+    /// brought back by native window restoration after a quit/crash re-joins its
+    /// project automatically — the restored window keeps its terminalGuid.
+    private var liveAssociations: [String: UUID] = [:]
+
+    /// Set true once applicationWillTerminate fires, so the per-window
+    /// willClose notifications that fire during app teardown don't get treated
+    /// as user-initiated closes (which would archive + drop associations).
+    private var isTerminating = false
+
+    /// terminalGuid for a window, or nil if it has none yet.
+    private static func guid(for terminal: PseudoTerminal) -> String? {
+        let g = terminal.terminalGuid
+        return (g?.isEmpty == false) ? g : nil
+    }
 
     private static var isTesting: Bool {
         return NSClassFromString("XCTestCase") != nil
@@ -199,6 +212,7 @@ final class iTermWindowProject: NSObject, Codable {
     private override init() {
         super.init()
         load()
+        loadAssociations()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(windowWillClose(_:)),
@@ -213,6 +227,11 @@ final class iTermWindowProject: NSObject, Codable {
 
     // MARK: Persistence
 
+    private static var associationsURL: URL {
+        let filename = isTesting ? "WindowProjectAssociations_test.json" : "WindowProjectAssociations.json"
+        return saveURL.deletingLastPathComponent().appendingPathComponent(filename)
+    }
+
     func save(postNotification: Bool = true) {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -222,6 +241,20 @@ final class iTermWindowProject: NSObject, Codable {
         if postNotification {
             NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
         }
+    }
+
+    /// Persists the guid→project association map (separate file so the projects
+    /// JSON format is untouched).
+    private func saveAssociations() {
+        let stringMap = liveAssociations.mapValues { $0.uuidString }
+        guard let data = try? JSONEncoder().encode(stringMap) else { return }
+        try? data.write(to: Self.associationsURL)
+    }
+
+    private func loadAssociations() {
+        guard let data = try? Data(contentsOf: Self.associationsURL),
+              let stringMap = try? JSONDecoder().decode([String: String].self, from: data) else { return }
+        liveAssociations = stringMap.compactMapValues { UUID(uuidString: $0) }
     }
 
     private func load() {
@@ -284,22 +317,24 @@ final class iTermWindowProject: NSObject, Codable {
     /// Marks `terminal` as belonging to `project` without closing it.
     /// When the window later closes, it will be auto-archived to this project.
     func associateWindow(_ terminal: PseudoTerminal, with project: iTermWindowProject) {
-        guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0 else { return }
-        liveAssociations[wn] = project.id
+        guard let guid = Self.guid(for: terminal) else { return }
+        liveAssociations[guid] = project.id
+        saveAssociations()
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
     }
 
     /// Removes the project association from `terminal`, leaving the window open but untracked.
     func disassociateWindow(_ terminal: PseudoTerminal) {
-        guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0,
-              liveAssociations.removeValue(forKey: wn) != nil else { return }
+        guard let guid = Self.guid(for: terminal),
+              liveAssociations.removeValue(forKey: guid) != nil else { return }
+        saveAssociations()
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
     }
 
     /// Returns the project `terminal` is currently associated with, or nil.
     func project(for terminal: PseudoTerminal) -> iTermWindowProject? {
-        guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0,
-              let pid = liveAssociations[wn] else { return nil }
+        guard let guid = Self.guid(for: terminal),
+              let pid = liveAssociations[guid] else { return nil }
         return project(id: pid)
     }
 
@@ -307,8 +342,8 @@ final class iTermWindowProject: NSObject, Codable {
     func liveWindows(for project: iTermWindowProject) -> [PseudoTerminal] {
         let all = iTermController.sharedInstance().terminals() ?? []
         return all.filter { t in
-            guard let wn = t.ptyWindow()?.windowNumber, wn > 0 else { return false }
-            return liveAssociations[wn] == project.id
+            guard let guid = Self.guid(for: t) else { return false }
+            return liveAssociations[guid] == project.id
         }
     }
 
@@ -316,8 +351,8 @@ final class iTermWindowProject: NSObject, Codable {
     func hasLiveWindows(for project: iTermWindowProject) -> Bool {
         let all = iTermController.sharedInstance().terminals() ?? []
         return all.contains { t in
-            guard let wn = t.ptyWindow()?.windowNumber, wn > 0 else { return false }
-            return liveAssociations[wn] == project.id
+            guard let guid = Self.guid(for: t) else { return false }
+            return liveAssociations[guid] == project.id
         }
     }
 
@@ -332,8 +367,8 @@ final class iTermWindowProject: NSObject, Codable {
             let uuid = UUID()
             Self.saveThumbnail(for: wn, uuid: uuid)
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
-            liveAssociations.removeValue(forKey: wn)
-            
+            if let guid = Self.guid(for: terminal) { liveAssociations.removeValue(forKey: guid) }
+
             // Park live children so the thawed window can re-adopt them in-place
             // (see parkSessionsForReattachment). Must run before close().
             if keepJobsRunning {
@@ -344,24 +379,25 @@ final class iTermWindowProject: NSObject, Codable {
             terminal.close()
         }
         project.lastUsed = Date()
+        saveAssociations()
         save()
     }
 
-    /// Called when any NSWindow is about to close. Auto-archives the window if it has a
-    /// live association, so the project retains the arrangement for later restoration.
+    /// Called when any NSWindow is about to close. For a *user-initiated* close
+    /// of an associated window, archives a snapshot into its project (the
+    /// "closed" state). During app termination this is a no-op: the association
+    /// is preserved on disk and native window restoration brings the window back
+    /// live on next launch (re-associated by guid) — archiving here would create
+    /// a duplicate.
     @objc private func windowWillClose(_ note: Notification) {
+        if isTerminating { return }
         guard let window = note.object as? NSWindow else { return }
         let wn = window.windowNumber
-        guard let projectID = liveAssociations[wn],
-              let project = project(id: projectID) else {
-            liveAssociations.removeValue(forKey: wn)
-            return
-        }
         let all = iTermController.sharedInstance().terminals() ?? []
-        guard let terminal = all.first(where: { $0.ptyWindow()?.windowNumber == wn }) else {
-            liveAssociations.removeValue(forKey: wn)
-            return
-        }
+        guard let terminal = all.first(where: { $0.ptyWindow()?.windowNumber == wn }),
+              let guid = Self.guid(for: terminal) else { return }
+        guard let projectID = liveAssociations[guid],
+              let project = project(id: projectID) else { return }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
@@ -369,28 +405,20 @@ final class iTermWindowProject: NSObject, Codable {
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
         project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
-        liveAssociations.removeValue(forKey: wn)
+        liveAssociations.removeValue(forKey: guid)
+        saveAssociations()
         project.lastUsed = Date()
         save()
     }
 
     @objc private func applicationWillTerminate(_ note: Notification) {
-        guard let all = iTermController.sharedInstance().terminals() else { return }
-        for terminal in all {
-            guard let wn = terminal.ptyWindow()?.windowNumber, wn > 0,
-                  let projectID = liveAssociations[wn],
-                  let project = project(id: projectID) else { continue }
-            
-            PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
-            PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-            
-            let title = terminal.ptyWindow()?.title ?? "Window"
-            let uuid = UUID()
-            project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
-            liveAssociations.removeValue(forKey: wn)
-        }
-        save(postNotification: false)
+        // Option A: open associated windows come back via native window
+        // restoration and are re-associated by guid on next launch — do NOT
+        // archive them here (that produced a live window + a stale archive
+        // duplicate). Just mark terminating so the willClose notifications fired
+        // during teardown don't archive/drop their associations.
+        isTerminating = true
+        saveAssociations()
     }
 
     // MARK: Window Archiving
@@ -402,8 +430,9 @@ final class iTermWindowProject: NSObject, Codable {
                        andClose close: Bool,
                        keepJobsRunning: Bool = false) {
         let wn = terminal.ptyWindow()?.windowNumber ?? 0
-        if wn > 0 {
-            liveAssociations.removeValue(forKey: wn)
+        if let guid = Self.guid(for: terminal) {
+            liveAssociations.removeValue(forKey: guid)
+            saveAssociations()
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
@@ -606,8 +635,9 @@ final class iTermWindowProject: NSObject, Codable {
             Self.deleteThumbnail(for: archived.id)
 
             // Associate the newly opened window with the project!
-            if let wn = term.ptyWindow()?.windowNumber, wn > 0 {
-                self.liveAssociations[wn] = project.id
+            if let guid = Self.guid(for: term) {
+                self.liveAssociations[guid] = project.id
+                self.saveAssociations()
             }
 
             project.lastUsed = Date()
@@ -632,8 +662,9 @@ final class iTermWindowProject: NSObject, Codable {
                 iTermController.sharedInstance().addTerminalWindow(term)
                 Self.logRestoredAttachment(term, expectedFrom: arrangement, phase: "THAW after restore")
 
-                if let wn = term.ptyWindow()?.windowNumber, wn > 0 {
-                    self.liveAssociations[wn] = project.id
+                if let guid = Self.guid(for: term) {
+                    self.liveAssociations[guid] = project.id
+                    self.saveAssociations()
                     NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
                 }
             }
