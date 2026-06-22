@@ -312,6 +312,11 @@ static BOOL hasBecomeActive = NO;
                                                          forEventClass:kInternetEventClass
                                                             andEventID:kAEGetURL];
         [[iTermOrphanServerAdopter sharedInstance] setDelegate:self];
+        // Let Window Projects claim its detached windows' children so they aren't
+        // adopted into a generic recovered window at startup.
+        [iTermOrphanServerAdopter sharedInstance].claimedChildPIDsProvider = ^NSSet<NSNumber *> *{
+            return [[iTermWindowProjectsModel shared] claimedMultiserverChildPIDs];
+        };
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
         _focusFollowsMouseController = [[iTermFocusFollowsMouseController alloc] init];

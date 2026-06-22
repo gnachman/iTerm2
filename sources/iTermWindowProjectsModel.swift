@@ -465,6 +465,47 @@ final class iTermWindowProject: NSObject, Codable {
         }
     }
 
+    /// Collects every multiserver child PID referenced by `arrangement` (one per
+    /// session/split pane), not just the first.
+    static func allServerChildPIDs(in arrangement: [AnyHashable: Any]) -> [Int32] {
+        var pids: [Int32] = []
+        func walk(_ node: Any) {
+            if let dict = node as? [AnyHashable: Any] {
+                if let sd = dict["Server Dict"] as? [AnyHashable: Any],
+                   let p = (sd["Child PID"] as? Int) ?? (sd["Child PID"] as? NSNumber)?.intValue {
+                    pids.append(Int32(p))
+                }
+                for v in dict.values { walk(v) }
+            } else if let arr = node as? [Any] {
+                for v in arr { walk(v) }
+            }
+        }
+        walk(arrangement)
+        return pids
+    }
+
+    /// Child PIDs owned by archived (detached) windows across all projects. The
+    /// orphan-server adopter consults this at startup so it leaves these parked
+    /// for on-demand project restore instead of pulling them into a generic
+    /// recovered window. (ObjC bridges Set<Int> to NSSet<NSNumber>.)
+    @objc func claimedMultiserverChildPIDs() -> Set<Int> {
+        var result = Set<Int>()
+        func walk(_ projects: [iTermWindowProject]) {
+            for p in projects {
+                for w in p.windows {
+                    guard let arr = w.arrangement else { continue }
+                    for pid in Self.allServerChildPIDs(in: arr) {
+                        result.insert(Int(pid))
+                    }
+                }
+                walk(p.children)
+            }
+        }
+        walk(rootProjects)
+        Self.wpLog("claimedMultiserverChildPIDs: \(result.sorted())")
+        return result
+    }
+
     /// Extracts (socket, childPid) from an arrangement's multiserver Server Dict.
     static func serverDict(in arrangement: [AnyHashable: Any]) -> (socket: Int32, childPid: Int32)? {
         func walk(_ node: Any) -> (Int32, Int32)? {

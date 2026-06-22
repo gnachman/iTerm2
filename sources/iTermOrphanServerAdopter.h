@@ -26,6 +26,12 @@
 @property(nonatomic, readonly) BOOL haveOrphanServers;
 @property(nonatomic, weak) id<iTermOrphanServerAdopterDelegate> delegate;
 
+// Multiserver child PIDs that another subsystem (Window Projects cold storage)
+// owns and will re-adopt on demand. The adopter must NOT pull these into a
+// generic recovered window at startup; it leaves them in unattachedChildren so
+// a project restore can re-attach them later. Evaluated lazily during adoption.
+@property(nonatomic, copy) NSSet<NSNumber *> * _Nullable (^claimedChildPIDsProvider)(void);
+
 + (instancetype)sharedInstance;
 - (void)openWindowWithOrphansWithCompletion:(void (^)(void))completion;
 - (void)removePath:(NSString *)path;

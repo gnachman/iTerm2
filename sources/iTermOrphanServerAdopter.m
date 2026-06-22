@@ -200,8 +200,18 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
     dispatch_group_t group = dispatch_group_create();
 
     DLog(@"Multiserver adoption beginning.");
+    NSSet<NSNumber *> *claimed = self.claimedChildPIDsProvider ? self.claimedChildPIDsProvider() : nil;
     NSArray<iTermFileDescriptorMultiClientChild *> *children = [connection.unattachedChildren copy];
     for (iTermFileDescriptorMultiClientChild *child in children) {
+        if ([claimed containsObject:@(child.pid)]) {
+            // Owned by Window Projects cold storage — leave it parked so a
+            // project restore can re-attach it instead of creating a stray tab.
+            DLog(@"Orphan adopter: skipping child pid %@ on socket %@ — claimed by Window Projects",
+                 @(child.pid), @(number));
+            NSLog(@"[WindowProjects] Orphan adopter skipping claimed child pid %d on socket %ld",
+                  child.pid, (long)number);
+            continue;
+        }
         iTermGeneralServerConnection generalConnection = {
             .type = iTermGeneralServerConnectionTypeMulti,
             .multi = {
