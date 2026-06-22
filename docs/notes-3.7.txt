@@ -443,6 +443,9 @@ Settings Improvements:
   you commit a selection.
 
 Bug Fixes:
+- The session-logging and archive folder
+  pickers now use the folder you select rather
+  than its parent when you don’t open it first.
 - Clicking a notification posted by a background
   tab of a dedicated hotkey window now selects the
   source tab and pane instead of leaving the

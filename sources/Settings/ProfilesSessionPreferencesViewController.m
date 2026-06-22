@@ -795,7 +795,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     [panel setAllowsMultipleSelection:NO];
 
     if ([panel runModal] == NSModalResponseOK) {
-        NSString *path = [[panel directoryURL] path];
+        NSString *path = [[panel URL] path];
         _archiveDir.stringValue = path;
         [self setString:path forKey:KEY_ARCHIVEDIR];
     }
@@ -828,7 +828,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     [panel setAllowsMultipleSelection:NO];
 
     if ([panel runModal] == NSModalResponseOK) {
-        NSString *path = [[panel directoryURL] path];
+        NSString *path = [[panel URL] path];
         _logDir.stringValue = path;
         [self setString:path forKey:KEY_LOGDIR];
     }
