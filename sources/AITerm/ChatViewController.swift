@@ -683,7 +683,8 @@ extension ChatViewController {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal,
                 .renameChat, .append, .appendAttachment, .commit, .userCommand,
-                .setPermissions, .vectorStoreCreated, .terminalCommand, .watcherEvent:
+                .setPermissions, .vectorStoreCreated, .terminalCommand, .watcherEvent,
+                .unsupported:
             break
         }
     }
@@ -1102,7 +1103,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 let cell = TerminalCommandMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
-            case .clientLocal, .watcherEvent:
+            case .clientLocal, .watcherEvent, .unsupported:
+                // A message type this build can't decode renders as a
+                // system-style placeholder bubble ("needs a newer
+                // version"); see attributedStringValue.
                 let cell = SystemMessageCellView()
                 configure(cell: cell, for: message.message, isLast: isLastMessage)
                 return cell
@@ -1312,6 +1316,19 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     self?.handleEnableOrchestrationButton(identifier: identifier,
                                                           chatID: capturedChatID)
                 }
+            case .orchestrationPermissionGranted:
+                let capturedChatID = self.chatID
+                cell.buttonClicked = { [weak self] identifier, messageID in
+                    guard messageID == originalMessageID else { return }
+                    // The default buttonTapped path greys the button on
+                    // click; the revoke notice OrchestratorClient publishes
+                    // then reloads the cell, where enableButtons (derived
+                    // from claimedScopes) keeps it greyed. No explicit
+                    // reload here, which would briefly re-enable it before
+                    // the async claim drop lands.
+                    self?.handleRevokeOrchestrationPermissionButton(identifier: identifier,
+                                                                    chatID: capturedChatID)
+                }
             }
         case .vectorStoreCreated, .userCommand:
             DLog("Unexpected message content \(message.content)")
@@ -1447,7 +1464,7 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             }
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
-                .appendAttachment, .multipart, .watcherEvent:
+                .appendAttachment, .multipart, .watcherEvent, .unsupported:
             cell.buttonClicked = nil
 
         case .terminalCommand:
@@ -1565,6 +1582,15 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 // Enable / Not Now stay tappable until the user answers.
                 // No additional gating beyond isLast.
                 break
+            case .orchestrationPermissionGranted(let scope, _):
+                // Revoke stays tappable for the life of the chat (not
+                // just while last) as long as the claim is still in
+                // effect. Once revoked, the scope drops out of
+                // claimedScopes and the button greys out on the next
+                // reload (revokeClaim publishes a notice, which reloads).
+                enableButtons = chatID.flatMap {
+                    listModel.claimedScopes(forChatID: $0).contains(scope)
+                } ?? false
             }
         default:
             break
@@ -2034,6 +2060,10 @@ extension Message.Content {
             // sees it's not their own message. Symbol prefix marks
             // it as an iTerm2-posted event.
             return AttributedStringForSystemMessageMarkdown("📡 \(payload.detail)") {}
+        case .unsupported:
+            // A message a newer iTerm2 sent that this build can't decode.
+            return AttributedStringForSystemMessageMarkdown(
+                "This message requires a newer version of iTerm2 to view.") {}
         case .plainText(let string, context: _):
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineBreakMode = .byWordWrapping
@@ -2195,6 +2225,12 @@ extension Message.Content {
                 the chat to Orchestration mode.
                 """
                 return AttributedStringForSystemMessageMarkdown(body) {}
+            case let .orchestrationPermissionGranted(_, name):
+                let body = "**Granted this chat permission to control "
+                    + "\u{201C}\(name)\u{201D}.**\n\n"
+                    + "You @-mentioned it, so the agent can act there "
+                    + "without asking. Revoke to require approval again."
+                return AttributedStringForSystemMessageMarkdown(body) {}
             }
 
         case .selectSessionRequest(_, terminal: let terminal):
@@ -2232,7 +2268,7 @@ extension Message {
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandResponse, .renameChat, .append, .commit, .setPermissions,
                 .terminalCommand, .appendAttachment, .multipart, .vectorStoreCreated, .userCommand,
-                .watcherEvent:
+                .watcherEvent, .unsupported:
             return []
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
@@ -2305,6 +2341,16 @@ extension Message {
                     .init(title: "Not Now",
                           destructive: true,
                           identifier: "enableOrchestration:\(ApprovalChoice.deny.rawValue):\(requestID)"),
+                ]
+            case let .orchestrationPermissionGranted(scope, _):
+                // Identifier carries the scope after the first colon.
+                // The scope itself can contain a colon ("session:<guid>"),
+                // so handleRevokeOrchestrationPermissionButton splits with
+                // maxSplits 1 and keeps everything after it verbatim.
+                return [
+                    .init(title: "Revoke",
+                          destructive: true,
+                          identifier: "revokeOrchestrationPermission:\(scope)"),
                 ]
             }
         case .selectSessionRequest:
@@ -2794,6 +2840,30 @@ extension ChatViewController {
                                                 approved: approved)))
         } catch {
             DLog("Chat VC: failed to publish workgroup permission response: \(error)")
+        }
+    }
+
+    // Identifier format: "revokeOrchestrationPermission:<scope>". The
+    // scope can itself contain a colon ("session:<guid>"), so split with
+    // maxSplits 1 and keep the remainder verbatim. OrchestratorClient
+    // (subscribed on the broker) drops the scope from claimedScopes.
+    fileprivate func handleRevokeOrchestrationPermissionButton(identifier: String,
+                                                               chatID: String?) {
+        let parts = identifier.split(separator: ":", maxSplits: 1,
+                                      omittingEmptySubsequences: false)
+        guard parts.count == 2,
+              parts[0] == "revokeOrchestrationPermission",
+              let chatID else {
+            return
+        }
+        let scope = String(parts[1])
+        do {
+            try client.publishUserMessage(
+                chatID: chatID,
+                content: .userCommand(
+                    .revokeOrchestrationPermission(scope: scope)))
+        } catch {
+            DLog("Chat VC: failed to publish revoke-orchestration-permission: \(error)")
         }
     }
 

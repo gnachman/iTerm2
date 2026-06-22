@@ -567,6 +567,13 @@ Bug Fixes:
   appearance variant of the profile key so
   it persists until OSC 110/111 or a manual
   reset clears it.
+- In an AI orchestration chat, @-mentioning a
+  session or workgroup now grants the chat
+  standing permission to control it, so the
+  agent acts there without the one-time
+  approval prompt. A notice with a Revoke
+  button is posted so you can take the
+  permission back whenever you want.
 - The orchestrator’s send_text tool
   now routes payloads containing control bytes
   (ESC, Ctrl-C, etc.) as raw keystrokes instead

@@ -130,6 +130,14 @@ class ChatService {
             deliverToolResult(message, inChat: chatID)
             return
 
+        case .unsupported:
+            // A placeholder for a message type this build doesn't
+            // understand. It's display-only; never start an agent turn
+            // for it. (In practice the Mac is always the newest build
+            // and won't author one, but the broker round-trips every
+            // message type through here.)
+            return
+
         case .plainText, .markdown, .explanationRequest, .explanationResponse,
                 .remoteCommandRequest, .selectSessionRequest,
                 .renameChat, .append, .appendAttachment, .commit, .vectorStoreCreated,
@@ -161,10 +169,10 @@ class ChatService {
         switch command {
         case .stop:
             agents[chatID]?.stop()
-        case .workgroupPermissionResponse:
-            // Consumed by the orchestrator dispatcher via its own
-            // broker subscription. The service shouldn't loop it back
-            // to the LLM.
+        case .workgroupPermissionResponse, .revokeOrchestrationPermission:
+            // Consumed by the orchestrator dispatcher / client via their
+            // own broker subscriptions. The service shouldn't loop these
+            // back to the LLM.
             break
         case let .enableOrchestrationResponse(requestID, approved):
             // The request_orchestration_enable tool parks the LLM

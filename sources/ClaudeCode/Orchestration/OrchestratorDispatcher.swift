@@ -1070,6 +1070,77 @@ final class OrchestratorDispatcher {
         }
     }
 
+    // MARK: - Mention-driven claims
+
+    // The user @-mentioned one or more sessions/workgroups in a chat
+    // message. Treat each named target as standing permission for this
+    // chat to control it: pre-insert its claim scope so the first write
+    // there skips the inline approval prompt. For every scope that
+    // wasn't already claimed we publish an orchestrationPermissionGranted
+    // bubble so the grant is visible and the user can revoke it.
+    //
+    // Resolving the scope mirrors applyGating's .session path: a bare
+    // session guid resolves through WorkgroupIntrospection.claimScope to
+    // the workgroup/synthetic scope its claim actually lives under, so a
+    // later write against that session finds the scope already claimed.
+    // The "session:" / "wg-" mention forms are themselves claim scopes.
+    @MainActor
+    func grantClaimsFromMentions(in text: String) {
+        if tornDown { return }
+        for mention in MentionParser.mentions(in: text) {
+            guard let scope = claimScope(forMention: mention) else { continue }
+            // contains() also de-dups repeated mentions of the same
+            // target within one message: only the first inserts and
+            // publishes, the rest short-circuit here.
+            if claimedScopes.contains(scope) { continue }
+            claimedScopes.insert(scope)
+            persistClaimedScopes()
+            publishPermissionGranted(scope: scope)
+        }
+    }
+
+    private func claimScope(forMention mention: MentionParser.Mention) -> String? {
+        guard mention.prefix == nil else {
+            // "session:<uuid>" / "wg-<uuid>" are already claim scopes.
+            return mention.identifier
+        }
+        // Bare session guid: resolve to the scope its claim lives under.
+        return WorkgroupIntrospection.claimScope(forSessionGuid: mention.uuid)
+    }
+
+    @MainActor
+    private func publishPermissionGranted(scope: String) {
+        let name = WorkgroupIntrospection.displayName(forWorkgroupID: scope)
+        do {
+            try broker?.publishMessageFromAgent(
+                chatID: chatID,
+                content: .clientLocal(.init(action:
+                    .orchestrationPermissionGranted(scope: scope, name: name))))
+        } catch {
+            DLog("Orchestrator dispatcher: failed to publish permission-granted notice: \(error)")
+        }
+    }
+
+    // Drop a claim the user previously granted (via @-mention or an
+    // approved prompt). Removing the scope means the next write there
+    // re-prompts. No-op when the scope isn't claimed so a double-tap on
+    // the Revoke button doesn't post a second confirmation notice.
+    @MainActor
+    func revokeClaim(scope: String) {
+        if tornDown { return }
+        guard claimedScopes.remove(scope) != nil else { return }
+        persistClaimedScopes()
+        let name = WorkgroupIntrospection.displayName(forWorkgroupID: scope)
+        let notice = "Revoked this chat’s permission to control "
+            + "\u{201C}\(name)\u{201D}. The agent will ask before its "
+            + "next action there."
+        do {
+            try broker?.publishNotice(chatID: chatID, notice: notice)
+        } catch {
+            DLog("Orchestrator dispatcher: failed to publish revoke notice: \(error)")
+        }
+    }
+
     // MARK: - Execute
 
     private func execute(_ command: OrchestratorCommand) async throws -> OrchestratorResult {

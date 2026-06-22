@@ -38,6 +38,11 @@ struct MessageToPromptStateMachine {
                 .commit, .setPermissions, .vectorStoreCreated, .terminalCommand, .appendAttachment,
                 .explanationRequest, .userCommand, .watcherEvent:
             it_fatalError()
+        case .unsupported:
+            // Forward-compat placeholder; upstream transcript builders
+            // skip it before reaching here, so this is purely defensive
+            // (don't crash a release build on a never-actually-sent path).
+            return .uninitialized
         case .multipart(let subparts, _):
             return .multipart(subparts.compactMap { subpart -> LLM.Message.Body? in
                 switch subpart {
@@ -144,6 +149,10 @@ struct MessageToPromptStateMachine {
                 .selectSessionRequest, .clientLocal, .renameChat, .commit, .setPermissions,
                 .vectorStoreCreated, .userCommand:
             it_fatalError()
+        case .unsupported:
+            // Forward-compat placeholder; upstream transcript builders
+            // skip it before reaching here, so this is purely defensive.
+            return .uninitialized
         }
     }
 

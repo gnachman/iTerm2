@@ -235,7 +235,7 @@ extension Message.Content {
         case let .watcherEvent(payload):
             return payload.detail
         case  .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat,
-                .commit, .setPermissions, .vectorStoreCreated, .userCommand:
+                .commit, .setPermissions, .vectorStoreCreated, .userCommand, .unsupported:
             return nil
         }
     }

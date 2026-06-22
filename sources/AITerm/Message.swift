@@ -92,6 +92,19 @@ struct ClientLocal: Codable {
         // tool, registered only in session-bound mode.
         case enableOrchestrationRequest(requestID: String)
 
+        // Published when the user @-mentions a session or workgroup in
+        // an orchestration chat. Naming a target is taken as standing
+        // permission for this chat to control it, so the inline claim
+        // prompt is skipped the first time the orchestrator writes
+        // there. Rendered as a system-message bubble with a single
+        // Revoke button; tapping it sends
+        // UserCommand.revokeOrchestrationPermission(scope:) which drops
+        // the claim. `scope` is the claimedScopes entry (a real
+        // workgroup instance ID or a synthetic "session:<guid>"), and
+        // `name` is resolved at publish time so the bubble still reads
+        // correctly if the target is torn down before the user revokes.
+        case orchestrationPermissionGranted(scope: String, name: String)
+
         enum StreamingState: String, Codable {
             case stopped
             case active
@@ -117,6 +130,13 @@ enum UserCommand: Codable {
     // the chat's orchestrationEnabled flag and transitions itself
     // in place to orchestration mode.
     case enableOrchestrationResponse(requestID: String, approved: Bool)
+    // Response to a ClientLocal.Action.orchestrationPermissionGranted
+    // Revoke button. Routed through the broker so OrchestratorClient
+    // drops `scope` from the chat's claimedScopes. Like
+    // workgroupPermissionResponse it goes through UserCommand so the
+    // chat service's skip-userCommand filter keeps it from looping
+    // back to the LLM.
+    case revokeOrchestrationPermission(scope: String)
 }
 
 struct Message: Codable {
@@ -173,11 +193,21 @@ struct Message: Codable {
         // created.
         case multipart([Subpart], vectorStoreID: String?)
 
+        // Forward-compatibility sentinel: a message type this build
+        // doesn't understand (a newer iTerm2 added a Content or
+        // ClientLocal.Action case). Never encoded by this build; it's
+        // produced by Message.init(from:) when the content field fails
+        // to decode, so an unknown message renders as a "needs a newer
+        // version" placeholder instead of throwing and taking the whole
+        // message (and, in a history batch, every sibling message) down
+        // with it.
+        case unsupported
+
         func clone(_ uuidMap: [UUID: UUID], messages: [UUID: Message]) -> Content {
             switch self {
             case .plainText, .markdown, .explanationRequest, .remoteCommandRequest, .clientLocal,
                     .renameChat, .userCommand, .setPermissions, .vectorStoreCreated,
-                    .terminalCommand, .multipart, .watcherEvent:
+                    .terminalCommand, .multipart, .watcherEvent, .unsupported:
                 return self
             case .explanationResponse(let response, var update, let markdown):
                 if let updateID = update?.messageID, let replacement = uuidMap[updateID] {
@@ -250,6 +280,8 @@ struct Message: Codable {
                     return "Client-local: workgroup permission request \(requestID) workgroup=\(workgroupName) (\(workgroupID))"
                 case .enableOrchestrationRequest(let requestID):
                     return "Client-local: enable orchestration request \(requestID)"
+                case let .orchestrationPermissionGranted(scope, name):
+                    return "Client-local: orchestration permission granted name=\(name) (\(scope))"
                 }
             case .renameChat(let name):
                 return "Rename chat to \(name)"
@@ -271,6 +303,8 @@ struct Message: Codable {
                 return "User command \(command)"
             case .watcherEvent(let update):
                 return "Watcher event (\(update.reason.rawValue)): \(update.detail.truncatedWithTrailingEllipsis(to: maxLength))"
+            case .unsupported:
+                return "Unsupported message type"
             }
         }
 
@@ -302,11 +336,11 @@ struct Message: Codable {
                         "Sending commands to AI automatically"
                     }
                 case .offerLink, .offerOrchestration, .permissions, .workgroupPermissionRequest,
-                        .enableOrchestrationRequest:
+                        .enableOrchestrationRequest, .orchestrationPermissionGranted:
                     return nil
                 }
             case .renameChat, .append, .appendAttachment, .commit, .setPermissions,
-                    .vectorStoreCreated, .userCommand:
+                    .vectorStoreCreated, .userCommand, .unsupported:
                 return nil
             case .watcherEvent(let update):
                 return update.detail.truncatedWithTrailingEllipsis(to: maxLength)
@@ -379,6 +413,10 @@ struct Message: Codable {
                 .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand,
                 .appendAttachment, .multipart, .watcherEvent:
             false
+        // An unrecognized message renders as a placeholder, so it must
+        // be visible to the user rather than hidden.
+        case .unsupported:
+            false
         }
     }
 
@@ -390,7 +428,7 @@ struct Message: Codable {
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
                 .commit, .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated, .userCommand, .watcherEvent:
+                .vectorStoreCreated, .userCommand, .watcherEvent, .unsupported:
             false
         }
     }
@@ -468,7 +506,7 @@ struct Message: Codable {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
                 .append, .appendAttachment, .commit, .setPermissions, .terminalCommand,
-                .vectorStoreCreated, .userCommand, .watcherEvent:
+                .vectorStoreCreated, .userCommand, .watcherEvent, .unsupported:
             it_fatalError()
         }
     }
@@ -506,7 +544,7 @@ struct Message: Codable {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
                 .commit, .setPermissions, .terminalCommand, .appendAttachment, .vectorStoreCreated,
-                .userCommand, .watcherEvent:
+                .userCommand, .watcherEvent, .unsupported:
             it_fatalError()
         }
     }
@@ -517,5 +555,38 @@ struct Message: Codable {
         uuidMap[uniqueID] = copy.uniqueID
         copy.content = content.clone(uuidMap, messages: messages)
         return copy
+    }
+}
+
+extension Message {
+    // Listed explicitly so the synthesized encode(to:) and this custom
+    // decoder share one key set; every stored property must appear here
+    // (a missing one fails to compile in init(from:) below).
+    private enum CodingKeys: String, CodingKey {
+        case chatID, author, content, sentDate, uniqueID
+        case inResponseTo, responseID, agentReasoning, configuration
+    }
+
+    // Custom decode (encode stays synthesized) so an unrecognized
+    // `content` degrades to .unsupported instead of throwing. This is
+    // the single forward-compatibility boundary: it catches both a
+    // brand-new Content case and a new ClientLocal.Action nested inside
+    // a known .clientLocal, because either makes the content decode
+    // throw and we swallow it here. Other fields stay strict; a message
+    // with a corrupt timestamp is genuinely broken, not merely newer.
+    //
+    // Declared in an extension to preserve the memberwise initializer
+    // Message(chatID:author:content:...) that the rest of the app uses.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        chatID = try c.decode(String.self, forKey: .chatID)
+        author = try c.decode(Participant.self, forKey: .author)
+        content = (try? c.decode(Content.self, forKey: .content)) ?? .unsupported
+        sentDate = try c.decode(Date.self, forKey: .sentDate)
+        uniqueID = try c.decode(UUID.self, forKey: .uniqueID)
+        inResponseTo = try c.decodeIfPresent(String.self, forKey: .inResponseTo)
+        responseID = try c.decodeIfPresent(String.self, forKey: .responseID)
+        agentReasoning = try c.decodeIfPresent(String.self, forKey: .agentReasoning)
+        configuration = try c.decodeIfPresent(Configuration.self, forKey: .configuration)
     }
 }

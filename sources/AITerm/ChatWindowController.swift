@@ -210,7 +210,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
                     .clientLocal, .renameChat, .append, .appendAttachment, .commit,
-                    .vectorStoreCreated, .terminalCommand, .multipart:
+                    .vectorStoreCreated, .terminalCommand, .multipart, .unsupported:
                 true
             case .userCommand, .setPermissions, .watcherEvent:
                 false

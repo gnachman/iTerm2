@@ -253,6 +253,14 @@ struct MessageBubbleView: View {
             Text(update.detail)
         case .clientLocal(let clientLocal):
             clientLocalView(clientLocal.action)
+        case .unsupported:
+            // A message a newer iTerm2 sent whose type this build of the
+            // app can't decode (Message.init(from:) substituted this
+            // placeholder rather than dropping the whole message).
+            Label("You need a newer version of iTerm2 Buddy to view this message.",
+                  systemImage: "arrow.up.circle")
+                .font(.callout)
+                .foregroundStyle(.secondary)
         case .append, .appendAttachment, .commit,
              .remoteCommandResponse, .renameChat, .setPermissions,
              .vectorStoreCreated, .userCommand:
@@ -328,6 +336,18 @@ struct MessageBubbleView: View {
             }
         case .offerOrchestration:
             Text("Orchestration is available for this chat. Enable it on your Mac.")
+        case .orchestrationPermissionGranted(let scope, let name):
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Granted this chat permission to control “\(name)”.")
+                    .font(.callout.weight(.semibold))
+                Text("You @-mentioned it, so the agent can act there without asking. Revoke to require approval again.")
+                actionButtons(for: message, [
+                    ActionButton(title: "Revoke", destructive: true) {
+                        model.respondUserCommand(requestMessage: message,
+                                                 command: .revokeOrchestrationPermission(scope: scope))
+                    },
+                ])
+            }
         }
     }
 

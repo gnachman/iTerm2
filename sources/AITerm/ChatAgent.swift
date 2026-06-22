@@ -385,7 +385,8 @@ class ChatAgent {
         for message in messages {
             switch message.content {
             case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
-                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest:
+                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest,
+                    .unsupported:
                 continue
 
             case .remoteCommandRequest(let payload, safe: _):
@@ -670,7 +671,7 @@ class ChatAgent {
             switch message.content {
             case .setPermissions, .renameChat, .selectSessionRequest, .clientLocal,
                     .append, .appendAttachment, .commit, .vectorStoreCreated, .userCommand,
-                    .watcherEvent:
+                    .watcherEvent, .unsupported:
                 false
 
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
@@ -725,6 +726,12 @@ class ChatAgent {
             it_fatalError("User-sent attachments not supported")
         case .watcherEvent:
             break
+        case .unsupported:
+            // A placeholder for a message type this build doesn't
+            // understand; it never feeds the LLM. Resolve the completion
+            // so the caller's turn doesn't hang.
+            completion(nil)
+            return
         }
         fetchCompletionForRegularMessage(userMessage: userMessage,
                                          history: filteredHistory,
@@ -1055,7 +1062,8 @@ class ChatAgent {
                 uniqueID: messageID,
                 responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand,
+                .unsupported:
             it_fatalError()
         }
     }
@@ -1096,7 +1104,8 @@ class ChatAgent {
                 uniqueID: messageID,
                 responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand,
+                .unsupported:
             it_fatalError()
         }
     }
@@ -1249,7 +1258,7 @@ extension ChatAgent {
                     body: body,
                     reasoningContent: message.agentReasoning)
             case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
-                    .commit, .vectorStoreCreated, .userCommand, .setPermissions:
+                    .commit, .vectorStoreCreated, .userCommand, .setPermissions, .unsupported:
                 return nil
             }
         }

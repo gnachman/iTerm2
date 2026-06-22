@@ -314,7 +314,7 @@ class ChatListModel: ChatListDataSource {
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
                 .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated,
-                .userCommand, .watcherEvent:
+                .userCommand, .watcherEvent, .unsupported:
             return false
         }
     }

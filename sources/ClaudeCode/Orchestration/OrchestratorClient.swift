@@ -103,7 +103,56 @@ final class OrchestratorClient {
 
     private func handle(update: ChatBroker.Update) {
         guard case let .delivery(message, chatID) = update else { return }
-        guard message.author == .agent else { return }
+        switch message.author {
+        case .user:
+            handleUser(message: message, chatID: chatID)
+        case .agent:
+            handleAgent(message: message, chatID: chatID)
+        }
+    }
+
+    // User-authored deliveries that touch the claim set:
+    //   - a chat message that @-mentions sessions/workgroups grants a
+    //     sticky claim for each named target (skips the later inline
+    //     prompt) and posts a revocable notice.
+    //   - the Revoke button on such a notice sends
+    //     revokeOrchestrationPermission, which drops the claim.
+    // Gated on orchestrationEnabled: session-bound chats use the
+    // per-call permission model and never carry claimedScopes. Both
+    // paths route through dispatcher(forChatID:), which creates the
+    // per-chat dispatcher if it doesn't exist yet (the user can mention
+    // a session before the agent has made its first tool call, and can
+    // revoke after a restart before any tool call recreates it).
+    private func handleUser(message: Message, chatID: String) {
+        guard broker.listModel.chat(id: chatID)?.orchestrationEnabled == true else {
+            return
+        }
+        switch message.content {
+        case .plainText(let text, _):
+            grantClaims(fromUserText: text, chatID: chatID)
+        case .multipart(let subparts, _):
+            // Mentions ride in the text subparts; attachments/context
+            // can't carry one. Grant off the concatenated user text.
+            let text = subparts.compactMap { subpart -> String? in
+                switch subpart {
+                case .plainText(let t), .markdown(let t): return t
+                case .attachment, .context: return nil
+                }
+            }.joined(separator: "\n")
+            grantClaims(fromUserText: text, chatID: chatID)
+        case .userCommand(.revokeOrchestrationPermission(let scope)):
+            dispatcher(forChatID: chatID).revokeClaim(scope: scope)
+        default:
+            break
+        }
+    }
+
+    private func grantClaims(fromUserText text: String, chatID: String) {
+        guard !MentionParser.mentions(in: text).isEmpty else { return }
+        dispatcher(forChatID: chatID).grantClaimsFromMentions(in: text)
+    }
+
+    private func handleAgent(message: Message, chatID: String) {
         guard case let .remoteCommandRequest(payload, _) = message.content else { return }
         guard case let .external(ext) = payload else { return }
         let requestID = message.uniqueID

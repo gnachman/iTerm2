@@ -59,7 +59,8 @@ class ChatClient {
                                                safe: safe)
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse,
                 .selectSessionRequest, .clientLocal, .renameChat, .setPermissions,
-                .terminalCommand, .multipart, .vectorStoreCreated, .watcherEvent:
+                .terminalCommand, .multipart, .vectorStoreCreated, .watcherEvent,
+                .unsupported:
             return message
         case let .append(string: string, uuid: uuid):
             it_assert(partial)
@@ -319,7 +320,7 @@ class ChatClient {
                             .remoteCommandResponse, .selectSessionRequest, .clientLocal,
                             .renameChat, .append, .appendAttachment, .commit, .setPermissions,
                             .vectorStoreCreated, .terminalCommand, .multipart,
-                            .userCommand, .watcherEvent:
+                            .userCommand, .watcherEvent, .unsupported:
                         it_fatalError("You can't append \(stringOrAttachment)")
                     }
                 case .attachment:
@@ -343,7 +344,7 @@ class ChatClient {
         case .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
                 .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated, .userCommand, .watcherEvent:
+                .vectorStoreCreated, .userCommand, .watcherEvent, .unsupported:
             // These are impossible or just normal streaming messages.
             return appendMessage
 
@@ -399,7 +400,7 @@ class ChatClient {
         case .plainText, .markdown, .explanationRequest, .remoteCommandResponse, .clientLocal,
                 .renameChat, .append, .commit, .remoteCommandRequest, .selectSessionRequest,
                 .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated, .userCommand, .watcherEvent:
+                .vectorStoreCreated, .userCommand, .watcherEvent, .unsupported:
             // These are impossible or just normal streaming messages.
             return finalMessage
 

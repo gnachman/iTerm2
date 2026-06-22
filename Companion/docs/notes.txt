@@ -1,6 +1,16 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- Messages from a newer iTerm2 that this app
+  doesn't understand now show a placeholder
+  ("You need a newer version of iTerm2 Buddy to
+  view this message") instead of silently
+  disappearing or hiding the rest of the chat.
+- When you @-mention a session or workgroup in
+  an orchestration chat, the agent is granted
+  standing permission to control it without a
+  prompt. A notice with a Revoke button lets
+  you take that permission back.
 - Voice dictation in chat. Tap the microphone
   in the message bar to dictate instead of type.
   The first time, it offers to download a small

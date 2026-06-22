@@ -127,7 +127,7 @@ class ChatViewControllerModel {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
                     .clientLocal, .renameChat, .commit, .setPermissions, .terminalCommand,
-                    .multipart, .vectorStoreCreated, .watcherEvent:
+                    .multipart, .vectorStoreCreated, .watcherEvent, .unsupported:
                 return
             }
         }
@@ -246,7 +246,7 @@ class ChatViewControllerModel {
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .commit,
                 .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated,
-                .userCommand, .watcherEvent:
+                .userCommand, .watcherEvent, .unsupported:
             break
         }
         let saved = showTypingIndicator
