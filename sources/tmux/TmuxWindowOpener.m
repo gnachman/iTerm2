@@ -418,6 +418,22 @@ static int OctalValue(const char *bytes) {
     [self requestDidComplete];
 }
 
+// Returns the frontmost iTerm2 window that already shows a tab belonging to the
+// given tmux controller, or nil if none does. Window order is front-to-back, so
+// the first match is the topmost.
+- (PseudoTerminal *)topmostTerminalHostingController:(TmuxController *)controller {
+    for (NSWindow *window in [NSApp orderedWindows]) {
+        if (!window.isVisible) {
+            continue;
+        }
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
+        if (term && [[term uniqueTmuxControllers] containsObject:controller]) {
+            return term;
+        }
+    }
+    return nil;
+}
+
 - (void)requestDidComplete {
     --pendingRequests_;
     if (_errorCount) {
@@ -457,14 +473,34 @@ static int OctalValue(const char *bytes) {
         }
         if (!term &&
             !self.initial &&
-            self.anonymous &&
-            [iTermAdvancedSettingsModel anonymousTmuxWindowsOpenInCurrentWindow]) {
-            PseudoTerminal *candidate = [[iTermController sharedInstance] currentTerminal];
-            if ([[candidate uniqueTmuxControllers] count] == 0 ||
-                [[candidate uniqueTmuxControllers] containsObject:controller_]) {
-                term = candidate;
-                initialTabs = term.tabs.count;
-                DLog(@"Use current window %@", term);
+            self.anonymous) {
+            const iTermOpenAnonymousTmuxWindowLocation location =
+                [iTermAdvancedSettingsModel anonymousTmuxWindowsOpenInCurrentWindow];
+            switch (location) {
+                case iTermOpenAnonymousTmuxWindowLocationNewWindow:
+                    // Leave term nil so a new window is created below.
+                    break;
+
+                case iTermOpenAnonymousTmuxWindowLocationFocusedWindow: {
+                    PseudoTerminal *candidate = [[iTermController sharedInstance] currentTerminal];
+                    if ([[candidate uniqueTmuxControllers] count] == 0 ||
+                        [[candidate uniqueTmuxControllers] containsObject:controller_]) {
+                        term = candidate;
+                        initialTabs = term.tabs.count;
+                        DLog(@"Use current window %@", term);
+                    }
+                    break;
+                }
+
+                case iTermOpenAnonymousTmuxWindowLocationTopmostSessionWindow: {
+                    PseudoTerminal *candidate = [self topmostTerminalHostingController:controller_];
+                    if (candidate) {
+                        term = candidate;
+                        initialTabs = term.tabs.count;
+                        DLog(@"Use topmost window hosting this tmux session %@", term);
+                    }
+                    break;
+                }
             }
         }
         if (!term) {

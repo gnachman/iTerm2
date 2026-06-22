@@ -15,8 +15,22 @@ typedef enum {
     kiTermAdvancedSettingTypeInteger,
     kiTermAdvancedSettingTypeFloat,
     kiTermAdvancedSettingTypeString,
-    kiTermAdvancedSettingTypeOptionalBoolean
+    kiTermAdvancedSettingTypeOptionalBoolean,
+
+    // An integer whose value is the index of a choice presented in a popup
+    // button. The kAdvancedSettingOptions key holds an array of option titles.
+    kiTermAdvancedSettingTypeIntEnum
 } iTermAdvancedSettingType;
+
+// Where a tmux window created outside iTerm2 (e.g., by running `tmux new-window`
+// at the command line) should open. Stored as the integer value of
+// +anonymousTmuxWindowsOpenInCurrentWindow. The raw values are persisted in user
+// defaults, so do not renumber them.
+typedef NS_ENUM(int, iTermOpenAnonymousTmuxWindowLocation) {
+    iTermOpenAnonymousTmuxWindowLocationNewWindow = 0,
+    iTermOpenAnonymousTmuxWindowLocationFocusedWindow = 1,
+    iTermOpenAnonymousTmuxWindowLocationTopmostSessionWindow = 2,
+};
 
 extern NSString *const kAdvancedSettingIdentifier;
 extern NSString *const kAdvancedSettingType;
@@ -24,6 +38,10 @@ extern NSString *const kAdvancedSettingDefaultValue;
 extern NSString *const kAdvancedSettingDescription;
 extern NSString *const kAdvancedSettingSetter;
 extern NSString *const kAdvancedSettingGetter;
+
+// For kiTermAdvancedSettingTypeIntEnum: an NSArray<NSString *> of option titles,
+// indexed by the setting's integer value.
+extern NSString *const kAdvancedSettingOptions;
 
 // The model posts this notification when it makes a change.
 extern NSString *const iTermAdvancedSettingsDidChange;
@@ -77,7 +95,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)alternateMouseScrollStringForUp;
 + (BOOL)alwaysAcceptFirstMouse;
 + (int)alwaysWarnBeforePastingOverSize;
-+ (BOOL)anonymousTmuxWindowsOpenInCurrentWindow;
++ (int)anonymousTmuxWindowsOpenInCurrentWindow;
 + (BOOL)appendToExistingDebugLog;
 + (BOOL)aquaSKKBugfixEnabled;
 + (BOOL)autoLockSessionNameOnEdit;

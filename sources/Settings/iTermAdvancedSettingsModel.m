@@ -26,6 +26,7 @@ NSString *const kAdvancedSettingDefaultValue = @"kAdvancedSettingDefaultValue";
 NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescription";
 NSString *const kAdvancedSettingSetter = @"kAdvancedSettingSetter";
 NSString *const kAdvancedSettingGetter = @"kAdvancedSettingGetter";
+NSString *const kAdvancedSettingOptions = @"kAdvancedSettingOptions";
 
 NSString *const iTermAdvancedSettingsDidChange = @"iTermAdvancedSettingsDidChange";
 
@@ -205,6 +206,32 @@ DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theD
 
 #define DEFINE_OPTIONAL_INT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, int *, kiTermAdvancedSettingTypeOptionalInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalInt, iTermAdvancedSettingsModelInverseTransformOptionalInt)
+
+// An integer setting presented as a popup button. theDefault is the default
+// integer value. theOptions is an NSArray<NSString *> * of option titles; the
+// stored value is the index of the selected title. Because the value is just an
+// int, a setting that used to be DEFINE_BOOL migrates transparently (NO=0, YES=1).
+#define DEFINE_INT_ENUM(name, theDefault, theOptions, theDescription) \
+static id sAdvancedSetting_##name; \
++ (NSDictionary *)advancedSettingsModelDictionary_##name { \
+    return @{ kAdvancedSettingIdentifier: [@#name stringByCapitalizingFirstLetter], \
+              kAdvancedSettingType: @(kiTermAdvancedSettingTypeIntEnum), \
+              kAdvancedSettingDefaultValue: @(theDefault), \
+              kAdvancedSettingDescription: theDescription, \
+              kAdvancedSettingOptions: theOptions }; \
+} \
++ (NSString *)name##UserDefaultsKey { \
+    return [@#name stringByCapitalizingFirstLetter]; \
+} \
++ (NSString *)load_##name { \
+    NSString *key = [self name##UserDefaultsKey]; \
+    id valueFromUserDefaults = [[iTermUserDefaults userDefaults] objectForKey:key]; \
+    sAdvancedSetting_##name = valueFromUserDefaults ?: @(theDefault); \
+    return key; \
+} \
++ (int)name { \
+    return [sAdvancedSetting_##name intValue]; \
+}
 
 #define DEFINE_FLOAT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, double, kiTermAdvancedSettingTypeFloat, theDefault, theDescription, iTermAdvancedSettingsModelTransformFloat, iTermAdvancedSettingsModelInverseTransformFloat)
@@ -696,7 +723,7 @@ DEFINE_BOOL(useBlackFillerColorForTmuxInFullScreen, NO, SECTION_TMUX @"Use black
 DEFINE_SETTABLE_OPTIONAL_BOOL(tmuxWindowsShouldCloseAfterDetach, TmuxWindowsShouldCloseAfterDetach, nil, SECTION_TMUX @"Close tmux windows after detaching?\nThis only takes effect when “Settings > Profiles > Session > After a session ends” is set to “No Action”.");
 DEFINE_BOOL(disableTmuxWindowPositionRestoration, NO, SECTION_TMUX @"Disable window position restoration in tmux integration.");
 DEFINE_BOOL(disableTmuxWindowResizing, YES, SECTION_TMUX @"Don't automatically resize tmux windows");
-DEFINE_BOOL(anonymousTmuxWindowsOpenInCurrentWindow, YES, SECTION_TMUX @"Should new tmux windows not created by iTerm2 open in the current window?\nIf set to No, they will open in new windows.");
+DEFINE_INT_ENUM(anonymousTmuxWindowsOpenInCurrentWindow, iTermOpenAnonymousTmuxWindowLocationFocusedWindow, (@[ @"New window", @"Focused window", @"Topmost session window" ]), SECTION_TMUX @"Where should new tmux windows not created by iTerm2 open?\n“Focused window” (the default) attaches the window as a tab of whichever iTerm2 window currently has keyboard focus. “Topmost session window” attaches it to the frontmost iTerm2 window that already shows a tab from this tmux session, regardless of focus.");
 DEFINE_BOOL(pollForTmuxForegroundJob, NO, SECTION_TMUX @"Poll for foreground job name in tmux integration with tmux < 3.2?\nThis enables tab icons but can cause a lot of background traffic. This has no effect in tmux 3.2 and later, where polling is unnecessary.");
 DEFINE_STRING(tmuxTitlePrefix, @"↣ ", SECTION_TMUX @"Insert this string at the start of tab and window titles to indicate tmux integration.");
 DEFINE_BOOL(tmuxIncludeClientNameInWindowTitle, YES, SECTION_TMUX @"When using tmux integration, should the tmux client name (typically the name of the attaching session or the host name) appear in brackets in the window title?");

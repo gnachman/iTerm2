@@ -303,6 +303,11 @@ Tmux Improvements:
   correct key reporting mode active.
 - Saner defaults for which window and tab a tmux
   attach uses.
+- The advanced setting for where tmux windows
+  created outside iTerm2 open is now a three-way
+  choice: a new window, the focused window, or
+  the topmost window already hosting that tmux
+  session.
 
 Expressions and Variables:
 - Arithmetic expressions and comparisons are

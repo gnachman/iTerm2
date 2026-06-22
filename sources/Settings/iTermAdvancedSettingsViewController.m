@@ -352,6 +352,31 @@ static NSDictionary *gIntrospection;
     }
 }
 
+- (NSView *)enumViewWithValue:(int)value options:(NSArray<NSString *> *)options row:(int)row {
+    NSPopUpButton *button = [_tableView makeViewWithIdentifier:@"enum" owner:self] ?: [[NSPopUpButton alloc] init];
+    [button it_setAssociatedObject:@(row) forKey:&iTermAdvancedSettingsTableKey];
+    [button setTarget:self];
+    [button setAction:@selector(changeEnum:)];
+    button.identifier = @"enum";
+    [button.menu removeAllItems];
+    for (NSString *title in options) {
+        [button.menu addItemWithTitle:title action:nil keyEquivalent:@""];
+    }
+    if (value >= 0 && value < options.count) {
+        [button selectItemAtIndex:value];
+    }
+    return button;
+}
+
+- (void)changeEnum:(NSPopUpButton *)sender {
+    const int row = [[sender it_associatedObjectForKey:&iTermAdvancedSettingsTableKey] intValue];
+    const NSInteger index = sender.indexOfSelectedItem;
+    NSArray *settings = [self filteredAdvancedSettings];
+    NSDictionary *dict = settings[row];
+    NSString *identifier = dict[kAdvancedSettingIdentifier];
+    [[iTermUserDefaults userDefaults] setInteger:index forKey:identifier];
+}
+
 - (iTermTableViewTextFieldWrapper *)viewForMutableString:(NSString *)string row:(int)row {
     iTermTableViewTextFieldWrapper *wrapper = [_tableView makeViewWithIdentifier:@"mutablestring" owner:self] ?: [[iTermTableViewTextFieldWrapper alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
     wrapper.ignoreBackgroundStyle = YES;
@@ -567,6 +592,13 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
                 return [self tristateViewWithValue:tristate row:row];
             }
 
+            case kiTermAdvancedSettingTypeIntEnum: {
+                NSNumber *n = (NSNumber *)value;
+                return [self enumViewWithValue:n.intValue
+                                       options:dict[kAdvancedSettingOptions]
+                                           row:row];
+            }
+
             case kiTermAdvancedSettingTypeFloat:
             case kiTermAdvancedSettingTypeInteger: {
                 iTermTableViewTextFieldWrapper *wrapper = [self viewForMutableString:[NSString stringWithFormat:@"%@", value] row:row];
@@ -643,6 +675,7 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
         switch ([dict advancedSettingType]) {
             case kiTermAdvancedSettingTypeBoolean:
             case kiTermAdvancedSettingTypeOptionalBoolean:
+            case kiTermAdvancedSettingTypeIntEnum:
                 assert(NO);
                 break;
 
@@ -696,7 +729,8 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
     switch ([dict advancedSettingType]) {
         case kiTermAdvancedSettingTypeBoolean:
         case kiTermAdvancedSettingTypeOptionalBoolean:
-            DLog(@"A boolean ended editing somehow");
+        case kiTermAdvancedSettingTypeIntEnum:
+            DLog(@"A popup ended editing somehow");
             break;
 
         case kiTermAdvancedSettingTypeFloat:
