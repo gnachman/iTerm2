@@ -61,12 +61,30 @@ final class ScreenWatchPoller {
 
     init(watcher: WorkgroupWatcher,
          sessionProvider: @escaping () -> PTYSession?,
-         onReached: @escaping () -> Void,
-         onTimedOut: @escaping () -> Void) {
+         onReached: @escaping () -> Void = {},
+         onTimedOut: @escaping () -> Void = {}) {
         self.watcher = watcher
         self.sessionProvider = sessionProvider
         self.onReached = onReached
         self.onTimedOut = onTimedOut
+    }
+
+    // One screen read + model judgement, with no run loop, deadline, or
+    // backoff. Returns true only when the model positively confirms the
+    // watcher's target. Used by the tab-status escalation backstop, which
+    // owns its own re-check cadence (a single check every few minutes)
+    // rather than running a continuous poll. The instance must be retained
+    // for the duration of the call so cancel() can abort the in-flight
+    // model request if the watch is resolved or dropped mid-check; an
+    // unreadable or cancelled judgement returns false (treated as not-yet,
+    // same as the run loop treats `unknown`).
+    func checkOnce() async -> Bool {
+        guard let session = sessionProvider() else { return false }
+        let contents = WorkgroupIntrospection.screenContents(
+            forSession: session, requestedLines: 150)
+        let capture = Capture(elapsed: 0, text: contents.text)
+        let verdict = await evaluate(window: [capture], kind: contents.kind)
+        return verdict == .reached
     }
 
     func start() {

@@ -1301,6 +1301,13 @@ Bug Fixes:
   agent picks the reliable watch form
   instead of misreading a splash
   screen as “idle”.
+- An orchestrator watcher waiting on a
+  session's reported status no longer
+  hangs forever if that status gets
+  stuck. After five minutes without the
+  expected change it falls back to
+  reading the screen to confirm the
+  real state.
 - Workgroup code-review/diff sessions no
   longer hang on “waiting for changes” in
   a checkout full of untracked files. The

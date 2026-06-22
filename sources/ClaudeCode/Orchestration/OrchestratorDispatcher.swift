@@ -112,6 +112,23 @@ final class OrchestratorDispatcher {
     // surviving .screenPoll watcher after a relaunch.
     private var screenPollers: [String: ScreenWatchPoller] = [:]
 
+    // Screen-observation backstop timers for tab-status watchers, keyed by
+    // watcherID. A tab-status watcher waits indefinitely on a status
+    // transition; if the cc-status hook drops the event that would report
+    // the target state, that transition never arrives and the watch hangs
+    // (a session reported "working" that has actually gone idle). After
+    // tabStatusEscalationDelay without firing, the timer escalates the
+    // watcher to screen observation — a poller reads the rendered screen and
+    // fires the watch when it can positively confirm the target, while the
+    // tab-status subscription stays armed in case the hook recovers. Not
+    // persisted; reconcilePersistedWatchers re-arms one per surviving
+    // tab-status watcher after a relaunch.
+    private var escalationTimers: [String: Task<Void, Never>] = [:]
+
+    // How long a tab-status watcher waits for its status transition before
+    // escalating to the screen-observation backstop.
+    private static let tabStatusEscalationDelay: TimeInterval = 300  // 5 minutes
+
     init(chatID: String, broker: ChatBroker) {
         self.chatID = chatID
         self.broker = broker
@@ -204,6 +221,10 @@ final class OrchestratorDispatcher {
             poller.cancel()
         }
         screenPollers.removeAll()
+        for (_, timer) in escalationTimers {
+            timer.cancel()
+        }
+        escalationTimers.removeAll()
     }
 
     deinit {
@@ -332,6 +353,13 @@ final class OrchestratorDispatcher {
         let matchedIDs = Set(matches.map { $0.watcherID })
         watchers.removeAll { matchedIDs.contains($0.watcherID) }
         persistWatchers()
+        // The status transition arrived (the hook is healthy): tear down any
+        // screen-observation backstop that escalation may have started, and
+        // the pending escalation timer, so neither fires after the watch is
+        // already resolved.
+        for id in matchedIDs {
+            removeWatcherAuxiliaries(watcherID: id)
+        }
         for fired in matches {
             publishStatusUpdate(
                 watcher: fired,
@@ -361,7 +389,7 @@ final class OrchestratorDispatcher {
         watchers.removeAll { droppedIDs.contains($0.watcherID) }
         persistWatchers()
         for watcher in dropped {
-            cancelScreenPoller(watcherID: watcher.watcherID)
+            removeWatcherAuxiliaries(watcherID: watcher.watcherID)
             publishStatusUpdate(
                 watcher: watcher,
                 reason: .watcherDropped,
@@ -412,6 +440,15 @@ final class OrchestratorDispatcher {
         // is the intended behavior after a relaunch.
         for watcher in watchers where watcher.effectiveMode == .screenPoll {
             startScreenPoll(for: watcher)
+        }
+        // Tab-status watchers get a fresh escalation timer, also counted
+        // from now (the running timer can't be serialized any more than the
+        // poll loop can). A watcher that already escalated to a live poller
+        // before the relaunch starts over: the timer re-arms, and if the
+        // status transition still hasn't come 5 minutes later it escalates
+        // again.
+        for watcher in watchers where watcher.effectiveMode == .tabStatus {
+            armScreenEscalation(for: watcher)
         }
     }
 
@@ -500,6 +537,144 @@ final class OrchestratorDispatcher {
         poller.start()
     }
 
+    // Arm the screen-observation backstop for a tab-status watcher.
+    // Idempotent per watcherID. The timer Task waits for the session's
+    // screen to go quiet (no textViewDidFindDirtyRects) for
+    // tabStatusEscalationDelay, then takes ONE screenshot and asks the model
+    // whether the target state has been reached:
+    //   - reached: fire the watch (via the shared screen-poll completion).
+    //   - not yet: the reported status may be legitimately "working" (a
+    //     silent computation can leave the screen static); wait another
+    //     interval and check once more. This is a slow single-check cadence,
+    //     not a continuous poll, so a long-running task isn't billed a model
+    //     round-trip every few seconds.
+    // Fresh output keeps resetting the quiet clock, so an actively-updating
+    // session never triggers a screenshot. The tab-status subscription stays
+    // armed throughout: if the status transition does arrive,
+    // handle(tabStatusNotification:) removes the watcher and cancels this
+    // timer (and any in-flight check) via removeWatcherAuxiliaries, so the
+    // backstop never fires after the watch is already resolved.
+    //
+    // No-op for two kinds of watcher, so callers don't have to pre-filter:
+    //   - Non-tab-status (.screenPoll) watchers already run their own
+    //     continuous poller in screenPollers[id]; arming here would let
+    //     runSingleScreenCheck overwrite that slot and orphan the running
+    //     poller. doStartCodeReview can reach this with a .screenPoll watcher
+    //     it dedup-matched (a register_watch made before the session emitted
+    //     its first cc-status), so the guard is load-bearing, not cosmetic.
+    //   - .working targets: the backstop only fires after the screen has been
+    //     QUIET for a while, which is evidence the session is idle, not
+    //     working. A quiet-screen screenshot could never confirm activity, so
+    //     there is nothing to escalate; the tab-status transition stays the
+    //     only trigger.
+    @MainActor
+    private func armScreenEscalation(for watcher: WorkgroupWatcher) {
+        guard watcher.effectiveMode == .tabStatus else { return }
+        guard watcher.targetState != .working else { return }
+        let id = watcher.watcherID
+        guard escalationTimers[id] == nil else { return }
+        escalationTimers[id] = Task { @MainActor [weak self] in
+            await self?.runScreenEscalation(watcherID: id)
+        }
+    }
+
+    @MainActor
+    private func runScreenEscalation(watcherID id: String) async {
+        let delay = Self.tabStatusEscalationDelay
+        let interval = UInt64(delay * 1_000_000_000)
+        // The screen-change stamp at our most recent screenshot check. While
+        // the screen stays on this stamp a re-check would read byte-for-byte
+        // identical contents and return the same verdict, so we skip it until
+        // a fresh dirty-rect advances the stamp.
+        var lastCheckedStamp: TimeInterval?
+        while !Task.isCancelled {
+            // Still an active, unfired tab-status watcher on a live session?
+            guard let watcher = watchers.first(where: { $0.watcherID == id }) else {
+                return
+            }
+            guard let session = sessionByGUID(watcher.sessionGUID) else {
+                // Session gone; the terminate handler owns watcher cleanup.
+                return
+            }
+            // Active output resets the quiet clock (textViewDidFindDirtyRects),
+            // so a working session keeps us here and never bills a check. This
+            // is the "restart the timer on input" behavior: every screen
+            // change pushes the screenshot back to last-change + delay.
+            let quiet = session.timeSinceScreenContentsLastChanged
+            if quiet < delay {
+                let remaining = max(1, delay - quiet)
+                try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+                continue
+            }
+            // Screen has been quiet long enough. If it hasn't changed since
+            // our last check, the verdict is unchanged too: wait (cheaply,
+            // no model call) for the next change instead of re-asking.
+            let stamp = session.screenContentsLastChangedAt
+            if lastCheckedStamp == stamp {
+                try? await Task.sleep(nanoseconds: interval)
+                continue
+            }
+            DLog("Orchestrator dispatcher: tab-status watcher \(id) "
+                 + "(\(watcher.roleName) in \(watcher.workgroupName)) has had a "
+                 + "quiet screen for \(Int(quiet))s without a status transition; "
+                 + "confirming state from a screenshot.")
+            let reached = await runSingleScreenCheck(for: watcher)
+            if Task.isCancelled { return }
+            if reached {
+                // Resolve through the shared completion path (removal,
+                // persistence, aux teardown, status_update with the
+                // escalation-flavored detail).
+                screenPollFinished(watcherID: id, timedOut: false)
+                return
+            }
+            // Not yet. Remember the screen we just judged so we don't re-judge
+            // the same contents, and wait a full interval before looking
+            // again. Capturing the pre-check stamp is conservative: any change
+            // during the check advances the stamp and forces a fresh judgement
+            // next time rather than risking a missed transition.
+            lastCheckedStamp = stamp
+            DLog("Orchestrator dispatcher: screenshot for watcher \(id) shows "
+                 + "the target is not reached yet; will re-check when its "
+                 + "screen next changes.")
+            try? await Task.sleep(nanoseconds: interval)
+        }
+    }
+
+    // Take a single screenshot judgement for an escalated watcher. The
+    // poller is parked in screenPollers for the call's duration so
+    // removeWatcherAuxiliaries can abort the in-flight model request if the
+    // watch fires or is dropped mid-check.
+    @MainActor
+    private func runSingleScreenCheck(for watcher: WorkgroupWatcher) async -> Bool {
+        let id = watcher.watcherID
+        let guid = watcher.sessionGUID
+        let poller = ScreenWatchPoller(
+            watcher: watcher,
+            sessionProvider: { [weak self] in self?.sessionByGUID(guid) })
+        screenPollers[id] = poller
+        let reached = await poller.checkOnce()
+        // Only clear our own entry; a concurrent teardown may have already
+        // removed (and cancelled) it.
+        if screenPollers[id] === poller {
+            screenPollers.removeValue(forKey: id)
+        }
+        return reached
+    }
+
+    // Tear down every piece of auxiliary machinery attached to a watcher:
+    // its escalation timer and any screen poller. Called from each path that
+    // removes a watcher from the list (tab-status fire, screen-poll fire,
+    // session terminate, unregister). An escalated tab-status watcher has
+    // both, and whichever firing path wins must stop the other so it can't
+    // fire again or keep polling/billing.
+    @MainActor
+    private func removeWatcherAuxiliaries(watcherID: String) {
+        if let timer = escalationTimers.removeValue(forKey: watcherID) {
+            timer.cancel()
+        }
+        cancelScreenPoller(watcherID: watcherID)
+    }
+
     // Terminal callback from a poller: it either decided the target was
     // reached or gave up at the time cap. Drop the watcher and poller and
     // publish the matching status_update. Routing through the dispatcher
@@ -513,6 +688,9 @@ final class OrchestratorDispatcher {
         }
         watchers.removeAll { $0.watcherID == watcherID }
         persistWatchers()
+        // The escalation timer (if this was an escalated tab-status watcher)
+        // already fired to start this poller; clear its slot defensively.
+        removeWatcherAuxiliaries(watcherID: watcherID)
         if timedOut {
             publishStatusUpdate(
                 watcher: watcher,
@@ -531,13 +709,23 @@ final class OrchestratorDispatcher {
                     + "condition '\(condition)' (detected by screen observation).")
         } else {
             let target = watcher.targetState?.rawValue ?? "unknown"
+            // A screen poller on a .tabStatus watcher is the escalation
+            // backstop: the session does report status, it was just stale
+            // for long enough that we confirmed the state from the screen
+            // instead. A .screenPoll watcher's session reports no status at
+            // all. The detail spells out which so the agent isn't misled.
+            let how = watcher.effectiveMode == .tabStatus
+                ? "confirmed by reading the screen; its reported status had "
+                    + "stopped updating for several minutes, so the status may "
+                    + "have been stale"
+                : "detected by screen observation; this session reports no "
+                    + "machine-readable status"
             publishStatusUpdate(
                 watcher: watcher,
                 reason: .stateReached,
                 stateReached: target,
                 detail: "\(watcher.roleName) in \(watcher.workgroupName) reached state "
-                    + "'\(target)' (detected by screen observation; this session reports "
-                    + "no machine-readable status).")
+                    + "'\(target)' (\(how)).")
         }
     }
 
@@ -1394,6 +1582,9 @@ final class OrchestratorDispatcher {
             notifyUser: args.notifyUser)
         watchers.append(watcher)
         persistWatchers()
+        // Tab-status watcher: arm the screen-observation backstop so a
+        // dropped status event can't hang the watch indefinitely.
+        armScreenEscalation(for: watcher)
         return .watcherRegistered(Self.description(of: watcher))
     }
 
@@ -1404,7 +1595,7 @@ final class OrchestratorDispatcher {
         if watchers.count != before {
             persistWatchers()
         }
-        cancelScreenPoller(watcherID: watcherID)
+        removeWatcherAuxiliaries(watcherID: watcherID)
         return .ack
     }
 
@@ -1866,6 +2057,10 @@ final class OrchestratorDispatcher {
             watchers.append(watcher)
             persistWatchers()
         }
+        // Code Review runs on a status-reporting Claude Code session, so this
+        // is a tab-status watcher: arm the screen-observation backstop (no-op
+        // if it already exists from a prior start_code_review on this role).
+        armScreenEscalation(for: watcher)
 
         DLog("[Orchestrator \(chatID)] Code Review started for \(resolved.roleName) "
              + "in \(resolved.workgroupName) using \(promptLabel); watcher \(watcher.watcherID)")

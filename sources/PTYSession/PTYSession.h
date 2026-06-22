@@ -388,6 +388,18 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly) BOOL alertOnMarksinOffscreenSessions;
 @property(nonatomic, copy, nullable) NSColor *tabColor;
 
+// Seconds (monotonic) since the rendered screen contents last changed, i.e.
+// since the last textViewDidFindDirtyRects. Used by the orchestrator's
+// tab-status escalation backstop to tell an actively-updating session from a
+// visually quiet one.
+@property(nonatomic, readonly) NSTimeInterval timeSinceScreenContentsLastChanged;
+
+// The monotonic (it_timeSinceBoot) timestamp of that last change. Compared
+// for equality across checks so the backstop can tell whether the screen has
+// changed since it last read it (an unchanged screen yields the same verdict,
+// so there's no point re-checking).
+@property(nonatomic, readonly) NSTimeInterval screenContentsLastChangedAt;
+
 @property(nonatomic, readonly, nullable) DVR *dvr;
 @property(nonatomic, readonly, nullable) DVRDecoder *dvrDecoder;
 // Returns the "real" session while in instant replay, else nil if not in IR.

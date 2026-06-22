@@ -422,6 +422,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // Time since reference date when the tab label was last updated.
     NSTimeInterval _lastUpdate;
 
+    // Monotonic (it_timeSinceBoot) time the rendered screen contents last
+    // changed, updated from textViewDidFindDirtyRects. Read by the
+    // orchestrator's tab-status escalation backstop to measure how long a
+    // session has been visually quiet. Monotonic so durations survive wall-
+    // clock changes.
+    NSTimeInterval _lastScreenContentsChangeTime;
+
     // This is used for divorced sessions. It contains the keys in profile
     // that have been customized. Changes in the original profile will be copied over
     // to profile except for these keys.
@@ -767,6 +774,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
+        _lastScreenContentsChangeTime = [NSDate it_timeSinceBoot];
         _pasteHelper = [[iTermPasteHelper alloc] init];
         _pasteHelper.delegate = self;
 
@@ -12192,7 +12200,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (NSTimeInterval)timeSinceScreenContentsLastChanged {
+    return [NSDate it_timeSinceBoot] - _lastScreenContentsChangeTime;
+}
+
+- (NSTimeInterval)screenContentsLastChangedAt {
+    return _lastScreenContentsChangeTime;
+}
+
 - (void)textViewDidFindDirtyRects {
+    _lastScreenContentsChangeTime = [NSDate it_timeSinceBoot];
     if (_updateSubscriptions.count) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
