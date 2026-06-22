@@ -902,6 +902,8 @@ final class iTermOpenWindowsController: NSViewController,
     private var outlineView  = NSOutlineView()
     private var scrollView   = NSScrollView()
     private var associateButton = NSButton()
+    var pathfinderButton    = NSButton()
+    var manualAdoptButton   = NSButton()
     private var statusLabel     = NSTextField(labelWithString: "")
 
     // Hover preview
@@ -1046,7 +1048,19 @@ final class iTermOpenWindowsController: NSViewController,
                   target: self,
                   action: #selector(associateSelected(_:)))
 
-        let stack = NSStackView(views: [statusLabel, NSView(), associateButton])
+        configure(&pathfinderButton,
+                  label: "Run Pathfinder",
+                  tip: "Run pathfinder diagnostics on current window",
+                  target: self,
+                  action: #selector(runPathfinder(_:)))
+
+        configure(&manualAdoptButton,
+                  label: "Manual Adopt",
+                  tip: "Try to manually re-adopt orphaned sessions on active multiserver sockets",
+                  target: self,
+                  action: #selector(runManualAdoption(_:)))
+
+        let stack = NSStackView(views: [statusLabel, NSView(), manualAdoptButton, pathfinderButton, associateButton])
         stack.orientation  = .horizontal
         stack.spacing      = 6
         stack.edgeInsets   = NSEdgeInsets(top: 0, left: 6, bottom: 0, right: 6)
@@ -1091,6 +1105,8 @@ final class iTermOpenWindowsController: NSViewController,
         let hasTerminal = selectedTerminal != nil
         let hasProject  = projectsController?.selectedProject != nil
         associateButton.isEnabled = hasTerminal && hasProject
+        pathfinderButton.isEnabled = hasTerminal
+        manualAdoptButton.isEnabled = hasTerminal
     }
 
     // MARK: NSOutlineViewDataSource
@@ -1233,6 +1249,25 @@ final class iTermOpenWindowsController: NSViewController,
         guard let terminal = selectedTerminal,
               let project  = iTermWindowProjectsModel.shared.project(for: terminal) else { return }
         iTermWindowProjectsModel.shared.archiveWindow(terminal, to: project, andClose: true, keepJobsRunning: true)
+    }
+
+    @objc private func runPathfinder(_ sender: Any?) {
+        guard let terminal = selectedTerminal else { return }
+        let log = iTermWindowProjectsPathfinder.runDiagnostics(on: terminal)
+        let alert = NSAlert()
+        alert.messageText = "Pathfinder Diagnostics"
+        alert.informativeText = log
+        alert.runModal()
+    }
+
+    @objc private func runManualAdoption(_ sender: Any?) {
+        guard let terminal = selectedTerminal,
+              let session = terminal.allSessions()?.first as? PTYSession else { return }
+        let log = iTermWindowProjectsPathfinder.tryManualAdoption(on: session)
+        let alert = NSAlert()
+        alert.messageText = "Manual Re-attachment Pathfinder"
+        alert.informativeText = log
+        alert.runModal()
     }
 
     @objc private func disassociateSelected(_ sender: Any?) {

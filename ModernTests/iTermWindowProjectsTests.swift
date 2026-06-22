@@ -402,6 +402,53 @@ class iTermWindowProjectsTests: XCTestCase {
         XCTAssertFalse(session?.isArchive ?? true, "Restored session with live attached process must NOT be marked as an archive (which freezes output/input)")
         XCTAssertTrue(session?.screen.terminalEnabled ?? false, "Restored session screen must be explicitly enabled to receive keyboard inputs and process output characters")
     }
+
+    func testSocketAdoptionExplorer() {
+        var log = "=== HEAVY EXPLORATORY MULTI-SERVER CONNECTION PROBE ===\n"
+        
+        // Connect to Socket 3 cleanly using iTerm2's own compiled structures!
+        let socketNumber: Int32 = 4
+        let sem = DispatchSemaphore(value: 0)
+        var connectionFound: iTermMultiServerConnection? = nil
+        
+        let thread = iTermThread<iTermMainThreadState>.main()
+        let callback = thread.newCallback { (stateObj, valueObj) in
+            guard let result = valueObj as? iTermResult<iTermMultiServerConnection> else {
+                log += "❌ Failed to cast valueObj to iTermResult<iTermMultiServerConnection>\n"
+                sem.signal()
+                return
+            }
+            result.handleObject({ connection in
+                connectionFound = connection
+                log += "✅ Established native connection to Socket \(socketNumber)!\n"
+                sem.signal()
+            }, error: { error in
+                log += "❌ Connection failed asynchronously: \(error.localizedDescription)\n"
+                sem.signal()
+            })
+        }
+        
+        let bridgedCallback = callback as! iTermCallback<AnyObject, iTermMultiServerConnection>
+        iTermMultiServerConnection.getForSocketNumber(socketNumber, createIfPossible: true, callback: bridgedCallback)
+        
+        // Wait up to 5 seconds for the connection to be established cleanly
+        _ = sem.wait(timeout: .now() + 5.0)
+        
+        if let connection = connectionFound {
+            let unattached = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+            log += "🎉 Discovered unattached children count: \(unattached.count)\n"
+            for child in unattached {
+                log += "   PID: \(child.pid), TTY: \(child.tty ?? "nil")\n"
+            }
+        } else {
+            log += "❌ Connection object is NIL\n"
+        }
+        
+        log += "=== PROBE COMPLETE ===\n"
+        fputs(log, stderr)
+        fflush(stderr)
+        XCTAssertNotNil(connectionFound, "Failed to connect to Socket 3")
+    }
 }
 
 extension PTYSession {

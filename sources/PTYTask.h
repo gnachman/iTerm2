@@ -190,6 +190,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 
+- (void)setJobManagerType:(iTermGeneralServerConnectionType)type;
+- (void)closeFileDescriptorAndDeregisterIfPossible;
+
 - (instancetype)init;
 
 - (BOOL)hasBrokenPipe;

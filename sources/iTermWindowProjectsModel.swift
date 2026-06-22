@@ -326,19 +326,25 @@ final class iTermWindowProject: NSObject, Codable {
         for terminal in liveWindows(for: project) {
             guard let wn = terminal.ptyWindow()?.windowNumber else { continue }
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-            var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-            if let firstSession = terminal.allSessions()?.first as? PTYSession {
-                arrangement["Archive"] = [
-                    "columns": firstSession.columns,
-                    "rows": firstSession.rows
-                ]
-            }
             let title = terminal.ptyWindow()?.title ?? "Window"
             let uuid = UUID()
             Self.saveThumbnail(for: wn, uuid: uuid)
             project.windows.append(iTermArchivedWindow(id: uuid, name: title, arrangement: arrangement))
             liveAssociations.removeValue(forKey: wn)
+            
+            // If we are freezing and keeping jobs running, cleanly release the client-side socket connections
+            if keepJobsRunning {
+                if let sessions = terminal.allSessions() as? [PTYSession] {
+                    for session in sessions {
+                        if let task = session.shell {
+                            print("[Freeze-Project] Natively closing file descriptors and deregistering task from TaskNotifier...")
+                            task.closeFileDescriptorAndDeregisterIfPossible()
+                        }
+                    }
+                }
+            }
             
             terminal.orphanJobsOnClose = keepJobsRunning
             terminal.close()
@@ -363,14 +369,8 @@ final class iTermWindowProject: NSObject, Codable {
             return
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-        if let firstSession = terminal.allSessions()?.first as? PTYSession {
-            arrangement["Archive"] = [
-                "columns": firstSession.columns,
-                "rows": firstSession.rows
-            ]
-        }
         let title = window.title.isEmpty ? "Window" : window.title
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
@@ -388,14 +388,8 @@ final class iTermWindowProject: NSObject, Codable {
                   let project = project(id: projectID) else { continue }
             
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-            var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+            let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-            if let firstSession = terminal.allSessions()?.first as? PTYSession {
-                arrangement["Archive"] = [
-                    "columns": firstSession.columns,
-                    "rows": firstSession.rows
-                ]
-            }
             
             let title = terminal.ptyWindow()?.title ?? "Window"
             let uuid = UUID()
@@ -418,14 +412,8 @@ final class iTermWindowProject: NSObject, Codable {
             liveAssociations.removeValue(forKey: wn)
         }
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        var arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
-        if let firstSession = terminal.allSessions()?.first as? PTYSession {
-            arrangement["Archive"] = [
-                "columns": firstSession.columns,
-                "rows": firstSession.rows
-            ]
-        }
         let title = terminal.ptyWindow()?.title ?? "Window"
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
@@ -433,6 +421,64 @@ final class iTermWindowProject: NSObject, Codable {
         project.windows.append(entry)
         project.lastUsed = Date()
         save()
+        
+        // If we are freezing and keeping jobs running, cleanly release and purge the client-side socket connections
+        if close && keepJobsRunning {
+            if let sessions = terminal.allSessions() as? [PTYSession] {
+                for session in sessions {
+                    if let task = session.shell {
+                        print("[Freeze] Natively closing file descriptors and deregistering task from TaskNotifier...")
+                        task.closeFileDescriptorAndDeregisterIfPossible()
+                    }
+                    
+                    if let task = session.shell,
+                       let restorationID = task.sessionRestorationIdentifier as? [AnyHashable: Any],
+                       let socketNumber = (restorationID["Socket"] as? Int) ?? (restorationID["Socket"] as? NSNumber)?.intValue {
+                        
+                        var callbackExecuted = false
+                        let thread = iTermThread<iTermMainThreadState>.main()
+                        let callback = thread.newCallback { (_, valueObj) in
+                            if let result = valueObj as? iTermResult<iTermMultiServerConnection> {
+                                result.handleObject({ connection in
+                                    print("[Freeze] Purging and releasing client socket connection for Socket \(socketNumber)...")
+                                    // Close the client's internal sockets
+                                    if let threadObj = (connection as NSObject).value(forKey: "thread") as? iTermThread<AnyObject> {
+                                        threadObj.dispatchSync { perConnectionStateObj in
+                                            if let state = perConnectionStateObj as? NSObject,
+                                               let client = state.value(forKey: "client") as? iTermFileDescriptorMultiClient {
+                                                if let clientThread = (client as NSObject).value(forKey: "thread") as? iTermThread<AnyObject> {
+                                                    clientThread.dispatchSync { clientStateObj in
+                                                        if let clientState = clientStateObj as? NSObject,
+                                                           let readFD = clientState.value(forKey: "readFD") as? Int32,
+                                                           let writeFD = clientState.value(forKey: "writeFD") as? Int32 {
+                                                            clientState.setValue(-1, forKey: "readFD")
+                                                            clientState.setValue(-1, forKey: "writeFD")
+                                                            if readFD >= 0 { Darwin.close(readFD) }
+                                                            if writeFD >= 0 { Darwin.close(writeFD) }
+                                                        }
+                                                    }
+                                                }
+                                                connection.fileDescriptorMultiClientDidClose(client)
+                                            }
+                                        }
+                                    }
+                                }, error: { _ in })
+                            }
+                            callbackExecuted = true
+                        }
+                        let bridgedCallback = callback as! iTermCallback<AnyObject, iTermMultiServerConnection>
+                        iTermMultiServerConnection.getForSocketNumber(Int32(socketNumber), createIfPossible: false, callback: bridgedCallback)
+                        
+                        // Spin run loop briefly to execute the callback synchronously
+                        let limitDate = Date(timeIntervalSinceNow: 0.3)
+                        while !callbackExecuted && Date() < limitDate {
+                            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.05))
+                        }
+                    }
+                }
+            }
+        }
+        
         if close {
             terminal.orphanJobsOnClose = keepJobsRunning
             terminal.close()
@@ -447,6 +493,121 @@ final class iTermWindowProject: NSObject, Codable {
 
     // MARK: Restoration
 
+    private class func purgeCachedConnection(for arrangement: [AnyHashable: Any]) {
+        // Unpack Tabs and Root to find the Session dictionary
+        func findSessionDict(in node: [AnyHashable: Any]) -> [AnyHashable: Any]? {
+            if node["Server Dict"] != nil {
+                return node
+            }
+            if let session = node["Session"] as? [AnyHashable: Any] {
+                return session
+            }
+            if let subviews = node["Subviews"] as? [Any] {
+                for sub in subviews {
+                    if let subDict = sub as? [AnyHashable: Any],
+                       let found = findSessionDict(in: subDict) {
+                        return found
+                    }
+                }
+            }
+            return nil
+        }
+        
+        guard let tabs = arrangement["Tabs"] as? [Any],
+              let firstTab = tabs.first as? [AnyHashable: Any],
+              let root = firstTab["Root"] as? [AnyHashable: Any],
+              let firstSessionDict = findSessionDict(in: root),
+              let serverDict = firstSessionDict["Server Dict"] as? [AnyHashable: Any],
+              let socketNumber = (serverDict["Socket"] as? Int) ?? (serverDict["Socket"] as? NSNumber)?.intValue,
+              let childPid = (serverDict["Child PID"] as? Int) ?? (serverDict["Child PID"] as? NSNumber)?.intValue else {
+            return
+        }
+        
+        print("[Restoration] Found saved multiserver Socket \(socketNumber), Child PID \(childPid) in arrangement. Purging cached connection to force fresh re-attachment...")
+        
+        // Fetch and purge cached connection
+        var callbackExecuted = false
+        var purgedConnection: iTermMultiServerConnection? = nil
+        let thread = iTermThread<iTermMainThreadState>.main()
+        let callback: iTermCallback<iTermMainThreadState, AnyObject> = thread.newCallback { (stateObj, valueObj) in
+            guard let result = valueObj as? iTermResult<iTermMultiServerConnection> else {
+                callbackExecuted = true
+                return
+            }
+            result.handleObject({ connection in
+                purgedConnection = connection
+                if let threadObj = (connection as NSObject).value(forKey: "thread") as? iTermThread<AnyObject> {
+                    threadObj.dispatchSync { perConnectionStateObj in
+                        if let state = perConnectionStateObj as? NSObject,
+                           let client = state.value(forKey: "client") as? iTermFileDescriptorMultiClient {
+                            connection.fileDescriptorMultiClientDidClose(client)
+                        }
+                    }
+                }
+                callbackExecuted = true
+            }, error: { _ in
+                callbackExecuted = true
+            })
+        }
+        
+        let bridgedCallback = callback as! iTermCallback<AnyObject, iTermMultiServerConnection>
+        iTermMultiServerConnection.getForSocketNumber(Int32(socketNumber), createIfPossible: false, callback: bridgedCallback)
+        
+        // Spin the run loop to allow synchronous main-thread purge to complete
+        let limitDate = Date(timeIntervalSinceNow: 1.0)
+        while !callbackExecuted && Date() < limitDate {
+            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.1))
+        }
+        
+        // If we successfully purged the connection, execute our 5-attempt retry connect loop to pre-establish the fresh connection!
+        if purgedConnection != nil {
+            var connectionFound = false
+            var retryCount = 1
+            let maxRetries = 5
+            
+            while retryCount <= maxRetries {
+                var callback2Executed = false
+                
+                let callback2: iTermCallback<iTermMainThreadState, AnyObject> = thread.newCallback { (stateObj, valueObj) in
+                    guard let result = valueObj as? iTermResult<iTermMultiServerConnection> else {
+                        callback2Executed = true
+                        return
+                    }
+                    result.handleObject({ freshConnection in
+                        let unattached = (freshConnection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                        if unattached.contains(where: { $0.pid == Int32(childPid) }) {
+                            connectionFound = true
+                        }
+                        callback2Executed = true
+                    }, error: { _ in
+                        callback2Executed = true
+                    })
+                }
+                
+                let bridgedCallback2 = callback2 as! iTermCallback<AnyObject, iTermMultiServerConnection>
+                iTermMultiServerConnection.getForSocketNumber(Int32(socketNumber), createIfPossible: true, callback: bridgedCallback2)
+                
+                let limitDate2 = Date(timeIntervalSinceNow: 1.5)
+                while !callback2Executed && Date() < limitDate2 {
+                    RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.1))
+                }
+                
+                if connectionFound {
+                    print("[Restoration] Successfully pre-established fresh multiserver connection to Socket \(socketNumber) and verified Child PID \(childPid) inside unattachedChildren on attempt \(retryCount)!")
+                    break
+                }
+                
+                retryCount += 1
+                if retryCount <= maxRetries {
+                    let pauseDate = Date(timeIntervalSinceNow: 0.4)
+                    while Date() < pauseDate {
+                        RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.1))
+                    }
+                }
+            }
+        }
+    }
+
     func restoreWindow(_ archived: iTermArchivedWindow) {
         guard let project = parentProject(of: archived) else { return }
         guard let arrangement = archived.arrangement else { return }
@@ -454,6 +615,7 @@ final class iTermWindowProject: NSObject, Codable {
         let lionFullScreen = PseudoTerminal.arrangementIsLionFullScreen(arrangement)
         PseudoTerminal.performWhenWindowCreationIsSafe(forLionFullScreen: lionFullScreen) { [weak self] in
             guard let self = self else { return }
+            Self.purgeCachedConnection(for: arrangement)
             guard let term = PseudoTerminal(
                 arrangement: arrangement,
                 named: nil,
@@ -483,6 +645,7 @@ final class iTermWindowProject: NSObject, Codable {
             let lionFullScreen = PseudoTerminal.arrangementIsLionFullScreen(arrangement)
             PseudoTerminal.performWhenWindowCreationIsSafe(forLionFullScreen: lionFullScreen) { [weak self] in
                 guard let self = self else { return }
+                Self.purgeCachedConnection(for: arrangement)
                 guard let term = PseudoTerminal(
                     arrangement: arrangement,
                     named: nil,
@@ -541,5 +704,244 @@ final class iTermWindowProject: NSObject, Codable {
             if let found = findArchivedWindow(id: id, in: p.children) { return found }
         }
         return nil
+    }
+}
+
+@objc public final class iTermWindowProjectsPathfinder: NSObject {
+    
+    @objc public class func tryManualAdoption(on session: PTYSession) -> String {
+        var log = "--- EXPERIMENT A: NATIVE HOT-SWAP ATTACHMENT ---\n"
+        func logInfo(_ message: String) {
+            log += message + "\n"
+            print("[Pathfinder-A] " + message)
+        }
+        
+        logInfo("Target Session TTY: \(session.tty ?? "nil")")
+        
+        // Purge the cached connections first to prevent ECONNREFUSED/stale connection reuse!
+        for socketNumber in 1...10 {
+            var callbackExecuted = false
+            let thread = iTermThread<iTermMainThreadState>.main()
+            let callback1: iTermCallback<iTermMainThreadState, AnyObject> = thread.newCallback { (stateObj, valueObj) in
+                if let result = valueObj as? iTermResult<iTermMultiServerConnection> {
+                    result.handleObject({ connection in
+                        logInfo("🧹 Socket \(socketNumber): Purging cached connection registry...")
+                        
+                        // Close the client's internal sockets
+                        if let threadObj = (connection as NSObject).value(forKey: "thread") as? iTermThread<AnyObject> {
+                            threadObj.dispatchSync { perConnectionStateObj in
+                                if let state = perConnectionStateObj as? NSObject,
+                                   let client = state.value(forKey: "client") as? iTermFileDescriptorMultiClient {
+                                    if let clientThread = (client as NSObject).value(forKey: "thread") as? iTermThread<AnyObject> {
+                                        clientThread.dispatchSync { clientStateObj in
+                                            if let clientState = clientStateObj as? NSObject,
+                                               let readFD = clientState.value(forKey: "readFD") as? Int32,
+                                               let writeFD = clientState.value(forKey: "writeFD") as? Int32 {
+                                                clientState.setValue(-1, forKey: "readFD")
+                                                clientState.setValue(-1, forKey: "writeFD")
+                                                if readFD >= 0 { close(readFD) }
+                                                if writeFD >= 0 { close(writeFD) }
+                                            }
+                                        }
+                                    }
+                                    connection.fileDescriptorMultiClientDidClose(client)
+                                }
+                            }
+                        }
+                    }, error: { _ in })
+                }
+                callbackExecuted = true
+            }
+            let bridgedCallback1 = callback1 as! iTermCallback<AnyObject, iTermMultiServerConnection>
+            iTermMultiServerConnection.getForSocketNumber(Int32(socketNumber), createIfPossible: false, callback: bridgedCallback1)
+            
+            let limitDate = Date(timeIntervalSinceNow: 0.5)
+            while !callbackExecuted && Date() < limitDate {
+                RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.05))
+            }
+        }
+        
+        // Now let's find the live background sleep process and orphaned Socket on disk!
+        var targetSocket: Int32 = -1
+        var targetPID: Int32 = -1
+        
+        for socketNumber in 1...10 {
+            var callbackExecuted = false
+            let thread = iTermThread<iTermMainThreadState>.main()
+            let callback2: iTermCallback<iTermMainThreadState, AnyObject> = thread.newCallback { (stateObj, valueObj) in
+                if let result = valueObj as? iTermResult<iTermMultiServerConnection> {
+                    result.handleObject({ connection in
+                        let unattached = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                        logInfo("🔍 Socket \(socketNumber): Found \(unattached.count) unattached children.")
+                        for child in unattached {
+                            if child.pid > 0 {
+                                targetSocket = Int32(socketNumber)
+                                targetPID = child.pid
+                                logInfo("   👉 Found background candidate PID: \(child.pid), TTY: \(child.tty ?? "nil")")
+                            }
+                        }
+                    }, error: { _ in })
+                }
+                callbackExecuted = true
+            }
+            let bridgedCallback2 = callback2 as! iTermCallback<AnyObject, iTermMultiServerConnection>
+            iTermMultiServerConnection.getForSocketNumber(Int32(socketNumber), createIfPossible: true, callback: bridgedCallback2)
+            
+            let limitDate = Date(timeIntervalSinceNow: 1.0)
+            while !callbackExecuted && Date() < limitDate {
+                RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.05))
+            }
+            
+            if targetSocket != -1 {
+                break
+            }
+        }
+        
+        if targetSocket == -1 || targetPID == -1 {
+            logInfo("❌ Failed to find any active orphaned children on sockets 1-10!")
+            try? log.write(toFile: "/tmp/iterm_projects_log.txt", atomically: true, encoding: .utf8)
+            return log
+        }
+        
+        logInfo("🎯 Targeted Candidate: Socket \(targetSocket), PID \(targetPID)")
+        
+        // Execute Native tryToAttachToMultiserver in-place hot-swap!
+        let serverDict: [AnyHashable: Any] = [
+            "Socket": targetSocket,
+            "Child PID": targetPID,
+            "Type": "multiserver",
+            "Version": 1
+        ]
+        
+        if let task = session.shell {
+            logInfo("🔄 Executing tryToAttachToMultiserver with Restoration Dict...")
+            let results = task.tryToAttachToMultiserver(withRestorationIdentifier: serverDict)
+            logInfo("   ✅ In-Place Attach Results: \(results)")
+            if results.rawValue != 0 {
+                logInfo("🎉 SUCCESS: Session has been natively re-attached to background PID \(targetPID) in-place!")
+            } else {
+                logInfo("❌ Failed to attach natively.")
+            }
+        } else {
+            logInfo("❌ Target session has no active shell task!")
+        }
+        
+        log += "--- EXPLORATION COMPLETE ---"
+        try? log.write(toFile: "/tmp/iterm_projects_log.txt", atomically: true, encoding: .utf8)
+        return log
+    }
+
+    @objc public class func runDiagnostics(on terminal: PseudoTerminal) -> String {
+        var log = "--- EXPERIMENT B: SURGICAL RAW FILE DESCRIPTOR SWAP ---\n"
+        func logInfo(_ message: String) {
+            log += message + "\n"
+            print("[Pathfinder-B] " + message)
+        }
+        
+        guard let session = terminal.currentSession() else {
+            return "❌ No active session found on terminal"
+        }
+        
+        logInfo("Target Session TTY: \(session.tty ?? "nil")")
+        
+        // Scan and find the target socket & PID of the orphan
+        var targetSocket: Int32 = -1
+        var targetPID: Int32 = -1
+        
+        for socketNumber in 1...10 {
+            var callbackExecuted = false
+            let thread = iTermThread<iTermMainThreadState>.main()
+            let callback2: iTermCallback<iTermMainThreadState, AnyObject> = thread.newCallback { (stateObj, valueObj) in
+                if let result = valueObj as? iTermResult<iTermMultiServerConnection> {
+                    result.handleObject({ connection in
+                        let unattached = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                        for child in unattached {
+                            if child.pid > 0 {
+                                targetSocket = Int32(socketNumber)
+                                targetPID = child.pid
+                            }
+                        }
+                    }, error: { _ in })
+                }
+                callbackExecuted = true
+            }
+            let bridgedCallback2 = callback2 as! iTermCallback<AnyObject, iTermMultiServerConnection>
+            iTermMultiServerConnection.getForSocketNumber(Int32(socketNumber), createIfPossible: true, callback: bridgedCallback2)
+            
+            let limitDate = Date(timeIntervalSinceNow: 1.0)
+            while !callbackExecuted && Date() < limitDate {
+                RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.05))
+            }
+            if targetSocket != -1 {
+                break
+            }
+        }
+        
+        if targetSocket == -1 || targetPID == -1 {
+            logInfo("❌ Failed to find any active orphaned children on sockets 1-10!")
+            try? log.write(toFile: "/tmp/iterm_projects_log.txt", atomically: true, encoding: .utf8)
+            return log
+        }
+        
+        logInfo("🎯 Targeted Candidate: Socket \(targetSocket), PID \(targetPID)")
+        
+        // Establish Connection and extract raw FD
+        var targetChild: iTermFileDescriptorMultiClientChild? = nil
+        var callbackExecuted = false
+        let thread = iTermThread<iTermMainThreadState>.main()
+        let callback3: iTermCallback<iTermMainThreadState, AnyObject> = thread.newCallback { (stateObj, valueObj) in
+            if let result = valueObj as? iTermResult<iTermMultiServerConnection> {
+                result.handleObject({ connection in
+                    let unattached = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                    for child in unattached {
+                        if child.pid == targetPID {
+                            targetChild = child
+                        }
+                    }
+                }, error: { _ in })
+            }
+            callbackExecuted = true
+        }
+        let bridgedCallback3 = callback3 as! iTermCallback<AnyObject, iTermMultiServerConnection>
+        iTermMultiServerConnection.getForSocketNumber(targetSocket, createIfPossible: true, callback: bridgedCallback3)
+        
+        let limitDate = Date(timeIntervalSinceNow: 1.0)
+        while !callbackExecuted && Date() < limitDate {
+            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.05))
+        }
+        
+        guard let child = targetChild else {
+            logInfo("❌ Failed to connect and retrieve the child object.")
+            try? log.write(toFile: "/tmp/iterm_projects_log.txt", atomically: true, encoding: .utf8)
+            return log
+        }
+        
+        let rawFD = child.fd
+        logInfo("✅ Natively extracted raw TTY master FD: \(rawFD)")
+        
+        if let task = session.shell {
+            logInfo("💉 Surgically injecting raw FD \(rawFD) inside Task's jobManager...")
+            
+            // Swap jobManager types first to MultiServer
+            task.setJobManagerType(iTermGeneralServerConnectionType.multi)
+            
+            // Inject the new fd
+            task.setValue(rawFD, forKey: "fd")
+            
+            // Update the tty path
+            let ttyPath = child.tty
+            task.setValue(ttyPath as NSString, forKey: "tty")
+            
+            // Signal TaskNotifier to rebuild its file descriptors
+            TaskNotifier.sharedInstance().unblock()
+            
+            logInfo("🎉 SUCCESS: Surgically injected raw file descriptor! Task is now listening on FD \(rawFD).")
+        } else {
+            logInfo("❌ Target session has no active shell task!")
+        }
+        
+        log += "--- EXPLORATION COMPLETE ---"
+        try? log.write(toFile: "/tmp/iterm_projects_log.txt", atomically: true, encoding: .utf8)
+        return log
     }
 }
