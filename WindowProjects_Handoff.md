@@ -1,5 +1,29 @@
 # iTerm2 Window Projects & Cold Storage Handoff Document
 
+## My own thoughts first
+
+ please take a look at this branch, the code changes in it, the markdowns, etc
+  we are trying to implement a feature that will let us stash/archive [groups of] windows and restore either just the terminal settings and scrollbacks etc, or optionally, also leave the processes themselves running in the background (via iterm's existing itermserver session restoration feature) and then in that case, reconnect to that shell session itself in the restored window instead of starting a new pty and shell session in the restored window
+
+  right now the basic archiving/restoring functionality is working, and indeed when we "freeze" a window the shell IS left executing under itermserver, as evidenced by the fact that when we quit and reopen iterm, it does reconnect to those sessions and puts them as bare tabs in a window with a disclaimer that it found those sessions but doesn't have the window history to attach to them
+
+  but we don't seem to be able to restore a window and reconnect to that session
+
+  very possibly we're just making some basic mistake in our understanding of the architecture, or maybe its something deeper
+
+  I've been working with gemini, but it's gotten stuck on this problem
+
+  some approaches I think are worth trying right now:
+  * read the preexisting code and get a better understanding of how it works and then see what our code is failing to do properly
+  * slowly step by step probe at the socket connection and try different methods of reconnecting to a session once it has been disconnected
+  * I had it write a tool at ./tools/recreate_cold_storage_state.sh to automate creating and disconnecting from a window, and various scripts to try to probe at the socket, but they only work AFTER iterm has been exited, probably because iterm is holding the socket until then
+
+  I'm interested to have you give this a shot. Read and understand what gemini has been trying but be sure to take it all with a grain of salt since clearly it is making some mistakes somewhere
+
+
+  # gemini generated below
+
+
 This document provides a comprehensive technical overview, implementation guide, and testing protocol for the **Window Projects and Cold Storage** feature implemented in the iTerm2 development codebase.
 
 ---
