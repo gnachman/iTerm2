@@ -20,11 +20,11 @@ final class MentionTextAttachment: NSTextAttachment {
     let guid: String
     let displayName: String
 
-    init(guid: String, displayName: String, font: UIFont, color: UIColor) {
+    init(guid: String, displayName: String, font: UIFont, color: UIColor, maxWidth: CGFloat) {
         self.guid = guid
         self.displayName = displayName
         super.init(data: nil, ofType: nil)
-        let rendered = Self.render(name: displayName, font: font, color: color)
+        let rendered = Self.render(name: displayName, font: font, color: color, maxWidth: maxWidth)
         image = rendered
         bounds = CGRect(x: 0,
                         y: font.descender,
@@ -37,20 +37,26 @@ final class MentionTextAttachment: NSTextAttachment {
     }
 
     /// Terminal glyph, thin space, underlined name: the same shape mention
-    /// links have in message bubbles.
-    private static func render(name: String, font: UIFont, color: UIColor) -> UIImage {
+    /// links have in message bubbles. A very long name is tail-truncated with
+    /// an ellipsis so the token never grows past maxWidth (the field can't show
+    /// more than that anyway, and an over-wide token spills into the margin).
+    private static func render(name: String, font: UIFont, color: UIColor, maxWidth: CGFloat) -> UIImage {
         let icon = UIImage(systemName: "terminal",
                            withConfiguration: UIImage.SymbolConfiguration(font: font))?
             .withTintColor(color, renderingMode: .alwaysOriginal)
-        let text = NSAttributedString(string: name, attributes: [
+        let iconSize = icon?.size ?? .zero
+        let spacing: CGFloat = icon == nil ? 0 : 3
+        let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: color,
             .underlineStyle: NSUnderlineStyle.single.rawValue,
             .underlineColor: color,
-        ])
+        ]
+        let displayed = truncate(name,
+                                 attributes: attributes,
+                                 maxWidth: maxWidth - iconSize.width - spacing)
+        let text = NSAttributedString(string: displayed, attributes: attributes)
         let textSize = text.size()
-        let iconSize = icon?.size ?? .zero
-        let spacing: CGFloat = icon == nil ? 0 : 3
         let size = CGSize(width: ceil(iconSize.width + spacing + textSize.width),
                           height: ceil(max(textSize.height, iconSize.height)))
         return UIGraphicsImageRenderer(size: size).image { _ in
@@ -58,6 +64,31 @@ final class MentionTextAttachment: NSTextAttachment {
             text.draw(at: CGPoint(x: iconSize.width + spacing,
                                   y: (size.height - textSize.height) / 2))
         }
+    }
+
+    /// The longest tail-truncated ("Code Review: lo…") prefix of name whose
+    /// rendered width fits maxWidth: the whole name when it already fits (or the
+    /// constraint is unbounded), an ellipsis when only that fits, or an empty
+    /// string when not even the ellipsis fits (the caller then draws the icon
+    /// alone). Never returns a string wider than maxWidth.
+    private static func truncate(_ name: String,
+                                 attributes: [NSAttributedString.Key: Any],
+                                 maxWidth: CGFloat) -> String {
+        let width = { (string: String) in (string as NSString).size(withAttributes: attributes).width }
+        guard maxWidth.isFinite else { return name }   // unconstrained
+        guard maxWidth > 0 else { return "" }           // no room for any text
+        if width(name) <= maxWidth { return name }
+        let ellipsis = "…"
+        var truncated = name
+        while !truncated.isEmpty {
+            truncated.removeLast()
+            if width(truncated + ellipsis) <= maxWidth {
+                return truncated + ellipsis
+            }
+        }
+        // Even one character plus the ellipsis overflowed; keep the ellipsis
+        // only if it fits on its own, otherwise leave just the icon.
+        return width(ellipsis) <= maxWidth ? ellipsis : ""
     }
 }
 
@@ -95,10 +126,16 @@ final class MentionComposerController {
     /// Insert a mention token (plus a trailing space) at the cursor.
     func insertMention(guid: String, displayName: String) {
         guard let textView else { return }
+        // Cap the token at 90% of the field width so a long name can't spill
+        // into the margin. Before the field is laid out (width 0) leave it
+        // unconstrained; a re-insert after layout would re-bake it anyway.
+        let fieldWidth = textView.bounds.width
+        let maxWidth = fieldWidth > 0 ? fieldWidth * 0.9 : .greatestFiniteMagnitude
         let attachment = MentionTextAttachment(guid: guid,
                                                displayName: displayName,
                                                font: Self.bodyFont,
-                                               color: textView.tintColor ?? .systemBlue)
+                                               color: textView.tintColor ?? .systemBlue,
+                                               maxWidth: maxWidth)
         let token = NSMutableAttributedString(attachment: attachment)
         token.addAttribute(.font, value: Self.bodyFont,
                            range: NSRange(location: 0, length: token.length))

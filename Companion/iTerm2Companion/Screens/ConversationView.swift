@@ -55,8 +55,8 @@ struct ConversationView: View {
             SessionPickerSheet(request: request)
         }
         .sheet(isPresented: $showMentionPicker) {
-            MentionPickerSheet { session in
-                insertMention(session)
+            MentionPickerSheet { session, title in
+                insertMention(session, title: title)
             }
         }
         .onChange(of: model.voiceCapture.liveText) { _, text in
@@ -124,7 +124,6 @@ struct ConversationView: View {
     private var inputRow: some View {
         HStack(alignment: .bottom, spacing: 8) {
             Button {
-                model.refreshSessionsForMentionPicker()
                 showMentionPicker = true
             } label: {
                 Image(systemName: "at.circle.fill")
@@ -322,10 +321,14 @@ struct ConversationView: View {
 
     /// Insert an @-mention of the chosen session at the cursor as an atomic
     /// styled token (like the Mac compose field); it serializes to "@<guid>"
-    /// when the message is sent.
-    private func insertMention(_ session: CompanionSessionSummary) {
+    /// when the message is sent. The title is the picker's display label (e.g.
+    /// a peer's "Code Review: zsh", or just its role when the session has no
+    /// distinct name), so the token keeps that context; it falls back to the
+    /// session name only when the title is empty.
+    private func insertMention(_ session: CompanionSessionSummary, title: String) {
         showMentionPicker = false
-        composer.insertMention(guid: session.guid, displayName: session.name)
+        let displayName = title.isEmpty ? session.name : title
+        composer.insertMention(guid: session.guid, displayName: displayName)
         inputFocused = true
     }
 
@@ -389,44 +392,37 @@ private struct TypingIndicatorView: View {
     }
 }
 
-/// Lists the mac's terminal sessions so the composer's @ button can insert a
-/// mention of one.
+/// Lets the composer's @ button pick a session to mention. It shows the same
+/// window > tab > pane > peer hierarchy as the Sessions tab so the choice is
+/// unambiguous: tapping a row's body selects that session, while the trailing
+/// preview button opens a read-only look at it without committing the choice.
 private struct MentionPickerSheet: View {
-    @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    let onSelect: (CompanionSessionSummary) -> Void
+    /// Selects a session to mention, with the picker's display title (so peer
+    /// rows keep their "Code Review: zsh" / role context in the token).
+    let onSelect: (CompanionSessionSummary, String) -> Void
+
+    /// The session being previewed (pushed onto the sheet's own stack), if any.
+    @State private var preview: PreviewTarget?
+
+    /// A session to preview; Identifiable so navigationDestination(item:) can
+    /// drive the push.
+    private struct PreviewTarget: Identifiable, Hashable {
+        let guid: String
+        let title: String
+        var id: String { guid }
+    }
 
     var body: some View {
         NavigationStack {
-            Group {
-                if model.sessions.isEmpty {
-                    Text("No sessions available.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    List(model.sessions, id: \.guid) { session in
-                        Button {
-                            onSelect(session)
-                        } label: {
-                            // Default (borderless) button style so the row
-                            // highlights on tap; color the text explicitly so
-                            // it doesn't take the accent tint.
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(session.name)
-                                    .foregroundStyle(.primary)
-                                if !session.subtitle.isEmpty {
-                                    Text(session.subtitle)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                        }
-                    }
-                }
+            SessionTreeBrowser { session, title, level in
+                pickerRow(session: session, title: title, level: level)
             }
             .navigationTitle("Mention a Session")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(item: $preview) { target in
+                SessionView(guid: target.guid, title: target.title, allowsChat: false)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -434,6 +430,40 @@ private struct MentionPickerSheet: View {
                     }
                 }
             }
+        }
+    }
+
+    /// A session row: tapping its body selects the session for the mention;
+    /// the trailing eye button previews it without selecting.
+    private func pickerRow(session: CompanionSessionSummary,
+                           title: String,
+                           level: Int) -> some View {
+        HStack(spacing: 8) {
+            Button {
+                onSelect(session, title)
+            } label: {
+                SessionTreeRow(icon: "terminal",
+                               title: title,
+                               subtitle: session.subtitle.isEmpty ? nil : session.subtitle,
+                               level: level)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            // Plain so the row highlights on tap without tinting its contents.
+            .buttonStyle(.plain)
+
+            Button {
+                preview = PreviewTarget(guid: session.guid, title: title)
+            } label: {
+                Image(systemName: "eye")
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.leading, 4)
+                    .contentShape(Rectangle())
+            }
+            // Borderless so it stays a discrete tap target alongside the row
+            // body rather than activating the whole row.
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Preview \(title)")
         }
     }
 }

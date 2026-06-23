@@ -16,6 +16,7 @@
 		2B4562DB8E2A411072237E9F /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F47305487EBECCCC106B8E5 /* Message.swift */; };
 		2F3A12CEFA3EC840258F8A8C /* CompanionProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 1AEB85FB2914F4CB3224B70A /* CompanionProtocol */; };
 		34FAE09941A2FB2C050C7CFC /* PrimaryButtonLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A7AAC6F6EA0B7C8BC0DFDDA /* PrimaryButtonLabel.swift */; };
+		361F37C77D701894FFE06B38 /* SessionTreeList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3132DD84BB25513820D33A3C /* SessionTreeList.swift */; };
 		39940659CD74D5AF58DF503C /* WorkgroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24218D973EDC803C93048735 /* WorkgroupView.swift */; };
 		3D3B241D2F33F3412C9A5438 /* MacShims.swift in Sources */ = {isa = PBXBuildFile; fileRef = E388A9346C1A08CC582B1385 /* MacShims.swift */; };
 		3D71A7C937B35FA638539B0B /* MailComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */; };
@@ -93,6 +94,7 @@
 		1F99F81A57FAD5CB7160828D /* CreateView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CreateView.swift; sourceTree = "<group>"; };
 		24218D973EDC803C93048735 /* WorkgroupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupView.swift; sourceTree = "<group>"; };
 		2ADBF604814A5CBED79B600C /* MacTypeShadows.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacTypeShadows.swift; sourceTree = "<group>"; };
+		3132DD84BB25513820D33A3C /* SessionTreeList.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionTreeList.swift; sourceTree = "<group>"; };
 		3541E5F2F774361A77015778 /* PairingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
 		39AEE4EAA532978B0EDD7930 /* iTerm2Companion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2Companion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3AED2D9CBC65681E48B458F7 /* AIExplanationRequest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AIExplanationRequest.swift; path = sources/AITerm/AIExplanationRequest.swift; sourceTree = "<group>"; };
@@ -307,6 +309,7 @@
 				42A05BF5FFBB99F8D48F8F63 /* MentionComposerView.swift */,
 				F8FA2D649F5A4E95296B9158 /* MessageBubbleView.swift */,
 				1A7AAC6F6EA0B7C8BC0DFDDA /* PrimaryButtonLabel.swift */,
+				3132DD84BB25513820D33A3C /* SessionTreeList.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -475,6 +478,7 @@
 				F6C5587117251D6D1B9E4C6A /* WhisperModelManager.swift in Sources */,
 				1A4A5B9A5AFE0E89561BA7E4 /* VoiceCaptureController.swift in Sources */,
 				3FED6D999B5E12119428D9D1 /* UpgradeRequiredView.swift in Sources */,
+				361F37C77D701894FFE06B38 /* SessionTreeList.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

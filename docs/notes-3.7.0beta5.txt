@@ -47,6 +47,12 @@ Improvements:
   agent acts there without the one-time approval
   prompt. A notice with a Revoke button lets you
   take the permission back whenever you want.
+- In iTerm2 Buddy, the session picker for
+  @-mentions now shows the same window, tab, and
+  pane hierarchy as the Sessions tab. Each row
+  has a preview button to view the session
+  before picking it; tapping elsewhere on the
+  row selects it.
 - Anthropic prompt caching now also covers the
   conversation history, not just the system
   prompt and tools, so long chats reread the

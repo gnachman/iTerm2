@@ -452,14 +452,6 @@ final class AppModel {
         appendToActivePath(.workgroup(id: id, title: title))
     }
 
-    /// The composer's @ button refreshes the session list before showing the
-    /// mention picker, so the choices are current.
-    func refreshSessionsForMentionPicker() {
-        Task {
-            try? await refreshLists()
-        }
-    }
-
     /// Sessions tab: appearance and pull-to-refresh both re-fetch the tree.
     func refreshSessionBrowser() async {
         do {

@@ -21,6 +21,10 @@ struct SessionView: View {
     @Environment(AppModel.self) private var model
     let guid: String
     let title: String
+    /// When false, the "chat about this session" toolbar button is hidden. The
+    /// mention picker shows this view only to preview a session, where starting
+    /// a chat would push onto the stack behind the picker sheet.
+    var allowsChat: Bool = true
 
     /// Lines per fetched tile: large enough to amortize round trips, small
     /// enough that each tile's PNG stays a lightweight frame.
@@ -70,16 +74,18 @@ struct SessionView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                // Jump into a conversation about this session: continues its
-                // most recent chat when that's fresh (last 24h), otherwise
-                // starts a new session-attached one.
-                Button {
-                    model.openOrCreateChat(forSessionGuid: guid)
-                } label: {
-                    Image(systemName: "text.bubble")
+            if allowsChat {
+                ToolbarItem(placement: .topBarTrailing) {
+                    // Jump into a conversation about this session: continues its
+                    // most recent chat when that's fresh (last 24h), otherwise
+                    // starts a new session-attached one.
+                    Button {
+                        model.openOrCreateChat(forSessionGuid: guid)
+                    } label: {
+                        Image(systemName: "text.bubble")
+                    }
+                    .accessibilityLabel("Chat about this session")
                 }
-                .accessibilityLabel("Chat about this session")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
