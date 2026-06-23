@@ -325,6 +325,7 @@
                                  [NSDate class],
                                  [NSData class],
                                  [NSArray class],
+                                 [NSSet class],
                                  [NSNull class],
                                  [NSValue class],
                                  [iTermTuple class] ];

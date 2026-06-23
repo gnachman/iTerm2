@@ -1447,3 +1447,11 @@ Bug Fixes:
   silenceable, so you can make it
   always save to Downloads or always
   show a save panel. Issue 12897.
+- Fix a bug where a pane could restore
+  in your home directory instead of its
+  previous working directory after
+  restarting iTerm2. Sessions that used
+  automatic profile switching saved a
+  value that could not be read back,
+  which silently dropped the rest of
+  the restored session state.

@@ -21,6 +21,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, retain, nullable) NSMutableSet *overriddenFields;
 @end
 
+// Serialization to/from a restorable-state dictionary. Exposed for testing (issue 12866).
+@interface iTermSavedProfile (Serialization)
+- (instancetype)initWithSavedState:(NSDictionary *)state;
+- (NSDictionary *)savedState;
+@end
+
 // The session that uses automatic profile switching should implement this protocol.
 @protocol iTermAutomaticProfileSwitcherDelegate<NSObject>
 
