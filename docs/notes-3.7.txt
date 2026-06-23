@@ -658,6 +658,18 @@ Bug Fixes:
   as a smaller inner rounded rectangle. Its view
   could be left at a stale size and was not kept
   in sync with the window. Issue 12882.
+- The heavy window border now has a uniform
+  width: its corners no longer look thinner than
+  its edges and no longer pick up semi-
+  transparent pixels. It is drawn entirely
+  inside the window instead of straddling the
+  window edge and relying on the system mask to
+  clip its outer half. Issue 12882.
+- The window border color advanced settings now
+  accept a four-part color like #rrggbbaa (or
+  p3#rrggbbaa) to set the border opacity. A
+  color without an alpha component is still
+  drawn at 75% opacity. Issue 12882.
 - The legacy (non-GPU) renderer now invalidates
   only the lines that actually changed, instead
   of repainting the entire view on every cell

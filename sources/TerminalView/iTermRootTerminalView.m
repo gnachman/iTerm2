@@ -798,20 +798,55 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     [self updateTextColors];
 }
 
+// A plain #rrggbb value carries no alpha and is drawn at 75% opacity for
+// backward compatibility; a four-part #rrggbbaa value carries its own alpha.
+// p3# works for either form. The optional alpha byte is split off here and the
+// remaining #rrggbb is handed to colorFromHexString: so that shared parser
+// (used by many callers) is not changed to accept alpha. Returns nil if unset
+// or unparseable.
+static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
+    if (setting.length == 0) {
+        return nil;
+    }
+    NSString *prefix = @"";
+    NSString *hex = setting;
+    if ([hex hasPrefix:@"p3#"]) {
+        prefix = @"p3#";
+        hex = [hex substringFromIndex:3];
+    } else if ([hex hasPrefix:@"#"]) {
+        prefix = @"#";
+        hex = [hex substringFromIndex:1];
+    }
+    CGFloat alpha = 0.75;
+    if (hex.length == 8) {
+        unsigned int a = 0;
+        if (![[NSScanner scannerWithString:[hex substringFromIndex:6]] scanHexInt:&a]) {
+            return nil;
+        }
+        alpha = a / 255.0;
+        hex = [hex substringToIndex:6];
+    }
+    NSColor *color = [NSColor colorFromHexString:[prefix stringByAppendingString:hex]];
+    if (color == nil) {
+        return nil;
+    }
+    return [color colorWithAlphaComponent:alpha];
+}
+
 - (NSColor *)resolvedWindowBorderColor NS_AVAILABLE_MAC(10_14) {
-    NSColor *focused = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColor]];
-    NSColor *unfocused = [NSColor colorFromHexString:[iTermAdvancedSettingsModel windowBorderColorUnfocused]];
+    NSColor *focused = iTermWindowBorderColorFromSetting([iTermAdvancedSettingsModel windowBorderColor]);
+    NSColor *unfocused = iTermWindowBorderColorFromSetting([iTermAdvancedSettingsModel windowBorderColorUnfocused]);
     NSColor *base = self.window.isKeyWindow ? (focused ?: unfocused) : (unfocused ?: focused);
     if (base == nil) {
         return [NSColor colorWithWhite:0.5 alpha:0.75];
     }
-    return [base colorWithAlphaComponent:0.75];
+    return base;
 }
 
-// Path arc is concentric with the system mask: same center, same radius. The
-// stroke straddles the mask boundary so half of it is clipped and half is
-// visible (with `outset` shifting which half ends up where). Updated on cache
-// miss by the early-return path in updateBorderViews.
+// Returns the window's outer corner radius (concentric with the system mask).
+// The border is drawn fully inside the window, so updateBorderViews subtracts
+// half the border width to get the stroke's centerline radius. Updated on
+// cache miss by the early-return path in updateBorderViews.
 - (CGFloat)resolvedWindowBorderCornerRadius NS_AVAILABLE_MAC(10_14) {
     if ([iTermAdvancedSettingsModel squareWindowCorners]) {
         return 0;
@@ -857,9 +892,17 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     // edge. layoutSubviews positions every other subview explicitly, so do the
     // same here and keep the border flush with the window bounds.
     _windowBorderView.frame = self.bounds;
-    _windowBorderView.borderWidth = 2;
-    _windowBorderView.outset = 1;
-    _windowBorderView.cornerRadius = [self resolvedWindowBorderCornerRadius];
+    // Draw the stroke entirely inside the window so it has a uniform width on
+    // edges and corners and does not depend on the system mask clipping its
+    // outer half (which left the curved corners thinner than the straight
+    // edges and dusted them with semi-transparent pixels). The centerline is
+    // inset by half the border width, so its corner radius is the window's
+    // outer radius minus that inset to keep the outer edge concentric with the
+    // window corner.
+    const CGFloat borderWidth = 1;
+    _windowBorderView.borderWidth = borderWidth;
+    _windowBorderView.outset = 0;
+    _windowBorderView.cornerRadius = MAX(0, [self resolvedWindowBorderCornerRadius] - borderWidth / 2);
     _windowBorderView.haveLeftEdge = self.delegate.haveLeftBorder;
     _windowBorderView.haveTopEdge = self.delegate.haveTopBorder;
     _windowBorderView.haveRightEdge = self.delegate.haveRightBorderRegardlessOfScrollBar;
