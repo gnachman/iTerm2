@@ -10,22 +10,31 @@ import XCTest
 
 class iTermWindowProjectsTests: XCTestCase {
     private var savedProjects: [iTermWindowProject] = []
-    
+    private var savedAssociations: [String: UUID] = [:]
+    private var savedIsTerminating = false
+
     override func setUp() {
         super.setUp()
         let model = iTermWindowProjectsModel.shared
-        // 1. Back up any existing in-memory projects
+        // 1. Back up any existing in-memory projects and associations
         savedProjects = model.rootProjects
-        
+        savedAssociations = model.testOnlyAssociations
+        savedIsTerminating = model.testOnlyIsTerminating
+
         // 2. Clear rootProjects for a clean test environment by deleting them via the public API
         while !model.rootProjects.isEmpty {
             model.deleteProject(model.rootProjects[0])
         }
+        model.testOnlyAssociations = [:]
+        model.testOnlyIsTerminating = false
     }
-    
+
     override func tearDown() {
-        // Restore user's original projects back to the singleton
-        iTermWindowProjectsModel.shared.testOnlySetRootProjects(savedProjects)
+        // Restore user's original projects and associations back to the singleton
+        let model = iTermWindowProjectsModel.shared
+        model.testOnlySetRootProjects(savedProjects)
+        model.testOnlyAssociations = savedAssociations
+        model.testOnlyIsTerminating = savedIsTerminating
         super.tearDown()
     }
     
@@ -403,51 +412,188 @@ class iTermWindowProjectsTests: XCTestCase {
         XCTAssertTrue(session?.screen.terminalEnabled ?? false, "Restored session screen must be explicitly enabled to receive keyboard inputs and process output characters")
     }
 
-    func testSocketAdoptionExplorer() {
-        var log = "=== HEAVY EXPLORATORY MULTI-SERVER CONNECTION PROBE ===\n"
-        
-        // Connect to Socket 3 cleanly using iTerm2's own compiled structures!
-        let socketNumber: Int32 = 4
-        let sem = DispatchSemaphore(value: 0)
-        var connectionFound: iTermMultiServerConnection? = nil
-        
-        let thread = iTermThread<iTermMainThreadState>.main()
-        let callback = thread.newCallback { (stateObj, valueObj) in
-            guard let result = valueObj as? iTermResult<iTermMultiServerConnection> else {
-                log += "❌ Failed to cast valueObj to iTermResult<iTermMultiServerConnection>\n"
-                sem.signal()
-                return
-            }
-            result.handleObject({ connection in
-                connectionFound = connection
-                log += "✅ Established native connection to Socket \(socketNumber)!\n"
-                sem.signal()
-            }, error: { error in
-                log += "❌ Connection failed asynchronously: \(error.localizedDescription)\n"
-                sem.signal()
-            })
-        }
-        
-        let bridgedCallback = callback as! iTermCallback<AnyObject, iTermMultiServerConnection>
-        iTermMultiServerConnection.getForSocketNumber(socketNumber, createIfPossible: true, callback: bridgedCallback)
-        
-        // Wait up to 5 seconds for the connection to be established cleanly
-        _ = sem.wait(timeout: .now() + 5.0)
-        
-        if let connection = connectionFound {
-            let unattached = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
-            log += "🎉 Discovered unattached children count: \(unattached.count)\n"
-            for child in unattached {
-                log += "   PID: \(child.pid), TTY: \(child.tty ?? "nil")\n"
-            }
-        } else {
-            log += "❌ Connection object is NIL\n"
-        }
-        
-        log += "=== PROBE COMPLETE ===\n"
-        fputs(log, stderr)
-        fflush(stderr)
-        XCTAssertNotNil(connectionFound, "Failed to connect to Socket 3")
+    // MARK: - Multiserver arrangement parsing (headless data layer)
+
+    /// Builds a session arrangement node containing a multiserver "Server Dict"
+    /// with the given socket and child PID, mirroring what iTerm2 captures.
+    private func arrangement(socket: Int, childPID: Int) -> [AnyHashable: Any] {
+        return [
+            "Tabs": [
+                [
+                    "Root": [
+                        "Subviews": [
+                            [
+                                "Session": [
+                                    "Server Dict": [
+                                        "Socket": socket,
+                                        "Child PID": childPID
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    }
+
+    func testServerDictExtraction() {
+        let arr = arrangement(socket: 7, childPID: 4242)
+        let result = iTermWindowProjectsModel.serverDict(in: arr)
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.socket, 7)
+        XCTAssertEqual(result?.childPid, 4242)
+    }
+
+    func testServerDictExtractionWithNSNumberValues() {
+        // iTerm2's decoded plists frequently surface integers as NSNumber.
+        let arr: [AnyHashable: Any] = [
+            "Session": [
+                "Server Dict": [
+                    "Socket": NSNumber(value: 3),
+                    "Child PID": NSNumber(value: 9001)
+                ]
+            ]
+        ]
+        let result = iTermWindowProjectsModel.serverDict(in: arr)
+        XCTAssertEqual(result?.socket, 3)
+        XCTAssertEqual(result?.childPid, 9001)
+    }
+
+    func testServerDictExtractionReturnsNilWhenAbsent() {
+        let arr: [AnyHashable: Any] = ["Columns": 80, "Rows": 24]
+        XCTAssertNil(iTermWindowProjectsModel.serverDict(in: arr))
+    }
+
+    func testAllServerChildPIDsCollectsEverySession() {
+        // A multi-pane window: two sessions, each with its own Server Dict.
+        let arr: [AnyHashable: Any] = [
+            "Tabs": [
+                ["Session": ["Server Dict": ["Socket": 2, "Child PID": 100]]],
+                ["Session": ["Server Dict": ["Socket": 2, "Child PID": 200]]]
+            ]
+        ]
+        let pids = iTermWindowProjectsModel.allServerChildPIDs(in: arr).sorted()
+        XCTAssertEqual(pids, [100, 200])
+    }
+
+    func testAllServerChildPIDsEmptyWhenNoServerDict() {
+        let arr: [AnyHashable: Any] = ["Columns": 80, "Rows": 24]
+        XCTAssertTrue(iTermWindowProjectsModel.allServerChildPIDs(in: arr).isEmpty)
+    }
+
+    func testClaimedMultiserverChildPIDsAcrossProjectTree() {
+        let model = iTermWindowProjectsModel.shared
+
+        // Two projects, one nested, each with an archived window holding a live
+        // (parked) child PID. claimedMultiserverChildPIDs walks the whole tree.
+        let root = model.createProject(named: "Claim-Root")
+        let child = model.createProject(named: "Claim-Child", parent: root)
+
+        root.windows.append(iTermArchivedWindow(name: "W1", arrangement: arrangement(socket: 2, childPID: 111)))
+        child.windows.append(iTermArchivedWindow(name: "W2", arrangement: arrangement(socket: 2, childPID: 222)))
+
+        let claimed = model.claimedMultiserverChildPIDs()
+        XCTAssertTrue(claimed.contains(111))
+        XCTAssertTrue(claimed.contains(222))
+
+        model.deleteProject(root)
+    }
+
+    func testClaimedMultiserverChildPIDsEmptyWithNoArchives() {
+        let model = iTermWindowProjectsModel.shared
+        model.createProject(named: "Empty-Project")
+        XCTAssertTrue(model.claimedMultiserverChildPIDs().isEmpty)
+    }
+
+    func testTotalWindowCountIsRecursive() {
+        let model = iTermWindowProjectsModel.shared
+        let root = model.createProject(named: "Count-Root")
+        let sub = model.createProject(named: "Count-Sub", parent: root)
+
+        root.windows.append(iTermArchivedWindow(name: "A", arrangement: ["Columns": 80]))
+        sub.windows.append(iTermArchivedWindow(name: "B", arrangement: ["Columns": 80]))
+        sub.windows.append(iTermArchivedWindow(name: "C", arrangement: ["Columns": 80]))
+
+        XCTAssertEqual(sub.totalWindowCount, 2)
+        XCTAssertEqual(root.totalWindowCount, 3)
+
+        model.deleteProject(root)
+    }
+
+    // MARK: - Empty-arrangement guard (DesignNotes #10)
+
+    func testIsArchivableRejectsEmptyAndNilArrangements() {
+        XCTAssertFalse(iTermWindowProjectsModel.isArchivable(nil))
+        XCTAssertFalse(iTermWindowProjectsModel.isArchivable([:]))
+        // A capture with no Tabs (the ~42-byte empty plist) must be rejected.
+        XCTAssertFalse(iTermWindowProjectsModel.isArchivable(["Columns": 80, "Rows": 24]))
+        // A present-but-empty Tabs array is still not restorable.
+        XCTAssertFalse(iTermWindowProjectsModel.isArchivable(["Tabs": [Any]()]))
+    }
+
+    func testIsArchivableAcceptsArrangementWithTabs() {
+        let arr = arrangement(socket: 2, childPID: 555)
+        XCTAssertTrue(iTermWindowProjectsModel.isArchivable(arr))
+        XCTAssertTrue(iTermWindowProjectsModel.isArchivable(["Tabs": [["Root": [:]]]]))
+    }
+
+    // MARK: - Association persistence (Option A: guid → project, round-trip)
+
+    func testAssociationPersistenceRoundTrip() {
+        let model = iTermWindowProjectsModel.shared
+        let project = model.createProject(named: "Assoc-Project")
+        let guid = "TERMINAL-GUID-ABC123"
+
+        // Associate by guid and persist to the (isolated test) associations file.
+        model.testOnlyAssociations = [guid: project.id]
+
+        // Drop the in-memory map and reload from disk, exercising the real
+        // save/load serialization (guid → UUID-string and back).
+        model.testOnlyReloadAssociationsFromDisk()
+
+        let reloaded = model.testOnlyAssociations
+        XCTAssertEqual(reloaded[guid], project.id)
+
+        model.deleteProject(project)
+    }
+
+    func testAssociationPersistenceSurvivesMultipleEntries() {
+        let model = iTermWindowProjectsModel.shared
+        let p1 = model.createProject(named: "Assoc-P1")
+        let p2 = model.createProject(named: "Assoc-P2")
+
+        model.testOnlyAssociations = [
+            "guid-1": p1.id,
+            "guid-2": p2.id,
+            "guid-3": p1.id
+        ]
+        model.testOnlyReloadAssociationsFromDisk()
+
+        let reloaded = model.testOnlyAssociations
+        XCTAssertEqual(reloaded.count, 3)
+        XCTAssertEqual(reloaded["guid-1"], p1.id)
+        XCTAssertEqual(reloaded["guid-2"], p2.id)
+        XCTAssertEqual(reloaded["guid-3"], p1.id)
+
+        model.deleteProject(p1)
+        model.deleteProject(p2)
+    }
+
+    /// A dangling association (project deleted, guid entry not pruned) must not
+    /// resolve to a project — lookup tolerates it. See DesignNotes §9 (low-priority
+    /// pruning) and the project(id:) guard.
+    func testDanglingAssociationResolvesToNil() {
+        let model = iTermWindowProjectsModel.shared
+        let project = model.createProject(named: "Dangling-Project")
+        let danglingID = project.id
+
+        model.testOnlyAssociations = ["ghost-guid": danglingID]
+        model.deleteProject(project)
+
+        // The association entry still exists, but the project is gone.
+        XCTAssertEqual(model.testOnlyAssociations["ghost-guid"], danglingID)
+        XCTAssertNil(model.project(id: danglingID))
     }
 }
 

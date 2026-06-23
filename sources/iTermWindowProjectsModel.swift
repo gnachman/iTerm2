@@ -123,6 +123,29 @@ final class iTermWindowProject: NSObject, Codable {
         save()
     }
 
+    /// Test-only access to the in-memory guid→project association map.
+    var testOnlyAssociations: [String: UUID] {
+        get { liveAssociations }
+        set {
+            liveAssociations = newValue
+            saveAssociations()
+        }
+    }
+
+    /// Test-only: drop the in-memory map and re-read it from disk, exercising the
+    /// real save/load serialization path (the guid→UUID-string round trip).
+    func testOnlyReloadAssociationsFromDisk() {
+        liveAssociations = [:]
+        loadAssociations()
+    }
+
+    /// Test-only access to the applicationWillTerminate guard so the no-archive-on-quit
+    /// behavior (Option A) can be exercised without a real NSApplication teardown.
+    var testOnlyIsTerminating: Bool {
+        get { isTerminating }
+        set { isTerminating = newValue }
+    }
+
     /// Persisted mapping: stable PseudoTerminal.terminalGuid → project UUID.
     /// Keyed by GUID (not window number) so an open associated window that is
     /// brought back by native window restoration after a quit/crash re-joins its
@@ -378,6 +401,12 @@ final class iTermWindowProject: NSObject, Codable {
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
             let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+            // Skip an empty capture (DesignNotes #10): leave this window open and
+            // associated rather than close it into an unrestorable archive.
+            guard Self.isArchivable(arrangement) else {
+                Self.wpLog("closeProject: refusing to archive empty arrangement; leaving window open")
+                continue
+            }
             let title = terminal.ptyWindow()?.title ?? "Window"
             let uuid = UUID()
             Self.saveThumbnail(for: wn, uuid: uuid)
@@ -416,6 +445,15 @@ final class iTermWindowProject: NSObject, Codable {
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+        // The window is closing regardless. On an empty capture (DesignNotes #10),
+        // skip the unrestorable archive entry but still drop the now-stale guid
+        // association.
+        guard Self.isArchivable(arrangement) else {
+            Self.wpLog("windowWillClose: refusing to archive empty arrangement; dropping association")
+            liveAssociations.removeValue(forKey: guid)
+            saveAssociations()
+            return
+        }
         let title = window.title.isEmpty ? "Window" : window.title
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
@@ -438,6 +476,15 @@ final class iTermWindowProject: NSObject, Codable {
 
     // MARK: Window Archiving
 
+    /// True if `arrangement` is substantive enough to archive. Some capture
+    /// timings yield an empty (~42-byte) plist with no `Tabs`, which would restore
+    /// to nothing; refuse to archive those so a detached/closed window never
+    /// becomes an unrestorable entry (see DesignNotes #10).
+    static func isArchivable(_ arrangement: [AnyHashable: Any]?) -> Bool {
+        guard let tabs = arrangement?["Tabs"] as? [Any] else { return false }
+        return !tabs.isEmpty
+    }
+
     /// Saves `terminal`'s arrangement into `project` and optionally closes the window.
     /// Any existing live association is cleared.
     func archiveWindow(_ terminal: PseudoTerminal,
@@ -445,13 +492,19 @@ final class iTermWindowProject: NSObject, Codable {
                        andClose close: Bool,
                        keepJobsRunning: Bool = false) {
         let wn = terminal.ptyWindow()?.windowNumber ?? 0
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+        // Refuse to archive an empty capture (DesignNotes #10): leave the window
+        // open and associated rather than create an unrestorable archive entry.
+        guard Self.isArchivable(arrangement) else {
+            Self.wpLog("archiveWindow: refusing to archive empty arrangement; leaving window open")
+            return
+        }
         if let guid = Self.guid(for: terminal) {
             liveAssociations.removeValue(forKey: guid)
             saveAssociations()
         }
-        PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
-        PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
         let title = terminal.ptyWindow()?.title ?? "Window"
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
