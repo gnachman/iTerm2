@@ -203,10 +203,13 @@ final class iTermWindowProject: NSObject, Codable {
         let aspectW: CGFloat = 320
         let aspectH = cgImage.height == 0 ? 200 : aspectW * CGFloat(cgImage.height) / CGFloat(cgImage.width)
         let size = NSSize(width: aspectW, height: min(aspectH, 240))
-        
+
+        // Render at 2× so the saved PNG stays crisp when shown on a Retina display
+        // (the preview is displayed at the logical `size`).
+        let scale: CGFloat = 2
         guard let bitmapRep = NSBitmapImageRep(bitmapDataPlanes: nil,
-                                                pixelsWide: Int(size.width),
-                                                pixelsHigh: Int(size.height),
+                                                pixelsWide: Int(size.width * scale),
+                                                pixelsHigh: Int(size.height * scale),
                                                 bitsPerSample: 8,
                                                 samplesPerPixel: 4,
                                                 hasAlpha: true,
@@ -214,7 +217,7 @@ final class iTermWindowProject: NSObject, Codable {
                                                 colorSpaceName: .calibratedRGB,
                                                 bytesPerRow: 0,
                                                 bitsPerPixel: 0) else { return }
-        
+
         bitmapRep.size = size
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)

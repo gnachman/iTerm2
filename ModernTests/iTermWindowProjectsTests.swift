@@ -334,11 +334,14 @@ class iTermWindowProjectsTests: XCTestCase {
         // Trigger outlineViewSelectionDidChange to update buttons
         controller.outlineViewSelectionDidChange(Notification(name: NSOutlineView.selectionDidChangeNotification))
         
-        // Assert project buttons are active, but restore/delete for archived is inactive/active as expected
+        // Assert project buttons are active. The single Restore button acts on the
+        // selection, so selecting a project that has a saved window enables it and its
+        // label reflects the count (1 saved window → “Restore”).
         XCTAssertTrue(controller.addSubprojectButton.isEnabled)
         XCTAssertTrue(controller.deleteButton.isEnabled) // Can delete project
-        XCTAssertFalse(controller.restoreButton.isEnabled) // Cannot restore project (it's not archived)
-        
+        XCTAssertTrue(controller.restoreButton.isEnabled) // Project has 1 saved window
+        XCTAssertEqual(controller.restoreButton.title, "Restore")
+
         // Cleanup
         model.deleteProject(p1)
     }
