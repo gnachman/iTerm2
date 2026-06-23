@@ -8372,12 +8372,24 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)tabViewDidClickAddTabButton:(PSMTabBarControl *)tabView {
     if (self.currentSession.isTmuxClient) {
         [self newTmuxTab:nil];
-    } else {
-        [iTermSessionLauncher launchBookmark:nil
-                                  inTerminal:self
-                          respectTabbingMode:NO
-                                  completion:nil];
+        return;
     }
+    Profile *profile = nil;
+    BOOL divorced = NO;
+    if ([iTermAdvancedSettingsModel addTabButtonUsesCurrentProfile]) {
+        Profile *originalBookmark = self.currentSession.profile;
+        profile = [ProfileModel profileForCreatingNewSessionBasedOn:originalBookmark];
+        divorced = (profile != originalBookmark);
+    }
+    [iTermSessionLauncher launchBookmark:profile
+                              inTerminal:self
+                      respectTabbingMode:NO
+                              completion:^(PTYSession *session) {
+        if (divorced) {
+            [session divorceAddressBookEntryFromPreferences];
+            [session refreshOverriddenFields];
+        }
+    }];
 }
 
 - (BOOL)themeSupportsAlternateDragModes {

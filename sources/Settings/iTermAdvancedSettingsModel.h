@@ -66,6 +66,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)acceptOSC7;
 + (double)activeUpdateCadence;
 + (int)adaptiveFrameRateThroughputThreshold;
++ (BOOL)addTabButtonUsesCurrentProfile;
 + (BOOL)addUtilitiesToPATH;
 + (BOOL)advancedPasteWaitsForPromptByDefault;
 + (BOOL)aggressiveBaseCharacterDetection;
