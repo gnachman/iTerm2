@@ -3503,7 +3503,7 @@ CA
                                 <outlet property="nextKeyView" destination="2100" id="5257"/>
                             </connections>
                         </button>
-                        <button toolTip="Underline and vertical bar cursors may have a shadow to improve visibliity." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eid-kp-DfH" customClass="iTermSettingsCheckbox">
+                        <button toolTip="Underline and vertical bar cursors can cast a soft drop shadow onto the character beneath the cursor, giving it a sense of depth." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eid-kp-DfH" customClass="iTermSettingsCheckbox">
                             <rect key="frame" x="113" y="383" width="88" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Shadow" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3s8-2Y-ENx">
