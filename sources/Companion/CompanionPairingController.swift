@@ -335,9 +335,12 @@ final class CompanionPairingController: NSObject {
     @objc func resumePairedListeningIfNeeded() {
         installLogHandler()
         relayLog("resumePairedListeningIfNeeded called")
-        // First call is at launch (the user is present); load the push secret
-        // from the keychain into memory now so later background sends never
-        // prompt. Idempotent, so reconnect-driven calls are no-ops.
+        // First call is at launch (the user is present); read the keychain-backed
+        // identity material (Noise keypair, paired phone key, room secret) and the
+        // push secret into memory now, so later reconnects and background sends
+        // serve from cache and never trigger a keychain prompt while the user is
+        // away. Both are idempotent, so reconnect-driven calls are no-ops.
+        CompanionMacIdentity.primeCacheAtLaunch()
         CompanionPushRegistry.loadSecretAtLaunch()
         // Watch the broker so a completed agent turn (or a permission request)
         // can nudge an away phone. Idempotent; gated so it does nothing unless

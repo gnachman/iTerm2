@@ -473,6 +473,11 @@ Settings Improvements:
   fades. Off by default.
 
 Bug Fixes:
+- The companion device no longer triggers a
+  keychain confirmation prompt when it connects
+  or when a notification is sent. The paired
+  identity is now read once at launch, while you
+  are present, instead of mid-connection.
 - The session-logging and archive folder
   pickers now use the folder you select rather
   than its parent when you don’t open it first.
