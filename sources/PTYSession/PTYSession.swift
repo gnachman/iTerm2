@@ -2363,8 +2363,7 @@ extension PTYSession {
         guard iTermAITermGatekeeper.check() else {
             return
         }
-        guard let listModel = ChatListModel.instance,
-              let client = ChatClient.instance else {
+        guard let listModel = ChatListModel.instance else {
             return
         }
         let sessionGuid = self.guid
@@ -2373,29 +2372,45 @@ extension PTYSession {
             inlineChatVisible = true
             return
         }
+        if createInlineChat() != nil {
+            inlineChatVisible = true
+        }
+    }
+
+    // Create a brand-new chat for this session's inline panel and bind it via
+    // inlineChatID. The chat is created UNLINKED (no terminal/browser GUID) and
+    // carries a single .offerLink client-local message, mirroring the chat
+    // window's new-chat flow: the user picks "Link" (bind to this session) or
+    // "Enable Orchestration" from buttons in the conversation rather than the
+    // panel deciding for them. Returns the new chat ID, or nil on failure.
+    //
+    // The offer is published here (at creation) rather than in
+    // ChatViewController.attach(to:) because attach runs on every (re)attach;
+    // offering there would stack duplicate offer bubbles across detach/reattach
+    // cycles. Published client-local messages persist and replay when the panel
+    // loads the chat.
+    @discardableResult
+    func createInlineChat() -> String? {
+        guard let client = ChatClient.instance else {
+            return nil
+        }
         do {
             let title = "Chat about \(self.name)"
             let isBrowser = self.isBrowserSession()
             let chatID = try client.create(
                 chatWithTitle: title,
-                terminalSessionGuid: isBrowser ? nil : sessionGuid,
-                browserSessionGuid: isBrowser ? sessionGuid : nil,
+                terminalSessionGuid: nil,
+                browserSessionGuid: nil,
                 initialMessages: [],
                 permissions: "")
-            // Mirror the chat window's link flow so the inline chat
-            // starts with the same "linked to session" notice and
-            // permissions buttons.
-            let escapedName = self.name.escapedForMarkdownCode
-            try? client.publishNotice(
-                chatID: chatID,
-                notice: "This chat has been linked to \(isBrowser ? "web browser" : "terminal") session “\(escapedName)”")
             try? client.publishClientLocalMessage(
                 chatID: chatID,
-                action: .permissions(terminal: !isBrowser, guid: sessionGuid))
+                action: .offerLink(terminal: !isBrowser, guid: self.guid, name: self.name))
             inlineChatID = chatID
-            inlineChatVisible = true
+            return chatID
         } catch {
             DLog("\(error)")
+            return nil
         }
     }
 }

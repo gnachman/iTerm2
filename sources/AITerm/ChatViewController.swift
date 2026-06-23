@@ -180,6 +180,11 @@ class ChatViewController: NSViewController {
     // the inline slot rather than asking a window controller).
     var inlinePanelCoordinator: InlinePanelCoordinator?
 
+    // Panel-only toolbar (new chat / switch chat / session info / hide). The
+    // chat window supplies its own NSToolbar or floating bar; the inline panel
+    // hosts this instead. Non-nil only while attached as a gutter panel.
+    private var inlineToolbarView: InlineChatToolbarView?
+
     // iTermRightGutterPanel.panelDelegate. Stored property so the protocol's
     // weak/var requirement is satisfied at the class level (extensions can't
     // declare stored properties).
@@ -279,10 +284,24 @@ class ChatViewController: NSViewController {
         guard bounds.width > 0 else { return }
         let dividerHeight: CGFloat = 1
 
+        // The inline-panel toolbar (if present) sits across the top edge; the
+        // scroll view fills the remaining height below it. In window mode
+        // there's no inline toolbar and the scroll view fills the full height.
+        let toolbarHeight = inlineToolbarView != nil ? InlineChatToolbarView.height : 0
+        if let inlineToolbarView {
+            let toolbarFrame = NSRect(x: 0,
+                                      y: bounds.height - toolbarHeight,
+                                      width: bounds.width,
+                                      height: toolbarHeight)
+            if inlineToolbarView.frame != toolbarFrame {
+                inlineToolbarView.frame = toolbarFrame
+            }
+        }
+
         let scrollFrame = NSRect(x: 0,
                                   y: 0,
                                   width: bounds.width,
-                                  height: bounds.height)
+                                  height: bounds.height - toolbarHeight)
         if scrollView.frame != scrollFrame {
             scrollView.frame = scrollFrame
         }
@@ -574,7 +593,9 @@ extension ChatViewController {
         // wrong.
         if let windowController = view.window?.windowController as? ChatWindowController {
             windowController.updateTitle(chat?.title ?? "AI Chat")
-        } else if !isInlinePanel {
+        } else if isInlinePanel {
+            updateInlineToolbarTitle()
+        } else {
             // Fallback for compatibility
             view.window?.title = chat?.title ?? "AI Chat"
         }
@@ -617,7 +638,9 @@ extension ChatViewController {
                             // isn't clobbered.
                             if let windowController = self.view.window?.windowController as? ChatWindowController {
                                 windowController.updateTitle(newName)
-                            } else if !self.isInlinePanel {
+                            } else if self.isInlinePanel {
+                                self.updateInlineToolbarTitle()
+                            } else {
                                 // Fallback for compatibility
                                 self.view.window?.title = newName
                             }
@@ -2625,6 +2648,13 @@ extension ChatViewController {
 
     fileprivate func rootViewDidMoveToWindow() {
         guard view.window != nil else { return }
+        // Install the panel toolbar here rather than in attach(to:): the gutter
+        // controller accesses our view (forcing loadView) only after attach, so
+        // the view isn't loaded during attach. By the time the view is in a
+        // window it is loaded and isInlinePanel is true.
+        if isInlinePanel {
+            installInlineToolbarIfNeeded()
+        }
         if let chatID = pendingPanelChatID {
             pendingPanelChatID = nil
             load(chatID: chatID)
@@ -2671,18 +2701,11 @@ extension ChatViewController: iTermRightGutterPanel {
             if view.window != nil {
                 rootViewDidMoveToWindow()
             }
-            if model?.terminalSessionGuid == nil
-                && model?.browserSessionGuid == nil
-                && !(listModel.chat(id: chatID)?.orchestrationEnabled ?? false) {
-                // Orchestration chats have nil session GUIDs BY DESIGN. Calling
-                // link() in that state would trip the it_assert in
-                // ChatListModel.setTerminalGuid/setBrowserGuid that refuses to
-                // bind an orchestration chat. it_assert is enabled in release,
-                // so without this short-circuit a stale session.inlineChatID
-                // pointing at an orchestration chat (e.g. after the user
-                // toggled an existing chat into orchestration) would crash.
-                try? link(terminal: !session.isBrowserSession(), guid: session.guid, name: session.name)
-            }
+            // Intentionally does NOT auto-link to the session. New inline chats
+            // are created unlinked (PTYSession.createInlineChat) with an
+            // .offerLink message so the user chooses Link vs Enable
+            // Orchestration, the same as the chat window's new-chat flow.
+            // Already-linked and orchestration chats are left as-is on attach.
         }
     }
 
@@ -2704,6 +2727,23 @@ extension ChatViewController: iTermRightGutterPanel {
         pendingPanelChatID = nil
         inlinePanelCoordinator = nil
         delegate = nil
+        inlineToolbarView?.removeFromSuperview()
+        inlineToolbarView = nil
+    }
+
+    private func installInlineToolbarIfNeeded() {
+        guard isViewLoaded, inlineToolbarView == nil else { return }
+        let toolbar = InlineChatToolbarView()
+        toolbar.delegate = self
+        toolbar.titleLabel.stringValue = chatTitle
+        toolbar.autoresizingMask = []
+        view.addSubview(toolbar)
+        inlineToolbarView = toolbar
+        setNeedsLayoutNow()
+    }
+
+    func updateInlineToolbarTitle() {
+        inlineToolbarView?.titleLabel.stringValue = chatTitle
     }
 
     // The panel may outlive its initial session if SessionView's delegate
@@ -2717,6 +2757,64 @@ extension ChatViewController: iTermRightGutterPanel {
             return session
         }
         return panelAttachedSession
+    }
+}
+
+// MARK: - Inline panel toolbar delegate
+
+extension ChatViewController: InlineChatToolbarViewDelegate {
+    func inlineChatToolbarDidTapNewChat() {
+        guard let session = currentInlinePanelSession,
+              let newID = session.createInlineChat() else {
+            return
+        }
+        session.inlineChatVisible = true
+        load(chatID: newID)
+        updateInlineToolbarTitle()
+    }
+
+    func inlineChatToolbarDidTapSwitchChat(_ sender: NSButton) {
+        let menu = NSMenu()
+        let currentID = chatID
+        // chatStorage is kept most-recent-first (see ChatListModel).
+        for i in 0..<listModel.count {
+            let chat = listModel.chat(at: i)
+            let item = NSMenuItem(title: chat.title.isEmpty ? "Untitled Chat" : chat.title,
+                                  action: #selector(switchToChatFromMenu(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.representedObject = chat.id
+            item.state = (chat.id == currentID) ? .on : .off
+            menu.addItem(item)
+        }
+        if menu.items.isEmpty {
+            let item = NSMenuItem(title: "No Chats", action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            menu.addItem(item)
+        }
+        menu.popUp(positioning: nil,
+                   at: NSPoint(x: 0, y: sender.bounds.height),
+                   in: sender)
+    }
+
+    @objc private func switchToChatFromMenu(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String,
+              let session = currentInlinePanelSession else {
+            return
+        }
+        session.inlineChatID = id
+        load(chatID: id)
+        updateInlineToolbarTitle()
+    }
+
+    func inlineChatToolbarDidTapSessionInfo(_ sender: NSButton) {
+        // Reuses the chat window's session menu; it already handles inline
+        // panel mode (suppresses "Put Chat in Linked Session" etc.).
+        showSessionButtonMenu(sender)
+    }
+
+    func inlineChatToolbarDidTapClose() {
+        currentInlinePanelSession?.inlineChatVisible = false
     }
 }
 

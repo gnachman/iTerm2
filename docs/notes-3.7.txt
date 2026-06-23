@@ -447,6 +447,12 @@ Settings Improvements:
   menu’s “Put Chat in Linked Session” item
   and toggle visibility from View > Show
   Inline Chat.
+- The inline chat panel now has a toolbar to
+  create a new chat, switch chats, open the
+  session/link menu, and hide the panel. New
+  inline chats ask whether to link to the
+  session or become an orchestrator instead
+  of linking automatically.
 - Open Quickly now uses recency as a
   tiebreaker, so the session list (whether
   the query is empty or matches several
