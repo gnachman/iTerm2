@@ -404,7 +404,7 @@ final class iTermWindowProject: NSObject, Codable {
             // Skip an empty capture (DesignNotes #10): leave this window open and
             // associated rather than close it into an unrestorable archive.
             guard Self.isArchivable(arrangement) else {
-                Self.wpLog("closeProject: refusing to archive empty arrangement; leaving window open")
+                Self.devReportEmptyArrangement(context: "closeProject", arrangement: arrangement, terminal: terminal)
                 continue
             }
             let title = terminal.ptyWindow()?.title ?? "Window"
@@ -449,7 +449,7 @@ final class iTermWindowProject: NSObject, Codable {
         // skip the unrestorable archive entry but still drop the now-stale guid
         // association.
         guard Self.isArchivable(arrangement) else {
-            Self.wpLog("windowWillClose: refusing to archive empty arrangement; dropping association")
+            Self.devReportEmptyArrangement(context: "windowWillClose", arrangement: arrangement, terminal: terminal)
             liveAssociations.removeValue(forKey: guid)
             saveAssociations()
             return
@@ -485,6 +485,45 @@ final class iTermWindowProject: NSObject, Codable {
         return !tabs.isEmpty
     }
 
+    // ⚠️ DEV DIAGNOSTIC — TEMPORARY, STRIP BEFORE SHIPPING ⚠️
+    // We are not convinced the empty-arrangement capture (DesignNotes #10) still
+    // happens on current builds — it may be residue from an older build. If it
+    // ever does fire, dump a full trace + the offending arrangement to
+    // /tmp/iterm_wp.log AND surface a dialog so we can catch it in the act and
+    // learn which capture path/timing produced it. Remove this together with the
+    // isArchivable() guard wiring once the question is settled.
+    static func devReportEmptyArrangement(context: String,
+                                          arrangement: [AnyHashable: Any],
+                                          terminal: PseudoTerminal?) {
+        let bytes = (try? PropertyListSerialization.data(fromPropertyList: arrangement,
+                                                         format: .binary,
+                                                         options: 0))?.count ?? -1
+        let title = terminal?.ptyWindow()?.title ?? "<nil>"
+        let windowNumber = terminal?.ptyWindow()?.windowNumber ?? -1
+        let sessionCount = (terminal?.allSessions() as? [PTYSession])?.count ?? -1
+        let keys = arrangement.keys.map { "\($0)" }.sorted()
+        let stack = Thread.callStackSymbols.prefix(25).joined(separator: "\n")
+        let detail = """
+        ⚠️ EMPTY ARRANGEMENT (DesignNotes #10) at \(context)
+        size=\(bytes)B keys=\(keys) title=\(title) windowNumber=\(windowNumber) liveSessions=\(sessionCount)
+        arrangement=\(arrangement)
+        callStack:
+        \(stack)
+        """
+        wpLog(detail)
+
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Window Projects (dev): empty arrangement captured"
+            alert.informativeText = "An empty terminal arrangement was captured during “\(context)” "
+                + "(\(bytes) bytes, keys: \(keys)). This is a temporary dev diagnostic for "
+                + "DesignNotes #10 — full trace written to /tmp/iterm_wp.log. The window was left "
+                + "open instead of being archived into an unrestorable entry."
+            alert.runModal()
+        }
+    }
+
     /// Saves `terminal`'s arrangement into `project` and optionally closes the window.
     /// Any existing live association is cleared.
     func archiveWindow(_ terminal: PseudoTerminal,
@@ -498,7 +537,7 @@ final class iTermWindowProject: NSObject, Codable {
         // Refuse to archive an empty capture (DesignNotes #10): leave the window
         // open and associated rather than create an unrestorable archive entry.
         guard Self.isArchivable(arrangement) else {
-            Self.wpLog("archiveWindow: refusing to archive empty arrangement; leaving window open")
+            Self.devReportEmptyArrangement(context: "archiveWindow", arrangement: arrangement, terminal: terminal)
             return
         }
         if let guid = Self.guid(for: terminal) {
