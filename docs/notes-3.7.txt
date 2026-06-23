@@ -497,6 +497,11 @@ Bug Fixes:
   prefer rich text.
 - Clicking in a porthole in an inactive split
   pane now activates that pane.
+- Fixed a crash (SIGABRT) when attaching with tmux
+  integration (tmux -CC) to a remote server whose
+  tmux version returns an unexpected state field.
+  iTerm2 now logs the bad field and continues
+  instead of aborting.
 - Fixed several crashes: registering a profile
   hotkey for a profile with no GUID, loading a
   profile whose default-bookmark value is a

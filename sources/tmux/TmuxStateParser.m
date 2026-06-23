@@ -155,13 +155,23 @@ NSString *kStateDictPaneKeyMode = @"pane_key_mode";  // tmux 3.5+; reports per-p
         if (eq.location != NSNotFound) {
             NSString *key = [kvp substringToIndex:eq.location];
             NSString *value = [kvp substringFromIndex:eq.location + 1];
+            if (key.length == 0) {
+                continue;
+            }
             NSString *converter = [fieldTypes objectForKey:key];
+            id objectToStore = value;
             if (converter) {
                 SEL sel = NSSelectorFromString(converter);
-                id convertedValue = [value performSelector:sel];
-                [result setObject:convertedValue forKey:key];
+                objectToStore = [value performSelector:sel];
+            }
+            // tmux is an external process (and, with `tmux -CC` to a remote host,
+            // potentially a different version than we expect). Never trust it to
+            // give us a non-nil value: a nil here would cause -setObject:forKey:
+            // to raise NSInvalidArgumentException and abort the whole app.
+            if (objectToStore) {
+                [result setObject:objectToStore forKey:key];
             } else {
-                [result setObject:value forKey:key];
+                NSLog(@"Ignoring nil value for key \"%@\" in tmux state \"%@\"", key, kvp);
             }
         } else if ([kvp length] > 0) {
             NSLog(@"Bogus result in control command: \"%@\"", kvp);
