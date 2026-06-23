@@ -873,7 +873,8 @@ final class iTermProjectsOutlineController: NSViewController,
                    || pb.availableType(from: [kArchivedWindowDragType]) != nil
         guard accepts, let project = projectDropTarget(for: item) else { return [] }
         outlineView.setDropItem(project, dropChildIndex: NSOutlineViewDropOnItemIndex)
-        return .move
+        // Use .link so the cursor shows the same redirect-arrow badge as the right pane.
+        return .link
     }
 
     func outlineView(_ outlineView: NSOutlineView,
