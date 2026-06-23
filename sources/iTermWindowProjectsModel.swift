@@ -255,6 +255,21 @@ final class iTermWindowProject: NSObject, Codable {
         guard let data = try? Data(contentsOf: Self.associationsURL),
               let stringMap = try? JSONDecoder().decode([String: String].self, from: data) else { return }
         liveAssociations = stringMap.compactMapValues { UUID(uuidString: $0) }
+        Self.wpLog("loadAssociations: \(liveAssociations.count) persisted guid→project entries: \(liveAssociations.keys.sorted())")
+    }
+
+    /// Logs which currently-open windows resolve to a project (for verifying
+    /// re-association after a restart). Safe to call any time.
+    func logResolvedAssociations(_ phase: String) {
+        let all = iTermController.sharedInstance().terminals() ?? []
+        var lines: [String] = []
+        for t in all {
+            guard let guid = Self.guid(for: t) else { continue }
+            if let pid = liveAssociations[guid], let proj = project(id: pid) {
+                lines.append("guid=\(guid)→\(proj.name)")
+            }
+        }
+        Self.wpLog("\(phase): \(lines.count) open window(s) resolved to a project: \(lines)")
     }
 
     private func load() {
