@@ -175,21 +175,35 @@ final class iTermWindowProject: NSObject, Codable {
         return NSClassFromString("XCTestCase") != nil
     }
 
-    private static var saveURL: URL {
+    /// The iTerm2 application-support directory, honoring the `-suite <name>`
+    /// launch argument (see main.m). Launching a dogfooding instance with
+    /// `-suite dev` redirects this to ~/Library/Application Support/dev/, so its
+    /// Window Projects, associations, and thumbnails stay out of the real
+    /// ~/Library/Application Support/iTerm2/ — matching how the rest of iTerm
+    /// (prefs, daemon socket) already isolates per-suite. With no -suite the
+    /// ObjC helper returns the same path as before (executable name "iTerm2"),
+    /// so the prod location is unchanged. Falls back to the hardcoded path only
+    /// if the helper ever returns nil.
+    private static var supportDirectory: URL {
+        if let path = FileManager.default.applicationSupportDirectory(), !path.isEmpty {
+            return URL(fileURLWithPath: path, isDirectory: true)
+        }
         let support = FileManager.default.urls(for: .applicationSupportDirectory,
                                                in: .userDomainMask)[0]
         let dir = support.appendingPathComponent("iTerm2")
         try? FileManager.default.createDirectory(at: dir,
                                                  withIntermediateDirectories: true)
+        return dir
+    }
+
+    private static var saveURL: URL {
         let filename = isTesting ? "WindowProjects_test.json" : "WindowProjects.json"
-        return dir.appendingPathComponent(filename)
+        return supportDirectory.appendingPathComponent(filename)
     }
 
     private static var thumbnailsDirectoryURL: URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory,
-                                               in: .userDomainMask)[0]
         let folderName = isTesting ? "WindowProjectThumbnails_test" : "WindowProjectThumbnails"
-        let dir = support.appendingPathComponent("iTerm2").appendingPathComponent(folderName)
+        let dir = supportDirectory.appendingPathComponent(folderName)
         try? FileManager.default.createDirectory(at: dir,
                                                  withIntermediateDirectories: true)
         return dir
