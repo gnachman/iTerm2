@@ -131,6 +131,29 @@ final class iTermWindowProject: NSObject, Codable {
         save()
     }
 
+    /// Test-only access to the in-memory guid→project association map.
+    var testOnlyAssociations: [String: UUID] {
+        get { liveAssociations }
+        set {
+            liveAssociations = newValue
+            saveAssociations()
+        }
+    }
+
+    /// Test-only: drop the in-memory map and re-read it from disk, exercising the
+    /// real save/load serialization path (the guid→UUID-string round trip).
+    func testOnlyReloadAssociationsFromDisk() {
+        liveAssociations = [:]
+        loadAssociations()
+    }
+
+    /// Test-only access to the applicationWillTerminate guard so the no-archive-on-quit
+    /// behavior (Option A) can be exercised without a real NSApplication teardown.
+    var testOnlyIsTerminating: Bool {
+        get { isTerminating }
+        set { isTerminating = newValue }
+    }
+
     /// Persisted mapping: stable PseudoTerminal.terminalGuid → project UUID.
     /// Keyed by GUID (not window number) so an open associated window that is
     /// brought back by native window restoration after a quit/crash re-joins its
@@ -188,10 +211,13 @@ final class iTermWindowProject: NSObject, Codable {
         let aspectW: CGFloat = 320
         let aspectH = cgImage.height == 0 ? 200 : aspectW * CGFloat(cgImage.height) / CGFloat(cgImage.width)
         let size = NSSize(width: aspectW, height: min(aspectH, 240))
-        
+
+        // Render at 2× so the saved PNG stays crisp when shown on a Retina display
+        // (the preview is displayed at the logical `size`).
+        let scale: CGFloat = 2
         guard let bitmapRep = NSBitmapImageRep(bitmapDataPlanes: nil,
-                                                pixelsWide: Int(size.width),
-                                                pixelsHigh: Int(size.height),
+                                                pixelsWide: Int(size.width * scale),
+                                                pixelsHigh: Int(size.height * scale),
                                                 bitsPerSample: 8,
                                                 samplesPerPixel: 4,
                                                 hasAlpha: true,
@@ -199,7 +225,7 @@ final class iTermWindowProject: NSObject, Codable {
                                                 colorSpaceName: .calibratedRGB,
                                                 bytesPerRow: 0,
                                                 bitsPerPixel: 0) else { return }
-        
+
         bitmapRep.size = size
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
@@ -386,6 +412,12 @@ final class iTermWindowProject: NSObject, Codable {
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
             let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
             PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+            // Skip an empty capture (DesignNotes #10): leave this window open and
+            // associated rather than close it into an unrestorable archive.
+            guard Self.isArchivable(arrangement) else {
+                Self.devReportEmptyArrangement(context: "closeProject", arrangement: arrangement, terminal: terminal)
+                continue
+            }
             let title = terminal.ptyWindow()?.title ?? "Window"
             let uuid = UUID()
             Self.saveThumbnail(for: wn, uuid: uuid)
@@ -424,6 +456,15 @@ final class iTermWindowProject: NSObject, Codable {
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
         let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
         PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+        // The window is closing regardless. On an empty capture (DesignNotes #10),
+        // skip the unrestorable archive entry but still drop the now-stale guid
+        // association.
+        guard Self.isArchivable(arrangement) else {
+            Self.devReportEmptyArrangement(context: "windowWillClose", arrangement: arrangement, terminal: terminal)
+            liveAssociations.removeValue(forKey: guid)
+            saveAssociations()
+            return
+        }
         let title = window.title.isEmpty ? "Window" : window.title
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
@@ -446,6 +487,54 @@ final class iTermWindowProject: NSObject, Codable {
 
     // MARK: Window Archiving
 
+    /// True if `arrangement` is substantive enough to archive. Some capture
+    /// timings yield an empty (~42-byte) plist with no `Tabs`, which would restore
+    /// to nothing; refuse to archive those so a detached/closed window never
+    /// becomes an unrestorable entry (see DesignNotes #10).
+    static func isArchivable(_ arrangement: [AnyHashable: Any]?) -> Bool {
+        guard let tabs = arrangement?["Tabs"] as? [Any] else { return false }
+        return !tabs.isEmpty
+    }
+
+    // ⚠️ DEV DIAGNOSTIC — TEMPORARY, STRIP BEFORE SHIPPING ⚠️
+    // We are not convinced the empty-arrangement capture (DesignNotes #10) still
+    // happens on current builds — it may be residue from an older build. If it
+    // ever does fire, dump a full trace + the offending arrangement to
+    // /tmp/iterm_wp.log AND surface a dialog so we can catch it in the act and
+    // learn which capture path/timing produced it. Remove this together with the
+    // isArchivable() guard wiring once the question is settled.
+    static func devReportEmptyArrangement(context: String,
+                                          arrangement: [AnyHashable: Any],
+                                          terminal: PseudoTerminal?) {
+        let bytes = (try? PropertyListSerialization.data(fromPropertyList: arrangement,
+                                                         format: .binary,
+                                                         options: 0))?.count ?? -1
+        let title = terminal?.ptyWindow()?.title ?? "<nil>"
+        let windowNumber = terminal?.ptyWindow()?.windowNumber ?? -1
+        let sessionCount = (terminal?.allSessions() as? [PTYSession])?.count ?? -1
+        let keys = arrangement.keys.map { "\($0)" }.sorted()
+        let stack = Thread.callStackSymbols.prefix(25).joined(separator: "\n")
+        let detail = """
+        ⚠️ EMPTY ARRANGEMENT (DesignNotes #10) at \(context)
+        size=\(bytes)B keys=\(keys) title=\(title) windowNumber=\(windowNumber) liveSessions=\(sessionCount)
+        arrangement=\(arrangement)
+        callStack:
+        \(stack)
+        """
+        wpLog(detail)
+
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Window Projects (dev): empty arrangement captured"
+            alert.informativeText = "An empty terminal arrangement was captured during “\(context)” "
+                + "(\(bytes) bytes, keys: \(keys)). This is a temporary dev diagnostic for "
+                + "DesignNotes #10 — full trace written to /tmp/iterm_wp.log. The window was left "
+                + "open instead of being archived into an unrestorable entry."
+            alert.runModal()
+        }
+    }
+
     /// Saves `terminal`'s arrangement into `project` and optionally closes the window.
     /// Any existing live association is cleared.
     func archiveWindow(_ terminal: PseudoTerminal,
@@ -453,13 +542,19 @@ final class iTermWindowProject: NSObject, Codable {
                        andClose close: Bool,
                        keepJobsRunning: Bool = false) {
         let wn = terminal.ptyWindow()?.windowNumber ?? 0
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
+        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
+        PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
+        // Refuse to archive an empty capture (DesignNotes #10): leave the window
+        // open and associated rather than create an unrestorable archive entry.
+        guard Self.isArchivable(arrangement) else {
+            Self.devReportEmptyArrangement(context: "archiveWindow", arrangement: arrangement, terminal: terminal)
+            return
+        }
         if let guid = Self.guid(for: terminal) {
             liveAssociations.removeValue(forKey: guid)
             saveAssociations()
         }
-        PseudoTerminal.setUseUnlimitedHistoryForArrangement(true)
-        let arrangement = terminal.arrangementExcludingTmuxTabs(true, includingContents: true) ?? [:]
-        PseudoTerminal.setUseUnlimitedHistoryForArrangement(false)
         let title = terminal.ptyWindow()?.title ?? "Window"
         let uuid = UUID()
         Self.saveThumbnail(for: wn, uuid: uuid)
