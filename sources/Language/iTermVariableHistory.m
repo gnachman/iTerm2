@@ -61,6 +61,7 @@
                                     iTermVariableKeySessionWindowName,
                                     iTermVariableKeySessionJob,
                                     iTermVariableKeySessionProcessTitle,
+                                    iTermVariableKeySessionDeepestJob,
                                     iTermVariableKeySessionForegroundJobAncestors,
                                     iTermVariableKeySessionCommandLine,
                                     iTermVariableKeySessionPresentationName,

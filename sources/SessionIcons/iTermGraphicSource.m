@@ -81,7 +81,9 @@ static NSDictionary *sGraphicIconMap;
 - (BOOL)updateImageForProcessID:(pid_t)pid
                         enabled:(BOOL)enabled
             processInfoProvider:(id<ProcessInfoProvider>)processInfoProvider {
-    NSImage *image = [self imageForProcessID:pid enabled:enabled processInfoProvider:processInfoProvider];
+    NSImage *image = [self imageForProcessID:pid
+                                     enabled:enabled
+                         processInfoProvider:processInfoProvider];
     if (image == self.image) {
         return NO;
     }
@@ -104,7 +106,7 @@ static NSDictionary *sGraphicIconMap;
     if (!enabled) {
         return nil;
     }
-    iTermProcessInfo *info = [processInfoProvider deepestForegroundJobForPid:pid];
+    iTermProcessInfo *info = [processInfoProvider displayForegroundJobForPid:pid];
     if (!info) {
         return nil;
     }

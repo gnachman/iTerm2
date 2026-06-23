@@ -24,6 +24,13 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
 
 // Maps process id to deepest foreground job. _lockQueue
 @property (nonatomic) NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJobLQ;
+// Maps process id to the deepest foreground job actually attached to the
+// session's tty (its stdin or stdout is the terminal), falling back to the
+// deepest foreground job when nothing qualifies. This is the user-facing job:
+// it hides foreground-process-group helpers that are piped to their parent (e.g.
+// an MCP server spawned by claude) or have their stdio redirected (e.g.
+// caffeinate). _lockQueue
+@property (nonatomic) NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDisplayForegroundJobLQ;
 @property (atomic) BOOL forcingLQ;
 @end
 
@@ -36,6 +43,14 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
     BOOL _needsUpdateFlagLQ;  // _lockQueue
     iTermRateLimitedUpdate *_rateLimit;  // Main queue. keeps updateIfNeeded from eating all the CPU
     NSMutableIndexSet *_dirtyPIDsLQ;  // _lockQueue
+    // Caches each tracked root pid's controlling tty (its stdio device rdev) so we
+    // derive it just once per session rather than every update. The tty doesn't
+    // change for the life of the session. Keyed by pid; the value is
+    // @[@(rdev), rootStartTime] so a recycled pid (same number, different process)
+    // is detected by its start time and re-derived rather than inheriting the prior
+    // session's tty. Also pruned to the live tracked pids each update to bound size.
+    // _workQueue only (reallyUpdate always runs there).
+    NSMutableDictionary<NSNumber *, NSArray *> *_ttyRdevByPidWQ;
     // Last foreground-job ancestry (deepest first, lowercased) posted for each
     // tracked root pid. Used to diff and emit
     // iTermProcessCacheForegroundJobAncestorsDidChangeNotification. _lockQueue
@@ -59,6 +74,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         _trackedPidsLQ = [NSMutableDictionary dictionary];
         _dirtyPIDsLQ = [NSMutableIndexSet indexSet];
         _lastAncestorsByPidLQ = [NSMutableDictionary dictionary];
+        _ttyRdevByPidWQ = [NSMutableDictionary dictionary];
         _blocksLQ = [NSMutableArray array];
 
         // I'm not fond of this pattern (code that sometimes is synchronous and sometimes not) but
@@ -208,6 +224,17 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
     return result;
 }
 
+// Any queue. Returns the precomputed tty-attached foreground job (see
+// reallyUpdate). The filtered walk and its proc_pidfdinfo syscalls happen on the
+// work queue during the update, not here, so this is just a dictionary read.
+- (iTermProcessInfo *)displayForegroundJobForPid:(pid_t)pid {
+    __block iTermProcessInfo *result;
+    dispatch_sync(_lockQueue, ^{
+        result = self.cachedDisplayForegroundJobLQ[@(pid)];
+    });
+    return result;
+}
+
 // Any queue
 - (void)registerTrackedPID:(pid_t)pid {
     dispatch_async(_lockQueue, ^{
@@ -336,20 +363,70 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
     return collection;
 }
 
-- (NSDictionary<NSNumber *, iTermProcessInfo *> *)newDeepestForegroundJobCacheWithCollection:(iTermProcessCollection *)collection {
-    NSMutableDictionary<NSNumber *, iTermProcessInfo *> *cache = [NSMutableDictionary dictionary];
+// _workQueue. Builds both the raw deepest-foreground-job cache and the
+// tty-attached display-job cache. The proc_pidfdinfo syscalls behind the display
+// job happen here (work queue), with the collection alive for the tree walk, so
+// the cache reads on other queues stay cheap. Each tracked root pid's controlling
+// tty is derived once from its own stdio and remembered in _ttyRdevByPidWQ.
+- (void)buildForegroundJobCachesWithCollection:(iTermProcessCollection *)collection
+                                       deepest:(NSDictionary<NSNumber *, iTermProcessInfo *> **)deepestOut
+                                       display:(NSDictionary<NSNumber *, iTermProcessInfo *> **)displayOut {
+    NSMutableDictionary<NSNumber *, iTermProcessInfo *> *deepest = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSNumber *, iTermProcessInfo *> *display = [NSMutableDictionary dictionary];
     __block NSSet<NSNumber *> *trackedPIDs;
     dispatch_sync(_lockQueue, ^{
         trackedPIDs = [self->_trackedPidsLQ.allKeys copy];
     });
     for (NSNumber *root in trackedPIDs) {
-        iTermProcessInfo *info = [collection infoForProcessID:root.integerValue].deepestForegroundJob;
-        DLog(@"iTermProcessCache: deepest fg job for %@ is %@", @(root.integerValue), @(info.processID));
-        if (info) {
-            cache[root] = info;
+        iTermProcessInfo *rootInfo = [collection infoForProcessID:root.integerValue];
+        iTermProcessInfo *deepestInfo = rootInfo.deepestForegroundJob;
+        DLog(@"iTermProcessCache: deepest fg job for %@ is %@", @(root.integerValue), @(deepestInfo.processID));
+        if (deepestInfo) {
+            deepest[root] = deepestInfo;
+        }
+        // The session's controlling tty doesn't change for its lifetime, so derive
+        // it once and remember it. Validate the cached entry against the root's
+        // start time so a recycled pid (a new session that reuses the numeric pid)
+        // re-derives rather than inheriting the previous session's tty.
+        NSDate *rootStartTime = rootInfo.startTime;
+        NSArray *cached = _ttyRdevByPidWQ[root];
+        NSNumber *rdevNumber = nil;
+        if (cached && rootStartTime && [cached[1] isEqual:rootStartTime]) {
+            rdevNumber = cached[0];
+        } else {
+            const dev_t derived = rootInfo.sessionControllingTTYRdev;
+            if (derived != 0) {
+                rdevNumber = @(derived);
+                if (rootStartTime) {
+                    _ttyRdevByPidWQ[root] = @[rdevNumber, rootStartTime];
+                }
+                DLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
+            } else {
+                // Don't keep a stale entry; re-derive next update in case the tty
+                // becomes readable later.
+                [_ttyRdevByPidWQ removeObjectForKey:root];
+                DLog(@"iTermProcessCache: could not derive controlling tty rdev for session rooted at pid %@ (%@); display job will fall back to the deepest foreground job", root, rootInfo.name);
+            }
+        }
+        iTermProcessInfo *displayInfo = [rootInfo deepestForegroundJobAttachedToTTYRdev:(dev_t)rdevNumber.intValue];
+        DLog(@"iTermProcessCache: display fg job for %@ (tty rdev %d) is %@ (%@)", @(root.integerValue), (int)rdevNumber.intValue, @(displayInfo.processID), displayInfo.name);
+        if (displayInfo) {
+            display[root] = displayInfo;
         }
     }
-    return cache;
+    // Drop cached ttys for pids that are no longer tracked to bound the map's
+    // size. This is not what protects against pid reuse (an unregister/re-register
+    // could both happen between updates, leaving the pid tracked here the whole
+    // time); the start-time check above is what handles that.
+    NSMutableArray<NSNumber *> *staleKeys = [NSMutableArray array];
+    for (NSNumber *key in _ttyRdevByPidWQ) {
+        if (![trackedPIDs containsObject:key]) {
+            [staleKeys addObject:key];
+        }
+    }
+    [_ttyRdevByPidWQ removeObjectsForKeys:staleKeys];
+    *deepestOut = deepest;
+    *displayOut = display;
 }
 
 // _workQueue
@@ -361,12 +438,17 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         iTermProcessCollection *collection = [self.class newProcessCollection];
 
         // Save the tracked PIDs in the cache
-        NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = [self newDeepestForegroundJobCacheWithCollection:collection];
+        NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = nil;
+        NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDisplayForegroundJob = nil;
+        [self buildForegroundJobCachesWithCollection:collection
+                                             deepest:&cachedDeepestForegroundJob
+                                             display:&cachedDisplayForegroundJob];
 
         // Flip to the new state.
         NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *ancestorChanges = [NSMutableDictionary dictionary];
         dispatch_sync(_lockQueue, ^{
             self->_cachedDeepestForegroundJobLQ = cachedDeepestForegroundJob;
+            self->_cachedDisplayForegroundJobLQ = cachedDisplayForegroundJob;
             self->_collectionLQ = collection;
             self->_needsUpdateFlagLQ = NO;
             [_trackedPidsLQ enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermProcessMonitor * _Nonnull monitor, BOOL * _Nonnull stop) {

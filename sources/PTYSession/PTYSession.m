@@ -7026,9 +7026,26 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)setCurrentForegroundJobProcessInfo:(iTermProcessInfo *)processInfo {
-    DLog(@"%p set job name to %@", self, processInfo.name);
-    NSString *name = processInfo.name;
-    NSString *processTitle = processInfo.argv0 ?: name;
+    // processInfo is the deepest foreground job. It may be a helper that runs in
+    // the foreground process group but isn't actually attached to the terminal
+    // (e.g. an MCP server spawned by claude and piped to it, or caffeinate with
+    // its stdio sent to /dev/null). Prefer the deepest foreground job whose stdin
+    // or stdout is the session tty for the user-facing job name, the session icon,
+    // and auto profile switching, while still exposing the raw deepest job as
+    // iTermVariableKeySessionDeepestJob. The process cache derives the session's
+    // tty from the root pid and falls back to the raw deepest job (so this equals
+    // processInfo) when nothing is attached or the tty is unknown, e.g. remote
+    // sessions.
+    // For a tmux integration pane the pid tracked in the process cache is the tmux
+    // client process id, not _shell.pid, so use the same effective pid the icon
+    // path and the foreground-job ancestry use. Otherwise the cache lookup misses
+    // and the display job silently degrades to the raw deepest job for tmux panes.
+    const pid_t effectivePid = _shell.tmuxClientProcessID ? _shell.tmuxClientProcessID.intValue : _shell.pid;
+    iTermProcessInfo *displayInfo = [self.processInfoProvider displayForegroundJobForPid:effectivePid] ?: processInfo;
+    DLog(@"%p set jobName to %@ (pid %@); raw deepest/deepestJob is %@ (pid %@); root pid %@",
+         self, displayInfo.name, @(displayInfo.processID), processInfo.name, @(processInfo.processID), @(effectivePid));
+    NSString *name = displayInfo.name;
+    NSString *processTitle = displayInfo.argv0 ?: name;
 
     // This is a gross hack but I haven't found a nicer way to do it yet. When exec fails (or takes
     // enough time that we happen to poll it before exec finishes) then the job name is
@@ -7039,12 +7056,21 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionJob];
     [self.variablesScope setValue:processTitle forVariableNamed:iTermVariableKeySessionProcessTitle];
-    [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
-    [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
+    [self.variablesScope setValue:displayInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
+    [self.variablesScope setValue:@(displayInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
+
+    // Expose the raw deepest foreground job (which may be a non-interactive helper
+    // like an MCP server) for scripting. Apply the same iTermServer hack so it
+    // matches the historical jobName value during the exec window.
+    NSString *deepestName = processInfo.name;
+    if ([deepestName isEqualToString:@"iTermServer"] && ![[self.program lastPathComponent] isEqualToString:deepestName]) {
+        deepestName = self.program.lastPathComponent;
+    }
+    [self.variablesScope setValue:deepestName forVariableNamed:iTermVariableKeySessionDeepestJob];
 
     // Collect argv0 values from the foreground process up through its ancestors (deepest first),
-    // stopping before the login shell. This lets triggers and monitors match on the user's command
-    // (e.g. "claude") even when a child process (e.g. caffeinate) is the deepest foreground job.
+    // stopping before the login shell. This intentionally uses the raw deepest job so the full
+    // chain (including helpers like caffeinate) remains available to triggers and monitors.
     NSArray<NSString *> *ancestorNames = processInfo.foregroundJobAncestorNames;
     DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job ancestors to %@ for trigger filtering", ancestorNames);
     [self applyForegroundJobAncestors:ancestorNames];
@@ -7055,7 +7081,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_naggingController removeTouchIDForSudoOffer];
     }
 
-    NSNumber *effectiveShellPID = _shell.tmuxClientProcessID ?: @(_shell.pid);
+    NSNumber *effectiveShellPID = @(effectivePid);
     if (!_exited) {
         if (effectiveShellPID.intValue > 0) {
             [self.variablesScope setValue:effectiveShellPID
@@ -7075,14 +7101,19 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [self.delegate sessionProcessInfoProviderDidChange:self];
         }
     }
-    // Avoid join from side-effect.
+    // Avoid join from side-effect. Auto profile switching matches on the
+    // tty-attached job (the same value as iTermVariableKeySessionJob), so a
+    // foreground-group helper that isn't facing the terminal can't trigger a
+    // surprising profile switch.
+    NSString *displayJobName = name;
+    NSString *displayCommandLine = displayInfo.commandLine;
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf tryAutoProfileSwitchWithHostname:weakSelf.variablesScope.hostname
                                           username:weakSelf.variablesScope.username
                                               path:weakSelf.variablesScope.path
-                                               job:processInfo.name
-                                       commandLine:processInfo.commandLine];
+                                               job:displayJobName
+                                       commandLine:displayCommandLine];
     });
 }
 

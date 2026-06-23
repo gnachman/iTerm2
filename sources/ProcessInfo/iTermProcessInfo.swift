@@ -123,24 +123,42 @@ class iTermProcessInfo: NSObject {
                               visited: inout Set<pid_t>,
                               cycle: inout Bool,
                               depth: Int) -> iTermProcessInfo? {
+        return deepestJob(matching: { $0.isForegroundJob },
+                          level: &levelInOut,
+                          visited: &visited,
+                          cycle: &cycle,
+                          depth: depth)
+    }
+
+    // Shared recursion behind deepestForegroundJob and its tty-attached variant: it
+    // returns the deepest descendant (including self) for which `predicate` is true,
+    // breaking ties toward the first one found. `predicate` decides what counts as a
+    // candidate (e.g. "is a foreground job", optionally "and attached to the tty")
+    // and is also where the filtered variant emits its per-candidate logging.
+    private func deepestJob(matching predicate: (iTermProcessInfo) -> Bool,
+                            level levelInOut: inout Int,
+                            visited: inout Set<pid_t>,
+                            cycle: inout Bool,
+                            depth: Int) -> iTermProcessInfo? {
         if depth > 50 || visited.contains(processID) {
             cycle = true
-            DLog("Failed to find deepest foreground job at \(processID) because depth is \(depth) or found a cycle")
+            DLog("Failed to find deepest job at \(processID) because depth is \(depth) or found a cycle")
             return nil
         }
         visited.insert(processID)
 
         var bestLevel = levelInOut
         var bestProcessInfo: iTermProcessInfo? = nil
-        if isForegroundJob {
+        if predicate(self) {
             bestProcessInfo = self
         }
         for child in children {
             var level = levelInOut + 1
-            let candidate = child.deepestForegroundJob(level: &level,
-                                                       visited: &visited,
-                                                       cycle: &cycle,
-                                                       depth: depth + 1)
+            let candidate = child.deepestJob(matching: predicate,
+                                             level: &level,
+                                             visited: &visited,
+                                             cycle: &cycle,
+                                             depth: depth + 1)
             if cycle {
                 return nil
             }
@@ -151,6 +169,126 @@ class iTermProcessInfo: NSObject {
         }
         levelInOut = bestLevel
         return bestProcessInfo
+    }
+
+    // The rdevs of the terminal devices backing this process's stdin and stdout,
+    // in fd order (fd 0 then fd 1), deduplicated. Empty when neither is a tty
+    // (pipes, files, sockets, or non-terminal character devices like /dev/null).
+    // Used to decide whether the process is attached to a given tty. Lazily
+    // computed (at most two proc_pidfdinfo syscalls) and only consulted for
+    // foreground-job candidates, so the common single-foreground-job case pays for
+    // at most one process per cache generation. Order matters: controllingTTYRdev
+    // prefers fd 0, so a process with stdin on the tty but stdout redirected
+    // resolves to the tty.
+    private lazy var stdioTTYRdevs: [dev_t] = {
+        var result = [dev_t]()
+        for fd in [Int32(0), Int32(1)] {
+            let rdev = dataSource.ttyRdev(forFileDescriptor: fd, ofProcess: processID)
+            if rdev != 0 && !result.contains(rdev) {
+                result.append(rdev)
+            }
+        }
+        return result
+    }()
+
+    @objc(stdioAttachedToTTYRdev:)
+    func stdioAttached(toTTYRdev rdev: dev_t) -> Bool {
+        guard rdev != 0 else {
+            return false
+        }
+        return stdioTTYRdevs.contains(rdev)
+    }
+
+    // The rdev of the terminal on this process's stdin (preferred) or stdout, or 0
+    // if neither is a tty (or its fds can't be read). fd 0 is preferred
+    // deterministically so a process whose stdout is redirected doesn't resolve to
+    // the redirected device.
+    var controllingTTYRdev: dev_t {
+        return stdioTTYRdevs.first ?? 0
+    }
+
+    // Identifies the session's controlling tty by searching this process and its
+    // descendants for the first one whose stdin or stdout is a character device,
+    // and returning that device's rdev (0 if none is found). We search rather than
+    // just reading this process's own stdio because the session's root pid is
+    // often `login`, which is owned by root: iTerm runs as the user and can't read
+    // root-owned fds, so login's stdio looks empty. The user-owned shell just below
+    // it holds the controlling tty on its stdio, so we find it there. The search is
+    // breadth-limited because in the normal case the shell is an immediate child,
+    // and the result is cached per session by the process cache so this runs at
+    // most once per session.
+    @objc var sessionControllingTTYRdev: dev_t {
+        return firstStdioTTYRdev(depth: 0)
+    }
+
+    private func firstStdioTTYRdev(depth: Int) -> dev_t {
+        let mine = controllingTTYRdev
+        if mine != 0 {
+            return mine
+        }
+        if depth >= 8 {
+            return 0
+        }
+        for child in children {
+            let rdev = child.firstStdioTTYRdev(depth: depth + 1)
+            if rdev != 0 {
+                return rdev
+            }
+        }
+        return 0
+    }
+
+    // The deepest foreground job whose stdin or stdout is the given tty, or the
+    // raw deepest foreground job when none qualifies (or rdev is 0). See the
+    // protocol comment on ProcessInfoProvider for the rationale.
+    @objc(deepestForegroundJobAttachedToTTYRdev:)
+    func deepestForegroundJob(attachedToTTYRdev rdev: dev_t) -> iTermProcessInfo? {
+        guard let raw = deepestForegroundJob else {
+            DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): no deepest foreground job under \(processID)")
+            return nil
+        }
+        guard rdev != 0 else {
+            DLog("deepestForegroundJobAttachedToTTYRdev: ttyRdev is 0 (unknown tty), using raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil))")
+            return raw
+        }
+        // Fast path: the deepest foreground job already owns the tty (an
+        // interactive program, or the idle shell). This is the overwhelmingly
+        // common case and costs just the two fd lookups on the leaf.
+        if raw.stdioAttached(toTTYRdev: rdev) {
+            DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil)) is attached to the tty; using it")
+            return raw
+        }
+        // The deepest foreground job is a helper that runs in the foreground
+        // process group but isn't attached to the terminal. Search for the
+        // deepest foreground job that is, and fall back to the raw deepest if
+        // none qualifies.
+        DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil)) is NOT attached (its stdio rdevs are \(raw.stdioTTYRdevs)); searching descendants of \(processID) for an attached foreground job")
+        let attachedForegroundJob: (iTermProcessInfo) -> Bool = { node in
+            guard node.isForegroundJob else {
+                return false
+            }
+            let attached = node.stdioAttached(toTTYRdev: rdev)
+            DLog("deepestJob(attachedToTTYRdev:\(rdev)): foreground job \(node.processID) (\(node.name.debugDescriptionOrNil)) stdio rdevs=\(node.stdioTTYRdevs) attached=\(attached)")
+            return attached
+        }
+        var level = 0
+        var visited = Set<pid_t>()
+        var cycle = false
+        let filtered = deepestJob(matching: attachedForegroundJob,
+                                  level: &level,
+                                  visited: &visited,
+                                  cycle: &cycle,
+                                  depth: 0)
+        if cycle {
+            DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): cycle while searching under \(processID); using raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil))")
+            return raw
+        }
+        if let filtered {
+            DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): using attached foreground job \(filtered.processID) (\(filtered.name.debugDescriptionOrNil))")
+        } else {
+            DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): no attached foreground job found under \(processID); falling back to raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil))")
+        }
+        return filtered ?? raw
     }
 
     var flattenedTree: [iTermProcessInfo] {

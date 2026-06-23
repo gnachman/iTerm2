@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/proc_info.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/un.h>
 
@@ -53,6 +54,10 @@
 
 - (NSDate *)startTimeForProcess:(pid_t)pid {
     return [iTermLSOF startTimeForProcess:pid];
+}
+
+- (dev_t)ttyRdevForFileDescriptor:(int)fd ofProcess:(pid_t)pid {
+    return [iTermLSOF ttyRdevForFileDescriptor:fd ofProcess:pid];
 }
 
 @end
@@ -349,6 +354,30 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     }
     free(fds);
     return result;
+}
+
++ (dev_t)ttyRdevForFileDescriptor:(int)fd ofProcess:(pid_t)pid {
+    struct vnode_fdinfowithpath info;
+    const int rc = proc_pidfdinfo(pid, fd, PROC_PIDFDVNODEPATHINFO, &info, sizeof(info));
+    if (rc != sizeof(info)) {
+        return 0;
+    }
+    // Only character special devices have a meaningful rdev. Pipes and sockets are
+    // a different fd type entirely and never reach this code; a regular file is a
+    // vnode but not a character device.
+    if ((info.pvip.vip_vi.vi_stat.vst_mode & S_IFMT) != S_IFCHR) {
+        return 0;
+    }
+    // proc_pidfdinfo reports an rdev for ANY character device, including /dev/null,
+    // /dev/zero, etc. We only want terminals, so a redirection to /dev/null is not
+    // mistaken for the session's controlling tty. On macOS pty slaves are
+    // /dev/ttysNNN and the controlling-terminal alias is /dev/tty, so they all
+    // share the /dev/tty prefix.
+    NSString *path = [NSString stringWithUTF8String:info.pvip.vip_path] ?: @"";
+    if (![path hasPrefix:@"/dev/tty"]) {
+        return 0;
+    }
+    return info.pvip.vip_vi.vi_stat.vst_rdev;
 }
 
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {

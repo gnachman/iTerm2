@@ -401,6 +401,18 @@ Menus and Miscellaneous:
   selection can now be given a keyboard
   shortcut. Previously this was only on the
   right-click menu.
+- The job name shown in titles, the session
+  icon, and automatic profile switching now
+  reflect the foreground job actually attached
+  to the terminal, hiding helper subprocesses
+  that run in the foreground process group but
+  are piped to their parent (for example an MCP
+  server spawned by claude, or caffeinate). The
+  raw deepest job is still available as the
+  deepestJob variable. Note that automatic
+  profile switching now matches the tty-attached
+  job, so a rule keyed on such a helper name will
+  no longer fire for it.
 
 Core Improvements:
 - Significant Metal rendering speedups for

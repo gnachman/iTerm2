@@ -47,6 +47,16 @@ protocol ProcessInfoProvider {
     @objc(deepestForegroundJobForPid:)
     func deepestForegroundJob(for pid: pid_t) -> iTermProcessInfo?
 
+    // Like deepestForegroundJob(for:) but prefers the deepest foreground job whose
+    // stdin or stdout is the session's tty, falling back to the raw deepest
+    // foreground job when none qualifies. This hides foreground-process-group
+    // members that aren't actually attached to the terminal, e.g. an MCP server
+    // piped to its parent or caffeinate writing to /dev/null. The provider derives
+    // and caches the session's tty from the tracked root pid's stdio, so callers
+    // don't pass it.
+    @objc(displayForegroundJobForPid:)
+    func displayForegroundJob(for pid: pid_t) -> iTermProcessInfo?
+
     @objc(registerTrackedPID:)
     func register(trackedPID pid: pid_t)
 

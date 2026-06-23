@@ -356,6 +356,11 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
         }
         return row.startTime
     }
+
+    func ttyRdev(forFileDescriptor fd: Int32, ofProcess pid: pid_t) -> dev_t {
+        // We can't introspect file descriptors of remote processes.
+        return 0
+    }
 }
 
 @MainActor
@@ -383,6 +388,12 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
     }
 
     func deepestForegroundJob(for pid: pid_t) -> iTermProcessInfo? {
+        return cachedDeepestForegroundJob[pid]
+    }
+
+    func displayForegroundJob(for pid: pid_t) -> iTermProcessInfo? {
+        // We can't introspect remote file descriptors, so tty attachment is
+        // unknowable. Fall back to the raw deepest foreground job.
         return cachedDeepestForegroundJob[pid]
     }
 
@@ -454,6 +465,10 @@ class NullProcessInfoProvider: ProcessInfoProvider, SessionProcessInfoProvider {
     }
 
     func deepestForegroundJob(for pid: pid_t) -> iTermProcessInfo? {
+        return nil
+    }
+
+    func displayForegroundJob(for pid: pid_t) -> iTermProcessInfo? {
         return nil
     }
 
