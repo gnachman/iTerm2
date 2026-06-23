@@ -40,9 +40,17 @@ struct iTermArchivedWindow: Codable {
             format: nil)) as? [AnyHashable: Any]
     }
 
-    /// Returns true if this archived window contains live background server process IDs.
+    /// Returns true if this archived window's process is still running — i.e. it is
+    /// *detached* rather than *closed*.
     var isOrphanedAndRunning: Bool {
         guard let arrangement = arrangement else { return false }
+        // Multiserver (current): the live child is referenced under Server Dict→Child PID
+        // (PTYSession's "Server PID" key is monoserver-only, so reading only that always
+        // reported "closed" for modern arrangements).
+        for pid in iTermWindowProjectsModel.allServerChildPIDs(in: arrangement) where pid > 0 {
+            if kill(pid, 0) == 0 { return true }
+        }
+        // Monoserver (legacy) fallback: a top-level "Server PID".
         return hasLiveServerPID(in: arrangement)
     }
 
