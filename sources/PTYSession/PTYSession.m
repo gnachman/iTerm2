@@ -5538,6 +5538,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _textview.animateMovementOnlyInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS
                                                                                inProfile:aDict];
     _textview.cursorSmoothSlide = [iTermProfilePreferences boolForKey:KEY_CURSOR_SMOOTH_SLIDE inProfile:aDict];
+    _textview.cursorSmoothBlink = [iTermProfilePreferences boolForKey:KEY_CURSOR_SMOOTH_BLINK inProfile:aDict];
+    _textview.cursorBlinkFadeInDuration = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_FADE_IN_DURATION inProfile:aDict];
+    _textview.cursorBlinkFadeOutDuration = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_FADE_OUT_DURATION inProfile:aDict];
+    _textview.cursorBlinkFadeInCurve = [iTermProfilePreferences intForKey:KEY_CURSOR_BLINK_FADE_IN_CURVE inProfile:aDict];
+    _textview.cursorBlinkFadeOutCurve = [iTermProfilePreferences intForKey:KEY_CURSOR_BLINK_FADE_OUT_CURVE inProfile:aDict];
+    _textview.cursorBlinkVisibleDwell = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_VISIBLE_DWELL inProfile:aDict];
+    _textview.cursorBlinkHiddenDwell = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_HIDDEN_DWELL inProfile:aDict];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:_cursorTypeOverride ? _cursorTypeOverride.integerValue : [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 

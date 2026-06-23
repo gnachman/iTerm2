@@ -33,6 +33,14 @@
     CGFloat _virtualOffset;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _fadeAlpha = 1.0;
+    }
+    return self;
+}
+
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType {
     switch (theType) {
         case CURSOR_UNDERLINE:
@@ -99,9 +107,9 @@
     }
     NSColor *shadowColor;
     if (_dark) {
-        shadowColor = [NSColor colorWithWhite:1 alpha:0.5];
+        shadowColor = [NSColor colorWithWhite:1 alpha:0.5 * _fadeAlpha];
     } else {
-        shadowColor = [NSColor colorWithWhite:0 alpha:0.5];
+        shadowColor = [NSColor colorWithWhite:0 alpha:0.5 * _fadeAlpha];
     }
     [shadowColor set];
     iTermRectFillUsingOperation(_shadowRect, NSCompositingOperationSourceOver, _virtualOffset);

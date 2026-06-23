@@ -463,6 +463,14 @@ Settings Improvements:
   that works while another app is in
   front, without activating iTerm2 until
   you commit a selection.
+- Blinking cursors can now fade smoothly
+  in and out instead of toggling abruptly.
+  Turn on “Smooth blink” in Settings >
+  Profiles > Text, where you can tune the
+  fade-in and fade-out durations, easing
+  curves, and how long the cursor dwells
+  fully visible and fully hidden between
+  fades. Off by default.
 
 Bug Fixes:
 - The session-logging and archive folder

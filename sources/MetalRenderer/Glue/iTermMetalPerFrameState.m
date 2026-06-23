@@ -335,6 +335,7 @@ typedef struct {
     _cursorVisible = drawingHelper.isCursorVisible;
     const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
     _cursorInfo = [[iTermMetalCursorInfo alloc] init];
+    _cursorInfo.fadeAlpha = 1.0;
     _cursorInfo.password = drawingHelper.passwordInput;
     _cursorInfo.copyMode = drawingHelper.copyMode;
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
@@ -355,13 +356,39 @@ typedef struct {
     const CGPoint pointOffset = [textView metalCursorAnimationPixelOffset];
     _cursorInfo.pixelOffset = CGPointMake(pointOffset.x * _configuration->_scale,
                                           pointOffset.y * _configuration->_scale);
-    if ([self shouldDrawCursor] &&
+
+    // For smooth blink the cursor is considered visible whenever it would be
+    // drawn ignoring the blinked-out phase, and the blink is conveyed by
+    // fadeAlpha. Once it has fully faded out we stop drawing it.
+    const BOOL smoothBlink = drawingHelper.cursorSmoothBlink;
+    CGFloat fadeAlpha = 1.0;
+    BOOL cursorPassesBlinkGate;
+    if (smoothBlink) {
+        fadeAlpha = [drawingHelper cursorBlinkFadeAlphaForBlinking:[self cursorBlinkConditionActive]];
+        cursorPassesBlinkGate = (fadeAlpha > 0.001) && [self shouldDrawCursorIgnoringBlink];
+        if (drawingHelper.cursorBlinkFadeWantsRedraw) {
+            // Keep the smooth-blink cycle going. Like the cursor slide animator
+            // this runs independently of the update cadence. The delay is 0
+            // mid-fade and the remaining dwell time while holding at an extreme.
+            const NSTimeInterval delay = MAX(0, drawingHelper.cursorBlinkFadeTimeUntilNextFrame);
+            __weak __typeof(textView) weakTextView = textView;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                weakTextView.drawingHelper.animated = YES;
+                [weakTextView requestDelegateRedraw];
+            });
+        }
+    } else {
+        cursorPassesBlinkGate = [self shouldDrawCursor];
+    }
+    if (cursorPassesBlinkGate &&
         (!drawingHelper.hideCursorWhenUnfocused || focused) &&
         _cursorVisible &&
         _visibleRange.start.y <= lineWithCursor &&
         lineWithCursor < _visibleRange.end.y) {
 
         _cursorInfo.cursorVisible = YES;
+        _cursorInfo.fadeAlpha = fadeAlpha;
         _cursorInfo.type = drawingHelper.cursorType;
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
         {
@@ -1877,8 +1904,18 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           isBackground:NO];
         }
         if (_cursorInfo.coord.x < width) {
-            attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
-            attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
+            cursorTextColor.w = 1;
+            const CGFloat fade = _cursorInfo.fadeAlpha;
+            if (fade >= 1.0) {
+                attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
+            } else {
+                // Smooth blink: crossfade the glyph from its normal color toward
+                // the cursor text color as the cursor fades in, so it matches the
+                // box fill being composited at the same alpha underneath.
+                vector_float4 normal = attributes[_cursorInfo.coord.x].foregroundColor;
+                normal.w = 1;
+                attributes[_cursorInfo.coord.x].foregroundColor = simd_mix(normal, cursorTextColor, simd_make_float4(fade, fade, fade, fade));
+            }
         }
     }
     CTVectorDestroy(&positions);
@@ -2517,14 +2554,26 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     return result;
 }
 
+// Like -shouldDrawCursor but ignores the blinked-out phase. Smooth blink uses
+// this and conveys the blink via fadeAlpha instead.
+- (BOOL)shouldDrawCursorIgnoringBlink {
+    return (![self hasMarkedText] && _cursorVisible);
+}
+
+// The condition under which the cursor blinks. Smooth blink drives its own
+// cycle from this.
+- (BOOL)cursorBlinkConditionActive {
+    return (_cursorBlinking &&
+            _configuration->_isInKeyWindow &&
+            _configuration->_textViewIsActiveSession &&
+            _configuration->_textViewIsFirstResponder &&
+            _timeSinceCursorMoved > 0.5);
+}
+
 - (BOOL)hideCursorBecauseBlinking {
-    if (_cursorBlinking &&
-        _configuration->_isInKeyWindow &&
-        _configuration->_textViewIsActiveSession &&
-        _configuration->_textViewIsFirstResponder &&
-        _timeSinceCursorMoved > 0.5) {
-        // Allow the cursor to blink if it is configured, the window is key, this session is active
-        // in the tab, and the cursor has not moved for half a second.
+    // Allow the cursor to blink if it is configured, the window is key, this session is active
+    // in the tab, and the cursor has not moved for half a second.
+    if ([self cursorBlinkConditionActive]) {
         return !_configuration->_blinkingItemsVisible;
     } else {
         return NO;

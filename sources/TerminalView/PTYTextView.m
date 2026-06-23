@@ -1784,6 +1784,21 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                              startedThisFrame:startedLegacyAnimation];
     }];
     [self shiftTrackingChildWindows];
+
+    if (_drawingHelper.cursorBlinkFadeWantsRedraw) {
+        // Keep the smooth-blink cycle going by scheduling another cursor redraw.
+        // This is a self-sustaining loop that runs at the display refresh rate
+        // (like the cursor slide animator) rather than relying on the session's
+        // update cadence, which can be slow when idle. The delay is 0 mid-fade
+        // and the remaining dwell time while holding at an extreme, so we don't
+        // burn frames while the cursor is just sitting fully on or fully off.
+        const NSTimeInterval delay = MAX(0, _drawingHelper.cursorBlinkFadeTimeUntilNextFrame);
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [weakSelf setCursorNeedsDisplay];
+        });
+    }
 }
 
 #pragma mark - Debug overlay for prompt-mark ranges
@@ -7231,6 +7246,62 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (void)setCursorShadow:(BOOL)cursorShadow {
     _drawingHelper.cursorShadow = cursorShadow;
+}
+
+- (void)setCursorSmoothBlink:(BOOL)cursorSmoothBlink {
+    _drawingHelper.cursorSmoothBlink = cursorSmoothBlink;
+}
+
+- (BOOL)cursorSmoothBlink {
+    return _drawingHelper.cursorSmoothBlink;
+}
+
+- (void)setCursorBlinkFadeInDuration:(NSTimeInterval)duration {
+    _drawingHelper.cursorBlinkFadeInDuration = duration;
+}
+
+- (NSTimeInterval)cursorBlinkFadeInDuration {
+    return _drawingHelper.cursorBlinkFadeInDuration;
+}
+
+- (void)setCursorBlinkFadeOutDuration:(NSTimeInterval)duration {
+    _drawingHelper.cursorBlinkFadeOutDuration = duration;
+}
+
+- (NSTimeInterval)cursorBlinkFadeOutDuration {
+    return _drawingHelper.cursorBlinkFadeOutDuration;
+}
+
+- (void)setCursorBlinkFadeInCurve:(NSInteger)curve {
+    _drawingHelper.cursorBlinkFadeInCurve = curve;
+}
+
+- (NSInteger)cursorBlinkFadeInCurve {
+    return _drawingHelper.cursorBlinkFadeInCurve;
+}
+
+- (void)setCursorBlinkFadeOutCurve:(NSInteger)curve {
+    _drawingHelper.cursorBlinkFadeOutCurve = curve;
+}
+
+- (NSInteger)cursorBlinkFadeOutCurve {
+    return _drawingHelper.cursorBlinkFadeOutCurve;
+}
+
+- (void)setCursorBlinkVisibleDwell:(NSTimeInterval)dwell {
+    _drawingHelper.cursorBlinkVisibleDwell = dwell;
+}
+
+- (NSTimeInterval)cursorBlinkVisibleDwell {
+    return _drawingHelper.cursorBlinkVisibleDwell;
+}
+
+- (void)setCursorBlinkHiddenDwell:(NSTimeInterval)dwell {
+    _drawingHelper.cursorBlinkHiddenDwell = dwell;
+}
+
+- (NSTimeInterval)cursorBlinkHiddenDwell {
+    return _drawingHelper.cursorBlinkHiddenDwell;
 }
 
 - (void)setHideCursorWhenUnfocused:(BOOL)hideCursorWhenUnfocused {

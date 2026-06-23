@@ -32,6 +32,10 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL cursorShadow;
 // Pixel offset for smooth cursor animation (applied in addition to coord-based position)
 @property (nonatomic) CGPoint pixelOffset;
+// Opacity in [0, 1] for smooth blink fading. 1 means fully opaque (the default).
+// The character drawn over a box cursor is crossfaded toward the normal text
+// color as this approaches 0 (see iTermMetalPerFrameState).
+@property (nonatomic) CGFloat fadeAlpha;
 
 // Block cursors care about drawing the character overtop the cursor in a
 // different color than the character would normally be. If this is set, the

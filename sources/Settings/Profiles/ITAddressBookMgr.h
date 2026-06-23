@@ -167,6 +167,13 @@
 #define KEY_ANIMATE_MOVEMENT       @"Animate Movement"
 #define KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS     @"Animate Movement Only in Interactive Apps"
 #define KEY_CURSOR_SMOOTH_SLIDE    @"Cursor Smooth Slide"
+#define KEY_CURSOR_SMOOTH_BLINK    @"Cursor Smooth Blink"
+#define KEY_CURSOR_BLINK_FADE_IN_DURATION   @"Cursor Blink Fade In Duration"
+#define KEY_CURSOR_BLINK_FADE_OUT_DURATION  @"Cursor Blink Fade Out Duration"
+#define KEY_CURSOR_BLINK_FADE_IN_CURVE      @"Cursor Blink Fade In Curve"
+#define KEY_CURSOR_BLINK_FADE_OUT_CURVE     @"Cursor Blink Fade Out Curve"
+#define KEY_CURSOR_BLINK_VISIBLE_DWELL      @"Cursor Blink Visible Dwell"
+#define KEY_CURSOR_BLINK_HIDDEN_DWELL       @"Cursor Blink Hidden Dwell"
 #define KEY_BLINK_ALLOWED          @"Blink Allowed"
 #define KEY_CURSOR_TYPE            @"Cursor Type"
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED

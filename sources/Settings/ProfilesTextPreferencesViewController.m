@@ -11,6 +11,8 @@
 #import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTermCursorBlinkFadeCurveIcon.h"
+#import "iTermCursorBlinkFadePreset.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermFontPanel.h"
 #import "iTermSizeRememberingView.h"
@@ -28,6 +30,7 @@
 @property(nonatomic, strong) NSFont *nonAsciiFont;
 @end
 
+
 @implementation ProfilesTextPreferencesViewController {
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
@@ -41,6 +44,26 @@
     IBOutlet NSButton *_animateMovement;
     IBOutlet NSButton *_animateMovementOnlyInInteractiveApps;
     IBOutlet NSButton *_cursorSmoothSlide;
+    IBOutlet NSButton *_cursorSmoothBlink;
+    // Button that opens the smooth-blink configuration popover.
+    IBOutlet NSButton *_cursorSmoothBlinkConfigureButton;
+    // Detached top-level view shown inside the popover. Hosts the fade duration
+    // and curve controls below.
+    IBOutlet NSView *_cursorBlinkFadePopoverView;
+    IBOutlet NSTextField *_cursorBlinkFadeInDuration;
+    IBOutlet NSTextField *_cursorBlinkFadeInDurationLabel;
+    IBOutlet NSTextField *_cursorBlinkFadeOutDuration;
+    IBOutlet NSTextField *_cursorBlinkFadeOutDurationLabel;
+    IBOutlet NSPopUpButton *_cursorBlinkFadeInCurve;
+    IBOutlet NSTextField *_cursorBlinkFadeInCurveLabel;
+    IBOutlet NSPopUpButton *_cursorBlinkFadeOutCurve;
+    IBOutlet NSTextField *_cursorBlinkFadeOutCurveLabel;
+    IBOutlet NSTextField *_cursorBlinkVisibleDwell;
+    IBOutlet NSTextField *_cursorBlinkVisibleDwellLabel;
+    IBOutlet NSTextField *_cursorBlinkHiddenDwell;
+    IBOutlet NSTextField *_cursorBlinkHiddenDwellLabel;
+    IBOutlet NSPopUpButton *_cursorBlinkPresets;
+    NSPopover *_cursorBlinkFadePopover;
     IBOutlet NSButton *_useItalicFont;
     IBOutlet NSButton *_ambiguousIsDoubleWidth;
     IBOutlet NSPopUpButton *_normalization;
@@ -106,10 +129,11 @@
         [weakSelf updateSmoothSlideEnabled];
     };
 
-    [self defineControl:_blinkingCursor
-                    key:KEY_BLINKING_CURSOR
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_blinkingCursor
+                           key:KEY_BLINKING_CURSOR
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{ [weakSelf updateSmoothBlinkControlsEnabled]; };
 
     [self defineControl:_useBoldFont
                     key:KEY_USE_BOLD_FONT
@@ -155,6 +179,41 @@
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
     [self updateSmoothSlideEnabled];
+
+    info = [self defineControl:_cursorSmoothBlink
+                           key:KEY_CURSOR_SMOOTH_BLINK
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:KEY_BLINKING_CURSOR];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:KEY_BLINKING_CURSOR controller:self];
+    info.observer = ^{ [weakSelf updateSmoothBlinkControlsEnabled]; };
+
+    // The fade/dwell controls live in the smooth-blink popover. They share
+    // identical enable logic and (for the double fields) custom get/set blocks,
+    // so they're defined via helpers below.
+    [self defineSmoothBlinkDoubleField:_cursorBlinkFadeInDuration
+                                 label:_cursorBlinkFadeInDurationLabel
+                                   key:KEY_CURSOR_BLINK_FADE_IN_DURATION];
+    [self defineSmoothBlinkDoubleField:_cursorBlinkFadeOutDuration
+                                 label:_cursorBlinkFadeOutDurationLabel
+                                   key:KEY_CURSOR_BLINK_FADE_OUT_DURATION];
+    [self defineSmoothBlinkDoubleField:_cursorBlinkVisibleDwell
+                                 label:_cursorBlinkVisibleDwellLabel
+                                   key:KEY_CURSOR_BLINK_VISIBLE_DWELL];
+    [self defineSmoothBlinkDoubleField:_cursorBlinkHiddenDwell
+                                 label:_cursorBlinkHiddenDwellLabel
+                                   key:KEY_CURSOR_BLINK_HIDDEN_DWELL];
+    [self defineSmoothBlinkCurvePopup:_cursorBlinkFadeInCurve
+                                label:_cursorBlinkFadeInCurveLabel
+                                  key:KEY_CURSOR_BLINK_FADE_IN_CURVE
+                              fadeOut:NO];
+    [self defineSmoothBlinkCurvePopup:_cursorBlinkFadeOutCurve
+                                label:_cursorBlinkFadeOutCurveLabel
+                                  key:KEY_CURSOR_BLINK_FADE_OUT_CURVE
+                              fadeOut:YES];
+    [self updateSmoothBlinkControlsEnabled];
 
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
@@ -381,6 +440,10 @@
     [super reloadProfile];
     [self updateFontsDescriptionsIncludingSpacing:YES];
     [self updateNonAsciiFontViewVisibility];
+    // reloadProfile runs once the profile (and thus boolForKey) is available, so
+    // this is where the smooth-blink controls get their correct initial enabled
+    // state.
+    [self updateSmoothBlinkControlsEnabled];
 }
 
 - (NSArray *)keysForBulkCopy {
@@ -469,6 +532,174 @@
 
 - (void)updateSmoothSlideEnabled {
     _cursorSmoothSlide.enabled = [self cursorTypeSupportsSmoothSlide];
+}
+
+// Smooth blink only matters when the cursor blinks, so its checkbox is enabled
+// only when blinking is on, and the Configure button only when both are on. The
+// framework's shouldBeEnabled dependency isn't reliably applied for these (the
+// initial enabled state is evaluated before shouldBeEnabled is assigned), so we
+// drive it explicitly from the blinking/smooth-blink observers and reloadProfile.
+- (void)updateSmoothBlinkControlsEnabled {
+    const BOOL blinks = [self boolForKey:KEY_BLINKING_CURSOR];
+    _cursorSmoothBlink.enabled = blinks;
+    _cursorSmoothBlinkConfigureButton.enabled = blinks && [self boolForKey:KEY_CURSOR_SMOOTH_BLINK];
+}
+
+// Defines one of the smooth-blink duration/dwell fields. Custom get/set blocks
+// are supplied so the non-integer default is not type-checked against
+// kPreferenceInfoTypeDoubleTextField (which otherwise requires whole-number
+// defaults). All such fields are enabled only when blinking and smooth blink
+// are both on.
+- (void)defineSmoothBlinkDoubleField:(NSTextField *)field
+                               label:(NSView *)label
+                                 key:(NSString *)key {
+    __weak __typeof(self) weakSelf = self;
+    __weak NSTextField *weakField = field;
+    PreferenceInfo *info = [self defineControl:field
+                                           key:key
+                                   relatedView:label
+                                          type:kPreferenceInfoTypeDoubleTextField
+                                settingChanged:^(id sender) {
+        [weakSelf setFloat:MAX(0, [sender doubleValue]) forKey:key];
+    }
+                                        update:^BOOL{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        NSTextField *strongField = weakField;
+        if (!strongSelf || !strongField) {
+            return NO;
+        }
+        strongField.doubleValue = [strongSelf floatForKey:key];
+        return YES;
+    }];
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:KEY_BLINKING_CURSOR] && [weakSelf boolForKey:KEY_CURSOR_SMOOTH_BLINK];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:KEY_BLINKING_CURSOR controller:self];
+    [info addShouldBeEnabledDependencyOnSetting:KEY_CURSOR_SMOOTH_BLINK controller:self];
+}
+
+// Defines a fade curve popup and assigns its menu-item icons.
+- (void)defineSmoothBlinkCurvePopup:(NSPopUpButton *)popup
+                              label:(NSView *)label
+                                key:(NSString *)key
+                            fadeOut:(BOOL)fadeOut {
+    __weak __typeof(self) weakSelf = self;
+    PreferenceInfo *info = [self defineControl:popup
+                                           key:key
+                                   relatedView:label
+                                          type:kPreferenceInfoTypePopup];
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:KEY_BLINKING_CURSOR] && [weakSelf boolForKey:KEY_CURSOR_SMOOTH_BLINK];
+    };
+    [info addShouldBeEnabledDependencyOnSetting:KEY_BLINKING_CURSOR controller:self];
+    [info addShouldBeEnabledDependencyOnSetting:KEY_CURSOR_SMOOTH_BLINK controller:self];
+    [self assignCurveIconsToPopup:popup fadeOut:fadeOut];
+}
+
+// Checkmarks the preset (if any) that matches the current configuration when
+// the presets pull-down opens. Nothing is checked when the values are custom.
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(applyBlinkPreset:)) {
+        iTermCursorBlinkFadePreset *preset = [iTermCursorBlinkFadePreset presetWithTag:menuItem.tag];
+        const BOOL matches =
+            preset != nil &&
+            [preset matchesFadeInDuration:[self floatForKey:KEY_CURSOR_BLINK_FADE_IN_DURATION]
+                          fadeOutDuration:[self floatForKey:KEY_CURSOR_BLINK_FADE_OUT_DURATION]
+                              fadeInCurve:[self intForKey:KEY_CURSOR_BLINK_FADE_IN_CURVE]
+                             fadeOutCurve:[self intForKey:KEY_CURSOR_BLINK_FADE_OUT_CURVE]
+                             visibleDwell:[self floatForKey:KEY_CURSOR_BLINK_VISIBLE_DWELL]
+                              hiddenDwell:[self floatForKey:KEY_CURSOR_BLINK_HIDDEN_DWELL]];
+        menuItem.state = matches ? NSControlStateValueOn : NSControlStateValueOff;
+    }
+    return YES;
+}
+
+// Give each menu item in a curve popup an icon that plots its curve. Items are
+// matched by tag to the iTermCursorBlinkFadeCurve value. The fade-out popup
+// flips the plot vertically so it reads as opacity falling over time.
+- (void)assignCurveIconsToPopup:(NSPopUpButton *)popup fadeOut:(BOOL)fadeOut {
+    for (NSMenuItem *item in popup.itemArray) {
+        item.image = [iTermCursorBlinkFadeCurveIcon imageForCurve:(iTermCursorBlinkFadeCurve)item.tag
+                                                          fadeOut:fadeOut];
+    }
+}
+
+- (IBAction)configureSmoothBlink:(id)sender {
+    if (_cursorBlinkFadePopover.isShown) {
+        [_cursorBlinkFadePopover close];
+        return;
+    }
+    if (!_cursorBlinkFadePopover) {
+        NSViewController *viewController = [[NSViewController alloc] init];
+        viewController.view = _cursorBlinkFadePopoverView;
+        _cursorBlinkFadePopover = [[NSPopover alloc] init];
+        _cursorBlinkFadePopover.contentViewController = viewController;
+        _cursorBlinkFadePopover.behavior = NSPopoverBehaviorTransient;
+    }
+    // The popover controls are wired in the xib to the -settingChanged: responder
+    // chain, which reaches this controller while the view lives in the prefs
+    // window but breaks once the view is hosted in the popover's own window and
+    // cycled. Bind the controls' targets explicitly so they keep working across
+    // repeated opens.
+    [self bindSmoothBlinkPopoverControls];
+    NSView *anchor = [sender isKindOfClass:[NSView class]] ? (NSView *)sender : _cursorSmoothBlinkConfigureButton;
+    [_cursorBlinkFadePopover showRelativeToRect:anchor.bounds
+                                         ofView:anchor
+                                  preferredEdge:NSRectEdgeMaxY];
+}
+
+// Point the popover's controls directly at this controller instead of relying
+// on the responder chain (see configureSmoothBlink:). Idempotent.
+- (void)bindSmoothBlinkPopoverControls {
+    for (NSControl *control in @[ _cursorBlinkFadeInDuration, _cursorBlinkFadeOutDuration,
+                                  _cursorBlinkVisibleDwell, _cursorBlinkHiddenDwell,
+                                  _cursorBlinkFadeInCurve, _cursorBlinkFadeOutCurve ]) {
+        control.target = self;
+        control.action = @selector(settingChanged:);
+    }
+    // The presets pull-down's menu items carry their own action (the sender is
+    // the NSMenuItem). Restore the target on just those items so both the action
+    // and -validateMenuItem: reach this controller; leave the title/separator
+    // items alone.
+    for (NSMenuItem *item in _cursorBlinkPresets.itemArray) {
+        if (item.action == @selector(applyBlinkPreset:)) {
+            item.target = self;
+        }
+    }
+}
+
+// Applies the selected preset by writing the six smooth-blink keys, then
+// refreshes the duration/dwell/curve controls to show the new values.
+- (IBAction)applyBlinkPreset:(id)sender {
+    // The sender may be the popup button (selectedTag) or, when the menu item's
+    // own action is connected, the NSMenuItem (tag).
+    NSInteger tag;
+    if ([sender isKindOfClass:[NSPopUpButton class]]) {
+        tag = [(NSPopUpButton *)sender selectedTag];
+    } else if ([sender respondsToSelector:@selector(tag)]) {
+        tag = [(id)sender tag];
+    } else {
+        return;
+    }
+    iTermCursorBlinkFadePreset *preset = [iTermCursorBlinkFadePreset presetWithTag:tag];
+    if (!preset) {
+        return;
+    }
+    [self setFloat:preset.fadeInDuration forKey:KEY_CURSOR_BLINK_FADE_IN_DURATION];
+    [self setFloat:preset.fadeOutDuration forKey:KEY_CURSOR_BLINK_FADE_OUT_DURATION];
+    [self setInt:preset.fadeInCurve forKey:KEY_CURSOR_BLINK_FADE_IN_CURVE];
+    [self setInt:preset.fadeOutCurve forKey:KEY_CURSOR_BLINK_FADE_OUT_CURVE];
+    [self setFloat:preset.visibleDwell forKey:KEY_CURSOR_BLINK_VISIBLE_DWELL];
+    [self setFloat:preset.hiddenDwell forKey:KEY_CURSOR_BLINK_HIDDEN_DWELL];
+
+    for (NSString *key in @[ KEY_CURSOR_BLINK_FADE_IN_DURATION,
+                             KEY_CURSOR_BLINK_FADE_OUT_DURATION,
+                             KEY_CURSOR_BLINK_FADE_IN_CURVE,
+                             KEY_CURSOR_BLINK_FADE_OUT_CURVE,
+                             KEY_CURSOR_BLINK_VISIBLE_DWELL,
+                             KEY_CURSOR_BLINK_HIDDEN_DWELL ]) {
+        [self updateControlForKey:key];
+    }
 }
 
 - (void)updateWarnings {

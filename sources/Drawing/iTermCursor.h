@@ -26,6 +26,11 @@ typedef NS_ENUM(NSInteger, ITermCursorType) {
 
 @property (nonatomic, assign) id<iTermCursorDelegate> delegate;
 
+// Multiplier in [0, 1] applied to the cursor's shadow opacity so it fades in
+// step with the cursor during smooth blink. The cursor body itself is faded by
+// the caller via CGContextSetAlpha around -drawWithRect:. Defaults to 1.
+@property (nonatomic) CGFloat fadeAlpha;
+
 + (iTermCursor *)cursorOfType:(ITermCursorType)theType;
 + (instancetype)itermCopyModeCursorInSelectionState:(BOOL)selecting;
 

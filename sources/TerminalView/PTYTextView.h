@@ -428,6 +428,15 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 // Should cursor blink?
 @property(nonatomic, assign) BOOL blinkingCursor;
 
+// Should a blinking cursor fade smoothly instead of toggling abruptly?
+@property(nonatomic) BOOL cursorSmoothBlink;
+@property(nonatomic) NSTimeInterval cursorBlinkFadeInDuration;
+@property(nonatomic) NSTimeInterval cursorBlinkFadeOutDuration;
+@property(nonatomic) NSInteger cursorBlinkFadeInCurve;
+@property(nonatomic) NSInteger cursorBlinkFadeOutCurve;
+@property(nonatomic) NSTimeInterval cursorBlinkVisibleDwell;
+@property(nonatomic) NSTimeInterval cursorBlinkHiddenDwell;
+
 // Should bar/underscore cursors have a shadow?
 @property(nonatomic) BOOL cursorShadow;
 
