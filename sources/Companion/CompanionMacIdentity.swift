@@ -143,11 +143,23 @@ final class CompanionMacIdentity: NSObject {
         cacheLock.unlock()
     }
 
+    // When -suite is given the app runs against a separate settings suite, so a
+    // second build can run beside the released one. Namespace the keychain items
+    // by suite too, so the two don't share or clobber each other's companion
+    // identity. Without -suite the account is the bare name, preserving items
+    // already written by released builds.
+    private static func suitedAccount(_ account: String) -> String {
+        guard let suite = iTermUserDefaults.customSuiteName() as String?, !suite.isEmpty else {
+            return account
+        }
+        return "\(account).\(suite)"
+    }
+
     private static func keychainLoad(account: String) -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: suitedAccount(account),
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
@@ -163,7 +175,7 @@ final class CompanionMacIdentity: NSObject {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: suitedAccount(account),
             kSecValueData as String: key,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
@@ -178,7 +190,7 @@ final class CompanionMacIdentity: NSObject {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account
+            kSecAttrAccount as String: suitedAccount(account)
         ]
         SecItemDelete(query as CFDictionary)
     }
