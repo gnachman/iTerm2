@@ -1515,6 +1515,12 @@ final class AppModel {
             }
         case .explanationResponse(let response, _, let markdown):
             return [markdown.isEmpty ? (response.mainResponse ?? "") : markdown]
+        case .remoteCommandRequest(let payload, _):
+            // MessageBubbleView renders this bubble's description with
+            // textWithMentions (both the classic and orchestration branches
+            // resolve to payload.markdownDescription), so its mentions must be
+            // scanned here too or they never get resolved and stay raw.
+            return [payload.markdownDescription]
         default:
             return []
         }

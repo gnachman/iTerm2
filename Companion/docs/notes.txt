@@ -26,3 +26,8 @@ New Features:
   Choose or remove the speech model under
   Settings > Voice Input. Only models that run
   well on this device are listed.
+
+Bug Fixes:
+- @-mentions in command-request messages now
+  show the friendly session or workgroup name
+  instead of the raw identifier.
