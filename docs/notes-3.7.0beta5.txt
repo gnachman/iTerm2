@@ -1,5 +1,9 @@
 Version 3.7.0beta5 was built on June 23, 2026.
 
+Note: if you are beta testing the iPhone companion
+app iTerm2 Buddy, you'll need to update it after
+upgrading iTerm2 to this version.
+
 Changes since 3.7.0beta4:
 
 New Features:
@@ -128,3 +132,4 @@ Bug Fixes:
   or when a notification is sent. The paired
   identity is now read once at launch, while you
   are present, instead of mid-connection.
+
