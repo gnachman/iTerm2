@@ -333,6 +333,12 @@ UI Improvements:
   text from tab subtitles while keeping the
   colored dot. Toggle it from the gear menu
   in the Session Status toolbelt tool.
+- Right-click a row in the Session Status
+  toolbelt tool and choose Snooze to move it
+  below a divider at the bottom of the list
+  and dim it. A snoozed entry un-snoozes
+  automatically the next time its status
+  changes.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
 - Rename dialogs, the pane menu, and the context
