@@ -11,7 +11,7 @@ import CompanionProtocol
 
 struct CreateView: View {
     @Environment(AppModel.self) private var model
-    @State private var kind: Kind = .session
+    @State private var kind: Kind = .orchestrator
 
     private enum Kind: Hashable {
         case session
@@ -23,7 +23,7 @@ struct CreateView: View {
             Section {
                 Picker("Chat with", selection: $kind) {
                     Text("A session").tag(Kind.session)
-                    Text("The orchestrator").tag(Kind.orchestrator)
+                    Text("Orchestration").tag(Kind.orchestrator)
                 }
                 .pickerStyle(.segmented)
             } footer: {
