@@ -15,6 +15,10 @@ class ChatCellView: NSTableCellView {
     // Display size of the circular chat icon, in points.
     private static let iconDiameter: CGFloat = 32
 
+    // Chat titles are bold; orchestrator chats get a leading wand glyph (see
+    // ChatTitleStyling). Shared so setupViews and load agree on the metrics.
+    private static let titleFont = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .bold)
+
     var snippet: String? {
         didSet {
             snippetLabel.stringValue = snippet?.replacingOccurrences(of: "\n", with: " ") ?? ""
@@ -28,6 +32,36 @@ class ChatCellView: NSTableCellView {
     }
     private var timer: Timer?
     private var subscription: ChatBroker.Subscription?
+
+    // Cached so the title (and its orchestrator glyph) can be re-rendered in
+    // the right color when selection or light/dark appearance changes. A
+    // baked-color glyph can't follow those on its own.
+    private var titleString = ""
+    private var isOrchestrator = false
+
+    // load(), backgroundStyle.didSet, and viewDidChangeEffectiveAppearance all
+    // call applyTitle, and they fire in quick succession for a reused cell
+    // during scroll/selection. Skip the rebuild when nothing that affects the
+    // rendered title changed.
+    private struct TitleRenderKey: Equatable {
+        var title: String
+        var orchestrator: Bool
+        var emphasized: Bool
+        var appearance: NSAppearance.Name
+    }
+    private var lastTitleKey: TitleRenderKey?
+
+    // NSTableCellView pushes .emphasized to its subviews on selection; the
+    // title isn't the cell's managed textField, so color it (and the glyph)
+    // ourselves to match.
+    override var backgroundStyle: NSView.BackgroundStyle {
+        didSet { applyTitle() }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        applyTitle()
+    }
 
     init(frame frameRect: NSRect, chat: Chat?, dataSource: ChatListDataSource?, autoupdateDate: Bool) {
         super.init(frame: frameRect)
@@ -58,7 +92,9 @@ class ChatCellView: NSTableCellView {
             self.snippet = dataSource.snippet(forChatID: chat.id)
         }
         self.date = chat.lastModifiedDate
-        titleLabel.stringValue = chat.title
+        titleString = chat.title
+        isOrchestrator = chat.orchestrationEnabled
+        applyTitle()
         iconView.image = Self.iconImage(for: chat)
         typing = false
 
@@ -93,6 +129,33 @@ class ChatCellView: NSTableCellView {
             if !typing, let snippet = message.snippetText {
                 self.snippet = snippet
             }
+        }
+    }
+
+    private func applyTitle() {
+        let emphasized = (backgroundStyle == .emphasized)
+        let key = TitleRenderKey(title: titleString,
+                                 orchestrator: isOrchestrator,
+                                 emphasized: emphasized,
+                                 appearance: effectiveAppearance.name)
+        if key == lastTitleKey {
+            return
+        }
+        lastTitleKey = key
+        // Match the title (and glyph) to the selection state: white on an
+        // emphasized (key-selected) row, otherwise the dynamic label color.
+        let color: NSColor = emphasized
+            ? .alternateSelectedControlTextColor
+            : .labelColor
+        // Bake the glyph inside this cell's effective appearance so the
+        // dynamic color resolves to the right light/dark variant. The closure
+        // runs synchronously (NS_NOESCAPE).
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            titleLabel.attributedStringValue = ChatTitleStyling.attributedTitle(
+                titleString,
+                orchestrator: isOrchestrator,
+                font: Self.titleFont,
+                color: color)
         }
     }
 
@@ -168,7 +231,7 @@ class ChatCellView: NSTableCellView {
         addSubview(iconView)
 
         // Configure title label
-        titleLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .bold)
+        titleLabel.font = Self.titleFont
         if let cell = titleLabel.cell as? NSTextFieldCell {
             cell.lineBreakMode = .byTruncatingTail
             cell.truncatesLastVisibleLine = true

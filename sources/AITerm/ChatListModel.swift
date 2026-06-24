@@ -344,7 +344,7 @@ class ChatListModel: ChatListDataSource {
 
     func firstIndex(forGuid guid: String) -> Int? {
         return chatStorage.firstIndex { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toSessionGuid: guid)
         }
     }
 
@@ -374,7 +374,7 @@ class ChatListModel: ChatListDataSource {
 
     func lastChat(guid: String) -> Chat? {
         return chatStorage.last { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toSessionGuid: guid)
         }
     }
 
@@ -383,7 +383,7 @@ class ChatListModel: ChatListDataSource {
     // most recent activity for the given session guid.
     func mostRecentChat(forGuid guid: String) -> Chat? {
         return chatStorage.first { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toSessionGuid: guid)
         }
     }
 

@@ -42,6 +42,12 @@ final class InlineChatToolbarView: NSView {
     private let sessionInfoButton: NSButton
     private let closeButton: NSButton
     private let separator: NSBox
+    // Horizontal row [newChat, switchChat, <flexible title>, sessionInfo,
+    // close]. ChatManualStackView (the same no-auto-layout row used by the
+    // chat window's floating toolbar) handles the left/center/right math.
+    private let row = ChatManualStackView(orientation: .horizontal,
+                                          spacing: InlineChatToolbarView.spacing,
+                                          alignment: .center)
 
     override init(frame frameRect: NSRect) {
         let label = InlineChatToolbarTitleLabel(labelWithString: "AI Chat")
@@ -55,8 +61,14 @@ final class InlineChatToolbarView: NSView {
                                         tooltip: "New chat")
         switchChatButton = Self.makeButton(symbol: .bubbleLeftAndBubbleRight,
                                            tooltip: "Switch to another chat")
-        sessionInfoButton = Self.makeButton(symbol: .infoCircle,
-                                            tooltip: "Link or unlink terminal/browser session")
+        // Same info-circle control the chat window toolbar uses.
+        sessionInfoButton = ChatToolbar.makeSessionInfoButton()
+        sessionInfoButton.imageScaling = .scaleProportionallyDown
+        sessionInfoButton.toolTip = "Link or unlink terminal/browser session"
+        // makeSessionInfoButton builds the image with a nil accessibility
+        // description, so give VoiceOver an explicit label (the tooltip only
+        // maps to accessibility help, not the element's label).
+        sessionInfoButton.setAccessibilityLabel("Link or unlink terminal/browser session")
         closeButton = Self.makeButton(symbol: .xmark,
                                       tooltip: "Hide chat")
 
@@ -65,10 +77,27 @@ final class InlineChatToolbarView: NSView {
 
         super.init(frame: frameRect)
 
-        for view in [newChatButton, switchChatButton, titleLabel,
-                     sessionInfoButton, closeButton, separator] {
-            view.autoresizingMask = []
-            addSubview(view)
+        addSubview(separator)
+        addSubview(row)
+        for control in [newChatButton, switchChatButton, titleLabel,
+                        sessionInfoButton, closeButton] {
+            row.addArrangedSubview(control)
+        }
+        // The title takes the leftover width between the button groups; its
+        // own text is centered (label alignment is .center).
+        row.setFlex(titleLabel, true)
+        row.sizeOverride = { [weak self] view, _ in
+            guard let self else { return nil }
+            if view === self.titleLabel {
+                // Width 0 (not -1) makes flex clamp the title to exactly its
+                // leftover share rather than treating the full intrinsic
+                // width as a minimum. Otherwise a long title would overflow
+                // the row and push the right-hand buttons off-screen. Height
+                // -1 keeps the measured (single-line) height. The label's
+                // .byTruncatingTail then truncates within the clamped width.
+                return NSSize(width: 0, height: -1)
+            }
+            return NSSize(width: Self.buttonWidth, height: Self.buttonWidth)
         }
 
         newChatButton.target = self
@@ -106,34 +135,12 @@ final class InlineChatToolbarView: NSView {
     override func layout() {
         super.layout()
         let bounds = self.bounds
-        let buttonY = floor((bounds.height - Self.buttonWidth) / 2)
-
-        // Left group: new chat, switch chat.
-        var x = Self.horizontalPadding
-        newChatButton.frame = NSRect(x: x, y: buttonY,
-                                     width: Self.buttonWidth, height: Self.buttonWidth)
-        x += Self.buttonWidth + Self.spacing
-        switchChatButton.frame = NSRect(x: x, y: buttonY,
-                                        width: Self.buttonWidth, height: Self.buttonWidth)
-        let leftEdge = x + Self.buttonWidth
-
-        // Right group: session info, close (close is rightmost).
-        var rx = bounds.width - Self.horizontalPadding - Self.buttonWidth
-        closeButton.frame = NSRect(x: rx, y: buttonY,
-                                   width: Self.buttonWidth, height: Self.buttonWidth)
-        rx -= Self.spacing + Self.buttonWidth
-        sessionInfoButton.frame = NSRect(x: rx, y: buttonY,
-                                         width: Self.buttonWidth, height: Self.buttonWidth)
-        let rightEdge = rx
-
-        // Title fills the gap between the two groups.
-        let titleX = leftEdge + Self.spacing
-        let titleWidth = max(0, rightEdge - Self.spacing - titleX)
-        let titleHeight = titleLabel.intrinsicContentSize.height
-        let titleY = floor((bounds.height - titleHeight) / 2)
-        titleLabel.frame = NSRect(x: titleX, y: titleY,
-                                  width: titleWidth, height: titleHeight)
-
+        // The control row spans the width minus horizontal padding; the
+        // ChatManualStackView centers each control vertically within it.
+        row.frame = NSRect(x: Self.horizontalPadding,
+                           y: 0,
+                           width: max(0, bounds.width - Self.horizontalPadding * 2),
+                           height: bounds.height)
         // Hairline along the bottom edge separating the toolbar from content.
         separator.frame = NSRect(x: 0, y: 0, width: bounds.width, height: 1)
     }

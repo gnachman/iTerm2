@@ -2764,6 +2764,12 @@ extension ChatViewController: iTermRightGutterPanel {
 
 extension ChatViewController: InlineChatToolbarViewDelegate {
     func inlineChatToolbarDidTapNewChat() {
+        // Gate user-initiated chat creation the same way PTYSession.toggleInlineChat
+        // does (createInlineChat itself only checks ChatClient), so the "+"
+        // button can't create a chat in states the menu entry point refuses.
+        guard iTermAITermGatekeeper.check() else {
+            return
+        }
         guard let session = currentInlinePanelSession,
               let newID = session.createInlineChat() else {
             return
@@ -2776,15 +2782,41 @@ extension ChatViewController: InlineChatToolbarViewDelegate {
     func inlineChatToolbarDidTapSwitchChat(_ sender: NSButton) {
         let menu = NSMenu()
         let currentID = chatID
+        let sessionGuid = currentInlinePanelSession?.guid
+        let menuFont = NSFont.menuFont(ofSize: 0)
+        let boldMenuFont = NSFontManager.shared.convert(menuFont, toHaveTrait: .boldFontMask)
         // chatStorage is kept most-recent-first (see ChatListModel).
         for i in 0..<listModel.count {
             let chat = listModel.chat(at: i)
-            let item = NSMenuItem(title: chat.title.isEmpty ? "Untitled Chat" : chat.title,
+            let title = chat.title.isEmpty ? "Untitled Chat" : chat.title
+            let item = NSMenuItem(title: title,
                                   action: #selector(switchToChatFromMenu(_:)),
                                   keyEquivalent: "")
             item.target = self
             item.representedObject = chat.id
-            item.state = (chat.id == currentID) ? .on : .off
+            let isCurrent = (chat.id == currentID)
+            item.state = isCurrent ? .on : .off
+            // Bold marks the chat linked to this panel's session. Leave the
+            // text color to AppKit (pass nil) so a highlighted row inverts to
+            // white the way a plain title would; baking a foreground color
+            // (e.g. to dim other-session chats) defeats that, so we convey
+            // "this session" with weight only.
+            let linkedToThisSession = sessionGuid.map { chat.isLinked(toSessionGuid: $0) } ?? false
+            let font = linkedToThisSession ? boldMenuFont : menuFont
+            item.attributedTitle = ChatTitleStyling.attributedTitle(
+                title,
+                orchestrator: chat.orchestrationEnabled,
+                font: font,
+                color: nil,
+                includeGlyph: false)
+            // Orchestrator chats get a wand in the item's image well: a
+            // template image, so the menu re-tints it for dark mode and the
+            // blue highlight (an embedded attachment glyph would not invert).
+            // The .on checkmark lives in a separate state-image column, so it
+            // coexists with the image on the current item.
+            if chat.orchestrationEnabled {
+                item.image = ChatTitleStyling.orchestratorTemplateImage(pointSize: font.pointSize)
+            }
             menu.addItem(item)
         }
         if menu.items.isEmpty {
@@ -2800,6 +2832,15 @@ extension ChatViewController: InlineChatToolbarViewDelegate {
     @objc private func switchToChatFromMenu(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String,
               let session = currentInlinePanelSession else {
+            return
+        }
+        // The menu was built from a snapshot of listModel; the chat may have
+        // been deleted (from the chat window, or another instance) while it was
+        // open. Don't bind the session to a missing chat: that would leave
+        // inlineChatID pointing at a deleted chat (reserving panel width and
+        // persisting into the arrangement) while load(chatID:) shows an empty
+        // panel.
+        guard listModel.index(of: id) != nil else {
             return
         }
         session.inlineChatID = id
@@ -2905,10 +2946,25 @@ class iTermInlineChatGutterPanelRegistration: NSObject {
                 // Called on the main-thread layout-budget path.
                 MainActor.assumeIsolated {
                     guard let session,
-                          session.inlineChatID != nil,
+                          let id = session.inlineChatID,
                           session.inlineChatVisible,
-                          ChatListModel.instance != nil,
+                          let listModel = ChatListModel.instance,
                           ChatClient.instance != nil else {
+                        return 0
+                    }
+                    // The bound chat may no longer exist: an optimistic restore
+                    // (restoreInlineChat binds before the DB is open) or a
+                    // deletion from the chat window / another instance. Don't
+                    // reserve width for, or build a panel onto, a missing chat;
+                    // drop the stale binding so it doesn't persist into future
+                    // arrangements. The clear is deferred to avoid re-entering
+                    // this layout-budget query from inlineChatID's didSet.
+                    guard listModel.index(of: id) != nil else {
+                        DispatchQueue.main.async {
+                            if session.inlineChatID == id {
+                                session.inlineChatID = nil
+                            }
+                        }
                         return 0
                     }
                     return iTermGutterPanelWidths.width(

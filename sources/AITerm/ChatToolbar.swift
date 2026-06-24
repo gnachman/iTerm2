@@ -44,16 +44,9 @@ class ChatToolbar {
         label.lineBreakMode = .byTruncatingTail
         self.titleLabel = label
 
-        do {
-            let image = NSImage(systemSymbolName: SFSymbol.infoCircle.rawValue, accessibilityDescription: nil)!
-            sessionButton = NSButton(image: image, target: nil, action: nil)
-            sessionButton.imageScaling = .scaleProportionallyUpOrDown
-            sessionButton.controlSize = .large
-            sessionButton.isBordered = false
-        }
-
-        sessionButton.bezelStyle = .badge
-        sessionButton.isBordered = false
+        sessionButton = ChatToolbar.makeSessionInfoButton()
+        sessionButton.imageScaling = .scaleProportionallyUpOrDown
+        sessionButton.controlSize = .large
         sessionButton.target = self
         sessionButton.action = #selector(showSessionButtonMenu(_:))
         sessionButton.sizeToFit()
@@ -256,6 +249,21 @@ final class FloatingChatToolbarView: NSView {
 }
 
 extension ChatToolbar {
+    // Shared construction of the info-circle "session" button so the chat
+    // window toolbar and the inline panel toolbar build the same control and
+    // don't drift. Callers set their own control size, image scaling, tooltip,
+    // and target/action.
+    static func makeSessionInfoButton() -> NSButton {
+        let image = NSImage(systemSymbolName: SFSymbol.infoCircle.rawValue,
+                            accessibilityDescription: nil)!
+        let button = NSButton(image: image, target: nil, action: nil)
+        button.bezelStyle = .badge
+        // Setting bezelStyle resets isBordered to true, so clear it after (the
+        // same dance the sibling web-search/thinking buttons do).
+        button.isBordered = false
+        return button
+    }
+
     @available(macOS 26, *)
     func createFloatingView() -> NSView {
         return FloatingChatToolbarView(titleLabel: titleLabel,
