@@ -1324,20 +1324,38 @@ class ClaudeCodeOnboarding: NSObject {
         for eventName in Self.hookEventNames {
             var eventHookGroups = (hooks[eventName] as? [[String: Any]]) ?? []
 
-            // Check if cc-status is already installed in any group.
-            let alreadyInstalled = eventHookGroups.contains { group in
-                guard let groupHooks = group["hooks"] as? [[String: Any]] else {
-                    return false
+            // Find any existing cc-status hook and rewrite it to the current
+            // path. A previously installed hook may point at a stale dot dir
+            // (for example a `-suite` instance wrote ~/.config/iterm2-alt4/
+            // cc-status and we're now reinstalling from the default instance
+            // that wants ~/.config/iterm2/cc-status). Matching on the
+            // "/cc-status" suffix lets us adopt and correct that entry instead
+            // of leaving it stale or appending a duplicate.
+            var foundCCStatus = false
+            for groupIndex in eventHookGroups.indices {
+                guard var groupHooks = eventHookGroups[groupIndex]["hooks"] as? [[String: Any]] else {
+                    continue
                 }
-                return groupHooks.contains { entry in
-                    guard let command = entry["command"] as? String else {
-                        return false
+                var groupChanged = false
+                for entryIndex in groupHooks.indices {
+                    guard let command = groupHooks[entryIndex]["command"] as? String,
+                          command.hasSuffix("/cc-status") else {
+                        continue
                     }
-                    return command.hasSuffix("/cc-status")
+                    foundCCStatus = true
+                    if command != ccStatusPath {
+                        groupHooks[entryIndex]["command"] = ccStatusPath
+                        groupChanged = true
+                        DLog("Onboarding: updated stale cc-status hook for \(eventName) from \(command) to \(ccStatusPath)")
+                    }
+                }
+                if groupChanged {
+                    eventHookGroups[groupIndex]["hooks"] = groupHooks
                 }
             }
-            if alreadyInstalled {
-                DLog("Onboarding: hook for \(eventName) already installed, skipping")
+            if foundCCStatus {
+                hooks[eventName] = eventHookGroups
+                DLog("Onboarding: hook for \(eventName) already present, ensured path is current")
                 continue
             }
 
