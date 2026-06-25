@@ -1889,8 +1889,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             dir = @"U";
         }
     }
-    NSString *resizeStr = [NSString stringWithFormat:@"resize-pane -%@ -t \"%%%d\" %d",
-                           dir, wp, abs(amount)];
+    NSString *resizeStr = [NSString stringWithFormat:@"resize-pane -t \"%%%d\" -%@ %d ",
+                           wp, dir, abs(amount)];
     NSString *listStr = [self commandToListWindows];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:resizeStr
