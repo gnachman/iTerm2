@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		01A01787661B9E1F5177DAB7 /* iTermJobTerminationMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677BAE3BF6167A6719904C54 /* iTermJobTerminationMonitor.swift */; };
 		01D8567525D898E2B0DB6FF1 /* iTermWindowBorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77FCEB05FACE33F5F7947261 /* iTermWindowBorderView.swift */; };
+		0277DCA424D4359E736F9E65 /* CompanionAlertBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8B8B423791410F363E9D3A /* CompanionAlertBridge.swift */; };
 		02B907EBABFCDE0B68A178AF /* iTermDockBadgeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1179CD897A4780286BB29AAC /* iTermDockBadgeController.swift */; };
 		0332201C625EE2E12BEAFA81 /* WorkgroupPeerSegmentedControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E989D59E1FC6B8DAF227C7 /* WorkgroupPeerSegmentedControl.swift */; };
 		035F0DC62B0099E102FBDF19 /* iTermAsyncStringConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2AE5DA2AD1C35F1397A53D /* iTermAsyncStringConversion.swift */; };
@@ -6049,6 +6050,7 @@
 		1D891E42190724DB0053C4BB /* MarkTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = MarkTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D8B8A121806038F00C2DC25 /* VT100Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Grid.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D8B8A131806038F00C2DC25 /* VT100Grid.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Grid.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D8B8B423791410F363E9D3A /* CompanionAlertBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionAlertBridge.swift; sourceTree = "<group>"; };
 		1D8BBA581B30E9AF0005A852 /* iTermTipCardActionButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipCardActionButton.h; sourceTree = "<group>"; };
 		1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipCardActionButton.m; sourceTree = "<group>"; };
 		1D8BBA661B30F5C30005A852 /* Navigate.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = Navigate.png; path = images/Navigate.png; sourceTree = "<group>"; };
@@ -10658,6 +10660,7 @@
 				08C19577D9B6A8202A0A8E07 /* MentionPlainTextRenderer.swift */,
 				9A1F7DEDB57FDB370787B646 /* CompanionPushNonceRegistry.swift */,
 				427970C67603E484CBA62CED /* CompanionMessageSubstance.swift */,
+				1D8B8B423791410F363E9D3A /* CompanionAlertBridge.swift */,
 			);
 			path = Companion;
 			sourceTree = "<group>";
@@ -21712,6 +21715,7 @@
 				FD34D15329745082B47FF48A /* InlineChatToolbarView.swift in Sources */,
 				5DAE3C891517F3EA4E28183E /* ChatTitleStyling.swift in Sources */,
 				1025FC686CC215C5276A1630 /* CompanionAlert+Database.swift in Sources */,
+				0277DCA424D4359E736F9E65 /* CompanionAlertBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

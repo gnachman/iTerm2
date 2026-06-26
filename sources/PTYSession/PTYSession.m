@@ -15515,14 +15515,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     self.alertOnNextMark = NO;
     NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
     if ([action isEqualToString:kMarkAlertActionPostNotification]) {
+        NSString *markDescription = [NSString stringWithFormat:@"Session %@ #%d had a mark set.",
+                                     [[self name] removingHTMLFromTabTitleIfNeeded],
+                                     [_delegate tabNumber]];
         [[iTermNotificationController sharedInstance] notify:@"Mark Set"
-                                             withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
-                                                              [[self name] removingHTMLFromTabTitleIfNeeded],
-                                                              [_delegate tabNumber]]
+                                             withDescription:markDescription
                                                  windowIndex:[self screenWindowIndex]
                                                     tabIndex:[self screenTabIndex]
                                                    viewIndex:[self screenViewIndex]
                                                       sticky:YES];
+        // Mirror to the paired iPhone when this profile opted in (the bridge is a
+        // no-op unless a revision-2 phone is paired and can be notified).
+        if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
+            [iTermCompanionAlertBridge postTerminalAlertWithTitle:@"Mark Set"
+                                                             body:markDescription
+                                                        threadKey:self.guid];
+        }
         completion();
         return;
     }
@@ -23717,13 +23725,21 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message {
     [iTermGCD assertMainQueueSafe];
     iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
-    [notificationController notify:message
-                   withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
+    NSString *triggerDescription = [NSString stringWithFormat:@"A trigger fired in session “%@” in tab #%d.",
                                     [[self name] removingHTMLFromTabTitleIfNeeded],
-                                    self.delegate.tabNumber]
+                                    self.delegate.tabNumber];
+    [notificationController notify:message
+                   withDescription:triggerDescription
                        windowIndex:[self screenWindowIndex]
                           tabIndex:[self screenTabIndex]
                          viewIndex:[self screenViewIndex]];
+    // Mirror to the paired iPhone when this profile opted in (the bridge is a
+    // no-op unless a revision-2 phone is paired and can be notified).
+    if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
+        [iTermCompanionAlertBridge postTerminalAlertWithTitle:message
+                                                         body:triggerDescription
+                                                    threadKey:self.guid];
+    }
 }
 
 // Scroll so that `absLine` is the last visible onscreen.
