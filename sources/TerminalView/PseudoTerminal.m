@@ -2076,8 +2076,9 @@ ITERM_WEAKLY_REFERENCEABLE
         return NO;
     }
 
+    NSArray<PTYSession *> *sessions = [aTab sessions];
     int numClosing = 0;
-    for (PTYSession* session in [aTab sessions]) {
+    for (PTYSession* session in sessions) {
         if (![session exited]) {
             ++numClosing;
         }
@@ -2096,14 +2097,14 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     if (mustAsk && !suppressConfirmation) {
-        const BOOL anyIsLocked = [[aTab sessions] anyWithBlock:^BOOL(PTYSession *anObject) {
+        const BOOL anyIsLocked = [sessions anyWithBlock:^BOOL(PTYSession *anObject) {
             return anObject.locked;
         }];
         NSString *const pinnedPrefix = aTab.isPinned ? @"pinned " : @"";
         // When numClosing is 0 (e.g., closing a pinned tab whose sessions all
         // exited) fall back to the tab's pane count to pick singular vs plural
         // wording.
-        const BOOL singular = (numClosing > 0) ? (numClosing == 1) : ([aTab sessions].count <= 1);
+        const BOOL singular = (numClosing > 0) ? (numClosing == 1) : (sessions.count <= 1);
         NSString *identifier;
         if (singular) {
             identifier = anyIsLocked
@@ -2114,7 +2115,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 ? [NSString stringWithFormat:@"This %@multi-pane tab (with locked sessions)", pinnedPrefix]
                 : [NSString stringWithFormat:@"This %@multi-pane tab", pinnedPrefix];
         }
-        return [self confirmCloseForSessions:[aTab sessions]
+        return [self confirmCloseForSessions:sessions
                                   identifier:identifier
                                  genericName:[NSString stringWithFormat:@"tab #%d",
                                               [aTab tabNumber]]];
