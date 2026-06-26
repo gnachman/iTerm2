@@ -1279,6 +1279,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setObjectCount:(int)value {
+    if (objectCount_ == value) {
+        return;
+    }
     objectCount_ = value;
     [_delegate tab:self didChangeObjectCount:self.objectCount];
 }
