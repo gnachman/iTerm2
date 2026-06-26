@@ -134,6 +134,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver;
 - (BOOL)textViewIsMaximized;
 - (BOOL)textViewIsLocked;
+// YES when the enclosing window's layout is locked.
+- (BOOL)textViewWindowIsLayoutLocked;
 - (void)textViewToggleLock;
 - (void)textViewLockAllInTab;
 - (void)textViewUnlockAllInTab;

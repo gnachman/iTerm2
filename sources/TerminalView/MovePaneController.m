@@ -112,6 +112,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)moveSessionToTab:(PTYSession *)movingSession {
     DLog(@"moveSessionToTab:%@", movingSession);
+    if (movingSession.delegate.realParentWindow.layoutLocked) {
+        DLog(@"Layout is locked, refusing to move session to a new tab");
+        return;
+    }
     PseudoTerminal *term = [PseudoTerminal castFrom:[movingSession.delegate realParentWindow]];
     if (!term) {
         return;
@@ -121,6 +125,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point {
     DLog(@"moveSessionToNewWindow:%@ atPoint:%@", movingSession, NSStringFromPoint(point));
+    if (movingSession.delegate.realParentWindow.layoutLocked) {
+        DLog(@"Layout is locked, refusing to move session to a new window");
+        return;
+    }
     if (movingSession.locked) {
         DLog(@"Locked");
         return;

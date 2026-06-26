@@ -12547,6 +12547,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _locked;
 }
 
+- (BOOL)textViewWindowIsLayoutLocked {
+    return [[_delegate realParentWindow] layoutLocked];
+}
+
 - (void)setLocked:(BOOL)locked {
     if (_locked == locked) {
         return;

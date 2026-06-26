@@ -11850,6 +11850,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         const SEL action = [item action];
         if (action == @selector(closeCurrentTab:) ||
             action == @selector(closeCurrentSession:) ||
+            action == @selector(closeTabContextualMenuAction:) ||
             action == @selector(splitVertically:) ||
             action == @selector(splitHorizontally:) ||
             action == @selector(openSplitHorizontallySheet:) ||
@@ -11858,6 +11859,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             action == @selector(moveTabRight:) ||
             action == @selector(moveTabToNewWindow:) ||
             action == @selector(moveTabToNewWindowContextualMenuAction:) ||
+            action == @selector(moveSessionToWindow:) ||
+            action == @selector(moveSessionToTab:) ||
+            action == @selector(duplicateTab:) ||
             action == @selector(newTabToTheRight:) ||
             action == @selector(closeOtherTabs:) ||
             action == @selector(closeTabsToTheRight:)) {
@@ -12355,6 +12359,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (IBAction)duplicateTab:(id)sender {
+    if (_layoutLocked) {
+        DLog(@"Layout is locked, refusing to duplicate tab");
+        return;
+    }
     [self createDuplicateOfTab:(PTYTab *)[[sender representedObject] identifier]];
 }
 

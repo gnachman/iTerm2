@@ -1882,7 +1882,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             term = [self currentTerminal];
-            if (term) {
+            if (term && !(term.layoutLocked && term.numberOfTabs > 0)) {
                 return [self openURLInSplitPane:url
                                          target:target
                                          window:term
@@ -1892,6 +1892,13 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                splitSessionGuid:term.currentSession.guid];
             }
             break;
+    }
+    if (term.layoutLocked && term.numberOfTabs > 0) {
+        // The current window’s layout is locked. Don’t split it or add a tab;
+        // open the URL in a new window so the lock is honored and the open still
+        // succeeds.
+        DLog(@"Current window is layout-locked; opening URL in a new window instead");
+        term = nil;
     }
     if (!term) {
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
