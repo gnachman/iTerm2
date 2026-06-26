@@ -146,39 +146,11 @@ final class CompanionAgentActivityNotifier {
                 return messages[index]
             },
             send: { chatID in
-                // Content-free mutable push, collapsed per chat by the opaque
-                // token so the chatID never leaves the device. The NSE fetches
-                // and renders the real content over Noise.
-                guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
-                    DLog("CompanionAgentActivityNotifier: no room secret; skipping push for \(chatID)")
-                    return
-                }
-                let collapse = CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chatID)
-                // A one-time nonce so the mac recognizes the NSE fetch this push
-                // triggers as its own (solicited) and skips the presence warning.
-                // Only the phone receives the push, so only the real NSE can echo
-                // it back; retained by capacity (not time) so an APNs-delayed push
-                // still matches. SEALED under the room secret so the relay/Apple
-                // (which carry the push but lack the room secret) see only
-                // ciphertext. See CompanionPushNonceRegistry / CompanionPushNonceCrypto.
-                let nonce = CompanionPushNonceRegistry.shared.mintNonce()
-                let sealedNonce = try? CompanionPushNonceCrypto.seal(nonce: nonce, roomSecret: roomSecret)
-                Task {
-                    do {
-                        try await CompanionPushSender.sendMutable(collapse: collapse, nonce: sealedNonce)
-                        // Record the nonce ONLY after the push actually went out,
-                        // and only if it carried the nonce (seal succeeded). A
-                        // failed seal/send must not consume a capacity slot for a
-                        // nonce no push delivered, which would evict a real
-                        // outstanding nonce sooner than warranted.
-                        if sealedNonce != nil {
-                            await MainActor.run { CompanionPushNonceRegistry.shared.record(nonce) }
-                        }
-                        DLog("CompanionAgentActivityNotifier: sent mutable push for \(chatID)")
-                    } catch {
-                        DLog("CompanionAgentActivityNotifier: mutable push failed for \(chatID): \(error)")
-                    }
-                }
+                // A content-free push the NSE fetches over Noise. The format
+                // (contentless wakeup for revision >= 2, else legacy per-chat
+                // collapse) and the one-time nonce bookkeeping live in
+                // CompanionPushSender.dispatchPush, shared with the alert bridge.
+                CompanionPushSender.dispatchPush(chatID: chatID)
             })
         shared = notifier
         notifier.subscription = ChatClient.instance?.subscribe(chatID: nil,
