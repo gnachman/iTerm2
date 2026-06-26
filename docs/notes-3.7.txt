@@ -21,6 +21,16 @@ Major New Features:
   networks, and end-to-end encryption ensures that
   your data is only visible to you.
 
+- The Companion app can now receive push
+  notifications for terminal alerts. Turn on
+  "Send alerts to paired iPhone" in a profile's
+  Terminal settings (Filter Alerts) to have
+  "alert on next mark" and Post Notification
+  triggers also notify your phone. Pushes are
+  content-free: the phone fetches the text over
+  the encrypted channel, so the relay and Apple
+  never see it or which chat it belongs to.
+
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.
