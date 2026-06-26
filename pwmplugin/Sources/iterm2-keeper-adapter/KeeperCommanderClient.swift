@@ -439,6 +439,24 @@ private func validatedRecordUID(_ recordUid: String) throws -> String {
     return uid
 }
 
+private func keeperCommandFailureLooksLikeWrongRecordType(_ data: Data) -> Bool {
+    let lower = (keeperHumanReadableError(fromResponseData: data) ?? "").lowercased()
+    let patterns = [
+        "not found",
+        "does not exist",
+        "doesn't exist",
+        "no such record",
+        "no record",
+        "could not find",
+        "unable to find",
+        "invalid record",
+        "unknown record",
+        "nested shared folder",
+        "not in any nested",
+    ]
+    return patterns.contains { lower.contains($0) }
+}
+
 enum KeeperRecordSource: String {
     case classic
     case nested
@@ -689,16 +707,24 @@ func setPassword(apiKey: String, recordUid: String, newPassword: String?, client
 
     var lastResponse: Data?
     var lastNetworkError: Error?
-    for verb in verbs {
+    for (index, verb) in verbs.enumerated() {
         do {
             let result = try attempt(verb)
             if result.success {
                 KeeperAdapterLog.write("setPassword: success uid=\(uid) via \(verb)")
                 return
             }
+            if index == 0 && verbs.count > 1 {
+                if keeperCommandFailureLooksLikeWrongRecordType(result.raw) {
+                    continue
+                }
+                lastResponse = result.raw
+                break
+            }
             lastResponse = result.raw
         } catch {
             lastNetworkError = error
+            break
         }
     }
 
@@ -756,16 +782,25 @@ func deleteRecord(apiKey: String, recordUid: String, client: KeeperCommanderClie
 
     var lastResponse: Data?
     var lastNetworkError: Error?
-    for (cmd, label) in attempts {
+    for (index, attemptPair) in attempts.enumerated() {
+        let (cmd, label) = attemptPair
         do {
             let result = try attempt(cmd, label: label)
             if result.success {
                 KeeperAdapterLog.write("deleteRecord: success uid=\(uid) via \(label)")
                 return
             }
+            if index == 0 && attempts.count > 1 {
+                if keeperCommandFailureLooksLikeWrongRecordType(result.raw) {
+                    continue
+                }
+                lastResponse = result.raw
+                break
+            }
             lastResponse = result.raw
         } catch {
             lastNetworkError = error
+            break
         }
     }
 
@@ -821,10 +856,20 @@ func addRecord(apiKey: String,
         var effectiveUid: String? { record_uid ?? uid }
     }
     let response = try JSONDecoder().decode(RecordAddResponse.self, from: data)
-    let extractedUid: String? = response.data?.effectiveUid
-        ?? response.message?.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard response.status == "success", let uid = extractedUid, !uid.isEmpty else {
-        KeeperAdapterLog.write("addRecord: \(verb) returned without a record_uid; raw=\(String(data: data, encoding: .utf8) ?? "<binary>")")
+    guard response.status == "success" else {
+        KeeperAdapterLog.write("addRecord: \(verb) failed; raw=\(String(data: data, encoding: .utf8) ?? "<binary>")")
+        throw KeeperClientError.message("Add failed")
+    }
+    let uid: String
+    if let fromData = response.data?.effectiveUid?.trimmingCharacters(in: .whitespacesAndNewlines),
+       !fromData.isEmpty {
+        uid = try validatedRecordUID(fromData)
+    } else if let message = response.message?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !message.isEmpty,
+              let valid = try? validatedRecordUID(message) {
+        uid = valid
+    } else {
+        KeeperAdapterLog.write("addRecord: \(verb) returned without a valid record_uid; raw=\(String(data: data, encoding: .utf8) ?? "<binary>")")
         throw KeeperClientError.message("Add failed")
     }
     KeeperAdapterLog.write("addRecord: \(verb) returned uid=\(uid)")

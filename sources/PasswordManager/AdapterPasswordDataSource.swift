@@ -341,12 +341,15 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         }
         guard masterPassword == nil else { return }
 
+        if let persisted = loadPersistedCredentials(),
+           !persisted.isEmpty {
+            masterPassword = persisted
+            return
+        }
         if let secretFromSettings = persistedSecretSettingsValue(),
            !secretFromSettings.isEmpty {
             masterPassword = secretFromSettings
-            return
         }
-        masterPassword = loadPersistedCredentials()
     }
 
     private func persistedSecretSettingsValue() -> String? {
@@ -362,30 +365,11 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     // MARK: - Settings Field Storage
 
-    private var keychainSettingsCache: [String: String] = [:]
-    private var keychainSettingsCacheCheckedKeys: Set<String> = []
-
-    private func invalidateKeychainSettingsCache(forKey key: String) {
-        keychainSettingsCache.removeValue(forKey: key)
-        keychainSettingsCacheCheckedKeys.remove(key)
-    }
-
-    private func invalidateAllKeychainSettingsCache() {
-        keychainSettingsCache.removeAll()
-        keychainSettingsCacheCheckedKeys.removeAll()
-    }
-
     private func storedSettingsValue(forKey key: String) -> String? {
         guard let fields = handshakeInfo?.settingsFields else { return nil }
         guard let field = fields.first(where: { $0.key == key }) else { return nil }
         if field.persistInKeychain {
-            if keychainSettingsCacheCheckedKeys.contains(key) {
-                return keychainSettingsCache[key]
-            }
-            keychainSettingsCacheCheckedKeys.insert(key)
-            let value = try? SSKeychain.password(forService: keychainCredentialServiceName, account: key)
-            if let value = value { keychainSettingsCache[key] = value }
-            return value
+            return try? SSKeychain.password(forService: keychainCredentialServiceName, account: key)
         } else {
             return iTermUserDefaults.userDefaults().string(forKey: "AdapterSetting_\(identifier)_\(key)")
         }
@@ -401,7 +385,6 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             } else {
                 _ = SSKeychain.setPassword(trimmed, forService: keychainCredentialServiceName, account: key)
             }
-            invalidateKeychainSettingsCache(forKey: key)
         } else {
             if trimmed.isEmpty {
                 iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(key)")
@@ -420,7 +403,6 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(field.key)")
             }
         }
-        invalidateAllKeychainSettingsCache()
     }
 
     private func ensureAuthentication(window: NSWindow?, _ completion: @escaping (Error?) -> ()) {

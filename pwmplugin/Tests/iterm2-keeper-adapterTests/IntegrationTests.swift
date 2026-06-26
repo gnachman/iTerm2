@@ -172,7 +172,6 @@ server.serve_forever()
         process.executableURL = adapterURL
         process.arguments = [subcommand]
         var env = ProcessInfo.processInfo.environment
-        env["ITERM2_KEEPER_ADAPTER_LOG_DISABLED"] = "1"
         process.environment = env
 
         let stdin = Pipe()

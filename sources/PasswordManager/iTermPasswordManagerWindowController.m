@@ -25,6 +25,9 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 // Looks nice and is unlikely to be used already
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
+static const CGFloat kNewAccountPanelWidth = 330;
+static const CGFloat kNewAccountPanelHeightWithoutToggle = 136;
+static const CGFloat kNewAccountPanelHeightWithToggle = 196;
 
 typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     iTermPasswordManagerReloadUnlimited,
@@ -642,6 +645,8 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     _addAccountToggleCheckbox.hidden = hidden;
     _addAccountToggleLabel.hidden = hidden;
     if (hidden) {
+        [_newAccountPanel setContentSize:NSMakeSize(kNewAccountPanelWidth,
+                                                    kNewAccountPanelHeightWithoutToggle)];
         return;
     }
     NSString *label = toggle[@"label"];
@@ -652,6 +657,8 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     _addAccountToggleCheckbox.state = (defaultValue.boolValue
                                        ? NSControlStateValueOn
                                        : NSControlStateValueOff);
+    [_newAccountPanel setContentSize:NSMakeSize(kNewAccountPanelWidth,
+                                                kNewAccountPanelHeightWithToggle)];
 }
 
 - (NSDictionary<NSString *, NSNumber *> *)collectAddAccountFlags {

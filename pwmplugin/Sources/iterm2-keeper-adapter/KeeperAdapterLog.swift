@@ -14,7 +14,7 @@ enum KeeperAdapterLog {
     }()
 
     static let isEnabled: Bool = {
-        ProcessInfo.processInfo.environment["ITERM2_KEEPER_ADAPTER_LOG_DISABLED"] == nil
+        ProcessInfo.processInfo.environment["ITERM2_KEEPER_ADAPTER_LOG_ENABLED"] == "1"
     }()
 
     private static let formatter: ISO8601DateFormatter = {
