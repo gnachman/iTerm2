@@ -378,7 +378,7 @@ Password Manager Improvements:
   optional toggles in their handshake that the
   Add Account panel renders as checkboxes. The
   Keeper adapter uses this to offer a “Use
-  classic permission model” choice — leaving
+  classic permission model” choice. Leaving
   it unchecked adds to Nested Shared Folders;
   checking it adds to the classic vault.
 
