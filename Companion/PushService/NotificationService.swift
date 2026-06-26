@@ -72,15 +72,22 @@ final class NotificationService: UNNotificationServiceExtension {
             ?? request.content
         lock.unlock()
 
-        // The per-chat collapse token: for a remote notification iOS sets the
-        // request identifier to the apns-collapse-id.
+        // iOS sets the request identifier to the apns-collapse-id. The fixed
+        // sentinel marks a CONTENTLESS WAKEUP (revision >= 2): fetch everything new
+        // across all chats + alerts. Any other value is a real per-chat collapse
+        // token from a LEGACY push (revision 1, or an older mac): fetch that chat.
         let token = request.identifier
-        threadID = token
         // Sealed one-time nonce the mac placed in the push (ciphertext under the
         // room secret); the fetcher opens it and echoes the plaintext so the mac
         // recognizes this fetch as its own (no presence warning).
         let sealedNonce = request.content.userInfo["n"] as? String
-        NSELog.log("didReceive push; token=\(token.prefix(8)) nonce=\(sealedNonce == nil ? "no" : "yes")")
+        let isWakeup = (token == CompanionPushWakeup.collapseSentinel)
+        // Log the KIND only, never the token. On the legacy path the token is the
+        // per-chat HMAC(roomSecret, chatID); NSELog mirrors to an emailable file in
+        // the App Group, and even an 8-char prefix would let anyone with the log
+        // (or a device backup) count/correlate pushes per opaque chat bucket - the
+        // very metadata this change set removes from the wire.
+        NSELog.log("didReceive push; \(isWakeup ? "wakeup" : "legacy") nonce=\(sealedNonce == nil ? "no" : "yes")")
         let fetcher = NSEFetcher(appGroup: Self.appGroup)
         self.fetcher = fetcher
 
@@ -89,6 +96,24 @@ final class NotificationService: UNNotificationServiceExtension {
             deliverFallback()
             return
         }
+        if isWakeup {
+            // iOS reuses one NSE instance across pushes; clear any threadID left by
+            // a previous LEGACY push so a wakeup fallback is never grouped under a
+            // stale per-chat thread. The wakeup path sets per-item threads itself.
+            threadID = nil
+            runSync(fetcher: fetcher, backing: backing, sealedNonce: sealedNonce)
+        } else {
+            threadID = token
+            runLegacy(token: token, fetcher: fetcher, backing: backing, sealedNonce: sealedNonce)
+        }
+    }
+
+    /// The legacy per-chat path (revision 1, or an older mac): fetch one chat by
+    /// its collapse token and render its previews.
+    private func runLegacy(token: String,
+                           fetcher: NSEFetcher,
+                           backing: UserDefaultsWatermarkBacking,
+                           sealedNonce: String?) {
         let coordinator = PushFetchCoordinator<NSEMessagesSince.Preview>(
             watermarks: WatermarkStore(backing: backing),
             fetch: { try await fetcher.fetch(collapseToken: $0, sinceSeq: $1, limit: $2, sealedNonce: sealedNonce) })
@@ -129,6 +154,53 @@ final class NotificationService: UNNotificationServiceExtension {
             // just closed). iOS reuses ONE NSE process across many pushes; without
             // this the chain self.task -> Task -> fetcher -> live transport would
             // accumulate a retained transport per push for the process lifetime.
+            self?.clearWork()
+        }
+    }
+
+    /// The contentless-wakeup path (revision >= 2): one unified syncSince fetch for
+    /// everything new across all chats + alerts, each rendered with a
+    /// threadIdentifier computed ON-DEVICE (no per-chat id ever crossed the push).
+    private func runSync(fetcher: NSEFetcher,
+                         backing: UserDefaultsWatermarkBacking,
+                         sealedNonce: String?) {
+        guard let roomSecret = NSEFetcher.roomSecret(appGroup: Self.appGroup) else {
+            NSELog.log("sync: no room secret; delivering fallback")
+            deliverFallback()
+            return
+        }
+        let coordinator = SyncFetchCoordinator(
+            watermarks: WatermarkStore(backing: backing),
+            tokenForChat: { CompanionThreadKey.make(roomSecret: roomSecret, input: $0) },
+            fetch: { try await fetcher.fetchSync(messageSeq: $0, alertSeq: $1, limit: $2, sealedNonce: sealedNonce) })
+
+        task = Task { [weak self] in
+            typealias Outcome = SyncFetchCoordinator.Outcome
+            let outcome: Outcome =
+                await withTaskGroup(of: Outcome?.self) { group in
+                    group.addTask { await coordinator.run() }
+                    group.addTask {
+                        try? await Task.sleep(for: Self.deadline)
+                        if Task.isCancelled { return nil }
+                        await fetcher.cancel()
+                        return coordinator.deadlineOutcome()
+                    }
+                    let first = await group.next() ?? nil
+                    group.cancelAll()
+                    return first ?? coordinator.deadlineOutcome()
+                }
+            await fetcher.close()
+            // Await delivery (which waits for every queued add() to be accepted by
+            // the notification daemon) BEFORE committing the cursors, AND commit
+            // ONLY when delivery actually happened. Otherwise the global floor could
+            // advance past items that were never shown - e.g. serviceExtensionTime-
+            // WillExpire already delivered the fallback and consumed the handler, so
+            // deliverSync presents nothing - suppressing those items forever. A nil
+            // self (NSE deallocated) likewise commits nothing.
+            let committable = await self?.deliverSync(outcome.decision, roomSecret: roomSecret) ?? false
+            if committable {
+                coordinator.commit(outcome)
+            }
             self?.clearWork()
         }
     }
@@ -224,6 +296,105 @@ final class NotificationService: UNNotificationServiceExtension {
 
     private func body(for preview: NSEMessagesSince.Preview, appendMore: Bool) -> String {
         appendMore ? preview.body + " (+ more)" : preview.body
+    }
+
+    // MARK: Sync (contentless wakeup) delivery
+
+    /// Returns whether the caller may COMMIT the cursors: true when delivery
+    /// actually happened (or the items were legitimately nothing-to-show), false
+    /// when the handler was already consumed (expiry) so the floor must not advance.
+    private func deliverSync(_ decision: SyncFetchCoordinator.Decision, roomSecret: Data) async -> Bool {
+        switch decision {
+        case .fallback:
+            // Fetch failed: show the generic (with its sound). The coordinator left
+            // the cursors nil, so "don't commit" is also the safe choice.
+            NSELog.log("sync decision=fallback; delivering generic notification")
+            deliverFallback()
+            return false
+        case .silent:
+            // Fetched OK but nothing to show (all already-read, or a reset resync).
+            // The push notification is unavoidable, so deliver it SILENTLY (no
+            // sound, no stale thread). The cursors are correct to advance, so commit.
+            NSELog.log("sync decision=silent; delivering silent placeholder")
+            deliverFinal { content in content.sound = nil }
+            return true
+        case let .content(items, truncated):
+            NSELog.log("sync decision=content; \(items.count) item(s), truncated=\(truncated)")
+            return await deliverSyncContent(items: items, truncated: truncated, roomSecret: roomSecret)
+        }
+    }
+
+    /// EVERY fetched item is delivered via add() with its OWN identifier
+    /// (uniqueID/alertID), so no item is ever collapsed by the shared all-zeros
+    /// sentinel: a later wakeup cannot replace an earlier still-unread one. The
+    /// threadIdentifier is computed ON-DEVICE from each item's chatID / alert key.
+    /// We AWAIT every add() completion (add() is async XPC with no barrier; once the
+    /// contentHandler returns iOS may freeze the NSE) and only then satisfy the push
+    /// with a SILENT generic via the one-shot handler - that sentinel-id
+    /// notification carries no unique unread content, so its cross-wakeup collapse
+    /// is harmless. Returns false (don't commit) if the handler was already consumed
+    /// or any add() failed, so the floor only advances once the batch is durable.
+    private func deliverSyncContent(items: [SyncFetchCoordinator.RenderItem],
+                                    truncated: Bool,
+                                    roomSecret: Data) async -> Bool {
+        struct Spec {
+            let id: String
+            let title: String
+            let body: String
+            let threadID: String
+        }
+        let specs: [Spec] = items.map { item in
+            switch item {
+            case let .message(chatID, chatName, uniqueID, _, body):
+                return Spec(id: uniqueID.uuidString, title: chatName, body: body,
+                            threadID: CompanionThreadKey.make(roomSecret: roomSecret, input: chatID))
+            case let .alert(alertID, threadKey, title, body):
+                return Spec(id: alertID.uuidString, title: title, body: body,
+                            threadID: CompanionThreadKey.make(roomSecret: roomSecret, input: "alert:" + threadKey))
+            }
+        }
+        guard !specs.isEmpty else {
+            // Shouldn't happen (.content implies items), but never advance the floor
+            // on a phantom empty batch.
+            deliverFinal { content in content.sound = nil }
+            return true
+        }
+        // CLAIM the one-shot handler FIRST so the per-item add()s and any expiry
+        // fallback are mutually exclusive. If it's already consumed (expiry won),
+        // deliver nothing and DON'T commit - the next wakeup re-fetches.
+        guard let claimed = claimHandler() else {
+            NSELog.log("deliverSyncContent: handler already consumed (deadline expiry); not committing")
+            return false
+        }
+        task?.cancel()
+        // Deliver every item via add() with its unique id; await all completions and
+        // track whether any failed (a failed add() means that item wasn't shown, so
+        // we must not let the floor advance past it).
+        let allAccepted: Bool = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            let group = DispatchGroup()
+            let lock = NSLock()
+            var ok = true
+            for (index, spec) in specs.enumerated() {
+                let isNewest = index == specs.count - 1   // newest carries sound + "+ more"
+                let content = UNMutableNotificationContent()
+                content.title = spec.title
+                content.body = (isNewest && truncated) ? spec.body + " (+ more)" : spec.body
+                content.sound = isNewest ? .default : nil
+                content.threadIdentifier = spec.threadID
+                let request = UNNotificationRequest(identifier: spec.id, content: content, trigger: nil)
+                group.enter()
+                UNUserNotificationCenter.current().add(request) { error in
+                    if error != nil { lock.lock(); ok = false; lock.unlock() }
+                    group.leave()
+                }
+            }
+            group.notify(queue: .main) { continuation.resume(returning: ok) }
+        }
+        // Satisfy the push itself with a SILENT generic. threadID is nil on the
+        // wakeup path, so finish() adds no stale thread; we strip the sound (the
+        // newest add() above carries it) so this placeholder is unobtrusive.
+        finish(claimed) { content in content.sound = nil }
+        return allAccepted
     }
 
     /// The one-shot handler plus the fallback content to feed it, captured under
