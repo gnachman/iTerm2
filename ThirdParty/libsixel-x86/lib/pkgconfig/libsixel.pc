@@ -1,10 +1,10 @@
-prefix=/Users/gnachman/git/iterm2-alt5/ThirdParty/libsixel-x86
+prefix=/Users/gnachman/git/iterm2-alt6/ThirdParty/libsixel-x86
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: libsixel
 Description: A lightweight, fast implementation of DEC SIXEL graphics codec
-Version: 1.8.7
+Version: 1.8.7-r2
 Libs: -L${libdir} -lsixel
 Cflags: -I${includedir}

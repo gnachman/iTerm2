@@ -3,7 +3,7 @@
 # Author: Hayaki Saito, 2015
 #
 
-prefix=/Users/gnachman/git/iterm2-alt5/ThirdParty/libsixel-x86
+prefix=/Users/gnachman/git/iterm2-alt6/ThirdParty/libsixel-x86
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 include_dir=${prefix}/include
@@ -37,7 +37,7 @@ while test $# -gt 0; do
 		;;
 	# identification
 	--version)
-		echo 1.8.7
+		echo 1.8.7-r2
 		;;
 	--abi-version)
 		echo 1:6:0 | tr : .
