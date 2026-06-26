@@ -4192,6 +4192,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
 
+    // Window Projects: an associated window uses its own Save & Detach / Save &
+    // Close / Remove confirmation in place of the generic running-jobs prompt.
+    switch ([[iTermWindowProjectsModel shared] handleUserInitiatedCloseOf:self]) {
+        case iTermWindowProjectCloseHandlingHandled:
+        case iTermWindowProjectCloseHandlingCancelled:
+            // Either Window Projects will close the window itself (after
+            // archiving/detaching/removing) or the user cancelled; AppKit must
+            // not continue the close in either case.
+            return NO;
+        case iTermWindowProjectCloseHandlingNotAssociated:
+            break;
+    }
+
     BOOL needPrompt = NO;
     if ([self promptOnCloseReason].hasReason) {
         needPrompt = YES;

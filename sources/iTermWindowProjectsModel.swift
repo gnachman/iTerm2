@@ -118,6 +118,22 @@ final class iTermWindowProject: NSObject, Codable {
     }
 }
 
+// MARK: - User-close routing
+
+/// Outcome of routing a user-initiated window close (red button / Cmd-W)
+/// through Window Projects. Returned to `PseudoTerminal.windowShouldClose:` so
+/// it knows whether to let AppKit proceed with the close.
+@objc enum iTermWindowProjectCloseHandling: Int {
+    /// The window isn't associated with a project; the caller should run its
+    /// normal close logic.
+    case notAssociated
+    /// The user picked an action; Window Projects will perform it (and close
+    /// the window itself). The caller must veto AppKit's close.
+    case handled
+    /// The user cancelled. The caller must veto AppKit's close.
+    case cancelled
+}
+
 // MARK: - Model Singleton
 
 @objc final class iTermWindowProjectsModel: NSObject {
@@ -452,12 +468,17 @@ final class iTermWindowProject: NSObject, Codable {
         save()
     }
 
-    /// Called when any NSWindow is about to close. For a *user-initiated* close
-    /// of an associated window, archives a snapshot into its project (the
-    /// "closed" state). During app termination this is a no-op: the association
-    /// is preserved on disk and native window restoration brings the window back
-    /// live on next launch (re-associated by guid) — archiving here would create
-    /// a duplicate.
+    /// Called when any NSWindow is about to close. This is the *fallback*
+    /// archive path for closes that don't go through
+    /// `PseudoTerminal.windowShouldClose:` — e.g. the last session exiting or a
+    /// programmatic close — where prompting would be wrong. A user-initiated
+    /// close (red button / Cmd-W) is instead routed through
+    /// `handleUserInitiatedClose(of:)`, which removes the association before the
+    /// window closes, so this handler's `liveAssociations[guid]` guard fails and
+    /// it no-ops (no double archive). During app termination this is also a
+    /// no-op: the association is preserved on disk and native window restoration
+    /// brings the window back live on next launch (re-associated by guid) —
+    /// archiving here would create a duplicate.
     @objc private func windowWillClose(_ note: Notification) {
         if isTerminating { return }
         guard let window = note.object as? NSWindow else { return }
@@ -585,6 +606,61 @@ final class iTermWindowProject: NSObject, Codable {
             terminal.orphanJobsOnClose = keepJobsRunning
             terminal.close()
         }
+    }
+
+    // MARK: User-initiated close of an associated window
+
+    private static let closeActionWarningIdentifier = "NoSyncWindowProjectCloseAction"
+
+    /// Routes a *user-initiated* close (red button / Cmd-W) of an associated
+    /// window through a confirmation dialog offering Save & Detach, Save &
+    /// Close, or Remove from Project. The chosen action is applied — and the
+    /// window closed — on the next runloop tick so we don't re-enter the close
+    /// machinery from within `windowShouldClose:`. Returns `.notAssociated` for
+    /// windows that don't belong to a project so the caller falls back to its
+    /// normal close prompt. iTermWarning persists a “Remember my choice”
+    /// selection under `closeActionWarningIdentifier`; Cancel is never
+    /// remembered (so a window can never become unclosable).
+    @objc func handleUserInitiatedClose(of terminal: PseudoTerminal) -> iTermWindowProjectCloseHandling {
+        guard let project = project(for: terminal) else { return .notAssociated }
+
+        let windowTitle = terminal.ptyWindow()?.title ?? "This window"
+        let warning = iTermWarning()
+        warning.heading = "Window Belongs to a Project"
+        warning.title = "“\(windowTitle)” is part of the project “\(project.name).” "
+            + "Save a snapshot and keep its jobs running (detach), save and close it, "
+            + "or remove it from the project?"
+        let remove = iTermWarningAction(label: "Remove from Project")
+        remove.destructive = true
+        // The “Remember my choice” selection is persisted by index, so do not
+        // reorder these without supplying an actionToSelectionMap.
+        warning.warningActions = [
+            iTermWarningAction(label: "Save & Detach"),
+            iTermWarningAction(label: "Save & Close"),
+            remove,
+            iTermWarningAction(label: "Cancel"),
+        ]
+        warning.identifier = Self.closeActionWarningIdentifier
+        warning.warningType = .kiTermWarningTypePermanentlySilenceable
+        warning.cancelLabel = "Cancel"
+        warning.window = terminal.window
+
+        let action: () -> Void
+        switch warning.runModal() {
+        case .kiTermWarningSelection0:  // Save & Detach: snapshot + park + keep jobs
+            action = { self.archiveWindow(terminal, to: project, andClose: true, keepJobsRunning: true) }
+        case .kiTermWarningSelection1:  // Save & Close: snapshot + close (process ends)
+            action = { self.archiveWindow(terminal, to: project, andClose: true, keepJobsRunning: false) }
+        case .kiTermWarningSelection2:  // Remove from Project: disassociate, no snapshot
+            action = {
+                self.disassociateWindow(terminal)
+                terminal.close()
+            }
+        default:  // Cancel / error
+            return .cancelled
+        }
+        DispatchQueue.main.async(execute: action)
+        return .handled
     }
 
     // MARK: Freeze/Thaw diagnostics

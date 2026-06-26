@@ -188,8 +188,26 @@ Options the user raised:
    above + "ask")
 5. or add/replace an option with **detach**
 Current behavior = (2)-ish: `windowWillClose` archives a snapshot on user close.
-Undecided. Recommendation: ship (4) eventually, default to **detach** for
-associated windows (keeps the process), with the setting to override.
+**DECIDED & BUILT (2026-06-25).** Shipped option (4)-as-a-dialog, but reduced to
+the outcomes the current *move*-model actually distinguishes (a live associated
+window has no coexisting snapshot — restore consumes the archive — so "leave
+stale" vs "delete" collapse; deferred to the §6a backing-model work). The dialog
+(`iTermWarning`, permanently-silenceable, identifier
+`NoSyncWindowProjectCloseAction`) offers four actions, default = **Save & Detach**:
+- **Save & Detach** → `archiveWindow(close:true, keepJobsRunning:true)` (snapshot + park, keeps jobs)
+- **Save & Close** → `archiveWindow(close:true, keepJobsRunning:false)` (snapshot, ends process)
+- **Remove from Project** (destructive) → `disassociateWindow` + close, no snapshot
+- **Cancel** (never remembered → window can't become unclosable)
+
+Routing: `iTermWindowProjectsModel.handleUserInitiatedClose(of:)` →
+`iTermWindowProjectCloseHandling` (notAssociated / handled / cancelled), called
+from `PseudoTerminal.windowShouldClose:` (the cancelable hook — `willClose` is too
+late, see §13a). The chosen action runs on the next runloop tick (avoids
+re-entering close from within `windowShouldClose:`); it removes the association
+first, so the model's `windowWillClose` fallback no-ops (no double archive). The
+"Remember my choice" checkbox IS the don't-ask-again config (per-selection,
+NSUserDefaults). **NOT exposed in Settings UI** — promote to a
+`kPreferenceKeyWindowProjectCloseBehavior` enum if/when that's wanted.
 
 ### 6d. Exit behavior
 Parallel to 6c, but for app quit. Options include: save+close, save+detach, or
@@ -335,13 +353,22 @@ to decode saved arrangements.
 - **Pass:** the others keep working — I/O flows, they can be closed/killed
   cleanly, and they still get termination notifications (no zombie/hang).
 
-### #9 — Direct-close (windowWillClose) semantics — ⏳ PENDING (blocked on #13 decision), integration
-- **Proves:** closing an associated window with Cmd-W/red-button does the intended
-  thing (currently: archive a "closed" snapshot, process dies), distinct from
-  detach, with no orphan/zombie leak or stray claim.
-- **Steps:** associate a window; Cmd-W it (app running, not quitting).
-- **Pass:** matches the decided semantics from #13; association removed; no orphan
-  left behind. (Currently archives + kills.)
+### #9 — Direct-close (windowShouldClose) semantics — ⏳ BUILT, needs manual verify, integration
+- **Proves:** closing an associated window with the red button shows the
+  Save & Detach / Save & Close / Remove from Project / Cancel dialog (§6c), and
+  each outcome behaves: association removed; Detach keeps the process parked &
+  reattachable; Close & Remove end the process; no orphan/zombie leak; no double
+  archive from the `windowWillClose` fallback; Cancel leaves everything intact.
+- **Steps:** associate a live window running `/bin/sleep <R>`; click the red
+  button. For each of the 4 buttons (clear the remembered choice between runs via
+  the “Always Show Alerts with Remembered Selections” mode or
+  `clearSavedSelectionForIdentifier:NoSyncWindowProjectCloseAction`): confirm
+  Detach → `pgrep -f "sleep <R>"` alive + Restore reattaches; Close/Remove →
+  process gone; Remove → no archive entry added; Save & Close → exactly one
+  archive entry. Also verify “Remember my choice” suppresses the dialog next time
+  and applies the same action; Cancel can’t be remembered.
+- **Note:** non-user closes (last session exits, programmatic close) still go
+  through the `windowWillClose` auto-archive fallback — no dialog there (correct).
 
 ### #10 — Empty 42-byte arrangement capture (BUG) — ⏳ PENDING, unit + manual repro
 - **Proves/repro:** some captures produced an empty 42-byte plist (no Tabs/
@@ -472,3 +499,102 @@ re-added `()` but **kept the cast**, leaving the same landmine armed.
 Rule of thumb: **`thing() ?? []`** for typed collections; add `as? [Foo]` ONLY
 when the header says bare `NSArray`. Any `as?` on an already-typed value is a
 smell — delete it.
+
+---
+
+## 13. Close/Exit semantics — implementation reference (for the §6c/§6d session)
+
+Researched 2026-06-25. The exact code map for adding a confirmation dialog when an
+associated window is closed, and the analogue for app quit.
+
+### 13a. THE LOAD-BEARING GOTCHA: `willClose` is too late to Cancel
+The current archive-on-close logic lives in `iTermWindowProjectsModel.windowWillClose(_:)`
+(observer on `NSWindow.willCloseNotification`, registered in `init`, model.swift
+~264–273, handler ~461–490). **`willCloseNotification` fires after the close
+decision is already made — you cannot veto it.** So a dialog with a **Cancel**
+button CANNOT be driven from there.
+
+The cancelable hook is **`PseudoTerminal.windowShouldClose:`** (`PseudoTerminal.m:4189`),
+which returns `BOOL` and is only called on *user-initiated* close (red button /
+Cmd-W), not on a session dying. It already centralizes close-prompting:
+`needPrompt` → `showCloseWindow` (the running-jobs prompt) and the tmux 4-button
+dialog via `killOrHideTmuxWindowForController:` (`PseudoTerminal.m:4220–4284`, a
+clean model for our multi-action dialog). **Plan: add the window-projects
+confirmation here** (return NO on Cancel), and make `windowWillClose(_:)` in the
+model only do the *non-interactive* bookkeeping for the already-decided outcome
+(or skip it entirely if `windowShouldClose:` already performed the archive/detach).
+Watch the interaction: today both the running-jobs prompt and our prompt could
+fire — coalesce so the user sees at most one dialog.
+
+### 13b. Model API to call (sources/iTermWindowProjectsModel.swift)
+| Outcome | Model call |
+|---|---|
+| Update & close (refresh snapshot, kill process) | `archiveWindow(t, to: p, andClose: true, keepJobsRunning: false)` (554–588) |
+| Update & detach (refresh snapshot, keep process) | `archiveWindow(t, to: p, andClose: true, keepJobsRunning: true)` → parks via `parkSessionsForReattachment` (598–610) |
+| Delete saved & close (remove archive, close) | `disassociateWindow(t)` (390–395) + remove the archived entry `removeWindow(_:from:)` (741–745) + close |
+| Close only, leave stale snapshot | close without touching the existing archive (must suppress the auto-archive in `windowWillClose`) |
+| Cancel | return NO from `windowShouldClose:` |
+
+Other relevant: `associateWindow(_:with:)` (382), `project(for:)` (398),
+`liveWindows(for:)` (405), `closeProject(_:keepJobsRunning:)` (423, the
+"Detach/Archive All" batch path), `disassociateWindow` removes the
+`liveAssociations[guid]` entry. Associations persist by `terminalGuid` in
+`WindowProjectAssociations.json` (separate from `WindowProjects.json`);
+`isTerminating` flag (model.swift ~166) makes `windowWillClose` no-op during quit
+(set by `applicationWillTerminate`, ~492–500).
+
+States today: **open/associated** (live, in `liveAssociations`), **detached**
+(parked, process alive), **closed/archived** (snapshot only, process dead).
+"Detach All"/"Archive All" route through `closeProject(keepJobsRunning:)`;
+single-window context-menu/buttons route through `archiveWindow(...)` in
+`iTermProjectsPanelController.swift` (archiveSelected 1452, detachSelected 1456,
+disassociateSelected 1468, associateSelected 1386).
+
+### 13c. Dialog mechanism: `iTermWarning` (sources/iTermWarning.h)
+`iTermWarning` natively gives multi-button + a **“Remember my choice” checkbox +
+per-selection persistence** — no custom accessory needed. This is the existing
+idiom (see the tmux 4-button dialog above). Key selector:
+```
++ (iTermWarningSelection)showWarningWithTitle:actions:actionMapping:accessory:
+        identifier:silenceable:heading:cancelLabel:window:
+```
+- `actions:` up to 7 labels → `kiTermWarningSelection0…6`; there is also a
+  `cancelLabel:` that is **never remembered** (perfect for Cancel).
+- `silenceable: kiTermWarningTypePermanentlySilenceable` + an `identifier:`
+  (convention `@"NoSync…"`) → auto-adds the “Remember my choice” checkbox and
+  **persists the chosen selection** under that identifier in NSUserDefaults. So
+  **iTermWarning IS the “config the don’t-ask-again saves to.”** Read it back with
+  `+conditionalSavedSelectionForIdentifier:` / `+identifierIsSilenced:`; reset via
+  `+clearSavedSelectionForIdentifier:` / the global `+toggleShowRememberedAlerts`.
+- `actionMapping:` decouples button order from saved selection values — use it so
+  we can reorder/insert buttons later without invalidating saved choices.
+- `iTermWarningAction` supports `.destructive` (red button) and `.keyEquivalent`.
+
+Trade-off vs a real `iTermPreferences` enum key: the NoSync identifier is
+zero-extra-code and self-persisting, but it's **not surfaced in Settings UI**. If
+we want a discoverable/resettable Settings control (DesignNotes §6c's "4-way
+setting"), add a `kPreferenceKeyWindowProjectCloseBehavior` enum
+(ask/update-close/update-detach/delete-close) to `iTermPreferences.h/.m`
+(declare key, add to `+defaultValueMap`, read via `+integerForKey:`), and have the
+dialog write to it when "don't ask again" is checked. Recommendation: start with
+iTermWarning's built-in remember; promote to a Settings pref only if we want it in
+the prefs window.
+
+### 13d. App-quit analogue (§6d)
+`iTermApplicationDelegate.applicationShouldTerminate:` (`iTermApplicationDelegate.m`
+~918–1021) is the quit gate. Today it shows the standard "Quit iTerm2?" NSAlert
+gated by `kPreferenceKeyPromptOnQuit` / `…EvenIfThereAreNoWindows`, with an
+`iTermDisclosableView` "why am I being prompted" accessory. Window-projects quit
+behavior is currently Option A: do nothing special, set `isTerminating`, preserve
+associations, rely on native window restoration. The analogue dialog would either
+(a) augment this single quit prompt with a project-aware choice
+(Detach all / Update & close all / Just quit / Cancel), or (b) per-window apply the
+same close-behavior setting. Counting associated open windows: iterate
+`iTermController.sharedInstance().terminals()` and `model.project(for:)`.
+
+### 13e. Other dialog facts
+- Simple confirmations in the panel use plain `NSAlert` +
+  `alert.buttons[0].hasDestructiveAction = true` (see
+  `iTermProjectsPanelController.swift` delete-project ~661, restore-all ~684).
+- Sheet vs app-modal: `NSAlert.runSheetModalForWindow:` for window-attached;
+  `iTermWarning … window:self.window` presents as a sheet on that window.
