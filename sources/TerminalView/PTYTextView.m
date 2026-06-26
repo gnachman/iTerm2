@@ -600,7 +600,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return self.findOnPageHelper.searchResults.count > 0;
     }
     if (item.action == @selector(movePane:)) {
-        return [[MovePaneController sharedInstance] session] == nil && ![self.delegate textViewIsLocked];
+        return ([[MovePaneController sharedInstance] session] == nil &&
+                ![self.delegate textViewIsLocked] &&
+                ![self.delegate textViewWindowIsLayoutLocked]);
     }
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {

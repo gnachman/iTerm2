@@ -26,6 +26,13 @@ New Features:
   Choose or remove the speech model under
   Settings > Voice Input. Only models that run
   well on this device are listed.
+- The session picker for @-mentions now shows
+  the same window, tab, and pane hierarchy as
+  the Sessions tab. Each row has a preview
+  button to view the session before picking it;
+  tapping elsewhere on the row selects it.
+- New chats now default to Orchestration on the
+  New Chat screen.
 
 Bug Fixes:
 - @-mentions in command-request messages now

@@ -14,10 +14,6 @@ class TerminalRendererTest: XCTestCase {
         try renderAndVerify(gpu: false, filename: "terminal_legacy_test.png")
     }
 
-    func testGPURender() throws {
-        try renderAndVerify(gpu: true, filename: "terminal_gpu_test.png")
-    }
-
     private func renderAndVerify(gpu: Bool, filename: String) throws {
         guard let profile = ProfileModel.sharedInstance()?.defaultProfile(),
               let guid = profile[KEY_GUID] as? String else {

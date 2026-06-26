@@ -2349,11 +2349,21 @@ extension PTYSession {
         Notification.Name("iTermInlineChatDidChange")
 
     // Action for the View > Show Inline Chat menu item. If a chat is bound
-    // already, just toggle its panel visibility. Otherwise pick the most
-    // recently active chat linked to this session, or create a new one if
-    // none exists, then bind it inline. Intentionally does NOT route
-    // through ChatWindowController so the chat window stays unaffected and
-    // is not opened as a side effect.
+    // already, just toggle its panel visibility. The binding (inlineChatID)
+    // lives in memory and is saved/restored with the window arrangement, so
+    // re-toggling reuses the same chat across both panel hides and restarts.
+    //
+    // With no chat bound, fall back to the most recent chat the user
+    // EXPLICITLY linked to this session (via the offerLink "Link" button or
+    // from the chat window): that's all mostRecentChat(forGuid:) can match.
+    // Inline chats are created unlinked (see createInlineChat), so this
+    // fallback intentionally does NOT rediscover a prior inline chat whose
+    // inlineChatID was lost; the only thing that clears inlineChatID is
+    // deleting the chat, which removes it entirely, so there's no reusable
+    // unlinked chat left behind to rediscover. When nothing matches, create a
+    // fresh inline chat. Intentionally does NOT route through
+    // ChatWindowController so the chat window stays unaffected and is not
+    // opened as a side effect.
     @objc(toggleInlineChat)
     func toggleInlineChat() {
         if inlineChatID != nil {
@@ -2363,8 +2373,7 @@ extension PTYSession {
         guard iTermAITermGatekeeper.check() else {
             return
         }
-        guard let listModel = ChatListModel.instance,
-              let client = ChatClient.instance else {
+        guard let listModel = ChatListModel.instance else {
             return
         }
         let sessionGuid = self.guid
@@ -2373,29 +2382,83 @@ extension PTYSession {
             inlineChatVisible = true
             return
         }
+        if createInlineChat() != nil {
+            inlineChatVisible = true
+        }
+    }
+
+    // Re-bind an inline chat during arrangement restoration. Setting
+    // inlineChatID drives the right-extra layout cascade that instantiates the
+    // gutter panel and reserves the panel's width, the same as a live toggle.
+    //
+    // Deliberately NOT gated on iTermAITermGatekeeper, unlike the create/show
+    // entry points. Restoring a panel that shows past chat history is benign:
+    // it makes no AI calls until the user sends a message, which goes through
+    // the gate. Gating here would pay the plugin-load cost on the launch
+    // restore path and would drop the saved binding whenever AI is temporarily
+    // disabled.
+    //
+    // Validate against the chat list only if the chat DB is ALREADY open
+    // (instanceIfExists, which does not construct it). Reading
+    // ChatListModel.instance would force ChatDatabase to open chatdb.sqlite
+    // and run migrations synchronously here on the restore path. When the DB
+    // is open and the chat is gone (deleted since the arrangement was saved),
+    // skip binding so the panel doesn't reopen onto a missing chat; when it
+    // isn't open we can't tell, so bind optimistically. The width provider
+    // re-validates that the chat still exists once the DB is open and drops
+    // the binding (yielding no panel) if it has since been deleted.
+    //
+    // Edge case: if the chat DB cannot be opened at all this launch (e.g. a
+    // second iTerm2 instance holds the sqlite lock), the width provider yields
+    // 0 and the window restores at full terminal width with no panel. We still
+    // set the binding so it survives to a healthy launch. Reserving width for
+    // a panel that can't be constructed would crash the force-unwrapping panel
+    // factory, so we accept the wider window in that degraded state.
+    @objc(restoreInlineChatID:visible:)
+    func restoreInlineChat(id: String, visible: Bool) {
+        if ChatDatabase.instanceIfExists != nil,
+           let listModel = ChatListModel.instance,
+           listModel.index(of: id) == nil {
+            return
+        }
+        inlineChatID = id
+        inlineChatVisible = visible
+    }
+
+    // Create a brand-new chat for this session's inline panel and bind it via
+    // inlineChatID. The chat is created UNLINKED (no terminal/browser GUID) and
+    // carries a single .offerLink client-local message, mirroring the chat
+    // window's new-chat flow: the user picks "Link" (bind to this session) or
+    // "Enable Orchestration" from buttons in the conversation rather than the
+    // panel deciding for them. Returns the new chat ID, or nil on failure.
+    //
+    // The offer is published here (at creation) rather than in
+    // ChatViewController.attach(to:) because attach runs on every (re)attach;
+    // offering there would stack duplicate offer bubbles across detach/reattach
+    // cycles. Published client-local messages persist and replay when the panel
+    // loads the chat.
+    @discardableResult
+    func createInlineChat() -> String? {
+        guard let client = ChatClient.instance else {
+            return nil
+        }
         do {
             let title = "Chat about \(self.name)"
             let isBrowser = self.isBrowserSession()
             let chatID = try client.create(
                 chatWithTitle: title,
-                terminalSessionGuid: isBrowser ? nil : sessionGuid,
-                browserSessionGuid: isBrowser ? sessionGuid : nil,
+                terminalSessionGuid: nil,
+                browserSessionGuid: nil,
                 initialMessages: [],
                 permissions: "")
-            // Mirror the chat window's link flow so the inline chat
-            // starts with the same "linked to session" notice and
-            // permissions buttons.
-            let escapedName = self.name.escapedForMarkdownCode
-            try? client.publishNotice(
-                chatID: chatID,
-                notice: "This chat has been linked to \(isBrowser ? "web browser" : "terminal") session “\(escapedName)”")
             try? client.publishClientLocalMessage(
                 chatID: chatID,
-                action: .permissions(terminal: !isBrowser, guid: sessionGuid))
+                action: .offerLink(terminal: !isBrowser, guid: self.guid, name: self.name))
             inlineChatID = chatID
-            inlineChatVisible = true
+            return chatID
         } catch {
             DLog("\(error)")
+            return nil
         }
     }
 }

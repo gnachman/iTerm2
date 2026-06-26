@@ -285,20 +285,24 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     if ([item action] == @selector(restartSession:)) {
         return [self.delegate contextMenuSessionCanBeRestarted:self];
     }
-    // Disable move/swap when locked
+    // Disable move/swap when the pane is locked or the window's layout is locked.
     if ([item action] == @selector(movePane:) ||
         [item action] == @selector(swapSessions:)) {
-        return ![self.delegate contextMenuIsLocked:self];
+        return ![self.delegate contextMenuIsLocked:self] && ![self.delegate contextMenuWindowIsLayoutLocked:self];
+    }
+    // These change the window's layout (split a pane or close a pane), so disable
+    // them when the window's layout is locked.
+    if ([item action] == @selector(splitTextViewVertically:) ||
+        [item action] == @selector(splitTextViewHorizontally:) ||
+        [item action] == @selector(closeTextViewSession:)) {
+        return ![self.delegate contextMenuWindowIsLayoutLocked:self];
     }
     if ([item action] == @selector(toggleBroadcastingInput:) ||
         [item action] == @selector(toggleLock:) ||
         [item action] == @selector(lockAllInTab:) ||
         [item action] == @selector(unlockAllInTab:) ||
-        [item action] == @selector(closeTextViewSession:) ||
         [item action] == @selector(editTextViewSession:) ||
         [item action] == @selector(clearTextViewBuffer:) ||
-        [item action] == @selector(splitTextViewVertically:) ||
-        [item action] == @selector(splitTextViewHorizontally:) ||
         [item action] == @selector(reRunCommand:) ||
         [item action] == @selector(saveImageAs:) ||
         [item action] == @selector(copyImage:) ||
@@ -326,12 +330,17 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         id<VT100ScreenMarkReading> commandMark = [item representedObject];
         return [self.delegate contextMenu:self hasOutputForCommandMark:commandMark];
     }
+    if ([item action] == @selector(openURLInVerticalSplitPane:) ||
+        [item action] == @selector(openURLInHorizontalSplitPane:)) {
+        // These explicitly split the current window, so disable them when its
+        // layout is locked (parallel to the greyed-out Split Pane menu items).
+        iTermSelection *selection = [self.delegate contextMenuSelection:self];
+        return selection.hasSelection && ![self.delegate contextMenuWindowIsLayoutLocked:self];
+    }
     if ([item action] == @selector(sendSelection:) ||
         [item action] == @selector(addNote:) ||
         [item action] == @selector(mail:) ||
         [item action] == @selector(browse:) ||
-        [item action] == @selector(openURLInVerticalSplitPane:) ||
-        [item action] == @selector(openURLInHorizontalSplitPane:) ||
         [item action] == @selector(quickLook:) ||
         [item action] == @selector(searchInBrowser:) ||
         [item action] == @selector(addTrigger:) ||

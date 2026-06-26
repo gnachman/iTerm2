@@ -333,6 +333,12 @@ UI Improvements:
   text from tab subtitles while keeping the
   colored dot. Toggle it from the gear menu
   in the Session Status toolbelt tool.
+- Right-click a row in the Session Status
+  toolbelt tool and choose Snooze to move it
+  below a divider at the bottom of the list
+  and dim it. A snoozed entry un-snoozes
+  automatically the next time its status
+  changes.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
 - Rename dialogs, the pane menu, and the context
@@ -447,6 +453,12 @@ Settings Improvements:
   menu’s “Put Chat in Linked Session” item
   and toggle visibility from View > Show
   Inline Chat.
+- The inline chat panel now has a toolbar to
+  create a new chat, switch chats, open the
+  session/link menu, and hide the panel. New
+  inline chats ask whether to link to the
+  session or become an orchestrator instead
+  of linking automatically.
 - Open Quickly now uses recency as a
   tiebreaker, so the session list (whether
   the query is empty or matches several
@@ -473,11 +485,21 @@ Settings Improvements:
   fades. Off by default.
 
 Bug Fixes:
+- tmux integration now parses pane state
+  correctly on macOS 26 and later. A new
+  system NSString method had shadowed ours
+  and caused numeric fields to be dropped.
 - The companion device no longer triggers a
   keychain confirmation prompt when it connects
   or when a notification is sent. The paired
   identity is now read once at launch, while you
   are present, instead of mid-connection.
+- Restoring a window with an open inline AI chat
+  panel now reopens the panel on the chat it was
+  showing, instead of widening the terminal.
+- Chat lists now mark orchestrator chats with a
+  wand glyph. The inline chat switcher bolds chats
+  linked to the current session.
 - The session-logging and archive folder
   pickers now use the folder you select rather
   than its parent when you don’t open it first.

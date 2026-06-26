@@ -334,6 +334,8 @@ static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE = @"Clippings Visib
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archive";  // NSArray<NSArray<NSDictionary<NSString *, NSString *> *> *>, oldest first.
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
 static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
+static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
+static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE = @"Inline Chat Visible";  // BOOL. Whether that panel was showing.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1671,6 +1673,9 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     aSession.clippingsVisible = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE]] boolValue];
+    // Inline AI chat is restored earlier, synchronously, in
+    // sessionFromArrangement: (see the comment there) so the panel's reserved
+    // width is in place before the window first fits its grid.
     [aSession.directoryTracker restoreFromArrangement:arrangement];
 
     if (arrangement[SESSION_ARRANGEMENT_APS]) {
@@ -1814,6 +1819,20 @@ ITERM_WEAKLY_REFERENCEABLE
     aSession.view = sessionView;
     aSession->_savedGridSize = VT100GridSizeMake(MAX(1, [arrangement[SESSION_ARRANGEMENT_COLUMNS] intValue]),
                                                  MAX(1, [arrangement[SESSION_ARRANGEMENT_ROWS] intValue]));
+    // Re-bind the inline AI chat here, synchronously, rather than in the
+    // asynchronous finishInitializing path. The right-gutter panel reserves
+    // width through desiredRightExtra; if inlineChatID is set late (after the
+    // command/server attach finishes), the window has already fit its grid to
+    // the full width with no reservation, and applying the reservation
+    // afterward grows the window by the panel width. Setting it now (before
+    // the window lays out its grid) means the grid is fit with the panel's
+    // space reserved, matching the saved frame. The session has no delegate
+    // yet, so this won't kick off a premature window resize.
+    NSString *inlineChatID = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_INLINE_CHAT_ID]];
+    if (inlineChatID) {
+        [aSession restoreInlineChatID:inlineChatID
+                              visible:[[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE]] boolValue]];
+    }
     [sessionView setFindDriverDelegate:aSession];
     NSMutableSet<NSString *> *keysToPreserveInCaseOfDivorce = [NSMutableSet setWithArray:@[ KEY_GUID, KEY_ORIGINAL_GUID ]];
 
@@ -6761,6 +6780,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX] = @(self.localClippingsViewIndex);
     }
     result[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE] = @(self.clippingsVisible);
+
+    // Inline AI chat gutter panel. Only meaningful when a chat is bound, so
+    // the visibility flag rides along with the id rather than being written
+    // unconditionally.
+    if (self.inlineChatID) {
+        result[SESSION_ARRANGEMENT_INLINE_CHAT_ID] = self.inlineChatID;
+        result[SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE] = @(self.inlineChatVisible);
+    }
 
     // Workgroup peer-group membership. The descriptor is opaque here:
     // iTermWorkgroupRestoration owns its schema and embeds the other
@@ -12518,6 +12545,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)textViewIsLocked {
     return _locked;
+}
+
+- (BOOL)textViewWindowIsLayoutLocked {
+    return [[_delegate realParentWindow] layoutLocked];
 }
 
 - (void)setLocked:(BOOL)locked {

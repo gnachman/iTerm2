@@ -30,7 +30,7 @@ class ObjCChatDatabase: NSObject {
             }
             for i in 0..<chats.count {
                 let chat = chats[i]
-                if chat.terminalSessionGuid == sessionGuid || chat.browserSessionGuid == sessionGuid {
+                if chat.isLinked(toSessionGuid: sessionGuid) {
                     var temp = chats[i]
                     let wasTerminal = temp.terminalSessionGuid != nil
                     temp.terminalSessionGuid = nil

@@ -1,5 +1,9 @@
 Version 3.7.0beta5 was built on June 23, 2026.
 
+Note: if you are beta testing the iPhone companion
+app iTerm2 Buddy, you'll need to update it after
+upgrading iTerm2 to this version.
+
 Changes since 3.7.0beta4:
 
 New Features:
@@ -47,17 +51,26 @@ Improvements:
   agent acts there without the one-time approval
   prompt. A notice with a Revoke button lets you
   take the permission back whenever you want.
-- In iTerm2 Buddy, the session picker for
-  @-mentions now shows the same window, tab, and
-  pane hierarchy as the Sessions tab. Each row
-  has a preview button to view the session
-  before picking it; tapping elsewhere on the
-  row selects it.
 - Anthropic prompt caching now also covers the
   conversation history, not just the system
   prompt and tools, so long chats reread the
   earlier turns from cache instead of paying
   full input price every turn.
+- Right-click a row in the Session Status
+  toolbelt tool and choose Snooze to move it
+  below a divider at the bottom of the list
+  and dim it. A snoozed entry un-snoozes
+  automatically the next time its status
+  changes.
+- The inline chat panel now has a toolbar to
+  create a new chat, switch chats, open the
+  session/link menu, and hide the panel. New
+  inline chats ask whether to link to the
+  session or become an orchestrator instead
+  of linking automatically.
+- Chat lists now mark orchestrator chats with a
+  wand glyph. The inline chat switcher bolds chats
+  linked to the current session.
 
 Bug Fixes:
 - Fixed a bug where a pane could restore in your
@@ -111,3 +124,12 @@ Bug Fixes:
 - OpenAI prompt caching is more reliable: the
   Responses API request now sorts its JSON keys
   so the cached prefix stays stable.
+- Restoring a window with an open inline AI chat
+  panel now reopens the panel on the chat it was
+  showing, instead of widening the terminal.
+- The companion device no longer triggers a
+  keychain confirmation prompt when it connects
+  or when a notification is sent. The paired
+  identity is now read once at launch, while you
+  are present, instead of mid-connection.
+

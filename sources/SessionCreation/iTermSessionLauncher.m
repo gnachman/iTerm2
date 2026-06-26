@@ -707,8 +707,20 @@
                                                                                            respectTabbingMode:_respectTabbingMode];
     *togglePtr = NO;
     if (windowController != nil && [windowController windowInitialized]) {
-        DLog(@"Use an existing window");
-        return windowController;
+        if (windowController.layoutLocked && windowController.numberOfTabs > 0 && _makeSession == nil) {
+            // The target window’s layout is locked. Rather than refuse the open
+            // (e.g. a semantic-history file open, a registered-scheme URL, or a
+            // file opened from Finder into a split/tab), redirect it into a
+            // brand-new window: the locked layout is left untouched and the
+            // user’s action still succeeds. Scripted launches (_makeSession) are
+            // excluded here so they continue to respect the lock strictly via
+            // the guards in -createTabWithProfile: / -asyncSplitVertically:.
+            DLog(@"Target window is layout-locked; opening in a new window instead");
+            windowController = nil;
+        } else {
+            DLog(@"Use an existing window");
+            return windowController;
+        }
     }
 
     [iTermController switchToSpaceInBookmark:profile];

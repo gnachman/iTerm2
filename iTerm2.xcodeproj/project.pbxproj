@@ -963,6 +963,7 @@
 		5A68344851B7CEE773FF8607 /* AICassette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B1126B05955C92900D7A85 /* AICassette.swift */; };
 		5A70B4826716B6F27711CADF /* WorkgroupToolbarBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7C79A0745E993B91C40235 /* WorkgroupToolbarBuilder.swift */; };
 		5A9B38999DE20ABF75B37873 /* WorkgroupNavigationToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */; };
+		5DAE3C891517F3EA4E28183E /* ChatTitleStyling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39113C8B0BCDC7700DE18F8F /* ChatTitleStyling.swift */; };
 		5E82F967B87E7F7A76A492E1 /* ChatSessionMentionAttachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D1CA9FEA656247ADC53ADF /* ChatSessionMentionAttachment.swift */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		5EEA7C6C9BEA8194F891E3F1 /* CCGitBaseSelectorItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 551CEFF56A53034E3FC7598A /* CCGitBaseSelectorItem.swift */; };
@@ -5449,6 +5450,7 @@
 		F96B31FFBFC5DFE713E9C670 /* EnterWorkgroupBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171DC262300F3B977D7FF1DB /* EnterWorkgroupBrowserTrigger.swift */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
 		FC58829E571DF07C5902F3EB /* EnterWorkgroupTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23866DFB3D15427C93C0849 /* EnterWorkgroupTrigger.swift */; };
+		FD34D15329745082B47FF48A /* InlineChatToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D24FA729C97DC10CC13FB8C /* InlineChatToolbarView.swift */; };
 		FDEC84030653ADA8F94F464D /* OrchestratorDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A289859EF5CE3EC1C14E85F4 /* OrchestratorDispatcher.swift */; };
 		FE12FC00AADEA00D04DE5D07 /* WorkgroupIntrospection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD8FF2B2AC39B0DDA9E1724 /* WorkgroupIntrospection.swift */; };
 /* End PBXBuildFile section */
@@ -5826,6 +5828,7 @@
 		1D24C283142EF334006B246F /* SendTextTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SendTextTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D24C2C3142FEACF006B246F /* SmartSelectionController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SmartSelectionController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D24C2C4142FEACF006B246F /* SmartSelectionController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SmartSelectionController.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D24FA729C97DC10CC13FB8C /* InlineChatToolbarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InlineChatToolbarView.swift; sourceTree = "<group>"; };
 		1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ArrangementPreviewView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ArrangementPreviewView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D29732514082676004C5DBE /* MovePaneController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = MovePaneController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -6282,6 +6285,7 @@
 		3335AD96138BA74CC79D25A8 /* iTermUnicodeNormalization.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermUnicodeNormalization.h; sourceTree = "<group>"; };
 		34C838CC7F84A22E7B7E3385 /* iTermJobInfoPopoverViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermJobInfoPopoverViewController.swift; sourceTree = "<group>"; };
 		37E989D59E1FC6B8DAF227C7 /* WorkgroupPeerSegmentedControl.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupPeerSegmentedControl.swift; sourceTree = "<group>"; };
+		39113C8B0BCDC7700DE18F8F /* ChatTitleStyling.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatTitleStyling.swift; sourceTree = "<group>"; };
 		3958B5886D15D42E92BF7392 /* WorkgroupRestorationCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupRestorationCoordinator.swift; sourceTree = "<group>"; };
 		39A91EF453B797BB100AD508 /* SessionNoteModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionNoteModel.swift; sourceTree = "<group>"; };
 		3B81856E5FFF3D6001EA8085 /* iTermController+SessionLookupDiagnosis.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "iTermController+SessionLookupDiagnosis.swift"; sourceTree = "<group>"; };
@@ -11290,6 +11294,8 @@
 				2C9EF4B4D9DF2F4E3CA2A3F5 /* AIExplanationRequest+Mac.swift */,
 				8F06ECF8A1AE910A311E3128 /* AIExplanationResponse+Mac.swift */,
 				3227E6C120C7EDABDA77D963 /* TerminalCommand.swift */,
+				1D24FA729C97DC10CC13FB8C /* InlineChatToolbarView.swift */,
+				39113C8B0BCDC7700DE18F8F /* ChatTitleStyling.swift */,
 			);
 			path = AITerm;
 			sourceTree = "<group>";
@@ -21723,6 +21729,8 @@
 				E4BE6F9594BF6756F85076DB /* iTermCursorBlinkFadeCurveIcon.h in Sources */,
 				73696CD1DE6460A41D2A67E0 /* iTermCursorBlinkFadePreset.m in Sources */,
 				9C7078E2AF6B527E9E15B01E /* iTermCursorBlinkFadePreset.h in Sources */,
+				FD34D15329745082B47FF48A /* InlineChatToolbarView.swift in Sources */,
+				5DAE3C891517F3EA4E28183E /* ChatTitleStyling.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

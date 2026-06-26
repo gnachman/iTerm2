@@ -347,7 +347,7 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
@@ -357,14 +357,17 @@ ifdef UNIVERSAL
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
 fatlibsixel: force armsixel x86libsixel
 	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel-x86/lib/libsixel.a
+	cp ThirdParty/libsixel-arm/include/sixel.h ThirdParty/libsixel/include/sixel.h
 else
 fatlibsixel: force
 ifeq ($(NATIVE_ARCH),arm64)
 	$(MAKE) armsixel
 	cp ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+	cp ThirdParty/libsixel-arm/include/sixel.h ThirdParty/libsixel/include/sixel.h
 else
 	$(MAKE) x86libsixel
 	cp ThirdParty/libsixel-x86/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+	cp ThirdParty/libsixel-x86/include/sixel.h ThirdParty/libsixel/include/sixel.h
 endif
 endif
 

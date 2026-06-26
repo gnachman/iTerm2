@@ -8,6 +8,8 @@
 
 #import "TmuxStateParser.h"
 
+#import "DebugLogging.h"
+
 NSString *kStateDictSavedGrid = @"alternate_on";
 // These are the cursor coords in the primary screen, valid only when in the alt screen.
 // CSI ? 1049 h saves to this, CSI ? 1049 h restores from it. CSI ? 1048 h/l is not supported by
@@ -44,14 +46,14 @@ NSString *kStateDictBracketedPasteMode = @"bracket_paste_flag";  // Requires tmu
 NSString *kStateDictPaneKeyMode = @"pane_key_mode";  // tmux 3.5+; reports per-pane modifyOtherKeys state
 
 @interface NSString (TmuxStateParser)
-- (NSArray *)intlistValue;
-- (NSNumber *)numberValue;
-- (NSNumber *)paneIdNumberValue;
+- (NSArray *)it_intlistValue;
+- (NSNumber *)it_numberValue;
+- (NSNumber *)it_paneIdNumberValue;
 @end
 
 @implementation NSString (TmuxStateParser)
 
-- (NSNumber *)paneIdNumberValue
+- (NSNumber *)it_paneIdNumberValue
 {
     if ([self hasPrefix:@"%"] && [self length] > 1) {
         return [NSNumber numberWithInt:[[self substringFromIndex:1] intValue]];
@@ -61,12 +63,12 @@ NSString *kStateDictPaneKeyMode = @"pane_key_mode";  // tmux 3.5+; reports per-p
     }
 }
 
-- (NSNumber *)numberValue
+- (NSNumber *)it_numberValue
 {
     return [NSNumber numberWithInt:[self intValue]];
 }
 
-- (NSArray *)intlistValue
+- (NSArray *)it_intlistValue
 {
     NSArray *components = [self componentsSeparatedByString:@","];
     NSMutableArray *result = [NSMutableArray array];
@@ -115,10 +117,10 @@ NSString *kStateDictPaneKeyMode = @"pane_key_mode";  // tmux 3.5+; reports per-p
     // State is a collection of key-value pairs. Each KVP is delimited by
     // newlines. The key is to the left of the first =, the value is to the
     // right.
-    NSString *intType = @"numberValue";
-    NSString *uintType = @"numberValue";
-    NSString *intlistType = @"intlistValue";
-    NSString *paneIdNumberType = @"paneIdNumberValue";
+    NSString *intType = @"it_numberValue";
+    NSString *uintType = @"it_numberValue";
+    NSString *intlistType = @"it_intlistValue";
+    NSString *paneIdNumberType = @"it_paneIdNumberValue";
 
 
 
@@ -155,13 +157,27 @@ NSString *kStateDictPaneKeyMode = @"pane_key_mode";  // tmux 3.5+; reports per-p
         if (eq.location != NSNotFound) {
             NSString *key = [kvp substringToIndex:eq.location];
             NSString *value = [kvp substringFromIndex:eq.location + 1];
+            if (key.length == 0) {
+                // A leading "=" yields an empty key; never store that.
+                continue;
+            }
             NSString *converter = [fieldTypes objectForKey:key];
+            id objectToStore = value;
             if (converter) {
                 SEL sel = NSSelectorFromString(converter);
-                id convertedValue = [value performSelector:sel];
-                [result setObject:convertedValue forKey:key];
+                objectToStore = [value performSelector:sel];
+            }
+            // tmux is an external process (and, with `tmux -CC` to a remote host,
+            // potentially a different version than we expect), so never trust it
+            // to give us a non-nil value: a nil here would make -setObject:forKey:
+            // raise NSInvalidArgumentException and abort the whole app. The actual
+            // fix for the macOS 26+ regression is the it_-prefixed category methods
+            // above (the framework now defines its own -[NSString numberValue] that
+            // returns nil); this remains as defense in depth against malformed input.
+            if (objectToStore) {
+                [result setObject:objectToStore forKey:key];
             } else {
-                [result setObject:value forKey:key];
+                DLog(@"Ignoring nil value for key \"%@\" in tmux state \"%@\"", key, kvp);
             }
         } else if ([kvp length] > 0) {
             NSLog(@"Bogus result in control command: \"%@\"", kvp);
