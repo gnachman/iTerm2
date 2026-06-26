@@ -151,6 +151,11 @@ class ChatDatabase {
                 + "(\(Message.Columns.chatID.rawValue), \(Message.Columns.seq.rawValue))",
                 withArguments: [])
 
+            // The contentless-wakeup push (revision >= 2) alert store. A separate
+            // table with its own AUTOINCREMENT seq, so the phone tracks an alert
+            // floor independent of the message floor.
+            try db.executeUpdate(CompanionAlertRecord.schema(), withArguments: [])
+
             return true
         } catch {
             DLog("\(error)")
@@ -281,6 +286,114 @@ class ChatDatabase {
             DLog("Companion: maxSeq failed for chat \(chatID): \(error)")
         }
         return 0
+    }
+
+    // MARK: Contentless-wakeup (syncSince) reads
+
+    /// For the unified syncSince responder: a newest-first window of rows ACROSS
+    /// ALL CHATS with seq greater than `sinceSeq`, each paired with its seq (the
+    /// Message struct drops the seq column, but the per-chat watermark gate needs
+    /// it), plus the global max seq. One transaction so the window and the max are
+    /// a single snapshot (see messagesSince for why). Returns nil on FAILURE,
+    /// distinct from an empty result.
+    func messagesSinceGlobal(sinceSeq: Int64,
+                             windowLimit: Int,
+                             ascending: Bool) -> (rows: [(seq: Int64, message: Message)], maxSeq: Int64)? {
+        var rows = [(seq: Int64, message: Message)]()
+        var maxSeqValue: Int64 = 0
+        do {
+            try db.transaction {
+                let (sql, args) = Message.messagesSinceGlobalQuery(seq: sinceSeq, windowLimit: windowLimit, ascending: ascending)
+                guard let rs = try db.executeQuery(sql, withArguments: args) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                while rs.next() {
+                    if let message = Message(dbResultSet: rs) {
+                        rows.append((seq: rs.longLongInt(forColumn: Message.Columns.seq.rawValue),
+                                     message: message))
+                    }
+                }
+                rs.close()
+                let (maxSQL, maxArgs) = Message.maxSeqGlobalQuery()
+                guard let maxRS = try db.executeQuery(maxSQL, withArguments: maxArgs) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                defer { maxRS.close() }
+                if maxRS.next() {
+                    maxSeqValue = maxRS.longLongInt(forColumn: "maxseq")
+                }
+            }
+        } catch {
+            DLog("Companion: messagesSinceGlobal failed: \(error); returning nil")
+            return nil
+        }
+        return (rows, maxSeqValue)
+    }
+
+    /// Append a terminal alert and return its assigned seq, pruning the store to a
+    /// bounded size. Returns nil on failure. Dedups by uniqueID (a retried enqueue
+    /// of the same alert is a no-op that returns the existing row's seq).
+    @discardableResult
+    func insertAlert(_ record: CompanionAlertRecord, keepNewest: Int = 200) -> Int64? {
+        do {
+            var assignedSeq: Int64 = 0
+            try db.transaction {
+                // Dedup: if a row with this uniqueID already exists, reuse its seq.
+                let existing = try db.executeQuery(
+                    "select \(CompanionAlertRecord.Columns.seq.rawValue) as seq from CompanionAlert where \(CompanionAlertRecord.Columns.uniqueID.rawValue)=?",
+                    withArguments: [record.uniqueID.uuidString])
+                if let existing, existing.next() {
+                    assignedSeq = existing.longLongInt(forColumn: "seq")
+                    existing.close()
+                    return
+                }
+                existing?.close()
+                let (sql, args) = record.insertQuery()
+                try db.executeUpdate(sql, withArguments: args)
+                assignedSeq = db.lastInsertRowId()?.int64Value ?? 0
+                let (pruneSQL, pruneArgs) = CompanionAlertRecord.pruneQuery(keep: keepNewest)
+                try db.executeUpdate(pruneSQL, withArguments: pruneArgs)
+            }
+            return assignedSeq
+        } catch {
+            DLog("Companion: insertAlert failed: \(error)")
+            return nil
+        }
+    }
+
+    /// Newest-first window of alerts with seq greater than `sinceSeq`, plus the
+    /// store's max alert seq. nil on failure (distinct from empty), like
+    /// messagesSince.
+    func alertsSince(sinceSeq: Int64,
+                     limit: Int) -> (alerts: [CompanionAlertRecord], maxSeq: Int64)? {
+        var alerts = [CompanionAlertRecord]()
+        var maxSeqValue: Int64 = 0
+        do {
+            try db.transaction {
+                let (sql, args) = CompanionAlertRecord.alertsSinceQuery(seq: sinceSeq, limit: limit)
+                guard let rs = try db.executeQuery(sql, withArguments: args) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                while rs.next() {
+                    if let alert = CompanionAlertRecord(dbResultSet: rs) {
+                        alerts.append(alert)
+                    }
+                }
+                rs.close()
+                let (maxSQL, maxArgs) = CompanionAlertRecord.maxSeqQuery()
+                guard let maxRS = try db.executeQuery(maxSQL, withArguments: maxArgs) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                defer { maxRS.close() }
+                if maxRS.next() {
+                    maxSeqValue = maxRS.longLongInt(forColumn: "maxseq")
+                }
+            }
+        } catch {
+            DLog("Companion: alertsSince failed: \(error); returning nil")
+            return nil
+        }
+        return (alerts, maxSeqValue)
     }
 
     private func popuplateSessionToChatMap() {
