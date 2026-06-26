@@ -23,6 +23,7 @@ enum CompanionPushRegistry {
     private static let legacySecretKey = "NoSyncCompanionPushRelaySecret"
     private static let sandboxKey = "NoSyncCompanionPushTokenSandbox"
     private static let authorizationKey = "NoSyncCompanionPushAuthorization"
+    private static let peerRevisionKey = "NoSyncCompanionPeerRevision"
 
     // The secret authorizes push to the paired phone, so it is kept in the
     // keychain, not UserDefaults. To avoid a keychain prompt while the user is
@@ -117,6 +118,33 @@ enum CompanionPushRegistry {
             .string(forKey: CompanionPairingController.pairedPIDKey) != nil
     }
 
+    /// The protocol revision the paired phone last advertised in its `.hello`
+    /// (0 if never recorded: paired before this mac learned to store it, or paired
+    /// long ago and not reconnected since the phone updated). Consulted at push
+    /// time, when the phone may be offline, to choose the wakeup format and to gate
+    /// the alert UI. Self-corrects on the next handshake.
+    static var peerRevision: Int {
+        iTermUserDefaults.userDefaults().integer(forKey: peerRevisionKey)
+    }
+
+    static func setPeerRevision(_ revision: Int) {
+        iTermUserDefaults.userDefaults().set(revision, forKey: peerRevisionKey)
+    }
+
+    /// The paired phone understands the contentless wakeup + unified syncSince
+    /// (revision >= 2). When false, the mac sends the legacy per-chat collapse push
+    /// for chat and offers no terminal alerts.
+    static var supportsContentlessWakeup: Bool {
+        peerRevision >= CompanionProtocolVersion.contentlessWakeupRevision
+    }
+
+    /// Whether terminal alerts can be delivered to the phone: a device is paired,
+    /// it is new enough to fetch them, and a notification could actually be sent.
+    /// The desktop "send to phone" UI gates on this.
+    static var canSendAlertsToPhone: Bool {
+        devicePaired && supportsContentlessWakeup && canNotify
+    }
+
     /// True when asking for permission could possibly succeed: iOS only ever
     /// shows the prompt while the state is notDetermined; after a decline,
     /// only the Settings app can change it. Gating the request tool on this
@@ -195,6 +223,7 @@ enum CompanionPushRegistry {
         defaults.removeObject(forKey: legacySecretKey)
         defaults.removeObject(forKey: sandboxKey)
         defaults.removeObject(forKey: authorizationKey)
+        defaults.removeObject(forKey: peerRevisionKey)
         CompanionMacIdentity.deletePairedPushSecret()
         secretLock.lock()
         cachedSecretHex = nil

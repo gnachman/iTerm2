@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import CompanionProtocol
 
 enum CompanionPushSender {
     struct SendError: LocalizedError {
@@ -47,13 +48,88 @@ enum CompanionPushSender {
 
     /// Content-free push that wakes the phone's Notification Service Extension,
     /// collapsed per chat by the opaque token (HMAC(roomSecret, chatID)). No
-    /// content crosses the relay; the NSE fetches it over Noise.
+    /// content crosses the relay; the NSE fetches it over Noise. Used for the
+    /// LEGACY per-chat push to revision-1 phones.
     static func sendMutable(collapse: String, nonce: String?) async throws {
         let (token, secret) = try credentials()
         try await post(url: CompanionPushRelay.mutablePushURL,
                        request: MutablePushRequest(token: token, secret: secret,
                                                    collapse: collapse, nonce: nonce),
                        label: "mutable (collapse \(collapse))")
+    }
+
+    /// Content-free "wakeup" for revision-2 phones: the same mutable push but with
+    /// the fixed all-zeros sentinel collapse id, so it carries NO per-chat identity
+    /// (the relay/Apple see one indistinguishable wakeup, and queued wakeups
+    /// coalesce while the phone is offline). The NSE recognizes the sentinel and
+    /// runs the unified syncSince fetch.
+    static func sendWakeup(nonce: String?) async throws {
+        let (token, secret) = try credentials()
+        try await post(url: CompanionPushRelay.mutablePushURL,
+                       request: MutablePushRequest(token: token, secret: secret,
+                                                   collapse: CompanionPushWakeup.collapseSentinel,
+                                                   nonce: nonce),
+                       label: "wakeup")
+    }
+
+    /// Fire-and-forget a content-free push to the paired phone, choosing the
+    /// format by the phone's known protocol revision: a contentless WAKEUP for
+    /// revision >= 2 (one indistinguishable push; the NSE runs the unified
+    /// syncSince), or the LEGACY per-chat collapse push for older phones. Handles
+    /// the one-time nonce (mint, seal under the room secret, record only if the
+    /// push went out) shared by the chat notifier and the alert bridge.
+    ///
+    /// `chatID` supplies the legacy collapse token; pass nil from the alert bridge
+    /// (alerts only fire for revision >= 2, which never needs a collapse token).
+    @MainActor
+    static func dispatchPush(chatID: String?) {
+        guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
+            DLog("Companion push: no room secret; skipping push")
+            return
+        }
+        let useWakeup = CompanionPushRegistry.supportsContentlessWakeup
+        // The legacy path needs a per-chat collapse token; the wakeup never does.
+        let collapse: String?
+        if useWakeup {
+            collapse = nil
+        } else if let chatID {
+            collapse = CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chatID)
+        } else {
+            // A revision-1 phone with no chat context: nothing to collapse on, so
+            // there is no legacy push to send (this is only reached if an alert
+            // were ever dispatched to an old phone, which the gate prevents).
+            DLog("Companion push: legacy phone with no chatID; nothing to send")
+            return
+        }
+        let nonce = CompanionPushNonceRegistry.shared.mintNonce()
+        let sealedNonce = try? CompanionPushNonceCrypto.seal(nonce: nonce, roomSecret: roomSecret)
+        // Record BEFORE sending (synchronously, on the main actor) when the nonce
+        // will ride out in the push. Recording after the send left a window where
+        // the app could be suspended/terminated between send and record - common
+        // when a push fires as the app backgrounds - so the nonce went out but was
+        // never recorded, and the NSE's echo was then misclassified as an
+        // unsolicited connection (spurious presence warning). A genuinely failed
+        // send is undone below, so this still doesn't keep a slot for a push that
+        // never went out.
+        if sealedNonce != nil {
+            CompanionPushNonceRegistry.shared.record(nonce)
+        }
+        Task {
+            do {
+                if useWakeup {
+                    try await sendWakeup(nonce: sealedNonce)
+                } else if let collapse {
+                    try await sendMutable(collapse: collapse, nonce: sealedNonce)
+                }
+                DLog("Companion push: sent \(useWakeup ? "wakeup" : "legacy") push")
+            } catch {
+                // The push didn't go out, so free the slot we optimistically took.
+                if sealedNonce != nil {
+                    await MainActor.run { CompanionPushNonceRegistry.shared.unrecord(nonce) }
+                }
+                DLog("Companion push: push failed: \(error)")
+            }
+        }
     }
 
     private static func credentials() throws -> (token: String, secret: String) {

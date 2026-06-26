@@ -97,6 +97,22 @@ final class CompanionPushNonceRegistry {
         return nonce
     }
 
+    /// Undo a record() when the push that would have carried the nonce failed to
+    /// send. Removes it from the live set (persisted); it was never delivered, so
+    /// nothing will echo it, and the capacity slot is freed. No-op if absent (e.g.
+    /// already evicted). Used by the record-before-send ordering so a nonce that
+    /// rides out in a push is recorded BEFORE the send completes (closing the
+    /// suspend-between-send-and-record window that would misclassify the mac's own
+    /// fetch as unsolicited), while a genuinely failed send still doesn't keep a
+    /// slot.
+    func unrecord(_ nonce: String) {
+        guard live.remove(nonce) != nil else { return }
+        if let index = order.firstIndex(of: nonce) {
+            order.remove(at: index)
+        }
+        store.save(order)
+    }
+
     /// Whether a nonce is recognizable as the mac's OWN, WITHOUT consuming it.
     /// True for an outstanding nonce OR a recently-consumed one (a duplicate APNs
     /// delivery of the same push). Used only to classify a connection as solicited
