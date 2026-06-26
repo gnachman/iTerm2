@@ -61,6 +61,10 @@
     IBOutlet NSButton *_terminalGeneratedAlerts;
     IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
     IBOutlet NSButton *_suppressAlertsInActiveSession;
+    // Opt in to also delivering this profile's alerts to the paired iPhone. Enabled
+    // only when an eligible (revision >= 2) companion device is paired and can be
+    // notified; see iTermCompanionAlertBridge.canSendToPhone.
+    IBOutlet NSButton *_sendAlertsToCompanion;
 
     IBOutlet NSButton *_automaticallyEnableAlternatemouseScroll;
     IBOutlet NSButton *_restrictAlternateMouseScrollToVertical;
@@ -258,6 +262,15 @@
     [self defineUnsearchableControl:_suppressAlertsInActiveSession
                                 key:KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION
                                type:kPreferenceInfoTypeCheckbox];
+    [self defineUnsearchableControl:_sendAlertsToCompanion
+                                key:KEY_SEND_ALERTS_TO_COMPANION
+                               type:kPreferenceInfoTypeCheckbox];
+    // Only actionable when an eligible (revision >= 2) phone is paired and can be
+    // notified; otherwise show it disabled so the user understands why it is inert.
+    _sendAlertsToCompanion.enabled = [iTermCompanionAlertBridge canSendToPhone];
+    _sendAlertsToCompanion.toolTip = [iTermCompanionAlertBridge canSendToPhone]
+        ? nil
+        : @"Pair an iPhone running iTerm2 Buddy (and allow its notifications) to enable this.";
 
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL
