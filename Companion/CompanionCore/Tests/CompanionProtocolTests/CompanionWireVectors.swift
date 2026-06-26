@@ -36,6 +36,28 @@ enum CompanionWireVectors {
     /// The uniqueID embedded in `messagesSinceReply`.
     static let replyPreviewUUID = "550E8400-E29B-41D4-A716-446655440000"
 
+    /// syncSince REQUEST (phone -> mac), including the one-time push nonce.
+    static let syncSinceRequest =
+        #"{"requestID":9,"payload":{"syncSince":{"messageSeq":5,"alertSeq":3,"limit":10,"nonce":"ab12"}}}"#
+
+    /// syncSince REQUEST without a nonce (nonce-less wakeup).
+    static let syncSinceRequestNoNonce =
+        #"{"requestID":9,"payload":{"syncSince":{"messageSeq":5,"alertSeq":3,"limit":10}}}"#
+
+    /// The alertID embedded in `syncSinceReply`.
+    static let replyAlertUUID = "770E8400-E29B-41D4-A716-446655440000"
+
+    /// syncSince REPLY (mac -> phone): one message item then one alert item,
+    /// truncated, no resets.
+    static let syncSinceReply = """
+    {"requestID":42,"payload":{"syncSince":{"items":[\
+    {"message":{"chatID":"c1","chatName":"Chat A",\
+    "uniqueID":"550E8400-E29B-41D4-A716-446655440000","author":"agent","body":"hello","seq":7}},\
+    {"alert":{"alertID":"770E8400-E29B-41D4-A716-446655440000","threadKey":"sess-1",\
+    "title":"Mark Set","body":"done","seq":4}}],\
+    "maxMessageSeq":7,"maxAlertSeq":4,"messageReset":false,"alertReset":false,"truncated":true}}}
+    """
+
     static func object(_ json: String) -> NSDictionary? {
         guard let data = json.data(using: .utf8) else { return nil }
         return (try? JSONSerialization.jsonObject(with: data)) as? NSDictionary
