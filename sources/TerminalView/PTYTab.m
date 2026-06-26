@@ -4248,7 +4248,8 @@ typedef struct {
                     visibleLayout:(NSMutableDictionary *)visibleParseTree
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
-                   tmuxController:(TmuxController *)tmuxController {
+                   tmuxController:(TmuxController *)tmuxController
+                 openInBackground:(BOOL)openInBackground {
     Profile *profile = [tmuxController profileForWindow:tmuxWindow];
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:term
@@ -4305,12 +4306,15 @@ typedef struct {
 
     if (parseTree[kLayoutDictTabIndex]) {
         // Add tab at a specified index.
-        [term insertTab:theTab atIndex:[parseTree[kLayoutDictTabIndex] intValue]];
+        [term insertTab:theTab
+                atIndex:[parseTree[kLayoutDictTabIndex] intValue]
+       openInBackground:openInBackground];
     } else if ([parseTree[kLayoutDictTabOpenedManually] boolValue] ||
                [parseTree[kLayoutDictAllInitialWindowsAdded] boolValue]) {
-        [term addTabAtAutomaticallyDeterminedLocation:theTab];
+        [term addTabAtAutomaticallyDeterminedLocation:theTab
+                                     openInBackground:openInBackground];
     } else {
-        [term appendTab:theTab];
+        [term appendTab:theTab openInBackground:openInBackground];
     }
     [theTab didAddToTerminal:term withArrangement:arrangement];
     [theTab updateTmuxTitleMonitor];

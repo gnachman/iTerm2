@@ -3649,7 +3649,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                   visibleLayout:visibleParseTree
                                      inTerminal:self
                                      tmuxWindow:window
-                                 tmuxController:tmuxController];
+                                 tmuxController:tmuxController
+                               openInBackground:[iTermAdvancedSettingsModel tmuxWindowsOpenInBackground]];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
     DLog(@"loadTmuxLayout: window frame before lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
@@ -10312,14 +10313,27 @@ typedef struct {
 }
 
 - (void)appendTab:(PTYTab*)aTab {
-    [self insertTab:aTab atIndex:[_contentView.tabView numberOfTabViewItems]];
+    [self appendTab:aTab openInBackground:NO];
+}
+
+- (void)appendTab:(PTYTab*)aTab openInBackground:(BOOL)openInBackground {
+    [self insertTab:aTab
+            atIndex:[_contentView.tabView numberOfTabViewItems]
+   openInBackground:openInBackground];
 }
 
 - (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab {
+    [self addTabAtAutomaticallyDeterminedLocation:tab openInBackground:NO];
+}
+
+- (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab
+                               openInBackground:(BOOL)openInBackground {
     if ([iTermPreferences boolForKey:kPreferenceKeyNewTabsOpenAtEndOfTabBar] || ![self currentTab]) {
-        [self insertTab:tab atIndex:self.numberOfTabs];
+        [self insertTab:tab atIndex:self.numberOfTabs openInBackground:openInBackground];
     } else {
-        [self insertTab:tab atIndex:[self indexOfTab:self.currentTab] + 1];
+        [self insertTab:tab
+                atIndex:[self indexOfTab:self.currentTab] + 1
+       openInBackground:openInBackground];
         if (tab.isTmuxTab) {
             [self tabsDidReorder];
         }
@@ -11584,6 +11598,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 // Add a tab to the tabview.
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex {
+    [self insertTab:aTab atIndex:anIndex openInBackground:NO];
+}
+
+- (void)insertTab:(PTYTab*)aTab
+          atIndex:(int)anIndex
+ openInBackground:(BOOL)openInBackground {
     PtyLog(@"insertTab:atIndex:%d", anIndex);
     assert(aTab);
     if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
@@ -11598,7 +11618,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         const int safeIndex = MAX(0, MIN(_contentView.tabView.tabViewItems.count, anIndex));
         [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:safeIndex];
         [aTabViewItem release];
-        if (_automaticallySelectNewTabs || _contentView.tabView.tabViewItems.count == 1) {
+        BOOL selectNewTab = (_automaticallySelectNewTabs ||
+                             _contentView.tabView.tabViewItems.count == 1);
+        if (openInBackground && _contentView.tabView.tabViewItems.count > 1) {
+            // The caller asked to open in the background. Leave the currently
+            // selected tab focused.
+            selectNewTab = NO;
+        }
+        if (selectNewTab) {
             [_contentView.tabView selectTabViewItemAtIndex:safeIndex];
         }
         if (self.windowInitialized && !_restoringWindow) {
@@ -11619,6 +11646,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                 } else {
                     DLog(@"already rolling in or still being created - no need to do anything");
                 }
+            } else if (openInBackground) {
+                DLog(@"Opening in background. Reveal the window without taking key focus.");
+                NSWindow *keyWindow = NSApp.keyWindow;
+                if (keyWindow && keyWindow != self.window) {
+                    [self.window orderWindow:NSWindowBelow relativeTo:keyWindow.windowNumber];
+                } else {
+                    [[self window] orderFront:self];
+                }
             } else if (_automaticallyOrderFrontNewTabs || self.tabs.count == 1) {
                 DLog(@"not a hidden hotkey window. Just order front.");
                 [[self window] makeKeyAndOrderFront:self];
@@ -11627,11 +11662,13 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
         if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone &&
+            !openInBackground &&
             (_automaticallyOrderFrontNewTabs || self.tabs.count == 1)) {
-            // A background tab (automaticallyOrderFrontNewTabs == NO) should not
-            // become the current terminal: doing so moves iTerm's current-window
-            // pointer to it, which clients observe as a focus/window steal even
-            // though the window itself was not ordered front above.
+            // A background tab (automaticallyOrderFrontNewTabs == NO), or a tab
+            // the caller asked to open in the background, should not become the
+            // current terminal: doing so moves iTerm's current-window pointer to
+            // it, which clients observe as a focus/window steal even though the
+            // window itself was not ordered front above.
             [[iTermController sharedInstance] setCurrentTerminal:self];
         }
     }

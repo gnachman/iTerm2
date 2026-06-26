@@ -293,6 +293,8 @@ SSH Integration Improvements:
   improved.
 
 Tmux Improvements:
+- Add an advanced setting to open tmux
+  windows and tabs without taking focus.
 - Bracketed paste state is restored on attach
   (prep for tmux’s upcoming bracket_paste_flag
   format).

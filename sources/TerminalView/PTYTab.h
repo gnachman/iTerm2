@@ -132,7 +132,8 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
                     visibleLayout:(NSMutableDictionary *)visibleParseTree
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
-                   tmuxController:(TmuxController *)tmuxController;
+                   tmuxController:(TmuxController *)tmuxController
+                 openInBackground:(BOOL)openInBackground;
 
 + (BOOL)arrangement:(NSDictionary *)arrangement
          passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure;

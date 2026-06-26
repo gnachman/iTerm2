@@ -227,8 +227,18 @@
 // Adds a tab to the end.
 - (void)appendTab:(PTYTab*)aTab;
 
+// Adds a tab to the end. When openInBackground is YES the window/tab is
+// revealed without taking keyboard focus.
+- (void)appendTab:(PTYTab*)aTab openInBackground:(BOOL)openInBackground;
+
 // Adds tab at end or next to current tab depending on settings.
 - (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab;
+
+// Adds tab at end or next to current tab depending on settings. When
+// openInBackground is YES the window/tab is revealed without taking keyboard
+// focus.
+- (void)addTabAtAutomaticallyDeterminedLocation:(PTYTab *)tab
+                               openInBackground:(BOOL)openInBackground;
 
 // Fit the window to exactly fit a tab of the given size. Returns true if the
 // window was resized.
@@ -240,6 +250,12 @@
 
 // Insert a tab at a specified location.
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex;
+
+// Insert a tab at a specified location. When openInBackground is YES the
+// window/tab is revealed without taking keyboard focus.
+- (void)insertTab:(PTYTab*)aTab
+          atIndex:(int)anIndex
+ openInBackground:(BOOL)openInBackground;
 
 // Add a session to the tab view.
 - (PTYTab *)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
