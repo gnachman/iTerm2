@@ -63,6 +63,15 @@ class ChatListModel: ChatListDataSource {
         return result
     }
 
+    /// Side-effect-free title lookup. Unlike chat(id:), this does NOT load the
+    /// chat's permissions into the process-global RemoteCommandExecutor, so it is
+    /// safe to call from a background, non-interactive path (e.g. the companion
+    /// push fetch) that must not reconfigure the live tool-call permission policy
+    /// an unrelated foreground session is relying on.
+    func title(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.title
+    }
+
     func index(of chatID: String) -> Int? {
         return chatStorage.firstIndex {
             $0.id == chatID

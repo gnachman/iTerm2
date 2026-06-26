@@ -143,6 +143,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .ping,
         .relayRoomSecret(Data()),
         .messagesSince(collapseToken: "t", seq: 0, limit: 1, nonce: nil),
+        .syncSince(messageSeq: 0, alertSeq: 0, limit: 1, nonce: nil),
         .unpairing,
     ]
 
@@ -172,6 +173,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .ping: return "ping"
         case .relayRoomSecret: return "relayRoomSecret"
         case .messagesSince: return "messagesSince"
+        case .syncSince: return "syncSince"
         case .unpairing: return "unpairing"
         }
     }
@@ -196,6 +198,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .requestNotificationPermission(requestID: 1),
         .unpaired,
         .messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
+        .syncSince(items: [], maxMessageSeq: 0, maxAlertSeq: 0, messageReset: false, alertReset: false, truncated: false),
         sampleErrorMessage,
     ]
 
@@ -220,6 +223,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .requestNotificationPermission: return "requestNotificationPermission"
         case .unpaired: return "unpaired"
         case .messagesSince: return "messagesSince"
+        case .syncSince: return "syncSince"
         case .error: return "error"
         }
     }

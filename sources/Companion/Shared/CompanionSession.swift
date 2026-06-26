@@ -143,6 +143,7 @@ actor CompanionSession {
         case .pong: "pong"
         case .relayRoomSecretStored: "relayRoomSecretStored"
         case .messagesSince: "messagesSince"
+        case .syncSince: "syncSince"
         case .unpaired: "unpaired"
         case .error: "error"
         }

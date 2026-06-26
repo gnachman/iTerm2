@@ -255,8 +255,8 @@ final class CompanionHostBridge {
         // a control handshake (neutral); every other request is interactive
         // presence -> unsolicited.
         switch envelope.payload {
-        case .messagesSince, .hello:
-            break  // messagesSince classifies after its nonce check; hello is neutral
+        case .messagesSince, .syncSince, .hello:
+            break  // messagesSince/syncSince classify after their nonce check; hello is neutral
         default:
             classifyOnce(solicited: false)
         }
@@ -347,6 +347,9 @@ final class CompanionHostBridge {
         case .messagesSince(let collapseToken, let seq, let limit, let nonce):
             handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit,
                                 nonce: nonce, requestID: requestID)
+        case .syncSince(let messageSeq, let alertSeq, let limit, let nonce):
+            handleSyncSince(messageSeq: messageSeq, alertSeq: alertSeq, limit: limit,
+                            nonce: nonce, requestID: requestID)
         case .unpairing:
             DLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
@@ -434,6 +437,13 @@ final class CompanionHostBridge {
         let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
                                                         peerMinimumPeer: peerMinimumPeer)
         versionBlocked = (verdict != .compatible)
+        // Persist the peer's revision ONLY for a compatible handshake. Push-time
+        // capability checks (canSendAlertsToPhone / supportsContentlessWakeup) key
+        // off the stored revision, so persisting a too-new peer's revision while we
+        // have declared ourselves incompatible (.selfMustUpgrade) would enable the
+        // alert UI and send wakeups to a peer we just refused to talk to. On
+        // incompatibility we reset it to 0 so those gates read false.
+        CompanionPushRegistry.setPeerRevision(verdict == .compatible ? peerRevision : 0)
         DLog("Companion bridge: hello peer(rev=\(peerRevision), min=\(peerMinimumPeer)) -> \(verdict)")
         guard verdict != .compatible else { return }
         // Don't also pop the presence toast for an incompatible peer; the alert
@@ -586,6 +596,173 @@ final class CompanionHostBridge {
                             maxSeq: maxSeq,
                             truncated: truncated,
                             reset: reset),
+             requestID: requestID)
+    }
+
+    /// Contentless-wakeup (revision >= 2): on a wakeup the NSE asks for everything
+    /// new across ALL chats (seq > messageSeq) and alerts (seq > alertSeq) in one
+    /// round trip. Mirrors handleMessagesSince's transient-error discipline (reply
+    /// .error without consuming the nonce, so the NSE's retry of the same wakeup is
+    /// still recognized as solicited); the nonce is burned only when a real reply
+    /// is served. The per-item chatID is safe here: it crosses the Noise channel,
+    /// never the APNs payload.
+    private func handleSyncSince(messageSeq: Int64,
+                                 alertSeq: Int64,
+                                 limit rawLimit: Int,
+                                 nonce: String?,
+                                 requestID: UInt64?) {
+        let solicited = nonce.map { CompanionPushNonceRegistry.shared.contains($0) } ?? false
+        classifyOnce(solicited: solicited)
+
+        let limit = min(max(rawLimit, 1), 500)
+        DLog("Companion bridge: syncSince request (messageSeq=\(messageSeq), alertSeq=\(alertSeq), limit=\(limit))")
+
+        func serveError(_ message: String) {
+            DLog("Companion bridge: syncSince -> error (\(message))")
+            send(.error(CompanionError(code: .internalError, message: message)), requestID: requestID)
+        }
+
+        guard let model = ChatListModel.instance, let db = ChatDatabase.instance else {
+            serveError("Chat system unavailable")
+            return
+        }
+
+        // --- Messages across all chats ---
+        // A negative message floor is the phone's FIRST-RUN signal (post-upgrade):
+        // show the newest `limit` as a teaser and jump the floor to the global tip,
+        // skipping the backlog rather than notifying it window-by-window. A normal
+        // run drains OLDEST-first within a window and advances the floor only to the
+        // highest seq it actually covered, so a truncated window never buries the
+        // tail (the tail drains on the next wakeup).
+        let firstRun = messageSeq < 0
+        let windowLimit = limit * 20
+        let messageWindow = firstRun ? limit : windowLimit
+        guard let probe = db.messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
+                                                 windowLimit: messageWindow,
+                                                 ascending: !firstRun) else {
+            serveError("Chat database unavailable")
+            return
+        }
+        let globalMessageTip = probe.maxSeq
+        // Reset: the phone's floor is past the tip (the store was lost/recreated and
+        // seq rewound). Do NOT re-notify the rewound content; resync silently -
+        // return no message items, signal a reset so the NSE clears its stale-high
+        // per-chat watermarks, and float the floor to the new tip.
+        let messageReset = !firstRun && messageSeq > globalMessageTip
+        let messageRows: [(seq: Int64, message: Message)]
+        let messageTruncated: Bool
+        let messageFloorTarget: Int64
+        if messageReset {
+            messageRows = []
+            messageTruncated = false
+            messageFloorTarget = globalMessageTip
+        } else if firstRun {
+            messageRows = probe.rows                       // newest `limit`, DESC
+            messageTruncated = probe.rows.count >= limit   // more backlog exists
+            messageFloorTarget = globalMessageTip          // jump to tip, skip backlog
+        } else {
+            messageRows = probe.rows                        // oldest window, ASC
+            messageTruncated = probe.rows.count >= windowLimit
+            // Advance the floor ONLY to the highest seq we covered in the window
+            // (its last ASC row); the tail above it drains next wakeup. When not
+            // truncated we covered everything above the floor, so jump to the tip.
+            messageFloorTarget = messageTruncated ? (probe.rows.last?.seq ?? globalMessageTip)
+                                                  : globalMessageTip
+        }
+
+        // --- Alerts (oldest-first drain; window >= store prune cap, so the window
+        // never truncates and no alert is skipped past the floor). ---
+        guard let alertProbe = db.alertsSince(sinceSeq: max(alertSeq, 0), limit: windowLimit) else {
+            serveError("Alert store unavailable")
+            return
+        }
+        let globalAlertTip = alertProbe.maxSeq
+        let alertReset = alertSeq > globalAlertTip
+        let alertRows: [CompanionAlertRecord]
+        let alertFloorTarget: Int64
+        if alertReset {
+            alertRows = []
+            alertFloorTarget = globalAlertTip
+        } else {
+            alertRows = alertProbe.alerts
+            let alertTruncated = alertProbe.alerts.count >= windowLimit
+            alertFloorTarget = alertTruncated ? (alertProbe.alerts.last?.seq ?? globalAlertTip)
+                                              : globalAlertTip
+        }
+
+        // Build message items: group the window by chat so the visibility + snippet
+        // + mention rendering in MessagesSinceResponder.summarize runs per-chat
+        // (exactly as the per-chat push). No per-chat cap here (limit = window): the
+        // floor advances to the window's covered seq, so dropping a notifiable
+        // message within the window would bury it. Each item is paired with its
+        // sort key (message sentDate / alert createdDate); we sort ALL items
+        // (messages + alerts) by wall-clock time below, because the two have
+        // separate seq spaces and the NSE relies on one global order to pick the
+        // anchor (oldest) and the sound/"+ more" (newest).
+        var infoByUniqueID = [UUID: (seq: Int64, date: Date)](minimumCapacity: messageRows.count)
+        var byChat = [String: [Message]]()
+        var chatOrder = [String]()
+        for row in messageRows {
+            infoByUniqueID[row.message.uniqueID] = (row.seq, row.message.sentDate)
+            if byChat[row.message.chatID] == nil { chatOrder.append(row.message.chatID) }
+            byChat[row.message.chatID, default: []].append(row.message)
+        }
+        var dated = [(item: CompanionSyncItem, date: Date)]()
+        for chatID in chatOrder {
+            // Side-effect-free title lookup: chat(id:) would reconfigure the global
+            // RemoteCommandExecutor permission singleton, which a background fetch
+            // must never do.
+            guard let chatTitle = model.title(forChatID: chatID) else { continue }
+            // summarize expects newest-first; sort the slice by seq DESC regardless
+            // of the fetch order (ASC normal run / DESC first run).
+            let slice = (byChat[chatID] ?? []).sorted {
+                (infoByUniqueID[$0.uniqueID]?.seq ?? 0) > (infoByUniqueID[$1.uniqueID]?.seq ?? 0)
+            }
+            let result = MessagesSinceResponder.summarize(
+                fetched: slice,
+                limit: messageWindow,
+                bodyMaxLength: 200,
+                resolveMention: { OrchestrationMentionRenderer.resolve(identifier: $0)?.displayName })
+            for preview in result.previews {
+                let info = infoByUniqueID[preview.uniqueID]
+                dated.append((.message(CompanionSyncMessageItem(
+                    chatID: chatID,
+                    chatName: chatTitle,
+                    uniqueID: preview.uniqueID,
+                    author: preview.author,
+                    body: preview.body,
+                    seq: info?.seq ?? 0)),
+                    info?.date ?? Date.distantPast))
+            }
+        }
+        for alert in alertRows {
+            dated.append((.alert(CompanionSyncAlertItem(
+                alertID: alert.uniqueID,
+                threadKey: alert.threadKey,
+                title: alert.title,
+                body: alert.body,
+                seq: alert.seq)),
+                alert.createdDate))
+        }
+        // Global time order (oldest first). The enumerated-index tiebreaker makes it
+        // explicitly stable, so same-timestamp items keep their per-chat / fetch
+        // order regardless of the sort's stability guarantees.
+        let items = dated.enumerated()
+            .sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }
+            .map { $0.element.item }
+        // `truncated` only feeds the NSE's "+ more" hint now; the floor targets above
+        // already guarantee the tail is not skipped.
+        let truncated = messageTruncated
+
+        // Served a real reply -> burn the single-use nonce.
+        if let nonce { _ = CompanionPushNonceRegistry.shared.consume(nonce) }
+        DLog("Companion bridge: syncSince -> \(items.count) item(s), messageFloor=\(messageFloorTarget), alertFloor=\(alertFloorTarget), firstRun=\(firstRun), messageReset=\(messageReset), alertReset=\(alertReset), truncated=\(truncated)")
+        send(.syncSince(items: items,
+                        maxMessageSeq: messageFloorTarget,
+                        maxAlertSeq: alertFloorTarget,
+                        messageReset: messageReset,
+                        alertReset: alertReset,
+                        truncated: truncated),
              requestID: requestID)
     }
 

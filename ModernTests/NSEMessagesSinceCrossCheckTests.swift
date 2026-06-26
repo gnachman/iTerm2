@@ -88,4 +88,58 @@ final class NSEMessagesSinceCrossCheckTests: XCTestCase {
         }
         XCTAssertNil(nonce, "a nonce-less request must decode (cross-version), not throw")
     }
+
+    // MARK: syncSince (contentless wakeup, revision >= 2)
+
+    func testProductionSyncReplyMatchesWireVector() throws {
+        let mid = try XCTUnwrap(UUID(uuidString: CompanionWireVectors.replyPreviewUUID))
+        let aid = try XCTUnwrap(UUID(uuidString: CompanionWireVectors.replyAlertUUID))
+        let message = CompanionSyncMessageItem(chatID: "c1", chatName: "Chat A",
+                                               uniqueID: mid, author: .agent, body: "hello", seq: 7)
+        let alert = CompanionSyncAlertItem(alertID: aid, threadKey: "sess-1",
+                                           title: "Mark Set", body: "done", seq: 4)
+        let host = CompanionHostMessage.syncSince(items: [.message(message), .alert(alert)],
+                                                  maxMessageSeq: 7, maxAlertSeq: 4,
+                                                  messageReset: false, alertReset: false, truncated: true)
+        let produced = try object(encoder().encode(HostEnvelope(requestID: 42, payload: host)))
+        let vector = try XCTUnwrap(CompanionWireVectors.object(CompanionWireVectors.syncSinceReply))
+        XCTAssertEqual(produced, vector, "production syncSince reply must match the shared NSE wire vector")
+    }
+
+    func testProductionDecodesSyncReplyVector() throws {
+        let data = try XCTUnwrap(CompanionWireVectors.syncSinceReply.data(using: .utf8))
+        let envelope = try decoder().decode(HostEnvelope.self, from: data)
+        guard case let .syncSince(items, maxMessageSeq, maxAlertSeq, messageReset, alertReset, truncated) = envelope.payload else {
+            return XCTFail("expected .syncSince, got \(envelope.payload)")
+        }
+        XCTAssertEqual(items.count, 2)
+        guard case let .message(message) = items.first else { return XCTFail("expected .message first") }
+        XCTAssertEqual(message.chatID, "c1")
+        XCTAssertEqual(message.body, "hello")
+        guard case let .alert(alert) = items.last else { return XCTFail("expected .alert last") }
+        XCTAssertEqual(alert.threadKey, "sess-1")
+        XCTAssertEqual(alert.title, "Mark Set")
+        XCTAssertEqual(maxMessageSeq, 7)
+        XCTAssertEqual(maxAlertSeq, 4)
+        XCTAssertFalse(messageReset)
+        XCTAssertFalse(alertReset)
+        XCTAssertTrue(truncated)
+    }
+
+    func testProductionSyncRequestMatchesWireVector() throws {
+        let env = ClientEnvelope(requestID: 9,
+                                 payload: .syncSince(messageSeq: 5, alertSeq: 3, limit: 10, nonce: "ab12"))
+        let produced = try object(encoder().encode(env))
+        let vector = try XCTUnwrap(CompanionWireVectors.object(CompanionWireVectors.syncSinceRequest))
+        XCTAssertEqual(produced, vector, "production syncSince request must match the shared NSE wire vector")
+    }
+
+    func testProductionDecodesSyncRequestWithoutNonce() throws {
+        let data = try XCTUnwrap(CompanionWireVectors.syncSinceRequestNoNonce.data(using: .utf8))
+        let env = try decoder().decode(ClientEnvelope.self, from: data)
+        guard case let .syncSince(_, _, _, nonce) = env.payload else {
+            return XCTFail("expected .syncSince, got \(env.payload)")
+        }
+        XCTAssertNil(nonce, "a nonce-less syncSince request must decode (cross-version), not throw")
+    }
 }

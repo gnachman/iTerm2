@@ -190,6 +190,67 @@ struct CompanionMessagePreview: Codable, Equatable {
     }
 }
 
+/// One display-ready chat message in a `.syncSince` reply. Unlike
+/// CompanionMessagePreview it carries the `chatID` and `seq`, because a unified
+/// sync returns items from MANY chats: the NSE computes each notification's
+/// threadIdentifier on-device as HMAC(roomSecret, chatID) (so no per-chat id
+/// crosses the APNs payload) and uses `seq` to advance the per-chat watermark and
+/// the global message floor. Carries no attachment bytes and no full Message.
+struct CompanionSyncMessageItem: Codable, Equatable {
+    var chatID: String
+    var chatName: String
+    var uniqueID: UUID
+    var author: Participant
+    var body: String
+    var seq: Int64
+}
+
+/// One terminal alert (e.g. "Mark Set", a fired notification trigger) in a
+/// `.syncSince` reply. `threadKey` is the source session's guid; the NSE groups a
+/// session's alerts by computing HMAC(roomSecret, "alert:" + threadKey)
+/// on-device. `seq` advances the global alert floor. Alerts have no in-app
+/// read-state, so the floor is both the query bound and the suppression cursor.
+struct CompanionSyncAlertItem: Codable, Equatable {
+    var alertID: UUID
+    var threadKey: String
+    var title: String
+    var body: String
+    var seq: Int64
+}
+
+/// One item in a `.syncSince` reply: a chat message or a terminal alert. Custom
+/// Codable so it encodes as {"message": {…}} / {"alert": {…}} (the synthesized
+/// enum Codable would nest the value under "_0"); the slim NSESyncSince mirror
+/// reproduces this flat single-key shape.
+enum CompanionSyncItem: Equatable {
+    case message(CompanionSyncMessageItem)
+    case alert(CompanionSyncAlertItem)
+}
+
+extension CompanionSyncItem: Codable {
+    private enum CodingKeys: String, CodingKey { case message, alert }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .message(let item): try container.encode(item, forKey: .message)
+        case .alert(let item): try container.encode(item, forKey: .alert)
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let item = try container.decodeIfPresent(CompanionSyncMessageItem.self, forKey: .message) {
+            self = .message(item)
+        } else if let item = try container.decodeIfPresent(CompanionSyncAlertItem.self, forKey: .alert) {
+            self = .alert(item)
+        } else {
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath,
+                                                    debugDescription: "CompanionSyncItem: neither message nor alert present"))
+        }
+    }
+}
+
 /// Sent by the phone (client) to the mac (host).
 enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// A message type this build does not recognize (a newer phone sent it). The
@@ -294,6 +355,16 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// older NSE (or a push that carried none) omits it, decoding as nil.
     case messagesSince(collapseToken: String, seq: Int64, limit: Int, nonce: String?)
 
+    /// Relay push (revision >= 2): woken by a contentless wakeup (the fixed
+    /// `CompanionPushWakeup.collapseSentinel` collapse id), the NSE asks for
+    /// everything new across ALL chats and alerts in one round trip. `messageSeq`
+    /// is the phone's global message floor, `alertSeq` its global alert floor;
+    /// the mac returns chat messages with seq > messageSeq and alerts with
+    /// seq > alertSeq. Replied to with `.syncSince`. `nonce` works exactly as in
+    /// `.messagesSince` (echoed back so the mac recognizes its own solicited
+    /// fetch). Supersedes the per-chat `.messagesSince` push for new peers.
+    case syncSince(messageSeq: Int64, alertSeq: Int64, limit: Int, nonce: String?)
+
     /// The phone is unpairing: the mac should forget the pairing and destroy
     /// its key material. No reply; the phone closes after sending.
     case unpairing
@@ -307,7 +378,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "remoteCommandDecision", "linkSession", "resolveMentions",
         "fetchSessionScreenInfo", "fetchSessionContent", "fetchWorkgroupInfo",
         "fetchSessionTree", "pushStatus", "notificationPermissionResponse", "ping",
-        "relayRoomSecret", "messagesSince", "unpairing",
+        "relayRoomSecret", "messagesSince", "syncSince", "unpairing",
     ]
 }
 
@@ -396,6 +467,15 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// either way the NSE shows the generic fallback.
     case messagesSince(chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool, reset: Bool)
 
+    /// Reply to `.syncSince`: every new chat message and alert, oldest first
+    /// (items carry their own `seq` so the NSE both orders and filters them).
+    /// `maxMessageSeq` / `maxAlertSeq` are the global tips the phone advances its
+    /// floors to. `messageReset` / `alertReset` mean the corresponding floor was
+    /// beyond the host's tip (the store rewound) and must be set DOWN rather than
+    /// max-merged. `truncated` means more items existed than the limit. Empty
+    /// items mean nothing new; the NSE shows the generic fallback.
+    case syncSince(items: [CompanionSyncItem], maxMessageSeq: Int64, maxAlertSeq: Int64, messageReset: Bool, alertReset: Bool, truncated: Bool)
+
     /// An error, optionally correlated to a request via the envelope.
     case error(CompanionError)
 
@@ -405,7 +485,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "delivery", "typingStatus", "mentionsResolved", "sessionScreenInfo",
         "sessionContent", "workgroupInfo", "sessionTree", "pong",
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
-        "unpaired", "messagesSince", "error",
+        "unpaired", "messagesSince", "syncSince", "error",
     ]
 }
 
