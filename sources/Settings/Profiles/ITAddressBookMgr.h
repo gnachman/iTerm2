@@ -258,6 +258,7 @@ extern NSString *const iTermProgressBarColorSchemeOrange;
 #define KEY_SEND_NEW_OUTPUT_ALERT             @"Send New Output Alert"
 #define KEY_SEND_SESSION_ENDED_ALERT          @"Send Session Ended Alert"
 #define KEY_SEND_TERMINAL_GENERATED_ALERT     @"Send Terminal Generated Alerts"
+#define KEY_SEND_ALERTS_TO_COMPANION          @"Send Alerts To Companion"
 #define KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION @"Suppress Alerts in Active Session"
 #define KEY_ALLOW_CHANGE_CURSOR_BLINK         @"Allow Change Cursor Blink"
 #define KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY @"Load Shell Integration Automatically"
