@@ -369,6 +369,21 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
             }
         }
     }
+    // Language-agnostic fallback: match on virtual key code + modifiers only,
+    // ignoring the character. On some keyboard layouts (e.g., Chinese/Pinyin)
+    // charactersIgnoringModifiers can vary depending on input method state,
+    // causing the key to be unrecognized after text input.
+    if (self.hasVirtualKeyCode) {
+        @autoreleasepool {
+            NSString *myPortable = self.portableSerialized;
+            for (NSString *key in dict) {
+                iTermKeystroke *candidate = [[iTermKeystroke alloc] initWithString:key];
+                if ([candidate.portableSerialized isEqualToString:myPortable]) {
+                    return key;
+                }
+            }
+        }
+    }
     return nil;
 }
 
