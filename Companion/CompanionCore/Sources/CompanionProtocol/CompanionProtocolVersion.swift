@@ -23,11 +23,23 @@ import Foundation
 public enum CompanionProtocolVersion {
     /// This build's companion-protocol revision. BUMP on any breaking change to
     /// the app<->phone message contract.
-    public static let current = 1
+    ///
+    /// Revision 2 adds the contentless-wakeup push: a single content-free wakeup
+    /// (the all-zeros CompanionPushWakeup.collapseSentinel) drives a unified
+    /// syncSince fetch covering chat messages AND terminal alerts, replacing the
+    /// per-chat collapse-token push. See docs/companion-push-relay.md.
+    public static let current = 2
 
-    /// The oldest peer revision this build accepts. Set equal to `current` to
-    /// force lockstep (early development); lower it to support older peers.
+    /// The oldest peer revision this build accepts. Kept at 1 (NOT lockstep with
+    /// `current`) so a revision-2 build still talks to revision-1 peers in the
+    /// field: the revision-2 features degrade to the legacy per-chat push when the
+    /// peer is older. See CompanionPushRegistry.peerRevision.
     public static let minimumPeer = 1
+
+    /// The minimum peer revision that understands the contentless wakeup + unified
+    /// syncSince (and therefore terminal alerts). Below this, the mac sends the
+    /// legacy per-chat collapse push and the alert UI is disabled.
+    public static let contentlessWakeupRevision = 2
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {
