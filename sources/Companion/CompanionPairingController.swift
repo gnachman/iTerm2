@@ -336,12 +336,15 @@ final class CompanionPairingController: NSObject {
         installLogHandler()
         relayLog("resumePairedListeningIfNeeded called")
         // First call is at launch (the user is present); read the keychain-backed
-        // identity material (Noise keypair, paired phone key, room secret) and the
-        // push secret into memory now, so later reconnects and background sends
-        // serve from cache and never trigger a keychain prompt while the user is
-        // away. Both are idempotent, so reconnect-driven calls are no-ops.
+        // identity material (Noise keypair, paired phone key, room secret), the
+        // push secret, and the outstanding-nonce list into memory now, so later
+        // reconnects and background sends serve from cache and never trigger a
+        // keychain prompt while the user is away. (The nonce list is its own
+        // keychain item, read lazily on first push without this.) All are
+        // idempotent, so reconnect-driven calls are no-ops.
         CompanionMacIdentity.primeCacheAtLaunch()
         CompanionPushRegistry.loadSecretAtLaunch()
+        CompanionPushNonceRegistry.shared.primeAtLaunch()
         // Watch the broker so a completed agent turn (or a permission request)
         // can nudge an away phone. Idempotent; gated so it does nothing unless
         // paired, away, and notifications are authorized.

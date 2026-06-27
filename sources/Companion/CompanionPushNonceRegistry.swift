@@ -97,6 +97,17 @@ final class CompanionPushNonceRegistry {
         return nonce
     }
 
+    /// Touch the keychain at launch, while the user is present, so the push hot
+    /// path never does. Simply CONSTRUCTING `shared` reads the persisted list
+    /// (init -> store.load()); call this at launch so that read does not happen
+    /// later inside dispatchPush() while the user is away. It also REWRITES the
+    /// list so the item is owned by the current binary, so the record()/consume()
+    /// saves on the push and fetch paths - and any code-signature confirmation
+    /// prompt after a rebuild - are answered now rather than mid-send. Idempotent.
+    func primeAtLaunch() {
+        store.save(order)
+    }
+
     /// Undo a record() when the push that would have carried the nonce failed to
     /// send. Removes it from the live set (persisted); it was never delivered, so
     /// nothing will echo it, and the capacity slot is freed. No-op if absent (e.g.
