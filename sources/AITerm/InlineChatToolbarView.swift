@@ -37,6 +37,7 @@ final class InlineChatToolbarView: NSView {
     weak var delegate: InlineChatToolbarViewDelegate?
 
     let titleLabel: NSTextField
+    private let backdrop: NSVisualEffectView
     private let newChatButton: NSButton
     private let switchChatButton: NSButton
     private let sessionInfoButton: NSButton
@@ -75,8 +76,16 @@ final class InlineChatToolbarView: NSView {
         separator = NSBox()
         separator.boxType = .separator
 
+        // Translucent background so the toolbar reads as a distinct header band
+        // rather than floating over the chat content behind it.
+        backdrop = NSVisualEffectView()
+        backdrop.material = .headerView
+        backdrop.blendingMode = .withinWindow
+        backdrop.state = .active
+
         super.init(frame: frameRect)
 
+        addSubview(backdrop)
         addSubview(separator)
         addSubview(row)
         for control in [newChatButton, switchChatButton, titleLabel,
@@ -135,6 +144,7 @@ final class InlineChatToolbarView: NSView {
     override func layout() {
         super.layout()
         let bounds = self.bounds
+        backdrop.frame = bounds
         // The control row spans the width minus horizontal padding; the
         // ChatManualStackView centers each control vertically within it.
         row.frame = NSRect(x: Self.horizontalPadding,
