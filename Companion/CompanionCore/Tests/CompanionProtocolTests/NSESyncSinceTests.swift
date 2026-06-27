@@ -39,8 +39,9 @@ final class NSESyncSinceTests: XCTestCase {
         XCTAssertFalse(reply.messageReset)
         XCTAssertFalse(reply.alertReset)
 
-        let message = try XCTUnwrap(reply.items.first?.message)
-        XCTAssertNil(reply.items.first?.alert)
+        guard case let .message(message) = reply.items.first else {
+            return XCTFail("expected first item to be a message")
+        }
         XCTAssertEqual(message.chatID, "c1")
         XCTAssertEqual(message.chatName, "Chat A")
         XCTAssertEqual(message.author, "agent")
@@ -48,8 +49,9 @@ final class NSESyncSinceTests: XCTestCase {
         XCTAssertEqual(message.seq, 7)
         XCTAssertEqual(message.uniqueID, UUID(uuidString: CompanionWireVectors.replyPreviewUUID))
 
-        let alert = try XCTUnwrap(reply.items.last?.alert)
-        XCTAssertNil(reply.items.last?.message)
+        guard case let .alert(alert) = reply.items.last else {
+            return XCTFail("expected last item to be an alert")
+        }
         XCTAssertEqual(alert.threadKey, "sess-1")
         XCTAssertEqual(alert.title, "Mark Set")
         XCTAssertEqual(alert.body, "done")

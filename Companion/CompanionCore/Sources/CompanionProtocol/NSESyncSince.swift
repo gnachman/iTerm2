@@ -21,36 +21,13 @@
 import Foundation
 
 public enum NSESyncSince {
-    /// Mirror of CompanionSyncMessageItem. `author` is the Participant raw value
-    /// (a string); the NSE only displays it.
-    public struct MessageItem: Codable, Equatable {
-        public let chatID: String
-        public let chatName: String
-        public let uniqueID: UUID
-        public let author: String
-        public let body: String
-        public let seq: Int64
-    }
-
-    /// Mirror of CompanionSyncAlertItem.
-    public struct AlertItem: Codable, Equatable {
-        public let alertID: UUID
-        public let threadKey: String
-        public let title: String
-        public let body: String
-        public let seq: Int64
-    }
-
-    /// Mirror of CompanionSyncItem. The production enum encodes a case as a
-    /// single-key object, so exactly one of these is non-nil per item.
-    public struct Item: Decodable, Equatable {
-        public let message: MessageItem?
-        public let alert: AlertItem?
-    }
-
-    /// Mirror of CompanionHostMessage.syncSince's payload.
+    /// The payload of CompanionHostMessage.syncSince. `items` is the SHARED
+    /// CompanionSyncItem (no re-declared mirror, so the item shape cannot drift);
+    /// only this thin envelope (the scalar cursors + the wrapping) is package-local,
+    /// because the full CompanionHostMessage enum carries Message/Chat and cannot be
+    /// linked into the NSE.
     public struct Reply: Decodable, Equatable {
-        public let items: [Item]
+        public let items: [CompanionSyncItem]
         public let maxMessageSeq: Int64
         public let maxAlertSeq: Int64
         public let messageReset: Bool

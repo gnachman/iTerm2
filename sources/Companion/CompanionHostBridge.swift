@@ -729,7 +729,7 @@ final class CompanionHostBridge {
                     chatID: chatID,
                     chatName: chatTitle,
                     uniqueID: preview.uniqueID,
-                    author: preview.author,
+                    author: preview.author.rawValue,
                     body: preview.body,
                     seq: info?.seq ?? 0)),
                     info?.date ?? Date.distantPast))

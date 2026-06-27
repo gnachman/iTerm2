@@ -91,34 +91,29 @@ final class NSEMessagesSinceCrossCheckTests: XCTestCase {
 
     // MARK: syncSince (contentless wakeup, revision >= 2)
 
-    func testProductionSyncReplyMatchesWireVector() throws {
-        let mid = try XCTUnwrap(UUID(uuidString: CompanionWireVectors.replyPreviewUUID))
-        let aid = try XCTUnwrap(UUID(uuidString: CompanionWireVectors.replyAlertUUID))
-        let message = CompanionSyncMessageItem(chatID: "c1", chatName: "Chat A",
-                                               uniqueID: mid, author: .agent, body: "hello", seq: 7)
-        let alert = CompanionSyncAlertItem(alertID: aid, threadKey: "sess-1",
-                                           title: "Mark Set", body: "done", seq: 4)
-        let host = CompanionHostMessage.syncSince(items: [.message(message), .alert(alert)],
-                                                  maxMessageSeq: 7, maxAlertSeq: 4,
-                                                  messageReset: false, alertReset: false, truncated: true)
-        let produced = try object(encoder().encode(HostEnvelope(requestID: 42, payload: host)))
-        let vector = try XCTUnwrap(CompanionWireVectors.object(CompanionWireVectors.syncSinceReply))
-        XCTAssertEqual(produced, vector, "production syncSince reply must match the shared NSE wire vector")
-    }
+    // The sync item structs (CompanionSyncItem etc.) now live in the
+    // CompanionProtocol package and are SHARED with the NSE, so there is no
+    // separate production mirror to drift from - their shape is pinned by the
+    // package's NSESyncSinceTests. This target therefore does not name those types
+    // (it doesn't link the package); it round-trips the shared wire vector through
+    // the production CompanionHostMessage envelope and checks the scalar cursors.
 
-    func testProductionDecodesSyncReplyVector() throws {
+    func testProductionSyncReplyRoundTripsWireVector() throws {
         let data = try XCTUnwrap(CompanionWireVectors.syncSinceReply.data(using: .utf8))
         let envelope = try decoder().decode(HostEnvelope.self, from: data)
-        guard case let .syncSince(items, maxMessageSeq, maxAlertSeq, messageReset, alertReset, truncated) = envelope.payload else {
+        let reencoded = try object(encoder().encode(envelope))
+        let vector = try XCTUnwrap(CompanionWireVectors.object(CompanionWireVectors.syncSinceReply))
+        XCTAssertEqual(reencoded, vector, "production syncSince reply must round-trip the shared wire vector")
+    }
+
+    func testProductionDecodesSyncReplyScalars() throws {
+        let data = try XCTUnwrap(CompanionWireVectors.syncSinceReply.data(using: .utf8))
+        let envelope = try decoder().decode(HostEnvelope.self, from: data)
+        // Ignore `items` (its shape is the package test's job); pin the envelope's
+        // discriminator and scalar cursors.
+        guard case .syncSince(_, let maxMessageSeq, let maxAlertSeq, let messageReset, let alertReset, let truncated) = envelope.payload else {
             return XCTFail("expected .syncSince, got \(envelope.payload)")
         }
-        XCTAssertEqual(items.count, 2)
-        guard case let .message(message) = items.first else { return XCTFail("expected .message first") }
-        XCTAssertEqual(message.chatID, "c1")
-        XCTAssertEqual(message.body, "hello")
-        guard case let .alert(alert) = items.last else { return XCTFail("expected .alert last") }
-        XCTAssertEqual(alert.threadKey, "sess-1")
-        XCTAssertEqual(alert.title, "Mark Set")
         XCTAssertEqual(maxMessageSeq, 7)
         XCTAssertEqual(maxAlertSeq, 4)
         XCTAssertFalse(messageReset)

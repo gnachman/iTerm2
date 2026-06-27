@@ -198,9 +198,18 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .requestNotificationPermission(requestID: 1),
         .unpaired,
         .messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
-        .syncSince(items: [], maxMessageSeq: 0, maxAlertSeq: 0, messageReset: false, alertReset: false, truncated: false),
+        syncSinceRep,
         sampleErrorMessage,
     ]
+
+    /// The .syncSince representative is built by DECODING rather than a literal, so
+    /// this test target need not link the CompanionProtocol package that now owns
+    /// CompanionSyncItem: the empty [CompanionSyncItem] is instantiated inside
+    /// iTerm2SharedARC's decoder, not in this object file.
+    private static let syncSinceRep: CompanionHostMessage = {
+        let json = #"{"syncSince":{"items":[],"maxMessageSeq":0,"maxAlertSeq":0,"messageReset":false,"alertReset":false,"truncated":false}}"#
+        return try! JSONDecoder().decode(CompanionHostMessage.self, from: Data(json.utf8))
+    }()
 
     /// EXHAUSTIVE: see clientKey.
     private func hostKey(_ m: CompanionHostMessage) -> String {

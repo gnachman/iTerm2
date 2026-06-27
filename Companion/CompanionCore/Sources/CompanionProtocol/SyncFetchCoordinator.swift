@@ -126,7 +126,8 @@ public struct SyncFetchCoordinator {
         var perChatAdvances: [String: Int64] = [:]
 
         for item in reply.items {
-            if let m = item.message {
+            switch item {
+            case .message(let m):
                 let token = tokenForChat(m.chatID)
                 // The whole message store rewound: every per-chat watermark is
                 // about to be cleared, so don't gate on the now-stale value.
@@ -140,7 +141,7 @@ public struct SyncFetchCoordinator {
                     renderItems.append(.message(chatID: m.chatID, chatName: m.chatName,
                                                 uniqueID: m.uniqueID, author: m.author, body: m.body))
                 }
-            } else if let a = item.alert {
+            case .alert(let a):
                 // Alerts have no in-app read-state; the global alert floor is their
                 // only suppression, and the host already returned seq > floor.
                 renderItems.append(.alert(alertID: a.alertID, threadKey: a.threadKey,

@@ -22,17 +22,15 @@ private final class MemoryBacking: WatermarkBacking {
 final class SyncFetchCoordinatorTests: XCTestCase {
     private func store() -> WatermarkStore { WatermarkStore(backing: MemoryBacking()) }
 
-    private func message(_ chatID: String, _ seq: Int64, body: String = "x") -> NSESyncSince.Item {
-        NSESyncSince.Item(message: .init(chatID: chatID, chatName: "Chat \(chatID)",
-                                         uniqueID: UUID(), author: "agent", body: body, seq: seq),
-                          alert: nil)
+    private func message(_ chatID: String, _ seq: Int64, body: String = "x") -> CompanionSyncItem {
+        .message(CompanionSyncMessageItem(chatID: chatID, chatName: "Chat \(chatID)",
+                                          uniqueID: UUID(), author: "agent", body: body, seq: seq))
     }
-    private func alert(_ threadKey: String, _ seq: Int64) -> NSESyncSince.Item {
-        NSESyncSince.Item(message: nil,
-                          alert: .init(alertID: UUID(), threadKey: threadKey,
-                                       title: "T", body: "B", seq: seq))
+    private func alert(_ threadKey: String, _ seq: Int64) -> CompanionSyncItem {
+        .alert(CompanionSyncAlertItem(alertID: UUID(), threadKey: threadKey,
+                                      title: "T", body: "B", seq: seq))
     }
-    private func reply(_ items: [NSESyncSince.Item],
+    private func reply(_ items: [CompanionSyncItem],
                        maxMessageSeq: Int64, maxAlertSeq: Int64,
                        messageReset: Bool = false, alertReset: Bool = false,
                        truncated: Bool = false) -> NSESyncSince.Reply {

@@ -190,66 +190,10 @@ struct CompanionMessagePreview: Codable, Equatable {
     }
 }
 
-/// One display-ready chat message in a `.syncSince` reply. Unlike
-/// CompanionMessagePreview it carries the `chatID` and `seq`, because a unified
-/// sync returns items from MANY chats: the NSE computes each notification's
-/// threadIdentifier on-device as HMAC(roomSecret, chatID) (so no per-chat id
-/// crosses the APNs payload) and uses `seq` to advance the per-chat watermark and
-/// the global message floor. Carries no attachment bytes and no full Message.
-struct CompanionSyncMessageItem: Codable, Equatable {
-    var chatID: String
-    var chatName: String
-    var uniqueID: UUID
-    var author: Participant
-    var body: String
-    var seq: Int64
-}
-
-/// One terminal alert (e.g. "Mark Set", a fired notification trigger) in a
-/// `.syncSince` reply. `threadKey` is the source session's guid; the NSE groups a
-/// session's alerts by computing HMAC(roomSecret, "alert:" + threadKey)
-/// on-device. `seq` advances the global alert floor. Alerts have no in-app
-/// read-state, so the floor is both the query bound and the suppression cursor.
-struct CompanionSyncAlertItem: Codable, Equatable {
-    var alertID: UUID
-    var threadKey: String
-    var title: String
-    var body: String
-    var seq: Int64
-}
-
-/// One item in a `.syncSince` reply: a chat message or a terminal alert. Custom
-/// Codable so it encodes as {"message": {…}} / {"alert": {…}} (the synthesized
-/// enum Codable would nest the value under "_0"); the slim NSESyncSince mirror
-/// reproduces this flat single-key shape.
-enum CompanionSyncItem: Equatable {
-    case message(CompanionSyncMessageItem)
-    case alert(CompanionSyncAlertItem)
-}
-
-extension CompanionSyncItem: Codable {
-    private enum CodingKeys: String, CodingKey { case message, alert }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case .message(let item): try container.encode(item, forKey: .message)
-        case .alert(let item): try container.encode(item, forKey: .alert)
-        }
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let item = try container.decodeIfPresent(CompanionSyncMessageItem.self, forKey: .message) {
-            self = .message(item)
-        } else if let item = try container.decodeIfPresent(CompanionSyncAlertItem.self, forKey: .alert) {
-            self = .alert(item)
-        } else {
-            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath,
-                                                    debugDescription: "CompanionSyncItem: neither message nor alert present"))
-        }
-    }
-}
+// CompanionSyncItem / CompanionSyncMessageItem / CompanionSyncAlertItem (the
+// leaf wire structs of a `.syncSince` reply) live in the CompanionProtocol
+// package so the NSE and this production enum share one definition. See
+// CompanionSyncItem.swift.
 
 /// Sent by the phone (client) to the mac (host).
 enum CompanionClientMessage: Codable, CompanionMessagePayload {
