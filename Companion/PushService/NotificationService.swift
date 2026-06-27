@@ -351,6 +351,12 @@ final class NotificationService: UNNotificationServiceExtension {
             case let .alert(alertID, threadKey, title, body):
                 return Spec(id: alertID.uuidString, title: title, body: body,
                             threadID: CompanionThreadKey.make(roomSecret: roomSecret, input: "alert:" + threadKey))
+            case let .placeholder(id):
+                // Forward-compat: an item this build couldn't decode. Show a generic
+                // notification instead of dropping it, grouped under one thread.
+                return Spec(id: id.uuidString, title: "iTerm2 Buddy",
+                            body: "You have a new notification. Update iTerm2 Buddy to view it.",
+                            threadID: "companion.placeholder")
             }
         }
         guard !specs.isEmpty else {

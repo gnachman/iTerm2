@@ -33,6 +33,10 @@ public struct SyncFetchCoordinator {
     public enum RenderItem: Equatable {
         case message(chatID: String, chatName: String, uniqueID: UUID, author: String, body: String)
         case alert(alertID: UUID, threadKey: String, title: String, body: String)
+        /// A forward-compatible placeholder for an item this build couldn't decode
+        /// (CompanionSyncItem.unsupported). The shell renders a generic "update to
+        /// view" notification; `id` is a fresh identifier so it shows distinctly.
+        case placeholder(id: UUID)
     }
 
     public enum Decision: Equatable {
@@ -146,6 +150,11 @@ public struct SyncFetchCoordinator {
                 // only suppression, and the host already returned seq > floor.
                 renderItems.append(.alert(alertID: a.alertID, threadKey: a.threadKey,
                                           title: a.title, body: a.body))
+            case .unsupported:
+                // A future item kind we can't decode: surface a placeholder rather
+                // than dropping it (forward compatibility). The host's floors still
+                // advance via maxMessageSeq/maxAlertSeq, so it isn't re-fetched.
+                renderItems.append(.placeholder(id: UUID()))
             }
         }
 

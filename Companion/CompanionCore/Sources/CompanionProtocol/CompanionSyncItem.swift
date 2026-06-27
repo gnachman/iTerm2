@@ -62,13 +62,19 @@ public struct CompanionSyncAlertItem: Codable, Equatable {
     }
 }
 
-/// One item in a `.syncSince` reply: a chat message or a terminal alert. Custom
-/// Codable so it encodes as {"message": {…}} / {"alert": {…}} (synthesized enum
-/// Codable would nest the value under "_0"). One definition, so the flat shape can
-/// never drift between the production enum and the NSE.
+/// One item in a `.syncSince` reply: a chat message, a terminal alert, or a
+/// forward-compatible placeholder. Custom Codable so it encodes as {"message":{…}}
+/// / {"alert":{…}} (synthesized enum Codable would nest the value under "_0"). One
+/// definition, so the flat shape can never drift between the production enum and
+/// the NSE - and ITEM-LEVEL forward compatibility lives in one place too.
 public enum CompanionSyncItem: Equatable {
     case message(CompanionSyncMessageItem)
     case alert(CompanionSyncAlertItem)
+    /// An item this build can't decode: a future item KIND (a new discriminator a
+    /// newer mac sent), or a known kind whose body won't decode. It decodes here
+    /// instead of failing the whole reply, so one bad item never kills the batch;
+    /// the renderer shows a generic placeholder rather than dropping it.
+    case unsupported
 }
 
 extension CompanionSyncItem: Codable {
@@ -79,18 +85,26 @@ extension CompanionSyncItem: Codable {
         switch self {
         case .message(let item): try container.encode(item, forKey: .message)
         case .alert(let item): try container.encode(item, forKey: .alert)
+        case .unsupported: break   // empty object; round-trips back to .unsupported
         }
     }
 
+    /// Never throws: any item we can't recognize/decode becomes `.unsupported` so
+    /// the surrounding `[CompanionSyncItem]` decode (and thus the whole reply)
+    /// succeeds with a placeholder for the bad element instead of failing wholesale.
     public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let item = try container.decodeIfPresent(CompanionSyncMessageItem.self, forKey: .message) {
+        guard let container = try? decoder.container(keyedBy: CodingKeys.self) else {
+            self = .unsupported
+            return
+        }
+        if container.contains(.message),
+           let item = try? container.decode(CompanionSyncMessageItem.self, forKey: .message) {
             self = .message(item)
-        } else if let item = try container.decodeIfPresent(CompanionSyncAlertItem.self, forKey: .alert) {
+        } else if container.contains(.alert),
+                  let item = try? container.decode(CompanionSyncAlertItem.self, forKey: .alert) {
             self = .alert(item)
         } else {
-            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath,
-                                                    debugDescription: "CompanionSyncItem: neither message nor alert present"))
+            self = .unsupported
         }
     }
 }

@@ -59,6 +59,31 @@ final class NSESyncSinceTests: XCTestCase {
         XCTAssertEqual(alert.alertID, UUID(uuidString: CompanionWireVectors.replyAlertUUID))
     }
 
+    func testUnknownItemKindDecodesToUnsupportedNotThrow() throws {
+        // A future item kind ("reminder") this build doesn't know must not fail the
+        // whole reply; it becomes .unsupported and the good items still decode.
+        let json = #"{"requestID":1,"payload":{"syncSince":{"items":[{"reminder":{"foo":1}},{"alert":{"alertID":"770E8400-E29B-41D4-A716-446655440000","threadKey":"s","title":"t","body":"b","seq":2}}],"maxMessageSeq":0,"maxAlertSeq":2,"messageReset":false,"alertReset":false,"truncated":false}}}"#
+            .data(using: .utf8)!
+        guard case let .sync(_, reply) = try NSESyncSince.decodeReply(json) else {
+            return XCTFail("expected .sync")
+        }
+        XCTAssertEqual(reply.items.count, 2)
+        XCTAssertEqual(reply.items.first, .unsupported)
+        guard case .alert = reply.items.last else {
+            return XCTFail("the known item must still decode alongside the unknown one")
+        }
+    }
+
+    func testMalformedKnownItemDecodesToUnsupported() throws {
+        // "message" present but missing required fields -> .unsupported, not a throw.
+        let json = #"{"requestID":1,"payload":{"syncSince":{"items":[{"message":{"chatID":"c"}}],"maxMessageSeq":0,"maxAlertSeq":0,"messageReset":false,"alertReset":false,"truncated":false}}}"#
+            .data(using: .utf8)!
+        guard case let .sync(_, reply) = try NSESyncSince.decodeReply(json) else {
+            return XCTFail("expected .sync")
+        }
+        XCTAssertEqual(reply.items, [.unsupported])
+    }
+
     func testErrorReplyIsClassifiedAsError() throws {
         let json = #"{"requestID":1,"payload":{"error":{"code":"badRequest","message":"x"}}}"#.data(using: .utf8)!
         guard case let .error(requestID) = try NSESyncSince.decodeReply(json) else {

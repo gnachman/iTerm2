@@ -71,6 +71,7 @@ final class SyncFetchCoordinatorTests: XCTestCase {
             switch $0 {
             case let .message(chatID, _, _, _, _): return "msg:\(chatID)"
             case let .alert(_, threadKey, _, _): return "alert:\(threadKey)"
+            case .placeholder: return "placeholder"
             }
         }
     }
@@ -90,6 +91,39 @@ final class SyncFetchCoordinatorTests: XCTestCase {
             return XCTFail("expected content")
         }
         XCTAssertEqual(tags(items), ["alert:s1", "msg:A", "alert:s2", "msg:B"])
+    }
+
+    func testUnsupportedItemRendersPlaceholderAndGoodItemsSurvive() async {
+        // Item-level forward compatibility: an undecodable item becomes a
+        // placeholder, and the good items in the same batch still render.
+        let s = store()
+        s.advanceFloor(.message, to: 0)
+        let coord = coordinator(s) { [self] in
+            reply([.unsupported, message("A", 10)], maxMessageSeq: 10, maxAlertSeq: 0)
+        }
+        let outcome = await coord.run()
+        guard case let .content(items, _) = outcome.decision else {
+            return XCTFail("expected content")
+        }
+        XCTAssertEqual(items.count, 2)
+        guard case .placeholder = items.first else {
+            return XCTFail("the unsupported item must render as a placeholder")
+        }
+        XCTAssertEqual(chatIDs(items), ["A"], "the decodable message must still render")
+    }
+
+    func testOnlyUnsupportedItemsStillShowsContent() async {
+        // A batch of only-unknown items is still content (placeholders), not silent.
+        let s = store()
+        s.advanceFloor(.message, to: 0)
+        let coord = coordinator(s) { [self] in
+            reply([.unsupported, .unsupported], maxMessageSeq: 0, maxAlertSeq: 0)
+        }
+        let outcome = await coord.run()
+        guard case let .content(items, _) = outcome.decision else {
+            return XCTFail("expected content (placeholders), not silent")
+        }
+        XCTAssertEqual(items.count, 2)
     }
 
     func testRunDoesNotMutateUntilCommit() async {
