@@ -124,6 +124,29 @@ enum PhoneIdentity {
         delete(account: pairingCodeAccount, accessGroup: nil)
     }
 
+    // MARK: Verifier-registered room marker (App Group keychain, so "this room's
+    // relay verifier is registered" survives an app reinstall like the pairing code
+    // and room secret. It used to live in UserDefaults, which a reinstall wipes -
+    // so a reconnect after reinstall saw the room as fresh, attested instead of
+    // signing the join, and the relay rejected it with "signature required".)
+
+    private static let registeredRoomAccount = "relay-registered-room"
+
+    /// The room name whose relay verifier this phone has registered, or nil.
+    static func registeredRoomName() -> String? {
+        guard let data = loadSharedData(account: registeredRoomAccount) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func storeRegisteredRoomName(_ roomName: String) throws {
+        try store(Data(roomName.utf8), account: registeredRoomAccount, accessGroup: appGroup)
+    }
+
+    static func deleteRegisteredRoomName() {
+        delete(account: registeredRoomAccount, accessGroup: appGroup)
+        delete(account: registeredRoomAccount, accessGroup: nil)
+    }
+
     // MARK: Keychain plumbing
 
     private static func randomSecret() throws -> Data {

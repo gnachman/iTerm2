@@ -279,11 +279,23 @@ final class AppModel {
     /// attestation; false until a registration actually succeeds, so a failed
     /// attempt is retried on the next connect (self-healing).
     private func verifierRegistered(for code: PairingCode) -> Bool {
-        UserDefaults.standard.string(forKey: Self.registeredRoomDefault) == roomName(for: code)
+        let target = roomName(for: code)
+        if PhoneIdentity.registeredRoomName() == target {
+            return true
+        }
+        // Promote a marker left by an older build in UserDefaults (which a reinstall
+        // wipes) into the keychain, so it survives future reinstalls like the
+        // pairing code and room secret. Without this, a reinstall would forget the
+        // room was established and wrongly attest on reconnect.
+        if UserDefaults.standard.string(forKey: Self.registeredRoomDefault) == target {
+            try? PhoneIdentity.storeRegisteredRoomName(target)
+            return true
+        }
+        return false
     }
 
     private func markVerifierRegistered(for code: PairingCode) {
-        UserDefaults.standard.set(roomName(for: code), forKey: Self.registeredRoomDefault)
+        try? PhoneIdentity.storeRegisteredRoomName(roomName(for: code))
     }
 
     /// The pairing from the last successful handshake. The responder key is
@@ -361,14 +373,16 @@ final class AppModel {
 
     func forgetStoredPairing() {
         // Clear the pairing code from the keychain (current location) and from
-        // both UserDefaults suites (legacy location). The registered-room marker
-        // is NoSync / app-only and stays in standard.
+        // both UserDefaults suites (legacy location).
         PhoneIdentity.deletePairingCode()
         for defaults in [UserDefaults(suiteName: PhoneIdentity.appGroup), UserDefaults.standard].compactMap({ $0 }) {
             defaults.removeObject(forKey: Self.storedKeyDefault)
             defaults.removeObject(forKey: Self.storedPIDDefault)
             defaults.removeObject(forKey: Self.storedRelayOriginDefault)
         }
+        // Clear the verifier-registered marker from the keychain (current location)
+        // and UserDefaults (legacy location).
+        PhoneIdentity.deleteRegisteredRoomName()
         UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
         // Drop the per-chat push watermarks (shared with the NSE): they are keyed
         // by the old room secret and meaningless once unpaired. reset() clears by
