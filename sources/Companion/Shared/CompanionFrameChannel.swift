@@ -2,45 +2,60 @@
 //  CompanionFrameChannel.swift
 //  iTerm2
 //
-//  The Companion connection multiplexes two logical channels over one
-//  Noise/relay link by tagging every application frame with a single leading
-//  byte: control frames carry a JSON CompanionEnvelope, media frames carry a
-//  CompanionMediaFrame. The tag rides inside the encrypted Noise payload (it is
-//  prepended before the frame is handed to the transport), so the relay never
-//  sees it. Noise chunking is orthogonal: it reassembles a whole frame before
-//  delivery, so the tag is always the first byte of the reassembled frame.
+//  The Companion connection multiplexes a JSON control channel and a binary
+//  media channel (live video) over the one Noise/relay link, in a
+//  backward-compatible way.
+//
+//  Control frames are sent verbatim as JSON, exactly as they always were: a JSON
+//  object never begins with the media marker byte, so a peer that predates the
+//  media channel still exchanges control frames byte-for-byte and the version
+//  handshake (the very first frame) keeps working across app versions. Media
+//  frames are distinguished by a single leading marker byte and only ever flow
+//  to a peer that asked to start a stream, so an older peer never sees one.
+//
+//  The marker rides inside the encrypted Noise payload, so the relay never sees
+//  it. Noise chunking is orthogonal: it reassembles a whole frame before
+//  delivery, so the marker is always the first byte of the reassembled frame.
 //
 //  This type is the single source of truth for that framing, shared by the Mac
-//  host and the iOS app so both ends agree on the wire format.
+//  host and the iOS app.
 //
 
 import Foundation
 
-enum CompanionFrameChannel: UInt8 {
-    /// A JSON-encoded CompanionEnvelope (the existing request/reply + event
-    /// control channel).
-    case control = 0
-    /// A binary CompanionMediaFrame (live video). Never base64.
-    case media = 1
+enum CompanionFrameChannel {
+    /// A byte no JSON document can begin with. A serialized CompanionEnvelope is
+    /// a JSON object, so it starts with `{` (0x7B); JSON may also begin with
+    /// `[`, `"`, a digit, `-`, `t`/`f`/`n`, or whitespace (0x20/0x09/0x0A/0x0D),
+    /// but never 0x01. Marking media with 0x01 is therefore unambiguous.
+    static let mediaMarker: UInt8 = 0x01
 
-    /// Prepend this channel's tag to `payload`, producing the application frame
-    /// to hand to the transport.
-    func frame(_ payload: Data) -> Data {
+    /// A received application frame, classified by channel.
+    enum Inbound: Equatable {
+        /// Bare JSON envelope bytes (the control channel).
+        case control(Data)
+        /// A media payload with the marker stripped (a CompanionMediaFrame's
+        /// encoded bytes).
+        case media(Data)
+    }
+
+    /// Wrap a media payload for the transport by prepending the marker byte.
+    static func frameMedia(_ payload: Data) -> Data {
         var data = Data(capacity: payload.count + 1)
-        data.append(rawValue)
+        data.append(mediaMarker)
         data.append(payload)
         return data
     }
 
-    /// Split a received application frame into its channel and payload. Returns
-    /// nil when the frame is empty or carries a tag this build does not know (a
-    /// future build's channel), so the receiver drops it rather than misrouting.
-    static func split(_ frame: Data) -> (channel: CompanionFrameChannel, payload: Data)? {
-        guard let first = frame.first,
-              let channel = CompanionFrameChannel(rawValue: first) else {
-            return nil
+    /// Classify a received application frame. Control frames are returned
+    /// verbatim (no wrapping was applied when sending); media frames have the
+    /// marker stripped. Returns nil for an empty frame (nothing to route).
+    static func classify(_ frame: Data) -> Inbound? {
+        guard let first = frame.first else { return nil }
+        guard first == mediaMarker else {
+            return .control(frame)
         }
         let payloadStart = frame.startIndex + 1
-        return (channel, frame.subdata(in: payloadStart..<frame.endIndex))
+        return .media(frame.subdata(in: payloadStart..<frame.endIndex))
     }
 }

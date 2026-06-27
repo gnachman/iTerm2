@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		031D25E04F2526D1221E65C4 /* CompanionMediaFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508E2211C4ADF7AB23B5CF3F /* CompanionMediaFrame.swift */; };
 		0C88E9AF756C21683FEB1BF6 /* AIExplanationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AED2D9CBC65681E48B458F7 /* AIExplanationRequest.swift */; };
 		0FE3B2F4008CF7ACF6978145 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10114730702BBA43426D5E85 /* SettingsView.swift */; };
 		1822ADF68D3A0178CE4CCA1F /* SessionBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A21C6D0017626533817E5E /* SessionBrowserView.swift */; };
 		1A4A5B9A5AFE0E89561BA7E4 /* VoiceCaptureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9845DDD46D6AA61085BA448F /* VoiceCaptureController.swift */; };
+		28B9863A97376BF11F48358A /* CompanionFrameChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B45585DFAFCF303451219BB /* CompanionFrameChannel.swift */; };
 		2A7C547246D31037B9140DF9 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3541E5F2F774361A77015778 /* PairingView.swift */; };
 		2B3EA67EF890DA8EBDA79B70 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 7836C53444CAE5CDF235737E /* AppIcon.icon */; };
 		2B4562DB8E2A411072237E9F /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F47305487EBECCCC106B8E5 /* Message.swift */; };
@@ -104,8 +106,10 @@
 		42A05BF5FFBB99F8D48F8F63 /* MentionComposerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionComposerView.swift; sourceTree = "<group>"; };
 		42ECCE549BC946C0443BA106 /* CompanionSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionSession.swift; path = sources/Companion/Shared/CompanionSession.swift; sourceTree = "<group>"; };
 		465641AD107D063E7DD2A1C5 /* CompanionPushRelay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionPushRelay.swift; path = sources/Companion/Shared/CompanionPushRelay.swift; sourceTree = "<group>"; };
+		508E2211C4ADF7AB23B5CF3F /* CompanionMediaFrame.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionMediaFrame.swift; path = sources/Companion/Shared/CompanionMediaFrame.swift; sourceTree = "<group>"; };
 		6A2D82EC77649D6E8EDC19C3 /* Chat.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Chat.swift; path = sources/AITerm/Chat.swift; sourceTree = "<group>"; };
 		6B1A92D2DA0130234E239854 /* LLM.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LLM.swift; path = sources/AITerm/LLM.swift; sourceTree = "<group>"; };
+		6B45585DFAFCF303451219BB /* CompanionFrameChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionFrameChannel.swift; path = sources/Companion/Shared/CompanionFrameChannel.swift; sourceTree = "<group>"; };
 		7836C53444CAE5CDF235737E /* AppIcon.icon */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.iconcomposer.icon; name = AppIcon.icon; path = Resources/AppIcon.icon; sourceTree = "<group>"; };
 		798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MailComposeView.swift; sourceTree = "<group>"; };
 		7E032AB4B164634905B48697 /* UpgradeRequiredView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpgradeRequiredView.swift; sourceTree = "<group>"; };
@@ -298,6 +302,8 @@
 				8352A86C7CEC1F3B06ED35B4 /* CompanionMessages.swift */,
 				465641AD107D063E7DD2A1C5 /* CompanionPushRelay.swift */,
 				42ECCE549BC946C0443BA106 /* CompanionSession.swift */,
+				508E2211C4ADF7AB23B5CF3F /* CompanionMediaFrame.swift */,
+				6B45585DFAFCF303451219BB /* CompanionFrameChannel.swift */,
 			);
 			name = SharedFromMac;
 			path = ..;
@@ -479,6 +485,8 @@
 				1A4A5B9A5AFE0E89561BA7E4 /* VoiceCaptureController.swift in Sources */,
 				3FED6D999B5E12119428D9D1 /* UpgradeRequiredView.swift in Sources */,
 				361F37C77D701894FFE06B38 /* SessionTreeList.swift in Sources */,
+				031D25E04F2526D1221E65C4 /* CompanionMediaFrame.swift in Sources */,
+				28B9863A97376BF11F48358A /* CompanionFrameChannel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
