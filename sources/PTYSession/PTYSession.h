@@ -876,6 +876,35 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 - (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast reporting:(BOOL)reporting;
 
+// Inject a mouse scroll-wheel report into the session as if the user
+// scrolled the wheel `lines` notches over the middle of the screen.
+// up=YES scrolls toward older content (MOUSE_BUTTON_SCROLLUP), up=NO
+// toward newer content. Returns NO without writing anything when the
+// foreground program hasn't enabled mouse reporting
+// (terminalMouseMode == MOUSE_REPORTING_NONE): there is no scroll
+// sequence to send in that case. Used by the orchestrator's
+// scroll_wheel tool to page through a full-screen app's own scrollback
+// when it's on the (soft) alternate screen.
+- (BOOL)reportScrollWheelForOrchestratorUp:(BOOL)up lines:(NSInteger)lines
+    NS_SWIFT_NAME(reportScrollWheelForOrchestrator(up:lines:));
+
+// YES when a scroll-wheel report would actually be sent for this session,
+// matching the full gate the live wheel path uses
+// (PTYMouseHandler.terminalWantsMouseReports plus its wheel sub-gate):
+// the profile's mouse-reporting setting (xtermMouseReporting, including
+// its restrict-to-alternate-screen rule) AND the "report mouse wheel
+// events" sub-setting (xtermMouseReportingAllowMouseWheel) AND a mouse
+// mode that reports the wheel (normal / button-motion / any-motion;
+// highlight-tracking mode reports selection clicks but never scroll, so
+// it's excluded). This is the single source of truth for "scroll
+// reporting is possible": both reportScrollWheelForOrchestratorUp:lines:
+// and the mouse_reporting hint the orchestrator surfaces to the agent
+// read it, so the advertised capability and the actual behavior can't
+// drift apart, and we never inject scroll bytes the user opted out of.
+// Exposed so Swift callers can gate the scroll_wheel tool without
+// referencing the C MouseMode enum directly.
+@property (nonatomic, readonly) BOOL scrollWheelReportingEnabled;
+
 - (void)updateViewBackgroundImage;
 - (void)invalidateBlend;
 - (void)setShowAlternateScreen:(BOOL)showAlternateScreen announce:(BOOL)announce;

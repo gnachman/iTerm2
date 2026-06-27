@@ -262,20 +262,53 @@ enum WorkgroupIntrospection {
                                requestedLines: Int?) -> ScreenContents {
         let kind = kind(for: session)
         let pending = pendingActionDescription(for: session)
-        switch kind {
-        case .tui:
+        let surface = screenSurface(for: session)
+        let mouseReporting = scrollReportingSupported(for: session)
+        // The (soft) alternate screen is the deciding factor, not `kind`:
+        // a full-screen app repaints into scrollback, so the only
+        // meaningful text is the current grid. This holds even for
+        // claude-code sessions, which now run on the alternate screen
+        // (their Ink frames would otherwise look like dozens of duplicate
+        // screens in the transcript). Expose just the visible grid and let
+        // the agent scroll the wheel to reveal older content.
+        if surface == .alternate {
             return ScreenContents(text: snapshot(of: session),
-                                  kind: .tui,
-                                  isSnapshot: true,
-                                  pendingAction: pending)
-        case .shell, .claudeCode, .other:
-            let text = trailingTranscript(of: session,
-                                          lines: requestedLines ?? 100)
-            return ScreenContents(text: text,
                                   kind: kind,
-                                  isSnapshot: false,
+                                  isSnapshot: true,
+                                  screen: .alternate,
+                                  mouseReporting: mouseReporting,
                                   pendingAction: pending)
         }
+        // Primary screen: scrollback is real linear history.
+        let text = trailingTranscript(of: session,
+                                      lines: requestedLines ?? 100)
+        return ScreenContents(text: text,
+                              kind: kind,
+                              isSnapshot: false,
+                              screen: .primary,
+                              mouseReporting: mouseReporting,
+                              pendingAction: pending)
+    }
+
+    // Semantic screen surface: alternate when the program is on (or would
+    // be on, per the soft flag) the alternate buffer. We use the soft flag
+    // rather than which VT100Grid is actually visible so the answer
+    // reflects the program's intent even when the user has disabled
+    // iTerm2's alternate-screen feature. A soft-alternate session is
+    // almost certainly a TUI.
+    static func screenSurface(for session: PTYSession) -> ScreenSurface {
+        return session.screen.terminalSoftAlternateScreenMode ? .alternate : .primary
+    }
+
+    // Whether the foreground program reports scroll-wheel events, i.e.
+    // whether the scroll_wheel tool can do anything. This is the same
+    // predicate the scroll path itself gates on (highlight-tracking mode
+    // is excluded because it never reports scroll), so the mouse_reporting
+    // hint we surface and the tool's real behavior agree. Reads
+    // PTYSession's ObjC accessor so we don't reference the C MouseMode
+    // enum from Swift.
+    static func scrollReportingSupported(for session: PTYSession) -> Bool {
+        return session.scrollWheelReportingEnabled
     }
 
     // MARK: - Clippings

@@ -502,6 +502,11 @@ Bug Fixes:
 - Chat lists now mark orchestrator chats with a
   wand glyph. The inline chat switcher bolds chats
   linked to the current session.
+- Orchestrator chats now handle full-screen apps
+  on the alternate screen (like Claude Code)
+  better: they see just the current screen and
+  can use a new scroll-wheel tool to page back
+  through the app’s own history.
 - The session-logging and archive folder
   pickers now use the folder you select rather
   than its parent when you don’t open it first.

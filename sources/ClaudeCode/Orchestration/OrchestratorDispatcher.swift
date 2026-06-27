@@ -1014,6 +1014,8 @@ final class OrchestratorDispatcher {
             return .getState(sessionGuid: try decoder.decode(A.self, from: jsonArgs).session_guid)
         case .getScreenContents:
             return .getScreenContents(try decoder.decode(GetScreenContentsArgs.self, from: jsonArgs))
+        case .scrollWheel:
+            return .scrollWheel(try decoder.decode(ScrollWheelArgs.self, from: jsonArgs))
         case .listWorkgroupClippings:
             struct A: Decodable {
                 let workgroup_id: String
@@ -1339,6 +1341,8 @@ final class OrchestratorDispatcher {
             return try await doGetState(sessionGuid: sessionGuid)
         case .getScreenContents(let args):
             return try await doGetScreenContents(args)
+        case .scrollWheel(let args):
+            return try await doScrollWheel(args)
         case .listWorkgroupClippings(let workgroupID, let typeFilter):
             return try await doListWorkgroupClippings(
                 workgroupID: workgroupID, typeFilter: typeFilter)
@@ -1449,6 +1453,40 @@ final class OrchestratorDispatcher {
         let contents = WorkgroupIntrospection.screenContents(
             for: resolved, requestedLines: args.lines)
         return .screenContents(contents)
+    }
+
+    // Inject scroll-wheel events so the agent can page through a
+    // full-screen app's own history (the alternate screen keeps no
+    // scrollback we can read). Errors when the program hasn't enabled
+    // mouse reporting, since there's no scroll sequence it would honor;
+    // the agent is told to fall back to get_screen_contents lines on the
+    // primary screen. Despite injecting bytes, this is gated as read-only
+    // (see OrchestratorCommand.category): it only moves the viewport.
+    @MainActor
+    private func doScrollWheel(_ args: ScrollWheelArgs) async throws -> OrchestratorResult {
+        let resolved = try resolveSessionOrThrow(args.sessionGuid)
+        if resolved.session.exited {
+            throw OrchestratorError.targetNoLongerExists(sessionGuid: args.sessionGuid)
+        }
+        guard WorkgroupIntrospection.scrollReportingSupported(for: resolved.session) else {
+            throw OrchestratorError.unsupported(reason:
+                "Mouse reporting is not enabled in \(resolved.roleName) "
+                + "(\(resolved.workgroupName)), so the scroll wheel can't be used. "
+                + "If this is the primary screen, just ask get_screen_contents for "
+                + "more lines instead.")
+        }
+        let up = (args.direction ?? .up) == .up
+        let didScroll = resolved.session.reportScrollWheelForOrchestrator(
+            up: up, lines: args.lines)
+        guard didScroll else {
+            // mouseReportingEnabled said yes a moment ago, so this is a
+            // narrow race (the app turned reporting off between the check
+            // and the write); report it the same way.
+            throw OrchestratorError.unsupported(reason:
+                "The scroll wheel could not be sent to \(resolved.roleName) "
+                + "(\(resolved.workgroupName)); mouse reporting appears to be off.")
+        }
+        return .ack
     }
 
     @MainActor

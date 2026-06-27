@@ -12900,6 +12900,85 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return NO;
 }
 
+- (BOOL)scrollWheelReportingEnabled {
+    // Mirror the full gate the live scroll-report path enforces
+    // (PTYMouseHandler.terminalWantsMouseReports plus its wheel sub-gate),
+    // not just the program's requested mode. Otherwise the orchestrator
+    // would advertise mouse_reporting:true and inject scroll bytes even
+    // when the user has turned reporting off in their profile, bypassing
+    // the consent the real wheel path honors.
+    //
+    //   1. xtermMouseReporting: the profile's "Enable mouse reporting"
+    //      setting (KEY_XTERM_MOUSE_REPORTING) and its
+    //      restrict-to-alternate-screen rule. NO means the user opted out.
+    //   2. xtermMouseReportingAllowMouseWheel: the separate "report mouse
+    //      wheel events" sub-setting.
+    //   3. a mouse mode that actually reports the wheel. Highlight-tracking
+    //      mode (1001) reports selection clicks but never scroll, so it's
+    //      excluded just like in terminalWantsMouseReports.
+    if (!self.xtermMouseReporting) {
+        return NO;
+    }
+    if (!self.xtermMouseReportingAllowMouseWheel) {
+        return NO;
+    }
+    switch (_screen.terminalMouseMode) {
+        case MOUSE_REPORTING_NORMAL:
+        case MOUSE_REPORTING_BUTTON_MOTION:
+        case MOUSE_REPORTING_ALL_MOTION:
+            return YES;
+        case MOUSE_REPORTING_NONE:
+        case MOUSE_REPORTING_HIGHLIGHT:
+            return NO;
+    }
+    return NO;
+}
+
+- (BOOL)reportScrollWheelForOrchestratorUp:(BOOL)up lines:(NSInteger)lines {
+    // Gate on the shared scroll-capable predicate so the bytes we'd send
+    // are actually understood by the program. Without scroll reporting
+    // there's nothing meaningful to send.
+    if (!self.scrollWheelReportingEnabled) {
+        return NO;
+    }
+    VT100Output *output = _screen.terminalOutput;
+    if (!output) {
+        return NO;
+    }
+    // Bound the repeat count: a runaway value would flood the program
+    // with reports. 256 notches is far more than any real history view
+    // needs and matches the spirit of the 32-step cap on live scrolls.
+    const NSInteger steps = MAX(1, MIN(256, lines));
+    // iTerm's MOUSE_BUTTON_SCROLL{UP,DOWN} names track the sign of the
+    // scroll-wheel *delta*, not the direction the content moves.
+    // MOUSE_BUTTON_SCROLLDOWN (4) encodes to xterm SGR button 64, which
+    // pagers and TUIs read as "scroll back" (reveal OLDER content above);
+    // MOUSE_BUTTON_SCROLLUP (5) encodes to SGR 65 = "scroll forward"
+    // (newer content below). So revealing older content (up==YES) means
+    // SCROLLDOWN. This matches the live scroll path in PTYMouseHandler.m,
+    // where scrollingDeltaY>0 maps to MOUSE_BUTTON_SCROLLDOWN. Getting it
+    // backwards sends a forward-scroll that does nothing when the view is
+    // already at the bottom, which is exactly the no-op the orchestrator hit.
+    const int button = up ? MOUSE_BUTTON_SCROLLDOWN : MOUSE_BUTTON_SCROLLUP;
+    // Report the scroll over the middle of the grid. Apps that key off
+    // pointer location (panes, scroll regions) then treat it as a scroll
+    // over the main content area rather than an edge. mousePress: adds 1
+    // to translate to the 1-based wire coordinates.
+    const int width = _screen.width;
+    const int height = _screen.height;
+    const VT100GridCoord coord = VT100GridCoordMake(MAX(0, width / 2),
+                                                    MAX(0, height / 2));
+    NSData *data = [output mousePress:button
+                       withModifiers:0
+                                  at:coord
+                               point:NSMakePoint(coord.x, coord.y)];
+    if (!data) {
+        return NO;
+    }
+    [self writeMouseReport:[data it_repeated:steps]];
+    return YES;
+}
+
 - (void)writeMouseReport:(NSData *)data {
     if ([iTermAdvancedSettingsModel autodetectMouseReportingStuck] &&
         ![iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration] &&

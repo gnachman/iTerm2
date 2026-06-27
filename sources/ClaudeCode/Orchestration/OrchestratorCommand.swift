@@ -61,6 +61,26 @@ struct GetScreenContentsArgs: Codable {
     }
 }
 
+enum ScrollDirection: String, Codable {
+    case up    // reveal OLDER content (scroll the view up)
+    case down  // reveal NEWER content (scroll the view back down)
+}
+
+struct ScrollWheelArgs: Codable {
+    let sessionGuid: String
+    // Number of scroll-wheel notches to send. Each notch is one wheel
+    // event; how many lines that moves depends on the app.
+    let lines: Int
+    // nil treated as .up (the common case: page back through history).
+    let direction: ScrollDirection?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionGuid = "session_guid"
+        case lines
+        case direction
+    }
+}
+
 struct RegisterWatchArgs: Codable {
     let sessionGuid: String
     // Exactly one of targetState / condition must be supplied; the
@@ -135,6 +155,19 @@ enum SessionKind: String, Codable {
     case other                       // fallback when classification fails
 }
 
+// Which logical screen the session is showing, from the soft alternate
+// screen flag (set by DECSET 1049/1047/47, and tracked even when the
+// user has disabled iTerm2's alternate-screen feature, so it reflects
+// what the program *intends*). Surfaced on get_screen_contents so the
+// agent knows whether it's looking at the linear primary buffer (where
+// scrollback is real history) or a full-screen app's alternate buffer
+// (where only the current grid is meaningful and older content has to
+// be revealed by scrolling).
+enum ScreenSurface: String, Codable {
+    case primary
+    case alternate
+}
+
 // Where a session's idle/working/waiting status comes from. Surfaced on
 // list_workgroups and get_state so the agent knows whether `status` is
 // authoritative (the program announces it via OSC 21337 / the cc-status
@@ -156,6 +189,7 @@ enum ToolName: String, CaseIterable {
     case listWorkgroups = "list_workgroups"
     case getState = "get_state"
     case getScreenContents = "get_screen_contents"
+    case scrollWheel = "scroll_wheel"
     case listWorkgroupClippings = "list_workgroup_clippings"
     case sendText = "send_text"
     case interrupt = "interrupt"
@@ -176,6 +210,10 @@ enum OrchestratorCommand {
     case listWorkgroups
     case getState(sessionGuid: String)
     case getScreenContents(GetScreenContentsArgs)
+    // Inject scroll-wheel events to page through a full-screen app's own
+    // history while it's on the alternate screen. A read aid, not a
+    // control action: it only moves the app's viewport.
+    case scrollWheel(ScrollWheelArgs)
     case listWorkgroupClippings(workgroupID: String, typeFilter: String?)
 
     // Action
@@ -217,8 +255,11 @@ enum OrchestratorCommand {
 
     var category: Category {
         switch self {
-        case .listWorkgroups, .getState, .getScreenContents,
+        case .listWorkgroups, .getState, .getScreenContents, .scrollWheel,
                 .listWorkgroupClippings:
+            // scroll_wheel injects bytes but only moves a full-screen
+            // app's viewport to reveal its own history; it's the read-side
+            // companion to get_screen_contents, so it claims nothing.
             return .readOnly
         case .sendText, .interrupt, .addWorkgroupClipping, .startCodeReview:
             return .write
@@ -254,7 +295,7 @@ enum OrchestratorCommand {
             return .session(args.sessionGuid)
         case .addWorkgroupClipping(let args):
             return .workgroup(args.workgroupID)
-        case .listWorkgroups, .getState, .getScreenContents,
+        case .listWorkgroups, .getState, .getScreenContents, .scrollWheel,
                 .listWorkgroupClippings,
                 .startSession,
                 .registerWatch, .unregisterWatch, .listWatches,
@@ -389,6 +430,21 @@ struct ScreenContents: Codable {
     let text: String
     let kind: SessionKind
     let isSnapshot: Bool
+    // Which logical screen this text came from. On `.alternate` the
+    // returned text is only the current grid (the visible screen);
+    // scrollback isn't returned because a full-screen app repaints into
+    // it, so it holds duplicate/garbled intermediate frames rather than
+    // real history. To see older content the agent scrolls with the
+    // scroll_wheel tool (when mouse_reporting is true) and re-reads.
+    let screen: ScreenSurface
+    // Whether the foreground program reports scroll-wheel events (the
+    // mouse modes that carry the wheel: normal/button-motion/any-motion;
+    // highlight-tracking mode is excluded because it never reports
+    // scroll). When true (and screen is `.alternate`), the scroll_wheel
+    // tool can shift the app's view to reveal content above/below what's
+    // shown. When false, scroll_wheel will error: there's no way to
+    // scroll a full-screen app that doesn't report the wheel.
+    let mouseReporting: Bool
     // Same surface as SessionStateInfo.pendingAction. Mirrored here
     // because the agent often calls get_screen_contents to figure
     // out what's going on; the screen alone won't tell it that a
@@ -399,6 +455,8 @@ struct ScreenContents: Codable {
         case text
         case kind
         case isSnapshot = "is_snapshot"
+        case screen
+        case mouseReporting = "mouse_reporting"
         case pendingAction = "pending_action"
     }
 }

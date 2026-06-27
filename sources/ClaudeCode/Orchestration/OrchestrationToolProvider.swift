@@ -320,6 +320,13 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Checking state of " + sessionDescription(args: dict)
         case "get_screen_contents":
             return "Reading screen of " + sessionDescription(args: dict)
+        case "scroll_wheel":
+            // direction defaults to "up" (reveal older content) at the
+            // dispatcher; mirror that here so the bubble matches behavior.
+            let direction = (dict["direction"] as? String) ?? "up"
+            let what = (direction == "down") ? "newer" : "older"
+            return "Scrolling " + sessionDescription(args: dict)
+                + " to show \(what) content"
         case "list_workgroup_clippings":
             return "Listing clippings in " + workgroupDescription(args: dict)
         case "send_text":
