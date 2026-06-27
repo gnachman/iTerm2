@@ -145,6 +145,17 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .messagesSince(collapseToken: "t", seq: 0, limit: 1, nonce: nil),
         .syncSince(messageSeq: 0, alertSeq: 0, limit: 1, nonce: nil),
         .unpairing,
+        .startSessionStream(sessionGuid: "s",
+                            params: CompanionStreamParams(supportedCodecs: [.hevc],
+                                                          maxFrameRate: 30,
+                                                          maxBitrate: 500_000)),
+        .stopSessionStream(streamID: 1),
+        .requestKeyframe(streamID: 1),
+        .updateStreamParams(streamID: 1,
+                            params: CompanionStreamParams(supportedCodecs: [.hevc, .h264],
+                                                          maxFrameRate: 60,
+                                                          maxBitrate: nil)),
+        .streamAck(streamID: 1, lastPTSMilliseconds: 0, queueDepth: 0),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -175,6 +186,11 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .messagesSince: return "messagesSince"
         case .syncSince: return "syncSince"
         case .unpairing: return "unpairing"
+        case .startSessionStream: return "startSessionStream"
+        case .stopSessionStream: return "stopSessionStream"
+        case .requestKeyframe: return "requestKeyframe"
+        case .updateStreamParams: return "updateStreamParams"
+        case .streamAck: return "streamAck"
         }
     }
 
@@ -200,6 +216,11 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
         syncSinceRep,
         sampleErrorMessage,
+        .streamStarted(CompanionStreamStarted(streamID: 1, codec: .hevc)),
+        .streamConfig(CompanionStreamConfig(streamID: 1, generationId: 0, codecExtradata: Data(),
+                                            pixelWidth: 100, pixelHeight: 50, scale: 2,
+                                            columns: 80, rows: 25)),
+        .streamEnded(streamID: 1, reason: .stoppedByClient),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -234,6 +255,9 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .messagesSince: return "messagesSince"
         case .syncSince: return "syncSince"
         case .error: return "error"
+        case .streamStarted: return "streamStarted"
+        case .streamConfig: return "streamConfig"
+        case .streamEnded: return "streamEnded"
         }
     }
 

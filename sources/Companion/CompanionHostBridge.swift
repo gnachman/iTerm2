@@ -354,6 +354,15 @@ final class CompanionHostBridge {
         case .unpairing:
             RLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
+        case .startSessionStream, .stopSessionStream, .requestKeyframe,
+             .updateStreamParams, .streamAck:
+            // Live pixel streaming is wired up in a later commit. Until the host
+            // streamer exists, fail fast so a streaming-capable phone does not
+            // hang waiting for a reply that will never come.
+            DLog("Companion bridge: live streaming not yet implemented on this build")
+            send(.error(CompanionError(code: .badRequest,
+                                       message: "Live streaming not available on this Mac build")),
+                 requestID: requestID)
         }
     }
 

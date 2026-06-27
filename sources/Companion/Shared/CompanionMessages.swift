@@ -145,6 +145,66 @@ struct CompanionSessionContent: Codable {
     var pngData: Data
 }
 
+/// A codec for a live session stream.
+enum CompanionStreamCodec: String, Codable, Equatable {
+    case hevc
+    case h264
+}
+
+/// Phone-supplied parameters for a live session stream.
+struct CompanionStreamParams: Codable, Equatable {
+    /// Codecs the phone can decode, best first; the host picks the first it can
+    /// produce.
+    var supportedCodecs: [CompanionStreamCodec]
+    /// Upper bound on frames per second the phone wants delivered.
+    var maxFrameRate: Double
+    /// Phone-permitted sustained bandwidth ceiling in bits per second (e.g.
+    /// tighter on cellular); the host streams at the min of this and its own
+    /// budget. nil means the phone imposes no limit.
+    var maxBitrate: Int?
+
+    init(supportedCodecs: [CompanionStreamCodec],
+         maxFrameRate: Double,
+         maxBitrate: Int?) {
+        self.supportedCodecs = supportedCodecs
+        self.maxFrameRate = maxFrameRate
+        self.maxBitrate = maxBitrate
+    }
+}
+
+/// Reply to `.startSessionStream`: the stream is live with the negotiated codec.
+struct CompanionStreamStarted: Codable, Equatable {
+    var streamID: UInt32
+    var codec: CompanionStreamCodec
+}
+
+/// Decoder configuration for a live stream: the codec parameter sets plus the
+/// pixel geometry of the encoded frames. Re-sent with a fresh generationId
+/// whenever the geometry changes. Geometry-for-selection fields (cell size,
+/// margins, top absolute line) arrive in a later milestone.
+struct CompanionStreamConfig: Codable, Equatable {
+    var streamID: UInt32
+    /// Bumped on every geometry change; media frames carry the generation they
+    /// were rendered at so the phone applies the matching configuration.
+    var generationId: UInt32
+    /// Codec parameter sets (hvcC for HEVC, avcC for H.264) for decoder setup.
+    var codecExtradata: Data
+    var pixelWidth: Int
+    var pixelHeight: Int
+    /// Render scale (encoded pixels per Mac point).
+    var scale: Double
+    var columns: Int
+    var rows: Int
+}
+
+/// Why a live stream ended.
+enum CompanionStreamEndReason: String, Codable, Equatable {
+    case stoppedByClient
+    case sessionClosed
+    case superseded
+    case error
+}
+
 /// The phone's notification-permission state, as iOS reports it.
 enum CompanionPushAuthorization: String, Codable {
     /// The user has never been asked; the prompt can be shown.
@@ -313,6 +373,28 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// its key material. No reply; the phone closes after sending.
     case unpairing
 
+    /// Live view: begin streaming a session's visible screen as encoded video on
+    /// the media channel. Replied to with `.streamStarted`, then a
+    /// `.streamConfig`, then a push stream of media frames.
+    case startSessionStream(sessionGuid: String, params: CompanionStreamParams)
+
+    /// Stop a live stream started with `.startSessionStream`. No reply beyond an
+    /// eventual `.streamEnded`.
+    case stopSessionStream(streamID: UInt32)
+
+    /// Ask the host to emit a keyframe now (on (re)subscribe, after a decode
+    /// error, or when resuming from background). No direct reply; a keyframe
+    /// arrives on the media channel.
+    case requestKeyframe(streamID: UInt32)
+
+    /// Update a running stream's parameters (frame-rate cap, bandwidth budget).
+    case updateStreamParams(streamID: UInt32, params: CompanionStreamParams)
+
+    /// Periodic flow-control feedback: the newest media PTS the phone has
+    /// received/displayed and its current decode-queue depth, so the host can
+    /// pace end-to-end (the relay hides TCP-level signals). No reply.
+    case streamAck(streamID: UInt32, lastPTSMilliseconds: UInt64, queueDepth: Int)
+
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
@@ -323,6 +405,8 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "fetchSessionScreenInfo", "fetchSessionContent", "fetchWorkgroupInfo",
         "fetchSessionTree", "pushStatus", "notificationPermissionResponse", "ping",
         "relayRoomSecret", "messagesSince", "syncSince", "unpairing",
+        "startSessionStream", "stopSessionStream", "requestKeyframe",
+        "updateStreamParams", "streamAck",
     ]
 }
 
@@ -427,6 +511,19 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// An error, optionally correlated to a request via the envelope.
     case error(CompanionError)
 
+    /// Reply to `.startSessionStream`: the stream is live with a negotiated codec.
+    case streamStarted(CompanionStreamStarted)
+
+    /// Stream (re)configuration: codec parameter sets and pixel geometry. Sent
+    /// right after `.streamStarted`, and again with a fresh generationId whenever
+    /// the geometry changes; the next media frame after a change sets its
+    /// configChanged flag.
+    case streamConfig(CompanionStreamConfig)
+
+    /// Unsolicited: the stream ended (client stopped it, the session closed, it
+    /// was superseded, or an error occurred).
+    case streamEnded(streamID: UInt32, reason: CompanionStreamEndReason)
+
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
@@ -434,6 +531,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "sessionContent", "workgroupInfo", "sessionTree", "pong",
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
         "unpaired", "messagesSince", "syncSince", "error",
+        "streamStarted", "streamConfig", "streamEnded",
     ]
 }
 

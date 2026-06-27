@@ -146,6 +146,9 @@ actor CompanionSession {
         case .syncSince: "syncSince"
         case .unpaired: "unpaired"
         case .error: "error"
+        case .streamStarted: "streamStarted"
+        case .streamConfig: "streamConfig"
+        case .streamEnded: "streamEnded"
         }
     }
 
