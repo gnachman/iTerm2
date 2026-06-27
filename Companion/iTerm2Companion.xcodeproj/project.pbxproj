@@ -33,6 +33,7 @@
 		5C8908D283572E2C9B8A87C8 /* CreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F99F81A57FAD5CB7160828D /* CreateView.swift */; };
 		6EFA1C777BF8F89B1ADAD336 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D3FEA6984796DC4CD99692 /* AppModel.swift */; };
 		72D53542FEFF31531976B66D /* CompanionClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85665D0E72B401EE56BAFF45 /* CompanionClient.swift */; };
+		73E61C64578BE54180942C4E /* CompanionHEVCFraming.swift in Sources */ = {isa = PBXBuildFile; fileRef = F163F73401D3427659D549FA /* CompanionHEVCFraming.swift */; };
 		7B624200888E205C4A51E37E /* CompanionNoise in Frameworks */ = {isa = PBXBuildFile; productRef = 142EA5B59C3ABC475159B7C4 /* CompanionNoise */; };
 		7DD44318B35BC2C0A110C3D2 /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8FA2D649F5A4E95296B9158 /* MessageBubbleView.swift */; };
 		86F3DB672FE3CEEDA09AF5C3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E24A92F9477597959F9353E0 /* Foundation.framework */; };
@@ -137,6 +138,7 @@
 		E3A21C6D0017626533817E5E /* SessionBrowserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionBrowserView.swift; sourceTree = "<group>"; };
 		E3A2BCDE5F5ACE080E518CA8 /* MentionParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MentionParser.swift; path = sources/ClaudeCode/Orchestration/MentionParser.swift; sourceTree = "<group>"; };
 		E5781E96CAC04116A07415C7 /* NSDictionaryCodableBox.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NSDictionaryCodableBox.swift; path = sources/Categories/NSDictionaryCodableBox.swift; sourceTree = "<group>"; };
+		F163F73401D3427659D549FA /* CompanionHEVCFraming.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionHEVCFraming.swift; path = sources/Companion/Shared/CompanionHEVCFraming.swift; sourceTree = "<group>"; };
 		F8FA2D649F5A4E95296B9158 /* MessageBubbleView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -304,6 +306,7 @@
 				42ECCE549BC946C0443BA106 /* CompanionSession.swift */,
 				508E2211C4ADF7AB23B5CF3F /* CompanionMediaFrame.swift */,
 				6B45585DFAFCF303451219BB /* CompanionFrameChannel.swift */,
+				F163F73401D3427659D549FA /* CompanionHEVCFraming.swift */,
 			);
 			name = SharedFromMac;
 			path = ..;
@@ -487,6 +490,7 @@
 				361F37C77D701894FFE06B38 /* SessionTreeList.swift in Sources */,
 				031D25E04F2526D1221E65C4 /* CompanionMediaFrame.swift in Sources */,
 				28B9863A97376BF11F48358A /* CompanionFrameChannel.swift in Sources */,
+				73E61C64578BE54180942C4E /* CompanionHEVCFraming.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -698,6 +698,7 @@
 		329255FAF6BE419BCB700B39 /* CodeReviewPromptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F0C4D86ED1181AF4DA5A4F /* CodeReviewPromptStore.swift */; };
 		355C6FC60EEF61A2C69E8D0E /* ArchiveClippingsBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B084D285B6C1CDDE2932596 /* ArchiveClippingsBuiltInFunction.swift */; };
 		355CFD74AA25EE29E0561F98 /* iTermWorkgroupsEditingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3C8D1807D495D39ED10205 /* iTermWorkgroupsEditingViewController.swift */; };
+		36D8261AC7F6D1A09CA1CBC9 /* CompanionHEVCFraming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7354D90938A3EB7434FB05B5 /* CompanionHEVCFraming.swift */; };
 		379BC6FDE40ED00F0D1B4CFD /* VT100PromptKind.h in Sources */ = {isa = PBXBuildFile; fileRef = 6D70E7DE7E81B39DC29CC27B /* VT100PromptKind.h */; };
 		38C1ECCA9DCF67E64C50E1BC /* iTermRenderingComparer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80A64098B399CE71B981E2C7 /* iTermRenderingComparer.swift */; };
 		398447BD6E0F4CA316672068 /* CompanionPairingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D4F38B871E9DA9C0AA5E10 /* CompanionPairingWindowController.swift */; };
@@ -6573,6 +6574,7 @@
 		6EFD41B9F2C6F53723CDF88B /* iTermArrangementKeys.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermArrangementKeys.h; sourceTree = "<group>"; };
 		6F87CB3CBFBF0D0E8781513C /* VT100StringConversionConfig.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VT100StringConversionConfig.h; sourceTree = "<group>"; };
 		7057439196C1E9D6AFF58395 /* iTermCursorBlinkFadeCurveIcon.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermCursorBlinkFadeCurveIcon.m; sourceTree = "<group>"; };
+		7354D90938A3EB7434FB05B5 /* CompanionHEVCFraming.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionHEVCFraming.swift; sourceTree = "<group>"; };
 		747097BB93FD0DED35E72C39 /* iTermWorkgroupController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupController.swift; sourceTree = "<group>"; };
 		756C32AB2597AC2E0047B3A9 /* iTermImage+Sixel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermImage+Sixel.h"; sourceTree = "<group>"; };
 		756C32AC2597AC2E0047B3A9 /* iTermImage+Sixel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermImage+Sixel.m"; sourceTree = "<group>"; };
@@ -10951,6 +10953,7 @@
 				5BB89D5E8FEBDEAE9E7370EC /* CompanionPushRelay.swift */,
 				D99A5372072C3A845A3FF589 /* CompanionMediaFrame.swift */,
 				C0A28E717306FFCBB02A7DB2 /* CompanionFrameChannel.swift */,
+				7354D90938A3EB7434FB05B5 /* CompanionHEVCFraming.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -21744,6 +21747,7 @@
 				0277DCA424D4359E736F9E65 /* CompanionAlertBridge.swift in Sources */,
 				C38E3AF02061D97048B95334 /* CompanionMediaFrame.swift in Sources */,
 				8422940974ABE7710C510035 /* CompanionFrameChannel.swift in Sources */,
+				36D8261AC7F6D1A09CA1CBC9 /* CompanionHEVCFraming.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
