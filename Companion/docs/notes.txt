@@ -1,6 +1,10 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- iTerm2 Buddy now asks for notification
+  permission when you turn on sending terminal
+  alerts to your iPhone on the Mac, instead of
+  only when an AI chat needs them.
 - Messages from a newer iTerm2 that this app
   doesn't understand now show a placeholder
   ("You need a newer version of iTerm2 Buddy to

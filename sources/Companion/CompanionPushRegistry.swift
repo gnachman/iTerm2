@@ -24,6 +24,7 @@ enum CompanionPushRegistry {
     private static let sandboxKey = "NoSyncCompanionPushTokenSandbox"
     private static let authorizationKey = "NoSyncCompanionPushAuthorization"
     private static let peerRevisionKey = "NoSyncCompanionPeerRevision"
+    private static let alertsEverEnabledKey = "NoSyncCompanionAlertsEverEnabled"
 
     // The secret authorizes push to the paired phone, so it is kept in the
     // keychain, not UserDefaults. To avoid a keychain prompt while the user is
@@ -138,11 +139,34 @@ enum CompanionPushRegistry {
         peerRevision >= CompanionProtocolVersion.contentlessWakeupRevision
     }
 
-    /// Whether terminal alerts can be delivered to the phone: a device is paired,
-    /// it is new enough to fetch them, and a notification could actually be sent.
-    /// The desktop "send to phone" UI gates on this.
+    /// Whether terminal alerts can actually be DELIVERED to the phone right now:
+    /// paired, new enough, AND able to be notified (authorized + token + secret).
+    /// The send path (CompanionAlertBridge.postTerminalAlert) gates on this.
     static var canSendAlertsToPhone: Bool {
         devicePaired && supportsContentlessWakeup && canNotify
+    }
+
+    /// Whether the desktop should OFFER the "send to phone" option: a revision-2
+    /// phone is paired. Deliberately does NOT require canNotify - the user opting in
+    /// is the immediate need that justifies asking iOS for notification permission,
+    /// so the control is enabled without a push token and enabling it triggers the
+    /// permission request (see CompanionPairingController.requestPushPermissionForAlerts).
+    static var canEnableAlertsToPhone: Bool {
+        devicePaired && supportsContentlessWakeup
+    }
+
+    /// Durable "the user has opted into phone alerts" flag, set the first time the
+    /// user turns the setting on. The mac advertises it in every `.hello` reply so a
+    /// connecting phone that hasn't yet been asked for notification permission knows
+    /// to ask - on connect, not on fragile timing. NOT cleared when permission is
+    /// decided (the phone gates re-asks on its own authorization) nor on unpair (the
+    /// intent is device-global, so a freshly paired phone is still asked).
+    static var alertsEverEnabled: Bool {
+        iTermUserDefaults.userDefaults().bool(forKey: alertsEverEnabledKey)
+    }
+
+    static func setAlertsEverEnabled(_ value: Bool) {
+        iTermUserDefaults.userDefaults().set(value, forKey: alertsEverEnabledKey)
     }
 
     /// True when asking for permission could possibly succeed: iOS only ever
@@ -224,6 +248,8 @@ enum CompanionPushRegistry {
         defaults.removeObject(forKey: sandboxKey)
         defaults.removeObject(forKey: authorizationKey)
         defaults.removeObject(forKey: peerRevisionKey)
+        // alertsEverEnabled is intentionally NOT cleared: it is device-global user
+        // intent, so a freshly paired phone is still asked for permission.
         CompanionMacIdentity.deletePairedPushSecret()
         secretLock.lock()
         cachedSecretHex = nil

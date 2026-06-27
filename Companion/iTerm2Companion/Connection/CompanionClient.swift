@@ -46,12 +46,22 @@ actor CompanionClient {
     /// mac's reply from the phone's side. Call FIRST, before any other request.
     /// .selfMustUpgrade -> upgrade the phone app; .peerMustUpgrade -> upgrade the
     /// Mac app.
-    func handshakeVersion() async throws -> CompanionProtocolVersion.Compatibility {
+    struct HandshakeResult {
+        var compatibility: CompanionProtocolVersion.Compatibility
+        /// The mac says the user has opted into phone alerts; if this phone hasn't
+        /// been asked for notification permission yet, it should ask.
+        var wantsNotificationPermission: Bool
+    }
+
+    func handshakeVersion() async throws -> HandshakeResult {
         let reply = try await session.request(.hello(revision: CompanionProtocolVersion.current,
                                                      minimumPeer: CompanionProtocolVersion.minimumPeer))
         switch reply {
-        case .hello(let revision, let minimumPeer):
-            return CompanionProtocolVersion.evaluate(peerRevision: revision, peerMinimumPeer: minimumPeer)
+        case .hello(let revision, let minimumPeer, let wantsNotificationPermission):
+            return HandshakeResult(
+                compatibility: CompanionProtocolVersion.evaluate(peerRevision: revision,
+                                                                 peerMinimumPeer: minimumPeer),
+                wantsNotificationPermission: wantsNotificationPermission ?? false)
         case .error(let error):
             throw error
         default:

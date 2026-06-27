@@ -205,6 +205,7 @@ final class CompanionHostBridge {
     func requestNotificationPermission() async -> CompanionPushAuthorization? {
         let requestID = nextHostRequestID
         nextHostRequestID += 1
+        DLog("Companion bridge: sending .requestNotificationPermission (requestID \(requestID)) to phone")
         send(.requestNotificationPermission(requestID: requestID), requestID: nil)
         return await withCheckedContinuation { continuation in
             permissionWaiters[requestID] = continuation
@@ -432,7 +433,8 @@ final class CompanionHostBridge {
     /// service and ask the mac to show an upgrade alert.
     private func handleHello(peerRevision: Int, peerMinimumPeer: Int, requestID: UInt64?) {
         send(.hello(revision: CompanionProtocolVersion.current,
-                    minimumPeer: CompanionProtocolVersion.minimumPeer),
+                    minimumPeer: CompanionProtocolVersion.minimumPeer,
+                    wantsNotificationPermission: CompanionPushRegistry.alertsEverEnabled),
              requestID: requestID)
         let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
                                                         peerMinimumPeer: peerMinimumPeer)

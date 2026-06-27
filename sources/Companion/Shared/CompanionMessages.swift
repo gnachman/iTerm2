@@ -338,8 +338,12 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
 
     /// Reply to the phone's `.hello`: the mac's companion-protocol revision and
     /// the oldest peer revision it accepts, so the phone can decide whether an
-    /// app upgrade is required.
-    case hello(revision: Int, minimumPeer: Int)
+    /// app upgrade is required. `wantsNotificationPermission` is true when the user
+    /// has opted into phone alerts: the phone, knowing its own permission state and
+    /// foreground status, asks iOS for notification permission if it hasn't yet.
+    /// Sent on every connect so it never depends on timing. Optional for
+    /// cross-version compatibility: an older mac omits it (decodes as nil -> false).
+    case hello(revision: Int, minimumPeer: Int, wantsNotificationPermission: Bool?)
 
     /// Reply to `.listChatsAndSessions`.
     case chatsAndSessions(chats: [CompanionChatListEntry], sessions: [CompanionSessionSummary])

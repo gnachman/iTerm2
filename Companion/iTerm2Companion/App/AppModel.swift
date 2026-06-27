@@ -935,9 +935,9 @@ final class AppModel {
         //     a deliberate teardown (CancellationError) propagates to the normal
         //     pairing retry path. We do NOT claim "upgrade the Mac" just because
         //     the connection broke.
-        let verdict: CompanionProtocolVersion.Compatibility
+        let handshake: CompanionClient.HandshakeResult
         do {
-            verdict = try await withThrowingTaskGroup(of: CompanionProtocolVersion.Compatibility.self) { group in
+            handshake = try await withThrowingTaskGroup(of: CompanionClient.HandshakeResult.self) { group in
                 group.addTask { try await client.handshakeVersion() }
                 group.addTask {
                     // A genuine elapse throws the sentinel; a cancelled sleep
@@ -967,7 +967,7 @@ final class AppModel {
         // Any OTHER error - a real transport drop (TransportError) or a deliberate
         // teardown (CancellationError) - is not an upgrade signal and propagates
         // out of loadHome to the normal pairing retry path.
-        switch verdict {
+        switch handshake.compatibility {
         case .compatible:
             break
         case .selfMustUpgrade:
@@ -978,6 +978,11 @@ final class AppModel {
             companionLog("Version handshake: the Mac app must upgrade")
             phase = .needsUpgrade(.mac)
             return
+        }
+        // The mac says the user opted into phone alerts: ask iOS for notification
+        // permission if we haven't yet (deferring to foreground if backgrounded).
+        if handshake.wantsNotificationPermission {
+            ensureNotificationPermission(replyTo: nil)
         }
         try await refreshLists()
         navigationPath = []
@@ -1047,6 +1052,20 @@ final class AppModel {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
+                    // Re-run the version handshake on every reconnect so the mac's
+                    // "user wants alerts" signal (carried in the .hello reply) is
+                    // honored on each connect, not just the initial pairing. A
+                    // failure here must not abort the reconnect, so it's best-effort.
+                    if let client {
+                        do {
+                            let handshake = try await client.handshakeVersion()
+                            if handshake.wantsNotificationPermission {
+                                ensureNotificationPermission(replyTo: nil)
+                            }
+                        } catch {
+                            companionLog("Reconnect version handshake failed: \(String(describing: error))")
+                        }
+                    }
                     reportPushStatus()
                     try await refreshLists()
                     if sessionTree != nil || selectedTab == .sessions {
@@ -1475,24 +1494,66 @@ final class AppModel {
     /// notification-permission prompt. Replies with the outcome; a grant is
     /// followed by a pushStatus carrying the token once APNs issues it.
     private func handleNotificationPermissionRequest(requestID: UInt64) {
-        Task {
-            let center = UNUserNotificationCenter.current()
-            var authorization = Self.authorization(
-                from: await center.notificationSettings().authorizationStatus)
-            if authorization == .notDetermined {
-                let granted = (try? await center.requestAuthorization(
-                    options: [.alert, .sound, .badge])) ?? false
-                authorization = granted ? .authorized : .denied
-                companionLog("Notification permission prompt answered: \(authorization.rawValue)")
+        companionLog("Received notification-permission request \(requestID)")
+        ensureNotificationPermission(replyTo: requestID)
+    }
+
+    /// Observer token for a deferred prompt; non-nil means we're waiting for the app
+    /// to become active before showing the iOS notification prompt.
+    private var becomeActiveObserver: NSObjectProtocol?
+
+    /// Ask iOS for notification permission when it makes sense, robustly:
+    ///  - already decided (authorized/denied): just report (and register if granted);
+    ///  - undetermined + app ACTIVE: show the prompt now;
+    ///  - undetermined + app NOT active (e.g. a background reconnect delivered the
+    ///    request): DEFER and show it the next time the app becomes active, so the
+    ///    prompt never depends on the request happening to land while foreground.
+    /// `replyTo` answers the orchestrator's request-id flow; nil for the hello flow.
+    private func ensureNotificationPermission(replyTo requestID: UInt64?) {
+        Task { await ensureNotificationPermissionImpl(replyTo: requestID) }
+    }
+
+    private func ensureNotificationPermissionImpl(replyTo requestID: UInt64?) async {
+        let center = UNUserNotificationCenter.current()
+        var authorization = Self.authorization(from: await center.notificationSettings().authorizationStatus)
+        companionLog("ensureNotificationPermission: status=\(authorization.rawValue), "
+            + "appState=\(UIApplication.shared.applicationState.rawValue)")
+        if authorization == .notDetermined {
+            guard UIApplication.shared.applicationState == .active else {
+                companionLog("App not active; deferring notification prompt to next foreground")
+                scheduleNotificationPromptOnNextActive()
+                if let requestID, let client {
+                    try? await client.sendNotificationPermissionResponse(requestID: requestID,
+                                                                         authorization: .notDetermined)
+                }
+                return
             }
-            if authorization == .authorized {
-                UIApplication.shared.registerForRemoteNotifications()
+            let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+            authorization = granted ? .authorized : .denied
+            companionLog("Notification permission prompt answered: \(authorization.rawValue)")
+        }
+        if authorization == .authorized {
+            UIApplication.shared.registerForRemoteNotifications()
+        }
+        if let requestID, let client {
+            try? await client.sendNotificationPermissionResponse(requestID: requestID,
+                                                                 authorization: authorization)
+        }
+        await sendPushStatus(authorization)
+    }
+
+    private func scheduleNotificationPromptOnNextActive() {
+        guard becomeActiveObserver == nil else { return }
+        becomeActiveObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                if let observer = self.becomeActiveObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                    self.becomeActiveObserver = nil
+                }
+                await self.ensureNotificationPermissionImpl(replyTo: nil)
             }
-            if let client {
-                try? await client.sendNotificationPermissionResponse(requestID: requestID,
-                                                                     authorization: authorization)
-            }
-            await sendPushStatus(authorization)
         }
     }
 

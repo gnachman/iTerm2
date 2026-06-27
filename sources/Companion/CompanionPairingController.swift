@@ -475,6 +475,21 @@ final class CompanionPairingController: NSObject {
         await bridge?.requestNotificationPermission()
     }
 
+    /// The user turned on "send alerts to my iPhone". Record the durable intent so
+    /// EVERY subsequent `.hello` tells the phone to ask for notification permission
+    /// (the robust, timing-independent path). Also nudge a currently-connected phone
+    /// immediately so opting in while the phone is foreground prompts right away
+    /// instead of waiting for the next connection.
+    func requestPushPermissionForAlerts() {
+        CompanionPushRegistry.setAlertsEverEnabled(true)
+        DLog("Companion: alerts opt-in recorded (authorization=\(CompanionPushRegistry.authorization.rawValue), presence=\(connectionPresence))")
+        if connectionPresence == .interactive,
+           CompanionPushRegistry.authorization == .notDetermined {
+            DLog("Companion: nudging connected phone to request notification permission now")
+            Task { [weak self] in _ = await self?.requestNotificationPermission() }
+        }
+    }
+
     /// Kick the paired device and delete the pairing: closes any live bridge,
     /// forgets the pairing id, and destroys the mac's static identity so a new
     /// one is generated for the next pairing.
