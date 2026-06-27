@@ -361,9 +361,9 @@ class ChatDatabase {
         }
     }
 
-    /// Newest-first window of alerts with seq greater than `sinceSeq`, plus the
-    /// store's max alert seq. nil on failure (distinct from empty), like
-    /// messagesSince.
+    /// Oldest-first (ASC) window of alerts with seq greater than `sinceSeq`, plus
+    /// the store's max alert seq. ASC so the alert floor drains contiguously from
+    /// the bottom. nil on failure (distinct from empty), like messagesSince.
     func alertsSince(sinceSeq: Int64,
                      limit: Int) -> (alerts: [CompanionAlertRecord], maxSeq: Int64)? {
         var alerts = [CompanionAlertRecord]()

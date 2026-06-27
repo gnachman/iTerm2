@@ -680,12 +680,14 @@ final class CompanionHostBridge {
         let alertReset = alertSeq > globalAlertTip
         let alertRows: [CompanionAlertRecord]
         let alertFloorTarget: Int64
+        let alertTruncated: Bool
         if alertReset {
             alertRows = []
             alertFloorTarget = globalAlertTip
+            alertTruncated = false
         } else {
             alertRows = alertProbe.alerts
-            let alertTruncated = alertProbe.alerts.count >= windowLimit
+            alertTruncated = alertProbe.alerts.count >= windowLimit
             alertFloorTarget = alertTruncated ? (alertProbe.alerts.last?.seq ?? globalAlertTip)
                                               : globalAlertTip
         }
@@ -751,8 +753,10 @@ final class CompanionHostBridge {
             .sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }
             .map { $0.element.item }
         // `truncated` only feeds the NSE's "+ more" hint now; the floor targets above
-        // already guarantee the tail is not skipped.
-        let truncated = messageTruncated
+        // already guarantee the tail is not skipped. Reflect EITHER stream being
+        // truncated (alerts can't truncate while the window exceeds the prune cap,
+        // but fold it in so a future sizing change can't silently drop the hint).
+        let truncated = messageTruncated || alertTruncated
 
         // Served a real reply -> burn the single-use nonce.
         if let nonce { _ = CompanionPushNonceRegistry.shared.consume(nonce) }
