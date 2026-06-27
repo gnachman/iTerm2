@@ -2658,13 +2658,22 @@ extension ChatViewController {
         if let chatID = pendingPanelChatID {
             pendingPanelChatID = nil
             load(chatID: chatID)
-            // load(chatID:) calls scrollToBottom, but at this point
-            // the gutter controller hasn't yet set the panel's frame
-            // — its positionPanels runs immediately after attach.
-            // Re-scroll on the next runloop so row heights are
-            // computed against the final tableview width.
+            // load(chatID:) ran reloadData while the gutter controller had
+            // not yet set the panel's frame (its positionPanels runs right
+            // after attach, and no layout pass has happened yet), so every
+            // row's height was measured against a table width of 0 and the
+            // bubbles came out hugely too tall, leaving big gaps. Re-measure
+            // on the next runloop now that the panel is at its final width.
+            // performLayoutNow() lays the table out at that width first;
+            // reloadData() then re-queries heightOfRow against it. A plain
+            // scrollToBottom isn't enough: performLayoutNow's width-change
+            // path only re-measures on a CHANGE, and lastTableViewWidth has
+            // already latched the final width by now, so it wouldn't re-fire.
             DispatchQueue.main.async { [weak self] in
-                self?.scrollToBottom(animated: false)
+                guard let self else { return }
+                self.performLayoutNow()
+                self.tableView.reloadData()
+                self.scrollToBottom(animated: false)
             }
         }
     }
