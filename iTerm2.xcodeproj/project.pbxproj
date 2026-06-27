@@ -1018,6 +1018,7 @@
 		82C1BB4D918C81532ED65EE4 /* iTermController+SessionLookupDiagnosis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B81856E5FFF3D6001EA8085 /* iTermController+SessionLookupDiagnosis.swift */; };
 		82C8876B3E6C833593501F97 /* SetTabStatusTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00885D5646181ED6CFE9A2DE /* SetTabStatusTrigger.swift */; };
 		833B6065F4848F124E956CCC /* WorkgroupVisualView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42ABD0E29FAE8BD4B694629 /* WorkgroupVisualView.swift */; };
+		8422940974ABE7710C510035 /* CompanionFrameChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A28E717306FFCBB02A7DB2 /* CompanionFrameChannel.swift */; };
 		8442E3770F2B54D3419663DB /* challenge-frame-detection.js in Resources */ = {isa = PBXBuildFile; fileRef = 832B7B71C0EE3B7635C7E77A /* challenge-frame-detection.js */; };
 		84914ABAD880FC4B174DFAF5 /* iTermTouchIDHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207C83644F1E850C9F1E918A /* iTermTouchIDHelper.swift */; };
 		84ADC3D7A7ED48A3AB5F1210 /* ClippingsGutterPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E403008EA58864DB2A3AED2 /* ClippingsGutterPanel.swift */; };
@@ -9620,6 +9621,7 @@
 		BB2BBD5361A436F82BFAB5CE /* AIPromptTemplateEvaluator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIPromptTemplateEvaluator.swift; sourceTree = "<group>"; };
 		BD02F2955BAF479EBAC063FE /* MentionParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionParser.swift; sourceTree = "<group>"; };
 		C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WordSelectionAtom.swift; sourceTree = "<group>"; };
+		C0A28E717306FFCBB02A7DB2 /* CompanionFrameChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionFrameChannel.swift; sourceTree = "<group>"; };
 		C10C843E3FEB7FC74ADE7DC0 /* AddClippingBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AddClippingBuiltInFunction.swift; sourceTree = "<group>"; };
 		C253AF0160FA01071B7DD22F /* CompanionPushSender.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPushSender.swift; sourceTree = "<group>"; };
 		C42ABD0E29FAE8BD4B694629 /* WorkgroupVisualView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupVisualView.swift; sourceTree = "<group>"; };
@@ -10948,6 +10950,7 @@
 				A99A211B9CCCCDFA3692A5C4 /* CompanionSession.swift */,
 				5BB89D5E8FEBDEAE9E7370EC /* CompanionPushRelay.swift */,
 				D99A5372072C3A845A3FF589 /* CompanionMediaFrame.swift */,
+				C0A28E717306FFCBB02A7DB2 /* CompanionFrameChannel.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -21740,6 +21743,7 @@
 				1025FC686CC215C5276A1630 /* CompanionAlert+Database.swift in Sources */,
 				0277DCA424D4359E736F9E65 /* CompanionAlertBridge.swift in Sources */,
 				C38E3AF02061D97048B95334 /* CompanionMediaFrame.swift in Sources */,
+				8422940974ABE7710C510035 /* CompanionFrameChannel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
