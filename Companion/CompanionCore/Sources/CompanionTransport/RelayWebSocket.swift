@@ -48,18 +48,44 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
     func resume() { task.resume() }
 
     func send(_ message: RelayWebSocketMessage) async throws {
-        switch message {
-        case .text(let s): try await task.send(.string(s))
-        case .data(let d): try await task.send(.data(d))
+        do {
+            switch message {
+            case .text(let s): try await task.send(.string(s))
+            case .data(let d): try await task.send(.data(d))
+            }
+        } catch {
+            logFailure("send", error)
+            throw error
         }
     }
 
     func receive() async throws -> RelayWebSocketMessage {
-        switch try await task.receive() {
+        let message: URLSessionWebSocketTask.Message
+        do {
+            message = try await task.receive()
+        } catch {
+            logFailure("receive", error)
+            throw error
+        }
+        switch message {
         case .string(let s): return .text(s)
         case .data(let d): return .data(d)
         @unknown default: throw TransportError.malformedFrame
         }
+    }
+
+    /// Log why the socket failed, including the WebSocket close code and reason the
+    /// relay sent (if any) and the underlying URLError, so a park or session drop is
+    /// diagnosable instead of surfacing as an opaque "closed". closeCode is .invalid
+    /// (0) for an abrupt transport drop with no close frame.
+    private func logFailure(_ op: String, _ error: Error) {
+        let code = task.closeCode.rawValue
+        let reason = task.closeReason
+            .flatMap { String(data: $0, encoding: .utf8) }
+            .map { $0.isEmpty ? "-" : $0 } ?? "-"
+        let ns = error as NSError
+        CompanionLog.log("Relay WS \(op) failed: closeCode=\(code) reason=\(reason) "
+            + "error=\(ns.domain)#\(ns.code) \(ns.localizedDescription)")
     }
 
     func sendPing() async -> Bool { await task.sendPingAsync() }

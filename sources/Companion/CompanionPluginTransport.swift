@@ -53,10 +53,26 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
 
     func receive() async throws -> RelayWebSocketMessage {
         let id = try await connectionID()
-        switch try await client.wsRecv(id) {
+        let incoming: CompanionPluginClient.Incoming
+        do {
+            incoming = try await client.wsRecv(id)
+        } catch {
+            // The plugin RPC itself failed (JS bridge gone, promise rejected): not a
+            // clean WebSocket close, so there's no close code to report.
+            let ns = error as NSError
+            CompanionLog.log("Relay WS (plugin) recv error: \(ns.domain)#\(ns.code) \(ns.localizedDescription)")
+            throw error
+        }
+        switch incoming {
         case .text(let s): return .text(s)
         case .data(let d): return .data(d)
-        case .closed: throw TransportError.closed
+        case .closed(let code, let reason):
+            // The relay (or an edge proxy) closed the socket. Surface the close code
+            // and reason so a short-lived park can be diagnosed: a clean relay close
+            // (1000/1001 with a reason) vs an abnormal drop with no close frame
+            // (1006, set by the plugin on a transport error).
+            CompanionLog.log("Relay WS (plugin) closed: closeCode=\(code) reason=\(reason.isEmpty ? "-" : reason)")
+            throw TransportError.closed
         }
     }
 
