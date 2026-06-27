@@ -760,6 +760,16 @@ final class CompanionPairingController: NSObject {
                 // the phone can reconnect; without this the mac goes silently
                 // dark. A closed park is routine churn, so retry quietly and
                 // surface only real faults (e.g. a connection/DNS failure).
+                //
+                // TODO(companion relay displaced): when the close reason is
+                // "displaced" (relay closeCode 1000, another mac-role connection
+                // took the room's single slot - see the close-code logging in
+                // PluginRelayWebSocket/URLSessionRelayWebSocket), re-parking after
+                // 5s just evicts the other instance, so two iTerm2 instances paired
+                // to the same room ping-pong forever. Back off (much longer, or stop
+                // re-parking) on a displaced close so a duplicate instance can't
+                // create an eviction storm. Needs the reason plumbed up from the
+                // transport to here (TransportError.closed currently carries none).
                 if (error as? TransportError) != .closed {
                     onFailed?(Self.userFacingDescription(of: error))
                 }
