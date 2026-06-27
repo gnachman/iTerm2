@@ -690,6 +690,14 @@ final class AppModel {
     /// Generous: a human is walking to a keyboard.
     private static let sasConfirmationTimeout: TimeInterval = 180
 
+    /// True when admission failed because the relay required a signed join (the room
+    /// is established and the verifier is registered). Used to self-heal a lost
+    /// "established" marker by retrying with a signature.
+    private static func admissionNeedsSignature(_ error: Error) -> Bool {
+        guard case let TransportError.connectionFailed(message) = error else { return false }
+        return message.range(of: "signature required", options: .caseInsensitive) != nil
+    }
+
     private func establish(code: PairingCode,
                            handshakeTimeout: TimeInterval = firstPairHandshakeTimeout,
                            requireConfirmation: Bool = false) async throws {
@@ -710,9 +718,26 @@ final class AppModel {
         companionLog("Admission proof: "
             + (pairingTicket != nil ? "App Attest ticket"
                : established ? "join signature" : "empty (open mode)"))
-        let transport = try await connector.connect(
-            to: PairingRendezvous(pairingID: code.pairingID),
-            timeout: 30)
+        let rendezvous = PairingRendezvous(pairingID: code.pairingID)
+        let transport: MessageTransport
+        do {
+            transport = try await connector.connect(to: rendezvous, timeout: 30)
+        } catch let error where !established
+                && Self.admissionNeedsSignature(error)
+                && PhoneIdentity.existingRoomSecret() != nil {
+            // Self-heal a lost/stale "established" marker: the relay still holds our
+            // verifier and demands a SIGNED join, but we attested because the marker
+            // was gone (e.g. a reinstall wiped the legacy UserDefaults copy before
+            // it was moved to the keychain). We DO have the room secret, so persist
+            // the marker and retry by signing - recovering without a re-pair, and
+            // signing first-try on every later connect. (Couples to the relay's
+            // "signature required" reason; if that drifts, the keychain marker plus a
+            // manual re-pair still recover.)
+            companionLog("Admission rejected (signature required) after attesting; retrying signed")
+            markVerifierRegistered(for: code)
+            let signingConnector = connectorForCode(code, nil, true)
+            transport = try await signingConnector.connect(to: rendezvous, timeout: 30)
+        }
         // The relay mints this for the phone at admission; present it to
         // /register. Captured before the handshake wraps the transport.
         let registrationToken = (transport as? RelayTransport)?.registrationToken
