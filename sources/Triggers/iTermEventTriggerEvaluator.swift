@@ -74,6 +74,16 @@ class EventTriggerEvaluator: NSObject {
     /// All event triggers grouped by match type
     private var eventTriggers: [iTermTriggerMatchType: [Trigger]] = [:]
 
+    /// Always-on built-in Codex title-status trigger. Seeded into the
+    /// eventTitleChanged bucket on every load so the Codex shim works with no
+    /// user configuration. It never lives in the profile and is never
+    /// serialized; the generic Title Changed trigger is the configurable path.
+    private lazy var builtinCodexTrigger: Trigger? = Trigger(fromUntrustedDict: [
+        kTriggerActionKey: "iTermCodexStatusTrigger",
+        kTriggerRegexKey: "",
+        kTriggerMatchTypeKey: NSNumber(value: iTermTriggerMatchType.eventTitleChanged.rawValue)
+    ])
+
     /// Idle timers keyed by trigger (using ObjectIdentifier)
     private var idleTimers: [ObjectIdentifier: Timer] = [:]
 
@@ -94,7 +104,18 @@ class EventTriggerEvaluator: NSObject {
     @objc init(sessionDescription: String) {
         self.sessionDescription = sessionDescription
         super.init()
+        seedBuiltinTriggers()
         DLog("[\(sessionDescription)] EventTriggerEvaluator initialized")
+    }
+
+    // Seed always-on built-in triggers that don't live in the profile. Called
+    // from init and after each load (loadFromProfileArray clears everything
+    // first). Keeps the Codex title-status shim working with no user config and
+    // before the profile has loaded.
+    private func seedBuiltinTriggers() {
+        if let builtinCodexTrigger {
+            eventTriggers[.eventTitleChanged, default: []].append(builtinCodexTrigger)
+        }
     }
 
     deinit {
@@ -129,6 +150,11 @@ class EventTriggerEvaluator: NSObject {
             }
             eventTriggers[matchType]?.append(trigger)
         }
+
+        // Re-seed the always-on built-in Codex title-status trigger. removeAll()
+        // above drops it each load. It fires on every title change (no titleRegex
+        // gate) so its action can clear status when the braille spinner vanishes.
+        seedBuiltinTriggers()
 
         DLog("[\(sessionDescription)] Loaded \(enabledEventTriggerCount) enabled event triggers across \(eventTriggers.count) event types")
 
@@ -211,6 +237,10 @@ class EventTriggerEvaluator: NSObject {
 
     @objc var hasJobEndedTrigger: Bool {
         return hasEnabledTrigger(for: .eventJobEnded)
+    }
+
+    @objc var hasTitleChangedTrigger: Bool {
+        return hasEnabledTrigger(for: .eventTitleChanged)
     }
 
     // Diff successive `foregroundJobAncestors` updates and fire
@@ -350,6 +380,27 @@ class EventTriggerEvaluator: NSObject {
                 fireTrigger(trigger, capturedStrings: [host])
             } else {
                 DLog("[\(sessionDescription)] Host '\(host)' did not match filter for trigger \(trigger.action)")
+            }
+        }
+    }
+
+    /// Called when the terminal title (OSC 0/1/2) changes
+    @objc func titleChanged(to title: String) {
+        DLog("[\(sessionDescription)] Title changed to: \(title)")
+        guard !disabled else {
+            DLog("[\(sessionDescription)] Disabled, skipping title changed triggers")
+            return
+        }
+        guard let triggers = eventTriggers[.eventTitleChanged] else {
+            DLog("[\(sessionDescription)] No title changed triggers configured")
+            return
+        }
+
+        for trigger in triggers where !trigger.disabled {
+            if matchesTitleFilter(trigger: trigger, title: title) {
+                fireTrigger(trigger, capturedStrings: [title])
+            } else {
+                DLog("[\(sessionDescription)] Title '\(title)' did not match filter for trigger \(trigger.action)")
             }
         }
     }
@@ -777,6 +828,10 @@ class EventTriggerEvaluator: NSObject {
 
     private func matchesHostFilter(trigger: Trigger, host: String) -> Bool {
         return matchesRegexParam(trigger: trigger, paramKey: "hostRegex", value: host)
+    }
+
+    private func matchesTitleFilter(trigger: Trigger, title: String) -> Bool {
+        return matchesRegexParam(trigger: trigger, paramKey: "titleRegex", value: title)
     }
 
     private func matchesUserFilter(trigger: Trigger, user: String) -> Bool {

@@ -592,6 +592,9 @@ typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
     // eventParams select which variable to watch ("variableName") and an
     // optional regex its new value must match ("variableValueRegex").
     iTermTriggerMatchTypeEventVariableChanged = 115,
+    // Terminal title (OSC 0/1/2) changed. The optional titleRegex param
+    // filters which titles fire; with no regex it fires on every change.
+    iTermTriggerMatchTypeEventTitleChanged = 116,
 };
 
 static inline BOOL iTermTriggerMatchTypeIsEvent(iTermTriggerMatchType type) {

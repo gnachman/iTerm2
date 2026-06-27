@@ -123,6 +123,7 @@ extern NSString * const kTriggerVariableValueRegexKey;
 - (void)triggerSetBufferInput:(Trigger *)trigger
                  shouldBuffer:(BOOL)shouldBuffer;
 - (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status;
+- (void)triggerSession:(Trigger *)trigger applyCodexTitleStatusWithTitle:(NSString *)title;
 - (void)triggerSession:(Trigger *)trigger
     enterWorkgroupWithIdentifier:(NSString *)workgroupUniqueIdentifier;
 - (void)triggerSessionExitWorkgroup:(Trigger *)trigger leaderOnly:(BOOL)leaderOnly;

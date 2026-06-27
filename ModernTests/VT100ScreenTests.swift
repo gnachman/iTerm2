@@ -1648,6 +1648,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
+    func screenApplyCodexTitleStatus(withTitle title: String) {
+
+    }
+
     func screenStatPath(_ path: String, queue: dispatch_queue_t, completion: @escaping (Int32, UnsafePointer<stat>) -> Void) {
         var s = stat()
         completion(0, &s)

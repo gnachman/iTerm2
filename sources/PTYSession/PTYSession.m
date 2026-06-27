@@ -7109,6 +7109,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job ancestors to %@ for trigger filtering", ancestorNames);
     [self applyForegroundJobAncestors:ancestorNames];
 
+    // Codex title adaptor needs to re-evaluate on foreground-job changes so the
+    // synthesized "working" status clears when codex exits and the shell takes
+    // over. Call the shim directly (not via the Title Changed event) since the
+    // title itself didn't change and user title-changed triggers shouldn't fire.
+    [self screenApplyCodexTitleStatusWithTitle:self.windowTitle];
+
     if ([name isEqualToString:@"sudo"]) {
         [self checkForSudoPasswordPromptToOfferTouchID];
     } else {
@@ -14871,6 +14877,36 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     title = [title stringByReplacingOccurrencesOfString:@"\\(" withString:@"\\\u200B("];
     [self setWindowTitle:title];
     [self.delegate sessionDidSetWindowTitle:title];
+    // A title change fires the Title Changed event; the built-in Codex trigger
+    // (and any user title-changed triggers) run from there.
+    if (_eventTriggerEvaluator.hasTitleChangedTrigger) {
+        [_eventTriggerEvaluator titleChangedTo:title];
+    }
+}
+
+// Codex CLI signals its working state via the OSC 0/1/2 title (braille-spinner
+// prefix while working, removed when idle / blocked on the user). Translate
+// that into iTermSessionTabStatus so the tab indicator and any consumers of
+// the OSC 21337 status model react the same way as for native emitters. Invoked
+// by the built-in Codex title-changed trigger and directly on foreground-job
+// changes (so working clears when codex exits without a fresh title).
+- (void)screenApplyCodexTitleStatusWithTitle:(NSString *)title {
+    // tabStatus is unsynchronized mutable state; same threading contract as
+    // screenSetTabStatus: which runs on the main thread.
+    ITAssertWithMessage([NSThread isMainThread],
+                        @"screenApplyCodexTitleStatusWithTitle: must run on main thread");
+    NSString *ancestorsJoined =
+        [[self variablesScope] valueForVariableName:iTermVariableKeySessionForegroundJobAncestors];
+    NSArray<NSString *> *ancestors =
+        ancestorsJoined.length ? [ancestorsJoined componentsSeparatedByString:@"\n"] : @[];
+    NSString *previousStatusText = self.tabStatus.statusText;
+    BOOL changed = [iTermCodexTitleStatusAdaptor applyForTitle:title
+                                              ancestorJobNames:ancestors
+                                                     tabStatus:self.tabStatus];
+    if (changed) {
+        [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
+        [_delegate sessionTabStatusDidChange:self];
+    }
 }
 
 - (NSString *)screenWindowTitle {

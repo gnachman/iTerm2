@@ -7436,6 +7436,12 @@ launchCoprocessWithCommand:(NSString *)command
     } name:@"trigger set tab status"];
 }
 
+- (void)triggerSession:(Trigger *)trigger applyCodexTitleStatusWithTitle:(NSString *)title {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenApplyCodexTitleStatusWithTitle:title];
+    } name:@"trigger apply codex title status"];
+}
+
 - (void)triggerSession:(Trigger *)trigger
     enterWorkgroupWithIdentifier:(NSString *)workgroupUniqueIdentifier {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
