@@ -33,10 +33,13 @@ public struct SyncFetchCoordinator {
     public enum RenderItem: Equatable {
         case message(chatID: String, chatName: String, uniqueID: UUID, author: String, body: String)
         case alert(alertID: UUID, threadKey: String, title: String, body: String)
-        /// A forward-compatible placeholder for an item this build couldn't decode
-        /// (CompanionSyncItem.unsupported). The shell renders a generic "update to
-        /// view" notification; `id` is a fresh identifier so it shows distinctly.
-        case placeholder(id: UUID)
+        /// A forward-compatible placeholder for one or more items this build
+        /// couldn't decode (CompanionSyncItem.unsupported). The shell renders a
+        /// single generic "update to view" notification with a STABLE identifier, so
+        /// a duplicate push and the host's repeated resends of an unknown-kind item
+        /// (which this build has no floor to advance past) coalesce onto one
+        /// standing notification instead of piling up.
+        case placeholder
     }
 
     public enum Decision: Equatable {
@@ -151,10 +154,14 @@ public struct SyncFetchCoordinator {
                 renderItems.append(.alert(alertID: a.alertID, threadKey: a.threadKey,
                                           title: a.title, body: a.body))
             case .unsupported:
-                // A future item kind we can't decode: surface a placeholder rather
-                // than dropping it (forward compatibility). The host's floors still
-                // advance via maxMessageSeq/maxAlertSeq, so it isn't re-fetched.
-                renderItems.append(.placeholder(id: UUID()))
+                // A future item kind we can't decode: surface ONE placeholder for
+                // the whole batch (forward compatibility) rather than dropping it.
+                // At most one per reply, with a stable id (see the shell), so
+                // repeated unknown-kind items - which this build has no floor to
+                // advance past - don't accumulate.
+                if !renderItems.contains(.placeholder) {
+                    renderItems.append(.placeholder)
+                }
             }
         }
 

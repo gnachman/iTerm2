@@ -112,18 +112,20 @@ final class SyncFetchCoordinatorTests: XCTestCase {
         XCTAssertEqual(chatIDs(items), ["A"], "the decodable message must still render")
     }
 
-    func testOnlyUnsupportedItemsStillShowsContent() async {
-        // A batch of only-unknown items is still content (placeholders), not silent.
+    func testMultipleUnsupportedItemsCoalesceToOnePlaceholder() async {
+        // A batch of only-unknown items is still content (not silent), but the
+        // placeholders coalesce to ONE - they share a stable identity, so several in
+        // a batch (and resends across syncs) collapse to a single standing prompt.
         let s = store()
         s.advanceFloor(.message, to: 0)
         let coord = coordinator(s) { [self] in
-            reply([.unsupported, .unsupported], maxMessageSeq: 0, maxAlertSeq: 0)
+            reply([.unsupported, .unsupported, .unsupported], maxMessageSeq: 0, maxAlertSeq: 0)
         }
         let outcome = await coord.run()
         guard case let .content(items, _) = outcome.decision else {
-            return XCTFail("expected content (placeholders), not silent")
+            return XCTFail("expected content (a placeholder), not silent")
         }
-        XCTAssertEqual(items.count, 2)
+        XCTAssertEqual(items, [.placeholder], "many unknown items -> one placeholder")
     }
 
     func testRunDoesNotMutateUntilCommit() async {

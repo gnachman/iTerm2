@@ -342,21 +342,26 @@ final class NotificationService: UNNotificationServiceExtension {
             let title: String
             let body: String
             let threadID: String
+            let isPlaceholder: Bool
         }
+        // Stable, constant identity for the forward-compat placeholder: a duplicate
+        // push and the host's repeated resends of an unknown-kind item all reuse it,
+        // so they coalesce onto ONE standing notification rather than stacking.
+        let placeholderID = "companion.placeholder"
         let specs: [Spec] = items.map { item in
             switch item {
             case let .message(chatID, chatName, uniqueID, _, body):
                 return Spec(id: uniqueID.uuidString, title: chatName, body: body,
-                            threadID: CompanionThreadKey.make(roomSecret: roomSecret, input: chatID))
+                            threadID: CompanionThreadKey.make(roomSecret: roomSecret, input: chatID),
+                            isPlaceholder: false)
             case let .alert(alertID, threadKey, title, body):
                 return Spec(id: alertID.uuidString, title: title, body: body,
-                            threadID: CompanionThreadKey.make(roomSecret: roomSecret, input: "alert:" + threadKey))
-            case let .placeholder(id):
-                // Forward-compat: an item this build couldn't decode. Show a generic
-                // notification instead of dropping it, grouped under one thread.
-                return Spec(id: id.uuidString, title: "iTerm2 Buddy",
+                            threadID: CompanionThreadKey.make(roomSecret: roomSecret, input: "alert:" + threadKey),
+                            isPlaceholder: false)
+            case .placeholder:
+                return Spec(id: placeholderID, title: "iTerm2 Buddy",
                             body: "You have a new notification. Update iTerm2 Buddy to view it.",
-                            threadID: "companion.placeholder")
+                            threadID: placeholderID, isPlaceholder: true)
             }
         }
         guard !specs.isEmpty else {
@@ -376,16 +381,20 @@ final class NotificationService: UNNotificationServiceExtension {
         // Deliver every item via add() with its unique id; await all completions and
         // track whether any failed (a failed add() means that item wasn't shown, so
         // we must not let the floor advance past it).
+        // The sound + "+ more" hint go to the newest REAL (non-placeholder) item.
+        // The placeholder is always silent: it is a standing prompt the host resends
+        // every sync, so alerting on each resend would nag the user repeatedly.
+        let soundIndex = specs.lastIndex { !$0.isPlaceholder }
         let allAccepted: Bool = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             let group = DispatchGroup()
             let lock = NSLock()
             var ok = true
             for (index, spec) in specs.enumerated() {
-                let isNewest = index == specs.count - 1   // newest carries sound + "+ more"
+                let carriesSound = (index == soundIndex)
                 let content = UNMutableNotificationContent()
                 content.title = spec.title
-                content.body = (isNewest && truncated) ? spec.body + " (+ more)" : spec.body
-                content.sound = isNewest ? .default : nil
+                content.body = (carriesSound && truncated) ? spec.body + " (+ more)" : spec.body
+                content.sound = carriesSound ? .default : nil
                 content.threadIdentifier = spec.threadID
                 let request = UNNotificationRequest(identifier: spec.id, content: content, trigger: nil)
                 group.enter()
