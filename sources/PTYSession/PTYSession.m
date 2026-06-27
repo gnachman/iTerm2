@@ -400,6 +400,38 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
 @end
 
+// Background-drawing delegate used when rendering a screenshot. It forwards to the
+// session but forces transparency off, so the saved/preview background image is opaque
+// (a screenshot has nothing behind it). This matches the tile branch, which also draws
+// at full alpha. See -screenshotBackgroundSliceForRect:ofTotalSize:.
+@interface iTermScreenshotBackgroundDrawingDelegate : NSObject <iTermBackgroundDrawingHelperDelegate>
+@property (nonatomic, weak) PTYSession *session;
+@end
+
+@implementation iTermScreenshotBackgroundDrawingDelegate
+- (SessionView *)backgroundDrawingHelperView {
+    return [self.session backgroundDrawingHelperView];
+}
+- (iTermImageWrapper *)backgroundDrawingHelperImage {
+    return [self.session backgroundDrawingHelperImage];
+}
+- (BOOL)backgroundDrawingHelperUseTransparency {
+    return NO;
+}
+- (CGFloat)backgroundDrawingHelperTransparency {
+    return 0;
+}
+- (iTermBackgroundImageMode)backgroundDrawingHelperBackgroundImageMode {
+    return [self.session backgroundDrawingHelperBackgroundImageMode];
+}
+- (NSColor *)backgroundDrawingHelperDefaultBackgroundColor {
+    return [self.session backgroundDrawingHelperDefaultBackgroundColor];
+}
+- (CGFloat)backgroundDrawingHelperBlending {
+    return [self.session backgroundDrawingHelperBlending];
+}
+@end
+
 @implementation PTYSession {
 
     NSString *_termVariable;
@@ -592,6 +624,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSessionTabStatus *_tabStatus;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
+    // Used to render the background behind a screenshot with transparency forced off.
+    // Held strongly because iTermBackgroundDrawingHelper's delegate is weak.
+    iTermBackgroundDrawingHelper *_screenshotBackgroundDrawingHelper;
+    iTermScreenshotBackgroundDrawingDelegate *_screenshotBackgroundDrawingDelegate;
     iTermBackgroundImageRotationManager *_backgroundImageRotator;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
 
@@ -8313,6 +8349,71 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         }
     }
     return [_view snapshot];
+}
+
+- (NSImage *)screenshotBackgroundSliceForRect:(NSRect)sliceRect ofTotalSize:(NSSize)totalSize {
+    if (sliceRect.size.width <= 0 || sliceRect.size.height <= 0 ||
+        totalSize.width <= 0 || totalSize.height <= 0) {
+        return nil;
+    }
+    // Force the fill opaque: a screenshot has nothing behind it, so transparency
+    // settings shouldn't leak into the saved file.
+    NSColor *backgroundColor = [[self processedBackgroundColor] colorWithAlphaComponent:1] ?: [NSColor blackColor];
+    // The slice image's coordinate space is local (origin at 0,0); sliceRect is expressed
+    // in the full screenshot's space (origin at bottom-left). localRect is the whole slice.
+    const NSRect localRect = NSMakeRect(0, 0, sliceRect.size.width, sliceRect.size.height);
+    NSImage *result = [[NSImage alloc] initWithSize:sliceRect.size];
+    [result lockFocus];
+    [backgroundColor set];
+    NSRectFillUsingOperation(localRect, NSCompositingOperationCopy);
+
+    iTermImageWrapper *backgroundImage = [self effectiveBackgroundImage];
+    if (backgroundImage) {
+        const iTermBackgroundImageMode mode = [self effectiveBackgroundImageMode];
+        if (mode == iTermBackgroundImageModeTile) {
+            // Tiling is independent of the window/screenshot size, so we draw it directly
+            // rather than via the helper (whose patterned-image cache would allocate a
+            // full-screenshot-size bitmap). The pattern phase keeps tiles continuous
+            // across slices/batches.
+            NSGraphicsContext *context = [NSGraphicsContext currentContext];
+            [context saveGraphicsState];
+            context.patternPhase = NSMakePoint(-sliceRect.origin.x, -sliceRect.origin.y);
+            [[NSColor colorWithPatternImage:backgroundImage.image] set];
+            NSRectFillUsingOperation(localRect, NSCompositingOperationSourceOver);
+            [context restoreGraphicsState];
+            // Blend the default background over the image, matching the live path.
+            [[backgroundColor colorWithAlphaComponent:1.0 - self.effectiveBlend] set];
+            NSRectFillUsingOperation(localRect, NSCompositingOperationSourceOver);
+        } else {
+            // Stretch / scale-aspect-fit / scale-aspect-fill: reuse the live drawing so the
+            // mode and blend match on screen. The image is laid out as though the pane were
+            // the full screenshot size; we translate so this slice lands at the origin. The
+            // helper draws the source image scaled into the slice, so memory stays bounded.
+            // A dedicated delegate forces transparency off so the image is opaque, matching
+            // the tile branch (the live _backgroundDrawingHelper would apply window
+            // transparency, washing the image toward the background color).
+            if (!_screenshotBackgroundDrawingHelper) {
+                _screenshotBackgroundDrawingDelegate = [[iTermScreenshotBackgroundDrawingDelegate alloc] init];
+                _screenshotBackgroundDrawingDelegate.session = self;
+                _screenshotBackgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
+                _screenshotBackgroundDrawingHelper.delegate = _screenshotBackgroundDrawingDelegate;
+            }
+            NSAffineTransform *transform = [NSAffineTransform transform];
+            [transform translateXBy:-sliceRect.origin.x yBy:-sliceRect.origin.y];
+            [transform concat];
+            const NSRect totalRect = NSMakeRect(0, 0, totalSize.width, totalSize.height);
+            NSView *scratch = [[NSView alloc] initWithFrame:totalRect];
+            [_screenshotBackgroundDrawingHelper drawBackgroundImageInView:scratch
+                                                                container:scratch
+                                                                dirtyRect:sliceRect
+                                                   visibleRectInContainer:totalRect
+                                                   blendDefaultBackground:YES
+                                                                     flip:NO
+                                                            virtualOffset:0];
+        }
+    }
+    [result unlockFocus];
+    return result;
 }
 
 - (NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size {

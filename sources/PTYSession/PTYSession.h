@@ -1069,6 +1069,16 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // source), so the returned image may include chrome or be empty in those cases.
 - (nullable NSImage *)terminalContentSnapshot;
 
+// Renders one slice of the session's configured background (a background image
+// with its mode and default-background blend, or the solid background color when
+// there's no image) for compositing behind a screenshot whose content has
+// transparent margins and uncovered areas. The background is laid out as though
+// the pane were `totalSize`; `sliceRect` (in that full space, origin bottom-left)
+// selects the region to render, so callers can render large screenshots in bounded
+// pieces. Must be called on the main thread. The result is opaque.
+- (nullable NSImage *)screenshotBackgroundSliceForRect:(NSRect)sliceRect
+                                           ofTotalSize:(NSSize)totalSize;
+
 - (void)enterPassword:(NSString *)password;
 
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement

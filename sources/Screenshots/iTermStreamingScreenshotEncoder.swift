@@ -17,6 +17,9 @@ class iTermStreamingScreenshotEncoder: NSObject {
     private let redactionManager: iTermScreenshotRedactionManager?
     private let redactionMethod: iTermBlurredScreenshotObscureMethod?
     private let backgroundColor: NSColor
+    /// The session, used to render a background slice per batch (bounded memory) so the
+    /// screenshot's transparent margins and uncovered areas match what's on screen.
+    private weak var session: PTYSession?
 
     private var pngWriter: iTermStreamingPNGWriter?
     private var cancelled = false
@@ -37,17 +40,20 @@ class iTermStreamingScreenshotEncoder: NSObject {
     /// @param destinationURL Where to write the PNG file
     /// @param redactionManager Optional manager for redaction annotations
     /// @param redactionMethod Optional method for applying redactions
+    /// @param session The session, used to render the background behind the content.
     @objc init(textView: PTYTextView,
                lineRange: NSRange,
                destinationURL: URL,
                redactionManager: iTermScreenshotRedactionManager?,
-               redactionMethod: iTermBlurredScreenshotObscureMethod?) {
+               redactionMethod: iTermBlurredScreenshotObscureMethod?,
+               session: PTYSession?) {
         self.textView = textView
         self.lineRange = lineRange
         self.destinationURL = destinationURL
         self.redactionManager = redactionManager
         self.redactionMethod = redactionMethod
         self.backgroundColor = textView.colorMap?.color(forKey: kColorMapBackground) ?? .black
+        self.session = session
         super.init()
     }
 
@@ -126,10 +132,22 @@ class iTermStreamingScreenshotEncoder: NSObject {
             let linesToRender = min(batchSize, remainingLines)
             let batchRange = NSRange(location: currentLine, length: linesToRender)
 
-            // Render the batch on the main thread (required for drawing)
+            // This batch's geometry within the full content, in NSImage coordinates
+            // (Y=0 at bottom). Used for both the background slice and the redaction filter.
+            let batchImageHeight = CGFloat(linesToRender) * lineHeight
+            let batchStartY = CGFloat(lineRange.location + lineRange.length - currentLine - linesToRender) * lineHeight
+
+            // Render the batch and its background slice on the main thread (drawing,
+            // and the session's lockFocus-based background renderer, require it). The
+            // background is rendered one batch-sized slice at a time so memory stays
+            // bounded the way the rest of the streaming path is.
             var batchImage: NSImage?
+            var batchBackground: NSImage?
             DispatchQueue.main.sync {
                 batchImage = textView.renderLines(toImage: batchRange)
+                let totalSize = NSSize(width: width, height: CGFloat(lineRange.length) * lineHeight)
+                let sliceRect = NSRect(x: 0, y: batchStartY, width: width, height: batchImageHeight)
+                batchBackground = session?.screenshotBackgroundSlice(for: sliceRect, ofTotalSize: totalSize)
             }
 
             guard let image = batchImage else {
@@ -141,10 +159,6 @@ class iTermStreamingScreenshotEncoder: NSObject {
             // Apply redactions if needed
             var processedImage = image
             if !pointRedactionRects.isEmpty, let method = redactionMethod {
-                // Filter rects that apply to this batch (in point coordinates)
-                let batchImageHeight = CGFloat(linesToRender) * lineHeight
-                let batchStartY = CGFloat(lineRange.location + lineRange.length - currentLine - linesToRender) * lineHeight
-
                 NSLog("StreamingEncoder batch: currentLine=\(currentLine), linesToRender=\(linesToRender), batchStartY=\(batchStartY), batchImageHeight=\(batchImageHeight)")
 
                 let batchRects = pointRedactionRects.filter { value in
@@ -189,6 +203,12 @@ class iTermStreamingScreenshotEncoder: NSObject {
                         processedImage = highlighted
                     }
                 }
+            }
+
+            // Composite over the batch's background slice so transparent margins and
+            // uncovered areas are filled and the batch is opaque.
+            if let batchBackground = batchBackground {
+                processedImage = iTermAnnotatedScreenshot.compositing(processedImage, overBackground: batchBackground)
             }
 
             // Extract pixel data from the image

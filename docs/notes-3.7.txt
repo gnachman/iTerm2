@@ -507,6 +507,11 @@ Bug Fixes:
   better: they see just the current screen and
   can use a new scroll-wheel tool to page back
   through the app’s own history.
+- Saved and copied screenshots now fill margins
+  and other uncovered areas with the session’s
+  background (including a background image, with
+  its blend and scaling) instead of leaving them
+  transparent.
 - The session-logging and archive folder
   pickers now use the folder you select rather
   than its parent when you don’t open it first.

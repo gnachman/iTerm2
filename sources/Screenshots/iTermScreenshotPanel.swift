@@ -106,6 +106,21 @@ class iTermScreenshotPanel: NSPanel {
     private var blurControlsContainer: NSView!
     private var colorControlsContainer: NSView!
 
+    /// A Photoshop-style checkerboard, used as the preview scroll view's background so the
+    /// area outside the saved image is visually distinct from the image itself.
+    private static let checkerboardBackgroundColor: NSColor = {
+        let square: CGFloat = 8
+        let image = NSImage(size: NSSize(width: square * 2, height: square * 2))
+        image.lockFocus()
+        NSColor(white: 0.93, alpha: 1).setFill()
+        NSRect(x: 0, y: 0, width: square * 2, height: square * 2).fill()
+        NSColor(white: 0.80, alpha: 1).setFill()
+        NSRect(x: 0, y: 0, width: square, height: square).fill()
+        NSRect(x: square, y: square, width: square, height: square).fill()
+        image.unlockFocus()
+        return NSColor(patternImage: image)
+    }()
+
     // Preview
     private var onDemandPreview: iTermScreenshotOnDemandPreview!
     private var previewScrollView: NSScrollView!
@@ -252,6 +267,18 @@ class iTermScreenshotPanel: NSPanel {
         previewScrollView.layer?.borderWidth = 1
         previewScrollView.layer?.borderColor = NSColor.separatorColor.cgColor
         previewScrollView.layer?.cornerRadius = 4
+        // Draw a checkerboard wherever the image content doesn't reach, so the boundary
+        // of what will be saved is obvious when the image is smaller than the preview
+        // (e.g. zoomed to fit). The clip view paints it directly in draw(): we turn off
+        // the scroll view's own background (which otherwise inserts an opaque background
+        // view above the clip), and the clip's drawsBackground (so AppKit doesn't replace
+        // our drawing with a solid layer background color).
+        previewScrollView.drawsBackground = false
+        let checkerboardClipView = iTermCheckerboardClipView()
+        checkerboardClipView.checkerboardColor = Self.checkerboardBackgroundColor
+        checkerboardClipView.drawsBackground = false
+        checkerboardClipView.copiesOnScroll = false
+        previewScrollView.contentView = checkerboardClipView
         previewScrollView.contentView.postsBoundsChangedNotifications = false
         contentView.addSubview(previewScrollView)
 
@@ -1007,6 +1034,7 @@ class iTermScreenshotPanel: NSPanel {
         onDemandPreview.lineRange = lineRange
         onDemandPreview.redactionManager = redactionManager
         onDemandPreview.redactionMethod = method
+        onDemandPreview.session = session
         onDemandPreview.invalidateTileCache()
 
         // Calculate content size
@@ -1139,6 +1167,7 @@ class iTermScreenshotPanel: NSPanel {
 
         let method = currentMethod()
         let lineRange = currentLineRange()
+        let backgroundColor = textView.colorMap.color(forKey: kColorMapBackground) ?? .black
 
         // Render the line range to an image (same as preview)
         guard var renderedImage = textView.renderLines(toImage: lineRange) else {
@@ -1162,16 +1191,26 @@ class iTermScreenshotPanel: NSPanel {
         // Apply highlights using image coordinates
         let groupedHighlightRects = redactionManager.groupedHighlightRects(for: textView, lineRange: lineRange)
         if !groupedHighlightRects.isEmpty {
-            let bgColor = textView.colorMap.color(forKey: kColorMapBackground) ?? .black
             if let highlightedImage = iTermAnnotatedScreenshot.applyHighlights(
                 to: renderedImage,
                 groupedRects: groupedHighlightRects,
                 outlineColor: .systemYellow,
                 outlineWidth: 3,
                 shadowRadius: 20,
-                backgroundColor: bgColor
+                backgroundColor: backgroundColor
             ) {
                 renderedImage = highlightedImage
+            }
+        }
+
+        // Composite over the session's real background (image with its mode and blend,
+        // or the solid background color) so transparent margins and uncovered areas
+        // match what's on screen and the result is opaque. The non-streaming path is
+        // only used for small screenshots, so a single full-size slice is bounded.
+        if let session = session {
+            let fullRect = NSRect(origin: .zero, size: renderedImage.size)
+            if let background = session.screenshotBackgroundSlice(for: fullRect, ofTotalSize: renderedImage.size) {
+                renderedImage = iTermAnnotatedScreenshot.compositing(renderedImage, overBackground: background)
             }
         }
 
@@ -1215,7 +1254,8 @@ class iTermScreenshotPanel: NSPanel {
             lineRange: lineRange,
             destinationURL: tempURL,
             redactionManager: redactionManager,
-            redactionMethod: method
+            redactionMethod: method,
+            session: session
         )
 
         streamingEncoder = encoder
@@ -1351,7 +1391,8 @@ class iTermScreenshotPanel: NSPanel {
             lineRange: partLineRange,
             destinationURL: destinationURL,
             redactionManager: redactionManager,
-            redactionMethod: state.method
+            redactionMethod: state.method,
+            session: session
         )
 
         streamingEncoder = encoder
@@ -1512,5 +1553,31 @@ extension iTermScreenshotPanel: NSTableViewDelegate {
 extension iTermScreenshotPanel: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         finish(with: nil)
+    }
+}
+
+/// A clip view that paints a checkerboard behind the document view, so the area outside
+/// the screenshot image (visible when the image is smaller than the preview, e.g. zoomed
+/// to fit) is visually distinct. We draw the pattern in `draw(_:)` rather than via
+/// `backgroundColor` because a pattern-image color does not render on a layer-backed clip
+/// view (it collapses to a solid layer background color).
+private final class iTermCheckerboardClipView: NSClipView {
+    var checkerboardColor: NSColor? {
+        didSet {
+            needsDisplay = true
+        }
+    }
+
+    override var isOpaque: Bool {
+        return checkerboardColor != nil
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let checkerboardColor = checkerboardColor else {
+            super.draw(dirtyRect)
+            return
+        }
+        checkerboardColor.setFill()
+        dirtyRect.fill()
     }
 }

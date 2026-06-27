@@ -31,6 +31,17 @@ class iTermScreenshotOnDemandPreview: NSView {
     /// The redaction method to use
     @objc var redactionMethod: iTermBlurredScreenshotObscureMethod?
 
+    /// The session, used to render the background (configured image with its mode/blend,
+    /// or solid color) behind the tiles so the preview matches the saved screenshot. The
+    /// background is drawn one dirty-rect-sized slice at a time, mirroring the tiled
+    /// content rendering, so no full-content bitmap is held. When nil, the terminal's
+    /// background color is used.
+    @objc weak var session: PTYSession? {
+        didSet {
+            needsDisplay = true
+        }
+    }
+
     /// Number of lines per tile for caching
     private let linesPerTile = 50
 
@@ -57,6 +68,13 @@ class iTermScreenshotOnDemandPreview: NSView {
         return true
     }
 
+    // Not opaque: the area outside the image content must let the checkerboard clip view
+    // behind it show through. If this view were opaque, its layer would fill the gutter
+    // (the region not covered by image content) with black.
+    override var isOpaque: Bool {
+        return false
+    }
+
     override var intrinsicContentSize: NSSize {
         let height = CGFloat(lineRange.length) * lineHeight
         return NSSize(width: contentWidth, height: height)
@@ -74,6 +92,11 @@ class iTermScreenshotOnDemandPreview: NSView {
 
     private func commonInit() {
         wantsLayer = true
+        // Keep the layer transparent and clipped to bounds so nothing outside the image
+        // content paints over the checkerboard behind this view.
+        layer?.isOpaque = false
+        layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.masksToBounds = true
         // Configure cache limits - keep ~20 tiles in memory
         tileCache.countLimit = 20
     }
@@ -86,25 +109,38 @@ class iTermScreenshotOnDemandPreview: NSView {
         needsDisplay = true
     }
 
+    /// Draws the session background (the configured image with its mode/blend, or the
+    /// solid background color) so the preview matches the saved screenshot.
+    private func drawBackground(_ dirtyRect: NSRect) {
+        // Render only the dirty region's slice (the view is flipped, so convert to the
+        // background's bottom-left origin space) to keep memory bounded like the tiles.
+        if let session = session, bounds.height > 0 {
+            let sliceRect = NSRect(x: dirtyRect.origin.x,
+                                   y: bounds.height - dirtyRect.maxY,
+                                   width: dirtyRect.width,
+                                   height: dirtyRect.height)
+            if let slice = session.screenshotBackgroundSlice(for: sliceRect, ofTotalSize: bounds.size) {
+                slice.draw(in: dirtyRect,
+                           from: .zero,
+                           operation: .copy,
+                           fraction: 1.0,
+                           respectFlipped: true,
+                           hints: nil)
+                return
+            }
+        }
+        (textView?.colorMap?.color(forKey: kColorMapBackground) ?? .black).setFill()
+        dirtyRect.fill()
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         guard let textView = textView, lineRange.length > 0 else {
-            // Draw background color
-            if let bgColor = textView?.colorMap?.color(forKey: kColorMapBackground) {
-                bgColor.setFill()
-            } else {
-                NSColor.black.setFill()
-            }
-            dirtyRect.fill()
+            drawBackground(dirtyRect)
             return
         }
 
         // Fill background first
-        if let bgColor = textView.colorMap?.color(forKey: kColorMapBackground) {
-            bgColor.setFill()
-        } else {
-            NSColor.black.setFill()
-        }
-        dirtyRect.fill()
+        drawBackground(dirtyRect)
 
         // Calculate which tiles are visible
         let visibleTiles = tilesIntersecting(dirtyRect)
