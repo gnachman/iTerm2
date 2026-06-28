@@ -496,4 +496,12 @@ class TypingStatusModel {
         let pc = PersonChat(participant: participant, chatID: chatID)
         return typing.contains(pc)
     }
+
+    func chatIDs(forParticipant participant: Participant) -> Set<String> {
+        var result = Set<String>()
+        for pc in typing where pc.participant == participant {
+            result.insert(pc.chatID)
+        }
+        return result
+    }
 }
