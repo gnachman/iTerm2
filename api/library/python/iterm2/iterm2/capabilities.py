@@ -216,3 +216,14 @@ def check_supports_prompt_excluded_subranges(connection):
             "This version of iTerm2 is too old to report excluded subranges " +
             "(PS2 prefixes, right-prompt cells) on prompts. You should " +
             "upgrade to run this script.")
+
+def supports_screenshot(connection):
+    """Can you use Session.async_screenshot()?"""
+    min_ver = (1, 17)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_screenshot(connection):
+    if not supports_screenshot(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to capture screenshots via " +
+            "the Python API. You should upgrade to run this script.")

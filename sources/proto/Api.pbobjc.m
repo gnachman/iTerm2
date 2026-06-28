@@ -10565,12 +10565,10 @@ BOOL ITMGetBufferResponse_Status_IsValidValue(int32_t value__) {
 @implementation ITMScreenshotRequest
 
 @dynamic hasSession, session;
-@dynamic hasBackgroundColor, backgroundColor;
 
 typedef struct ITMScreenshotRequest__storage_ {
   uint32_t _has_storage_[1];
   NSString *session;
-  NSString *backgroundColor;
 } ITMScreenshotRequest__storage_;
 
 // This method is threadsafe because it is initially called
@@ -10585,15 +10583,6 @@ typedef struct ITMScreenshotRequest__storage_ {
         .number = ITMScreenshotRequest_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMScreenshotRequest__storage_, session),
-        .flags = GPBFieldOptional,
-        .dataType = GPBDataTypeString,
-      },
-      {
-        .name = "backgroundColor",
-        .dataTypeSpecific.clazz = Nil,
-        .number = ITMScreenshotRequest_FieldNumber_BackgroundColor,
-        .hasIndex = 1,
-        .offset = (uint32_t)offsetof(ITMScreenshotRequest__storage_, backgroundColor),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
       },

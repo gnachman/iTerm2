@@ -4378,7 +4378,6 @@ GPB_FINAL @interface ITMGetBufferResponse : GPBMessage
 
 typedef GPB_ENUM(ITMScreenshotRequest_FieldNumber) {
   ITMScreenshotRequest_FieldNumber_Session = 1,
-  ITMScreenshotRequest_FieldNumber_BackgroundColor = 2,
 };
 
 /**
@@ -4390,14 +4389,6 @@ GPB_FINAL @interface ITMScreenshotRequest : GPBMessage
 @property(nonatomic, readwrite, copy, null_resettable) NSString *session;
 /** Test to see if @c session has been set. */
 @property(nonatomic, readwrite) BOOL hasSession;
-
-/**
- * Optional background colour to fill behind the content as a web-style string
- * like "#rrggbb" (sRGB). When omitted, the session's own background colour is used.
- **/
-@property(nonatomic, readwrite, copy, null_resettable) NSString *backgroundColor;
-/** Test to see if @c backgroundColor has been set. */
-@property(nonatomic, readwrite) BOOL hasBackgroundColor;
 
 @end
 

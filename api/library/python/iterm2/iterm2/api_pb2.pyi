@@ -4305,22 +4305,16 @@ class ScreenshotRequest(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
     SESSION_FIELD_NUMBER: _builtins.int
-    BACKGROUND_COLOR_FIELD_NUMBER: _builtins.int
     session: _builtins.str
     """See documentation on session IDs. "all" not accepted."""
-    background_color: _builtins.str
-    """Optional background colour to fill behind the content as a web-style string
-    like "#rrggbb" (sRGB). When omitted, the session's own background colour is used.
-    """
     def __init__(
         self,
         *,
         session: _builtins.str | None = ...,
-        background_color: _builtins.str | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["background_color", b"background_color", "session", b"session"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal["session", b"session"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["background_color", b"background_color", "session", b"session"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["session", b"session"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 

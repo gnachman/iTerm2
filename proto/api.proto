@@ -1187,10 +1187,6 @@ message GetBufferResponse {
 message ScreenshotRequest {
   // See documentation on session IDs. "all" not accepted.
   optional string session = 1;
-
-  // Optional background colour to fill behind the content as a web-style string
-  // like "#rrggbb" (sRGB). When omitted, the session's own background colour is used.
-  optional string background_color = 2;
 }
 
 // Returns a PNG-encoded image of a session's screen.

@@ -1604,8 +1604,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         handler(response);
         return;
     }
-    NSString *colorString = request.hasBackgroundColor ? request.backgroundColor : nil;
-    NSData *png = [session screenshotPNGDataWithBackgroundColorString:colorString];
+    NSData *png = [session screenshotPNGData];
     if (!png) {
         response.status = ITMScreenshotResponse_Status_InternalError;
         handler(response);

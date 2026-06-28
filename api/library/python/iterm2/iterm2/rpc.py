@@ -112,21 +112,17 @@ async def async_send_text(connection, session, text, suppress_broadcast):
     return await _async_call(connection, request)
 
 
-async def async_screenshot(connection, session, background_color=None):
+async def async_screenshot(connection, session):
     """
     Captures a PNG screenshot of a session's visible screen contents.
 
     connection: A connected iterm2.Connection.
     session: A session ID.
-    background_color: Optional web-style "#rrggbb" colour to fill behind the
-        content. When None, the session's own background colour is used.
 
     Returns: iterm2.api_pb2.ServerOriginatedMessage
     """
     request = _alloc_request()
     request.screenshot_request.session = session
-    if background_color is not None:
-        request.screenshot_request.background_color = background_color
     return await _async_call(connection, request)
 
 
