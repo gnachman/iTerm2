@@ -454,7 +454,8 @@ final class CompanionHostBridge {
             }
         }
         streams[streamID] = StreamContext(streamer: streamer, guid: guid, timer: timer,
-                                          lastChange: session.screenContentsLastChangedAt)
+                                          lastChange: max(session.screenContentsLastChangedAt,
+                                                          session.view?.lastRedrawRequestedAt ?? 0))
         streamIDForGuid[guid] = streamID
         send(.streamStarted(CompanionStreamStarted(streamID: streamID, codec: .hevc)),
              requestID: requestID)
@@ -466,7 +467,11 @@ final class CompanionHostBridge {
             endStream(streamID, reason: .sessionClosed)
             return
         }
-        let changedAt = session.screenContentsLastChangedAt
+        // Emit on any visual change: grid content (screenContentsLastChangedAt,
+        // bumped under every renderer) OR a redraw request that does not change
+        // content, such as a selection or cursor change (lastRedrawRequestedAt).
+        let changedAt = max(session.screenContentsLastChangedAt,
+                            session.view?.lastRedrawRequestedAt ?? 0)
         if changedAt > context.lastChange {
             context.lastChange = changedAt
             context.streamer.screenDidChange()
