@@ -385,7 +385,15 @@ final class CompanionPairingController: NSObject {
     /// silently stops advertising and the phone can never reconnect.
     private var listenerRetryTask: Task<Void, Never>?
 
-    private func scheduleListenerRetry() {
+    /// Routine re-park delay after a park loss (idle reap, redeploy, network blip).
+    private static let defaultListenerRetryNanos: UInt64 = 5_000_000_000
+    /// A park displaced by another mac-role connection (a duplicate instance in the
+    /// same room) backs off much longer than the routine delay so the two don't
+    /// ping-pong evicting each other; finite so the slot is reclaimed if the other
+    /// instance exits.
+    private static let displacedListenerRetryNanos: UInt64 = 60_000_000_000
+
+    private func scheduleListenerRetry(after delayNanos: UInt64 = defaultListenerRetryNanos) {
         guard listenerRetryTask == nil, desiredListeningPID != nil else {
             return
         }
@@ -394,7 +402,7 @@ final class CompanionPairingController: NSObject {
         relayConnectedSince = nil
         notifyPresenceChanged()
         listenerRetryTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            try? await Task.sleep(nanoseconds: delayNanos)
             guard let self, !Task.isCancelled else { return }
             self.listenerRetryTask = nil
             self.resumePairedListeningIfNeeded()
@@ -759,20 +767,25 @@ final class CompanionPairingController: NSObject {
                 if cancelled {
                     return
                 }
+                // The relay evicted our park because another mac-role connection
+                // took the room's single slot (closeCode 1000 "displaced") - almost
+                // always a SECOND iTerm2 instance paired to the same room. Re-parking
+                // on the routine 5s timer would immediately evict that other instance,
+                // which re-parks and evicts us, an endless eviction storm that hammers
+                // the relay and flaps the phone's reachability. Back off much longer so
+                // the two instances settle instead of ping-ponging; still finite, so we
+                // reclaim the slot if the other instance goes away. NOT a user-facing
+                // fault (so no onFailed), and NOT the routine-churn path below.
+                if error is RelayDisplacedError {
+                    relayLog("acceptLoop: park displaced by another mac connection; "
+                        + "backing off \(Self.displacedListenerRetryNanos / 1_000_000_000)s")
+                    scheduleListenerRetry(after: Self.displacedListenerRetryNanos)
+                    return
+                }
                 // A genuine park loss while a device is still paired. Re-park so
                 // the phone can reconnect; without this the mac goes silently
                 // dark. A closed park is routine churn, so retry quietly and
                 // surface only real faults (e.g. a connection/DNS failure).
-                //
-                // TODO(companion relay displaced): when the close reason is
-                // "displaced" (relay closeCode 1000, another mac-role connection
-                // took the room's single slot - see the close-code logging in
-                // PluginRelayWebSocket/URLSessionRelayWebSocket), re-parking after
-                // 5s just evicts the other instance, so two iTerm2 instances paired
-                // to the same room ping-pong forever. Back off (much longer, or stop
-                // re-parking) on a displaced close so a duplicate instance can't
-                // create an eviction storm. Needs the reason plumbed up from the
-                // transport to here (TransportError.closed currently carries none).
                 if (error as? TransportError) != .closed {
                     onFailed?(Self.userFacingDescription(of: error))
                 }
