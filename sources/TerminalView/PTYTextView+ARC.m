@@ -2542,13 +2542,20 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         //    making the selection invisible. isFrontTextView feeds nothing else
         //    in the drawing helper, so setting it just selects the focused color.
         helper.isFrontTextView = YES;
-        // 2. Remove inactive-session dimming/muting (the live view raises these
+        // 2. Remove inactive-session dimming (the live view raises dimmingAmount
         //    when its session is in a background tab) by drawing through an
         //    undimmed copy of the color map, leaving the real map untouched.
+        //    Only dimmingAmount is focus-driven; mutingAmount is cursor-boost
+        //    (a profile setting), so it is preserved.
         iTermColorMap *undimmed = [helper.colorMap copy];
         undimmed.dimmingAmount = 0;
-        undimmed.mutingAmount = 0;
         helper.colorMap = undimmed;
+        // The text is drawn by an attributed-string builder that was wired to the
+        // ORIGINAL color map in newDrawingHelperForOffscreenRendering's
+        // didFinishSetup (which ran before this swap). Re-run didFinishSetup so
+        // the builder re-reads the undimmed map; otherwise glyph colors stay
+        // dimmed even though the cursor/selection/background (read live) do not.
+        [helper didFinishSetup];
         //    The side margins are filled with backgroundColor, not drawn by the
         //    helper, so derive an undimmed fill from the same map to match.
         if (effectiveBackgroundColor != nil) {
