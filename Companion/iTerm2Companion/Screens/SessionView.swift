@@ -41,6 +41,48 @@ struct SessionView: View {
 
     var body: some View {
         Group {
+            if model.macSupportsStreaming {
+                // Live follow-mode video of the visible screen. Scrollback
+                // browsing stays on the tile path (a later milestone).
+                LiveSessionView(guid: guid)
+            } else {
+                tileContent
+            }
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if allowsChat {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        model.openOrCreateChat(forSessionGuid: guid)
+                    } label: {
+                        Image(systemName: "text.bubble")
+                    }
+                    .accessibilityLabel("Chat about this session")
+                }
+            }
+            if !model.macSupportsStreaming {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        reload()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .disabled(info == nil && loadError == nil)
+                }
+            }
+        }
+        .task(id: guid) {
+            if !model.macSupportsStreaming {
+                await load()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var tileContent: some View {
+        Group {
             if let info {
                 SessionContentZoomView(info: info,
                                        linesPerTile: Self.linesPerTile,
@@ -70,34 +112,6 @@ struct SessionView: View {
             } else {
                 ProgressView("Loading session…")
             }
-        }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if allowsChat {
-                ToolbarItem(placement: .topBarTrailing) {
-                    // Jump into a conversation about this session: continues its
-                    // most recent chat when that's fresh (last 24h), otherwise
-                    // starts a new session-attached one.
-                    Button {
-                        model.openOrCreateChat(forSessionGuid: guid)
-                    } label: {
-                        Image(systemName: "text.bubble")
-                    }
-                    .accessibilityLabel("Chat about this session")
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    reload()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .disabled(info == nil && loadError == nil)
-            }
-        }
-        .task(id: guid) {
-            await load()
         }
     }
 
@@ -431,4 +445,105 @@ private final class TileView: UIView {
         retryLabel.isHidden = false
         spinner.stopAnimating()
     }
+}
+
+// MARK: - Live streaming
+
+/// Live follow-mode video of a session's visible screen, played through an
+/// AVSampleBufferDisplayLayer. Starts the stream on appear, stops it on
+/// disappear or backgrounding, and re-subscribes (with a fresh keyframe) on
+/// resume. Scrollback browsing is not available here (a later milestone).
+private struct LiveSessionView: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
+    let guid: String
+
+    @State private var holder = LiveVideoHolder()
+    @State private var resolution: String?
+    @State private var endedReason: CompanionStreamEndReason?
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            LiveVideoLayer(holder: holder)
+                .ignoresSafeArea(edges: .bottom)
+            VStack {
+                HStack {
+                    liveBadge
+                    Spacer()
+                }
+                Spacer()
+            }
+            .padding()
+            if let endedReason {
+                ContentUnavailableView {
+                    Label("Stream Ended", systemImage: "stop.circle")
+                } description: {
+                    Text(endedMessage(endedReason))
+                }
+            }
+        }
+        .task(id: guid) { await start() }
+        .onDisappear { model.endActiveSessionStream() }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active: Task { await start() }
+            case .background: model.endActiveSessionStream()
+            default: break
+            }
+        }
+    }
+
+    @ViewBuilder private var liveBadge: some View {
+        if endedReason == nil {
+            HStack(spacing: 6) {
+                Circle().fill(.red).frame(width: 8, height: 8)
+                Text(resolution.map { "LIVE  \($0)" } ?? "LIVE")
+                    .font(.caption2.monospaced())
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.ultraThinMaterial, in: Capsule())
+            .foregroundStyle(.white)
+        }
+    }
+
+    private func start() async {
+        endedReason = nil
+        holder.view.onNeedsKeyframe = { [weak model] in model?.requestActiveStreamKeyframe() }
+        await model.beginSessionStream(
+            guid: guid,
+            onConfig: { config in
+                resolution = "\(config.pixelWidth)×\(config.pixelHeight)"
+                if let parameterSets = try? CompanionHEVCFraming.decodeParameterSets(config.codecExtradata) {
+                    holder.view.configure(parameterSets: parameterSets)
+                }
+            },
+            onMedia: { frame in
+                holder.view.enqueue(accessUnit: frame.payload, ptsMilliseconds: frame.ptsMilliseconds)
+                model.sendActiveStreamAck(lastPTSMilliseconds: frame.ptsMilliseconds, queueDepth: 0)
+            },
+            onEnded: { reason in
+                endedReason = reason
+            })
+    }
+
+    private func endedMessage(_ reason: CompanionStreamEndReason) -> String {
+        switch reason {
+        case .sessionClosed: return "The session is no longer available."
+        case .stoppedByClient, .superseded: return "The live view stopped."
+        case .error: return "Live streaming isn’t available."
+        }
+    }
+}
+
+/// Holds the AVSampleBufferDisplayLayer-backed view across SwiftUI updates.
+private final class LiveVideoHolder {
+    let view = CompanionVideoView(frame: .zero)
+}
+
+private struct LiveVideoLayer: UIViewRepresentable {
+    let holder: LiveVideoHolder
+    func makeUIView(context: Context) -> CompanionVideoView { holder.view }
+    func updateUIView(_ uiView: CompanionVideoView, context: Context) {}
 }

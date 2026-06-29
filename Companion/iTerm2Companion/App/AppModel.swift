@@ -212,6 +212,18 @@ final class AppModel {
 
     private var client: CompanionClient?
 
+    /// Whether the connected Mac supports live session streaming (advertised
+    /// protocol revision >= streamingRevision). The session view shows live video
+    /// when true and falls back to PNG tiles otherwise. Set on each handshake.
+    private(set) var macSupportsStreaming = false
+
+    /// The live stream the session view is currently watching, and the handlers
+    /// it registered. Only one session is streamed at a time.
+    private var activeStreamID: UInt32?
+    private var onStreamConfig: ((CompanionStreamConfig) -> Void)?
+    private var onStreamMedia: ((CompanionMediaFrame) -> Void)?
+    private var onStreamEnded: ((CompanionStreamEndReason) -> Void)?
+
     // How the phone reaches the mac, built per pairing code: the relay connector
     // when the code carries a relay origin (off-LAN reach), else a connector that
     // fails fast. Injectable for tests; production uses
@@ -788,6 +800,10 @@ final class AppModel {
             Task { @MainActor in
                 self?.connectionLost()
             }
+        }, onMedia: { [weak self] frame in
+            Task { @MainActor in
+                self?.handleStreamMedia(frame)
+            }
         })
         self.client = client
 
@@ -1018,6 +1034,7 @@ final class AppModel {
             phase = .needsUpgrade(.mac)
             return
         }
+        macSupportsStreaming = handshake.supportsStreaming
         // The mac says the user opted into phone alerts: ask iOS for notification
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
@@ -1098,6 +1115,7 @@ final class AppModel {
                     if let client {
                         do {
                             let handshake = try await client.handshakeVersion()
+                            macSupportsStreaming = handshake.supportsStreaming
                             if handshake.wantsNotificationPermission {
                                 ensureNotificationPermission(replyTo: nil)
                             }
@@ -1725,8 +1743,85 @@ final class AppModel {
             handleNotificationPermissionRequest(requestID: requestID)
         case .unpaired:
             handleRemoteUnpair()
+        case .streamConfig(let config):
+            if config.streamID == activeStreamID {
+                onStreamConfig?(config)
+            }
+        case .streamEnded(let streamID, let reason):
+            if streamID == activeStreamID {
+                activeStreamID = nil
+                let handler = onStreamEnded
+                clearStreamHandlers()
+                handler?(reason)
+            }
         default:
             break
+        }
+    }
+
+    // MARK: Live session streaming
+
+    private func handleStreamMedia(_ frame: CompanionMediaFrame) {
+        guard frame.streamID == activeStreamID else { return }
+        onStreamMedia?(frame)
+    }
+
+    private func clearStreamHandlers() {
+        onStreamConfig = nil
+        onStreamMedia = nil
+        onStreamEnded = nil
+    }
+
+    /// Start streaming a session's live screen. The handlers receive the stream
+    /// config (parameter sets + geometry), each media frame, and the end event.
+    /// No-op (and onEnded fires) when the Mac does not support streaming.
+    func beginSessionStream(guid: String,
+                            onConfig: @escaping (CompanionStreamConfig) -> Void,
+                            onMedia: @escaping (CompanionMediaFrame) -> Void,
+                            onEnded: @escaping (CompanionStreamEndReason) -> Void) async {
+        guard let client, macSupportsStreaming else {
+            onEnded(.error)
+            return
+        }
+        // Replace any prior stream's handlers (one live session at a time).
+        endActiveSessionStream()
+        onStreamConfig = onConfig
+        onStreamMedia = onMedia
+        onStreamEnded = onEnded
+        let params = CompanionStreamParams(supportedCodecs: [.hevc], maxFrameRate: 30, maxBitrate: nil)
+        do {
+            let started = try await client.startSessionStream(guid: guid, params: params)
+            activeStreamID = started.streamID
+        } catch {
+            companionLog("startSessionStream failed: \(String(describing: error))")
+            let handler = onStreamEnded
+            clearStreamHandlers()
+            handler?(.error)
+        }
+    }
+
+    /// Stop the active live stream (on leaving the view or backgrounding).
+    func endActiveSessionStream() {
+        let streamID = activeStreamID
+        activeStreamID = nil
+        clearStreamHandlers()
+        guard let client, let streamID else { return }
+        Task { try? await client.stopSessionStream(streamID: streamID) }
+    }
+
+    /// Ask the Mac for a fresh keyframe (on resume, or after a decode error).
+    func requestActiveStreamKeyframe() {
+        guard let client, let streamID = activeStreamID else { return }
+        Task { try? await client.requestStreamKeyframe(streamID: streamID) }
+    }
+
+    /// Report flow-control feedback for the active stream.
+    func sendActiveStreamAck(lastPTSMilliseconds: UInt64, queueDepth: Int) {
+        guard let client, let streamID = activeStreamID else { return }
+        Task {
+            try? await client.sendStreamAck(streamID: streamID,
+                                            lastPTSMilliseconds: lastPTSMilliseconds,
+                                            queueDepth: queueDepth)
         }
     }
 

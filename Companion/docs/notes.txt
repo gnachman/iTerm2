@@ -1,6 +1,16 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- Live session view. When the paired Mac is new
+  enough, tapping a session shows live video that
+  updates as the terminal changes, instead of a
+  static snapshot. The Mac renders and streams the
+  visible screen, so inline images, colors, and
+  full-screen apps look exactly as on the Mac. A
+  quiet terminal uses almost no data. Scrolling
+  back through history and selecting text in the
+  live view are not in this version; older Macs
+  keep showing the static snapshot.
 - iTerm2 Buddy now asks for notification
   permission when you turn on sending terminal
   alerts to your iPhone on the Mac, instead of

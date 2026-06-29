@@ -27,6 +27,16 @@ final class CompanionVideoView: UIView {
 
     private var formatDescription: CMFormatDescription?
 
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .black
+        displayLayer.videoGravity = .resizeAspect  // letterbox, never distort
+    }
+
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) is not supported")
+    }
+
     /// Apply a new stream configuration (parameter sets decoded from
     /// streamConfig.codecExtradata). Discards any prior format.
     func configure(parameterSets: [Data]) {
