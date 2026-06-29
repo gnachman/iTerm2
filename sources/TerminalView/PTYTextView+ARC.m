@@ -2448,14 +2448,14 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                        includeMargins:includeMargins
                       backgroundColor:backgroundColor
                            showCursor:showCursor
-                     includeSelection:NO];
+                     asFocusedSession:NO];
 }
 
 - (NSImage *)renderImageWithLines:(NSRange)lineRange
                    includeMargins:(BOOL)includeMargins
                   backgroundColor:(NSColor *)backgroundColor
                        showCursor:(BOOL)showCursor
-                 includeSelection:(BOOL)includeSelection {
+                 asFocusedSession:(BOOL)asFocusedSession {
     id<iTermTextDataSource> dataSource = self.dataSource;
     if (!dataSource) {
         return nil;
@@ -2516,6 +2516,10 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                           imageWidth,
                                           imageHeight);
 
+    // The fill color for margins/uncovered areas. In asFocusedSession mode it is
+    // replaced with the undimmed background so the side margins match the
+    // undimmed cells.
+    NSColor *effectiveBackgroundColor = backgroundColor;
     iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
     if (showCursor) {
         helper.isCursorVisible = YES;
@@ -2523,18 +2527,34 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         helper.cursorCoord = VT100GridCoordMake(self.dataSource.cursorX - 1,
                                                  self.dataSource.cursorY - 1);
     }
-    if (includeSelection) {
-        // newDrawingHelperForOffscreenRendering clears these (snapshots omit the
-        // selection); restore them so a streamed frame shows the same selection
-        // highlight and selected-text color the user sees on screen.
+    if (asFocusedSession) {
+        // Render as the focused, foreground session so the streamed frame looks
+        // identical regardless of which tab is foremost on the Mac.
+        //
+        // 1. Draw the selection. newDrawingHelperForOffscreenRendering clears it
+        //    (snapshots omit the selection); restore it and the selected-text
+        //    color the user sees on screen.
         helper.selection = self.selection;
         helper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
-        // selectionColorForCurrentFocus returns the real (focused) selection
-        // color only when isFrontTextView is set; otherwise it uses
-        // unfocusedSelectionColor, which the offscreen helper never sets (nil),
-        // making the selection invisible. isFrontTextView feeds nothing else in
-        // the drawing helper, so setting it just selects the focused color.
+        //    selectionColorForCurrentFocus returns the real (focused) selection
+        //    color only when isFrontTextView is set; otherwise it uses
+        //    unfocusedSelectionColor, which the offscreen helper never sets (nil),
+        //    making the selection invisible. isFrontTextView feeds nothing else
+        //    in the drawing helper, so setting it just selects the focused color.
         helper.isFrontTextView = YES;
+        // 2. Remove inactive-session dimming/muting (the live view raises these
+        //    when its session is in a background tab) by drawing through an
+        //    undimmed copy of the color map, leaving the real map untouched.
+        iTermColorMap *undimmed = [helper.colorMap copy];
+        undimmed.dimmingAmount = 0;
+        undimmed.mutingAmount = 0;
+        helper.colorMap = undimmed;
+        //    The side margins are filled with backgroundColor, not drawn by the
+        //    helper, so derive an undimmed fill from the same map to match.
+        if (effectiveBackgroundColor != nil) {
+            effectiveBackgroundColor =
+                [undimmed processedBackgroundColorForBackgroundColor:[undimmed colorForKey:kColorMapBackground]];
+        }
     }
     [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
                                         visibleRect:contentRect];
@@ -2547,8 +2567,8 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     // Fill background behind all existing content. The drawing helper clears
     // to transparent before drawing cell backgrounds, so margins and any
     // uncovered areas need to be filled with the background color.
-    if (backgroundColor) {
-        [backgroundColor set];
+    if (effectiveBackgroundColor) {
+        [effectiveBackgroundColor set];
         NSRectFillUsingOperation(NSMakeRect(0, 0, imageWidth, imageHeight),
                                  NSCompositingOperationDestinationOver);
     }
