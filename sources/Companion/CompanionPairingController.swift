@@ -647,9 +647,14 @@ final class CompanionPairingController: NSObject {
     /// One-line trace of the relay lifecycle, stamped with the state that drives
     /// the single-mac-slot logic.
     private func relayLog(_ message: String) {
-        DLog("Companion relay: \(message) "
+        let full = "Companion relay: \(message) "
              + "[bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) "
-             + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]")
+             + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]"
+        DLog("\(full)")
+        // CDIAG: temporary always-on mirror so the park/re-park/admission
+        // lifecycle is visible without debug logging (which was off when the
+        // streaming wedge happened). Remove once the wedge is diagnosed.
+        NSFuckingLog("%@", "CDIAG \(full)")
     }
 
     private func startListening(pairingID: String) throws {

@@ -105,15 +105,26 @@ final class CompanionHostBridge {
 
     func start() {
         ChatBroker.instance?.ensureServiceRunning()
+        NSFuckingLog("%@", "CDIAG bridge start (phone connected, bridge live)")
 
         var continuation: AsyncStream<CompanionOutboundFrame>.Continuation!
         let stream = AsyncStream<CompanionOutboundFrame> { continuation = $0 }
         outbox = continuation
         outboxTask = Task { [transport] in
+            // CDIAG: temporary diagnostic counters/heartbeat. If a send wedges
+            // (half-open splice), the heartbeat below stops logging while the
+            // bridge believes it is still connected -- the signal we need.
+            var mediaFrames = 0
+            var mediaBytes = 0
+            var controlFrames = 0
+            var lastHeartbeat = CACurrentMediaTime()
+            NSFuckingLog("%@", "CDIAG bridge outbox drain started")
             for await frame in stream {
                 let data: Data
+                let isMedia: Bool
                 switch frame {
                 case .control(let envelope):
+                    isMedia = false
                     do {
                         data = try WireCoding.encode(envelope)
                     } catch {
@@ -121,17 +132,29 @@ final class CompanionHostBridge {
                         continue
                     }
                 case .media(let payload):
+                    isMedia = true
                     // Control frames stay bare JSON; media frames carry the marker.
                     data = CompanionFrameChannel.frameMedia(payload)
                 }
                 do {
                     try await transport.send(data)
                 } catch {
-                    RLog("Companion bridge: outbox send failed; outbox is dead: \(error)")
+                    RLog("CDIAG bridge outbox send FAILED (outbox dead) after \(mediaFrames) media/\(controlFrames) control: \(error)")
                     break
                 }
+                if isMedia {
+                    mediaFrames += 1
+                    mediaBytes += data.count
+                } else {
+                    controlFrames += 1
+                }
+                let now = CACurrentMediaTime()
+                if now - lastHeartbeat >= 5 {
+                    NSFuckingLog("%@", "CDIAG bridge outbox alive: sent \(mediaFrames) media (\(mediaBytes) B), \(controlFrames) control")
+                    lastHeartbeat = now
+                }
             }
-            DLog("Companion bridge: outbox drained")
+            NSFuckingLog("%@", "CDIAG bridge outbox drained/exited: \(mediaFrames) media, \(controlFrames) control total")
         }
 
         receiveTask = Task { [weak self] in
@@ -255,11 +278,16 @@ final class CompanionHostBridge {
     // MARK: Receive loop
 
     private func runReceiveLoop() async {
+        // CDIAG: if the relay splice goes half-open during streaming, receive()
+        // can block forever -- we'd see "started" but never "receive FAILED" or
+        // "exited", confirming the wedge (no teardown, no re-park).
+        NSFuckingLog("%@", "CDIAG bridge receiveLoop started")
         while true {
             let frame: Data
             do {
                 frame = try await transport.receive()
             } catch {
+                NSFuckingLog("%@", "CDIAG bridge receiveLoop receive() FAILED (drop detected): \(error)")
                 break
             }
             guard let envelope = try? WireCoding.decode(ClientEnvelope.self, from: frame) else {
@@ -268,6 +296,7 @@ final class CompanionHostBridge {
             }
             handle(envelope)
         }
+        NSFuckingLog("%@", "CDIAG bridge receiveLoop exited -> teardownStreams + onClose (will re-park)")
         teardownStreams()
         onClose?()
     }
@@ -457,6 +486,7 @@ final class CompanionHostBridge {
                                           lastChange: max(session.screenContentsLastChangedAt,
                                                           session.view?.lastRedrawRequestedAt ?? 0))
         streamIDForGuid[guid] = streamID
+        NSFuckingLog("%@", "CDIAG stream \(streamID) START guid=\(guid) fps=\(frameRate)")
         send(.streamStarted(CompanionStreamStarted(streamID: streamID, codec: .hevc)),
              requestID: requestID)
     }
@@ -481,6 +511,7 @@ final class CompanionHostBridge {
 
     private func endStream(_ streamID: UInt32, reason: CompanionStreamEndReason) {
         guard let context = streams.removeValue(forKey: streamID) else { return }
+        NSFuckingLog("%@", "CDIAG stream \(streamID) END reason=\(reason)")
         context.timer.invalidate()
         context.streamer.stop()
         if streamIDForGuid[context.guid] == streamID {
