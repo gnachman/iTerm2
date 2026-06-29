@@ -483,12 +483,12 @@ private struct LiveSessionView: View {
                 }
             }
         }
-        .task(id: guid) { await start() }
-        .onDisappear { model.endActiveSessionStream() }
+        .task(id: guid) { start() }
+        .onDisappear { model.stopWatchingSessionLive() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
-            case .active: Task { await start() }
-            case .background: model.endActiveSessionStream()
+            case .active: model.resumeLiveStream()
+            case .background: model.pauseLiveStream()
             default: break
             }
         }
@@ -508,10 +508,10 @@ private struct LiveSessionView: View {
         }
     }
 
-    private func start() async {
+    private func start() {
         endedReason = nil
         holder.view.onNeedsKeyframe = { [weak model] in model?.requestActiveStreamKeyframe() }
-        await model.beginSessionStream(
+        model.watchSessionLive(
             guid: guid,
             onConfig: { config in
                 resolution = "\(config.pixelWidth)×\(config.pixelHeight)"
@@ -519,12 +519,20 @@ private struct LiveSessionView: View {
                     holder.view.configure(parameterSets: parameterSets)
                 }
             },
-            onMedia: { frame in
+            onMedia: { [weak model] frame in
                 holder.view.enqueue(accessUnit: frame.payload, ptsMilliseconds: frame.ptsMilliseconds)
-                model.sendActiveStreamAck(lastPTSMilliseconds: frame.ptsMilliseconds, queueDepth: 0)
+                model?.sendActiveStreamAck(lastPTSMilliseconds: frame.ptsMilliseconds, queueDepth: 0)
             },
             onEnded: { reason in
-                endedReason = reason
+                // Only a terminal host-side end reaches here; a transient
+                // disconnect restarts silently. Surface only the cases worth
+                // telling the user about.
+                switch reason {
+                case .sessionClosed, .error:
+                    endedReason = reason
+                case .stoppedByClient, .superseded:
+                    break
+                }
             })
     }
 
@@ -532,7 +540,7 @@ private struct LiveSessionView: View {
         switch reason {
         case .sessionClosed: return "The session is no longer available."
         case .stoppedByClient, .superseded: return "The live view stopped."
-        case .error: return "Live streaming isn’t available."
+        case .error: return "The live view ended unexpectedly."
         }
     }
 }

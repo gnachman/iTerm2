@@ -223,6 +223,15 @@ final class AppModel {
     private var onStreamConfig: ((CompanionStreamConfig) -> Void)?
     private var onStreamMedia: ((CompanionMediaFrame) -> Void)?
     private var onStreamEnded: ((CompanionStreamEndReason) -> Void)?
+    /// The session the live view wants to watch. Held across reconnects so the
+    /// stream restarts automatically once the connection is back, instead of
+    /// surfacing a transient "unavailable" error. nil when no live view is open.
+    private var liveWatchGuid: String?
+    /// True while the app is backgrounded: intent is kept but no stream runs.
+    private var liveStreamPaused = false
+    /// True while a start request is in flight, so a reconnect and a foreground
+    /// resume firing together don't open two streams.
+    private var liveStreamStarting = false
 
     // How the phone reaches the mac, built per pairing code: the relay connector
     // when the code carries a relay origin (off-LAN reach), else a connector that
@@ -1094,6 +1103,9 @@ final class AppModel {
         guard !isReconnecting else { return }
         companionLog("Connection lost")
         client = nil
+        // The stream id belongs to the dead connection; drop it but keep the
+        // live-watch intent so the stream restarts after reconnect.
+        activeStreamID = nil
         guard phase == .home else { return }
         guard let code = storedPairingCode else {
             phase = .scanning
@@ -1138,6 +1150,8 @@ final class AppModel {
                         openChatID = nil
                         conversationDidAppear(chatID: chatID)
                     }
+                    // Resume a live session view that was open across the drop.
+                    restartLiveStreamAfterReconnect()
                 } catch is CancellationError {
                     // App-driven teardown; nothing to report.
                 } catch {
@@ -1750,9 +1764,11 @@ final class AppModel {
         case .streamEnded(let streamID, let reason):
             if streamID == activeStreamID {
                 activeStreamID = nil
-                let handler = onStreamEnded
-                clearStreamHandlers()
-                handler?(reason)
+                // A host-side end is terminal: drop the intent so it does not
+                // restart, and tell the view (which shows it only for reasons
+                // worth surfacing, e.g. the session closed).
+                liveWatchGuid = nil
+                onStreamEnded?(reason)
             }
         default:
             break
@@ -1772,41 +1788,84 @@ final class AppModel {
         onStreamEnded = nil
     }
 
-    /// Start streaming a session's live screen. The handlers receive the stream
-    /// config (parameter sets + geometry), each media frame, and the end event.
-    /// No-op (and onEnded fires) when the Mac does not support streaming.
-    func beginSessionStream(guid: String,
-                            onConfig: @escaping (CompanionStreamConfig) -> Void,
-                            onMedia: @escaping (CompanionMediaFrame) -> Void,
-                            onEnded: @escaping (CompanionStreamEndReason) -> Void) async {
-        guard let client, macSupportsStreaming else {
-            onEnded(.error)
-            return
-        }
-        // Replace any prior stream's handlers (one live session at a time).
-        endActiveSessionStream()
+    /// Express intent to watch a session live. The handlers receive the stream
+    /// config (parameter sets + geometry), each media frame, and a terminal end
+    /// event. The stream starts when the connection is ready and restarts after a
+    /// reconnect; a not-yet-connected state is NOT an error (no onEnded fires).
+    func watchSessionLive(guid: String,
+                          onConfig: @escaping (CompanionStreamConfig) -> Void,
+                          onMedia: @escaping (CompanionMediaFrame) -> Void,
+                          onEnded: @escaping (CompanionStreamEndReason) -> Void) {
+        liveWatchGuid = guid
+        liveStreamPaused = false
         onStreamConfig = onConfig
         onStreamMedia = onMedia
         onStreamEnded = onEnded
+        startLiveStreamIfPossible()
+    }
+
+    /// Drop the live-watch intent and stop any running stream (on leaving the view).
+    func stopWatchingSessionLive() {
+        liveWatchGuid = nil
+        stopActiveStream()
+        clearStreamHandlers()
+    }
+
+    /// Backgrounded: keep the intent but stop the running stream so the Mac stops
+    /// encoding while the phone can't display anything.
+    func pauseLiveStream() {
+        liveStreamPaused = true
+        stopActiveStream()
+    }
+
+    /// Foregrounded: resume if a live view is still open. Safe if not connected
+    /// yet (the reconnect path will start it).
+    func resumeLiveStream() {
+        liveStreamPaused = false
+        startLiveStreamIfPossible()
+    }
+
+    /// Start the live stream for the watched session if everything is ready;
+    /// otherwise a no-op (a later reconnect/resume retries). Never surfaces a
+    /// transient failure as a stream end.
+    private func startLiveStreamIfPossible() {
+        guard let guid = liveWatchGuid, !liveStreamPaused, macSupportsStreaming,
+              activeStreamID == nil, !liveStreamStarting, let client else {
+            return
+        }
+        liveStreamStarting = true
         let params = CompanionStreamParams(supportedCodecs: [.hevc], maxFrameRate: 30, maxBitrate: nil)
-        do {
-            let started = try await client.startSessionStream(guid: guid, params: params)
-            activeStreamID = started.streamID
-        } catch {
-            companionLog("startSessionStream failed: \(String(describing: error))")
-            let handler = onStreamEnded
-            clearStreamHandlers()
-            handler?(.error)
+        Task { @MainActor in
+            defer { liveStreamStarting = false }
+            do {
+                let started = try await client.startSessionStream(guid: guid, params: params)
+                // Guard against races: the view may have closed, the app may have
+                // paused, or a reconnect may have superseded this attempt.
+                if liveWatchGuid == guid, !liveStreamPaused, activeStreamID == nil {
+                    activeStreamID = started.streamID
+                } else {
+                    try? await client.stopSessionStream(streamID: started.streamID)
+                }
+            } catch {
+                companionLog("startSessionStream failed (will retry on reconnect/resume): \(String(describing: error))")
+            }
         }
     }
 
-    /// Stop the active live stream (on leaving the view or backgrounding).
-    func endActiveSessionStream() {
-        let streamID = activeStreamID
+    /// Tell the connected Mac to stop the active stream and forget its id. Keeps
+    /// the watch intent so it can restart.
+    private func stopActiveStream() {
+        guard let streamID = activeStreamID else { return }
         activeStreamID = nil
-        clearStreamHandlers()
-        guard let client, let streamID else { return }
+        guard let client else { return }
         Task { try? await client.stopSessionStream(streamID: streamID) }
+    }
+
+    /// Called after a (re)connect completes so an open live view resumes.
+    private func restartLiveStreamAfterReconnect() {
+        // A new connection means the old stream id is dead.
+        activeStreamID = nil
+        startLiveStreamIfPossible()
     }
 
     /// Ask the Mac for a fresh keyframe (on resume, or after a decode error).
