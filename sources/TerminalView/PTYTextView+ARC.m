@@ -2431,6 +2431,15 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     return image;
 }
 
+- (CGFloat)widthExcludingRightGutter {
+    // The right gutter (panel reservation plus the timestamp slot) is part of
+    // the view's width but holds only accessory views (chat, clippings,
+    // timestamps) that an offscreen content render never draws. Excluding it
+    // keeps streamed and snapshot images free of empty right-hand space.
+    const CGFloat gutter = MAX(0, self.delegate.textViewRightExtra);
+    return MAX(1, self.frame.size.width - gutter);
+}
+
 - (NSImage *)renderImageWithLines:(NSRange)lineRange
                    includeMargins:(BOOL)includeMargins
                   backgroundColor:(NSColor *)backgroundColor
@@ -2462,7 +2471,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     }
 
     const CGFloat lineHeight = self.lineHeight;
-    const CGFloat imageWidth = self.frame.size.width;
+    const CGFloat imageWidth = [self widthExcludingRightGutter];
     const CGFloat vmargin = includeMargins ? [iTermPreferences topBottomMargins] : 0;
     const CGFloat imageHeight = actualLength * lineHeight + vmargin * 2;
 
@@ -2520,6 +2529,12 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         // highlight and selected-text color the user sees on screen.
         helper.selection = self.selection;
         helper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
+        // selectionColorForCurrentFocus returns the real (focused) selection
+        // color only when isFrontTextView is set; otherwise it uses
+        // unfocusedSelectionColor, which the offscreen helper never sets (nil),
+        // making the selection invisible. isFrontTextView feeds nothing else in
+        // the drawing helper, so setting it just selects the focused color.
+        helper.isFrontTextView = YES;
     }
     [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
                                         visibleRect:contentRect];

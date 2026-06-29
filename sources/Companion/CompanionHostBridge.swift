@@ -1101,7 +1101,9 @@ final class CompanionHostBridge {
                                               name: session.name,
                                               lineCount: Int(session.screen.numberOfLines()),
                                               columns: Int(session.columns),
-                                              width: Double(textview.frame.width),
+                                              // Exclude the right gutter (accessory panels / timestamp
+                                              // slot) so it matches the rendered tile width.
+                                              width: Double(textview.widthExcludingRightGutter()),
                                               lineHeight: Double(textview.lineHeight),
                                               // Matches the fallback the offscreen renderer uses
                                               // for windowless (buried/peer) sessions.

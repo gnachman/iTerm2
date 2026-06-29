@@ -199,6 +199,12 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 // Uses iTermTextDrawingHelper for accurate rendering of images, box-drawing, etc.
 - (NSImage * _Nullable)renderMinimapWithWidth:(CGFloat)width height:(CGFloat)height;
 
+// The view's width minus the right gutter (panel reservation plus the
+// timestamp slot), i.e. the width of the terminal content area. Offscreen
+// content renders use this so streamed/snapshot images don't include the empty
+// accessory gutter.
+- (CGFloat)widthExcludingRightGutter;
+
 // Renders the specified range of lines to an image.
 // Lines are 0-based absolute line numbers (including scrollback).
 // Returns nil if the range is invalid.
