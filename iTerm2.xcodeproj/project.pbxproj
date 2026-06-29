@@ -10044,7 +10044,6 @@
 				A60D02322683D60F00E19362 /* iTerm2-Bridging-Header.h */,
 				A60D022F2683D1E200E19362 /* iTerm2SharedARC-Bridging-Header.h */,
 				A6E1524D27613EEC00D0F41C /* iTerm2XCTests-Bridging-Header.h */,
-				3335AD96138BA74CC79D25A8 /* iTermUnicodeNormalization.h */,
 				8C3C91DF2BBB018FD38146E7 /* iTermWindowProjectsModel.swift */,
 				2343E2DF433BD7B9647283A3 /* iTermProjectsPanelController.swift */,
 				13ACC6F2DFDB64638DCDB228 /* iTermProjectsDropOverlay.swift */,
