@@ -63,6 +63,7 @@
 		F40D832BDCE75E8A74EDAE72 /* Result+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899C05355E61EEF37D8C265F /* Result+iTerm.swift */; };
 		F6C5587117251D6D1B9E4C6A /* WhisperModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C180C99242A0356C8E0D404 /* WhisperModelManager.swift */; };
 		F840E446186274A715C2BC98 /* PhoneIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4C078E19397FAC1112AAA7 /* PhoneIdentity.swift */; };
+		FA3DC7672264574260BD246F /* CompanionVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 698CE0B1D8A47BB2E6D41FA0 /* CompanionVideoView.swift */; };
 		FF78DC091BDC5967B175AE88 /* CompanionProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 484C4315A31AC3A318C0B784 /* CompanionProtocol */; };
 /* End PBXBuildFile section */
 
@@ -110,6 +111,7 @@
 		465641AD107D063E7DD2A1C5 /* CompanionPushRelay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionPushRelay.swift; path = sources/Companion/Shared/CompanionPushRelay.swift; sourceTree = "<group>"; };
 		508E2211C4ADF7AB23B5CF3F /* CompanionMediaFrame.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionMediaFrame.swift; path = sources/Companion/Shared/CompanionMediaFrame.swift; sourceTree = "<group>"; };
 		551830A40102EA036643794D /* CompanionHEVCSampleBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionHEVCSampleBuilder.swift; path = sources/Companion/Shared/CompanionHEVCSampleBuilder.swift; sourceTree = "<group>"; };
+		698CE0B1D8A47BB2E6D41FA0 /* CompanionVideoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionVideoView.swift; path = CompanionVideoView.swift; sourceTree = "<group>"; };
 		6A2D82EC77649D6E8EDC19C3 /* Chat.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Chat.swift; path = sources/AITerm/Chat.swift; sourceTree = "<group>"; };
 		6B1A92D2DA0130234E239854 /* LLM.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LLM.swift; path = sources/AITerm/LLM.swift; sourceTree = "<group>"; };
 		6B45585DFAFCF303451219BB /* CompanionFrameChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionFrameChannel.swift; path = sources/Companion/Shared/CompanionFrameChannel.swift; sourceTree = "<group>"; };
@@ -211,6 +213,7 @@
 				24218D973EDC803C93048735 /* WorkgroupView.swift */,
 				798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */,
 				7E032AB4B164634905B48697 /* UpgradeRequiredView.swift */,
+				698CE0B1D8A47BB2E6D41FA0 /* CompanionVideoView.swift */,
 			);
 			path = Screens;
 			sourceTree = "<group>";
@@ -495,6 +498,7 @@
 				28B9863A97376BF11F48358A /* CompanionFrameChannel.swift in Sources */,
 				73E61C64578BE54180942C4E /* CompanionHEVCFraming.swift in Sources */,
 				54F5D986EBF8A12BFD55DBFE /* CompanionHEVCSampleBuilder.swift in Sources */,
+				FA3DC7672264574260BD246F /* CompanionVideoView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
