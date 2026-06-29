@@ -68,11 +68,26 @@ struct SessionTreeList<SessionRow: View>: View {
             ForEach(Array(tree.windows.enumerated()), id: \.offset) { _, window in
                 Section {
                     ForEach(Array(window.tabs.enumerated()), id: \.offset) { _, tab in
-                        SessionTreeRow(icon: "square.on.square", title: tab.title, level: 0)
+                        SessionTreeRow(icon: "folder", title: tab.title, level: 0)
                         ForEach(Array(tab.panes.enumerated()), id: \.offset) { _, pane in
-                            sessionRow(pane.session, pane.session.name, 1)
-                            ForEach(Array(pane.peers.enumerated()), id: \.offset) { _, peer in
-                                sessionRow(peer.session, Self.peerTitle(peer), 2)
+                            if pane.peers.isEmpty {
+                                sessionRow(pane.session, pane.session.name, 1)
+                            } else {
+                                // A pane hosting a peer group is a container, not
+                                // a live session. When the tab has other panes,
+                                // render it as a non-tappable row with its own
+                                // icon and nest the peers beneath it. When it is
+                                // the tab's only pane the container is redundant,
+                                // so hoist the peers up to be direct tab children.
+                                let nested = tab.panes.count > 1
+                                if nested {
+                                    SessionTreeRow(icon: "rectangle.split.2x1",
+                                                   title: "Split Pane",
+                                                   level: 1)
+                                }
+                                ForEach(Array(pane.peers.enumerated()), id: \.offset) { _, peer in
+                                    sessionRow(peer.session, Self.peerTitle(peer), nested ? 2 : 1)
+                                }
                             }
                         }
                     }

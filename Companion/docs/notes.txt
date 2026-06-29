@@ -42,3 +42,7 @@ Bug Fixes:
 - @-mentions in command-request messages now
   show the friendly session or workgroup name
   instead of the raw identifier.
+- In the Sessions tab, a split pane that hosts a
+  peer workgroup now shows as a container with
+  its own icon and is no longer tappable. Only
+  the individual peers beneath it open a session.
