@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Quote the text inside the <text> element shown.\"},{\"text\":\"<svg xmlns=\\\"http:\\\/\\\/www.w3.org\\\/2000\\\/svg\\\" viewBox=\\\"0 0 200 20\\\"><text x=\\\"0\\\" y=\\\"15\\\">pinecone-42<\\\/text><\\\/svg>\"}],\"role\":\"user\"}]}",
+  "key" : "6062a66a2229f11ea61f957b6d88e2499204c4b50475f96a7dc497d15e32ce99",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"`pinecone-42`\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 65,\n    \"candidatesTokenCount\": 7,\n    \"totalTokenCount\": 106,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 65\n      }\n    ],\n    \"thoughtsTokenCount\": 34,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"UO4lavj5MvDrz7IPoInsiQQ\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

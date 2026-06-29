@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttp:\/\/localhost:11434\/api\/chat\ncontent-type: application\/json\n\n{\"max_tokens\":127977,\"messages\":[{\"content\":\"Quote the text inside the <text> element shown.\\n<iterm2:attachment file=\\\"magic.svg\\\" type=\\\"image\\\/svg+xml\\\">\\n<svg xmlns=\\\"http:\\\/\\\/www.w3.org\\\/2000\\\/svg\\\" viewBox=\\\"0 0 200 20\\\"><text x=\\\"0\\\" y=\\\"15\\\">pinecone-42<\\\/text><\\\/svg>\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"llama3.3:latest\",\"stream\":false}",
+  "key" : "34ca9c05bac251cf8641887c5fb4c55b623698697f38034d0ca5cbe030d5151e",
+  "response" : {
+    "data" : "{\"model\":\"llama3.3:latest\",\"created_at\":\"2026-06-15T22:26:03.412759Z\",\"message\":{\"role\":\"assistant\",\"content\":\"The text inside the `\\u003ctext\\u003e` element is:\\n\\n`pinecone-42`\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":3964956875,\"load_duration\":100584250,\"prompt_eval_count\":88,\"prompt_eval_duration\":1911825000,\"eval_count\":17,\"eval_duration\":1936799000}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

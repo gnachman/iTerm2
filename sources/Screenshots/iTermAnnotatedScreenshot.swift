@@ -404,6 +404,40 @@ class iTermAnnotatedScreenshot: NSObject {
         }
     }
 
+    // MARK: - Background Fill
+
+    /// Composites the screenshot `content` (which has transparent margins and uncovered
+    /// areas) over a `background` image that fills the whole frame, producing an opaque
+    /// result. The background is scaled to the content's pixel dimensions, so a per-batch
+    /// background slice can be passed alongside a per-batch content image. Returns the
+    /// content unchanged on failure.
+    @objc static func compositing(_ content: NSImage, overBackground background: NSImage) -> NSImage {
+        guard let contentImage = content.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return content
+        }
+        let width = contentImage.width
+        let height = contentImage.height
+        guard width > 0, height > 0,
+              let context = CGContext(data: nil,
+                                      width: width,
+                                      height: height,
+                                      bitsPerComponent: 8,
+                                      bytesPerRow: 0,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            return content
+        }
+        let fullRect = CGRect(x: 0, y: 0, width: width, height: height)
+        if let backgroundImage = background.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+            context.draw(backgroundImage, in: fullRect)
+        }
+        context.draw(contentImage, in: fullRect)
+        guard let composited = context.makeImage() else {
+            return content
+        }
+        return NSImage(cgImage: composited, size: content.size)
+    }
+
     // MARK: - Highlight Support
 
     /// Applies highlights (outline with shadow) to an NSImage.

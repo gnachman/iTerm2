@@ -118,7 +118,7 @@ final class iTermASCIIStringTest: XCTestCase {
         let s = "Test"
         let data = Data(s.utf8)
         let style = makeStyle()
-        let attr = iTermExternalAttribute(havingUnderlineColor: true, underlineColor: VT100TerminalColorValue(red: 1, green: 1, blue: 1, mode: ColorModeNormal), url: nil, blockIDList: nil, controlCode: nil)
+        let attr = iTermExternalAttribute(havingUnderlineColor: true, underlineColor: VT100TerminalColorValue(red: 1, green: 1, blue: 1, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0), url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         let string = iTermASCIIString(data: data, style: style, ea: attr)
 
         // externalAttributesIndex must exist
@@ -264,7 +264,7 @@ final class iTermASCIIStringTest: XCTestCase {
 
     func testIsEqualToString() {
         let style = makeStyle()
-        let ea = iTermExternalAttribute(havingUnderlineColor: true, underlineColor: VT100TerminalColorValue(red: 2, green: 3, blue: 4, mode: ColorModeNormal), url: nil, blockIDList: nil, controlCode: nil)
+        let ea = iTermExternalAttribute(havingUnderlineColor: true, underlineColor: VT100TerminalColorValue(red: 2, green: 3, blue: 4, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0), url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
 
         let a = iTermASCIIString(data: Data("Equal".utf8), style: style, ea: ea)
         let b = iTermASCIIString(data: Data("Equal".utf8), style: style, ea: ea)
@@ -304,11 +304,10 @@ final class iTermASCIIStringTest: XCTestCase {
     func testRoundTrip() throws {
         let ea = iTermExternalAttribute(
             havingUnderlineColor: true,
-            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
             url: nil,
             blockIDList: nil,
-            controlCode: nil
-        )
+            controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         let original = iTermASCIIString(data: Data([65, 66, 67]),
                                         style: makeStyle(),
                                         ea: ea)

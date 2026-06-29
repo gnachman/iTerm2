@@ -2,10 +2,12 @@ ifndef ORIG_PATH
   ORIG_PATH := $(PATH)
 endif
 export ORIG_PATH
-PATH := /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+PATH := /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
+# Local checkout of the iterm2-website repo, where built plugins are published.
+ITERM2_WEBSITE ?= $(HOME)/iterm2-website
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
@@ -17,11 +19,12 @@ DEPLOYMENT_TARGET=12.0
 
 # Build product directory: defaults to xcodebuild's SYMROOT.
 # Override with BUILD_DIR=/path/to/dir on the command line.
-# Skip validation for 'make setup' since xcodebuild may not work yet.
+# Skip validation for targets that don't need a build directory.
 ifndef BUILD_DIR
   BUILD_DIR := $(shell xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}')
 endif
-ifneq ($(MAKECMDGOALS),setup)
+_NEEDS_BUILD_DIR := $(if $(filter-out setup dangerous-setup _setup-main help doctor,$(MAKECMDGOALS)),yes,$(if $(MAKECMDGOALS),,yes))
+ifdef _NEEDS_BUILD_DIR
   ifeq ($(strip $(BUILD_DIR)),)
     $(error Could not determine BUILD_DIR from xcodebuild -showBuildSettings. Is Xcode installed? Set BUILD_DIR explicitly to override.)
   endif
@@ -62,46 +65,200 @@ endif
 
 RUST_TOOLCHAIN_BIN = $(HOME)/.rustup/toolchains/stable-$(RUST_NATIVE_TARGET)/bin
 
-.PHONY: clean all backup-old-iterm restart
+.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor
+
+help:
+	@echo "iTerm2 — $(VERSION) ($(NATIVE_ARCH))"
+	@echo ""
+	@echo "First time:"
+	@echo "  make setup            Install all build dependencies (interactive)"
+	@echo "  make dangerous-setup  Same as setup, skip all confirmations"
+	@echo ""
+	@echo "Build:"
+	@echo "  make              Build Development (default)"
+	@echo "  make dev          Build Development"
+	@echo "  make prod         Build Deployment"
+	@echo "  make run          Build and launch Development build"
+	@echo "  make watch        Build and launch with interactive r=reload q=quit loop"
+	@echo "  make test         Run unit tests"
+	@echo "  make install      Build Deployment and install to /Applications"
+	@echo ""
+	@echo "Dependencies:"
+	@echo "  make paranoid-deps  Rebuild all native dependencies (sandboxed)"
+	@echo "  make DepsIfNeeded   Rebuild deps only if Xcode version changed"
+	@echo "  make clean        Remove build products"
+	@echo "  make cleandeps    Clean submodule build directories"
+	@echo ""
+	@echo "Release:"
+	@echo "  make Beta         Build Beta configuration"
+	@echo "  make Nightly      Build Nightly configuration"
+	@echo "  make Deployment   Build Deployment configuration"
+	@echo ""
+	@echo "Diagnose:"
+	@echo "  make doctor       Check all build dependencies"
+	@echo ""
+	@echo "Options:"
+	@echo "  SIGNED=1          Enable code signing"
+	@echo "  UNIVERSAL=1       Build universal (arm64 + x86_64) binaries"
+	@echo "  BUILD_DIR=/path   Override build output directory"
+	@echo ""
+	@echo "Homebrew: $(HOMEBREW_PREFIX)"
 
 all: Development
 dev: Development
 prod: Deployment
 
 setup:
-	@if ! PATH="$(ORIG_PATH)" command -v brew >/dev/null 2>&1; then \
-		echo "Error: Homebrew is not installed. Install from https://brew.sh"; \
-		exit 1; \
+	@BREW_BIN=$$(PATH="/opt/homebrew/bin:/usr/local/bin:$(ORIG_PATH)" command -v brew 2>/dev/null); \
+	if [ -z "$$BREW_BIN" ]; then \
+		echo "Homebrew is not installed."; \
+		if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+			printf "Install Homebrew via its official install script (requires sudo)? [y/N] "; \
+			read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+		fi; \
+		NONINTERACTIVE=1 /bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+		BREW_BIN=$$(command -v /opt/homebrew/bin/brew 2>/dev/null || command -v /usr/local/bin/brew 2>/dev/null); \
+		if [ -z "$$BREW_BIN" ]; then \
+			echo "Error: Homebrew installation failed."; \
+			exit 1; \
+		fi; \
+	fi; \
+	if ! PATH="$(ORIG_PATH)" command -v brew >/dev/null 2>&1; then \
+		echo "Restarting setup with Homebrew in PATH..."; \
+		PATH="$$(dirname $$BREW_BIN):$(ORIG_PATH)" \
+			$(MAKE) _setup-main SKIP_CONFIRM="$(SKIP_CONFIRM)"; \
+	else \
+		$(MAKE) _setup-main SKIP_CONFIRM="$(SKIP_CONFIRM)"; \
 	fi
-	@if ! PATH="$(ORIG_PATH)" xcode-select -p 2>/dev/null | grep -q 'Xcode.app'; then \
-		echo "Error: Xcode is not selected. Run: sudo xcode-select -s /Applications/Xcode.app"; \
-		exit 1; \
+
+dangerous-setup:
+	@$(MAKE) setup SKIP_CONFIRM=1
+
+_setup-main:
+	@XCODE_DEV=$$(PATH="$(ORIG_PATH)" xcode-select -p 2>/dev/null); \
+	if echo "$$XCODE_DEV" | grep -q '/Xcode.*\.app'; then \
+		XCODE_APP=$$(echo "$$XCODE_DEV" | sed 's|/Contents/Developer.*||'); \
+		echo "Xcode already selected: $$XCODE_APP"; \
+	else \
+		echo "Xcode.app is not selected."; \
+		XCODE_APP=$$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1); \
+		if [ -n "$$XCODE_APP" ]; then \
+			echo "Found $$XCODE_APP, selecting it..."; \
+			if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+				printf "This will run: sudo xcode-select -s \"$$XCODE_APP\". Continue? [y/N] "; \
+				read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+			fi; \
+			sudo xcode-select -s "$$XCODE_APP"; \
+		else \
+			echo "No Xcode installation found in /Applications."; \
+			HAS_XCODES=0; \
+			if PATH="$(ORIG_PATH)" command -v xcodes >/dev/null 2>&1; then \
+				HAS_XCODES=1; \
+			else \
+				echo "Installing xcodes to manage Xcode versions..."; \
+				PATH="$(ORIG_PATH)" brew install aria2 2>&1 || true; \
+				if PATH="$(ORIG_PATH)" brew install xcodes 2>&1; then \
+					HAS_XCODES=1; \
+				else \
+					echo "Could not install xcodes. See error above."; \
+				fi; \
+			fi; \
+			if [ "$$HAS_XCODES" = "1" ]; then \
+				echo "Downloading and installing the latest Xcode (this will take a while)..."; \
+				PATH="$(ORIG_PATH)" xcodes install --latest --experimental-unxip; \
+				XCODE_APP=$$(ls -d /Applications/Xcode*.app 2>/dev/null | head -1); \
+				if [ -z "$$XCODE_APP" ]; then \
+					XCODE_APP=$$(PATH="$(ORIG_PATH)" xcodes installed | tail -1 | awk '{print $$NF}'); \
+				fi; \
+			fi; \
+			if [ -z "$$XCODE_APP" ]; then \
+				echo ""; \
+				echo "Please install Xcode from the App Store or https://developer.apple.com/download/"; \
+				echo "then re-run make setup."; \
+				exit 1; \
+			fi; \
+			if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+				printf "This will run: sudo xcode-select -s \"$$XCODE_APP\". Continue? [y/N] "; \
+				read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+			fi; \
+			sudo xcode-select -s "$$XCODE_APP"; \
+		fi; \
+	fi
+	@if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+		printf "Accept the Xcode license agreement? [y/N] "; \
+		read ans </dev/tty; \
+		case "$$ans" in [yY]) sudo PATH="$(ORIG_PATH)" xcodebuild -license accept;; *) echo "Skipped license acceptance.";; esac; \
+	else \
+		sudo PATH="$(ORIG_PATH)" xcodebuild -license accept 2>/dev/null || true; \
 	fi
 	@if [ -z "$(RUSTUP)" ]; then \
-		echo "Error: rustup is not installed. Install from https://rustup.rs"; \
-		exit 1; \
+		echo "rustup is not installed."; \
+		if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+			printf "Install rustup via 'curl https://sh.rustup.rs | sh'? [y/N] "; \
+			read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+		fi; \
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
+		export PATH="$$HOME/.cargo/bin:$$PATH"; \
 	fi
 	@test -f plists/iTerm2.plist || cp plists/dev-iTerm2.plist plists/iTerm2.plist
 	@PATH="$(ORIG_PATH)" brew list cmake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install cmake
 	@PATH="$(ORIG_PATH)" brew list pkg-config >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install pkg-config
 	@PATH="$(ORIG_PATH)" brew list automake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install automake
-	@PATH="$(ORIG_PATH)" brew list perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
-	@PATH="$(ORIG_PATH)" brew list python3 >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install python3
-	@PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install --cask sf-symbols
-	@$(HOMEBREW_PREFIX)/bin/python3 -c "import objc" 2>/dev/null || $(HOMEBREW_PREFIX)/bin/pip3 install --break-system-packages pyobjc
-	@PATH="$(ORIG_PATH)" command -v cbindgen >/dev/null || $(RUSTUP) run stable cargo install cbindgen
-	# Note: this installs arm tooling as well
-	$(RUSTUP) target add x86_64-apple-darwin
-	git submodule update --init --recursive
-	PATH="$(ORIG_PATH)" xcodebuild -downloadComponent MetalToolchain
-	@if tools/check-xcode-version; then \
-		BUILD_DIR=$$(xcodebuild -scheme iTerm2 -showBuildSettings 2>/dev/null | awk -F ' = ' '/^ *SYMROOT/{print $$2; exit}'); \
-		if [ "$$USER" = "gnachman" ]; then \
-			$(MAKE) paranoid-deps SIGNED=1 BUILD_DIR="$$BUILD_DIR"; \
-		else \
-			$(MAKE) paranoid-deps BUILD_DIR="$$BUILD_DIR"; \
+	@PATH="$(ORIG_PATH)" command -v perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
+	@if ! test -x "$(HOMEBREW_PREFIX)/bin/python3"; then \
+		PATH="$(ORIG_PATH)" brew install python3; \
+		if ! PATH="$(ORIG_PATH)" brew link python@3 2>/dev/null; then \
+			echo "brew link python@3 would overwrite existing symlinks:"; \
+			PATH="$(ORIG_PATH)" brew link python@3 2>&1 | head -5; \
+			if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+				printf "Overwrite these symlinks? [y/N] "; \
+				read ans </dev/tty; case "$$ans" in [yY]) ;; *) echo "Aborted."; exit 1;; esac; \
+			fi; \
+			PATH="$(ORIG_PATH)" brew link --overwrite python@3; \
 		fi; \
 	fi
+	@if ! PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1; then \
+		INSTALL_SF=1; \
+		if [ "$(SKIP_CONFIRM)" != "1" ]; then \
+			printf "sf-symbols is a .pkg installer that requires sudo. Install it now? [y/N] "; \
+			read ans </dev/tty; case "$$ans" in [yY]) ;; *) INSTALL_SF=0; echo "Skipped sf-symbols.";; esac; \
+		fi; \
+		if [ "$$INSTALL_SF" = "1" ]; then \
+			PATH="$(ORIG_PATH)" brew install --cask sf-symbols || \
+			{ echo ""; echo "WARNING: sf-symbols installation failed (requires sudo)."; \
+			  echo "  Ask your admin to run: brew install --cask sf-symbols"; echo ""; }; \
+		fi; \
+	fi
+	@$(HOMEBREW_PREFIX)/bin/python3 -c "import objc" 2>/dev/null || $(HOMEBREW_PREFIX)/bin/pip3 install --break-system-packages pyobjc
+	@PATH="$(ORIG_PATH):$$HOME/.cargo/bin" command -v cbindgen >/dev/null || $(or $(RUSTUP),$$HOME/.cargo/bin/rustup) run stable cargo install cbindgen
+	# Note: this installs arm tooling as well
+	$(or $(RUSTUP),$$HOME/.cargo/bin/rustup) target add x86_64-apple-darwin
+	git submodule update --init --recursive
+	PATH="$(ORIG_PATH)" xcodebuild -downloadComponent MetalToolchain || \
+		echo "WARNING: Metal Toolchain download failed. You can retry later with: xcodebuild -downloadComponent MetalToolchain"
+	@echo ""
+	@echo "Setup complete. Run 'make paranoid-deps' to build native dependencies."
+
+doctor:
+	@echo "iTerm2 build environment — $(NATIVE_ARCH)"
+	@echo ""
+	@printf "  %-18s" "Homebrew:"; (PATH="$(ORIG_PATH)" brew --version 2>/dev/null | head -1) || echo "NOT FOUND"
+	@printf "  %-18s" "Homebrew prefix:"; echo "$(HOMEBREW_PREFIX)"
+	@printf "  %-18s" "Xcode:"; (xcodebuild -version 2>/dev/null | tr '\n' ' ' && echo) || echo "NOT FOUND"
+	@printf "  %-18s" "xcode-select:"; (xcode-select -p 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "xcodes:"; (PATH="$(ORIG_PATH)" xcodes version 2>/dev/null) || echo "not installed"
+	@printf "  %-18s" "cmake:"; ($(CMAKE) --version 2>/dev/null | head -1) || echo "NOT FOUND"
+	@printf "  %-18s" "pkg-config:"; ($(PKG_CONFIG) --version 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "automake:"; (PATH="$(ORIG_PATH)" automake --version 2>/dev/null | grep -m1 .) || echo "NOT FOUND"
+	@printf "  %-18s" "perl:"; (PATH="$(ORIG_PATH)" perl -e 'print $$]."\n"' 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "python3 (brew):"; ver=$$($(HOMEBREW_PREFIX)/bin/python3 --version 2>/dev/null); \
+		if [ -z "$$ver" ]; then echo "NOT FOUND — run make setup"; \
+		elif echo "$$ver" | grep -q "^Python 3"; then echo "$$ver"; \
+		else echo "$$ver (WARNING: needs Python 3)"; fi
+	@printf "  %-18s" "pyobjc:"; ($(HOMEBREW_PREFIX)/bin/python3 -c "import objc; print('installed')" 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "rustup:"; (PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" rustup --version 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "cbindgen:"; (PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" cbindgen --version 2>/dev/null) || echo "NOT FOUND"
+	@printf "  %-18s" "sf-symbols:"; (PATH="$(ORIG_PATH)" brew list --cask sf-symbols >/dev/null 2>&1 && echo "installed") || echo "NOT FOUND"
 
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
@@ -111,6 +268,7 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
+	cp plists/dev-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" && \
 	chmod -R go+rX $(BUILD_DIR)/Development
 
@@ -128,8 +286,27 @@ Nightly: force
 	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO
 	chmod -R go+rX $(BUILD_DIR)/Nightly
 
+companion-iphone: force
+	Companion/tools/run_on_iphone.sh $(COMPANION_DEVICE)
+
+open: Development
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(notdir $(CURDIR))
+
 run: Development
-	$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2 -suite iterm2-dev
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
+	pid=$$!; \
+	trap 'kill $$pid 2>/dev/null' INT TERM; \
+	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
+	wait $$pid
+
+runbg: Development
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
+	pid=$$!; \
+	trap 'kill $$pid 2>/dev/null' INT TERM; \
+	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
+
+watch: Development
+	tools/run.sh "$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" "$(BUILD_DIR)" -suite iterm2-dev
 
 devzip: Development
 	cd $(BUILD_DIR)/Development && \
@@ -175,7 +352,7 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
@@ -185,14 +362,17 @@ ifdef UNIVERSAL
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
 fatlibsixel: force armsixel x86libsixel
 	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel-x86/lib/libsixel.a
+	cp ThirdParty/libsixel-arm/include/sixel.h ThirdParty/libsixel/include/sixel.h
 else
 fatlibsixel: force
 ifeq ($(NATIVE_ARCH),arm64)
 	$(MAKE) armsixel
 	cp ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+	cp ThirdParty/libsixel-arm/include/sixel.h ThirdParty/libsixel/include/sixel.h
 else
 	$(MAKE) x86libsixel
 	cp ThirdParty/libsixel-x86/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+	cp ThirdParty/libsixel-x86/include/sixel.h ThirdParty/libsixel/include/sixel.h
 endif
 endif
 
@@ -312,6 +492,34 @@ endif
 pwmadapters: force
 	cd pwmplugin/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 
+# Build, notarize, staple, and zip the companion consent plugin, then copy the
+# notarized zip into the website repo's downloads folder. build.sh prompts for
+# the notarization password, the EdDSA signing key, and the version.
+companion-plugin: force
+	cd iTermCompanion && WEBSITE_DOWNLOADS="$(ITERM2_WEBSITE)/downloads/companion-plugin" ./build.sh
+
+# Archive the iOS Companion app (Release) and export a signed App Store .ipa,
+# the same Release product Xcode's Archive produces (production aps-environment).
+# Upload it separately (Xcode Organizer, Transporter, or `xcrun altool
+# --upload-app`); that step needs App Store Connect credentials.
+companion-iphone-archive: force
+	cd Companion && xcodebuild -project iTerm2Companion.xcodeproj -scheme iTerm2Companion \
+	  -configuration Release -destination 'generic/platform=iOS' \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive -allowProvisioningUpdates archive
+	cd Companion && xcodebuild -exportArchive \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive \
+	  -exportOptionsPlist ExportOptions.plist \
+	  -exportPath Build/ios/export -allowProvisioningUpdates
+	@echo "Archive: Companion/Build/ios/iTerm2Companion.xcarchive"
+	@echo "IPA:     Companion/Build/ios/export/"
+
+it2cli: force
+	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
+	cp it2cli/.build/release/it2 it2cli/bin
+
+cc-status: force
+	cd cc-status/ && ./build.sh
+
 libgit2: force
 	mkdir -p submodules/libgit2/build
 	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_CLAR=OFF -DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="$(CMAKE_ARCHS)" -DCMAKE_OSX_DEPLOYMENT_TARGET="$(DEPLOYMENT_TARGET)" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
@@ -329,6 +537,7 @@ paranoid-SwiftyMarkdown: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SwiftyMarkdown
 
 paranoid-deps: force
+	tools/check-submodule-cleanliness
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" deps
 	xcodebuild -version > last-xcode-version
 
@@ -370,6 +579,12 @@ sfsymbolenum:
 	cd submodules/SFSymbolEnum && swift generateSFSymbolEnum.swift --objc > ../../ThirdParty/SFSymbolEnum/SFSymbolEnum.h
 	cd submodules/SFSymbolEnum && swift generateSFSymbolEnum.swift --objc-impl > ../../ThirdParty/SFSymbolEnum/SFSymbolEnum.m
 
+# Regenerate NSCharacterSet+iTerm.m and iTermCharacterSets.m from latest Unicode data.
+# Run this when a new Unicode version is released.
+unicode:
+	rm -rf tools/.unicode_cache
+	python3 tools/generate_nscharacterset.py
+
 DepsIfNeeded: force
 	tools/rebuild-deps-if-needed
 
@@ -409,5 +624,8 @@ cleandeps: force
 	cd submodules/libsixel && git clean -f -d .
 	cd submodules/libssh2 && git clean -f -d .
 	cd submodules/openssl && git clean -f -d .
+
+test: force
+	tools/run_tests.expect ModernTests
 
 force:

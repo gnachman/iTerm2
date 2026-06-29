@@ -1,0 +1,143 @@
+Version 3.7.0beta4 was built on June 18, 2026.
+
+Changes since 3.7.0beta3:
+
+Major New Features:
+- Companion App: the new iOS app, iTerm2 Buddy,
+  is now functional. Pair your Mac with your
+  phone by scanning a QR code (iTerm2 >
+  Companion Device Settings). Devices connect
+  through a relay using end-to-end encryption, so
+  they work even when the Mac and phone are on
+  different networks, and end-to-end encryption
+  ensures your data is visible only to you. From
+  your phone you can interact with iTerm2 via AI
+  chat.
+
+New Features:
+- New Lock Layout menu item (in the Window
+  menu, next to Lock Size) that freezes a
+  window’s layout: it prevents splitting,
+  adding or closing tabs, reordering tabs,
+  closing or dragging panes, and moving panes
+  or tabs to other windows. Resizing panes,
+  opening new windows, and closing the window
+  still work.
+- A new Variable Changed trigger match type
+  fires when a named session variable changes
+  to a value matching an optional regex.
+- A process inspector popover was added to the
+  Jobs view (toolbelt and status bar popover).
+  Hover a row to see the full command as a
+  tooltip, or press space to open a popover
+  with the full command, process ID, start
+  time, working directory, environment
+  variables, and a list of open files and
+  network connections.
+- Chats in the AI chat list now get an icon
+  drawn by your AI model from the chat title.
+  Chats without one show a default icon. The
+  prompt can be edited in Settings > General >
+  AI > Prompts.
+- You can @-mention terminal sessions in
+  orchestration chats to bring them into the
+  conversation.
+- The Session Status tool can notify you when a
+  watched session or window changes status. The
+  alert offers a Reveal button that jumps to
+  the session, and the same control is now
+  available in the Cockpit and the Window menu.
+- The Session Status tool can merge workgroup
+  statuses, collapsing each workgroup into a
+  single row that shows its highest-priority
+  status.
+- The Python API’s create_tab can now create a
+  tab in the background. Set select_tab=false on
+  CreateTabRequest to add a tab without
+  selecting it or raising its window.
+- App.async_apply_layout can now create
+  brand-new sessions in place via new_session
+  leaves, instead of only rearranging existing
+  ones.
+- A new window.title variable holds the
+  rendered window title, alongside the existing
+  session.presentationName and tab.title.
+
+Improvements:
+- The default AI request timeout was raised from
+  30 seconds to 5 minutes.
+- The AI command safety check now uses your
+  configured AI model. It runs deterministic
+  terminal rules first and only asks the model
+  when those rules cannot decide. Because it can
+  send commands to your (possibly cloud)
+  provider, it is opt-in. Users who already
+  enabled it keep using free on-device Apple
+  Intelligence and are asked once whether to
+  switch to their model.
+- Auto-approved AI tool requests are now
+  persisted instead of squelched, so they
+  survive reloading a chat.
+- AI models were updated. Support for Claude
+  Opus 4 was removed and the latest models were
+  added; temperature is omitted for Opus 4.7
+  and newer.
+- Orchestration chats auto-approve safe session
+  spawns, render tool-call activity inline, and
+  show @-prefixed session and workgroup ids as
+  name links. AI chat now offers orchestration
+  when there is no session to link.
+- The Claude Code setup wizard has clearer
+  navigation and highlighting.
+- The code review overlay now defaults to the
+  last-used prompt when reloaded.
+- Workgroup peers are persisted and restored
+  across app restarts. The peer switcher spins
+  an activity indicator while a peer is working,
+  and the Workgroups settings pane gained a help
+  button.
+- The Cockpit can watch statusless sessions by
+  observing their screen, shows session detail
+  under the name when grouping by status, and no
+  longer dims when it loses key status.
+- The Settings window title now shows the suite
+  name when running a named instance.
+- The Git diff menu excludes untracked files
+  from its per-file statuses.
+- Automatic text substitutions are now disabled
+  in the AI chat input field.
+- Auto-launched API scripts no longer warn about
+  __pycache__ directories, and context menu
+  items registered via the Python API are now
+  sorted by display name for a stable order.
+
+Bug Fixes:
+- A key bound to “Bypass Terminal” now reaches
+  macOS for function, arrow, and numeric-keypad
+  keys, so global shortcuts in other apps work
+  again. Issue 12884.
+- A live filter no longer drops content that
+  arrives while it is mid-search.
+- A tab no longer shows a stale or missing
+  session status when a pane carrying a status
+  is closed, moved between tabs, or reparented
+  (for example by entering or exiting a
+  workgroup).
+- Fold All and Clear Buffer no longer leave
+  portholes behind.
+- Copying selected text from a porthole now
+  works in apps that prefer rich text, and
+  clicking a porthole in an inactive split pane
+  now activates that pane.
+- Next Pane and Previous Pane work again while
+  maximized after restarting a session.
+- The grid and scroll view are now re-fit when
+  entering or leaving instant replay.
+- The Jobs toolbelt is now populated immediately
+  for restored sessions.
+- Installing or uninstalling the Claude Code
+  integration now persists its trigger changes,
+  so they are no longer lost on the next launch.
+- Fixed a threading issue in AI chat streaming.
+- Fixed several low-risk crashes seen in 3.6.10
+  reports.

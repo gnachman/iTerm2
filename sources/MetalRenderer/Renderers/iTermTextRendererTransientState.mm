@@ -1,0 +1,860 @@
+//
+//  iTermTextRendererTransientState.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 12/22/17.
+//
+
+#import "FutureMethods.h"
+#import "iTermTextRendererTransientState.h"
+#import "iTermTextRendererTransientState+Private.h"
+#import "iTermGCD.h"
+#import "iTermPIUArray.h"
+#import "iTermSubpixelModelBuilder.h"
+#import "iTermTexturePage.h"
+#import "iTermTexturePageCollection.h"
+#import "NSMutableData+iTerm.h"
+
+#include <map>
+
+const vector_float4 iTermAnnotationUnderlineColor = simd_make_float4(1, 1, 0, 1);
+
+namespace iTerm2 {
+    class TexturePage;
+}
+
+static vector_uint2 CGSizeToVectorUInt2(const CGSize &size) {
+    return simd_make_uint2(size.width, size.height);
+}
+
+static const size_t iTermPIUArrayIndexNotUnderlined = 0;
+static const size_t iTermPIUArrayIndexUnderlined = 1;  // This can be used as the Underlined bit in this bitmask
+static const size_t iTermPIUArrayIndexNotUnderlinedEmoji = 2;  // This can be used as the Emoji bit in this bitmask
+static const size_t iTermPIUArrayIndexUnderlinedEmoji = 3;
+static const size_t iTermPIUArraySize = 4;
+
+static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
+
+@implementation iTermTextRendererTransientState {
+    iTerm2::PIUArray<iTermTextPIU> _asciiPIUArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
+    iTerm2::PIUArray<iTermTextPIU> _asciiOverflowArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
+
+    // Array of PIUs for each texture page.
+    std::map<iTerm2::TexturePage *, iTerm2::PIUArray<iTermTextPIU> *> _pius[iTermPIUArraySize];
+
+    iTermPreciseTimerStats _stats[iTermTextRendererStatCount];
+
+    // Set per-row to suppress underlines on DECDHL top-half lines.
+    BOOL _suppressUnderlineForDHL;
+}
+
+// Carrier struct for moving PIUArrays to background deallocation queue.
+// The expensive deallocation of the vectors happens when this is deleted.
+namespace {
+    struct PIUArrayDeallocCarrier {
+        iTerm2::PIUArray<iTermTextPIU> asciiArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
+        iTerm2::PIUArray<iTermTextPIU> overflowArrays[iTermPIUArraySize][iTermNumberOfPIUArrays];
+        std::vector<iTerm2::PIUArray<iTermTextPIU> *> heapArrays;
+
+        ~PIUArrayDeallocCarrier() {
+            for (auto ptr : heapArrays) {
+                delete ptr;
+            }
+        }
+    };
+}
+
+- (void)dealloc {
+    // Count total PIUs to decide if background deallocation is worthwhile.
+    // The dispatch overhead isn't free, so for small amounts of data it's
+    // cheaper to just deallocate inline.
+    static const size_t kAsyncDeallocThreshold = 100;
+    size_t totalSize = 0;
+    for (size_t i = 0; i < iTermPIUArraySize && totalSize < kAsyncDeallocThreshold; i++) {
+        for (size_t j = 0; j < iTermNumberOfPIUArrays && totalSize < kAsyncDeallocThreshold; j++) {
+            totalSize += _asciiPIUArrays[i][j].size();
+            totalSize += _asciiOverflowArrays[i][j].size();
+        }
+        totalSize += _pius[i].size();
+    }
+
+    if (totalSize < kAsyncDeallocThreshold) {
+        // Small amount - deallocate inline
+        for (size_t i = 0; i < iTermPIUArraySize; i++) {
+            for (auto it = _pius[i].begin(); it != _pius[i].end(); it++) {
+                delete it->second;
+            }
+        }
+        return;
+    }
+
+    // Large amount - move to carrier and delete on background queue.
+    // The move operations are O(1) pointer swaps; the expensive deallocation
+    // of the underlying vectors happens on the background queue.
+    auto *carrier = new PIUArrayDeallocCarrier();
+
+    for (size_t i = 0; i < iTermPIUArraySize; i++) {
+        for (size_t j = 0; j < iTermNumberOfPIUArrays; j++) {
+            carrier->asciiArrays[i][j] = std::move(_asciiPIUArrays[i][j]);
+            carrier->overflowArrays[i][j] = std::move(_asciiOverflowArrays[i][j]);
+        }
+        for (auto it = _pius[i].begin(); it != _pius[i].end(); it++) {
+            carrier->heapArrays.push_back(it->second);
+        }
+        _pius[i].clear();
+    }
+
+    dispatch_async([iTermGCD deallocQueue], ^{
+        delete carrier;
+    });
+}
+
++ (NSString *)formatTextPIU:(iTermTextPIU)a {
+    return [NSString stringWithFormat:
+            @"offset=(%@, %@) "
+            @"textureOffset=(%@, %@) "
+            @"textColor=(%@, %@, %@, %@) "
+            @"underlineStyle=%@ "
+            @"underlineColor=(%@, %@, %@, %@)\n",
+            @(a.offset.x),
+            @(a.offset.y),
+            @(a.textureOffset.x),
+            @(a.textureOffset.y),
+            @(a.textColor.x),
+            @(a.textColor.y),
+            @(a.textColor.z),
+            @(a.textColor.w),
+            @(a.underlineStyle),
+            @(a.underlineColor.x),
+            @(a.underlineColor.y),
+            @(a.underlineColor.z),
+            @(a.underlineColor.w)];
+}
+
+- (void)writeDebugInfoToFolder:(NSURL *)folder {
+    [super writeDebugInfoToFolder:folder];
+
+    [_modelData writeToURL:[folder URLByAppendingPathComponent:@"model.bin"] atomically:NO];
+
+    @autoreleasepool {
+        for (int k = 0; k < iTermPIUArraySize; k++) {
+            for (int i = 0; i < sizeof(_asciiPIUArrays[k]) / sizeof(**_asciiPIUArrays); i++) {
+                NSMutableString *s = [NSMutableString string];
+                const int size = _asciiPIUArrays[k][i].size();
+                for (int j = 0; j < size; j++) {
+                    const iTermTextPIU &a = _asciiPIUArrays[k][i].get(j);
+                    [s appendString:[self.class formatTextPIU:a]];
+                }
+                NSMutableString *name = [NSMutableString stringWithFormat:@"asciiPIUs.CenterPart."];
+                if (i & iTermASCIITextureAttributesBold) {
+                    [name appendString:@"B"];
+                }
+                if (i & iTermASCIITextureAttributesItalic) {
+                    [name appendString:@"I"];
+                }
+                if (i & iTermASCIITextureAttributesThinStrokes) {
+                    [name appendString:@"T"];
+                }
+                if (k == iTermPIUArrayIndexUnderlined ||
+                    k == iTermPIUArrayIndexUnderlinedEmoji) {
+                    [name appendString:@"U"];
+                }
+                if (k == iTermPIUArrayIndexNotUnderlinedEmoji ||
+                    k == iTermPIUArrayIndexUnderlinedEmoji) {
+                    [name appendString:@"E"];
+                }
+                [name appendString:@".txt"];
+                [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+            }
+        }
+    }
+
+    @autoreleasepool {
+        for (int k = 0; k < iTermPIUArraySize; k++) {
+            for (int i = 0; i < sizeof(_asciiOverflowArrays[k]) / sizeof(**_asciiOverflowArrays); i++) {
+                NSMutableString *s = [NSMutableString string];
+                const int size = _asciiOverflowArrays[k][i].size();
+                for (int j = 0; j < size; j++) {
+                    const iTermTextPIU &a = _asciiOverflowArrays[k][i].get(j);
+                    [s appendString:[self.class formatTextPIU:a]];
+                }
+                NSMutableString *name = [NSMutableString stringWithFormat:@"asciiPIUs.Overflow."];
+                if (i & iTermASCIITextureAttributesBold) {
+                    [name appendString:@"B"];
+                }
+                if (i & iTermASCIITextureAttributesItalic) {
+                    [name appendString:@"I"];
+                }
+                if (i & iTermASCIITextureAttributesThinStrokes) {
+                    [name appendString:@"T"];
+                }
+                [name appendString:@".txt"];
+                [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+            }
+        }
+    }
+
+    @autoreleasepool {
+        for (int k = 0; k < iTermPIUArraySize; k++) {
+            NSMutableString *s = [NSMutableString string];
+            for (auto entry : _pius[k]) {
+                const iTerm2::TexturePage *texturePage = entry.first;
+                iTerm2::PIUArray<iTermTextPIU> *piuArray = entry.second;
+                [s appendFormat:@"Texture Page with texture %@:\n", texturePage->get_texture().label];
+                if (piuArray) {
+                    for (int j = 0; j < piuArray->size(); j++) {
+                        iTermTextPIU &piu = piuArray->get(j);
+                        [s appendString:[self.class formatTextPIU:piu]];
+                    }
+                }
+            }
+            NSString *name = @"non-ascii-pius.txt";
+            if (k & iTermPIUArrayIndexUnderlined) {
+                name = [@"underlined-" stringByAppendingString:name];
+            }
+            if (k & iTermPIUArrayIndexNotUnderlinedEmoji) {
+                name = [@"emoji-" stringByAppendingString:name];
+            }
+            [s writeToURL:[folder URLByAppendingPathComponent:name] atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        }
+    }
+
+    NSString *s = [NSString stringWithFormat:@"backgroundTexture=%@\nasciiUnderlineDescriptor=%@\nnonAsciiUnderlineDescriptor=%@\nstrikethroughUnderlineDescriptor=%@",
+                   _backgroundTexture,
+                   iTermMetalUnderlineDescriptorDescription(&_asciiUnderlineDescriptor),
+                   iTermMetalUnderlineDescriptorDescription(&_nonAsciiUnderlineDescriptor),
+                   iTermMetalUnderlineDescriptorDescription(&_strikethroughUnderlineDescriptor)];
+    [s writeToURL:[folder URLByAppendingPathComponent:@"state.txt"]
+       atomically:NO
+         encoding:NSUTF8StringEncoding
+            error:NULL];
+}
+
+- (iTermPreciseTimerStats *)stats {
+    return _stats;
+}
+
+- (int)numberOfStats {
+    return iTermTextRendererStatCount;
+}
+
+- (NSString *)nameForStat:(int)i {
+    return [@[ @"text.newQuad",
+               @"text.newPIU",
+               @"text.newDims",
+               @"text.info",
+               @"text.subpixel",
+               @"text.draw" ] objectAtIndex:i];
+}
+
+- (BOOL)haveAsciiOverflow {
+    for (int k = 0; k < iTermPIUArraySize; k++) {
+        for (int i = 0; i < iTermNumberOfPIUArrays; i++) {
+            const int n = _asciiOverflowArrays[k][i].get_number_of_segments();
+            if (n > 0) {
+                for (int j = 0; j < n; j++) {
+                    if (_asciiOverflowArrays[k][i].size_of_segment(j) > 0) {
+                        return YES;
+                    }
+                }
+            }
+        }
+    }
+    return NO;
+}
+
+- (void)enumerateASCIIDrawsFromArrays:(iTerm2::PIUArray<iTermTextPIU> *)piuArrays
+                           underlined:(BOOL)underlined
+                                emoji:(BOOL)emoji
+                                block:(void (^)(const iTermTextPIU *,
+                                                NSInteger,
+                                                id<MTLTexture>,
+                                                vector_uint2,
+                                                vector_uint2,
+                                                iTermMetalUnderlineDescriptor,
+                                                iTermMetalUnderlineDescriptor,
+                                                BOOL underlined,
+                                                BOOL emoji))block {
+    // ASCII glyphs are shifted by self.asciiOffset.height pixels relative to non-ascii glyphs.
+    // The underlines would come along with them so we adjust them here. Issue 10168.
+    iTermMetalUnderlineDescriptor adjustedASCIIUnderlineDescriptor = _asciiUnderlineDescriptor;
+    adjustedASCIIUnderlineDescriptor.offset -= self.asciiOffset.height / self.configuration.scale;
+    vector_uint2 augmentedGlyphSize = CGSizeToVectorUInt2(_asciiTextureGroup.glyphSize);
+    if (iTermTextIsMonochrome()) {
+        // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph, notwithstanding the ascii offset.
+        // If we don't account for ascii offset here than glyphs that spill into the right (such as Italic often does) can be truncated.
+        augmentedGlyphSize.x += self.asciiOffset.width;
+        augmentedGlyphSize.y += self.asciiOffset.height;
+    }
+    for (int i = 0; i < iTermNumberOfPIUArrays; i++) {
+        const int n = piuArrays[i].get_number_of_segments();
+        iTermASCIITexture *asciiTexture = [_asciiTextureGroup asciiTextureForAttributes:(iTermASCIITextureAttributes)i];
+        ITBetaAssert(asciiTexture, @"nil ascii texture for attributes %d", i);
+        for (int j = 0; j < n; j++) {
+            if (piuArrays[i].size_of_segment(j) > 0) {
+                block(piuArrays[i].start_of_segment(j),
+                      piuArrays[i].size_of_segment(j),
+                      asciiTexture.textureArray.texture,
+                      CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
+                      augmentedGlyphSize,
+                      adjustedASCIIUnderlineDescriptor,
+                      _strikethroughUnderlineDescriptor,
+                      underlined,
+                      emoji);
+            }
+        }
+    }
+}
+
+- (size_t)enumerateNonASCIIDraws:(void (^)(const iTermTextPIU *,
+                                           NSInteger,
+                                           id<MTLTexture>,
+                                           vector_uint2,
+                                           vector_uint2,
+                                           iTermMetalUnderlineDescriptor,
+                                           iTermMetalUnderlineDescriptor,
+                                           BOOL underlined,
+                                           BOOL emoji))block {
+    size_t sum = 0;
+    for (size_t k = 0; k < iTermPIUArraySize; k++) {
+        for (auto const &mapPair : _pius[k]) {
+            const iTerm2::TexturePage *const &texturePage = mapPair.first;
+            const iTerm2::PIUArray<iTermTextPIU> *const &piuArray = mapPair.second;
+
+            for (size_t i = 0; i < piuArray->get_number_of_segments(); i++) {
+                const size_t count = piuArray->size_of_segment(i);
+                if (count > 0) {
+                    sum += count;
+                    block(piuArray->start_of_segment(i),
+                          count,
+                          texturePage->get_texture(),
+                          texturePage->get_atlas_size(),
+                          texturePage->get_cell_size(),
+                          _nonAsciiUnderlineDescriptor,
+                          _strikethroughUnderlineDescriptor,
+                          !!(k & iTermPIUArrayIndexUnderlined),
+                          !!(k & iTermPIUArrayIndexNotUnderlinedEmoji));
+                }
+            }
+        }
+    }
+    return sum;
+}
+
+- (void)enumerateASCIIDrawsFromArrays:(iTerm2::PIUArray<iTermTextPIU>[iTermPIUArraySize][iTermNumberOfPIUArrays])piuArrays
+                                block:(void (^)(const iTermTextPIU *, NSInteger, id<MTLTexture>, vector_uint2, vector_uint2, iTermMetalUnderlineDescriptor, iTermMetalUnderlineDescriptor, BOOL, BOOL))block {
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexUnderlined]
+                             underlined:true
+                                  emoji:false
+                                  block:block];
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexUnderlinedEmoji]
+                             underlined:true
+                                  emoji:true
+                                  block:block];
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexNotUnderlined]
+                             underlined:false
+                                  emoji:false
+                                  block:block];
+    [self enumerateASCIIDrawsFromArrays:piuArrays[iTermPIUArrayIndexNotUnderlinedEmoji]
+                             underlined:false
+                                  emoji:true
+                                  block:block];
+}
+
+- (void)enumerateDraws:(void (^)(const iTermTextPIU *,
+                                 NSInteger,
+                                 id<MTLTexture>,
+                                 vector_uint2,
+                                 vector_uint2,
+                                 iTermMetalUnderlineDescriptor,
+                                 iTermMetalUnderlineDescriptor,
+                                 BOOL underlined,
+                                 BOOL emoji))block
+             copyBlock:(void (^)(void))copyBlock {
+    [self enumerateNonASCIIDraws:block];
+    [self enumerateASCIIDrawsFromArrays:_asciiPIUArrays block:block];
+    if ([self haveAsciiOverflow]) {
+        copyBlock();
+        [self enumerateASCIIDrawsFromArrays:_asciiOverflowArrays block:block];
+    }
+}
+
+- (void)willDraw {
+    DLog(@"WILL DRAW %@", self);
+    for (int k = 0; k < iTermPIUArraySize; k++) {
+        for (auto pair : _pius[k]) {
+            iTerm2::TexturePage *page = pair.first;
+            page->record_use();
+        }
+    }
+    DLog(@"END WILL DRAW");
+}
+
+NS_INLINE iTermTextPIU *iTermTextRendererTransientStateAddASCIIPart(iTermTextPIU *piu,
+                                                                    char code,
+                                                                    float w,
+                                                                    float h,
+                                                                    iTermASCIITexture *texture,
+                                                                    float cellWidth,
+                                                                    int visualColumn,
+                                                                    CGSize asciiOffset,
+                                                                    iTermASCIITextureOffset offset,
+                                                                    vector_float4 textColor,
+                                                                    iTermMetalGlyphAttributesUnderline underlineStyle,
+                                                                    vector_float4 underlineColor) {
+    piu->offset = simd_make_float2(visualColumn * cellWidth + asciiOffset.width,
+                                   asciiOffset.height);
+    const int index = iTermASCIITextureIndexOfCode(code, offset);
+    MTLOrigin origin = iTermTextureArrayOffsetForIndex(texture.textureArray, index);
+    piu->textureOffset = (vector_float2){ origin.x * w, origin.y * h };
+    piu->textColor = textColor;
+    piu->underlineStyle = underlineStyle;
+    piu->underlineColor = underlineColor;
+    return piu;
+}
+
+static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underlined, const bool &emoji) {
+    const int underlineBit = (annotation || underlined) ? iTermPIUArrayIndexUnderlined : 0;
+    const int emojiBit = emoji ? iTermPIUArrayIndexNotUnderlinedEmoji : 0;
+    return underlineBit | emojiBit;
+}
+
+- (void)addASCIICellToPIUsForCode:(char)code
+                     logicalIndex:(int)logicalIndex
+                     visualColumn:(int)visualColumn
+                           offset:(CGSize)asciiOffset
+                                w:(float)w
+                                h:(float)h
+                        cellWidth:(float)cellWidth
+                       asciiAttrs:(iTermASCIITextureAttributes)asciiAttrs
+                       attributes:(const iTermMetalGlyphAttributes *)attributes
+                    inMarkedRange:(BOOL)inMarkedRange {
+    // When profiling, objc_retain and objc_release took 20% of the time in this function, which
+    // is called super frequently. It should be safe not to retain the texture because the texture
+    // group retains it. Once a texture is set in the group it won't be removed or replaced.
+    __unsafe_unretained iTermASCIITexture *texture = _asciiTextureGroup->_textures[asciiAttrs];
+    if (!texture) {
+        texture = [_asciiTextureGroup asciiTextureForAttributes:asciiAttrs];
+    }
+
+    iTermASCIITextureParts parts = texture.parts[(size_t)code];
+    vector_float4 underlineColor = { 0, 0, 0, 0 };
+
+    const BOOL suppressUnderlines = self.suppressUnderlines || _suppressUnderlineForDHL;
+    const bool hasAnnotation = suppressUnderlines ? false : attributes[visualColumn].annotation;
+    const bool hasUnderline = suppressUnderlines ? false : attributes[visualColumn].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
+    const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, false);
+    if (hasAnnotation) {
+        underlineColor = iTermAnnotationUnderlineColor;
+    } else if (hasUnderline) {
+        if (attributes[visualColumn].hasUnderlineColor) {
+            underlineColor = attributes[visualColumn].underlineColor;
+        } else {
+            underlineColor = _asciiUnderlineDescriptor.color.w > 0 ? _asciiUnderlineDescriptor.color : attributes[visualColumn].foregroundColor;
+        }
+    }
+
+    iTermMetalGlyphAttributesUnderline underlineStyle = suppressUnderlines ? iTermMetalGlyphAttributesUnderlineNone : attributes[visualColumn].underlineStyle;
+    vector_float4 textColor = attributes[visualColumn].foregroundColor;
+    if (!suppressUnderlines && inMarkedRange) {
+        // Marked range gets a yellow underline.
+        underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+    }
+
+    if (iTermTextIsMonochrome()) {
+        // There is only a center part for ASCII on Mojave because the glyph size is increased to contain the largest ASCII glyph.
+        iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                    code,
+                                                    w,
+                                                    h,
+                                                    texture,
+                                                    cellWidth,
+                                                    visualColumn,
+                                                    asciiOffset,
+                                                    iTermASCIITextureOffsetCenter,
+                                                    textColor,
+                                                    underlineStyle,
+                                                    underlineColor);
+        return;
+    }
+    // Pre-10.14, ASCII glyphs can get chopped up into multiple parts. This is necessary so subpixel AA will work right.
+    
+    // Add PIU for left overflow
+    if (parts & iTermASCIITexturePartsLeft) {
+        iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                    code,
+                                                    w,
+                                                    h,
+                                                    texture,
+                                                    cellWidth,
+                                                    visualColumn - 1,
+                                                    asciiOffset,
+                                                    iTermASCIITextureOffsetLeft,
+                                                    textColor,
+                                                    iTermMetalGlyphAttributesUnderlineNone,
+                                                    underlineColor);
+    }
+
+    // Add PIU for center part, which is always present
+    iTermTextRendererTransientStateAddASCIIPart(_asciiPIUArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                code,
+                                                w,
+                                                h,
+                                                texture,
+                                                cellWidth,
+                                                visualColumn,
+                                                asciiOffset,
+                                                iTermASCIITextureOffsetCenter,
+                                                textColor,
+                                                underlineStyle,
+                                                underlineColor);
+    // Add PIU for right overflow
+    if (parts & iTermASCIITexturePartsRight) {
+
+        iTermTextRendererTransientStateAddASCIIPart(_asciiOverflowArrays[outerPIUIndex][asciiAttrs].get_next(),
+                                                    code,
+                                                    w,
+                                                    h,
+                                                    texture,
+                                                    cellWidth,
+                                                    visualColumn + 1,
+                                                    asciiOffset,
+                                                    iTermASCIITextureOffsetRight,
+                                                    attributes[visualColumn].foregroundColor,
+                                                    iTermMetalGlyphAttributesUnderlineNone,
+                                                    underlineColor);
+    }
+}
+
+static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphKey) {
+    return (glyphKey.type == iTermMetalGlyphTypeRegular &&
+            glyphKey.payload.regular.code <= iTermASCIITextureMaximumCharacter &&
+            glyphKey.payload.regular.code >= iTermASCIITextureMinimumCharacter &&
+            !glyphKey.payload.regular.isComplex &&
+            !glyphKey.payload.regular.boxDrawing &&
+            !iTermLineAttributeIsDoubleWidth(glyphKey.lineAttribute));
+}
+
+typedef struct {
+    const iTermMetalGlyphKey *glyphKeys;
+    int i;
+    float asciiXOffset;
+    float asciiYOffset;
+    float yOffset;
+    vector_float2 reciprocalAsciiAtlasSize;
+    CGSize cellSize;
+    CGSize glyphSize;
+    const iTermMetalGlyphAttributes *attributes;
+    BOOL inMarkedRange;
+    iTermMetalBufferPoolContext *context;
+    NSDictionary<NSNumber *, iTermCharacterBitmap *> *(^creation)(int x, BOOL *emoji);
+} iTermTextRendererGlyphState;
+
+- (void)setGlyphKeysData:(iTermGlyphKeyData *)glyphKeysData
+           glyphKeyCount:(NSUInteger)glyphKeyCount
+                   count:(int)count
+          attributesData:(iTermAttributesData *)attributesData
+                     row:(int)row
+  backgroundColorRLEData:(nonnull iTermData *)backgroundColorRLEData
+       markedRangeOnLine:(NSRange)markedRangeOnLine
+                 context:(iTermMetalBufferPoolContext *)context
+                creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation {
+    //DLog(@"BEGIN setGlyphKeysData for %@", self);
+    const iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)glyphKeysData.bytes;
+    const iTermMetalGlyphAttributes *attributes = (iTermMetalGlyphAttributes *)attributesData.bytes;
+    vector_float2 reciprocalAsciiAtlasSize = 1.0 / _asciiTextureGroup.atlasSize;
+    CGSize glyphSize = self.cellConfiguration.glyphSize;
+    const CGSize cellSize = self.cellConfiguration.cellSize;
+    const float cellHeight = self.cellConfiguration.cellSize.height;
+    // NOTE: This must match logic in -[iTermCharacterSource drawBoxAtOffset:iteration:]
+    const float verticalShift = round((cellHeight - self.cellConfiguration.cellSizeWithoutSpacing.height) / (2 * self.configuration.scale)) * self.configuration.scale;
+    const float yOffset = (self.cellConfiguration.gridSize.height - row - 1) * cellHeight + verticalShift;
+    const float asciiYOffset = -self.asciiOffset.height;
+    const float asciiXOffset = -self.asciiOffset.width;
+
+    std::map<int, int> lastRelations;
+
+    iTermTextRendererGlyphState state = {
+        .glyphKeys = glyphKeys,
+        .asciiXOffset = asciiXOffset,
+        .asciiYOffset = asciiYOffset,
+        .yOffset = yOffset,
+        .reciprocalAsciiAtlasSize = reciprocalAsciiAtlasSize,
+        .cellSize = cellSize,
+        .glyphSize = glyphSize,
+        .attributes = attributes,
+        .context = context,
+        .creation = creation
+    };
+    // Suppress underlines on DECDHL top-half lines (underlines belong
+    // on the bottom half, below the text).
+    _suppressUnderlineForDHL = (glyphKeyCount > 0 &&
+                                glyphKeys[0].lineAttribute == iTermLineAttributeDoubleHeightTop);
+    int previousLogicalIndex = -1;
+    for (state.i = 0; state.i < glyphKeyCount; state.i++) {
+        const int logicalIndex = glyphKeys[state.i].logicalIndex;
+        const int visualIndex = glyphKeys[state.i].visualColumn;
+        state.inMarkedRange = NSLocationInRange(visualIndex, markedRangeOnLine);
+
+        switch (glyphKeys[state.i].type) {
+            case iTermMetalGlyphTypeRegular:
+                if (!glyphKeys[state.i].payload.regular.drawable) {
+                    break;
+                }
+                if (GlyphKeyCanTakeASCIIFastPath(glyphKeys[state.i])) {
+                    [self addASCII:&state];
+                } else {
+                    [self addNonASCII:&state allowUnderline:YES];
+                }
+                break;
+            case iTermMetalGlyphTypeDecomposed:
+                [self addNonASCII:&state allowUnderline:logicalIndex != previousLogicalIndex];
+                break;
+        }
+        previousLogicalIndex = logicalIndex;
+    }
+}
+
+// ASCII fast path
+- (void)addASCII:(const iTermTextRendererGlyphState *)state {
+    const iTermMetalGlyphKey theGlyphKey = state->glyphKeys[state->i];
+    const int logicalIndex = theGlyphKey.logicalIndex;
+
+    iTermASCIITextureAttributes asciiAttrs =
+        iTermASCIITextureAttributesFromGlyphKeyTypeface(theGlyphKey.typeface,
+                                                        theGlyphKey.thinStrokes);
+    [self addASCIICellToPIUsForCode:theGlyphKey.payload.regular.code
+                       logicalIndex:logicalIndex
+                       visualColumn:theGlyphKey.visualColumn
+                             offset:CGSizeMake(state->asciiXOffset,
+                                               state->yOffset + state->asciiYOffset)
+                                  w:state->reciprocalAsciiAtlasSize.x
+                                  h:state->reciprocalAsciiAtlasSize.y
+                          cellWidth:state->cellSize.width
+                         asciiAttrs:asciiAttrs
+                         attributes:state->attributes
+                      inMarkedRange:state->inMarkedRange];
+}
+
+// Non-ASCII slower path
+- (void)addNonASCII:(const iTermTextRendererGlyphState *)state
+     allowUnderline:(BOOL)allowUnderline {
+    const iTermMetalGlyphKey theGlyphKey = state->glyphKeys[state->i];
+    const int visualIndex = theGlyphKey.visualColumn;
+
+    const iTerm2::GlyphKey glyphKey(&theGlyphKey);
+    std::vector<const iTerm2::GlyphEntry *> *entries = _texturePageCollectionSharedPointer.object->find(glyphKey);
+    if (!entries) {
+        entries = _texturePageCollectionSharedPointer.object->add(state->i,
+                                                                  glyphKey,
+                                                                  state->context,
+                                                                  state->creation);
+        if (!entries) {
+            return;;
+        }
+    } else if (entries->empty()) {
+        return;;
+    }
+
+    if (entries->empty()) {
+        return;
+    }
+
+    const iTermMetalGlyphAttributes *attributes = state->attributes;
+    const BOOL suppressUnderlines = self.suppressUnderlines || _suppressUnderlineForDHL;
+    const bool hasAnnotation = suppressUnderlines ? false : attributes[visualIndex].annotation;
+    const bool hasUnderline = suppressUnderlines ? false : attributes[visualIndex].underlineStyle != iTermMetalGlyphAttributesUnderlineNone;
+    const iTerm2::GlyphEntry *firstGlyphEntry = (*entries)[0];
+    const int outerPIUIndex = iTermOuterPIUIndex(hasAnnotation, hasUnderline, firstGlyphEntry->_is_emoji);
+    for (auto entry : *entries) {
+        auto it = _pius[outerPIUIndex].find(entry->_page);
+        iTerm2::PIUArray<iTermTextPIU> *array;
+        if (it == _pius[outerPIUIndex].end()) {
+            array = _pius[outerPIUIndex][entry->_page] = new iTerm2::PIUArray<iTermTextPIU>(_numberOfCells);
+        } else {
+            array = it->second;
+        }
+        iTermTextPIU *piu = array->get_next();
+        // Build the PIU
+        const int &part = entry->_part;
+        const int dx = iTermImagePartDX(part);
+        const int dy = iTermImagePartDY(part);
+        piu->offset = simd_make_float2(theGlyphKey.visualColumn * state->cellSize.width + dx * state->glyphSize.width,
+                                       -dy * state->glyphSize.height + state->yOffset);
+        MTLOrigin origin = entry->get_origin();
+        vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();
+        piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
+                                              origin.y * reciprocal_atlas_size.y);
+        piu->textColor = attributes[visualIndex].foregroundColor;
+        if (suppressUnderlines) {
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+            piu->underlineColor = simd_make_float4(0, 0, 0, 0);
+        } else if (attributes[visualIndex].annotation) {
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+            piu->underlineColor = iTermAnnotationUnderlineColor;
+        } else if (state->inMarkedRange) {
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
+            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+        } else {
+            piu->underlineStyle = attributes[visualIndex].underlineStyle;
+            if (attributes[visualIndex].hasUnderlineColor) {
+                piu->underlineColor = attributes[visualIndex].underlineColor;
+            } else {
+                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+            }
+        }
+        if (part != iTermTextureMapMiddleCharacterPart &&
+            part != iTermTextureMapMiddleCharacterPart + 1) {
+            // Only underline center part and its right neighbor of the character. There are weird artifacts otherwise,
+            // such as floating underlines (for parts above and below) or doubly drawn
+            // underlines.
+            piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
+    }
+}
+
+- (void)computeUnderlineSpansFromAttributes:(const iTermMetalGlyphAttributes *)attributes
+                                      count:(int)count
+                                        row:(int)row
+                          markedRangeOnLine:(NSRange)markedRangeOnLine
+                                       line:(const screen_char_t *)line
+                                 lineLength:(int)lineLength
+                                 inverseLUT:(const int *)inverseLUT
+                             inverseLUTLen:(int)inverseLUTLen
+                              lineAttribute:(iTermLineAttribute)lineAttribute
+                             underlineSpans:(NSMutableData *)underlineSpans
+                         strikethroughSpans:(NSMutableData *)strikethroughSpans {
+    BOOL inUnderlineSpan = NO;
+    BOOL inStrikethroughSpan = NO;
+    iTermMetalUnderlineSpan currentUnderline = {};
+    iTermMetalUnderlineSpan currentStrikethrough = {};
+
+    // On DECDHL top-half lines, underlines belong on the bottom half
+    // (below the text). Suppress them here.
+    const BOOL suppressUnderlineForDHL = (lineAttribute == iTermLineAttributeDoubleHeightTop);
+
+    for (int col = 0; col < count; col++) {
+        iTermMetalGlyphAttributesUnderline rawStyle = attributes[col].underlineStyle;
+
+        // IME marked range overrides underline style.
+        if (NSLocationInRange(col, markedRangeOnLine)) {
+            rawStyle = iTermMetalGlyphAttributesUnderlineSingle;
+        }
+
+        iTermMetalGlyphAttributesUnderline baseStyle =
+            (iTermMetalGlyphAttributesUnderline)(rawStyle & iTermMetalGlyphAttributesUnderlineBitmask);
+        const BOOL hasStrikethrough = (rawStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) != 0;
+
+        if (suppressUnderlineForDHL) {
+            baseStyle = iTermMetalGlyphAttributesUnderlineNone;
+        }
+
+        // Select the correct underline descriptor based on ASCII vs non-ASCII.
+        const int logicalIndex = (inverseLUT && col < inverseLUTLen) ? inverseLUT[col] : col;
+        const BOOL isASCII = (logicalIndex >= 0 && logicalIndex < lineLength &&
+                              !line[logicalIndex].complexChar &&
+                              !line[logicalIndex].image &&
+                              line[logicalIndex].code < 128);
+
+        // Resolve underline color (same priority as addASCIICellToPIUsForCode / addNonASCII).
+        vector_float4 underlineColor = {};
+        if (attributes[col].annotation) {
+            underlineColor = iTermAnnotationUnderlineColor;
+        } else if (attributes[col].hasUnderlineColor) {
+            underlineColor = attributes[col].underlineColor;
+        } else {
+            const iTermMetalUnderlineDescriptor descriptor = isASCII
+                ? _asciiUnderlineDescriptor
+                : _nonAsciiUnderlineDescriptor;
+            underlineColor = descriptor.color.w > 0
+                ? descriptor.color
+                : attributes[col].foregroundColor;
+        }
+
+        // Pack base style and ASCII flag into the style field.
+        const int asciiFlag = isASCII ? iTermMetalUnderlineSpanASCIIFlag : 0;
+        const int packedStyle = baseStyle | asciiFlag;
+
+        // Handle underline spans. Break on style, color, or ASCII status change.
+        if (baseStyle != iTermMetalGlyphAttributesUnderlineNone) {
+            if (inUnderlineSpan &&
+                currentUnderline.style == packedStyle &&
+                simd_equal(currentUnderline.color, underlineColor)) {
+                currentUnderline.endColumn = col;
+            } else {
+                if (inUnderlineSpan) {
+                    [underlineSpans appendBytes:&currentUnderline length:sizeof(currentUnderline)];
+                }
+                currentUnderline = (iTermMetalUnderlineSpan){
+                    .row = row,
+                    .startColumn = col,
+                    .endColumn = col,
+                    .style = packedStyle,
+                    .color = underlineColor,
+                    .lineAttribute = lineAttribute,
+                };
+                inUnderlineSpan = YES;
+            }
+        } else {
+            if (inUnderlineSpan) {
+                [underlineSpans appendBytes:&currentUnderline length:sizeof(currentUnderline)];
+                inUnderlineSpan = NO;
+            }
+        }
+
+        // Handle strikethrough spans. Break on color or ASCII status change.
+        const int packedStrikethroughStyle = iTermMetalGlyphAttributesUnderlineStrikethrough | asciiFlag;
+        if (hasStrikethrough) {
+            if (inStrikethroughSpan &&
+                currentStrikethrough.style == packedStrikethroughStyle &&
+                simd_equal(currentStrikethrough.color, underlineColor)) {
+                currentStrikethrough.endColumn = col;
+            } else {
+                if (inStrikethroughSpan) {
+                    [strikethroughSpans appendBytes:&currentStrikethrough length:sizeof(currentStrikethrough)];
+                }
+                currentStrikethrough = (iTermMetalUnderlineSpan){
+                    .row = row,
+                    .startColumn = col,
+                    .endColumn = col,
+                    .style = packedStrikethroughStyle,
+                    .color = underlineColor,
+                    .lineAttribute = lineAttribute,
+                };
+                inStrikethroughSpan = YES;
+            }
+        } else {
+            if (inStrikethroughSpan) {
+                [strikethroughSpans appendBytes:&currentStrikethrough length:sizeof(currentStrikethrough)];
+                inStrikethroughSpan = NO;
+            }
+        }
+    }
+
+    if (inUnderlineSpan) {
+        [underlineSpans appendBytes:&currentUnderline length:sizeof(currentUnderline)];
+    }
+    if (inStrikethroughSpan) {
+        [strikethroughSpans appendBytes:&currentStrikethrough length:sizeof(currentStrikethrough)];
+    }
+}
+
+- (void)didComplete {
+    DLog(@"BEGIN didComplete for %@", self);
+    _texturePageCollectionSharedPointer.object->prune_if_needed();  // The static analyzer wrongly says this is a use-after-free.
+    DLog(@"END didComplete");
+}
+
+- (nonnull NSMutableData *)modelData  {
+    if (_modelData == nil) {
+        _modelData = [[NSMutableData alloc] initWithUninitializedLength:sizeof(iTermTextPIU) * self.cellConfiguration.gridSize.width * self.cellConfiguration.gridSize.height];
+    }
+    return _modelData;
+}
+
+- (void)expireNonASCIIGlyphs {
+    _texturePageCollectionSharedPointer.object->remove_all();
+}
+
+@end
+

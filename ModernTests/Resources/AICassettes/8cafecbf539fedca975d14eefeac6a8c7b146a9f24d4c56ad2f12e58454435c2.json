@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-pro:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"My favorite color is chartreuse. Reply OK.\"}],\"role\":\"user\"}]}",
+  "key" : "8cafecbf539fedca975d14eefeac6a8c7b146a9f24d4c56ad2f12e58454435c2",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"OK\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 11,\n    \"candidatesTokenCount\": 1,\n    \"totalTokenCount\": 308,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 11\n      }\n    ],\n    \"thoughtsTokenCount\": 296,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-pro\",\n  \"responseId\": \"lu8laoG9FIDRz7IPo4iBoAk\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

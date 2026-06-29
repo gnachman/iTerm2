@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127918,\"messages\":[{\"content\":\"Briefly explain why ice floats on water. Reply in one short sentence.\",\"role\":\"user\"},{\"content\":\"\",\"reasoning_content\":\"I considered the user's previous question and concluded ice floats on water because solid water is less dense than liquid water due to its open hydrogen-bonded crystal structure.\",\"role\":\"assistant\"},{\"content\":\"Was that explanation primarily about ice's density compared to liquid water? Reply yes or no.\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"enabled\"}}",
+  "key" : "aa91707bacd7652f78e923f84a934e4fa32cbb626e91082e39536d884a5b09ae",
+  "response" : {
+    "data" : "{\"id\":\"aa4a4d2e-6bf6-4a23-9c91-27016a2d9761\",\"object\":\"chat.completion\",\"created\":1780870918,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"yes\",\"reasoning_content\":\"We need to answer: \\\"Was that explanation primarily about ice's density compared to liquid water? Reply yes or no.\\\" The previous answer was: \\\"Ice floats on water because it is less dense than liquid water.\\\" So yes, that explanation was primarily about density. Reply \\\"yes\\\".\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":41,\"completion_tokens\":59,\"total_tokens\":100,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":57},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":41},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

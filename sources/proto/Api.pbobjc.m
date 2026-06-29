@@ -10605,6 +10605,7 @@ typedef struct ITMGetPromptRequest__storage_ {
 @dynamic hasPromptState, promptState;
 @dynamic hasExitStatus, exitStatus;
 @dynamic hasUniquePromptId, uniquePromptId;
+@dynamic excludedSubrangesArray, excludedSubrangesArray_Count;
 
 typedef struct ITMGetPromptResponse__storage_ {
   uint32_t _has_storage_[1];
@@ -10617,6 +10618,7 @@ typedef struct ITMGetPromptResponse__storage_ {
   NSString *workingDirectory;
   NSString *command;
   NSString *uniquePromptId;
+  NSMutableArray *excludedSubrangesArray;
 } ITMGetPromptResponse__storage_;
 
 // This method is threadsafe because it is initially called
@@ -10705,6 +10707,15 @@ typedef struct ITMGetPromptResponse__storage_ {
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, uniquePromptId),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "excludedSubrangesArray",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoordRange),
+        .number = ITMGetPromptResponse_FieldNumber_ExcludedSubrangesArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, excludedSubrangesArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -13193,6 +13204,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
 @dynamic hasTabIndex, tabIndex;
 @dynamic hasCommand, command;
 @dynamic customProfilePropertiesArray, customProfilePropertiesArray_Count;
+@dynamic hasSelectTab, selectTab;
 
 typedef struct ITMCreateTabRequest__storage_ {
   uint32_t _has_storage_[1];
@@ -13253,6 +13265,15 @@ typedef struct ITMCreateTabRequest__storage_ {
         .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, customProfilePropertiesArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "selectTab",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMCreateTabRequest_FieldNumber_SelectTab,
+        .hasIndex = 4,
+        .offset = 5,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
       },
     };
     GPBDescriptor *localDescriptor =

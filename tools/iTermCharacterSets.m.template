@@ -1,0 +1,327 @@
+//
+//  iTermCharacterSets.m
+//  iTerm2
+//
+//  Fast character set membership tests using bitmaps and binary search.
+//  Replaces NSCharacterSet lookups in StringToScreenChars hot path.
+//
+//  THIS FILE IS AUTO-GENERATED. DO NOT EDIT DIRECTLY.
+//  Run tools/generate_nscharacterset.py to regenerate.
+//
+
+#import "iTermCharacterSets.h"
+#import <Foundation/Foundation.h>
+#include <string.h>
+
+// ============================================================================
+// Bitmap infrastructure (same approach as iTermCharacterWidth.c)
+// ============================================================================
+
+typedef struct {
+    uint64_t bits[1024];  // 65536 bits = BMP
+} BMPBitmap;
+
+typedef struct {
+    uint32_t start;
+    uint32_t end;  // inclusive
+} CharRange;
+
+NS_INLINE void setBit(BMPBitmap *bmp, uint32_t cp) {
+    bmp->bits[cp >> 6] |= (1ULL << (cp & 63));
+}
+
+NS_INLINE BOOL testBit(const BMPBitmap *bmp, uint32_t cp) {
+    return (bmp->bits[cp >> 6] & (1ULL << (cp & 63))) != 0;
+}
+
+NS_INLINE void setRange(BMPBitmap *bmp, uint32_t start, uint32_t count) {
+    for (uint32_t i = start; i < start + count; i++) {
+        setBit(bmp, i);
+    }
+}
+
+static BOOL inRanges(uint32_t cp, const CharRange *ranges, int count) {
+    int lo = 0, hi = count - 1;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (cp < ranges[mid].start) {
+            hi = mid - 1;
+        } else if (cp > ranges[mid].end) {
+            lo = mid + 1;
+        } else {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// ============================================================================
+// Static bitmaps
+// ============================================================================
+
+static BMPBitmap sIgnorableBMP;
+static BMPBitmap sSpacingCombiningMarksBMP;
+static BMPBitmap sEmojiAcceptingVS16BMP;
+static BMPBitmap sRTLBMP;
+static BMPBitmap sCodePointsWithOwnCellBMP;
+
+// ============================================================================
+// Supplementary plane ranges
+// ============================================================================
+
+// Ignorable supplementary ranges
+static const CharRange sIgnorableSupp[] = {
+{{IGNORABLE_SUPP_RANGES}}
+};
+static const int sIgnorableSuppCount = sizeof(sIgnorableSupp) / sizeof(sIgnorableSupp[0]);
+
+// Spacing combining marks supplementary ranges
+static const CharRange sSpacingCombiningMarksSupp[] = {
+{{SPACING_COMBINING_MARKS_SUPP_RANGES}}
+};
+static const int sSpacingCombiningMarksSuppCount =
+    sizeof(sSpacingCombiningMarksSupp) / sizeof(sSpacingCombiningMarksSupp[0]);
+
+// Emoji accepting VS16 supplementary ranges
+static const CharRange sEmojiAcceptingVS16Supp[] = {
+{{EMOJI_VS16_SUPP_RANGES}}
+};
+static const int sEmojiAcceptingVS16SuppCount =
+    sizeof(sEmojiAcceptingVS16Supp) / sizeof(sEmojiAcceptingVS16Supp[0]);
+
+// RTL supplementary ranges
+static const CharRange sRTLSupp[] = {
+{{RTL_SUPP_RANGES}}
+};
+static const int sRTLSuppCount = sizeof(sRTLSupp) / sizeof(sRTLSupp[0]);
+
+// Code points with own cell supplementary ranges
+// (Grapheme_Base - Default_Ignorable) + spacing combining marks (gc=Mc) + modifier letters (gc=Lm)
+static const CharRange sCodePointsWithOwnCellSupp[] = {
+{{CODE_POINTS_WITH_OWN_CELL_SUPP_RANGES}}
+};
+static const int sCodePointsWithOwnCellSuppCount =
+    sizeof(sCodePointsWithOwnCellSupp) / sizeof(sCodePointsWithOwnCellSupp[0]);
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+static void iTermCharacterSetsInit(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        memset(&sIgnorableBMP, 0, sizeof(sIgnorableBMP));
+{{IGNORABLE_BMP_INIT}}
+
+        memset(&sSpacingCombiningMarksBMP, 0, sizeof(sSpacingCombiningMarksBMP));
+{{SPACING_COMBINING_MARKS_BMP_INIT}}
+
+        memset(&sEmojiAcceptingVS16BMP, 0, sizeof(sEmojiAcceptingVS16BMP));
+{{EMOJI_VS16_BMP_INIT}}
+
+        memset(&sRTLBMP, 0, sizeof(sRTLBMP));
+{{RTL_BMP_INIT}}
+
+        memset(&sCodePointsWithOwnCellBMP, 0, sizeof(sCodePointsWithOwnCellBMP));
+{{CODE_POINTS_WITH_OWN_CELL_BMP_INIT}}
+    });
+}
+
+// ============================================================================
+// Query functions
+// ============================================================================
+
+BOOL iTermIsIgnorableCharacter(uint32_t cp, BOOL zeroWidthSpaceAdvancesCursor) {
+    iTermCharacterSetsInit();
+    if (cp == 0x200b) {
+        return !zeroWidthSpaceAdvancesCursor;
+    }
+    if (cp < 0x10000) {
+        return testBit(&sIgnorableBMP, cp);
+    }
+    return inRanges(cp, sIgnorableSupp, sIgnorableSuppCount);
+}
+
+BOOL iTermIsSpacingCombiningMark(uint32_t cp) {
+    iTermCharacterSetsInit();
+    if (cp < 0x10000) {
+        return testBit(&sSpacingCombiningMarksBMP, cp);
+    }
+    return inRanges(cp, sSpacingCombiningMarksSupp, sSpacingCombiningMarksSuppCount);
+}
+
+BOOL iTermIsEmojiAcceptingVS16(uint32_t cp) {
+    iTermCharacterSetsInit();
+    if (cp < 0x10000) {
+        return testBit(&sEmojiAcceptingVS16BMP, cp);
+    }
+    return inRanges(cp, sEmojiAcceptingVS16Supp, sEmojiAcceptingVS16SuppCount);
+}
+
+BOOL iTermIsRTLCodePoint(uint32_t cp) {
+    iTermCharacterSetsInit();
+    if (cp < 0x10000) {
+        return testBit(&sRTLBMP, cp);
+    }
+    return inRanges(cp, sRTLSupp, sRTLSuppCount);
+}
+
+BOOL iTermIsCodePointWithOwnCell(uint32_t cp) {
+    iTermCharacterSetsInit();
+    if (cp < 0x10000) {
+        return testBit(&sCodePointsWithOwnCellBMP, cp);
+    }
+    return inRanges(cp, sCodePointsWithOwnCellSupp, sCodePointsWithOwnCellSuppCount);
+}
+
+// ============================================================================
+// String scanning functions
+// ============================================================================
+
+// Decode a UTF-16 code unit at position i, advancing i past the character.
+NS_INLINE uint32_t decodeUTF16(const UniChar *chars, CFIndex len, CFIndex *i) {
+    UniChar c = chars[*i];
+    if (c >= 0xD800 && c <= 0xDBFF && *i + 1 < len) {
+        UniChar low = chars[*i + 1];
+        if (low >= 0xDC00 && low <= 0xDFFF) {
+            *i += 2;
+            return 0x10000 + ((uint32_t)(c - 0xD800) << 10) + (low - 0xDC00);
+        }
+    }
+    *i += 1;
+    return c;
+}
+
+BOOL iTermStringContainsRTL(CFStringRef s) {
+    iTermCharacterSetsInit();
+    CFIndex len = CFStringGetLength(s);
+    if (len == 0) return NO;
+
+    const UniChar *chars = CFStringGetCharactersPtr(s);
+    UniChar stackBuf[256];
+
+    if (chars) {
+        // Fast path: direct pointer to UTF-16 buffer
+        for (CFIndex i = 0; i < len;) {
+            UniChar c = chars[i];
+            // Fast skip for ASCII/Latin (below first RTL range at 0x5BE)
+            if (c < 0x5be) {
+                i++;
+                continue;
+            }
+            uint32_t cp = decodeUTF16(chars, len, &i);
+            if (iTermIsRTLCodePoint(cp)) return YES;
+        }
+    } else {
+        // Fallback: copy chunks into stack buffer
+        CFIndex remaining = len;
+        CFIndex offset = 0;
+        while (remaining > 0) {
+            CFIndex chunk = remaining > 256 ? 256 : remaining;
+            CFStringGetCharacters(s, CFRangeMake(offset, chunk), stackBuf);
+            for (CFIndex i = 0; i < chunk;) {
+                UniChar c = stackBuf[i];
+                if (c < 0x5be) {
+                    i++;
+                    continue;
+                }
+                uint32_t cp = decodeUTF16(stackBuf, chunk, &i);
+                if (iTermIsRTLCodePoint(cp)) return YES;
+            }
+            offset += chunk;
+            remaining -= chunk;
+        }
+    }
+    return NO;
+}
+
+BOOL iTermStringContainsSpacingCombiningMark(CFStringRef s) {
+    iTermCharacterSetsInit();
+    CFIndex len = CFStringGetLength(s);
+    if (len == 0) return NO;
+
+    const UniChar *chars = CFStringGetCharactersPtr(s);
+    UniChar stackBuf[64];
+
+    if (!chars) {
+        if (len > 64) len = 64;
+        CFStringGetCharacters(s, CFRangeMake(0, len), stackBuf);
+        chars = stackBuf;
+    }
+
+    for (CFIndex i = 0; i < len;) {
+        uint32_t cp = decodeUTF16(chars, len, &i);
+        if (cp < 0x10000) {
+            if (testBit(&sSpacingCombiningMarksBMP, cp)) return YES;
+        } else {
+            if (inRanges(cp, sSpacingCombiningMarksSupp, sSpacingCombiningMarksSuppCount)) return YES;
+        }
+    }
+    return NO;
+}
+
+BOOL iTermStringContainsModifierForcingFullWidth(CFStringRef s) {
+    CFIndex len = CFStringGetLength(s);
+    if (len == 0) return NO;
+
+    // Skin tone modifiers in UTF-16: high=0xD83C, low=0xDFFB..0xDFFF
+    const UniChar *chars = CFStringGetCharactersPtr(s);
+    UniChar stackBuf[64];  // composed strings are short
+
+    if (!chars) {
+        if (len > 64) len = 64;
+        CFStringGetCharacters(s, CFRangeMake(0, len), stackBuf);
+        chars = stackBuf;
+    }
+
+    for (CFIndex i = 0; i < len; i++) {
+        if (chars[i] == 0xFE0F) return YES;
+        if (chars[i] == 0xD83C && i + 1 < len &&
+            chars[i + 1] >= 0xDFFB && chars[i + 1] <= 0xDFFF) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
+                                           CFIndex start,
+                                           CFIndex length,
+                                           BOOL aggressive) {
+    iTermCharacterSetsInit();
+    CFIndex end = start + length;
+    if (!aggressive) {
+        // Only check for 0xFF9E and 0xFF9F (halfwidth katakana voiced sound marks)
+        for (CFIndex i = start; i < end; i++) {
+            if (chars[i] == 0xFF9E || chars[i] == 0xFF9F) {
+                return i;
+            }
+        }
+        return kCFNotFound;
+    }
+    for (CFIndex i = start; i < end;) {
+        UniChar c = chars[i];
+        // Fast path: most BMP characters
+        if (c < 0xD800 || c > 0xDBFF) {
+            if (testBit(&sCodePointsWithOwnCellBMP, c)) {
+                return i;
+            }
+            i++;
+        } else if (i + 1 < end) {
+            // Surrogate pair
+            UniChar low = chars[i + 1];
+            if (low >= 0xDC00 && low <= 0xDFFF) {
+                uint32_t cp = 0x10000 + ((uint32_t)(c - 0xD800) << 10) + (low - 0xDC00);
+                if (inRanges(cp, sCodePointsWithOwnCellSupp, sCodePointsWithOwnCellSuppCount)) {
+                    return i;
+                }
+                i += 2;
+            } else {
+                i++;
+            }
+        } else {
+            i++;
+        }
+    }
+    return kCFNotFound;
+}

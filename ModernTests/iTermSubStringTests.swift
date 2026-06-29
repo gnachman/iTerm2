@@ -185,8 +185,8 @@ final class iTermSubStringTests: XCTestCase {
         let style = makeStyle()
         // supply base with ea on only some cells
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
-                                        underlineColor: VT100TerminalColorValue(red: 1, green: 2, blue: 3, mode: ColorModeNormal),
-                                        url: nil, blockIDList: nil, controlCode: nil)
+                                        underlineColor: VT100TerminalColorValue(red: 1, green: 2, blue: 3, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
+                                        url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         let eaIndex = iTermExternalAttributeIndex()
         eaIndex.setAttributes(ea, at: 0, count: 1)
         let base = iTermASCIIString(data: data, style: style, ea: nil)
@@ -270,11 +270,10 @@ final class iTermSubStringTests: XCTestCase {
         let eaIndex = iTermExternalAttributeIndex()
         let ea = iTermExternalAttribute(
             havingUnderlineColor: true,
-            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
             url: nil,
             blockIDList: nil,
-            controlCode: nil
-        )
+            controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         eaIndex.setAttributes(ea, at: 1, count: 1)
         var metadata = iTermMetadataDefault()
         metadata.timestamp = 1234.0
@@ -300,11 +299,10 @@ final class iTermSubStringTests: XCTestCase {
     func testRoundTrip_ASCII() throws {
         let ea = iTermExternalAttribute(
             havingUnderlineColor: true,
-            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
             url: nil,
             blockIDList: nil,
-            controlCode: nil
-        )
+            controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         let base = iTermASCIIString(data: Data([65, 66, 67, 68]),
                                         style: makeStyle(),
                                         ea: ea)
@@ -325,11 +323,10 @@ final class iTermSubStringTests: XCTestCase {
     func testRoundTrip_nonASCII() throws {
         let ea = iTermExternalAttribute(
             havingUnderlineColor: true,
-            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
             url: nil,
             blockIDList: nil,
-            controlCode: nil
-        )
+            controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
 
         let baseStyle = makeStyle()
         let msca = MutableScreenCharArray.emptyLine(ofLength: 0)

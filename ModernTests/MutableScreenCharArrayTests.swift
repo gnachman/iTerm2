@@ -53,11 +53,12 @@ final class MutableScreenCharArrayTests: XCTestCase {
             weakEaIndex1 = eaIndex1
             let ea1 = iTermExternalAttribute(
                 havingUnderlineColor: true,
-                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal,
+                hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                 url: nil,
                 blockIDList: nil,
-                controlCode: nil
-            )
+                controlCode: nil,
+                dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
             eaIndex1.setAttributes(ea1, at: 0, count: 1)
 
             var metadata1 = iTermMetadataDefault()
@@ -80,11 +81,12 @@ final class MutableScreenCharArrayTests: XCTestCase {
             weakEaIndex2 = eaIndex2
             let ea2 = iTermExternalAttribute(
                 havingUnderlineColor: true,
-                underlineColor: VT100TerminalColorValue(red: 0, green: 1, blue: 0, mode: ColorModeNormal),
+                underlineColor: VT100TerminalColorValue(red: 0, green: 1, blue: 0, mode: ColorModeNormal,
+                hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                 url: nil,
                 blockIDList: nil,
-                controlCode: nil
-            )
+                controlCode: nil,
+                dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
             eaIndex2.setAttributes(ea2, at: 1, count: 1)
 
             var metadata2 = iTermMetadataDefault()
@@ -102,7 +104,7 @@ final class MutableScreenCharArrayTests: XCTestCase {
 
         // Clean up: release msca's hold on eaIndex2 by setting metadata without external attributes
         autoreleasepool {
-            var emptyMetadata = iTermMetadataDefault()
+            let emptyMetadata = iTermMetadataDefault()
             msca.setMetadata(emptyMetadata)
             iTermMetadataRelease(emptyMetadata)
         }
@@ -118,7 +120,7 @@ final class MutableScreenCharArrayTests: XCTestCase {
         msca.append("AB", fg: style, bg: style)
 
         // Start with empty metadata
-        var emptyMetadata = iTermMetadataDefault()
+        let emptyMetadata = iTermMetadataDefault()
         msca.setMetadata(emptyMetadata)
         iTermMetadataRelease(emptyMetadata)
 
@@ -131,11 +133,12 @@ final class MutableScreenCharArrayTests: XCTestCase {
             weakEaIndex = eaIndex
             let ea = iTermExternalAttribute(
                 havingUnderlineColor: true,
-                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal,
+                hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                 url: nil,
                 blockIDList: nil,
-                controlCode: nil
-            )
+                controlCode: nil,
+                dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
             eaIndex.setAttributes(ea, at: 0, count: 1)
 
             var metadata = iTermMetadataDefault()
@@ -160,16 +163,17 @@ final class MutableScreenCharArrayTests: XCTestCase {
         for i in 0..<5 {
             autoreleasepool {
                 let eaIndex = iTermExternalAttributeIndex()
-                weak var weakEa = eaIndex
+                weak let weakEa = eaIndex
                 weakRefs.append({ weakEa })
 
                 let ea = iTermExternalAttribute(
                     havingUnderlineColor: true,
-                    underlineColor: VT100TerminalColorValue(red: Int32(i), green: 0, blue: 0, mode: ColorModeNormal),
+                    underlineColor: VT100TerminalColorValue(red: Int32(i), green: 0, blue: 0, mode: ColorModeNormal,
+                    hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                     url: nil,
                     blockIDList: nil,
-                    controlCode: nil
-                )
+                    controlCode: nil,
+                    dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
                 eaIndex.setAttributes(ea, at: 0, count: 1)
 
                 var metadata = iTermMetadataDefault()

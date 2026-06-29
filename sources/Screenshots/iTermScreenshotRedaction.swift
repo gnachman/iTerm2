@@ -41,7 +41,8 @@ class iTermScreenshotAnnotation: NSObject {
                                      annotationType: iTermScreenshotAnnotationType,
                                      label: String) -> iTermScreenshotAnnotation? {
         guard selection.hasSelection else { return nil }
-        guard let allSubs = selection.allSubSelections, !allSubs.isEmpty else { return nil }
+        let allSubs = selection.allSubSelections
+        guard !allSubs.isEmpty else { return nil }
 
         var subs: [iTermSubSelection] = []
         for sub in allSubs {

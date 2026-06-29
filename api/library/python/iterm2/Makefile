@@ -21,7 +21,7 @@ upload: force
 	rm -f dist/*
 	python3 setup.py bdist_wheel
 	python3 setup.py sdist
-	twine upload dist/*
+	python3 -m twine upload dist/*
 
 mypy: force
 	mypy --ignore-missing-imports ./test.py

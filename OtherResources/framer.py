@@ -543,7 +543,12 @@ def procmon_parse(output):
 async def get_env_var(var_name):
     # Get the user's shell
     user_shell = os.environ.get('SHELL', '/bin/bash')
-    known_shells = ['bash', 'sh', 'zsh', 'ksh', 'dash', 'fish', 'csh', 'tcsh']
+
+    # Non-POSIX shells may leave POSIX shell path in the $SHELL; perform an additional check.
+    if os.environ.get('XONSHRC', ''):
+        user_shell = 'xonsh'
+
+    known_shells = ['bash', 'csh', 'dash', 'fish', 'ksh', 'sh', 'tcsh', 'xonsh', 'zsh']
 
     # Extract the last path component of the user's shell
     shell_name = os.path.basename(user_shell)
@@ -1578,9 +1583,19 @@ HANDLERS = {
     "runpy": handle_runpy
 }
 
+def _silence_shutdown_unraisable(unraisable):
+    # Subprocess transports' __del__ runs after asyncio.run() has closed the
+    # loop; their cleanup calls call_soon() and raises "Event loop is closed".
+    # We're on our way out — nobody cares.
+    exc = unraisable.exc_value
+    if isinstance(exc, RuntimeError) and 'Event loop is closed' in str(exc):
+        return
+    sys.__unraisablehook__(unraisable)
+
 def main():
     if sys.stdin.isatty():
         signal.signal(signal.SIGWINCH, on_sigwinch)
+    sys.unraisablehook = _silence_shutdown_unraisable
     try:
         asyncio.run(mainloop())
     except Exception as e:

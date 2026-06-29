@@ -1,0 +1,205 @@
+//
+//  NSCharacterSet+iTerm.m
+//  iTerm2
+//
+//  Created by George Nachman on 3/29/15.
+//
+//
+//  THIS FILE IS AUTO-GENERATED. DO NOT EDIT DIRECTLY.
+//  Run tools/generate_nscharacterset.py to regenerate.
+//
+
+#import "NSCharacterSet+iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "NSArray+iTerm.h"
+#import "NSStringITerm.h"
+
+unichar iTermMinimumDefaultEmojiPresentationCodePoint = {{MIN_EMOJI_PRESENTATION_CODE}};
+
+@implementation NSCharacterSet (iTerm)
+
+// ============================================================================
+// IDN Characters
+// http://unicode.org/reports/tr36/idn-chars.html
+// ============================================================================
++ (instancetype)idnCharacters {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *idnCharacters;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *set = [[NSMutableCharacterSet alloc] init];
+{{IDN_RANGES}}
+
+        idnCharacters = [set copy];
+    });
+    return idnCharacters;
+}
+
+// ============================================================================
+// Filename Character Set
+// ============================================================================
++ (NSCharacterSet *)filenameCharacterSet {
+    static NSMutableCharacterSet* filenameChars;
+    if (!filenameChars) {
+        filenameChars = [[NSCharacterSet whitespaceCharacterSet] mutableCopy];
+        [filenameChars formUnionWithCharacterSet:[self urlCharacterSet]];
+        [filenameChars formUnionWithCharacterSet:[NSCharacterSet characterSetWithCharactersInString:[iTermAdvancedSettingsModel filenameCharacterSet]]];
+    }
+
+    return filenameChars;
+}
+
+// ============================================================================
+// URL Character Set
+// ============================================================================
++ (NSCharacterSet *)urlCharacterSet {
+    static NSMutableCharacterSet* urlChars;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *chars = [iTermAdvancedSettingsModel URLCharacterSet];
+        urlChars = [NSMutableCharacterSet characterSetWithCharactersInString:chars];
+        [urlChars formUnionWithCharacterSet:[NSCharacterSet idnCharacters]];
+        [urlChars removeCharactersInString:[iTermAdvancedSettingsModel URLCharacterSetExclusions]];
+    });
+
+    return urlChars;
+}
+
+// ============================================================================
+// Emoji with Default Text Presentation (Emoji - Emoji_Presentation)
+// From emoji-data.txt
+// ============================================================================
++ (NSCharacterSet *)emojiWithDefaultTextPresentation {
+    static dispatch_once_t onceToken;
+    static NSMutableCharacterSet *textPresentation;
+    dispatch_once(&onceToken, ^{
+        textPresentation = [[NSMutableCharacterSet alloc] init];
+{{EMOJI_TEXT_PRESENTATION_RANGES}}
+    });
+    return textPresentation;
+}
+
+// ============================================================================
+// Emoji with Default Emoji Presentation
+// From emoji-data.txt Emoji_Presentation property
+// NOTE: The smallest member must be at least iTermMinimumDefaultEmojiPresentationCodePoint.
+// ============================================================================
++ (NSCharacterSet *)emojiWithDefaultEmojiPresentation {
+    static dispatch_once_t onceToken;
+    static NSMutableCharacterSet *emojiPresentation;
+    dispatch_once(&onceToken, ^{
+        emojiPresentation = [[NSMutableCharacterSet alloc] init];
+{{EMOJI_PRESENTATION_RANGES}}
+    });
+    return emojiPresentation;
+}
+
+// ============================================================================
+// Strong RTL Code Points
+// Bidi classes: R, AL
+// ============================================================================
++ (NSCharacterSet *)strongRTLCodePoints {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *characterSet;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *mutableCharacterSet = [[NSMutableCharacterSet alloc] init];
+{{STRONG_RTL_RANGES}}
+
+        characterSet = mutableCharacterSet;
+    });
+    return characterSet;
+}
+
+// ============================================================================
+// Strong LTR Code Points
+// Bidi class: L
+// ============================================================================
++ (NSCharacterSet *)strongLTRCodePoints {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *characterSet;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *mutableCharacterSet = [[NSMutableCharacterSet alloc] init];
+{{STRONG_LTR_RANGES}}
+
+        characterSet = mutableCharacterSet;
+    });
+    return characterSet;
+}
+
+// ============================================================================
+// Unsafe for Display Characters
+// Control characters, bidi controls, zero-width/formatting characters
+// ============================================================================
++ (NSCharacterSet *)it_unsafeForDisplayCharacters {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *unwantedCharacters;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *mutableCharacterSet = [NSMutableCharacterSet new];
+
+        // Add control characters (C0 and C1 controls)
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x0000, 0x0020)]; // C0
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x007F, 0x0080)]; // Delete
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x0080, 0x0020)]; // C1
+
+        // Add bidi control characters
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x202A, 0x0005)]; // LRE to PDF
+        [mutableCharacterSet addCharactersInRange:NSMakeRange(0x2066, 0x0004)]; // LRI to PDI
+
+        // Add zero-width and formatting characters
+        [mutableCharacterSet addCharactersInString:@"\u200B\u200C\u200D\uFEFF\u00AD\u2060\u2064"];
+
+        unwantedCharacters = mutableCharacterSet;
+    });
+    return unwantedCharacters;
+}
+
+// ============================================================================
+// Base64 Characters
+// ============================================================================
++ (NSCharacterSet *)it_base64Characters {
+    static NSCharacterSet *cached;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *charset = [[NSMutableCharacterSet alloc] init];
+        [charset addCharactersInRange:NSMakeRange('A', 26)];
+        [charset addCharactersInRange:NSMakeRange('a', 26)];
+        [charset addCharactersInRange:NSMakeRange('0', 10)];
+        [charset addCharactersInString:@"+/="];
+        [charset formUnionWithCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        cached = charset;
+
+    });
+    return cached;
+}
+
+// ============================================================================
+// URL-Safe Base64 Characters
+// ============================================================================
++ (NSCharacterSet *)it_urlSafeBase64Characters {
+    static NSCharacterSet *cached;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *charset = [[NSMutableCharacterSet alloc] init];
+        [charset addCharactersInRange:NSMakeRange('A', 26)];
+        [charset addCharactersInRange:NSMakeRange('a', 26)];
+        [charset addCharactersInRange:NSMakeRange('0', 10)];
+        [charset addCharactersInString:@"-_="];
+        [charset formUnionWithCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        cached = charset;
+
+    });
+    return cached;
+}
+
+// ============================================================================
+// Accessibility Trim Characters (spaces and nulls)
+// ============================================================================
++ (NSCharacterSet *)it_accessibilityTrimCharacterSet {
+    static NSCharacterSet *cached;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cached = [NSCharacterSet characterSetWithCharactersInString:@" \0"];
+    });
+    return cached;
+}
+
+@end

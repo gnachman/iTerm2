@@ -41,13 +41,15 @@ class iTermBrowserGeolocationHandler: NSObject {
     private struct LocationRequest {
         let operationId: Int
         weak var webView: iTermBrowserWebView?
+        let frame: WKFrameInfo?
         let options: GeolocationOptions
         let startTime: Date
     }
-    
+
     private struct WatchRequest {
         let watchId: Int
         weak var webView: iTermBrowserWebView?
+        let frame: WKFrameInfo?
         let options: GeolocationOptions
     }
     
@@ -133,27 +135,92 @@ class iTermBrowserGeolocationHandler: NSObject {
             return
         }
         let origin = message.frameInfo.securityOrigin
+        let frame = message.frameInfo
         Task {
+            // clearWatch and cancelOperation only stop in-flight work; they
+            // never start location access, so they must run regardless of
+            // permission state. Requesting permission here would let a
+            // teardown call pop a prompt, and gating it behind a denial
+            // would leak the watch. Handle them before the permission gate.
+            switch type {
+            case "clearWatch":
+                await handleClearWatch(messageDict: messageDict)
+                return
+            case "cancelOperation":
+                await handleCancelOperation(messageDict: messageDict)
+                return
+            default:
+                break
+            }
+
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: origin)
             let permission = await iTermBrowserPermissionManager(user: user).requestPermission(
                 for: .geolocation,
                 origin: originString)
-            if permission != .granted {
-                DLog("Auth failed")
+            // Sync the calling frame's JS bridge with the actual decision
+            // so navigator.permissions.query and the bridge's local
+            // short-circuit reflect reality.
+            await pushPermissionState(decision: permission, webView: webView, frame: frame)
+
+            guard permission == .granted else {
+                // Don't silently drop. Tell the page so its errorCallback fires.
+                await sendDenialResponse(for: type,
+                                         messageDict: messageDict,
+                                         webView: webView,
+                                         frame: frame)
                 return
             }
             switch type {
             case "getCurrentPosition":
-                await handleGetCurrentPosition(webView: webView, messageDict: messageDict)
+                await handleGetCurrentPosition(webView: webView, frame: frame, messageDict: messageDict)
             case "watchPosition":
-                await handleWatchPosition(webView: webView, messageDict: messageDict)
-            case "clearWatch":
-                await handleClearWatch(messageDict: messageDict)
-            case "cancelOperation":
-                await handleCancelOperation(messageDict: messageDict)
+                await handleWatchPosition(webView: webView, frame: frame, messageDict: messageDict)
             default:
                 DLog("Unknown geolocation message type: \(type)")
             }
+        }
+    }
+
+    // Push the JS bridge's permissionState for the geolocation polyfill.
+    // Pass nil for "no decision recorded yet" (maps to "prompt"); pass a
+    // concrete BrowserPermissionDecision when one exists. Pass frame=nil
+    // to target the main frame; pass a WKFrameInfo to target a subframe.
+    private func pushPermissionState(decision: BrowserPermissionDecision?,
+                                     webView: iTermBrowserWebView,
+                                     frame: WKFrameInfo?) async {
+        let permissionString: String
+        switch decision {
+        case .granted: permissionString = "granted"
+        case .denied: permissionString = "denied"
+        case nil: permissionString = "prompt"
+        }
+        let jsCode = "window.iTermGeolocationHandler.setPermission('\(secret)', '\(permissionString)');"
+        do {
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
+        } catch {
+            DLog("Error pushing geolocation permission state: \(error)")
+        }
+    }
+
+    private func sendDenialResponse(for type: String,
+                                    messageDict: [String: Any],
+                                    webView: iTermBrowserWebView,
+                                    frame: WKFrameInfo?) async {
+        let denialMessage = "User denied the request for Geolocation."
+        switch type {
+        case "getCurrentPosition":
+            if let opId = messageDict["operationId"] as? Int {
+                await sendPositionError(webView: webView, frame: frame,
+                                        operationId: opId, code: 1, message: denialMessage)
+            }
+        case "watchPosition":
+            if let watchId = messageDict["watchId"] as? Int {
+                await sendWatchError(webView: webView, frame: frame,
+                                     watchId: watchId, code: 1, message: denialMessage)
+            }
+        default:
+            // clearWatch / cancelOperation / unknown — no callback to fire.
+            break
         }
     }
 }
@@ -162,56 +229,56 @@ class iTermBrowserGeolocationHandler: NSObject {
 
 @MainActor
 extension iTermBrowserGeolocationHandler {
-    private func handleGetCurrentPosition(webView: iTermBrowserWebView, messageDict: [String: Any]) async {
+    private func handleGetCurrentPosition(webView: iTermBrowserWebView, frame: WKFrameInfo?, messageDict: [String: Any]) async {
         guard let operationId = messageDict["operationId"] as? Int else {
             DLog("Missing operationId in getCurrentPosition request")
             return
         }
 
         let options = GeolocationOptions(from: messageDict["options"] as? [String: Any] ?? [:])
-        let request = LocationRequest(operationId: operationId, webView: webView, options: options, startTime: Date())
+        let request = LocationRequest(operationId: operationId, webView: webView, frame: frame, options: options, startTime: Date())
         pendingLocationRequests[operationId] = request
-        
+
         // Check if we can use cached position
         if let cachedPosition = getCachedPosition(maxAge: options.maximumAge) {
-            await sendPositionSuccess(webView: webView, operationId: operationId, location: cachedPosition)
+            await sendPositionSuccess(webView: webView, frame: frame, operationId: operationId, location: cachedPosition)
             pendingLocationRequests.removeValue(forKey: operationId)
             return
         }
-        
+
         // Set timeout if specified
         if let timeout = options.timeout {
             Task {
                 try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
                 if pendingLocationRequests[operationId] != nil {
                     pendingLocationRequests.removeValue(forKey: operationId)
-                    await sendPositionError(webView: webView, operationId: operationId, code: 3, message: "Timeout expired")
+                    await sendPositionError(webView: webView, frame: frame, operationId: operationId, code: 3, message: "Timeout expired")
                 }
             }
         }
-        
+
         // Configure location manager for this request
         locationManager.desiredAccuracy = options.enableHighAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyKilometer
         locationManager.startUpdatingLocation()
     }
-    
-    private func handleWatchPosition(webView: iTermBrowserWebView, messageDict: [String: Any]) async {
+
+    private func handleWatchPosition(webView: iTermBrowserWebView, frame: WKFrameInfo?, messageDict: [String: Any]) async {
         guard let watchId = messageDict["watchId"] as? Int else {
             DLog("Missing watchId in watchPosition request")
             return
         }
-        
+
         let options = GeolocationOptions(from: messageDict["options"] as? [String: Any] ?? [:])
-        let watch = WatchRequest(watchId: watchId, webView: webView, options: options)
+        let watch = WatchRequest(watchId: watchId, webView: webView, frame: frame, options: options)
         activeWatches[watchId] = watch
-        
+
         // Configure location manager for watching
         locationManager.desiredAccuracy = options.enableHighAccuracy ? kCLLocationAccuracyBest : kCLLocationAccuracyKilometer
         locationManager.startUpdatingLocation()
-        
+
         // Send cached position immediately if available and fresh enough
         if let cachedPosition = getCachedPosition(maxAge: options.maximumAge) {
-            await sendWatchPositionUpdate(webView: webView, watchId: watchId, location: cachedPosition)
+            await sendWatchPositionUpdate(webView: webView, frame: frame, watchId: watchId, location: cachedPosition)
         }
     }
     
@@ -260,57 +327,57 @@ extension iTermBrowserGeolocationHandler {
         return age <= maxAgeSeconds ? lastLocation : nil
     }
     
-    private func sendPositionSuccess(webView: iTermBrowserWebView, operationId: Int, location: CLLocation) async {
+    private func sendPositionSuccess(webView: iTermBrowserWebView, frame: WKFrameInfo? = nil, operationId: Int, location: CLLocation) async {
         let coords = locationToCoordinates(location)
         let timestamp = Int64(location.timestamp.timeIntervalSince1970 * 1000) // JavaScript expects milliseconds
-        
+
         let jsCode = """
             window.iTermGeolocationHandler.handlePositionSuccess('\(secret)', \(operationId), \(coords), \(timestamp));
         """
 
         do {
-            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
         } catch {
             DLog("Error sending position success: \(error)")
         }
     }
-    
-    private func sendPositionError(webView: iTermBrowserWebView, operationId: Int, code: Int, message: String) async {
+
+    private func sendPositionError(webView: iTermBrowserWebView, frame: WKFrameInfo? = nil, operationId: Int, code: Int, message: String) async {
         let escapedMessage = message.replacingOccurrences(of: "'", with: "\\'")
         let jsCode = """
             window.iTermGeolocationHandler.handlePositionError('\(secret)', \(operationId), \(code), '\(escapedMessage)');
         """
-        
+
         do {
-            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
         } catch {
             DLog("Error sending position error: \(error)")
         }
     }
-    
-    private func sendWatchPositionUpdate(webView: iTermBrowserWebView, watchId: Int, location: CLLocation) async {
+
+    private func sendWatchPositionUpdate(webView: iTermBrowserWebView, frame: WKFrameInfo? = nil, watchId: Int, location: CLLocation) async {
         let coords = locationToCoordinates(location)
         let timestamp = Int64(location.timestamp.timeIntervalSince1970 * 1000)
-        
+
         let jsCode = """
             window.iTermGeolocationHandler.handleWatchPositionUpdate('\(secret)', \(watchId), \(coords), \(timestamp));
         """
-        
+
         do {
-            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
         } catch {
             DLog("Error sending watch position update: \(error)")
         }
     }
-    
-    private func sendWatchError(webView: iTermBrowserWebView, watchId: Int, code: Int, message: String) async {
+
+    private func sendWatchError(webView: iTermBrowserWebView, frame: WKFrameInfo? = nil, watchId: Int, code: Int, message: String) async {
         let escapedMessage = message.replacingOccurrences(of: "'", with: "\\'")
         let jsCode = """
             window.iTermGeolocationHandler.handleWatchError('\(secret)', \(watchId), \(code), '\(escapedMessage)');
         """
-        
+
         do {
-            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
+            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
         } catch {
             DLog("Error sending watch error: \(error)")
         }
@@ -336,20 +403,12 @@ extension iTermBrowserGeolocationHandler {
     
     // MARK: - Permission State Updates
     
-    func updatePermissionState(for origin: String, webView: iTermBrowserWebView) async {
+    func updatePermissionState(for origin: String, webView: iTermBrowserWebView, frame: WKFrameInfo? = nil) async {
         let decision = await iTermBrowserPermissionManager(user: user).getPermissionDecision(
             for: .geolocation,
             origin: origin
         )
-        
-        let permissionString = decision == .granted ? "granted" : (decision == .denied ? "denied" : "prompt")
-        let jsCode = "window.iTermGeolocationHandler.setPermission('\(secret)', '\(permissionString)');"
-        
-        do {
-            _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
-        } catch {
-            DLog("Error updating geolocation permission state: \(error)")
-        }
+        await pushPermissionState(decision: decision, webView: webView, frame: frame)
     }
 }
 
@@ -381,7 +440,7 @@ extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
             for request in requests {
                 if let webView = request.webView {
                     Task {
-                        await sendPositionSuccess(webView: webView, operationId: request.operationId, location: location)
+                        await sendPositionSuccess(webView: webView, frame: request.frame, operationId: request.operationId, location: location)
                     }
                 }
             }
@@ -390,7 +449,7 @@ extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
             for watch in activeWatches.values {
                 if let webView = watch.webView {
                     Task {
-                        await sendWatchPositionUpdate(webView: webView, watchId: watch.watchId, location: location)
+                        await sendWatchPositionUpdate(webView: webView, frame: watch.frame, watchId: watch.watchId, location: location)
                     }
                 }
             }
@@ -434,7 +493,7 @@ extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
             for request in requests {
                 if let webView = request.webView {
                     Task {
-                        await sendPositionError(webView: webView, operationId: request.operationId, code: code, message: message)
+                        await sendPositionError(webView: webView, frame: request.frame, operationId: request.operationId, code: code, message: message)
                     }
                 }
             }
@@ -443,7 +502,7 @@ extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
             for watch in activeWatches.values {
                 if let webView = watch.webView {
                     Task {
-                        await sendWatchError(webView: webView, watchId: watch.watchId, code: code, message: message)
+                        await sendWatchError(webView: webView, frame: watch.frame, watchId: watch.watchId, code: code, message: message)
                     }
                 }
             }

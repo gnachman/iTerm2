@@ -262,6 +262,14 @@
     return result;
 }
 
+- (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell {
+    NSRect cellFrame = [cell frame];
+    return NSMakeRect(cellFrame.origin.x,
+                      cellFrame.origin.y,
+                      cellFrame.size.width,
+                      PSMTabBarProgressBarHeight);
+}
+
 - (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
     return rect;
 }
@@ -502,7 +510,13 @@
 - (PSMCachedTitleInputs *)cachedTitleInputsForTabCell:(PSMTabBarCell *)cell {
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
     id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
-    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.stringValue
+    // When the style can't draw a separate subtitle line (short bar / single-line
+    // style), fold subtitleString into the title so its content still shows.
+    NSString *title = cell.stringValue;
+    if (!self.supportsMultiLineLabels && cell.subtitleString.length > 0) {
+        title = [NSString stringWithFormat:@"%@ %@", cell.stringValue, cell.subtitleString];
+    }
+    PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:title
                                                                truncationStyle:cell.truncationStyle
                                                                          color:[self textColorForCell:cell]
                                                                        graphic:[(id)[[cell representedObject] identifier] psmTabGraphic]
@@ -520,9 +534,17 @@
     const BOOL parseHTML = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionHTMLTabTitles] boolValue];
     id<PSMPUAFontProvider> puaFontProvider = [_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionPUAFontProvider];
     NSColor *color = [self textColorForCell:cell];
+    NSColor *subtitleColor = nil;
+    id tab = [[cell representedObject] identifier];
+    if ([tab respondsToSelector:@selector(psmTabStatusSubtitleColor)]) {
+        subtitleColor = [tab psmTabStatusSubtitleColor];
+    }
+    if (!subtitleColor) {
+        subtitleColor = [color colorWithAlphaComponent:color.alphaComponent * 0.7];
+    }
     PSMCachedTitleInputs *inputs = [[PSMCachedTitleInputs alloc] initWithTitle:cell.subtitleString ?: @""
                                                                truncationStyle:cell.truncationStyle
-                                                                         color:[color colorWithAlphaComponent:color.alphaComponent * 0.7]
+                                                                         color:subtitleColor
                                                                        graphic:nil
                                                                    orientation:_orientation
                                                                       fontSize:self.subtitleFontSize
@@ -1340,10 +1362,12 @@ const void *PSMTabStyleDarkColorKey = "dark";
         [[self bottomLineColorSelected:NO] set];
         NSRect rightLineRect = rect;
         rightLineRect.origin.y -= 1;
-        [self drawVerticalLineInFrame:rightLineRect x:NSMaxX(rect) - 1];
+        const CGFloat x = (bar.tabLocation == PSMTab_RightTab) ? NSMinX(rect) : NSMaxX(rect) - 1;
+        [self drawVerticalLineInFrame:rightLineRect x:x];
     } else {
         switch (bar.tabLocation) {
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 break;
             case PSMTab_TopTab:
                 // Bottom line
@@ -1365,6 +1389,7 @@ const void *PSMTabStyleDarkColorKey = "dark";
     switch (position) {
         case PSMTab_BottomTab:
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             return YES;
 
         case PSMTab_TopTab:

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3.5-flash:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"My favorite color is chartreuse. Reply OK.\"}],\"role\":\"user\"},{\"parts\":[{\"text\":\"OK.\"}],\"role\":\"model\"},{\"parts\":[{\"text\":\"What color did I just tell you was my favorite? Answer with one word.\"}],\"role\":\"user\"}]}",
+  "key" : "09657ab007e0ec90bf308298c89d8f2e8621982a45340824ac70946fd18cbed7",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"Chartreuse\",\n            \"thoughtSignature\": \"Ep4ECpsEAQw51sdLNHjc6b5no1nJmTrz0YArP5OaE5xCjMthlT8kme59gvDKI3IO3cZ9cXbNV8Ru9foto8EARFyKQ5pyE1CYW6tOpCr6XwB9jRr7o3Iiu9PEkJThHosyU3QLNZKOIzaK\/Brhw95f6Ok96Stye3eWgCDGDPsfT9x3bgX2odHVIrqC2V50C0dT0mA905wUfBgKjxYEQ77mRlKOiPKBEMmqmuI+DBWombyLClZuzGHoDm9ySLs7r64jH1lWb1F6xlJHRFaZzQPiZ5E9GN5DGF3+AC5f8F3drLPrO6gvi4Sz04t08kUefXN14NCcub97uWDG1RR4UYw5bVaG7ddAcJlk\/9tdqf9I+5z8nJtVepuN0ZH7U2hR2KYmakiEcpjZz+PVz2wKrg4\/+1lIjVeEcQP1tTa1i+UnZHtwMgN69M4qQ0xzRiGB9oZOviHFOgULhGMATeuXZtYuYQXP+EirKAAKWXwJUwTgyMDcz6I\/W5uDzyJCXKHXY4M9EMZRyNT+L465RkQd2zz7FcoF\/RTnS0XfKkSutFD6KY1Q+S9wfmtH36ytQEPsStLmfm1s4+HQGNTabsBejSU8GMbAw62UDTwvB1ak\/11XgRA3mREbqdW9INXRntpp2wBi69Mjcm0lqA4AeFo3RlYSU2\/BjBEhrxY4A+aifpgLXNuSicQhJckudmWMklP0wKuaNhBvvBNAf01Y7WatCecE6fw=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 31,\n    \"candidatesTokenCount\": 2,\n    \"totalTokenCount\": 169,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 31\n      }\n    ],\n    \"thoughtsTokenCount\": 136,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash\",\n  \"responseId\": \"ie8lau6aEfPrz7IP64eIyQs\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

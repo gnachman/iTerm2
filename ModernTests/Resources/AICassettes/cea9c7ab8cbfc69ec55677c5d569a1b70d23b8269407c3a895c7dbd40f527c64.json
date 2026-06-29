@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":32000,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"My favorite color is chartreuse. Reply OK.\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-opus-4-1\",\"temperature\":0}",
+  "key" : "cea9c7ab8cbfc69ec55677c5d569a1b70d23b8269407c3a895c7dbd40f527c64",
+  "response" : {
+    "data" : "{\"model\":\"claude-opus-4-1-20250805\",\"id\":\"msg_01EtZoAGfauiwN5UuULhqnL9\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"OK.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":18,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

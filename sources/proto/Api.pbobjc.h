@@ -4383,6 +4383,7 @@ typedef GPB_ENUM(ITMGetPromptResponse_FieldNumber) {
   ITMGetPromptResponse_FieldNumber_PromptState = 7,
   ITMGetPromptResponse_FieldNumber_ExitStatus = 9,
   ITMGetPromptResponse_FieldNumber_UniquePromptId = 10,
+  ITMGetPromptResponse_FieldNumber_ExcludedSubrangesArray = 11,
 };
 
 /**
@@ -4423,6 +4424,26 @@ GPB_FINAL @interface ITMGetPromptResponse : GPBMessage
 @property(nonatomic, readwrite, copy, null_resettable) NSString *uniquePromptId;
 /** Test to see if @c uniquePromptId has been set. */
 @property(nonatomic, readwrite) BOOL hasUniquePromptId;
+
+/**
+ * Cell regions inside command_range that are NOT part of the user-typed
+ * command: PS2 prefixes on continuation rows and right-prompt text the
+ * shell emitted between an OSC 133;A;k=s|c|r and its matching 133;B.
+ * Half-open: `start` inclusive, `end` exclusive. Selection / share /
+ * AI consumers should subtract these from command_range to get the
+ * actual user input.
+ *
+ * Populated only on responses to an explicit GetPromptRequest. When a
+ * PromptNotification fires (at OSC 133;B), no non-INITIAL pairs can
+ * have been recorded yet, so the list would be empty AND misleading:
+ * a script reading it then would assume there are no excluded
+ * subranges, ever. Scripts that want the field should subscribe to
+ * COMMAND_END notifications and re-fetch the prompt by id once they
+ * fire.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMCoordRange*> *excludedSubrangesArray;
+/** The number of items in @c excludedSubrangesArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger excludedSubrangesArray_Count;
 
 @end
 
@@ -5295,6 +5316,7 @@ typedef GPB_ENUM(ITMCreateTabRequest_FieldNumber) {
   ITMCreateTabRequest_FieldNumber_TabIndex = 3,
   ITMCreateTabRequest_FieldNumber_Command = 4,
   ITMCreateTabRequest_FieldNumber_CustomProfilePropertiesArray = 5,
+  ITMCreateTabRequest_FieldNumber_SelectTab = 6,
 };
 
 GPB_FINAL @interface ITMCreateTabRequest : GPBMessage
@@ -5323,6 +5345,14 @@ GPB_FINAL @interface ITMCreateTabRequest : GPBMessage
 /** The number of items in @c customProfilePropertiesArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger customProfilePropertiesArray_Count;
 
+/**
+ * If false, create the tab in the background: do not select it and do not
+ * bring its window to the front. Unset or true preserves the default
+ * behavior (select the new tab and order its window front).
+ **/
+@property(nonatomic, readwrite) BOOL selectTab;
+
+@property(nonatomic, readwrite) BOOL hasSelectTab;
 @end
 
 #pragma mark - ITMCreateTabResponse

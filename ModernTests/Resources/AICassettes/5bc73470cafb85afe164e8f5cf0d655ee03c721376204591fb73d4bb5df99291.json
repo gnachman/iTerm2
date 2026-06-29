@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":16384,\"messages\":[{\"content\":\"My favorite color is chartreuse. Reply OK.\",\"role\":\"user\"}],\"model\":\"gpt-4o-mini\",\"stream\":false,\"temperature\":0}",
+  "key" : "5bc73470cafb85afe164e8f5cf0d655ee03c721376204591fb73d4bb5df99291",
+  "response" : {
+    "data" : "{\n  \"id\": \"chatcmpl-DoGHntoz9a0ijBGbTJmZiMG67J9jH\",\n  \"object\": \"chat.completion\",\n  \"created\": 1780871375,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"OK.\",\n        \"refusal\": null,\n        \"annotations\": []\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 17,\n    \"completion_tokens\": 2,\n    \"total_tokens\": 19,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\": 0,\n      \"audio_tokens\": 0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\": 0,\n      \"audio_tokens\": 0,\n      \"accepted_prediction_tokens\": 0,\n      \"rejected_prediction_tokens\": 0\n    }\n  },\n  \"service_tier\": \"default\",\n  \"system_fingerprint\": \"fp_31455a11c2\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

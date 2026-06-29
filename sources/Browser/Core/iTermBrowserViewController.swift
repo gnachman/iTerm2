@@ -74,6 +74,7 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
     func browserViewControllerOnboardingFindBrowserProfileGuid(_ controller: iTermBrowserViewController) -> String?
     func browserViewControllerOnboardingGetSettings(_ controller: iTermBrowserViewController) -> iTermBrowserOnboardingSettings
     func browserViewControllerScope(_ controller: iTermBrowserViewController) -> (iTermVariableScope, iTermObject)
+    func browserViewControllerSession(_ controller: iTermBrowserViewController) -> PTYSession?
     func browserViewControllerShouldInterpolateSmartSelectionParameters(_ controller: iTermBrowserViewController) -> Bool
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String)
     func browserViewController(_ controller: iTermBrowserViewController, performSplitPaneAction action: iTermBrowserSplitPaneAction)
@@ -1630,5 +1631,34 @@ extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
 
     func browserTriggerInject(_ script: String) {
         browserManager.triggerHandler?.inject(script)
+    }
+
+    // Hop through the delegate to find the owning PTYSession, then
+    // ask iTermWorkgroupController to enter/exit. Workgroups are
+    // session-kind-agnostic — a browser session is a fine leader —
+    // so the controller doesn't need any browser-specific path.
+    func browserTriggerEnterWorkgroup(uniqueIdentifier: String) {
+        guard let session = delegate?.browserViewControllerSession(self) else {
+            return
+        }
+        // Route through the shared menu/trigger policy seam rather than
+        // re-implementing "not already in a workgroup" inline, so a
+        // future refusal predicate on the controller can't silently
+        // miss this path. canEnterFromUI also covers the restoring and
+        // unusable-workgroup cases.
+        guard iTermWorkgroupController.instance.canEnterFromUI(
+                workgroupUniqueIdentifier: uniqueIdentifier, on: session) else {
+            DLog("browserTriggerEnterWorkgroup: refused for workgroup \(uniqueIdentifier) on session \(session.guid)")
+            return
+        }
+        iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: uniqueIdentifier,
+                                                on: session)
+    }
+
+    func browserTriggerExitWorkgroup() {
+        guard let session = delegate?.browserViewControllerSession(self) else {
+            return
+        }
+        iTermWorkgroupController.instance.exit(on: session)
     }
 }

@@ -163,7 +163,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
 
     func testExternalAttributesIndex_distribution() {
         let codes: [UInt16] = [65, 66, 67, 68]
-        let underlineColor = VT100TerminalColorValue(red: 1, green: 1, blue: 1, mode: ColorModeNormal)
+        let underlineColor = VT100TerminalColorValue(red: 1, green: 1, blue: 1, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0)
         let ea = iTermExternalAttribute(underlineColor: underlineColor, url: nil, blockIDList: nil, controlCode: nil)
         let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: ea)
         guard let idx = s.externalAttributesIndex() else {
@@ -184,7 +184,7 @@ final class iTermNonASCIIStringTest: XCTestCase {
                                         underlineColor: VT100TerminalColorValue(),
                                         url: url,
                                         blockIDList: nil,
-                                        controlCode: nil)
+                                        controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         let s = iTermNonASCIIString(codes: codes, complex: IndexSet(), style: makeBaseStyle(), ea: ea)
 
         let md = MutableScreenCharArray.emptyLine(ofLength: 4)
@@ -202,8 +202,8 @@ final class iTermNonASCIIStringTest: XCTestCase {
         let msca = MutableScreenCharArray.emptyLine(ofLength: 4)
         let eaIndex = iTermExternalAttributeIndex()
         let ea2 = iTermExternalAttribute(havingUnderlineColor: true,
-                                         underlineColor: VT100TerminalColorValue(red:2,green:2,blue:2,mode:ColorModeNormal),
-                                         url: nil, blockIDList: nil, controlCode: nil)
+                                         underlineColor: VT100TerminalColorValue(red:2,green:2,blue:2,mode:ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
+                                         url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         eaIndex.setAttributes(ea2, at: 0, count: 2)
         msca.setExternalAttributesIndex(eaIndex)
         s.hydrate(into: msca, destinationIndex: 1, sourceRange: NSRange(location: 0, length: 2))
@@ -243,11 +243,10 @@ final class iTermNonASCIIStringTest: XCTestCase {
     func testRoundTrip() throws {
         let ea = iTermExternalAttribute(
             havingUnderlineColor: true,
-            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
             url: nil,
             blockIDList: nil,
-            controlCode: nil
-        )
+            controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
 
         let baseStyle = makeBaseStyle()
         let msca = MutableScreenCharArray.emptyLine(ofLength: 0)

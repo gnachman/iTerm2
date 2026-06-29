@@ -235,8 +235,8 @@ final class iTermRopeTests: XCTestCase {
         let a = makeASCII("AA")
         // give EA only on "BB" segment
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
-                                        underlineColor: VT100TerminalColorValue(red:1,green:1,blue:1,mode:ColorModeNormal),
-                                        url: nil, blockIDList: nil, controlCode: nil)
+                                        underlineColor: VT100TerminalColorValue(red:1,green:1,blue:1,mode:ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
+                                        url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         let bWithEA = iTermASCIIString(data: Data("BB".utf8), style: makeStyle(), ea: ea)
         let rope = iTermRope([a, bWithEA])
         guard let idx = rope.externalAttributesIndex() else {
@@ -436,11 +436,10 @@ final class iTermRopeTests: XCTestCase {
             let eaIndex = iTermExternalAttributeIndex()
             let ea = iTermExternalAttribute(
                 havingUnderlineColor: true,
-                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                 url: nil,
                 blockIDList: nil,
-                controlCode: nil
-            )
+                controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
             eaIndex.setAttributes(ea, at: 1, count: 1)
             var metadata = iTermMetadataDefault()
             metadata.timestamp = 1234.0
@@ -453,11 +452,10 @@ final class iTermRopeTests: XCTestCase {
         let ascii = {
             let ea = iTermExternalAttribute(
                 havingUnderlineColor: true,
-                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                 url: nil,
                 blockIDList: nil,
-                controlCode: nil
-            )
+                controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
             return iTermASCIIString(data: Data([65, 66, 67, 68]),
                                     style: makeStyle(),
                                     ea: ea)
@@ -465,11 +463,10 @@ final class iTermRopeTests: XCTestCase {
         let nonAscii = {
             let ea = iTermExternalAttribute(
                 havingUnderlineColor: true,
-                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                 url: nil,
                 blockIDList: nil,
-                controlCode: nil
-            )
+                controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
 
             let baseStyle = makeStyle()
             let msca = MutableScreenCharArray.emptyLine(ofLength: 0)
@@ -490,11 +487,10 @@ final class iTermRopeTests: XCTestCase {
         let substring = {
             let ea = iTermExternalAttribute(
                 havingUnderlineColor: true,
-                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+                underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
                 url: nil,
                 blockIDList: nil,
-                controlCode: nil
-            )
+                controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
 
             let baseStyle = makeStyle()
             let msca = MutableScreenCharArray.emptyLine(ofLength: 0)

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash-lite:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\"}],\"role\":\"user\"}],\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}}]}]}",
+  "key" : "39de3a653b37f5ded9f7667bf72458214f2d8d56636bedc676fb1617c1263d74",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"functionCall\": {\n              \"name\": \"get_random_word\",\n              \"args\": {}\n            }\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"finishMessage\": \"Model generated function call(s).\"\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 69,\n    \"candidatesTokenCount\": 12,\n    \"totalTokenCount\": 81,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 69\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash-lite\",\n  \"responseId\": \"W_AlaoezM_jU1MkP842yuQc\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

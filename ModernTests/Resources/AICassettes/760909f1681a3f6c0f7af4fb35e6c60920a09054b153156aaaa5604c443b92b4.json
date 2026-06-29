@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3-flash-preview:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{},\"name\":\"get_random_word\"},\"thoughtSignature\":\"EqgDCqUDAQw51seIPhViCFDt9vuWpud3K5Wd4Ncsfp0mQcH8QvLzFsluP3IEF4+Z+ZKcrdrtTRV6O6X1rhsIhX1Ts2k57MctBBwWxj\\\/9jG7IHSnTDGMnBkRvw4NAne2CvPrH9ZX\\\/yY8HxP+rP2uHIpfsNKFkQ0z8kSIwu9eDPTVoA7ZgEA8wS+m4Bs2lniuXHH0mVpXvfGhVIc4a73HE2UZyOE4GTx4Q+QpjLRujSi7+IEFIhQ0NDni41w+0h8bONvlfx6iB4pQ9qVl9\\\/c57xXrMoX4o7a2Tz5SYu+poh+uprv70mBr37BeP2\\\/uhzO81yz8AYqmmXgkc1pU0sDrasUpuXY0hkfGU1jct0sEJC15qGgXX91dWv0e7NzdGXod9kMgF8O3wsWAhgMnl4frOGfNc4HouE\\\/5vewuYcW2kcthaTwJDsBOpz0zN1AyPnEfQVLqAm2nglMe6l3l6cfCIKR+VAaRXxla2ARPYMR\\\/hU7vIN7xpIlA6pk+OvikERQD5l2bAWb5O7VDzS8+L2BXksh0lexfBWm8F1FxPYP\\\/4mLNfndYSbg4aJevfaA==\"}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"get_random_word\",\"response\":{\"output\":\"MAGENTA-LARK-77\"}}}],\"role\":\"user\"}],\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}}]}]}",
+  "key" : "760909f1681a3f6c0f7af4fb35e6c60920a09054b153156aaaa5604c443b92b4",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"The random word generated for you is **MAGENTA-LARK-77**, which sounds like it could be a secret code name for a colorful undercover mission.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 208,\n    \"candidatesTokenCount\": 33,\n    \"totalTokenCount\": 241,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 208\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3-flash-preview\",\n  \"responseId\": \"WvAlapbhN5r3jrEPm62WwQM\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

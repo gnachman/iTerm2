@@ -606,6 +606,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
             return NO;
 
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_TopTab:
             return [super shouldDrawTopLineSelected:selected attached:attached position:position];
     }

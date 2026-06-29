@@ -140,6 +140,149 @@
     XCTAssert(token->type == VT100_UNKNOWNCHAR);
 }
 
+#pragma mark - Dual-mode SGR (38:12 / 48:12 / 38:13 / 48:13)
+
+- (void)testDualModeRGBForeground {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[38:12:10:20:30:40:50:60m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 1);
+    XCTAssert(token.csi->p[0] == 38);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertEqual(value.mode, ColorMode24bit);
+    XCTAssertEqual(value.red, 10);
+    XCTAssertEqual(value.green, 20);
+    XCTAssertEqual(value.blue, 30);
+    XCTAssertTrue(value.hasDarkVariant);
+    XCTAssertEqual(value.redDark, 40);
+    XCTAssertEqual(value.greenDark, 50);
+    XCTAssertEqual(value.blueDark, 60);
+}
+
+- (void)testDualModeRGBBackground {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[48:12:1:2:3:4:5:6m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->p[0] == 48);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertEqual(value.mode, ColorMode24bit);
+    XCTAssertEqual(value.red, 1);
+    XCTAssertEqual(value.blue, 3);
+    XCTAssertTrue(value.hasDarkVariant);
+    XCTAssertEqual(value.redDark, 4);
+    XCTAssertEqual(value.blueDark, 6);
+}
+
+- (void)testDualModeIndexedForeground {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[38:13:208:11m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->p[0] == 38);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertEqual(value.mode, ColorModeNormal);
+    XCTAssertEqual(value.red, 208);
+    XCTAssertTrue(value.hasDarkVariant);
+    XCTAssertEqual(value.redDark, 11);
+}
+
+- (void)testDualModeRejectsSemicolonForm {
+    // 38;12;... is the unsafe semicolon form; the parser must NOT treat it as
+    // dual-mode (it would spill trailing values into the SGR stream on
+    // non-supporting terminals). Should fall through and not return a valid
+    // dual-mode color.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[38;12;1;2;3;4;5;6m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->p[0] == 38);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertFalse(value.hasDarkVariant);
+}
+
+- (void)testDualModeShortSubparametersInvalid {
+    // 38:12 with fewer than 7 subparameters should not produce a dual-mode value.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[38:12:1:2:3m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertFalse(value.hasDarkVariant);
+}
+
+- (void)testDualModeChainedAfterFallback {
+    // The recommended emission pattern: 38;2;Rf;Gf;Bf followed by 38:12:...
+    // Last-wins semantics mean the dual-mode value is what an SGR executor
+    // would land on after processing both color specs in order.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[38;2;7;7;7;38:12:11:22:33:44:55:66m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    // Six top-level params: 38, 2, 7, 7, 7, 38 (the colon-form payload hangs
+    // off the second 38 as its sub-parameters).
+    XCTAssertEqual(token.csi->count, 6);
+
+    // First parse: semicolon-form fallback at index 0. Should yield single-color
+    // RGB(7,7,7) with no dark variant, advancing index past the consumed params.
+    int i = 0;
+    VT100TerminalColorValue fallback = VT100TerminalColorValueFromCSI(token.csi, &i);
+    XCTAssertEqual(fallback.mode, ColorMode24bit);
+    XCTAssertEqual(fallback.red, 7);
+    XCTAssertEqual(fallback.green, 7);
+    XCTAssertEqual(fallback.blue, 7);
+    XCTAssertFalse(fallback.hasDarkVariant);
+
+    // Second parse: colon-form override at index 5. Should yield dual-mode
+    // RGB with light=(11,22,33) and dark=(44,55,66) — this is the value an
+    // SGR executor lands on (last-wins).
+    i = 5;
+    const VT100TerminalColorValue override = VT100TerminalColorValueFromCSI(token.csi, &i);
+    XCTAssertEqual(override.mode, ColorMode24bit);
+    XCTAssertTrue(override.hasDarkVariant);
+    XCTAssertEqual(override.red, 11);
+    XCTAssertEqual(override.green, 22);
+    XCTAssertEqual(override.blue, 33);
+    XCTAssertEqual(override.redDark, 44);
+    XCTAssertEqual(override.greenDark, 55);
+    XCTAssertEqual(override.blueDark, 66);
+}
+
+#pragma mark - Dual-mode SGR 58 (underline color)
+
+// SGR 58 shares VT100TerminalColorValueFromCSI with 38/48, so the parser already
+// understands sub-modes 12 and 13 for underline. These tests pin the contract.
+
+- (void)testDualModeRGBUnderline {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[58:12:10:20:30:40:50:60m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 1);
+    XCTAssert(token.csi->p[0] == 58);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertEqual(value.mode, ColorMode24bit);
+    XCTAssertEqual(value.red, 10);
+    XCTAssertEqual(value.green, 20);
+    XCTAssertEqual(value.blue, 30);
+    XCTAssertTrue(value.hasDarkVariant);
+    XCTAssertEqual(value.redDark, 40);
+    XCTAssertEqual(value.greenDark, 50);
+    XCTAssertEqual(value.blueDark, 60);
+}
+
+- (void)testDualModeIndexedUnderline {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[58:13:208:120m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->p[0] == 58);
+
+    int j = 0;
+    const VT100TerminalColorValue value = VT100TerminalColorValueFromCSI(token.csi, &j);
+    XCTAssertEqual(value.mode, ColorModeNormal);
+    XCTAssertEqual(value.red, 208);
+    XCTAssertTrue(value.hasDarkVariant);
+    XCTAssertEqual(value.redDark, 120);
+}
+
 - (void)testIntermediateByte {
     // DECSCUSR with parameter 3 (set cursor to "blink underline"), which has an intermediate byte
     // of the space character.

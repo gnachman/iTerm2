@@ -1,0 +1,1 @@
+{"autoMode":{"allow":["$defaults","Running `it2 session add-clipping` is allowed: it pipes content to the local iTerm2 session per the user’s request."]}}

@@ -20,6 +20,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PSMMinimalTabStyle : PSMYosemiteTabStyle
 @property (nonatomic, weak) id<PSMMinimalTabStyleDelegate> delegate;
 
+// The color used to stroke the outline around the selected tab.
+- (NSColor *)outlineColor;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -202,8 +202,8 @@ final class iTermLegacyMutableStringTests: XCTestCase {
         let m = iTermLegacyMutableString(width: 2)
         XCTAssertNil(m.eaIndex)
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
-                                        underlineColor: VT100TerminalColorValue(red:1,green:0,blue:0,mode:ColorModeNormal),
-                                        url: nil, blockIDList: nil, controlCode: nil)
+                                        underlineColor: VT100TerminalColorValue(red:1,green:0,blue:0,mode:ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
+                                        url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         let idx = m.eaIndex(createIfNeeded: true)!
         idx.setAttributes(ea, at: 1, count: 1)
         XCTAssertEqual(m.externalAttribute(at: 1), ea)
@@ -323,8 +323,8 @@ final class iTermLegacyMutableStringTests: XCTestCase {
         // create EA index and attach via metadata
         let eaIndex = iTermExternalAttributeIndex()
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
-                                        underlineColor: VT100TerminalColorValue(red:1,green:0,blue:0,mode:ColorModeNormal),
-                                        url: nil, blockIDList: nil, controlCode: nil)
+                                        underlineColor: VT100TerminalColorValue(red:1,green:0,blue:0,mode:ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
+                                        url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         eaIndex.setAttributes(ea, at: 1, count: 1)
         // set into metadata
         var metadata = iTermMetadataDefault()
@@ -406,8 +406,8 @@ final class iTermLegacyMutableStringTests: XCTestCase {
         sca.append("ABC", fg: style, bg: style)
         let eaIndex = iTermExternalAttributeIndex()
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
-                                        underlineColor: VT100TerminalColorValue(red:1,green:2,blue:3,mode:ColorModeNormal),
-                                        url: nil, blockIDList: nil, controlCode: nil)
+                                        underlineColor: VT100TerminalColorValue(red:1,green:2,blue:3,mode:ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
+                                        url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         eaIndex.setAttributes(ea, at: 1, count: 1)
         sca.setExternalAttributesIndex(eaIndex)
         let m = iTermLegacyMutableString(sca)
@@ -453,8 +453,8 @@ final class iTermLegacyMutableStringTests: XCTestCase {
         // set non-nil
         let eaSrc = iTermExternalAttributeIndex()
         let ea = iTermExternalAttribute(havingUnderlineColor: true,
-                                        underlineColor: VT100TerminalColorValue(red:3,green:4,blue:5,mode:ColorModeNormal),
-                                        url: nil, blockIDList: nil, controlCode: nil)
+                                        underlineColor: VT100TerminalColorValue(red:3,green:4,blue:5,mode:ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
+                                        url: nil, blockIDList: nil, controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         eaSrc.setAttributes(ea, at: 0, count: 1)
         m.set(externalAttributes: eaSrc)
         let idx = m.externalAttributesIndex()!
@@ -485,11 +485,10 @@ final class iTermLegacyMutableStringTests: XCTestCase {
         let eaIndex = iTermExternalAttributeIndex()
         let ea = iTermExternalAttribute(
             havingUnderlineColor: true,
-            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal),
+            underlineColor: VT100TerminalColorValue(red: 1, green: 0, blue: 0, mode: ColorModeNormal, hasDarkVariant: false, redDark: 0, greenDark: 0, blueDark: 0),
             url: nil,
             blockIDList: nil,
-            controlCode: nil
-        )
+            controlCode: nil, dualModeForeground: iTermDualModeColor(), dualModeBackground: iTermDualModeColor())
         eaIndex.setAttributes(ea, at: 1, count: 1)
         var metadata = iTermMetadataDefault()
         metadata.timestamp = 1234.0

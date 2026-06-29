@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/responses\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"input\":[{\"content\":\"Reply with exactly the single word: PINEAPPLE\",\"role\":\"user\",\"type\":\"message\"}],\"max_output_tokens\":127978,\"model\":\"gpt-5.4\",\"stream\":false,\"tool_choice\":\"none\",\"tools\":[]}",
+  "key" : "8ec98744ad9dac975d81f5b44be6dd0a8cf6cf51809dd75b296144d62f9d9b14",
+  "response" : {
+    "data" : "{\n  \"id\": \"resp_0561ea1238bada6b006a25f3e8690881999a884b18353a4a9a\",\n  \"object\": \"response\",\n  \"created_at\": 1780872168,\n  \"status\": \"completed\",\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1780872169,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": null,\n  \"max_output_tokens\": 127978,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5.4-2026-03-05\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"msg_0561ea1238bada6b006a25f3e905008199b01fce11c6d675c5\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"PINEAPPLE\"\n        }\n      ],\n      \"phase\": \"final_answer\",\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"24h\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"none\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"none\",\n  \"tools\": [],\n  \"top_logprobs\": 0,\n  \"top_p\": 0.98,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 16,\n    \"input_tokens_details\": {\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 7,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 0\n    },\n    \"total_tokens\": 23\n  },\n  \"user\": null,\n  \"metadata\": {}\n}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

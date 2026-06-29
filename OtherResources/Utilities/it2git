@@ -71,6 +71,60 @@ adds() {
 deletes() {
     "${GIT_BINARY}" ls-files --deleted --exclude-standard | wc -l
 }
+
+# Line counts: "insertions<TAB>deletions" for modified files only.
+# Excludes added, untracked, and deleted files — their line contents are not
+# counted as inserted/deleted lines, only the file-level add/delete below.
+line_counts() {
+    local insertions=0 deletions=0
+    local line
+    # Include M (modified), R (renamed), T (typechange). Exclude A/D.
+    # --numstat prints "INS\tDEL\tPATH" per file; "-\t-\tPATH" for binary.
+    while IFS=$'\t' read -r line; do
+        local ins del
+        ins="${line%%$'\t'*}"
+        del="${line#*$'\t'}"
+        del="${del%%$'\t'*}"
+        [[ "$ins" == "-" ]] && ins=0
+        [[ "$del" == "-" ]] && del=0
+        insertions=$((insertions + ins))
+        deletions=$((deletions + del))
+    done < <("${GIT_BINARY}" diff --numstat --diff-filter=MRT HEAD 2>/dev/null)
+    printf '%s\t%s\n' "$insertions" "$deletions"
+}
+
+# File counts by status across staged+unstaged+untracked.
+# Added: brand-new files only (staged A or untracked ??).
+# Deleted: actually-removed files only (D in either column).
+# Modified: M/R/T/C/U — existing files whose contents changed.
+# Emits "A<TAB>M<TAB>D".
+file_counts() {
+    local added=0 modified=0 deleted=0 porcelain
+    porcelain=$("${GIT_BINARY}" status --porcelain --ignore-submodules -unormal 2>/dev/null) || {
+        printf '%s\t%s\t%s\n' 0 0 0
+        return
+    }
+    # git status --porcelain: two status chars in cols 1-2, space, path.
+    # XY where X=index, Y=worktree. Categorize per file, "added" and "deleted"
+    # take priority over "modified" when both columns differ (e.g. AM, MD).
+    local line x y
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        x="${line:0:1}"
+        y="${line:1:1}"
+        if [[ "$x" == "?" && "$y" == "?" ]]; then
+            added=$((added + 1))
+        elif [[ "$x" == "A" || "$y" == "A" ]]; then
+            added=$((added + 1))
+        elif [[ "$x" == "D" || "$y" == "D" ]]; then
+            deleted=$((deleted + 1))
+        else
+            # M, R, C, T, U, or any mix of those — existing file changed.
+            modified=$((modified + 1))
+        fi
+    done <<< "$porcelain"
+    printf '%s\t%s\t%s\n' "$added" "$modified" "$deleted"
+}
 function iterm2_begin_osc {
   printf "\033]"
 }
@@ -95,6 +149,13 @@ git_poll () {
     BRANCH=$(branch)
     ADDS=$(adds)
     DELETES=$(deletes)
+    LINES=$(line_counts)
+    LINES_INSERTED=$(cut -f1 <<< "$LINES")
+    LINES_DELETED=$(cut -f2 <<< "$LINES")
+    FILES=$(file_counts)
+    FILES_ADDED=$(cut -f1 <<< "$FILES")
+    FILES_MODIFIED=$(cut -f2 <<< "$FILES")
+    FILES_DELETED=$(cut -f3 <<< "$FILES")
 
     iterm2_set_user_var gitBranch "$BRANCH"
     iterm2_set_user_var gitDirty "$DIRTY"
@@ -102,6 +163,11 @@ git_poll () {
     iterm2_set_user_var gitPullCount "$PULL_COUNT"
     iterm2_set_user_var gitAdds "$ADDS"
     iterm2_set_user_var gitDeletes "$DELETES"
+    iterm2_set_user_var gitLinesInserted "$LINES_INSERTED"
+    iterm2_set_user_var gitLinesDeleted "$LINES_DELETED"
+    iterm2_set_user_var gitFilesAdded "$FILES_ADDED"
+    iterm2_set_user_var gitFilesModified "$FILES_MODIFIED"
+    iterm2_set_user_var gitFilesDeleted "$FILES_DELETED"
 }
 
 "$GIT_BINARY" rev-parse --git-dir 2>/dev/null >/dev/null
@@ -112,6 +178,11 @@ if (($?)); then
     iterm2_set_user_var gitPullCount ""
     iterm2_set_user_var gitAdds ""
     iterm2_set_user_var gitDeletes ""
+    iterm2_set_user_var gitLinesInserted ""
+    iterm2_set_user_var gitLinesDeleted ""
+    iterm2_set_user_var gitFilesAdded ""
+    iterm2_set_user_var gitFilesModified ""
+    iterm2_set_user_var gitFilesDeleted ""
 else
     git_poll "$PWD"
 fi

@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-2.5-flash:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\"}],\"role\":\"user\"},{\"parts\":[{\"functionCall\":{\"args\":{},\"name\":\"get_random_word\"},\"thoughtSignature\":\"CpYBAQw51sdTyM61Eh7qa2Xa\\\/bcr8pcY42Qu4CILP349iwEaea4d2\\\/Id3lBWDp5iDJMwCCP\\\/fE09wYXosSH+2SDUeeI0DfdRrFQCpx\\\/JSYB2hZSBvVX1YuOL8msG7iPIcuSN2NHOm9W4iu6j0K1TFrPqi8xxRGEp84eR0\\\/4Af04h6nhVP29X4M9gaGcCH+\\\/PBOixUJcxVHxs\"}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"get_random_word\",\"response\":{\"output\":\"MAGENTA-LARK-77\"}}}],\"role\":\"user\"}],\"tools\":[{\"functionDeclarations\":[{\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"name\":\"get_random_word\",\"parameters\":{\"properties\":{},\"required\":[],\"type\":\"object\"}}]}]}",
+  "key" : "bea5691f51e81f2380e831233e978ac154b0f65595e589d07559657f8ce88a77",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"Here is a random word for you: MAGENTA-LARK-77.\",\n            \"thoughtSignature\": \"CogCAQw51seX9wqNSZxcH01\/VlX+rjvoBvtmw0BeAZHdKJ3LnvuPA7tQmPXWR7liTt4aJnLzRIZoUIBu41hfp2BkJ95y2ENXn4RgLlTsYEXsIe7GpGNnL9fUQDyYMVk0INMLpWmZbbmuS41kMZH2a3etuOrPsany6hdF8CWAlgcIPEROpk5X+3EiIgv7l3dxHKZ6q9+9QUFGOVShEbzDTTqn68FtaZtqjHbtAn6ro8YCtXsPvYfAqzDs8\/MkkroBqnRta7dm6nzoipBX3v0rp18LkK2PIJnRKyuV0b5fRuaqda3I5QqnqJO2eyOvpE9UovyWVSE9A843+K2A51I41I5RkqlUNZMRfQCT\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 105,\n    \"candidatesTokenCount\": 17,\n    \"totalTokenCount\": 179,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 105\n      }\n    ],\n    \"thoughtsTokenCount\": 57,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-2.5-flash\",\n  \"responseId\": \"XfAlasGyFLSN_PUP_IKoyQs\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

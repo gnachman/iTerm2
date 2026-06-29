@@ -1,0 +1,222 @@
+//
+//  NSColor+iTerm.h
+//  iTerm
+//
+//  Created by George Nachman on 3/2/14.
+//
+//
+
+#import <Cocoa/Cocoa.h>
+#import <simd/simd.h>
+
+@class NSAppearance;
+
+NS_ASSUME_NONNULL_BEGIN
+
+// Keys of -dictionaryValue. Use -[NSDictionary colorValue] to convert to color.
+extern NSString *const kEncodedColorDictionaryRedComponent;
+extern NSString *const kEncodedColorDictionaryGreenComponent;
+extern NSString *const kEncodedColorDictionaryBlueComponent;
+extern NSString *const kEncodedColorDictionaryAlphaComponent;  // Optional, defaults to 1.0
+extern NSString *const kEncodedColorDictionaryColorSpace;  // Optional, defaults to calibrated
+
+// Values for kEncodedColorDictionaryColorSpace key
+extern NSString *const kEncodedColorDictionarySRGBColorSpace;
+extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
+extern NSString *const kEncodedColorDictionaryP3ColorSpace;
+
+static inline float SIMDPerceivedBrightness(vector_float4 x) {
+    static const vector_float4 y = (vector_float4){ 0.30, 0.59, 0.11, 0 };
+    return simd_dot(x, y);
+}
+
+// Note: nonlinear values, like NSColor
+typedef struct {
+    CGFloat r;
+    CGFloat g;
+    CGFloat b;
+} iTermP3Color;
+
+// Note: these are in 0…1. These represent LINEAR values. NSColor has sRGB values which are not linear.
+typedef struct {
+    CGFloat r;
+    CGFloat g;
+    CGFloat b;
+} iTermRGBColor;
+
+// Note: nonlinear values, like NSColor
+typedef struct {
+    CGFloat r;
+    CGFloat g;
+    CGFloat b;
+} iTermSRGBColor;
+
+typedef struct {
+    CGFloat l;  // 0…100
+    CGFloat a;  // -100…100
+    CGFloat b;  // -100…100
+} iTermLABColor;
+
+typedef struct {
+    CGFloat x;
+    CGFloat y;
+    CGFloat z;
+} iTermXYZColor;
+
+iTermRGBColor iTermLinearizeSRGB(iTermSRGBColor srgb);
+iTermSRGBColor iTermCompressRGB(iTermRGBColor rgb);
+
+iTermLABColor iTermLABFromSRGB(iTermSRGBColor srgb);
+iTermSRGBColor iTermSRGBFromLAB(iTermLABColor lab);
+
+iTermP3Color iTermP3FromLAB(iTermLABColor lab);
+
+// Based on Rec. 709 standard
+CGFloat iTermPerceptualBrightnessSRGB(iTermSRGBColor srgb);
+
+// Based on Delta E 1976
+// Distance will be in 0-1. Warning: this doesn't work very well. For example,
+// ((l=15.6, a=29.6, b=24.0) = srgb (.31,.05,0) has a distance from pure black of .41
+CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs);
+
+// This is a more sophisticated perceptual distance function.
+// This is roughly in [0, 100]
+CGFloat iTermLABDeltaE2000(iTermLABColor lab1, iTermLABColor lab2);
+
+iTermSRGBColor iTermP3ColorToSRGBColor(iTermP3Color p3);
+iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb);
+
+iTermXYZColor iTermP3ToXYZ(iTermP3Color p3);
+iTermP3Color iTermXYZToP3(iTermXYZColor xyz);
+iTermP3Color iTermXYZToLinearP3(iTermXYZColor xyz);
+iTermRGBColor iTermXYZToLinearSRGB(iTermXYZColor xyz);
+iTermXYZColor iTermLinearSRGBToXYZ(iTermRGBColor linearRGB);
+
+// Encode an iTermSRGBColor as a dictionary compatible with -[NSColor dictionaryValue].
+NSDictionary *iTermSRGBColorToDictionary(iTermSRGBColor color);
+
+// Decode an iTermSRGBColor from a dictionary produced by -[NSColor dictionaryValue] or
+// iTermSRGBColorToDictionary. Returns YES on success. Returns NO and leaves *colorOut unchanged
+// if the dictionary is missing required keys.
+BOOL iTermSRGBColorFromDictionary(NSDictionary *dict, iTermSRGBColor *colorOut);
+
+// Parse a "#rrggbb" hex string into an iTermSRGBColor. Returns YES on success.
+// The leading '#' is required. Returns NO if the string is malformed.
+BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut);
+
+@interface NSColor (iTerm)
+
+@property(nonatomic, readonly) CGFloat perceivedBrightness;
+@property(nonatomic, readonly) BOOL isDark;
+@property(nonatomic, readonly) NSString *shortDescription;
+
+@property(nonatomic, readonly) NSDictionary *dictionaryValue;
+
+// Like dictionaryValue but encodes the receiver in its own color space (sRGB, P3, or
+// Calibrated/deviceRGB) instead of forcing conversion to a default. Use this when serializing a
+// color whose color space was deliberately chosen by the user.
+@property(nonatomic, readonly) NSDictionary *dictionaryValuePreservingColorSpace;
+
+@property(nonatomic, readonly) NSString *stringValue;
+@property(nonatomic, readonly) iTermSRGBColor itermSRGBColor;
+
+// This is some janky NTSC shit
+CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
+
+// This will return the color in the app's standard colorspace.
++ (NSColor * _Nullable)colorWithString:(NSString *)s;
+
+// This will preserve the colorspace of the encoded color.
++ (NSColor *)colorPreservingColorspaceFromString:(NSString *)s;
+
++ (NSColor *)colorWith8BitRed:(int)red
+                        green:(int)green
+                         blue:(int)blue;
+
++ (NSColor *)it_dynamicColorForLightMode:(NSColor *)light
+                                darkMode:(NSColor *)dark;
++ (NSColor *)it_automaticDynamicColorForLightModeColor:(NSColor *)lightModeColor;
++ (NSColor *)it_automaticDynamicColorForLightModeWhite:(CGFloat)white
+                                                 alpha:(CGFloat)alpha;
+
+
+// Modify r,g,b to have brightness t, placing the values in result which should hold 4 CGFloats.
++ (void)getComponents:(CGFloat *)result
+      forColorWithRed:(CGFloat)r
+                green:(CGFloat)g
+                 blue:(CGFloat)b
+                alpha:(CGFloat)a
+  perceivedBrightness:(CGFloat)t;
+
+// Fill in result with four values by modifying mainComponents to have at least
+// minimumContrast against otherComponents. All arrays are
+// red,green,blue,alpha. Alpha is copied over from mainComponents to result.
++ (void)getComponents:(CGFloat * _Nullable)result
+        forComponents:(CGFloat *)mainComponents
+  withContrastAgainstComponents:(CGFloat *)otherComponents
+                minimumContrast:(CGFloat)minimumContrast;
+
++ (NSColor *)it_colorInDefaultColorSpaceWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
+
+- (int)nearestIndexIntoAnsi256ColorTable;
+
+- (iTermLABColor)labColor;
++ (instancetype)withLABColor:(iTermLABColor)lab;
+
+// Returns colors for the standard 8-bit ansi color codes. Only indices between 16 and 255 are
+// supported.
++ (NSColor * _Nullable)colorForAnsi256ColorIndex:(int)index;
++ (iTermRGBColor)rgbColorForAnsi256ColorIndex:(int)index;
+
+- (NSColor *)colorDimmedBy:(double)dimmingAmount towardsGrayLevel:(double)grayLevel;
+
+// Return the color you'd get by rendering self over background.
+- (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
+
+// p3:#rrggbb or #rrggbb (srgb implicitly)
+// converts to the app-standard colorspace
+- (NSString *)hexString;
+
+- (NSString *)hexStringPreservingColorSpace;
+
+- (NSString *)humanReadableDescription;
+
+// #rrggbb
+- (NSString *)srgbHexString;
+
++ (instancetype _Nullable)colorFromHexString:(NSString *)hexString;
+
+- (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;
+
+- (NSColor *)it_colorWithAppearance:(NSAppearance *)appearance;
+- (NSColor *)it_colorWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
+- (NSColor *)it_colorInDefaultColorSpace;
+
+// Unlike -colorSpace, this is safe to use from Swift. It does not throw an exception, but returns nil for catalog colors and such.
+@property (nonatomic, readonly) NSColorSpace * _Nullable it_colorSpace;
+
+- (BOOL)isApproximatelyEqualToColor:(NSColor *)other epsilon:(double)e;
+- (NSColor *)blendedWithColor:(NSColor *)color weight:(CGFloat)weight;
+@property (nonatomic, readonly) vector_float4 vector;
+
++ (instancetype)colorWithVector:(vector_float4)vector colorSpace:(NSColorSpace *)colorSpace;
+
+// Mostly in [0,1] although it could possibly go over 1. It won't go negative.
+- (double)perceptualDistanceTo:(NSColor *)other;
+
++ (NSColor *)it_blue;
+
+// Shift the color towards another target color.
+// targetColor: The color to shift towards
+// amount: Interpolation amount in [0,1]. At 0, returns the original color unchanged.
+//         At 1, returns the target color.
+- (NSColor *)colorByShiftingTowardsColor:(NSColor *)targetColor
+                                  amount:(CGFloat)amount;
+
+@end
+
+@interface NSColorSpace(iTerm)
++ (instancetype)it_defaultColorSpace;
+@end
+
+NS_ASSUME_NONNULL_END

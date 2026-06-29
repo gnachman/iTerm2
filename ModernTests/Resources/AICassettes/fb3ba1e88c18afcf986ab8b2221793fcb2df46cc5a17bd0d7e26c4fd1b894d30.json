@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":127848,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-opus-4-6\",\"temperature\":0,\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.\",\"input_schema\":{\"properties\":{},\"required\":[],\"type\":\"object\"},\"name\":\"get_random_word\"}]}",
+  "key" : "fb3ba1e88c18afcf986ab8b2221793fcb2df46cc5a17bd0d7e26c4fd1b894d30",
+  "response" : {
+    "data" : "{\"model\":\"claude-opus-4-6\",\"id\":\"msg_01LHZQ9RUMDsQhDz6h71zm1v\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"\\n\\nSure! Let me call the tool to get a random word.\"},{\"type\":\"tool_use\",\"id\":\"toolu_019bcmbmNaysTqnEi8Jtn6Lf\",\"name\":\"get_random_word\",\"input\":{},\"caller\":{\"type\":\"direct\"}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":380,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":44,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

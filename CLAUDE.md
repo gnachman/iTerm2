@@ -3,19 +3,35 @@
 - Avoid writing javascript, html, or CSS that's more than one line long in Swift. Create a new file and use the existing template mechanism to load it.
 - After creating a new file, `git add` it immediately
 - To add a file to the Xcode project, use `tools/add_file_to_xcodeproj.rb <file_path> <target_name>` (e.g., `tools/add_file_to_xcodeproj.rb sources/Example.swift iTerm2SharedARC`)
-- In Swift, use it_fatalError and it_assert instead of fatalError and assert, which do not create useful crash logs. In ObjC, assert is ok although ITAssertWithMessage is preferable.
+- In Swift, use it_fatalError and it_assert instead of fatalError and assert, which do not create useful crash logs. In ObjC, assert is ok although ITAssertWithMessage is preferable. Asserts are enabled in release builds.
 - Don't write more than one line of inline javascript, html, or css. Instead create a new file and load it using iTermBrowserTemplateLoader.swift
 - Don't create dependency cycles. Use delegates or closures instead.
 - To run unit tests in ModernTests, use tools/run_tests.expect. It takes an argument naming the test or tests, such as `tools/run_tests.expect ModernTests/iTermScriptFunctionCallTest/testSignature`
+- After changes that affect AI chat (request builders, response parsers, AITermController, AIConversation, anything in sources/AITerm/, ChatAgent, ChatClient, etc.), run `tools/run_ai_live.sh` against real vendor APIs. This is a separate live harness from the regular ModernTests; it costs real money but exercises end-to-end round-trips (smoke, multi-turn, tool calls, both streaming and non-streaming) against OpenAI/Anthropic/Gemini/DeepSeek. The default ModernTests run skips the live harness, so unit tests passing alone is not sufficient evidence. Pass a filter to scope the run: `tools/run_ai_live.sh openai`, `tools/run_ai_live.sh smoke`, or an exact method name like `tools/run_ai_live.sh test_anthropic_toolCall_nonStreaming`.
+- After changes that affect attachment serialization (per-vendor file/image/document content blocks, MIME allowlists in LLMProvider, anything in CompletionsAnthropic.swift / Gemini.swift / DeepSeek.swift / Llama.swift / LLMModernProtocol.swift / ResponsesAPIRequest.swift attachment paths), run the 96-cell attachment matrix: `tools/run_ai_live.sh attachmentMatrix`. It bypasses the LLMProvider.accepts gate and sends each of 16 MIME fixtures through each of 6 vendor lanes, asserting whether the vendor accepted-with-content, rejected at HTTP, or accepted-but-garbled. Drift in either direction fails loudly with a `MATRIX DRIFT:` message that tells you whether to widen the allowlist, fix the serializer, or update the matrix cell. Full sweep: ~95 sec, ~70 API calls, under $0.50. Scope with `attachmentMatrix_<lane>` (e.g. `attachmentMatrix_gemini` runs one column) or `attachmentMatrix_<kind>` (e.g. `attachmentMatrix_imagePNG` runs one row across all lanes), or run a single cell by exact method name (`test_attachmentMatrix_anthropic_imageWEBP`). Fixtures live in `ModernTests/Resources/AttachmentFixtures/`.
 - When renaming a file tracked by git (and almost all of them are) use `git mv` instead of `mv`
 - To make a debug build run `tools/build.sh` (or `tools/build.sh Development`). This saves logs to `tmp/build.log` and shows only errors/warnings on failure.
 - Little scripts or text files that are used for manual testing of features go in tests/
 - The deployment target for iTerm2 is macOS 12. You don't need to perform availability checks for older versions.
 - Don't replace curly quotes with straight quotes. Same for apostrophes and single quotes. If you need help typing a curly quote, just ask. Here are some you can copy and paste: ‘’“”
 - In user-visible strings do not use " except as a shorthand for inch. Prefer curly quotes like “ and ”. I know this goes against your nature, but fight hard here.
-- Never use auto layout in the terminal window. It virally spreads and breaks autoresizing. It is fine to use it in other windows without a lot of existing autoresizing mask-based code (e.g., the AI chat window)
+- Ask permission before using auto layout if it's not already in use in a given file. Debugging auto layout is the worst hell.
 - The deployment target is macOS 12. Don't add availability checks for 12 and lower.
 - Never `git add` submodules without express written permission.
 - Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
 - Avoid duplicate expressions; hoist shared computations into a named `const` before branching.
 - Don't change defaults silently.
+- Use [iTermUserDefaults userDefaults] instead of [NSUserDefaults standardUserDefaults]
+- Use `make run` to build and run a debug build.
+- Do not use associated objects (objc_getAssociatedObject or objc_setAssociatedObject) without express written permission.
+- You should treat warnings as errors.
+- If you get stuck, ask for help. It's better to ask me to look at something in the debugger than to flail around for a long time.
+- If your changes introduce compiler warnings, fix them.
+- After landing a feature or bugfix, update docs/notes-3.7.txt (the release notes). Max width of a line is 50 characters.
+- For changes to the Companion iOS app (the `Companion/` directory, "iTerm2 Buddy"), put release notes in Companion/docs/notes.txt instead of docs/notes-3.7.txt.
+- The sources directory is organized into folders. Before adding a new file, consider which directory it belongs in. Some are named after features while others are named after their role.
+- User Defaults keys that should only be stored locally begin with the prefix NoSync. If a user chooses to load prefs from a custom location (e.g., Dropbox) they may be prompted to write settings when a non-NoSync key changes. To avoid disrupting them in this manner, user defaults that are not actual configuration settings (e.g., a list of recent items) get a NoSync prefix.
+- When adding temporary code for debugging, use NSFuckingLog instead of NSLog because NSLog truncates long output. Logging code that is intended to remain long-term should use DLog.
+- Do not use an SF Symbols name as a string literal. Get it using SFSymbolGetString in Objective C or the SFSymbol enum in Swift.
+- Don't use sleep to solve concurrency problems.
+- Tests should not be flaky. Don't write tests that will fail if the system is slower than usual.

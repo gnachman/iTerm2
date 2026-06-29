@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2620"
-   version = "2.0">
+   LastUpgradeVersion = "2640"
+   version = "1.8">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -48,13 +48,12 @@
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
-      debugXPCServices = "NO"
-      migratedStopOnEveryIssue = "YES"
       debugServiceExtension = "internal"
       enableGPUValidationMode = "1"
       allowLocationSimulation = "YES"
       queueDebuggingEnabled = "No"
-      disablePerformanceAntipatternChecker = "YES">
+      disablePerformanceAntipatternChecker = "YES"
+      migratedStopOnEveryIssue = "YES">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
@@ -67,7 +66,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-suite iterm2-dev"
+            argument = "-suite $(PROJECT_DIR:file)"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
@@ -87,7 +86,24 @@
             value = "oslogToStdio"
             isEnabled = "YES">
          </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "IT2_SUITE"
+            value = "$(PROJECT_DIR:file)"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "IT2_APP"
+            value = "$(BUILT_PRODUCTS_DIR)/$(WRAPPER_NAME)"
+            isEnabled = "YES">
+         </EnvironmentVariable>
       </EnvironmentVariables>
+      <AdditionalOptions>
+         <AdditionalOption
+            key = "NSZombieEnabled"
+            value = "YES"
+            isEnabled = "YES">
+         </AdditionalOption>
+      </AdditionalOptions>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Deployment"

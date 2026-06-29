@@ -70,16 +70,12 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
             guard let name = memberPicker.selectedFontName else {
                 return nil
             }
-            if options.isEmpty {
-                return NSFont(name: name,
-                              size: CGFloat(sizePicker?.size ?? 12))
-            }
             let size = CGFloat(sizePicker?.size ?? 12)
-            var descriptor = NSFontDescriptor(name: name, size: size)
-            let settings = Array(options).map {
-                [NSFontDescriptor.FeatureKey.typeIdentifier: kStylisticAlternativesType,
-                 NSFontDescriptor.FeatureKey.selectorIdentifier: $0]
+            let settings = optionsButtonController?.featureSettings ?? []
+            if settings.isEmpty {
+                return NSFont(name: name, size: size)
             }
+            var descriptor = NSFontDescriptor(name: name, size: size)
             descriptor = descriptor.addingAttributes([.featureSettings: settings])
             return NSFont(descriptor: descriptor, size: size)
         }
@@ -162,8 +158,10 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
             return
         }
         optionsButtonController = OptionsButtonController()
-        optionsButtonController?.set(font: font)
+        // Build the menu first so the family-change reset doesn't clobber the
+        // state we are about to load from the font.
         updateOptionsMenu()
+        optionsButtonController?.set(font: font)
     }
 
     private func temporarilyRemoveOptionsButton() {
@@ -284,10 +282,13 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     }
 
     public func affordance(_ affordance: Affordance, didSelectFontFamily fontFamily: String) {
+        // Rebuild the options menu first so stale stylistic-alt and calt
+        // state from the previous family is cleared before we hand the
+        // delegate a font built from feature settings.
+        updateOptionsMenu()
         if let font = font {
             delegate?.fontPickerCompositeView(self, didSelectFont: font)
         }
-        updateOptionsMenu()
     }
 
     private var indexOfOptionsButton: Int? {
@@ -333,7 +334,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         }
     }
 
-    func optionsDidChange(_ controller: OptionsButtonController, options: Set<Int>) {
+    func optionsDidChange(_ controller: OptionsButtonController) {
         if let font = font {
             delegate?.fontPickerCompositeView(self, didSelectFont: font)
         }

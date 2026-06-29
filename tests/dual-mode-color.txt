@@ -1,0 +1,17 @@
+Dual-mode SGR color test (issue #12832).
+
+Each line below emits a universal-truecolor (or 256-color) fallback
+first, then chains the colon-form dual-mode override. In iTerm2,
+toggle macOS appearance and watch each line's color flip. In a
+non-supporting terminal, only the fallback color appears.
+
+  [38;2;200;0;0m[38:12:200:0:0:255:200:200mDual-mode 24-bit FG: dark red light / pink dark[0m
+  [48;2;255;255;0m[48:12:255:255:0:30:30:80mDual-mode 24-bit BG: yellow light / navy dark[0m
+  [38;5;208m[38:13:208:120mDual-mode indexed FG: 208 light / 120 dark[0m
+  [48;5;226m[48:13:226:54mDual-mode indexed BG: 226 light / 54 dark[0m
+  [38;2;0;0;128m[38:12:0:0:128:200:200:255m[48;2;255;230;200m[48:12:255:230:200:30:30:50mDual-mode FG + BG combined[0m
+  [7m[38;2;200;0;0m[38:12:200:0:0:255:200:200mInverse + dual-mode FG[0m
+  [1m[3m[38;2;0;128;0m[38:12:0:128:0:128:255:128mBold italic + dual-mode FG[0m
+
+Toggle macOS appearance (System Settings > Appearance) and watch
+the colors above swap between their light and dark variants.

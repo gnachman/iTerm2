@@ -93,7 +93,9 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
     
     override public func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         menu.cancelTrackingWithoutAnimation()
-        showPicker()
+        DispatchQueue.main.async { [weak self] in
+            self?.showPicker()
+        }
     }
 
     private func showPicker() {

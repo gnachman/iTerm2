@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":16384,\"messages\":[{\"content\":[{\"text\":\"Quote the text inside the <magic> element shown.\",\"type\":\"text\"},{\"text\":\"<iterm2:attachment file=\\\"magic.xml\\\" type=\\\"application\\\/xml\\\">\\n<?xml version=\\\"1.0\\\"?><root><magic>pinecone-42<\\\/magic><\\\/root>\\n<\\\/iterm2:attachment>\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"gpt-4o-mini\",\"stream\":false,\"temperature\":0}",
+  "key" : "805b7b2ab7745cda90ed4c6896ebe1f0418aba94589084701cc688c954a70715",
+  "response" : {
+    "data" : "{\n  \"id\": \"chatcmpl-DoG7hnBRy8LdvdyRKYwehHItUCeiw\",\n  \"object\": \"chat.completion\",\n  \"created\": 1780870749,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"The text inside the `<magic>` element is \\\"pinecone-42\\\".\",\n        \"refusal\": null,\n        \"annotations\": []\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 62,\n    \"completion_tokens\": 15,\n    \"total_tokens\": 77,\n    \"prompt_tokens_details\": {\n      \"cached_tokens\": 0,\n      \"audio_tokens\": 0\n    },\n    \"completion_tokens_details\": {\n      \"reasoning_tokens\": 0,\n      \"audio_tokens\": 0,\n      \"accepted_prediction_tokens\": 0,\n      \"rejected_prediction_tokens\": 0\n    }\n  },\n  \"service_tier\": \"default\",\n  \"system_fingerprint\": \"fp_31455a11c2\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

@@ -15,6 +15,51 @@ public enum PasswordManagerProtocol {
         public var maxProtocolVersion: Int
     }
 
+    public enum PathKind: String, Codable {
+        case file
+        case url
+    }
+
+    // Custom commands are added to the ... menu of the password manager.
+    public struct CustomCommand: Codable {
+        public var name: String
+        public var label: String
+        public var icon: String?
+
+        public init(name: String, label: String, icon: String?) {
+            self.name = name
+            self.label = label
+            self.icon = icon
+        }
+    }
+
+    // A custom setting for your adapter.
+    public struct SettingsField: Codable {
+        public var key: String
+        public var label: String
+
+        // Value to show in text field when it is empty
+        public var placeholder: String?
+
+        // Use a password text field?
+        public var isSecret: Bool
+
+        // Additional info shown below text field
+        public var note: String?
+
+        // Save this in keychain? If false, it just goes in user defaults.
+        public var persistInKeychain: Bool
+
+        public init(key: String, label: String, placeholder: String?, isSecret: Bool, note: String?, persistInKeychain: Bool) {
+            self.key = key
+            self.label = label
+            self.placeholder = placeholder
+            self.isSecret = isSecret
+            self.note = note
+            self.persistInKeychain = persistInKeychain
+        }
+    }
+
     public struct HandshakeResponse: Codable {
         public var protocolVersion: Int
         public var name: String
@@ -25,7 +70,18 @@ public enum PasswordManagerProtocol {
         public var databaseExtension: String?
         public var needsPathToExecutable: String?
 
-        public init(protocolVersion: Int, name: String, requiresMasterPassword: Bool, canSetPasswords: Bool, userAccounts: [UserAccount]?, needsPathToDatabase: Bool, databaseExtension: String?, needsPathToExecutable: String?) {
+        // Protocol extensions (v0 optional fields)
+        // Defaults to .file if not set
+        public var pathToDatabaseKind: PathKind?
+        public var pathToDatabasePrompt: String?
+        public var pathToDatabasePlaceholder: String?
+        public var masterPasswordLabel: String?
+        public var persistsCredentials: Bool?
+        public var customCommands: [CustomCommand]?
+        public var settingsFields: [SettingsField]?
+
+        public init(protocolVersion: Int, name: String, requiresMasterPassword: Bool, canSetPasswords: Bool, userAccounts: [UserAccount]?, needsPathToDatabase: Bool, databaseExtension: String?, needsPathToExecutable: String?,
+                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil) {
             self.protocolVersion = protocolVersion
             self.name = name
             self.requiresMasterPassword = requiresMasterPassword
@@ -34,6 +90,13 @@ public enum PasswordManagerProtocol {
             self.needsPathToDatabase = needsPathToDatabase
             self.databaseExtension = databaseExtension
             self.needsPathToExecutable = needsPathToExecutable
+            self.pathToDatabaseKind = pathToDatabaseKind
+            self.pathToDatabasePrompt = pathToDatabasePrompt
+            self.pathToDatabasePlaceholder = pathToDatabasePlaceholder
+            self.masterPasswordLabel = masterPasswordLabel
+            self.persistsCredentials = persistsCredentials
+            self.customCommands = customCommands
+            self.settingsFields = settingsFields
         }
     }
 
@@ -41,6 +104,7 @@ public enum PasswordManagerProtocol {
         public var pathToDatabase: String?
         public var pathToExecutable: String?
         public var mode: Mode
+        public var settings: [String: String]?
 
         public enum Mode: String, Codable {
             case terminal
@@ -175,6 +239,23 @@ public enum PasswordManagerProtocol {
 
         public init(accountIdentifier: AccountIdentifier) {
             self.accountIdentifier = accountIdentifier
+        }
+    }
+
+    // MARK: - Custom Commands
+
+    public struct CustomCommandRequest: Codable {
+        public var header: RequestHeader
+        public var userAccountID: String?
+        public var token: String?
+        public var commandName: String
+    }
+
+    public struct CustomCommandResponse: Codable {
+        public var message: String?
+
+        public init(message: String?) {
+            self.message = message
         }
     }
 

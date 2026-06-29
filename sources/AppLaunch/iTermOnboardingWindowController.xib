@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24765" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24765"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermOnboardingWindowController">
+            <connections>
+                <outlet property="_nextPageButton" destination="0Bv-Hm-lzS" id="VNM-wH-4zd"/>
+                <outlet property="_pageController" destination="ZmD-OR-Mfd" id="ale-Ef-VWs"/>
+                <outlet property="_pageIndicator1" destination="LCh-T0-GyK" id="PfH-mr-fIc"/>
+                <outlet property="_pageIndicator2" destination="GnW-FQ-AUA" id="9aH-rh-MPE"/>
+                <outlet property="_pageIndicator3" destination="Y7m-qf-MNv" id="6Q0-gt-XMx"/>
+                <outlet property="_pageIndicator4" destination="1qs-yK-5FQ" id="mbh-U3-pmw"/>
+                <outlet property="_previousPageButton" destination="x6w-fs-8dH" id="mAZ-mO-pvT"/>
+                <outlet property="_textField1" destination="bGK-Us-rSz" id="LtO-se-QXT"/>
+                <outlet property="_textField2" destination="jYX-nH-O5u" id="T09-9Z-qSE"/>
+                <outlet property="_textField3" destination="S6M-1Y-bvP" id="m4x-Ka-rFy"/>
+                <outlet property="_textField4" destination="Gmu-pM-bKu" id="grm-WZ-i9B"/>
+                <outlet property="_view1" destination="uKS-OK-cAN" id="yUS-DH-7Z4"/>
+                <outlet property="_view2" destination="Cc0-Vj-shB" id="ETf-Vr-guH"/>
+                <outlet property="_view3" destination="U46-lc-cJw" id="qVb-k2-swu"/>
+                <outlet property="_view4" destination="olY-Zn-0Bl" id="70J-C4-EE3"/>
+                <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="F0z-JX-Cv5" customClass="NSPanel">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" utility="YES" fullSizeContentView="YES"/>
+            <windowCollectionBehavior key="collectionBehavior" fullScreenNone="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="196" y="240" width="665" height="402"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
+            <value key="minSize" type="size" width="665" height="402"/>
+            <value key="maxSize" type="size" width="665" height="437"/>
+            <view key="contentView" wantsLayer="YES" id="se5-gp-TjO" customClass="iTermOnboardingView">
+                <rect key="frame" x="0.0" y="0.0" width="665" height="402"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fTJ-RA-Rgc">
+                        <rect key="frame" x="-30" y="20" width="725" height="343"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    </customView>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Bv-Hm-lzS">
+                        <rect key="frame" x="615" y="199" width="30" height="33"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="&gt;" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="f8J-e6-gm5">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="systemThin" size="30"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="nextPage:" target="-2" id="NeA-d3-8Rr"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="x6w-fs-8dH">
+                        <rect key="frame" x="20" y="199" width="30" height="33"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="&lt;" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="VdW-Ng-Wlh">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="systemThin" size="30"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="previousPage:" target="-2" id="vzs-nH-Ope"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LCh-T0-GyK">
+                        <rect key="frame" x="298" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="IHu-13-I9y">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="Thr-WP-HOE"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GnW-FQ-AUA">
+                        <rect key="frame" x="316" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="fum-rI-3gd">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="eyp-VP-Rua"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Y7m-qf-MNv">
+                        <rect key="frame" x="333" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="N2h-T9-zrt">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="Dwf-W5-qN6"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1qs-yK-5FQ">
+                        <rect key="frame" x="351" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="7s1-aT-qfO">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="wIO-Xd-Fz7"/>
+                        </connections>
+                    </button>
+                    <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57P-Xf-65n">
+                        <rect key="frame" x="18" y="369" width="629" height="23"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="What’s New in Version 3.7" id="Dih-Go-912">
+                            <font key="font" metaFont="systemLight" size="16"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                </subviews>
+            </view>
+            <connections>
+                <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
+            </connections>
+            <point key="canvasLocation" x="248.5" y="206"/>
+        </window>
+        <pagecontroller id="ZmD-OR-Mfd">
+            <connections>
+                <outlet property="delegate" destination="-2" id="1vG-D0-tfr"/>
+                <outlet property="view" destination="fTJ-RA-Rgc" id="sJ3-30-6Ba"/>
+            </connections>
+        </pagecontroller>
+        <customView id="uKS-OK-cAN" userLabel="Companion" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4gk-fe-vQq" userLabel="Title">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Companion iPhone App" id="LXN-RX-ZgC">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bGK-Us-rSz" userLabel="Detail" customClass="iTermOnboardingTextField">
+                    <rect key="frame" x="18" y="20" width="589" height="48"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" alignment="center" id="0Bk-78-p2L">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">Use iTerm2 while you are apart from your Mac. You can control it via AI chat, view session content, and receive push notifications. End-to-end encryption keeps your data safe. &lt;a href="iterm2whatsnew:companion"&gt;Try it now!&lt;/a&gt;</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="G1E-yA-NmU"/>
+                    </connections>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jRF-f4-nke">
+                    <rect key="frame" x="20" y="76" width="585" height="205"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Companion" id="Q5w-FO-7Jc"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="-175.5" y="-384.5"/>
+        </customView>
+        <customView id="Cc0-Vj-shB" userLabel="Claude Code" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UXE-KQ-MEi" userLabel="Title">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Claude Code Integration" id="hKz-h7-CcP">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yrA-gS-7pH">
+                    <rect key="frame" x="20" y="43" width="577" height="257"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-ClaudeCode" id="Igz-7Y-Uwf"/>
+                </imageView>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jYX-nH-O5u" userLabel="Detail" customClass="iTermOnboardingTextField">
+                    <rect key="frame" x="49" y="13" width="558" height="51"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" alignment="center" id="Lvg-vI-G64">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">The Claude Code integration organizes multiple related sessions—such as code review and reading diffs—into a customizable UI. It also exposes Claude’s status so you can easily find instances that are blocked on your attention. &lt;a href="iterm2whatsnew:claudecode"&gt;Try it now!&lt;/a&gt;</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="USJ-Su-FR4"/>
+                    </connections>
+                </textField>
+            </subviews>
+            <point key="canvasLocation" x="494.5" y="-385.5"/>
+        </customView>
+        <customView id="U46-lc-cJw" userLabel="Screenshot" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="344"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Lc-G4-yGt" userLabel="Title">
+                    <rect key="frame" x="18" y="290" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Screenshots" id="VcV-iJ-Nlq">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP" customClass="iTermOnboardingTextField">
+                    <rect key="frame" x="30" y="10" width="577" height="32"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" alignment="center" id="d4H-cG-h3K">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">The new Screenshots feature simplifies creating a PNG of your terminal content. It supports redactions and highlights. Use &lt;a href="iterm2whatsnew:screenshot"&gt;Session &gt; Make Screenshot&lt;/a&gt; to activate it.</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="w2M-VT-Gcb"/>
+                    </connections>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GpA-wZ-e6o">
+                    <rect key="frame" x="30" y="50" width="577" height="238"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Screenshot" id="UR7-vx-L4E"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="1166.5" y="-386"/>
+        </customView>
+        <customView id="olY-Zn-0Bl" userLabel="Orchestration" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dAJ-jg-bJ2" userLabel="Title">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Orchestration" id="OAI-gn-AQ7" userLabel="tmux Flow Control">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu" customClass="iTermOnboardingTextField">
+                    <rect key="frame" x="30" y="12" width="577" height="48"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" alignment="center" id="a2B-NS-5LJ">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">A new AI chat mode, Orchestration, lets AI run the show for you. It can create windows, wait for tasks to complete (even in interactive apps), and the new automatic safety checker relieves you of having to respond to almost all permission prompts. &lt;a href="iterm2whatsnew:orchestration"&gt;Try it now!&lt;/a&gt;</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="I4y-R3-wuU"/>
+                    </connections>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vtE-pO-lEk">
+                    <rect key="frame" x="53" y="68" width="530" height="220"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Orchestration" id="5d4-4e-NgE"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="1866.5" y="-385.5"/>
+        </customView>
+    </objects>
+    <resources>
+        <image name="Onboarding-ClaudeCode" width="720" height="507"/>
+        <image name="Onboarding-Companion" width="472" height="664"/>
+        <image name="Onboarding-Orchestration" width="794" height="520"/>
+        <image name="Onboarding-Screenshot" width="658" height="754"/>
+    </resources>
+</document>

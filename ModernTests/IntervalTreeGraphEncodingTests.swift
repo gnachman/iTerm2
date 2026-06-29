@@ -37,9 +37,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let originalGuid = mark.guid
 
         let dict = mark.dictionaryValue()
-        XCTAssertNotNil(dict)
 
-        let restoredMark = iTermMark(dictionary: dict!)
+        let restoredMark = iTermMark(dictionary: dict)
         XCTAssertEqual(restoredMark?.guid, originalGuid, "GUID should be preserved through serialization")
     }
 
@@ -73,7 +72,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let dict = annotation.dictionaryValue()
 
         let restoredAnnotation = PTYAnnotation(dictionary: dict)
-        XCTAssertEqual(restoredAnnotation.uniqueID, originalID, "UniqueID should be preserved through serialization")
+        XCTAssertEqual(restoredAnnotation?.uniqueID, originalID, "UniqueID should be preserved through serialization")
     }
 
     // MARK: - IntervalTree Graph Encoding Tests
@@ -125,7 +124,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Convert record to dictionary format for restoration
         if let plist = record?.propertyListValue as? [AnyHashable: Any] {
-            let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+            let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
             XCTAssertTrue(restored, "Should successfully restore from graph record")
             XCTAssertEqual(newTree.allObjects().count, 3, "Restored tree should have 3 objects")
         } else {
@@ -148,7 +147,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Decode
         let newTree = IntervalTree()
         if let plist = encoder.record?.propertyListValue as? [AnyHashable: Any] {
-            let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+            let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
             XCTAssertTrue(restored)
 
             let restoredObjects = newTree.allObjects()
@@ -183,7 +182,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Decode
         let newTree = IntervalTree()
         if let plist = encoder.record?.propertyListValue as? [AnyHashable: Any] {
-            let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+            let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
             XCTAssertTrue(restored)
 
             let restoredObjects = newTree.allObjects()
@@ -214,7 +213,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Decode
         let newTree = IntervalTree()
         if let plist = encoder.record?.propertyListValue as? [AnyHashable: Any] {
-            let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+            let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
             XCTAssertTrue(restored)
 
             let restoredObjects = newTree.allObjects()
@@ -245,7 +244,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             ]
         ]
 
-        let result = tree.restore(fromGraphRecord: oldFormatDict, offset: 0)
+        let result = tree.restore(fromGraphRecord: oldFormatDict, offset: 0, largeContentProvider: nil)
         XCTAssertFalse(result, "Should return false for old dictionary format")
     }
 
@@ -273,14 +272,14 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             savedLines: nil,
             savedITOs: [],
             promptLength: 0,
-            imageCodes: []
+            imageCodes: [],
+            width: 80
         )
 
         let dict = foldMark.dictionaryValue()
-        XCTAssertNotNil(dict)
 
         // Should include GUID from parent class
-        XCTAssertNotNil(dict!["Guid"] as? String, "FoldMark dictionary should include GUID from iTermMark")
+        XCTAssertNotNil(dict["Guid"] as? String, "FoldMark dictionary should include GUID from iTermMark")
     }
 
     func testFoldMarkGenerationIsAlwaysZero() {
@@ -289,15 +288,15 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             savedLines: nil,
             savedITOs: [],
             promptLength: 0,
-            imageCodes: []
+            imageCodes: [],
+            width: 80
         )
         XCTAssertEqual(foldMark.generation, 0, "FoldMark generation should always be 0")
 
         // Serialize and deserialize - generation should still be 0
         let dict = foldMark.dictionaryValue()
-        XCTAssertNotNil(dict)
 
-        let restoredFoldMark = FoldMark(dictionary: dict!)
+        let restoredFoldMark = FoldMark(dictionary: dict)
         XCTAssertNotNil(restoredFoldMark)
         XCTAssertEqual(restoredFoldMark!.generation, 0,
                        "Restored FoldMark generation should be 0")
@@ -325,7 +324,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let newTree = IntervalTree()
         if let plist = encoder.record?.propertyListValue as? [AnyHashable: Any] {
-            let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+            let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
             XCTAssertTrue(restored)
             XCTAssertEqual(newTree.allObjects().count, 0)
         } else {
@@ -392,7 +391,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let annotation = PTYAnnotation(dictionary: dict)
         XCTAssertNotNil(annotation)
-        XCTAssertFalse(annotation.uniqueID.isEmpty,
+        XCTAssertFalse(annotation!.uniqueID.isEmpty,
                        "Annotation restored with empty UniqueID should get a new non-empty ID")
     }
 
@@ -404,7 +403,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let annotation = PTYAnnotation(dictionary: dict)
         XCTAssertNotNil(annotation)
-        XCTAssertFalse(annotation.uniqueID.isEmpty,
+        XCTAssertFalse(annotation!.uniqueID.isEmpty,
                        "Annotation restored without UniqueID should get a new non-empty ID")
     }
 
@@ -417,10 +416,10 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         session.screen = screen
         screen.delegate = session
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState?.terminalEnabled = true
-            mutableState?.terminal?.termType = "xterm"
+            mutableState.terminalEnabled = true
+            mutableState.terminal?.termType = "xterm"
             screen.destructivelySetScreenWidth(width, height: height, mutableState: mutableState)
-            mutableState?.maxScrollbackLines = maxScrollback
+            mutableState.maxScrollbackLines = maxScrollback
         })
         return screen
     }
@@ -428,8 +427,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     private func appendLines(_ lines: [String], to screen: VT100Screen) {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             for line in lines {
-                mutableState?.appendString(atCursor: line)
-                mutableState?.appendCarriageReturnLineFeed()
+                mutableState.appendString(atCursor: line)
+                mutableState.appendCarriageReturnLineFeed()
             }
         })
     }
@@ -449,7 +448,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         var markGuid: String?
         var originalInterval: Interval?
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let mark = mutableState?.addMark(onLine: 1, of: VT100ScreenMark.self) as? VT100ScreenMark
+            let mark = mutableState.addMark(onLine: 1, of: VT100ScreenMark.self) as? VT100ScreenMark
             markGuid = mark?.guid
             originalInterval = mark?.entry?.interval
         })
@@ -469,17 +468,18 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Restore to a new screen
         let restoredScreen = self.screen(width: 10, height: 4, maxScrollback: 3)
-        restoredScreen.restore(from: state,
+        restoredScreen.restore(from: state!,
                                includeRestorationBanner: false,
                                reattached: false,
-                               isArchive: false)
+                               isArchive: false,
+                               largeContentProvider: nil)
 
         // Find the mark in the restored screen and verify its interval
         var restoredMark: VT100ScreenMark?
         var restoredInterval: Interval?
         restoredScreen.performBlock(joinedThreads: { _, mutableState, _ in
-            let marks = mutableState?.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
-            restoredMark = marks?.first { $0.guid == markGuid }
+            let marks = mutableState.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
+            restoredMark = marks.first { $0.guid == markGuid }
             restoredInterval = restoredMark?.entry?.interval
         })
 
@@ -506,8 +506,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         var mark1Guid: String?
         var mark2Guid: String?
         screen.performBlock(joinedThreads: { _, mutableState, _ in
-            let mark1 = mutableState?.addMark(onLine: 2, of: VT100ScreenMark.self) as? VT100ScreenMark
-            let mark2 = mutableState?.addMark(onLine: 4, of: VT100ScreenMark.self) as? VT100ScreenMark
+            let mark1 = mutableState.addMark(onLine: 2, of: VT100ScreenMark.self) as? VT100ScreenMark
+            let mark2 = mutableState.addMark(onLine: 4, of: VT100ScreenMark.self) as? VT100ScreenMark
             mark1Guid = mark1?.guid
             mark2Guid = mark2?.guid
         })
@@ -523,18 +523,19 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Restore
         let restoredScreen = self.screen(width: 10, height: 4, maxScrollback: 5)
-        restoredScreen.restore(from: state,
+        restoredScreen.restore(from: state!,
                                includeRestorationBanner: false,
                                reattached: false,
-                               isArchive: false)
+                               isArchive: false,
+                               largeContentProvider: nil)
 
         // Get restored marks
         var mark1Interval: Interval?
         var mark2Interval: Interval?
         restoredScreen.performBlock(joinedThreads: { _, mutableState, _ in
-            let marks = mutableState?.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
-            mark1Interval = marks?.first { $0.guid == mark1Guid }?.entry?.interval
-            mark2Interval = marks?.first { $0.guid == mark2Guid }?.entry?.interval
+            let marks = mutableState.intervalTree.allObjects().compactMap { $0 as? VT100ScreenMark }
+            mark1Interval = marks.first { $0.guid == mark1Guid }?.entry?.interval
+            mark2Interval = marks.first { $0.guid == mark2Guid }?.entry?.interval
         })
 
         // If both marks survived, verify their relative positions
@@ -571,16 +572,17 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Restore
         let restoredScreen = self.screen(width: 10, height: 4, maxScrollback: 4)
-        restoredScreen.restore(from: state,
+        restoredScreen.restore(from: state!,
                                includeRestorationBanner: false,
                                reattached: false,
-                               isArchive: false)
+                               isArchive: false,
+                               largeContentProvider: nil)
 
         // Find the annotation
         var restoredAnnotation: PTYAnnotation?
         restoredScreen.performBlock(joinedThreads: { _, mutableState, _ in
-            let annotations = mutableState?.intervalTree.allObjects().compactMap { $0 as? PTYAnnotation }
-            restoredAnnotation = annotations?.first { $0.uniqueID == originalUniqueID }
+            let annotations = mutableState.intervalTree.allObjects().compactMap { $0 as? PTYAnnotation }
+            restoredAnnotation = annotations.first { $0.uniqueID == originalUniqueID }
         })
 
         // Annotation may have scrolled out; if it exists, verify it has content
@@ -620,7 +622,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Decode with same offset
         let newTree = IntervalTree()
         if let plist = encoder.record?.propertyListValue as? [AnyHashable: Any] {
-            let restored = newTree.restore(fromGraphRecord: plist, offset: offset)
+            let restored = newTree.restore(fromGraphRecord: plist, offset: offset, largeContentProvider: nil)
             XCTAssertTrue(restored)
 
             let restoredObjects = newTree.allObjects()
@@ -660,7 +662,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         let newTree = IntervalTree()
         if let plist = encoder.record?.propertyListValue as? [AnyHashable: Any] {
-            let restored = newTree.restore(fromGraphRecord: plist, offset: offset)
+            let restored = newTree.restore(fromGraphRecord: plist, offset: offset, largeContentProvider: nil)
             XCTAssertTrue(restored)
             XCTAssertEqual(newTree.allObjects().count, 3)
 
@@ -701,7 +703,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             return
         }
 
-        let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+        let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
         XCTAssertTrue(restored, "Should restore successfully", file: file, line: line)
         XCTAssertEqual(newTree.allObjects().count, 1, "Should have one object", file: file, line: line)
 
@@ -725,14 +727,18 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     func testVT100ScreenMarkRoundTrip() {
         let mark = VT100ScreenMark()
         mark.isPrompt = true
-        mark.command = "ls -la"
+        mark.firstLineOfCommand = "ls -la"
+        mark.fullCommand = "ls -la"
         mark.code = 0
         mark.name = "Test Mark"
 
         verifyRoundTrip(mark, interval: Interval(location: 100, length: 50)) { original, restored in
             XCTAssertEqual(restored.guid, original.guid, "GUID should be preserved")
             XCTAssertEqual(restored.isPrompt, original.isPrompt, "isPrompt should be preserved")
-            XCTAssertEqual(restored.command, original.command, "command should be preserved")
+            XCTAssertEqual(restored.firstLineOfCommand, original.firstLineOfCommand,
+                           "firstLineOfCommand should be preserved")
+            XCTAssertEqual(restored.fullCommand, original.fullCommand,
+                           "fullCommand should be preserved")
             XCTAssertEqual(restored.code, original.code, "code should be preserved")
             XCTAssertEqual(restored.name, original.name, "name should be preserved")
         }
@@ -771,7 +777,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: FoldMark Round-Trip
 
     func testFoldMarkRoundTrip() {
-        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 5, imageCodes: [])
+        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 5, imageCodes: [], width: 80)
 
         verifyRoundTrip(foldMark, interval: Interval(location: 500, length: 200)) { original, restored in
             XCTAssertEqual(restored.guid, original.guid, "GUID should be preserved")
@@ -783,10 +789,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: VT100RemoteHost Round-Trip
 
     func testVT100RemoteHostRoundTrip() {
-        guard let remoteHost = VT100RemoteHost(username: "testuser", hostname: "testhost.example.com") else {
-            XCTFail("Failed to create VT100RemoteHost")
-            return
-        }
+        let remoteHost = VT100RemoteHost(username: "testuser", hostname: "testhost.example.com")
 
         verifyRoundTrip(remoteHost, interval: Interval(location: 600, length: 10)) { original, restored in
             XCTAssertEqual(restored.username, original.username, "username should be preserved")
@@ -799,7 +802,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
     // MARK: PortholeMark Round-Trip
 
     func testPortholeMarkRoundTrip() {
-        let portholeMark = PortholeMark("unique-porthole-id-123")
+        let portholeMark = PortholeMark("unique-porthole-id-123", width: 80)
 
         verifyRoundTrip(portholeMark, interval: Interval(location: 800, length: 50)) { original, restored in
             XCTAssertEqual(restored.guid, original.guid, "GUID should be preserved")
@@ -861,11 +864,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Create two VT100RemoteHost objects with identical content
         // This is a realistic scenario - multiple prompts showing the same remote host
-        guard let host1 = VT100RemoteHost(username: "admin", hostname: "server.example.com"),
-              let host2 = VT100RemoteHost(username: "admin", hostname: "server.example.com") else {
-            XCTFail("Failed to create VT100RemoteHost objects")
-            return
-        }
+        let host1 = VT100RemoteHost(username: "admin", hostname: "server.example.com")
+        let host2 = VT100RemoteHost(username: "admin", hostname: "server.example.com")
 
         // Each object should have a unique GUID even though content is identical
         XCTAssertNotEqual(host1.stableIdentifier, host2.stableIdentifier,
@@ -892,7 +892,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             return
         }
 
-        let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+        let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
         XCTAssertTrue(restored, "Should restore successfully")
 
         // CRITICAL: Both objects should be restored
@@ -916,14 +916,11 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         let tree = IntervalTree()
 
         // Create two hosts at host1.com
-        guard let hostA1 = VT100RemoteHost(username: "user", hostname: "host1.com"),
-              let hostA2 = VT100RemoteHost(username: "user", hostname: "host1.com"),
-              // And two hosts at host2.com
-              let hostB1 = VT100RemoteHost(username: "user", hostname: "host2.com"),
-              let hostB2 = VT100RemoteHost(username: "user", hostname: "host2.com") else {
-            XCTFail("Failed to create VT100RemoteHost objects")
-            return
-        }
+        let hostA1 = VT100RemoteHost(username: "user", hostname: "host1.com")
+        let hostA2 = VT100RemoteHost(username: "user", hostname: "host1.com")
+        // And two hosts at host2.com
+        let hostB1 = VT100RemoteHost(username: "user", hostname: "host2.com")
+        let hostB2 = VT100RemoteHost(username: "user", hostname: "host2.com")
 
         tree.add(hostA1, with: Interval(location: 100, length: 50))
         tree.add(hostA2, with: Interval(location: 200, length: 50))
@@ -942,7 +939,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             return
         }
 
-        let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+        let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
         XCTAssertTrue(restored)
         XCTAssertEqual(newTree.allObjects().count, 4, "All 4 objects should be restored")
 
@@ -962,7 +959,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
         // Add one of each Swift-visible type
         // Note: iTermCapturedOutputMark and VT100WorkingDirectory are not in bridging header
         let screenMark = VT100ScreenMark()
-        screenMark.command = "echo test"
+        screenMark.firstLineOfCommand = "echo test"
+        screenMark.fullCommand = "echo test"
 
         let annotation = PTYAnnotation()
         annotation.stringValue = "Note"
@@ -972,14 +970,11 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             return
         }
 
-        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 3, imageCodes: [])
+        let foldMark = FoldMark(savedLines: nil, savedITOs: [], promptLength: 3, imageCodes: [], width: 80)
 
-        guard let remoteHost = VT100RemoteHost(username: "user", hostname: "host") else {
-            XCTFail("Failed to create VT100RemoteHost")
-            return
-        }
+        let remoteHost = VT100RemoteHost(username: "user", hostname: "host")
 
-        let portholeMark = PortholeMark("porthole-all-test")
+        let portholeMark = PortholeMark("porthole-all-test", width: 80)
 
         let blockMark = BlockMark()
 
@@ -1011,7 +1006,7 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
             return
         }
 
-        let restored = newTree.restore(fromGraphRecord: plist, offset: 0)
+        let restored = newTree.restore(fromGraphRecord: plist, offset: 0, largeContentProvider: nil)
         XCTAssertTrue(restored)
         XCTAssertEqual(newTree.allObjects().count, 9, "All 9 objects should be restored")
 
@@ -1029,7 +1024,8 @@ class IntervalTreeGraphEncodingTests: XCTestCase {
 
         // Verify key properties preserved
         let restoredScreenMark = restoredObjects.compactMap { $0 as? VT100ScreenMark }.first!
-        XCTAssertEqual(restoredScreenMark.command, "echo test")
+        XCTAssertEqual(restoredScreenMark.firstLineOfCommand, "echo test")
+        XCTAssertEqual(restoredScreenMark.fullCommand, "echo test")
 
         let restoredAnnotation = restoredObjects.compactMap { $0 as? PTYAnnotation }.first!
         XCTAssertEqual(restoredAnnotation.stringValue, "Note")

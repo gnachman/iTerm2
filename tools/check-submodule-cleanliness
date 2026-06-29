@@ -1,0 +1,76 @@
+#!/bin/bash
+# Check that all submodules are pristine before a production deps build.
+# Exits 0 if clean or user confirms, exits 1 if user aborts.
+
+set -euo pipefail
+
+dirty=0
+messages=""
+
+while IFS= read -r line; do
+    # git submodule status prefixes:
+    #   ' ' = checked out at recorded commit
+    #   '+' = checked out at a different commit than recorded
+    #   '-' = not initialized
+    #   'U' = merge conflict
+    prefix="${line:0:1}"
+    # Rest of line: <sha> <path> (optional description)
+    rest="${line:1}"
+    path="$(echo "$rest" | awk '{print $2}')"
+
+    if [ "$prefix" = "-" ]; then
+        messages+="  $path: not initialized\n"
+        dirty=1
+    elif [ "$prefix" = "+" ]; then
+        messages+="  $path: checked out at different commit than recorded\n"
+        dirty=1
+    elif [ "$prefix" = "U" ]; then
+        messages+="  $path: has merge conflicts\n"
+        dirty=1
+    fi
+
+    # Check for local changes within the submodule
+    if [ -d "$path" ]; then
+        # Untracked files
+        untracked="$(cd "$path" && git ls-files --others --exclude-standard 2>/dev/null)" || true
+        if [ -n "$untracked" ]; then
+            count="$(echo "$untracked" | wc -l | tr -d ' ')"
+            messages+="  $path: $count untracked file(s)\n"
+            dirty=1
+        fi
+
+        # Staged changes
+        if ! (cd "$path" && git diff --cached --quiet 2>/dev/null); then
+            messages+="  $path: has staged changes\n"
+            dirty=1
+        fi
+
+        # Unstaged changes
+        if ! (cd "$path" && git diff --quiet 2>/dev/null); then
+            messages+="  $path: has unstaged changes\n"
+            dirty=1
+        fi
+    fi
+done < <(git submodule status --recursive)
+
+if [ "$dirty" -eq 0 ]; then
+    echo "All submodules are clean."
+    exit 0
+fi
+
+echo "WARNING: The following submodule issues were detected:"
+echo ""
+printf '%b' "$messages"
+echo ""
+if [ -t 0 ]; then
+    printf "Continue with production deps build anyway? [y/N] "
+    read -r answer
+    case "$answer" in
+        [yY]|[yY][eE][sS])
+            echo "Proceeding..."
+            exit 0
+            ;;
+    esac
+fi
+echo "Aborted."
+exit 1

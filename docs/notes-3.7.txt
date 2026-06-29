@@ -1,0 +1,1516 @@
+Version 3.7.0beta1 was built on April 20, 2026
+
+A note to beta users:
+An awful lot of features have been piling up here
+since the last release off the main branch was
+many months ago. I decided to bump the version
+number up to 3.7. The changelog below is relative
+to version 3.6.7 and duplicates some items in
+betas since then.
+
+Major New Features:
+- Companion App: a new iOS app, iTerm2 Buddy,
+  pairs with your Mac by scanning a QR code
+  (iTerm2 > Companion Device Settings) and
+  connects over an encrypted Noise channel so you
+  can interact with iTerm2 via AI chat from your
+  phone.
+  Devices connect through an encrypted relay, so
+  they work even when the Mac and phone are on
+  different
+  networks, and end-to-end encryption ensures that
+  your data is only visible to you.
+
+- There's a new kind of AI chat called
+  "orchestration" which can view all your
+  sessions and operate iTerm2 for you.
+
+- Claude Code integration was added. It enables
+  the new Session Status feature for claude code
+  sessions so you can see at a glance which
+  instance is waiting for you. It also ties in
+  with the new Workflows feature to facilitate
+  viewing diffs and performing code reviews. It
+  ties in with clippings so that AI-authored code
+  review comments can easily be sent back to
+  Claude code.
+
+- A new Session Status system was added. Sessions
+  can now report status that appears on their tab
+  with a custom subtitle, color, and dot icon.
+  Status can be set by a control sequence, the it2
+  command, or by triggers. The Session Status tool
+  lets you view the status of all sessions in a
+  window at a glance and the new Cockpit window
+  lets you browse status across windows.
+
+- Session Notes were added: floating,
+  draggable, resizable, collapsible multiline
+  text notes attached to a session that
+  persist across restarts.
+
+- You can now run multiple concurrent
+  instances of iTerm2 side by side with
+  independent settings. Launch with
+  --suite=com.iterm2.unique-id-of-your-choice.
+
+- The new Workgroups feature let you define how to
+  transform a session into a cluster of related
+  sessions. When a session enters a Workgroup, the
+  cluster of related sessions is created. They can 
+  be in split panes, separate tabs, or "peers"
+  which are like tabs within a split pane.
+  Sessions in a workgroup have a unique name, a
+  custom command, a customizable toolbar, and can
+  even have custom behavior such as to drive AI
+  code review or perform in-terminal diffs of a
+  git repo.
+
+- Clippings is a new side panel that contains a
+  list of items formatted as markdown. They're a
+  useful place to store text that you need
+  temporarily.
+  The Claude Code integration uses Clippings to
+  store code review comments so they can be shared
+  between related sessions in a Workgroup.
+
+- The new Fold All menu item folds everything
+  (aside from folds at the very top of history).
+  This makes it easy to keep history around
+  without it getting in the way.
+
+- You can now create screenshots including
+  highlights and redactions using the Make
+  Screenshot menu item.
+
+- Session archives were added. The new Session >
+  Archives menu has “Save Archive of Current
+  Session…” and “Restore Archive…” commands, and
+  remembers your ten most recent archives. A
+  per-profile setting can automatically archive a
+  session to a configured directory when it
+  closes.  Restoring an archive reopens the
+  session’s scrollback in a new window.
+
+New Features in Terminal Sessions:
+- Double-width and double-height lines
+  (DECDWL, DECDHL, DECSWL) are now supported
+  via ESC #3, #4, #5, and #6.
+- Custom in-terminal buttons with SF Symbol
+  icons that emit a user-defined escape code
+  when clicked. To add one, send
+  OSC 1337 ; Button=type=custom;code=N;
+  icon=<SF-Symbol-name> ST. The code must be
+  positive. To invalidate all custom buttons,
+  send OSC 1337 ; Button=type=custom ST.
+- A control sequence to programmatically
+  fold and unfold blocks of output. Send
+  OSC 1337 ; UpdateBlock=id=<blockID>;
+  action=fold ST (or action=unfold) where
+  blockID matches a previously declared
+  block ID (see custom escape sequence docs
+  "Blocks" section for details).
+- A new SetProfileProperty control sequence
+  lets you change profile properties at
+  runtime. Send
+  OSC 1337 ; SetProfileProperty=<Key>=
+  <base64-JSON>[;<Key2>=<base64-JSON>...] ST,
+  e.g. set “Cursor Type” to 2 by encoding
+  the JSON value 2 as base64.
+- OSC 52 clipboard query responses now work
+  with tmux 3.6+ in tmux integration.
+- Added OSC 21337 for session status. Send
+  OSC 21337 ; indicator=<#rrggbb> ;
+  status=<text> ; status-color=<#rrggbb> ST
+  to set the tab’s dot indicator, subtitle,
+  and subtitle color. Send the same sequence
+  with empty values to clear.
+- Smooth-typing animation for underscore and
+  vertical-bar cursors can be enabled in
+  Settings > Profiles > Text.
+- Relative timestamps (set via the Set
+  Baseline for Relative Timestamps menu)
+  now use Go-style unit suffixes such as
+  +1m23s and +2h5m, giving sub-minute
+  precision in the 1m–1h range that was
+  previously rounded to whole minutes.
+
+Tabs, Windows, and UI:
+- Most window types support initial size as a
+  percentage of the screen (used to be only number
+  of rows and columns).
+- Tabs can be pinned so they stay put and are
+  protected from reordering.
+- New Lock Size menu item and per-profile
+  preference to prevent window resizing.
+- New Lock Layout menu item (in the Window
+  menu, next to Lock Size) that freezes a
+  window’s layout: it prevents splitting,
+  adding or closing tabs, reordering tabs,
+  closing or dragging panes, and moving
+  panes or tabs to other windows. Resizing
+  panes, opening new windows, and closing
+  the window still work.
+- Panes can be locked to prevent accidental drag
+  and drop.
+- Tabs can now be placed on the right side
+  of the window.
+- The control-sequence-controlled progress
+  indicator is now shown in the tab bar.
+- An active pane border can be displayed to
+  highlight the focused pane.
+- The status bar can now draw a separator line
+  between itself and the terminal content. Enable
+  it in the status bar layout’s advanced settings.
+- You can now choose to show a Proxy icon in
+  Compact and Minimal themes.
+- The tab color menu now has a color picker,
+  recent colors, and an eyedropper tool.
+- Asymmetrical broadcasting via a per-session
+  broadcast-source flag lets you prevent
+  accidental typing in some sessions from being
+  broadcast.
+- New key binding action to send text without
+  broadcasting.
+- The Cycle Tabs Forward and Cycle Tabs Backward
+  key actions now have a help button explaining
+  their tap-vs-hold behavior.
+- Nerd Font glyphs are now rendered in pane title
+  bars and tabs.
+- A unified dock badge combines bell count and tab
+  status, and the old 999 cap on the bell count
+  was removed.
+- Split pane icons were added to the context
+  menu.
+- Hold Option when clicking a Split button in the
+  Profiles panel to open the selected profiles as
+  splits in a new window instead of the current
+  one.
+- Background images can now rotate through a
+  folder of images at a configurable interval.
+  Pick a folder instead of a file in
+  Settings > Profiles > Window > Background.
+- In the Jobs view (toolbelt and status bar
+  popover) hovering on a row shows the full
+  command as a tooltip, and pressing space
+  opens a popover with the full command,
+  process ID, start time, working
+  directory, environment variables, and a
+  list of open files and network
+  connections.
+
+
+Triggers Improvements:
+- Event-based triggers can fire on events such as
+  a session ending or a hostname change.
+- A trigger can now match when a session variable
+  changes to a value matching a regex.
+- Triggers can be imported and exported as
+  .it2triggers files.
+- A regex can now be used to define word
+  characters for a trigger.
+- Nulls are now treated as spaces in trigger regex
+  matching.
+- You can now assign a "job" to a trigger, which
+  ensures the trigger is only active when that job
+  is running. This makes it possible, for example,
+  to write triggers that are only active while
+  Claude Code is running.
+
+
+AI Improvements:
+- Chats in the AI chat list now get an icon
+  drawn by your AI model from the chat
+  title. Chats without one show a default
+  icon. The prompt can be edited in
+  Settings > General > AI > Prompts.
+- The AI command safety check now uses your
+  configured AI model. It runs deterministic
+  terminal rules first and only asks the model
+  when those rules cannot decide. It can send
+  commands to your (possibly cloud) provider, so
+  it is opt-in. Users who already enabled it keep
+  using free on-device Apple Intelligence and are
+  asked once whether to switch to their model.
+- AI chat can connect to LAN-hosted models
+  over HTTP.
+- Anthropic prompt caching now also covers the
+  conversation history, not just the system
+  prompt and tools. A rolling cache breakpoint
+  on the latest message lets long chats reread
+  the prior turns from cache instead of paying
+  full input price every turn.
+- AI models updated.
+- DeepSeek v4 thinking mode is now supported.
+  Toggle the lightbulb in the chat toolbar to
+  enable. Reasoning summaries appear live in
+  the conversation and round-trip correctly
+  on multi-turn tool calls (fixes a 400 from
+  the API when reasoning_content was missing).
+- The “Configure AI Model Manually…” popover
+  now has a section for custom HTTP headers
+  that are appended to every AI request (chat,
+  vector store, and file upload). Useful for
+  proxy auth or routing tags. Custom headers
+  override built-in headers with the same
+  name. Values are stored unencrypted in
+  iTerm2’s preferences.
+- PDF chat attachments now work on Anthropic.
+
+Python API Improvements:
+- Move sessions to new tabs or windows via the
+  Python API.
+- Load URLs in browser sessions from the Python
+  API.
+- The Open URL API now supports a per-domain
+  allowlist.
+- App.async_apply_layout atomically reshapes
+  one or more tabs to a target layout in a
+  single transaction. Supports swapping panes,
+  rearranging the split tree, and moving
+  sessions across tabs and windows. New
+  sessions can be created in place with
+  new_session leaves.
+
+Password Manager Improvements:
+- Bitwarden is now a supported password manager.
+- Keeper Security is also supported.
+
+Shell Integration Improvements:
+- xonsh is now a supported shell.
+- Better interop with Fish 4.3, which builds in
+  some of shell integration.
+- A new it2 command-line utility lets you perform
+  common actions like creating a window at the
+  command line. Run `it2 --help` for details.
+  It's automatically in your path.
+
+SSH Integration Improvements:
+- Better passphrase handling for SCP and
+  private keys. Wrong passphrases now retry
+  instead of falling through to an empty
+  password, and encrypted-key detection was
+  improved.
+
+Tmux Improvements:
+- Add an advanced setting to open tmux
+  windows and tabs without taking focus.
+- Bracketed paste state is restored on attach
+  (prep for tmux’s upcoming bracket_paste_flag
+  format).
+- The per-pane modifyOtherKeys state is now
+  restored on attach (using tmux 3.5+’s
+  pane_key_mode format), so reattaching while
+  nvim or another app is running keeps the
+  correct key reporting mode active.
+- Saner defaults for which window and tab a tmux
+  attach uses.
+- The advanced setting for where tmux windows
+  created outside iTerm2 open is now a three-way
+  choice: a new window, the focused window, or
+  the topmost window already hosting that tmux
+  session.
+
+Expressions and Variables:
+- Arithmetic expressions and comparisons are
+  now supported in interpolated strings.
+- You can right click on a color in settings and
+  choose "Bind to Expression" so that it will
+  takes its value from an expression (e.g., a
+  user-defined Variable or registered function:
+  see the Scripting Fundamentals section of the
+  documentation for details). The value should
+  be a string like #ff8844.
+- Same for checkbox settings. The value should be
+  a boolean.
+- A new global variable iterm2.appBundlePath
+  exposes the path to iTerm2.app for use in
+  interpolated strings.
+- A new window variable window.title holds the
+  rendered window title, alongside the existing
+  session.presentationName and tab.title.
+
+UI Improvements:
+- A new preference hides the session status
+  text from tab subtitles while keeping the
+  colored dot. Toggle it from the gear menu
+  in the Session Status toolbelt tool.
+- Right-click a row in the Session Status
+  toolbelt tool and choose Snooze to move it
+  below a divider at the bottom of the list
+  and dim it. A snoozed entry un-snoozes
+  automatically the next time its status
+  changes.
+- Contextual alternates (calt) are enabled by
+  default for ligature-capable fonts.
+- Rename dialogs, the pane menu, and the context
+  menu now respect dark/light mode.
+- Tab colors are written to all appearance
+  variants so they survive light/dark switches.
+- Customizable IME color.
+- Cleaner glass material on the jobs popover.
+- Scroll command marks to top (instead of
+  centering) on Next/Previous Mark.
+
+Input and Accessibility:
+- VoiceOver now announces terminal output and
+  deleted characters.
+- Voice dictation now works.
+- A repair button was added to fix key bindings
+  corrupted by a 3.4.x-3.5.x migration bug.
+- Ctrl/Option-modified function keys now work with
+  third-party global shortcuts.
+- 3-finger drag is now treated like a regular drag
+  for mouse reporting.
+- Offer to reset the key reporting mode when it
+  gets stuck on.
+
+Search and Selection Improvements:
+- Folded content is searched in global search.
+- URL search results extend across soft boundaries
+  such as tmux pane dividers.
+- “$” is now considered part of a URL. Used when
+  detecting URL boundaries for cmd-click.
+- Search results refresh after window resize.
+- Fix Cmd+G skipping matches sometimes.
+- New “Copy or Paste” pointer action. If there's a
+  selection, it copies. Otherwise, it pastes.
+- New pointer action to copy link address.
+
+Menus and Miscellaneous:
+- New menu item to open new tabs next to the
+  current tab or at the end (opposite of the
+  default).
+- New “Always show alerts with remembered
+  selections” option. This temporarily turns off
+  the "Remember my selection" feature of alert
+  boxes that you already saved in case you change
+  your mind and want to make a different
+  selection.
+- New “Buffer input by default” profile setting
+  with menu item, indicator, and trigger
+  integration. Buffering causes text you type to
+  be stored until buffering is disabled by
+  selecting Shell > Toggle Buffer Input.
+- "Copy" menu item on status bar components to
+  copy relevant information.
+- Smart selection action URL is shown on hover.
+- Offer to restore titles when an ssh session
+  ends.
+- New "Suppress notifications from the active
+  session" setting.
+- Undo Close now has the ⌘⇧T shortcut. Show
+  Tabs in Fullscreen moved to ⌘⇧U. The first
+  time you press ⌘⇧T in full screen, an alert
+  explains the change and can restore ⌘⇧T to
+  Show Tabs in Fullscreen with a key binding.
+- Added Edit > Marks and Annotations >
+  Annotate Selection, so annotating a
+  selection can now be given a keyboard
+  shortcut. Previously this was only on the
+  right-click menu.
+- The job name shown in titles, the session
+  icon, and automatic profile switching now
+  reflect the foreground job actually attached
+  to the terminal, hiding helper subprocesses
+  that run in the foreground process group but
+  are piped to their parent (for example an MCP
+  server spawned by claude, or caffeinate). The
+  raw deepest job is still available as the
+  deepestJob variable. Note that automatic
+  profile switching now matches the tty-attached
+  job, so a rule keyed on such a helper name will
+  no longer fire for it.
+
+Core Improvements:
+- Significant Metal rendering speedups for
+  non-ASCII text should result in higher frame
+  rates.
+- Framerate is capped at 30 fps in low-power mode.
+- Crash-log search was moved off the main thread
+  so app launch does not hang when there are a
+  huge number of crash logs.
+- Prompt for local-network permission on launch.
+
+Settings Improvements:
+- Window frames are remembered per-profile rather
+  than globally. When you open a window, the
+  default frame will come from a previous window
+  with that profile, if possible.
+- Font zoom is preserved during Automatic Profile
+  Switching.
+- User-set colors are remembered separately
+  from control-sequence-set colors so that they
+  don't get reset by control sequence.
+- Special Exceptions has a new Add Preset
+  button with common Unicode ranges such as
+  Han, Hangul, and Cyrillic.
+- Profiles using a custom Command can now opt
+  to run the command through the user’s login
+  shell so dotfiles set $PATH and exported
+  variables (API keys, GEM_HOME, etc.) before
+  the command starts.
+- A linked AI chat can be hosted inline in
+  its session’s right margin. Use the chat
+  menu’s “Put Chat in Linked Session” item
+  and toggle visibility from View > Show
+  Inline Chat.
+- The inline chat panel now has a toolbar to
+  create a new chat, switch chats, open the
+  session/link menu, and hide the panel. New
+  inline chats ask whether to link to the
+  session or become an orchestrator instead
+  of linking automatically.
+- Open Quickly now uses recency as a
+  tiebreaker, so the session list (whether
+  the query is empty or matches several
+  panes) is ordered most-recently-used
+  first across tabs and windows. The
+  current session is omitted from results
+  since it is never a useful jump target,
+  so Cmd-Shift-O followed by Enter now
+  jumps to the most-recently-used other
+  pane. A new preview side panel shows a
+  snapshot of the highlighted session.
+  Open Quickly can also be assigned a
+  system-wide hotkey in Settings > Keys
+  that works while another app is in
+  front, without activating iTerm2 until
+  you commit a selection.
+- Blinking cursors can now fade smoothly
+  in and out instead of toggling abruptly.
+  Turn on “Smooth blink” in Settings >
+  Profiles > Text, where you can tune the
+  fade-in and fade-out durations, easing
+  curves, and how long the cursor dwells
+  fully visible and fully hidden between
+  fades. Off by default.
+
+Bug Fixes:
+- tmux integration now parses pane state
+  correctly on macOS 26 and later. A new
+  system NSString method had shadowed ours
+  and caused numeric fields to be dropped.
+- The companion device no longer triggers a
+  keychain confirmation prompt when it connects
+  or when a notification is sent. The paired
+  identity is now read once at launch, while you
+  are present, instead of mid-connection.
+- Restoring a window with an open inline AI chat
+  panel now reopens the panel on the chat it was
+  showing, instead of widening the terminal.
+- Chat lists now mark orchestrator chats with a
+  wand glyph. The inline chat switcher bolds chats
+  linked to the current session.
+- Orchestrator chats now handle full-screen apps
+  on the alternate screen (like Claude Code)
+  better: they see just the current screen and
+  can use a new scroll-wheel tool to page back
+  through the app’s own history.
+- Saved and copied screenshots now fill margins
+  and other uncovered areas with the session’s
+  background (including a background image, with
+  its blend and scaling) instead of leaving them
+  transparent.
+- The session-logging and archive folder
+  pickers now use the folder you select rather
+  than its parent when you don’t open it first.
+- SSH integration no longer leaves Ctrl+C unable
+  to interrupt programs on remote hosts whose
+  Python is older than 3.7 (e.g. CentOS 7,
+  AlmaLinux 8). The login shell handoff was
+  leaving signal generation disabled on the tty.
+- Clicking a notification posted by a background
+  tab of a dedicated hotkey window now selects the
+  source tab and pane instead of leaving the
+  previously-selected tab in front.
+- AI chat with DeepSeek no longer fails with an
+  "insufficient tool messages" error after a tool
+  call that was interrupted or left unapproved.
+- A live filter no longer drops content that
+  arrives while it is mid-search; such lines
+  could previously be missing from the filtered
+  view until more output came in.
+- Copying selected text from a porthole (such as
+  rendered markdown) now works in apps that
+  prefer rich text.
+- Clicking in a porthole in an inactive split
+  pane now activates that pane.
+- Fixed several crashes: registering a profile
+  hotkey for a profile with no GUID, loading a
+  profile whose default-bookmark value is a
+  boolean, listing processes over SSH when a
+  process has an empty command, drawing margin
+  background colors with a nil color, a crash when
+  macOS rejected presentation options during a
+  Spaces transition (now retried once it settles),
+  and a divide-by-zero when the Metal view has a
+  zero-size drawable.
+- iTerm2 no longer spuriously offers to reset
+  terminal state or restore the tab and window
+  title when the local hostname changes (for
+  example when mDNS renames your .local host)
+  or when you run sudo. Any two localhosts are
+  now treated as the same host.
+- AI chat no longer fails with a tool_use_id
+  error after an auto-approved command. The
+  tool call was dropped from saved history
+  while its result was kept; the prompt is now
+  repaired when reloaded, healing chats saved
+  by earlier versions too.
+- Session notes now keep their distance from
+  the top-right corner of a session when it
+  is resized, instead of from the bottom-left.
+- A tab no longer shows a stale or missing
+  session status (such as “waiting”) when a
+  pane carrying a status is closed, moved
+  between tabs, or reparented (for example by
+  entering or exiting a workgroup). The tab’s
+  aggregated status is now recomputed whenever
+  its set of sessions changes.
+- Full-screen programs that don’t use the
+  alternate screen buffer (such as Claude
+  Code) no longer destroy on-screen content
+  when, on startup, they move the cursor to
+  the top of the screen and repaint over it.
+  The visible screen is now scrolled into
+  history first. Requires shell integration.
+- When such a program moves the cursor above
+  a fold and repaints, the fold is now
+  scrolled into history instead of being
+  overwritten and left with an orphaned
+  unfold icon in the margin. This works even
+  without shell integration installed.
+- The “taking a long time to check state
+  restoration” prompt no longer appears so
+  readily right after login, when the system
+  is busy and disk I/O is slow. The integrity
+  check timeout is now extended in the first
+  ten minutes after boot, the prompt's
+  wording is friendlier, and it defaults to
+  continuing rather than discarding windows.
+  Issue 11809.
+- Editing a color in a color well no longer
+  silently switches the picker from sRGB to
+  P3 (or back). The color space the well is
+  showing is now preserved across the edit
+  roundtrip. Issue 12720.
+- The Python API server now takes an
+  advisory lock on its socket directory at
+  startup. A second iTerm2 instance sharing
+  the same application-support directory
+  (e.g. two non-suited copies launched from
+  different .app bundles) will refuse to
+  start the API server instead of silently
+  unlinking and rebinding the original
+  instance’s socket.
+- Localhost detection no longer breaks when
+  your computer's hostname changes (for
+  example after switching networks). Whether
+  a session is on the local machine is now
+  recorded when the host is first reported,
+  rather than recomputed later by comparing
+  names. This fixes the git status bar, the
+  workgroup diff list, opening local files,
+  and uploads/downloads going stale after a
+  rename.
+- Pressing Enter to commit an IME
+  composition (e.g. Chinese, Japanese,
+  Korean) in the AI Chat input no longer
+  prematurely submits the unfinalized
+  candidate text.
+- Open Quickly now updates the MRU order
+  when you jump to a session, so repeated
+  Cmd-Shift-O Enter cycles between the two
+  most-recently-used panes instead of
+  drifting onto a sibling pane that
+  happened to be active in the destination
+  tab. Issue 12799.
+- Open Quickly recency now strictly follows
+  focus order. Jumping to a pane no longer
+  bumps the previously-active sibling in the
+  destination window, and structural changes
+  (closing a pane, splitting, restoring) in
+  background windows no longer reorder the
+  list, so Cmd-Shift-O Enter reliably
+  toggles between the last two focused
+  panes. Issue 12799.
+- OSC color overrides (foreground, background,
+  cursor, selection, palette, and the iTerm2
+  SetColors variants) now survive macOS Light
+  / Dark appearance switches and toggles of
+  the separate light / dark colors profile
+  setting. The override is written to every
+  appearance variant of the profile key so
+  it persists until OSC 110/111 or a manual
+  reset clears it.
+- In an AI orchestration chat, @-mentioning a
+  session or workgroup now grants the chat
+  standing permission to control it, so the
+  agent acts there without the one-time
+  approval prompt. A notice with a Revoke
+  button is posted so you can take the
+  permission back whenever you want.
+- The orchestrator’s send_text tool
+  now routes payloads containing control bytes
+  (ESC, Ctrl-C, etc.) as raw keystrokes instead
+  of bracketed pastes. The previous wrap turned
+  embedded control bytes into literal pasted
+  data, so e.g. sending ESC :q ENTER to a vim
+  session inserted “^[:q” as text instead of
+  quitting. Pure prompt-style text still goes
+  through as a paste, as Ink-based TUIs expect.
+- The orchestrator’s get_screen_contents
+  tool now marks faint text with ⟨dim⟩…⟨/dim⟩ and
+  the cursor with ⟨cursor⟩. Inline shell
+  suggestions and ghost completions are rendered
+  faint and used to be indistinguishable from
+  text the user actually typed, so the agent
+  would sometimes mistake a suggestion for an
+  entered command.
+- Showing the clippings panel in a window
+  zoomed to fit the display no longer grows
+  the window horizontally. The tab content
+  area absorbs the panel’s width instead,
+  mirroring the toolbelt’s behavior.
+- The Install Claude Code Integration intro is
+  now presented as a real sheet attached to the
+  installer panel, rather than a subview
+  overlay. Enter now correctly activates
+  Continue instead of the Install/Next button
+  it was visually covering.
+- Workgroup peer-switch and toolbar shortcuts
+  now fire no matter which view in the terminal
+  window has keyboard focus, including the Diff
+  peer’s Run Anyway button, the Code Review
+  prompt’s text view, and the clippings table.
+  They are now dispatched centrally instead of
+  relying on the focused view to forward them.
+- The Claude Code installer now reliably adds
+  Enter/Exit Workgroup triggers to divorced
+  sessions whose original profile was picked.
+  The previous pass matched on the dict’s
+  KEY_ORIGINAL_GUID, which could be stale
+  after an arrangement reload. The walk now
+  also consults each live or buried session’s
+  runtime originalProfile reference.
+- The Code Review prompt overlay no longer
+  drifts out of sync with light/dark mode. The
+  panel cached a CGColor snapshot of
+  windowBackgroundColor resolved against an
+  arbitrary NSAppearance.current, so its
+  background could disagree with its own text
+  view. It now uses the existing layer-backed
+  solid color view, which refreshes the color
+  in updateLayer under the correct drawing
+  appearance.
+- The heavy window border no longer leaves its
+  corners unbordered on low-opacity windows. The
+  corner-radius detector failed on transparent
+  windows (their interior is not opaque enough),
+  so the border fell back to a wrong radius and
+  the corner arc was clipped away. Detection now
+  works at any opacity, with a better per-OS
+  fallback radius. Issue 12882.
+- The heavy window border now stays flush with
+  the window edges instead of sometimes drawing
+  as a smaller inner rounded rectangle. Its view
+  could be left at a stale size and was not kept
+  in sync with the window. Issue 12882.
+- The heavy window border now has a uniform
+  width: its corners no longer look thinner than
+  its edges and no longer pick up semi-
+  transparent pixels. It is drawn entirely
+  inside the window instead of straddling the
+  window edge and relying on the system mask to
+  clip its outer half. Issue 12882.
+- The window border color advanced settings now
+  accept a four-part color like #rrggbbaa (or
+  p3#rrggbbaa) to set the border opacity. A
+  color without an alpha component is still
+  drawn at 75% opacity. Issue 12882.
+- The legacy (non-GPU) renderer now invalidates
+  only the lines that actually changed, instead
+  of repainting the entire view on every cell
+  update. Heavy TUI animations (e.g. spinners
+  that rewrite a single line at high frequency)
+  use significantly less CPU on hosts where the
+  GPU renderer is disabled. Issue 12790.
+- Anthropic tool calls reloaded from a chat
+  transcript would fail with HTTP 400 because
+  the function output got serialized as plain
+  text instead of a tool_result block. The
+  parser stored the tool_use id only on the
+  inner FunctionCall while the serializer
+  looked on the outer wrapper, so the id was
+  lost on round-trip. Both fields are now
+  populated so persisted tool calls survive
+  the round-trip.
+- Anthropic requests no longer 400 when a
+  stray user message gets persisted between a
+  tool_use and its matching tool_result. The
+  request builder reorders so the tool_result
+  is always emitted immediately after the
+  tool_use, with any intervening messages
+  bumped to after it.
+- Fix a launch crash when a saved status bar
+  layout referenced an RPC-provided text
+  component whose configuration was missing
+  the registration request (for example, from
+  a partial profile restoration). The base64
+  decoder dereferenced a NULL pointer instead
+  of returning nil. Issue 12861.
+- The “Respect shortcuts from System Settings >
+  Keyboard > Keyboard Shortcuts > Keyboard”
+  option used subset matching on modifier keys,
+  so a system shortcut bound to Ctrl+Right (or
+  any other strict subset of an event’s
+  modifiers) would also intercept
+  Ctrl+Shift+Right and similar keystrokes.
+  Modifier comparison is now exact. Issue 12859.
+- When launched with -suite, orphan adoption
+  could no longer reattach to surviving
+  multi-server daemons after a state-database
+  loss. The application-support directory is
+  already isolated per suite, but daemon
+  sockets were also being named with the
+  suite in the filename, while the orphan
+  adopter (and the settings-export exclusion
+  list) still expected the plain
+  iterm2-daemon- prefix. The suite is now
+  carried only by the containing directory,
+  matching how the dotdir fallback already
+  worked. A transitional fallback accepts
+  the {suite}-daemon-N.socket form so betas
+  that wrote that name don't strand their
+  daemons across the upgrade. Issue 12860.
+- Fix a crash when a Python API client invoked
+  a function whose argument string contained
+  non-BMP characters (for example, emoji). The
+  expression tokenizer’s optional-path
+  recognizer indexed by Unicode scalar while
+  the surrounding tokenizer tracks UTF-16
+  positions, so the offset could run past the
+  scalar count and trap. Issue 12856.
+- When ESC #3, #4, or #6 (DECDHL/DECDWL) was
+  received mid-line, characters already on the
+  line were correctly doubled in size but the
+  cursor was not advanced to compensate, so
+  text printed afterward overwrote the right
+  half of the existing characters. The cursor
+  is now repositioned when the line’s width
+  class changes.
+- ssh:// URL handling and Bonjour-discovered
+  host profiles now find ssh through the user’s
+  login shell PATH, so Homebrew’s ssh (or any
+  ssh outside /usr/bin) is used. The advanced
+  setting SshSchemePath, when changed from its
+  default, still wins. Issue 3415.
+- The faint-text opacity slider in Profiles >
+  Colors now has a minimum of 0.1, and existing
+  profiles with a stored value below 0.1 are
+  clamped at runtime. A value of 0 caused SGR 2
+  text to render in exactly the background
+  color, making it invisible. The slider’s
+  tooltip was also incorrect (it described
+  minimum contrast); it now describes faint
+  text opacity.
+- The “open password manager automatically”
+  feature no longer triggers when a shell
+  script briefly disables terminal echo to
+  suppress the visible echo of an OSC report
+  response (e.g. it2getvar, it2profile -g).
+  ECHO must now stay off for at least 0.2
+  seconds — tunable via the
+  DetectPasswordInputDebounce advanced
+  setting — before iTerm2 treats it as a
+  password prompt.
+- Fix the Minimal-theme tab bar overlapping the
+  terminal in fullscreen when adding a second
+  tab with “Hide tab bar when there is only
+  one tab” enabled. The titlebar accessory
+  hosting the tab bar grew from zero to its
+  full height but the content view was not
+  re-laid out to leave room for it. Issue
+  12811.
+- The Touch ID for sudo offer no longer relies on
+  AppleScript admin elevation, which fails on
+  macOS 26 with EPERM when writing to
+  /etc/pam.d/. Accepting the offer now lets you
+  copy the install command or run it in a new
+  iTerm2 window where you can enter your sudo
+  password.
+- Fix a bug where suppressing a warning would
+  not stick across launches when prefs are
+  loaded from a custom folder with “Save
+  changes: Automatically.” The debounced save
+  could lose the race against app exit, so
+  the next launch overwrote the just-saved
+  suppression with the stale remote copy.
+  applicationWillTerminate now flushes
+  synchronously when Automatic mode is on.
+- Fix Ctrl-letter keystrokes appearing as
+  literal text (e.g., “0x4” for Ctrl-D) in
+  tmux -CC mode when the tmux server has
+  extended-keys enabled and an inner app
+  has turned on modifyOtherKeys. Control
+  bytes 0x00–0x1F are now sent through
+  send-keys with the -H flag on tmux
+  3.0a or newer, which bypasses tmux 3.5’s
+  silent literal-text fallthrough for
+  unmodified C0 bytes. Issue 12845.
+- Fix dragging a tab or split pane onto a
+  window with only one tab. The destination
+  window’s tab bar is hidden in that case, so
+  AppKit could not deliver drag events to it
+  and a brand-new window was created instead.
+  Tab bars are now temporarily shown for the
+  duration of any tab or session drag.
+  Issue 12846.
+- Fix a latent use-after-free in Core Text run
+  enumeration when the font does not return
+  contiguous glyph or string-index pointers.
+  The fallback NSMutableData backing buffers
+  could be released before the closure ran.
+- Fix the cursor jumping to the end while
+  typing in an annotation when the caret was
+  not already at the end. The optimistic
+  main-thread write echoed back through the
+  delegate and reassigned the text view’s
+  string, which resets the selection.
+- Fix a crash when invoking Undo after closing
+  a split pane that contained an annotation,
+  session note, or chat input. These text
+  views now own their own undo manager so
+  text-edit undo actions can’t outlive the
+  text view in the window’s undo stack.
+- Fix UI hangs when opendirectoryd is slow or
+  wedged. The user’s login shell is now
+  fetched in the pidinfo XPC service (so a
+  daemon hang only burns the helper, never
+  the main app) and cached in-process. Every
+  call still kicks off a fresh background
+  lookup so the cache stays current after
+  chsh, but a slow lookup no longer stalls
+  the UI — the cached value is returned if a
+  fresh result doesn’t arrive in time.
+- Fix a multi-second hang when closing the
+  Settings window. PreferenceInfo now only
+  registers a notification observer when an
+  observer block is set, avoiding O(N²)
+  teardown across the many controls in the
+  panel.
+- Fix a state-restoration crash where the
+  recovery path could leave records with no
+  rowid in the in-memory tree, causing the
+  next save to abort with MissingRowID. The
+  recovery now operates on a deep copy of
+  the failed save’s tree so it can’t corrupt
+  records other code still holds, and it
+  dedupes siblings by (key, identifier) so
+  every record gets a fresh rowid.
+- Fix the window growing wider when a
+  clippings panel appears in a non-current
+  tab. Window resize now happens only when
+  the visible tab needs the space.
+- Fix Code Review (and any other long
+  command) failing immediately with a zsh
+  "unmatched '" error. The shell-arg
+  splitter used by startProgram was running
+  every unquoted argv element through
+  -stringByExpandingTildeInPath, which
+  silently truncates at 1024 chars. Long
+  arguments now skip the expansion when
+  there's no leading ~.
+- Fix shell escaping of embedded apostrophes
+  and CR/LF in single-quote (POSIX) and
+  $'...' (bash) modes. Apostrophes now use
+  the close-escape-reopen idiom ('\''), and
+  control chars round-trip cleanly through
+  the receiving shell instead of either
+  injecting a literal backslash or producing
+  an unmatched-quote parse error.
+- Fix the password-manager CLI picker
+  greying out interpreter scripts (such as
+  the Homebrew-installed Bitwarden ‘bw’,
+  which is a Node.js script). Also accept
+  the symlink target name (e.g. bw.js).
+- Improved energy efficiency.
+- Fix bell and other user notifications not being
+  posted when iTerm2 is not hidden behind another
+  app. Notifications now post whenever iTerm2 is
+  not the active app or the session’s window is
+  not frontmost.
+- Fix ⌥Y and the Character Viewer inserting
+  a backslash instead of ¥ on non-JIS
+  keyboards. Restore ⌥+¥ sending ESC+\
+  (with Option=Esc+) on JIS keyboards.
+- Fix various crashes.
+- Fix wrong terminal size after exiting
+  fullscreen with multiple tabs.
+- Fix tmux window shrink when a pre-tmux
+  session is buried after attach.
+- Fix theme not updating when changed via
+  the Python API.
+- Fix legacy hotkey window profiles
+  defaulting to 100% width and height.
+- Fix NSTextInputClient to use consistent
+  absolute coordinates.
+- Work around a macOS SVG bug that dropped
+  <use> elements referencing IDs nested in
+  <g> wrappers inside <defs>.
+- Fix trigger color wells not prefilling
+  with the trigger’s actual colors.
+- Fix session tab color across appearance
+  changes.
+- Fix GPU renderer not respecting a custom
+  underline color for non-ASCII text.
+- Fix the color space of the block cursor
+  in Metal.
+- Fix wrong session used for GPU frame
+  capture.
+- Fix tmux italic rewriting not being
+  skipped when TERM matches *tmux*.
+- Fix cursor shape being reset to a block
+  instead of the profile default when
+  programs use the terminfo Se capability
+  (e.g. Neovim 0.12+).
+- Fix paste bracketing race that could
+  cause out-of-order chunks.
+- Fix posix_spawn failing with “disclaim
+  children” enabled.
+- Fix async_set_profile() failing with
+  REQUEST_MALFORMED on certain keys.
+- Fix tmux close dialog Cancel button not
+  preventing window close.
+- Fix shell integration not working with
+  Login Shell mode.
+- Fix Nerd Font Bundle not persisting
+  after restart.
+- Fix full-bleed drawing of unfilled
+  Powerline arrow glyphs.
+- Fix multipart Kitty image transmission
+  where independently-encoded padded
+  chunks did not decode.
+- Fix Kitty image transmission rejecting
+  paths containing /dev/.
+- Fix a “not clearing enough of character
+  images” rendering bug.
+- Fix adaptive framerate always overriding
+  the non-adaptive setting.
+- Fix status bar hidden behind the tab bar
+  in fullscreen.
+- Fix clearing a filter in a maximized
+  pane causing the window to shrink.
+- Fix divorced session drag-to-split
+  losing divorce state.
+- Fix a background-tab token execution
+  hang when tabs were not rescheduled.
+- Fix a per-window settings save bug.
+- Fix “dynamic” tag being added to dynamic
+  profiles when unwanted.
+- Migrate legacy dynamic profiles that
+  remained in user defaults.
+- Mark navigation now visits marks created
+  by triggers, not just prompt marks.
+- Fix tmux -CC alternate screen not showing
+  in apps like vim.
+- Fix memory leaks.
+- Prompt before opening a .iterm2arrangement
+  file that has been downloaded from the
+  internet, because arrangements can embed
+  profiles that run arbitrary commands.
+  Reported by @naxus-audit.
+- Fix “Save Current Window to File with
+  Contents…” producing a file that had no
+  contents.
+- Add dual-mode SGR colors so programs can
+  emit different fg/bg colors for light vs
+  dark mode, keeping scrollback readable
+  across appearance toggles. Use CSI
+  38:12:Rl:Gl:Bl:Rd:Gd:Bd m for 24-bit and
+  CSI 38:13:Nl:Nd m for 256-color (and 48
+  for backgrounds).
+- Extend dual-mode SGR to underline color
+  via CSI 58:12:Rl:Gl:Bl:Rd:Gd:Bd m and
+  CSI 58:13:Nl:Nd m.
+- Fix tab graphic matching when the
+  foreground binary is a versioned symlink
+  target (e.g., claude → 2.1.121) by also
+  consulting argv0 and the command line,
+  and by walking up to a non-shell ancestor
+  when the deepest foreground job has no
+  icon match.
+- Fix the session’s hostname variable
+  going stale when gethostname() at session
+  init returned a value (e.g., from a
+  transient DHCP-provided name) that
+  differed from the OSC RemoteHost the
+  shell later sent. Now a host change is
+  also detected when the new value differs
+  from the most recently pushed one, not
+  only from the interval tree’s last-line
+  host.
+- Add an advanced setting (off by default)
+  to set IT2_APP_PATH on new sessions, so
+  the “it2” CLI targets this iTerm2 build
+  via AppleScript when multiple iTerm2
+  builds are running. Useful for iTerm2
+  developers.
+- Fix memory leaks in the doubly-linked
+  list backing iTermCache and the Swift
+  LRUDictionary: every cached entry was
+  retained forever once the cache was
+  dropped. Also fix LRU bump leaving a
+  stale node reference, which corrupted
+  eviction order after a re-insert.
+- Fix paste-history scores using a
+  different epoch for freshly saved entries
+  vs. entries loaded from disk, which could
+  cause inconsistent ordering if score-
+  based sorting/eviction were used.
+- Request the badge authorization option
+  from UNUserNotificationCenter so the
+  dock-tile bell-count badge actually
+  renders and the “Badge application
+  icon” toggle appears in System
+  Settings › Notifications › iTerm.
+- Hide a top-right status indicator while
+  the mouse is hovering an inline button
+  it overlaps, so the button stays
+  reachable.
+- Honor IT2_APP_PATH in the iterm2
+  Python library’s AppleScript cookie
+  request, matching the “it2” CLI. Lets
+  external scripts targeting a -suite
+  dev build get a cookie from the right
+  iTerm2 instance instead of whichever
+  one macOS routes to. Issue 12850.
+- Honor IT2_SUITE when checking for
+  disable-automation-auth in the iterm2
+  Python library, so external scripts
+  targeting a -suite instance no longer
+  silently fail with 401 when stock
+  iTerm2 has “Always Allow All Apps”
+  enabled. Issue 12864.
+- Add advanced settings to customize
+  the window border color for focused
+  and unfocused windows (requires
+  “Show border around windows” with
+  no title bar).
+- Add a per-profile “Contextual Alternates”
+  toggle to the font picker’s options menu,
+  for fonts that expose calt. Lets you keep
+  calt-based coding ligatures on for one
+  profile while turning off surprising
+  substitutions (e.g. Monaspace rendering
+  [] as a checkbox) on another. Issue 12847.
+- Add an Erase All Settings and Data
+  button in Settings > General >
+  Settings. It offers to export first,
+  then erases preferences, profiles,
+  saved sessions, scripts, and the
+  contents of ~/.iterm2 and the app
+  support folder, then quits
+  immediately. Issue 12852.
+- Add keyboard shortcut bindings to
+  workgroup toolbar items. Navigation
+  cluster (back, forward, reload) and
+  the standalone reload toolbar item
+  each support a per-action shortcut,
+  with defaults of ctrl-cmd-left,
+  ctrl-cmd-right, and cmd-R. Shortcuts
+  take precedence over profile key
+  bindings and main menu items but
+  defer to global key bindings.
+- Add an optional per-peer shortcut
+  for jumping to a peer in a workgroup.
+  Configurable in the workgroup
+  session settings; when unset, the
+  built-in opt-shift-cmd-number
+  fallback still works. Custom peer
+  shortcuts route through the same
+  pipeline as workgroup toolbar
+  shortcuts, so they beat profile
+  bindings and the main menu but
+  defer to global key bindings.
+- Fix vertical window resize being
+  silently rejected when the window
+  sits partly below the screen.
+- Coalesce pending re-evaluations of
+  interpolated strings. Previously,
+  every dependency change enqueued a
+  fresh dispatch_async on the main
+  queue, so a tmux -CC pane title that
+  changed many times per second could
+  pile millions of blocks onto the main
+  queue and exhaust memory. Issue
+  12857.
+- Built-in browser: hide our message
+  handlers and skip the page-world
+  Notification, geolocation, console,
+  and audio bridges inside Cloudflare
+  Turnstile, hCaptcha, and similar
+  challenge frames so the captcha
+  probe sees an unmodified Safari
+  surface.
+- Built-in browser geolocation: stop
+  silently dropping requests when
+  permission is not granted; the page
+  now receives a PERMISSION_DENIED
+  error instead of hanging. Push the
+  decision to the calling frame so
+  navigator.permissions.query reflects
+  reality, and route success and error
+  callbacks back to the originating
+  iframe instead of always the main
+  frame. Stop persisting system-level
+  denials (Location Services off, OS
+  prompt declined) as per-site
+  decisions; only an explicit Allow
+  or Block in the per-site dialog is
+  remembered. The same fix applies to
+  notification permissions.
+- Honor the option-modified “Quit and
+  Close All Windows” menu item. iTerm2
+  now samples the option modifier at
+  quit time and erases saved state when
+  the user picked the option-modified
+  menu item, so it actually closes all
+  windows on the next launch. Issue
+  12852.
+- Clear tab status when a session’s
+  program terminates (broken pipe or
+  tmux detach) so stale status text
+  and indicators no longer linger.
+- Fix a stall after large output bursts
+  when the main thread was reading every
+  line of the burst to announce it for
+  VoiceOver. Two changes: the LineBlock
+  metadata provider no longer allocates
+  a heap block per inner-loop iteration
+  (which was churning through the objc
+  associated-objects table on release),
+  and the new-output announcement is
+  capped to the most recent 256 lines so
+  giant floods stop overwhelming
+  VoiceOver’s speech queue.
+- Fix Session Status toolbelt rows
+  appearing in arbitrary order when
+  the toolbelt is first opened. The
+  initial population now sorts by
+  priority like every other update
+  path.
+- Add a Diff workgroup session mode
+  that defers running the configured
+  command until there are staged or
+  unstaged changes to show. The Claude
+  Code workgroup’s Diff peer uses it,
+  so the peer no longer launches
+  difftool on a clean tree. Existing
+  Claude Code workgroups are migrated
+  on first launch so the Diff peer
+  picks up the new mode automatically;
+  flip it back to Regular in Settings
+  if you prefer the old behavior.
+- Add a urlHandlerCommand advanced
+  setting. When set, clicking a URL
+  (including OSC 8 hyperlinks and
+  auto-detected URLs) runs it as a
+  /bin/sh -c task with the URL in
+  \(url) and a background-open flag in
+  \(background), instead of handing the
+  URL to the system. Its output goes to
+  the Script Console. Lets you route
+  links through your own script, e.g. to
+  open in the background or pick a
+  browser mode. Empty by default, so
+  normal URL opening is unchanged.
+  Issue 12878.
+- Script Console no longer jumps to the
+  top when a new entry arrives. The
+  script list keeps its scroll position
+  and selection, and a filtered log view
+  stays put as new lines come in.
+- Fix black, unreadable text in the
+  Script Console Logs tab in dark mode.
+- Session Stats now shows the correct
+  keyboard shortcut for workgroup peers
+  that have a custom peer-switch
+  shortcut configured, instead of always
+  showing the built-in ⌥⇧⌘ number.
+- Jobs toolbelt and the status bar job
+  popover gain a “Notify on Termination”
+  right-click option. Monitored jobs show
+  a bell next to their name, and when the
+  chosen process exits a modal alert names
+  the job and process ID.
+- The badge no longer hides behind the
+  clippings panel. It now right-aligns
+  at the inner edge of the right-gutter
+  panel area in both the legacy and GPU
+  renderers.
+- AI text-typing tools (send_text in
+  orchestration mode and
+  insert_text_at_cursor in
+  session-bound mode) now accept a
+  small backslash-escape vocabulary so
+  the agent can drive control keys.
+  Recognized: \\ for a literal
+  backslash, \n, \r, \t, and \uXXXX
+  (four hex digits) for any Unicode
+  scalar. Set append_newline to false
+  for a standalone control key (e.g.
+  Escape) so iTerm2 doesn’t tack a
+  newline onto it. Lets the agent
+  send things
+  like  for Ctrl-D,  for
+  Ctrl-Z,  for Ctrl-L, and
+   for Escape.
+- Implement start_session for the
+  orchestrator. The agent can now
+  spawn a new window, tab, or
+  vertical split via the existing
+  start_session tool. Every spawn
+  prompts for user approval inline
+  in the chat, with the placement
+  and command (if any) shown in the
+  prompt. Returns the new session’s
+  synthetic workgroup_id so the
+  agent can immediately drive the
+  new session with the other tools.
+
+- Dropping a file onto the AI chat
+  text field now offers to attach it
+  when the current backend supports
+  that file type, instead of always
+  inserting its path as text. The
+  choice can be remembered.
+
+- AI chat can now attach images to
+  OpenAI models (vision), and audio
+  to OpenAI audio models on the
+  chat-completions API. Attachment
+  support is now decided by modality
+  rather than a per-format allow
+  list: if a backend can carry an
+  image, PDF, audio, or video block,
+  you can attach it, and an
+  unsupported file is reported by the
+  model instead of being silently
+  refused.
+- Announcements now become narrower
+  when the clippings panel is visible
+  so they no longer overlap it.
+- Python API: GetPromptResponse now
+  has excluded_subranges, listing the
+  cell regions inside the command
+  range that the shell marked as
+  non-input via OSC 133;A;k=s|c|r
+  (PS2 prefixes, right-prompt cells).
+  Available on responses to
+  async_get_last_prompt and
+  async_get_prompt_by_id. Always
+  empty on PromptMonitor.PROMPT
+  notifications — fetch via the RPC
+  after a COMMAND_END notification
+  for the populated value.
+- OSC 133 aid= now tracks nested
+  shell-integration sessions: a local
+  shell that runs ssh into a remote
+  shell with shell integration (or a
+  REPL that emits its own A/B/C/D)
+  no longer confuses iTerm2's mark
+  bookkeeping when the inner D's
+  arrive before the outer's. Each
+  mark carries the aid from its
+  A/B/C/D markers and a parentAid
+  pointing at the open mark it
+  nested under. D;aid=X closes the
+  matching command instead of the
+  topmost. If an outer command dies
+  (ssh tunnel drop, etc.) without
+  the inner ever closing, the outer
+  D cascade-closes every still-open
+  mark whose parentAid chain leads
+  back to it so no inner mark leaks
+  as still-running.
+- Disable automatic text substitutions
+  in the AI chat input field, so things
+  like -- no longer turn into an em
+  dash and smart quotes, autocorrect,
+  and text replacements stay off.
+- Fix a bug where installing the Claude
+  Code integration added its workgroup
+  triggers to the settings UI but never
+  wrote them back to user defaults, so
+  they vanished on the next launch.
+  Uninstalling had the mirror bug. Both
+  now flush the profile model to disk.
+- The default AI timeout is now 5 minutes
+  instead of 30 seconds, giving slow
+  models and long responses more time to
+  complete before giving up.
+- AI orchestration: opening a new session
+  with no command no longer prompts for
+  permission. When the agent supplies a
+  command, the auto-mode safety check
+  vets it and approves automatically if
+  it passes, only prompting otherwise.
+- The Claude Code integration setup
+  wizard is easier to navigate. Show
+  Toolbelt can now be skipped, the
+  default button reflects whether each
+  step is already done (Install when it
+  is not, Next/Close when it is), and
+  the Before You Start sheet has an
+  always-visible link to a web page
+  explaining the whole integration.
+
+- The orchestrator can now
+  watch sessions that report no
+  status (plain TUIs, coding agents
+  that don't emit status, bare
+  shells). register_watch falls back
+  to reading the screen with a quiet
+  background AI poller and delivers
+  the usual status_update when the
+  target state is reached, instead of
+  noisily polling in the chat. It
+  gives up after five minutes with a
+  watch_timed_out update.
+- The orchestrator's watchers
+  can now watch for a plain-English
+  condition (e.g. “emacs has exited”),
+  judged by reading the screen, in
+  addition to idle/working/waiting
+  states. Sessions also report whether
+  their status is announced by the
+  program or merely inferred, so the
+  agent picks the reliable watch form
+  instead of misreading a splash
+  screen as “idle”.
+- An orchestrator watcher waiting on a
+  session's reported status no longer
+  hangs forever if that status gets
+  stuck. After five minutes without the
+  expected change it falls back to
+  reading the screen to confirm the
+  real state.
+- Workgroup code-review/diff sessions no
+  longer hang on “waiting for changes” in
+  a checkout full of untracked files. The
+  per-file diff list now excludes
+  untracked files, so git rename detection
+  no longer hashes every untracked file in
+  the tree and the poll finishes within
+  the git timeout.
+- The Workgroups settings pane has a
+  help button in the bottom-right
+  corner that opens the Workgroups
+  documentation.
+- Next/Previous Pane (cmd-[ and cmd-])
+  work again after using Session >
+  Restart Session on a maximized pane.
+  Restart gives the session a new GUID,
+  and the maximized reading-order list
+  was keyed by GUID, so it could no
+  longer find the restarted pane. The
+  order now tracks panes in a way that
+  survives a restart and other in-place
+  session swaps.
+- Fix a bug where Fold All and Clear
+  Buffer left inline views (such as
+  imgcat images) behind. Folded views
+  are now hidden and restored on
+  unfold.
+- Fix a bug where the Jobs toolbelt was
+  empty after restoring a session until
+  the next job or shell prompt. Restored
+  sessions now populate it immediately.
+- The Session Status toolbelt tool has a
+  bell toggle in its bottom-left corner.
+  When armed, the next time any session’s
+  status (waiting/idle/busy) changes it
+  shows an alert and turns itself back
+  off. A brief flicker that returns to
+  the original status does not count.
+  Window > Notify on Status Change
+  (shift-cmd-X) toggles the same thing
+  from the menu.
+- The Cockpit window now shows each
+  session’s detail string under its
+  name when grouping by status.
+- The Cockpit window has a bell button
+  that arms notify-on-status-change for
+  the selected window or session, and
+  rows show a bell when armed. The
+  per-window watch is shared with the
+  Window menu and the Session Status
+  tool; per-session watches are new.
+  Notify-on-status-change now works
+  whether or not the Session Status
+  toolbelt tool is open.
+- Killing or reloading claude in a Claude
+  Code workgroup peer (such as the Code
+  Review or Diff peer) no longer exits the
+  whole workgroup. The Exit Workgroup
+  trigger has a new leader-only option, set
+  by the Claude Code installer, so only the
+  main session's claude ending tears the
+  workgroup down. Existing setups are
+  upgraded automatically.
+- Job Ended triggers now fire reliably
+  when a foreground job exits, including
+  when it exits together with the
+  session. Job started/ended detection is
+  now event driven (from the process
+  monitor) rather than inferred from the
+  periodic title poll, which could miss a
+  job's termination.
+- The notify-on-status-change alert has a
+  Reveal button that jumps to the session
+  whose status changed. A window watch
+  now covers every session in the window,
+  including ones created after it was
+  armed.
+- Workgroups are now tracked by a stable
+  identifier, so a workgroup whose main
+  session had already closed can still
+  be exited and torn down instead of
+  leaking and stranding its remaining
+  sessions invisibly.
+- Session lookup now also searches
+  buried sessions' workgroup peer ports
+  and the workgroup registry, so a peer
+  whose only visible sibling was buried
+  can still be found and revealed, e.g.
+  from the Session Status tool.
+- A Session Status row whose session
+  cannot be found renders blank instead
+  of showing a recycled row's content.
+- Switching between workgroup peers no
+  longer wipes a session's entry from
+  the Session Status tool. The per-tab
+  status rollup was borrowing the
+  session's identity and clearing it
+  when the visible peer changed.
+- Sort JSON keys in the Responses API
+  request so OpenAI prompt caching gets
+  a stable prefix and reliably hits the
+  cache.
+- Terminal-initiated downloads (it2dl)
+  now ask whether to save to the
+  Downloads folder or to choose a
+  destination. The choice is
+  silenceable, so you can make it
+  always save to Downloads or always
+  show a save panel. Issue 12897.
+- Fix a bug where a pane could restore
+  in your home directory instead of its
+  previous working directory after
+  restarting iTerm2. Sessions that used
+  automatic profile switching saved a
+  value that could not be read back,
+  which silently dropped the rest of
+  the restored session state.

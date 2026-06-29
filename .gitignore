@@ -64,4 +64,24 @@ hudsucker-ffi/lib/
 iTermBrowserPlugin/iTermBrowserPlugin.xcodeproj/project.xcworkspace/xcuserdata/gnachman.xcuserdatad/
 
 # Claude Code local settings
-.claude/*.local.json
+.claude/
+EastAsianWidth.txt
+emoji-data.txt
+
+# Unicode data cache for generate_nscharacterset.py
+tools/.unicode_cache/
+emoji-sequences.txt
+
+# Local issue-investigation scratch directories (screenshots, copied
+# prefs, notes); named after the issue number. gitignore globs can't
+# express "one or more digits", so cover 1-6 digit names explicitly.
+# Leading / anchors to the repo root; trailing / matches directories only.
+/[0-9]/
+/[0-9][0-9]/
+/[0-9][0-9][0-9]/
+/[0-9][0-9][0-9][0-9]/
+/[0-9][0-9][0-9][0-9][0-9]/
+/[0-9][0-9][0-9][0-9][0-9][0-9]/
+
+# Live AI harness config (API keys) written by tools/run_ai_live.sh; never commit.
+.iterm2-ai-live.json

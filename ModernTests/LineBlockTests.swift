@@ -3928,4 +3928,112 @@ class LineBlockIncrementalMergeTests: XCTestCase {
         XCTAssertEqual(fullLine.stringValue.count, expectedContent.count,
                        "Content length mismatch")
     }
+
+    // MARK: - Generation Restoration
+
+    /// Creates a minimal block dictionary with the given generation key present or absent.
+    private func makeBlockDictionary(guid: String = "TEST-GUID",
+                                     generation: NSNumber? = nil) -> [AnyHashable: Any] {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        let line = makeLineString("hello", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line, width: 80))
+        var dict = block.dictionary() as [AnyHashable: Any]
+        dict["GUID"] = guid
+        if let generation {
+            dict["Generation"] = generation
+        } else {
+            dict.removeValue(forKey: "Generation")
+        }
+        return dict
+    }
+
+    func testRestoredBlockUsesGenerationFromDictionary() {
+        let dict = makeBlockDictionary(generation: 42)
+
+        guard let block = LineBlock(dictionary: dict, absoluteBlockNumber: 0) else {
+            return XCTFail("Failed to create block from dictionary")
+        }
+
+        XCTAssertEqual(block.generation, 42,
+                       "Block should use the generation stored in its dictionary")
+    }
+
+    func testRestoredBlockUsesFallbackGenerationWhenDictionaryLacksIt() {
+        let dict = makeBlockDictionary(generation: nil)
+
+        guard let block = LineBlock(dictionary: dict,
+                                    absoluteBlockNumber: 0,
+                                    fallbackGeneration: 99) else {
+            return XCTFail("Failed to create block from dictionary")
+        }
+
+        XCTAssertEqual(block.generation, 99,
+                       "Block should use the fallback generation when dictionary lacks one")
+    }
+
+    func testRestoredBlockPrefersOwnGenerationOverFallback() {
+        let dict = makeBlockDictionary(generation: 42)
+
+        guard let block = LineBlock(dictionary: dict,
+                                    absoluteBlockNumber: 0,
+                                    fallbackGeneration: 99) else {
+            return XCTFail("Failed to create block from dictionary")
+        }
+
+        XCTAssertEqual(block.generation, 42,
+                       "Block should prefer its own saved generation over the fallback")
+    }
+
+    func testRestoredBlockAllocatesNewGenerationWhenNothingAvailable() {
+        let dict = makeBlockDictionary(generation: nil)
+
+        guard let block = LineBlock(dictionary: dict,
+                                    absoluteBlockNumber: 0,
+                                    fallbackGeneration: nil) else {
+            return XCTFail("Failed to create block from dictionary")
+        }
+
+        XCTAssertGreaterThan(block.generation, 0,
+                             "Block should allocate a fresh generation when no saved or fallback value exists")
+    }
+
+    func testCowCopyPreservesGeneration() {
+        let block = LineBlock(rawBufferSize: 1024, absoluteBlockNumber: 0)
+        let line = makeLineString("hello", eol: EOL_HARD)
+        XCTAssertTrue(block.appendLineString(line, width: 80))
+        let gen = block.generation
+
+        let copy = block.cowCopy()
+
+        XCTAssertEqual(copy.generation, gen,
+                       "cowCopy should preserve the original block's generation")
+    }
+
+    func testImplicitDictionaryValueInjectsGeneration() {
+        // Build a graph record with a child that has a non-zero generation.
+        let child = iTermEncoderGraphRecord.withPODs(
+            ["data": "value"],
+            graphs: [],
+            generation: 500,
+            key: "MyKey",
+            identifier: "",
+            rowid: nil
+        )
+        let parent = iTermEncoderGraphRecord.withPODs(
+            nil,
+            graphs: [child],
+            generation: 1,
+            key: "parent",
+            identifier: "",
+            rowid: nil
+        )
+
+        guard let dict = parent.propertyListValue as? NSDictionary else {
+            return XCTFail("propertyListValue should return a dictionary")
+        }
+
+        let genKey = "MyKey" + iTermEncoderGraphRecordGenerationKeySuffix
+        XCTAssertEqual(dict[genKey] as? Int, 500,
+                       "implicitDictionaryValue should inject the child record's generation")
+    }
 }

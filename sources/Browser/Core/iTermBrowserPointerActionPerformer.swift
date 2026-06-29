@@ -161,4 +161,14 @@ class iTermBrowserPointerActionPerformer: NSObject, PointerControllerDelegate {
     func copyLinkAddress(with event: NSEvent) {
         delegate?.actionPerformingCopyLinkAddress(atPointInWindow: event.locationInWindow)
     }
+
+    func copyOrPaste(with event: NSEvent) {
+        Task {
+            if await delegate?.actionPerformingHasSelection() == true {
+                delegate?.actionPerformingCopyToClipboard()
+            } else if NSString.fromPasteboard()?.isEmpty == false {
+                delegate?.actionPerformingPasteFromClipboard()
+            }
+        }
+    }
 }

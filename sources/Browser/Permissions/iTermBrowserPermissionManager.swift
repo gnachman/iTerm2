@@ -29,25 +29,34 @@ extension iTermBrowserPermissionManager {
         if let existingDecision = await getPermissionDecision(for: permissionType, origin: origin) {
             return existingDecision
         }
-        
-        // Handle permission request based on type
+
+        // Handle permission request based on type. The handler returns
+        // (decision, persist). persist is false when the decision came
+        // from a system-level state (Location Services off, OS prompt
+        // declined, etc.) rather than from the user explicitly choosing
+        // Allow or Block in our per-site dialog. Persisting a system
+        // denial would lock the site out forever even after the user
+        // re-enables the system permission.
         let decision: BrowserPermissionDecision
+        let persist: Bool
         switch permissionType {
         case .notification:
-            decision = await handleNotificationPermissionRequest(origin: origin)
+            (decision, persist) = await handleNotificationPermissionRequest(origin: origin)
         case .geolocation:
-            decision = await handleGeolocationPermissionRequest(origin: origin)
+            (decision, persist) = await handleGeolocationPermissionRequest(origin: origin)
         case .camera:
-            decision = await handleMediaPermissionRequest(camera: true, microphone: false, origin: origin)
+            (decision, persist) = await handleMediaPermissionRequest(camera: true, microphone: false, origin: origin)
         case .microphone:
-            decision = await handleMediaPermissionRequest(camera: false, microphone: true, origin: origin)
+            (decision, persist) = await handleMediaPermissionRequest(camera: false, microphone: true, origin: origin)
         case .cameraAndMicrophone:
-            decision = await handleMediaPermissionRequest(camera: true, microphone: true, origin: origin)
+            (decision, persist) = await handleMediaPermissionRequest(camera: true, microphone: true, origin: origin)
         case .audioPlayback:
             it_fatalError("Client should handle it themselves")
         }
-        
-        await savePermissionDecision(origin: origin, permissionType: permissionType, decision: decision)
+
+        if persist {
+            await savePermissionDecision(origin: origin, permissionType: permissionType, decision: decision)
+        }
         return decision
     }
     
@@ -140,71 +149,70 @@ extension iTermBrowserPermissionManager {
 
     // MARK: - Geolocation-Specific Implementation
 
-    private func handleMediaPermissionRequest(camera: Bool, microphone: Bool, origin: String) async -> BrowserPermissionDecision {
+    private func handleMediaPermissionRequest(camera: Bool, microphone: Bool, origin: String) async -> (BrowserPermissionDecision, Bool) {
+        let decision: BrowserPermissionDecision
         if camera && !microphone {
-            return await showPermissionDialog(for: .camera, origin: origin)
+            decision = await showPermissionDialog(for: .camera, origin: origin)
         } else if microphone && !camera {
-            return await showPermissionDialog(for: .microphone, origin: origin)
+            decision = await showPermissionDialog(for: .microphone, origin: origin)
         } else if camera && microphone {
-            return await showPermissionDialog(for: .cameraAndMicrophone, origin: origin)
+            decision = await showPermissionDialog(for: .cameraAndMicrophone, origin: origin)
         } else {
             it_fatalError()
         }
+        return (decision, true)
     }
 
-    private func handleGeolocationPermissionRequest(origin: String) async -> BrowserPermissionDecision {
+    private func handleGeolocationPermissionRequest(origin: String) async -> (BrowserPermissionDecision, Bool) {
         guard let handler = iTermBrowserGeolocationHandler.instance(for: user) else {
-            return .denied
+            return (.denied, false)
         }
         switch handler.systemAuthorizationStatus {
         case .denied:
-            return .denied
+            return (.denied, false)
         case .notDetermined:
             let granted = await handler.requestAuthorization(for: origin)
             if !granted {
-                return .denied
+                return (.denied, false)
             }
         case .systemAuthorized:
             break
         }
-        // Show website permission dialog
-        return await showPermissionDialog(for: .geolocation, origin: origin)
+        let decision = await showPermissionDialog(for: .geolocation, origin: origin)
+        return (decision, true)
     }
 
     // MARK: - Notification-Specific Implementation
 
-    private func handleNotificationPermissionRequest(origin: String) async -> BrowserPermissionDecision {
+    private func handleNotificationPermissionRequest(origin: String) async -> (BrowserPermissionDecision, Bool) {
         // First check if system notifications are available
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
-        
+
         switch settings.authorizationStatus {
         case .denied:
-            // System notifications are denied, so we can't grant web notifications
-            return .denied
-            
+            return (.denied, false)
+
         case .notDetermined:
-            // Request system permission first
             do {
                 let granted = try await center.requestAuthorization(options: [.alert, .badge, .sound])
                 if !granted {
-                    return .denied
+                    return (.denied, false)
                 }
             } catch {
                 DLog("Failed to request system notification permission: \(error)")
-                return .denied
+                return (.denied, false)
             }
-            
+
         case .authorized, .provisional, .ephemeral:
-            // System permission is available, continue to website permission
             break
-            
+
         @unknown default:
-            return .denied
+            return (.denied, false)
         }
-        
-        // Show website permission dialog
-        return await showPermissionDialog(for: .notification, origin: origin)
+
+        let decision = await showPermissionDialog(for: .notification, origin: origin)
+        return (decision, true)
     }
     
     private func showPermissionDialog(for permissionType: BrowserPermissionType, origin: String) async -> BrowserPermissionDecision {

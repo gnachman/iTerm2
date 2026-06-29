@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/generativelanguage.googleapis.com\/v1beta\/models\/gemini-3.1-pro-preview:generateContent?key=<SECRET>\ncontent-type: application\/json\n\n{\"contents\":[{\"parts\":[{\"text\":\"My favorite color is chartreuse. Reply OK.\"}],\"role\":\"user\"},{\"parts\":[{\"text\":\"OK.\"}],\"role\":\"model\"},{\"parts\":[{\"text\":\"What color did I just tell you was my favorite? Answer with one word.\"}],\"role\":\"user\"}]}",
+  "key" : "dcbc35aa14759620aa1a6661f6097a9f05cb127d6bbdc3fcb36185572633b6e4",
+  "response" : {
+    "data" : "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"Chartreuse.\",\n            \"thoughtSignature\": \"EpcFCpQFAQw51senCh5H\/FyZ\/Qmvk2zKhTAcIKXC07+kL7\/HEMss6dml+wboeBQgsFH8KyZfuQHaatyxIjt8cbH\/ZZ8YM3+JdA1iJcOp+5WPWnzJsRI+yUPuZLyu2ek2J1liMiS8z8a5qdTw33IIQk16JuJh1X2STtwOZLFBz2ZXv7nU07lo7L7DSaRZslE7I+Bv5AO6hkNcPhUavt7zHn19fgePUoEQFTMFX31Z\/yRmxY03l8cfI0fAjJ4l47ukJnXfEL9f0JcdVcGlqGy0v09YqE1MA8AtP08+fHYN9Rh9SaaONh0LiztME0Sr\/coy7e24TNGHCQTxpUQoPdVDD\/Ktin+E4p3h8pXQMnEbAArEHeGXW1aabReg2qjSkkII590qA1TGpcxAe507IqTSzGwx6I44fuOiRQMEg1kLI38jg7iC7L5nDMLnoNImxpRJplRKtwMa\/BnQcKXssfBuCKNrft8J2VDma\/868vaPcqwx6SLUGGGqYhs2pau7u7FTpMR3XpvV11Qlj5srKTwbpSJIOSBEEhALsEtIxhkYwlAVPXHwl7S8xjPPn9JcEKk6QOAbXX0hGRh0NTsqgj9+UmkdntQuZAFa79tsfZX668jDSJFec0dWbmt0HO9dyGp0YlwErW58FVWGiOOTej+DNnu9pvlZzNn7LQz+Kct7nVIyd5nBvC9ghx7STXTdXktRMkGOIkIQdStInKKFyAP5v4xUyiNBRBsA6siTXI7XoLH7z26nQCGhOd0XfJy5oAzmx+550nQdpOHBkUNGo4ZQtGrKHsrw4olae+QY7P\/X5oohXCTq37ovnb7SRboy+C9U3ZJE8iBhJTG3katzCjNKPWiNiblGz4sjWwpipudAhBCobpQiuCKaxwPn\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 31,\n    \"candidatesTokenCount\": 3,\n    \"totalTokenCount\": 190,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 31\n      }\n    ],\n    \"thoughtsTokenCount\": 156,\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.1-pro-preview\",\n  \"responseId\": \"je8larTdBZvUz7IPj53RkAo\"\n}\n",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

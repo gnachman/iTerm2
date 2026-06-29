@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":\"Please run the diagnostic command.\",\"role\":\"user\"},{\"content\":[{\"id\":\"toolu_test_chat_reload_orphan\",\"input\":{},\"name\":\"execute_command\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"Darwin host 25.4.0 arm64\",\"tool_use_id\":\"toolu_test_chat_reload_orphan\",\"type\":\"tool_result\"}],\"role\":\"user\"},{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"In one short sentence, summarize what you learned from the previous command output.\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-sonnet-4-0\",\"stream\":true,\"temperature\":0,\"tool_choice\":{\"disable_parallel_tool_use\":true,\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Run a shell command (stub for chat-reload tests).\",\"input_schema\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"},\"name\":\"execute_command\"}]}",
+  "key" : "7303a7d3dbd909bab204880892a2aaaccce98d1af8986e7aa5b0c98586d54c10",
+  "response" : {
+    "data" : "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-0\"},\"request_id\":\"req_011CcFbUV6ur6itoP9GAxN23\"}",
+    "error" : "HTTP request failed with status 404."
+  },
+  "streamChunks" : [
+    "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-0\"},\"request_id\":\"req_011CcFbUV6ur6itoP9GAxN23\"}"
+  ],
+  "streaming" : true
+}

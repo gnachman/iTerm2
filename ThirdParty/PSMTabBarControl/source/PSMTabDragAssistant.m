@@ -395,6 +395,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                     switch (control.tabLocation) {
                         case PSMTab_TopTab:
                         case PSMTab_LeftTab:
+                        case PSMTab_RightTab:
                             drawPoint.y = viewImage.size.height - self.draggedCell.frame.size.height;
                             break;
                         case PSMTab_BottomTab:
@@ -421,10 +422,21 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                 [viewImage unlockFocus];
             }
 
-            if (self.sourceTabBar.tabLocation == PSMTab_LeftTab) {
+            if (self.sourceTabBar.tabLocation == PSMTab_LeftTab || self.sourceTabBar.tabLocation == PSMTab_RightTab) {
                 _dragWindowOffset.height += self.height;
             } else if (styleMask & NSWindowStyleMaskFullSizeContentView) {
                _dragWindowOffset.height += self.draggedCell.frame.size.height;
+            }
+
+            // For right-side tab bars the dragged tab cell is drawn near the
+            // right edge of viewImage (because the new window will also have
+            // its tab bar on the right). Shift the new window left by that
+            // distance so the tab cell sits under the mouse instead of the
+            // snapshot. topLeftPointOfDragViewWindowForMouseLocation: subtracts
+            // _dragWindowOffset.width from the mouse position, so we add here.
+            if (self.sourceTabBar.tabLocation == PSMTab_RightTab) {
+                NSImage *tabImage = [[_dragTabWindow contentView] image];
+                _dragWindowOffset.width += (viewImage.size.width - tabImage.size.width);
             }
 
             _dragViewWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:[self draggedCell]
@@ -711,6 +723,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             break;
         }
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_TopTab: {
             NSPoint topLeft = control.window.frame.origin;
             topLeft.y += control.window.frame.size.height;
@@ -791,6 +804,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             break;
         }
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
         case PSMTab_TopTab: {
             NSPoint topLeft = origin;
             [window setFrameTopLeftPoint:topLeft];

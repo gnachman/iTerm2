@@ -1,6 +1,7 @@
 {
   "atom": "#7CB342",
   "bash": "#FFF",
+  "claude_code": "#CC7C5E",
   "curl": "#9CCC65",
   "docker": "#0EB7ED",
   "docker-compose": "#0EB7ED",

@@ -43,9 +43,13 @@ eval_cmd=\''eval "$(echo "$0")"'\'
 SSH=${SSH:-/usr/bin/ssh}
 if [[ "$OSTYPE" == "darwin"* ]]; then
   TOKEN=""
-  for SOCKET in ~/.config/iterm2/sockets/secrets ~/.iterm2/sockets/secrets ~/.iterm2-1/sockets/secrets
+  SOCKETS=(~/.config/iterm2/sockets/secrets ~/.iterm2/sockets/secrets ~/.iterm2-1/sockets/secrets)
+  if [ -n "${IT2_SUITE:-}" ]; then
+      SOCKETS=("$HOME/.config/$IT2_SUITE/sockets/secrets" "${SOCKETS[@]}")
+  fi
+  for SOCKET in "${SOCKETS[@]}"
   do
-      [ -z "$TOKEN" ] && TOKEN=$(/usr/bin/nc -U $SOCKET || true)
+      [ -z "$TOKEN" ] && TOKEN=$(/usr/bin/nc -U "$SOCKET" || true)
   done
 else
   TOKEN="none"
@@ -152,7 +156,7 @@ send_conductor='printf "%s '"$intro"'"'
 # Run a command on the remote host that instructs iTerm2 to send a script, then reads the script and executes it.
 # I tried many ways to concatenate s and l and this is the only one that works on both Ubuntu 18 and Ubuntu 20.
 esc=$(printf "\033")
-sanitized="stty -echo; $send_conductor"';s="";IFS=""; while read -r l;do [ "$l" = "-- BEGIN CONDUCTOR --" ]&&break; done; while read -r l; do [ "$l" = "'$esc'" ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; s=$(echo "$s" | { command -v base64 > /dev/null 2> /dev/null && command base64 -d || { command -v b64encode > /dev/null 2> /dev/null && command fold -w 76 | command b64decode -r; } || echo "echo base64 not available on remote host"; }); eval "$s"'
+sanitized="stty -echo -isig; $send_conductor"';s="";IFS=""; while read -r l;do [ "$l" = "-- BEGIN CONDUCTOR --" ]&&break; done; while read -r l; do [ "$l" = "'$esc'" ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; s=$(echo "$s" | { command -v base64 > /dev/null 2> /dev/null && command base64 -d || { command -v b64encode > /dev/null 2> /dev/null && command fold -w 76 | command b64decode -r; } || echo "echo base64 not available on remote host"; }); eval "$s"'
 
 # If ssh gets a signal, let it2ssh keep running.
 set +e
@@ -167,6 +171,14 @@ sh \
 "$eval_cmd" \
 \'"$sanitized"\'
 
+
+stty_settings=$(command stty -g)
+cleanup() {
+  command stty "$stty_settings"
+}
+trap "cleanup" EXIT
+command stty -isig -echo
+
 print_osc
 printf "1337;EndSSH=%s" "${UNIQUEID}"
 print_st
@@ -175,5 +187,7 @@ print_st
 # the command line. Read until EndSSH causes a blank line to be sent.
 while read l; do
     [ -z "$l" ] && break
+    [ "$l" = "$(command printf '\003')" ] && break
 done
 
+cleanup

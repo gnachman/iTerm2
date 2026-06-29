@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"max_tokens\":127979,\"messages\":[{\"content\":\"Quote the magic phrase exactly as written.\\n<iterm2:attachment file=\\\"magic.txt\\\" type=\\\"text\\\/plain\\\">\\nThe magic phrase is pinecone-42.\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"deepseek-v4-flash\",\"stream\":false,\"temperature\":0,\"thinking\":{\"type\":\"disabled\"}}",
+  "key" : "220198f33534628eb2a88526c67d772c53bc08dfba5f765ac7b723190648a80c",
+  "response" : {
+    "data" : "{\"id\":\"06ed6299-a9e2-4f98-9529-20bbb45139fe\",\"object\":\"chat.completion\",\"created\":1780870725,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The magic phrase is pinecone-42.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":46,\"completion_tokens\":9,\"total_tokens\":55,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":46},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

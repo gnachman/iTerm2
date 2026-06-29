@@ -1,21 +1,27 @@
 [submodule "submodules/NMSSH"]
 	path = submodules/NMSSH
 	url = https://github.com/gnachman/NMSSH.git
+	ignore = dirty
 [submodule "submodules/CoreParse"]
 	path = submodules/CoreParse
 	url = https://github.com/gnachman/CoreParse
+	ignore = dirty
 [submodule "submodules/Sparkle"]
 	path = submodules/Sparkle
 	url = https://github.com/gnachman/Sparkle.git
+	ignore = dirty
 [submodule "submodules/libsixel"]
 	path = submodules/libsixel
 	url = https://github.com/saitoha/libsixel
+	ignore = dirty
 [submodule "submodules/openssl"]
 	path = submodules/openssl
 	url = https://github.com/gnachman/openssl
+	ignore = dirty
 [submodule "submodules/libssh2"]
 	path = submodules/libssh2
 	url = https://github.com/libssh2/libssh2
+	ignore = dirty
 [submodule "submodules/fmdb"]
 	path = submodules/fmdb
 	url = https://github.com/ccgus/fmdb
@@ -49,3 +55,9 @@
 [submodule "submodules/SFSymbolEnum"]
 	path = submodules/SFSymbolEnum
 	url = https://github.com/gnachman/SFSymbolEnum
+[submodule "Companion/CompanionCore/Sources/CNoise/vendor"]
+	path = Companion/CompanionCore/Sources/CNoise/vendor
+	url = https://github.com/rweather/noise-c.git
+[submodule "submodules/iterm2-companion-relay"]
+	path = submodules/iterm2-companion-relay
+	url = https://github.com/gnachman/iterm2-companion-relay

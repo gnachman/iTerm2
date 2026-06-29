@@ -1,0 +1,32 @@
+# New Emoji in Unicode 17.0
+# Test file for verifying Unicode 17 emoji rendering in iTerm2
+
+## Basic Emoji (7 new characters)
+
+U+1F6D8  🛘  landslide
+U+1FA8A  🪊  trombone
+U+1FA8E  🪎  treasure chest
+U+1FAC8  🫈  hairy creature
+U+1FACD  🫍  orca
+U+1FAEA  🫪  distorted face
+U+1FAEF  🫯  fight cloud
+
+## New Skin Tone Modifier Sequences
+
+### People with bunny ears (skin tones)
+👯🏻  light skin tone
+👯🏼  medium-light skin tone
+👯🏽  medium skin tone
+👯🏾  medium-dark skin tone
+👯🏿  dark skin tone
+
+### People wrestling (skin tones)
+🤼🏻  light skin tone
+🤼🏼  medium-light skin tone
+🤼🏽  medium skin tone
+🤼🏾  medium-dark skin tone
+🤼🏿  dark skin tone
+
+## All new basic emoji on one line
+
+🛘 🪊 🪎 🫈 🫍 🫪 🫯

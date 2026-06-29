@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.openai.com\/v1\/responses\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"input\":[{\"content\":\"Please run the diagnostic command.\",\"role\":\"user\",\"type\":\"message\"},{\"call_id\":\"call_negctl\",\"output\":\"Darwin host 25.4.0 arm64\",\"type\":\"function_call_output\"},{\"content\":\"In one short sentence, summarize what you learned from the previous command output.\",\"role\":\"user\",\"type\":\"message\"}],\"max_output_tokens\":127816,\"model\":\"gpt-5.5\",\"stream\":false,\"tool_choice\":\"auto\",\"tools\":[{\"description\":\"Run a shell command (stub for chat-reload tests).\",\"name\":\"execute_command\",\"parameters\":{\"additionalProperties\":false,\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"},\"strict\":true,\"type\":\"function\"}]}",
+  "key" : "e09bcfbfa54ebb20ec4406c0068cd75d5585ffdd8d09ed5c9fd86ea6699c5177",
+  "response" : {
+    "data" : "{\n  \"error\": {\n    \"message\": \"No tool call found for function call output with call_id call_negctl.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"input\",\n    \"code\": null\n  }\n}",
+    "error" : "HTTP request failed with status 400."
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

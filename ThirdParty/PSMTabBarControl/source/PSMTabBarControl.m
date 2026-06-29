@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "NSBezierPath+iTerm.h"
 #import "PSMTabBarCell.h"
 #import "PSMOverflowPopUpButton.h"
 #import "PSMRolloverButton.h"
@@ -19,6 +20,7 @@
 #import "PTYTask.h"
 #import "NSColor+PSM.h"
 #import "NSWindow+PSM.h"
+#import <QuartzCore/QuartzCore.h>
 #import <os/signpost.h>
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
@@ -37,9 +39,10 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 NSString *const PSMTabDragDidEndNotification = @"PSMTabDragDidEndNotification";
 NSString *const PSMTabDragDidBeginNotification = @"PSMTabDragDidBeginNotification";
 const CGFloat kSPMTabBarCellInternalXMargin = 6;
+const CGFloat PSMTabBarProgressBarHeight = 2;
 
 const CGFloat kPSMTabBarCellPadding = 4;
-const CGFloat kPSMTabBarCellIconPadding = 0;
+const CGFloat kPSMTabBarCellIconPadding = 4;
 // fixed size objects
 const CGFloat kPSMMinimumTitleWidth = 30;
 const CGFloat kPSMTabBarIndicatorWidth = 16.0;
@@ -140,6 +143,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 @end
 
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol, NSMenuItemValidation, NSViewToolTipOwner>
+- (void)removeTabProgressBarForCell:(PSMTabBarCell *)cell;
 @end
 
 @implementation PSMTabBarControl {
@@ -177,6 +181,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     BOOL _needsUpdateAnimate;
     BOOL _needsUpdate;
     NSInteger _preDragSelectedTabIndex;  // or NSNotFound
+    NSMapTable<PSMTabBarCell *, NSView *> *_tabProgressBars;
     NSMutableArray<PSMToolTip *> *_tooltips;
     NSInteger _toolTipCoalescing;
 }
@@ -251,6 +256,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             _style = [[PSMYosemiteTabStyle alloc] init];
         }
         _preDragSelectedTabIndex = NSNotFound;
+        _tabProgressBars = [[NSMapTable strongToStrongObjectsMapTable] retain];
 
         // the overflow button/menu
         [self setupButtons];
@@ -376,6 +382,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         [cell release];
     }
 
+    for (NSView *progressBar in _tabProgressBars.objectEnumerator) {
+        [progressBar removeFromSuperview];
+    }
+    [_tabProgressBars release];
     [_overflowPopUpButton release];
     [_cells release];
     [_tabView release];
@@ -574,6 +584,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             break;
 
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             [self setOrientation:PSMTabBarVerticalOrientation];
             break;
     }
@@ -597,6 +608,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             return (point.y > self.bounds.size.height - edgeDragHeight);
 
         case PSMTab_LeftTab:
+        case PSMTab_RightTab:
             break;
     }
     return NO;
@@ -715,9 +727,94 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [cell removeCloseButtonTrackingRectFrom:self];
     [cell removeCellTrackingRectFrom:self];
     [self removeAllToolTips];
+    [self removeTabProgressBarForCell:cell];
 
     // pull from collection
     [_cells removeObject:cell];
+}
+
+- (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell {
+    return NO;
+}
+
+- (NSView *)customProgressBarViewForTabCell:(PSMTabBarCell *)cell {
+    return nil;
+}
+
+- (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell {
+}
+
+- (void)removeTabProgressBarForCell:(PSMTabBarCell *)cell {
+    NSView *progressBar = [_tabProgressBars objectForKey:cell];
+    if (!progressBar) {
+        return;
+    }
+    [progressBar removeFromSuperview];
+    [_tabProgressBars removeObjectForKey:cell];
+}
+
+- (void)syncTabProgressBars {
+    NSMutableSet<PSMTabBarCell *> *visibleCells = [NSMutableSet set];
+    for (PSMTabBarCell *cell in _cells) {
+        if (![self shouldShowCustomProgressBarForTabCell:cell]) {
+            [self removeTabProgressBarForCell:cell];
+            continue;
+        }
+        [visibleCells addObject:cell];
+        NSView *progressBar = [_tabProgressBars objectForKey:cell];
+        if (!progressBar) {
+            progressBar = [self customProgressBarViewForTabCell:cell];
+            if (!progressBar) {
+                continue;
+            }
+            [_tabProgressBars setObject:progressBar forKey:cell];
+        }
+        progressBar.frame = [self.style progressBarRectForTabCell:cell];
+        [self configureCustomProgressBarView:progressBar forTabCell:cell];
+        if ([self.style respondsToSelector:@selector(progressBarClipPathForTabCell:)]) {
+            NSBezierPath *clipPath = [self.style progressBarClipPathForTabCell:cell];
+            if (clipPath) {
+                // Convert the clip path from the tab bar's flipped coordinate
+                // system to the progress bar layer's non-flipped coordinate system.
+                const NSRect frame = progressBar.frame;
+                NSAffineTransformStruct s = {
+                    .m11 = 1,
+                    .m12 = 0,
+                    .m21 = 0,
+                    .m22 = -1,
+                    .tX = -frame.origin.x,
+                    .tY = frame.size.height + frame.origin.y
+                };
+                NSAffineTransform *transform = [[NSAffineTransform alloc] init];
+                [transform setTransformStruct:s];
+                NSBezierPath *localPath = [transform transformBezierPath:clipPath];
+                CAShapeLayer *mask = [CAShapeLayer layer];
+                mask.path = [localPath iterm_CGPath];
+                progressBar.wantsLayer = YES;
+                progressBar.layer.mask = mask;
+                [transform release];
+            } else {
+                progressBar.layer.mask = nil;
+            }
+        } else {
+            progressBar.layer.mask = nil;
+        }
+        progressBar.hidden = NO;
+        if (progressBar.superview != self) {
+            [self addSubview:progressBar];
+        }
+        cell.indicator.hidden = YES;
+        cell.indicator.animate = NO;
+        [cell.indicator removeFromSuperview];
+    }
+
+    for (PSMTabBarCell *cell in _tabProgressBars.keyEnumerator.allObjects) {
+        if (![visibleCells containsObject:cell]) {
+            NSView *progressBar = [_tabProgressBars objectForKey:cell];
+            [progressBar removeFromSuperview];
+            [_tabProgressBars removeObjectForKey:cell];
+        }
+    }
 }
 
 - (void)dragDidFinish {
@@ -1066,6 +1163,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [self update:NO];
 }
 
+- (void)setFrame:(NSRect)frame {
+    [super setFrame:frame];
+    [self syncTabProgressBars];
+}
+
 - (void)update:(BOOL)animate {
     // This method handles all of the cell layout, and is called when something changes to require
     // the refresh.  This method is not called during drag and drop. See the PSMTabDragAssistant's
@@ -1198,6 +1300,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         [self finishUpdateWithRegularWidths:newOrigins widthsWithOverflow:newOrigins];
     }
 
+    [self syncTabProgressBars];
     [self setNeedsDisplay:YES];
 }
 
@@ -1401,6 +1504,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (void)removeCell:(PSMTabBarCell *)cell {
     [cell removeCloseButtonTrackingRectFrom:self];
     [cell removeCellTrackingRectFrom:self];
+    [self removeTabProgressBarForCell:cell];
     [[self cells] removeObject:cell];
 }
 
@@ -1411,7 +1515,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
     for (i = 0; i < cellCount; i++) {
         id cell = [_cells objectAtIndex:i];
-        [[NSNotificationCenter defaultCenter] removeObserver:cell];
         [cell removeCloseButtonTrackingRectFrom:self];
         [cell removeCellTrackingRectFrom:self];
     }
@@ -1720,7 +1823,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSPoint mousePt = [self convertPoint:[theEvent locationInWindow] fromView:nil];
     NSRect frame = [self frame];
 
-    if ([self orientation] == PSMTabBarVerticalOrientation && [self allowsResizing] && partnerView && (mousePt.x > frame.size.width - 3)) {
+    const BOOL mouseIsOverVerticalResizeHandle = (_tabLocation == PSMTab_RightTab) ? (mousePt.x < 3) : (mousePt.x > frame.size.width - 3);
+    if ([self orientation] == PSMTabBarVerticalOrientation && [self allowsResizing] && partnerView && mouseIsOverVerticalResizeHandle) {
         _resizing = YES;
     }
 
@@ -1772,16 +1876,28 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (_resizing) {
         NSRect frame = [self frame];
         float resizeAmount = [theEvent deltaX];
-        if ((currentPoint.x > frame.size.width && resizeAmount > 0) || (currentPoint.x < frame.size.width && resizeAmount < 0)) {
+        if (_tabLocation == PSMTab_RightTab) {
+            resizeAmount = -resizeAmount;
+        }
+        const BOOL shouldResize = (_tabLocation == PSMTab_RightTab) ?
+            ((currentPoint.x < 0 && resizeAmount > 0) || (currentPoint.x > 0 && resizeAmount < 0)) :
+            ((currentPoint.x > frame.size.width && resizeAmount > 0) || (currentPoint.x < frame.size.width && resizeAmount < 0));
+        if (shouldResize) {
             [[NSCursor resizeLeftRightCursor] push];
 
             NSRect partnerFrame = [partnerView frame];
 
             //do some bounds checking
             if ((frame.size.width + resizeAmount > [self cellMinWidth]) && (frame.size.width + resizeAmount < [self cellMaxWidth])) {
-                frame.size.width += resizeAmount;
-                partnerFrame.size.width -= resizeAmount;
-                partnerFrame.origin.x += resizeAmount;
+                if (_tabLocation == PSMTab_RightTab) {
+                    frame.origin.x -= resizeAmount;
+                    frame.size.width += resizeAmount;
+                    partnerFrame.size.width -= resizeAmount;
+                } else {
+                    frame.size.width += resizeAmount;
+                    partnerFrame.size.width -= resizeAmount;
+                    partnerFrame.origin.x += resizeAmount;
+                }
 
                 [self setFrame:frame];
                 [partnerView setFrame:partnerFrame];
@@ -1932,7 +2048,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [super resetCursorRects];
     if ([self orientation] == PSMTabBarVerticalOrientation) {
         NSRect frame = [self frame];
-        [self addCursorRect:NSMakeRect(frame.size.width - 2, 0, 2, frame.size.height) cursor:[NSCursor resizeLeftRightCursor]];
+        const CGFloat cursorX = (_tabLocation == PSMTab_RightTab) ? 0 : frame.size.width - 2;
+        [self addCursorRect:NSMakeRect(cursorX, 0, 2, frame.size.height) cursor:[NSCursor resizeLeftRightCursor]];
     } else {
         const CGFloat edgeDragHeight = self.style.edgeDragHeight;
         if (edgeDragHeight == 0) {
@@ -1952,6 +2069,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 break;
 
             case PSMTab_LeftTab:
+            case PSMTab_RightTab:
                 break;
         }
     }
@@ -2521,6 +2639,12 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (void)setProgress:(PSMProgress)progress forTabWithIdentifier:(id)identifier {
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
     cell.progress = progress;
+    [self syncTabProgressBars];
+}
+
+- (BOOL)isInOverflowMenuForTabWithIdentifier:(id)identifier {
+    PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    return cell.isInOverflowMenu;
 }
 
 - (void)graphicDidChangeForTabWithIdentifier:(id)identifier {
@@ -2833,4 +2957,3 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 @end
-

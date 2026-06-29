@@ -1219,6 +1219,22 @@ message GetPromptResponse {
   optional uint32 exit_status = 9;
 
   optional string unique_prompt_id = 10;
+
+  // Cell regions inside command_range that are NOT part of the user-typed
+  // command: PS2 prefixes on continuation rows and right-prompt text the
+  // shell emitted between an OSC 133;A;k=s|c|r and its matching 133;B.
+  // Half-open: `start` inclusive, `end` exclusive. Selection / share /
+  // AI consumers should subtract these from command_range to get the
+  // actual user input.
+  //
+  // Populated only on responses to an explicit GetPromptRequest. When a
+  // PromptNotification fires (at OSC 133;B), no non-INITIAL pairs can
+  // have been recorded yet, so the list would be empty AND misleading:
+  // a script reading it then would assume there are no excluded
+  // subranges, ever. Scripts that want the field should subscribe to
+  // COMMAND_END notifications and re-fetch the prompt by id once they
+  // fire.
+  repeated CoordRange excluded_subranges = 11;
 }
 
 message ListPromptsRequest {
@@ -1582,6 +1598,11 @@ message CreateTabRequest {
 
   // Modifies the profile to customize its behavior just for this session.
   repeated ProfileProperty custom_profile_properties = 5;
+
+  // If false, create the tab in the background: do not select it and do not
+  // bring its window to the front. Unset or true preserves the default
+  // behavior (select the new tab and order its window front).
+  optional bool select_tab = 6;
 }
 
 message CreateTabResponse {

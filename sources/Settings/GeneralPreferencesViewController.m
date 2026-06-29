@@ -1,0 +1,1976 @@
+//
+//  GeneralPreferencesViewController.m
+//  iTerm
+//
+//  Created by George Nachman on 4/6/14.
+//
+//
+
+#import "GeneralPreferencesViewController.h"
+#import "NSBundle+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSTextField+iTerm.h"
+#import "NSWorkspace+iTerm.h"
+#import "PasteboardHistory.h"
+#import "RegexKitLite.h"
+#import "WindowArrangements.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAPIHelper.h"
+#import "iTermAdvancedGPUSettingsViewController.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermBuriedSessions.h"
+#import "iTermHotKeyController.h"
+#import "iTermNotificationCenter.h"
+#import "iTermPreferenceDidChangeNotification.h"
+#import "iTermRemotePreferences.h"
+#import "iTermScriptsMenuController.h"
+#import "iTermShellHistoryController.h"
+#import "iTermUserDefaults.h"
+#import "iTermUserDefaultsObserver.h"
+#import "iTermWarning.h"
+#import <SSKeychain/SSKeychain.h>
+
+@interface GeneralPreferencesViewController () <NSTableViewDataSource, CompetentTableViewDelegate, NSTextFieldDelegate>
+@end
+
+enum {
+    kUseSystemWindowRestorationSettingTag = 0,
+    kOpenDefaultWindowArrangementTag = 1,
+    kDontOpenAnyWindowsTag= 2
+};
+
+@implementation GeneralPreferencesViewController {
+    BOOL _awoken;
+    // open bookmarks when iterm starts
+    IBOutlet NSButton *_openBookmark;
+    IBOutlet NSButton *_advancedGPUPrefsButton;
+
+    // Open saved window arrangement at startup
+    IBOutlet NSPopUpButton *_openWindowsAtStartup;
+    IBOutlet NSTextField *_openWindowsAtStartupLabel;
+    IBOutlet NSButton *_alwaysOpenWindowAtStartup;
+    IBOutlet NSTextField *_alwaysOpenLegend;
+    IBOutlet NSButton *_restoreWindowsToSameSpaces;
+
+    IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
+
+    // Quit when all windows are closed
+    IBOutlet NSButton *_quitWhenAllWindowsClosed;
+
+    // Confirm closing multiple sessions
+    IBOutlet id _confirmClosingMultipleSessions;
+
+    // Warn when quitting
+    IBOutlet id _promptOnQuit;
+    IBOutlet NSButton *_evenIfThereAreNoWindows;
+
+    // Instant replay memory usage.
+    IBOutlet NSTextField *_irMemory;
+    IBOutlet NSTextField *_irMemoryLabel;
+
+    // Save copy paste history
+    IBOutlet NSButton *_savePasteHistory;
+
+    // Use GPU?
+    IBOutlet NSButton *_gpuRendering;
+    IBOutlet NSButton *_advancedGPU;
+    iTermAdvancedGPUSettingsWindowController *_advancedGPUWindowController;
+
+    IBOutlet NSButton *_maximizeThroughput;
+    IBOutlet NSButton *_enableAPI;
+    IBOutlet NSPopUpButton *_apiPermission;
+
+    // Enable bonjour
+    IBOutlet NSButton *_enableBonjour;
+
+    IBOutlet NSButton *_notifyOnlyCriticalShellIntegrationUpdates;
+
+    // Check for updates automatically
+    IBOutlet NSButton *_checkUpdate;
+
+    // Prompt for test-release updates
+    IBOutlet NSButton *_checkTestRelease;
+
+    // Warning that nightly builds can't update to beta/release
+    IBOutlet NSTextField *_nightlyBuildNotice;
+
+    // Load prefs from custom folder
+    IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
+    IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
+    IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
+    IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
+    IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
+    IBOutlet NSPopUpButton *_saveChanges;  // Save settings to folder when
+    IBOutlet NSTextField *_saveChangesLabel;
+
+    IBOutlet NSButton *_useCustomScriptsFolder;
+    IBOutlet NSTextField *_customScriptsFolder;
+    IBOutlet NSImageView *_customScriptsFolderWarning;
+    IBOutlet NSButton *_browseCustomScriptsFolder;
+
+    // Copy to clipboard on selection
+    IBOutlet NSButton *_selectionCopiesText;
+
+    // Copy includes trailing newline
+    IBOutlet NSButton *_copyLastNewline;
+
+    // Triple click selects full, wrapped lines.
+    IBOutlet NSButton *_tripleClickSelectsFullLines;
+
+    // Double click perform smart selection
+    IBOutlet NSButton *_doubleClickPerformsSmartSelection;
+
+    // Allow clipboard access by terminal applications
+    IBOutlet NSButton *_allowClipboardAccessFromTerminal;
+
+    // Characters considered part of word
+    IBOutlet NSTextField *_wordChars;
+    IBOutlet NSTextField *_wordCharsRegex;
+    IBOutlet NSTextField *_wordCharsLabel;
+    IBOutlet NSPopUpButton *_wordMode;
+
+    // Smart window placement
+    IBOutlet NSButton *_smartPlacement;
+    IBOutlet NSButton *_useAutoSaveFrames;
+    IBOutlet NSButton *_rememberPositionOnly;
+    IBOutlet NSButton *_defaultPositioning;
+    IBOutlet NSView *_placementContainer;
+
+    // Adjust window size when changing font size
+    IBOutlet NSButton *_adjustWindowForFontSizeChange;
+
+    // Zoom vertically only
+    IBOutlet NSButton *_maxVertically;
+
+    IBOutlet NSButton *_separateWindowTitlePerTab;
+
+    // Lion-style fullscreen
+    IBOutlet NSButton *_lionStyleFullscreen;
+
+    // Open tmux windows in [windows, tabs]
+    IBOutlet NSButton *_openTmuxWindowsAsTabsInAttachingWindow;
+    IBOutlet NSTextField *_whenAttachingTmuxLabel;
+    IBOutlet NSPopUpButton *_openUnrecognizedTmuxWindowsIn;
+
+    // Hide the tmux client session
+    IBOutlet NSButton *_autoHideTmuxClientSession;
+    
+    IBOutlet NSButton *_useTmuxProfile;
+    IBOutlet NSButton *_useTmuxStatusBar;
+
+    IBOutlet NSTextField *_tmuxPauseModeAgeLimit;
+    IBOutlet NSButton *_unpauseTmuxAutomatically;
+    IBOutlet NSButton *_tmuxWarnBeforePausing;
+
+    IBOutlet NSButton *_syncTmuxClipboard;
+
+    IBOutlet NSTabView *_tabView;
+
+    IBOutlet NSButton *_enterCopyModeAutomatically;
+    IBOutlet NSButton *_warningButton;
+    iTermUserDefaultsObserver *_observer;
+
+    IBOutlet NSButton *_clickToSelectCommand;
+    IBOutlet NSButton *_wrapDroppedFilenamesInQuotesWhenPasting;
+
+    IBOutlet NSPopUpButton *_allowsSendingClipboardContents;
+    IBOutlet NSTextField *_allowsSendingClipboardContentsLabel;
+
+    IBOutlet NSButton *_disableConfirmationOnShutdown;
+
+    IBOutlet NSButton *_openAIAPIKey;
+    IBOutlet NSTextField *_openAIAPIKeyLabel;
+
+    IBOutlet NSPopUpButton *_promptSelector;
+    IBOutlet NSTextView *_aiPrompt;
+    IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks \(ai.prompt)
+
+    BOOL _customScriptsFolderDidChange;
+
+    IBOutlet NSComboBox *_aiModel;
+    IBOutlet NSTextField *_aiTokenLimit;
+    IBOutlet NSTextField *_aiResponseTokenLimit;
+    IBOutlet NSTextField *_aiModelLabel;
+    IBOutlet NSTextField *_aiTokenLimitLabel;
+    IBOutlet NSButton *_resetAIPrompt;
+    IBOutlet NSTextField *_aiTimeout;
+
+    IBOutlet NSTextField *_aiPluginLabel;
+    IBOutlet NSButton *_enableAI;
+    IBOutlet NSTextField *_pluginStatus;
+    IBOutlet NSButton *_installPluginButton;
+    BOOL _pluginOK;
+
+    IBOutlet NSTextField *_customAIEndpoint;
+    IBOutlet NSPopUpButton *_aiAPI;
+
+    IBOutlet NSButton *_aiFeatureHostedCodeInterpeter;
+    IBOutlet NSButton *_aiFeatureHostedFileSearch;
+    IBOutlet NSButton *_aiFeatureHostedWebSearch;
+    IBOutlet NSButton *_aiFeatureFunctionCalling;
+    IBOutlet NSButton *_aiFeatureStreamingResponses;
+    IBOutlet NSPopUpButton *_vectorStore;
+
+    IBOutlet NSButton *_useRecommendedModel;
+    IBOutlet NSView *_manualAISettings;
+    NSWindow *_manualAIConfigurationSheet;
+    IBOutlet NSButton *_manualAIConfiguration;
+    IBOutlet NSPopUpButton *_aiVendor;
+    IBOutlet NSButton *_aiSafetyCheck;
+
+    IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
+    IBOutlet NSPopUpButton *_checkTerminalStateButton;
+    IBOutlet NSTextField *_runCommandsLabel; // Run Commands
+    IBOutlet NSPopUpButton *_runCommandsButton;
+    IBOutlet NSTextField *_viewHistoryLabel; // View History
+    IBOutlet NSPopUpButton *_viewHistoryButton;
+    IBOutlet NSTextField *_writeToClipboardLabel; // Write to the Clipboard
+    IBOutlet NSPopUpButton *_writeToClipboardButton;
+    IBOutlet NSTextField *_typeForYouLabel; // Type for You
+    IBOutlet NSPopUpButton *_typeForYouButton;
+    IBOutlet NSTextField *_viewManpagesLabel; // View Manpages
+    IBOutlet NSPopUpButton *_viewManpagesButton;
+    IBOutlet NSTextField *_writeToFilesystemLabel; // View Manpages
+    IBOutlet NSPopUpButton *_writeToFilesystemButton;
+    IBOutlet NSTextField *_actInWebBrowserLabel; // Act in web browser
+    IBOutlet NSPopUpButton *_actInWebBrowserButton;
+    IBOutlet NSButton *_aiCompletions;
+
+    IBOutlet NSButton *_enableRTL;
+    IBOutlet NSButton *_sshIntegrationForURLs;
+
+    NSString *_lastModel;
+
+    // Custom headers section (wired up in the XIB).
+    IBOutlet NSButton *_aiCustomHeadersEnabled;
+    IBOutlet NSTableView *_aiCustomHeadersTableView;
+    IBOutlet NSSegmentedControl *_aiCustomHeadersAddRemove;  // segment 0 = add, segment 1 = remove
+    NSMutableArray<NSMutableDictionary *> *_customHeaders;
+}
+
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(savedArrangementChanged:)
+                                                     name:kSavedArrangementDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(didRevertPythonAuthenticationMethod:)
+                                                     name:iTermAPIHelperDidDetectChangeOfPythonAuthMethodNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updateAlwaysOpenLegend)
+                                                     name:iTermSessionBuriedStateChangeTabNotification
+                                                   object:nil];
+        _observer = [[iTermUserDefaultsObserver alloc] init];
+        __weak __typeof(self) weakSelf = self;
+        [_observer observeKey:@"NSQuitAlwaysKeepsWindows" block:^{
+            [weakSelf updateEnabledState];
+        }];
+
+        static iTermUserDefaultsObserver *gRemotePrefsObserver;
+        gRemotePrefsObserver = [[iTermUserDefaultsObserver alloc] init];
+        [gRemotePrefsObserver observeKey:kPreferenceKeyCustomFolder block:^{
+            DLog(@"Remote prefs changed from\n%@", [NSThread callStackSymbols]);
+        }];
+        [gRemotePrefsObserver observeKey:kPreferenceKeyLoadPrefsFromCustomFolder block:^{
+            [weakSelf loadPrefsFromCustomFolderDidChangeByUI:NO];
+        }];
+    }
+    return self;
+}
+
+- (void)awakeFromNib {
+    if (_awoken) {
+        // View-based NSTableView lazily unarchives each NSTableCellView prototype
+        // from an inline nib using File’s Owner as the nib owner, which causes a
+        // second -awakeFromNib on this controller. Idempotency is required.
+        return;
+    }
+    _awoken = YES;
+
+    [self setupCustomHeadersSection];
+    PreferenceInfo *info;
+
+    __weak __typeof(self) weakSelf = self;
+    [self defineControl:_openBookmark
+                    key:kPreferenceKeyOpenBookmark
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_openWindowsAtStartup
+                           key:kPreferenceKeyOpenArrangementAtStartup
+                   relatedView:_openWindowsAtStartupLabel
+                          type:kPreferenceInfoTypeCheckbox
+                settingChanged:^(id sender) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        switch ([strongSelf->_openWindowsAtStartup selectedTag]) {
+            case kUseSystemWindowRestorationSettingTag:
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                break;
+
+            case kOpenDefaultWindowArrangementTag:
+                [strongSelf setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                break;
+
+            case kDontOpenAnyWindowsTag:
+                [strongSelf setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                [strongSelf setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                break;
+        }
+        [strongSelf updateEnabledState];
+    } update:^BOOL{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return NO;
+        }
+        if ([strongSelf boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+            [strongSelf->_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
+        } else if ([WindowArrangements count] &&
+                   [self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+            [strongSelf->_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
+        } else {
+            [strongSelf->_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
+        }
+        [strongSelf updateEnabledState];
+        return YES;
+    }];
+    info.hasDefaultValue = ^BOOL{
+        return [weakSelf boolForKey:kPreferenceKeyOpenArrangementAtStartup] == NO && [weakSelf boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] == NO;
+    };
+    [self updateNonDefaultIndicatorVisibleForInfo:info];
+
+    [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
+
+    [self defineControl:_restoreWindowsToSameSpaces
+                    key:kPreferenceKeyRestoreWindowsToSameSpaces
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_alwaysOpenWindowAtStartup
+                    key:kPreferenceKeyAlwaysOpenWindowAtStartup
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self updateAlwaysOpenLegend];
+
+    [self defineControl:_quitWhenAllWindowsClosed
+                    key:kPreferenceKeyQuitWhenAllWindowsClosed
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_confirmClosingMultipleSessions
+                    key:kPreferenceKeyConfirmClosingMultipleTabs
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_promptOnQuit
+                           key:kPreferenceKeyPromptOnQuit
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        [weakSelf updateEnabledState];
+    };
+
+    [self defineControl:_disableConfirmationOnShutdown
+                    key:kPreferenceKeyNeverBlockSystemShutdown
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_evenIfThereAreNoWindows
+                    key:kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_irMemory
+                           key:kPreferenceKeyInstantReplayMemoryMegabytes
+                   displayName:@"Instant Replay memory usage limit"
+                          type:kPreferenceInfoTypeIntegerTextField];
+    info.range = NSMakeRange(0, 1000);
+
+    info = [self defineControl:_savePasteHistory
+                           key:kPreferenceKeySavePasteAndCommandHistory
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        [[iTermShellHistoryController sharedInstance] backingStoreTypeDidChange];
+    };
+
+    info = [self defineControl:_gpuRendering
+                           key:kPreferenceKeyUseMetal
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [weakSelf updateAdvancedGPUEnabled];
+    };
+
+    info = [self defineControl:_enableAPI
+                           key:kPreferenceKeyEnableAPIServer
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.customSettingChangedHandler = ^(id sender) {
+        [weakSelf enableAPISettingDidChange];
+    };
+    [iTermPreferenceDidChangeNotification subscribe:self
+                                              block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+        if ([notification.key isEqualToString:kPreferenceKeyEnableAPIServer]) {
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                strongSelf->_enableAPI.state = NSControlStateValueOn;
+            }
+        }
+    }];
+
+    info = [self defineControl:_apiPermission
+                           key:kPreferenceKeyAPIAuthentication
+                   displayName:@"Authentication method for Python API"
+                          type:kPreferenceInfoTypePopup];
+    info.syntheticGetter = ^id{
+        return @([iTermAPIHelper requireApplescriptAuth] ? 0 : 1);
+    };
+    info.syntheticSetter = ^(NSNumber *newValue) {
+        const BOOL useApplescript = (newValue.intValue == 0);
+        [iTermAPIHelper setRequireApplescriptAuth:useApplescript
+                                           window:self.view.window];
+        [weakSelf updateAPIEnabledState];
+    };
+    info.shouldBeEnabled = ^BOOL{
+        return [weakSelf boolForKey:kPreferenceKeyEnableAPIServer];
+    };
+
+    _advancedGPUWindowController = [[iTermAdvancedGPUSettingsWindowController alloc] initWithWindowNibName:@"iTermAdvancedGPUSettingsWindowController"];
+    [_advancedGPUWindowController.window orderOut:nil];
+    _advancedGPUWindowController.viewController.disableWhenDisconnected.target = self;
+    _advancedGPUWindowController.viewController.disableWhenDisconnected.action = @selector(settingChanged:);
+    info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.disableWhenDisconnected
+                                       key:kPreferenceKeyDisableMetalWhenUnplugged
+                                      type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+
+    _advancedGPUWindowController.viewController.disableInLowPowerMode.target = self;
+    _advancedGPUWindowController.viewController.disableInLowPowerMode.action = @selector(settingChanged:);
+    info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.disableInLowPowerMode
+                                       key:kPreferenceKeyDisableInLowPowerMode
+                                      type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+
+    _advancedGPUWindowController.viewController.preferIntegratedGPU.target = self;
+    _advancedGPUWindowController.viewController.preferIntegratedGPU.action = @selector(settingChanged:);
+    info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.preferIntegratedGPU
+                                       key:kPreferenceKeyPreferIntegratedGPU
+                                      type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+    info.onChange = ^{
+        [iTermWarning showWarningWithTitle:@"You must restart iTerm2 for this change to take effect."
+                                   actions:@[ @"OK" ]
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                    window:nil];
+    };
+
+
+    [self addViewToSearchIndex:_advancedGPUPrefsButton
+                   displayName:@"Advanced GPU settings"
+                       phrases:@[ _advancedGPUWindowController.viewController.disableWhenDisconnected.title,
+                                  _advancedGPUWindowController.viewController.disableInLowPowerMode.title,
+                                  _advancedGPUWindowController.viewController.preferIntegratedGPU.title ]
+                           key:nil];
+
+    info = [self defineControl:_maximizeThroughput
+                           key:kPreferenceKeyMaximizeThroughput
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+
+    [self defineControl:_enableBonjour
+                    key:kPreferenceKeyAddBonjourHostsToProfiles
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_notifyOnlyCriticalShellIntegrationUpdates
+                    key:kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_checkUpdate
+                    key:kPreferenceKeyCheckForUpdatesAutomatically
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    if ([NSBundle it_isNightlyBuild]) {
+        _checkTestRelease.enabled = NO;
+    } else {
+        _nightlyBuildNotice.hidden = YES;
+    }
+    [self defineControl:_checkTestRelease
+                    key:kPreferenceKeyCheckForTestReleases
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    // ---------------------------------------------------------------------------------------------
+    info = [self defineControl:_useCustomScriptsFolder
+                           key:kPreferenceKeyUseCustomScriptsFolder
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        [self useCustomScriptsFolderDidChange];
+        [weakSelf customScriptsFolderDidChange];
+        [weakSelf postCustomScriptsFolderDidChangeNotificationIfNeeded];
+    };
+    info.observer = ^() { [self updateCustomScriptsFolderViews]; };
+
+    info = [self defineControl:_customScriptsFolder
+                           key:kPreferenceKeyCustomScriptsFolder
+                   displayName:@"Custom folder for Python API scripts"
+                          type:kPreferenceInfoTypeStringTextField];
+    info.shouldBeEnabled = ^BOOL() {
+        return [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
+    };
+    info.onChange = ^() {
+        [self updateCustomScriptsFolderViews];
+        [weakSelf customScriptsFolderDidChange];
+    };
+    info.controlTextDidEndEditing = ^(NSNotification *notif) {
+        // Post here instead of onChange since a patial path, like "/", would kick off a very slow
+        // recursive search for scripts.
+        [weakSelf postCustomScriptsFolderDidChangeNotificationIfNeeded];
+    };
+    [self updateCustomScriptsFolderViews];
+
+    // ---------------------------------------------------------------------------------------------
+    info = [self defineControl:_loadPrefsFromCustomFolder
+                           key:kPreferenceKeyLoadPrefsFromCustomFolder
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() { [self loadPrefsFromCustomFolderDidChangeByUI:YES]; };
+    info.observer = ^() { [self updateRemotePrefsViews]; };
+
+    info = [self defineControl:_saveChanges
+                           key:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection
+                   relatedView:_saveChangesLabel
+                          type:kPreferenceInfoTypePopup];
+    // Called when user interacts with control
+    info.customSettingChangedHandler = ^(id sender) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [[iTermUserDefaults userDefaults] setBool:YES forKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection];
+        [[iTermUserDefaults userDefaults] setObject:@([strongSelf->_saveChanges selectedTag])
+                                                  forKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection];
+    };
+
+    // Called on programmatic change (e.g., selecting a different profile. Returns YES to avoid
+    // normal code path.
+    info.onUpdate = ^BOOL () {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return NO;
+        }
+        NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+        NSUInteger tag = iTermPreferenceSavePrefsModeNever;
+        if ([userDefaults boolForKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection]) {
+            tag = [userDefaults integerForKey:kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection];
+        }
+        [strongSelf->_saveChanges selectItemWithTag:tag];
+        return YES;
+    };
+    info.onUpdate();
+
+    // ---------------------------------------------------------------------------------------------
+    info = [self defineUnsearchableControl:_prefsCustomFolder
+                                       key:kPreferenceKeyCustomFolder
+                                      type:kPreferenceInfoTypeStringTextField];
+    info.shouldBeEnabled = ^BOOL() {
+        return [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    };
+    info.onChange = ^() {
+        DLog(@"prefsCustomFolder did change");
+        [iTermRemotePreferences sharedInstance].customFolderChanged = YES;
+        [self updateRemotePrefsViews];
+    };
+    [self updateRemotePrefsViews];
+
+    // ---------------------------------------------------------------------------------------------
+    [self defineControl:_selectionCopiesText
+                    key:kPreferenceKeySelectionCopiesText
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_copyLastNewline
+                    key:kPreferenceKeyCopyLastNewline
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_allowClipboardAccessFromTerminal
+                    key:kPreferenceKeyAllowClipboardAccessFromTerminal
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_wordMode
+                            key:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode
+                    relatedView:nil
+                           type:kPreferenceInfoTypePopup];
+    info.observer = ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        BOOL isRegexMode = ([strongSelf unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode] == iTermSelectionWordModeRegularExpression);
+        // Show/hide the appropriate text field based on mode
+        strongSelf->_wordChars.hidden = isRegexMode;
+        strongSelf->_wordCharsRegex.hidden = !isRegexMode;
+    };
+
+    [self defineControl:_wordChars
+                    key:kPreferenceKeyCharactersConsideredPartOfAWordForSelection
+            relatedView:_wordCharsLabel
+                   type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_wordCharsRegex
+                    key:kPreferenceKeyWordSelectionRegexPattern
+            relatedView:_wordCharsLabel
+                   type:kPreferenceInfoTypeStringTextField];
+
+    // Set initial visibility based on current mode
+    {
+        BOOL isRegexMode = ([self unsignedIntegerForKey:kPreferenceKeyCharactersConsideredPartOfAWordForSelectionMode] == iTermSelectionWordModeRegularExpression);
+        _wordChars.hidden = isRegexMode;
+        _wordCharsRegex.hidden = !isRegexMode;
+    }
+
+    [self defineControl:_tripleClickSelectsFullLines
+                    key:kPreferenceKeyTripleClickSelectsFullWrappedLines
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_doubleClickPerformsSmartSelection
+                           key:kPreferenceKeyDoubleClickPerformsSmartSelection
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        BOOL enabled = ![strongSelf boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection];
+        strongSelf->_wordChars.enabled = enabled;
+        strongSelf->_wordCharsRegex.enabled = enabled;
+        strongSelf->_wordCharsLabel.labelEnabled = enabled;
+        strongSelf->_wordMode.enabled = enabled;
+    };
+    [self defineControl:_enterCopyModeAutomatically
+                    key:kPreferenceKeyEnterCopyModeAutomatically
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_clickToSelectCommand
+                    key:kPreferenceKeyClickToSelectCommand
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_wrapDroppedFilenamesInQuotesWhenPasting
+                    key:kPreferenceKeyWrapDroppedFilenamesInQuotesWhenPasting
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_placementContainer
+                           key:kPreferenceKeyWindowPlacement
+                   displayName:@"New window placement"
+                          type:kPreferenceInfoTypeRadioButton];
+
+    [self defineControl:_adjustWindowForFontSizeChange
+                    key:kPreferenceKeyAdjustWindowForFontSizeChange
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_maxVertically
+                    key:kPreferenceKeyMaximizeVerticallyOnly
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_lionStyleFullscreen
+                    key:kPreferenceKeyLionStyleFullscreen
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_separateWindowTitlePerTab
+                    key:kPreferenceKeySeparateWindowTitlePerTab
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_openTmuxWindowsAsTabsInAttachingWindow
+                           key:kPreferenceKeyOpenTmuxWindowsAsTabsInAttachingWindow
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.syntheticGetter = ^id{
+        const iTermOpenTmuxWindowsMode mode = (iTermOpenTmuxWindowsMode)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyOpenTmuxWindowsIn];
+        return @(mode == kOpenTmuxWindowsAsNativeTabsInExistingWindow);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if ([NSNumber castFrom:newValue].boolValue) {
+            [iTermPreferences setUnsignedInteger:kOpenTmuxWindowsAsNativeTabsInExistingWindow
+                                          forKey:kPreferenceKeyOpenTmuxWindowsIn];
+        } else if (strongSelf) {
+            [iTermPreferences setUnsignedInteger:strongSelf->_openUnrecognizedTmuxWindowsIn.selectedTag
+                                          forKey:kPreferenceKeyOpenTmuxWindowsIn];
+        }
+    };
+    info = [self defineControl:_openUnrecognizedTmuxWindowsIn
+                           key:kPreferenceKeyOpenUnrecognizedTmuxWindowsIn
+                   relatedView:_whenAttachingTmuxLabel
+                          type:kPreferenceInfoTypePopup];
+    info.syntheticGetter = ^id{
+        const iTermOpenTmuxWindowsMode mode = (iTermOpenTmuxWindowsMode)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyOpenTmuxWindowsIn];
+        if (mode == kOpenTmuxWindowsAsNativeTabsInExistingWindow) {
+            return @(kOpenTmuxWindowsAsNativeTabsInNewWindow);
+        }
+        return @(mode);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        [iTermPreferences setUnsignedInteger:[NSNumber castFrom:newValue].unsignedIntegerValue
+                                      forKey:kPreferenceKeyOpenTmuxWindowsIn];
+    };
+    info.shouldBeEnabled = ^BOOL{
+        const iTermOpenTmuxWindowsMode mode = (iTermOpenTmuxWindowsMode)[iTermPreferences unsignedIntegerForKey:kPreferenceKeyOpenTmuxWindowsIn];
+        return (mode != kOpenTmuxWindowsAsNativeTabsInExistingWindow);
+    };
+    // Depend on the user defaults key, not the phony one, since it uses a User Defaults Observer to cause updates.
+    [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyOpenTmuxWindowsIn
+                                     controller:self];
+    // This is how it was done before the great refactoring, but I don't see why it's needed.
+    info.onChange = ^() { [weakSelf postRefreshNotification]; };
+    [self updateEnabledStateForInfo:info];
+
+    [self defineControl:_autoHideTmuxClientSession
+                    key:kPreferenceKeyAutoHideTmuxClientSession
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_useTmuxProfile
+                    key:kPreferenceKeyUseTmuxProfile
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_useTmuxStatusBar
+                    key:kPreferenceKeyUseTmuxStatusBar
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_tmuxPauseModeAgeLimit
+                    key:kPreferenceKeyTmuxPauseModeAgeLimit
+            displayName:@"Pause a tmux pane if it would take more than this many seconds to catch up."
+                   type:kPreferenceInfoTypeUnsignedIntegerTextField];
+    [self defineControl:_unpauseTmuxAutomatically
+                    key:kPreferenceKeyTmuxUnpauseAutomatically
+            displayName:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_tmuxWarnBeforePausing
+                    key:kPreferenceKeyTmuxWarnBeforePausing
+            displayName:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_syncTmuxClipboard
+                    key:kPreferenceKeyTmuxSyncClipboard
+            displayName:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_allowsSendingClipboardContents
+                           key:kPreferenceKeyPhonyAllowSendingClipboardContents
+                   relatedView:_allowsSendingClipboardContentsLabel
+                          type:kPreferenceInfoTypePopup];
+    info.syntheticGetter = ^id{
+        return @([iTermPasteboardReporter configuration]);
+    };
+    info.syntheticSetter = ^(NSNumber *newValue) {
+        [iTermPasteboardReporter setConfiguration:newValue.intValue];
+    };
+    PreferenceInfo *allowSendingClipboardInfo = info;
+
+    /// -------
+
+    [self addViewToSearchIndex:_openAIAPIKey
+                   displayName:@"Set API Key"
+                       phrases:@[ @"Set API key for AI" ]
+                           key:kPreferenceKeyAIAPIKey];
+
+    info = [self defineControl:_aiPrompt
+                           key:kPreferenceKeyAIPromptPlaceholder
+                   relatedView:_promptSelector
+                          type:kPreferenceInfoTypeStringTextView];
+    info.observer = ^{
+        [weakSelf updateAIPromptWarning];
+    };
+    info.syntheticGetter = ^id{
+        NSString *key = [weakSelf keyForCurrentlySelectedAIPrompt];
+        return [iTermPreferences stringForKey:key];
+    };
+    info.syntheticSetter = ^(id newValue) {
+        NSString *key = [weakSelf keyForCurrentlySelectedAIPrompt];
+        [iTermPreferences setWithoutSideEffectsObject:newValue forKey:key];
+    };
+
+    [AIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context, NSString *url) {
+        [_aiModel addItemWithObjectValue:name];
+    }];
+
+    PreferenceInfo *tokenLimitInfo =
+        [self defineControl:_aiTokenLimit
+                        key:kPreferenceKeyAITokenLimit
+                relatedView:_aiTokenLimitLabel
+                       type:kPreferenceInfoTypeIntegerTextField];
+    PreferenceInfo *responseTokenLimitInfo =
+        [self defineControl:_aiResponseTokenLimit
+                        key:kPreferenceKeyAIResponseTokenLimit
+                relatedView:_aiTokenLimitLabel
+                       type:kPreferenceInfoTypeIntegerTextField];
+    PreferenceInfo *urlInfo = [self defineControl:_customAIEndpoint
+                                              key:kPreferenceKeyAITermURL
+                                      displayName:@"Custom URL for AI"
+                                             type:kPreferenceInfoTypeStringTextField];
+    urlInfo.onUpdate = ^BOOL{
+        [weakSelf updateEnabledState];
+        return NO;
+    };
+
+    info = [self defineControl:_checkTerminalStateButton
+                           key:kPreferenceKeyAIPermissionCheckTerminalState
+                   relatedView:_checkTerminalStateLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_runCommandsButton
+                           key:kPreferenceKeyAIPermissionRunCommands
+                   relatedView:_runCommandsLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_viewHistoryButton
+                           key:kPreferenceKeyAIPermissionViewHistory
+                   relatedView:_viewHistoryLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_writeToClipboardButton
+                           key:kPreferenceKeyAIPermissionWriteToClipboard
+                   relatedView:_writeToClipboardLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_typeForYouButton
+                           key:kPreferenceKeyAIPermissionTypeForYou
+                   relatedView:_typeForYouLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_viewManpagesButton
+                           key:kPreferenceKeyAIPermissionViewManpages
+                   relatedView:_viewManpagesLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_writeToFilesystemButton
+                           key:kPreferenceKeyAIPermissionWriteToFilesystem
+                   relatedView:_writeToFilesystemLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    info = [self defineControl:_actInWebBrowserButton
+                           key:kPreferenceKeyAIPermissionActInWebBrowser
+                   relatedView:_actInWebBrowserLabel
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
+
+    NSMutableArray<PreferenceInfo *> *aiFeatureInfos = [NSMutableArray array];
+    info = [self defineControl:_aiFeatureHostedCodeInterpeter
+                    key:kPreferenceKeyAIFeatureHostedCodeInterpreter
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_aiFeatureHostedFileSearch
+                    key:kPreferenceKeyAIFeatureHostedFileSearch
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_aiFeatureHostedWebSearch
+                    key:kPreferenceKeyAIFeatureHostedWebSearch
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_aiFeatureFunctionCalling
+                    key:kPreferenceKeyAIFeatureFunctionCalling
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_aiFeatureStreamingResponses
+                    key:kPreferenceKeyAIFeatureStreamingResponses
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [aiFeatureInfos addObject:info];
+    info = [self defineControl:_vectorStore
+                           key:kPreferenceKeyAIVectorStore
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+    [aiFeatureInfos addObject:info];
+
+    PreferenceInfo *apiInfo = [self defineControl:_aiAPI
+                           key:kPreferenceKeyAITermAPI
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+    apiInfo.shouldBeEnabled = ^BOOL{
+        return [weakSelf canCustomizeAPI];
+    };
+    apiInfo.observer = ^{
+        [weakSelf updateAIEnabled];
+    };
+
+    _lastModel = [self stringForKey:kPreferenceKeyAIModel];
+    info = [self defineControl:_aiModel
+                           key:kPreferenceKeyAIModel
+                   relatedView:_aiModelLabel
+                          type:kPreferenceInfoTypeStringTextField];
+    info.onChange = ^{
+        [weakSelf aiModelDidChange:tokenLimitInfo
+                 responseLimitInfo:responseTokenLimitInfo
+                           urlInfo:urlInfo
+                           apiInfo:apiInfo
+                      featureInfos:aiFeatureInfos];
+        [weakSelf updateAIEnabled];
+    };
+
+    info = [self defineControl:_aiVendor
+                           key:kPreferenceKeyAIVendor
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^{
+        [weakSelf updateAIModelFromVendor];
+        [weakSelf aiModelDidChange:tokenLimitInfo
+                 responseLimitInfo:responseTokenLimitInfo
+                           urlInfo:urlInfo
+                           apiInfo:apiInfo
+                      featureInfos:aiFeatureInfos];
+    };
+    info = [self defineControl:_useRecommendedModel
+                           key:kPreferenceKeyUseRecommendedAIModel
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [weakSelf updateAIModelFromVendor];
+        [weakSelf updateCoarseAIModelSettingsEnabled];
+        [weakSelf aiModelDidChange:tokenLimitInfo
+                 responseLimitInfo:responseTokenLimitInfo
+                           urlInfo:urlInfo
+                           apiInfo:apiInfo
+                      featureInfos:aiFeatureInfos];
+    };
+    [self addViewToSearchIndex:_aiPluginLabel
+                   displayName:@"Install AI Plugin"
+                       phrases:@[ @"AI Plugin" ]
+                           key:kPhonyPreferenceKeyInstallAIPlugin];
+
+    info = [self defineControl:_enableAI
+                           key:kPreferenceKeyEnableAI
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.syntheticGetter = ^id{
+        NSNumber *result = @(iTermSecureUserDefaults.instance.enableAI);
+        DLog(@"enableAI=%@\n%@", result, [NSThread callStackSymbols]);
+        return result;
+    };
+    info.syntheticSetter = ^(id newValue) {
+        DLog(@"set enableAI<-%@\n%@", newValue, [NSThread callStackSymbols]);
+        iTermSecureUserDefaults.instance.enableAI = [newValue boolValue];
+        [weakSelf updateAIEnabled];
+    };
+    PreferenceInfo *enableAIInfo = info;
+
+
+    info = [self defineControl:_aiCompletions
+                           key:kPreferenceKeyAICompletion
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.syntheticGetter = ^id {
+        return @(iTermSecureUserDefaults.instance.aiCompletionsEnabled);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        const BOOL setting = [newValue boolValue];
+        if (setting == iTermSecureUserDefaults.instance.defaultValue_aiCompletionsEnabled) {
+            [iTermSecureUserDefaults.instance resetAICompletionsEnabled];
+        } else {
+            iTermSecureUserDefaults.instance.aiCompletionsEnabled = [newValue boolValue];
+        }
+    };
+    [self defineControl:_aiTimeout
+                    key:kPreferenceKeyAITimeout
+            displayName:@"AI timeout"
+                   type:kPreferenceInfoTypeIntegerTextField];
+
+    [self defineControl:_aiSafetyCheck
+                    key:kPreferenceKeyAISafetyCheck
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    info = [self defineControl:_aiCustomHeadersEnabled
+                           key:kPreferenceKeyAICustomHeadersEnabled
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf updateCustomHeadersControlsEnabled];
+    };
+
+    // ---------------------------------------------------------------------------------------------
+    [self defineControl:_enableRTL
+                    key:kPreferenceKeyBidi
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+     [self defineControl:_sshIntegrationForURLs
+                     key:kPreferenceKeySshIntegrationForURLs
+             relatedView:nil
+                    type:kPreferenceInfoTypeCheckbox];
+
+    [self validatePlugin];
+    [self updateEnabledState];
+    [self commitControls];
+    [self updateValueForInfo:allowSendingClipboardInfo];
+    [self updateValueForInfo:enableAIInfo];
+    [self updateAIEnabled];
+}
+
+// The single source of per-prompt metadata: the preference key plus,
+// for prompts whose template must interpolate a feature-supplied
+// variable, that variable's bare name (in the "ai" scope) and a
+// sentence explaining what replaces it. The switch is exhaustive so
+// adding a prompt forces this method to be updated; everything else
+// (warning logic, reset, editor binding) derives from it. The
+// \(ai.<name>) wrapper and the shared "must contain" sentence are
+// composed once in updateAIPromptWarning. Out params may be NULL.
+- (NSString *)keyForCurrentlySelectedAIPromptGetting:(NSString **)variableName
+                                  variableExplanation:(NSString **)variableExplanation {
+    NSString *name = nil;
+    NSString *explanation = nil;
+    NSString *key;
+    switch ((iTermAIPrompt)_promptSelector.selectedTag) {
+        case iTermAIPromptEngageAI:
+            name = iTermAIPromptVariablePrompt;
+            explanation = @"The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \\(ai.prompt).”";
+            key = kPreferenceKeyAIPrompt;
+            break;
+        case iTermAIPromptAIChat:
+            key = kPreferenceKeyAIPromptAIChat;
+            break;
+        case iTermAIPromptAIChatReadOnlyTerminal:
+            key = kPreferenceKeyAIPromptAIChatReadOnlyTerminal;
+            break;
+        case iTermAIPromptAIChatReadWriteTerminal:
+            key = kPreferenceKeyAIPromptAIChatReadWriteTerminal;
+            break;
+        case iTermAIPromptAIChatBrowser:
+            key = kPreferenceKeyAIPromptAIChatBrowser;
+            break;
+        case iTermAIPromptAIChatReadOnlyTerminalBrowser:
+            key = kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser;
+            break;
+        case iTermAIPromptAIChatReadWriteTerminalBrowser:
+            key = kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
+            break;
+        case iTermAIPromptAIChatOrchestration:
+            key = kPreferenceKeyAIPromptAIChatOrchestration;
+            break;
+        case iTermAIPromptCodeReviewSystem:
+            key = kPreferenceKeyAIPromptCodeReviewSystem;
+            break;
+        case iTermAIPromptChatIcon:
+            name = iTermAIPromptVariableSubject;
+            explanation = @"The chat’s title will replace it when speaking to the AI.";
+            key = kPreferenceKeyAIPromptChatIcon;
+            break;
+    }
+    if (variableName) {
+        *variableName = name;
+    }
+    if (variableExplanation) {
+        *variableExplanation = explanation;
+    }
+    return key;
+}
+
+- (NSString *)keyForCurrentlySelectedAIPrompt {
+    return [self keyForCurrentlySelectedAIPromptGetting:NULL variableExplanation:NULL];
+}
+
+- (BOOL)canCustomizeAPI {
+    // Only allow customization for non-default settings.
+    if ([self valueOfKeyEqualsDefaultValue:kPreferenceKeyAITermURL]) {
+        return NO;
+    }
+    if ([[self stringForKey:kPreferenceKeyAITermURL] length] == 0) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)updateCoarseAIModelSettingsEnabled {
+    const BOOL automatic = [self boolForKey:kPreferenceKeyUseRecommendedAIModel];
+    const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
+    _manualAIConfiguration.enabled = allowed && !automatic;
+    _aiVendor.enabled = allowed && automatic;
+}
+
+- (void)updateAIModelFromVendor {
+    iTermAIModel *model = [iTermAIModel modelFromSettings];
+    if (model) {
+        [self setString:model.name forKey:kPreferenceKeyAIModel];
+    }
+}
+
+- (void)aiModelDidChange:(PreferenceInfo *)tokenLimitInfo
+       responseLimitInfo:(PreferenceInfo *)responseLimitInfo
+                 urlInfo:(PreferenceInfo *)urlInfo
+                 apiInfo:(PreferenceInfo *)apiInfo
+            featureInfos:(NSArray<PreferenceInfo *> *)featureInfos {
+    NSString *model = [self stringForKey:kPreferenceKeyAIModel];
+    // Ignore it if it doesn't change because this is called when the view is closed.
+    if (!model || [model isEqualToString:_lastModel]) {
+        return;
+    }
+
+    _lastModel = [self stringForKey:kPreferenceKeyAIModel];
+
+    const iTermAIAPI api = [AIMetadata.instance apiForModel:model
+                                                   fallback:[self unsignedIntegerForKey:kPreferenceKeyAITermAPI]];
+    [self setObject:@(api) forKey:kPreferenceKeyAITermAPI];
+    [self updateValueForInfo:apiInfo];
+
+    NSNumber *tokens = [AIMetadata.instance contextWindowTokensForModelName:model];
+    if (tokens) {
+        [self setObject:tokens forKey:kPreferenceKeyAITokenLimit];
+        [self updateValueForInfo:tokenLimitInfo];
+    }
+    NSNumber *responseTokens = [AIMetadata.instance responseTokenLimitForModelName:model];
+    if (responseTokens) {
+        [self setObject:responseTokens forKey:kPreferenceKeyAIResponseTokenLimit];
+        [self updateValueForInfo:responseLimitInfo];
+    }
+    NSString *url = [AIMetadata.instance urlForModelName:model];
+    if (url) {
+        [self setObject:url forKey:kPreferenceKeyAITermURL];
+        [self updateValueForInfo:urlInfo];
+    }
+    if ([AIMetadata.instance modelHasDefaults:model]) {
+        [self setBool:[AIMetadata.instance modelSupportsHostedCodeInterpreter:model]
+               forKey:kPreferenceKeyAIFeatureHostedCodeInterpreter];
+        [self setBool:[AIMetadata.instance modelSupportsHostedFileSearch:model]
+               forKey:kPreferenceKeyAIFeatureHostedFileSearch];
+        [self setBool:[AIMetadata.instance modelSupportsHostedWebSearch:model]
+               forKey:kPreferenceKeyAIFeatureHostedWebSearch];
+        [self setBool:[AIMetadata.instance modelSupportsFunctionCalling:model]
+               forKey:kPreferenceKeyAIFeatureFunctionCalling];
+        [self setBool:[AIMetadata.instance modelSupportsStreamingResponses:model]
+               forKey:kPreferenceKeyAIFeatureStreamingResponses];
+        [self setInteger:[AIMetadata.instance vectorStoreForModel:model]
+                  forKey:kPreferenceKeyAIVectorStore];
+        for (PreferenceInfo *info in featureInfos) {
+            [self updateValueForInfo:info];
+        }
+    }
+}
+
+- (void)validatePlugin {
+    DLog(@"validatePlugin");
+    _pluginStatus.stringValue = @"Checking plugin status…";
+    __weak __typeof(self) weakSelf = self;
+    [iTermAITermGatekeeper validatePlugin:^(NSString * _Nullable problem) {
+        [weakSelf setPluginProblem:problem];
+    }];
+}
+
+- (void)setPluginProblem:(NSString *)problem {
+    DLog(@"problem=%@", problem);
+    if (problem) {
+        _pluginStatus.stringValue = problem;
+        _installPluginButton.title = @"Install…";
+        _installPluginButton.action = @selector(installPlugin:);
+        [_installPluginButton sizeToFit];
+        _installPluginButton.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
+        _pluginOK = NO;
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf validatePlugin];
+        });
+    } else {
+        _pluginStatus.stringValue = @"Plugin installed and working ✅";
+        _installPluginButton.title = @"Reveal in Finder";
+        [_installPluginButton sizeToFit];
+        _installPluginButton.action = @selector(revealPlugin:);
+        _installPluginButton.enabled = YES;
+        _pluginOK = YES;
+    }
+    [self updateAIEnabled];
+}
+
+- (void)viewDidAppear {
+    DLog(@"viewDidAppear");
+}
+
+- (void)updateAIEnabled {
+    _enableAI.enabled = _pluginOK;
+
+    const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
+    _openAIAPIKey.enabled = allowed;
+    _aiPrompt.editable = allowed;
+    _aiModel.enabled = allowed;
+    _aiTokenLimit.enabled = allowed;
+    _resetAIPrompt.enabled = allowed;
+    _customAIEndpoint.enabled = allowed;
+    _enableAI.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
+    _aiResponseTokenLimit.enabled = allowed;
+    _aiModelLabel.enabled = allowed;
+    _aiTokenLimitLabel.enabled = allowed;
+    _aiAPI.enabled = allowed;
+    _aiFeatureHostedCodeInterpeter.enabled = allowed;
+    _aiFeatureHostedFileSearch.enabled = allowed;
+    _aiFeatureHostedWebSearch.enabled = allowed;
+    _aiFeatureFunctionCalling.enabled = allowed;
+    _aiFeatureStreamingResponses.enabled = allowed;
+    _aiSafetyCheck.enabled = allowed;
+    _vectorStore.enabled = allowed;
+
+    [self updateCoarseAIModelSettingsEnabled];
+}
+
+- (BOOL)modelSupportsModernAPI {
+    NSURL *url = [NSURL URLWithString:[self stringForKey:kPreferenceKeyAITermURL]];
+    return [iTermLLMMetadata hostIsOpenAIAPIForURL:url];
+}
+
+- (void)customScriptsFolderDidChange {
+    _customScriptsFolderDidChange = YES;
+}
+
+- (void)postCustomScriptsFolderDidChangeNotificationIfNeeded {
+    if (_customScriptsFolderDidChange) {
+        _customScriptsFolderDidChange = NO;
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptsFolderDidChange object:nil];
+    }
+}
+
+- (void)windowWillClose {
+    [self postCustomScriptsFolderDidChangeNotificationIfNeeded];
+}
+
+- (void)willDeselectTab {
+    [self postCustomScriptsFolderDidChangeNotificationIfNeeded];
+}
+
+- (void)updateAIPromptWarning {
+    NSString *variableName = nil;
+    NSString *explanation = nil;
+    NSString *key = [self keyForCurrentlySelectedAIPromptGetting:&variableName
+                                             variableExplanation:&explanation];
+    NSString *requiredVariable =
+        variableName ? [NSString stringWithFormat:@"\\(ai.%@)", variableName] : nil;
+    if (requiredVariable && ![[self stringForKey:key] containsString:requiredVariable]) {
+        _aiPromptWarning.toolTip =
+            [NSString stringWithFormat:@"The prompt must contain the substring %@. %@",
+             requiredVariable, explanation];
+        _aiPromptWarning.alphaValue = 1.0;
+    } else {
+        // Clear the tooltip as well as fading: alpha 0 doesn't remove
+        // the view from hit-testing, so a stale tooltip would still
+        // answer hover/click on the invisible warning.
+        _aiPromptWarning.toolTip = nil;
+        _aiPromptWarning.alphaValue = 0.0;
+    }
+}
+
+- (NSString *)alwaysOpenLegend {
+    if ([iTermScriptsMenuController autoLaunchFolderExists]) {
+        return @"The presence of auto-launch scripts disables opening a window at startup.";
+    }
+    if ([[[iTermHotKeyController sharedInstance] profileHotKeys] count] > 0) {
+        return @"The existence of hotkey windows disables opening a window at startup.";
+    }
+    if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count] > 0) {
+        return @"The existence of buried sessions disables opening a window at startup.";
+    }
+    return nil;
+}
+
+- (void)updateAlwaysOpenLegend {
+    NSString *legend = [self alwaysOpenLegend];
+    if (!legend) {
+        _alwaysOpenLegend.hidden = YES;
+        return;
+    }
+    _alwaysOpenLegend.stringValue = legend;
+    _alwaysOpenLegend.hidden = NO;
+}
+
+- (void)updateAPIEnabledState {
+    _enableAPI.state = [self boolForKey:kPreferenceKeyEnableAPIServer];
+    [_apiPermission selectItemWithTag:[iTermAPIHelper requireApplescriptAuth] ? 0 : 1];
+    [self updateEnabledState];
+}
+
+- (BOOL)shouldEnableAlwaysOpenWindowAtStartup {
+    if ([self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+        return NO;
+    }
+    if ([self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)updateEnabledState {
+    [super updateEnabledState];
+    [_apiPermission selectItemWithTag:[iTermAPIHelper requireApplescriptAuth] ? 0 : 1];
+    _evenIfThereAreNoWindows.enabled = [self boolForKey:kPreferenceKeyPromptOnQuit];
+    const BOOL useSystemWindowRestoration = (![self boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
+                                             ![self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]);
+    const BOOL systemRestorationEnabled = [[iTermUserDefaults userDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
+    _warningButton.hidden = (!useSystemWindowRestoration || systemRestorationEnabled);
+    _alwaysOpenWindowAtStartup.enabled = [self shouldEnableAlwaysOpenWindowAtStartup];
+    _restoreWindowsToSameSpaces.enabled = systemRestorationEnabled && useSystemWindowRestoration;
+}
+
+- (void)updateAdvancedGPUEnabled {
+    _advancedGPU.enabled = [self boolForKey:kPreferenceKeyUseMetal];
+}
+
+- (BOOL)enableAPISettingDidChange {
+    const BOOL result = [self reallyEnableAPISettingDidChange];
+    [self updateEnabledState];
+    return result;
+}
+
+- (BOOL)reallyEnableAPISettingDidChange {
+    const BOOL enabled = _enableAPI.state == NSControlStateValueOn;
+    if (enabled) {
+        // Prompt the user. If they agree, or have permanently agreed, set the user default to YES.
+        if ([iTermAPIHelper confirmShouldStartServerAndUpdateUserDefaultsForced:YES]) {
+            [iTermAPIHelper sharedInstance];
+        } else {
+            return NO;
+            
+        }
+    } else {
+        [iTermAPIHelper setEnabled:NO];
+    }
+    if (enabled && ![iTermAPIHelper isEnabled]) {
+        _enableAPI.state = NSControlStateValueOff;
+        return NO;
+    }
+    return YES;
+}
+
+#pragma mark - Actions
+
+- (IBAction)selectedPromptDidChange:(id)sender {
+    NSString *string = [self stringForKey:kPreferenceKeyAIPromptPlaceholder];
+    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:string
+                                                                                   attributes:_aiPrompt.typingAttributes]];
+    [self updateAIPromptWarning];
+}
+
+- (IBAction)changeAPIKey:(id)sender {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = [NSString stringWithFormat:@"Enter the API key for your AI provider. The key will be stored securely in the Keychain."];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    NSSecureTextField *apiKey = [[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 500, 24)];
+    apiKey.usesSingleLineMode = YES;
+    apiKey.editable = YES;
+    apiKey.selectable = YES;
+    apiKey.stringValue = [AITermControllerObjC apiKey] ?: @"";
+    alert.accessoryView = apiKey;
+    [alert layout];
+    [[alert window] makeFirstResponder:apiKey];
+
+    [NSApp activateIgnoringOtherApps:YES];
+    [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
+        switch (returnCode) {
+            case NSAlertFirstButtonReturn: {
+                [AITermControllerObjC setAPIKeyAsync:apiKey.stringValue];
+                break;
+            }
+            case NSAlertSecondButtonReturn: {
+                break;
+            }
+        }
+    }];
+}
+
+#pragma mark - Custom Headers
+
+// Loads the persisted headers into _customHeaders and sets initial UI state.
+// All view layout (labels, segmented control, table view, columns, scroll
+// view) lives in the XIB; the controls are connected via the IBOutlets above
+// and the table view's dataSource/delegate are set in the XIB to this
+// controller.
+- (void)setupCustomHeadersSection {
+    id saved = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+    _customHeaders = [NSMutableArray array];
+    if ([saved isKindOfClass:[NSArray class]]) {
+        for (id entry in (NSArray *)saved) {
+            if ([entry isKindOfClass:[NSDictionary class]]) {
+                [_customHeaders addObject:[entry mutableCopy]];
+            }
+        }
+    }
+    [_aiCustomHeadersTableView reloadData];
+    [self updateCustomHeadersControlsEnabled];
+}
+
+- (BOOL)customHeadersEnabled {
+    return [iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled];
+}
+
+- (void)updateCustomHeadersControlsEnabled {
+    const BOOL enabled = [self customHeadersEnabled];
+    _aiCustomHeadersAddRemove.enabled = enabled;
+    _aiCustomHeadersTableView.enabled = enabled;
+    if (!enabled) {
+        [_aiCustomHeadersTableView deselectAll:nil];
+    }
+    [_aiCustomHeadersTableView reloadData];  // refresh cell editability
+    [self updateCustomHeadersRemoveEnabled];
+}
+
+- (void)updateCustomHeadersRemoveEnabled {
+    const BOOL hasSelection = (_aiCustomHeadersTableView.selectedRow >= 0);
+    const BOOL canRemove = hasSelection && [self customHeadersEnabled];
+    [_aiCustomHeadersAddRemove setEnabled:canRemove forSegment:1];
+}
+
+- (void)saveCustomHeaders {
+    // Skip rows with empty names so the persisted plist doesn't accumulate
+    // blanks from rows the user added but never named.
+    NSMutableArray *toSave = [NSMutableArray array];
+    for (NSDictionary *entry in _customHeaders) {
+        NSString *name = entry[@"name"];
+        if ([name isKindOfClass:[NSString class]] && name.length > 0) {
+            [toSave addObject:[entry copy]];
+        }
+    }
+    [iTermPreferences setObject:toSave forKey:kPreferenceKeyAICustomHeaders];
+}
+
+- (IBAction)customHeadersAddRemove:(id)sender {
+    NSSegmentedControl *control = (NSSegmentedControl *)sender;
+    switch (control.selectedSegment) {
+        case 0:
+            [self addCustomHeader];
+            break;
+        case 1:
+            [self removeCustomHeader];
+            break;
+    }
+}
+
+- (void)addCustomHeader {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Add Custom Header";
+    alert.informativeText = @"Enter a header name and value. The name is required.";
+    [alert addButtonWithTitle:@"Add"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    const CGFloat width = 280.0;
+    const CGFloat fieldHeight = 22.0;
+    const CGFloat labelHeight = 17.0;
+    const CGFloat gap = 4.0;
+    const CGFloat sectionGap = 10.0;
+    const CGFloat totalHeight = labelHeight + gap + fieldHeight + sectionGap + labelHeight + gap + fieldHeight;
+
+    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, totalHeight)];
+
+    CGFloat y = totalHeight;
+
+    y -= labelHeight;
+    NSTextField *nameLabel = [NSTextField labelWithString:@"Name:"];
+    nameLabel.frame = NSMakeRect(0, y, width, labelHeight);
+    [accessory addSubview:nameLabel];
+
+    y -= gap + fieldHeight;
+    NSTextField *nameField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, y, width, fieldHeight)];
+    [accessory addSubview:nameField];
+
+    y -= sectionGap + labelHeight;
+    NSTextField *valueLabel = [NSTextField labelWithString:@"Value:"];
+    valueLabel.frame = NSMakeRect(0, y, width, labelHeight);
+    [accessory addSubview:valueLabel];
+
+    y -= gap + fieldHeight;
+    NSTextField *valueField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, y, width, fieldHeight)];
+    [accessory addSubview:valueField];
+
+    alert.accessoryView = accessory;
+
+    NSTextField *focusField = nameField;
+    while (YES) {
+        [alert.window setInitialFirstResponder:focusField];
+        const NSModalResponse response = [alert runModal];
+        if (response != NSAlertFirstButtonReturn) {
+            return;
+        }
+        NSString *name = [nameField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSString *value = valueField.stringValue ?: @"";
+        if (![AICustomHeaders isValidName:name]) {
+            alert.informativeText = @"The header name must be non-empty and contain only RFC 7230 token characters (letters, digits, and any of !#$%&'*+-.^_`|~).";
+            focusField = nameField;
+            continue;
+        }
+        if (![AICustomHeaders isValidValue:value]) {
+            alert.informativeText = @"The header value must not contain newline or null characters.";
+            focusField = valueField;
+            continue;
+        }
+        [_customHeaders addObject:[@{@"name": name, @"value": value} mutableCopy]];
+        [self saveCustomHeaders];
+        [_aiCustomHeadersTableView reloadData];
+        NSInteger newRow = (NSInteger)_customHeaders.count - 1;
+        [_aiCustomHeadersTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)newRow]
+                               byExtendingSelection:NO];
+        [_aiCustomHeadersTableView scrollRowToVisible:newRow];
+        return;
+    }
+}
+
+- (void)removeCustomHeader {
+    NSInteger row = _aiCustomHeadersTableView.selectedRow;
+    if (row < 0 || row >= (NSInteger)_customHeaders.count) {
+        return;
+    }
+    [_customHeaders removeObjectAtIndex:(NSUInteger)row];
+    [self saveCustomHeaders];
+    [_aiCustomHeadersTableView deselectAll:nil];
+    [_aiCustomHeadersTableView reloadData];
+    [self updateCustomHeadersRemoveEnabled];
+}
+
+#pragma mark - NSTableViewDataSource
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
+    if (tableView != _aiCustomHeadersTableView) {
+        return 0;
+    }
+    return (NSInteger)_customHeaders.count;
+}
+
+#pragma mark - NSTableViewDelegate
+
+// View-based table view. The XIB defines an NSTableCellView prototype per
+// column whose identifier matches the column identifier (“name” or “value”),
+// containing an editable NSTextField wired to the cell view’s textField
+// outlet. The text field’s delegate is forced to this controller here so
+// edits always route through -controlTextDidEndEditing:.
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    if (tableView != _aiCustomHeadersTableView) {
+        return nil;
+    }
+    NSTableCellView *cell = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
+    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
+    const BOOL enabled = [self customHeadersEnabled];
+    cell.textField.stringValue = entry[tableColumn.identifier] ?: @"";
+    cell.textField.editable = enabled;
+    cell.textField.selectable = enabled;
+    cell.textField.enabled = enabled;
+    cell.textField.delegate = self;
+    return cell;
+}
+
+- (BOOL)tableView:(NSTableView *)tableView shouldSelectRow:(NSInteger)row {
+    if (tableView == _aiCustomHeadersTableView && ![self customHeadersEnabled]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    if (notification.object == _aiCustomHeadersTableView) {
+        [self updateCustomHeadersRemoveEnabled];
+    }
+}
+
+- (void)competentTableViewDeleteSelectedRows:(CompetentTableView *)sender {
+    if (sender != _aiCustomHeadersTableView || ![self customHeadersEnabled]) {
+        return;
+    }
+    [self removeCustomHeader];
+}
+
+#pragma mark - NSTextFieldDelegate
+
+- (void)controlTextDidEndEditing:(NSNotification *)notification {
+    NSTextField *field = (NSTextField *)notification.object;
+    if (![field isKindOfClass:[NSTextField class]]) {
+        [super controlTextDidEndEditing:notification];
+        return;
+    }
+    const NSInteger row = [_aiCustomHeadersTableView rowForView:field];
+    const NSInteger column = [_aiCustomHeadersTableView columnForView:field];
+    if (row < 0 || column < 0) {
+        // Not one of our custom-header cells; let the base class handle
+        // info.controlTextDidEndEditing blocks and integer/double field
+        // canonicalization.
+        [super controlTextDidEndEditing:notification];
+        return;
+    }
+    if (row >= (NSInteger)_customHeaders.count ||
+        column >= (NSInteger)_aiCustomHeadersTableView.tableColumns.count) {
+        return;
+    }
+    NSTableColumn *tableColumn = _aiCustomHeadersTableView.tableColumns[(NSUInteger)column];
+    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
+    NSString *newValue = field.stringValue;
+    NSString *failure = nil;
+    if ([tableColumn.identifier isEqualToString:@"name"]) {
+        newValue = [newValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (![AICustomHeaders isValidName:newValue]) {
+            failure = @"The header name must be non-empty and contain only RFC 7230 token characters (letters, digits, and any of !#$%&'*+-.^_`|~).";
+        }
+    } else if ([tableColumn.identifier isEqualToString:@"value"]) {
+        if (![AICustomHeaders isValidValue:newValue]) {
+            failure = @"The header value must not contain newline or null characters.";
+        }
+    }
+    if (failure) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Invalid HTTP header";
+        alert.informativeText = failure;
+        [alert runModal];
+        // Put the user back into the same cell so they can fix the value
+        // without retyping it from scratch.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (row < (NSInteger)self->_customHeaders.count &&
+                column < (NSInteger)self->_aiCustomHeadersTableView.tableColumns.count) {
+                [self->_aiCustomHeadersTableView editColumn:column
+                                                        row:row
+                                                  withEvent:nil
+                                                     select:YES];
+            }
+        });
+        return;
+    }
+    entry[tableColumn.identifier] = newValue;
+    [self saveCustomHeaders];
+}
+
+- (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
+    NSWindow *parent = self.view.window;
+    if (parent == nil) {
+        return;
+    }
+
+    if (_manualAIConfigurationSheet == nil) {
+        const NSSize size = _manualAISettings.frame.size;
+        NSWindow *sheet = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, size.width, size.height)
+                                                      styleMask:(NSWindowStyleMaskTitled |
+                                                                 NSWindowStyleMaskFullSizeContentView)
+                                                        backing:NSBackingStoreBuffered
+                                                          defer:NO];
+        sheet.titlebarAppearsTransparent = YES;
+        sheet.titleVisibility = NSWindowTitleHidden;
+        sheet.contentView = _manualAISettings;
+        [sheet setContentSize:size];
+
+        // Hidden Cancel button so Escape dismisses the sheet. NSWindow routes
+        // ⎋ to whichever button has keyEquivalent == "\e", but XML 1.0 forbids
+        // U+001B in attributes so we add it in code rather than the XIB.
+        NSButton *escapeButton = [[NSButton alloc] initWithFrame:NSZeroRect];
+        escapeButton.hidden = YES;
+        escapeButton.keyEquivalent = @"\e";
+        escapeButton.target = self;
+        escapeButton.action = @selector(closeManualAIConfigurationSheet:);
+        [_manualAISettings addSubview:escapeButton];
+
+        _manualAIConfigurationSheet = sheet;
+    }
+
+    [parent beginSheet:_manualAIConfigurationSheet completionHandler:^(NSModalResponse returnCode) {}];
+}
+
+- (IBAction)closeManualAIConfigurationSheet:(id)sender {
+    if (_manualAIConfigurationSheet == nil) {
+        return;
+    }
+    [self.view.window endSheet:_manualAIConfigurationSheet returnCode:NSModalResponseOK];
+}
+
+- (IBAction)reloadPlugin:(id)sender {
+    __weak __typeof(self) weakSelf = self;
+    [iTermAITermGatekeeper reloadPlugin:^(void) {
+        [weakSelf validatePlugin];
+    }];
+}
+
+- (IBAction)installPlugin:(id)sender {
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/ai-plugin.html"]
+                                       target:nil
+                                configuration:[NSWorkspaceOpenConfiguration configuration]
+                                        style:iTermOpenStyleTab
+                                       upsell:NO
+                                       window:self.view.window];
+}
+
+- (void)revealPlugin:(id)sender {
+    NSURL *url = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.googlecode.iterm2.iTermAI"];
+    if (!url) {
+        NSBeep();
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[url]];
+}
+
+- (IBAction)exportAllSettingsAndData:(id)sender {
+    [self showMessage:[iTerm2ImportExport exportAll] title:@"Problem Exporting"];
+}
+
+- (IBAction)importAllSettingsAndData:(id)sender {
+    [self showMessage:[iTerm2ImportExport importAll] title:@"Problem Importing"];
+}
+
+- (IBAction)eraseAllSettingsAndData:(id)sender {
+    [self showMessage:[iTerm2ImportExport eraseAllWithWindow:self.view.window]
+                title:@"Problem Erasing Settings and Data"];
+}
+
+- (void)showMessage:(NSString *)message title:(NSString *)title {
+    if (!message) {
+        return;
+    }
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:title
+                                window:self.view.window];
+}
+
+- (IBAction)warning:(id)sender {
+    NSString *message;
+    NSString *action;
+    NSString *path;
+    if (@available(macOS 13, *)) {
+        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable ”System Settings > Desktop & Dock > Close windows when quitting an application“ to enable window restoration.";
+        action = @"Open System Settings";
+        path = @"/System/Library/PreferencePanes/Dock.prefPane";
+    } else {
+        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Settings > General > Close windows when quitting an app to enable window restoration.";
+        action = @"Open System Preferences";
+        path = @"/System/Library/PreferencePanes/Appearance.prefPane";
+    }
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ action, @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncWindowRestorationDisabled"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Window Restoration Disabled"
+                                window:self.view.window];
+    if (selection == kiTermWarningSelection0) {
+        [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:path]
+                                           target:nil
+                                            style:iTermOpenStyleTab
+                                           window:self.view.window];
+    }
+}
+
+
+- (IBAction)browseCustomFolder:(id)sender {
+    [self choosePrefsCustomFolder];
+}
+
+- (IBAction)browseScriptsFolder:(id)sender {
+    [self chooseCustomScriptsFolder];
+}
+
+- (IBAction)pushToCustomFolder:(id)sender {
+    [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
+}
+
+- (IBAction)advancedGPU:(NSView *)sender {
+    [self.view.window beginSheet:_advancedGPUWindowController.window completionHandler:^(NSModalResponse returnCode) {
+    }];
+}
+
+- (IBAction)pythonAPIAuthHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]
+                                       target:nil
+                                        style:iTermOpenStyleTab
+                                       window:self.view.window];
+}
+
+- (IBAction)resetAIPrompt:(id)sender {
+    NSString *key = [self keyForCurrentlySelectedAIPrompt];
+    NSString *defaultValue = [iTermPreferences defaultObjectForKey:key] ?: @"";
+    [self setString:defaultValue forKey:key];
+    [_aiPrompt.textStorage setAttributedString:[NSAttributedString attributedStringWithString:defaultValue
+                                                                                   attributes:_aiPrompt.typingAttributes]];
+    [self updateAIPromptWarning];
+}
+
+- (IBAction)aiPromptHelp:(id)sender {
+    NSString *text =
+        [NSString stringWithContentsOfFile:[[NSBundle bundleForClass:[self class]] pathForResource:@"ai-prompt-help"
+                                                                                            ofType:@"md"]
+                                  encoding:NSUTF8StringEncoding
+                                     error:nil];
+
+    [(NSView *)sender it_showInformativeMessageWithMarkdown:text];
+}
+
+#pragma mark - Notifications
+
+- (void)savedArrangementChanged:(id)sender {
+    PreferenceInfo *info = [self infoForControl:_openWindowsAtStartup];
+    [self updateValueForInfo:info];
+    [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
+}
+
+// The API helper just noticed that the file's contents changed.
+- (void)didRevertPythonAuthenticationMethod:(NSNotification *)notification {
+    [self updateAPIEnabledState];
+}
+
+- (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
+    [self updateAlwaysOpenLegend];
+    [super preferenceDidChangeFromOtherPanel:notification];
+}
+
+
+#pragma mark - Remote Prefs
+
+- (void)updateCustomScriptsFolderViews {
+    BOOL haveCustomFolder = [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
+    _browseCustomScriptsFolder.enabled = haveCustomFolder;
+    _customScriptsFolder.enabled = haveCustomFolder;
+    if (haveCustomFolder) {
+        _customScriptsFolderWarning.alphaValue = 1;
+    } else {
+        if (_customScriptsFolder.stringValue.length > 0) {
+            _customScriptsFolderWarning.alphaValue = 0.5;
+        } else {
+            _customScriptsFolderWarning.alphaValue = 0;
+        }
+    }
+    const BOOL locationIsValid = [[NSFileManager defaultManager] customScriptsFolderIsValid:_customScriptsFolder.stringValue];
+    _customScriptsFolderWarning.image = locationIsValid ? [NSImage it_imageNamed:@"CheckMark" forClass:self.class] : [NSImage it_imageNamed:@"WarningSign" forClass:self.class];
+}
+
+- (void)updateRemotePrefsViews {
+    BOOL shouldLoadRemotePrefs =
+        [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    [_browseCustomFolder setEnabled:shouldLoadRemotePrefs];
+    [_prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
+
+    if (shouldLoadRemotePrefs) {
+        _prefsDirWarning.alphaValue = 1;
+    } else {
+        if (_prefsCustomFolder.stringValue.length > 0) {
+            _prefsDirWarning.alphaValue = 0.5;
+        } else {
+            _prefsDirWarning.alphaValue = 0;
+        }
+    }
+
+    BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
+    _prefsDirWarning.image = remoteLocationIsValid ? [NSImage it_imageNamed:@"CheckMark" forClass:self.class] : [NSImage it_imageNamed:@"WarningSign" forClass:self.class];
+    BOOL isValidFile = (shouldLoadRemotePrefs &&
+                        remoteLocationIsValid &&
+                        ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL]);
+    [_saveChanges setEnabled:isValidFile];
+    [_saveChangesLabel setLabelEnabled:isValidFile];
+    [_pushToCustomFolder setEnabled:isValidFile];
+}
+
+- (void)useCustomScriptsFolderDidChange {
+    const BOOL newValue = [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
+    [self updateCustomScriptsFolderViews];
+    if (newValue) {
+        // Just turned it on
+        if ([[_customScriptsFolder stringValue] length] == 0) {
+            // Filed was initially empty so browse for a dir.
+            if ([self chooseCustomScriptsFolder]) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptsFolderDidChange object:nil];
+            }
+        }
+    }
+    [self updateCustomScriptsFolderViews];
+}
+
+- (void)loadPrefsFromCustomFolderDidChangeByUI:(BOOL)byUI {
+    BOOL shouldLoadRemotePrefs = [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+    [self updateRemotePrefsViews];
+    if (shouldLoadRemotePrefs && byUI) {
+        // Just turned it on.
+#if DEBUG
+        const BOOL gitlab = [iTermPreferences gitlabURLOnPasteboard] != nil;
+#else
+        const BOOL gitlab = NO;
+#endif
+        if ([[_prefsCustomFolder stringValue] length] == 0 && !gitlab) {
+            // Field was initially empty so browse for a dir.
+            if ([self choosePrefsCustomFolder]) {
+                // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
+                if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Copy local settings to custom folder now?";
+                    [alert addButtonWithTitle:@"Copy"];
+                    [alert addButtonWithTitle:@"Don’t Copy"];
+                    if ([alert runModal] == NSAlertFirstButtonReturn) {
+                        [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
+                    }
+                }
+            }
+        }
+    }
+    if (!byUI && (_loadPrefsFromCustomFolder.state == NSControlStateValueOn) != shouldLoadRemotePrefs) {
+        _loadPrefsFromCustomFolder.state = shouldLoadRemotePrefs ? NSControlStateValueOn : NSControlStateValueOff;
+    }
+    [self updateRemotePrefsViews];
+}
+
+- (BOOL)chooseCustomScriptsFolder {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSModalResponseOK && panel.directoryURL.path) {
+        [_customScriptsFolder setStringValue:panel.directoryURL.path];
+        [self settingChanged:_customScriptsFolder];
+        return YES;
+    }  else {
+        return NO;
+    }
+}
+
+- (BOOL)choosePrefsCustomFolder {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSModalResponseOK && panel.directoryURL.path) {
+        [_prefsCustomFolder setStringValue:panel.directoryURL.path];
+        [self settingChanged:_prefsCustomFolder];
+        return YES;
+    }  else {
+        return NO;
+    }
+}
+
+- (NSTabView *)tabView {
+    return _tabView;
+}
+
+- (CGFloat)minimumWidth {
+    return 598;
+}
+
+@end

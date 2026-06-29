@@ -1,0 +1,257 @@
+//
+//  Trigger.h
+//  iTerm
+//
+//  Created by George Nachman on 9/23/11.
+//
+
+#import <Cocoa/Cocoa.h>
+
+#import "ITAddressBookMgr.h"
+#import "iTermFocusReportingTextField.h"
+#import "iTermObject.h"
+#import "iTermPromise.h"
+#import "VT100GridTypes.h"
+#import "iTermParser.h"
+
+NS_ASSUME_NONNULL_BEGIN
+
+@class CapturedOutput;
+@class PTYAnnotation;
+@protocol PTYAnnotationReading;
+@class Trigger;
+@class iTermBackgroundCommandRunnerPool;
+@class iTermHistogram;
+@protocol iTermObject;
+@class iTermRateLimitedUpdate;
+@class iTermStringLine;
+@class VT100TabStatusUpdate;
+@class iTermVariableScope;
+@protocol PTYAnnotationReading;
+@class Trigger;
+
+extern NSString * const kTriggerMatchTypeKey;
+extern NSString * const kTriggerRegexKey;
+extern NSString * const kTriggerContentRegexKey;
+extern NSString * const kTriggerActionKey;
+extern NSString * const kTriggerPerformanceKey;
+extern NSString * const kTriggerParameterKey;
+extern NSString * const kTriggerPartialLineKey;
+extern NSString * const kTriggerDisabledKey;
+extern NSString * const kTriggerNameKey;
+extern NSString * const kTriggerEventParamsKey;
+extern NSString * const kTriggerJobKey;
+extern NSString * const kTriggerProvenanceKey;
+
+// Keys within the eventParams dictionary for the variable-changed match type.
+extern NSString * const kTriggerVariableNameKey;
+extern NSString * const kTriggerVariableValueRegexKey;
+
+@protocol iTermTriggerDelegate<NSObject>
+- (void)triggerDidChangeParameterOptions:(Trigger *)trigger;
+@end
+
+@protocol iTermTriggerCallbackScheduler<NSObject>
+- (void)scheduleTriggerCallback:(void (^)(void))block;
+@end
+
+@protocol iTermTriggerScopeProvider<NSObject>
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block;
+- (id<iTermTriggerCallbackScheduler>)triggerCallbackScheduler;
+@end
+
+@protocol iTermTriggerSession<NSObject>
+- (void)triggerSessionRingBell:(Trigger *)trigger;
+- (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger;
+- (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger;
+- (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger;
+- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output;
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger;
+
+// Identifier is used for silenceing errors, or nil to make it not silenceable.
+- (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent;
+- (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger;
+- (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger;
+- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message rateLimit:(iTermRateLimitedUpdate *)rateLimit;
+- (void)triggerSession:(Trigger *)trigger
+  highlightTextInRange:(NSRange)rangeInScreenChars
+          absoluteLine:(long long)lineNumber
+                colors:(NSDictionary<NSString *, NSColor *> *)colors;
+- (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling;
+- (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName;
+- (void)triggerSession:(Trigger *)trigger
+            runCommand:(NSString *)command
+        withRunnerPool:(iTermBackgroundCommandRunnerPool *)pool;
+- (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text;
+- (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost;
+- (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)text;
+- (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName;
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAtAbsLine:(long long)lineNumber range:(NSRange)range;
+
+- (void)triggerSession:(Trigger *)trigger
+    makeHyperlinkToURL:(NSURL *)url
+               inRange:(NSRange)rangeInString
+                  line:(long long)lineNumber;
+- (void)triggerSession:(Trigger *)trigger
+                invoke:(NSString *)invocation
+         withVariables:(NSDictionary *)temporaryVariables
+              captures:(NSArray<NSString *> *)captureStringArray;
+- (void)triggerSession:(Trigger *)trigger
+         setAnnotation:(id<PTYAnnotationReading>)annotation
+              stringTo:(NSString *)stringValue;
+- (void)triggerSession:(Trigger *)trigger
+       highlightLineAt:(VT100GridAbsCoord)absCoord
+                colors:(NSDictionary *)colors;
+- (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
+- (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
+- (void)triggerSession:(Trigger *)trigger
+  showAlertWithMessage:(NSString *)message
+             rateLimit:(iTermRateLimitedUpdate *)rateLimit
+               disable:(void (^)(void))disable;
+- (id<PTYAnnotationReading> _Nullable)triggerSession:(Trigger *)trigger
+                               makeAnnotationInRange:(NSRange)rangeInScreenChars
+                                                line:(long long)lineNumber;
+- (BOOL)triggerSessionIsInAlternateScreen;
+- (void)triggerSession:(Trigger *)trigger
+  addNamedMarkWithName:(NSString *)identifier
+        atAbsoluteLine:(long long)absLine;
+- (void)triggerSession:(Trigger *)trigger foldFromNamedMark:(NSString *)identifier toAbsoluteLine:(long long)absLine;
+- (void)triggerSession:(Trigger *)trigger
+              setRange:(NSRange)rangeInScreenChars
+          absoluteLine:(long long)lineNumber
+                   sgr:(CSIParam)csi;
+- (void)triggerSetBufferInput:(Trigger *)trigger
+                 shouldBuffer:(BOOL)shouldBuffer;
+- (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status;
+- (void)triggerSession:(Trigger *)trigger
+    enterWorkgroupWithIdentifier:(NSString *)workgroupUniqueIdentifier;
+- (void)triggerSessionExitWorkgroup:(Trigger *)trigger leaderOnly:(BOOL)leaderOnly;
+@end
+
+@interface Trigger : NSObject<iTermObject>
+
+@property (nonatomic, readonly) iTermTriggerMatchType matchType;
+@property (nonatomic, copy) NSString *regex;
+@property (nonatomic, copy, readonly) NSString *contentRegex;
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, copy, readonly, nullable) NSString *job;
+@property (nonatomic, copy, readonly, nullable) NSString *provenance;
+@property (nonatomic, copy) NSString *action;
+@property (nullable, nonatomic, copy) id param;
+@property (nonatomic, assign) BOOL partialLine;
+@property (nonatomic, assign) BOOL disabled;
+// Event-specific parameters for event-based triggers (match type >= 100)
+@property (nullable, nonatomic, copy, readonly) NSDictionary<NSString *, id> *eventParams;
+// A non-cryptographic hash for content addressed triggers (helpful for letting serialized data
+// reference a trigger).
+@property (nullable, nonatomic, readonly) NSData *digest;
+@property (nullable, nonatomic, retain) NSColor *textColor;
+@property (nullable, nonatomic, retain) NSColor *backgroundColor;
+@property (nonatomic, readonly) BOOL instantTriggerCanFireMultipleTimesPerLine;
+@property (nonatomic, readonly) BOOL isIdempotent;
+
+// Whether this trigger exposes the "leader only" option in its editor (and
+// honors it at fire time). Defaults to NO; the Exit Workgroup trigger
+// overrides it.
+@property (nonatomic, readonly) BOOL hasLeaderOnlyOption;
+@property (class, nonatomic, readonly) NSString *title;
+@property (nonatomic, weak) id<iTermTriggerDelegate> delegate;
+@property (nonatomic, readonly) BOOL detectsPrompt;
+@property (nullable, nonatomic, readonly) NSString *helpText;
+@property (nonatomic, readonly) NSSet<NSNumber *> *allowedMatchTypes;
+@property (nonatomic, strong) iTermHistogram *performanceHistogram;
+@property (nonatomic, readonly) BOOL isBrowserTrigger;
+
++ (nullable NSSet<NSString *> *)synonyms;
++ (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict;
+
+// Subclasses should implement:
+- (NSString *)title;
+- (nullable NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation;
+- (nullable NSString *)triggerOptionalDefaultParameterValueWithInterpolation:(BOOL)interpolation;
+// Returns true if this kind of action takes a parameter.
+- (BOOL)takesParameter;
+// Returns true if the parameter this action takes is a popupbutton.
+- (BOOL)paramIsPopupButton;
+- (BOOL)paramIsTwoColorWells;
+- (BOOL)paramIsTwoStrings;
+- (BOOL)paramIsComboBoxAndTwoColorWells;
+// Items for the combo box when paramIsComboBoxAndTwoColorWells returns YES.
+- (nullable NSArray<NSString *> *)comboBoxItems;
+// Returns the current combo box string extracted from the parameter.
+- (nullable NSString *)comboBoxValueInParam:(nullable id)param;
+- (nullable NSColor *)textColorInParam:(nullable id)param;
+- (nullable NSColor *)backgroundColorInParam:(nullable id)param;
+// Returns an updated parameter incorporating the given combo box value.
+- (nullable id)paramByReplacingComboBoxValue:(NSString *)value inParam:(nullable id)param;
+// Returns a map from id(tag/represented object) -> NSString(title)
+- (nullable NSDictionary *)menuItemsForPoupupButton;
+// Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)
+- (nullable NSArray *)groupedMenuItemsForPopupButton;
+
+// Index of represented object (usually a NSNumber tag, but could be something else)
+- (NSInteger)indexForObject:(id)object;
+// Represented object (usually a NSNumber tag, but could be something else) at an index.
+- (id _Nullable)objectAtIndex:(NSInteger)index;
+
+// Utility that returns keys sorted by values for a tag/represented object dict
+// (i.e., an element of groupedMenuItemsForPopupButton)
+- (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict;
+
+- (iTermVariableScope *)variableScope:(iTermVariableScope *)scope
+               byAddingBackreferences:(NSArray<NSString *> *)backreferences;
+
+- (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
+                                                                absLine:(long long)absLine
+                                                                  scope:(id<iTermTriggerScopeProvider>)scope
+                                                       useInterpolation:(BOOL)useInterpolation;
+- (iTermPromise<NSString *> *)promisedValueOfInterpolatedString:(NSString *)p
+            withBackreferencesReplacedWithValues:(NSArray *)stringArray
+                                         absLine:(long long)absLine
+                                           scope:(id<iTermTriggerScopeProvider>)scopeProvider
+                                useInterpolation:(BOOL)useInterpolation;
+
+// Returns YES if no more triggers should be processed.
+- (BOOL)tryString:(iTermStringLine *)stringLine
+        inSession:(id<iTermTriggerSession>)aSession
+      partialLine:(BOOL)partialLine
+       lineNumber:(long long)lineNumber
+ useInterpolation:(BOOL)useInterpolation;
+
+// Subclasses must override this. Return YES if it can fire again on this line.
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
+                          capturedRanges:(const NSRange *)capturedRanges
+                               inSession:(id<iTermTriggerSession>)aSession
+                                onString:(iTermStringLine *)s
+                    atAbsoluteLineNumber:(long long)lineNumber
+                        useInterpolation:(BOOL)useInterpolation
+                                    stop:(BOOL *)stop;
+
+- (NSComparisonResult)compareTitle:(Trigger *)other;
+
+// If no parameter is present, the parameter index to select by default.
+- (int)defaultIndex;
+
+// Default value for a parameter of a popup. Trigger's implementation returns
+// @0 but subclasses can override.
+- (id)defaultPopupParameterObject;
+
+// Called before a trigger window opens.
+- (void)reloadData;
+
+- (id<iTermFocusReportingTextFieldDelegate> _Nullable)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough;
+
++ (NSDictionary *)triggerNormalizedDictionary:(NSDictionary *)dict;
+
+- (NSDictionary *)dictionaryValue;
+
++ (NSDictionary *)sanitizedTriggerDictionary:(NSDictionary *)dict;
+- (NSAttributedString *)attributedString;
+- (NSAttributedString *)titleAttributedString;
+- (NSAttributedString * _Nullable)paramAttributedString;
+- (NSDictionary<NSAttributedStringKey, id> *)regularAttributes;
+
+@end
+
+NS_ASSUME_NONNULL_END
+

@@ -1,0 +1,437 @@
+//
+//  ChatDatabase.swift
+//  iTerm2
+//
+//  Created by George Nachman on 2/17/25.
+//
+
+enum ChatDatabaseQueryError: Error {
+    case nilResultSet
+}
+
+@objc(iTermChatDatabase)
+class ObjCChatDatabase: NSObject {
+    @objc static let redrawTerminalsNotification = Notification.Name("iTermChatDatabaseRedrawTerminals")
+
+    @objc(chatIDsForSession:)
+    static func chatIDsForSession(withGUID guid: String) -> Set<String> {
+        guard let instance = ChatDatabase.instanceIfExists else {
+            return []
+        }
+        return instance.terminalSessionToChatMap[guid] ?? Set()
+    }
+
+    @objc(unlinkSessionGuid:)
+    static func unlink(sessionGuid: String) {
+        MainActor.assumeIsolated {
+            guard let instance = ChatDatabase.instance,
+            let chats = instance.chats else {
+                return
+            }
+            for i in 0..<chats.count {
+                let chat = chats[i]
+                if chat.isLinked(toSessionGuid: sessionGuid) {
+                    var temp = chats[i]
+                    let wasTerminal = temp.terminalSessionGuid != nil
+                    temp.terminalSessionGuid = nil
+                    temp.browserSessionGuid = nil
+                    do {
+                        try chats.set(at: i, temp)
+                        try? ChatBroker.instance?.publishNotice(
+                            chatID: temp.id,
+                            notice: "This chat is no longer linked to a \(wasTerminal ? "terminal" : "web browser") session.")
+                    } catch {
+                        DLog("\(error)")
+                    }
+                }
+            }
+        }
+    }
+
+    @objc(firstChatIDForSessionGuid:)
+    static func firstChatID(forSessionGuid sessionGuid: String) -> String? {
+        return ChatDatabase.instance?.chats?.first { $0.terminalSessionGuid == sessionGuid }?.id
+    }
+}
+
+class ChatDatabase {
+    private static var _instance: ChatDatabase?
+    static var instanceIfExists: ChatDatabase? { _instance }
+    static var instance: ChatDatabase? {
+        if let _instance {
+            return _instance
+        }
+        let appDefaults = FileManager.default.applicationSupportDirectory()
+        guard let appDefaults else {
+            return nil
+        }
+        var url = URL(fileURLWithPath: appDefaults)
+        url.appendPathComponent("chatdb.sqlite")
+        _instance = ChatDatabase(url: url)
+        return _instance
+    }
+
+    let db: iTermDatabase
+    fileprivate var terminalSessionToChatMap = [String: Set<String>]()
+    fileprivate var browserSessionToChatMap = [String: Set<String>]()
+
+    init?(url: URL) {
+        db = iTermSqliteDatabaseImpl(url: url, lockName: "chatdb-lock")
+        if !db.lock() {
+            return nil
+        }
+        if !db.open() {
+            return nil
+        }
+
+        if !createTables() {
+            DLog("FAILED TO CREATE TABLES, CLOSING CHAT DB at \(url.path)")
+            db.close()
+            return nil
+        }
+        popuplateSessionToChatMap()
+    }
+
+    private func listColumns(resultSet: iTermDatabaseResultSet?) -> [String] {
+        guard let resultSet else {
+            return []
+        }
+        var results = [String]()
+        while resultSet.next() {
+            if let name = resultSet.string(forColumn: "name") {
+                results.append(name)
+            }
+        }
+        return results
+    }
+
+    private func createTables() -> Bool {
+        do {
+            do {
+                try db.executeUpdate(Chat.schema(), withArguments: [])
+                let chatMigrations = Chat.migrations(existingColumns:
+                                                         listColumns(
+                                                             resultSet: try db.executeQuery(
+                                                                 Chat.tableInfoQuery(),
+                                                                 withArguments: [])))
+                for migration in chatMigrations {
+                    try db.executeUpdate(migration.query, withArguments: migration.args)
+                }
+            }
+
+            try db.executeUpdate(Message.schema(), withArguments: [])
+
+            do {
+                // Read the existing columns once: it drives both the plain
+                // ADD COLUMN migrations and the seq rebuild below. For a brand
+                // new database schema() just created the table WITH seq, so this
+                // already contains "seq" and the rebuild is skipped.
+                let existingColumns = listColumns(
+                    resultSet: try db.executeQuery(Message.tableInfoQuery(),
+                                                   withArguments: []))
+                let messageMigrations = Message.migrations(existingColumns: existingColumns)
+                for migration in messageMigrations {
+                    try db.executeUpdate(migration.query, withArguments: migration.args)
+                }
+                // The seq column (INTEGER PRIMARY KEY AUTOINCREMENT) cannot be
+                // added with ALTER TABLE, so pre-seq databases need a table
+                // rebuild. Run it AFTER the ADD COLUMN migrations above so the
+                // copied rows already have responseID/agentReasoning.
+                if !existingColumns.isEmpty && !existingColumns.contains(Message.Columns.seq.rawValue) {
+                    try migrateAddSeqColumnToMessage()
+                }
+            }
+
+            // Index the push path's per-chat scans (messagesSince window + maxSeq)
+            // and the per-chat history fetch. Only seq (the PK) is indexed
+            // otherwise, so these full-scan the Message table, growing with total
+            // messages across all chats. IF NOT EXISTS: cheap on every open.
+            try db.executeUpdate(
+                "create index if not exists Message_chatID_seq on Message "
+                + "(\(Message.Columns.chatID.rawValue), \(Message.Columns.seq.rawValue))",
+                withArguments: [])
+
+            return true
+        } catch {
+            DLog("\(error)")
+            return false
+        }
+    }
+
+    // Rebuild the Message table to add the seq AUTOINCREMENT primary key
+    // (SQLite forbids adding one with ALTER TABLE). The whole rebuild runs in
+    // ONE transaction: SQLite DDL is transactional, so a crash or error
+    // mid-migration rolls back to the intact original table rather than leaving
+    // a half-built or emptied one. Rows are copied in rowid order so seq is
+    // backfilled in arrival order; the engine assigns 1..N and tracks the max
+    // in sqlite_sequence, so subsequent inserts never reuse a value.
+    private func migrateAddSeqColumnToMessage() throws {
+        let c = Message.Columns.self
+        let copiedColumns = [
+            c.uniqueID, c.author, c.chatID, c.content,
+            c.sentDate, c.responseID, c.agentReasoning
+        ].map { $0.rawValue }.joined(separator: ", ")
+        // The SELECT coalesces the NOT NULL columns so a single legacy row with a
+        // NULL (the old schema also declares these NOT NULL, so this shouldn't
+        // exist, but a corrupt row would otherwise fail the INSERT and roll back
+        // the whole migration - bricking the DB, since every reopen re-runs and
+        // re-fails). A coerced bad row degrades gracefully instead.
+        let selectColumns = [
+            c.uniqueID.rawValue,
+            "coalesce(\(c.author.rawValue), 'user')",
+            "coalesce(\(c.chatID.rawValue), '')",
+            "coalesce(\(c.content.rawValue), '')",
+            "coalesce(\(c.sentDate.rawValue), 0)",
+            c.responseID.rawValue,
+            c.agentReasoning.rawValue
+        ].joined(separator: ", ")
+        // Throwing transaction: begins, runs the closure, commits; any throw
+        // from executeUpdate rolls back and rethrows, so a failure leaves the
+        // original Message table intact.
+        do {
+            try db.transaction {
+                try db.executeUpdate("""
+                    create table Message_new
+                        (\(c.seq.rawValue) integer primary key autoincrement,
+                         \(c.uniqueID.rawValue) text,
+                         \(c.author.rawValue) text not null,
+                         \(c.chatID.rawValue) text not null,
+                         \(c.content.rawValue) text not null,
+                         \(c.sentDate.rawValue) integer not null,
+                         \(c.responseID.rawValue) text,
+                         \(c.agentReasoning.rawValue) text)
+                    """, withArguments: [])
+                try db.executeUpdate("""
+                    insert into Message_new (\(copiedColumns))
+                    select \(selectColumns) from Message order by rowid
+                    """, withArguments: [])
+                try db.executeUpdate("drop table Message", withArguments: [])
+                try db.executeUpdate("alter table Message_new rename to Message", withArguments: [])
+            }
+        } catch {
+            // Surface loudly: a persistent failure here re-runs and re-fails on
+            // every open, so the chat DB would never open again.
+            DLog("Message seq migration FAILED (chat DB will not open): \(error)")
+            throw error
+        }
+    }
+
+    /// For the relay-push messagesSince responder: a newest-first window of a
+    /// chat's messages with seq greater than `sinceSeq`, plus the chat's current
+    /// max seq. Decodes Message rows (which ignore the seq column); the caller
+    /// drops hidden rows and trims to previews. `windowLimit` over-fetches so
+    /// hidden rows don't crowd out visible ones.
+    ///
+    /// Returns nil on a query FAILURE - distinct from a genuinely empty result
+    /// (`([], 0)`). The caller must not treat a failure as an empty/rewound chat:
+    /// a maxSeq of 0 from a transient error would otherwise look like a chat-DB
+    /// rewind (seq > maxSeq) and force the phone's watermark down to 0.
+    func messagesSince(chatID: String,
+                       sinceSeq: Int64,
+                       windowLimit: Int) -> (messages: [Message], maxSeq: Int64)? {
+        var messages = [Message]()
+        var maxSeqValue: Int64 = 0
+        // One transaction so the window read and the maxSeq read are a single
+        // snapshot. Otherwise a write between them could advance maxSeq past a
+        // message not in the returned window, and the phone would advance its
+        // watermark past an un-previewed message and never notify it. All callers
+        // are @MainActor today, but this invariant must not rest on that.
+        do {
+            try db.transaction {
+                let (sql, args) = Message.messagesSinceQuery(chatID: chatID, seq: sinceSeq, windowLimit: windowLimit)
+                guard let rs = try db.executeQuery(sql, withArguments: args) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                while rs.next() {
+                    if let message = Message(dbResultSet: rs) {
+                        messages.append(message)
+                    }
+                }
+                rs.close()
+                let (maxSQL, maxArgs) = Message.maxSeqQuery(chatID: chatID)
+                guard let maxRS = try db.executeQuery(maxSQL, withArguments: maxArgs) else {
+                    throw ChatDatabaseQueryError.nilResultSet
+                }
+                defer { maxRS.close() }
+                if maxRS.next() {
+                    maxSeqValue = maxRS.longLongInt(forColumn: "maxseq")
+                }
+            }
+        } catch {
+            // Surface the cause (e.g. a missing seq column if the migration were
+            // ever skipped) so a phone that mysteriously stops getting previews is
+            // diagnosable. Return nil (failure), NOT ([], 0): the caller must be
+            // able to tell a transient error from an empty chat.
+            DLog("Companion: messagesSince failed for chat \(chatID): \(error); returning nil")
+            return nil
+        }
+        return (messages, maxSeqValue)
+    }
+
+    /// The chat's current max seq (0 if it has no messages).
+    func maxSeq(chatID: String) -> Int64 {
+        let (sql, args) = Message.maxSeqQuery(chatID: chatID)
+        do {
+            guard let rs = try db.executeQuery(sql, withArguments: args) else { return 0 }
+            defer { rs.close() }
+            if rs.next() {
+                return rs.longLongInt(forColumn: "maxseq")
+            }
+        } catch {
+            DLog("Companion: maxSeq failed for chat \(chatID): \(error)")
+        }
+        return 0
+    }
+
+    private func popuplateSessionToChatMap() {
+        let sql =
+        """
+        SELECT
+            \(Chat.Columns.terminalSessionGuid.rawValue),
+            \(Chat.Columns.browserSessionGuid.rawValue),
+            \(Chat.Columns.uuid.rawValue)
+        FROM Chat
+        WHERE
+            \(Chat.Columns.terminalSessionGuid.rawValue) IS NOT NULL OR
+            \(Chat.Columns.browserSessionGuid.rawValue) IS NOT NULL
+        """
+        do {
+            guard let resultSet = try db.executeQuery(sql, withArguments: []) else {
+                return
+            }
+            while resultSet.next() {
+                if let terminalGuid = resultSet.string(forColumn: Chat.Columns.terminalSessionGuid.rawValue),
+                      let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) {
+                    terminalSessionToChatMap[terminalGuid, default: Set()].insert(chatID)
+                }
+                if let browserGuid = resultSet.string(forColumn: Chat.Columns.browserSessionGuid.rawValue),
+                      let chatID = resultSet.string(forColumn: Chat.Columns.uuid.rawValue) {
+                    browserSessionToChatMap[browserGuid, default: Set()].insert(chatID)
+                }
+            }
+        } catch {
+            DLog("\(error)")
+            return
+        }
+    }
+
+    private var _chats: DatabaseBackedArray<Chat>?
+    var chats: DatabaseBackedArray<Chat>? {
+        if _chats == nil {
+            guard let dba = try? DatabaseBackedArray<Chat>(db: db, query: Chat.fetchAllQuery()) else {
+                return nil
+            }
+            dba.delegate = self
+            _chats = dba
+        }
+        return _chats
+    }
+
+    func messages(inChat chatID: String) -> DatabaseBackedArray<Message>? {
+        let (query, args) = Message.query(forChatID: chatID)
+        return try? DatabaseBackedArray(db: db,
+                                        query: query,
+                                        args: args)
+    }
+
+    struct QueryIterator<T>: Sequence, IteratorProtocol where T: iTermDatabaseInitializable {
+        fileprivate var resultSet: iTermDatabaseResultSet?
+        mutating func next() -> T? {
+            guard let resultSet else {
+                return nil
+            }
+            if resultSet.next() {
+                return T(dbResultSet: resultSet)
+            }
+            resultSet.close()
+            self.resultSet = nil
+            return nil
+        }
+        func makeIterator() -> any IteratorProtocol {
+            return self
+        }
+    }
+    typealias MessageIterator = QueryIterator<Message>
+
+    func messageReverseIterator(inChat chatID: String) -> MessageIterator {
+        let query = "SELECT * FROM Message WHERE chatID=? ORDER BY sentDate DESC"
+        do {
+            guard let resultSet = try db.executeQuery(query, withArguments: [chatID]) else {
+                return MessageIterator(resultSet: nil)
+            }
+            return MessageIterator(resultSet: resultSet)
+        } catch {
+            DLog("\(error)")
+            return MessageIterator(resultSet: nil)
+        }
+    }
+
+    func searchResultSequence(forQuery query: String) -> AnySequence<ChatSearchResult> {
+        return AnySequence {
+            let tokens = query
+                .components(separatedBy: .whitespacesAndNewlines)
+                .filter { !$0.isEmpty }
+
+            let conditions = tokens.map { "content LIKE '%\($0)%'" }
+            let whereClause = "WHERE " + conditions.joined(separator: " AND ")
+            do {
+                let resultSet = try self.db.executeQuery("SELECT * from MESSAGE \(whereClause)", withArguments: tokens)
+                return QueryIterator<ChatSearchResult>(resultSet: resultSet)
+            } catch {
+                DLog("\(error)")
+                return QueryIterator<ChatSearchResult>(resultSet: nil)
+            }
+        }
+    }
+}
+
+extension ChatSearchResult: iTermDatabaseInitializable {
+    init?(dbResultSet resultSet: any iTermDatabaseResultSet) {
+        guard let chatID = resultSet.string(forColumn: Message.Columns.chatID.rawValue),
+              let message = Message(dbResultSet: resultSet) else {
+            return nil
+        }
+        self.chatID = chatID
+        self.message = message
+    }
+}
+
+extension ChatDatabase: DatabaseBackedArrayDelegate {
+    func databaseBackedArray(didInsertElement chat: Chat) {
+        if let guid = chat.terminalSessionGuid {
+            terminalSessionToChatMap[guid, default: Set()].insert(chat.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+        if let guid = chat.browserSessionGuid {
+            browserSessionToChatMap[guid, default: Set()].insert(chat.id)
+        }
+    }
+
+    func databaseBackedArray(didRemoveElement chat: Chat) {
+        if let guid = chat.terminalSessionGuid {
+            terminalSessionToChatMap[guid]?.remove(chat.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+        if let guid = chat.browserSessionGuid {
+            browserSessionToChatMap[guid]?.remove(chat.id)
+        }
+    }
+
+    func databaseBackedArray(didModifyElement newValue: Chat, oldValue: Chat) {
+        if let guid = oldValue.terminalSessionGuid {
+            terminalSessionToChatMap[guid]?.remove(oldValue.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+        if let guid = newValue.terminalSessionGuid {
+            terminalSessionToChatMap[guid, default: Set()].insert(newValue.id)
+            NotificationCenter.default.post(name: ObjCChatDatabase.redrawTerminalsNotification, object: nil)
+        }
+        if let guid = oldValue.browserSessionGuid {
+            browserSessionToChatMap[guid]?.remove(oldValue.id)
+        }
+        if let guid = newValue.browserSessionGuid {
+            browserSessionToChatMap[guid, default: Set()].insert(newValue.id)
+        }
+    }
+}
+

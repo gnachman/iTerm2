@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.deepseek.com\/v1\/chat\/completions\nauthorization: Bearer <SECRET>\ncontent-type: application\/json\n\n{\"function_call\":\"auto\",\"max_tokens\":8000,\"messages\":[{\"content\":\"Please run the diagnostic command.\",\"role\":\"user\"},{\"role\":\"assistant\",\"tool_calls\":[{\"function\":{\"arguments\":\"{}\",\"id\":\"call_test_chat_reload_orphan\",\"name\":\"execute_command\"},\"id\":\"call_test_chat_reload_orphan\",\"type\":\"function\"}]},{\"content\":\"Darwin host 25.4.0 arm64\",\"role\":\"tool\",\"tool_call_id\":\"call_test_chat_reload_orphan\"},{\"content\":\"In one short sentence, summarize what you learned from the previous command output.\",\"role\":\"user\"}],\"model\":\"deepseek-coder\",\"stream\":false,\"temperature\":0,\"tools\":[{\"function\":{\"description\":\"Run a shell command (stub for chat-reload tests).\",\"name\":\"execute_command\",\"parameters\":{\"properties\":{\"command\":{\"description\":\"The command to run.\",\"type\":\"string\"}},\"required\":[\"command\"],\"type\":\"object\"}},\"type\":\"function\"}]}",
+  "key" : "c8d4d418a4bdd5b0afe33d9ac4fcafa78888d8ad3f960388c74b856d077f39bb",
+  "response" : {
+    "data" : "{\"id\":\"456231e5-9cf0-46eb-b421-27dbabf0d324\",\"object\":\"chat.completion\",\"created\":1780870809,\"model\":\"deepseek-v4-flash\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The system is running macOS (Darwin) on an ARM64 (Apple Silicon) architecture, with kernel version 25.4.0.\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":360,\"completion_tokens\":29,\"total_tokens\":389,\"prompt_tokens_details\":{\"cached_tokens\":256},\"prompt_cache_hit_tokens\":256,\"prompt_cache_miss_tokens\":104},\"system_fingerprint\":\"fp_8b330d02d0_prod0820_fp8_kvcache_20260402\"}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}
