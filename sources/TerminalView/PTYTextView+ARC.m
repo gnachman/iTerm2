@@ -2550,27 +2550,31 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         iTermColorMap *undimmed = [helper.colorMap copy];
         undimmed.dimmingAmount = 0;
 
-        // CDIAG: confirm (a) whether the focus state actually changes the live
-        // color map, and (b) whether zeroing dimmingAmount actually changes the
-        // processed default text color. Logs only when the live value changes
-        // (e.g. a tab switch), so it is not per-frame noise.
-        const double cdiagLiveDim = helper.colorMap.dimmingAmount;
-        const double cdiagLiveMute = helper.colorMap.mutingAmount;
-        static double cdiagLastDim = -999, cdiagLastMute = -999;
-        if (fabs(cdiagLiveDim - cdiagLastDim) > 0.001 || fabs(cdiagLiveMute - cdiagLastMute) > 0.001) {
-            NSColor *liveFg = [helper.colorMap processedTextColorForTextColor:[helper.colorMap colorForKey:kColorMapForeground]
-                                                         overBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]
-                                                      disableMinimumContrast:NO];
-            NSColor *undimFg = [undimmed processedTextColorForTextColor:[undimmed colorForKey:kColorMapForeground]
-                                                   overBackgroundColor:[undimmed colorForKey:kColorMapBackground]
-                                                disableMinimumContrast:NO];
-            NSLog(@"CDIAG render(asFocusedSession): dim=%.3f mute=%.3f active=%d key=%d "
-                  @"liveFgBrightness=%.3f undimFgBrightness=%.3f",
-                  cdiagLiveDim, cdiagLiveMute,
-                  (int)[self.delegate textViewIsActiveSession], (int)[self isInKeyWindow],
-                  liveFg.perceivedBrightness, undimFg.perceivedBrightness);
-            cdiagLastDim = cdiagLiveDim;
-            cdiagLastMute = cdiagLiveMute;
+        // CDIAG: a tab switch (same window) flips textViewIsActiveSession while
+        // the window stays key, and dimming did NOT change, so log a broad
+        // snapshot keyed on the active/key/dim change to find what actually
+        // shifts the streamed text brightness. fgB is the perceived brightness of
+        // the PROCESSED default foreground color the render will use; if it
+        // differs between the active and inactive snapshots, the listed inputs
+        // say which knob did it; if it is identical, the shift is not in the
+        // rendered content at all.
+        const int cdiagActive = (int)[self.delegate textViewIsActiveSession];
+        const int cdiagKey = (int)[self isInKeyWindow];
+        const double cdiagDim = helper.colorMap.dimmingAmount;
+        static int cdiagLastActive = -1, cdiagLastKey = -1;
+        static double cdiagLastDim = -999;
+        if (cdiagActive != cdiagLastActive || cdiagKey != cdiagLastKey || fabs(cdiagDim - cdiagLastDim) > 0.001) {
+            NSColor *fg = [helper.colorMap processedTextColorForTextColor:[helper.colorMap colorForKey:kColorMapForeground]
+                                                      overBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]
+                                                   disableMinimumContrast:NO];
+            NSColor *bg = [helper.colorMap processedBackgroundColorForBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]];
+            NSLog(@"CDIAG render: active=%d key=%d dim=%.3f mute=%.3f contrast=%.3f blend=%.3f transp=%.3f thinStrokes=%ld reverseVideo=%d fgB=%.3f bgB=%.3f",
+                  cdiagActive, cdiagKey, cdiagDim, helper.colorMap.mutingAmount, helper.colorMap.minimumContrast,
+                  helper.blend, helper.transparencyAlpha, (long)helper.thinStrokes, (int)helper.reverseVideo,
+                  fg.perceivedBrightness, bg.perceivedBrightness);
+            cdiagLastActive = cdiagActive;
+            cdiagLastKey = cdiagKey;
+            cdiagLastDim = cdiagDim;
         }
 
         helper.colorMap = undimmed;
