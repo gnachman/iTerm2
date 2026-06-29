@@ -21,13 +21,12 @@ import Foundation
 /// The session-side inputs the streamer needs: the geometry of the rendered
 /// frame and a way to render the current visible screen.
 protocol CompanionFrameSource: AnyObject {
-    var pixelWidth: Int { get }
-    var pixelHeight: Int { get }
     var columns: Int { get }
     var rows: Int { get }
     /// Encoded pixels per Mac point (the render scale).
     var scale: Double { get }
     /// Render the current visible screen, or nil if it cannot be produced now.
+    /// The encoder and pool size themselves to the returned image's dimensions.
     func renderCurrentScreen() -> CGImage?
 }
 
@@ -84,7 +83,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         lock.unlock()
         guard let decision else { return }
         guard let image = source.renderCurrentScreen() else { return }
-        guard ensureEncoder(width: source.pixelWidth, height: source.pixelHeight),
+        guard ensureEncoder(width: image.width, height: image.height),
               let encoder, let pool,
               let pixelBuffer = try? pool.pixelBuffer(from: image) else {
             return

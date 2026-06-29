@@ -20,16 +20,43 @@
 //
 
 import Foundation
+import QuartzCore
 import CompanionProtocol
 import CompanionNoise
+
+/// One item queued for the wire: a JSON control envelope (sent verbatim) or a
+/// media payload (sent with the media channel marker). Routing both through the
+/// one outbox preserves ordering, so a stream config always precedes the
+/// keyframe it describes.
+private enum CompanionOutboundFrame {
+    case control(HostEnvelope)
+    case media(Data)
+}
 
 @MainActor
 final class CompanionHostBridge {
     private let transport: MessageTransport
     private var receiveTask: Task<Void, Never>?
     private var subscriptions: [String: ChatBroker.Subscription] = [:]
-    private var outbox: AsyncStream<HostEnvelope>.Continuation?
+    private var outbox: AsyncStream<CompanionOutboundFrame>.Continuation?
     private var outboxTask: Task<Void, Never>?
+
+    /// One live video stream and the main-thread timer driving it.
+    private final class StreamContext {
+        let streamer: CompanionSessionStreamer
+        let guid: String
+        let timer: Timer
+        var lastChange: TimeInterval
+        init(streamer: CompanionSessionStreamer, guid: String, timer: Timer, lastChange: TimeInterval) {
+            self.streamer = streamer
+            self.guid = guid
+            self.timer = timer
+            self.lastChange = lastChange
+        }
+    }
+    private var streams: [UInt32: StreamContext] = [:]
+    private var streamIDForGuid: [String: UInt32] = [:]
+    private var nextStreamID: UInt32 = 1
 
     /// Host-initiated requests to the phone (today: the notification
     /// permission prompt), keyed by a host-side request id and resolved when
@@ -79,17 +106,23 @@ final class CompanionHostBridge {
     func start() {
         ChatBroker.instance?.ensureServiceRunning()
 
-        var continuation: AsyncStream<HostEnvelope>.Continuation!
-        let stream = AsyncStream<HostEnvelope> { continuation = $0 }
+        var continuation: AsyncStream<CompanionOutboundFrame>.Continuation!
+        let stream = AsyncStream<CompanionOutboundFrame> { continuation = $0 }
         outbox = continuation
         outboxTask = Task { [transport] in
-            for await envelope in stream {
+            for await frame in stream {
                 let data: Data
-                do {
-                    data = try WireCoding.encode(envelope)
-                } catch {
-                    RLog("Companion bridge: DROPPING unencodable envelope: \(error)")
-                    continue
+                switch frame {
+                case .control(let envelope):
+                    do {
+                        data = try WireCoding.encode(envelope)
+                    } catch {
+                        RLog("Companion bridge: DROPPING unencodable envelope: \(error)")
+                        continue
+                    }
+                case .media(let payload):
+                    // Control frames stay bare JSON; media frames carry the marker.
+                    data = CompanionFrameChannel.frameMedia(payload)
                 }
                 do {
                     try await transport.send(data)
@@ -139,6 +172,7 @@ final class CompanionHostBridge {
     func announceUnpairedAndStop() async {
         RLog("Companion bridge: announcing unpair")
         onClose = nil
+        endAllStreams(reason: .sessionClosed)
         for observer in chatListObservers {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -177,6 +211,7 @@ final class CompanionHostBridge {
     }
 
     private func teardownStreams() {
+        endAllStreams(reason: .sessionClosed)
         for observer in chatListObservers {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -354,15 +389,104 @@ final class CompanionHostBridge {
         case .unpairing:
             RLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
-        case .startSessionStream, .stopSessionStream, .requestKeyframe,
-             .updateStreamParams, .streamAck:
-            // Live pixel streaming is wired up in a later commit. Until the host
-            // streamer exists, fail fast so a streaming-capable phone does not
-            // hang waiting for a reply that will never come.
-            DLog("Companion bridge: live streaming not yet implemented on this build")
+        case .startSessionStream(let sessionGuid, let params):
+            handleStartSessionStream(guid: sessionGuid, params: params, requestID: requestID)
+        case .stopSessionStream(let streamID):
+            endStream(streamID, reason: .stoppedByClient)
+        case .requestKeyframe(let streamID):
+            streams[streamID]?.streamer.requestKeyframe()
+        case .updateStreamParams:
+            // Frame-rate / bitrate adaptation is handled in a later milestone.
+            break
+        case .streamAck:
+            // End-to-end flow-control feedback is consumed in a later milestone.
+            break
+        }
+    }
+
+    // MARK: Live streaming
+
+    private func handleStartSessionStream(guid: String,
+                                          params: CompanionStreamParams,
+                                          requestID: UInt64?) {
+        guard params.supportedCodecs.contains(.hevc) else {
             send(.error(CompanionError(code: .badRequest,
-                                       message: "Live streaming not available on this Mac build")),
+                                       message: "No supported video codec (HEVC required)")),
                  requestID: requestID)
+            return
+        }
+        guard let session = contentSession(guid: guid, requestID: requestID) else {
+            return  // contentSession already replied with an error
+        }
+        // One stream per session: replace any existing one.
+        if let existing = streamIDForGuid[guid] {
+            endStream(existing, reason: .superseded)
+        }
+
+        let streamID = nextStreamID
+        nextStreamID &+= 1
+        let frameRate = params.maxFrameRate > 0 ? min(params.maxFrameRate, 60) : 30
+        let bitRate = params.maxBitrate.map { max(100_000, min($0, 8_000_000)) } ?? 1_000_000
+
+        // Capture the Sendable outbox continuation, not self: the encoder's
+        // callbacks fire on a VideoToolbox thread, and yielding to the stream is
+        // thread-safe whereas touching the main-actor bridge would not be.
+        let outboxRef = outbox
+        let streamer = CompanionSessionStreamer(
+            streamID: streamID,
+            source: CompanionTerminalFrameSource(session: session),
+            maxFrameRate: frameRate,
+            averageBitRate: bitRate,
+            onConfig: { config in
+                outboxRef?.yield(.control(HostEnvelope(requestID: nil, payload: .streamConfig(config))))
+            },
+            onMedia: { frame in
+                outboxRef?.yield(.media(frame.encoded()))
+            })
+        streamer.start()
+
+        // A main-thread timer at the frame-rate cap drives the stream: mark dirty
+        // only when the session's content-change timestamp advanced, then tick.
+        // The pacer coalesces and enforces the cap, so a static screen emits nothing.
+        let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / frameRate, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.driveStream(streamID)
+            }
+        }
+        streams[streamID] = StreamContext(streamer: streamer, guid: guid, timer: timer,
+                                          lastChange: session.screenContentsLastChangedAt)
+        streamIDForGuid[guid] = streamID
+        send(.streamStarted(CompanionStreamStarted(streamID: streamID, codec: .hevc)),
+             requestID: requestID)
+    }
+
+    private func driveStream(_ streamID: UInt32) {
+        guard let context = streams[streamID] else { return }
+        guard let session = iTermController.sharedInstance().anySession(withGUID: context.guid) else {
+            endStream(streamID, reason: .sessionClosed)
+            return
+        }
+        let changedAt = session.screenContentsLastChangedAt
+        if changedAt > context.lastChange {
+            context.lastChange = changedAt
+            context.streamer.screenDidChange()
+        }
+        context.streamer.tick(nowMilliseconds: UInt64(max(0, CACurrentMediaTime() * 1000)))
+    }
+
+    private func endStream(_ streamID: UInt32, reason: CompanionStreamEndReason) {
+        guard let context = streams.removeValue(forKey: streamID) else { return }
+        context.timer.invalidate()
+        context.streamer.stop()
+        if streamIDForGuid[context.guid] == streamID {
+            streamIDForGuid[context.guid] = nil
+        }
+        send(.streamEnded(streamID: streamID, reason: reason), requestID: nil)
+    }
+
+    private func endAllStreams(reason: CompanionStreamEndReason) {
+        for streamID in Array(streams.keys) {
+            endStream(streamID, reason: reason)
         }
     }
 
@@ -1126,6 +1250,6 @@ final class CompanionHostBridge {
     /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
     /// transmit order.
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
-        outbox?.yield(HostEnvelope(requestID: requestID, payload: payload))
+        outbox?.yield(.control(HostEnvelope(requestID: requestID, payload: payload)))
     }
 }

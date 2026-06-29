@@ -13,16 +13,12 @@ import CoreGraphics
 @testable import iTerm2SharedARC
 
 private final class FakeFrameSource: CompanionFrameSource {
-    let pixelWidth: Int
-    let pixelHeight: Int
     let columns: Int
     let rows: Int
     let scale: Double
     private let image: CGImage
 
     init(pixelWidth: Int, pixelHeight: Int, columns: Int, rows: Int, scale: Double) {
-        self.pixelWidth = pixelWidth
-        self.pixelHeight = pixelHeight
         self.columns = columns
         self.rows = rows
         self.scale = scale
