@@ -2549,6 +2549,30 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         //    (a profile setting), so it is preserved.
         iTermColorMap *undimmed = [helper.colorMap copy];
         undimmed.dimmingAmount = 0;
+
+        // CDIAG: confirm (a) whether the focus state actually changes the live
+        // color map, and (b) whether zeroing dimmingAmount actually changes the
+        // processed default text color. Logs only when the live value changes
+        // (e.g. a tab switch), so it is not per-frame noise.
+        const double cdiagLiveDim = helper.colorMap.dimmingAmount;
+        const double cdiagLiveMute = helper.colorMap.mutingAmount;
+        static double cdiagLastDim = -999, cdiagLastMute = -999;
+        if (fabs(cdiagLiveDim - cdiagLastDim) > 0.001 || fabs(cdiagLiveMute - cdiagLastMute) > 0.001) {
+            NSColor *liveFg = [helper.colorMap processedTextColorForTextColor:[helper.colorMap colorForKey:kColorMapForeground]
+                                                         overBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]
+                                                      disableMinimumContrast:NO];
+            NSColor *undimFg = [undimmed processedTextColorForTextColor:[undimmed colorForKey:kColorMapForeground]
+                                                   overBackgroundColor:[undimmed colorForKey:kColorMapBackground]
+                                                disableMinimumContrast:NO];
+            NSLog(@"CDIAG render(asFocusedSession): dim=%.3f mute=%.3f active=%d key=%d "
+                  @"liveFgBrightness=%.3f undimFgBrightness=%.3f",
+                  cdiagLiveDim, cdiagLiveMute,
+                  (int)[self.delegate textViewIsActiveSession], (int)[self isInKeyWindow],
+                  liveFg.perceivedBrightness, undimFg.perceivedBrightness);
+            cdiagLastDim = cdiagLiveDim;
+            cdiagLastMute = cdiagLiveMute;
+        }
+
         helper.colorMap = undimmed;
         // The text is drawn by an attributed-string builder that was wired to the
         // ORIGINAL color map in newDrawingHelperForOffscreenRendering's
