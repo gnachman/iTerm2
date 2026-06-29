@@ -5456,6 +5456,7 @@
 		F8ECBE597A69D02A7C924093 /* iTermPasswordInputDebouncer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F20922E7C56B246576E589A /* iTermPasswordInputDebouncer.swift */; };
 		F968986D3911FB8752DFAA33 /* OrchestrationToolProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC80F2A9A6FBB24419560FD1 /* OrchestrationToolProvider.swift */; };
 		F96B31FFBFC5DFE713E9C670 /* EnterWorkgroupBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171DC262300F3B977D7FF1DB /* EnterWorkgroupBrowserTrigger.swift */; };
+		FAD6DE861DB58FBEB8390E1F /* CompanionSessionStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1A8905A6728CBE90BCD09 /* CompanionSessionStreamer.swift */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
 		FC58829E571DF07C5902F3EB /* EnterWorkgroupTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23866DFB3D15427C93C0849 /* EnterWorkgroupTrigger.swift */; };
 		FD34D15329745082B47FF48A /* InlineChatToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D24FA729C97DC10CC13FB8C /* InlineChatToolbarView.swift */; };
@@ -6654,6 +6655,7 @@
 		A0F7E9B034221DCA29222383 /* TerminalRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TerminalRenderer.swift; sourceTree = "<group>"; };
 		A25EF27A7558A60A0553EDC9 /* WorkgroupChildSpawning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupChildSpawning.swift; sourceTree = "<group>"; };
 		A289859EF5CE3EC1C14E85F4 /* OrchestratorDispatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorDispatcher.swift; sourceTree = "<group>"; };
+		A3C1A8905A6728CBE90BCD09 /* CompanionSessionStreamer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionSessionStreamer.swift; sourceTree = "<group>"; };
 		A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableAttributedString+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableAttributedString+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermNSKeyBindingEmulator.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -10696,6 +10698,7 @@
 				E989C0EC904E3E213AA6115A /* CompanionPixelBufferPool.swift */,
 				F1D98D4F4D522B88FB7F898D /* CompanionVideoEncoder.swift */,
 				B577B7726D9E6991593F0069 /* CompanionStreamPacer.swift */,
+				A3C1A8905A6728CBE90BCD09 /* CompanionSessionStreamer.swift */,
 			);
 			path = Companion;
 			sourceTree = "<group>";
@@ -21760,6 +21763,7 @@
 				A2E21711A1810B5CFD3A9ECF /* CompanionPixelBufferPool.swift in Sources */,
 				72375D4CDC81280431ED5BA1 /* CompanionVideoEncoder.swift in Sources */,
 				7822303C5D0B67588F07F281 /* CompanionStreamPacer.swift in Sources */,
+				FAD6DE861DB58FBEB8390E1F /* CompanionSessionStreamer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
