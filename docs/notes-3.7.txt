@@ -497,6 +497,11 @@ Settings Improvements:
   fades. Off by default.
 
 Bug Fixes:
+- Hiding a hotkey window on macOS 26 no longer
+  briefly flashes background iTerm2 windows to
+  the front. The window now waits for the
+  previously active app to come forward before
+  ordering out.
 - tmux integration now parses pane state
   correctly on macOS 26 and later. A new
   system NSString method had shadowed ours
