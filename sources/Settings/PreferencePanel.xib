@@ -10948,9 +10948,9 @@ instead of the system keyboard.</string>
                         </connections>
                     </button>
                     <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cmp-A2-lbl">
-                        <rect key="frame" x="18" y="38" width="304" height="30"/>
+                        <rect key="frame" x="40" y="20" width="248" height="48"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" lineBreakMode="wordWrapping" selectable="YES" title="" id="cmp-A2-cel">
+                        <textFieldCell key="cell" controlSize="small" selectable="YES" title="Companion app help text goes here" id="cmp-A2-cel">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
