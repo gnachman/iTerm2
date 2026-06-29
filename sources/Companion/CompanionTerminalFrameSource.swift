@@ -52,7 +52,8 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
         guard let image = textview.renderImage(withLines: range,
                                                includeMargins: false,
                                                backgroundColor: background,
-                                               showCursor: true) else {
+                                               showCursor: true,
+                                               includeSelection: true) else {
             return nil
         }
         var rect = CGRect(origin: .zero, size: image.size)

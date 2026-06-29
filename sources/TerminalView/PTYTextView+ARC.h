@@ -211,6 +211,15 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
                           backgroundColor:(NSColor * _Nullable)backgroundColor
                                showCursor:(BOOL)showCursor;
 
+// As above, but optionally draws the current text selection (its highlight and
+// selected-text color), so a streamed/snapshot image matches what the user sees
+// on screen. The 4-argument form above omits the selection (includeSelection:NO).
+- (NSImage * _Nullable)renderImageWithLines:(NSRange)lineRange
+                           includeMargins:(BOOL)includeMargins
+                          backgroundColor:(NSColor * _Nullable)backgroundColor
+                               showCursor:(BOOL)showCursor
+                         includeSelection:(BOOL)includeSelection;
+
 // Renders lines in batches to avoid blocking the main thread.
 // Each batch is rendered, then control returns to the run loop before the next batch.
 // Progress callback is called after each batch with (completed lines, total lines).

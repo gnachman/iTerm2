@@ -2435,6 +2435,18 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                    includeMargins:(BOOL)includeMargins
                   backgroundColor:(NSColor *)backgroundColor
                        showCursor:(BOOL)showCursor {
+    return [self renderImageWithLines:lineRange
+                       includeMargins:includeMargins
+                      backgroundColor:backgroundColor
+                           showCursor:showCursor
+                     includeSelection:NO];
+}
+
+- (NSImage *)renderImageWithLines:(NSRange)lineRange
+                   includeMargins:(BOOL)includeMargins
+                  backgroundColor:(NSColor *)backgroundColor
+                       showCursor:(BOOL)showCursor
+                 includeSelection:(BOOL)includeSelection {
     id<iTermTextDataSource> dataSource = self.dataSource;
     if (!dataSource) {
         return nil;
@@ -2501,6 +2513,13 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         helper.cursorType = self.drawingHelper.cursorType;
         helper.cursorCoord = VT100GridCoordMake(self.dataSource.cursorX - 1,
                                                  self.dataSource.cursorY - 1);
+    }
+    if (includeSelection) {
+        // newDrawingHelperForOffscreenRendering clears these (snapshots omit the
+        // selection); restore them so a streamed frame shows the same selection
+        // highlight and selected-text color the user sees on screen.
+        helper.selection = self.selection;
+        helper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
     }
     [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
                                         visibleRect:contentRect];
