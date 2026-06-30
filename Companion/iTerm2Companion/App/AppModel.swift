@@ -1978,11 +1978,19 @@ final class AppModel {
                               mode: CompanionSelectionMode,
                               point: CompanionSelectionPoint) {
         guard let client, let streamID = activeStreamID else { return }
+        // Coalesce: a drag fires a touch event per frame, but the selection only
+        // changes when the mapped CELL changes. Sending a move per event (often
+        // the same cell) floods the link in both directions (the move, plus the
+        // mac's selectionRange reply) and backs it up for seconds. Drop a .move
+        // whose cell is unchanged; begin/end always go.
+        if phase == .move && point == lastSentSelectionPoint { return }
+        lastSentSelectionPoint = (phase == .end) ? nil : point
         companionLog("CDIAG sel send phase=\(phase) col=\(point.column) line=\(point.absLine)")
         sendOrderedSelection {
             try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
         }
     }
+    private var lastSentSelectionPoint: CompanionSelectionPoint?
 
     /// Serialize selection sends. A drag fires begin/move/move/.../end in quick
     /// succession; wrapping each in its own Task does NOT preserve order, so the

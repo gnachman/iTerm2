@@ -465,8 +465,14 @@ final class CompanionHostBridge {
             textview.selection?.endLive()
         }
         RLog("CDIAG sel recv phase=\(phase) col=\(point.column) line=\(point.absLine) moved=\(moved) has=\(textview.selection?.hasSelection ?? false) live=\(textview.selection?.live ?? false)")
-        context.streamer.screenDidChange()
-        sendSelectionRange(streamID: streamID, textview: textview)
+        // Only react when the selection actually changed: a no-op move neither
+        // alters the rendered frame nor needs a selectionRange reply, and emitting
+        // either just adds to the flood that backs up the link.
+        let changed = (phase != .move) || moved
+        if changed {
+            context.streamer.screenDidChange()
+            sendSelectionRange(streamID: streamID, textview: textview)
+        }
     }
 
     private func handleClearSelection(streamID: UInt32) {
