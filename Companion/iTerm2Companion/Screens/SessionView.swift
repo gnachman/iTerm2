@@ -462,20 +462,6 @@ private struct LiveSessionView: View {
     @State private var holder = LiveVideoHolder()
     @State private var resolution: String?
     @State private var endedReason: CompanionStreamEndReason?
-    @State private var selecting = false
-    /// While a selection drag is in progress: the finger's view point and the
-    /// encoded-image point under it, so the magnifier can follow and show content.
-    @State private var loupeViewPoint: CGPoint?
-    @State private var loupeImagePoint: CGPoint?
-    /// Drawn handle positions DURING a drag, computed locally from the finger so
-    /// the dragged handle tracks instantly instead of trailing the round-tripped
-    /// selectionRange (which feeds the handles only when not dragging). The moving
-    /// handle follows the finger; the anchor is the fixed opposite endpoint.
-    @State private var dragMovingHandle: CGPoint?
-    @State private var dragAnchorHandle: CGPoint?
-    /// True when the current drag began in the letterbox bars, so it is ignored.
-    @State private var dragIgnored = false
-    private let loupeDiameter: CGFloat = 120
 
     var body: some View {
         ZStack {
@@ -523,142 +509,6 @@ private struct LiveSessionView: View {
             }
         }
     }
-
-    /// A transparent layer that turns a drag into begin/move/end selection
-    /// gestures. A drag starting on a selection handle adjusts that endpoint
-    /// (anchoring at the opposite one); a drag elsewhere starts a fresh selection.
-    /// Mapping uses the stream geometry. Handles are drawn but do not intercept
-    /// touches, so the one gesture below hit-tests them itself.
-    private var selectionGestureOverlay: some View {
-        GeometryReader { geo in
-            let handles = model.selectionHandlePoints(viewSize: geo.size)
-            ZStack {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                if !selecting {
-                                    selecting = true
-                                    // Ignore a drag that starts in the letterbox bars
-                                    // (outside the terminal image): no selection there.
-                                    dragIgnored = !model.isInsideContent(viewPoint: value.startLocation, viewSize: geo.size)
-                                    if !dragIgnored {
-                                        beginSelectionDrag(at: value.startLocation, handles: handles, viewSize: geo.size)
-                                    }
-                                }
-                                if dragIgnored { return }
-                                model.sendSelectionGesture(phase: .move, mode: .character,
-                                                           viewPoint: value.location, viewSize: geo.size)
-                                dragMovingHandle = value.location
-                                loupeViewPoint = value.location
-                                loupeImagePoint = model.selectionImagePoint(viewPoint: value.location, viewSize: geo.size)
-                            }
-                            .onEnded { value in
-                                if !dragIgnored {
-                                    model.sendSelectionGesture(phase: .end, mode: .character,
-                                                               viewPoint: value.location, viewSize: geo.size)
-                                }
-                                selecting = false
-                                dragIgnored = false
-                                dragMovingHandle = nil
-                                dragAnchorHandle = nil
-                                loupeViewPoint = nil
-                                loupeImagePoint = nil
-                            }
-                    )
-                // During a drag, draw the moving handle at the finger (instant) and
-                // the anchor fixed; otherwise from the round-tripped selectionRange.
-                if selecting, let moving = dragMovingHandle {
-                    if let anchor = dragAnchorHandle { selectionHandle.position(anchor) }
-                    selectionHandle.position(moving)
-                } else if let handles {
-                    selectionHandle.position(handles.start)
-                    selectionHandle.position(handles.end)
-                }
-                if let loupeViewPoint, let loupeImagePoint {
-                    loupe(at: loupeViewPoint, imagePoint: loupeImagePoint, viewSize: geo.size)
-                }
-                // The system edit menu above the selection once the drag finishes.
-                // Anchored to the selection start, clamped into the view so a
-                // Select All (whose start is in off-screen scrollback) still shows
-                // near the top of the content rather than off-screen.
-                if !selecting, model.activeSelectionRange != nil, let handles {
-                    let anchor = clampedMenuAnchor(handles.start, viewSize: geo.size)
-                    SelectionEditMenu(anchorKey: anchor,
-                                      canPaste: UIPasteboard.general.hasStrings,
-                                      onCopy: { model.copyActiveSelection() },
-                                      onSelectAll: { model.selectAllActiveStream() },
-                                      onPaste: { model.pasteIntoActiveSession() })
-                        .frame(width: 1, height: 1)
-                        .position(anchor)
-                }
-            }
-        }
-        .ignoresSafeArea(edges: .bottom)
-    }
-
-    private func clampedMenuAnchor(_ point: CGPoint, viewSize: CGSize) -> CGPoint {
-        // Keep the menu within the video content (not the letterbox bars): a Select
-        // All anchors at the top of off-screen scrollback, which would otherwise
-        // pin it into the top black bar.
-        let rect = model.contentRect(in: viewSize)
-        let inset = min(8, rect.width / 2, rect.height / 2)
-        return CGPoint(x: min(max(point.x, rect.minX + inset), rect.maxX - inset),
-                       y: min(max(point.y, rect.minY + inset), rect.maxY - inset))
-    }
-
-    /// The Apple-style magnifier: a circle showing the content around the finger
-    /// blown up, floated above the touch point (clamped to stay on screen).
-    private func loupe(at viewPoint: CGPoint, imagePoint: CGPoint, viewSize: CGSize) -> some View {
-        let radius = loupeDiameter / 2
-        let gap: CGFloat = 24
-        let x = min(max(viewPoint.x, radius), viewSize.width - radius)
-        // Float above the finger; if that would clip the top, drop below instead.
-        let above = viewPoint.y - gap - radius
-        let y = above - radius >= 0 ? above : viewPoint.y + gap + radius
-        // Show ~4 rows across the loupe (fall back to a sane crop if unknown).
-        let cellHeight = model.activeStreamCellHeight
-        let cropSide = max(40, cellHeight * 4)
-        return LoupeView(holder: holder, imagePoint: imagePoint, cropSide: cropSide, cellHeight: cellHeight)
-            .frame(width: loupeDiameter, height: loupeDiameter)
-            .position(x: x, y: y)
-            .allowsHitTesting(false)
-    }
-
-    /// A handle dot. Non-interactive: the overlay's single gesture hit-tests it.
-    private var selectionHandle: some View {
-        Circle()
-            .fill(.white)
-            .overlay(Circle().stroke(.blue, lineWidth: 2))
-            .frame(width: 16, height: 16)
-            .shadow(radius: 2)
-            .allowsHitTesting(false)
-    }
-
-    /// Decide what a drag beginning at `location` does, and send the opening
-    /// gesture. Grabbing a handle anchors the selection at the opposite endpoint.
-    private func beginSelectionDrag(at location: CGPoint,
-                                    handles: (start: CGPoint, end: CGPoint)?,
-                                    viewSize: CGSize) {
-        let hitRadius: CGFloat = 32
-        if let handles, let endpoints = model.activeSelectionEndpoints {
-            if location.distance(to: handles.start) <= hitRadius {
-                dragAnchorHandle = handles.end  // dragging start; end stays put
-                model.sendSelectionGesture(phase: .begin, mode: .character, point: endpoints.end)
-                return
-            }
-            if location.distance(to: handles.end) <= hitRadius {
-                dragAnchorHandle = handles.start  // dragging end; start stays put
-                model.sendSelectionGesture(phase: .begin, mode: .character, point: endpoints.start)
-                return
-            }
-        }
-        // Fresh selection: the start is wherever the drag began.
-        dragAnchorHandle = location
-        model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: location, viewSize: viewSize)
-    }
-
 
     @ViewBuilder private var liveBadge: some View {
         if endedReason == nil {
@@ -712,117 +562,9 @@ private struct LiveSessionView: View {
     }
 }
 
-private extension CGPoint {
-    func distance(to other: CGPoint) -> CGFloat {
-        hypot(x - other.x, y - other.y)
-    }
-}
-
 /// Holds the AVSampleBufferDisplayLayer-backed view across SwiftUI updates.
 private final class LiveVideoHolder {
     let view = CompanionVideoView(frame: .zero)
-}
-
-/// Presents the system edit menu (UIEditMenuInteraction) above the selection with
-/// Copy / Select All / Paste. The host view does not take touches (the gesture
-/// overlay beneath it owns input); the menu is presented programmatically and its
-/// own surface handles taps.
-private struct SelectionEditMenu: UIViewRepresentable {
-    /// Used only to detect when to (re)present; the menu anchors at the host view's
-    /// own center, which SwiftUI positions at this point.
-    let anchorKey: CGPoint
-    let canPaste: Bool
-    let onCopy: () -> Void
-    let onSelectAll: () -> Void
-    let onPaste: () -> Void
-
-    func makeCoordinator() -> Coordinator { Coordinator() }
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        let interaction = UIEditMenuInteraction(delegate: context.coordinator)
-        view.addInteraction(interaction)
-        context.coordinator.interaction = interaction
-        context.coordinator.hostView = view
-        return view
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {
-        context.coordinator.onCopy = onCopy
-        context.coordinator.onSelectAll = onSelectAll
-        context.coordinator.onPaste = onPaste
-        context.coordinator.canPaste = canPaste
-        context.coordinator.presentIfNeeded(anchorKey: anchorKey)
-    }
-
-    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
-        coordinator.interaction?.dismissMenu()
-    }
-
-    final class Coordinator: NSObject, UIEditMenuInteractionDelegate {
-        weak var interaction: UIEditMenuInteraction?
-        weak var hostView: UIView?
-        var onCopy: (() -> Void)?
-        var onSelectAll: (() -> Void)?
-        var onPaste: (() -> Void)?
-        var canPaste = false
-        private var presentedKey: CGPoint?
-
-        /// Present once the host view is in a window (presenting synchronously from
-        /// updateUIView is too early). Re-present only when the anchor moved enough
-        /// (e.g. Select All shifts the selection start), not every SwiftUI tick.
-        func presentIfNeeded(anchorKey: CGPoint) {
-            if let p = presentedKey, hypot(p.x - anchorKey.x, p.y - anchorKey.y) < 8 { return }
-            presentedKey = anchorKey
-            DispatchQueue.main.async { [weak self] in
-                guard let self, let view = self.hostView, view.window != nil else { return }
-                let center = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
-                self.interaction?.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: center))
-            }
-        }
-
-        func editMenuInteraction(_ interaction: UIEditMenuInteraction,
-                                 menuFor configuration: UIEditMenuConfiguration,
-                                 suggestedActions: [UIMenuElement]) -> UIMenu? {
-            var children: [UIMenuElement] = [
-                UIAction(title: "Copy") { [weak self] _ in self?.onCopy?() },
-                UIAction(title: "Select All") { [weak self] _ in self?.onSelectAll?() },
-            ]
-            if canPaste {
-                children.append(UIAction(title: "Paste") { [weak self] _ in self?.onPaste?() })
-            }
-            return UIMenu(children: children)
-        }
-    }
-}
-
-/// A circular magnifier that draws a blown-up crop of the live frame around an
-/// image point, sampling the video view's latest decoded pixel buffer.
-private struct LoupeView: UIViewRepresentable {
-    let holder: LiveVideoHolder
-    let imagePoint: CGPoint
-    let cropSide: CGFloat
-    let cellHeight: CGFloat
-
-    func makeUIView(context: Context) -> LoupeUIView {
-        let view = LoupeUIView()
-        view.pixelBufferProvider = { [weak holder] in holder?.view.latestPixelBuffer() }
-        view.isUserInteractionEnabled = false
-        view.backgroundColor = .black
-        view.contentMode = .redraw
-        view.layer.masksToBounds = true
-        view.layer.borderColor = UIColor.white.withAlphaComponent(0.9).cgColor
-        view.layer.borderWidth = 3
-        return view
-    }
-
-    func updateUIView(_ view: LoupeUIView, context: Context) {
-        view.layer.cornerRadius = view.bounds.width / 2
-        view.imagePoint = imagePoint
-        view.cropSide = cropSide
-        view.cellHeight = cellHeight
-        view.setNeedsDisplay()
-    }
 }
 
 private final class LoupeUIView: UIView {
@@ -899,12 +641,6 @@ private final class LoupeUIView: UIView {
         ctx.setLineWidth(1)
         ctx.strokeEllipse(in: knobRect)
     }
-}
-
-private struct LiveVideoLayer: UIViewRepresentable {
-    let holder: LiveVideoHolder
-    func makeUIView(context: Context) -> CompanionVideoView { holder.view }
-    func updateUIView(_ uiView: CompanionVideoView, context: Context) {}
 }
 
 /// The live view as a zoomable/scrollable canvas (Safari model): two-finger pinch
@@ -1063,17 +799,22 @@ private struct LiveCanvas: UIViewRepresentable {
                            y: min(max(point.y, rect.minY + inset), rect.maxY - inset))
         }
 
-        func editMenuInteraction(_ interaction: UIEditMenuInteraction,
-                                 menuFor configuration: UIEditMenuConfiguration,
-                                 suggestedActions: [UIMenuElement]) -> UIMenu? {
-            var children: [UIMenuElement] = [
-                UIAction(title: "Copy") { [weak self] _ in self?.model.copyActiveSelection() },
-                UIAction(title: "Select All") { [weak self] _ in self?.model.selectAllActiveStream() },
-            ]
-            if UIPasteboard.general.hasStrings {
-                children.append(UIAction(title: "Paste") { [weak self] _ in self?.model.pasteIntoActiveSession() })
+        // nonisolated to match the non-main-actor delegate requirement; UIKit calls
+        // it on the main thread, so the body assumes isolation and the deferred
+        // action handlers hop back to the main actor.
+        nonisolated func editMenuInteraction(_ interaction: UIEditMenuInteraction,
+                                             menuFor configuration: UIEditMenuConfiguration,
+                                             suggestedActions: [UIMenuElement]) -> UIMenu? {
+            MainActor.assumeIsolated {
+                var children: [UIMenuElement] = [
+                    UIAction(title: "Copy") { [weak self] _ in Task { @MainActor in self?.model.copyActiveSelection() } },
+                    UIAction(title: "Select All") { [weak self] _ in Task { @MainActor in self?.model.selectAllActiveStream() } },
+                ]
+                if UIPasteboard.general.hasStrings {
+                    children.append(UIAction(title: "Paste") { [weak self] _ in Task { @MainActor in self?.model.pasteIntoActiveSession() } })
+                }
+                return UIMenu(children: children)
             }
-            return UIMenu(children: children)
         }
     }
 }
