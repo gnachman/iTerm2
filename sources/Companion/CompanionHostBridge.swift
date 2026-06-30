@@ -471,6 +471,10 @@ final class CompanionHostBridge {
             },
             onMedia: { frame in
                 outboxRef?.yield(.media(frame.encoded()))
+            },
+            onDataLimitReached: { [weak self] in
+                // Called on the main thread from the streamer's tick.
+                self?.endStream(streamID, reason: .dataLimitReached)
             })
         streamer.start()
 

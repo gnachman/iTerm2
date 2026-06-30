@@ -528,7 +528,7 @@ private struct LiveSessionView: View {
                 // disconnect restarts silently. Surface only the cases worth
                 // telling the user about.
                 switch reason {
-                case .sessionClosed, .error:
+                case .sessionClosed, .error, .dataLimitReached:
                     endedReason = reason
                 case .stoppedByClient, .superseded:
                     break
@@ -541,6 +541,7 @@ private struct LiveSessionView: View {
         case .sessionClosed: return "The session is no longer available."
         case .stoppedByClient, .superseded: return "The live view stopped."
         case .error: return "The live view ended unexpectedly."
+        case .dataLimitReached: return "Live view paused to stay within data limits."
         }
     }
 }

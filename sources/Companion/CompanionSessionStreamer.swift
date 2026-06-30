@@ -17,6 +17,7 @@
 
 import CoreGraphics
 import Foundation
+import QuartzCore
 
 /// The session-side inputs the streamer needs: the geometry of the rendered
 /// frame and a way to render the current visible screen.
@@ -37,8 +38,14 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private let averageBitRate: Int
     private let onConfig: (CompanionStreamConfig) -> Void
     private let onMedia: (CompanionMediaFrame) -> Void
+    /// Called on the main thread when the rolling byte budget is used up, so the
+    /// owner can pause the stream (end it with .dataLimitReached) before the
+    /// relay force-closes the connection for exceeding its room quota.
+    private let onDataLimitReached: () -> Void
 
     private let lock = NSLock()
+    private var budget: CompanionStreamBudget
+    private var dataLimitHit = false
     private var pacer: CompanionStreamPacer
     private var pool: CompanionPixelBufferPool?
     private var encoder: CompanionVideoEncoder?
@@ -55,13 +62,17 @@ final class CompanionSessionStreamer: @unchecked Sendable {
          source: CompanionFrameSource,
          maxFrameRate: Double = 30,
          averageBitRate: Int = 1_000_000,
+         dailyByteBudget: Int = 400 * 1024 * 1024,
          onConfig: @escaping (CompanionStreamConfig) -> Void,
-         onMedia: @escaping (CompanionMediaFrame) -> Void) {
+         onMedia: @escaping (CompanionMediaFrame) -> Void,
+         onDataLimitReached: @escaping () -> Void = {}) {
         self.streamID = streamID
         self.source = source
         self.averageBitRate = averageBitRate
         self.onConfig = onConfig
         self.onMedia = onMedia
+        self.onDataLimitReached = onDataLimitReached
+        self.budget = CompanionStreamBudget(limitBytes: dailyByteBudget)
         self.pacer = CompanionStreamPacer(minInterval: maxFrameRate > 0 ? 1.0 / maxFrameRate : 0)
     }
 
@@ -83,9 +94,19 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// Evaluate the pacer at `nowMilliseconds` and, if it says to emit, render and
     /// encode a frame. Call on the main thread.
     func tick(nowMilliseconds: UInt64) {
+        let nowSeconds = TimeInterval(nowMilliseconds) / 1000.0
         lock.lock()
-        let decision = pacer.evaluate(now: TimeInterval(nowMilliseconds) / 1000.0)
+        let exhausted = budget.isExhausted(now: nowSeconds)
+        let decision = exhausted ? nil : pacer.evaluate(now: nowSeconds)
         lock.unlock()
+        if exhausted {
+            // Pause before the relay force-closes us for exceeding its quota.
+            if !dataLimitHit {
+                dataLimitHit = true
+                onDataLimitReached()
+            }
+            return
+        }
         guard let decision else { return }
         guard let image = source.renderCurrentScreen() else { return }
         guard ensureEncoder(width: image.width, height: image.height),
@@ -164,6 +185,8 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                                         flags: flags,
                                         payload: frame.accessUnit)
         sequence &+= 1
+        // Charge the rolling budget; tick() pauses the stream once it is spent.
+        budget.record(bytes: media.payload.count, now: CACurrentMediaTime())
         onMedia(media)
     }
 }

@@ -203,6 +203,8 @@ enum CompanionStreamEndReason: String, Codable, Equatable {
     case sessionClosed
     case superseded
     case error
+    /// The host paused the stream to stay within the relay's data budget.
+    case dataLimitReached
 }
 
 /// The phone's notification-permission state, as iOS reports it.
