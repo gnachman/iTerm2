@@ -69,6 +69,36 @@ private struct SingleSocketFactory: RelayWebSocketFactory {
     }
 }
 
+/// A socket whose receive() blocks forever and does NOT unblock on cancel(),
+/// modeling the observed wedge where a hard network drop leaves a bridged
+/// URLSession socket's in-flight receive hung even after task.cancel(). Its ping
+/// fails, so the keepalive must drive recovery on its own.
+private final class CancelIgnoringWebSocket: RelayWebSocket, @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var waiter: CheckedContinuation<RelayWebSocketMessage, Error>?
+
+    func resume() {}
+    func send(_ message: RelayWebSocketMessage) async throws {}
+    func receive() async throws -> RelayWebSocketMessage {
+        // Parks and does NOT unblock on cancel() -- models a half-open socket whose
+        // in-flight receive does not throw on its own.
+        try await withCheckedThrowingContinuation { cont in
+            lock.withLock { waiter = cont }
+        }
+    }
+    func sendPing() async -> Bool { false }   // dead
+    func cancel() {}                          // deliberately does nothing
+
+    /// Test cleanup: release the parked receive so the test does not leak a
+    /// continuation. Called after the assertion, never as part of cancel().
+    func releaseForTeardown() {
+        let w = lock.withLock { () -> CheckedContinuation<RelayWebSocketMessage, Error>? in
+            let w = waiter; waiter = nil; return w
+        }
+        w?.resume(throwing: TransportError.closed)
+    }
+}
+
 final class RelayKeepaliveTeardownTests: XCTestCase {
     func test_failedKeepalivePingCancelsParkedAcceptSoItThrows() async {
         let ws = HalfOpenWebSocket(admissionReplies: [
@@ -89,5 +119,24 @@ final class RelayKeepaliveTeardownTests: XCTestCase {
             // receive() threw instead of hanging forever.
         }
         XCTAssertTrue(ws.wasCancelled, "the keepalive must cancel the socket on ping failure")
+    }
+
+    func test_keepaliveDeath_unblocksBridgedReceive_evenWhenSocketIgnoresCancel() async {
+        // The bridged case from the field: the socket's receive() never unblocks on
+        // cancel, so the only way out is the keepalive death hard-closing the
+        // transport (onDeath) and receive() racing that close. Without the fix this
+        // hangs forever -> the mac stays "online" to itself but offline to the relay.
+        let ws = CancelIgnoringWebSocket()
+        let keepalive = RelayKeepalive(intervalNanos: 0, ping: { await ws.sendPing() })
+        let transport = RelayTransport(ws: ws, keepalive: keepalive)
+        keepalive.start()
+        do {
+            _ = try await transport.receive()
+            XCTFail("receive() must throw once the keepalive detects the dead socket")
+        } catch {
+            // Expected: the keepalive's onDeath hard-closed the transport, which
+            // resolved receive()'s close race.
+        }
+        ws.releaseForTeardown()
     }
 }
