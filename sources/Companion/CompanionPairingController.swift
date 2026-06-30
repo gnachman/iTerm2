@@ -640,7 +640,10 @@ final class CompanionPairingController: NSObject {
 
     private func installLogHandler() {
         CompanionLog.handler = { message in
-            DLog("\(message)")
+            // RLog (retrospective): CompanionCore logs survive debug-logging-off,
+            // so package-level traffic (e.g. the relay keepalive) is captured the
+            // same way the rest of the companion logging is.
+            RLog("\(message)")
         }
     }
 

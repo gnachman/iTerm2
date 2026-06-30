@@ -40,12 +40,12 @@ private func relayKeepalive(for ws: RelayWebSocket,
             // CDIAG: confirms the WS-to-edge link is alive. If this keeps logging
             // while the relay reports "mac offline", the splice/park died but the
             // socket did not -- the half-open-at-the-app-layer wedge.
-            NSLog("CDIAG relay keepalive ping ok")
+            CompanionLog.log("CDIAG relay keepalive ping ok")
             return true
         }
         // Ping failed -> the socket is dead. Tear it down so the parked
         // receive()/accept() throws and the caller's retry path engages.
-        NSLog("CDIAG relay keepalive ping FAILED -> cancelling socket")
+        CompanionLog.log("CDIAG relay keepalive ping FAILED -> cancelling socket")
         ws.cancel()
         return false
     }
