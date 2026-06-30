@@ -375,6 +375,12 @@ final class CompanionHostBridge {
                                       firstLine: firstLine,
                                       lineCount: lineCount,
                                       requestID: requestID)
+        case .fetchHistoryTile(let streamID, let firstAbsLine, let lineCount, let generationId):
+            handleFetchHistoryTile(streamID: streamID,
+                                   firstAbsLine: firstAbsLine,
+                                   lineCount: lineCount,
+                                   generationId: generationId,
+                                   requestID: requestID)
         case .fetchWorkgroupInfo(let workgroupID):
             handleFetchWorkgroupInfo(workgroupID: workgroupID, requestID: requestID)
         case .fetchSessionTree:
@@ -1308,6 +1314,56 @@ final class CompanionHostBridge {
                                                      firstLine: first,
                                                      lineCount: count,
                                                      pngData: pngData)),
+             requestID: requestID)
+    }
+
+    /// Render a scrollback tile addressed by absolute line for the live canvas.
+    /// The request is clamped to what is currently available; the reply reports the
+    /// range actually covered plus the current window (oldest absolute line + total
+    /// lines), so the phone can size its canvas and resolve eviction races.
+    private func handleFetchHistoryTile(streamID: UInt32,
+                                        firstAbsLine: Int64,
+                                        lineCount: Int,
+                                        generationId: UInt32,
+                                        requestID: UInt64?) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            send(.error(CompanionError(code: .badRequest, message: "No such stream.")), requestID: requestID)
+            return
+        }
+        let overflow = session.screen.totalScrollbackOverflow()
+        let total = Int(session.screen.numberOfLines())
+        let window = CompanionHistoryWindow(firstAbsLine: overflow, lineCount: total)
+        // Entirely evicted (or empty): reply with a 0-line tile carrying the window
+        // so the phone marks the region unavailable without erroring.
+        guard let covered = window.clamped(absLine: firstAbsLine, count: min(lineCount, Self.maxContentLines)) else {
+            send(.historyTile(CompanionHistoryTile(streamID: streamID, generationId: generationId,
+                                                   firstAbsLine: max(firstAbsLine, overflow), lineCount: 0,
+                                                   windowFirstAbsLine: overflow, windowLineCount: total,
+                                                   pngData: Data())),
+                 requestID: requestID)
+            return
+        }
+        let relativeFirst = Int(covered.absLine - overflow)
+        // Detached sessions (buried/parked) render zero lines; re-attach for the
+        // render and restore after, as handleFetchSessionContent does.
+        let wasDetached = textview.dataSource == nil
+        if wasDetached { textview.dataSource = session.screen }
+        defer { if wasDetached { textview.dataSource = nil } }
+        let backgroundColor = session.processedBackgroundColor ?? .black
+        guard let image = textview.renderImage(withLines: NSRange(location: relativeFirst, length: covered.count),
+                                               includeMargins: false,
+                                               backgroundColor: backgroundColor,
+                                               showCursor: false) else {
+            send(.error(CompanionError(code: .internalError, message: "Rendering the session content failed.")),
+                 requestID: requestID)
+            return
+        }
+        send(.historyTile(CompanionHistoryTile(streamID: streamID, generationId: generationId,
+                                               firstAbsLine: covered.absLine, lineCount: covered.count,
+                                               windowFirstAbsLine: overflow, windowLineCount: total,
+                                               pngData: image.dataForFile(of: .png))),
              requestID: requestID)
     }
 

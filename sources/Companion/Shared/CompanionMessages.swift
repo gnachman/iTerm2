@@ -145,6 +145,23 @@ struct CompanionSessionContent: Codable {
     var pngData: Data
 }
 
+/// A rendered scrollback tile addressed by absolute (overflow-adjusted) line,
+/// plus the current availability window so the phone can size its history canvas
+/// and resolve eviction races deterministically.
+struct CompanionHistoryTile: Codable, Equatable {
+    var streamID: UInt32
+    var generationId: UInt32
+    /// First absolute line actually rendered (clamped to what is available).
+    var firstAbsLine: Int64
+    /// Lines actually rendered (0 if the request was entirely evicted).
+    var lineCount: Int
+    /// Oldest available absolute line right now (== totalScrollbackOverflow).
+    var windowFirstAbsLine: Int64
+    /// Total available lines right now (scrollback + screen).
+    var windowLineCount: Int
+    var pngData: Data
+}
+
 /// A codec for a live session stream.
 enum CompanionStreamCodec: String, Codable, Equatable {
     case hevc
@@ -254,6 +271,11 @@ struct CompanionStreamConfig: Codable, Equatable {
     /// to send it (pre-geometry build) decodes as nil, and the phone keeps the
     /// video working but cannot offer selection.
     var cellGeometry: CompanionCellGeometry? = nil
+    /// Oldest available absolute line (== totalScrollbackOverflow) at config time,
+    /// so the phone can lay out the history canvas. Older hosts decode as 0.
+    var firstAbsLine: Int64 = 0
+    /// Total available lines (scrollback + screen) at config time.
+    var totalLines: Int = 0
 }
 
 /// Why a live stream ended.
@@ -375,6 +397,10 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// `.sessionContent`.
     case fetchSessionContent(sessionGuid: String, firstLine: Int, lineCount: Int)
 
+    /// Render a scrollback tile by absolute (overflow-adjusted) line for the live
+    /// canvas's history. Replied to with `.historyTile`.
+    case fetchHistoryTile(streamID: UInt32, firstAbsLine: Int64, lineCount: Int, generationId: UInt32)
+
     /// Workgroup view: list a workgroup's members with their status. Replied
     /// to with `.workgroupInfo`.
     case fetchWorkgroupInfo(workgroupID: String)
@@ -485,7 +511,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "unsupported", "hello", "listChatsAndSessions", "createChat", "deleteChat",
         "subscribe", "unsubscribe", "publish", "selectSessionResponse",
         "remoteCommandDecision", "linkSession", "resolveMentions",
-        "fetchSessionScreenInfo", "fetchSessionContent", "fetchWorkgroupInfo",
+        "fetchSessionScreenInfo", "fetchSessionContent", "fetchHistoryTile", "fetchWorkgroupInfo",
         "fetchSessionTree", "pushStatus", "notificationPermissionResponse", "ping",
         "relayRoomSecret", "messagesSince", "syncSince", "unpairing",
         "startSessionStream", "stopSessionStream", "requestKeyframe",
@@ -543,6 +569,9 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
 
     /// Reply to `.fetchSessionContent`.
     case sessionContent(CompanionSessionContent)
+
+    /// Reply to `.fetchHistoryTile`.
+    case historyTile(CompanionHistoryTile)
 
     /// Reply to `.fetchWorkgroupInfo`.
     case workgroupInfo(CompanionWorkgroupInfo)
@@ -626,7 +655,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
         "unpaired", "messagesSince", "syncSince", "error",
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
-        "selectionRange",
+        "selectionRange", "historyTile",
     ]
 }
 

@@ -149,6 +149,7 @@ actor CompanionSession {
         case .mentionsResolved: "mentionsResolved"
         case .sessionScreenInfo: "sessionScreenInfo"
         case .sessionContent: "sessionContent"
+        case .historyTile: "historyTile"
         case .workgroupInfo: "workgroupInfo"
         case .sessionTree: "sessionTree"
         case .chatListChanged: "chatListChanged"

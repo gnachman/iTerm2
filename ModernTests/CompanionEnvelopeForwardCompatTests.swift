@@ -136,6 +136,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .resolveMentions(identifiers: []),
         .fetchSessionScreenInfo(sessionGuid: "s"),
         .fetchSessionContent(sessionGuid: "s", firstLine: 0, lineCount: 1),
+        .fetchHistoryTile(streamID: 1, firstAbsLine: 2, lineCount: 3, generationId: 4),
         .fetchWorkgroupInfo(workgroupID: "w"),
         .fetchSessionTree,
         .pushStatus(authorization: .authorized, token: nil, relaySecret: nil, sandbox: false),
@@ -183,6 +184,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .resolveMentions: return "resolveMentions"
         case .fetchSessionScreenInfo: return "fetchSessionScreenInfo"
         case .fetchSessionContent: return "fetchSessionContent"
+        case .fetchHistoryTile: return "fetchHistoryTile"
         case .fetchWorkgroupInfo: return "fetchWorkgroupInfo"
         case .fetchSessionTree: return "fetchSessionTree"
         case .pushStatus: return "pushStatus"
@@ -217,6 +219,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .sessionScreenInfo(CompanionSessionScreenInfo(guid: "s", name: "n", lineCount: 0, columns: 0,
                                                       width: 0, lineHeight: 0, scale: 1)),
         .sessionContent(CompanionSessionContent(guid: "s", firstLine: 0, lineCount: 0, pngData: Data())),
+        .historyTile(CompanionHistoryTile(streamID: 1, generationId: 2, firstAbsLine: 3, lineCount: 4,
+                                          windowFirstAbsLine: 3, windowLineCount: 10, pngData: Data())),
         .workgroupInfo(CompanionWorkgroupInfo(workgroupID: "w", name: "n", members: [])),
         .sessionTree(CompanionSessionTree(windows: [])),
         .pong,
@@ -260,6 +264,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .mentionsResolved: return "mentionsResolved"
         case .sessionScreenInfo: return "sessionScreenInfo"
         case .sessionContent: return "sessionContent"
+        case .historyTile: return "historyTile"
         case .workgroupInfo: return "workgroupInfo"
         case .sessionTree: return "sessionTree"
         case .pong: return "pong"

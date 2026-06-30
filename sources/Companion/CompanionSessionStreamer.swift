@@ -34,9 +34,20 @@ protocol CompanionFrameSource: AnyObject {
     /// Absolute line number of the top visible row right now (overflow-adjusted).
     /// Changes whenever the screen scrolls, so it is captured per frame.
     var liveTop: Int64 { get }
+    /// Oldest available absolute line (== total scrollback overflow) and the total
+    /// available lines, so the phone can lay out the history canvas. Captured at
+    /// config time.
+    var firstAbsLine: Int64 { get }
+    var totalLines: Int { get }
     /// Render the current visible screen, or nil if it cannot be produced now.
     /// The encoder and pool size themselves to the returned image's dimensions.
     func renderCurrentScreen() -> CGImage?
+}
+
+extension CompanionFrameSource {
+    // Defaults so test fakes need not supply history extent.
+    var firstAbsLine: Int64 { 0 }
+    var totalLines: Int { 0 }
 }
 
 final class CompanionSessionStreamer: @unchecked Sendable {
@@ -277,7 +288,9 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                     scale: source.scale,
                     columns: source.columns,
                     rows: source.rows,
-                    cellGeometry: lastCellGeometry))
+                    cellGeometry: lastCellGeometry,
+                    firstAbsLine: source.firstAbsLine,
+                    totalLines: source.totalLines))
                 flags.insert(.configChanged)
             }
         }

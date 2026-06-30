@@ -44,6 +44,10 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
         Int64(session.screen.numberOfScrollbackLines()) + session.screen.totalScrollbackOverflow()
     }
 
+    /// Oldest available absolute line and total available lines, for history layout.
+    var firstAbsLine: Int64 { session.screen.totalScrollbackOverflow() }
+    var totalLines: Int { Int(session.screen.numberOfLines()) }
+
     func renderCurrentScreen() -> CGImage? {
         guard let textview = session.textview, textview.frame.width > 0 else {
             return nil
