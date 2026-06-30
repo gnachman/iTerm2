@@ -1814,11 +1814,22 @@ final class AppModel {
         case .streamExtent(let streamID, let firstAbsLine, let totalLines):
             if streamID == activeStreamID,
                firstAbsLine != activeStreamFirstAbsLine || totalLines != activeStreamTotalLines {
+                let shrank = totalLines < activeStreamTotalLines
                 activeStreamFirstAbsLine = firstAbsLine
                 activeStreamTotalLines = totalLines
-                // Drop tiles for lines that are gone (trimmed or cleared).
-                historyTileCache = historyTileCache.filter { $0.key >= firstAbsLine }
-                historyTilesInFlight = historyTilesInFlight.filter { $0 >= firstAbsLine }
+                if shrank {
+                    // Cleared/reset: the content at existing absolute lines changed
+                    // and the (pre-clear) live top is now stale, which would inflate
+                    // the canvas until the next frame. Snap the live top to the new
+                    // extent and drop every cached tile.
+                    activeStreamLiveTop = firstAbsLine + Int64(max(0, totalLines - activeStreamRows))
+                    historyTileCache.removeAll()
+                    historyTilesInFlight.removeAll()
+                } else {
+                    // Trimmed: only lines below the new origin are gone.
+                    historyTileCache = historyTileCache.filter { $0.key >= firstAbsLine }
+                    historyTilesInFlight = historyTilesInFlight.filter { $0 >= firstAbsLine }
+                }
             }
         case .selectionRange(let streamID, let range):
             if streamID == activeStreamID {

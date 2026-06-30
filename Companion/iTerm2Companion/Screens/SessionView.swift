@@ -727,6 +727,7 @@ private struct LiveCanvas: UIViewRepresentable {
         /// The history origin the tiles are currently keyed against; a change means
         /// scrollback was trimmed or cleared.
         private var laidOutFirstAbsLine: Int64?
+        private var laidOutTotalLines = 0
         private var didScrollToBottom = false
         // History tiles, keyed by tile index (0 = oldest), like the static path.
         private var tileViews: [Int: TileView] = [:]
@@ -849,16 +850,19 @@ private struct LiveCanvas: UIViewRepresentable {
             let wasAtBottom = isPinnedToBottom
             appliedKey = key
 
-            // The history origin advanced (scrollback trimmed) or jumped (cleared):
-            // tiles are keyed relative to it, so drop them; they refetch (hitting the
-            // cache for lines that survived). The cache itself was already pruned.
-            if let prev = laidOutFirstAbsLine, prev != layout.firstAbsLine {
+            // The history origin advanced (scrollback trimmed) or the document
+            // shrank (cleared): tiles are keyed relative to the origin and stale
+            // ones must not linger, so drop every tile view; they refetch (hitting
+            // the cache for survivors). The model cache was already pruned.
+            let shrank = totalLines < laidOutTotalLines
+            if let prev = laidOutFirstAbsLine, prev != layout.firstAbsLine || shrank {
                 for view in tileViews.values { view.removeFromSuperview() }
                 tileViews.removeAll()
                 requestedTiles.removeAll()
                 tileFetchedLines.removeAll()
             }
             laidOutFirstAbsLine = layout.firstAbsLine
+            laidOutTotalLines = totalLines
 
             let videoHeight = size.width * layout.imageSize.height / layout.imageSize.width
             pointsPerLine = videoHeight / CGFloat(layout.rows)
