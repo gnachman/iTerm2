@@ -20,6 +20,11 @@ Major New Features:
   different
   networks, and end-to-end encryption ensures that
   your data is only visible to you.
+  First-time setup is now a guided wizard: it
+  installs the AI and companion plugins, turns on
+  both features with a single password prompt,
+  takes your API key, and walks you through
+  pairing your phone.
 
 - The Companion app can now receive push
   notifications for terminal alerts. Turn on

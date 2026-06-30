@@ -15,6 +15,7 @@
 import Foundation
 import AppKit
 import CoreImage
+import LocalAuthentication
 import Network
 import Security
 import CompanionProtocol
@@ -179,6 +180,11 @@ final class CompanionPairingController: NSObject {
         set {
             if let newValue {
                 iTermUserDefaults.userDefaults().set(newValue, forKey: Self.pairedPIDKey)
+                // The first successful pairing makes the user "experienced": the
+                // onboarding wizard is first-run only, so record this durable,
+                // device-global flag (never cleared on unpair) so future visits to
+                // Companion Device Settings open the plain window, not the wizard.
+                CompanionPushRegistry.setEverPaired(true)
             } else {
                 iTermUserDefaults.userDefaults().removeObject(forKey: Self.pairedPIDKey)
             }
@@ -409,6 +415,34 @@ final class CompanionPairingController: NSObject {
         }
     }
 
+    /// Require the device owner to authenticate before showing a fresh pairing
+    /// QR, so brief physical access to an unlocked Mac is not enough to pair a
+    /// new device. Authentication uses biometrics when available and falls back
+    /// to the device passcode/login password. Shared by the Companion Device
+    /// Settings window and the onboarding wizard.
+    func authenticateToPair() async -> Bool {
+        let context = LAContext()
+        var error: NSError?
+        // .deviceOwnerAuthentication uses biometrics when available and falls
+        // back to the device passcode/login password otherwise.
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+            // No biometrics and no passcode configured: there is nothing to
+            // authenticate against, so let pairing proceed (the Mac is unsecured
+            // regardless).
+            RLog("Companion: no device authentication available (\(error?.localizedDescription ?? "none")); proceeding")
+            return true
+        }
+        return await withCheckedContinuation { continuation in
+            context.evaluatePolicy(.deviceOwnerAuthentication,
+                                   localizedReason: "pair a companion device with this Mac") { success, authError in
+                if let authError {
+                    RLog("Companion: pairing authentication failed: \(authError.localizedDescription)")
+                }
+                continuation.resume(returning: success)
+            }
+        }
+    }
+
     /// Begin a fresh pairing. Returns the pairing code whose URL should be
     /// displayed as a QR.
     func startPairing() throws -> PairingCode {
@@ -604,6 +638,13 @@ final class CompanionPairingController: NSObject {
     /// Pending code-entry continuation while a fresh pairing waits for the
     /// user to type the SAS code shown on the phone.
     private var sasContinuation: CheckedContinuation<String?, Never>?
+
+    /// The SAS the user types is exactly six decimal digits. Shared by the plain
+    /// pairing window and the onboarding wizard so the accepted format is defined
+    /// in one place.
+    static func isCompleteSAS(_ s: String) -> Bool {
+        return s.count == 6 && s.allSatisfy { ("0"..."9").contains($0) }
+    }
 
     /// The window delivers the user's typed code here (nil = declined). Safe to
     /// call when no entry is pending.

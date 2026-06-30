@@ -46,7 +46,7 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
                                         window:window];
             return;
         }
-        [[iTermCompanionPairingWindowController shared] showAndBeginPairing];
+        [iTermCompanionOnboardingRouter openSettingsOrWizard];
         return;
     }
     if ([path isEqualToString:@"claudecode"]) {

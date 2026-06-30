@@ -2436,7 +2436,7 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)pairCompanionDevice:(id)sender {
-    [[iTermCompanionPairingWindowController shared] showAndBeginPairing];
+    [iTermCompanionOnboardingRouter openSettingsOrWizard];
 }
 
 - (IBAction)installClaudeCodeIntegration:(id)sender {

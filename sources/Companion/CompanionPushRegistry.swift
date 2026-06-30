@@ -25,6 +25,7 @@ enum CompanionPushRegistry {
     private static let authorizationKey = "NoSyncCompanionPushAuthorization"
     private static let peerRevisionKey = "NoSyncCompanionPeerRevision"
     private static let alertsEverEnabledKey = "NoSyncCompanionAlertsEverEnabled"
+    private static let everPairedKey = "NoSyncCompanionEverPaired"
 
     // The secret authorizes push to the paired phone, so it is kept in the
     // keychain, not UserDefaults. To avoid a keychain prompt while the user is
@@ -167,6 +168,20 @@ enum CompanionPushRegistry {
 
     static func setAlertsEverEnabled(_ value: Bool) {
         iTermUserDefaults.userDefaults().set(value, forKey: alertsEverEnabledKey)
+    }
+
+    /// Durable "the user has successfully paired a companion device at least once"
+    /// flag, set the first time a pairing completes. The onboarding wizard is a
+    /// first-run experience: once this is set, the menu opens today's Companion
+    /// Device Settings window instead of the wizard. Like alertsEverEnabled this is
+    /// device-global intent, so it is deliberately NOT cleared on unpair, a user who
+    /// has paired before and then unpaired is experienced and gets the plain window.
+    static var everPaired: Bool {
+        iTermUserDefaults.userDefaults().bool(forKey: everPairedKey)
+    }
+
+    static func setEverPaired(_ value: Bool) {
+        iTermUserDefaults.userDefaults().set(value, forKey: everPairedKey)
     }
 
     /// True when asking for permission could possibly succeed: iOS only ever

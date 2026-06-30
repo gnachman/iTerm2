@@ -90,6 +90,53 @@ struct SecureUserDefaults {
     lazy var browserBundleID = { SecureUserDefault<String>("BrowserBundleID", defaultValue: "") }()
     lazy var aiCompletionsEnabled = { SecureUserDefault<Bool>("AICompletions", defaultValue: false) }()
 
+    /// Grant AI and/or companion consent in a SINGLE administrator prompt.
+    /// Setting these one at a time (the normal `set(true)` path) puts up one
+    /// password dialog per value; the onboarding wizard needs both granted at
+    /// once without making the user authenticate twice. Only the requested values
+    /// are written, and only the `true` direction is supported here (revoking is
+    /// fail-safe and needs no auth, so it stays on the per-value `reset()` path).
+    ///
+    /// Static, not a mutating instance method, on purpose: storeBatch posts
+    /// secureUserDefaultDidChange synchronously, and its observers read
+    /// SecureUserDefaults.instance (the companion gate does). A mutating method
+    /// would hold exclusive access to `instance` across that callout and trip the
+    /// Swift exclusivity checker. So gather the writes with brief accesses first,
+    /// then run the batch with no access to `instance` held.
+    static func grantConsent(ai: Bool, companion: Bool) throws {
+        var writes: [SecureUserDefault<Bool>.PendingWrite] = []
+        if ai {
+            writes.append(instance.enableAI.pendingWrite(true))
+        }
+        if companion {
+            writes.append(instance.enableCompanionPairing.pendingWrite(true))
+        }
+        guard !writes.isEmpty else { return }
+        // storeBatch is not atomic across keys: an earlier statement can commit
+        // its file before a later one fails (and on failure it posts no
+        // notifications). Remember the prior values so a partial failure can be
+        // rolled back to a consistent state rather than silently leaving one
+        // consent on.
+        let priorAI = instance.enableAI.value
+        let priorCompanion = instance.enableCompanionPairing.value
+        // The batch write changes the on-disk files; invalidate the in-memory
+        // caches so the next read reflects the new values.
+        instance.enableAI.invalidateCache()
+        instance.enableCompanionPairing.invalidateCache()
+        do {
+            try SecureUserDefault<Bool>.storeBatch(writes)
+        } catch {
+            // Revert any key this call may have partially written back to its
+            // prior value (reset needs no authorization), so a caller never sees a
+            // half-applied grant.
+            if ai, !priorAI { try? instance.enableAI.reset() }
+            if companion, !priorCompanion { try? instance.enableCompanionPairing.reset() }
+            instance.enableAI.invalidateCache()
+            instance.enableCompanionPairing.invalidateCache()
+            throw error
+        }
+    }
+
     private var hostToOpenURLSUDs = [String: SecureUserDefault<Bool>]()
     mutating func openURL(host: String) -> SecureUserDefault<Bool> {
         if let value = hostToOpenURLSUDs[host] {
@@ -297,6 +344,46 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         try Self.delete(key)
     }
 
+    /// Drop the in-memory cache so the next read re-loads from disk. Used after a
+    /// batch write (storeBatch), which changes the files behind the cache's back.
+    func invalidateCache() {
+        cached = nil
+    }
+
+    /// A single key/value to be written by storeBatch. The value is pre-encoded
+    /// (hex of the UTF-8 string form) so the batch primitive, which is generic
+    /// over the element type, only needs strings.
+    struct PendingWrite {
+        let key: String
+        let encodedValue: String
+    }
+
+    /// Produce a PendingWrite for this default set to `value`, for use with
+    /// storeBatch. Does not write anything by itself.
+    func pendingWrite(_ value: T) -> PendingWrite {
+        return PendingWrite(key: key,
+                            encodedValue: SecureUserDefaultValue<T>(value: value).encodedString)
+    }
+
+    /// Write several secure settings with ONE administrator prompt. Each write
+    /// is the same root-owned mktemp/chmod/mv sequence as store(), but all of
+    /// them run inside a single `do shell script ... with administrator
+    /// privileges`, so macOS authorizes once for the whole batch. The path/magic
+    /// computation is identical to store() so the files load() produces are
+    /// indistinguishable from singly-written ones.
+    static func storeBatch(_ writes: [PendingWrite]) throws {
+        guard !writes.isEmpty else { return }
+        let statements = try writes.map {
+            try writeStatement(key: $0.key, encodedValue: $0.encodedValue)
+        }
+        // Each statement aborts the script (exit 1) on its own failure, so a
+        // partial batch surfaces as an error here rather than posting change
+        // notifications for keys that were never written.
+        try runPrivilegedWrites(statements: statements,
+                                keys: writes.map { $0.key },
+                                prompt: "iTerm2 needs to modify secure settings.")
+    }
+
     private static func fallbackBaseDirectory(create: Bool) throws -> String {
         DLog("create=\(create)")
         // When the user's home directory is not local, we use FallbackFolder
@@ -496,23 +583,46 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
 
     private static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
         RLog("Store \(value) to \(key)")
-        // Write to a temp file and then move it. If the destination is a link then it's not safe
-        // to write to it.
+        let statement = try writeStatement(key: key, encodedValue: SecureUserDefaultValue<U>(value: value).encodedString)
+        try runPrivilegedWrites(statements: [statement],
+                                keys: [key],
+                                prompt: "iTerm2 needs to modify a secure setting.")
+    }
+
+    /// The double-backslash/double-quote escaping for a path embedded in the
+    /// `do shell script "…"` AppleScript string. Shared so store() and
+    /// storeBatch() escape identically.
+    private static func escapedShellPath(_ url: URL) -> String {
+        return url.path
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\\\\\"")
+    }
+
+    /// One shell statement that writes `key`'s value to its root-owned file via a
+    /// temp file and an atomic move. On ANY failure it removes the temp file and
+    /// `exit 1`s, which aborts the whole `do shell script` so the AppleScript
+    /// reports an error: a failed or partial write must not be masked as success
+    /// (the old `|| rm -f` form swallowed the error and returned 0).
+    private static func writeStatement(key: String, encodedValue: String) throws -> String {
+        // Write to a temp file and then move it. If the destination is a link then
+        // it's not safe to write to it.
         let unsafeURL = try self.path(key, create: true)
-        let path = unsafeURL.path.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\\\\\"")
+        let path = escapedShellPath(unsafeURL)
         let magic = Self.magic(key, filePath: URL(fileURLWithPath: path))
-        let encodedValue = SecureUserDefaultValue<U>(value: value).encodedString
-        let code =
-        """
-        do shell script "
-            umask 077
-            TF=$(mktemp)
-            printf '%s\\n%s' '\(magic)' '\(encodedValue)' > \\"$TF\\" && \
-                chmod a+r \\"$TF\\" && \
-                mv \\"$TF\\" \\"\(path)\\" || \
-                rm -f \\"$TF\\"
-        " with prompt "iTerm2 needs to modify a secure setting." with administrator privileges
-        """
+        // \\n -> printf interprets it as a newline; \\\" -> AppleScript turns it
+        // into a literal " for the shell.
+        return "TF=$(mktemp); printf '%s\\n%s' '\(magic)' '\(encodedValue)' > \\\"$TF\\\" && chmod a+r \\\"$TF\\\" && mv \\\"$TF\\\" \\\"\(path)\\\" || { rm -f \\\"$TF\\\"; exit 1; }"
+    }
+
+    /// Run one or more write statements inside a SINGLE root-privileged
+    /// AppleScript (one authorization prompt). Throws if the script reports an
+    /// error (any statement's `exit 1`); only on success are the change
+    /// notifications posted, one per key.
+    private static func runPrivilegedWrites(statements: [String],
+                                            keys: [String],
+                                            prompt: String) throws {
+        let body = (["umask 077"] + statements).joined(separator: "\n")
+        let code = "do shell script \"\n\(body)\n\" with prompt \"\(prompt)\" with administrator privileges"
         let script = NSAppleScript(source: code)
         var error: NSDictionary? = nil
         DLog("Will execute \(code)")
@@ -523,8 +633,10 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
             RLog("reason=\(maybeReason.d)")
             throw SecureUserDefaultError.scriptError(maybeReason)
         }
-        RLog("Success. Post notif for \(key)")
-        NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
+        for key in keys {
+            RLog("Success. Post notif for \(key)")
+            NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
+        }
     }
 }
 

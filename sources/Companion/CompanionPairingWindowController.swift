@@ -15,7 +15,6 @@
 import AppKit
 import CompanionProtocol
 import CoreImage
-import LocalAuthentication
 
 @MainActor
 @objc(iTermCompanionPairingWindowController)
@@ -456,18 +455,13 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     @objc private func sasVerifyPressed(_ sender: Any) {
         // Ignore an incomplete code, in case Return reaches here while the Verify
         // button is disabled.
-        guard isCompleteSAS(sasField.stringValue) else { return }
+        guard CompanionPairingController.isCompleteSAS(sasField.stringValue) else { return }
         controller.submitSASEntry(sasField.stringValue)
         sasField.stringValue = ""
     }
 
-    /// The SAS is exactly six decimal digits.
-    private func isCompleteSAS(_ s: String) -> Bool {
-        s.count == 6 && s.allSatisfy { ("0"..."9").contains($0) }
-    }
-
     private func updateSASVerifyEnabled() {
-        sasVerifyButton.isEnabled = isCompleteSAS(sasField.stringValue)
+        sasVerifyButton.isEnabled = CompanionPairingController.isCompleteSAS(sasField.stringValue)
     }
 
     func controlTextDidChange(_ obj: Notification) {
@@ -571,7 +565,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         showBlockedTop("Authenticate to pair a companion device with this Mac.")
         Task { [weak self] in
             guard let self else { return }
-            let authenticated = await self.authenticateToPair()
+            let authenticated = await self.controller.authenticateToPair()
             self.pairingAuthInFlight = false
             // The gate may have changed while the sheet was up (consent revoked,
             // a device reconnected, the window closed): only show the QR if a
@@ -588,29 +582,6 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                                     remedyTitle: "Authenticate") { [weak self] in
                     self?.startFreshPairingFlow()
                 }
-            }
-        }
-    }
-
-    private func authenticateToPair() async -> Bool {
-        let context = LAContext()
-        var error: NSError?
-        // .deviceOwnerAuthentication uses biometrics when available and falls
-        // back to the device passcode/login password otherwise.
-        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            // No biometrics and no passcode configured: there is nothing to
-            // authenticate against, so let pairing proceed (the Mac is unsecured
-            // regardless).
-            RLog("Companion: no device authentication available (\(error?.localizedDescription ?? "none")); proceeding")
-            return true
-        }
-        return await withCheckedContinuation { continuation in
-            context.evaluatePolicy(.deviceOwnerAuthentication,
-                                   localizedReason: "pair a companion device with this Mac") { success, authError in
-                if let authError {
-                    RLog("Companion: pairing authentication failed: \(authError.localizedDescription)")
-                }
-                continuation.resume(returning: success)
             }
         }
     }
