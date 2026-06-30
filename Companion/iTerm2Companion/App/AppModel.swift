@@ -1787,6 +1787,9 @@ final class AppModel {
         // with the mac wedge. Remove once diagnosed.
         diagMediaFrames += 1
         diagMediaBytes += frame.payload.count
+        if frame.flags.contains(.keyframe) {
+            companionLog("CDIAG phone received KEYFRAME bytes=\(frame.payload.count) configChanged=\(frame.flags.contains(.configChanged))")
+        }
         let now = ProcessInfo.processInfo.systemUptime
         if now - diagLastMediaLog >= 5 {
             companionLog("CDIAG phone received \(diagMediaFrames) media frames (\(diagMediaBytes) B), stream \(frame.streamID)")

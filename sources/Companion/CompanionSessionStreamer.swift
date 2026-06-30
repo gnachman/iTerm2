@@ -149,6 +149,13 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                                         ptsMilliseconds: frame.ptsMilliseconds,
                                         flags: flags,
                                         payload: frame.accessUnit)
+        // CDIAG: keyframes are rare, so log every one with its size to test
+        // whether a tab-switch repaint emits a keyframe and whether its
+        // size/quality differs from the steady P-frames (the brightness shift
+        // would then be keyframe-vs-Pframe encode/decode, not the content).
+        if frame.isKeyframe {
+            NSFuckingLog("%@", "CDIAG encoded KEYFRAME seq=\(sequence) bytes=\(frame.accessUnit.count) configChanged=\(flags.contains(.configChanged))")
+        }
         sequence &+= 1
         onMedia(media)
     }
