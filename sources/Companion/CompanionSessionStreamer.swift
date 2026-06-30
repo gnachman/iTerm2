@@ -324,7 +324,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// A small green-on-translucent-black "#N" image, drawn in a standard
     /// bottom-left CG context (CTLine draws upright), so compositing it upright.
     private func labelImage(for number: UInt32) -> CGImage? {
-        let width = 160, height = 40
+        let width = 640, height = 160
         guard let ctx = CGContext(data: nil, width: width, height: height,
                                   bitsPerComponent: 8, bytesPerRow: 0,
                                   space: CGColorSpaceCreateDeviceRGB(),
@@ -333,12 +333,12 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         }
         ctx.setFillColor(CGColor(red: 0, green: 0, blue: 0, alpha: 0.6))
         ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
-        let font = CTFontCreateWithName("Menlo-Bold" as CFString, 26, nil)
+        let font = CTFontCreateWithName("Menlo-Bold" as CFString, 104, nil)
         let attrs = [kCTFontAttributeName: font,
                      kCTForegroundColorAttributeName: CGColor(red: 0, green: 1, blue: 0, alpha: 1)] as CFDictionary
         guard let attributed = CFAttributedStringCreate(nil, "#\(number)" as CFString, attrs) else { return nil }
         let line = CTLineCreateWithAttributedString(attributed)
-        ctx.textPosition = CGPoint(x: 6, y: 9)
+        ctx.textPosition = CGPoint(x: 24, y: 36)
         CTLineDraw(line, ctx)
         return ctx.makeImage()
     }
