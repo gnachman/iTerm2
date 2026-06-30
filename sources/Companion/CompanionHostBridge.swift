@@ -1333,9 +1333,11 @@ final class CompanionHostBridge {
                                         lineCount: Int,
                                         generationId: UInt32,
                                         requestID: UInt64?) {
+        RLog("Companion historyTile req stream=\(streamID) firstAbs=\(firstAbsLine) lineCount=\(lineCount) gen=\(generationId)")
         guard let context = streams[streamID],
               let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
               let textview = session.textview else {
+            RLog("Companion historyTile FAIL: no such stream \(streamID)")
             send(.error(CompanionError(code: .badRequest, message: "No such stream.")), requestID: requestID)
             return
         }
@@ -1345,6 +1347,7 @@ final class CompanionHostBridge {
         // Entirely evicted (or empty): reply with a 0-line tile carrying the window
         // so the phone marks the region unavailable without erroring.
         guard let covered = window.clamped(absLine: firstAbsLine, count: min(lineCount, Self.maxContentLines)) else {
+            RLog("Companion historyTile EVICTED firstAbs=\(firstAbsLine) window=[\(overflow),\(overflow + Int64(total))) -> 0 lines")
             send(.historyTile(CompanionHistoryTile(streamID: streamID, generationId: generationId,
                                                    firstAbsLine: max(firstAbsLine, overflow), lineCount: 0,
                                                    windowFirstAbsLine: overflow, windowLineCount: total,
@@ -1366,14 +1369,17 @@ final class CompanionHostBridge {
                                                backgroundColor: backgroundColor,
                                                showCursor: false,
                                                includeSelection: true) else {
+            RLog("Companion historyTile FAIL render covered=[\(covered.absLine),+\(covered.count)) rel=\(relativeFirst) total=\(total) detached=\(wasDetached) frame=\(NSStringFromRect(textview.frame))")
             send(.error(CompanionError(code: .internalError, message: "Rendering the session content failed.")),
                  requestID: requestID)
             return
         }
+        let pngData = image.dataForFile(of: .png)
+        RLog("Companion historyTile OK covered=[\(covered.absLine),+\(covered.count)) overflow=\(overflow) total=\(total) bytes=\(pngData.count)")
         send(.historyTile(CompanionHistoryTile(streamID: streamID, generationId: generationId,
                                                firstAbsLine: covered.absLine, lineCount: covered.count,
                                                windowFirstAbsLine: overflow, windowLineCount: total,
-                                               pngData: image.dataForFile(of: .png))),
+                                               pngData: pngData)),
              requestID: requestID)
     }
 
