@@ -16,6 +16,8 @@
 //
 
 import CoreGraphics
+import CoreText
+import CoreVideo
 import Foundation
 import QuartzCore
 
@@ -56,7 +58,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private var pacer: CompanionStreamPacer
     private var pool: CompanionPixelBufferPool?
     private var encoder: CompanionVideoEncoder?
-    private var sequence: UInt32 = 0
+    /// Monotonic number stamped into each emitted frame's pixels (CDIAG) and used
+    /// as that frame's media sequence, so a screen recording's visible number
+    /// matches the logs. Set in tick(), read in handleEncoded.
+    private var frameNumber: UInt32 = 0
+    private var pendingFrameNumber: UInt32 = 0
     private var generationId: UInt32 = 0
     private var sentConfigDimensions: (Int, Int)?
     /// Content hash of the last frame handed to the encoder. A frame whose pixels
@@ -179,6 +185,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // config/media frame from the encoder thread.
         let cellGeometry = source.cellGeometry
         let liveTop = source.liveTop
+        let thisFrame = frameNumber
+        frameNumber &+= 1
+        // CDIAG: burn the frame number into the pixels (after the dedup hash, so it
+        // does not defeat dedup) so a screen recording shows which frame is visible.
+        stampFrameNumber(thisFrame, into: pixelBuffer)
         lock.lock()
         inFlight.noteSent(ptsMilliseconds: nowMilliseconds)
         statEmitted += 1
@@ -186,6 +197,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         lastRenderedLiveTop = liveTop
         lastEmitAt = nowSeconds
         lastEmitWasKeyframe = decision.keyframe
+        pendingFrameNumber = thisFrame
         lock.unlock()
         encoder.encode(pixelBuffer, ptsMilliseconds: nowMilliseconds, forceKeyframe: decision.keyframe)
     }
@@ -270,17 +282,64 @@ final class CompanionSessionStreamer: @unchecked Sendable {
             }
         }
         let media = CompanionMediaFrame(streamID: streamID,
-                                        sequence: sequence,
+                                        sequence: pendingFrameNumber,
                                         ptsMilliseconds: frame.ptsMilliseconds,
                                         flags: flags,
                                         payload: frame.accessUnit,
                                         generationId: generationId,
                                         liveTop: lastRenderedLiveTop)
-        sequence &+= 1
         // Charge the rolling budget; tick() pauses the stream once it is spent.
         budget.record(bytes: media.payload.count, now: CACurrentMediaTime())
         statBytes += media.payload.count
         RLog("CDIAG emit seq=\(media.sequence) pts=\(media.ptsMilliseconds) key=\(frame.isKeyframe) cfg=\(flags.contains(.configChanged)) gen=\(media.generationId) bytes=\(media.payload.count)")
         onMedia(media)
+    }
+
+    // MARK: CDIAG frame-number overlay
+
+    /// Burn "#N" into the top-left of the BGRA pixel buffer. Uses the same
+    /// no-flip BGRA context CompanionPixelBufferPool uses to draw the frame (so a
+    /// drawn CGImage lands upright), compositing a pre-rendered label image.
+    private func stampFrameNumber(_ number: UInt32, into pixelBuffer: CVPixelBuffer) {
+        guard let label = labelImage(for: number) else { return }
+        CVPixelBufferLockBaseAddress(pixelBuffer, [])
+        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, []) }
+        guard let base = CVPixelBufferGetBaseAddress(pixelBuffer) else { return }
+        let height = CVPixelBufferGetHeight(pixelBuffer)
+        let bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        guard let ctx = CGContext(data: base,
+                                  width: CVPixelBufferGetWidth(pixelBuffer),
+                                  height: height,
+                                  bitsPerComponent: 8,
+                                  bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer),
+                                  space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: bitmapInfo) else {
+            return
+        }
+        // High y = top of the (upright) frame in this context, matching the pool.
+        ctx.draw(label, in: CGRect(x: 4, y: height - label.height - 4,
+                                   width: label.width, height: label.height))
+    }
+
+    /// A small green-on-translucent-black "#N" image, drawn in a standard
+    /// bottom-left CG context (CTLine draws upright), so compositing it upright.
+    private func labelImage(for number: UInt32) -> CGImage? {
+        let width = 160, height = 40
+        guard let ctx = CGContext(data: nil, width: width, height: height,
+                                  bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            return nil
+        }
+        ctx.setFillColor(CGColor(red: 0, green: 0, blue: 0, alpha: 0.6))
+        ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        let font = CTFontCreateWithName("Menlo-Bold" as CFString, 26, nil)
+        let attrs = [kCTFontAttributeName: font,
+                     kCTForegroundColorAttributeName: CGColor(red: 0, green: 1, blue: 0, alpha: 1)] as CFDictionary
+        guard let attributed = CFAttributedStringCreate(nil, "#\(number)" as CFString, attrs) else { return nil }
+        let line = CTLineCreateWithAttributedString(attributed)
+        ctx.textPosition = CGPoint(x: 6, y: 9)
+        CTLineDraw(line, ctx)
+        return ctx.makeImage()
     }
 }
