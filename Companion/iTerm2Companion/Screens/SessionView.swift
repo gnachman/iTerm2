@@ -997,30 +997,53 @@ private struct LiveCanvas: UIViewRepresentable {
                 endHandle.isHidden = true
                 return
             }
-            guard videoRect.width > 0,
-                  model.activeSelectionRange != nil,
-                  let points = model.selectionHandlePoints(viewSize: videoRect.size) else {
+            guard model.activeSelectionRange != nil, let endpoints = model.activeSelectionEndpoints,
+                  pointsPerLine > 0, cellWidthPoints > 0 else {
                 startHandle.isHidden = true
                 endHandle.isHidden = true
                 return
             }
-            // Handle points are in the video band's local space; offset into the
-            // content, then convert to the container (applying zoom/scroll).
+            // Endpoints are absolute (col, line); place the start handle at the
+            // top-left of its cell and the end handle at the bottom-right of its
+            // cell, then convert to the container (applying zoom/scroll).
             if !draggingStart {
-                startHandle.center = container.convert(contentPoint(fromVideoLocal: points.start), from: contentView)
+                let p = contentPoint(absLine: endpoints.start.absLine, column: endpoints.start.column, rightEdge: false, bottomEdge: false)
+                startHandle.center = container.convert(p, from: contentView)
                 startHandle.isHidden = false
             }
             if !draggingEnd {
-                endHandle.center = container.convert(contentPoint(fromVideoLocal: points.end), from: contentView)
+                let p = contentPoint(absLine: endpoints.end.absLine, column: endpoints.end.column, rightEdge: true, bottomEdge: true)
+                endHandle.center = container.convert(p, from: contentView)
                 endHandle.isHidden = false
             }
         }
 
-        /// A video-band-local point (the units selection geometry uses) to a point
-        /// in the content view, and the inverse.
-        private func contentPoint(fromVideoLocal p: CGPoint) -> CGPoint {
-            CGPoint(x: p.x + videoRect.minX, y: p.y + videoRect.minY)
+        // MARK: Whole-document coordinate mapping
+
+        /// Width of one cell in content points (the video fills the width at zoom 1).
+        private var cellWidthPoints: CGFloat {
+            guard let layout, layout.columns > 0, contentView.bounds.width > 0 else { return 0 }
+            return contentView.bounds.width / CGFloat(layout.columns)
         }
+
+        /// A point anywhere in the document to an absolute terminal point, clamped to
+        /// the available lines/columns. Works for both history and the live band.
+        private func selectionPoint(atContent p: CGPoint) -> CompanionSelectionPoint? {
+            guard let layout, pointsPerLine > 0, cellWidthPoints > 0 else { return nil }
+            let col = min(max(Int((p.x / cellWidthPoints).rounded(.down)), 0), layout.columns - 1)
+            let line = Int((p.y / pointsPerLine).rounded(.down))
+            let lastLine = max(0, historyLines + layout.rows - 1)
+            let clampedLine = min(max(line, 0), lastLine)
+            return CompanionSelectionPoint(absLine: layout.firstAbsLine + Int64(clampedLine), column: col)
+        }
+
+        /// The content-space point of a cell corner, for placing handles / highlights.
+        private func contentPoint(absLine: Int64, column: Int, rightEdge: Bool, bottomEdge: Bool) -> CGPoint {
+            let line = CGFloat(absLine - (layout?.firstAbsLine ?? 0))
+            return CGPoint(x: (CGFloat(column) + (rightEdge ? 1 : 0)) * cellWidthPoints,
+                           y: (line + (bottomEdge ? 1 : 0)) * pointsPerLine)
+        }
+
         private func videoLocal(_ contentPoint: CGPoint) -> CGPoint {
             CGPoint(x: contentPoint.x - videoRect.minX, y: contentPoint.y - videoRect.minY)
         }
@@ -1031,8 +1054,7 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Drag an endpoint, anchoring the selection at the opposite one.
         private func handleHandlePan(_ gesture: UIPanGestureRecognizer, isStart: Bool) {
             let point = gesture.location(in: contentView)
-            let local = videoLocal(point)
-            let viewSize = videoRect.size
+            guard let sel = selectionPoint(atContent: point) else { return }
             switch gesture.state {
             case .began:
                 guard let endpoints = model.activeSelectionEndpoints else { return }
@@ -1040,18 +1062,18 @@ private struct LiveCanvas: UIViewRepresentable {
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
                 model.sendSelectionGesture(phase: .begin, mode: .character, point: isStart ? endpoints.end : endpoints.start)
-                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: local, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .changed:
-                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: local, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 draggingStart = false
                 draggingEnd = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: local, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .end, mode: .character, point: sel)
                 loupe.removeFromSuperview()
                 repositionHandles()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
@@ -1069,29 +1091,25 @@ private struct LiveCanvas: UIViewRepresentable {
 
         @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
             let point = gesture.location(in: contentView)
-            let local = videoLocal(point)
-            let viewSize = videoRect.size
+            guard let sel = selectionPoint(atContent: point) else { return }
             switch gesture.state {
             case .began:
-                // Only the live video band is selectable for now; a long-press in the
-                // history region above it scrolls rather than selects.
-                guard model.isInsideContent(viewPoint: local, viewSize: viewSize) else { return }
                 selecting = true
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
                 startHandle.isHidden = true
                 endHandle.isHidden = true
-                model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: local, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .begin, mode: .character, point: sel)
                 showLoupe(at: point)
             case .changed:
                 guard selecting else { return }
-                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: local, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 guard selecting else { return }
                 selecting = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: local, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .end, mode: .character, point: sel)
                 loupe.removeFromSuperview()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
                 editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))
@@ -1106,8 +1124,9 @@ private struct LiveCanvas: UIViewRepresentable {
         }
 
         private func showLoupe(at contentPoint: CGPoint) {
-            // Image point is computed in the video band's local space (it samples
-            // the live frame), but the loupe floats at the finger in the container.
+            // The magnifier samples the live frame, so only show it over the live
+            // video band; selecting in history relies on the handles + highlight.
+            guard videoRect.contains(contentPoint) else { loupe.removeFromSuperview(); return }
             guard let imagePoint = model.selectionImagePoint(viewPoint: videoLocal(contentPoint), viewSize: videoRect.size) else { return }
             loupe.imagePoint = imagePoint
             loupe.cellHeight = model.activeStreamCellHeight
