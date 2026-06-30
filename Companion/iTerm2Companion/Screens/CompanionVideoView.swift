@@ -80,7 +80,13 @@ final class CompanionVideoView: UIView {
     }
 
     /// Enqueue one access unit for immediate display.
-    func enqueue(accessUnit: Data, ptsMilliseconds: UInt64) {
+    func enqueue(accessUnit: Data, ptsMilliseconds: UInt64, isKeyframe: Bool) {
+        // CDIAG: the display side has no instrumentation; log enough to see whether
+        // a received frame is actually accepted by the layer (readiness, status,
+        // keyframe) or silently dropped.
+        companionLog("CDIAG enqueue pts=\(ptsMilliseconds) key=\(isKeyframe) "
+            + "ready=\(displayLayer.isReadyForMoreMediaData) status=\(displayLayer.status.rawValue) "
+            + "hasFormat=\(formatDescription != nil) bytes=\(accessUnit.count)")
         guard let formatDescription else {
             // A frame arrived before (or without) a usable config: ask for a
             // keyframe, which the host always precedes with a fresh config.
@@ -88,6 +94,7 @@ final class CompanionVideoView: UIView {
             return
         }
         if displayLayer.status == .failed {
+            companionLog("CDIAG enqueue layer FAILED err=\(String(describing: displayLayer.error)) -> flush + request keyframe")
             displayLayer.flush()
             onNeedsKeyframe?()
         }
@@ -96,6 +103,7 @@ final class CompanionVideoView: UIView {
             format: formatDescription,
             ptsMilliseconds: ptsMilliseconds,
             displayImmediately: true) else {
+            companionLog("CDIAG enqueue sample build FAILED")
             return
         }
         displayLayer.enqueue(sample)
