@@ -2578,7 +2578,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                                       overBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]
                                                    disableMinimumContrast:NO];
             NSColor *bg = [helper.colorMap processedBackgroundColorForBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]];
-            NSLog(@"CDIAG render: active=%d key=%d dim=%.3f mute=%.3f contrast=%.3f blend=%.3f transp=%.3f thinStrokes=%ld reverseVideo=%d fgB=%.3f bgB=%.3f",
+            RLog(@"CDIAG render: active=%d key=%d dim=%.3f mute=%.3f contrast=%.3f blend=%.3f transp=%.3f thinStrokes=%ld reverseVideo=%d fgB=%.3f bgB=%.3f",
                   cdiagActive, cdiagKey, cdiagDim, helper.colorMap.mutingAmount, helper.colorMap.minimumContrast,
                   helper.blend, helper.transparencyAlpha, (long)helper.thinStrokes, (int)helper.reverseVideo,
                   fg.perceivedBrightness, bg.perceivedBrightness);
