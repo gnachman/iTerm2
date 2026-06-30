@@ -1359,10 +1359,13 @@ final class CompanionHostBridge {
         if wasDetached { textview.dataSource = session.screen }
         defer { if wasDetached { textview.dataSource = nil } }
         let backgroundColor = session.processedBackgroundColor ?? .black
+        // Render with the current selection so scrollback shows the same highlight
+        // as the live band; the phone refetches affected tiles when it changes.
         guard let image = textview.renderImage(withLines: NSRange(location: relativeFirst, length: covered.count),
                                                includeMargins: false,
                                                backgroundColor: backgroundColor,
-                                               showCursor: false) else {
+                                               showCursor: false,
+                                               includeSelection: true) else {
             send(.error(CompanionError(code: .internalError, message: "Rendering the session content failed.")),
                  requestID: requestID)
             return

@@ -693,6 +693,7 @@ private struct LiveCanvas: UIViewRepresentable {
         context.coordinator.layout = layout
         context.coordinator.applyLayout()
         context.coordinator.repositionHandles()
+        context.coordinator.updateSelectionTiles()
     }
     static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) { coordinator.tearDown() }
 
@@ -735,6 +736,11 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Line count the cached image for each tile actually covers, so a tile that
         /// has grown is sized to its image (not stretched) until it is refetched.
         private var tileFetchedLines: [Int: Int] = [:]
+        /// Tile indices that currently overlap the selection, and the endpoints they
+        /// were computed for, so a selection change invalidates only the tiles whose
+        /// highlight changed.
+        private var selectedTileIndices: Set<Int> = []
+        private var lastSelectionEndpoints: (Int64, Int64)?
         private let linesPerTile = 50
         private var growthTimer: Timer?
 
@@ -860,6 +866,10 @@ private struct LiveCanvas: UIViewRepresentable {
                 tileViews.removeAll()
                 requestedTiles.removeAll()
                 tileFetchedLines.removeAll()
+                // Tile indices are relative to the origin; force selection tiles to
+                // be recomputed against the new origin.
+                selectedTileIndices.removeAll()
+                lastSelectionEndpoints = nil
             }
             laidOutFirstAbsLine = layout.firstAbsLine
             laidOutTotalLines = totalLines
@@ -981,6 +991,49 @@ private struct LiveCanvas: UIViewRepresentable {
                 // Keep tileFetchedLines so a re-shown tile uses the cache; a cache
                 // miss (e.g. generation change) still triggers a refetch.
             }
+        }
+
+        // MARK: Selection-driven tile invalidation
+
+        /// The history tiles are rendered with the current selection by the mac, so
+        /// when the selection changes, invalidate the tiles whose highlight changed:
+        /// tiles that entered or left the selection, and the tiles holding either
+        /// endpoint (their selected edge moves). Visible ones refetch immediately;
+        /// off-screen ones refetch lazily when scrolled into view.
+        func updateSelectionTiles() {
+            guard let layout else { return }
+            let endpoints = model.activeSelectionEndpoints
+            let newTiles = endpoints.map { historyTileIndices(start: $0.start.absLine, end: $0.end.absLine) } ?? []
+            var affected = newTiles.symmetricDifference(selectedTileIndices)
+            for absLine in [endpoints?.start.absLine, endpoints?.end.absLine,
+                            lastSelectionEndpoints?.0, lastSelectionEndpoints?.1] {
+                if let absLine, let index = historyTileIndex(forAbs: absLine) { affected.insert(index) }
+            }
+            for index in affected {
+                model.invalidateHistoryTile(firstAbsLine: layout.firstAbsLine + Int64(index * linesPerTile))
+                tileFetchedLines[index] = nil
+                requestedTiles.remove(index)
+            }
+            selectedTileIndices = newTiles
+            lastSelectionEndpoints = endpoints.map { ($0.start.absLine, $0.end.absLine) }
+            if !affected.isEmpty { refreshTiles() }
+        }
+
+        /// Tile index for an absolute line, or nil if it is not in the history region.
+        private func historyTileIndex(forAbs absLine: Int64) -> Int? {
+            guard let layout, absLine >= layout.firstAbsLine else { return nil }
+            let rel = Int(absLine - layout.firstAbsLine)
+            guard rel < historyLines else { return nil }
+            return rel / linesPerTile
+        }
+
+        /// History tile indices a selection spanning [start, end] touches.
+        private func historyTileIndices(start: Int64, end: Int64) -> Set<Int> {
+            guard let layout, historyLines > 0 else { return [] }
+            let lo = max(0, Int(min(start, end) - layout.firstAbsLine))
+            let hi = min(historyLines - 1, Int(max(start, end) - layout.firstAbsLine))
+            guard lo <= hi else { return [] }
+            return Set((lo / linesPerTile)...(hi / linesPerTile))
         }
 
         // MARK: Handles
