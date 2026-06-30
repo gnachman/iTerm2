@@ -63,6 +63,7 @@
 		F40D832BDCE75E8A74EDAE72 /* Result+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899C05355E61EEF37D8C265F /* Result+iTerm.swift */; };
 		F6C5587117251D6D1B9E4C6A /* WhisperModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C180C99242A0356C8E0D404 /* WhisperModelManager.swift */; };
 		F840E446186274A715C2BC98 /* PhoneIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4C078E19397FAC1112AAA7 /* PhoneIdentity.swift */; };
+		F9DD768544783E3F190AE0F2 /* CompanionTouchMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCE31EAF88D6FAF54E12B52 /* CompanionTouchMapper.swift */; };
 		FA3DC7672264574260BD246F /* CompanionVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 698CE0B1D8A47BB2E6D41FA0 /* CompanionVideoView.swift */; };
 		FF78DC091BDC5967B175AE88 /* CompanionProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 484C4315A31AC3A318C0B784 /* CompanionProtocol */; };
 /* End PBXBuildFile section */
@@ -122,6 +123,7 @@
 		85665D0E72B401EE56BAFF45 /* CompanionClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionClient.swift; sourceTree = "<group>"; };
 		8635EAF6BB0BB03744749618 /* ConversationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		899C05355E61EEF37D8C265F /* Result+iTerm.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = "Result+iTerm.swift"; path = "sources/Categories/Result+iTerm.swift"; sourceTree = "<group>"; };
+		8CCE31EAF88D6FAF54E12B52 /* CompanionTouchMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionTouchMapper.swift; path = sources/Companion/Shared/CompanionTouchMapper.swift; sourceTree = "<group>"; };
 		969B8C22B79D7C1929B7DE1A /* WorkgroupWatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WorkgroupWatcher.swift; path = sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift; sourceTree = "<group>"; };
 		9845DDD46D6AA61085BA448F /* VoiceCaptureController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VoiceCaptureController.swift; sourceTree = "<group>"; };
 		9A766B60CE969D9AA49989C8 /* iTerm2CompanionApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTerm2CompanionApp.swift; sourceTree = "<group>"; };
@@ -313,6 +315,7 @@
 				6B45585DFAFCF303451219BB /* CompanionFrameChannel.swift */,
 				F163F73401D3427659D549FA /* CompanionHEVCFraming.swift */,
 				551830A40102EA036643794D /* CompanionHEVCSampleBuilder.swift */,
+				8CCE31EAF88D6FAF54E12B52 /* CompanionTouchMapper.swift */,
 			);
 			name = SharedFromMac;
 			path = ..;
@@ -499,6 +502,7 @@
 				73E61C64578BE54180942C4E /* CompanionHEVCFraming.swift in Sources */,
 				54F5D986EBF8A12BFD55DBFE /* CompanionHEVCSampleBuilder.swift in Sources */,
 				FA3DC7672264574260BD246F /* CompanionVideoView.swift in Sources */,
+				F9DD768544783E3F190AE0F2 /* CompanionTouchMapper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
