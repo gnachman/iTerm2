@@ -471,7 +471,9 @@ private struct LiveSessionView: View {
             // added in later M5 steps.
             // Passing the selection range (read here) makes SwiftUI re-run
             // updateUIView when it changes, so the canvas repositions its handles.
-            LiveCanvas(holder: holder, model: model, selectionRange: model.activeSelectionRange)
+            LiveCanvas(holder: holder, model: model,
+                       layout: model.liveCanvasLayout,
+                       selectionRange: model.activeSelectionRange)
                 .ignoresSafeArea(edges: .bottom)
             VStack {
                 HStack {
@@ -677,6 +679,8 @@ private final class LoupeUIView: UIView {
 private struct LiveCanvas: UIViewRepresentable {
     let holder: LiveVideoHolder
     let model: AppModel
+    /// Drives a relayout (history extent / geometry) when it changes.
+    let layout: CompanionLiveCanvasLayout?
     /// Drives handle repositioning: a change re-runs updateUIView.
     let selectionRange: CompanionSelectionRange?
 
@@ -684,6 +688,8 @@ private struct LiveCanvas: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView { context.coordinator.makeContainer() }
     func updateUIView(_ uiView: UIView, context: Context) {
         context.coordinator.model = model
+        context.coordinator.layout = layout
+        context.coordinator.applyLayout()
         context.coordinator.repositionHandles()
     }
     static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) { coordinator.tearDown() }
@@ -702,9 +708,23 @@ private struct LiveCanvas: UIViewRepresentable {
         private var selecting = false
         private var draggingStart = false
         private var draggingEnd = false
-        private var lastLayoutSize: CGSize = .zero
         private var menuAnchor: CGPoint = .zero
         private let loupeDiameter: CGFloat = 120
+
+        // History canvas layout (set from updateUIView).
+        var layout: CompanionLiveCanvasLayout?
+        /// The live video band within the (tall) content view, in content coords.
+        private var videoRect: CGRect = .zero
+        private var pointsPerLine: CGFloat = 0
+        /// Number of scrollback lines above the live video (the history region).
+        private var historyLines = 0
+        /// Guards redundant relayout: the (viewport size, layout) it was built for.
+        private var appliedKey: String = ""
+        private var didScrollToBottom = false
+        // History tiles, keyed by tile index (0 = oldest), like the static path.
+        private var tileViews: [Int: TileView] = [:]
+        private var requestedTiles: Set<Int> = []
+        private let linesPerTile = 50
 
         init(holder: LiveVideoHolder, model: AppModel) {
             self.holder = holder
@@ -730,8 +750,9 @@ private struct LiveCanvas: UIViewRepresentable {
             scrollView.bouncesZoom = true
             container.addSubview(scrollView)
 
-            holder.view.frame = contentView.bounds
-            holder.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            // The video is positioned explicitly (a band at the document bottom) by
+            // applyLayout; until then it fills the container so the first frames show.
+            holder.view.frame = container.bounds
             contentView.addSubview(holder.view)
             scrollView.addSubview(contentView)
 
@@ -765,26 +786,109 @@ private struct LiveCanvas: UIViewRepresentable {
                 container.addSubview(handle)
             }
 
-            scrollView.onLayout = { [weak self] in self?.layout() }
+            scrollView.onLayout = { [weak self] in self?.applyLayout() }
             return container
         }
 
-        private func layout() {
+        /// Lay out the scrollable document: history fills the top, the live video is
+        /// a band at the bottom (the last `rows` lines). Sized so the video fits the
+        /// viewport width at zoom 1, with one line mapping to `pointsPerLine` points.
+        func applyLayout() {
             let size = scrollView.bounds.size
-            guard size.width > 0, size.height > 0, size != lastLayoutSize else { return }
-            lastLayoutSize = size
-            contentView.frame = CGRect(origin: .zero, size: size)
-            scrollView.contentSize = size
-            let imageWidth = model.activeStreamImageSize.width
-            if imageWidth > 0 {
-                let displayScale = max(1, scrollView.traitCollection.displayScale)
-                scrollView.maximumZoomScale = max(1, 4 * imageWidth / (size.width * displayScale))
+            guard size.width > 0, size.height > 0 else { return }
+            // No geometry yet: fall back to the video filling the viewport.
+            guard let layout, layout.imageSize.width > 0, layout.rows > 0, layout.totalLines > 0 else {
+                contentView.frame = CGRect(origin: .zero, size: size)
+                scrollView.contentSize = size
+                holder.view.frame = contentView.bounds
+                videoRect = contentView.bounds
+                return
             }
+            let key = "\(Int(size.width))x\(Int(size.height))|\(layout)"
+            guard key != appliedKey else { return }
+            appliedKey = key
+
+            let videoHeight = size.width * layout.imageSize.height / layout.imageSize.width
+            pointsPerLine = videoHeight / CGFloat(layout.rows)
+            historyLines = max(0, layout.totalLines - layout.rows)
+            let documentHeight = CGFloat(layout.totalLines) * pointsPerLine
+
+            contentView.frame = CGRect(x: 0, y: 0, width: size.width, height: documentHeight)
+            scrollView.contentSize = contentView.frame.size
+            videoRect = CGRect(x: 0, y: documentHeight - videoHeight, width: size.width, height: videoHeight)
+            holder.view.frame = videoRect
+
+            let displayScale = max(1, scrollView.traitCollection.displayScale)
+            scrollView.maximumZoomScale = max(1, 4 * layout.imageSize.width / (size.width * displayScale))
+
+            for (index, view) in tileViews { view.frame = tileFrame(index: index) }
+            if !didScrollToBottom {
+                didScrollToBottom = true
+                let bottom = max(-scrollView.adjustedContentInset.top,
+                                 documentHeight - size.height + scrollView.adjustedContentInset.bottom)
+                scrollView.contentOffset = CGPoint(x: 0, y: bottom)
+            }
+            refreshTiles()
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { contentView }
-        func scrollViewDidScroll(_ scrollView: UIScrollView) { repositionHandles() }
-        func scrollViewDidZoom(_ scrollView: UIScrollView) { repositionHandles() }
+        func scrollViewDidScroll(_ scrollView: UIScrollView) { repositionHandles(); refreshTiles() }
+        func scrollViewDidZoom(_ scrollView: UIScrollView) { repositionHandles(); refreshTiles() }
+
+        // MARK: History tiles
+
+        private func tileFrame(index: Int) -> CGRect {
+            let lines = min(linesPerTile, historyLines - index * linesPerTile)
+            return CGRect(x: 0, y: CGFloat(index * linesPerTile) * pointsPerLine,
+                          width: contentView.bounds.width, height: CGFloat(max(0, lines)) * pointsPerLine)
+        }
+
+        /// Materialize tile views around the visible history (one viewport of
+        /// lookahead each way), fetch their bitmaps, and drop far-away ones.
+        private func refreshTiles() {
+            guard let layout, historyLines > 0, pointsPerLine > 0, contentView.bounds.width > 0 else { return }
+            let tileHeight = CGFloat(linesPerTile) * pointsPerLine
+            guard tileHeight > 0 else { return }
+            let visible = scrollView.convert(scrollView.bounds, to: contentView)
+            let keep = visible.insetBy(dx: 0, dy: -visible.height)
+            let tileCount = (historyLines + linesPerTile - 1) / linesPerTile
+            let first = max(0, Int(floor(keep.minY / tileHeight)))
+            let last = min(tileCount - 1, Int(floor(keep.maxY / tileHeight)))
+            guard first <= last else { return }
+
+            for index in first...last {
+                let view: TileView
+                if let existing = tileViews[index] {
+                    view = existing
+                } else {
+                    view = TileView()
+                    view.frame = tileFrame(index: index)
+                    contentView.insertSubview(view, belowSubview: holder.view)
+                    tileViews[index] = view
+                }
+                let absLine = layout.firstAbsLine + Int64(index * linesPerTile)
+                if let image = model.cachedHistoryTile(firstAbsLine: absLine) {
+                    view.show(image: image)
+                } else {
+                    view.showLoading()
+                    if !requestedTiles.contains(index) {
+                        requestedTiles.insert(index)
+                        let lines = min(linesPerTile, historyLines - index * linesPerTile)
+                        model.requestHistoryTile(firstAbsLine: absLine, lineCount: lines) { [weak self] image in
+                            guard let self, let view = self.tileViews[index] else { return }
+                            if let image { view.show(image: image) } else { view.showFailure() }
+                        }
+                    }
+                }
+            }
+
+            let discard = visible.insetBy(dx: 0, dy: -3 * visible.height)
+            for (index, view) in tileViews where !view.frame.intersects(discard) {
+                view.removeFromSuperview()
+                tileViews[index] = nil
+                requestedTiles.remove(index)
+            }
+        }
 
         // MARK: Handles
 
@@ -800,20 +904,32 @@ private struct LiveCanvas: UIViewRepresentable {
                 endHandle.isHidden = true
                 return
             }
-            guard model.activeSelectionRange != nil,
-                  let points = model.selectionHandlePoints(viewSize: contentView.bounds.size) else {
+            guard videoRect.width > 0,
+                  model.activeSelectionRange != nil,
+                  let points = model.selectionHandlePoints(viewSize: videoRect.size) else {
                 startHandle.isHidden = true
                 endHandle.isHidden = true
                 return
             }
+            // Handle points are in the video band's local space; offset into the
+            // content, then convert to the container (applying zoom/scroll).
             if !draggingStart {
-                startHandle.center = container.convert(points.start, from: contentView)
+                startHandle.center = container.convert(contentPoint(fromVideoLocal: points.start), from: contentView)
                 startHandle.isHidden = false
             }
             if !draggingEnd {
-                endHandle.center = container.convert(points.end, from: contentView)
+                endHandle.center = container.convert(contentPoint(fromVideoLocal: points.end), from: contentView)
                 endHandle.isHidden = false
             }
+        }
+
+        /// A video-band-local point (the units selection geometry uses) to a point
+        /// in the content view, and the inverse.
+        private func contentPoint(fromVideoLocal p: CGPoint) -> CGPoint {
+            CGPoint(x: p.x + videoRect.minX, y: p.y + videoRect.minY)
+        }
+        private func videoLocal(_ contentPoint: CGPoint) -> CGPoint {
+            CGPoint(x: contentPoint.x - videoRect.minX, y: contentPoint.y - videoRect.minY)
         }
 
         @objc private func handleStartPan(_ gesture: UIPanGestureRecognizer) { handleHandlePan(gesture, isStart: true) }
@@ -822,7 +938,8 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Drag an endpoint, anchoring the selection at the opposite one.
         private func handleHandlePan(_ gesture: UIPanGestureRecognizer, isStart: Bool) {
             let point = gesture.location(in: contentView)
-            let viewSize = contentView.bounds.size
+            let local = videoLocal(point)
+            let viewSize = videoRect.size
             switch gesture.state {
             case .began:
                 guard let endpoints = model.activeSelectionEndpoints else { return }
@@ -830,21 +947,21 @@ private struct LiveCanvas: UIViewRepresentable {
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
                 model.sendSelectionGesture(phase: .begin, mode: .character, point: isStart ? endpoints.end : endpoints.start)
-                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: point, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: local, viewSize: viewSize)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .changed:
-                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: point, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: local, viewSize: viewSize)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 draggingStart = false
                 draggingEnd = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: point, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: local, viewSize: viewSize)
                 loupe.removeFromSuperview()
                 repositionHandles()
-                menuAnchor = clampToContent(container.convert(point, from: contentView))
+                menuAnchor = clampToContainer(container.convert(point, from: contentView))
                 editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))
             default:
                 break
@@ -859,28 +976,31 @@ private struct LiveCanvas: UIViewRepresentable {
 
         @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
             let point = gesture.location(in: contentView)
-            let viewSize = contentView.bounds.size
+            let local = videoLocal(point)
+            let viewSize = videoRect.size
             switch gesture.state {
             case .began:
-                guard model.isInsideContent(viewPoint: point, viewSize: viewSize) else { return }
+                // Only the live video band is selectable for now; a long-press in the
+                // history region above it scrolls rather than selects.
+                guard model.isInsideContent(viewPoint: local, viewSize: viewSize) else { return }
                 selecting = true
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
                 startHandle.isHidden = true
                 endHandle.isHidden = true
-                model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: point, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: local, viewSize: viewSize)
                 showLoupe(at: point)
             case .changed:
                 guard selecting else { return }
-                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: point, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: local, viewSize: viewSize)
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 guard selecting else { return }
                 selecting = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: point, viewSize: viewSize)
+                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: local, viewSize: viewSize)
                 loupe.removeFromSuperview()
-                menuAnchor = clampToContent(container.convert(point, from: contentView))
+                menuAnchor = clampToContainer(container.convert(point, from: contentView))
                 editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))
             default:
                 break
@@ -893,8 +1013,9 @@ private struct LiveCanvas: UIViewRepresentable {
         }
 
         private func showLoupe(at contentPoint: CGPoint) {
-            let viewSize = contentView.bounds.size
-            guard let imagePoint = model.selectionImagePoint(viewPoint: contentPoint, viewSize: viewSize) else { return }
+            // Image point is computed in the video band's local space (it samples
+            // the live frame), but the loupe floats at the finger in the container.
+            guard let imagePoint = model.selectionImagePoint(viewPoint: videoLocal(contentPoint), viewSize: videoRect.size) else { return }
             loupe.imagePoint = imagePoint
             loupe.cellHeight = model.activeStreamCellHeight
             loupe.cropSide = max(40, model.activeStreamCellHeight * 4)
@@ -909,11 +1030,11 @@ private struct LiveCanvas: UIViewRepresentable {
             loupe.setNeedsDisplay()
         }
 
-        private func clampToContent(_ point: CGPoint) -> CGPoint {
-            let rect = model.contentRect(in: container.bounds.size)
-            let inset = min(8, rect.width / 2, rect.height / 2)
-            return CGPoint(x: min(max(point.x, rect.minX + inset), rect.maxX - inset),
-                           y: min(max(point.y, rect.minY + inset), rect.maxY - inset))
+        private func clampToContainer(_ point: CGPoint) -> CGPoint {
+            let bounds = container.bounds.insetBy(dx: 8, dy: 8)
+            guard bounds.width > 0, bounds.height > 0 else { return point }
+            return CGPoint(x: min(max(point.x, bounds.minX), bounds.maxX),
+                           y: min(max(point.y, bounds.minY), bounds.maxY))
         }
 
         // nonisolated to match the non-main-actor delegate requirement; UIKit calls

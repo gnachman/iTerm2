@@ -207,6 +207,22 @@ actor CompanionClient {
         }
     }
 
+    /// Fetch a scrollback tile for the live canvas, addressed by absolute line.
+    func historyTile(streamID: UInt32, firstAbsLine: Int64, lineCount: Int, generationId: UInt32) async throws -> CompanionHistoryTile {
+        let reply = try await session.request(.fetchHistoryTile(streamID: streamID,
+                                                                firstAbsLine: firstAbsLine,
+                                                                lineCount: lineCount,
+                                                                generationId: generationId))
+        switch reply {
+        case .historyTile(let tile):
+            return tile
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to history tile request")
+        }
+    }
+
     /// Begin a live video stream of a session. The mac replies with the started
     /// stream, then sends a stream config and a push stream of media frames
     /// (delivered via the onMedia handler passed to start). Streaming requires a

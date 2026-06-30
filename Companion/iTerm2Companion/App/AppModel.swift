@@ -82,6 +82,18 @@ private func withTimeout<T: Sendable>(_ seconds: TimeInterval,
 // unrelated mutations (loading a conversation's history) re-rendered the view
 // containing the NavigationStack mid-transition, which killed the push
 // animation.
+
+/// The geometry the live canvas needs to lay out its scrollable document: history
+/// tiles fill [firstAbsLine, firstAbsLine + totalLines - rows); the live video is
+/// the bottom `rows` lines.
+struct CompanionLiveCanvasLayout: Equatable {
+    var imageSize: CGSize
+    var columns: Int
+    var rows: Int
+    var firstAbsLine: Int64
+    var totalLines: Int
+}
+
 @MainActor
 @Observable
 final class AppModel {
@@ -232,6 +244,14 @@ final class AppModel {
     private(set) var activeStreamColumns = 0
     private(set) var activeStreamRows = 0
     private var activeStreamLiveTop: Int64 = 0
+    /// History extent from the latest config, for laying out the scrollback canvas.
+    private(set) var activeStreamFirstAbsLine: Int64 = 0
+    private(set) var activeStreamTotalLines = 0
+    private var activeStreamGeneration: UInt32 = 0
+    /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
+    /// fetches in flight so scroll events do not duplicate them.
+    private var historyTileCache: [Int64: UIImage] = [:]
+    private var historyTilesInFlight: Set<Int64> = []
     /// The current selection span reported by the mac, for drawing handles.
     private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).
@@ -1781,6 +1801,14 @@ final class AppModel {
                 activeStreamImageSize = CGSize(width: config.pixelWidth, height: config.pixelHeight)
                 activeStreamColumns = config.columns
                 activeStreamRows = config.rows
+                activeStreamFirstAbsLine = config.firstAbsLine
+                activeStreamTotalLines = config.totalLines
+                // A new generation re-renders everything; stale tiles must not show.
+                if config.generationId != activeStreamGeneration {
+                    activeStreamGeneration = config.generationId
+                    historyTileCache.removeAll()
+                    historyTilesInFlight.removeAll()
+                }
                 onStreamConfig?(config)
             }
         case .selectionRange(let streamID, let range):
@@ -1830,6 +1858,8 @@ final class AppModel {
                           onEnded: @escaping (CompanionStreamEndReason) -> Void) {
         liveWatchGuid = guid
         liveStreamPaused = false
+        historyTileCache.removeAll()
+        historyTilesInFlight.removeAll()
         onStreamConfig = onConfig
         onStreamMedia = onMedia
         onStreamEnded = onEnded
@@ -2006,6 +2036,48 @@ final class AppModel {
 
     /// Encoded-pixel cell height of the active stream (for sizing the magnifier).
     var activeStreamCellHeight: CGFloat { CGFloat(activeStreamGeometry?.cellHeight ?? 0) }
+
+    /// The layout the live canvas needs to size its scrollable document (history
+    /// above, live video at the bottom). Nil until a config with geometry arrives.
+    var liveCanvasLayout: CompanionLiveCanvasLayout? {
+        guard activeStreamImageSize.width > 0, activeStreamImageSize.height > 0,
+              activeStreamRows > 0, activeStreamTotalLines > 0 else {
+            return nil
+        }
+        return CompanionLiveCanvasLayout(imageSize: activeStreamImageSize,
+                                         columns: activeStreamColumns,
+                                         rows: activeStreamRows,
+                                         firstAbsLine: activeStreamFirstAbsLine,
+                                         totalLines: activeStreamTotalLines)
+    }
+
+    /// A cached scrollback tile, if already fetched.
+    func cachedHistoryTile(firstAbsLine: Int64) -> UIImage? { historyTileCache[firstAbsLine] }
+
+    /// Fetch a scrollback tile (idempotent per first line); `completion` runs on the
+    /// main actor with the image, or nil on failure / empty (evicted) range.
+    func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (UIImage?) -> Void) {
+        if let image = historyTileCache[firstAbsLine] {
+            completion(image)
+            return
+        }
+        guard let client, let streamID = activeStreamID, !historyTilesInFlight.contains(firstAbsLine) else {
+            return
+        }
+        historyTilesInFlight.insert(firstAbsLine)
+        let generation = activeStreamGeneration
+        Task { @MainActor in
+            defer { historyTilesInFlight.remove(firstAbsLine) }
+            guard let tile = try? await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
+                                                           lineCount: lineCount, generationId: generation),
+                  tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
+                completion(nil)
+                return
+            }
+            historyTileCache[firstAbsLine] = image
+            completion(image)
+        }
+    }
 
     /// The view-space rect the video occupies (excluding letterbox bars), or the
     /// full view if geometry is unknown.
