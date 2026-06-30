@@ -53,7 +53,7 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
                                                includeMargins: false,
                                                backgroundColor: background,
                                                showCursor: true,
-                                               asFocusedSession: true) else {
+                                               includeSelection: true) else {
             return nil
         }
         var rect = CGRect(origin: .zero, size: image.size)

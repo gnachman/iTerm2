@@ -2448,14 +2448,14 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                        includeMargins:includeMargins
                       backgroundColor:backgroundColor
                            showCursor:showCursor
-                     asFocusedSession:NO];
+                     includeSelection:NO];
 }
 
 - (NSImage *)renderImageWithLines:(NSRange)lineRange
                    includeMargins:(BOOL)includeMargins
                   backgroundColor:(NSColor *)backgroundColor
                        showCursor:(BOOL)showCursor
-                 asFocusedSession:(BOOL)asFocusedSession {
+                 includeSelection:(BOOL)includeSelection {
     id<iTermTextDataSource> dataSource = self.dataSource;
     if (!dataSource) {
         return nil;
@@ -2516,10 +2516,6 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                           imageWidth,
                                           imageHeight);
 
-    // The fill color for margins/uncovered areas. In asFocusedSession mode it is
-    // replaced with the undimmed background so the side margins match the
-    // undimmed cells.
-    NSColor *effectiveBackgroundColor = backgroundColor;
     iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
     // The offscreen bitmap is always rasterized at `scale` (the retina 2.0
     // fallback when there is no window), but configureDrawingHelper derived
@@ -2537,69 +2533,17 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         helper.cursorCoord = VT100GridCoordMake(self.dataSource.cursorX - 1,
                                                  self.dataSource.cursorY - 1);
     }
-    if (asFocusedSession) {
-        // Render as the focused, foreground session so the streamed frame looks
-        // identical regardless of which tab is foremost on the Mac.
-        //
-        // 1. Draw the selection. newDrawingHelperForOffscreenRendering clears it
-        //    (snapshots omit the selection); restore it and the selected-text
-        //    color the user sees on screen.
+    if (includeSelection) {
+        // newDrawingHelperForOffscreenRendering clears the selection (snapshots
+        // omit it); restore it and the selected-text color so a streamed frame
+        // shows the selection the user made. selectionColorForCurrentFocus
+        // returns the real (focused) selection color only when isFrontTextView is
+        // set; otherwise it uses unfocusedSelectionColor, which the offscreen
+        // helper never sets (nil), making the selection invisible. isFrontTextView
+        // feeds nothing else in the drawing helper.
         helper.selection = self.selection;
         helper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
-        //    selectionColorForCurrentFocus returns the real (focused) selection
-        //    color only when isFrontTextView is set; otherwise it uses
-        //    unfocusedSelectionColor, which the offscreen helper never sets (nil),
-        //    making the selection invisible. isFrontTextView feeds nothing else
-        //    in the drawing helper, so setting it just selects the focused color.
         helper.isFrontTextView = YES;
-        // 2. Remove inactive-session dimming (the live view raises dimmingAmount
-        //    when its session is in a background tab) by drawing through an
-        //    undimmed copy of the color map, leaving the real map untouched.
-        //    Only dimmingAmount is focus-driven; mutingAmount is cursor-boost
-        //    (a profile setting), so it is preserved.
-        iTermColorMap *undimmed = [helper.colorMap copy];
-        undimmed.dimmingAmount = 0;
-
-        // CDIAG: a tab switch (same window) flips textViewIsActiveSession while
-        // the window stays key, and dimming did NOT change, so log a broad
-        // snapshot keyed on the active/key/dim change to find what actually
-        // shifts the streamed text brightness. fgB is the perceived brightness of
-        // the PROCESSED default foreground color the render will use; if it
-        // differs between the active and inactive snapshots, the listed inputs
-        // say which knob did it; if it is identical, the shift is not in the
-        // rendered content at all.
-        const int cdiagActive = (int)[self.delegate textViewIsActiveSession];
-        const int cdiagKey = (int)[self isInKeyWindow];
-        const double cdiagDim = helper.colorMap.dimmingAmount;
-        static int cdiagLastActive = -1, cdiagLastKey = -1;
-        static double cdiagLastDim = -999;
-        if (cdiagActive != cdiagLastActive || cdiagKey != cdiagLastKey || fabs(cdiagDim - cdiagLastDim) > 0.001) {
-            NSColor *fg = [helper.colorMap processedTextColorForTextColor:[helper.colorMap colorForKey:kColorMapForeground]
-                                                      overBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]
-                                                   disableMinimumContrast:NO];
-            NSColor *bg = [helper.colorMap processedBackgroundColorForBackgroundColor:[helper.colorMap colorForKey:kColorMapBackground]];
-            RLog(@"CDIAG render: active=%d key=%d dim=%.3f mute=%.3f contrast=%.3f blend=%.3f transp=%.3f thinStrokes=%ld reverseVideo=%d fgB=%.3f bgB=%.3f",
-                  cdiagActive, cdiagKey, cdiagDim, helper.colorMap.mutingAmount, helper.colorMap.minimumContrast,
-                  helper.blend, helper.transparencyAlpha, (long)helper.thinStrokes, (int)helper.reverseVideo,
-                  fg.perceivedBrightness, bg.perceivedBrightness);
-            cdiagLastActive = cdiagActive;
-            cdiagLastKey = cdiagKey;
-            cdiagLastDim = cdiagDim;
-        }
-
-        helper.colorMap = undimmed;
-        // The text is drawn by an attributed-string builder that was wired to the
-        // ORIGINAL color map in newDrawingHelperForOffscreenRendering's
-        // didFinishSetup (which ran before this swap). Re-run didFinishSetup so
-        // the builder re-reads the undimmed map; otherwise glyph colors stay
-        // dimmed even though the cursor/selection/background (read live) do not.
-        [helper didFinishSetup];
-        //    The side margins are filled with backgroundColor, not drawn by the
-        //    helper, so derive an undimmed fill from the same map to match.
-        if (effectiveBackgroundColor != nil) {
-            effectiveBackgroundColor =
-                [undimmed processedBackgroundColorForBackgroundColor:[undimmed colorForKey:kColorMapBackground]];
-        }
     }
     [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
                                         visibleRect:contentRect];
@@ -2612,8 +2556,8 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     // Fill background behind all existing content. The drawing helper clears
     // to transparent before drawing cell backgrounds, so margins and any
     // uncovered areas need to be filled with the background color.
-    if (effectiveBackgroundColor) {
-        [effectiveBackgroundColor set];
+    if (backgroundColor) {
+        [backgroundColor set];
         NSRectFillUsingOperation(NSMakeRect(0, 0, imageWidth, imageHeight),
                                  NSCompositingOperationDestinationOver);
     }

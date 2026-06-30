@@ -217,16 +217,15 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
                           backgroundColor:(NSColor * _Nullable)backgroundColor
                                showCursor:(BOOL)showCursor;
 
-// As above, but when asFocusedSession is YES the image is rendered as the
-// focused, foreground session: the text selection is drawn in the focused
-// selection color, and inactive-session dimming/muting is removed, so a streamed
-// frame looks the same no matter which tab is foremost on the Mac. The
-// 4-argument form renders without these (asFocusedSession:NO).
+// As above, but when includeSelection is YES the current text selection is drawn
+// (in the focused selection color) so a streamed/live frame shows the user's
+// selection. The 4-argument form omits it (includeSelection:NO), matching the
+// snapshot/tile behavior.
 - (NSImage * _Nullable)renderImageWithLines:(NSRange)lineRange
                            includeMargins:(BOOL)includeMargins
                           backgroundColor:(NSColor * _Nullable)backgroundColor
                                showCursor:(BOOL)showCursor
-                         asFocusedSession:(BOOL)asFocusedSession;
+                         includeSelection:(BOOL)includeSelection;
 
 // Renders lines in batches to avoid blocking the main thread.
 // Each batch is rendered, then control returns to the run loop before the next batch.
