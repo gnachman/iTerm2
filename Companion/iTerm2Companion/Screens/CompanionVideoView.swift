@@ -2,39 +2,50 @@
 //  CompanionVideoView.swift
 //  iTerm2Companion
 //
-//  Plays the live terminal stream. The view is backed by an
-//  AVSampleBufferDisplayLayer; the Mac sends a stream config (HEVC parameter
-//  sets) then a push stream of access units. We rebuild a format description
-//  from the config and enqueue each access unit tagged for immediate display, so
-//  a variable-frame-rate stream shows each frame on arrival and a silent period
-//  simply leaves the last frame on screen.
+//  Plays the live terminal stream. The Mac sends a stream config (HEVC parameter
+//  sets) then a push stream of access units. We decode each access unit with a
+//  VTDecompressionSession and display the most-recently-decoded frame directly as
+//  the view's layer contents.
+//
+//  We deliberately do NOT use AVSampleBufferDisplayLayer: with a change-driven,
+//  variable-frame-rate stream it holds the final frame in its decode/presentation
+//  pipeline and does not present it until another frame is enqueued, so when the
+//  screen goes idle the last update (e.g. the end of a selection drag) stays
+//  invisible until something nudges a new frame through. Decoding ourselves and
+//  setting layer.contents on each decoded frame shows the latest frame
+//  deterministically, and the same decoded buffer feeds the selection magnifier.
 //
 
-import AVFoundation
+import CoreImage
+import CoreMedia
 import UIKit
 import VideoToolbox
 
 final class CompanionVideoView: UIView {
-    /// Called when the view needs a fresh keyframe: no config yet, or the display
-    /// layer failed and was flushed. The owner forwards a requestKeyframe.
+    /// Called when the view needs a fresh keyframe: no config/decoder yet, or a
+    /// decode failed (a lost P-frame reference). The owner forwards a requestKeyframe.
     var onNeedsKeyframe: (() -> Void)?
 
-    override class var layerClass: AnyClass { AVSampleBufferDisplayLayer.self }
-
-    private var displayLayer: AVSampleBufferDisplayLayer {
-        // Safe: layerClass guarantees the backing layer's type.
-        layer as! AVSampleBufferDisplayLayer
-    }
-
     private var formatDescription: CMFormatDescription?
-
-    // A second, parallel decode of the same access units to CVPixelBuffers, so the
-    // selection magnifier can sample the current frame's pixels (the display layer
-    // never hands decoded pixels back). HEVC decode of small terminal frames is
-    // cheap; the latest buffer is kept under a lock and read on the main thread.
     private var decompressionSession: VTDecompressionSession?
+    private let ciContext = CIContext(options: nil)
+
+    // The latest decoded frame, shared with the selection magnifier, and the PTS
+    // of the frame currently shown so out-of-order async callbacks never regress
+    // the display.
     private let frameLock = NSLock()
     private var _latestPixelBuffer: CVPixelBuffer?
+    private var lastDisplayedPTSSeconds = -Double.greatestFiniteMagnitude
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .black
+        layer.contentsGravity = .resizeAspect  // letterbox, never distort
+    }
+
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) is not supported")
+    }
 
     /// The most recently decoded frame, for the magnifier. nil until one decodes.
     func latestPixelBuffer() -> CVPixelBuffer? {
@@ -42,21 +53,11 @@ final class CompanionVideoView: UIView {
         return _latestPixelBuffer
     }
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        backgroundColor = .black
-        displayLayer.videoGravity = .resizeAspect  // letterbox, never distort
-    }
-
-    required init?(coder: NSCoder) {
-        it_fatalError("init(coder:) is not supported")
-    }
-
     /// Apply a new stream configuration (parameter sets decoded from
-    /// streamConfig.codecExtradata). Discards any prior format.
+    /// streamConfig.codecExtradata). Rebuilds the decoder; discards any prior format.
     func configure(parameterSets: [Data]) {
         formatDescription = try? CompanionHEVCSampleBuilder.makeFormatDescription(parameterSets: parameterSets)
-        if formatDescription == nil {
+        guard formatDescription != nil else {
             onNeedsKeyframe?()
             return
         }
@@ -79,58 +80,68 @@ final class CompanionVideoView: UIView {
         if status == noErr { decompressionSession = session }
     }
 
-    /// Enqueue one access unit for immediate display.
+    /// Decode one access unit and display it. `isKeyframe` is informational.
     func enqueue(accessUnit: Data, ptsMilliseconds: UInt64, isKeyframe: Bool) {
-        // CDIAG: the display side has no instrumentation; log enough to see whether
-        // a received frame is actually accepted by the layer (readiness, status,
-        // keyframe) or silently dropped.
-        companionLog("CDIAG enqueue pts=\(ptsMilliseconds) key=\(isKeyframe) "
-            + "ready=\(displayLayer.isReadyForMoreMediaData) status=\(displayLayer.status.rawValue) "
-            + "hasFormat=\(formatDescription != nil) bytes=\(accessUnit.count)")
-        guard let formatDescription else {
-            // A frame arrived before (or without) a usable config: ask for a
-            // keyframe, which the host always precedes with a fresh config.
+        guard let formatDescription, let session = decompressionSession else {
+            // A frame arrived before (or without) a usable config/decoder: ask for
+            // a keyframe, which the host always precedes with a fresh config.
             onNeedsKeyframe?()
             return
-        }
-        if displayLayer.status == .failed {
-            companionLog("CDIAG enqueue layer FAILED err=\(String(describing: displayLayer.error)) -> flush + request keyframe")
-            displayLayer.flush()
-            onNeedsKeyframe?()
         }
         guard let sample = try? CompanionHEVCSampleBuilder.makeSampleBuffer(
             accessUnit: accessUnit,
             format: formatDescription,
             ptsMilliseconds: ptsMilliseconds,
             displayImmediately: true) else {
-            companionLog("CDIAG enqueue sample build FAILED")
             return
         }
-        displayLayer.enqueue(sample)
-
-        // Parallel decode for the magnifier (async, off the main thread).
-        if let decompressionSession {
-            _ = VTDecompressionSessionDecodeFrame(
-                decompressionSession,
-                sampleBuffer: sample,
-                flags: [._EnableAsynchronousDecompression],
-                infoFlagsOut: nil) { [weak self] status, _, imageBuffer, _, _ in
-                    guard let self, status == noErr, let imageBuffer else { return }
-                    self.frameLock.lock()
-                    self._latestPixelBuffer = imageBuffer
-                    self.frameLock.unlock()
+        let status = VTDecompressionSessionDecodeFrame(
+            session,
+            sampleBuffer: sample,
+            flags: [._EnableAsynchronousDecompression],
+            infoFlagsOut: nil) { [weak self] status, _, imageBuffer, pts, _ in
+                guard let self else { return }
+                guard status == noErr, let imageBuffer else {
+                    // A decode error usually means a lost reference frame; recover
+                    // with a fresh keyframe.
+                    self.onNeedsKeyframe?()
+                    return
                 }
+                self.present(imageBuffer, ptsSeconds: pts.seconds)
+            }
+        if status != noErr {
+            onNeedsKeyframe?()
         }
     }
 
-    /// Clear the screen and forget the format (on stop / teardown).
+    /// Store and display a decoded frame. Called on a VideoToolbox thread; the
+    /// CGImage is built here (off the main thread) and only the cheap layer
+    /// contents assignment hops to main.
+    private func present(_ pixelBuffer: CVPixelBuffer, ptsSeconds: Double) {
+        frameLock.lock()
+        _latestPixelBuffer = pixelBuffer
+        frameLock.unlock()
+        let pts = ptsSeconds.isFinite ? ptsSeconds : 0
+        guard let cgImage = ciContext.createCGImage(CIImage(cvPixelBuffer: pixelBuffer),
+                                                    from: CIImage(cvPixelBuffer: pixelBuffer).extent) else {
+            return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, pts >= self.lastDisplayedPTSSeconds else { return }
+            self.lastDisplayedPTSSeconds = pts
+            self.layer.contents = cgImage
+        }
+    }
+
+    /// Clear the screen and forget the decoder (on stop / teardown).
     func reset() {
-        displayLayer.flushAndRemoveImage()
-        formatDescription = nil
         if let decompressionSession {
             VTDecompressionSessionInvalidate(decompressionSession)
         }
         decompressionSession = nil
+        formatDescription = nil
         frameLock.lock(); _latestPixelBuffer = nil; frameLock.unlock()
+        lastDisplayedPTSSeconds = -Double.greatestFiniteMagnitude
+        layer.contents = nil
     }
 }
