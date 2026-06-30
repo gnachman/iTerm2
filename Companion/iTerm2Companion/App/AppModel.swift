@@ -1975,7 +1975,24 @@ final class AppModel {
                               mode: CompanionSelectionMode,
                               point: CompanionSelectionPoint) {
         guard let client, let streamID = activeStreamID else { return }
-        Task { try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point) }
+        sendOrderedSelection {
+            try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
+        }
+    }
+
+    /// Serialize selection sends. A drag fires begin/move/move/.../end in quick
+    /// succession; wrapping each in its own Task does NOT preserve order, so the
+    /// opening .begin (anchor) could reach the mac after the first .move and the
+    /// move would be lost (the symptom: the selection only updates after a
+    /// "jiggle" produces a later move). Chaining each send after the previous one
+    /// guarantees in-order delivery.
+    private var lastSelectionSend: Task<Void, Never>?
+    private func sendOrderedSelection(_ operation: @escaping () async -> Void) {
+        let previous = lastSelectionSend
+        lastSelectionSend = Task {
+            await previous?.value
+            await operation()
+        }
     }
 
     /// The selection's start/end as absolute points (for anchoring handle drags).
@@ -1991,10 +2008,11 @@ final class AppModel {
     /// Encoded-pixel cell height of the active stream (for sizing the magnifier).
     var activeStreamCellHeight: CGFloat { CGFloat(activeStreamGeometry?.cellHeight ?? 0) }
 
-    /// Clear the live-view selection on the mac.
+    /// Clear the live-view selection on the mac. Ordered with gestures so a clear
+    /// that follows a drag cannot overtake the drag's final messages.
     func clearActiveSelection() {
         guard let client, let streamID = activeStreamID else { return }
-        Task { try? await client.clearSelection(streamID: streamID) }
+        sendOrderedSelection { try? await client.clearSelection(streamID: streamID) }
     }
 
     /// Copy the active session's selection to the iOS clipboard.
