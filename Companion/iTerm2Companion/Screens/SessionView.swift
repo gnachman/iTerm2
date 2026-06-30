@@ -480,11 +480,11 @@ private struct LiveSessionView: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            LiveVideoLayer(holder: holder)
+            // Zoomable/scrollable canvas hosting the live video, with long-press
+            // selection (Safari model). History tiles and draggable handles are
+            // added in later M5 steps.
+            LiveCanvas(holder: holder, model: model)
                 .ignoresSafeArea(edges: .bottom)
-            if model.sessionSelectionSupported {
-                selectionGestureOverlay
-            }
             VStack {
                 HStack {
                     liveBadge
@@ -905,6 +905,177 @@ private struct LiveVideoLayer: UIViewRepresentable {
     let holder: LiveVideoHolder
     func makeUIView(context: Context) -> CompanionVideoView { holder.view }
     func updateUIView(_ uiView: CompanionVideoView, context: Context) {}
+}
+
+/// The live view as a zoomable/scrollable canvas (Safari model): two-finger pinch
+/// zooms, one-finger drag scrolls (when zoomed in), and a long-press begins a
+/// selection that the same press-and-drag extends, with the magnifier and the
+/// system edit menu. This first step hosts only the live video; history tiles and
+/// re-draggable handles come in later M5 steps.
+private struct LiveCanvas: UIViewRepresentable {
+    let holder: LiveVideoHolder
+    let model: AppModel
+
+    func makeCoordinator() -> Coordinator { Coordinator(holder: holder, model: model) }
+    func makeUIView(context: Context) -> UIView { context.coordinator.makeContainer() }
+    func updateUIView(_ uiView: UIView, context: Context) { context.coordinator.model = model }
+    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) { coordinator.tearDown() }
+
+    @MainActor
+    final class Coordinator: NSObject, UIScrollViewDelegate, UIEditMenuInteractionDelegate {
+        let holder: LiveVideoHolder
+        var model: AppModel
+        private let container = UIView()
+        private let scrollView = LayoutObservingScrollView()
+        private let contentView = UIView()
+        private let loupe = LoupeUIView()
+        private var editMenu: UIEditMenuInteraction!
+        private var selecting = false
+        private var lastLayoutSize: CGSize = .zero
+        private var menuAnchor: CGPoint = .zero
+        private let loupeDiameter: CGFloat = 120
+
+        init(holder: LiveVideoHolder, model: AppModel) {
+            self.holder = holder
+            self.model = model
+            super.init()
+        }
+
+        func tearDown() {
+            editMenu?.dismissMenu()
+        }
+
+        func makeContainer() -> UIView {
+            container.backgroundColor = .black
+            scrollView.frame = container.bounds
+            scrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            scrollView.minimumZoomScale = 1
+            scrollView.maximumZoomScale = 6
+            scrollView.delegate = self
+            scrollView.backgroundColor = .black
+            scrollView.showsVerticalScrollIndicator = false
+            scrollView.showsHorizontalScrollIndicator = false
+            scrollView.contentInsetAdjustmentBehavior = .never
+            scrollView.bouncesZoom = true
+            container.addSubview(scrollView)
+
+            holder.view.frame = contentView.bounds
+            holder.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            contentView.addSubview(holder.view)
+            scrollView.addSubview(contentView)
+
+            // Hold-still ~0.3s to begin a selection; the same press-and-drag then
+            // extends it. A drag that moves before recognition scrolls instead
+            // (default allowableMovement), matching Safari.
+            let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+            longPress.minimumPressDuration = 0.3
+            contentView.addGestureRecognizer(longPress)
+
+            // Tap clears the selection / dismisses the menu.
+            let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+            contentView.addGestureRecognizer(tap)
+
+            loupe.isUserInteractionEnabled = false
+            loupe.backgroundColor = .black
+            loupe.layer.masksToBounds = true
+            loupe.layer.borderColor = UIColor.white.withAlphaComponent(0.9).cgColor
+            loupe.layer.borderWidth = 3
+            loupe.pixelBufferProvider = { [weak self] in self?.holder.view.latestPixelBuffer() }
+
+            editMenu = UIEditMenuInteraction(delegate: self)
+            container.addInteraction(editMenu)
+
+            scrollView.onLayout = { [weak self] in self?.layout() }
+            return container
+        }
+
+        private func layout() {
+            let size = scrollView.bounds.size
+            guard size.width > 0, size.height > 0, size != lastLayoutSize else { return }
+            lastLayoutSize = size
+            contentView.frame = CGRect(origin: .zero, size: size)
+            scrollView.contentSize = size
+            let imageWidth = model.activeStreamImageSize.width
+            if imageWidth > 0 {
+                let displayScale = max(1, scrollView.traitCollection.displayScale)
+                scrollView.maximumZoomScale = max(1, 4 * imageWidth / (size.width * displayScale))
+            }
+        }
+
+        func viewForZooming(in scrollView: UIScrollView) -> UIView? { contentView }
+
+        // MARK: Selection
+
+        @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+            let point = gesture.location(in: contentView)
+            let viewSize = contentView.bounds.size
+            switch gesture.state {
+            case .began:
+                guard model.isInsideContent(viewPoint: point, viewSize: viewSize) else { return }
+                selecting = true
+                scrollView.isScrollEnabled = false
+                editMenu.dismissMenu()
+                model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: point, viewSize: viewSize)
+                showLoupe(at: point)
+            case .changed:
+                guard selecting else { return }
+                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: point, viewSize: viewSize)
+                showLoupe(at: point)
+            case .ended, .cancelled, .failed:
+                guard selecting else { return }
+                selecting = false
+                scrollView.isScrollEnabled = true
+                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: point, viewSize: viewSize)
+                loupe.removeFromSuperview()
+                menuAnchor = clampToContent(container.convert(point, from: contentView))
+                editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))
+            default:
+                break
+            }
+        }
+
+        @objc private func handleTap() {
+            editMenu.dismissMenu()
+            model.clearActiveSelection()
+        }
+
+        private func showLoupe(at contentPoint: CGPoint) {
+            let viewSize = contentView.bounds.size
+            guard let imagePoint = model.selectionImagePoint(viewPoint: contentPoint, viewSize: viewSize) else { return }
+            loupe.imagePoint = imagePoint
+            loupe.cellHeight = model.activeStreamCellHeight
+            loupe.cropSide = max(40, model.activeStreamCellHeight * 4)
+            let finger = container.convert(contentPoint, from: contentView)
+            let radius = loupeDiameter / 2
+            let x = min(max(finger.x, radius), max(radius, container.bounds.width - radius))
+            let above = finger.y - 24 - radius
+            let y = above - radius >= 0 ? above : finger.y + 24 + radius
+            loupe.frame = CGRect(x: x - radius, y: y - radius, width: loupeDiameter, height: loupeDiameter)
+            loupe.layer.cornerRadius = radius
+            if loupe.superview == nil { container.addSubview(loupe) }
+            loupe.setNeedsDisplay()
+        }
+
+        private func clampToContent(_ point: CGPoint) -> CGPoint {
+            let rect = model.contentRect(in: container.bounds.size)
+            let inset = min(8, rect.width / 2, rect.height / 2)
+            return CGPoint(x: min(max(point.x, rect.minX + inset), rect.maxX - inset),
+                           y: min(max(point.y, rect.minY + inset), rect.maxY - inset))
+        }
+
+        func editMenuInteraction(_ interaction: UIEditMenuInteraction,
+                                 menuFor configuration: UIEditMenuConfiguration,
+                                 suggestedActions: [UIMenuElement]) -> UIMenu? {
+            var children: [UIMenuElement] = [
+                UIAction(title: "Copy") { [weak self] _ in self?.model.copyActiveSelection() },
+                UIAction(title: "Select All") { [weak self] _ in self?.model.selectAllActiveStream() },
+            ]
+            if UIPasteboard.general.hasStrings {
+                children.append(UIAction(title: "Paste") { [weak self] _ in self?.model.pasteIntoActiveSession() })
+            }
+            return UIMenu(children: children)
+        }
+    }
 }
 
 /// Disables the navigation controller's interactive swipe-back while present, so
