@@ -467,6 +467,12 @@ private struct LiveSessionView: View {
     /// encoded-image point under it, so the magnifier can follow and show content.
     @State private var loupeViewPoint: CGPoint?
     @State private var loupeImagePoint: CGPoint?
+    /// Drawn handle positions DURING a drag, computed locally from the finger so
+    /// the dragged handle tracks instantly instead of trailing the round-tripped
+    /// selectionRange (which feeds the handles only when not dragging). The moving
+    /// handle follows the finger; the anchor is the fixed opposite endpoint.
+    @State private var dragMovingHandle: CGPoint?
+    @State private var dragAnchorHandle: CGPoint?
     private let loupeDiameter: CGFloat = 120
 
     var body: some View {
@@ -539,6 +545,7 @@ private struct LiveSessionView: View {
                                 }
                                 model.sendSelectionGesture(phase: .move, mode: .character,
                                                            viewPoint: value.location, viewSize: geo.size)
+                                dragMovingHandle = value.location
                                 loupeViewPoint = value.location
                                 loupeImagePoint = model.selectionImagePoint(viewPoint: value.location, viewSize: geo.size)
                             }
@@ -546,11 +553,18 @@ private struct LiveSessionView: View {
                                 model.sendSelectionGesture(phase: .end, mode: .character,
                                                            viewPoint: value.location, viewSize: geo.size)
                                 selecting = false
+                                dragMovingHandle = nil
+                                dragAnchorHandle = nil
                                 loupeViewPoint = nil
                                 loupeImagePoint = nil
                             }
                     )
-                if let handles {
+                // During a drag, draw the moving handle at the finger (instant) and
+                // the anchor fixed; otherwise from the round-tripped selectionRange.
+                if selecting, let moving = dragMovingHandle {
+                    if let anchor = dragAnchorHandle { selectionHandle.position(anchor) }
+                    selectionHandle.position(moving)
+                } else if let handles {
                     selectionHandle.position(handles.start)
                     selectionHandle.position(handles.end)
                 }
@@ -598,14 +612,18 @@ private struct LiveSessionView: View {
         let hitRadius: CGFloat = 32
         if let handles, let endpoints = model.activeSelectionEndpoints {
             if location.distance(to: handles.start) <= hitRadius {
+                dragAnchorHandle = handles.end  // dragging start; end stays put
                 model.sendSelectionGesture(phase: .begin, mode: .character, point: endpoints.end)
                 return
             }
             if location.distance(to: handles.end) <= hitRadius {
+                dragAnchorHandle = handles.start  // dragging end; start stays put
                 model.sendSelectionGesture(phase: .begin, mode: .character, point: endpoints.start)
                 return
             }
         }
+        // Fresh selection: the start is wherever the drag began.
+        dragAnchorHandle = location
         model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: location, viewSize: viewSize)
     }
 
