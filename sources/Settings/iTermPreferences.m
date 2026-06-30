@@ -166,6 +166,7 @@ NSString *const kPreferenceKeyEnableSoundForEsc = @"SoundForEsc";
 NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
 NSString *const kPreferenceKeyLanguageAgnosticKeyBindings = @"LanguageAgnosticKeyBindings";
 NSString *const kPreferenceKeyForceKeyboard = @"ForceKeyboard";  // bool
+NSString *const kPreferenceKeyForceKeyboardOncePerSession = @"ForceKeyboardOncePerSession";  // bool
 NSString *const kPreferenceKeyAllowSymbolicHotKeys = @"AllowSymbolicHotKeys";  // bool
 NSString *const kPreferenceKeyKeyboardLocale = @"KeyboardLocale";  // string
 NSString *const kPreferenceKeyRemapModifiersGlobally = @"RemapModifiersGlobally";  // bool
@@ -802,7 +803,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyLeftControlRemapping: @(kPreferencesModifierTagLeftControl),
                   kPreferenceKeyRightControlRemapping: @(kPreferencesModifierTagRightControl),
                   kPreferenceKeyKeyboardLocale: [NSNull null],
-                  
+
                   kPreferenceKeyLeftOptionRemapping: @(kPreferencesModifierTagLeftOption),
                   kPreferenceKeyRightOptionRemapping: @(kPreferencesModifierTagRightOption),
                   kPreferenceKeyLeftCommandRemapping: @(kPreferencesModifierTagLeftCommand),
@@ -815,6 +816,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHotkeyEnabled: @NO,
                   kPreferenceKeyRemapModifiersGlobally: @YES,
                   kPreferenceKeyForceKeyboard: @NO,
+                  kPreferenceKeyForceKeyboardOncePerSession: @NO,
                   kPreferenceKeyAllowSymbolicHotKeys: @YES,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,

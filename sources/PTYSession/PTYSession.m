@@ -12696,6 +12696,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)textViewDidBecomeFirstResponder {
     DLog(@"textViewDidBecomeFirstResponder for %@", self);
+    [[iTermInputSourceForcer sharedInstance] forceKeyboardForSessionIfNeeded:self];
     [self notifyActive];
 }
 

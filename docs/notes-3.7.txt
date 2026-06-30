@@ -1535,6 +1535,13 @@ Bug Fixes:
   silenceable, so you can make it
   always save to Downloads or always
   show a save panel. Issue 12897.
+- Settings > Keys > “Force keyboard” gains
+  an option to only force the keyboard
+  locale once per session, the first time
+  a newly created terminal receives
+  keyboard focus, instead of forcing it
+  continuously. Restored sessions are not
+  affected.
 - Fix a bug where a pane could restore
   in your home directory instead of its
   previous working directory after

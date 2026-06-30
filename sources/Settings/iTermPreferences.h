@@ -303,6 +303,7 @@ extern NSString *const kPreferenceKeyEmulateUSKeyboard;  // See issue 6994
 
 extern NSString *const kPreferenceKeyHotkeyEnabled;
 extern NSString *const kPreferenceKeyForceKeyboard;
+extern NSString *const kPreferenceKeyForceKeyboardOncePerSession;
 extern NSString *const kPreferenceKeyAllowSymbolicHotKeys;
 extern NSString *const kPreferenceKeyKeyboardLocale;
 extern NSString *const kPreferenceKeyHotKeyCode;
