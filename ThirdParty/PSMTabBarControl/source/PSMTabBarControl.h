@@ -158,6 +158,11 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (BOOL)tabViewShouldAllowDragOnAddTabButton:(NSTabView *)tabView;
 - (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView;
 
+// Called when the number of rows the horizontal tab bar uses changes (the
+// two-row tab bar crossing its single-row capacity), so the delegate can
+// recompute the bar height and relayout. Already dispatched to the main queue.
+- (void)tabViewDidChangeDesiredHeight:(NSTabView *)tabView;
+
 @end
 
 enum {
@@ -231,6 +236,23 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // tab information
 - (NSMutableArray *)representedTabViewItems;
 - (int)numberOfVisibleTabs;
+
+// Number of rows a horizontal tab bar will lay its tabs out on: 1 normally, or
+// 2 when the “two-row tab bar” setting is on and there are more tabs than fit on
+// a single row. Always 1 for vertical (left/right) bars.
+- (NSInteger)horizontalRowCount;
+
+
+// Two-row vertical geometry (used by styles that draw per-row decorations).
+// twoRowContentHeight is the drawable height of one physical row; twoRowStride is
+// the vertical distance between the tops of the two rows.
+- (CGFloat)twoRowContentHeight;
+- (CGFloat)twoRowStride;
+
+// The total two-row bar height for a given single-row height. The one source of
+// truth for the two-row height, shared by the styles' tabBarHeight and the
+// window's desired-height calc so they can't drift.
+- (CGFloat)twoRowHeightForSingleRowHeight:(CGFloat)singleRowHeight;
 
 // special effects
 - (void)hideTabBar:(BOOL)hide animate:(BOOL)animate;
