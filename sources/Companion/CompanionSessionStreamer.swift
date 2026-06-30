@@ -59,6 +59,15 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// resize so the first frame at a new size always encodes.
     private var lastSentHash: UInt64?
 
+    // CDIAG flow-control stats, logged once a second while streaming. Counters are
+    // for the current one-second bucket; reset on each log. Touched from tick()
+    // (main) and handleEncoded (encoder thread), so guarded by `lock`.
+    private var statLastLog: TimeInterval = 0
+    private var statEmitted = 0
+    private var statDeduped = 0
+    private var statPaced = 0
+    private var statBytes = 0
+
     init(streamID: UInt32,
          source: CompanionFrameSource,
          maxFrameRate: Double = 30,
@@ -104,7 +113,10 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // before evaluate() avoids consuming the dirty flag when we skip.
         let blocked = !exhausted && !pacer.isKeyframeRequested && !inFlight.mayEmit()
         let decision = (exhausted || blocked) ? nil : pacer.evaluate(now: nowSeconds)
+        if blocked { statPaced += 1 }
+        let statsLine = takeFlowStatsLine(now: nowSeconds)
         lock.unlock()
+        if let statsLine { RLog(statsLine) }
         if exhausted {
             // Pause before the relay force-closes us for exceeding its quota.
             if !dataLimitHit {
@@ -125,11 +137,30 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // encodes -- a (re)subscribe/resume needs a fresh IDR even if static.
         let hash = CompanionPixelBufferHash.hash(pixelBuffer)
         if !decision.keyframe && hash == lastSentHash {
+            lock.lock(); statDeduped += 1; lock.unlock()
             return
         }
         lastSentHash = hash
-        lock.lock(); inFlight.noteSent(ptsMilliseconds: nowMilliseconds); lock.unlock()
+        lock.lock(); inFlight.noteSent(ptsMilliseconds: nowMilliseconds); statEmitted += 1; lock.unlock()
         encoder.encode(pixelBuffer, ptsMilliseconds: nowMilliseconds, forceKeyframe: decision.keyframe)
+    }
+
+    /// If at least a second has elapsed, return the flow-control stats line for
+    /// the bucket and reset it; otherwise nil. Must be called with `lock` held.
+    private func takeFlowStatsLine(now: TimeInterval) -> String? {
+        if statLastLog == 0 { statLastLog = now }
+        guard now - statLastLog >= 1 else { return nil }
+        let usedMB = (budget.limitBytes - budget.remaining(now: now)) / (1024 * 1024)
+        let limitMB = budget.limitBytes / (1024 * 1024)
+        let line = "CDIAG flow stream=\(streamID) emitted=\(statEmitted) deduped=\(statDeduped) "
+            + "paced=\(statPaced) bytes=\(statBytes) lead=\(inFlight.leadMilliseconds)ms "
+            + "queue=\(inFlight.queueDepth) budgetUsed=\(usedMB)MB/\(limitMB)MB"
+        statEmitted = 0
+        statDeduped = 0
+        statPaced = 0
+        statBytes = 0
+        statLastLog = now
+        return line
     }
 
     /// Apply a streamAck from the phone so the limiter can pace against how far
@@ -200,6 +231,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         sequence &+= 1
         // Charge the rolling budget; tick() pauses the stream once it is spent.
         budget.record(bytes: media.payload.count, now: CACurrentMediaTime())
+        statBytes += media.payload.count
         onMedia(media)
     }
 }

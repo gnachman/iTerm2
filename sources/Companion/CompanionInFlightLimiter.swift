@@ -35,6 +35,12 @@ struct CompanionInFlightLimiter {
         lastSentPTS = max(lastSentPTS, ptsMilliseconds)
     }
 
+    /// How far (capture ms) the last sent frame is ahead of the last acked one.
+    var leadMilliseconds: UInt64 { lastSentPTS > lastAckedPTS ? lastSentPTS - lastAckedPTS : 0 }
+
+    /// The phone's most recently reported decode queue depth.
+    var queueDepth: Int { lastQueueDepth }
+
     /// Apply a streamAck from the phone.
     mutating func noteAck(ptsMilliseconds: UInt64, queueDepth: Int) {
         haveAck = true
