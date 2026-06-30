@@ -24,6 +24,11 @@ struct CompanionStreamPacer: Equatable {
         self.minInterval = minInterval
     }
 
+    /// Whether an urgent keyframe is pending. The streamer lets a keyframe bypass
+    /// the in-flight limiter, so it must be able to tell before calling evaluate()
+    /// (which would otherwise consume the dirty flag if the limiter then skipped).
+    var isKeyframeRequested: Bool { keyframeRequested }
+
     /// The screen changed since the last frame.
     mutating func noteDirty() {
         dirty = true

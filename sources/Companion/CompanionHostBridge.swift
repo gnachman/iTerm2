@@ -427,9 +427,8 @@ final class CompanionHostBridge {
         case .updateStreamParams:
             // Frame-rate / bitrate adaptation is handled in a later milestone.
             break
-        case .streamAck:
-            // End-to-end flow-control feedback is consumed in a later milestone.
-            break
+        case .streamAck(let streamID, let lastPTSMilliseconds, let queueDepth):
+            streams[streamID]?.streamer.noteAck(ptsMilliseconds: lastPTSMilliseconds, queueDepth: queueDepth)
         }
     }
 

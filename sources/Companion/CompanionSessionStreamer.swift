@@ -46,6 +46,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private let lock = NSLock()
     private var budget: CompanionStreamBudget
     private var dataLimitHit = false
+    private var inFlight: CompanionInFlightLimiter
     private var pacer: CompanionStreamPacer
     private var pool: CompanionPixelBufferPool?
     private var encoder: CompanionVideoEncoder?
@@ -73,6 +74,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         self.onMedia = onMedia
         self.onDataLimitReached = onDataLimitReached
         self.budget = CompanionStreamBudget(limitBytes: dailyByteBudget)
+        self.inFlight = CompanionInFlightLimiter()
         self.pacer = CompanionStreamPacer(minInterval: maxFrameRate > 0 ? 1.0 / maxFrameRate : 0)
     }
 
@@ -97,7 +99,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         let nowSeconds = TimeInterval(nowMilliseconds) / 1000.0
         lock.lock()
         let exhausted = budget.isExhausted(now: nowSeconds)
-        let decision = exhausted ? nil : pacer.evaluate(now: nowSeconds)
+        // A pending keyframe (subscribe/resume) must go even if the receiver is
+        // behind; otherwise the limiter coalesces to the latest screen. Checking
+        // before evaluate() avoids consuming the dirty flag when we skip.
+        let blocked = !exhausted && !pacer.isKeyframeRequested && !inFlight.mayEmit()
+        let decision = (exhausted || blocked) ? nil : pacer.evaluate(now: nowSeconds)
         lock.unlock()
         if exhausted {
             // Pause before the relay force-closes us for exceeding its quota.
@@ -122,7 +128,14 @@ final class CompanionSessionStreamer: @unchecked Sendable {
             return
         }
         lastSentHash = hash
+        lock.lock(); inFlight.noteSent(ptsMilliseconds: nowMilliseconds); lock.unlock()
         encoder.encode(pixelBuffer, ptsMilliseconds: nowMilliseconds, forceKeyframe: decision.keyframe)
+    }
+
+    /// Apply a streamAck from the phone so the limiter can pace against how far
+    /// behind the receiver is. Safe to call from any thread.
+    func noteAck(ptsMilliseconds: UInt64, queueDepth: Int) {
+        lock.lock(); inFlight.noteAck(ptsMilliseconds: ptsMilliseconds, queueDepth: queueDepth); lock.unlock()
     }
 
     /// Flush in-flight frames (teardown, and to make encoding synchronous in tests).

@@ -28,6 +28,7 @@
 		0E2A5ED423A079E312DF135B /* iTermLayoutMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89D3137ADD4526A5A2012D83 /* iTermLayoutMutator.swift */; };
 		0EBFA4D421C1D324DCE01133 /* ResilientCoordinateNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240C63271364D969B638DA6E /* ResilientCoordinateNotifications.swift */; };
 		1025FC686CC215C5276A1630 /* CompanionAlert+Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 915FC56D082AE9C9EF31D4D5 /* CompanionAlert+Database.swift */; };
+		1065CE0FDF12C07A57548F0B /* CompanionInFlightLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC017F2B1715E00FD2C9D726 /* CompanionInFlightLimiter.swift */; };
 		10AAA7668EA8FBDD64696AB7 /* iTermEventTriggerParameterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7B0AE10E1598EDE1E01795 /* iTermEventTriggerParameterView.swift */; };
 		10D567B3DD4E3FB05673BF65 /* iTermAnnotatedScreenshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C74C12959E7040AF3A3B12F /* iTermAnnotatedScreenshot.swift */; };
 		1133A7B8FBFAD27FE4AA0BBC /* iTermSessionToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CF9D13C38FB56DAF280BDA7 /* iTermSessionToolbarView.swift */; };
@@ -9698,6 +9699,7 @@
 		E989C0EC904E3E213AA6115A /* CompanionPixelBufferPool.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPixelBufferPool.swift; sourceTree = "<group>"; };
 		E9D218FDCACCEF2DA820B7D4 /* ExitWorkgroupTrigger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExitWorkgroupTrigger.swift; sourceTree = "<group>"; };
 		EB72B02155E98A2D900F57AD /* ClaudeCodeWorkgroupTemplate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeWorkgroupTemplate.swift; sourceTree = "<group>"; };
+		EC017F2B1715E00FD2C9D726 /* CompanionInFlightLimiter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionInFlightLimiter.swift; sourceTree = "<group>"; };
 		ECFD443A066A4370FCB20EFC /* TerminalHardRules.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TerminalHardRules.swift; sourceTree = "<group>"; };
 		ED1DEABF73F84ABCF9B2FDC8 /* cloak-page-world.js */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.javascript; path = "cloak-page-world.js"; sourceTree = "<group>"; };
 		ED49EE365D629DAE80503BFD /* iTermNonTextPasteHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = iTermNonTextPasteHelper.swift; path = sources/Pasting/iTermNonTextPasteHelper.swift; sourceTree = SOURCE_ROOT; };
@@ -10710,6 +10712,7 @@
 				79B5A4B6CFD9C92B0B21E7DB /* CompanionTerminalFrameSource.swift */,
 				C2B75EA7ECA05D0BBE98C9EF /* CompanionPixelBufferHash.swift */,
 				F62823957A3CEEC1DB72C718 /* CompanionStreamBudget.swift */,
+				EC017F2B1715E00FD2C9D726 /* CompanionInFlightLimiter.swift */,
 			);
 			path = Companion;
 			sourceTree = "<group>";
@@ -21780,6 +21783,7 @@
 				9CC7383F92969C8D5036CECB /* CompanionHEVCSampleBuilder.swift in Sources */,
 				C170B61E5D91A047173C40BB /* CompanionPixelBufferHash.swift in Sources */,
 				7AA2B3375FB3024E4A954222 /* CompanionStreamBudget.swift in Sources */,
+				1065CE0FDF12C07A57548F0B /* CompanionInFlightLimiter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
