@@ -469,7 +469,9 @@ private struct LiveSessionView: View {
             // Zoomable/scrollable canvas hosting the live video, with long-press
             // selection (Safari model). History tiles and draggable handles are
             // added in later M5 steps.
-            LiveCanvas(holder: holder, model: model)
+            // Passing the selection range (read here) makes SwiftUI re-run
+            // updateUIView when it changes, so the canvas repositions its handles.
+            LiveCanvas(holder: holder, model: model, selectionRange: model.activeSelectionRange)
                 .ignoresSafeArea(edges: .bottom)
             VStack {
                 HStack {
@@ -567,6 +569,30 @@ private final class LiveVideoHolder {
     let view = CompanionVideoView(frame: .zero)
 }
 
+/// A draggable selection-endpoint dot. The view is larger than the dot so the
+/// touch target is comfortable; the dot is drawn centered.
+private final class SelectionHandleView: UIView {
+    private let dotDiameter: CGFloat = 18
+
+    init() {
+        super.init(frame: CGRect(x: 0, y: 0, width: 40, height: 40))
+        backgroundColor = .clear
+        isOpaque = false
+    }
+    required init?(coder: NSCoder) { it_fatalError("init(coder:) is not supported") }
+
+    override func draw(_ rect: CGRect) {
+        guard let ctx = UIGraphicsGetCurrentContext() else { return }
+        let dot = CGRect(x: bounds.midX - dotDiameter / 2, y: bounds.midY - dotDiameter / 2,
+                         width: dotDiameter, height: dotDiameter)
+        UIColor.white.setFill()
+        ctx.fillEllipse(in: dot)
+        UIColor.systemBlue.setStroke()
+        ctx.setLineWidth(2)
+        ctx.strokeEllipse(in: dot.insetBy(dx: 1, dy: 1))
+    }
+}
+
 private final class LoupeUIView: UIView {
     var pixelBufferProvider: (() -> CVPixelBuffer?)?
     var imagePoint: CGPoint = .zero   // center, image px, top-left origin
@@ -651,10 +677,15 @@ private final class LoupeUIView: UIView {
 private struct LiveCanvas: UIViewRepresentable {
     let holder: LiveVideoHolder
     let model: AppModel
+    /// Drives handle repositioning: a change re-runs updateUIView.
+    let selectionRange: CompanionSelectionRange?
 
     func makeCoordinator() -> Coordinator { Coordinator(holder: holder, model: model) }
     func makeUIView(context: Context) -> UIView { context.coordinator.makeContainer() }
-    func updateUIView(_ uiView: UIView, context: Context) { context.coordinator.model = model }
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.model = model
+        context.coordinator.repositionHandles()
+    }
     static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) { coordinator.tearDown() }
 
     @MainActor
@@ -665,8 +696,12 @@ private struct LiveCanvas: UIViewRepresentable {
         private let scrollView = LayoutObservingScrollView()
         private let contentView = UIView()
         private let loupe = LoupeUIView()
+        private let startHandle = SelectionHandleView()
+        private let endHandle = SelectionHandleView()
         private var editMenu: UIEditMenuInteraction!
         private var selecting = false
+        private var draggingStart = false
+        private var draggingEnd = false
         private var lastLayoutSize: CGSize = .zero
         private var menuAnchor: CGPoint = .zero
         private let loupeDiameter: CGFloat = 120
@@ -721,6 +756,15 @@ private struct LiveCanvas: UIViewRepresentable {
             editMenu = UIEditMenuInteraction(delegate: self)
             container.addInteraction(editMenu)
 
+            // Draggable selection handles overlay the container (so they stay a
+            // fixed size regardless of zoom) and reposition as the canvas scrolls.
+            for (handle, isStart) in [(startHandle, true), (endHandle, false)] {
+                handle.isHidden = true
+                let pan = UIPanGestureRecognizer(target: self, action: isStart ? #selector(handleStartPan(_:)) : #selector(handleEndPan(_:)))
+                handle.addGestureRecognizer(pan)
+                container.addSubview(handle)
+            }
+
             scrollView.onLayout = { [weak self] in self?.layout() }
             return container
         }
@@ -739,6 +783,77 @@ private struct LiveCanvas: UIViewRepresentable {
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { contentView }
+        func scrollViewDidScroll(_ scrollView: UIScrollView) { repositionHandles() }
+        func scrollViewDidZoom(_ scrollView: UIScrollView) { repositionHandles() }
+
+        // MARK: Handles
+
+        /// Place the handle dots at the selection endpoints, converting from the
+        /// content's coordinate space (where the endpoints are computed) to the
+        /// container, so zoom and scroll are applied. A handle being dragged keeps
+        /// the finger position until the round-tripped selection catches up.
+        func repositionHandles() {
+            // Hide handles during a fresh long-press drag (the magnifier leads
+            // there); they appear once the selection settles.
+            guard !selecting else {
+                startHandle.isHidden = true
+                endHandle.isHidden = true
+                return
+            }
+            guard model.activeSelectionRange != nil,
+                  let points = model.selectionHandlePoints(viewSize: contentView.bounds.size) else {
+                startHandle.isHidden = true
+                endHandle.isHidden = true
+                return
+            }
+            if !draggingStart {
+                startHandle.center = container.convert(points.start, from: contentView)
+                startHandle.isHidden = false
+            }
+            if !draggingEnd {
+                endHandle.center = container.convert(points.end, from: contentView)
+                endHandle.isHidden = false
+            }
+        }
+
+        @objc private func handleStartPan(_ gesture: UIPanGestureRecognizer) { handleHandlePan(gesture, isStart: true) }
+        @objc private func handleEndPan(_ gesture: UIPanGestureRecognizer) { handleHandlePan(gesture, isStart: false) }
+
+        /// Drag an endpoint, anchoring the selection at the opposite one.
+        private func handleHandlePan(_ gesture: UIPanGestureRecognizer, isStart: Bool) {
+            let point = gesture.location(in: contentView)
+            let viewSize = contentView.bounds.size
+            switch gesture.state {
+            case .began:
+                guard let endpoints = model.activeSelectionEndpoints else { return }
+                if isStart { draggingStart = true } else { draggingEnd = true }
+                scrollView.isScrollEnabled = false
+                editMenu.dismissMenu()
+                model.sendSelectionGesture(phase: .begin, mode: .character, point: isStart ? endpoints.end : endpoints.start)
+                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: point, viewSize: viewSize)
+                moveHandle(isStart: isStart, toContentPoint: point)
+                showLoupe(at: point)
+            case .changed:
+                model.sendSelectionGesture(phase: .move, mode: .character, viewPoint: point, viewSize: viewSize)
+                moveHandle(isStart: isStart, toContentPoint: point)
+                showLoupe(at: point)
+            case .ended, .cancelled, .failed:
+                draggingStart = false
+                draggingEnd = false
+                scrollView.isScrollEnabled = true
+                model.sendSelectionGesture(phase: .end, mode: .character, viewPoint: point, viewSize: viewSize)
+                loupe.removeFromSuperview()
+                repositionHandles()
+                menuAnchor = clampToContent(container.convert(point, from: contentView))
+                editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))
+            default:
+                break
+            }
+        }
+
+        private func moveHandle(isStart: Bool, toContentPoint point: CGPoint) {
+            (isStart ? startHandle : endHandle).center = container.convert(point, from: contentView)
+        }
 
         // MARK: Selection
 
@@ -751,6 +866,8 @@ private struct LiveCanvas: UIViewRepresentable {
                 selecting = true
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
+                startHandle.isHidden = true
+                endHandle.isHidden = true
                 model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: point, viewSize: viewSize)
                 showLoupe(at: point)
             case .changed:
