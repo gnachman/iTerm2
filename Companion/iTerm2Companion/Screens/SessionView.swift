@@ -400,6 +400,9 @@ private final class TileView: UIView {
     private let spinner = UIActivityIndicatorView(style: .medium)
     private let retryLabel = UILabel()
 
+    /// The displayed bitmap (persists across refetches), for the magnifier to sample.
+    var currentImage: UIImage? { imageView.image }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .secondarySystemBackground
@@ -598,7 +601,9 @@ private final class SelectionHandleView: UIView {
 }
 
 private final class LoupeUIView: UIView {
-    var pixelBufferProvider: (() -> CVPixelBuffer?)?
+    /// The image to magnify (the live frame over the live band, or a history tile
+    /// over scrollback). Sampled every refresh so live content keeps updating.
+    var imageProvider: (() -> CIImage?)?
     var imagePoint: CGPoint = .zero   // center, image px, top-left origin
     var cropSide: CGFloat = 80        // image px shown across the loupe
     var cellHeight: CGFloat = 0       // image px, for sizing the handle caret
@@ -634,10 +639,9 @@ private final class LoupeUIView: UIView {
     }
 
     override func draw(_ rect: CGRect) {
-        guard let pixelBuffer = pixelBufferProvider?(), cropSide > 0 else { return }
+        guard let base = imageProvider?(), cropSide > 0 else { return }
         // CIImage uses a bottom-left origin; clamp to the edges so a crop near the
         // border extends rather than going transparent.
-        let base = CIImage(cvPixelBuffer: pixelBuffer)
         let imageHeight = base.extent.height
         let ciImage = base.clampedToExtent()
         let half = cropSide / 2
@@ -795,7 +799,6 @@ private struct LiveCanvas: UIViewRepresentable {
             loupe.layer.masksToBounds = true
             loupe.layer.borderColor = UIColor.white.withAlphaComponent(0.9).cgColor
             loupe.layer.borderWidth = 3
-            loupe.pixelBufferProvider = { [weak self] in self?.holder.view.latestPixelBuffer() }
 
             editMenu = UIEditMenuInteraction(delegate: self)
             container.addInteraction(editMenu)
@@ -1177,13 +1180,13 @@ private struct LiveCanvas: UIViewRepresentable {
         }
 
         private func showLoupe(at contentPoint: CGPoint) {
-            // The magnifier samples the live frame, so only show it over the live
-            // video band; selecting in history relies on the handles + highlight.
-            guard videoRect.contains(contentPoint) else { loupe.removeFromSuperview(); return }
-            guard let imagePoint = model.selectionImagePoint(viewPoint: videoLocal(contentPoint), viewSize: videoRect.size) else { return }
-            loupe.imagePoint = imagePoint
-            loupe.cellHeight = model.activeStreamCellHeight
-            loupe.cropSide = max(40, model.activeStreamCellHeight * 4)
+            // Magnify the live frame over the live band, or the history tile under
+            // the finger over scrollback. Hide if there is nothing to sample yet.
+            guard let sample = loupeSample(atContent: contentPoint) else { loupe.removeFromSuperview(); return }
+            loupe.imageProvider = sample.provider
+            loupe.imagePoint = sample.imagePoint
+            loupe.cellHeight = sample.cellHeight
+            loupe.cropSide = max(8, sample.cellHeight * 4)
             let finger = container.convert(contentPoint, from: contentView)
             let radius = loupeDiameter / 2
             let x = min(max(finger.x, radius), max(radius, container.bounds.width - radius))
@@ -1193,6 +1196,36 @@ private struct LiveCanvas: UIViewRepresentable {
             loupe.layer.cornerRadius = radius
             if loupe.superview == nil { container.addSubview(loupe) }
             loupe.setNeedsDisplay()
+        }
+
+        /// The image + center the magnifier should show for a content point, in that
+        /// image's pixel space. Over the live band it samples the decoded frame; over
+        /// history it samples the tile view's current bitmap (which persists across
+        /// refetches, so the magnifier does not flicker while the endpoint tile is
+        /// being re-rendered). `cellHeight`/crop are in the sampled image's pixels.
+        private func loupeSample(atContent p: CGPoint)
+            -> (provider: () -> CIImage?, imagePoint: CGPoint, cellHeight: CGFloat)? {
+            if videoRect.contains(p) {
+                guard let imagePoint = model.selectionImagePoint(viewPoint: videoLocal(p), viewSize: videoRect.size) else {
+                    return nil
+                }
+                let provider: () -> CIImage? = { [weak self] in
+                    self?.holder.view.latestPixelBuffer().map { CIImage(cvPixelBuffer: $0) }
+                }
+                return (provider, imagePoint, model.activeStreamCellHeight)
+            }
+            // History: locate the tile under the point and the pixel within its image.
+            guard pointsPerLine > 0, contentView.bounds.width > 0, historyLines > 0 else { return nil }
+            let index = Int(p.y / pointsPerLine) / linesPerTile
+            let lines = min(linesPerTile, historyLines - index * linesPerTile)
+            guard lines > 0, let cg = tileViews[index]?.currentImage?.cgImage else { return nil }
+            let tileTop = CGFloat(index * linesPerTile) * pointsPerLine
+            let tileHeight = CGFloat(lines) * pointsPerLine
+            let fx = min(max(p.x / contentView.bounds.width, 0), 1)
+            let fy = min(max((p.y - tileTop) / tileHeight, 0), 1)
+            let imagePoint = CGPoint(x: fx * CGFloat(cg.width), y: fy * CGFloat(cg.height))
+            let cellHeight = CGFloat(cg.height) / CGFloat(lines)
+            return ({ CIImage(cgImage: cg) }, imagePoint, cellHeight)
         }
 
         private func clampToContainer(_ point: CGPoint) -> CGPoint {
