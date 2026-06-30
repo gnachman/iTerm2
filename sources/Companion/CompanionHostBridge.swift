@@ -429,6 +429,10 @@ final class CompanionHostBridge {
             handleClearSelection(streamID: streamID)
         case .copySelection(let sessionGuid):
             handleCopySelection(guid: sessionGuid, requestID: requestID)
+        case .selectAllInStream(let streamID):
+            handleSelectAll(streamID: streamID)
+        case .pasteText(let sessionGuid, let text):
+            iTermController.sharedInstance().anySession(withGUID: sessionGuid)?.paste(text, flags: [])
         }
     }
 
@@ -472,6 +476,20 @@ final class CompanionHostBridge {
             context.streamer.screenDidChange()
             sendSelectionRange(streamID: streamID, textview: textview)
         }
+    }
+
+    private func handleSelectAll(streamID: UInt32) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            return
+        }
+        let wasDetached = textview.dataSource == nil
+        if wasDetached { textview.dataSource = session.screen }
+        defer { if wasDetached { textview.dataSource = nil } }
+        textview.selectAll(nil)
+        context.streamer.screenDidChange()
+        sendSelectionRange(streamID: streamID, textview: textview)
     }
 
     private func handleClearSelection(streamID: UInt32) {

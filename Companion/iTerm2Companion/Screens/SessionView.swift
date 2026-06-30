@@ -473,6 +473,8 @@ private struct LiveSessionView: View {
     /// handle follows the finger; the anchor is the fixed opposite endpoint.
     @State private var dragMovingHandle: CGPoint?
     @State private var dragAnchorHandle: CGPoint?
+    /// True when the current drag began in the letterbox bars, so it is ignored.
+    @State private var dragIgnored = false
     private let loupeDiameter: CGFloat = 120
 
     var body: some View {
@@ -487,9 +489,6 @@ private struct LiveSessionView: View {
                 HStack {
                     liveBadge
                     Spacer()
-                    if model.sessionSelectionSupported {
-                        selectionControls
-                    }
                 }
                 Spacer()
             }
@@ -541,8 +540,14 @@ private struct LiveSessionView: View {
                             .onChanged { value in
                                 if !selecting {
                                     selecting = true
-                                    beginSelectionDrag(at: value.startLocation, handles: handles, viewSize: geo.size)
+                                    // Ignore a drag that starts in the letterbox bars
+                                    // (outside the terminal image): no selection there.
+                                    dragIgnored = !model.isInsideContent(viewPoint: value.startLocation, viewSize: geo.size)
+                                    if !dragIgnored {
+                                        beginSelectionDrag(at: value.startLocation, handles: handles, viewSize: geo.size)
+                                    }
                                 }
+                                if dragIgnored { return }
                                 model.sendSelectionGesture(phase: .move, mode: .character,
                                                            viewPoint: value.location, viewSize: geo.size)
                                 dragMovingHandle = value.location
@@ -550,9 +555,12 @@ private struct LiveSessionView: View {
                                 loupeImagePoint = model.selectionImagePoint(viewPoint: value.location, viewSize: geo.size)
                             }
                             .onEnded { value in
-                                model.sendSelectionGesture(phase: .end, mode: .character,
-                                                           viewPoint: value.location, viewSize: geo.size)
+                                if !dragIgnored {
+                                    model.sendSelectionGesture(phase: .end, mode: .character,
+                                                               viewPoint: value.location, viewSize: geo.size)
+                                }
                                 selecting = false
+                                dragIgnored = false
                                 dragMovingHandle = nil
                                 dragAnchorHandle = nil
                                 loupeViewPoint = nil
@@ -571,9 +579,49 @@ private struct LiveSessionView: View {
                 if let loupeViewPoint, let loupeImagePoint {
                     loupe(at: loupeViewPoint, imagePoint: loupeImagePoint, viewSize: geo.size)
                 }
+                // Edit menu above the selection once the drag finishes, like the
+                // UITextView selection menu.
+                if !selecting, model.activeSelectionRange != nil, let handles {
+                    selectionEditMenu(aboveStart: handles.start, viewSize: geo.size)
+                }
             }
         }
         .ignoresSafeArea(edges: .bottom)
+    }
+
+    /// A floating Copy / Select All / Paste menu, positioned above the selection's
+    /// start. Paste appears only when the clipboard has text.
+    private func selectionEditMenu(aboveStart start: CGPoint, viewSize: CGSize) -> some View {
+        HStack(spacing: 0) {
+            editMenuButton("Copy") { model.copyActiveSelection() }
+            editMenuDivider
+            editMenuButton("Select All") { model.selectAllActiveStream() }
+            if UIPasteboard.general.hasStrings {
+                editMenuDivider
+                editMenuButton("Paste") { model.pasteIntoActiveSession() }
+            }
+        }
+        .fixedSize()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(.white.opacity(0.15)))
+        .shadow(radius: 4)
+        // Float above the start handle, clamped horizontally so it stays on screen.
+        .position(x: min(max(start.x, 110), max(110, viewSize.width - 110)),
+                  y: max(28, start.y - 36))
+    }
+
+    private func editMenuButton(_ title: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.callout)
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+        }
+    }
+
+    private var editMenuDivider: some View {
+        Rectangle().fill(.white.opacity(0.15)).frame(width: 1, height: 22)
     }
 
     /// The Apple-style magnifier: a circle showing the content around the finger
@@ -627,23 +675,6 @@ private struct LiveSessionView: View {
         model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: location, viewSize: viewSize)
     }
 
-    private var selectionControls: some View {
-        HStack(spacing: 8) {
-            Button { model.clearActiveSelection() } label: {
-                Image(systemName: "xmark")
-            }
-            .accessibilityLabel("Clear selection")
-            Button { model.copyActiveSelection() } label: {
-                Image(systemName: "doc.on.doc")
-            }
-            .accessibilityLabel("Copy selection")
-        }
-        .font(.caption)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.ultraThinMaterial, in: Capsule())
-        .foregroundStyle(.white)
-    }
 
     @ViewBuilder private var liveBadge: some View {
         if endedReason == nil {

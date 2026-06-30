@@ -256,6 +256,16 @@ actor CompanionClient {
         try await session.send(.clearSelection(streamID: streamID))
     }
 
+    /// Select the entire terminal content.
+    func selectAll(streamID: UInt32) async throws {
+        try await session.send(.selectAllInStream(streamID: streamID))
+    }
+
+    /// Paste text into the session as input.
+    func pasteText(sessionGuid: String, text: String) async throws {
+        try await session.send(.pasteText(sessionGuid: sessionGuid, text: text))
+    }
+
     /// Copy the session's current selection; returns the selected text ("" if none).
     func copySelection(sessionGuid: String) async throws -> String {
         let reply = try await session.request(.copySelection(sessionGuid: sessionGuid))

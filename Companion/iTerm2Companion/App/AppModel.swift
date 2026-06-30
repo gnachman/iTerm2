@@ -2007,6 +2007,17 @@ final class AppModel {
     /// Encoded-pixel cell height of the active stream (for sizing the magnifier).
     var activeStreamCellHeight: CGFloat { CGFloat(activeStreamGeometry?.cellHeight ?? 0) }
 
+    /// Whether a touch falls on the terminal image rather than the letterbox bars
+    /// around it, so a drag in the empty margins does not start a selection.
+    func isInsideContent(viewPoint: CGPoint, viewSize: CGSize) -> Bool {
+        guard let mapper = activeTouchMapper,
+              let p = mapper.imagePoint(viewPoint: viewPoint, viewSize: viewSize) else {
+            return false
+        }
+        return p.x >= 0 && p.x <= activeStreamImageSize.width
+            && p.y >= 0 && p.y <= activeStreamImageSize.height
+    }
+
     /// Clear the live-view selection on the mac. Ordered with gestures so a clear
     /// that follows a drag cannot overtake the drag's final messages.
     func clearActiveSelection() {
@@ -2021,6 +2032,19 @@ final class AppModel {
             guard let text = try? await client.copySelection(sessionGuid: guid), !text.isEmpty else { return }
             UIPasteboard.general.string = text
         }
+    }
+
+    /// Select the entire terminal content (edit-menu Select All). Ordered with
+    /// gestures so it cannot overtake a drag's tail.
+    func selectAllActiveStream() {
+        guard let client, let streamID = activeStreamID else { return }
+        sendOrderedSelection { try? await client.selectAll(streamID: streamID) }
+    }
+
+    /// Paste the iOS clipboard into the session as input (edit-menu Paste).
+    func pasteIntoActiveSession() {
+        guard let client, let guid = liveWatchGuid, let text = UIPasteboard.general.string, !text.isEmpty else { return }
+        Task { try? await client.pasteText(sessionGuid: guid, text: text) }
     }
 
     /// The mac kicked this device: forget the pairing and go back to the scan

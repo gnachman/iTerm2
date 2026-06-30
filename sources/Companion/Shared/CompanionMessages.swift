@@ -470,6 +470,14 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// `.selectionText`.
     case copySelection(sessionGuid: String)
 
+    /// Select the entire terminal content (edit-menu Select All). No reply; a
+    /// `.selectionRange` follows.
+    case selectAllInStream(streamID: UInt32)
+
+    /// Paste text into the session as input (edit-menu Paste of the phone's
+    /// clipboard). No reply.
+    case pasteText(sessionGuid: String, text: String)
+
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
@@ -483,6 +491,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "startSessionStream", "stopSessionStream", "requestKeyframe",
         "updateStreamParams", "streamAck",
         "selectionGesture", "clearSelection", "copySelection",
+        "selectAllInStream", "pasteText",
     ]
 }
 

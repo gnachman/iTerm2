@@ -160,6 +160,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
                           point: CompanionSelectionPoint(absLine: 0, column: 0)),
         .clearSelection(streamID: 1),
         .copySelection(sessionGuid: "g"),
+        .selectAllInStream(streamID: 1),
+        .pasteText(sessionGuid: "g", text: "x"),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -198,6 +200,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .selectionGesture: return "selectionGesture"
         case .clearSelection: return "clearSelection"
         case .copySelection: return "copySelection"
+        case .selectAllInStream: return "selectAllInStream"
+        case .pasteText: return "pasteText"
         }
     }
 
