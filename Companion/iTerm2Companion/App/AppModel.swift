@@ -1811,6 +1811,15 @@ final class AppModel {
                 }
                 onStreamConfig?(config)
             }
+        case .streamExtent(let streamID, let firstAbsLine, let totalLines):
+            if streamID == activeStreamID,
+               firstAbsLine != activeStreamFirstAbsLine || totalLines != activeStreamTotalLines {
+                activeStreamFirstAbsLine = firstAbsLine
+                activeStreamTotalLines = totalLines
+                // Drop tiles for lines that are gone (trimmed or cleared).
+                historyTileCache = historyTileCache.filter { $0.key >= firstAbsLine }
+                historyTilesInFlight = historyTilesInFlight.filter { $0 >= firstAbsLine }
+            }
         case .selectionRange(let streamID, let range):
             if streamID == activeStreamID {
                 activeSelectionRange = range

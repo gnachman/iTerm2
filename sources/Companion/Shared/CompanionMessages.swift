@@ -638,6 +638,12 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// was superseded, or an error occurred).
     case streamEnded(streamID: UInt32, reason: CompanionStreamEndReason)
 
+    /// Unsolicited: the history window changed in a way the live top alone cannot
+    /// convey -- scrollback trimmed (firstAbsLine advanced) or cleared (totalLines
+    /// dropped). Carries the current oldest available absolute line and total line
+    /// count so the phone can drop evicted tiles and reanchor its canvas.
+    case streamExtent(streamID: UInt32, firstAbsLine: Int64, totalLines: Int)
+
     /// Reply to `.copySelection`: the selected text (empty if nothing is
     /// selected). The phone places it on the clipboard.
     case selectionText(text: String)
@@ -655,7 +661,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
         "unpaired", "messagesSince", "syncSince", "error",
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
-        "selectionRange", "historyTile",
+        "selectionRange", "historyTile", "streamExtent",
     ]
 }
 

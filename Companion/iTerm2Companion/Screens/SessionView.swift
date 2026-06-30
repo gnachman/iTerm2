@@ -724,6 +724,9 @@ private struct LiveCanvas: UIViewRepresentable {
         private var historyLines = 0
         /// Guards redundant relayout: the (viewport size, layout) it was built for.
         private var appliedKey: String = ""
+        /// The history origin the tiles are currently keyed against; a change means
+        /// scrollback was trimmed or cleared.
+        private var laidOutFirstAbsLine: Int64?
         private var didScrollToBottom = false
         // History tiles, keyed by tile index (0 = oldest), like the static path.
         private var tileViews: [Int: TileView] = [:]
@@ -832,16 +835,30 @@ private struct LiveCanvas: UIViewRepresentable {
             // the user returns to 1.
             guard scrollView.zoomScale <= 1.001 else { return }
 
-            // Freshest extent: the live top advances as output scrolls off, growing
-            // the browsable history. Falls back to the config extent before media.
-            let configLiveTop = layout.firstAbsLine + Int64(layout.totalLines - layout.rows)
-            let liveTop = max(configLiveTop, model.activeStreamLiveTop)
-            let totalLines = Int(liveTop - layout.firstAbsLine) + layout.rows
+            // Freshest extent: grow with the live top as output scrolls off; the
+            // extent (firstAbsLine/totalLines, updated by streamExtent on trim or
+            // clear) is the floor, so a clear shrinks the document once the next
+            // frame lands. Live top can move down on clear, so do not pin it up.
+            let derivedTotal = model.activeStreamLiveTop > layout.firstAbsLine
+                ? Int(model.activeStreamLiveTop - layout.firstAbsLine) + layout.rows
+                : layout.totalLines
+            let totalLines = max(layout.totalLines, derivedTotal)
 
             let key = "\(Int(size.width))x\(Int(size.height))|\(layout)|\(totalLines)"
             guard key != appliedKey else { return }
             let wasAtBottom = isPinnedToBottom
             appliedKey = key
+
+            // The history origin advanced (scrollback trimmed) or jumped (cleared):
+            // tiles are keyed relative to it, so drop them; they refetch (hitting the
+            // cache for lines that survived). The cache itself was already pruned.
+            if let prev = laidOutFirstAbsLine, prev != layout.firstAbsLine {
+                for view in tileViews.values { view.removeFromSuperview() }
+                tileViews.removeAll()
+                requestedTiles.removeAll()
+                tileFetchedLines.removeAll()
+            }
+            laidOutFirstAbsLine = layout.firstAbsLine
 
             let videoHeight = size.width * layout.imageSize.height / layout.imageSize.width
             pointsPerLine = videoHeight / CGFloat(layout.rows)

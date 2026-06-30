@@ -221,6 +221,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .sessionContent(CompanionSessionContent(guid: "s", firstLine: 0, lineCount: 0, pngData: Data())),
         .historyTile(CompanionHistoryTile(streamID: 1, generationId: 2, firstAbsLine: 3, lineCount: 4,
                                           windowFirstAbsLine: 3, windowLineCount: 10, pngData: Data())),
+        .streamExtent(streamID: 1, firstAbsLine: 2, totalLines: 3),
         .workgroupInfo(CompanionWorkgroupInfo(workgroupID: "w", name: "n", members: [])),
         .sessionTree(CompanionSessionTree(windows: [])),
         .pong,
@@ -265,6 +266,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .sessionScreenInfo: return "sessionScreenInfo"
         case .sessionContent: return "sessionContent"
         case .historyTile: return "historyTile"
+        case .streamExtent: return "streamExtent"
         case .workgroupInfo: return "workgroupInfo"
         case .sessionTree: return "sessionTree"
         case .pong: return "pong"

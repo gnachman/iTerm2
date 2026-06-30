@@ -163,6 +163,7 @@ actor CompanionSession {
         case .streamStarted: "streamStarted"
         case .streamConfig: "streamConfig"
         case .streamEnded: "streamEnded"
+        case .streamExtent: "streamExtent"
         case .selectionText: "selectionText"
         case .selectionRange: "selectionRange"
         }

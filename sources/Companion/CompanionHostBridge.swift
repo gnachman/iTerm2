@@ -575,6 +575,13 @@ final class CompanionHostBridge {
             onMedia: { frame in
                 outboxRef?.enqueueMedia(frame.encoded(version: mediaVersion))
             },
+            onExtentChanged: { firstAbsLine, totalLines in
+                // Latest-wins on the coalescing lane: only the newest window matters.
+                outboxRef?.enqueueCoalescingControl(
+                    HostEnvelope(requestID: nil,
+                                 payload: .streamExtent(streamID: streamID, firstAbsLine: firstAbsLine, totalLines: totalLines)),
+                    key: "streamExtent.\(streamID)")
+            },
             onDataLimitReached: { [weak self] in
                 // Called on the main thread from the streamer's tick.
                 self?.endStream(streamID, reason: .dataLimitReached)

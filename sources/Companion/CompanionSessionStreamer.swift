@@ -57,6 +57,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private let averageBitRate: Int
     private let onConfig: (CompanionStreamConfig) -> Void
     private let onMedia: (CompanionMediaFrame) -> Void
+    /// Called on the main thread when the history window changes by trim/clear
+    /// (firstAbsLine advances or totalLines drops): (firstAbsLine, totalLines).
+    private let onExtentChanged: (Int64, Int) -> Void
+    private var lastSeenFirstAbsLine: Int64 = -1
+    private var lastSeenTotalLines = -1
     /// Called on the main thread when the rolling byte budget is used up, so the
     /// owner can pause the stream (end it with .dataLimitReached) before the
     /// relay force-closes the connection for exceeding its room quota.
@@ -114,12 +119,14 @@ final class CompanionSessionStreamer: @unchecked Sendable {
          dailyByteBudget: Int = 400 * 1024 * 1024,
          onConfig: @escaping (CompanionStreamConfig) -> Void,
          onMedia: @escaping (CompanionMediaFrame) -> Void,
+         onExtentChanged: @escaping (Int64, Int) -> Void = { _, _ in },
          onDataLimitReached: @escaping () -> Void = {}) {
         self.streamID = streamID
         self.source = source
         self.averageBitRate = averageBitRate
         self.onConfig = onConfig
         self.onMedia = onMedia
+        self.onExtentChanged = onExtentChanged
         self.onDataLimitReached = onDataLimitReached
         self.budget = CompanionStreamBudget(limitBytes: dailyByteBudget)
         self.inFlight = CompanionInFlightLimiter()
@@ -193,6 +200,16 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // config/media frame from the encoder thread.
         let cellGeometry = source.cellGeometry
         let liveTop = source.liveTop
+        // Notify the phone when scrollback was trimmed (firstAbsLine advanced) or
+        // cleared (totalLines dropped); growth is conveyed by liveTop, so it does
+        // not need an event. Called on this (main) thread.
+        let firstAbsLine = source.firstAbsLine
+        let totalLines = source.totalLines
+        if firstAbsLine != lastSeenFirstAbsLine || totalLines < lastSeenTotalLines {
+            onExtentChanged(firstAbsLine, totalLines)
+        }
+        lastSeenFirstAbsLine = firstAbsLine
+        lastSeenTotalLines = totalLines
         let thisFrame = frameNumber
         frameNumber &+= 1
         // Optionally burn the frame number into the pixels (after the dedup hash,
