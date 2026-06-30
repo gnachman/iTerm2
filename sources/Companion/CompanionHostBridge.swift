@@ -40,6 +40,9 @@ final class CompanionHostBridge {
         let guid: String
         let timer: Timer
         var lastChange: TimeInterval
+        /// Last selection pushed to the phone, to detect changes (mac-side or phone)
+        /// and push a selectionRange so it can reload affected history tiles.
+        var lastSentSelectionRange: CompanionSelectionRange?
         init(streamer: CompanionSessionStreamer, guid: String, timer: Timer, lastChange: TimeInterval) {
             self.streamer = streamer
             self.guid = guid
@@ -511,16 +514,18 @@ final class CompanionHostBridge {
 
     /// Report the session's current selection span (or nil) so the phone can draw
     /// and move handles.
+    private func currentSelectionRange(_ textview: PTYTextView) -> CompanionSelectionRange? {
+        guard let selection = textview.selection, selection.hasSelection else { return nil }
+        let span = selection.spanningAbsRange
+        return CompanionSelectionRange(
+            start: CompanionSelectionPoint(absLine: span.start.y, column: Int(span.start.x)),
+            end: CompanionSelectionPoint(absLine: span.end.y, column: Int(span.end.x)))
+    }
+
     private func sendSelectionRange(streamID: UInt32, textview: PTYTextView) {
-        let range: CompanionSelectionRange?
-        if let selection = textview.selection, selection.hasSelection {
-            let span = selection.spanningAbsRange
-            range = CompanionSelectionRange(
-                start: CompanionSelectionPoint(absLine: span.start.y, column: Int(span.start.x)),
-                end: CompanionSelectionPoint(absLine: span.end.y, column: Int(span.end.x)))
-        } else {
-            range = nil
-        }
+        let range = currentSelectionRange(textview)
+        streams[streamID]?.lastSentSelectionRange = range
+        RLog("Companion selectionRange push stream=\(streamID) range=\(range.map { "(\($0.start.column),\($0.start.absLine))..(\($0.end.column),\($0.end.absLine))" } ?? "none")")
         // Latest-wins state: ride the coalescing lane so a fast drag's updates
         // collapse to the newest and never starve the media frame that actually
         // shows the selection. Keyed per stream.
@@ -625,6 +630,15 @@ final class CompanionHostBridge {
         if changedAt > context.lastChange {
             context.lastChange = changedAt
             context.streamer.screenDidChange()
+        }
+        // Detect a selection change from any source (mac-side Cmd-A/drag as well as
+        // phone gestures) and push it, so the phone reloads the affected history
+        // tiles; the live band already reflects it via the rendered video.
+        if let textview = session.textview {
+            let current = currentSelectionRange(textview)
+            if current != context.lastSentSelectionRange {
+                sendSelectionRange(streamID: streamID, textview: textview)
+            }
         }
         context.streamer.tick(nowMilliseconds: UInt64(max(0, CACurrentMediaTime() * 1000)))
     }
