@@ -2008,9 +2008,15 @@ final class AppModel {
         activeSelectionRange.map { ($0.start, $0.end) }
     }
 
-    /// The continuous encoded-image pixel under a touch, to center the magnifier.
+    /// Where to center the magnifier: the CENTER OF THE CELL the finger maps to,
+    /// not the raw finger point. The selection (and its caret in the video) sits
+    /// at that cell, so this lines the magnified caret up with the selection
+    /// instead of leaving a persistent sub-cell offset. Computed locally, so it is
+    /// instant and independent of the round-trip.
     func selectionImagePoint(viewPoint: CGPoint, viewSize: CGSize) -> CGPoint? {
-        activeTouchMapper?.imagePoint(viewPoint: viewPoint, viewSize: viewSize)
+        guard let mapper = activeTouchMapper else { return nil }
+        let point = mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize)
+        return mapper.cellCenterImagePoint(column: point.column, absLine: point.absLine)
     }
 
     /// Encoded-pixel cell height of the active stream (for sizing the magnifier).

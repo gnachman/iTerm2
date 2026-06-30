@@ -48,8 +48,16 @@ struct CompanionTouchMapper {
         return CompanionSelectionPoint(absLine: liveTop + Int64(clampedRow), column: clampedCol)
     }
 
+    /// The center of a cell in encoded-image pixels. The magnifier centers here
+    /// (the cell the selection is at) rather than the raw finger, so the magnified
+    /// caret lines up with the selection instead of sitting at a sub-cell offset.
+    func cellCenterImagePoint(column: Int, absLine: Int64) -> CGPoint {
+        let x = cellGeometry.leftMargin + (Double(column) + 0.5) * cellGeometry.cellWidth
+        let y = cellGeometry.topMargin + (Double(absLine - liveTop) + 0.5) * cellGeometry.cellHeight
+        return CGPoint(x: x, y: y)
+    }
+
     /// The continuous (unquantized, unclamped) encoded-image pixel under a touch.
-    /// Used to center the magnifier on exactly where the finger is, not the cell.
     func imagePoint(viewPoint: CGPoint, viewSize: CGSize) -> CGPoint? {
         guard imageSize.width > 0, imageSize.height > 0,
               viewSize.width > 0, viewSize.height > 0 else {

@@ -102,6 +102,16 @@ final class CompanionTouchMapperTests: XCTestCase {
         XCTAssertGreaterThan(past?.x ?? 0, 800)
     }
 
+    func testCellCenterImagePoint() {
+        // 10x20 cells, no margin: cell (2, row 2 with liveTop 0) center = (25, 50).
+        let center = mapper().cellCenterImagePoint(column: 2, absLine: 2)
+        XCTAssertEqual(center.x, 25, accuracy: 0.001)
+        XCTAssertEqual(center.y, 50, accuracy: 0.001)
+        // liveTop offsets the row.
+        let scrolled = mapper(liveTop: 1000).cellCenterImagePoint(column: 0, absLine: 1003)
+        XCTAssertEqual(scrolled.y, 70, accuracy: 0.001)  // row 3 -> (3+0.5)*20
+    }
+
     func testEndHandleSitsRightAndBelow() {
         let m = mapper()
         let viewSize = CGSize(width: 800, height: 500)  // exact fit
