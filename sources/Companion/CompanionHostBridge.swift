@@ -130,18 +130,11 @@ final class CompanionHostBridge {
                     // Control frames stay bare JSON; media frames carry the marker.
                     data = CompanionFrameChannel.frameMedia(payload)
                 }
-                let sendStart = CACurrentMediaTime()
                 do {
                     try await transport.send(data)
                 } catch {
                     RLog("CDIAG bridge outbox send FAILED (outbox dead) after \(mediaFrames) media/\(controlFrames) control: \(error)")
                     break drain
-                }
-                // A slow send means the transport is applying backpressure: log it
-                // so a stall can be attributed to the wire rather than the encoder.
-                let sendMillis = (CACurrentMediaTime() - sendStart) * 1000
-                if isMedia || sendMillis >= 20 {
-                    RLog("CDIAG sent \(isMedia ? "media" : "control") bytes=\(data.count) dt=\(Int(sendMillis))ms")
                 }
                 if isMedia {
                     mediaFrames += 1
@@ -471,7 +464,6 @@ final class CompanionHostBridge {
             moved = textview.selection?.moveEndpoint(to: coord) ?? false
             textview.selection?.endLive()
         }
-        RLog("CDIAG sel recv phase=\(phase) col=\(point.column) line=\(point.absLine) moved=\(moved) has=\(textview.selection?.hasSelection ?? false) live=\(textview.selection?.live ?? false)")
         // Only react when the selection actually changed: a no-op move neither
         // alters the rendered frame nor needs a selectionRange reply, and emitting
         // either just adds to the flood that backs up the link.
@@ -504,11 +496,6 @@ final class CompanionHostBridge {
                 end: CompanionSelectionPoint(absLine: span.end.y, column: Int(span.end.x)))
         } else {
             range = nil
-        }
-        if let range {
-            RLog("CDIAG sel range start=(\(range.start.column),\(range.start.absLine)) end=(\(range.end.column),\(range.end.absLine))")
-        } else {
-            RLog("CDIAG sel range (none)")
         }
         // Latest-wins state: ride the coalescing lane so a fast drag's updates
         // collapse to the newest and never starve the media frame that actually

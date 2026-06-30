@@ -144,19 +144,16 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // Nothing to send, but the last frame was a P-frame and activity has been
         // quiet a moment: re-send the current screen as a keyframe so a dropped
         // P-frame cannot leave the phone showing a stale frame indefinitely.
-        var insuranceFired = false
         if decision == nil && !exhausted && !blocked
             && lastEmitAt > 0 && !lastEmitWasKeyframe
             && nowSeconds - lastEmitAt >= insuranceKeyframeDelay {
             pacer.requestKeyframe()
             decision = pacer.evaluate(now: nowSeconds)
-            insuranceFired = true
         }
         if blocked { statPaced += 1 }
         let statsLine = takeFlowStatsLine(now: nowSeconds)
         lock.unlock()
         if let statsLine { RLog(statsLine) }
-        if insuranceFired { RLog("CDIAG insurance keyframe fired at \(nowSeconds)") }
         if exhausted {
             // Pause before the relay force-closes us for exceeding its quota.
             if !dataLimitHit {
@@ -187,9 +184,12 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         let liveTop = source.liveTop
         let thisFrame = frameNumber
         frameNumber &+= 1
-        // CDIAG: burn the frame number into the pixels (after the dedup hash, so it
-        // does not defeat dedup) so a screen recording shows which frame is visible.
-        stampFrameNumber(thisFrame, into: pixelBuffer)
+        // Optionally burn the frame number into the pixels (after the dedup hash,
+        // so it does not defeat dedup) so a screen recording shows which frame is
+        // visible. Behind an advanced setting; off by default.
+        if iTermAdvancedSettingsModel.companionStreamFrameNumbers() {
+            stampFrameNumber(thisFrame, into: pixelBuffer)
+        }
         lock.lock()
         inFlight.noteSent(ptsMilliseconds: nowMilliseconds)
         statEmitted += 1
@@ -291,7 +291,6 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // Charge the rolling budget; tick() pauses the stream once it is spent.
         budget.record(bytes: media.payload.count, now: CACurrentMediaTime())
         statBytes += media.payload.count
-        RLog("CDIAG emit seq=\(media.sequence) pts=\(media.ptsMilliseconds) key=\(frame.isKeyframe) cfg=\(flags.contains(.configChanged)) gen=\(media.generationId) bytes=\(media.payload.count)")
         onMedia(media)
     }
 

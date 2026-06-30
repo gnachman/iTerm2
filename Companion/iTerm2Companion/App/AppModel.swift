@@ -248,10 +248,6 @@ final class AppModel {
     /// True while a start request is in flight, so a reconnect and a foreground
     /// resume firing together don't open two streams.
     private var liveStreamStarting = false
-    // CDIAG: phone-side media-receipt counters (temporary). Remove once diagnosed.
-    private var diagMediaFrames = 0
-    private var diagMediaBytes = 0
-    private var diagLastMediaLog: TimeInterval = 0
 
     // How the phone reaches the mac, built per pairing code: the relay connector
     // when the code carries a relay origin (off-LAN reach), else a connector that
@@ -1815,9 +1811,6 @@ final class AppModel {
         activeStreamLiveTop = frame.liveTop
         // CDIAG: phone-side media-receipt heartbeat to correlate a phone stall
         // with the mac wedge. Remove once diagnosed.
-        diagMediaFrames += 1
-        diagMediaBytes += frame.payload.count
-        companionLog("CDIAG recv seq=\(frame.sequence) pts=\(frame.ptsMilliseconds) key=\(frame.flags.contains(.keyframe)) gen=\(frame.generationId) bytes=\(frame.payload.count)")
         onStreamMedia?(frame)
     }
 
@@ -1835,10 +1828,6 @@ final class AppModel {
                           onConfig: @escaping (CompanionStreamConfig) -> Void,
                           onMedia: @escaping (CompanionMediaFrame) -> Void,
                           onEnded: @escaping (CompanionStreamEndReason) -> Void) {
-        companionLog("CDIAG phone watchSessionLive guid=\(guid) macSupportsStreaming=\(macSupportsStreaming)")
-        diagMediaFrames = 0
-        diagMediaBytes = 0
-        diagLastMediaLog = 0
         liveWatchGuid = guid
         liveStreamPaused = false
         onStreamConfig = onConfig
@@ -1960,10 +1949,7 @@ final class AppModel {
                               mode: CompanionSelectionMode,
                               viewPoint: CGPoint,
                               viewSize: CGSize) {
-        guard let mapper = activeTouchMapper else {
-            companionLog("CDIAG sel send SKIPPED (no geometry) phase=\(phase)")
-            return
-        }
+        guard let mapper = activeTouchMapper else { return }
         sendSelectionGesture(phase: phase, mode: mode,
                              point: mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize))
     }
@@ -1981,7 +1967,6 @@ final class AppModel {
         // whose cell is unchanged; begin/end always go.
         if phase == .move && point == lastSentSelectionPoint { return }
         lastSentSelectionPoint = (phase == .end) ? nil : point
-        companionLog("CDIAG sel send phase=\(phase) col=\(point.column) line=\(point.absLine)")
         sendOrderedSelection {
             try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
         }

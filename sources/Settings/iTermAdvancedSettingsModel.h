@@ -123,6 +123,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)browserPluginPathHint;
 + (void)setBrowserPluginPathHint:(NSString *)newValue;
 + (BOOL)browserProfiles;
++ (BOOL)companionStreamFrameNumbers;
 + (int)bufferDepth;
 + (BOOL)chaseAnchoredScreen;
 + (BOOL)channelsEnabled;
