@@ -1964,7 +1964,10 @@ final class AppModel {
                               mode: CompanionSelectionMode,
                               viewPoint: CGPoint,
                               viewSize: CGSize) {
-        guard let mapper = activeTouchMapper else { return }
+        guard let mapper = activeTouchMapper else {
+            companionLog("CDIAG sel send SKIPPED (no geometry) phase=\(phase)")
+            return
+        }
         sendSelectionGesture(phase: phase, mode: mode,
                              point: mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize))
     }
@@ -1975,6 +1978,7 @@ final class AppModel {
                               mode: CompanionSelectionMode,
                               point: CompanionSelectionPoint) {
         guard let client, let streamID = activeStreamID else { return }
+        companionLog("CDIAG sel send phase=\(phase) col=\(point.column) line=\(point.absLine)")
         sendOrderedSelection {
             try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
         }

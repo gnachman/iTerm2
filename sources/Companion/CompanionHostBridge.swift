@@ -453,16 +453,18 @@ final class CompanionHostBridge {
         if wasDetached { textview.dataSource = session.screen }
         defer { if wasDetached { textview.dataSource = nil } }
 
+        var moved = true
         switch phase {
         case .begin:
             textview.selection?.begin(at: coord, mode: mode.iTermSelectionMode,
                                       resume: false, append: false)
         case .move:
-            _ = textview.selection?.moveEndpoint(to: coord)
+            moved = textview.selection?.moveEndpoint(to: coord) ?? false
         case .end:
-            _ = textview.selection?.moveEndpoint(to: coord)
+            moved = textview.selection?.moveEndpoint(to: coord) ?? false
             textview.selection?.endLive()
         }
+        RLog("CDIAG sel recv phase=\(phase) col=\(point.column) line=\(point.absLine) moved=\(moved) has=\(textview.selection?.hasSelection ?? false) live=\(textview.selection?.live ?? false)")
         context.streamer.screenDidChange()
         sendSelectionRange(streamID: streamID, textview: textview)
     }
