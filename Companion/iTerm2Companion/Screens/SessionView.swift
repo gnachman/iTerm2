@@ -584,11 +584,14 @@ private struct LiveSessionView: View {
                 // Select All (whose start is in off-screen scrollback) still shows
                 // near the top of the content rather than off-screen.
                 if !selecting, model.activeSelectionRange != nil, let handles {
-                    SelectionEditMenu(anchor: clampedMenuAnchor(handles.start, viewSize: geo.size),
+                    let anchor = clampedMenuAnchor(handles.start, viewSize: geo.size)
+                    SelectionEditMenu(anchorKey: anchor,
                                       canPaste: UIPasteboard.general.hasStrings,
                                       onCopy: { model.copyActiveSelection() },
                                       onSelectAll: { model.selectAllActiveStream() },
                                       onPaste: { model.pasteIntoActiveSession() })
+                        .frame(width: 1, height: 1)
+                        .position(anchor)
                 }
             }
         }
@@ -720,7 +723,9 @@ private final class LiveVideoHolder {
 /// overlay beneath it owns input); the menu is presented programmatically and its
 /// own surface handles taps.
 private struct SelectionEditMenu: UIViewRepresentable {
-    let anchor: CGPoint
+    /// Used only to detect when to (re)present; the menu anchors at the host view's
+    /// own center, which SwiftUI positions at this point.
+    let anchorKey: CGPoint
     let canPaste: Bool
     let onCopy: () -> Void
     let onSelectAll: () -> Void
@@ -728,41 +733,47 @@ private struct SelectionEditMenu: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeUIView(context: Context) -> EditMenuHostView {
-        let view = EditMenuHostView()
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
         let interaction = UIEditMenuInteraction(delegate: context.coordinator)
         view.addInteraction(interaction)
         context.coordinator.interaction = interaction
+        context.coordinator.hostView = view
         return view
     }
 
-    func updateUIView(_ uiView: EditMenuHostView, context: Context) {
+    func updateUIView(_ uiView: UIView, context: Context) {
         context.coordinator.onCopy = onCopy
         context.coordinator.onSelectAll = onSelectAll
         context.coordinator.onPaste = onPaste
         context.coordinator.canPaste = canPaste
-        context.coordinator.present(at: anchor)
+        context.coordinator.presentIfNeeded(anchorKey: anchorKey)
     }
 
-    static func dismantleUIView(_ uiView: EditMenuHostView, coordinator: Coordinator) {
+    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
         coordinator.interaction?.dismissMenu()
     }
 
     final class Coordinator: NSObject, UIEditMenuInteractionDelegate {
-        var interaction: UIEditMenuInteraction?
+        weak var interaction: UIEditMenuInteraction?
+        weak var hostView: UIView?
         var onCopy: (() -> Void)?
         var onSelectAll: (() -> Void)?
         var onPaste: (() -> Void)?
         var canPaste = false
-        private var presentedAnchor: CGPoint?
+        private var presentedKey: CGPoint?
 
-        /// Present at `anchor`, or re-present if it moved enough (e.g. Select All
-        /// shifts the selection start). Avoids re-presenting on every SwiftUI tick.
-        func present(at anchor: CGPoint) {
-            if let p = presentedAnchor, hypot(p.x - anchor.x, p.y - anchor.y) < 8 { return }
-            presentedAnchor = anchor
-            interaction?.dismissMenu()
-            interaction?.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: anchor))
+        /// Present once the host view is in a window (presenting synchronously from
+        /// updateUIView is too early). Re-present only when the anchor moved enough
+        /// (e.g. Select All shifts the selection start), not every SwiftUI tick.
+        func presentIfNeeded(anchorKey: CGPoint) {
+            if let p = presentedKey, hypot(p.x - anchorKey.x, p.y - anchorKey.y) < 8 { return }
+            presentedKey = anchorKey
+            DispatchQueue.main.async { [weak self] in
+                guard let self, let view = self.hostView, view.window != nil else { return }
+                let center = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
+                self.interaction?.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: center))
+            }
         }
 
         func editMenuInteraction(_ interaction: UIEditMenuInteraction,
@@ -778,13 +789,6 @@ private struct SelectionEditMenu: UIViewRepresentable {
             return UIMenu(children: children)
         }
     }
-}
-
-/// Touch-transparent: the menu is presented programmatically and lives in its own
-/// surface, so this host view must never intercept touches from the gesture
-/// overlay beneath it.
-private final class EditMenuHostView: UIView {
-    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? { nil }
 }
 
 /// A circular magnifier that draws a blown-up crop of the live frame around an
