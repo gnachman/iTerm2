@@ -471,10 +471,12 @@ private struct LiveSessionView: View {
             // added in later M5 steps.
             // Passing the selection range (read here) makes SwiftUI re-run
             // updateUIView when it changes, so the canvas repositions its handles.
+            // Respect the bottom safe area so the canvas sits above the tab bar
+            // (the black background still fills under it); a content inset adds a
+            // margin so the last line stays legible. The top stays under the nav bar.
             LiveCanvas(holder: holder, model: model,
                        layout: model.liveCanvasLayout,
                        selectionRange: model.activeSelectionRange)
-                .ignoresSafeArea(edges: .bottom)
             VStack {
                 HStack {
                     liveBadge
@@ -710,6 +712,8 @@ private struct LiveCanvas: UIViewRepresentable {
         private var draggingEnd = false
         private var menuAnchor: CGPoint = .zero
         private let loupeDiameter: CGFloat = 120
+        /// Empty space kept below the content so the last line clears the tab bar.
+        static let bottomMargin: CGFloat = 16
 
         // History canvas layout (set from updateUIView).
         var layout: CompanionLiveCanvasLayout?
@@ -748,6 +752,9 @@ private struct LiveCanvas: UIViewRepresentable {
             scrollView.showsHorizontalScrollIndicator = false
             scrollView.contentInsetAdjustmentBehavior = .never
             scrollView.bouncesZoom = true
+            // Empty space below the content so the bottom line clears the tab bar.
+            scrollView.contentInset.bottom = Self.bottomMargin
+            scrollView.verticalScrollIndicatorInsets.bottom = Self.bottomMargin
             container.addSubview(scrollView)
 
             // The video is positioned explicitly (a band at the document bottom) by
