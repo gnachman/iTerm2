@@ -464,6 +464,7 @@ final class CompanionHostBridge {
             textview.selection?.endLive()
         }
         context.streamer.screenDidChange()
+        sendSelectionRange(streamID: streamID, textview: textview)
     }
 
     private func handleClearSelection(streamID: UInt32) {
@@ -474,6 +475,22 @@ final class CompanionHostBridge {
         }
         textview.selection?.clear()
         context.streamer.screenDidChange()
+        sendSelectionRange(streamID: streamID, textview: textview)
+    }
+
+    /// Report the session's current selection span (or nil) so the phone can draw
+    /// and move handles.
+    private func sendSelectionRange(streamID: UInt32, textview: PTYTextView) {
+        let range: CompanionSelectionRange?
+        if let selection = textview.selection, selection.hasSelection {
+            let span = selection.spanningAbsRange
+            range = CompanionSelectionRange(
+                start: CompanionSelectionPoint(absLine: span.start.y, column: Int(span.start.x)),
+                end: CompanionSelectionPoint(absLine: span.end.y, column: Int(span.end.x)))
+        } else {
+            range = nil
+        }
+        send(.selectionRange(streamID: streamID, range: range), requestID: nil)
     }
 
     private func handleCopySelection(guid: String, requestID: UInt64?) {

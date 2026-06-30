@@ -232,6 +232,8 @@ final class AppModel {
     private(set) var activeStreamColumns = 0
     private(set) var activeStreamRows = 0
     private var activeStreamLiveTop: Int64 = 0
+    /// The current selection span reported by the mac, for drawing handles.
+    private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).
     private(set) var macRevision = 0
     var sessionSelectionSupported: Bool {
@@ -1785,10 +1787,15 @@ final class AppModel {
                 activeStreamRows = config.rows
                 onStreamConfig?(config)
             }
+        case .selectionRange(let streamID, let range):
+            if streamID == activeStreamID {
+                activeSelectionRange = range
+            }
         case .streamEnded(let streamID, let reason):
             if streamID == activeStreamID {
                 activeStreamID = nil
                 activeStreamGeometry = nil
+                activeSelectionRange = nil
                 // A host-side end is terminal: drop the intent so it does not
                 // restart, and tell the view (which shows it only for reasons
                 // worth surfacing, e.g. the session closed).
@@ -1926,6 +1933,30 @@ final class AppModel {
         }
     }
 
+    /// A mapper for the current stream geometry, or nil if selection is not
+    /// available yet.
+    private var activeTouchMapper: CompanionTouchMapper? {
+        guard let geometry = activeStreamGeometry else { return nil }
+        return CompanionTouchMapper(imageSize: activeStreamImageSize,
+                                    cellGeometry: geometry,
+                                    columns: activeStreamColumns,
+                                    rows: activeStreamRows,
+                                    liveTop: activeStreamLiveTop)
+    }
+
+    /// View-space points for the selection's start (top-left) and end
+    /// (bottom-right) handles, or nil if there is no selection/geometry.
+    func selectionHandlePoints(viewSize: CGSize) -> (start: CGPoint, end: CGPoint)? {
+        guard let range = activeSelectionRange, let mapper = activeTouchMapper,
+              let start = mapper.viewPoint(column: range.start.column, absLine: range.start.absLine,
+                                           rightEdge: false, bottomEdge: false, viewSize: viewSize),
+              let end = mapper.viewPoint(column: range.end.column, absLine: range.end.absLine,
+                                         rightEdge: true, bottomEdge: true, viewSize: viewSize) else {
+            return nil
+        }
+        return (start, end)
+    }
+
     /// Drive a live-view selection from a touch at `viewPoint` in a view of
     /// `viewSize`, mapping it to an absolute terminal point with the current
     /// stream geometry. No-op if selection is not supported.
@@ -1933,14 +1964,23 @@ final class AppModel {
                               mode: CompanionSelectionMode,
                               viewPoint: CGPoint,
                               viewSize: CGSize) {
-        guard let client, let streamID = activeStreamID, let geometry = activeStreamGeometry else { return }
-        let mapper = CompanionTouchMapper(imageSize: activeStreamImageSize,
-                                          cellGeometry: geometry,
-                                          columns: activeStreamColumns,
-                                          rows: activeStreamRows,
-                                          liveTop: activeStreamLiveTop)
-        let point = mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize)
+        guard let mapper = activeTouchMapper else { return }
+        sendSelectionGesture(phase: phase, mode: mode,
+                             point: mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize))
+    }
+
+    /// Drive a selection with an explicit absolute point (used to anchor a handle
+    /// drag at the opposite, fixed endpoint).
+    func sendSelectionGesture(phase: CompanionSelectionPhase,
+                              mode: CompanionSelectionMode,
+                              point: CompanionSelectionPoint) {
+        guard let client, let streamID = activeStreamID else { return }
         Task { try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point) }
+    }
+
+    /// The selection's start/end as absolute points (for anchoring handle drags).
+    var activeSelectionEndpoints: (start: CompanionSelectionPoint, end: CompanionSelectionPoint)? {
+        activeSelectionRange.map { ($0.start, $0.end) }
     }
 
     /// Clear the live-view selection on the mac.

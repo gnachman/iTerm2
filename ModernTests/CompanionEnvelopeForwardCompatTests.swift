@@ -229,6 +229,9 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
                                             columns: 80, rows: 25)),
         .streamEnded(streamID: 1, reason: .stoppedByClient),
         .selectionText(text: "x"),
+        .selectionRange(streamID: 1, range: CompanionSelectionRange(
+            start: CompanionSelectionPoint(absLine: 0, column: 0),
+            end: CompanionSelectionPoint(absLine: 1, column: 2))),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -267,6 +270,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .streamConfig: return "streamConfig"
         case .streamEnded: return "streamEnded"
         case .selectionText: return "selectionText"
+        case .selectionRange: return "selectionRange"
         }
     }
 

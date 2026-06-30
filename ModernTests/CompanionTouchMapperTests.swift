@@ -68,6 +68,36 @@ final class CompanionTouchMapperTests: XCTestCase {
         XCTAssertEqual(before.absLine, 0)
     }
 
+    func testViewPointInvertsSelectionPoint() {
+        // The top-left corner of the cell a touch maps to should map back near the
+        // touch (within the cell). Use the scaled-view case.
+        let m = mapper(liveTop: 1000)
+        let viewSize = CGSize(width: 400, height: 250)  // scale 0.5
+        let touch = CGPoint(x: 50, y: 100)
+        let p = m.selectionPoint(viewPoint: touch, viewSize: viewSize)
+        // top-left corner of that cell:
+        let corner = m.viewPoint(column: p.column, absLine: p.absLine,
+                                 rightEdge: false, bottomEdge: false, viewSize: viewSize)
+        let unwrapped = try? XCTUnwrap(corner)
+        XCTAssertNotNil(unwrapped)
+        if let c = unwrapped {
+            // cell is 10x20 px * 0.5 scale = 5x10 view px; corner within one cell.
+            XCTAssertLessThanOrEqual(abs(c.x - touch.x), 5)
+            XCTAssertLessThanOrEqual(abs(c.y - touch.y), 10)
+            XCTAssertLessThanOrEqual(c.x, touch.x)  // top-left is up-and-left of the touch
+            XCTAssertLessThanOrEqual(c.y, touch.y)
+        }
+    }
+
+    func testEndHandleSitsRightAndBelow() {
+        let m = mapper()
+        let viewSize = CGSize(width: 800, height: 500)  // exact fit
+        let topLeft = m.viewPoint(column: 3, absLine: 2, rightEdge: false, bottomEdge: false, viewSize: viewSize)
+        let bottomRight = m.viewPoint(column: 3, absLine: 2, rightEdge: true, bottomEdge: true, viewSize: viewSize)
+        XCTAssertEqual(topLeft, CGPoint(x: 30, y: 40))            // 3*10, 2*20
+        XCTAssertEqual(bottomRight, CGPoint(x: 40, y: 60))        // +cellW, +cellH
+    }
+
     func testDegenerateGeometryReturnsOrigin() {
         let m = CompanionTouchMapper(imageSize: .zero,
                                      cellGeometry: CompanionCellGeometry(cellWidth: 0, cellHeight: 0,

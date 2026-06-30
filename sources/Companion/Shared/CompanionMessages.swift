@@ -210,6 +210,14 @@ struct CompanionSelectionPoint: Codable, Equatable {
     var column: Int
 }
 
+/// The current selection's span in absolute terminal coordinates, reported by the
+/// host so the phone can draw draggable handles at the endpoints. start is the
+/// earlier coordinate, end the later one.
+struct CompanionSelectionRange: Codable, Equatable {
+    var start: CompanionSelectionPoint
+    var end: CompanionSelectionPoint
+}
+
 /// Phase of a phone-driven selection drag.
 enum CompanionSelectionPhase: String, Codable, Equatable {
     case begin
@@ -596,6 +604,11 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// selected). The phone places it on the clipboard.
     case selectionText(text: String)
 
+    /// Unsolicited: the session's selection changed (after a phone gesture or any
+    /// other cause). Carries the span so the phone can draw/move handles; nil when
+    /// there is no selection.
+    case selectionRange(streamID: UInt32, range: CompanionSelectionRange?)
+
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
@@ -604,6 +617,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
         "unpaired", "messagesSince", "syncSince", "error",
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
+        "selectionRange",
     ]
 }
 

@@ -514,27 +514,68 @@ private struct LiveSessionView: View {
     }
 
     /// A transparent layer that turns a drag into begin/move/end selection
-    /// gestures, mapping each touch to a terminal cell with the stream geometry.
+    /// gestures. A drag starting on a selection handle adjusts that endpoint
+    /// (anchoring at the opposite one); a drag elsewhere starts a fresh selection.
+    /// Mapping uses the stream geometry. Handles are drawn but do not intercept
+    /// touches, so the one gesture below hit-tests them itself.
     private var selectionGestureOverlay: some View {
         GeometryReader { geo in
-            Color.clear
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            let phase: CompanionSelectionPhase = selecting ? .move : .begin
-                            selecting = true
-                            model.sendSelectionGesture(phase: phase, mode: .character,
-                                                       viewPoint: value.location, viewSize: geo.size)
-                        }
-                        .onEnded { value in
-                            model.sendSelectionGesture(phase: .end, mode: .character,
-                                                       viewPoint: value.location, viewSize: geo.size)
-                            selecting = false
-                        }
-                )
+            let handles = model.selectionHandlePoints(viewSize: geo.size)
+            ZStack {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                if !selecting {
+                                    selecting = true
+                                    beginSelectionDrag(at: value.startLocation, handles: handles, viewSize: geo.size)
+                                }
+                                model.sendSelectionGesture(phase: .move, mode: .character,
+                                                           viewPoint: value.location, viewSize: geo.size)
+                            }
+                            .onEnded { value in
+                                model.sendSelectionGesture(phase: .end, mode: .character,
+                                                           viewPoint: value.location, viewSize: geo.size)
+                                selecting = false
+                            }
+                    )
+                if let handles {
+                    selectionHandle.position(handles.start)
+                    selectionHandle.position(handles.end)
+                }
+            }
         }
         .ignoresSafeArea(edges: .bottom)
+    }
+
+    /// A handle dot. Non-interactive: the overlay's single gesture hit-tests it.
+    private var selectionHandle: some View {
+        Circle()
+            .fill(.white)
+            .overlay(Circle().stroke(.blue, lineWidth: 2))
+            .frame(width: 16, height: 16)
+            .shadow(radius: 2)
+            .allowsHitTesting(false)
+    }
+
+    /// Decide what a drag beginning at `location` does, and send the opening
+    /// gesture. Grabbing a handle anchors the selection at the opposite endpoint.
+    private func beginSelectionDrag(at location: CGPoint,
+                                    handles: (start: CGPoint, end: CGPoint)?,
+                                    viewSize: CGSize) {
+        let hitRadius: CGFloat = 32
+        if let handles, let endpoints = model.activeSelectionEndpoints {
+            if location.distance(to: handles.start) <= hitRadius {
+                model.sendSelectionGesture(phase: .begin, mode: .character, point: endpoints.end)
+                return
+            }
+            if location.distance(to: handles.end) <= hitRadius {
+                model.sendSelectionGesture(phase: .begin, mode: .character, point: endpoints.start)
+                return
+            }
+        }
+        model.sendSelectionGesture(phase: .begin, mode: .character, viewPoint: location, viewSize: viewSize)
     }
 
     private var selectionControls: some View {
@@ -604,6 +645,12 @@ private struct LiveSessionView: View {
         case .error: return "The live view ended unexpectedly."
         case .dataLimitReached: return "Live view paused to stay within data limits."
         }
+    }
+}
+
+private extension CGPoint {
+    func distance(to other: CGPoint) -> CGFloat {
+        hypot(x - other.x, y - other.y)
     }
 }
 

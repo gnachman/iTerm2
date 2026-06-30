@@ -47,4 +47,24 @@ struct CompanionTouchMapper {
         let clampedRow = min(max(row, 0), rows - 1)
         return CompanionSelectionPoint(absLine: liveTop + Int64(clampedRow), column: clampedCol)
     }
+
+    /// The inverse: the view-space point of a grid corner, for placing selection
+    /// handles. `rightEdge`/`bottomEdge` move the point to the cell's right/bottom
+    /// (the end handle sits at the bottom-right of the last selected cell, the
+    /// start handle at the top-left of the first). Returns nil for degenerate
+    /// geometry.
+    func viewPoint(column: Int, absLine: Int64, rightEdge: Bool, bottomEdge: Bool,
+                   viewSize: CGSize) -> CGPoint? {
+        guard imageSize.width > 0, imageSize.height > 0,
+              viewSize.width > 0, viewSize.height > 0 else {
+            return nil
+        }
+        let scale = min(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
+        let offsetX = (viewSize.width - imageSize.width * scale) / 2
+        let offsetY = (viewSize.height - imageSize.height * scale) / 2
+        let row = Double(absLine - liveTop)
+        let imageX = cellGeometry.leftMargin + (Double(column) + (rightEdge ? 1 : 0)) * cellGeometry.cellWidth
+        let imageY = cellGeometry.topMargin + (row + (bottomEdge ? 1 : 0)) * cellGeometry.cellHeight
+        return CGPoint(x: imageX * scale + offsetX, y: imageY * scale + offsetY)
+    }
 }
