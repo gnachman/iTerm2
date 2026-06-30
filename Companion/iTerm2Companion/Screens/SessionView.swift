@@ -750,6 +750,8 @@ private struct LiveCanvas: UIViewRepresentable {
         /// highlight changed.
         private var selectedTileIndices: Set<Int> = []
         private var lastSelectionEndpoints: (start: CompanionSelectionPoint, end: CompanionSelectionPoint)?
+        /// Last visible tile range logged, so refreshTiles logs only on change.
+        private var lastLoggedVisibleRange: (Int, Int)?
         private let linesPerTile = 50
         private var growthTimer: Timer?
 
@@ -901,6 +903,7 @@ private struct LiveCanvas: UIViewRepresentable {
                 didScrollToBottom = true
                 scrollToBottom()
             }
+            companionLog("canvas layout size=\(Int(size.width))x\(Int(size.height)) firstAbs=\(layout.firstAbsLine) total=\(totalLines) hist=\(historyLines) ppl=\(String(format: "%.2f", pointsPerLine)) videoTop=\(Int(videoRect.minY)) docH=\(Int(documentHeight)) offsetY=\(Int(scrollView.contentOffset.y)) wasAtBottom=\(wasAtBottom)")
             refreshTiles()
         }
 
@@ -954,6 +957,12 @@ private struct LiveCanvas: UIViewRepresentable {
             let first = max(0, Int(floor(keep.minY / tileHeight)))
             let last = min(tileCount - 1, Int(floor(keep.maxY / tileHeight)))
             guard first <= last else { return }
+
+            // Log only when the visible tile range changes, so scrolling does not spam.
+            if lastLoggedVisibleRange?.0 != first || lastLoggedVisibleRange?.1 != last {
+                lastLoggedVisibleRange = (first, last)
+                companionLog("canvas visible tiles \(first)...\(last) of \(tileCount) offsetY=\(Int(scrollView.contentOffset.y)) zoom=\(String(format: "%.2f", scrollView.zoomScale))")
+            }
 
             for index in first...last {
                 let expected = expectedLines(index: index)
