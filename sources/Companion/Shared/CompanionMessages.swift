@@ -162,13 +162,20 @@ struct CompanionStreamParams: Codable, Equatable {
     /// tighter on cellular); the host streams at the min of this and its own
     /// budget. nil means the phone imposes no limit.
     var maxBitrate: Int?
+    /// Highest media-frame wire version the phone can decode. nil/absent means the
+    /// phone predates versioned frames, so the host must emit version 1. The host
+    /// emits min(this, its own current version), so an old phone keeps working
+    /// (without per-frame geometry) and a new phone gets generationId/liveTop.
+    var maxMediaFrameVersion: Int? = nil
 
     init(supportedCodecs: [CompanionStreamCodec],
          maxFrameRate: Double,
-         maxBitrate: Int?) {
+         maxBitrate: Int?,
+         maxMediaFrameVersion: Int? = nil) {
         self.supportedCodecs = supportedCodecs
         self.maxFrameRate = maxFrameRate
         self.maxBitrate = maxBitrate
+        self.maxMediaFrameVersion = maxMediaFrameVersion
     }
 }
 

@@ -41,17 +41,52 @@ final class CompanionMediaFrameTests: XCTestCase {
         XCTAssertEqual(decoded, frame)
     }
 
-    func testWireLayoutIsBigEndian() throws {
-        // Pin the byte layout so an independent decoder (the iOS app) can rely on
-        // it. version=1, flags=keyframe(1), streamID, sequence, pts, payloadLen.
-        let bytes = [UInt8](sample().encoded())
-        XCTAssertEqual(bytes[0], 1)                       // version
+    func testWireLayoutVersion2IsBigEndian() throws {
+        // Pin the v2 byte layout so an independent decoder (the iOS app) can rely
+        // on it: version=2, flags, streamID, sequence, pts, generationId, liveTop,
+        // payloadLen.
+        let frame = CompanionMediaFrame(streamID: 0x01020304, sequence: 0x0A0B0C0D,
+                                        ptsMilliseconds: 0x0102_0304_0506_0708,
+                                        flags: .keyframe, payload: Data([0xDE, 0xAD, 0xBE, 0xEF]),
+                                        generationId: 0x11223344, liveTop: 0x0506_0708_090A_0B0C)
+        let bytes = [UInt8](frame.encoded())
+        XCTAssertEqual(bytes[0], 2)                       // version
         XCTAssertEqual(bytes[1], 1)                       // flags: keyframe
         XCTAssertEqual(Array(bytes[2..<6]), [0x01, 0x02, 0x03, 0x04])      // streamID
         XCTAssertEqual(Array(bytes[6..<10]), [0x0A, 0x0B, 0x0C, 0x0D])     // sequence
         XCTAssertEqual(Array(bytes[10..<18]),
                        [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08])   // pts
-        XCTAssertEqual(Array(bytes[18..<22]), [0x00, 0x00, 0x00, 0x04])    // payloadLen=4
+        XCTAssertEqual(Array(bytes[18..<22]), [0x11, 0x22, 0x33, 0x44])    // generationId
+        XCTAssertEqual(Array(bytes[22..<30]),
+                       [0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C])   // liveTop
+        XCTAssertEqual(Array(bytes[30..<34]), [0x00, 0x00, 0x00, 0x04])    // payloadLen=4
+    }
+
+    func testGenerationAndLiveTopRoundTrip() throws {
+        let frame = CompanionMediaFrame(streamID: 7, sequence: 3, ptsMilliseconds: 99,
+                                        flags: [.keyframe, .configChanged],
+                                        payload: Data([1, 2, 3]),
+                                        generationId: 42, liveTop: 1_000_000)
+        let decoded = try CompanionMediaFrame(decoding: frame.encoded())
+        XCTAssertEqual(decoded, frame)
+        XCTAssertEqual(decoded.generationId, 42)
+        XCTAssertEqual(decoded.liveTop, 1_000_000)
+    }
+
+    func testLegacyVersion1RoundTripDropsGeometry() throws {
+        // Emitting v1 (for an old peer) omits generationId/liveTop; they decode as
+        // 0, but every other field survives, and the size is the v1 header.
+        let frame = CompanionMediaFrame(streamID: 7, sequence: 3, ptsMilliseconds: 99,
+                                        flags: .keyframe, payload: Data([1, 2, 3]),
+                                        generationId: 42, liveTop: 5)
+        let encoded = frame.encoded(version: CompanionMediaFrame.legacyVersion)
+        XCTAssertEqual(encoded.count, CompanionMediaFrame.headerSizeV1 + 3)
+        XCTAssertEqual(encoded[encoded.startIndex], 1)  // version byte
+        let decoded = try CompanionMediaFrame(decoding: encoded)
+        XCTAssertEqual(decoded.streamID, 7)
+        XCTAssertEqual(decoded.payload, Data([1, 2, 3]))
+        XCTAssertEqual(decoded.generationId, 0, "v1 carries no generation")
+        XCTAssertEqual(decoded.liveTop, 0, "v1 carries no liveTop")
     }
 
     func testDecodeFromNonZeroBasedSlice() throws {
