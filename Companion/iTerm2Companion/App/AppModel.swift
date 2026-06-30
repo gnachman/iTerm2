@@ -1983,6 +1983,14 @@ final class AppModel {
         activeSelectionRange.map { ($0.start, $0.end) }
     }
 
+    /// The continuous encoded-image pixel under a touch, to center the magnifier.
+    func selectionImagePoint(viewPoint: CGPoint, viewSize: CGSize) -> CGPoint? {
+        activeTouchMapper?.imagePoint(viewPoint: viewPoint, viewSize: viewSize)
+    }
+
+    /// Encoded-pixel cell height of the active stream (for sizing the magnifier).
+    var activeStreamCellHeight: CGFloat { CGFloat(activeStreamGeometry?.cellHeight ?? 0) }
+
     /// Clear the live-view selection on the mac.
     func clearActiveSelection() {
         guard let client, let streamID = activeStreamID else { return }

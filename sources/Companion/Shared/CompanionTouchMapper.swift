@@ -48,6 +48,19 @@ struct CompanionTouchMapper {
         return CompanionSelectionPoint(absLine: liveTop + Int64(clampedRow), column: clampedCol)
     }
 
+    /// The continuous (unquantized, unclamped) encoded-image pixel under a touch.
+    /// Used to center the magnifier on exactly where the finger is, not the cell.
+    func imagePoint(viewPoint: CGPoint, viewSize: CGSize) -> CGPoint? {
+        guard imageSize.width > 0, imageSize.height > 0,
+              viewSize.width > 0, viewSize.height > 0 else {
+            return nil
+        }
+        let scale = min(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
+        let offsetX = (viewSize.width - imageSize.width * scale) / 2
+        let offsetY = (viewSize.height - imageSize.height * scale) / 2
+        return CGPoint(x: (viewPoint.x - offsetX) / scale, y: (viewPoint.y - offsetY) / scale)
+    }
+
     /// The inverse: the view-space point of a grid corner, for placing selection
     /// handles. `rightEdge`/`bottomEdge` move the point to the cell's right/bottom
     /// (the end handle sits at the bottom-right of the last selected cell, the

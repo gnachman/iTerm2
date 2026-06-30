@@ -15,6 +15,7 @@
 //
 
 import SwiftUI
+import CoreImage
 import CompanionProtocol
 
 struct SessionView: View {
@@ -462,6 +463,11 @@ private struct LiveSessionView: View {
     @State private var resolution: String?
     @State private var endedReason: CompanionStreamEndReason?
     @State private var selecting = false
+    /// While a selection drag is in progress: the finger's view point and the
+    /// encoded-image point under it, so the magnifier can follow and show content.
+    @State private var loupeViewPoint: CGPoint?
+    @State private var loupeImagePoint: CGPoint?
+    private let loupeDiameter: CGFloat = 120
 
     var body: some View {
         ZStack {
@@ -533,20 +539,44 @@ private struct LiveSessionView: View {
                                 }
                                 model.sendSelectionGesture(phase: .move, mode: .character,
                                                            viewPoint: value.location, viewSize: geo.size)
+                                loupeViewPoint = value.location
+                                loupeImagePoint = model.selectionImagePoint(viewPoint: value.location, viewSize: geo.size)
                             }
                             .onEnded { value in
                                 model.sendSelectionGesture(phase: .end, mode: .character,
                                                            viewPoint: value.location, viewSize: geo.size)
                                 selecting = false
+                                loupeViewPoint = nil
+                                loupeImagePoint = nil
                             }
                     )
                 if let handles {
                     selectionHandle.position(handles.start)
                     selectionHandle.position(handles.end)
                 }
+                if let loupeViewPoint, let loupeImagePoint {
+                    loupe(at: loupeViewPoint, imagePoint: loupeImagePoint, viewSize: geo.size)
+                }
             }
         }
         .ignoresSafeArea(edges: .bottom)
+    }
+
+    /// The Apple-style magnifier: a circle showing the content around the finger
+    /// blown up, floated above the touch point (clamped to stay on screen).
+    private func loupe(at viewPoint: CGPoint, imagePoint: CGPoint, viewSize: CGSize) -> some View {
+        let radius = loupeDiameter / 2
+        let gap: CGFloat = 24
+        let x = min(max(viewPoint.x, radius), viewSize.width - radius)
+        // Float above the finger; if that would clip the top, drop below instead.
+        let above = viewPoint.y - gap - radius
+        let y = above - radius >= 0 ? above : viewPoint.y + gap + radius
+        // Show ~4 rows across the loupe (fall back to a sane crop if unknown).
+        let cropSide = max(40, model.activeStreamCellHeight * 4)
+        return LoupeView(holder: holder, imagePoint: imagePoint, cropSide: cropSide)
+            .frame(width: loupeDiameter, height: loupeDiameter)
+            .position(x: x, y: y)
+            .allowsHitTesting(false)
     }
 
     /// A handle dot. Non-interactive: the overlay's single gesture hit-tests it.
@@ -657,6 +687,60 @@ private extension CGPoint {
 /// Holds the AVSampleBufferDisplayLayer-backed view across SwiftUI updates.
 private final class LiveVideoHolder {
     let view = CompanionVideoView(frame: .zero)
+}
+
+/// A circular magnifier that draws a blown-up crop of the live frame around an
+/// image point, sampling the video view's latest decoded pixel buffer.
+private struct LoupeView: UIViewRepresentable {
+    let holder: LiveVideoHolder
+    let imagePoint: CGPoint
+    let cropSide: CGFloat
+
+    func makeUIView(context: Context) -> LoupeUIView {
+        let view = LoupeUIView()
+        view.pixelBufferProvider = { [weak holder] in holder?.view.latestPixelBuffer() }
+        view.isUserInteractionEnabled = false
+        view.backgroundColor = .black
+        view.contentMode = .redraw
+        view.layer.masksToBounds = true
+        view.layer.borderColor = UIColor.white.withAlphaComponent(0.9).cgColor
+        view.layer.borderWidth = 3
+        return view
+    }
+
+    func updateUIView(_ view: LoupeUIView, context: Context) {
+        view.layer.cornerRadius = view.bounds.width / 2
+        view.imagePoint = imagePoint
+        view.cropSide = cropSide
+        view.setNeedsDisplay()
+    }
+}
+
+private final class LoupeUIView: UIView {
+    var pixelBufferProvider: (() -> CVPixelBuffer?)?
+    var imagePoint: CGPoint = .zero   // center, image px, top-left origin
+    var cropSide: CGFloat = 80        // image px shown across the loupe
+    private let ciContext = CIContext(options: nil)
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.cornerRadius = bounds.width / 2
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard let pixelBuffer = pixelBufferProvider?(), cropSide > 0 else { return }
+        // CIImage uses a bottom-left origin; clamp to the edges so a crop near the
+        // border extends rather than going transparent.
+        let base = CIImage(cvPixelBuffer: pixelBuffer)
+        let imageHeight = base.extent.height
+        let ciImage = base.clampedToExtent()
+        let half = cropSide / 2
+        let ciRect = CGRect(x: imagePoint.x - half,
+                            y: imageHeight - (imagePoint.y + half),
+                            width: cropSide, height: cropSide)
+        guard let cropped = ciContext.createCGImage(ciImage, from: ciRect) else { return }
+        UIImage(cgImage: cropped).draw(in: bounds)  // scales the crop to fill the circle
+    }
 }
 
 private struct LiveVideoLayer: UIViewRepresentable {

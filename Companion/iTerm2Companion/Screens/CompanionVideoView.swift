@@ -12,6 +12,7 @@
 
 import AVFoundation
 import UIKit
+import VideoToolbox
 
 final class CompanionVideoView: UIView {
     /// Called when the view needs a fresh keyframe: no config yet, or the display
@@ -26,6 +27,20 @@ final class CompanionVideoView: UIView {
     }
 
     private var formatDescription: CMFormatDescription?
+
+    // A second, parallel decode of the same access units to CVPixelBuffers, so the
+    // selection magnifier can sample the current frame's pixels (the display layer
+    // never hands decoded pixels back). HEVC decode of small terminal frames is
+    // cheap; the latest buffer is kept under a lock and read on the main thread.
+    private var decompressionSession: VTDecompressionSession?
+    private let frameLock = NSLock()
+    private var _latestPixelBuffer: CVPixelBuffer?
+
+    /// The most recently decoded frame, for the magnifier. nil until one decodes.
+    func latestPixelBuffer() -> CVPixelBuffer? {
+        frameLock.lock(); defer { frameLock.unlock() }
+        return _latestPixelBuffer
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -43,7 +58,25 @@ final class CompanionVideoView: UIView {
         formatDescription = try? CompanionHEVCSampleBuilder.makeFormatDescription(parameterSets: parameterSets)
         if formatDescription == nil {
             onNeedsKeyframe?()
+            return
         }
+        makeDecompressionSession()
+    }
+
+    private func makeDecompressionSession() {
+        if let decompressionSession {
+            VTDecompressionSessionInvalidate(decompressionSession)
+        }
+        decompressionSession = nil
+        guard let formatDescription else { return }
+        var session: VTDecompressionSession?
+        let status = VTDecompressionSessionCreate(allocator: kCFAllocatorDefault,
+                                                  formatDescription: formatDescription,
+                                                  decoderSpecification: nil,
+                                                  imageBufferAttributes: nil,
+                                                  outputCallback: nil,
+                                                  decompressionSessionOut: &session)
+        if status == noErr { decompressionSession = session }
     }
 
     /// Enqueue one access unit for immediate display.
@@ -66,11 +99,30 @@ final class CompanionVideoView: UIView {
             return
         }
         displayLayer.enqueue(sample)
+
+        // Parallel decode for the magnifier (async, off the main thread).
+        if let decompressionSession {
+            _ = VTDecompressionSessionDecodeFrame(
+                decompressionSession,
+                sampleBuffer: sample,
+                flags: [._EnableAsynchronousDecompression],
+                infoFlagsOut: nil) { [weak self] status, _, imageBuffer, _, _ in
+                    guard let self, status == noErr, let imageBuffer else { return }
+                    self.frameLock.lock()
+                    self._latestPixelBuffer = imageBuffer
+                    self.frameLock.unlock()
+                }
+        }
     }
 
     /// Clear the screen and forget the format (on stop / teardown).
     func reset() {
         displayLayer.flushAndRemoveImage()
         formatDescription = nil
+        if let decompressionSession {
+            VTDecompressionSessionInvalidate(decompressionSession)
+        }
+        decompressionSession = nil
+        frameLock.lock(); _latestPixelBuffer = nil; frameLock.unlock()
     }
 }

@@ -89,6 +89,19 @@ final class CompanionTouchMapperTests: XCTestCase {
         }
     }
 
+    func testImagePointIsContinuousAndUnclamped() {
+        let m = mapper()
+        // Half-size view (scale 0.5): view 33,44 -> image 66,88 (no quantization).
+        let p = m.imagePoint(viewPoint: CGPoint(x: 33, y: 44),
+                             viewSize: CGSize(width: 400, height: 250))
+        XCTAssertEqual(p?.x ?? -1, 66, accuracy: 0.001)
+        XCTAssertEqual(p?.y ?? -1, 88, accuracy: 0.001)
+        // Past the right edge: not clamped (the magnifier handles edges itself).
+        let past = m.imagePoint(viewPoint: CGPoint(x: 1600, y: 0),
+                                viewSize: CGSize(width: 1600, height: 500))
+        XCTAssertGreaterThan(past?.x ?? 0, 800)
+    }
+
     func testEndHandleSitsRightAndBelow() {
         let m = mapper()
         let viewSize = CGSize(width: 800, height: 500)  // exact fit
