@@ -490,6 +490,14 @@ private struct LiveSessionView: View {
                 }
             }
         }
+        // A left-edge drag would otherwise trigger the swipe-back gesture instead
+        // of starting a selection there. Disable swipe-back while selection is
+        // available; the back button still works.
+        .background {
+            if model.sessionSelectionSupported {
+                SwipeBackDisabler()
+            }
+        }
         .task(id: guid) { start() }
         .onDisappear { model.stopWatchingSessionLive() }
         .onChange(of: scenePhase) { _, phase in
@@ -608,4 +616,28 @@ private struct LiveVideoLayer: UIViewRepresentable {
     let holder: LiveVideoHolder
     func makeUIView(context: Context) -> CompanionVideoView { holder.view }
     func updateUIView(_ uiView: CompanionVideoView, context: Context) {}
+}
+
+/// Disables the navigation controller's interactive swipe-back while present, so
+/// a left-edge drag starts a selection instead of popping the view. Restores the
+/// previous state on disappear (e.g. the back button is still used).
+private struct SwipeBackDisabler: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> Controller { Controller() }
+    func updateUIViewController(_ controller: Controller, context: Context) {}
+
+    final class Controller: UIViewController {
+        private var previouslyEnabled: Bool?
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            guard let recognizer = navigationController?.interactivePopGestureRecognizer else { return }
+            previouslyEnabled = recognizer.isEnabled
+            recognizer.isEnabled = false
+        }
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            if let previouslyEnabled {
+                navigationController?.interactivePopGestureRecognizer?.isEnabled = previouslyEnabled
+            }
+        }
+    }
 }
