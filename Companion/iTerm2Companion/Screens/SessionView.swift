@@ -744,6 +744,30 @@ private final class LoupeUIView: UIView {
     var cropSide: CGFloat = 80        // image px shown across the loupe
     var cellHeight: CGFloat = 0       // image px, for sizing the handle caret
     private let ciContext = CIContext(options: nil)
+    private var displayLink: CADisplayLink?
+
+    // The loupe must re-sample the latest decoded frame every refresh, not only
+    // when the finger moves: after the finger stops, new frames keep arriving (the
+    // selection catches up) and the loupe would otherwise keep showing the stale
+    // frame it last sampled on a gesture event. A display link drives the redraw
+    // while the loupe is on screen.
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil {
+            if displayLink == nil {
+                let link = CADisplayLink(target: self, selector: #selector(redrawFromDisplayLink))
+                link.add(to: .main, forMode: .common)
+                displayLink = link
+            }
+        } else {
+            displayLink?.invalidate()
+            displayLink = nil
+        }
+    }
+
+    @objc private func redrawFromDisplayLink() {
+        setNeedsDisplay()
+    }
 
     override func layoutSubviews() {
         super.layoutSubviews()
