@@ -179,7 +179,7 @@ class PortholeRegistry: NSObject {
     private let mutex = Mutex()
 
     func add(_ porthole: ObjCPorthole) {
-        DLog("add \(porthole)")
+        RLog("add \(porthole)")
         mutex.sync {
             portholes[porthole.uniqueIdentifier] = porthole
             incrementGeneration()
@@ -187,7 +187,7 @@ class PortholeRegistry: NSObject {
     }
 
     func remove(_ key: String) {
-        DLog("remove \(key)")
+        RLog("remove \(key)")
         mutex.sync {
             _ = portholes.removeValue(forKey: key)
             _ = marks.removeValue(forKey: key)
@@ -197,7 +197,7 @@ class PortholeRegistry: NSObject {
 
     @objc(registerKey:forMark:)
     func set(_ key: String, mark: PortholeMarkReading) {
-        DLog("register mark \(mark) for \(key)")
+        RLog("register mark \(mark) for \(key)")
         mutex.sync {
             marks[key] = mark
             incrementGeneration()
@@ -220,7 +220,7 @@ class PortholeRegistry: NSObject {
                 return nil
             }
             pending.removeValue(forKey: key)
-            DLog("hydrating \(key)")
+            RLog("hydrating \(key)")
             guard let porthole = PortholeFactory.porthole(dict,
                                                           colorMap: colorMap,
                                                           useSelectedTextColor: useSelectedTextColor,

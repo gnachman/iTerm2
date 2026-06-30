@@ -448,7 +448,7 @@ static int gSignalsToList[] = {
         iTermJobProxy *job = [self->_outlineView itemAtRow:idx];
         pid_t pid = job.pid;
         if (pid) {
-            DLog(@"Send %d to %@", [signal_ intValue], @(pid));
+            RLog(@"Send %d to %@", [signal_ intValue], @(pid));
             [self.processInfoProvider sendSignal:signal_.intValue
                                            toPID:pid];
             kill(pid, [signal_ intValue]);

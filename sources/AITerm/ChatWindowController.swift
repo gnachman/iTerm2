@@ -137,7 +137,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
                           self.chatViewController.chatID == deletedID else {
                         return
                     }
-                    DLog("Displayed chat \(deletedID) was deleted externally; clearing the view")
+                    RLog("Displayed chat \(deletedID) was deleted externally; clearing the view")
                     self.chatViewController.load(chatID: nil)
                 }
             }
@@ -636,15 +636,15 @@ extension ChatWindowController: ChatViewControllerDelegate {
                             forkAtMessageID: UUID,
                             ofChat originalChatID: String) {
         guard let listModel = ChatListModel.instance else {
-            DLog("No chat list model")
+            RLog("No chat list model")
             return
         }
         guard let chat = ChatListModel.instance?.chat(id: originalChatID) else {
-            DLog("No chat with id \(originalChatID)")
+            RLog("No chat with id \(originalChatID)")
             return
         }
         guard let index = listModel.index(ofMessageID: forkAtMessageID, inChat: chat.id) else {
-            DLog("No such message \(forkAtMessageID) in \(originalChatID)")
+            RLog("No such message \(forkAtMessageID) in \(originalChatID)")
             return
         }
         do {
@@ -701,7 +701,7 @@ extension ChatWindowController: ChatViewControllerDelegate {
             do {
                 try listModel.setIcon(chat.icon, forChatID: chatID)
             } catch {
-                DLog("Failed to copy icon to forked chat \(chatID): \(error)")
+                RLog("Failed to copy icon to forked chat \(chatID): \(error)")
             }
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)

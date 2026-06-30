@@ -631,7 +631,7 @@ struct AnthropicResponseParser: LLMResponseParser {
     mutating func parse(data: Data) throws -> LLM.AnyResponse? {
         let decoder = JSONDecoder()
         let response = try decoder.decode(AnthropicResponse.self, from: data)
-        DLog("RESPONSE:\n\(response)")
+        RLog("RESPONSE:\n\(response)")
         parsedResponse = response
         return response
     }

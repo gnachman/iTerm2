@@ -137,7 +137,7 @@
 
     Profile *profile = [self modifiedProfile];
     if (!profile) {
-        DLog(@"No profile");
+        RLog(@"No profile");
         [self setFinishedWithSuccess:NO];
         self.session = nil;
         return;
@@ -156,7 +156,7 @@
                 windowController:windowController
                       completion:
      ^(PTYSession *session, BOOL willCallCompletionBlock) {
-         DLog(@"session=%@ willCallCompletionBlock=%@", session, @(willCallCompletionBlock));
+         RLog(@"session=%@ willCallCompletionBlock=%@", session, @(willCallCompletionBlock));
          if (!session && windowController.numberOfTabs == 0) {
              DLog(@"abort");
              [[windowController window] close];
@@ -185,7 +185,7 @@
 
     Profile *profile = [self modifiedProfile];
     if (!profile) {
-        DLog(@"No profile");
+        RLog(@"No profile");
         [self setFinishedWithSuccess:NO];
         self.session = nil;
         return nil;
@@ -300,7 +300,7 @@
 - (void)makeSessionByURLWithProfile:(Profile *)profile
                    windowController:(PseudoTerminal *)windowController
                          completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
-    DLog(@"Creating a new session by URL: %@", _url);
+    RLog(@"Creating a new session by URL: %@", _url);
     PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
                                                                           parent:nil];
     session.browserTarget = self.browserTarget;
@@ -361,7 +361,7 @@
     }
                                                      completion:
      ^(PTYSession *newSession, BOOL ok) {
-        DLog(@"launch by url finished with ok=%@", @(ok));
+        RLog(@"launch by url finished with ok=%@", @(ok));
         [newSession loadDeferredURLIfNeeded];
         [weakSelf setFinishedWithSuccess:ok];
     }];
@@ -459,7 +459,7 @@
     }
                                                      completion:
      ^(PTYSession *newSession, BOOL ok) {
-        DLog(@"launch by url finished with ok=%@", @(ok));
+        RLog(@"launch by url finished with ok=%@", @(ok));
         [newSession loadDeferredURLIfNeeded];
         [weakSelf setFinishedWithSuccess:ok];
     }];
@@ -558,7 +558,7 @@
 }
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
-    DLog(@"modify profile to ssh to %@", url);
+    RLog(@"modify profile to ssh to %@", url);
     NSMutableString *tempString = [NSMutableString string];
     const BOOL useSSHIntegration = [iTermPreferences boolForKey:kPreferenceKeySshIntegrationForURLs];
     BOOL forceLoginShell = NO;
@@ -591,7 +591,7 @@
                                    silenceable:kiTermWarningTypePersistent
                                        heading:@"Illegal Username"
                                         window:nil];
-            DLog(@"bad username");
+            RLog(@"bad username");
             return nil;
         }
         [tempString appendFormat:@"-l %@ ", part];
@@ -607,7 +607,7 @@
     if (hostname) {
         NSString *part = [self validatedAndShellEscapedHostname:hostname];
         if (!part) {
-            DLog(@"Bad hostname");
+            RLog(@"Bad hostname");
             return nil;
         }
         [tempString appendString:part];
@@ -622,7 +622,7 @@
             [tempString appendFormat:@" \"cd %@; exec \\$SHELL -l\"", [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
         }
     }
-    DLog(@"Use command line: %@", tempString);
+    RLog(@"Use command line: %@", tempString);
     if (useSSHIntegration) {
         return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
                                                            KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue }];
@@ -715,7 +715,7 @@
             // user’s action still succeeds. Scripted launches (_makeSession) are
             // excluded here so they continue to respect the lock strictly via
             // the guards in -createTabWithProfile: / -asyncSplitVertically:.
-            DLog(@"Target window is layout-locked; opening in a new window instead");
+            RLog(@"Target window is layout-locked; opening in a new window instead");
             windowController = nil;
         } else {
             DLog(@"Use an existing window");
@@ -731,7 +731,7 @@
         windowType = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
     }
     if (windowController) {
-        DLog(@"Theoretically unreachable code path reached!");
+        RLog(@"Theoretically unreachable code path reached!");
         // TODO: This code path might be unreachable. It was originally added in
         // fb845ffbc908ffbb3b7b57c35b881eab0f87a01e to deal with the crazy way applescript creates
         // windows separately from tabs, but that is no longer possible.
@@ -792,7 +792,7 @@
 }
 
 - (void)setFinishedWithSuccess:(BOOL)ok {
-    DLog(@"setFinishedWithSuccess:%@", @(ok));
+    RLog(@"setFinishedWithSuccess:%@", @(ok));
     if (_finished) {
         return;
     }

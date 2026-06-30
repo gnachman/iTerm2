@@ -308,7 +308,7 @@ final class CompanionPairingController: NSObject {
         // here: turning off the consent checkbox (handled in the pairing window)
         // and the plugin disappearing (see unpairIfPluginMissing).
         guard bridge != nil || acceptTask != nil else { return }
-        DLog("Companion: gate closed; dropping any live connection and stopping listener")
+        RLog("Companion: gate closed; dropping any live connection and stopping listener")
         if bridge != nil {
             bridge?.stop()
             bridge = nil
@@ -325,7 +325,7 @@ final class CompanionPairingController: NSObject {
     /// Again. Consent-off is enforced separately by the pairing window.
     func unpairIfPluginMissing() {
         guard hasPairedDevice, !CompanionPlugin.instance().isSuccess else { return }
-        DLog("Companion: consent plugin missing; unpairing and deleting key material")
+        RLog("Companion: consent plugin missing; unpairing and deleting key material")
         relayLog("unpairIfPluginMissing: plugin gone, unpairing")
         unpair()
     }
@@ -371,9 +371,9 @@ final class CompanionPairingController: NSObject {
         do {
             relayLog("resume: starting listening for pid \(pid)")
             try startListening(pairingID: pid)
-            DLog("Companion: resumed listening for paired device (pid \(pid))")
+            RLog("Companion: resumed listening for paired device (pid \(pid))")
         } catch {
-            DLog("Companion: could not resume listening: \(error); will retry")
+            RLog("Companion: could not resume listening: \(error); will retry")
             relayLog("resume: startListening THREW \(error); scheduling retry")
             scheduleListenerRetry()
         }
@@ -469,7 +469,7 @@ final class CompanionPairingController: NSObject {
             let code = try startPairing()
             onPairingCodeChanged?(code)
         } catch {
-            DLog("Companion: could not regenerate pairing code: \(error)")
+            RLog("Companion: could not regenerate pairing code: \(error)")
             onFailed?(Self.userFacingDescription(of: error))
         }
     }
@@ -506,7 +506,7 @@ final class CompanionPairingController: NSObject {
     /// one is generated for the next pairing.
     func unpair() {
         relayLog("unpair() called")
-        DLog("Companion: unpair (bridge connected: \(bridge != nil))")
+        RLog("Companion: unpair (bridge connected: \(bridge != nil))")
         // This Mac initiates the unpair, so it owns the authenticated relay
         // delete-room call. Build it BEFORE wiping key material below; the
         // closure captures the room secret it needs.
@@ -561,7 +561,7 @@ final class CompanionPairingController: NSObject {
     /// phone is the one leaving).
     private func peerDidUnpair() {
         relayLog("peerDidUnpair() called")
-        DLog("Companion: peer unpaired; deleting key material")
+        RLog("Companion: peer unpaired; deleting key material")
         bridge?.stop()
         bridge = nil
         stopAdvertising()
@@ -729,7 +729,7 @@ final class CompanionPairingController: NSObject {
     private func acceptLoop(listener: TransportListener,
                             keyPair: NoiseKeyPair,
                             code: PairingCode) async {
-        DLog("Companion pairing: accept loop started (pid \(code.pairingID))")
+        RLog("Companion pairing: accept loop started (pid \(code.pairingID))")
         relayLog("acceptLoop START pid=\(code.pairingID); awaiting a connection (park)")
         onStatus?("Waiting for your iPhone…")
         while !Task.isCancelled {
@@ -762,7 +762,7 @@ final class CompanionPairingController: NSObject {
                     regenerateFreshPairing(reason: "park-closed")
                     return
                 }
-                DLog("Companion pairing: accept ended: \(error), cancelled=\(cancelled)")
+                RLog("Companion pairing: accept ended: \(error), cancelled=\(cancelled)")
                 relayLog("acceptLoop EXIT via accept() error (cancelled=\(cancelled)): \(error)")
                 if cancelled {
                     return
@@ -798,7 +798,7 @@ final class CompanionPairingController: NSObject {
                 // on every exit from this block (success, reject, or failure).
                 confirmationInProgress = true
                 defer { confirmationInProgress = false }
-                DLog("Companion pairing: connection accepted; starting Noise handshake")
+                RLog("Companion pairing: connection accepted; starting Noise handshake")
                 relayLog("acceptLoop: connection ACCEPTED (peer joined); starting Noise handshake")
                 onStatus?("Phone connected. Securing the connection…")
                 let channel = try await NoiseHandshake.perform(
@@ -807,14 +807,14 @@ final class CompanionPairingController: NSObject {
                     localKeyPair: keyPair,
                     remoteStaticPublicKey: nil,
                     prologue: code.handshakePrologue())
-                DLog("Companion pairing: handshake complete")
+                RLog("Companion pairing: handshake complete")
 
                 // The relay is untrusted: it cannot vouch for who connected.
                 // Authenticate the phone end-to-end by its Noise static key,
                 // learned (and decrypted) during the handshake. Fail closed if
                 // we somehow did not learn it.
                 guard let phoneStatic = channel.remoteStaticPublicKey else {
-                    DLog("Companion pairing: no phone static key; rejecting")
+                    RLog("Companion pairing: no phone static key; rejecting")
                     relayLog("acceptLoop: REJECT, no phone static key from handshake")
                     await channel.close()
                     continue
@@ -835,7 +835,7 @@ final class CompanionPairingController: NSObject {
                         // the observable signature of a hijack attempt. Void this
                         // pid and re-advertise under a fresh one so the attacker's
                         // photographed QR is invalidated and they must start over.
-                        DLog("Companion pairing: SAS not confirmed; regenerating pid")
+                        RLog("Companion pairing: SAS not confirmed; regenerating pid")
                         relayLog("acceptLoop: SAS REJECTED; closing and regenerating pid")
                         onStatus?("Pairing declined.")
                         await channel.close()
@@ -852,7 +852,7 @@ final class CompanionPairingController: NSObject {
                     // be trust-on-first-use, pinning whatever phone connected
                     // first, so reject and force re-pairing instead.
                     guard let pinned = pairedPhoneStatic, pinned == phoneStatic else {
-                        DLog("Companion pairing: reconnect static missing or mismatched; rejecting")
+                        RLog("Companion pairing: reconnect static missing or mismatched; rejecting")
                         relayLog("acceptLoop: REJECT, reconnect static missing/mismatched; re-pair required")
                         await channel.close()
                         continue
@@ -868,7 +868,7 @@ final class CompanionPairingController: NSObject {
                         self?.relayLog("bridge.onClose: STALE bridge closed; ignoring")
                         return
                     }
-                    DLog("Companion: bridge closed; resuming listening for reconnect")
+                    RLog("Companion: bridge closed; resuming listening for reconnect")
                     self.relayLog("bridge.onClose: LIVE bridge closed; nil-ing bridge + resuming")
                     self.bridge = nil
                     self.onDisconnect?()
@@ -908,7 +908,7 @@ final class CompanionPairingController: NSObject {
                     // do NOT record the pid: leave the device unpaired so the next
                     // session re-pairs rather than reconnecting against a missing
                     // pinned static.
-                    DLog("Companion pairing: phone static did not persist; not recording the pid")
+                    RLog("Companion pairing: phone static did not persist; not recording the pid")
                     relayLog("acceptLoop: phone static did not persist; leaving unpaired (re-pair required)")
                     onPaired?()
                     acceptTask = nil
@@ -930,7 +930,7 @@ final class CompanionPairingController: NSObject {
                          + "(reconnect now driven by bridge.onClose)")
                 return
             } catch {
-                DLog("Companion pairing: handshake failed: \(error); still listening")
+                RLog("Companion pairing: handshake failed: \(error); still listening")
                 relayLog("acceptLoop: handshake FAILED (\(error)); closing socket and re-accepting")
                 onStatus?("Waiting for your iPhone…")
                 // The parked socket was consumed by the failed handshake; close

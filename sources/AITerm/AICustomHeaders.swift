@@ -31,11 +31,11 @@ import Foundation
             guard let name = entry["name"], isValidName(name) else { continue }
             let value = entry["value"] ?? ""
             guard isValidValue(value) else {
-                DLog("Skipping AI custom header \"\(name)\" because its value contains a control character")
+                RLog("Skipping AI custom header \"\(name)\" because its value contains a control character")
                 continue
             }
             if result[name] != nil {
-                DLog("AI custom header overrides existing header field \"\(name)\"")
+                RLog("AI custom header overrides existing header field \"\(name)\"")
             }
             result[name] = value
         }

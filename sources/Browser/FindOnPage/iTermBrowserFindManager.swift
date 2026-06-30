@@ -196,7 +196,7 @@ class iTermBrowserFindManager: NSObject {
             do {
                 let raw = try await webView.safelyCallAsyncJavaScript(script, contentWorld: world)
                 guard let dict = raw as? [String: Double] else {
-                    DLog("Bad result: \(String(describing: raw)) in \(script)")
+                    RLog("Bad result: \(String(describing: raw)) in \(script)")
                     throw InvalidResponseError()
                 }
                 guard let x = dict["x"],
@@ -207,7 +207,7 @@ class iTermBrowserFindManager: NSObject {
                 }
                 return NSRect(x: x, y: y, width: width, height: height)
             } catch {
-                DLog("\(error)")
+                RLog("\(error)")
                 throw error
             }
         }
@@ -242,7 +242,7 @@ class iTermBrowserFindManager: NSObject {
                                                       "identifier": identifier ],
                                             sharedState: sharedState)
             } catch {
-                DLog("\(error)")
+                RLog("\(error)")
             }
         }
 
@@ -378,9 +378,9 @@ class iTermBrowserFindManager: NSObject {
                 try await state.executeJavaScript(command: ["action": "startNavigationShortcuts",
                                                             "selectionAction": selectionAction],
                                                   sharedState: sharedState)
-                DLog("Started navigation shortcuts")
+                RLog("Started navigation shortcuts")
             } catch {
-                DLog("Failed to start navigation shortcuts: \(error)")
+                RLog("Failed to start navigation shortcuts: \(error)")
             }
         }
     }
@@ -391,9 +391,9 @@ class iTermBrowserFindManager: NSObject {
                 let state = defaultState
                 try await state.executeJavaScript(command: ["action": "clearNavigationShortcuts"], 
                                                   sharedState: sharedState)
-                DLog("Cleared navigation shortcuts")
+                RLog("Cleared navigation shortcuts")
             } catch {
-                DLog("Failed to clear navigation shortcuts: \(error)")
+                RLog("Failed to clear navigation shortcuts: \(error)")
             }
         }
     }
@@ -416,7 +416,7 @@ class iTermBrowserFindManager: NSObject {
                 globalState.stream = stream
                 globalState.startFind(query, mode: mode, contextLength: 40, sharedState: sharedState, findManager: self)
             } catch {
-                DLog("\(error)")
+                RLog("\(error)")
             }
         }
         return stream
@@ -478,7 +478,7 @@ class iTermBrowserFindManager: NSObject {
             do {
                 try await defaultState.clearFind(sharedState: sharedState, findManager: self)
             } catch {
-                DLog("\(error)")
+                RLog("\(error)")
             }
         }
     }
@@ -631,7 +631,7 @@ extension iTermBrowserWebView {
         }
         
         // Timeout after 500ms - assume scrolling is complete
-        DLog("Scroll completion check timed out after 500ms")
+        RLog("Scroll completion check timed out after 500ms")
     }
 }
 

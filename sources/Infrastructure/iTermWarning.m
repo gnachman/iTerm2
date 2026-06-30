@@ -444,17 +444,17 @@ BOOL gShowRememberedAlerts = NO;
         const iTermWarningSelection selection = [self.class savedSelectionForIdentifier:_identifier];
         NSString *label = [self labelForSelection:selection];
         if (!label || ![self shouldRememberLabel:label]) {
-            DLog(@"%@ has saved selection %@ but label %@ should not be remembered", self, @(selection), label);
+            RLog(@"%@ has saved selection %@ but label %@ should not be remembered", self, @(selection), label);
             return NO;
         }
         // When "Always Show Alerts with Remembered Selections" is enabled, show the dialog instead of preempting.
         if (gShowRememberedAlerts) {
-            DLog(@"%@ would be silenced but gShowRememberedAlerts is YES", self);
+            RLog(@"%@ would be silenced but gShowRememberedAlerts is YES", self);
             self.shownDueToRememberedAlertsMode = YES;
             self.savedSelectionLabel = label;
             return NO;  // Don't preempt - show the dialog
         }
-        DLog(@"%@ is silenced with saved selection %@", self, @(selection));
+        RLog(@"%@ is silenced with saved selection %@", self, @(selection));
         *selectionPtr = selection;
         return YES;
     }
@@ -504,7 +504,7 @@ BOOL gShowRememberedAlerts = NO;
     if (_shownDueToRememberedAlertsMode && _identifier) {
         NSInteger forgetButtonIndex = NSAlertFirstButtonReturn + _warningActions.count;
         if (result == forgetButtonIndex) {
-            DLog(@"Permanently forget saved selection for %@", _identifier);
+            RLog(@"Permanently forget saved selection for %@", _identifier);
             [self.class clearSavedSelectionForIdentifier:_identifier];
             // Re-show the alert without the remembered alerts mode explanatory text.
             // Create a fresh warning with the same parameters but without the remembered mode flag.
@@ -551,7 +551,7 @@ BOOL gShowRememberedAlerts = NO;
 
     // Save info if suppression was enabled.
     if (remember && alert.suppressionButton.state == NSControlStateValueOn) {
-        DLog(@"Remember selection for %@", self);
+        RLog(@"Remember selection for %@", self);
         NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
         if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
             NSString *theKey = [self.class temporarySilenceKeyForIdentifier:_identifier];

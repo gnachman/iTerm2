@@ -441,6 +441,10 @@ Core Improvements:
   so app launch does not hang when there are a
   huge number of crash logs.
 - Prompt for local-network permission on launch.
+- New iTerm2 menu item, Save Retrospective Debug
+  Logs, writes recently captured low-frequency
+  diagnostics to a file you choose, even when
+  debug logging was never turned on.
 
 Settings Improvements:
 - Window frames are remembered per-profile rather

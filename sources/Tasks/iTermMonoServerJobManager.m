@@ -94,7 +94,7 @@
     void (^wrapper)(iTermJobManagerForkAndExecStatus, NSNumber *) = ^(iTermJobManagerForkAndExecStatus status,
                                                                       NSNumber *optionalErrorCode) {
         if (status == iTermJobManagerForkAndExecStatusSuccess) {
-            DLog(@"Register %@ after fork and exec", @(task.pid));
+            RLog(@"Register %@ after fork and exec", @(task.pid));
             [[TaskNotifier sharedInstance] registerTask:task];
         }
         completion(status, optionalErrorCode);
@@ -209,7 +209,7 @@
                                                                   ttyState:(const iTermTTYState)ttyState
                                                           serverConnection:(iTermFileDescriptorServerConnection)serverConnection
                                                                       task:(id<iTermTask>)task {
-    DLog(@"Handshake complete");
+    RLog(@"Handshake complete");
     close(state.deadMansPipe[0]);
     if (serverConnection.ok) {
         // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
@@ -241,7 +241,7 @@
         return iTermJobManagerForkAndExecStatusSuccess;
     }
     close(_fd);
-    DLog(@"Server died immediately!");
+    RLog(@"Server died immediately!");
     DLog(@"fini");
     return iTermJobManagerForkAndExecStatusTaskDiedImmediately;
 }
@@ -279,7 +279,7 @@
     dispatch_sync(self.queue, ^{
         [self queueAttachToServer:serverConnection task:task];
     });
-    DLog(@"Register task for %@", pidNumber);
+    RLog(@"Register task for %@", pidNumber);
     [[TaskNotifier sharedInstance] registerTask:task];
     if (pidNumber == nil) {
         return results;
@@ -304,7 +304,7 @@
         if (_serverPid < 0) {
             return;
         }
-        DLog(@"Sending signal %@ to server %@", @(signo), @(_serverPid));
+        RLog(@"Sending signal %@ to server %@", @(signo), @(_serverPid));
         kill(_serverPid, signo);
         return;
     }
@@ -312,7 +312,7 @@
         return;
     }
     [[iTermProcessCache sharedInstance] unregisterTrackedPID:_serverChildPid];
-    DLog(@"Sending signal %@ to child %@", @(signo), @(_serverChildPid));
+    RLog(@"Sending signal %@ to child %@", @(signo), @(_serverChildPid));
     kill(_serverChildPid, signo);
 }
 
@@ -340,7 +340,7 @@
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
-    DLog(@"%@ killWithMode:%@", self, @(mode));
+    RLog(@"%@ killWithMode:%@", self, @(mode));
     switch (mode) {
         case iTermJobManagerKillingModeRegular:
             [self sendSignal:SIGHUP toServer:NO];

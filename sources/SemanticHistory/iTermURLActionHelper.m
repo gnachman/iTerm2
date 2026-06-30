@@ -264,7 +264,7 @@
    inBackground:(BOOL)background
 workingDirectory:(NSString *)workingDirectory
           style:(iTermOpenStyle)style {
-    DLog(@"openURL:%@ inBackground:%@", url, @(background));
+    RLog(@"openURL:%@ inBackground:%@", url, @(background));
 
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
     if (profile) {
@@ -344,7 +344,7 @@ workingDirectory:(NSString *)workingDirectory
                         completion:^(iTermExpressionEvaluator *evaluator) {
         NSString *command = [NSString castFrom:evaluator.value];
         if (command.length == 0) {
-            DLog(@"urlHandlerCommand evaluated to an empty string; not running. error=%@", evaluator.error);
+            RLog(@"urlHandlerCommand evaluated to an empty string; not running. error=%@", evaluator.error);
             return;
         }
         [weakSelf launchURLHandlerCommand:command];
@@ -380,7 +380,7 @@ workingDirectory:(NSString *)workingDirectory
         [extractor restrictToLogicalWindowIncludingCoord:coord];
     }
 
-    DLog(@"openTargetWithEvent generation %@ has action=%@", @(generation), action);
+    RLog(@"openTargetWithEvent generation %@ has action=%@", @(generation), action);
     if (smartSelectionActionsOnly && action.actionType != kURLActionSmartSelectionAction) {
         DLog(@"Ignoring non-smart-selection action %@ because only smart selection actions are allowed", action);
         return;

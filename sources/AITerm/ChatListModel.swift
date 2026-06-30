@@ -100,7 +100,7 @@ class ChatListModel: ChatListDataSource {
             do {
                 try messages.removeAll(where: { _ in true })
             } catch {
-                DLog("Failed to delete messages for chat \(chatID): \(error)")
+                RLog("Failed to delete messages for chat \(chatID): \(error)")
             }
         }
         try chatStorage.remove(at: i)
@@ -128,7 +128,7 @@ class ChatListModel: ChatListDataSource {
             // Defense in depth: ChatAgent sanitizes model-supplied titles
             // before publishing, but nothing stops a future producer from
             // publishing a blank .renameChat. Never blank the title.
-            DLog("Ignoring rename of \(chatID) to a blank title")
+            RLog("Ignoring rename of \(chatID) to a blank title")
             return
         }
         if chatStorage[i].title == trimmedNewName {
@@ -228,7 +228,7 @@ class ChatListModel: ChatListDataSource {
         do {
             try messages.removeAll(where: { messageIDs.contains($0.uniqueID) })
         } catch {
-            DLog("Failed to delete messages from chat \(chatID): \(error)")
+            RLog("Failed to delete messages from chat \(chatID): \(error)")
         }
     }
 

@@ -264,7 +264,7 @@
             return nil;
         }
         if ([fonts containsObject:heavierFont]) {
-            DLog(@"  * cycle detected among fonts *\n%@", [fonts arrayByAddingObject:heavierFont]);
+            RLog(@"  * cycle detected among fonts *\n%@", [fonts arrayByAddingObject:heavierFont]);
             return nil;
         }
         [fonts addObject:heavierFont];
@@ -278,13 +278,13 @@
         }
         lastFont = heavierFont;
     }
-    DLog(@"Failed to find a bold version that's bold enough");
+    RLog(@"Failed to find a bold version that's bold enough");
     return nil;
 }
 
 - (PTYFontInfo *)computedBoldVersion {
     NSFont *boldFont = [self boldVersionOfFont:font_];
-    DLog(@"Bold version of %@ is %@", font_, boldFont);
+    RLog(@"Bold version of %@ is %@", font_, boldFont);
     if (boldFont && boldFont != font_) {
         return [PTYFontInfo fontInfoWithFont:boldFont];
     } else {
@@ -296,7 +296,7 @@
 - (PTYFontInfo *)computedItalicVersion {
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
     NSFont* italicFont = [fontManager convertFont:font_ toHaveTrait:NSItalicFontMask];
-    DLog(@"Italic version of %@ is %@", font_, italicFont);
+    RLog(@"Italic version of %@ is %@", font_, italicFont);
     if (italicFont && italicFont != font_) {
         return [PTYFontInfo fontInfoWithFont:italicFont];
     } else {

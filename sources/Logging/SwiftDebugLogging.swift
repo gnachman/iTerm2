@@ -27,6 +27,16 @@ func DLogMain(_ messageBlock: @autoclosure () -> String, file: String = #file, l
     DebugLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message)
 }
 
+// Retrospective log. Like DLog when debug logging is on, but when it is off the
+// message is retained in a bounded in-memory ring (see RetrospectiveLogImpl) so
+// the lead-up to a low-frequency event can be recovered later. The message is a
+// plain String, not an @autoclosure: unlike DLog it is always evaluated (that is
+// how it captures retrospectively), so the non-deferred parameter makes the cost
+// explicit. Only use it for low-frequency call sites with cheap arguments.
+func RLog(_ message: String, file: String = #file, line: Int = #line, function: String = #function) {
+    RetrospectiveLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message)
+}
+
 func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line: Int = #line, function: String = #function) {
     guard gDebugLogging.boolValue else {
         return

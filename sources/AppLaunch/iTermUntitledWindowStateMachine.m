@@ -33,7 +33,7 @@
         return;
     }
     if (_disableInitialWindow && !_windowRestorationComplete) {
-        DLog(@"untitled: do nothing because window restoration is still in progress");
+        RLog(@"untitled: do nothing because window restoration is still in progress");
         return;
     }
     _wantsWindow = YES;
@@ -52,13 +52,13 @@
 }
 
 - (void)didFinishRestoringWindows {
-    DLog(@"untitled: windowRestorationDidComplete %@", self);
+    RLog(@"untitled: windowRestorationDidComplete %@", self);
     _windowRestorationComplete = YES;
     [self openWindowIfWanted];
 }
 
 - (void)didFinishInitialization {
-    DLog(@"untitled: didFinishInitialization %@", self);
+    RLog(@"untitled: didFinishInitialization %@", self);
     _initializationComplete = YES;
     [self openWindowIfWanted];
 }
@@ -78,7 +78,7 @@
         return;
     }
 
-    DLog(@"untitled: actually open a window %@", self);
+    RLog(@"untitled: actually open a window %@", self);
     [self.delegate untitledWindowStateMachineCreateNewWindow:self];
 }
 

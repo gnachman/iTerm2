@@ -88,7 +88,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 #pragma mark - APIs
 
 - (BOOL)showWindowForProfileHotKey:(iTermProfileHotKey *)profileHotKey url:(NSURL *)url {
-    DLog(@"Show window for profile hotkey %@", profileHotKey);
+    RLog(@"Show window for profile hotkey %@", profileHotKey);
     return [profileHotKey showHotKeyWindowCreatingWithURLIfNeeded:url];
 }
 
@@ -363,10 +363,10 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     __block BOOL handled = NO;
     if (self.visibleWindowControllers.count > 0) {
         if ([[iTermApplication sharedApplication] it_justBecameActive]) {
-            DLog(@"Just became active. Ignoring dock click.");
+            RLog(@"Just became active. Ignoring dock click.");
             return YES;
         }
-        DLog(@"Closing hotkey windows in response to dock click.");
+        RLog(@"Closing hotkey windows in response to dock click.");
         [self.profileHotKeys enumerateObjectsUsingBlock:^(iTermProfileHotKey  *_Nonnull profileHotKey,
                                                           NSUInteger idx,
                                                           BOOL *_Nonnull stop) {
@@ -613,7 +613,7 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
     }
     self.previousState = [[[iTermPreviousState alloc] init] autorelease];
     self.previousState.owner = profileHotKey;
-    DLog(@"Stored previous state");
+    RLog(@"Stored previous state");
 }
 
 - (BOOL)otherHotKeyWindowWillBecomeKeyAfterOrderOut:(iTermProfileHotKey *)profileHotKey {
@@ -646,13 +646,13 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
                          causedByKeypress:(BOOL)causedByKeypress {
     // Restore the previous state (key window or active app) unless we switched
     // to another hotkey window.
-    DLog(@"Finished rolling out %p. key window is %@.", profileHotKey.windowController, [[NSApp keyWindow] windowController]);
+    RLog(@"Finished rolling out %p. key window is %@.", profileHotKey.windowController, [[NSApp keyWindow] windowController]);
     if (!causedByKeypress && self.previousState) {
         DLog(@"Erase previous state");
         self.previousState = nil;
     }
     if (![self otherHotKeyWindowWillBecomeKeyAfterOrderOut:profileHotKey]) {
-        DLog(@"Restoring the previous state %p", self.previousState);
+        RLog(@"Restoring the previous state %p", self.previousState);
         iTermPreviousState *previousState = [self.previousState retain];
         BOOL result = [previousState restoreAllowingAppSwitch:!profileHotKey.closedByOtherHotkeyWindowOpening];
         [previousState autorelease];

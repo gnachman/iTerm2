@@ -125,7 +125,7 @@ NSString *const iTermBulkCopyIdentifierAdvanced = @"Advanced";
 - (IBAction)performBulkCopy:(id)sender {
     ProfileModel *profileModel = [ProfileModel sharedInstance];
     if (!_sourceGuid || ![profileModel bookmarkWithGuid:_sourceGuid]) {
-        DLog(@"Beep: bulk copy failed");
+        RLog(@"Beep: bulk copy failed");
         NSBeep();
         return;
     }

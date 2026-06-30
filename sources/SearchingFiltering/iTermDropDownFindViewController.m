@@ -188,7 +188,7 @@ static const CGFloat kLineRangeHeight = 24;
 }
 
 - (void)close {
-    DLog(@"Closing find view %@", self.view);
+    RLog(@"Closing find view %@", self.view);
     [NSAnimationContext beginGrouping];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         [[self view] setHidden:YES];
@@ -204,7 +204,7 @@ static const CGFloat kLineRangeHeight = 24;
     [[self view] setFrame:[self collapsedFrame]];
     [[self view] setHidden:NO];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
-    DLog(@"Animate find view %@ to full size frame: %@",
+    RLog(@"Animate find view %@ to full size frame: %@",
          self.view, NSStringFromRect([self fullSizeFrame]));
     
     [NSAnimationContext beginGrouping];

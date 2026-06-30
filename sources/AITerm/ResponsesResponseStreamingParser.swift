@@ -567,12 +567,12 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 parsedResponse?.ignore = false
 
             case let createdEvent as ResponseCreatedEvent:
-                DLog("Response started: \(createdEvent.response.id)")
+                RLog("Response started: \(createdEvent.response.id)")
                 parsedResponse?.newlyCreatedResponseID = createdEvent.response.id
                 parsedResponse?.ignore = false
 
             case let doneEvent as ResponseDoneEvent:
-                DLog("\nResponse completed. Status: \(doneEvent.response.status)")
+                RLog("\nResponse completed. Status: \(doneEvent.response.status)")
                 parsedResponse = nil
 
             case let funcArgsEvent as ResponseFunctionCallArgumentsDoneEvent:

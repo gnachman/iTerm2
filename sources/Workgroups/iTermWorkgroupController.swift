@@ -56,11 +56,11 @@ final class iTermWorkgroupController: NSObject {
         case .refused(let refusal):
             switch refusal {
             case .restoring:
-                DLog("iTermWorkgroupController.enter: refusing; session \(session.guid) is being restored into a workgroup")
+                RLog("iTermWorkgroupController.enter: refusing; session \(session.guid) is being restored into a workgroup")
             case .unusableWorkgroup:
-                DLog("iTermWorkgroupController.enter: no usable workgroup with id \(identifier)")
+                RLog("iTermWorkgroupController.enter: no usable workgroup with id \(identifier)")
             case .nonLeaderMember(let member):
-                DLog("iTermWorkgroupController.enter: refusing to switch workgroups on \(session.guid), a non-leader member of \(member.instanceUniqueIdentifier)")
+                RLog("iTermWorkgroupController.enter: refusing to switch workgroups on \(session.guid), a non-leader member of \(member.instanceUniqueIdentifier)")
             }
             return false
         case .proceed(let existing, let workgroup):
@@ -73,7 +73,7 @@ final class iTermWorkgroupController: NSObject {
             guard let instance = iTermWorkgroupInstance.enter(workgroup: workgroup,
                                                               on: session,
                                                               spawner: spawner) else {
-                DLog("iTermWorkgroupController: failed to build instance for \(identifier)")
+                RLog("iTermWorkgroupController: failed to build instance for \(identifier)")
                 return false
             }
             // Entry spawns splits/tabs, during which the instance's
@@ -84,7 +84,7 @@ final class iTermWorkgroupController: NSObject {
             // back-pointer, so no member could ever resolve to it and no
             // path would remove the entry).
             guard !instance.didTeardown else {
-                DLog("iTermWorkgroupController.enter: instance \(instance.instanceUniqueIdentifier) was torn down during entry (a member died mid-spawn); not registering")
+                RLog("iTermWorkgroupController.enter: instance \(instance.instanceUniqueIdentifier) was torn down during entry (a member died mid-spawn); not registering")
                 return false
             }
             instances[instance.instanceUniqueIdentifier] = instance
@@ -237,7 +237,7 @@ final class iTermWorkgroupController: NSObject {
         let resolvedID: String
         if instances[instanceUniqueIdentifier] != nil {
             resolvedID = iTermWorkgroupInstance.mintInstanceUniqueIdentifier()
-            DLog("iTermWorkgroupController.adopt: persisted instance id \(instanceUniqueIdentifier) is already registered; adopting under fresh id \(resolvedID)")
+            RLog("iTermWorkgroupController.adopt: persisted instance id \(instanceUniqueIdentifier) is already registered; adopting under fresh id \(resolvedID)")
         } else {
             resolvedID = instanceUniqueIdentifier
         }
@@ -250,13 +250,13 @@ final class iTermWorkgroupController: NSObject {
             peerSessionsByConfigID: peerSessionsByConfigID,
             nonPeerSessionsByConfigID: nonPeerSessionsByConfigID,
             spawner: spawner) else {
-            DLog("iTermWorkgroupController: failed to adopt \(workgroup.uniqueIdentifier)")
+            RLog("iTermWorkgroupController: failed to adopt \(workgroup.uniqueIdentifier)")
             return nil
         }
         // Same mid-build teardown hazard as enter(); see the
         // didTeardown guard there.
         guard !instance.didTeardown else {
-            DLog("iTermWorkgroupController.adopt: instance \(instance.instanceUniqueIdentifier) was torn down during adoption; not registering")
+            RLog("iTermWorkgroupController.adopt: instance \(instance.instanceUniqueIdentifier) was torn down during adoption; not registering")
             return nil
         }
         instances[instance.instanceUniqueIdentifier] = instance
@@ -267,7 +267,7 @@ final class iTermWorkgroupController: NSObject {
     @objc
     func exit(on session: PTYSession) {
         guard let instance = registeredInstance(on: session) else {
-            DLog("iTermWorkgroupController.exit: session \(session.guid) is not in a registered workgroup")
+            RLog("iTermWorkgroupController.exit: session \(session.guid) is not in a registered workgroup")
             return
         }
         exit(instance: instance)

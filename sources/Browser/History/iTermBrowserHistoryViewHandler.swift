@@ -99,7 +99,7 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
         DLog("Loading history entries: offset=\(offset), limit=\(limit), query='\(searchQuery)'")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
-            DLog("Failed to get database instance")
+            RLog("Failed to get database instance")
             await sendHistoryEntries([], hasMore: false, to: webView)
             return
         }
@@ -162,11 +162,11 @@ class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {
                     let result = try await webView.safelyEvaluateJavaScript(iife(script))
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
-                    DLog("Failed to execute JavaScript: \(error)")
+                    RLog("Failed to execute JavaScript: \(error)")
                 }
             }
         } catch {
-            DLog("Failed to serialize history entries: \(error)")
+            RLog("Failed to serialize history entries: \(error)")
         }
     }
     

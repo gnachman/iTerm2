@@ -25,6 +25,16 @@ static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
 
 static NSMutableDictionary *gPinnedMessages;
+
+// Retrospective log: a single, byte-bounded ring of recent RLog lines
+// retained while debug logging is OFF, so a low-frequency event's lead-up
+// is captured even though nobody enabled logging ahead of time. Guarded by
+// GetDebugLogLock(). Snapshotted into the debug-log header when logging
+// starts (see iTermDebugLogHeaderString).
+static NSMutableArray<NSString *> *gRetrospectiveLog;
+static NSUInteger gRetrospectiveLogBytes;
+static const NSUInteger kRetrospectiveLogMaxBytes = 10 * 1024 * 1024;
+
 BOOL gDebugLogging = NO;
 // Keys already emitted by DLogOncePerLoggingSession this logging
 // session. Guarded by GetDebugLogLock(); cleared in StartDebugLogging.
@@ -209,6 +219,55 @@ void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
         gPinnedMessages = [[NSMutableDictionary alloc] init];
     };
     gPinnedMessages[key] = log;
+    [GetDebugLogLock() unlock];
+}
+
+void RetrospectiveLogImpl(const char *file, int line, const char *function, NSString *value) {
+    // When debug logging is on, behave exactly like DLog: the message lands
+    // in the live debug log and we keep nothing extra in the ring.
+    if (gDebugLogging) {
+        DebugLogImpl(file, line, function, value);
+        return;
+    }
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    const char *lastSlash = strrchr(file, '/');
+    if (!lastSlash) {
+        lastSlash = file;
+    } else {
+        lastSlash++;
+    }
+    NSString *entry = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): %@\n",
+                       (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, value];
+
+    [GetDebugLogLock() lock];
+    if (!gRetrospectiveLog) {
+        gRetrospectiveLog = [[NSMutableArray alloc] init];
+    }
+    [gRetrospectiveLog addObject:entry];
+    gRetrospectiveLogBytes += entry.length;
+    // Evict oldest lines until back under the cap, but always keep the most
+    // recent line even if it alone exceeds the cap.
+    while (gRetrospectiveLogBytes > kRetrospectiveLogMaxBytes && gRetrospectiveLog.count > 1) {
+        NSString *oldest = gRetrospectiveLog[0];
+        gRetrospectiveLogBytes -= oldest.length;
+        [gRetrospectiveLog removeObjectAtIndex:0];
+    }
+    [GetDebugLogLock() unlock];
+}
+
+NSString *iTermRetrospectiveLogString(void) {
+    [GetDebugLogLock() lock];
+    NSString *result = [gRetrospectiveLog componentsJoinedByString:@""] ?: @"";
+    [GetDebugLogLock() unlock];
+    return result;
+}
+
+void iTermClearRetrospectiveLog(void) {
+    [GetDebugLogLock() lock];
+    [gRetrospectiveLog removeAllObjects];
+    gRetrospectiveLogBytes = 0;
     [GetDebugLogLock() unlock];
 }
 

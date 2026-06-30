@@ -97,7 +97,7 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             break
         }
         if requester != nil {
-            DLog("WARNING: Overwriting existing token requester.")
+            RLog("WARNING: Overwriting existing token requester.")
         }
         requester = OnePasswordTokenRequester()
         requester?.asyncGet { [weak self] result in

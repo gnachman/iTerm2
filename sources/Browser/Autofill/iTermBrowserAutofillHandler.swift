@@ -91,13 +91,13 @@ class iTermBrowserAutofillHandler {
                let success = resultDict["success"] as? Bool,
                let fieldsFound = resultDict["fieldsFound"] as? Int {
                 if success {
-                    DLog("fillAll successfully found and triggered autofill for \(fieldsFound) fields")
+                    RLog("fillAll successfully found and triggered autofill for \(fieldsFound) fields")
                 } else {
-                    DLog("fillAll failed - authentication or other error")
+                    RLog("fillAll failed - authentication or other error")
                 }
             }
         } catch {
-            DLog("fillAll failed: \(error)")
+            RLog("fillAll failed: \(error)")
         }
     }
 }

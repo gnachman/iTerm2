@@ -61,7 +61,7 @@ struct GeminiRequestBuilder: Codable {
             return try JSONDecoder().decode([String: AnyCodable].self,
                                             from: args.lossyData)
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
             return [:]
         }
     }

@@ -55,7 +55,7 @@ class FocusOrder: NSObject {
         lastStampedSession = focused
         let ordinal = counter.next
         focused.lastActivityOrdinal = ordinal
-        DLog("update: stamped guid=\(focused.guid) name=\(focused.name) ordinal=\(ordinal)")
+        RLog("update: stamped guid=\(focused.guid) name=\(focused.name) ordinal=\(ordinal)")
     }
 
     // MARK: - Persistence

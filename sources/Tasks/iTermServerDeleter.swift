@@ -72,7 +72,7 @@ class iTermServerDeleter: NSObject {
             do {
                 try FileManager.default.removeItem(atPath: file)
             } catch {
-                DLog("Failed to delete \(file): \(error)")
+                RLog("Failed to delete \(file): \(error)")
             }
         }
     }

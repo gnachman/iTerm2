@@ -552,7 +552,7 @@
 }
 
 - (void)beginRemappingModifiers {
-    DLog(@"Begin remapping modifiers");
+    RLog(@"Begin remapping modifiers");
     [self.keyDown setRemappingDelegate:self];
     [self.keyUp setRemappingDelegate:self];
     if ([iTermAdvancedSettingsModel remapModifiersWithoutEventTap]) {
@@ -562,7 +562,7 @@
     [[iTermFlagsChangedEventTap sharedInstance] setRemappingDelegate:self];
 
     if (![_keyDown isEnabled]) {
-        DLog(@"The event tap is NOT enabled");
+        RLog(@"The event tap is NOT enabled");
         [self requestAccessibilityPermission];
     }
 }
@@ -578,7 +578,7 @@
         return;
     }
 
-    DLog(@"Requesting accessibility permission");
+    RLog(@"Requesting accessibility permission");
     [[iTermPermissionsHelper accessibility] request];
 }
 

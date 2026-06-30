@@ -554,7 +554,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         if (result == NSModalResponseOK) {
             NSURL *url = [[panel URLs] objectAtIndex:0];
             if (![self loadIconWithFilename:url.path]) {
-                DLog(@"Beep: Failed to load icon at %@", url);
+                RLog(@"Beep: Failed to load icon at %@", url);
                 NSBeep();
             }
         }

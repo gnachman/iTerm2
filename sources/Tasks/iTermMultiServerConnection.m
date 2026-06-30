@@ -70,7 +70,7 @@
 + (void)getConnectionForSocketNumber:(int)number
                     createIfPossible:(BOOL)shouldCreate
                             callback:(iTermCallback<id, iTermResult<iTermMultiServerConnection *> *> *)callback {
-    DLog(@"Want to get connection for socket %@. shouldCreate=%@", @(number), @(shouldCreate));
+    RLog(@"Want to get connection for socket %@. shouldCreate=%@", @(number), @(shouldCreate));
     [self.thread dispatchAsync:^(iTermMultiServerConnectionGlobalState * _Nonnull state) {
         [self connectionForSocketNumber:number
                        createIfPossible:shouldCreate
@@ -186,10 +186,10 @@
             [connectionState.client attachToOrLaunchNewDaemonWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
                 iTermResult *resultObject;
                 if (!statusNumber.boolValue) {
-                    DLog(@"Failed to attach or launch socket %@", @(number));
+                    RLog(@"Failed to attach or launch socket %@", @(number));
                     resultObject = [iTermResult withError:self.cannotConnectError];
                 } else {
-                    DLog(@"Succeeded to attach or launch socket %@", @(number));
+                    RLog(@"Succeeded to attach or launch socket %@", @(number));
                     resultObject = [iTermResult withObject:result];
                     [self addConnection:result number:number state:globalState];
                 }
@@ -204,13 +204,13 @@
         DLog(@"Attach to %@", @(number));
         [connectionState.client attachWithCallback:[self.thread newCallbackWithBlock:^(iTermMultiServerConnectionGlobalState *globalState, NSNumber *statusNumber) {
             if (!statusNumber.boolValue) {
-                DLog(@"Attach failed for socket %@", @(number));
+                RLog(@"Attach failed for socket %@", @(number));
                 [self invokePendingCallbacksForSocketNumber:number
                                                       state:globalState
                                                      result:[iTermResult withError:self.cannotConnectError]];
             } else {
                 [self addConnection:result number:number state:globalState];
-                DLog(@"Attach succeeded for socket %@", @(number));
+                RLog(@"Attach succeeded for socket %@", @(number));
                 [self invokePendingCallbacksForSocketNumber:number
                                                       state:globalState
                                                      result:[iTermResult withObject:result]];
@@ -239,7 +239,7 @@
 + (void)addConnection:(iTermMultiServerConnection *)result
                number:(NSInteger)number
                 state:(iTermMultiServerConnectionGlobalState *)state {
-    DLog(@"Register connection number %@", @(number));
+    RLog(@"Register connection number %@", @(number));
     state.registry[@(number)] = result;
     if (!state.primary) {
         state.primary = result;
@@ -359,11 +359,11 @@
             return element.pid == pid;
         }];
         if (!child) {
-            DLog(@"Failed to attach to child with pid %@ - not in unattached children", @(pid));
+            RLog(@"Failed to attach to child with pid %@ - not in unattached children", @(pid));
             [callback invokeWithObject:nil];
             return;
         }
-        DLog(@"Attached to pid %@. Remove unattached child", @(pid));
+        RLog(@"Attached to pid %@. Remove unattached child", @(pid));
         [state.unattachedChildren removeObject:child];
         [callback invokeWithObject:child];
     }];
@@ -418,7 +418,7 @@
 - (void)fileDescriptorMultiClient:(iTermFileDescriptorMultiClient *)client
                  didDiscoverChild:(iTermFileDescriptorMultiClientChild *)child {
     [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
-        DLog(@"Discovered child %@. Add to unattached children.", child);
+        RLog(@"Discovered child %@. Add to unattached children.", child);
         [state.unattachedChildren addObject:child];
     }];
 }

@@ -71,7 +71,7 @@ final class CompanionAlertBridge: NSObject {
             return
         }
         guard let db = ChatDatabase.instance else {
-            DLog("Companion alert: no chat database; dropping alert")
+            RLog("Companion alert: no chat database; dropping alert")
             return
         }
         let record = CompanionAlertRecord(seq: 0,
@@ -81,10 +81,10 @@ final class CompanionAlertBridge: NSObject {
                                           body: body,
                                           createdDate: Date())
         guard db.insertAlert(record) != nil else {
-            DLog("Companion alert: failed to persist alert")
+            RLog("Companion alert: failed to persist alert")
             return
         }
-        DLog("Companion alert: stored alert for thread \(threadKey.prefix(8)); scheduling wakeup")
+        RLog("Companion alert: stored alert for thread \(threadKey.prefix(8)); scheduling wakeup")
         scheduleWakeup()
     }
 

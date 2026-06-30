@@ -215,7 +215,7 @@ class CommandLinePasswordDataSource: NSObject {
             var _error: Error? = nil
             let group = DispatchGroup()
             group.enter()
-            DLog("Execute: \(command) \(args) with environment keys \(Array(env.keys.map { String($0) }))")
+            RLog("Execute: \(command) \(args) with environment keys \(Array(env.keys.map { String($0) }))")
             execAsync { output, error in
                 _output = output
                 _error = error
@@ -429,7 +429,7 @@ class CommandLinePasswordDataSource: NSObject {
         private func waitInBackground() {
             DispatchQueue.global().async {
                 self.process.waitUntilExit()
-                DLog("\(self.request.command) \(self.request.args) terminated status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
+                RLog("\(self.request.command) \(self.request.args) terminated status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
                 self.log("TERMINATED status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
                 self.queue.enqueue(.terminated(self.process.terminationStatus,
                                                self.process.terminationReason))

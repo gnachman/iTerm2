@@ -410,7 +410,7 @@ extension iTermBrowserViewController {
     func performDeferredInitialization(window: NSWindow) {
         if let restorationDelegate = window.delegate as? iTermSessionRestorationStatusProtocol,
            restorationDelegate.isPerformingSessionRestoration {
-            DLog("Not doing global search on \(self) becaue session restoration is underway")
+            RLog("Not doing global search on \(self) becaue session restoration is underway")
             return
         }
         loadDeferredURLIfNeeded()
@@ -1032,7 +1032,7 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
                                                               title: pageContent.title,
                                                               content: pageContent.content)
             } else {
-                DLog("Shouldn't be possible but no page content for \((browserManager.webView?.url).d)")
+                RLog("Shouldn't be possible but no page content for \((browserManager.webView?.url).d)")
             }
         }
     }
@@ -1648,7 +1648,7 @@ extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
         // unusable-workgroup cases.
         guard iTermWorkgroupController.instance.canEnterFromUI(
                 workgroupUniqueIdentifier: uniqueIdentifier, on: session) else {
-            DLog("browserTriggerEnterWorkgroup: refused for workgroup \(uniqueIdentifier) on session \(session.guid)")
+            RLog("browserTriggerEnterWorkgroup: refused for workgroup \(uniqueIdentifier) on session \(session.guid)")
             return
         }
         iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: uniqueIdentifier,

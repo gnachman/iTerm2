@@ -233,7 +233,7 @@ class ChatService {
                         self?.finishTurn(chatID: chatID, reply: reply)
                     })
             } catch {
-                DLog("ChatService fetchCompletion failed: \(error)")
+                RLog("ChatService fetchCompletion failed: \(error)")
                 stopTyping()
                 self.finishTurn(chatID: chatID, reply: nil)
             }

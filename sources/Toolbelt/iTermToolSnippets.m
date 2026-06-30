@@ -588,7 +588,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)applyAction:(iTermToolSnippetsAction)action toSnippet:(iTermSnippet *)snippet {
-    DLog(@"Create action to send snippet %@", snippet);
+    RLog(@"Create action to send snippet %@", snippet);
     iTermToolWrapper *wrapper = self.toolWrapper;
     switch (action) {
         case iTermToolSnippetsActionSend: {

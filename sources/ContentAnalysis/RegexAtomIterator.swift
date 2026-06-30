@@ -249,7 +249,7 @@ class RegexAtomIterator {
                 regexes.append(regex)
             } catch {
                 // Invalid regex pattern - skip it
-                DLog("Invalid regex pattern '\(pattern)': \(error)")
+                RLog("Invalid regex pattern '\(pattern)': \(error)")
             }
         }
         return regexes

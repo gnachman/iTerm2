@@ -487,7 +487,7 @@ final class OrchestratorDispatcher {
                     do {
                         try await CompanionPushSender.send(title: title, body: body)
                     } catch {
-                        DLog("Orchestrator dispatcher: watcher push failed: \(error)")
+                        RLog("Orchestrator dispatcher: watcher push failed: \(error)")
                     }
                 }
                 pushed = true
@@ -511,7 +511,7 @@ final class OrchestratorDispatcher {
                 chatID: chatID,
                 content: .watcherEvent(payload))
         } catch {
-            DLog("Orchestrator dispatcher: failed to publish status_update: \(error)")
+            RLog("Orchestrator dispatcher: failed to publish status_update: \(error)")
         }
     }
 
@@ -759,7 +759,7 @@ final class OrchestratorDispatcher {
             try broker?.listModel
                 .setClaimedScopes(claimedScopes, forChatID: chatID)
         } catch {
-            DLog("Orchestrator dispatcher: failed to persist claimed workgroups: \(error)")
+            RLog("Orchestrator dispatcher: failed to persist claimed workgroups: \(error)")
         }
     }
 
@@ -768,7 +768,7 @@ final class OrchestratorDispatcher {
             try broker?.listModel
                 .setWatchers(watchers, forChatID: chatID)
         } catch {
-            DLog("Orchestrator dispatcher: failed to persist watchers: \(error)")
+            RLog("Orchestrator dispatcher: failed to persist watchers: \(error)")
         }
     }
 
@@ -1252,7 +1252,7 @@ final class OrchestratorDispatcher {
                                                   workgroupName: workgroupName,
                                                   summary: summary))))
             } catch {
-                DLog("Orchestrator dispatcher: failed to publish permission request: \(error)")
+                RLog("Orchestrator dispatcher: failed to publish permission request: \(error)")
                 if let cont = pendingPermissionPrompts.removeValue(forKey: requestID) {
                     cont.resume(returning: false)
                 }
@@ -1307,7 +1307,7 @@ final class OrchestratorDispatcher {
                 content: .clientLocal(.init(action:
                     .orchestrationPermissionGranted(scope: scope, name: name))))
         } catch {
-            DLog("Orchestrator dispatcher: failed to publish permission-granted notice: \(error)")
+            RLog("Orchestrator dispatcher: failed to publish permission-granted notice: \(error)")
         }
     }
 
@@ -1327,7 +1327,7 @@ final class OrchestratorDispatcher {
         do {
             try broker?.publishNotice(chatID: chatID, notice: notice)
         } catch {
-            DLog("Orchestrator dispatcher: failed to publish revoke notice: \(error)")
+            RLog("Orchestrator dispatcher: failed to publish revoke notice: \(error)")
         }
     }
 
@@ -2100,7 +2100,7 @@ final class OrchestratorDispatcher {
         // if it already exists from a prior start_code_review on this role).
         armScreenEscalation(for: watcher)
 
-        DLog("[Orchestrator \(chatID)] Code Review started for \(resolved.roleName) "
+        RLog("[Orchestrator \(chatID)] Code Review started for \(resolved.roleName) "
              + "in \(resolved.workgroupName) using \(promptLabel); watcher \(watcher.watcherID)")
 
         return .watcherRegistered(Self.description(of: watcher))
@@ -2141,7 +2141,7 @@ final class OrchestratorDispatcher {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + timeoutSeconds) {
                 if resolved.tryResolve() {
-                    DLog("withResolvedOnce timed out after \(timeoutSeconds)s")
+                    RLog("withResolvedOnce timed out after \(timeoutSeconds)s")
                     continuation.resume(returning: nil)
                 }
             }

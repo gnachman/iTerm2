@@ -88,7 +88,7 @@ import Foundation
             guard let injector = ShellIntegrationInjectionFactory().createInjector(
                 shellIntegrationDir: shellIntegrationDir,
                 path: argv[0]) else {
-                DLog("Failed to create injector")
+                RLog("Failed to create injector")
                 return (env, argv)
             }
             // Keep injector from getting dealloced
@@ -120,7 +120,7 @@ import Foundation
             // shape (see +loginShellCommandForBookmark:forObjectType:); this only fires when a
             // user types the plain form as a custom command.
             guard argv.count >= 5 else {
-                DLog("Plain login shell form can't transport extra args; skipping injection")
+                RLog("Plain login shell form can't transport extra args; skipping injection")
                 return (env, argv)
             }
             // "-" is a placeholder meaning "use $SHELL", followed by extra args (e.g., "--posix")
@@ -205,7 +205,7 @@ fileprivate class ShellIntegrationInjectionFactory {
         }
         switch Shell(path: path) {
         case .none:
-            DLog("Don't know what shell \(path) is")
+            RLog("Don't know what shell \(path) is")
             return nil
         case .bash:
             DLog("bash")

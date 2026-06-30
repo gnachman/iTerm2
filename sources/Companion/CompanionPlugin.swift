@@ -46,7 +46,7 @@ struct CompanionPlugin {
         do {
             return .success(try CompanionPlugin())
         } catch let error as PluginError {
-            DLog("\(error.reason)")
+            RLog("\(error.reason)")
             return .failure(error)
         } catch {
             return .failure(PluginError(reason: error.localizedDescription))
@@ -80,7 +80,7 @@ struct CompanionPlugin {
               publicKey.isValidSignature(signature, for: message) else {
             throw PluginError(reason: "The companion plugin's signature is invalid. Reinstall the plugin or upgrade iTerm2.")
         }
-        DLog("Companion plugin signature is good")
+        RLog("Companion plugin signature is good")
     }
 
     /// A relay socket factory that routes all egress through this plugin.

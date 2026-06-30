@@ -52,7 +52,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)startWithSession:(PTYSession *)session move:(BOOL)move {
     if (session_) {
-        DLog(@"Decline because we already have a session %@", session_);
+        RLog(@"Decline because we already have a session %@", session_);
         return;
     }
     DLog(@"startWithSession:%@ move:%@\n%@", session, @(move), [NSThread callStackSymbols]);
@@ -222,7 +222,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 - (BOOL)reallyDropInSession:(PTYSession *)dest
                        half:(SplitSessionHalf)half
                     atPoint:(NSPoint)point {
-    DLog(@"reallyDropInSession:%@ half:%@ atPoint:%@", dest, @(half), NSStringFromPoint(point));
+    RLog(@"reallyDropInSession:%@ half:%@ atPoint:%@", dest, @(half), NSStringFromPoint(point));
     if ((dest && ![session_ isCompatibleWith:dest]) ||  // Would create hetero-tmuxual splits in tab
         dest == session_ ||  // move to self
         !session_) {         // no source (?)

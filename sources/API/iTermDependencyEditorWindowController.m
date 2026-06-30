@@ -125,7 +125,7 @@
     }
     if (!ok) {
         tuple.secondObject = @"[Error]";
-        DLog(@"Error running pip3 show %@ in %@: %@",
+        RLog(@"Error running pip3 show %@ in %@: %@",
              tuple.firstObject,
              container.path,
              result);
@@ -377,7 +377,7 @@
 }
 
 + (void)setDependency:(NSString *)dependency scriptPath:(NSString *)scriptPath {
-    DLog(@"Set dependency %@ in %@", dependency, scriptPath);
+    RLog(@"Set dependency %@ in %@", dependency, scriptPath);
     NSString *path = [scriptPath stringByAppendingPathComponent:@"setup.cfg"];
     iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:path];
     [iTermSetupCfgParser writeSetupCfgToFile:path

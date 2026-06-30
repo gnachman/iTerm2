@@ -384,7 +384,7 @@
             if (ctype) {
                 _localeName.stringValue = [NSString stringWithFormat:@"LC_CTYPE=%@", ctype];
             } else {
-                DLog(@"enc=%@ %@", @([self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]), [guesser dictionaryWithLC_CTYPE]);
+                RLog(@"enc=%@ %@", @([self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]), [guesser dictionaryWithLC_CTYPE]);
                 _localeName.stringValue = @"Unexpectedly missing LC_CTYPE. Report a bug.";
             }
             break;

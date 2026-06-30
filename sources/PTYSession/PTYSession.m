@@ -1831,7 +1831,7 @@ ITERM_WEAKLY_REFERENCEABLE
                          forObjectType:(iTermObjectType)objectType
                     partialAttachments:(NSDictionary *)partialAttachments
                                options:(NSDictionary *)options {
-    DLog(@"Restoring session from arrangement");
+    RLog(@"Restoring session from arrangement");
 
     Profile *theBookmark =
     [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
@@ -2106,27 +2106,27 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_PID]]) {
                 DLog(@"Have a server PID in the arrangement");
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
-                DLog(@"Try to attach to pid %d", (int)serverPid);
+                RLog(@"Try to attach to pid %d", (int)serverPid);
                 // serverPid might be -1 if the user turned on session restoration and then quit.
                 if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid
                                                                               tty:arrangement[SESSION_ARRANGEMENT_TTY]]) {
-                    DLog(@"Success!");
+                    RLog(@"Success!");
                     didAttach = YES;
                 }
             } else if ([iTermMultiServerJobManager available] &&
                        [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_DICT]]) {
                 DLog(@"Have a server dict in the arrangement");
                 NSDictionary *serverDict = arrangement[SESSION_ARRANGEMENT_SERVER_DICT];
-                DLog(@"Try to attach to %@", serverDict);
+                RLog(@"Try to attach to %@", serverDict);
                 if (partialAttachments) {
                     id partial = partialAttachments[serverDict];
                     if (partial &&
                         [aSession tryToFinishAttachingToMultiserverWithPartialAttachment:partial] != 0) {
-                        DLog(@"Finished attaching to multiserver!");
+                        RLog(@"Finished attaching to multiserver!");
                         didAttach = YES;
                     }
                 } else if ([aSession tryToAttachToMultiserverWithRestorationIdentifier:serverDict]) {
-                    DLog(@"Attached to multiserver!");
+                    RLog(@"Attached to multiserver!");
                     didAttach = YES;
                 }
             }
@@ -2544,12 +2544,12 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Failing to attach because run jobs in servers is off");
         return NO;
     }
-    DLog(@"Try to attach...");
+    RLog(@"Try to attach...");
     if ([_shell tryToAttachToServerWithProcessId:serverPid tty:tty]) {
-        DLog(@"Success, attached.");
+        RLog(@"Success, attached.");
         return YES;
     } else {
-        DLog(@"Failed to attach");
+        RLog(@"Failed to attach");
         return NO;
     }
 }
@@ -2562,10 +2562,10 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Attached to multiserver. Not registered.");
     }
     if (results & iTermJobManagerAttachResultsAttached) {
-        DLog(@"Success, attached.");
+        RLog(@"Success, attached.");
         return YES;
     } else {
-        DLog(@"Failed to attach");
+        RLog(@"Failed to attach");
         return NO;
     }
 }
@@ -2574,7 +2574,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)attachToServer:(iTermGeneralServerConnection)serverConnection
             completion:(void (^)(void))completion {
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
-        DLog(@"Attaching to a server...");
+        RLog(@"Attaching to a server...");
         [_shell attachToServer:serverConnection completion:^(iTermJobManagerAttachResults results) {
             if (!(results & iTermJobManagerAttachResultsAttached)) {
                 [self brokenPipe];
@@ -3221,7 +3221,7 @@ ITERM_WEAKLY_REFERENCEABLE
      fromArrangement:(BOOL)fromArrangement
 webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
           completion:(void (^)(BOOL))completion {
-    DLog(@"startProgram:%@ ssh:%@ browser:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
+    RLog(@"startProgram:%@ ssh:%@ browser:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
          command,
          @(ssh),
          @(browser),
@@ -4273,7 +4273,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 
 - (void)threadedTaskBrokenPipe {
-    DLog(@"threaded task broken pipe");
+    RLog(@"threaded task broken pipe");
     // Put the call to brokenPipe in the same queue as the token executor to avoid a race.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self brokenPipe];
@@ -4339,7 +4339,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)tmuxDidDisconnect {
-    DLog(@"tmuxDidDisconnect");
+    RLog(@"tmuxDidDisconnect");
     if (_exited) {
         return;
     }
@@ -4502,7 +4502,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     assert(self.isRestartable);
     assert(_exited);
     _shouldRestart = NO;
-    DLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
+    RLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
     [self setExited:NO];
     [_shell autorelease];
     _shell = nil;
@@ -9121,7 +9121,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute {
-    DLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
+    RLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
     NSDictionary *env = [self environmentForNewJobFromEnvironment:self.environment
                                                     substitutions:self.substitutions
                                                       arrangement:nil
@@ -14185,7 +14185,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)bury {
-    DLog(@"Bury %@", self);
+    RLog(@"Bury %@", self);
     if (_synthetic) {
         DLog(@"Attempt to bury while synthetic");
         return;
@@ -14291,7 +14291,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
 {
-    DLog(@"uploadFiles:%@ toPath:%@", localFilenames, destinationPath.path);
+    RLog(@"uploadFiles:%@ toPath:%@", localFilenames, destinationPath.path);
 
     SCPFile *previous = nil;
     for (NSString *file in localFilenames) {
@@ -15347,7 +15347,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)reveal {
-    DLog(@"Reveal session %@", self);
+    RLog(@"Reveal session %@", self);
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
         DLog(@"disinter");
         [[iTermBuriedSessions sharedInstance] restoreSession:self];
@@ -18834,7 +18834,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)unhookSSHConductor {
-    DLog(@"Unhook %@", _conductor);
+    RLog(@"Unhook %@", _conductor);
     [self conductorWillDie];
     NSDictionary *config = _conductor.terminalConfiguration;
     if (config) {
@@ -23961,7 +23961,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)conductorWillDie {
-    DLog(@"conductorWillDie");
+    RLog(@"conductorWillDie");
     iTermPublisher<NSNumber *> *replacement = _conductor.parent.cpuUtilizationPublisher;
     if (!replacement) {
         replacement = [iTermLocalCPUUtilizationPublisher sharedInstance];
@@ -23990,7 +23990,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)conductorQuit {
-    DLog(@"conductorQuit");
+    RLog(@"conductorQuit");
     [self conductorWillDie];
     NSString *identity = _conductor.sshIdentity.description;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

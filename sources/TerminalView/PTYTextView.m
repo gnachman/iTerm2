@@ -5023,9 +5023,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)maybeUpload:(NSArray *)tuple {
     NSArray *propertyList = tuple[0];
     SCPPath *dropScpPath = tuple[1];
-    DLog(@"Confirm upload to %@", dropScpPath);
+    RLog(@"Confirm upload to %@", dropScpPath);
     if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
-        DLog(@"initiating upload");
+        RLog(@"initiating upload");
         [self.delegate uploadFiles:propertyList toPath:dropScpPath];
     }
 }
@@ -5061,7 +5061,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self.delegate textViewDidUpdateDropTargetVisibility];
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
-    DLog(@"Perform drag operation");
+    RLog(@"Perform drag operation");
     if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric | NSDragOperationLink)) {
         DLog(@"Drag operation is acceptable");
         NSArray *types = [draggingPasteboard types];
@@ -5070,28 +5070,28 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             if (filenames.count > 0) {
                 if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
                     // Option key held - upload files
-                    DLog(@"Option key held, uploading files: %@", filenames);
+                    RLog(@"Option key held, uploading files: %@", filenames);
                     NSPoint windowDropPoint = [sender draggingLocation];
                     return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
                 } else if ([self.delegate textViewIsOnLocalhost]) {
                     // On localhost, just paste the paths directly
-                    DLog(@"On localhost, pasting file paths directly: %@", filenames);
+                    RLog(@"On localhost, pasting file paths directly: %@", filenames);
                     return [self pasteValuesOnPasteboard:draggingPasteboard
                                            cdToDirectory:(dragOperation == NSDragOperationGeneric)];
                 } else {
                     // On remote host, show paste options dialog
-                    DLog(@"On remote host, showing paste options for dropped files: %@", filenames);
+                    RLog(@"On remote host, showing paste options for dropped files: %@", filenames);
                     [self.delegate textViewShowPasteOptionsForDroppedFiles:filenames];
                     return YES;
                 }
             }
         }
         // Fall back to pasting text values
-        DLog(@"No files, pasting text values");
+        RLog(@"No files, pasting text values");
         return [self pasteValuesOnPasteboard:draggingPasteboard
                                cdToDirectory:(dragOperation == NSDragOperationGeneric)];
     }
-    DLog(@"Drag/drop Failing");
+    RLog(@"Drag/drop Failing");
     return NO;
 }
 
@@ -6744,7 +6744,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)unfoldBlock:(NSString *)blockID {
     const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
     if (range.start.x < 0){
-        DLog(@"Failed to find block %@", blockID);
+        RLog(@"Failed to find block %@", blockID);
         return;
     }
     const long long offset = [self.dataSource totalScrollbackOverflow];
@@ -6756,7 +6756,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)foldBlock:(NSString *)blockID {
     const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
     if (range.start.x < 0 || range.start.y == range.end.y) {
-        DLog(@"Failed to fold block %@. range=%@", blockID, VT100GridCoordRangeDescription(range));
+        RLog(@"Failed to fold block %@. range=%@", blockID, VT100GridCoordRangeDescription(range));
         return;
     }
     const long long offset = [self.dataSource totalScrollbackOverflow];

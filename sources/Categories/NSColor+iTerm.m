@@ -512,7 +512,7 @@ iTermP3Color iTermSRGBColorToP3Color(iTermSRGBColor srgb) {
     NSKeyedUnarchiver *decoder = [[[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error] autorelease];
     if (error) {
         NSLog(@"Failed to decode color from string %@", s);
-        DLog(@"Failed to decode color from string %@", s);
+        RLog(@"Failed to decode color from string %@", s);
         return nil;
     }
     NSColor *color = [[[NSColor alloc] initWithCoder:decoder] autorelease];
@@ -862,7 +862,7 @@ BOOL iTermSRGBColorFromHexString(NSString *hexString, iTermSRGBColor *colorOut) 
         DLog(@"Convert color in space %@ to calibrated", colorSpace);
         NSColor *deviceColor = [self colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
         if (!deviceColor) {
-            DLog(@"Failed to convert %@ to device RGB color space", self);
+            RLog(@"Failed to convert %@ to device RGB color space", self);
             deviceColor = [NSColor colorWithSRGBRed:0.5 green:0.5 blue:0.5 alpha:1.0];
         }
         return [deviceColor dictionaryValuePreservingColorSpace];

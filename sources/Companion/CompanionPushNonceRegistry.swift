@@ -191,7 +191,7 @@ final class KeychainNonceStore: CompanionNonceStore {
         // is a real failure that silently disables cross-restart nonce
         // suppression, so log it for diagnosis.
         if status != errSecSuccess && status != errSecItemNotFound {
-            DLog("CompanionPushNonceRegistry: keychain load failed (\(status))")
+            RLog("CompanionPushNonceRegistry: keychain load failed (\(status))")
         }
         guard status == errSecSuccess,
               let data = item as? Data,
@@ -213,14 +213,14 @@ final class KeychainNonceStore: CompanionNonceStore {
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let deleteStatus = SecItemDelete(base as CFDictionary)
         if deleteStatus != errSecSuccess && deleteStatus != errSecItemNotFound {
-            DLog("CompanionPushNonceRegistry: keychain delete failed (\(deleteStatus))")
+            RLog("CompanionPushNonceRegistry: keychain delete failed (\(deleteStatus))")
         }
         let addStatus = SecItemAdd(add as CFDictionary, nil)
         // A persistent add failure means nonces don't survive a restart, so a
         // post-relaunch fetch is misclassified as unsolicited (spurious presence
         // warning) with no other clue; surface it.
         if addStatus != errSecSuccess {
-            DLog("CompanionPushNonceRegistry: keychain add failed (\(addStatus)); nonce won't survive restart")
+            RLog("CompanionPushNonceRegistry: keychain add failed (\(addStatus)); nonce won't survive restart")
         }
     }
 }

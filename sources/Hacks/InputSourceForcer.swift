@@ -59,7 +59,7 @@ class InputSourceForcer: NSObject {
 
     @objc
     func begin() {
-        DLog("Begin input source forcing")
+        RLog("Begin input source forcing")
         it_assert(!begun)
         active = NSApp.isActive
         begun = true
@@ -85,7 +85,7 @@ class InputSourceForcer: NSObject {
         guard active else {
             return
         }
-        DLog("Keyboard selection did change to \(systemLocale ?? "none")")
+        RLog("Keyboard selection did change to \(systemLocale ?? "none")")
         guard !haveChangedSinceBecomingActive else {
             DLog("Already forced after becoming active so ignoring keyboard selection change")
             return
@@ -152,7 +152,7 @@ class InputSourceForcer: NSObject {
             DLog("selectInputLocale: Found input source with id \(keyboardID) and selecting it")
             TISSelectInputSource(inputSource)
         } else {
-            DLog("selectInputLocale: there is no input source with id \(keyboardID)")
+            RLog("selectInputLocale: there is no input source with id \(keyboardID)")
         }
     }
 }

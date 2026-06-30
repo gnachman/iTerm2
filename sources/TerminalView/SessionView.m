@@ -342,7 +342,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)moveToolbarTo:(SessionView *)other {
-    DLog(@"moveToolbarTo: from %p (frame=%@) to %p (frame=%@)",
+    RLog(@"moveToolbarTo: from %p (frame=%@) to %p (frame=%@)",
          self, NSStringFromRect(self.frame),
          other, NSStringFromRect(other.frame));
     [other->_toolbarView removeFromSuperview];
@@ -362,7 +362,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // setToolbarItems: path returns changedToolbar==NO (the toolbar was moved,
     // not added or removed). Force a layout so browser / scrollview frames
     // reflect this view's current toolbar state.
-    DLog(@"layoutContentsForNewlyActiveSession on %p frame=%@ toolbar=%p scrollview.frame=%@",
+    RLog(@"layoutContentsForNewlyActiveSession on %p frame=%@ toolbar=%p scrollview.frame=%@",
          self, NSStringFromRect(self.frame), _toolbarView,
          NSStringFromRect([self scrollview].frame));
     [self updateLayout];
@@ -613,7 +613,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)takeFindDriverFrom:(SessionView *)donorView delegate:(id<iTermFindDriverDelegate>)delegate {
-    DLog(@"Take find driver from %@, give it to %@ with delegate %@", donorView, self, delegate);
+    RLog(@"Take find driver from %@, give it to %@ with delegate %@", donorView, self, delegate);
     if (_dropDownFindDriver.viewController.isViewLoaded) {
         [_dropDownFindDriver.viewController.view removeFromSuperview];
     }
@@ -779,7 +779,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
             iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
             if (!statusBarViewController) {
-                DLog(@"No status bar VC from %@", self.delegate);
+                RLog(@"No status bar VC from %@", self.delegate);
                 return;
             }
             _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController
@@ -793,7 +793,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
             iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
             if (!statusBarViewController) {
-                DLog(@"No status bar VC from %@", self.delegate);
+                RLog(@"No status bar VC from %@", self.delegate);
                 return;
             }
             _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.temporaryLeftComponent.statusBarComponentSearchViewController
@@ -840,7 +840,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     if (useMetal != _useMetal) {
         _useMetal = useMetal;
-        DLog(@"setUseMetal:%@ dataSource:%@", @(useMetal), dataSource);
+        RLog(@"setUseMetal:%@ dataSource:%@", @(useMetal), dataSource);
         if (useMetal) {
             [self installMetalViewWithDataSource:dataSource];
         } else {
@@ -1978,7 +1978,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-    DLog(@"performDragOperation: %@", sender);
+    RLog(@"performDragOperation: %@", sender);
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];
     [_delegate sessionViewDraggingExited:sender];
     return result;
@@ -2004,7 +2004,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     PTYScrollView *scrollView = [self scrollview];
     NSRect frame = [scrollView frame];
     if (_showTitle) {
-        DLog(@"Adjust frame to make make room for title bar");
+        RLog(@"Adjust frame to make make room for title bar");
         frame.size.height -= iTermGetSessionViewTitleHeight();
         _title = [[SessionTitleView alloc] initWithFrame:NSMakeRect(0,
                                                                     self.frame.size.height - iTermGetSessionViewTitleHeight(),
@@ -2020,7 +2020,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         [_title updateLockButton];
         [self addSubviewBelowFindView:_title];
     } else {
-        DLog(@"Adjust frame to eliminate title bar");
+        RLog(@"Adjust frame to eliminate title bar");
         frame.size.height += iTermGetSessionViewTitleHeight();
         [_title removeFromSuperview];
         _title = nil;
@@ -2151,7 +2151,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     PTYScrollView *scrollView = [self scrollview];
     NSRect frame = [scrollView frame];
     if (_showBottomStatusBar) {
-        DLog(@"Adjust frame to make room for status bar");
+        RLog(@"Adjust frame to make room for status bar");
         iTermStatusBarViewController *statusBar = self.delegate.sessionViewStatusBarViewController;
         _title.statusBarViewController = nil;
         frame.size.height -= iTermGetStatusBarHeight();
@@ -2167,7 +2167,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         }
         [self addSubviewBelowFindView:_genericStatusBarContainer];
     } else {
-        DLog(@"Adjust frame to eliminate status bar");
+        RLog(@"Adjust frame to eliminate status bar");
         [_genericStatusBarContainer removeFromSuperview];
         _genericStatusBarContainer = nil;
         frame.size.height += iTermGetStatusBarHeight();
@@ -2632,7 +2632,7 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
 }
 
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {
-    DLog(@"Add announcement %@ to %@", announcement.title, self.delegate);
+    RLog(@"Add announcement %@ to %@", announcement.title, self.delegate);
     [_announcements addObject:announcement];
     announcement.delegate = self;
     if (!_currentAnnouncement) {

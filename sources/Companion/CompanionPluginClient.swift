@@ -109,7 +109,7 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
         if let c = _context { return c }
         let c = JSContext()!
         c.exceptionHandler = { _, exception in
-            DLog("Companion plugin JS exception: \(exception?.toString() ?? "(nil)")")
+            RLog("Companion plugin JS exception: \(exception?.toString() ?? "(nil)")")
         }
         registerHostFunctions(c)
         c.evaluateScript(code)

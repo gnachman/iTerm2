@@ -140,7 +140,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         }
     }
     
-    DLog(@"Request validates as websocket upgrade request");
+    RLog(@"Request validates as websocket upgrade request");
     iTermWebSocketConnection *conn = [[self alloc] initWithConnection:connection];
     if (conn) {
         conn->_preauthorized = authenticated;
@@ -208,7 +208,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         while (weakSelf) {
             NSMutableData *data = [self->_connection readSynchronously];
             if (!data) {
-                DLog(@"Read EOF from connection");
+                RLog(@"Read EOF from connection");
                 [weakSelf abortWithCompletion:nil];
                 return;
             }
@@ -323,7 +323,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 // queue
 - (void)reallyAbort {
     if (_state != iTermWebSocketConnectionStateClosed) {
-        DLog(@"Aborting connection");
+        RLog(@"Aborting connection");
         _state = iTermWebSocketConnectionStateClosed;
         dispatch_queue_t queue = self.delegateQueue;
         if (queue) {
@@ -400,7 +400,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
         case iTermWebSocketOpcodeConnectionClose:
             if (_state == iTermWebSocketConnectionStateOpen) {
-                DLog(@"open->closing");
+                RLog(@"open->closing");
                 _state = iTermWebSocketConnectionStateClosing;
                 [self sendFrame:[iTermWebSocketFrame closeFrame]];
 
@@ -410,7 +410,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 });
                 [self performClose];
             } else if (_state == iTermWebSocketConnectionStateClosing) {
-                DLog(@"closing->closed");
+                RLog(@"closing->closed");
                 _state = iTermWebSocketConnectionStateClosed;
                 dispatch_async(self.delegateQueue, ^{
                     [self.delegate webSocketConnectionDidTerminate:self];
@@ -435,7 +435,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
 // queue
 - (void)reallyClose {
-    DLog(@"Client initiated close");
+    RLog(@"Client initiated close");
     if (_state == iTermWebSocketConnectionStateOpen) {
         DLog(@"Send close frame");
         _state = iTermWebSocketConnectionStateClosing;
@@ -448,7 +448,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 - (void)sendUpgradeResponseWithKey:(NSString *)key
                            version:(NSInteger)version
                         completion:(void (^)(BOOL))completion {
-    DLog(@"Upgrading with key %@", key);
+    RLog(@"Upgrading with key %@", key);
     key = [key stringByAppendingString:@"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"];
 
     NSData *data = [key dataUsingEncoding:NSUTF8StringEncoding];

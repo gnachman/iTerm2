@@ -569,7 +569,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _creationTime = [NSDate it_timeSinceBoot];
     const iTermWindowType windowType = iTermThemedWindowType(unsafeWindowType);
     iTermWindowType savedWindowType = iTermThemedWindowType(unsafeSavedWindowType);
-    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
+    RLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
          windowType,
@@ -2266,7 +2266,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab {
-    DLog(@"Remove tab %@", aTab);
+    RLog(@"Remove tab %@", aTab);
     if (![aTab isTmuxTab]) {
         // Exit synthetic sessions (filter, instant replay, screenshot mode)
         // so the restorable session captures live sessions that can be revived.
@@ -3460,7 +3460,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([session revive]) {
             [revivedSessions addObject:session];
         } else {
-            DLog(@"Failed to revive session %@", session);
+            RLog(@"Failed to revive session %@", session);
         }
     }
     if ([term loadArrangement:arrangement
@@ -3643,7 +3643,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
                   name:(NSString *)name {
-    DLog(@"begin loadTmuxLayout");
+    RLog(@"begin loadTmuxLayout");
     [self beginTmuxOriginatedResize];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
                                   visibleLayout:visibleParseTree
@@ -3668,7 +3668,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // the tab. This must be done after setting the tmux controller.
     [tab loadTitleFromSession];
     [self endTmuxOriginatedResize];
-    DLog(@"end loadTmuxLayout");
+    RLog(@"end loadTmuxLayout");
 }
 
 - (void)beginTmuxOriginatedResize
@@ -4510,7 +4510,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
-   DLog(@"windowWillClose %@", self);
+   RLog(@"windowWillClose %@", self);
     _closing = YES;
     [iTermWindowCornerRadiusDetector windowDidClose:self.window];
     if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
@@ -6570,14 +6570,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
-    DLog(@"windowWillEnterFullScreen window=%d", (int)self.window.windowNumber);
+    RLog(@"windowWillEnterFullScreen window=%d", (int)self.window.windowNumber);
     _titlebarAccessoryNanny.enteringFullScreen = YES;
     [iTermWindowCornerRadiusDetector windowWillTransitionFullScreen:self.window];
     [self windowWillEnterFullScreenImpl:notification];
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
-    DLog(@"windowDidEnterFullScreen window=%d", (int)self.window.windowNumber);
+    RLog(@"windowDidEnterFullScreen window=%d", (int)self.window.windowNumber);
     _titlebarAccessoryNanny.enteringFullScreen = NO;
     [iTermWindowCornerRadiusDetector windowDidTransitionFullScreen:self.window];
     [self windowDidEnterFullScreenImpl:notification];
@@ -6585,7 +6585,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
-    DLog(@"windowDidFailToEnterFullScreen window=%d", (int)self.window.windowNumber);
+    RLog(@"windowDidFailToEnterFullScreen window=%d", (int)self.window.windowNumber);
     _titlebarAccessoryNanny.enteringFullScreen = NO;
     [iTermWindowCornerRadiusDetector windowDidTransitionFullScreen:self.window];
     [self windowDidFailToEnterFullScreenImpl:window];
@@ -6606,13 +6606,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
-    DLog(@"windowWillExitFullScreen window=%d", (int)self.window.windowNumber);
+    RLog(@"windowWillExitFullScreen window=%d", (int)self.window.windowNumber);
     [iTermWindowCornerRadiusDetector windowWillTransitionFullScreen:self.window];
     [self windowWillExitFullScreenImpl:notification];
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-    DLog(@"windowDidExitFullScreen window=%d", (int)self.window.windowNumber);
+    RLog(@"windowDidExitFullScreen window=%d", (int)self.window.windowNumber);
     [iTermWindowCornerRadiusDetector windowDidTransitionFullScreen:self.window];
     [self windowDidExitFullScreenImpl:notification];
     [self updateActivePaneBordersAfterFullScreenTransition];
@@ -8492,7 +8492,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                inSession:(PTYSession *)session
                                  forUser:(BOOL)forUser
                          didSendUserName:(void (^)(void))didSendUserName {
-    DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
+    RLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
     if (session && !session.canOpenPasswordManager) {
         DLog(@"Can't open password manager right now");
         return;
@@ -9479,7 +9479,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
           addingSession:(PTYSession *)newSession
           targetSession:(PTYSession *)targetSession
            performSetup:(BOOL)performSetup {
-    DLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
+    RLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
          @(isVertical), @(before), newSession, targetSession, @(performSetup), self);
     [self.currentSession refuseFirstResponderAtCurrentMouseLocation];
     NSColor *tabColor;
@@ -13000,7 +13000,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                         timeout:(void (^)(NSArray *))timeout
            largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider
                      completion:(void (^)(void))completion {
-    DLog(@"asyncRestoreArrangement: begin");
+    RLog(@"asyncRestoreArrangement: begin");
     _sessionRestorationCount++;
     [self openPartialAttachmentsForArrangement:arrangement
                                        timeout:timeout
@@ -13050,7 +13050,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             return;
         }
         haveNotified = YES;
-        DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: timeout");
+        RLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: timeout");
         completion([result autorelease]);
     });
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{

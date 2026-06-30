@@ -167,7 +167,7 @@ static NSString *const kArrangement = @"Arrangement";
         return;
     }
 
-    DLog(@"Create new window controller for profile hotkey");
+    RLog(@"Create new window controller for profile hotkey");
     PseudoTerminal *windowController = [self windowControllerFromRestorableState];
     [_windowController release];
     _windowController = nil;
@@ -235,7 +235,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-    DLog(@"activeSpaceDidChangei %@", self.windowController);
+    RLog(@"activeSpaceDidChangei %@", self.windowController);
     if (!self.isHotKeyWindowOpen) {
         DLog(@"Not open");
         return;
@@ -652,13 +652,13 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)rollInAnimated:(BOOL)animated {
-    DLog(@"Roll in [show] hotkey window");
+    RLog(@"Roll in [show] hotkey window");
     if (_rollingIn) {
         DLog(@"Already rolling in");
         return;
     }
     if (self.rollingOut) {
-        DLog(@"Rolling out. Cancel roll in");
+        RLog(@"Rolling out. Cancel roll in");
         return;
     }
     _rollingIn = YES;
@@ -723,7 +723,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)rollOut:(BOOL)causedByKeypress {
-    DLog(@"Roll out [hide] hotkey window");
+    RLog(@"Roll out [hide] hotkey window");
     DLog(@"\n%@", [NSThread callStackSymbols]);
     if (self.rollingOut) {
         DLog(@"Already rolling out");
@@ -732,7 +732,7 @@ static NSString *const kArrangement = @"Arrangement";
     // Note: the test for alpha is because when you become an LSUIElement, the
     // window's alpha could be 1 but it's still invisible.
     if (self.windowController.window.alphaValue == 0) {
-        DLog(@"RollOutHotkeyTerm returning because term isn't visible.");
+        RLog(@"RollOutHotkeyTerm returning because term isn't visible.");
         return;
     }
 
@@ -872,14 +872,14 @@ static NSString *const kArrangement = @"Arrangement";
             }
         });
     } else {
-        DLog(@"Cannot cancel. cancelable=%@ rollingOut=%@", @(_rollOutCancelable), @(self.rollingOut));
+        RLog(@"Cannot cancel. cancelable=%@ rollingOut=%@", @(_rollOutCancelable), @(self.rollingOut));
     }
 }
 
 #pragma mark - Protected
 
 - (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)genericSiblings {
-    DLog(@"hotKeypressedWithSiblings called on %@ with siblings %@", self, genericSiblings);
+    RLog(@"hotKeypressedWithSiblings called on %@ with siblings %@", self, genericSiblings);
     DLog(@"Secure input=%@", @([[iTermSecureKeyboardEntryController sharedInstance] isEnabled]));
     if (@available(macOS 12.0, *)) {
         if ([[iTermSecureKeyboardEntryController sharedInstance] isEnabled] &&
@@ -919,7 +919,7 @@ static NSString *const kArrangement = @"Arrangement";
         return result;
     }];
     if (anyTransitioning) {
-        DLog(@"One or more siblings is transitioning so I'm returning without doing anything.");
+        RLog(@"One or more siblings is transitioning so I'm returning without doing anything.");
         return siblings;
     }
     DLog(@"toggle window %@. siblings=%@", self, siblings);
@@ -932,7 +932,7 @@ static NSString *const kArrangement = @"Arrangement";
         return anObject.windowController.window.isKeyWindow;
     }];
 
-    DLog(@"Hotkey pressed. All open=%@  any is key=%@  siblings=%@",
+    RLog(@"Hotkey pressed. All open=%@  any is key=%@  siblings=%@",
          @(allSiblingsOpen), @(anyIsKey), siblings);
     for (iTermProfileHotKey *sibling in [NSSet setWithArray:[siblings arrayByAddingObject:self]]) {
         DLog(@"Invoking handleHotkeyPressWithAllOpen:%@ anyIsKey:%@ on %@", @(allSiblingsOpen), @(anyIsKey), sibling);
@@ -1049,7 +1049,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)rollInFinished {
-    DLog(@"Roll-in finished for %@", self);
+    RLog(@"Roll-in finished for %@", self);
     _rollingIn = NO;
     if (self.windowController.window) {
         [[iTermApplication sharedApplication] it_makeWindowKey:self.windowController.window];
@@ -1128,7 +1128,7 @@ static NSString *const kArrangement = @"Arrangement";
     }
     const BOOL hotkeyWindowOnOtherSpace = ![self.windowController.window isOnActiveSpace];
     if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
-        DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
+        RLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
         if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
             [NSApp activateIgnoringOtherApps:YES];
         }

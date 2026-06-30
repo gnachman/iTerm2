@@ -87,7 +87,7 @@
                                       task:task];
         dispatch_async(dispatch_get_main_queue(), ^{
             if (status == iTermJobManagerForkAndExecStatusSuccess) {
-                DLog(@"Register task for pid %@", @(self.childPid));
+                RLog(@"Register task for pid %@", @(self.childPid));
                 [[TaskNotifier sharedInstance] registerTask:task];
             }
             if (completion) {
@@ -162,17 +162,17 @@
     }
     [[iTermProcessCache sharedInstance] unregisterTrackedPID:self.childPid];
     if (toProcessGroup) {
-        DLog(@"Kill process group %@ with signal %@", @(self.childPid), @(signo));
+        RLog(@"Kill process group %@ with signal %@", @(self.childPid), @(signo));
         killpg(self.childPid, signo);
     } else {
-        DLog(@"Kill process %@ with signal %@", @(self.childPid), @(signo));
+        RLog(@"Kill process %@ with signal %@", @(self.childPid), @(signo));
         kill(self.childPid, signo);
     }
     DLog(@"%@", [NSThread callStackSymbols]);
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
-    DLog(@"%@ killWithMode:%@", self, @(mode));
+    RLog(@"%@ killWithMode:%@", self, @(mode));
     switch (mode) {
         case iTermJobManagerKillingModeRegular:
             [self sendSignal:SIGHUP toProcessGroup:NO];

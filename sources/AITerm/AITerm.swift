@@ -304,7 +304,7 @@ class AITermController {
                 }
                 delegate?.aitermControllerWillSendRequest(self)
             case .error(let error):
-                DLog("error: \(error)")
+                RLog("error: \(error)")
                 state = .ground
                 switch query {
                 case .completion(_):
@@ -319,7 +319,7 @@ class AITermController {
                                                                              error: error)
                 }
             case .pluginError(let error):
-                DLog("plugin error: \(error.reason)")
+                RLog("plugin error: \(error.reason)")
                 state = .ground
             case .webResponse:
                 DLog("Unexpected event \(event) in \(state)")
@@ -350,10 +350,10 @@ class AITermController {
                 }
                 delegate?.aitermControllerWillSendRequest(self)
             case .pluginError(let error):
-                DLog("plugin error: \(error.reason)")
+                RLog("plugin error: \(error.reason)")
                 state = .ground
             case .error(let error):
-                DLog("error: \(error)")
+                RLog("error: \(error)")
                 state = .ground
                 delegate?.aitermController(self, didFailWithError: error)
                 state = .ground
@@ -399,7 +399,7 @@ class AITermController {
                 delegate?.aitermControllerDidCancelOutstandingRequest(self)
                 state = .ground
             case .error(let error):
-                DLog("error: \(error)")
+                RLog("error: \(error)")
                 state = .ground
                 if streamParserState != nil && !(error is PendingCommandCanceled) {
                     delegate?.aitermController(self, didStreamUpdate: "An error ocurred: \(error.localizedDescription)")
@@ -1018,11 +1018,11 @@ class AITermController {
             // (or otherwise propagate `message.reasoningContent`) from here.
             amended.append(message)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
-                DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
+                RLog("Invoke function with arguments \(functionCall.arguments ?? "")")
                 delegate?.aitermController(self, willInvokeFunction: impl)
                 impl.invoke(message: message,
                             json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
-                    DLog("result of function call is \(result)")
+                    RLog("result of function call is \(result)")
                     guard let self else {
                         DLog("I have been released")
                         return
@@ -1057,7 +1057,7 @@ class AITermController {
                         request(messages: amended, stream: shouldStream)
                         return
                     case .failure(let error):
-                        DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
+                        RLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
                         handle(event: .error(error))
                         return
                     }

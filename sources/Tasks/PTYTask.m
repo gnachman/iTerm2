@@ -98,7 +98,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)dealloc {
-    DLog(@"Dealloc PTYTask %p", self);
+    RLog(@"Dealloc PTYTask %p", self);
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders? It is not clear from git history why killpg is used here and
@@ -205,7 +205,7 @@ static void HandleSigChld(int n) {
 
 // This runs on the task notifier thread
 - (void)setCoprocess:(Coprocess *)coprocess {
-    DLog(@"Set coprocess of %@ to %@", self, coprocess);
+    RLog(@"Set coprocess of %@ to %@", self, coprocess);
     @synchronized (self) {
         coprocess_ = coprocess;
         self.hasMuteCoprocess = coprocess_.mute;
@@ -263,7 +263,7 @@ static void HandleSigChld(int n) {
       maybeScaleFactor:(CGFloat)maybeScaleFactor
                 isUTF8:(BOOL)isUTF8
             completion:(void (^)(void))completion {
-    DLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
+    RLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
          progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8));
 
     if ([iTermAdvancedSettingsModel runJobsInServers] && ![iTermMultiServerJobManager available]) {
@@ -299,7 +299,7 @@ static void HandleSigChld(int n) {
     if ([NSObject object:tmuxClientProcessID isEqualToObject:_tmuxClientProcessID]) {
         return;
     }
-    DLog(@"Set tmux client process ID for %@ to %@", self, tmuxClientProcessID);
+    RLog(@"Set tmux client process ID for %@ to %@", self, tmuxClientProcessID);
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -312,7 +312,7 @@ static void HandleSigChld(int n) {
 - (void)setReadOnlyFileDescriptor:(int)readOnlyFileDescriptor {
     iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:self->_jobManagerQueue];
     jobManager.fd = readOnlyFileDescriptor;
-    DLog(@"Configure %@ as tmux task", self);
+    RLog(@"Configure %@ as tmux task", self);
     _jobManager = jobManager;
     [[TaskNotifier sharedInstance] registerTask:self];
 }
@@ -380,7 +380,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)stop {
-    DLog(@"stop %@", self);
+    RLog(@"stop %@", self);
     self.paused = NO;
     [self.loggingHelper stop];
     [self killWithMode:iTermJobManagerKillingModeRegular];
@@ -393,7 +393,7 @@ static void HandleSigChld(int n) {
 }
 
 - (void)brokenPipe {
-    DLog(@"brokenPipe %@", self);
+    RLog(@"brokenPipe %@", self);
     @synchronized(self) {
         brokenPipe_ = YES;
     }
@@ -403,7 +403,7 @@ static void HandleSigChld(int n) {
 
 // Main queue
 - (void)didRegister {
-    DLog(@"didRegister %@", self);
+    RLog(@"didRegister %@", self);
     [self.delegate taskDidRegister:self];
 }
 
@@ -506,7 +506,7 @@ static void HandleSigChld(int n) {
             if ([self.jobManager isKindOfClass:[iTermMonoServerJobManager class]]) {
                 return;
             }
-            DLog(@"Replace jobmanager %@ with monoserver instance", self.jobManager);
+            RLog(@"Replace jobmanager %@ with monoserver instance", self.jobManager);
             self.jobManager = [[iTermMonoServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
             return;
 
@@ -514,7 +514,7 @@ static void HandleSigChld(int n) {
             if ([self.jobManager isKindOfClass:[iTermMultiServerJobManager class]]) {
                 return;
             }
-            DLog(@"Replace jobmanager %@ with multiserver instance", self.jobManager);
+            RLog(@"Replace jobmanager %@ with multiserver instance", self.jobManager);
             self.jobManager = [[iTermMultiServerJobManager alloc] initWithQueue:self->_jobManagerQueue];
             return;
     }
@@ -537,7 +537,7 @@ static void HandleSigChld(int n) {
     assert([self canAttach]);
     [self setJobManagerType:serverConnection.type];
     if (serverConnection.type == iTermGeneralServerConnectionTypeMulti) {
-        DLog(@"PTYTask: attach to multiserver %@", @(serverConnection.multi.number));
+        RLog(@"PTYTask: attach to multiserver %@", @(serverConnection.multi.number));
     }
     return [_jobManager attachToServer:serverConnection
                          withProcessID:nil
@@ -561,7 +561,7 @@ static void HandleSigChld(int n) {
         return NO;
     }
 
-    DLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d, tty %@", (int)thePid, tty);
+    RLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d, tty %@", (int)thePid, tty);
     iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRun(thePid);
     if (!serverConnection.ok) {
         NSLog(@"Failed with error %s", serverConnection.error);
@@ -594,7 +594,7 @@ static void HandleSigChld(int n) {
         return 0;
     }
 
-    DLog(@"tryToAttachToMultiserverWithRestorationIdentifier:%@", restorationIdentifier);
+    RLog(@"tryToAttachToMultiserverWithRestorationIdentifier:%@", restorationIdentifier);
     return [self attachToServer:generalConnection];
 }
 
@@ -629,7 +629,7 @@ static void HandleSigChld(int n) {
 
 - (void)registerTmuxTask {
     _isTmuxTask = YES;
-    DLog(@"Register pid %@ as coprocess-only task", @(self.pid));
+    RLog(@"Register pid %@ as coprocess-only task", @(self.pid));
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
@@ -819,7 +819,7 @@ static void HandleSigChld(int n) {
             break;
 
         case iTermJobManagerForkAndExecStatusFailedToFork: {
-            DLog(@"Unable to fork %@: %s", progpath, strerror(optionalErrorCode.intValue));
+            RLog(@"Unable to fork %@: %s", progpath, strerror(optionalErrorCode.intValue));
             NSString *error = @"Unable to fork child process: you may have too many processes already running.";
             if (optionalErrorCode) {
                 error = [NSString stringWithFormat:@"%@ The system error was: %s", error, strerror(optionalErrorCode.intValue)];
@@ -904,7 +904,7 @@ static void HandleSigChld(int n) {
     assert(self.jobManager);
     const int fd = self.fd;
     if ([self.jobManager closeFileDescriptor]) {
-        DLog(@"Deregister file descriptor %d for process %@ after closing it", fd, @(self.pid));
+        RLog(@"Deregister file descriptor %d for process %@ after closing it", fd, @(self.pid));
         [[TaskNotifier sharedInstance] deregisterTask:self];
     }
 }

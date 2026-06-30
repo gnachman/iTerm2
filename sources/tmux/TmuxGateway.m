@@ -454,7 +454,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     // It's an instance of attacker-controlled values that we then output which could be used as user input.
     NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%paste-buffer-changed (buffer[0-9]+)"];
     if (components.count != 2) {
-        DLog(@"Unexpected syntax: %@", command);
+        RLog(@"Unexpected syntax: %@", command);
         return;
     }
     [delegate_ tmuxSessionPasteDidChange:components[1]];
@@ -494,7 +494,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         NSString *clientName = components[1];
         [delegate_ tmuxClientSessionChanged:clientName];
     } else {
-        DLog(@"Unexpected client-session-changed syntax: %@", command);
+        RLog(@"Unexpected client-session-changed syntax: %@", command);
     }
 }
 
@@ -505,7 +505,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         NSString *clientName = components[1];
         [delegate_ tmuxClientDetached:clientName];
     } else {
-        DLog(@"Unexpected client-detached syntax: %@", command);
+        RLog(@"Unexpected client-detached syntax: %@", command);
     }
 }
 
@@ -606,13 +606,13 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
     // Remove subsequent commands belonging to the same list so we can go back to life
     // as usual.
-    DLog(@"Automatically fail the next command.");
+    RLog(@"Automatically fail the next command.");
     return YES;
 }
 
 - (void)performInitializationOnCommandResponseWithError:(BOOL)withError {
     if ([currentCommand_[kCommandIsInitial] boolValue]) {
-        DLog(@"Begin accepting notifications");
+        RLog(@"Begin accepting notifications");
         acceptNotifications_ = YES;
     }
     if (_initialized) {
@@ -868,7 +868,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         [self parseBegin:command];
     } else {
         if ([command hasPrefix:@"%"]) {
-            DLog(@"Unrecognized notification: %@", command);
+            RLog(@"Unrecognized notification: %@", command);
             return;
         }
         if (![iTermAdvancedSettingsModel tolerateUnrecognizedTmuxCommands]) {
@@ -878,7 +878,7 @@ static NSString *kCommandTimestamp = @"timestamp";
             return;
         }
         // We'll be tolerant of unrecognized commands.
-        DLog(@"Unrecognized command \"%@\"", command);
+        RLog(@"Unrecognized command \"%@\"", command);
         [strayMessages_ appendFormat:@"%@\n", command];
     }
 }
@@ -1257,7 +1257,7 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
         }
         [self enqueueCommandDict:amended];
         if (disconnected_) {
-            DLog(@"Aborting! Disconnected");
+            RLog(@"Aborting! Disconnected");
             return;
         }
         sep = @"; ";
@@ -1286,12 +1286,12 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
         [delegate_ tmuxWriteString:string];
         return;
     }
-    DLog(@"Defer writing %@", string);
+    RLog(@"Defer writing %@", string);
     [_writeQueue appendString:string];
 }
 
 - (void)flushWriteQueue {
-    DLog(@"flushWriteQueue: %@", _writeQueue);
+    RLog(@"flushWriteQueue: %@", _writeQueue);
     if (!_writeQueue.length) {
         return;
     }

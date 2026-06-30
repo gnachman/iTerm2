@@ -100,7 +100,7 @@ NSString *kLayoutDictAllInitialWindowsAdded = @"all-initial-windows-added";
         if (components.count == 3) {
             tree[kLayoutDictWidthKey] = @([components[1] intValue]);
             tree[kLayoutDictHeightKey] = @([components[2] intValue]);
-            DLog(@"%%layout-change reported window size of %@ x %@",
+            RLog(@"%%layout-change reported window size of %@ x %@",
                  tree[kLayoutDictWidthKey],
                  tree[kLayoutDictHeightKey]);
         }

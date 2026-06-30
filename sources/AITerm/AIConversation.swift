@@ -258,7 +258,7 @@ struct AIConversation {
                     }
                 }
             } else {
-                DLog("No registration provider found")
+                RLog("No registration provider found")
                 completion(AIError("You must provide a valid API key to use AI features in iTerm2"))
             }
         }

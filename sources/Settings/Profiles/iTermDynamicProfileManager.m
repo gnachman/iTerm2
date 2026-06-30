@@ -102,7 +102,7 @@
       _events.notificationLatency = [iTermAdvancedSettingsModel dynamicProfilesNotificationLatency];
       _events.delegate = self;
       _paths = self.pathsToWatch;
-      DLog(@"Watching files: %@, folders: %@", _paths.files, _paths.folders);
+      RLog(@"Watching files: %@, folders: %@", _paths.files, _paths.folders);
       [self startWatching];
 
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(profileDidChange:) name:iTermProfileDidChange object:nil];
@@ -258,12 +258,12 @@
 
 // Call this when a file or folder changes.
 - (void)somethingChanged {
-    DLog(@"Path watcher noticed a change");
+    RLog(@"Path watcher noticed a change");
     [self reloadDynamicProfiles];
 
     iTermFilesAndFolders *updatedPaths = self.pathsToWatch;
     if (![updatedPaths isEqual:_paths]) {
-        DLog(@"Paths to watch changed to %@", updatedPaths);
+        RLog(@"Paths to watch changed to %@", updatedPaths);
         [self stopWatching];
         _paths = updatedPaths;
         [self startWatching];
@@ -283,7 +283,7 @@
 
 - (void)reallyReloadDynamicProfiles {
     NSString *path = [self dynamicProfilesPath];
-    DLog(@"Reloading dynamic profiles from %@", path);
+    RLog(@"Reloading dynamic profiles from %@", path);
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
     // Load the current dynamic profiles into |newProfiles|. The |guids| set
@@ -641,7 +641,7 @@
 // Remove a dynamic profile from the model. Updates displays of profiles,
 // references to the profile, etc.
 - (BOOL)removeDynamicProfile:(Profile *)profile {
-    DLog(@"Remove dynamic profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
+    RLog(@"Remove dynamic profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
     ProfileModel *model = [ProfileModel sharedInstance];
     if ([ITAddressBookMgr canRemoveProfile:profile fromModel:model]) {
         return [ITAddressBookMgr removeProfile:profile fromModel:model];

@@ -79,7 +79,7 @@
     UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
     [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            DLog(@"auth status %@", @(settings.authorizationStatus));
+            RLog(@"auth status %@", @(settings.authorizationStatus));
             switch (settings.authorizationStatus) {
                 case UNAuthorizationStatusAuthorized:
                     [self invokeAllPendingCompletionsWithResult:YES];
@@ -90,9 +90,9 @@
                                           completionHandler:^(BOOL authGranted, NSError * _Nullable error) {
                         dispatch_async(dispatch_get_main_queue(), ^{
                             if (error) {
-                                DLog(@"Notification authorization error: %@", error);
+                                RLog(@"Notification authorization error: %@", error);
                             }
-                            DLog(@"granted=%@", @(authGranted));
+                            RLog(@"granted=%@", @(authGranted));
                             [self invokeAllPendingCompletionsWithResult:authGranted];
                         });
                     }];
@@ -151,7 +151,7 @@
        windowIndex:(int)windowIndex
           tabIndex:(int)tabIndex
          viewIndex:(int)viewIndex {
-    DLog(@"Notify title=%@ description=%@ window=%@ tab=%@ view=%@",
+    RLog(@"Notify title=%@ description=%@ window=%@ tab=%@ view=%@",
             title, description, @(windowIndex), @(tabIndex), @(viewIndex));
 
     if (description == nil) {
@@ -221,7 +221,7 @@
         [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
                                                                withCompletionHandler:^(NSError * _Nullable error) {
             if (error) {
-                DLog(@"Error posting notification: %@", error);
+                RLog(@"Error posting notification: %@", error);
             }
         }];
     }];
@@ -235,7 +235,7 @@
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex
              sticky:(BOOL)sticky {
-    DLog(@"Notify title=%@ description=%@ window=%@ tab=%@ view=%@ sticky=%@",
+    RLog(@"Notify title=%@ description=%@ window=%@ tab=%@ view=%@ sticky=%@",
          title, description, @(windowIndex), @(tabIndex), @(viewIndex), @(sticky));
     
     [self ensureNotificationPermissionsWithCompletion:^(BOOL granted) {
@@ -269,7 +269,7 @@
         [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
                                                                withCompletionHandler:^(NSError * _Nullable error) {
             if (error) {
-                DLog(@"Error posting notification: %@", error);
+                RLog(@"Error posting notification: %@", error);
             }
         }];
     }];
@@ -302,7 +302,7 @@
         [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
                                                                withCompletionHandler:^(NSError * _Nullable error) {
             if (error) {
-                DLog(@"Error posting notification: %@", error);
+                RLog(@"Error posting notification: %@", error);
             }
         }];
     }];
@@ -357,7 +357,7 @@
         [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request
                                                                withCompletionHandler:^(NSError * _Nullable error) {
             if (error) {
-                DLog(@"Error posting notification: %@", error);
+                RLog(@"Error posting notification: %@", error);
             }
         }];
     }];
@@ -365,7 +365,7 @@
 
 
 - (void)notificationWasClicked:(id)clickContext {
-    DLog(@"notificationWasClicked:%@", clickContext);
+    RLog(@"notificationWasClicked:%@", clickContext);
 
     NSString *callbackName = clickContext[@"CallbackNotificationName"];
     NSDictionary *callbackUserInfo = clickContext[@"CallbackUserInfo"];
@@ -389,7 +389,7 @@
     int view = [clickContext[@"view"] intValue];
 
     if (win >= [controller numberOfTerminals]) {
-        DLog(@"Beep: bogus window number");
+        RLog(@"Beep: bogus window number");
         NSBeep();
         return;
     }

@@ -246,7 +246,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         }];
         iTermProcessInfo *info = [self->_collectionLQ infoForProcessID:pid];
         if (!info) {
-            DLog(@"Request update for %@", @(pid));
+            RLog(@"Request update for %@", @(pid));
             [self queueRequestUpdateWithCompletionQueue:self->_lockQueue block:^{
                 DLog(@"Got update for %@", @(pid));
                 [weakSelf didUpdateForPid:pid];
@@ -262,7 +262,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
 - (void)didUpdateForPid:(pid_t)pid {
     iTermProcessInfo *info = [self->_collectionLQ infoForProcessID:pid];
     if (!info) {
-        DLog(@":( no info for %@", @(pid));
+        RLog(@":( no info for %@", @(pid));
         return;
     }
     iTermProcessMonitor *monitor = self->_trackedPidsLQ[@(pid)];
@@ -400,7 +400,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                 if (rootStartTime) {
                     _ttyRdevByPidWQ[root] = @[rdevNumber, rootStartTime];
                 }
-                DLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
+                RLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
             } else {
                 // Don't keep a stale entry; re-derive next update in case the tty
                 // becomes readable later.
@@ -496,7 +496,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
 
 // Main queue
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
-    DLog(@"Application did become active (process cache)");
+    RLog(@"Application did become active (process cache)");
     _rateLimit.minimumInterval = 0.5;
 }
 

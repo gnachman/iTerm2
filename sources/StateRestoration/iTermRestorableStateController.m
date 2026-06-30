@@ -101,7 +101,7 @@ static BOOL gForceDiscardState;
         dispatch_queue_t queue = dispatch_queue_create("com.iterm2.restorable-state", DISPATCH_QUEUE_SERIAL);
         NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
         if (!appSupport) {
-            DLog(@"ERROR - No app support directory.");
+            RLog(@"ERROR - No app support directory.");
             return nil;
         }
         NSString *savedState = [appSupport stringByAppendingPathComponent:@"SavedState"];
@@ -187,21 +187,21 @@ static BOOL gForceDiscardState;
         [weakSelf.delegate restorableStateDidFinishRequestingRestorations:self];
     }
                              completion:^{
-        DLog(@"Restoration did complete");
+        RLog(@"Restoration did complete");
         [weakSelf completeInitialization];
         completion();
     }];
 }
 
 - (void)didSkipRestoration {
-    DLog(@"did skip restoration");
+    RLog(@"did skip restoration");
     [self completeInitialization];
 }
 
 - (void)setSystemRestorationCallback:(void (^)(NSWindow *, NSError *))callback
                     windowIdentifier:(NSString *)windowIdentifier {
     if (_ready) {
-        DLog(@"Unexpected window restoration call with id %@", windowIdentifier);
+        RLog(@"Unexpected window restoration call with id %@", windowIdentifier);
         callback(nil, nil);
         return;
     }
@@ -215,7 +215,7 @@ static BOOL gForceDiscardState;
 // called from applicationShouldTerminate because waiting until willTerminate is too late - the
 // windows have already been closed.
 - (void)applicationWillTerminate:(NSNotification *)notification {
-    DLog(@"application will terminate");
+    RLog(@"application will terminate");
     if (![iTermRestorableStateController stateRestorationEnabled]) {
         DLog(@"State restoration disabled. Erase state.");
         [_driver eraseSynchronously:YES];
@@ -225,14 +225,14 @@ static BOOL gForceDiscardState;
         DLog(@"Still restoring so don't save");
         return;
     }
-    DLog(@"Calling saveSynchronously.");
+    RLog(@"Calling saveSynchronously.");
     [_driver saveSynchronously];
     _driver = nil;
 }
 
 // All restoration activities (if any) are complete and it's now save to save to the db.
 - (void)completeInitialization {
-    DLog(@"completeInitialization");
+    RLog(@"completeInitialization");
     assert([NSThread isMainThread]);
     _ready = YES;
     dispatch_group_leave(_completionGroup);

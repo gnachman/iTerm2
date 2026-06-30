@@ -101,7 +101,7 @@
     DLog(@"%@", data);
     NSData *errorMessage = [[[task standardError] fileHandleForReading] readDataToEndOfFile];
     if (errorMessage.length) {
-        DLog(@"%@ %@: %@", task.launchPath, [task.arguments componentsJoinedByString:@" "], [errorMessage stringWithEncoding:NSUTF8StringEncoding]);
+        RLog(@"%@ %@: %@", task.launchPath, [task.arguments componentsJoinedByString:@" "], [errorMessage stringWithEncoding:NSUTF8StringEncoding]);
     }
     [task waitUntilExit];
     return task.terminationStatus;
@@ -168,7 +168,7 @@
     // Note: archiveError may be set even on success (e.g., tar warnings to stderr).
     // Only fail if we didn't get any data back.
     if (!archiveData) {
-        DLog(@"Failed to create tgz archive: %@", archiveError);
+        RLog(@"Failed to create tgz archive: %@", archiveError);
         if (error) {
             *error = archiveError ?: [NSError errorWithDomain:@"com.googlecode.iterm2"
                                                          code:-1
@@ -186,7 +186,7 @@
     NSString *tempPath = [tempDir stringByAppendingPathComponent:archiveName];
 
     if (![archiveData writeToFile:tempPath atomically:YES]) {
-        DLog(@"Failed to write temp archive to %@", tempPath);
+        RLog(@"Failed to write temp archive to %@", tempPath);
         if (error) {
             *error = [NSError errorWithDomain:@"com.googlecode.iterm2"
                                          code:-1
@@ -252,7 +252,7 @@
         [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
         fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
         if (!fileHandle) {
-            DLog(@"Failed to open for writing or create %@", path);
+            RLog(@"Failed to open for writing or create %@", path);
             return NO;
         }
     }
@@ -465,7 +465,7 @@
                                        8,                      // memLevel: use lots of memory and be fast.
                                        Z_DEFAULT_STRATEGY);    // stragegy: normal strategy
     if (initError != Z_OK) {
-        DLog(@"deflateInit2 failed with error %@", @(initError));
+        RLog(@"deflateInit2 failed with error %@", @(initError));
         return nil;
     }
 
@@ -488,7 +488,7 @@
     deflateEnd(&stream);
 
     if (deflateStatus != Z_STREAM_END) {
-        DLog(@"deflate failed with %@", @(deflateStatus));
+        RLog(@"deflate failed with %@", @(deflateStatus));
         return nil;
     }
 

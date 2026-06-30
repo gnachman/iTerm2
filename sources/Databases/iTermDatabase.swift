@@ -67,7 +67,7 @@ extension iTermDatabase {
             commit()
             return value
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
             rollback()
             throw error
         }

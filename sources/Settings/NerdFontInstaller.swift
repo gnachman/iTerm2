@@ -81,7 +81,7 @@ class NerdFontInstaller {
 
     private var state = State.ground {
         didSet {
-            DLog("State became \(state.debugDescription)")
+            RLog("State became \(state.debugDescription)")
             switch state {
             case .ground:
                 break
@@ -163,7 +163,7 @@ class NerdFontInstaller {
             let tempDir = URL(fileURLWithPath: FileManager.default.it_temporaryDirectory()!)
             let zip = tempDir.appendingPathComponent("file.zip")
             do {
-                DLog("Move \(location.path) to \(zip.path)")
+                RLog("Move \(location.path) to \(zip.path)")
                 try FileManager.default.moveItem(at: location, to: zip)
                 let destination = Self.contentsFolder(tempDir)
                 try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: false)
@@ -221,7 +221,7 @@ class NerdFontInstaller {
                 }
                 try fileManager.copyItem(at: itemURL, to: destURL)
             } catch {
-                DLog("Failed to copy font \(itemURL.lastPathComponent): \(error)")
+                RLog("Failed to copy font \(itemURL.lastPathComponent): \(error)")
                 return [CTFontDescriptor]()
             }
             if let descriptors = CTFontManagerCreateFontDescriptorsFromURL(destURL as CFURL) {
@@ -269,7 +269,7 @@ class NerdFontInstaller {
             if reason.isEmpty {
                 reason = "Unknown errors occurred"
             }
-            DLog("\(reason)")
+            RLog("\(reason)")
             DispatchQueue.main.async {
                 completion(NerdFontInstallerError.fontInstallationFailed(reason: reason))
             }

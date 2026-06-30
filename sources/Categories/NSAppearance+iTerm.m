@@ -85,7 +85,7 @@
         return TAB_STYLE_LIGHT_HIGH_CONTRAST;
     }
     
-    DLog(@"Unexpected tab style %@", name);
+    RLog(@"Unexpected tab style %@", name);
     return TAB_STYLE_LIGHT;
 }
 

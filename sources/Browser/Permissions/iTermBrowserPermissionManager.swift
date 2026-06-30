@@ -122,27 +122,27 @@ extension iTermBrowserPermissionManager {
     
     func savePermissionDecision(origin: String, permissionType: BrowserPermissionType, decision: BrowserPermissionDecision) async {
         guard let database = await BrowserDatabase.instance(for: user) else {
-            DLog("Could not save permission: database unavailable")
+            RLog("Could not save permission: database unavailable")
             return
         }
         
         let success = await database.savePermission(origin: origin, permissionType: permissionType, decision: decision)
         
         if success {
-            DLog("Saved permission: \(permissionType.rawValue) for \(origin) = \(decision.rawValue)")
+            RLog("Saved permission: \(permissionType.rawValue) for \(origin) = \(decision.rawValue)")
         } else {
-            DLog("Failed to save permission to database")
+            RLog("Failed to save permission to database")
         }
     }
 
     func resetPermission(origin: String, permissionType: BrowserPermissionType) async {
         guard let database = await BrowserDatabase.instance(for: user) else {
-            DLog("Could not reset permission: database unavailable")
+            RLog("Could not reset permission: database unavailable")
             return
         }
 
         await database.resetPermission(origin: origin, permissionType: permissionType)
-        DLog("Reset \(permissionType) for \(origin)")
+        RLog("Reset \(permissionType) for \(origin)")
     }
 
     // MARK: - Private Helper Methods
@@ -200,7 +200,7 @@ extension iTermBrowserPermissionManager {
                     return (.denied, false)
                 }
             } catch {
-                DLog("Failed to request system notification permission: \(error)")
+                RLog("Failed to request system notification permission: \(error)")
                 return (.denied, false)
             }
 

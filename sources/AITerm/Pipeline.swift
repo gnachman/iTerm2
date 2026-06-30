@@ -59,13 +59,13 @@ class PipelineQueue<T> {
         }
         self.pipelines.append(pipeline)
         if self.pipelines.count == 1 {
-            DLog("pipeline queue got a first element so begin executing it")
+            RLog("pipeline queue got a first element so begin executing it")
             pipeline.begin()
         }
     }
 
     private func pipelineDidComplete() {
-        DLog("Pipeline completed. Run next if available")
+        RLog("Pipeline completed. Run next if available")
         if pipelines.isEmpty {
             return
         }
@@ -75,7 +75,7 @@ class PipelineQueue<T> {
 
     func cancelAll() {
         dispatchPrecondition(condition: .onQueue(.main))
-        DLog("Cancel pipeline queue")
+        RLog("Cancel pipeline queue")
         let saved = pipelines
         pipelines.removeAll()
         for pipeline in saved {
@@ -204,10 +204,10 @@ class Pipeline<T>: CustomDebugStringConvertible {
                     dispatchPrecondition(condition: .onQueue(.main))
                     switch result {
                     case .success(let value):
-                        DLog("Pipeline action \(actionToRun.description) completed successfuly with value \(value)")
+                        RLog("Pipeline action \(actionToRun.description) completed successfuly with value \(value)")
                         self?.actionDidComplete(actionToRun.id, value: value)
                     case .failure(let error):
-                        DLog("Pipeline action \(actionToRun.description) failed with error \(error.localizedDescription)")
+                        RLog("Pipeline action \(actionToRun.description) failed with error \(error.localizedDescription)")
                         self?.finish(.failure(error))
                     }
                 }
@@ -238,7 +238,7 @@ class Pipeline<T>: CustomDebugStringConvertible {
         if !self.disposition.isPending {
             return
         }
-        DLog("pipeline finished with disposition \(disposition)")
+        RLog("pipeline finished with disposition \(disposition)")
         self.disposition = disposition
         runningActions = []
         eligibleActions = []

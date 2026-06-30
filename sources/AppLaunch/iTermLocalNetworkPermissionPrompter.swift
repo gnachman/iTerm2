@@ -33,7 +33,7 @@ class LocalNetworkPermissionPrompter: NSObject {
             return
         }
 
-        DLog("Requesting local network permission prompt")
+        RLog("Requesting local network permission prompt")
         startBrowsing()
         recordPrompted()
     }
@@ -64,7 +64,7 @@ class LocalNetworkPermissionPrompter: NSObject {
         browser = NWBrowser(for: descriptor, using: parameters)
 
         browser?.stateUpdateHandler = { [weak self] state in
-            DLog("Local network browser state: \(state)")
+            RLog("Local network browser state: \(state)")
             switch state {
             case .ready:
                 // Browser is ready - permission was granted or prompt shown
@@ -73,7 +73,7 @@ class LocalNetworkPermissionPrompter: NSObject {
                     self?.stopBrowser()
                 }
             case .failed(let error):
-                DLog("Local network browser failed: \(error)")
+                RLog("Local network browser failed: \(error)")
                 self?.stopBrowser()
             case .cancelled:
                 break

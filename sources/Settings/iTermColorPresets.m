@@ -29,10 +29,10 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 }
 
 + (BOOL)importColorPresetFromFile:(NSString *)filename {
-    DLog(@"Colors VC importing presets from %@", filename);
+    RLog(@"Colors VC importing presets from %@", filename);
     NSDictionary *aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
     if (!aDict) {
-        DLog(@"Failed to parse dictionary");
+        RLog(@"Failed to parse dictionary");
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Import Failed.";
         alert.informativeText = @"The selected file could not be read or did not contain a valid color scheme.";
@@ -99,7 +99,7 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
 }
 
 + (void)addColorPreset:(NSString *)presetName withColors:(NSDictionary *)theDict {
-    DLog(@"Add color preset with name %@ and dictionary %@", presetName, theDict);
+    RLog(@"Add color preset with name %@ and dictionary %@", presetName, theDict);
     NSDictionary *presets = [[iTermUserDefaults userDefaults] objectForKey:kCustomColorPresetsKey];
     NSMutableDictionary* customPresets = [NSMutableDictionary dictionaryWithDictionary:presets];
     if (!customPresets) {

@@ -930,7 +930,7 @@ extension ResilientCoordinate {
     static func from(dictionary: NSDictionary) -> ResilientCoordinate? {
         guard let kindRaw = dictionary[CodingKeys.kind.rawValue] as? String,
               let kind = EncodedKind(rawValue: kindRaw) else {
-            DLog("ResilientCoordinate.from(dictionary:): missing/invalid kind")
+            RLog("ResilientCoordinate.from(dictionary:): missing/invalid kind")
             return nil
         }
         let location: Location
@@ -984,7 +984,7 @@ extension ResilientCoordinateRange {
               let endDict = dictionary[RangeCodingKeys.end.rawValue] as? NSDictionary,
               let startRC = ResilientCoordinate.from(dictionary: startDict),
               let endRC = ResilientCoordinate.from(dictionary: endDict) else {
-            DLog("ResilientCoordinateRange.from(dictionary:): missing/invalid start or end")
+            RLog("ResilientCoordinateRange.from(dictionary:): missing/invalid start or end")
             return nil
         }
         return ResilientCoordinateRange(start: startRC, end: endRC)

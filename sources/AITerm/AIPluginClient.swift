@@ -107,10 +107,10 @@ struct Plugin {
             return  Result<Plugin, PluginError>.success(try Plugin())
         } catch let error as PluginError {
             let temp = Result<Plugin, PluginError>.failure(error)
-            DLog("\(error.reason)")
+            RLog("\(error.reason)")
             return temp
         } catch {
-            DLog("\(error.localizedDescription)")
+            RLog("\(error.localizedDescription)")
             let temp = Result<Plugin, PluginError>.failure(PluginError(reason: error.localizedDescription))
             return temp
         }
@@ -217,7 +217,7 @@ class iTermAIClient {
             }
             return
         case .failure(let error):
-            DLog("\(error)")
+            RLog("\(error)")
             throw error
         }
     }

@@ -503,7 +503,7 @@ class MainMenuMangler: NSObject {
 
         // Begin observing the new window’s firstResponder
         observedWindow = window
-        DLog("Start observing \(window)")
+        RLog("Start observing \(window)")
         window.addObserver(
             self,
             forKeyPath: "firstResponder",

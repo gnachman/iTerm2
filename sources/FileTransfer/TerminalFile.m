@@ -200,7 +200,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
     }
     [[FileTransferManager sharedInstance] transferrableFileProgressDidChange:self];
     if (approximateSize > self.fileSize + 5) {
-        DLog(@"Have %@ bytes of base64 which encodes as much as %@ but the file's declared size is %@",
+        RLog(@"Have %@ bytes of base64 which encodes as much as %@ but the file's declared size is %@",
              @(self.data.length), @(approximateSize + 4), @(self.fileSize));
         return NO;
     }

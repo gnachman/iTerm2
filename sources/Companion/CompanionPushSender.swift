@@ -84,7 +84,7 @@ enum CompanionPushSender {
     @MainActor
     static func dispatchPush(chatID: String?) {
         guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
-            DLog("Companion push: no room secret; skipping push")
+            RLog("Companion push: no room secret; skipping push")
             return
         }
         let useWakeup = CompanionPushRegistry.supportsContentlessWakeup
@@ -98,7 +98,7 @@ enum CompanionPushSender {
             // A revision-1 phone with no chat context: nothing to collapse on, so
             // there is no legacy push to send (this is only reached if an alert
             // were ever dispatched to an old phone, which the gate prevents).
-            DLog("Companion push: legacy phone with no chatID; nothing to send")
+            RLog("Companion push: legacy phone with no chatID; nothing to send")
             return
         }
         let nonce = CompanionPushNonceRegistry.shared.mintNonce()
@@ -121,13 +121,13 @@ enum CompanionPushSender {
                 } else if let collapse {
                     try await sendMutable(collapse: collapse, nonce: sealedNonce)
                 }
-                DLog("Companion push: sent \(useWakeup ? "wakeup" : "legacy") push")
+                RLog("Companion push: sent \(useWakeup ? "wakeup" : "legacy") push")
             } catch {
                 // The push didn't go out, so free the slot we optimistically took.
                 if sealedNonce != nil {
                     await MainActor.run { CompanionPushNonceRegistry.shared.unrecord(nonce) }
                 }
-                DLog("Companion push: push failed: \(error)")
+                RLog("Companion push: push failed: \(error)")
             }
         }
     }
@@ -156,9 +156,9 @@ enum CompanionPushSender {
         guard response.error.isEmpty else {
             let detail = (try? JSONDecoder().decode(RelayReply.self, from: Data(response.data.utf8)))?.error
                 ?? response.data
-            DLog("Companion push: relay rejected send (\(response.error)): \(detail)")
+            RLog("Companion push: relay rejected send (\(response.error)): \(detail)")
             throw SendError(message: "The push relay refused the notification (\(response.error)): \(detail)")
         }
-        DLog("Companion push: delivered \(label) via relay")
+        RLog("Companion push: delivered \(label) via relay")
     }
 }

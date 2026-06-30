@@ -64,11 +64,11 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 }
 
 - (void)addBuriedSession:(PTYSession *)sessionToBury {
-    DLog(@"addBuriedSession:%@", sessionToBury);
+    RLog(@"addBuriedSession:%@", sessionToBury);
     id<iTermWindowController> windowController = (PseudoTerminal *)sessionToBury.delegate.parentWindow;
     iTermRestorableSession *restorableSession = [windowController restorableSessionForSession:sessionToBury];
     if (!restorableSession) {
-        DLog(@"Failed to create restorable session");
+        RLog(@"Failed to create restorable session");
         return;
     }
     [self addRestorableSession:restorableSession forSession:sessionToBury];
@@ -122,7 +122,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 
 - (void)restoreSession:(PTYSession *)session withRestorableSession:(iTermRestorableSession *)restorableSession {
     [_array removeObject:restorableSession];
-    DLog(@"Restore %@", session);
+    RLog(@"Restore %@", session);
     [session disinter];
     DLog(@"Look for terminal with guid %@", restorableSession.terminalGuid);
     PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:restorableSession.terminalGuid];
@@ -146,13 +146,13 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
                      sessions:restorableSession.sessions
                        revive:NO];
         } else {
-            DLog(@"The tab doesn't exist. Create a new tab and add the session to it");
+            RLog(@"The tab doesn't exist. Create a new tab and add the session to it");
             // Create a new tab and add the session to it.
             [term addRevivedSession:restorableSession.sessions[0]];
         }
     } else {
         // Create a new term and add the session to it.
-        DLog(@"Failed to find the terminal by uid. Create a new window and add the session to it.");
+        RLog(@"Failed to find the terminal by uid. Create a new window and add the session to it.");
         term = [[iTermController sharedInstance] reviveSession:restorableSession.sessions[0]
                                            inNewWindowWithType:restorableSession.windowType
                                                savedWindowType:restorableSession.savedWindowType

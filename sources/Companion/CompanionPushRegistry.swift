@@ -234,10 +234,10 @@ enum CompanionPushRegistry {
                 cachedSecretHex = hex
                 secretLock.unlock()
             } catch {
-                DLog("Companion push: failed to store relay secret in keychain: \(error)")
+                RLog("Companion push: failed to store relay secret in keychain: \(error)")
             }
         }
-        DLog("Companion push: status \(authorization.rawValue), token \(token != nil ? "present" : "absent"), secret \(relaySecret != nil ? "present" : "absent"), sandbox \(sandbox); canNotify=\(canNotify)")
+        RLog("Companion push: status \(authorization.rawValue), token \(token != nil ? "present" : "absent"), secret \(relaySecret != nil ? "present" : "absent"), sandbox \(sandbox); canNotify=\(canNotify)")
     }
 
     static func clear() {
@@ -254,6 +254,6 @@ enum CompanionPushRegistry {
         secretLock.lock()
         cachedSecretHex = nil
         secretLock.unlock()
-        DLog("Companion push: cleared device registration")
+        RLog("Companion push: cleared device registration")
     }
 }

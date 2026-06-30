@@ -161,7 +161,7 @@ class MenuItemTipController: NSObject, NSMenuDelegate {
         windowOrigin.y += inset
         tipWindow.setFrameOrigin(windowOrigin)
 
-        DLog("Show tip window at \(windowOrigin) of size \(tipWindow.frame.size)")
+        RLog("Show tip window at \(windowOrigin) of size \(tipWindow.frame.size)")
 
         self.tipWindow = tipWindow
         tipWindow.makeKeyAndOrderFront(nil)

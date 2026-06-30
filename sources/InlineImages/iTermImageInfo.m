@@ -118,7 +118,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
 
         _dictionary = nil;
 
-        DLog(@"Queueing load of %@", self.uniqueIdentifier);
+        RLog(@"Queueing load of %@", self.uniqueIdentifier);
         void (^block)(void) = ^{
             // This is a slow operation that blocks for a long time.
             iTermImage *image = [iTermImage imageWithCompressedData:self->_data];
@@ -129,7 +129,7 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
                     self->_image = image;
                 }
                 if (self->_image || self->_animatedImage) {
-                    DLog(@"Loaded %@", self.uniqueIdentifier);
+                    RLog(@"Loaded %@", self.uniqueIdentifier);
                     [[NSNotificationCenter defaultCenter] postNotificationName:iTermImageDidLoad object:self];
                 }
             });

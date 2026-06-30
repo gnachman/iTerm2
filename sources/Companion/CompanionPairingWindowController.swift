@@ -159,7 +159,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             return
         }
         currentGate = gate
-        DLog("Companion pairing window: gate is now \(gate)")
+        RLog("Companion pairing window: gate is now \(gate)")
         switch gate {
         case .aiAdminDisabled:
             // No remedy to offer: this is an administrator decision.
@@ -601,14 +601,14 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             // No biometrics and no passcode configured: there is nothing to
             // authenticate against, so let pairing proceed (the Mac is unsecured
             // regardless).
-            DLog("Companion: no device authentication available (\(error?.localizedDescription ?? "none")); proceeding")
+            RLog("Companion: no device authentication available (\(error?.localizedDescription ?? "none")); proceeding")
             return true
         }
         return await withCheckedContinuation { continuation in
             context.evaluatePolicy(.deviceOwnerAuthentication,
                                    localizedReason: "pair a companion device with this Mac") { success, authError in
                 if let authError {
-                    DLog("Companion: pairing authentication failed: \(authError.localizedDescription)")
+                    RLog("Companion: pairing authentication failed: \(authError.localizedDescription)")
                 }
                 continuation.resume(returning: success)
             }
@@ -637,7 +637,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     func windowWillClose(_ notification: Notification) {
         stopGatePolling()
         currentGate = nil
-        DLog("Companion windowWillClose (hasPairedDevice=\(controller.hasPairedDevice)): "
+        RLog("Companion windowWillClose (hasPairedDevice=\(controller.hasPairedDevice)): "
              + (controller.hasPairedDevice ? "keeping listener" : "stopAdvertising"))
         if controller.hasPairedDevice {
             // A pairing happened: the listener that handled it keeps running in

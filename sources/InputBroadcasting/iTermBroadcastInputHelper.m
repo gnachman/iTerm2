@@ -220,10 +220,10 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
                                         identifier:@"NoSyncSuppressBroadcastInputWarning"
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:window] == kiTermWarningSelection1) {
-                DLog(@"User declined");
+                RLog(@"User declined");
                 return;
             }
-            DLog(@"user accepted");
+            RLog(@"user accepted");
         }
         if (mode == BROADCAST_TO_ALL_PANES) {
             // Enable just this tab

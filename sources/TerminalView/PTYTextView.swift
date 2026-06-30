@@ -180,7 +180,7 @@ extension PTYTextView: ExternalSearchResultsController {
     }
 
     @objc func hydratePorthole(_ mark: PortholeMarkReading) -> ObjCPorthole? {
-        DLog("hydratePorthole(\(mark))")
+        RLog("hydratePorthole(\(mark))")
         guard let interval = mark.entry?.interval,
               let absRange = dataSource?.absCoordRange(for: interval) else {
             return nil
@@ -230,7 +230,7 @@ extension PTYTextView: ExternalSearchResultsController {
     // site knows, and signals here.
     @objc(forciblyRemovePortholeWithUniqueIdentifier:)
     func forciblyRemovePorthole(uniqueIdentifier: String) {
-        DLog("forciblyRemovePorthole(\(uniqueIdentifier))")
+        RLog("forciblyRemovePorthole(\(uniqueIdentifier))")
         // Drop the registry references unconditionally. This is the whole point
         // of the signal: break the doppelganger retain cycle (registry -> mark
         // doppelganger -> progenitor) so the progenitor mark carried in the
@@ -263,7 +263,7 @@ extension PTYTextView: ExternalSearchResultsController {
         DLog("unhidePorthole(\(objcPorthole))")
         let porthole = objcPorthole as! Porthole
         guard portholes.contains(porthole) else {
-            DLog("Not unhiding porthole we don't own")
+            RLog("Not unhiding porthole we don't own")
             return
         }
         guard porthole.view.superview != self else {
@@ -275,7 +275,7 @@ extension PTYTextView: ExternalSearchResultsController {
 
     @objc
     func removePorthole(_ objcPorthole: ObjCPorthole) {
-        DLog("removePorthole(\(objcPorthole))")
+        RLog("removePorthole(\(objcPorthole))")
         let porthole = objcPorthole as! Porthole
         willRemoveSubview(porthole.view)
         if porthole.delegate === self {
@@ -648,7 +648,7 @@ extension PTYTextView: ExternalSearchResultsController {
         guard let dataSource else {
             return
         }
-        DLog("Fold")
+        RLog("Fold")
         let overflow = dataSource.totalScrollbackOverflow()
         let absRange = VT100GridAbsCoordRange(start: VT100GridAbsCoord(x: 0,
                                                                        y: range.lowerBound),
@@ -752,7 +752,7 @@ extension PTYTextView: ExternalSearchResultsController {
             completion?(false)
             return
         }
-        DLog("Unfold")
+        RLog("Unfold")
         let coord = dataSource.absCoordRange(for: interval)
         dataSource.removeFolds(in: NSRange(location: Int(coord.start.y), length: 1),
                                completion: completion)

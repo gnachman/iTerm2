@@ -3265,14 +3265,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                           connectionKey:(NSString *)connectionKey {
     NSString *key = result.requestId;
     if (!key) {
-        DLog(@"Bogus key %@", key);
+        RLog(@"Bogus key %@", key);
         return;
     }
 
     iTermServerOriginatedRPCCompletionBlock block = _serverOriginatedRPCCompletionBlocks[key];
     if (!block) {
         // Could be a timeout already occurred.
-        DLog(@"Key %@ doesn't match a pending RPC", key);
+        RLog(@"Key %@ doesn't match a pending RPC", key);
         return;
     }
     [_serverOriginatedRPCCompletionBlocks removeObjectForKey:key];
@@ -4048,7 +4048,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         }
         PseudoTerminal *term = [PseudoTerminal castFrom:tab.realParentWindow];
         if (!term) {
-            DLog(@"Strange, the tab's window is not a PseudoTerminal");
+            RLog(@"Strange, the tab's window is not a PseudoTerminal");
             [response.statusesArray addValue:ITMCloseResponse_Status_NotFound];
             continue;
         }

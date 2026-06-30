@@ -226,7 +226,7 @@ class SelectionExtractor: NSObject {
             DLog("\(it_addressString) done with \(VT100GridAbsWindowedRangeDescription(absRange))")
             fractionSoFar += subselectionWeight
         }
-        DLog("Finish extracting \(String(describing: selection.allSubSelections)). canceled=\(_canceled.value) self=\(self)")
+        RLog("Finish extracting \(String(describing: selection.allSubSelections)). canceled=\(_canceled.value) self=\(self)")
     }
 
     fileprivate func content(in range: VT100GridWindowedRange,
@@ -249,7 +249,7 @@ class SelectionExtractor: NSObject {
     }
 
     fileprivate func cancel() {
-        DLog("cancel \(it_addressString)")
+        RLog("cancel \(it_addressString)")
         _canceled.set(true)
         atomicExtractor.access { maybeExtractor in
             maybeExtractor?.stopAsSoonAsPossible = true
@@ -500,7 +500,7 @@ class AsyncSelectionProvider: NSObject, NSPasteboardWriting {
     }
 
     func pasteboardPropertyList(forType pasteboardType: NSPasteboard.PasteboardType) -> Any? {
-        DLog("Blocking on value")
+        RLog("Blocking on value")
         let or = promise.wait()
         let result = or.maybeFirst
         if let obj = result as? NSObject {
@@ -512,10 +512,10 @@ class AsyncSelectionProvider: NSObject, NSPasteboardWriting {
                 }
             }
             let length = (result as? Destination)?.length ?? -1
-            DLog("Return result of length \(length), type \(NSStringFromClass(type(of: obj)))")
+            RLog("Return result of length \(length), type \(NSStringFromClass(type(of: obj)))")
             return result
         }
-        DLog("error \(or.maybeSecond?.description ?? "(nil)")")
+        RLog("error \(or.maybeSecond?.description ?? "(nil)")")
         return nil
     }
 

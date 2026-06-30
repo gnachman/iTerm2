@@ -107,7 +107,7 @@ final class CompanionAgentActivityNotifier {
         // userActionRequired bypasses the debounce but still updates it, so an
         // immediately-following turn-complete in the same chat doesn't double-fire.
         lastFire[chatID] = now
-        DLog("CompanionAgentActivityNotifier: firing \(trigger) push for \(chatID)")
+        RLog("CompanionAgentActivityNotifier: firing \(trigger) push for \(chatID)")
         send(chatID)
     }
 
@@ -125,7 +125,7 @@ final class CompanionAgentActivityNotifier {
     /// chats and, on a qualifying event, sends a content-free push (section 5).
     static func start() {
         guard shared == nil else { return }
-        DLog("CompanionAgentActivityNotifier: starting; subscribing to all chats")
+        RLog("CompanionAgentActivityNotifier: starting; subscribing to all chats")
         let notifier = CompanionAgentActivityNotifier(
             gate: {
                 // Suppress only for an INTERACTIVE connection (a foreground app

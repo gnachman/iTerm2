@@ -129,11 +129,11 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         if ([[NSFileManager defaultManager] fileExistsAtPath:savedEnv.path]) {
             NSError *error = nil;
             [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:&error];
-            DLog(@"remove broken %@: %@", existingEnv.path, error);
+            RLog(@"remove broken %@: %@", existingEnv.path, error);
         } else {
             NSError *error = nil;
             [[NSFileManager defaultManager] moveItemAtURL:existingEnv toURL:savedEnv error:&error];
-            DLog(@"saving - move '%@' to '%@': %@", existingEnv.path, savedEnv.path, error);
+            RLog(@"saving - move '%@' to '%@': %@", existingEnv.path, savedEnv.path, error);
         }
     }
     [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:url
@@ -143,7 +143,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         if (!errorStatus) {
             NSError *error = nil;
             [[NSFileManager defaultManager] removeItemAtURL:savedEnv error:&error];
-            DLog(@"remove saved - %@: %@", savedEnv.path, error);
+            RLog(@"remove saved - %@: %@", savedEnv.path, error);
             NSString *venv = [self environmentForScript:fullPath checkForMain:YES checkForSaved:NO];
             completion(venv);
             return;
@@ -151,11 +151,11 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
         NSError *error = nil;
         [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:&error];
-        DLog(@"remove failed install - %@: %@", existingEnv.path, error);
+        RLog(@"remove failed install - %@: %@", existingEnv.path, error);
 
         error = nil;
         [[NSFileManager defaultManager] moveItemAtURL:savedEnv toURL:existingEnv error:&error];
-        DLog(@"restore saved - move '%@' to '%@': %@", savedEnv.path, existingEnv.path, error);
+        RLog(@"restore saved - move '%@' to '%@': %@", savedEnv.path, existingEnv.path, error);
 
         dispatch_async(dispatch_get_main_queue(), ^{
             [iTermWarning showWarningWithTitle:errorStatus.localizedDescription
@@ -192,7 +192,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     }
 
     const int version = [self environmentVersionAt:iterm2env];
-    DLog(@"version=%@", @(version));
+    RLog(@"version=%@", @(version));
     if (version < iTermMinimumPythonEnvironmentVersion) {
         [self upgradeFullEnvironmentScriptAt:fullPath
                                 configParser:configParser
@@ -246,7 +246,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                                                                        requiredToContinue:YES
                                                                                            withCompletion:
          ^(iTermPythonRuntimeDownloaderStatus status) {
-            DLog(@"status=%@", @(status));
+            RLog(@"status=%@", @(status));
             switch (status) {
                 case iTermPythonRuntimeDownloaderStatusNotNeeded:
                 case iTermPythonRuntimeDownloaderStatusDownloaded:
@@ -372,7 +372,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             withVirtualEnv:(NSString *)virtualenv
              pythonVersion:(NSString *)pythonVersion
         explicitUserAction:(BOOL)explicitUserAction {
-     DLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ pythonVersion:%@ explicitUserAction:%@",
+     RLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ pythonVersion:%@ explicitUserAction:%@",
           filename,
           fullPath,
           arguments,
@@ -425,7 +425,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                     pythonVersion:pythonVersion];
         }
         @catch (NSException *e) {
-            DLog(@"%@", e);
+            RLog(@"%@", e);
             [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
             [entry addOutput:[NSString stringWithFormat:@"ERROR: Failed to launch: %@", e.reason]
                   completion:^{}];

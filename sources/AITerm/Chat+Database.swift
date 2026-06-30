@@ -195,7 +195,7 @@ extension Chat: iTermDatabaseElement {
         do {
             let data = try encoder.encode(watchers)
             guard let str = String(data: data, encoding: .utf8) else {
-                DLog("encodeWatchers: utf8 decode of JSON bytes failed")
+                RLog("encodeWatchers: utf8 decode of JSON bytes failed")
                 return ""
             }
             return str
@@ -204,7 +204,7 @@ extension Chat: iTermDatabaseElement {
             // watchers would vanish on next encode round-trip. Log so
             // future schema changes don't disappear watchers without
             // any user-visible diagnostic.
-            DLog("encodeWatchers failed: \(error)")
+            RLog("encodeWatchers failed: \(error)")
             return ""
         }
     }
@@ -219,7 +219,7 @@ extension Chat: iTermDatabaseElement {
         do {
             return try decoder.decode([WorkgroupWatcher].self, from: data)
         } catch {
-            DLog("decodeWatchers failed (\(encoded.count) bytes): \(error)")
+            RLog("decodeWatchers failed (\(encoded.count) bytes): \(error)")
             return []
         }
     }

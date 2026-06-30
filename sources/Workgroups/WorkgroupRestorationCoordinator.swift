@@ -191,7 +191,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
                 // this each pass is harmless.
                 if NSDate.it_timeSinceBoot() - p.registeredAt >= pendingReconstructionTimeout,
                    !p.restoringGuidsReleased {
-                    DLog("WorkgroupRestoration: anchor \(anchor.guid) not ready within \(pendingReconstructionTimeout)s; releasing \(p.guids.count) restoring GUIDs but still awaiting its window")
+                    RLog("WorkgroupRestoration: anchor \(anchor.guid) not ready within \(pendingReconstructionTimeout)s; releasing \(p.guids.count) restoring GUIDs but still awaiting its window")
                     releaseRestoringGUIDs(p)
                 }
                 continue
@@ -232,7 +232,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
         // We bail BEFORE deserializing the members so we don't create and
         // immediately abandon their sessions.
         guard let workgroup = iTermWorkgroupModel.instance.workgroup(uniqueIdentifier: workgroupID) else {
-            DLog("WorkgroupRestoration: config \(workgroupID) is gone; peers not restored, anchor left standalone")
+            RLog("WorkgroupRestoration: config \(workgroupID) is gone; peers not restored, anchor left standalone")
             return
         }
 
@@ -282,7 +282,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
             // members. We did build the other members above; terminate
             // them rather than leaking abandoned sessions, and degrade
             // gracefully to just the still-on-screen anchor.
-            DLog("WorkgroupRestoration: leader \(leaderID) missing from restored members; degrading to anchor only")
+            RLog("WorkgroupRestoration: leader \(leaderID) missing from restored members; degrading to anchor only")
             for (id, s) in sessionsByConfigID where id != anchorID {
                 s.terminate()
             }

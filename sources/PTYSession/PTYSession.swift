@@ -308,7 +308,7 @@ extension PTYSession {
     }
 
     func execute(_ command: RemoteCommand, completion: @escaping (String, String) throws -> ()) throws {
-        DLog("\(command)")
+        RLog("\(command)")
         cancelRemoteCommand()
         switch command.content {
         case .isAtPrompt(let isAtPrompt):
@@ -834,7 +834,7 @@ extension PTYSession {
 
         do {
             try process.run()
-            DLog("Session \(self) running \(command)")
+            RLog("Session \(self) running \(command)")
             pipe.fileHandleForReading.readabilityHandler = { [weak pipe] handle in
                 let data = handle.availableData
                 if data.count == 0 {
@@ -899,7 +899,7 @@ extension PTYSession {
     private func webSearch(args: RemoteCommand.WebSearch, completion: @escaping (String, String) throws -> ()) rethrows {
         view?.browserViewController?.doWebSearch(for: args.query) { [weak self] error in
             if let error {
-                DLog("\(error)")
+                RLog("\(error)")
                 try? completion("Web search is not currently available", "Web search failed")
                 return
             }
@@ -960,7 +960,7 @@ struct SubSelectionSerializationInfo {
         precondition(components.count == 4, "Invalid queryValue format")
 
         guard let mode = Int(components[0]) else {
-            DLog("Invalid mode in queryValue \(queryValue)")
+            RLog("Invalid mode in queryValue \(queryValue)")
             return nil
         }
 
@@ -973,7 +973,7 @@ struct SubSelectionSerializationInfo {
             let parts = components[3].split(separator: ":", omittingEmptySubsequences: false).map(String.init)
             precondition(parts.count == 2, "Invalid range format")
             guard let lower = Int32(parts[0]), let upper = Int32(parts[1]) else {
-                DLog("Invalid range bounds in queryValue \(queryValue)")
+                RLog("Invalid range bounds in queryValue \(queryValue)")
                 return nil
             }
             return lower..<upper
@@ -1203,7 +1203,7 @@ extension PTYSession {
             candidate.channelUID == uid
         }
         guard let session else {
-            DLog("No buried session with channel uid \(uid)")
+            RLog("No buried session with channel uid \(uid)")
             return
         }
         delegate?.swapSession(self, withBuriedSession: session)
@@ -1264,7 +1264,7 @@ extension PTYSession {
     @objc(openURL:)
     func open(url: URL) {
         guard view?.isBrowser == true else {
-            DLog("Can't open \(url), not a browser")
+            RLog("Can't open \(url), not a browser")
             return
         }
         view?.browserViewController?.loadURL(url.absoluteString)
@@ -1578,7 +1578,7 @@ extension PTYSession {
 extension PTYSession {
     func saveArchive() {
         guard let destination = iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: justProfile) else {
-            DLog("No archive dir in profile")
+            RLog("No archive dir in profile")
             return
         }
         let term = delegate?.realParentWindow() as? PseudoTerminal
@@ -1616,7 +1616,7 @@ extension PTYSession {
                 try data.write(to: URL(fileURLWithPath: location.filename))
                 ArchivesMenuBuilder.shared?.didAdd(path: location.filename)
             } catch {
-                DLog("Saving to \(location.description) failed: \(error)")
+                RLog("Saving to \(location.description) failed: \(error)")
                 iTermNotificationController.sharedInstance().notify(
                     "Archiving to \(location.displayName) failed: \(error.localizedDescription)")
             }
@@ -1629,7 +1629,7 @@ extension PTYSession {
                     ArchivesMenuBuilder.shared?.didAdd(path: location.filename)
                 }
             } catch {
-                DLog("Saving to \(location.description) failed: \(error)")
+                RLog("Saving to \(location.description) failed: \(error)")
                 iTermNotificationController.sharedInstance().notify(
                     "Archiving to \(location.displayName) failed: \(error.localizedDescription)")
             }
@@ -2457,7 +2457,7 @@ extension PTYSession {
             inlineChatID = chatID
             return chatID
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
             return nil
         }
     }

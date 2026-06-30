@@ -268,7 +268,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     func set(_ newValue: T?) throws {
-        DLog("Set \(key) to \((newValue?.sudString).d)")
+        RLog("Set \(key) to \((newValue?.sudString).d)")
         cached = nil
         do {
             if let value = newValue {
@@ -279,7 +279,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
                 try Self.delete(key)
             }
         } catch {
-            DLog("Fail: \(error)")
+            RLog("Fail: \(error)")
             iTermWarning.show(withTitle: error.localizedDescription,
                               actions: ["OK"],
                               accessory: nil,
@@ -292,7 +292,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     func reset() throws {
-        DLog("Reset \(key)")
+        RLog("Reset \(key)")
         cached = nil
         try Self.delete(key)
     }
@@ -340,7 +340,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         script?.executeAndReturnError(&error)
         DLog("Execution complete")
         if let error {
-            DLog("Error \(error)")
+            RLog("Error \(error)")
             throw SecureUserDefaultError.failedToCreateUsrLocal
         }
         DLog("Success, return \(path)")
@@ -392,7 +392,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
             "webdav"
         ]
 
-        DLog("Filesystem type of \(path) is \(fsTypeName)")
+        RLog("Filesystem type of \(path) is \(fsTypeName)")
         let result = nonUnixTypes.contains(fsTypeName)
         secureUserDefaultsFolderIsOnUnixFilesystem = (path, result)
         return result
@@ -401,7 +401,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     private static func baseDirectory(create: Bool) throws -> String {
         DLog("create=\(create)")
         guard let appSupportString = FileManager.default.applicationSupportDirectory() else {
-            DLog("Failed to get regular app support directory. Use fallback")
+            RLog("Failed to get regular app support directory. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
         DLog("appSupportString=\(appSupportString)")
@@ -417,15 +417,15 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
             additionalNetworkPaths: pathsToIgnore,
             allowNetworkMounts: false)
         if !isLocal {
-            DLog("Not local. Use fallback")
+            RLog("Not local. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
         if isOnNonUnixFilesystem(atPath: appSupportString) {
-            DLog("Not a unix filesystem. Use fallback")
+            RLog("Not a unix filesystem. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
         if ignoresOwnership(atPath: appSupportString) {
-            DLog("Ownership ignored. Use fallback")
+            RLog("Ownership ignored. Use fallback")
             return try fallbackBaseDirectory(create: create)
         }
         DLog("Use \(appSupportString)")
@@ -459,11 +459,11 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         }
         guard let owner = attributes[.ownerAccountID] as? Int, owner == 0 else {
             // Not owned by root
-            DLog("Not owned by root. attributes=\(attributes)")
+            RLog("Not owned by root. attributes=\(attributes)")
             return nil
         }
         guard let content = try? String(contentsOf: fileURL) else {
-            DLog("Cannot read contents of \(fileURL)")
+            RLog("Cannot read contents of \(fileURL)")
             return nil
         }
         DLog("content=\(content)")
@@ -474,7 +474,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         let expectedMagic = magic(key, filePath: fileURL)
         let actualMagic = content.prefix(upTo: newline.lowerBound)
         guard actualMagic == expectedMagic else {
-            DLog("In \(fileURL) magic is \(actualMagic) but expected \(expectedMagic)")
+            RLog("In \(fileURL) magic is \(actualMagic) but expected \(expectedMagic)")
             throw SecureUserDefaultError.badMagic
         }
         let payload = content.suffix(from: newline.upperBound)
@@ -483,7 +483,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func delete(_ key: String) throws {
-        DLog("delete \(key)")
+        RLog("delete \(key)")
         let filename = try path(key, create: false)
         DLog("Remove \(filename)")
         if (FileManager.default.fileExists(atPath: filename.path)) {
@@ -495,7 +495,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
-        DLog("Store \(value) to \(key)")
+        RLog("Store \(value) to \(key)")
         // Write to a temp file and then move it. If the destination is a link then it's not safe
         // to write to it.
         let unsafeURL = try self.path(key, create: true)
@@ -520,10 +520,10 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         DLog("Execution complete. Error is \(error.d)")
         guard error == nil else {
             let maybeReason = error?[NSAppleScript.errorBriefMessage] as? String
-            DLog("reason=\(maybeReason.d)")
+            RLog("reason=\(maybeReason.d)")
             throw SecureUserDefaultError.scriptError(maybeReason)
         }
-        DLog("Success. Post notif for \(key)")
+        RLog("Success. Post notif for \(key)")
         NotificationCenter.default.post(name: secureUserDefaultDidChange, object: key)
     }
 }

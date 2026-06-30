@@ -63,7 +63,7 @@
         [self createNewCommandRunner];
     }
     if (_idle.count == 0) {
-        DLog(@"Failed to create new command runner");
+        RLog(@"Failed to create new command runner");
         return nil;
     }
     id<iTermCommandRunner> commandRunner = [_idle lastObject];
@@ -78,7 +78,7 @@
     __weak __typeof(commandRunner) weakCommandRunner = commandRunner;
     __weak __typeof(self) weakSelf = self;
     commandRunner.completion = ^(int code) {
-        DLog(@"Command runner %@ died with code %@", weakCommandRunner, @(code));
+        RLog(@"Command runner %@ died with code %@", weakCommandRunner, @(code));
         [weakSelf commandRunnerDied:weakCommandRunner];
         if (block) {
             DLog(@"Invoking client termination block");
@@ -94,7 +94,7 @@
 - (void)terminateCommandRunner:(iTermCommandRunner *)commandRunner {
     DLog(@"Terminate %@", commandRunner);
     if (![_busy containsObject:commandRunner]) {
-        DLog(@"NOT TERMINATING - NOT IN BUSY LIST");
+        RLog(@"NOT TERMINATING - NOT IN BUSY LIST");
         return;
     }
     [_terminating addObject:commandRunner];

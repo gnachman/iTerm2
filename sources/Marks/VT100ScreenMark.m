@@ -659,7 +659,7 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 }
 
 - (void)setFirstLineOfCommand:(NSString *)command {
-    DLog(@"Set firstLineOfCommand of %@ to %@", self.guid, command);
+    RLog(@"Set firstLineOfCommand of %@ to %@", self.guid, command);
     if (!_firstLineOfCommand) {
         // Mark just became a command mark; notify exactly once. The
         // fullCommand setter doesn't re-fire because both fields are
@@ -672,7 +672,7 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 }
 
 - (void)setFullCommand:(NSString *)command {
-    DLog(@"Set fullCommand of %@ to %@", self.guid, command);
+    RLog(@"Set fullCommand of %@ to %@", self.guid, command);
     _fullCommand = [command copy];
 }
 
@@ -687,7 +687,7 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
     // No exit code to report — the command's parent died and we're
     // cascade-closing. Settle the promise as a rejection so awaiters
     // resolve now instead of waiting until dealloc.
-    DLog(@"markAbandoned: %@ aid=%@ hadSeal=%@",
+    RLog(@"markAbandoned: %@ aid=%@ hadSeal=%@",
          self.guid, _aid, @(_codeSeal != nil));
     id<iTermPromiseSeal> seal = _codeSeal;
     _codeSeal = nil;

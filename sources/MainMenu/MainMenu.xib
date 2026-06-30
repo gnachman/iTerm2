@@ -50,6 +50,12 @@
                                     <action selector="debugLogging:" target="-1" id="951"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Save Retrospective Debug Logs" enabled="NO" identifier="Save Retrospective Debug Logs" id="Rtr-Sv-Log">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="saveRetrospectiveDebugLogs:" target="-1" id="Rtr-Sv-Act"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Copy Performance Stats" identifier="Copy Performance Stats" id="cYu-lQ-5GD">
                                 <connections>
                                     <action selector="copyPerformanceStats:" target="201" id="Q9K-AS-x9Q"/>

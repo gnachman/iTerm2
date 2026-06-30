@@ -26,7 +26,7 @@ class iTermBrowserAutofillContactSource {
             do {
                 return try await store.requestAccess(for: .contacts)
             } catch {
-                DLog("Failed to request contacts access: \(error)")
+                RLog("Failed to request contacts access: \(error)")
                 return false
             }
         @unknown default:
@@ -63,7 +63,7 @@ class iTermBrowserAutofillContactSource {
                 }
             }
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
         }
         guard let contact = bestContact else {
             throw ContactError.noContactFound

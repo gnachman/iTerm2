@@ -25,7 +25,7 @@
 
 - (void)dealloc {
     if (!_fileDescriptorAccessed && _fileDescriptor && _fileDescriptor.intValue >= 0) {
-        DLog(@"File descriptor in message never accessed. Closing %d", _fileDescriptor.intValue);
+        RLog(@"File descriptor in message never accessed. Closing %d", _fileDescriptor.intValue);
         close(_fileDescriptor.intValue);
     }
 }

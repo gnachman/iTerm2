@@ -91,7 +91,7 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
             const iTermEchoProbeState previousState = _state;
             _state = iTermEchoProbeGetNextState(_state, token);
             if (_state != previousState) {
-                DLog(@"%@ went %@->%@ because of token %@", self, @(previousState), @(_state), token);
+                RLog(@"%@ went %@->%@ because of token %@", self, @(previousState), @(_state), token);
             }
             if (_state == iTermEchoProbeOff || _state == iTermEchoProbeFailed) {
                 break;

@@ -88,13 +88,13 @@ final class CompanionHostBridge {
                 do {
                     data = try WireCoding.encode(envelope)
                 } catch {
-                    DLog("Companion bridge: DROPPING unencodable envelope: \(error)")
+                    RLog("Companion bridge: DROPPING unencodable envelope: \(error)")
                     continue
                 }
                 do {
                     try await transport.send(data)
                 } catch {
-                    DLog("Companion bridge: outbox send failed; outbox is dead: \(error)")
+                    RLog("Companion bridge: outbox send failed; outbox is dead: \(error)")
                     break
                 }
             }
@@ -137,7 +137,7 @@ final class CompanionHostBridge {
     /// actually reaches the wire, then tear down. Used by unpair; a plain
     /// stop() would race the farewell against the connection close.
     func announceUnpairedAndStop() async {
-        DLog("Companion bridge: announcing unpair")
+        RLog("Companion bridge: announcing unpair")
         onClose = nil
         for observer in chatListObservers {
             NotificationCenter.default.removeObserver(observer)
@@ -205,7 +205,7 @@ final class CompanionHostBridge {
     func requestNotificationPermission() async -> CompanionPushAuthorization? {
         let requestID = nextHostRequestID
         nextHostRequestID += 1
-        DLog("Companion bridge: sending .requestNotificationPermission (requestID \(requestID)) to phone")
+        RLog("Companion bridge: sending .requestNotificationPermission (requestID \(requestID)) to phone")
         send(.requestNotificationPermission(requestID: requestID), requestID: nil)
         return await withCheckedContinuation { continuation in
             permissionWaiters[requestID] = continuation
@@ -266,7 +266,7 @@ final class CompanionHostBridge {
             // A message type this mac build doesn't recognize (newer phone). The
             // envelope still decoded, so reply with a correlated error rather than
             // dropping it silently.
-            DLog("Companion bridge: unsupported client message (peer is newer)")
+            RLog("Companion bridge: unsupported client message (peer is newer)")
             send(.error(CompanionError(code: .badRequest, message: "Unsupported request; app upgrade required")),
                  requestID: requestID)
         case .hello(let revision, let minimumPeer):
@@ -338,10 +338,10 @@ final class CompanionHostBridge {
             // and the phone retries on the next connection.
             do {
                 try CompanionMacIdentity.storePairedRoomSecret(secret)
-                DLog("Companion bridge: stored relay room secret")
+                RLog("Companion bridge: stored relay room secret")
                 send(.relayRoomSecretStored, requestID: requestID)
             } catch {
-                DLog("Companion bridge: failed to store room secret: \(error)")
+                RLog("Companion bridge: failed to store room secret: \(error)")
                 send(.error(CompanionError(code: .internalError, message: "\(error)")),
                      requestID: requestID)
             }
@@ -352,7 +352,7 @@ final class CompanionHostBridge {
             handleSyncSince(messageSeq: messageSeq, alertSeq: alertSeq, limit: limit,
                             nonce: nonce, requestID: requestID)
         case .unpairing:
-            DLog("Companion bridge: peer is unpairing")
+            RLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
         }
     }
@@ -389,7 +389,7 @@ final class CompanionHostBridge {
                 ChatService.instance?.dropAgent(forChatID: chatID)
                 OrchestratorClient.instance?.dropDispatcher(forChatID: chatID)
                 try ChatListModel.instance?.setOrchestrationEnabled(true, forChatID: chatID)
-                DLog("Companion bridge: chat \(chatID) created in orchestration mode")
+                RLog("Companion bridge: chat \(chatID) created in orchestration mode")
             }
             if let entry = entry(forChatID: chatID) {
                 send(.chatCreated(entry: entry), requestID: requestID)
@@ -446,7 +446,7 @@ final class CompanionHostBridge {
         // alert UI and send wakeups to a peer we just refused to talk to. On
         // incompatibility we reset it to 0 so those gates read false.
         CompanionPushRegistry.setPeerRevision(verdict == .compatible ? peerRevision : 0)
-        DLog("Companion bridge: hello peer(rev=\(peerRevision), min=\(peerMinimumPeer)) -> \(verdict)")
+        RLog("Companion bridge: hello peer(rev=\(peerRevision), min=\(peerMinimumPeer)) -> \(verdict)")
         guard verdict != .compatible else { return }
         // Don't also pop the presence toast for an incompatible peer; the alert
         // is the user-facing signal. (solicited:true suppresses the toast.)
@@ -508,7 +508,7 @@ final class CompanionHostBridge {
         let limit = min(max(rawLimit, 1), 500)
         // Flow logging only; never message content. The token prefix lets you
         // correlate with the push-sender's "delivered mutable (collapse ...)".
-        DLog("Companion bridge: messagesSince request (collapse \(collapseToken.prefix(8)), seq=\(seq), limit=\(limit))")
+        RLog("Companion bridge: messagesSince request (collapse \(collapseToken.prefix(8)), seq=\(seq), limit=\(limit))")
 
         // Transient mac-side failures (creds not loaded yet, chat model not
         // built at startup) reply .error, NOT an empty success: the NSE rethrows
@@ -517,13 +517,13 @@ final class CompanionHostBridge {
         // The nonce is NOT consumed on these paths (see above), so the retry is
         // still recognized as solicited.
         guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
-            DLog("Companion bridge: messagesSince -> error (no room secret stored)")
+            RLog("Companion bridge: messagesSince -> error (no room secret stored)")
             send(.error(CompanionError(code: .internalError, message: "No room secret stored")),
                  requestID: requestID)
             return
         }
         guard let model = ChatListModel.instance, let db = ChatDatabase.instance else {
-            DLog("Companion bridge: messagesSince -> error (chat system unavailable)")
+            RLog("Companion bridge: messagesSince -> error (chat system unavailable)")
             send(.error(CompanionError(code: .internalError, message: "Chat system unavailable")),
                  requestID: requestID)
             return
@@ -539,7 +539,7 @@ final class CompanionHostBridge {
             // because the watermark is max-merged and never lowered (section 8). A
             // served reply, so burn the single-use nonce.
             if let nonce { _ = CompanionPushNonceRegistry.shared.consume(nonce) }
-            DLog("Companion bridge: messagesSince -> no chat matched the collapse token (of \(model.count) chats); empty reply")
+            RLog("Companion bridge: messagesSince -> no chat matched the collapse token (of \(model.count) chats); empty reply")
             send(.messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
                  requestID: requestID)
             return
@@ -553,7 +553,7 @@ final class CompanionHostBridge {
         // do NOT compute reset. A maxSeq of 0 from an error must never look like a
         // chat-DB rewind (seq > maxSeq) and force the phone's watermark to 0.
         guard let probe = db.messagesSince(chatID: chat.id, sinceSeq: seq, windowLimit: windowLimit) else {
-            DLog("Companion bridge: messagesSince -> error (chat database query failed)")
+            RLog("Companion bridge: messagesSince -> error (chat database query failed)")
             send(.error(CompanionError(code: .internalError, message: "Chat database unavailable")),
                  requestID: requestID)
             return
@@ -570,7 +570,7 @@ final class CompanionHostBridge {
         let windowMessages: [Message]
         if reset {
             guard let refetched = db.messagesSince(chatID: chat.id, sinceSeq: 0, windowLimit: windowLimit) else {
-                DLog("Companion bridge: messagesSince -> error (reset re-fetch failed)")
+                RLog("Companion bridge: messagesSince -> error (reset re-fetch failed)")
                 send(.error(CompanionError(code: .internalError, message: "Chat database unavailable")),
                      requestID: requestID)
                 return
@@ -592,7 +592,7 @@ final class CompanionHostBridge {
         // the single-use nonce (after this, a replay can't suppress a warning).
         if let nonce { _ = CompanionPushNonceRegistry.shared.consume(nonce) }
         // Counts/flags only; never chat title or message bodies.
-        DLog("Companion bridge: messagesSince -> \(result.previews.count) preview(s), maxSeq=\(maxSeq), truncated=\(truncated), reset=\(reset)")
+        RLog("Companion bridge: messagesSince -> \(result.previews.count) preview(s), maxSeq=\(maxSeq), truncated=\(truncated), reset=\(reset)")
         send(.messagesSince(chatName: chat.title,
                             previews: result.previews,
                             maxSeq: maxSeq,
@@ -617,10 +617,10 @@ final class CompanionHostBridge {
         classifyOnce(solicited: solicited)
 
         let limit = min(max(rawLimit, 1), 500)
-        DLog("Companion bridge: syncSince request (messageSeq=\(messageSeq), alertSeq=\(alertSeq), limit=\(limit))")
+        RLog("Companion bridge: syncSince request (messageSeq=\(messageSeq), alertSeq=\(alertSeq), limit=\(limit))")
 
         func serveError(_ message: String) {
-            DLog("Companion bridge: syncSince -> error (\(message))")
+            RLog("Companion bridge: syncSince -> error (\(message))")
             send(.error(CompanionError(code: .internalError, message: message)), requestID: requestID)
         }
 
@@ -762,7 +762,7 @@ final class CompanionHostBridge {
 
         // Served a real reply -> burn the single-use nonce.
         if let nonce { _ = CompanionPushNonceRegistry.shared.consume(nonce) }
-        DLog("Companion bridge: syncSince -> \(items.count) item(s), messageFloor=\(messageFloorTarget), alertFloor=\(alertFloorTarget), firstRun=\(firstRun), messageReset=\(messageReset), alertReset=\(alertReset), truncated=\(truncated)")
+        RLog("Companion bridge: syncSince -> \(items.count) item(s), messageFloor=\(messageFloorTarget), alertFloor=\(alertFloorTarget), firstRun=\(firstRun), messageReset=\(messageReset), alertReset=\(alertReset), truncated=\(truncated)")
         send(.syncSince(items: items,
                         maxMessageSeq: messageFloorTarget,
                         maxAlertSeq: alertFloorTarget,
@@ -825,9 +825,9 @@ final class CompanionHostBridge {
             try ChatClient.instance?.publishNotice(
                 chatID: chatID,
                 notice: "This chat has been linked to \(terminal ? "terminal" : "browser") session “\(name)”.")
-            DLog("Companion bridge: linked \(terminal ? "terminal" : "browser") session \(guid) to chat \(chatID)")
+            RLog("Companion bridge: linked \(terminal ? "terminal" : "browser") session \(guid) to chat \(chatID)")
         } catch {
-            DLog("Companion bridge: linkSession failed: \(error)")
+            RLog("Companion bridge: linkSession failed: \(error)")
             send(.error(CompanionError(code: .internalError, message: "\(error)")), requestID: nil)
         }
     }
@@ -851,11 +851,11 @@ final class CompanionHostBridge {
                                              terminal: Bool) {
         guard let client = ChatClient.instance else { return }
         if let sessionGuid {
-            DLog("Companion bridge: select-session resolved with \(sessionGuid); republishing original")
+            RLog("Companion bridge: select-session resolved with \(sessionGuid); republishing original")
             performLinkSession(chatID: chatID, guid: sessionGuid, terminal: terminal)
             try? client.publish(message: originalMessage, toChatID: chatID, partial: false)
         } else {
-            DLog("Companion bridge: select-session declined")
+            RLog("Companion bridge: select-session declined")
             declineRemoteCommand(chatID: chatID,
                                  requestUUID: originalMessage.uniqueID,
                                  message: originalMessage,
@@ -879,10 +879,10 @@ final class CompanionHostBridge {
         guard let message = found,
               case .remoteCommandRequest(let payload, _) = message.content,
               let remoteCommand = payload.classic else {
-            DLog("Companion bridge: remoteCommandDecision for unknown message \(messageUniqueID)")
+            RLog("Companion bridge: remoteCommandDecision for unknown message \(messageUniqueID)")
             return
         }
-        DLog("Companion bridge: remote command decision \(decision.rawValue) for \(messageUniqueID)")
+        RLog("Companion bridge: remote command decision \(decision.rawValue) for \(messageUniqueID)")
         let category = remoteCommand.content.permissionCategory
         let browser = category.isBrowserSpecific
         let guid = browser ? listModel.chat(id: chatID)?.browserSessionGuid
@@ -1019,7 +1019,7 @@ final class CompanionHostBridge {
                                                includeMargins: false,
                                                backgroundColor: backgroundColor,
                                                showCursor: false) else {
-            DLog("Companion bridge: render failed for \(guid): wasDetached=\(wasDetached) lines=\(totalLines) frame=\(NSStringFromRect(textview.frame))")
+            RLog("Companion bridge: render failed for \(guid): wasDetached=\(wasDetached) lines=\(totalLines) frame=\(NSStringFromRect(textview.frame))")
             send(.error(CompanionError(code: .internalError,
                                        message: "Rendering the session content failed.")),
                  requestID: requestID)

@@ -256,7 +256,7 @@ extension ToolStatus {
 
     override func viewDidMoveToWindow() {
         let delegate = toolWrapper()?.delegate?.delegate
-        DLog("ToolStatus viewDidMoveToWindow: window=\(window.d), delegate=\(delegate.d), statuses in controller=\(SessionStatusController.instance.statuses.keys.map { $0 })")
+        RLog("ToolStatus viewDidMoveToWindow: window=\(window.d), delegate=\(delegate.d), statuses in controller=\(SessionStatusController.instance.statuses.keys.map { $0 })")
         // The fresh reload below is authoritative — drop any in-flight debounced work.
         resolvedSessionsForReload.removeAll()
         pendingFlush?.cancel()
@@ -1014,7 +1014,7 @@ extension ToolStatus: NSTableViewDelegate {
             // one-shot may have fired before logging was enabled, and
             // an unreachable session generates no reload that would
             // re-trigger it).
-            DLog("No session with ID \(guid)\n\(Self.diagnosis(unresolvableGUID: guid))")
+            RLog("No session with ID \(guid)\n\(Self.diagnosis(unresolvableGUID: guid))")
             return
         }
         session.reveal()

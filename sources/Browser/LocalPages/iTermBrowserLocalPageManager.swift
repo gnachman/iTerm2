@@ -149,12 +149,12 @@ class iTermBrowserLocalPageManager: NSObject {
         guard currentURL.absoluteString == messageURL,
               let webViewURL = webView.url?.absoluteString,
               webViewURL == messageURL else {
-            DLog("Message from wrong URL: webView=\(webView.url?.absoluteString ?? "nil"), currentURL=\(currentURL.absoluteString), message=\(messageURL)")
+            RLog("Message from wrong URL: webView=\(webView.url?.absoluteString ?? "nil"), currentURL=\(currentURL.absoluteString), message=\(messageURL)")
             return false
         }
         
         guard let context = activePageContexts[messageURL] else {
-            DLog("No active context for message URL: \(messageURL)")
+            RLog("No active context for message URL: \(messageURL)")
             return false
         }
         
@@ -323,7 +323,7 @@ private extension iTermBrowserLocalPageManager {
 
         case iTermBrowserWelcomePageHandler.welcomeURL.absoluteString:
             guard let handler = welcomeHandler else {
-                DLog("Failed to create welcome page handler")
+                RLog("Failed to create welcome page handler")
                 context = nil
                 break
             }
@@ -451,7 +451,7 @@ extension iTermBrowserLocalPageManager: iTermBrowserPermissionsViewHandlerDelega
     func permissionsViewHandlerDidRevokeAllPermissions(_ handler: iTermBrowserPermissionsViewHandler, for origin: String) {
         // Notify the browser controller that permissions have been revoked
         // This allows the browser to update any cached permission state
-        DLog("All permissions revoked for origin: \(origin)")
+        RLog("All permissions revoked for origin: \(origin)")
     }
 }
 

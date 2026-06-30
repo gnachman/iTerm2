@@ -80,7 +80,7 @@ class iTermLocaleGuesser: NSObject {
     @objc
     func dictionaryWithLANG() -> [String: String]? {
         if let lang = valueForLanguageEnvironmentVariable() {
-            DLog("Have value for LANG")
+            RLog("Have value for LANG")
             return ["LANG": lang]
         }
         return nil
@@ -89,7 +89,7 @@ class iTermLocaleGuesser: NSObject {
     @objc
     func dictionaryWithLC_CTYPE() ->  [String: String]? {
         if let fallback = config.fallbackLCCType, !fallback.isEmpty {
-            DLog("Have fallback LC_CTYPE")
+            RLog("Have fallback LC_CTYPE")
             return ["LC_CTYPE": fallback]
         }
 
@@ -110,14 +110,14 @@ class iTermLocaleGuesser: NSObject {
             return result
         }
         guard shouldSetCTYPE else {
-            DLog("Not setting CTYPE")
+            RLog("Not setting CTYPE")
             return nil
         }
         if let result = dictionaryWithLC_CTYPE() {
             return result
         }
 
-        DLog("Failed to find anything")
+        RLog("Failed to find anything")
         return nil
     }
 

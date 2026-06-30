@@ -85,7 +85,7 @@ class ChatDatabase {
         }
 
         if !createTables() {
-            DLog("FAILED TO CREATE TABLES, CLOSING CHAT DB at \(url.path)")
+            RLog("FAILED TO CREATE TABLES, CLOSING CHAT DB at \(url.path)")
             db.close()
             return nil
         }
@@ -216,7 +216,7 @@ class ChatDatabase {
         } catch {
             // Surface loudly: a persistent failure here re-runs and re-fails on
             // every open, so the chat DB would never open again.
-            DLog("Message seq migration FAILED (chat DB will not open): \(error)")
+            RLog("Message seq migration FAILED (chat DB will not open): \(error)")
             throw error
         }
     }
@@ -267,7 +267,7 @@ class ChatDatabase {
             // ever skipped) so a phone that mysteriously stops getting previews is
             // diagnosable. Return nil (failure), NOT ([], 0): the caller must be
             // able to tell a transient error from an empty chat.
-            DLog("Companion: messagesSince failed for chat \(chatID): \(error); returning nil")
+            RLog("Companion: messagesSince failed for chat \(chatID): \(error); returning nil")
             return nil
         }
         return (messages, maxSeqValue)
@@ -283,7 +283,7 @@ class ChatDatabase {
                 return rs.longLongInt(forColumn: "maxseq")
             }
         } catch {
-            DLog("Companion: maxSeq failed for chat \(chatID): \(error)")
+            RLog("Companion: maxSeq failed for chat \(chatID): \(error)")
         }
         return 0
     }
@@ -324,7 +324,7 @@ class ChatDatabase {
                 }
             }
         } catch {
-            DLog("Companion: messagesSinceGlobal failed: \(error); returning nil")
+            RLog("Companion: messagesSinceGlobal failed: \(error); returning nil")
             return nil
         }
         return (rows, maxSeqValue)
@@ -356,7 +356,7 @@ class ChatDatabase {
             }
             return assignedSeq
         } catch {
-            DLog("Companion: insertAlert failed: \(error)")
+            RLog("Companion: insertAlert failed: \(error)")
             return nil
         }
     }
@@ -390,7 +390,7 @@ class ChatDatabase {
                 }
             }
         } catch {
-            DLog("Companion: alertsSince failed: \(error); returning nil")
+            RLog("Companion: alertsSince failed: \(error); returning nil")
             return nil
         }
         return (alerts, maxSeqValue)

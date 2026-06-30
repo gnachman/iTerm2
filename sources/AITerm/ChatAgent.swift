@@ -183,7 +183,7 @@ class ChatAgent {
                 content: .clientLocal(
                     .init(action: .enableOrchestrationRequest(requestID: requestID))))
         } catch {
-            DLog("Failed to publish enable-orchestration request: \(error)")
+            RLog("Failed to publish enable-orchestration request: \(error)")
             pendingOrchestrationRequests.removeValue(forKey: requestID)
             try? completion(.success("Failed to surface the request: \(error.localizedDescription)"))
         }
@@ -208,7 +208,7 @@ class ChatAgent {
                 // next app launch would rebuild this chat as
                 // session-bound while the conversation history already
                 // references orchestrator tool calls.
-                DLog("Failed to set orchestrationEnabled: \(error)")
+                RLog("Failed to set orchestrationEnabled: \(error)")
                 try? completion(.success(
                     "Failed to enable orchestration: \(error.localizedDescription). "
                     + "The chat remains in its current mode."))
@@ -318,7 +318,7 @@ class ChatAgent {
         } catch {
             // Drop the parked completion and surface the failure to
             // the LLM rather than leaving it parked forever.
-            DLog("Failed to publish orchestration tool request: \(error)")
+            RLog("Failed to publish orchestration tool request: \(error)")
             pendingRemoteCommands.removeValue(forKey: requestID)
             try? completion(.failure(error))
         }
@@ -711,7 +711,7 @@ class ChatAgent {
             // silently cancel any actively in-flight queued turn,
             // orphaning its completion and stalling the queue.
             // Pinned by AILiveHarness.test_chat_orphanToolResponseAfterStop_doesNotOrphanQueuedMessage.
-            DLog("Dropping orphan .remoteCommandResponse for cancelled tool")
+            RLog("Dropping orphan .remoteCommandResponse for cancelled tool")
             completion(nil)
             return
         case .setPermissions(let allowedCategories):
@@ -941,10 +941,10 @@ class ChatAgent {
                     // model call and display next to the wrong title.
                     self?.requestIconGeneration(title: newName)
                 } catch {
-                    DLog("renameChat failed: \(error)")
+                    RLog("renameChat failed: \(error)")
                 }
             } else {
-                DLog("Rename produced no usable title")
+                RLog("Rename produced no usable title")
             }
         }
     }
@@ -967,7 +967,7 @@ class ChatAgent {
             do {
                 try ChatListModel.instance?.setIcon(data, forChatID: chatID)
             } catch {
-                DLog("Failed to save icon for chat \(chatID): \(error)")
+                RLog("Failed to save icon for chat \(chatID): \(error)")
             }
         }
     }

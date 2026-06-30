@@ -241,7 +241,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     if (enabled == _terminalEnabled) {
         return;
     }
-    DLog(@"setTerminalEnabled:%@", @(enabled));
+    RLog(@"setTerminalEnabled:%@", @(enabled));
     _terminalEnabled = enabled;
     if (enabled) {
         _terminal.delegate = self;
@@ -548,7 +548,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 }
 
 - (void)setExited:(BOOL)exited {
-    DLog(@"begin %@", @(exited));
+    RLog(@"begin %@", @(exited));
     _exited = exited;
     _triggerEvaluator.sessionExited = exited;
 }
@@ -1887,7 +1887,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt {
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
-    DLog(@"clear buffer saving prompt");
+    RLog(@"clear buffer saving prompt");
     const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
     id<VT100ScreenMarkReading> mark = [self lastPromptMark];
     const BOOL detectedByTrigger = mark.promptDetectedByTrigger;
@@ -3097,7 +3097,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (!command && range.start.x != -1) {
         command = @"";
     }
-    DLog(@"FinalTerm: Command <<%@>> ended with range %@",
+    RLog(@"FinalTerm: Command <<%@>> ended with range %@",
          command, VT100GridCoordRangeDescription(range));
 
     if (command) {
@@ -3123,7 +3123,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 NSString *firstLine = (firstNewline.location != NSNotFound)
                     ? [command substringToIndex:firstNewline.location]
                     : command;
-                DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
+                RLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                      self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
                     VT100ScreenMark *mark = (VT100ScreenMark *)obj;
@@ -3306,7 +3306,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (VT100ScreenMark *)setPromptStartLine:(int)line
                       detectedByTrigger:(BOOL)detectedByTrigger
                                     aid:(NSString * _Nullable)aid {
-    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine. aid=%@", line, aid);
+    RLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine. aid=%@", line, aid);
     // Reset this in case it's taking the "real" shell integration path.
     self.fakePromptDetectedAbsLine = -1;
     const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
@@ -6076,7 +6076,7 @@ lengthExcludingInBandSignaling:data.length
                     [self.openAidStack addObject:obj];
                 }
             }
-            DLog(@"restoreFromDictionary: restored openAidStack=%@", self.openAidStack);
+            RLog(@"restoreFromDictionary: restored openAidStack=%@", self.openAidStack);
         } else {
             DLog(@"restoreFromDictionary: no openAidStack in saved state (pre-feature or empty)");
         }
@@ -6200,7 +6200,7 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)reallyAppendBannerMessage:(NSString *)message {
-    DLog(@"Append banner %@", message);
+    RLog(@"Append banner %@", message);
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = self.terminal.graphicRendition;
 
@@ -6461,7 +6461,7 @@ lengthExcludingInBandSignaling:data.length
 // the NEXT prompt-start) and isn't a reliable open/closed flag at
 // arbitrary save points.
 - (void)rebuildAidStateFromIntervalTree {
-    DLog(@"rebuildAidStateFromIntervalTree begin: restoredStack=%@", self.openAidStack);
+    RLog(@"rebuildAidStateFromIntervalTree begin: restoredStack=%@", self.openAidStack);
     [self.marksByAid removeAllObjects];
     if (self.openAidStack.count == 0) {
         DLog(@"rebuildAidStateFromIntervalTree: empty stack, nothing to rebuild");
@@ -6595,7 +6595,7 @@ lengthExcludingInBandSignaling:data.length
 
 - (void)markDidBecomeCommandMark:(id<VT100ScreenMarkReading>)mark {
     [self assertOnMutationThread];
-    DLog(@"mark %@ became command mark", mark);
+    RLog(@"mark %@ became command mark", mark);
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
         DLog(@"Set last command mark to %@", mark);
         self.lastCommandMark = mark;
@@ -6613,7 +6613,7 @@ lengthExcludingInBandSignaling:data.length
     if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize >= VT100ScreenBigFileDownloadThreshold) {
         if (![delegate screenConfirmDownloadNamed:name
                                     canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
-            DLog(@"Aborting big download");
+            RLog(@"Aborting big download");
             __weak __typeof(self) weakSelf = self;
             dispatch_async(queue, ^{
                 [weakSelf stopTerminalReceivingFile];
@@ -7252,7 +7252,7 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)handleTriggerDetectedPromptAt:(VT100GridAbsCoordRange)range {
-    DLog(@"handleTriggerDetectedPromptAt: %@", VT100GridAbsCoordRangeDescription(range));
+    RLog(@"handleTriggerDetectedPromptAt: %@", VT100GridAbsCoordRangeDescription(range));
     _triggerDidDetectPrompt = NO;
     if (self.fakePromptDetectedAbsLine == -2) {
         // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
@@ -7324,7 +7324,7 @@ launchCoprocessWithCommand:(NSString *)command
     const VT100GridCoordRange relative = { .start = startCoord, .end = endCoord };
     const VT100GridAbsCoordRange range = VT100GridAbsCoordRangeFromCoordRange(relative, overflow);
 
-    DLog(@"Trigger detected prompt at %@ of %@ (%@)",
+    RLog(@"Trigger detected prompt at %@ of %@ (%@)",
          NSStringFromRange(wrappedRange), @(lineNumber),  VT100GridAbsCoordRangeDescription(range));
 
     id<VT100ScreenMarkReading> lastPromptMark = [self lastPromptMark];

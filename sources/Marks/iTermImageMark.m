@@ -22,7 +22,7 @@
     if (self) {
         _imageCode = imageCode;
     }
-    DLog(@"New image mark %@ created", self);
+    RLog(@"New image mark %@ created", self);
     return self;
 }
 

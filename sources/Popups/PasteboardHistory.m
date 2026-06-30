@@ -138,7 +138,7 @@
                               requiringSecureCoding:NO
                                               error:&error];
         if (error) {
-            DLog(@"Failed to archive command history: %@", error);
+            RLog(@"Failed to archive command history: %@", error);
             return;
         }
         [data writeToFile:path_ atomically:NO];
@@ -170,7 +170,7 @@
 {
     if (IsSecureEventInputEnabled() &&
         ![iTermAdvancedSettingsModel saveToPasteHistoryWhenSecureInputEnabled]) {
-        DLog(@"Not saving paste history because secure keyboard entry is enabled");
+        RLog(@"Not saving paste history because secure keyboard entry is enabled");
         return;
     }
     value = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];

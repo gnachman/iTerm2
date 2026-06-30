@@ -37,16 +37,16 @@
         return;
     }
 
-    DLog(@"Migrating hotkey prefs…");
+    RLog(@"Migrating hotkey prefs…");
     if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyEnabled] &&
         [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow_Deprecated]) {
-        DLog(@"Legacy preferences have a dedicated window");
+        RLog(@"Legacy preferences have a dedicated window");
 
         NSString *guid = [iTermPreferences stringForKey:kPreferenceKeyHotkeyProfileGuid_Deprecated];
         // There is something to migrate
         Profile *profile = guid ? [[ProfileModel sharedInstance] bookmarkWithGuid:guid] : nil;
         if (profile) {
-            DLog(@"Found the hotkey profile");
+            RLog(@"Found the hotkey profile");
             if ([profile profileIsDynamic]) {
                 [self migrateDynamicProfileHotKeySettings:profile];
             } else {
@@ -55,7 +55,7 @@
                 [[ProfileModel sharedInstance] flush];
             }
             if ([self warnAboutChildrenOfHotkeyProfileIfNeeded:profile]) {
-                DLog(@"Reloading dynamic profiles");
+                RLog(@"Reloading dynamic profiles");
                 // We changed the parent of a profile so reload them and the children will pick up
                 // the (terrible) behavior we warned you about.
                 [[iTermDynamicProfileManager sharedInstance] reloadDynamicProfiles];
@@ -89,7 +89,7 @@
         }
     }
     if (childrensNames.count) {
-        DLog(@"Warning about children of hotkey profile");
+        RLog(@"Warning about children of hotkey profile");
         NSString *concatenatedNames = [childrensNames componentsJoinedWithOxfordComma];
         NSString *title = [NSString stringWithFormat:@"You have dynamic profiles whose “Dynamic Profile Parent Name” is set to your hotkey window's profile, “%@.” Because multiple hotkey windows are now supported, the hotkey will now toggle a separate window for each of these profiles. Please update your dynamic profiles appropriately. The affected profiles are:\n%@",
                            profile[KEY_NAME], concatenatedNames];
@@ -103,7 +103,7 @@
 }
 
 - (void)migrateDynamicProfileHotKeySettings:(Profile *)profile {
-    DLog(@"Have a dynamic profile to migrate");
+    RLog(@"Have a dynamic profile to migrate");
     NSString *title = [NSString stringWithFormat:@"Your hotkey window‘s profile is a dynamic profile named “%@.” It needs to be updated for this version of iTerm2 because hotkey settings are now stored in the profile.", profile[KEY_NAME]];
 
     NSArray *actions;

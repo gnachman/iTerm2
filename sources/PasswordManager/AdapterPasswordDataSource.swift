@@ -145,7 +145,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 guard let response = try? decoder.decode(Response.self, from: output.stdout) else {
                     let outputString = String(data: output.stdout, encoding: .utf8) ?? "(non-UTF8)"
                     completion(.failure(AdapterError.badOutput))
-                    DLog("Failed to decode response from adapter. Output: \(outputString)")
+                    RLog("Failed to decode response from adapter. Output: \(outputString)")
                     return
                 }
 

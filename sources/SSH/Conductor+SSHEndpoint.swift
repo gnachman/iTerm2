@@ -54,7 +54,7 @@ extension Conductor: SSHEndpoint {
                     completion(entries)
                 }
             } catch {
-                DLog("\(error) for \(path)")
+                RLog("\(error) for \(path)")
                 queue.async {
                     completion([])
                 }
@@ -102,7 +102,7 @@ extension Conductor: SSHEndpoint {
 
     @MainActor
     func cancelDownload(uniqueID: String) async throws {
-        DLog("Want to cancel downloads with unique ID \(uniqueID)")
+        RLog("Want to cancel downloads with unique ID \(uniqueID)")
         cancelEnqueuedRequests { command in
             switch command {
             case .framerFile(let sub):
@@ -383,7 +383,7 @@ extension Conductor: SSHEndpoint {
                 }
             }
             return AsyncThrowingStream<RemoteFile, Error> { continuation in
-                DLog("Begin new search with id \(id) and query \(query)")
+                RLog("Begin new search with id \(id) and query \(query)")
                 currentSearch = Search(id: id,
                                        query: query,
                                        continuation: continuation,

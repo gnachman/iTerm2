@@ -55,7 +55,7 @@ extension NSPopUpButton {
         runner.maximumOutputSize = NSNumber(value: 1024 * 1024)
         let rc = runner.blockingRun()
         if rc != 0 {
-            DLog("locale -a failed with return code \(rc)")
+            RLog("locale -a failed with return code \(rc)")
             return []
         }
         var data = runner.output ?? Data()

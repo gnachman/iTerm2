@@ -31,6 +31,8 @@
 - For changes to the Companion iOS app (the `Companion/` directory, "iTerm2 Buddy"), put release notes in Companion/docs/notes.txt instead of docs/notes-3.7.txt.
 - The sources directory is organized into folders. Before adding a new file, consider which directory it belongs in. Some are named after features while others are named after their role.
 - User Defaults keys that should only be stored locally begin with the prefix NoSync. If a user chooses to load prefs from a custom location (e.g., Dropbox) they may be prompted to write settings when a non-NoSync key changes. To avoid disrupting them in this manner, user defaults that are not actual configuration settings (e.g., a list of recent items) get a NoSync prefix.
+- Use DLog statements so we can debug problems in the field. These statements have no effect when debug logging is off (the default) and it's OK for them to do somewhat expensive operations like getting a stack trace.
+- Use RLog statements to log debug messages to memory even when debug logging is not on. Creating a debug log later will pull in the last 10 megabytes of RLog statements. RLog runs always so don't do anything expensive (such as stack traces) and do not use them in hot paths that could burn a lot of CPU logging.
 - When adding temporary code for debugging, use NSFuckingLog instead of NSLog because NSLog truncates long output. Logging code that is intended to remain long-term should use DLog.
 - Do not use an SF Symbols name as a string literal. Get it using SFSymbolGetString in Objective C or the SFSymbol enum in Swift.
 - Don't use sleep to solve concurrency problems.

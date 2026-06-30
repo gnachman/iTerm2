@@ -60,7 +60,7 @@ struct TarJob: CustomDebugStringConvertible {
         let destination = destinationParent.appendingPathComponent(local.lastPathComponent)
         DLog("Want to add \(local.path) at \(destination.path) to \(self)")
         guard sourceParents.hasCommonPathPrefix else {
-            DLog("Source parents lack common prefix \(sourceParents)")
+            RLog("Source parents lack common prefix \(sourceParents)")
             return nil
         }
         let sourcePrefix = (sourceParents + [local.deletingLastPathComponent()]).commonPathPrefix
@@ -110,7 +110,7 @@ struct TarJob: CustomDebugStringConvertible {
             DLog("Upon success replacement is \(replacement)")
             return replacement
         } catch {
-            DLog("FAIL - exception \(error)")
+            RLog("FAIL - exception \(error)")
             return nil
         }
     }

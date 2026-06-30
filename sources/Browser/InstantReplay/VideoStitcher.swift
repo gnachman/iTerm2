@@ -72,11 +72,11 @@ final class VideoStitcher {
 
         // Find maximum size across all segments
         let maxSize = Self.videoSize(forClipFrames: inputSegments.map(\.clipFrame))
-        DLog("maxSize=\(maxSize), clipFrames=\(inputSegments.map(\.clipFrame))")
+        RLog("maxSize=\(maxSize), clipFrames=\(inputSegments.map(\.clipFrame))")
 
         // Validate size
         guard maxSize.width > 0 && maxSize.height > 0 else {
-            DLog("Invalid maxSize: \(maxSize)")
+            RLog("Invalid maxSize: \(maxSize)")
             throw RuntimeError.noValidSegments
         }
         // Create writer with final video settings
@@ -118,7 +118,7 @@ final class VideoStitcher {
             pixelDensityItem.dataType = kCMMetadataBaseDataType_RawData as String
             
             input.metadata = [pixelDensityItem]
-            DLog("Added pixel density metadata: \(pixelWidth)x\(pixelHeight) -> \(displayWidth)x\(displayHeight)")
+            RLog("Added pixel density metadata: \(pixelWidth)x\(pixelHeight) -> \(displayWidth)x\(displayHeight)")
         }
 
         let pixelBufferAttributes: [String: Any] = [

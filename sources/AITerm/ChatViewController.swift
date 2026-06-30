@@ -1748,7 +1748,7 @@ extension LLM.Message.Attachment {
             do {
                 try text.write(toFile: path, atomically: false, encoding: .utf8)
             } catch {
-                DLog("Failed to write to \(path): \(error)")
+                RLog("Failed to write to \(path): \(error)")
             }
         case .statusUpdate:
             it_fatalError()
@@ -1756,7 +1756,7 @@ extension LLM.Message.Attachment {
             do {
                 try file.content.write(to: URL(fileURLWithPath: path))
             } catch {
-                DLog("Failed to write to \(path): \(error)")
+                RLog("Failed to write to \(path): \(error)")
             }
         case .fileID:
             // TODO: Download the file
@@ -1797,7 +1797,7 @@ extension LLM.Message.Attachment {
             try FileManager.default.createDirectory(atPath: path.deletingLastPathComponent,
                                                     withIntermediateDirectories: true)
         } catch {
-            DLog("Failed to create \(path): \(error)")
+            RLog("Failed to create \(path): \(error)")
         }
         return path
     }
@@ -1991,7 +1991,7 @@ extension ChatViewController {
               let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as? Int32,
               let dataSource = userInfo[PTYCommandDidExitUserInfoKeyDataSource] as? iTermTextDataSource,
               let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as? URL else {
-            DLog("PTYCommandDidExit notification missing required userInfo keys: \(userInfo)")
+            RLog("PTYCommandDidExit notification missing required userInfo keys: \(userInfo)")
             return
         }
         let extractor = iTermTextExtractor(dataSource: dataSource)
@@ -3013,7 +3013,7 @@ extension ChatViewController {
                     .enableOrchestrationResponse(requestID: requestID,
                                                   approved: approved)))
         } catch {
-            DLog("Chat VC: failed to publish enable-orchestration response: \(error)")
+            RLog("Chat VC: failed to publish enable-orchestration response: \(error)")
         }
     }
 
@@ -3040,7 +3040,7 @@ extension ChatViewController {
                     .workgroupPermissionResponse(requestID: requestID,
                                                 approved: approved)))
         } catch {
-            DLog("Chat VC: failed to publish workgroup permission response: \(error)")
+            RLog("Chat VC: failed to publish workgroup permission response: \(error)")
         }
     }
 
@@ -3064,7 +3064,7 @@ extension ChatViewController {
                 content: .userCommand(
                     .revokeOrchestrationPermission(scope: scope)))
         } catch {
-            DLog("Chat VC: failed to publish revoke-orchestration-permission: \(error)")
+            RLog("Chat VC: failed to publish revoke-orchestration-permission: \(error)")
         }
     }
 
@@ -3143,7 +3143,7 @@ extension ChatViewController {
         do {
             try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
         } catch {
-            DLog("Failed to toggle orchestration: \(error)")
+            RLog("Failed to toggle orchestration: \(error)")
             return
         }
         inputView.refreshPlaceholder()

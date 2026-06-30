@@ -241,13 +241,13 @@ class PasswordManagerDataSourceProvider: NSObject {
         let policy = LAPolicy.deviceOwnerAuthentication
         var error: NSError? = nil
         if !context.canEvaluatePolicy(policy, error: &error) {
-            DLog("Can't evaluate \(policy): \(error?.localizedDescription ?? "(nil)")")
+            RLog("Can't evaluate \(policy): \(error?.localizedDescription ?? "(nil)")")
             return
         }
         iTermApplication.shared().localAuthenticationDialogOpen = true
         let reason = "open the password manager"
         context.evaluatePolicy(policy, localizedReason: reason) { success, error in
-            DLog("Policy evaluation success=\(success) error=\(String(describing: error))")
+            RLog("Policy evaluation success=\(success) error=\(String(describing: error))")
             DispatchQueue.main.async {
                 iTermApplication.shared().localAuthenticationDialogOpen = false
                 if success {

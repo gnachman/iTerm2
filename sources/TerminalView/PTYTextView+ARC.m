@@ -410,7 +410,7 @@ iTermCommandInfoViewControllerDelegate>
     }
     NSString *path = action.fullPath;
     if (path == nil) {
-        DLog(@"path is nil");
+        RLog(@"path is nil");
         return;
     }
 
@@ -435,7 +435,7 @@ iTermCommandInfoViewControllerDelegate>
     draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
     draggingSession.draggingFormation = NSDraggingFormationNone;
     [_mouseHandler didDragSemanticHistory];
-    DLog(@"did semantic history drag");
+    RLog(@"did semantic history drag");
 }
 
 #pragma mark - Underlined Actions

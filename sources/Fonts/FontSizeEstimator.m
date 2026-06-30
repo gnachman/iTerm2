@@ -80,7 +80,7 @@
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         [dic setObject:aFont forKey:NSFontAttributeName];
         NSSize size = [@"W" sizeWithAttributes:dic];
-        DLog(@"Initial guess at a size for %@ is %@", aFont, NSStringFromSize(size));
+        RLog(@"Initial guess at a size for %@ is %@", aFont, NSStringFromSize(size));
         CGGlyph glyphs[1];
         int advances[1];
         UniChar characters[1];

@@ -55,12 +55,12 @@ class PasteboardReporter: NSObject {
                 return
             }
             do {
-                DLog("Set secure user default to true")
+                RLog("Set secure user default to true")
                 try SecureUserDefaults.instance.allowPaste.set(true)
                 DLog("Set user default to false")
                 iTermUserDefaults.userDefaults().set(false, forKey: Self.userDefaultsKey)
             } catch {
-                DLog("Failed to enable allowPaste: \(error.localizedDescription)")
+                RLog("Failed to enable allowPaste: \(error.localizedDescription)")
             }
 
         case .askEachTime:
@@ -131,7 +131,7 @@ class PasteboardReporter: NSObject {
 
     private func ask(pasteboard: String, completion: @escaping () -> ()) {
         delegate?.pasteboardReporterRequestPermission(self) { [weak self] allowed, permanently in
-            DLog("allowed=\(allowed) permanently=\(permanently)")
+            RLog("allowed=\(allowed) permanently=\(permanently)")
             if !allowed {
                 if permanently {
                     Self.set(configuration: .never)
@@ -145,7 +145,7 @@ class PasteboardReporter: NSObject {
                 Self.set(configuration: .always)
             }
             if let self = self {
-                DLog("Requesting pasteboard report be sent")
+                RLog("Requesting pasteboard report be sent")
                 self.delegate?.pasteboardReporter(self, reportPasteboard: pasteboard)
             }
             completion()

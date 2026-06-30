@@ -789,7 +789,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
                                                          fromData:rowData
                                                             error:&error];
     if (error) {
-        DLog(@"Drop failed: %@", error);
+        RLog(@"Drop failed: %@", error);
         return NO;
     }
 
@@ -1250,7 +1250,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         [[self triggerDictionariesForCurrentProfile][row] mutableCopy];
     Trigger<iTermColorSettable> *trigger = (id)[Trigger triggerFromUntrustedDict:triggerDictionary];
     if (!trigger) {
-        DLog(@"Invalid trigger dict: %@", triggerDictionary);
+        RLog(@"Invalid trigger dict: %@", triggerDictionary);
         return;
     }
     if ([colorWell.identifier isEqual:kTextColorWellIdentifier]) {

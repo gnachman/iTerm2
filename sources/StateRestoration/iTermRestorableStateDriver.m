@@ -35,7 +35,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     assert([NSThread isMainThread]);
     DLog(@"save sync=%@ saver=%@", @(sync), _saver);
     if (_saving) {
-        DLog(@"Currently saving. Set needsSave.");
+        RLog(@"Currently saving. Set needsSave.");
         _needsSave = YES;
         return;
     }
@@ -68,7 +68,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
                         completion:(void (^)(void))completion {
     DLog(@"restoreWindows");
     if (!self.restorer) {
-        DLog(@"Have no restorer.");
+        RLog(@"Have no restorer.");
         ready();
         completion();
         return;
@@ -99,7 +99,7 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
             [index restorableStateIndexUnlink];
             [[iTermUserDefaults userDefaults] setInteger:0
                                                        forKey:iTermRestorableStateControllerUserDefaultsKeyCount];
-            DLog(@"Ready after warning");
+            RLog(@"Ready after warning");
             ready();
             completion();
             return;
@@ -144,14 +144,14 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
             completion();
         });
     });
-    DLog(@"Restoring from index:\n%@", index);
+    RLog(@"Restoring from index:\n%@", index);
     for (NSInteger i = 0; i < count; i++) {
         DLog(@"driver: restore window number %@", @(i));
         _numberOfWindowsRestored += 1;
         dispatch_group_enter(group);
         [self.restorer restoreWindowWithRecord:[index restorableStateRecordAtIndex:i]
                                     completion:^(NSString *windowIdentifier, NSWindow *window) {
-            DLog(@"driver: restoration of window number %@ with identifier %@ finished", @(i), windowIdentifier);
+            RLog(@"driver: restoration of window number %@ with identifier %@ finished", @(i), windowIdentifier);
             if (windowIdentifier) {
                 void (^callback)(NSWindow *, NSError *) = callbacks[windowIdentifier];
                 if (callback) {

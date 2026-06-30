@@ -266,7 +266,7 @@ extension TerminalWindowSizeHelper {
         let menuBarIsHidden = !iTermMenuBarObserver.sharedInstance().menuBarVisible(on: screen)
         let canOverlapMenuBar = window is iTermPanel
 
-        DLog("Checking if the fullscreen window frame should be shifted down below the menu bar. " +
+        RLog("Checking if the fullscreen window frame should be shifted down below the menu bar. " +
              "wantToHideMenuBar=\(wantToHideMenuBar), canHideMenuBar=\(canHideMenuBar)," + "menuIsHidden=\(menuBarIsHidden), canOverlapMenuBar=\(canOverlapMenuBar)")
         if wantToHideMenuBar && canHideMenuBar {
             DLog("Nope");

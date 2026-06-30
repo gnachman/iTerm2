@@ -110,7 +110,7 @@ final class ScreenWatchPoller {
     // logger, so this is the only window into what a statusless watch is
     // doing; replies are snippeted so a screen-derived answer stays short.
     private func log(_ message: String) {
-        DLog("[ScreenWatchPoller \(watcher.roleName)] \(message)")
+        RLog("[ScreenWatchPoller \(watcher.roleName)] \(message)")
     }
 
     private static func snippet(_ text: String, limit: Int = 200) -> String {

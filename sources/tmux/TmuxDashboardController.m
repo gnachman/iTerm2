@@ -53,7 +53,7 @@
 }
 
 - (void)windowDidLoad {
-    DLog(@"dashboard: windowDidLoad with tmux controller %@", self.tmuxController);
+    RLog(@"dashboard: windowDidLoad with tmux controller %@", self.tmuxController);
     [super windowDidLoad];
 
     [sessionsTable_ selectSessionNumber:[[self tmuxController] sessionId]];
@@ -116,7 +116,7 @@
 
 - (void)didAttachWithHiddenWindows:(BOOL)anyHidden
                     tooManyWindows:(BOOL)tooMany {
-    DLog(@"anyHidden=%@ tooMany=%@", @(anyHidden), @(tooMany));
+    RLog(@"anyHidden=%@ tooMany=%@", @(anyHidden), @(tooMany));
     if (anyHidden && iTermUserDefaults.openTmuxDashboardIfHiddenWindows) {
         [self show];
         return;
@@ -241,7 +241,7 @@
 }
 
 - (void)setWindows:(TSVDocument *)doc forSession:(NSNumber *)sessionNumber {
-    DLog(@"dashboard: setWindows:%@ forSession:%@", doc, sessionNumber);
+    RLog(@"dashboard: setWindows:%@ forSession:%@", doc, sessionNumber);
     if ([sessionNumber isEqual:[sessionsTable_ selectedSessionNumber]]) {
         NSMutableArray *windows = [NSMutableArray array];
         for (NSArray *record in doc.records) {
@@ -427,7 +427,7 @@
 
 
 - (IBAction)connectionSelectionDidChange:(id)sender {
-    DLog(@"dashboard: connectionSelectionDidChange controller=%@", [self tmuxController]);
+    RLog(@"dashboard: connectionSelectionDidChange controller=%@", [self tmuxController]);
     [sessionsTable_ setSessionObjects:[[self tmuxController] sessionObjects]];
     [self reloadWindows];
 }

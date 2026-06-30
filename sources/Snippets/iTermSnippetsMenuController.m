@@ -43,7 +43,7 @@
 - (BOOL)checkForTagsChange {
     NSArray<NSString *> *tags = [[iTermController sharedInstance] currentSnippetsFilter];
     if (![NSObject object:tags isEqualToObject:_tags]) {
-        DLog(@"Tags changed from %@ to %@", _tags, tags);
+        RLog(@"Tags changed from %@ to %@", _tags, tags);
         [self reload];
         return YES;
     }

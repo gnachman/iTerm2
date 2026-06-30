@@ -108,7 +108,7 @@ class ChatBroker {
                 temp.chatID = chat.id
                 try listModel.append(message: temp, toChatID: chat.id)
             } catch {
-                DLog("While preloading messages: \(error)")
+                RLog("While preloading messages: \(error)")
             }
         }
         return chat.id

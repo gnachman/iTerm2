@@ -535,7 +535,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let containsOrigin = await checkWebViewContainsOrigin(origin)
         
         if containsOrigin {
-            DLog("Reloading browser session \(sessionGuid) due to revoked permission for origin: \(origin)")
+            RLog("Reloading browser session \(sessionGuid) due to revoked permission for origin: \(origin)")
             reload()
         }
     }
@@ -1296,7 +1296,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         let nsError = error as NSError
-        DLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
+        RLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
 
         navigationState.didCompleteLoading(error: error)
@@ -1816,9 +1816,9 @@ extension iTermBrowserManager {
             let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
             let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
             dataStore.proxyConfigurations = [proxyConfig]
-            DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
+            RLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
         } else {
-            DLog("Proxy disabled")
+            RLog("Proxy disabled")
             dataStore.proxyConfigurations = []
         }
     }

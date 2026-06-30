@@ -193,7 +193,7 @@ class iTermSessionDirectoryTracker: NSObject {
     /// Encode arrangement to the encoder.
     @objc
     func encodeArrangement(with encoder: any iTermEncoderAdapter) {
-        DLog("\(d(delegate)): Saving arrangement with lastDirectory of \(d(lastDirectory))");
+        RLog("\(d(delegate)): Saving arrangement with lastDirectory of \(d(lastDirectory))");
         if let dir = lastDirectory {
             encoder.setObject(dir, forKey: ArrangementKeys.lastDirectory)
         }
@@ -412,9 +412,9 @@ class iTermSessionDirectoryTracker: NSObject {
     /// Replace the working directory poller with a tmux-aware one.
     @objc
     func switchToTmuxPoller(tmuxController: TmuxController) {
-        DLog("\(d(delegate)): switchToTmuxPoller")
+        RLog("\(d(delegate)): switchToTmuxPoller")
         guard let gateway = tmuxController.gateway else {
-            DLog("\(d(delegate)): Missing gateway")
+            RLog("\(d(delegate)): Missing gateway")
             return
         }
 
@@ -524,7 +524,7 @@ class iTermSessionDirectoryTracker: NSObject {
         }
 
         if lastLocalDirectoryWasPushed, lastLocalDirectory != nil {
-            DLog("\(d(delegate)): Looks like there was a race because there is now a last local directory of \(d(lastLocalDirectory)). Use it")
+            RLog("\(d(delegate)): Looks like there was a race because there is now a last local directory of \(d(lastLocalDirectory)). Use it")
             completion(lastLocalDirectory)
             return
         }

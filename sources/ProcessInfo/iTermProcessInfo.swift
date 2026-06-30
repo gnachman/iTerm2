@@ -142,7 +142,7 @@ class iTermProcessInfo: NSObject {
                             depth: Int) -> iTermProcessInfo? {
         if depth > 50 || visited.contains(processID) {
             cycle = true
-            DLog("Failed to find deepest job at \(processID) because depth is \(depth) or found a cycle")
+            RLog("Failed to find deepest job at \(processID) because depth is \(depth) or found a cycle")
             return nil
         }
         visited.insert(processID)
@@ -280,13 +280,13 @@ class iTermProcessInfo: NSObject {
                                   cycle: &cycle,
                                   depth: 0)
         if cycle {
-            DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): cycle while searching under \(processID); using raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil))")
+            RLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): cycle while searching under \(processID); using raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil))")
             return raw
         }
         if let filtered {
             DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): using attached foreground job \(filtered.processID) (\(filtered.name.debugDescriptionOrNil))")
         } else {
-            DLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): no attached foreground job found under \(processID); falling back to raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil))")
+            RLog("deepestForegroundJobAttachedToTTYRdev(\(rdev)): no attached foreground job found under \(processID); falling back to raw deepest \(raw.processID) (\(raw.name.debugDescriptionOrNil))")
         }
         return filtered ?? raw
     }

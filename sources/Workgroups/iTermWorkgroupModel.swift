@@ -73,7 +73,7 @@ final class iTermWorkgroupModel: NSObject {
         do {
             return try JSONDecoder().decode([iTermWorkgroup].self, from: data)
         } catch {
-            DLog("Failed to decode workgroups: \(error)")
+            RLog("Failed to decode workgroups: \(error)")
             return []
         }
     }
@@ -83,7 +83,7 @@ final class iTermWorkgroupModel: NSObject {
             let data = try JSONEncoder().encode(workgroups)
             iTermUserDefaults.workgroupsData = data
         } catch {
-            DLog("Failed to encode workgroups: \(error)")
+            RLog("Failed to encode workgroups: \(error)")
         }
     }
 
