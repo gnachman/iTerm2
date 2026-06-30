@@ -7,7 +7,10 @@ New Features:
   static snapshot. The Mac renders and streams the
   visible screen, so inline images, colors, and
   full-screen apps look exactly as on the Mac. A
-  quiet terminal uses almost no data. Scrolling
+  quiet terminal uses almost no data, the view
+  stays current on a slow connection instead of
+  lagging behind, and it pauses itself with a
+  notice if it would use too much data. Scrolling
   back through history and selecting text in the
   live view are not in this version; older Macs
   keep showing the static snapshot.
