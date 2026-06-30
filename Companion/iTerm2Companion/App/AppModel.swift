@@ -223,6 +223,20 @@ final class AppModel {
     private var onStreamConfig: ((CompanionStreamConfig) -> Void)?
     private var onStreamMedia: ((CompanionMediaFrame) -> Void)?
     private var onStreamEnded: ((CompanionStreamEndReason) -> Void)?
+    /// Geometry of the active stream (from the latest config) and the live top
+    /// line (from the latest media frame), used to map a touch to a terminal cell
+    /// for phone-driven selection. Whether selection is offered depends on the
+    /// mac advertising selectionGeometryRevision and the config carrying geometry.
+    private(set) var activeStreamGeometry: CompanionCellGeometry?
+    private(set) var activeStreamImageSize: CGSize = .zero
+    private(set) var activeStreamColumns = 0
+    private(set) var activeStreamRows = 0
+    private var activeStreamLiveTop: Int64 = 0
+    /// The mac's advertised protocol revision (0 until the handshake).
+    private(set) var macRevision = 0
+    var sessionSelectionSupported: Bool {
+        macRevision >= CompanionProtocolVersion.selectionGeometryRevision && activeStreamGeometry != nil
+    }
     /// The session the live view wants to watch. Held across reconnects so the
     /// stream restarts automatically once the connection is back, instead of
     /// surfacing a transient "unavailable" error. nil when no live view is open.
@@ -1048,6 +1062,7 @@ final class AppModel {
             return
         }
         macSupportsStreaming = handshake.supportsStreaming
+        macRevision = handshake.peerRevision
         // The mac says the user opted into phone alerts: ask iOS for notification
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
@@ -1132,6 +1147,7 @@ final class AppModel {
                         do {
                             let handshake = try await client.handshakeVersion()
                             macSupportsStreaming = handshake.supportsStreaming
+        macRevision = handshake.peerRevision
                             if handshake.wantsNotificationPermission {
                                 ensureNotificationPermission(replyTo: nil)
                             }
@@ -1763,11 +1779,16 @@ final class AppModel {
             handleRemoteUnpair()
         case .streamConfig(let config):
             if config.streamID == activeStreamID {
+                activeStreamGeometry = config.cellGeometry
+                activeStreamImageSize = CGSize(width: config.pixelWidth, height: config.pixelHeight)
+                activeStreamColumns = config.columns
+                activeStreamRows = config.rows
                 onStreamConfig?(config)
             }
         case .streamEnded(let streamID, let reason):
             if streamID == activeStreamID {
                 activeStreamID = nil
+                activeStreamGeometry = nil
                 // A host-side end is terminal: drop the intent so it does not
                 // restart, and tell the view (which shows it only for reasons
                 // worth surfacing, e.g. the session closed).
@@ -1783,6 +1804,8 @@ final class AppModel {
 
     private func handleStreamMedia(_ frame: CompanionMediaFrame) {
         guard frame.streamID == activeStreamID else { return }
+        // Track the top visible line so a touch maps to the right absolute line.
+        activeStreamLiveTop = frame.liveTop
         // CDIAG: phone-side media-receipt heartbeat to correlate a phone stall
         // with the mac wedge. Remove once diagnosed.
         diagMediaFrames += 1
@@ -1900,6 +1923,38 @@ final class AppModel {
             try? await client.sendStreamAck(streamID: streamID,
                                             lastPTSMilliseconds: lastPTSMilliseconds,
                                             queueDepth: queueDepth)
+        }
+    }
+
+    /// Drive a live-view selection from a touch at `viewPoint` in a view of
+    /// `viewSize`, mapping it to an absolute terminal point with the current
+    /// stream geometry. No-op if selection is not supported.
+    func sendSelectionGesture(phase: CompanionSelectionPhase,
+                              mode: CompanionSelectionMode,
+                              viewPoint: CGPoint,
+                              viewSize: CGSize) {
+        guard let client, let streamID = activeStreamID, let geometry = activeStreamGeometry else { return }
+        let mapper = CompanionTouchMapper(imageSize: activeStreamImageSize,
+                                          cellGeometry: geometry,
+                                          columns: activeStreamColumns,
+                                          rows: activeStreamRows,
+                                          liveTop: activeStreamLiveTop)
+        let point = mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize)
+        Task { try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point) }
+    }
+
+    /// Clear the live-view selection on the mac.
+    func clearActiveSelection() {
+        guard let client, let streamID = activeStreamID else { return }
+        Task { try? await client.clearSelection(streamID: streamID) }
+    }
+
+    /// Copy the active session's selection to the iOS clipboard.
+    func copyActiveSelection() {
+        guard let client, let guid = liveWatchGuid else { return }
+        Task {
+            guard let text = try? await client.copySelection(sessionGuid: guid), !text.isEmpty else { return }
+            UIPasteboard.general.string = text
         }
     }
 

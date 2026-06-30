@@ -10,10 +10,12 @@ New Features:
   quiet terminal uses almost no data, the view
   stays current on a slow connection instead of
   lagging behind, and it pauses itself with a
-  notice if it would use too much data. Scrolling
-  back through history and selecting text in the
-  live view are not in this version; older Macs
-  keep showing the static snapshot.
+  notice if it would use too much data. You can
+  drag to select text in the live view and copy it
+  to the clipboard (when the Mac is new enough).
+  Scrolling back through history is not in this
+  version; older Macs keep showing the static
+  snapshot.
 - iTerm2 Buddy now asks for notification
   permission when you turn on sending terminal
   alerts to your iPhone on the Mac, instead of

@@ -461,16 +461,23 @@ private struct LiveSessionView: View {
     @State private var holder = LiveVideoHolder()
     @State private var resolution: String?
     @State private var endedReason: CompanionStreamEndReason?
+    @State private var selecting = false
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             LiveVideoLayer(holder: holder)
                 .ignoresSafeArea(edges: .bottom)
+            if model.sessionSelectionSupported {
+                selectionGestureOverlay
+            }
             VStack {
                 HStack {
                     liveBadge
                     Spacer()
+                    if model.sessionSelectionSupported {
+                        selectionControls
+                    }
                 }
                 Spacer()
             }
@@ -496,6 +503,48 @@ private struct LiveSessionView: View {
             default: break
             }
         }
+    }
+
+    /// A transparent layer that turns a drag into begin/move/end selection
+    /// gestures, mapping each touch to a terminal cell with the stream geometry.
+    private var selectionGestureOverlay: some View {
+        GeometryReader { geo in
+            Color.clear
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            let phase: CompanionSelectionPhase = selecting ? .move : .begin
+                            selecting = true
+                            model.sendSelectionGesture(phase: phase, mode: .character,
+                                                       viewPoint: value.location, viewSize: geo.size)
+                        }
+                        .onEnded { value in
+                            model.sendSelectionGesture(phase: .end, mode: .character,
+                                                       viewPoint: value.location, viewSize: geo.size)
+                            selecting = false
+                        }
+                )
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private var selectionControls: some View {
+        HStack(spacing: 8) {
+            Button { model.clearActiveSelection() } label: {
+                Image(systemName: "xmark")
+            }
+            .accessibilityLabel("Clear selection")
+            Button { model.copyActiveSelection() } label: {
+                Image(systemName: "doc.on.doc")
+            }
+            .accessibilityLabel("Copy selection")
+        }
+        .font(.caption)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial, in: Capsule())
+        .foregroundStyle(.white)
     }
 
     @ViewBuilder private var liveBadge: some View {

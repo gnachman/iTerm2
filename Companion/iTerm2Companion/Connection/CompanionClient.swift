@@ -242,6 +242,33 @@ actor CompanionClient {
                                           queueDepth: queueDepth))
     }
 
+    /// Drive a live-view selection on the mac (begin/move/end at an absolute point).
+    func sendSelectionGesture(streamID: UInt32,
+                              phase: CompanionSelectionPhase,
+                              mode: CompanionSelectionMode,
+                              point: CompanionSelectionPoint) async throws {
+        try await session.send(.selectionGesture(streamID: streamID, phase: phase,
+                                                 mode: mode, point: point))
+    }
+
+    /// Clear the live-view selection on the mac.
+    func clearSelection(streamID: UInt32) async throws {
+        try await session.send(.clearSelection(streamID: streamID))
+    }
+
+    /// Copy the session's current selection; returns the selected text ("" if none).
+    func copySelection(sessionGuid: String) async throws -> String {
+        let reply = try await session.request(.copySelection(sessionGuid: sessionGuid))
+        switch reply {
+        case .selectionText(let text):
+            return text
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to copySelection")
+        }
+    }
+
     func workgroupInfo(id: String) async throws -> CompanionWorkgroupInfo {
         let reply = try await session.request(.fetchWorkgroupInfo(workgroupID: id))
         switch reply {
