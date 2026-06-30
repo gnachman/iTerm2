@@ -603,6 +603,12 @@ final class CompanionHostBridge {
         RLog("CDIAG stream \(streamID) START guid=\(guid) fps=\(frameRate)")
         send(.streamStarted(CompanionStreamStarted(streamID: streamID, codec: .hevc)),
              requestID: requestID)
+        // Tell the phone about any pre-existing selection on subscribe: the history
+        // tiles are rendered with it, so the phone must know which tiles carry the
+        // highlight to invalidate them correctly when the selection later changes.
+        if let textview = session.textview {
+            sendSelectionRange(streamID: streamID, textview: textview)
+        }
     }
 
     private func driveStream(_ streamID: UInt32) {

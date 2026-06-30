@@ -1030,7 +1030,10 @@ private struct LiveCanvas: UIViewRepresentable {
             }
             selectedTileIndices = newTiles
             lastSelectionEndpoints = endpoints.map { ($0.start.absLine, $0.end.absLine) }
-            if !affected.isEmpty { refreshTiles() }
+            if !affected.isEmpty {
+                companionLog("historyTile invalidate selection affected=\(affected.sorted()) new=\(newTiles.sorted()) hist=\(historyLines)")
+                refreshTiles()
+            }
         }
 
         /// A fresh request token for a tile, marking any in-flight fetch superseded.
