@@ -138,16 +138,19 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // Nothing to send, but the last frame was a P-frame and activity has been
         // quiet a moment: re-send the current screen as a keyframe so a dropped
         // P-frame cannot leave the phone showing a stale frame indefinitely.
+        var insuranceFired = false
         if decision == nil && !exhausted && !blocked
             && lastEmitAt > 0 && !lastEmitWasKeyframe
             && nowSeconds - lastEmitAt >= insuranceKeyframeDelay {
             pacer.requestKeyframe()
             decision = pacer.evaluate(now: nowSeconds)
+            insuranceFired = true
         }
         if blocked { statPaced += 1 }
         let statsLine = takeFlowStatsLine(now: nowSeconds)
         lock.unlock()
         if let statsLine { RLog(statsLine) }
+        if insuranceFired { RLog("CDIAG insurance keyframe fired at \(nowSeconds)") }
         if exhausted {
             // Pause before the relay force-closes us for exceeding its quota.
             if !dataLimitHit {
