@@ -29,6 +29,12 @@
 @interface PSMTabBarCell : NSActionCell <NSCoding>
 // Is this the last cell? Only valid while drawing.
 @property(nonatomic, assign) BOOL isLast;
+// First/last cell on its physical row (two-row tab bar). In single-row mode these
+// mean first/last cell overall. Computed once per layout so styles that draw
+// per-cell separators don't do O(n) neighbor lookups per cell. Only valid while
+// drawing.
+@property(nonatomic, assign) BOOL isFirstInHorizontalRow;
+@property(nonatomic, assign) BOOL isLastInHorizontalRow;
 @property(nonatomic, assign) BOOL isCloseButtonSuppressed;
 @property(nonatomic, readonly) BOOL closeButtonVisible;
 @property(nonatomic, assign) int tabState;
