@@ -156,6 +156,10 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
                                                           maxFrameRate: 60,
                                                           maxBitrate: nil)),
         .streamAck(streamID: 1, lastPTSMilliseconds: 0, queueDepth: 0),
+        .selectionGesture(streamID: 1, phase: .begin, mode: .character,
+                          point: CompanionSelectionPoint(absLine: 0, column: 0)),
+        .clearSelection(streamID: 1),
+        .copySelection(sessionGuid: "g"),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -191,6 +195,9 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .requestKeyframe: return "requestKeyframe"
         case .updateStreamParams: return "updateStreamParams"
         case .streamAck: return "streamAck"
+        case .selectionGesture: return "selectionGesture"
+        case .clearSelection: return "clearSelection"
+        case .copySelection: return "copySelection"
         }
     }
 
@@ -221,6 +228,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
                                             pixelWidth: 100, pixelHeight: 50, scale: 2,
                                             columns: 80, rows: 25)),
         .streamEnded(streamID: 1, reason: .stoppedByClient),
+        .selectionText(text: "x"),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -258,6 +266,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .streamStarted: return "streamStarted"
         case .streamConfig: return "streamConfig"
         case .streamEnded: return "streamEnded"
+        case .selectionText: return "selectionText"
         }
     }
 

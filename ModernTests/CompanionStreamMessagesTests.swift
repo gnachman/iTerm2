@@ -103,4 +103,41 @@ final class CompanionStreamMessagesTests: XCTestCase {
         XCTAssertEqual(streamID, 5)
         XCTAssertEqual(reason, .superseded)
     }
+
+    func testSelectionGestureRoundTrip() throws {
+        let point = CompanionSelectionPoint(absLine: 9_000_000_000, column: 37)
+        guard case let .selectionGesture(streamID, phase, mode, decoded) =
+                try roundTripClient(.selectionGesture(streamID: 4, phase: .move,
+                                                      mode: .word, point: point)) else {
+            return XCTFail("expected .selectionGesture")
+        }
+        XCTAssertEqual(streamID, 4)
+        XCTAssertEqual(phase, .move)
+        XCTAssertEqual(mode, .word)
+        XCTAssertEqual(decoded, point)
+    }
+
+    func testClearSelectionRoundTrip() throws {
+        guard case let .clearSelection(streamID) =
+                try roundTripClient(.clearSelection(streamID: 8)) else {
+            return XCTFail("expected .clearSelection")
+        }
+        XCTAssertEqual(streamID, 8)
+    }
+
+    func testCopySelectionRoundTrip() throws {
+        guard case let .copySelection(guid) =
+                try roundTripClient(.copySelection(sessionGuid: "S-1")) else {
+            return XCTFail("expected .copySelection")
+        }
+        XCTAssertEqual(guid, "S-1")
+    }
+
+    func testSelectionTextRoundTrip() throws {
+        guard case let .selectionText(text) =
+                try roundTripHost(.selectionText(text: "hello “world”")) else {
+            return XCTFail("expected .selectionText")
+        }
+        XCTAssertEqual(text, "hello “world”")
+    }
 }

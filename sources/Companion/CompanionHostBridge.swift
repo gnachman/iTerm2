@@ -423,10 +423,63 @@ final class CompanionHostBridge {
             break
         case .streamAck(let streamID, let lastPTSMilliseconds, let queueDepth):
             streams[streamID]?.streamer.noteAck(ptsMilliseconds: lastPTSMilliseconds, queueDepth: queueDepth)
+        case .selectionGesture(let streamID, let phase, let mode, let point):
+            handleSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
+        case .clearSelection(let streamID):
+            handleClearSelection(streamID: streamID)
+        case .copySelection(let sessionGuid):
+            handleCopySelection(guid: sessionGuid, requestID: requestID)
         }
     }
 
     // MARK: Live streaming
+
+    /// Drive the session's real iTermSelection from a phone gesture. The resulting
+    /// highlight is rendered into the stream (we mark the stream dirty so a frame
+    /// goes out promptly). Runs on the main actor, where PTYTextView is safe.
+    private func handleSelectionGesture(streamID: UInt32,
+                                        phase: CompanionSelectionPhase,
+                                        mode: CompanionSelectionMode,
+                                        point: CompanionSelectionPoint) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            return
+        }
+        let coord = VT100GridAbsCoordMake(Int32(clamping: point.column), point.absLine)
+        // Word/line/smart snapping queries the data source, which a buried session
+        // detaches; re-attach for the operation, mirroring the frame source.
+        let wasDetached = textview.dataSource == nil
+        if wasDetached { textview.dataSource = session.screen }
+        defer { if wasDetached { textview.dataSource = nil } }
+
+        switch phase {
+        case .begin:
+            textview.selection?.begin(at: coord, mode: mode.iTermSelectionMode,
+                                      resume: false, append: false)
+        case .move:
+            _ = textview.selection?.moveEndpoint(to: coord)
+        case .end:
+            _ = textview.selection?.moveEndpoint(to: coord)
+            textview.selection?.endLive()
+        }
+        context.streamer.screenDidChange()
+    }
+
+    private func handleClearSelection(streamID: UInt32) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            return
+        }
+        textview.selection?.clear()
+        context.streamer.screenDidChange()
+    }
+
+    private func handleCopySelection(guid: String, requestID: UInt64?) {
+        let text = iTermController.sharedInstance().anySession(withGUID: guid)?.textview?.selectedText
+        send(.selectionText(text: text ?? ""), requestID: requestID)
+    }
 
     private func handleStartSessionStream(guid: String,
                                           params: CompanionStreamParams,
@@ -1291,5 +1344,18 @@ final class CompanionHostBridge {
     /// transmit order among control frames, which always precede pending media.
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
         outbox?.enqueueControl(HostEnvelope(requestID: requestID, payload: payload))
+    }
+}
+
+private extension CompanionSelectionMode {
+    /// Map the wire selection mode to iTerm2's. Box selection is not exposed to the
+    /// phone, so there is no inverse for it.
+    var iTermSelectionMode: iTermSelectionMode {
+        switch self {
+        case .character: return .kiTermSelectionModeCharacter
+        case .word: return .kiTermSelectionModeWord
+        case .line: return .kiTermSelectionModeWholeLine
+        case .smart: return .kiTermSelectionModeSmart
+        }
     }
 }

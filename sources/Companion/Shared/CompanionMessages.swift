@@ -201,6 +201,31 @@ struct CompanionCellGeometry: Codable, Equatable {
     var topMargin: Double
 }
 
+/// A point in absolute terminal coordinates, computed by the phone from a touch
+/// using the stream geometry: column is a 0-based cell, absLine is the
+/// overflow-adjusted absolute line (so it stays valid as scrollback grows). The
+/// host maps it to a VT100GridAbsCoord to drive the real selection.
+struct CompanionSelectionPoint: Codable, Equatable {
+    var absLine: Int64
+    var column: Int
+}
+
+/// Phase of a phone-driven selection drag.
+enum CompanionSelectionPhase: String, Codable, Equatable {
+    case begin
+    case move
+    case end
+}
+
+/// How a selection snaps. character = exact cells; word/line/smart match the
+/// Mac's double/triple/smart selection. Only meaningful on `.begin`.
+enum CompanionSelectionMode: String, Codable, Equatable {
+    case character
+    case word
+    case line
+    case smart
+}
+
 /// Decoder configuration for a live stream: the codec parameter sets plus the
 /// pixel geometry of the encoded frames. Re-sent with a fresh generationId
 /// whenever the geometry changes.
@@ -423,6 +448,20 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// pace end-to-end (the relay hides TCP-level signals). No reply.
     case streamAck(streamID: UInt32, lastPTSMilliseconds: UInt64, queueDepth: Int)
 
+    /// Live-view text selection driven from the phone. `.begin` starts a live
+    /// selection at `point` (snapped per `mode`), `.move` extends its end, `.end`
+    /// finalizes it; the resulting highlight is rendered into the streamed frames.
+    /// No reply. `mode` is only consulted on `.begin`.
+    case selectionGesture(streamID: UInt32, phase: CompanionSelectionPhase,
+                          mode: CompanionSelectionMode, point: CompanionSelectionPoint)
+
+    /// Clear any live-view selection on the session. No reply.
+    case clearSelection(streamID: UInt32)
+
+    /// Copy the session's current selection to a string. Replied to with
+    /// `.selectionText`.
+    case copySelection(sessionGuid: String)
+
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
@@ -435,6 +474,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "relayRoomSecret", "messagesSince", "syncSince", "unpairing",
         "startSessionStream", "stopSessionStream", "requestKeyframe",
         "updateStreamParams", "streamAck",
+        "selectionGesture", "clearSelection", "copySelection",
     ]
 }
 
@@ -552,6 +592,10 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// was superseded, or an error occurred).
     case streamEnded(streamID: UInt32, reason: CompanionStreamEndReason)
 
+    /// Reply to `.copySelection`: the selected text (empty if nothing is
+    /// selected). The phone places it on the clipboard.
+    case selectionText(text: String)
+
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
@@ -559,7 +603,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "sessionContent", "workgroupInfo", "sessionTree", "pong",
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
         "unpaired", "messagesSince", "syncSince", "error",
-        "streamStarted", "streamConfig", "streamEnded",
+        "streamStarted", "streamConfig", "streamEnded", "selectionText",
     ]
 }
 
