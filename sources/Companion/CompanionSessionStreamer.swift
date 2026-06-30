@@ -69,6 +69,17 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// on resize; liveTop changes per frame.
     private var lastCellGeometry: CompanionCellGeometry?
     private var lastRenderedLiveTop: Int64 = 0
+    /// When the last frame was emitted and whether it was a keyframe, to drive the
+    /// insurance keyframe (below).
+    private var lastEmitAt: TimeInterval = 0
+    private var lastEmitWasKeyframe = false
+    /// After activity settles, re-send the current screen as a self-contained
+    /// keyframe. The stream is change-driven P-frames, so if any frame is dropped
+    /// (in transport, or at the phone's display decoder) the shown frame stays
+    /// stale until the next frame -- which, once idle, never comes, so the screen
+    /// looks frozen until the user nudges it. A keyframe shortly after the last
+    /// change is decodable on its own and corrects any such drift.
+    private let insuranceKeyframeDelay: TimeInterval = 0.3
 
     // CDIAG flow-control stats, logged once a second while streaming. Counters are
     // for the current one-second bucket; reset on each log. Touched from tick()
@@ -123,7 +134,16 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // behind; otherwise the limiter coalesces to the latest screen. Checking
         // before evaluate() avoids consuming the dirty flag when we skip.
         let blocked = !exhausted && !pacer.isKeyframeRequested && !inFlight.mayEmit()
-        let decision = (exhausted || blocked) ? nil : pacer.evaluate(now: nowSeconds)
+        var decision = (exhausted || blocked) ? nil : pacer.evaluate(now: nowSeconds)
+        // Nothing to send, but the last frame was a P-frame and activity has been
+        // quiet a moment: re-send the current screen as a keyframe so a dropped
+        // P-frame cannot leave the phone showing a stale frame indefinitely.
+        if decision == nil && !exhausted && !blocked
+            && lastEmitAt > 0 && !lastEmitWasKeyframe
+            && nowSeconds - lastEmitAt >= insuranceKeyframeDelay {
+            pacer.requestKeyframe()
+            decision = pacer.evaluate(now: nowSeconds)
+        }
         if blocked { statPaced += 1 }
         let statsLine = takeFlowStatsLine(now: nowSeconds)
         lock.unlock()
@@ -161,6 +181,8 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         statEmitted += 1
         lastCellGeometry = cellGeometry
         lastRenderedLiveTop = liveTop
+        lastEmitAt = nowSeconds
+        lastEmitWasKeyframe = decision.keyframe
         lock.unlock()
         encoder.encode(pixelBuffer, ptsMilliseconds: nowMilliseconds, forceKeyframe: decision.keyframe)
     }

@@ -168,6 +168,37 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(out.medias.count, 2)
     }
 
+    func testInsuranceKeyframeAfterActivitySettles() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)        // keyframe
+        streamer.flush()
+
+        source.setFill(0x90)
+        streamer.screenDidChange()
+        streamer.tick(nowMilliseconds: 100)      // P-frame (content change)
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 2)
+        XCTAssertFalse(out.medias[1].flags.contains(.keyframe))
+
+        // Idle tick past the settle delay: the current screen is re-sent as a
+        // keyframe even though nothing changed and it is not deduped.
+        streamer.tick(nowMilliseconds: 500)
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 3, "insurance keyframe emitted after activity settled")
+        XCTAssertTrue(out.medias[2].flags.contains(.keyframe))
+
+        // It happens once: a further idle tick does not keep emitting keyframes.
+        streamer.tick(nowMilliseconds: 1000)
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 3, "insurance keyframe is sent once, not repeatedly")
+    }
+
     func testConfigAndFramesCarryGeometry() throws {
         try skipIfNoEncoder()
         let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
