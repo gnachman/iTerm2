@@ -250,7 +250,9 @@ final class AppModel {
     private var activeStreamGeneration: UInt32 = 0
     /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
     /// fetches in flight so scroll events do not duplicate them.
-    private var historyTileCache: [Int64: UIImage] = [:]
+    // Internal plumbing, not UI state: mutating it must not re-render SwiftUI views
+    // (a tile load would otherwise trigger updateUIView and re-run selection logic).
+    @ObservationIgnored private var historyTileCache: [Int64: UIImage] = [:]
     /// The current selection span reported by the mac, for drawing handles.
     private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).

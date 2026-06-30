@@ -749,7 +749,7 @@ private struct LiveCanvas: UIViewRepresentable {
         /// were computed for, so a selection change invalidates only the tiles whose
         /// highlight changed.
         private var selectedTileIndices: Set<Int> = []
-        private var lastSelectionEndpoints: (Int64, Int64)?
+        private var lastSelectionEndpoints: (start: CompanionSelectionPoint, end: CompanionSelectionPoint)?
         private let linesPerTile = 50
         private var growthTimer: Timer?
 
@@ -1016,20 +1016,28 @@ private struct LiveCanvas: UIViewRepresentable {
         func updateSelectionTiles() {
             guard let layout else { return }
             let endpoints = model.activeSelectionEndpoints
+            // No change since last call -> nothing to invalidate. updateUIView fires
+            // for many reasons (including each tile load); without this guard the
+            // endpoint tile is re-invalidated and refetched every time, looping.
+            if endpoints?.start == lastSelectionEndpoints?.start,
+               endpoints?.end == lastSelectionEndpoints?.end {
+                return
+            }
             let newTiles = endpoints.map { historyTileIndices(start: $0.start.absLine, end: $0.end.absLine) } ?? []
             var affected = newTiles.symmetricDifference(selectedTileIndices)
+            // Endpoint tiles (their selected edge moved): old and new positions.
             for absLine in [endpoints?.start.absLine, endpoints?.end.absLine,
-                            lastSelectionEndpoints?.0, lastSelectionEndpoints?.1] {
+                            lastSelectionEndpoints?.start.absLine, lastSelectionEndpoints?.end.absLine] {
                 if let absLine, let index = historyTileIndex(forAbs: absLine) { affected.insert(index) }
             }
+            selectedTileIndices = newTiles
+            lastSelectionEndpoints = endpoints
             for index in affected {
                 model.invalidateHistoryTile(firstAbsLine: layout.firstAbsLine + Int64(index * linesPerTile))
                 tileFetchedLines[index] = nil
                 requestedTiles.remove(index)
                 _ = nextTileToken(index)   // supersede any in-flight fetch
             }
-            selectedTileIndices = newTiles
-            lastSelectionEndpoints = endpoints.map { ($0.start.absLine, $0.end.absLine) }
             if !affected.isEmpty {
                 companionLog("historyTile invalidate selection affected=\(affected.sorted()) new=\(newTiles.sorted()) hist=\(historyLines)")
                 refreshTiles()
