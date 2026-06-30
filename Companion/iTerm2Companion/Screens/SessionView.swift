@@ -572,8 +572,9 @@ private struct LiveSessionView: View {
         let above = viewPoint.y - gap - radius
         let y = above - radius >= 0 ? above : viewPoint.y + gap + radius
         // Show ~4 rows across the loupe (fall back to a sane crop if unknown).
-        let cropSide = max(40, model.activeStreamCellHeight * 4)
-        return LoupeView(holder: holder, imagePoint: imagePoint, cropSide: cropSide)
+        let cellHeight = model.activeStreamCellHeight
+        let cropSide = max(40, cellHeight * 4)
+        return LoupeView(holder: holder, imagePoint: imagePoint, cropSide: cropSide, cellHeight: cellHeight)
             .frame(width: loupeDiameter, height: loupeDiameter)
             .position(x: x, y: y)
             .allowsHitTesting(false)
@@ -695,6 +696,7 @@ private struct LoupeView: UIViewRepresentable {
     let holder: LiveVideoHolder
     let imagePoint: CGPoint
     let cropSide: CGFloat
+    let cellHeight: CGFloat
 
     func makeUIView(context: Context) -> LoupeUIView {
         let view = LoupeUIView()
@@ -712,6 +714,7 @@ private struct LoupeView: UIViewRepresentable {
         view.layer.cornerRadius = view.bounds.width / 2
         view.imagePoint = imagePoint
         view.cropSide = cropSide
+        view.cellHeight = cellHeight
         view.setNeedsDisplay()
     }
 }
@@ -720,6 +723,7 @@ private final class LoupeUIView: UIView {
     var pixelBufferProvider: (() -> CVPixelBuffer?)?
     var imagePoint: CGPoint = .zero   // center, image px, top-left origin
     var cropSide: CGFloat = 80        // image px shown across the loupe
+    var cellHeight: CGFloat = 0       // image px, for sizing the handle caret
     private let ciContext = CIContext(options: nil)
 
     override func layoutSubviews() {
@@ -738,8 +742,32 @@ private final class LoupeUIView: UIView {
         let ciRect = CGRect(x: imagePoint.x - half,
                             y: imageHeight - (imagePoint.y + half),
                             width: cropSide, height: cropSide)
-        guard let cropped = ciContext.createCGImage(ciImage, from: ciRect) else { return }
-        UIImage(cgImage: cropped).draw(in: bounds)  // scales the crop to fill the circle
+        if let cropped = ciContext.createCGImage(ciImage, from: ciRect) {
+            UIImage(cgImage: cropped).draw(in: bounds)  // scales the crop to fill the circle
+        }
+        drawHandleMarker()
+    }
+
+    /// The dragged endpoint tracks the finger, which is the loupe center, so draw
+    /// the handle there: a vertical caret one (magnified) cell tall with a knob,
+    /// matching the on-screen selection handle, so it appears inside the magnifier.
+    private func drawHandleMarker() {
+        guard let ctx = UIGraphicsGetCurrentContext() else { return }
+        let center = CGPoint(x: bounds.midX, y: bounds.midY)
+        // One image cell maps to this many points in the loupe.
+        let caretHeight = cellHeight > 0 ? bounds.height * cellHeight / cropSide : bounds.height / 4
+        let caretWidth: CGFloat = 2
+        let caretRect = CGRect(x: center.x - caretWidth / 2, y: center.y - caretHeight / 2,
+                               width: caretWidth, height: caretHeight)
+        UIColor.systemBlue.setFill()
+        ctx.fill(caretRect)
+        let knobRadius: CGFloat = 5
+        let knobRect = CGRect(x: center.x - knobRadius, y: caretRect.minY - knobRadius,
+                              width: knobRadius * 2, height: knobRadius * 2)
+        ctx.fillEllipse(in: knobRect)
+        UIColor.white.setStroke()
+        ctx.setLineWidth(1)
+        ctx.strokeEllipse(in: knobRect)
     }
 }
 
