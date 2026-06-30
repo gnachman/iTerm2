@@ -280,6 +280,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // Charge the rolling budget; tick() pauses the stream once it is spent.
         budget.record(bytes: media.payload.count, now: CACurrentMediaTime())
         statBytes += media.payload.count
+        RLog("CDIAG emit seq=\(media.sequence) pts=\(media.ptsMilliseconds) key=\(frame.isKeyframe) cfg=\(flags.contains(.configChanged)) gen=\(media.generationId) bytes=\(media.payload.count)")
         onMedia(media)
     }
 }

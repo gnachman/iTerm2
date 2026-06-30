@@ -80,11 +80,12 @@ final class CompanionVideoView: UIView {
         if status == noErr { decompressionSession = session }
     }
 
-    /// Decode one access unit and display it. `isKeyframe` is informational.
-    func enqueue(accessUnit: Data, ptsMilliseconds: UInt64, isKeyframe: Bool) {
+    /// Decode one access unit and display it. `isKeyframe`/`sequence` are for logs.
+    func enqueue(accessUnit: Data, ptsMilliseconds: UInt64, isKeyframe: Bool, sequence: UInt32) {
         guard let formatDescription, let session = decompressionSession else {
             // A frame arrived before (or without) a usable config/decoder: ask for
             // a keyframe, which the host always precedes with a fresh config.
+            companionLog("CDIAG decode SKIP seq=\(sequence) (no decoder) -> request keyframe")
             onNeedsKeyframe?()
             return
         }
@@ -93,8 +94,10 @@ final class CompanionVideoView: UIView {
             format: formatDescription,
             ptsMilliseconds: ptsMilliseconds,
             displayImmediately: true) else {
+            companionLog("CDIAG decode SKIP seq=\(sequence) (sample build failed)")
             return
         }
+        companionLog("CDIAG decode submit seq=\(sequence) pts=\(ptsMilliseconds) key=\(isKeyframe)")
         let status = VTDecompressionSessionDecodeFrame(
             session,
             sampleBuffer: sample,
@@ -104,12 +107,14 @@ final class CompanionVideoView: UIView {
                 guard status == noErr, let imageBuffer else {
                     // A decode error usually means a lost reference frame; recover
                     // with a fresh keyframe.
+                    companionLog("CDIAG decode FAILED seq=\(sequence) status=\(status) -> request keyframe")
                     self.onNeedsKeyframe?()
                     return
                 }
-                self.present(imageBuffer, ptsSeconds: pts.seconds)
+                self.present(imageBuffer, ptsSeconds: pts.seconds, sequence: sequence)
             }
         if status != noErr {
+            companionLog("CDIAG decode submit FAILED seq=\(sequence) status=\(status) -> request keyframe")
             onNeedsKeyframe?()
         }
     }
@@ -117,19 +122,25 @@ final class CompanionVideoView: UIView {
     /// Store and display a decoded frame. Called on a VideoToolbox thread; the
     /// CGImage is built here (off the main thread) and only the cheap layer
     /// contents assignment hops to main.
-    private func present(_ pixelBuffer: CVPixelBuffer, ptsSeconds: Double) {
+    private func present(_ pixelBuffer: CVPixelBuffer, ptsSeconds: Double, sequence: UInt32) {
         frameLock.lock()
         _latestPixelBuffer = pixelBuffer
         frameLock.unlock()
         let pts = ptsSeconds.isFinite ? ptsSeconds : 0
         guard let cgImage = ciContext.createCGImage(CIImage(cvPixelBuffer: pixelBuffer),
                                                     from: CIImage(cvPixelBuffer: pixelBuffer).extent) else {
+            companionLog("CDIAG decode->display seq=\(sequence) FAILED (createCGImage nil)")
             return
         }
         DispatchQueue.main.async { [weak self] in
-            guard let self, pts >= self.lastDisplayedPTSSeconds else { return }
+            guard let self else { return }
+            guard pts >= self.lastDisplayedPTSSeconds else {
+                companionLog("CDIAG display SKIP seq=\(sequence) (pts \(pts) < shown \(self.lastDisplayedPTSSeconds))")
+                return
+            }
             self.lastDisplayedPTSSeconds = pts
             self.layer.contents = cgImage
+            companionLog("CDIAG display seq=\(sequence) pts=\(pts)")
         }
     }
 

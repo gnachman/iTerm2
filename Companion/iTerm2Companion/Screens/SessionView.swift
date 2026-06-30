@@ -654,7 +654,7 @@ private struct LiveSessionView: View {
             },
             onMedia: { [weak model] frame in
                 holder.view.enqueue(accessUnit: frame.payload, ptsMilliseconds: frame.ptsMilliseconds,
-                                    isKeyframe: frame.flags.contains(.keyframe))
+                                    isKeyframe: frame.flags.contains(.keyframe), sequence: frame.sequence)
                 model?.sendActiveStreamAck(lastPTSMilliseconds: frame.ptsMilliseconds, queueDepth: 0)
             },
             onEnded: { reason in
