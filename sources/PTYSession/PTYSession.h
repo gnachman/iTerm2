@@ -677,6 +677,7 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermEchoProbe *echoProbe;
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
+@property(nonatomic) BOOL needsNewTerminalKeyboardForced;
 
 // nil unless this session has an active workgroup instance.
 @property(nonatomic, readonly, nullable) NSArray<iTermSessionToolbarItem *> *desiredToolbarItems;

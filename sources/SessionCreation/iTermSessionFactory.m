@@ -343,6 +343,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Initialize a new session
     aSession = [[PTYSession alloc] initSynthetic:NO];
+    aSession.needsNewTerminalKeyboardForced = YES;
 
     if ([[NSNumber castFrom:profile[KEY_SHORT_LIVED_SINGLE_USE]] boolValue]) {
         aSession.shortLivedSingleUse = YES;

@@ -94,6 +94,8 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
     IBOutlet NSButton *_forceKeyboard;
     IBOutlet NSPopUpButton *_keyboardLocale;
+    IBOutlet NSButton *_forceNewTerminalKeyboard;
+    IBOutlet NSPopUpButton *_newTerminalKeyboardLocale;
     IBOutlet NSButton *_allowSymbolicHotKeys;
 
     IBOutlet NSButton *_repairKeyMappingsButton;
@@ -242,6 +244,12 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateKeyboardLocaleEnabled]; };
 
+    info = [self defineControl:_forceNewTerminalKeyboard
+                           key:kPreferenceKeyForceNewTerminalKeyboard
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [weakSelf updateKeyboardLocaleEnabled]; };
+
     info = [self defineControl:_allowSymbolicHotKeys
                            key:kPreferenceKeyAllowSymbolicHotKeys
                    relatedView:nil
@@ -250,6 +258,11 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     info = [self defineControl:_keyboardLocale
                            key:kPreferenceKeyKeyboardLocale
                    displayName:@"Keyboard locale"
+                          type:kPreferenceInfoTypeStringPopup];
+
+    info = [self defineControl:_newTerminalKeyboardLocale
+                           key:kPreferenceKeyNewTerminalKeyboardLocale
+                   displayName:@"New terminal keyboard locale"
                           type:kPreferenceInfoTypeStringPopup];
 
     [self defineControl:_remapModifiersGlobally
@@ -275,8 +288,14 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 }
 
 - (void)rebuildKeyboardLocales {
-    while (_keyboardLocale.menu.numberOfItems > 0) {
-        [_keyboardLocale.menu removeItemAtIndex:0];
+    [self populateKeyboardLocalePopup:_keyboardLocale forKey:kPreferenceKeyKeyboardLocale];
+    [self populateKeyboardLocalePopup:_newTerminalKeyboardLocale
+                               forKey:kPreferenceKeyNewTerminalKeyboardLocale];
+}
+
+- (void)populateKeyboardLocalePopup:(NSPopUpButton *)popup forKey:(NSString *)key {
+    while (popup.menu.numberOfItems > 0) {
+        [popup.menu removeItemAtIndex:0];
     }
 
     // Convert system input sources into (display name, identifier) tuples.
@@ -309,19 +328,20 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                                                       action:nil
                                                keyEquivalent:@""];
         item.representedObject = tuple.secondObject;
-        [_keyboardLocale.menu addItem:item];
+        [popup.menu addItem:item];
     }];
 
-    NSString *identifier = [self stringForKey:kPreferenceKeyKeyboardLocale];
+    NSString *identifier = [self stringForKey:key];
     NSInteger i = -1;
     if (identifier) {
-        i = [_keyboardLocale indexOfItemWithRepresentedObject:identifier];
+        i = [popup indexOfItemWithRepresentedObject:identifier];
     }
-    [_keyboardLocale selectItemAtIndex:i];
+    [popup selectItemAtIndex:i];
 }
 
 - (void)updateKeyboardLocaleEnabled {
     _keyboardLocale.enabled = [self boolForKey:kPreferenceKeyForceKeyboard];
+    _newTerminalKeyboardLocale.enabled = [self boolForKey:kPreferenceKeyForceNewTerminalKeyboard];
 }
 
 - (void)viewWillAppear {

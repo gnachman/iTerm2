@@ -74,6 +74,22 @@ class InputSourceForcer: NSObject {
         }
     }
 
+    @objc
+    func forceNewTerminalKeyboardForSessionIfNeeded(_ session: PTYSession) {
+        guard session.needsNewTerminalKeyboardForced else {
+            return
+        }
+        guard newTerminalKeyboardForcingEnabled else {
+            return
+        }
+        guard let locale = newTerminalKeyboardDesiredLocale else {
+            return
+        }
+        session.needsNewTerminalKeyboardForced = false
+        RLog("Force new terminal keyboard to \(locale) for session \(session.guid)")
+        setInputLocale(locale)
+    }
+
     @objc private func appDidBecomeActive(notification: Notification) {
         DLog("App did become active in forcer")
         systemLocale = Self.currentSystemLocale
@@ -114,11 +130,26 @@ class InputSourceForcer: NSObject {
         return iTermPreferences.bool(forKey: kPreferenceKeyForceKeyboard)
     }
 
+    private var newTerminalKeyboardForcingEnabled: Bool {
+        return iTermPreferences.bool(forKey: kPreferenceKeyForceNewTerminalKeyboard)
+    }
+
     private var desiredLocale: String? {
         if !forcingEnabled {
             return nil
         }
         return iTermPreferences.string(forKey: kPreferenceKeyKeyboardLocale)
+    }
+
+    private var newTerminalKeyboardDesiredLocale: String? {
+        if !newTerminalKeyboardForcingEnabled {
+            return nil
+        }
+        let locale = iTermPreferences.string(forKey: kPreferenceKeyNewTerminalKeyboardLocale)
+        if locale?.isEmpty == true {
+            return nil
+        }
+        return locale
     }
 
     private func update() {
@@ -140,7 +171,7 @@ class InputSourceForcer: NSObject {
 
     private func setInputLocale(_ keyboardID: String) {
         DLog("System locale is \(systemLocale ?? "none"), switch to \(keyboardID)")
-        precondition(forcingEnabled)
+        precondition(forcingEnabled || newTerminalKeyboardForcingEnabled)
         let inputSources = TISCreateInputSourceList(nil, false).takeRetainedValue() as! [TISInputSource]
         if let inputSource = inputSources.first(where: { inputSource in
             guard let idProperty = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID) else {
