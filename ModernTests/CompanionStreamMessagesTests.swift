@@ -78,6 +78,21 @@ final class CompanionStreamMessagesTests: XCTestCase {
         }
         XCTAssertEqual(decoded, config)
         XCTAssertEqual(decoded.codecExtradata, Data([0x01, 0x02, 0x03, 0xFF]))
+        XCTAssertNil(decoded.cellGeometry, "geometry omitted stays nil")
+    }
+
+    func testStreamConfigRoundTripWithCellGeometry() throws {
+        let geometry = CompanionCellGeometry(cellWidth: 14.5, cellHeight: 30, leftMargin: 0, topMargin: 0)
+        let config = CompanionStreamConfig(streamID: 9, generationId: 2,
+                                           codecExtradata: Data([0xAA]),
+                                           pixelWidth: 1280, pixelHeight: 720, scale: 2,
+                                           columns: 120, rows: 40,
+                                           cellGeometry: geometry)
+        guard case let .streamConfig(decoded) = try roundTripHost(.streamConfig(config)) else {
+            return XCTFail("expected .streamConfig")
+        }
+        XCTAssertEqual(decoded, config)
+        XCTAssertEqual(decoded.cellGeometry, geometry)
     }
 
     func testStreamEndedRoundTrip() throws {

@@ -178,10 +178,25 @@ struct CompanionStreamStarted: Codable, Equatable {
     var codec: CompanionStreamCodec
 }
 
+/// The fixed (per-generation) screen geometry needed to map a touch on the
+/// encoded image to a terminal cell, all in ENCODED PIXELS (the units of
+/// pixelWidth/pixelHeight), so the phone works entirely in image space:
+///   column = floor((imageX - leftMargin) / cellWidth)
+///   row    = floor((imageY - topMargin)  / cellHeight)
+/// Margins are 0 today (the stream renders without margins) but are carried so
+/// the transform stays correct if that changes. This changes only on a
+/// resize/font/scale change, so it rides streamConfig with the generationId; the
+/// per-frame top line (liveTop) rides the media-frame header instead.
+struct CompanionCellGeometry: Codable, Equatable {
+    var cellWidth: Double
+    var cellHeight: Double
+    var leftMargin: Double
+    var topMargin: Double
+}
+
 /// Decoder configuration for a live stream: the codec parameter sets plus the
 /// pixel geometry of the encoded frames. Re-sent with a fresh generationId
-/// whenever the geometry changes. Geometry-for-selection fields (cell size,
-/// margins, top absolute line) arrive in a later milestone.
+/// whenever the geometry changes.
 struct CompanionStreamConfig: Codable, Equatable {
     var streamID: UInt32
     /// Bumped on every geometry change; media frames carry the generation they
@@ -195,6 +210,10 @@ struct CompanionStreamConfig: Codable, Equatable {
     var scale: Double
     var columns: Int
     var rows: Int
+    /// Cell/margin geometry for touch-to-cell mapping. Optional: a host too old
+    /// to send it (pre-geometry build) decodes as nil, and the phone keeps the
+    /// video working but cannot offer selection.
+    var cellGeometry: CompanionCellGeometry? = nil
 }
 
 /// Why a live stream ended.
