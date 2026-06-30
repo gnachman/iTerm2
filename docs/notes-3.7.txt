@@ -499,6 +499,11 @@ Settings Improvements:
   curves, and how long the cursor dwells
   fully visible and fully hidden between
   fades. Off by default.
+- A new advanced setting, “Show tab bar on
+  two rows,” distributes tabs across two
+  horizontal rows so each tab gets more room
+  for its title. Handy when many tabs are
+  open. Off by default.
 
 Bug Fixes:
 - tmux integration now parses pane state

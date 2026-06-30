@@ -156,6 +156,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSTimer *_animationTimer;
     float _animationDelta;
 
+    // Horizontal row count (1 or 2) from the most recent layout, used to detect
+    // when the two-row tab bar needs the window to recompute the bar height.
+    NSInteger _lastLaidOutHorizontalRowCount;
+
     // vertical tab resizing
     BOOL _resizing;
 
@@ -199,12 +203,43 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     return [[PSMTabDragAssistant sharedDragAssistant] isDragging];
 }
 
-- (float)availableCellWidthWithOverflow:(BOOL)withOverflow {
-    float width = [self frame].size.width;
+// Available width for cells in a single physical row (never doubled).
+- (CGFloat)singleRowAvailableCellWidthWithOverflow:(BOOL)withOverflow {
     const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:withOverflow
                                                                    addTabButton:self.showAddTabButton];
     const CGFloat leftMargin = [_style leftMarginForTabBarControl];
-    width = width - leftMargin - rightMargin;
+    return [self frame].size.width - leftMargin - rightMargin;
+}
+
+- (NSInteger)horizontalRowCount {
+    if (![iTermAdvancedSettingsModel twoRowTabBar] ||
+        _orientation != PSMTabBarHorizontalOrientation) {
+        return 1;
+    }
+    const NSInteger cellCount = (NSInteger)_cells.count;
+    if (cellCount <= 1) {
+        return 1;
+    }
+    // How many cells fit on a single row at minimum width? If they all fit, stay
+    // on one row; only spill onto a second row once they would overflow.
+    const CGFloat available = [self singleRowAvailableCellWidthWithOverflow:NO];
+    const CGFloat minW = self.cellMinWidth;
+    const CGFloat spacing = _style.intercellSpacing;
+    if (minW <= 0) {
+        return 1;
+    }
+    NSInteger capacity = (NSInteger)floor((available + spacing) / (minW + spacing));
+    capacity = MAX(1, capacity);
+    return (cellCount > capacity) ? 2 : 1;
+}
+
+- (float)availableCellWidthWithOverflow:(BOOL)withOverflow {
+    const CGFloat width = [self singleRowAvailableCellWidthWithOverflow:withOverflow];
+    // In two-row mode cells are distributed across two rows so the effective
+    // container for width computation is twice as wide.
+    if ([self horizontalRowCount] == 2) {
+        return width * 2;
+    }
     return width;
 }
 
@@ -212,7 +247,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSRect aRect = [self frame];
     aRect.origin.x = [_style leftMarginForTabBarControl];
     aRect.origin.y = self.insets.top;
-    aRect.size.width = [self availableCellWidthWithOverflow:withOverflow];
+    // Compute single-row width directly to avoid picking up the 2× factor that
+    // availableCellWidthWithOverflow: applies in two-row mode.
+    aRect.size.width = [self singleRowAvailableCellWidthWithOverflow:withOverflow];
     if (_orientation == PSMTabBarHorizontalOrientation) {
         aRect.size.height = self.height - self.insets.top - self.insets.bottom;
     } else {
@@ -1241,7 +1278,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     }
 }
 
-- (void)reallyUpdate:(BOOL)animate {
+- (void)reallyUpdate:(BOOL)animateFlag {
     [self _removeCellTrackingRects];
 
     NSLineBreakMode truncationStyle = [self truncationStyle];
@@ -1259,8 +1296,27 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         [cell updateIndicators];
     }
 
+    // If the number of rows changed (two-row tab bar crossing the single-row
+    // capacity), the bar's height must change. Tab adds don't otherwise re-fit
+    // the window when the bar is already visible, so ask the delegate to
+    // recompute the height. Deferred to avoid reentrant layout.
+    const NSInteger currentRowCount = [self horizontalRowCount];
+    if (currentRowCount != _lastLaidOutHorizontalRowCount) {
+        _lastLaidOutHorizontalRowCount = currentRowCount;
+        if ([_delegate respondsToSelector:@selector(tabViewDidChangeDesiredHeight:)]) {
+            NSTabView *tabView = _tabView;
+            id<PSMTabBarControlDelegate> delegate = _delegate;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [delegate tabViewDidChangeDesiredHeight:tabView];
+            });
+        }
+    }
+
     // Calculate number of cells to fit in the control and cell widths.
     const NSInteger cellCount = [_cells count];
+    // The width animation only knows how to slide cells along a single row, so
+    // disable it in two-row mode and lay out directly via _setupCells:.
+    const BOOL animate = animateFlag && ([self horizontalRowCount] == 1);
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
         if ((animate || _animationTimer != nil) && cellCount > 0) {
             // Animate only on horizontal tab bars.
@@ -1377,6 +1433,41 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     const NSUInteger pinnedCount = [self numberOfPinnedCells];
     const NSUInteger unpinnedCount = cellCount - pinnedCount;
 
+    // Two-row mode: distribute cells evenly across two rows, each row stretched to
+    // fill a single physical row's width. This deliberately overrides the
+    // size-to-fit and optimal-width paths so tabs get as much room as possible.
+    if ([self horizontalRowCount] == 2) {
+        // availableWidth is already 2× the single-row width.
+        const CGFloat singleRowWidth = availableWidth / 2.0;
+        NSInteger visibleCount = (NSInteger)cellCount;
+        if (self.cellMinWidth * visibleCount + intercellSpacing * MAX(0, visibleCount - 1) > availableWidth) {
+            visibleCount = (NSInteger)(availableWidth / _cellMinWidth);
+            while (visibleCount > 0 &&
+                   _cellMinWidth * visibleCount + intercellSpacing * MAX(0, visibleCount - 1) > availableWidth) {
+                visibleCount--;
+            }
+        }
+        if (visibleCount <= 0) {
+            return [NSArray array];
+        }
+        const NSInteger row1Count = (visibleCount + 1) / 2;
+        const NSInteger row2Count = visibleCount - row1Count;
+        NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+        [self computeCellFramesInContainerOfWidth:singleRowWidth
+                             numberOfVisibleCells:row1Count
+                                 intercellSpacing:intercellSpacing
+                                            scale:2.0
+                                           frames:result];
+        if (row2Count > 0) {
+            [self computeCellFramesInContainerOfWidth:singleRowWidth
+                                 numberOfVisibleCells:row2Count
+                                     intercellSpacing:intercellSpacing
+                                                scale:2.0
+                                               frames:result];
+        }
+        return result;
+    }
+
     if (self.sizeCellsToFit) {
         NSArray<NSNumber *> *widths = [self variableCellWidthsWithOverflow:withOverflow];
         if (widths) {
@@ -1385,7 +1476,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     }
 
     if (pinnedCount == 0) {
-        // No pinned cells
+        // No pinned cells (normal single-row path)
         NSMutableArray<NSNumber *> *newWidths = [NSMutableArray array];
         if ([self shouldUseOptimalWidthWithOverflow:withOverflow]) {
             for (int i = 0; i < cellCount; i++) {
@@ -1620,6 +1711,20 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     NSMenu *overflowMenu = nil;
     const CGFloat intercellSpacing = _style.intercellSpacing;
 
+    // Two-row layout state (horizontal bars only).
+    const BOOL twoRow = ([self horizontalRowCount] == 2);
+    // Each row is half the usable height (generic.size.height already excludes the
+    // top/bottom insets), so two rows exactly fill the bar's content area.
+    const CGFloat rowHeight = generic.size.height / 2.0;
+    // Index boundary: cells [0, twoRowRow1Count) on row 1; rest on row 2.
+    const int twoRowRow1Count = twoRow ? (numberOfVisibleCells + 1) / 2 : 0;
+    int currentRow = 0;
+    // A modified generic rect that tells the style each cell is one row tall.
+    NSRect rowGeneric = generic;
+    if (twoRow) {
+        rowGeneric.size.height = rowHeight;
+    }
+
     // Set up cells with frames and rects
     for (int i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
@@ -1627,13 +1732,25 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         if (i < numberOfVisibleCells) {
             // set cell frame
             if ([self orientation] == PSMTabBarHorizontalOrientation) {
-                cellRect.size.width = [[newValues objectAtIndex:i] floatValue];
+                const CGFloat width = [[newValues objectAtIndex:i] floatValue];
+                // In two-row mode, switch to row 2 at the midpoint index.
+                if (twoRow && currentRow == 0 && i >= twoRowRow1Count) {
+                    currentRow = 1;
+                    cellRect.origin.x = generic.origin.x;
+                }
+                cellRect.size.width = width;
             } else {
                 cellRect.size.width = [self frame].size.width;
                 cellRect.origin.y = [[newValues objectAtIndex:i] floatValue];
                 cellRect.origin.x = 0;
             }
-            cellRect = [_style adjustedCellRect:cellRect generic:generic];
+            cellRect = [_style adjustedCellRect:cellRect generic:twoRow ? rowGeneric : generic];
+            // In two-row mode override the y so row 2 cells sit below row 1,
+            // regardless of what adjustedCellRect: set (e.g. Tahoe always
+            // resets y to containerTopInset).
+            if (twoRow && [self orientation] == PSMTabBarHorizontalOrientation) {
+                cellRect.origin.y = generic.origin.y + currentRow * rowHeight;
+            }
             [cell setFrame:cellRect];
 
             // close button tracking rect
