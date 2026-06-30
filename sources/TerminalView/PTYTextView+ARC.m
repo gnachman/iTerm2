@@ -2521,6 +2521,16 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     // undimmed cells.
     NSColor *effectiveBackgroundColor = backgroundColor;
     iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
+    // The offscreen bitmap is always rasterized at `scale` (the retina 2.0
+    // fallback when there is no window), but configureDrawingHelper derived
+    // isRetina from self.window.backingScaleFactor, which is 0 for a session in a
+    // background tab (its view has no window). That made isRetina=NO, so with
+    // thin-strokes set to RetinaOnly the glyphs were drawn with font smoothing
+    // (heavier strokes) whenever the streamed tab was not frontmost. Pin isRetina
+    // (and the matching antialias shift) to the scale we actually render at, so
+    // stroke weight does not depend on which tab is foreground.
+    helper.isRetina = (scale > 1.0);
+    helper.antiAliasedShift = (scale > 1.0) ? 0.5 : 0;
     if (showCursor) {
         helper.isCursorVisible = YES;
         helper.cursorType = self.drawingHelper.cursorType;
