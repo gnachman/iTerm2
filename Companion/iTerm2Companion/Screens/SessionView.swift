@@ -487,8 +487,12 @@ private struct LiveSessionView: View {
         .onDisappear { model.stopWatchingSessionLive() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
-            case .active: model.resumeLiveStream()
-            case .background: model.pauseLiveStream()
+            case .active:
+                companionLog("CDIAG SessionView scenePhase active -> resumeLiveStream")
+                model.resumeLiveStream()
+            case .background:
+                companionLog("CDIAG SessionView scenePhase background -> pauseLiveStream")
+                model.pauseLiveStream()
             default: break
             }
         }
