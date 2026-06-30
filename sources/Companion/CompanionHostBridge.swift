@@ -24,21 +24,14 @@ import QuartzCore
 import CompanionProtocol
 import CompanionNoise
 
-/// One item queued for the wire: a JSON control envelope (sent verbatim) or a
-/// media payload (sent with the media channel marker). Routing both through the
-/// one outbox preserves ordering, so a stream config always precedes the
-/// keyframe it describes.
-private enum CompanionOutboundFrame {
-    case control(HostEnvelope)
-    case media(Data)
-}
-
 @MainActor
 final class CompanionHostBridge {
     private let transport: MessageTransport
     private var receiveTask: Task<Void, Never>?
     private var subscriptions: [String: ChatBroker.Subscription] = [:]
-    private var outbox: AsyncStream<CompanionOutboundFrame>.Continuation?
+    /// Control frames drain ahead of media so input/replies never wait behind a
+    /// video backlog; media is never dropped (see CompanionPriorityOutbox).
+    private var outbox: CompanionPriorityOutbox<HostEnvelope>?
     private var outboxTask: Task<Void, Never>?
 
     /// One live video stream and the main-thread timer driving it.
@@ -107,9 +100,8 @@ final class CompanionHostBridge {
         ChatBroker.instance?.ensureServiceRunning()
         RLog("CDIAG bridge start (phone connected, bridge live)")
 
-        var continuation: AsyncStream<CompanionOutboundFrame>.Continuation!
-        let stream = AsyncStream<CompanionOutboundFrame> { continuation = $0 }
-        outbox = continuation
+        let outbox = CompanionPriorityOutbox<HostEnvelope>()
+        self.outbox = outbox
         outboxTask = Task { [transport] in
             // CDIAG: temporary diagnostic counters/heartbeat. If a send wedges
             // (half-open splice), the heartbeat below stops logging while the
@@ -119,10 +111,12 @@ final class CompanionHostBridge {
             var controlFrames = 0
             var lastHeartbeat = CACurrentMediaTime()
             RLog("CDIAG bridge outbox drain started")
-            for await frame in stream {
+            drain: while true {
                 let data: Data
                 let isMedia: Bool
-                switch frame {
+                switch await outbox.next() {
+                case .finished:
+                    break drain
                 case .control(let envelope):
                     isMedia = false
                     do {
@@ -140,7 +134,7 @@ final class CompanionHostBridge {
                     try await transport.send(data)
                 } catch {
                     RLog("CDIAG bridge outbox send FAILED (outbox dead) after \(mediaFrames) media/\(controlFrames) control: \(error)")
-                    break
+                    break drain
                 }
                 if isMedia {
                     mediaFrames += 1
@@ -466,10 +460,10 @@ final class CompanionHostBridge {
             maxFrameRate: frameRate,
             averageBitRate: bitRate,
             onConfig: { config in
-                outboxRef?.yield(.control(HostEnvelope(requestID: nil, payload: .streamConfig(config))))
+                outboxRef?.enqueueControl(HostEnvelope(requestID: nil, payload: .streamConfig(config)))
             },
             onMedia: { frame in
-                outboxRef?.yield(.media(frame.encoded()))
+                outboxRef?.enqueueMedia(frame.encoded())
             },
             onDataLimitReached: { [weak self] in
                 // Called on the main thread from the streamer's tick.
@@ -1289,8 +1283,8 @@ final class CompanionHostBridge {
     // MARK: Sending
 
     /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
-    /// transmit order.
+    /// transmit order among control frames, which always precede pending media.
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
-        outbox?.yield(.control(HostEnvelope(requestID: requestID, payload: payload)))
+        outbox?.enqueueControl(HostEnvelope(requestID: requestID, payload: payload))
     }
 }
