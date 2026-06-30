@@ -740,6 +740,11 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Line count the cached image for each tile actually covers, so a tile that
         /// has grown is sized to its image (not stretched) until it is refetched.
         private var tileFetchedLines: [Int: Int] = [:]
+        /// Per-tile request token: a completion applies only if its token is still
+        /// current, so a re-request (after a grow or selection change) supersedes an
+        /// in-flight fetch instead of an out-of-order reply winning.
+        private var tileToken: [Int: Int] = [:]
+        private var tileTokenCounter = 0
         /// Tile indices that currently overlap the selection, and the endpoints they
         /// were computed for, so a selection change invalidates only the tiles whose
         /// highlight changed.
@@ -869,6 +874,7 @@ private struct LiveCanvas: UIViewRepresentable {
                 tileViews.removeAll()
                 requestedTiles.removeAll()
                 tileFetchedLines.removeAll()
+                tileToken.removeAll()
                 // Tile indices are relative to the origin; force selection tiles to
                 // be recomputed against the new origin.
                 selectedTileIndices.removeAll()
@@ -966,13 +972,17 @@ private struct LiveCanvas: UIViewRepresentable {
                     view.show(image: image)
                 } else if !requestedTiles.contains(index) {
                     // Missing, or grew since last fetch: (re)render for the current
-                    // count. Keep the old (correctly-sized) image visible meanwhile.
-                    if tileFetchedLines[index] == nil { view.showLoading() }
+                    // count. Keep the old (correctly-sized) image visible meanwhile
+                    // (showLoading is a no-op once a tile already has an image).
+                    view.showLoading()
                     requestedTiles.insert(index)
+                    let token = nextTileToken(index)
                     model.invalidateHistoryTile(firstAbsLine: absLine)
                     model.requestHistoryTile(firstAbsLine: absLine, lineCount: expected) { [weak self] image in
-                        guard let self, let view = self.tileViews[index] else { return }
+                        // Ignore a superseded reply (a newer request for this tile ran).
+                        guard let self, self.tileToken[index] == token else { return }
                         self.requestedTiles.remove(index)
+                        guard let view = self.tileViews[index] else { return }
                         if let image {
                             self.tileFetchedLines[index] = expected
                             view.frame = self.tileFrame(index: index)
@@ -1016,10 +1026,18 @@ private struct LiveCanvas: UIViewRepresentable {
                 model.invalidateHistoryTile(firstAbsLine: layout.firstAbsLine + Int64(index * linesPerTile))
                 tileFetchedLines[index] = nil
                 requestedTiles.remove(index)
+                _ = nextTileToken(index)   // supersede any in-flight fetch
             }
             selectedTileIndices = newTiles
             lastSelectionEndpoints = endpoints.map { ($0.start.absLine, $0.end.absLine) }
             if !affected.isEmpty { refreshTiles() }
+        }
+
+        /// A fresh request token for a tile, marking any in-flight fetch superseded.
+        private func nextTileToken(_ index: Int) -> Int {
+            tileTokenCounter += 1
+            tileToken[index] = tileTokenCounter
+            return tileTokenCounter
         }
 
         /// Tile index for an absolute line, or nil if it is not in the history region.

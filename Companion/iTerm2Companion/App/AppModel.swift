@@ -251,7 +251,6 @@ final class AppModel {
     /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
     /// fetches in flight so scroll events do not duplicate them.
     private var historyTileCache: [Int64: UIImage] = [:]
-    private var historyTilesInFlight: Set<Int64> = []
     /// The current selection span reported by the mac, for drawing handles.
     private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).
@@ -1807,7 +1806,6 @@ final class AppModel {
                 if config.generationId != activeStreamGeneration {
                     activeStreamGeneration = config.generationId
                     historyTileCache.removeAll()
-                    historyTilesInFlight.removeAll()
                 }
                 onStreamConfig?(config)
             }
@@ -1824,11 +1822,9 @@ final class AppModel {
                     // extent and drop every cached tile.
                     activeStreamLiveTop = firstAbsLine + Int64(max(0, totalLines - activeStreamRows))
                     historyTileCache.removeAll()
-                    historyTilesInFlight.removeAll()
                 } else {
                     // Trimmed: only lines below the new origin are gone.
                     historyTileCache = historyTileCache.filter { $0.key >= firstAbsLine }
-                    historyTilesInFlight = historyTilesInFlight.filter { $0 >= firstAbsLine }
                 }
             }
         case .selectionRange(let streamID, let range):
@@ -1879,7 +1875,6 @@ final class AppModel {
         liveWatchGuid = guid
         liveStreamPaused = false
         historyTileCache.removeAll()
-        historyTilesInFlight.removeAll()
         onStreamConfig = onConfig
         onStreamMedia = onMedia
         onStreamEnded = onEnded
@@ -2078,20 +2073,23 @@ final class AppModel {
     /// grown more lines).
     func invalidateHistoryTile(firstAbsLine: Int64) { historyTileCache[firstAbsLine] = nil }
 
-    /// Fetch a scrollback tile (idempotent per first line); `completion` runs on the
-    /// main actor with the image, or nil on failure / empty (evicted) range.
+    /// Fetch a scrollback tile; `completion` ALWAYS runs on the main actor (with the
+    /// image, or nil on failure / no stream / empty-evicted range) so the caller can
+    /// clear its in-flight state. De-duplication and staleness are the caller's job
+    /// (the canvas keys requests by tile and ignores out-of-date completions); doing
+    /// it here by absolute line silently dropped re-requests after an invalidation,
+    /// leaving tiles stuck loading or showing a stale highlight.
     func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (UIImage?) -> Void) {
         if let image = historyTileCache[firstAbsLine] {
             completion(image)
             return
         }
-        guard let client, let streamID = activeStreamID, !historyTilesInFlight.contains(firstAbsLine) else {
+        guard let client, let streamID = activeStreamID else {
+            completion(nil)
             return
         }
-        historyTilesInFlight.insert(firstAbsLine)
         let generation = activeStreamGeneration
         Task { @MainActor in
-            defer { historyTilesInFlight.remove(firstAbsLine) }
             guard let tile = try? await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
                                                            lineCount: lineCount, generationId: generation),
                   tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
