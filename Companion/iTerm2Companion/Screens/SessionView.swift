@@ -728,6 +728,9 @@ private struct LiveCanvas: UIViewRepresentable {
         // History tiles, keyed by tile index (0 = oldest), like the static path.
         private var tileViews: [Int: TileView] = [:]
         private var requestedTiles: Set<Int> = []
+        /// Line count the cached image for each tile actually covers, so a tile that
+        /// has grown is sized to its image (not stretched) until it is refetched.
+        private var tileFetchedLines: [Int: Int] = [:]
         private let linesPerTile = 50
         private var growthTimer: Timer?
 
@@ -886,14 +889,21 @@ private struct LiveCanvas: UIViewRepresentable {
 
         // MARK: History tiles
 
+        private func expectedLines(index: Int) -> Int {
+            min(linesPerTile, historyLines - index * linesPerTile)
+        }
+
         private func tileFrame(index: Int) -> CGRect {
-            let lines = min(linesPerTile, historyLines - index * linesPerTile)
+            // Height tracks the image's actual line count (or the expected count
+            // while loading), so a tile that has since grown is never stretched.
+            let lines = tileFetchedLines[index] ?? expectedLines(index: index)
             return CGRect(x: 0, y: CGFloat(index * linesPerTile) * pointsPerLine,
                           width: contentView.bounds.width, height: CGFloat(max(0, lines)) * pointsPerLine)
         }
 
         /// Materialize tile views around the visible history (one viewport of
-        /// lookahead each way), fetch their bitmaps, and drop far-away ones.
+        /// lookahead each way), fetch their bitmaps, refetch any whose line count
+        /// grew, and drop far-away ones.
         private func refreshTiles() {
             guard let layout, historyLines > 0, pointsPerLine > 0, contentView.bounds.width > 0 else { return }
             let tileHeight = CGFloat(linesPerTile) * pointsPerLine
@@ -906,27 +916,38 @@ private struct LiveCanvas: UIViewRepresentable {
             guard first <= last else { return }
 
             for index in first...last {
+                let expected = expectedLines(index: index)
+                guard expected > 0 else { continue }
                 let view: TileView
                 if let existing = tileViews[index] {
                     view = existing
                 } else {
                     view = TileView()
-                    view.frame = tileFrame(index: index)
                     contentView.insertSubview(view, belowSubview: holder.view)
                     tileViews[index] = view
                 }
+                view.frame = tileFrame(index: index)
                 let absLine = layout.firstAbsLine + Int64(index * linesPerTile)
-                if let image = model.cachedHistoryTile(firstAbsLine: absLine) {
+                if tileFetchedLines[index] == expected, let image = model.cachedHistoryTile(firstAbsLine: absLine) {
                     view.show(image: image)
-                } else {
-                    view.showLoading()
-                    if !requestedTiles.contains(index) {
-                        requestedTiles.insert(index)
-                        let lines = min(linesPerTile, historyLines - index * linesPerTile)
-                        model.requestHistoryTile(firstAbsLine: absLine, lineCount: lines) { [weak self] image in
-                            guard let self, let view = self.tileViews[index] else { return }
-                            if let image { view.show(image: image) } else { view.showFailure() }
+                } else if !requestedTiles.contains(index) {
+                    // Missing, or grew since last fetch: (re)render for the current
+                    // count. Keep the old (correctly-sized) image visible meanwhile.
+                    if tileFetchedLines[index] == nil { view.showLoading() }
+                    requestedTiles.insert(index)
+                    model.invalidateHistoryTile(firstAbsLine: absLine)
+                    model.requestHistoryTile(firstAbsLine: absLine, lineCount: expected) { [weak self] image in
+                        guard let self, let view = self.tileViews[index] else { return }
+                        self.requestedTiles.remove(index)
+                        if let image {
+                            self.tileFetchedLines[index] = expected
+                            view.frame = self.tileFrame(index: index)
+                            view.show(image: image)
+                        } else {
+                            view.showFailure()
                         }
+                        // It may have grown again while rendering; catch up.
+                        if self.expectedLines(index: index) != expected { self.refreshTiles() }
                     }
                 }
             }
@@ -936,6 +957,8 @@ private struct LiveCanvas: UIViewRepresentable {
                 view.removeFromSuperview()
                 tileViews[index] = nil
                 requestedTiles.remove(index)
+                // Keep tileFetchedLines so a re-shown tile uses the cache; a cache
+                // miss (e.g. generation change) still triggers a refetch.
             }
         }
 

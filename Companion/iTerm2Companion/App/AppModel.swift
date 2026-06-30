@@ -2054,6 +2054,10 @@ final class AppModel {
     /// A cached scrollback tile, if already fetched.
     func cachedHistoryTile(firstAbsLine: Int64) -> UIImage? { historyTileCache[firstAbsLine] }
 
+    /// Drop a cached tile so it is re-rendered (e.g. a partial tile that has since
+    /// grown more lines).
+    func invalidateHistoryTile(firstAbsLine: Int64) { historyTileCache[firstAbsLine] = nil }
+
     /// Fetch a scrollback tile (idempotent per first line); `completion` runs on the
     /// main actor with the image, or nil on failure / empty (evicted) range.
     func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (UIImage?) -> Void) {
