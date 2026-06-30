@@ -579,49 +579,25 @@ private struct LiveSessionView: View {
                 if let loupeViewPoint, let loupeImagePoint {
                     loupe(at: loupeViewPoint, imagePoint: loupeImagePoint, viewSize: geo.size)
                 }
-                // Edit menu above the selection once the drag finishes, like the
-                // UITextView selection menu.
+                // The system edit menu above the selection once the drag finishes.
+                // Anchored to the selection start, clamped into the view so a
+                // Select All (whose start is in off-screen scrollback) still shows
+                // near the top of the content rather than off-screen.
                 if !selecting, model.activeSelectionRange != nil, let handles {
-                    selectionEditMenu(aboveStart: handles.start, viewSize: geo.size)
+                    SelectionEditMenu(anchor: clampedMenuAnchor(handles.start, viewSize: geo.size),
+                                      canPaste: UIPasteboard.general.hasStrings,
+                                      onCopy: { model.copyActiveSelection() },
+                                      onSelectAll: { model.selectAllActiveStream() },
+                                      onPaste: { model.pasteIntoActiveSession() })
                 }
             }
         }
         .ignoresSafeArea(edges: .bottom)
     }
 
-    /// A floating Copy / Select All / Paste menu, positioned above the selection's
-    /// start. Paste appears only when the clipboard has text.
-    private func selectionEditMenu(aboveStart start: CGPoint, viewSize: CGSize) -> some View {
-        HStack(spacing: 0) {
-            editMenuButton("Copy") { model.copyActiveSelection() }
-            editMenuDivider
-            editMenuButton("Select All") { model.selectAllActiveStream() }
-            if UIPasteboard.general.hasStrings {
-                editMenuDivider
-                editMenuButton("Paste") { model.pasteIntoActiveSession() }
-            }
-        }
-        .fixedSize()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(.white.opacity(0.15)))
-        .shadow(radius: 4)
-        // Float above the start handle, clamped horizontally so it stays on screen.
-        .position(x: min(max(start.x, 110), max(110, viewSize.width - 110)),
-                  y: max(28, start.y - 36))
-    }
-
-    private func editMenuButton(_ title: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.callout)
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-        }
-    }
-
-    private var editMenuDivider: some View {
-        Rectangle().fill(.white.opacity(0.15)).frame(width: 1, height: 22)
+    private func clampedMenuAnchor(_ point: CGPoint, viewSize: CGSize) -> CGPoint {
+        CGPoint(x: min(max(point.x, 8), max(8, viewSize.width - 8)),
+                y: min(max(point.y, 8), max(8, viewSize.height - 8)))
     }
 
     /// The Apple-style magnifier: a circle showing the content around the finger
@@ -737,6 +713,78 @@ private extension CGPoint {
 /// Holds the AVSampleBufferDisplayLayer-backed view across SwiftUI updates.
 private final class LiveVideoHolder {
     let view = CompanionVideoView(frame: .zero)
+}
+
+/// Presents the system edit menu (UIEditMenuInteraction) above the selection with
+/// Copy / Select All / Paste. The host view does not take touches (the gesture
+/// overlay beneath it owns input); the menu is presented programmatically and its
+/// own surface handles taps.
+private struct SelectionEditMenu: UIViewRepresentable {
+    let anchor: CGPoint
+    let canPaste: Bool
+    let onCopy: () -> Void
+    let onSelectAll: () -> Void
+    let onPaste: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIView(context: Context) -> EditMenuHostView {
+        let view = EditMenuHostView()
+        let interaction = UIEditMenuInteraction(delegate: context.coordinator)
+        view.addInteraction(interaction)
+        context.coordinator.interaction = interaction
+        return view
+    }
+
+    func updateUIView(_ uiView: EditMenuHostView, context: Context) {
+        context.coordinator.onCopy = onCopy
+        context.coordinator.onSelectAll = onSelectAll
+        context.coordinator.onPaste = onPaste
+        context.coordinator.canPaste = canPaste
+        context.coordinator.present(at: anchor)
+    }
+
+    static func dismantleUIView(_ uiView: EditMenuHostView, coordinator: Coordinator) {
+        coordinator.interaction?.dismissMenu()
+    }
+
+    final class Coordinator: NSObject, UIEditMenuInteractionDelegate {
+        var interaction: UIEditMenuInteraction?
+        var onCopy: (() -> Void)?
+        var onSelectAll: (() -> Void)?
+        var onPaste: (() -> Void)?
+        var canPaste = false
+        private var presentedAnchor: CGPoint?
+
+        /// Present at `anchor`, or re-present if it moved enough (e.g. Select All
+        /// shifts the selection start). Avoids re-presenting on every SwiftUI tick.
+        func present(at anchor: CGPoint) {
+            if let p = presentedAnchor, hypot(p.x - anchor.x, p.y - anchor.y) < 8 { return }
+            presentedAnchor = anchor
+            interaction?.dismissMenu()
+            interaction?.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: anchor))
+        }
+
+        func editMenuInteraction(_ interaction: UIEditMenuInteraction,
+                                 menuFor configuration: UIEditMenuConfiguration,
+                                 suggestedActions: [UIMenuElement]) -> UIMenu? {
+            var children: [UIMenuElement] = [
+                UIAction(title: "Copy") { [weak self] _ in self?.onCopy?() },
+                UIAction(title: "Select All") { [weak self] _ in self?.onSelectAll?() },
+            ]
+            if canPaste {
+                children.append(UIAction(title: "Paste") { [weak self] _ in self?.onPaste?() })
+            }
+            return UIMenu(children: children)
+        }
+    }
+}
+
+/// Touch-transparent: the menu is presented programmatically and lives in its own
+/// surface, so this host view must never intercept touches from the gesture
+/// overlay beneath it.
+private final class EditMenuHostView: UIView {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? { nil }
 }
 
 /// A circular magnifier that draws a blown-up crop of the live frame around an
