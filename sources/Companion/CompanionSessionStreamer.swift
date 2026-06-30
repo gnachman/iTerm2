@@ -45,6 +45,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private var sequence: UInt32 = 0
     private var generationId: UInt32 = 0
     private var sentConfigDimensions: (Int, Int)?
+    /// Content hash of the last frame handed to the encoder. A frame whose pixels
+    /// match it is skipped (the phone already shows it), so a static screen costs
+    /// nothing even though cosmetic repaints keep driving tick(). Cleared on a
+    /// resize so the first frame at a new size always encodes.
+    private var lastSentHash: UInt64?
 
     init(streamID: UInt32,
          source: CompanionFrameSource,
@@ -88,6 +93,14 @@ final class CompanionSessionStreamer: @unchecked Sendable {
               let pixelBuffer = try? pool.pixelBuffer(from: image) else {
             return
         }
+        // Skip frames whose pixels are unchanged so an idle screen (cosmetic
+        // repaints like cursor blink) costs zero bytes. A forced keyframe always
+        // encodes -- a (re)subscribe/resume needs a fresh IDR even if static.
+        let hash = CompanionPixelBufferHash.hash(pixelBuffer)
+        if !decision.keyframe && hash == lastSentHash {
+            return
+        }
+        lastSentHash = hash
         encoder.encode(pixelBuffer, ptsMilliseconds: nowMilliseconds, forceKeyframe: decision.keyframe)
     }
 
@@ -109,6 +122,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
             return true
         }
         pool = CompanionPixelBufferPool(width: width, height: height)
+        lastSentHash = nil  // a new size invalidates the dedup baseline
         do {
             encoder = try CompanionVideoEncoder(width: width, height: height,
                                                 averageBitRate: averageBitRate) { [weak self] frame in

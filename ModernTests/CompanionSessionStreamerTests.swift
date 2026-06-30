@@ -16,18 +16,31 @@ private final class FakeFrameSource: CompanionFrameSource {
     let columns: Int
     let rows: Int
     let scale: Double
-    private let image: CGImage
+    private let pixelWidth: Int
+    private let pixelHeight: Int
+    private var image: CGImage
 
     init(pixelWidth: Int, pixelHeight: Int, columns: Int, rows: Int, scale: Double) {
         self.columns = columns
         self.rows = rows
         self.scale = scale
-        let bytes = [UInt8](repeating: 0x60, count: pixelWidth * pixelHeight * 4)
+        self.pixelWidth = pixelWidth
+        self.pixelHeight = pixelHeight
+        self.image = Self.makeImage(width: pixelWidth, height: pixelHeight, fill: 0x60)
+    }
+
+    /// Change the rendered content so a subsequent frame is not deduped.
+    func setFill(_ fill: UInt8) {
+        image = Self.makeImage(width: pixelWidth, height: pixelHeight, fill: fill)
+    }
+
+    private static func makeImage(width: Int, height: Int, fill: UInt8) -> CGImage {
+        let bytes = [UInt8](repeating: fill, count: width * height * 4)
         let provider = CGDataProvider(data: Data(bytes) as CFData)!
-        self.image = CGImage(width: pixelWidth, height: pixelHeight, bitsPerComponent: 8, bitsPerPixel: 32,
-                             bytesPerRow: pixelWidth * 4, space: CGColorSpaceCreateDeviceRGB(),
-                             bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-                             provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)!
+        return CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32,
+                       bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                       bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                       provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)!
     }
 
     func renderCurrentScreen() -> CGImage? { image }
@@ -113,6 +126,7 @@ final class CompanionSessionStreamerTests: XCTestCase {
         streamer.tick(nowMilliseconds: 0)   // keyframe + config
         streamer.flush()
 
+        source.setFill(0x90)  // actually change the pixels
         streamer.screenDidChange()
         streamer.tick(nowMilliseconds: 1000)  // well past the cap interval
         streamer.flush()
@@ -123,5 +137,32 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(second.sequence, 1)
         XCTAssertFalse(second.flags.contains(.keyframe))
         XCTAssertFalse(second.flags.contains(.configChanged))
+    }
+
+    func testUnchangedPixelsAreDeduped() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)   // keyframe of the initial content
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 1)
+
+        // A dirty tick whose rendered pixels are identical (e.g. a cursor-blink
+        // repaint) must not emit a frame -- an idle screen costs nothing.
+        streamer.screenDidChange()
+        streamer.tick(nowMilliseconds: 1000)
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 1, "identical pixels must be deduped")
+
+        // A real change does emit.
+        source.setFill(0x91)
+        streamer.screenDidChange()
+        streamer.tick(nowMilliseconds: 2000)
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 2)
     }
 }
