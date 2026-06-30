@@ -729,6 +729,7 @@ private struct LiveCanvas: UIViewRepresentable {
         private var tileViews: [Int: TileView] = [:]
         private var requestedTiles: Set<Int> = []
         private let linesPerTile = 50
+        private var growthTimer: Timer?
 
         init(holder: LiveVideoHolder, model: AppModel) {
             self.holder = holder
@@ -738,6 +739,8 @@ private struct LiveCanvas: UIViewRepresentable {
 
         func tearDown() {
             editMenu?.dismissMenu()
+            growthTimer?.invalidate()
+            growthTimer = nil
         }
 
         func makeContainer() -> UIView {
@@ -794,12 +797,22 @@ private struct LiveCanvas: UIViewRepresentable {
             }
 
             scrollView.onLayout = { [weak self] in self?.applyLayout() }
+
+            // Grow the document as the live top advances (4 Hz; cheap no-op when the
+            // extent is unchanged or the user is interacting).
+            let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.growthTick() }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            growthTimer = timer
             return container
         }
 
         /// Lay out the scrollable document: history fills the top, the live video is
-        /// a band at the bottom (the last `rows` lines). Sized so the video fits the
-        /// viewport width at zoom 1, with one line mapping to `pointsPerLine` points.
+        /// a band at the bottom (the last `rows` lines). The document grows as the
+        /// live top advances (new output scrolls into history); if the view was
+        /// pinned to the bottom it stays there (following), otherwise the offset is
+        /// preserved (browsing) since the content above is unchanged.
         func applyLayout() {
             let size = scrollView.bounds.size
             guard size.width > 0, size.height > 0 else { return }
@@ -811,14 +824,26 @@ private struct LiveCanvas: UIViewRepresentable {
                 videoRect = contentView.bounds
                 return
             }
-            let key = "\(Int(size.width))x\(Int(size.height))|\(layout)"
+            // Relayout only at zoom 1: at other scales the scroll view manages
+            // contentSize for zooming and our changes would fight it. Resumes when
+            // the user returns to 1.
+            guard scrollView.zoomScale <= 1.001 else { return }
+
+            // Freshest extent: the live top advances as output scrolls off, growing
+            // the browsable history. Falls back to the config extent before media.
+            let configLiveTop = layout.firstAbsLine + Int64(layout.totalLines - layout.rows)
+            let liveTop = max(configLiveTop, model.activeStreamLiveTop)
+            let totalLines = Int(liveTop - layout.firstAbsLine) + layout.rows
+
+            let key = "\(Int(size.width))x\(Int(size.height))|\(layout)|\(totalLines)"
             guard key != appliedKey else { return }
+            let wasAtBottom = isPinnedToBottom
             appliedKey = key
 
             let videoHeight = size.width * layout.imageSize.height / layout.imageSize.width
             pointsPerLine = videoHeight / CGFloat(layout.rows)
-            historyLines = max(0, layout.totalLines - layout.rows)
-            let documentHeight = CGFloat(layout.totalLines) * pointsPerLine
+            historyLines = max(0, totalLines - layout.rows)
+            let documentHeight = CGFloat(totalLines) * pointsPerLine
 
             contentView.frame = CGRect(x: 0, y: 0, width: size.width, height: documentHeight)
             scrollView.contentSize = contentView.frame.size
@@ -829,13 +854,30 @@ private struct LiveCanvas: UIViewRepresentable {
             scrollView.maximumZoomScale = max(1, 4 * layout.imageSize.width / (size.width * displayScale))
 
             for (index, view) in tileViews { view.frame = tileFrame(index: index) }
-            if !didScrollToBottom {
+            if !didScrollToBottom || wasAtBottom {
                 didScrollToBottom = true
-                let bottom = max(-scrollView.adjustedContentInset.top,
-                                 documentHeight - size.height + scrollView.adjustedContentInset.bottom)
-                scrollView.contentOffset = CGPoint(x: 0, y: bottom)
+                scrollToBottom()
             }
             refreshTiles()
+        }
+
+        private var isPinnedToBottom: Bool {
+            let maxY = scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom
+            return scrollView.contentOffset.y >= maxY - 1
+        }
+
+        private func scrollToBottom() {
+            let maxY = max(-scrollView.adjustedContentInset.top,
+                           scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom)
+            scrollView.contentOffset = CGPoint(x: 0, y: maxY)
+        }
+
+        /// Periodically grow the document as the live top advances, but never while
+        /// the user is interacting (it would jolt) or zoomed in.
+        private func growthTick() {
+            guard !scrollView.isDragging, !scrollView.isDecelerating, !scrollView.isZooming,
+                  !selecting, !draggingStart, !draggingEnd, scrollView.zoomScale <= 1.001 else { return }
+            applyLayout()
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { contentView }

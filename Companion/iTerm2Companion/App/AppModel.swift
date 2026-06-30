@@ -243,7 +243,7 @@ final class AppModel {
     private(set) var activeStreamImageSize: CGSize = .zero
     private(set) var activeStreamColumns = 0
     private(set) var activeStreamRows = 0
-    private var activeStreamLiveTop: Int64 = 0
+    private(set) var activeStreamLiveTop: Int64 = 0
     /// History extent from the latest config, for laying out the scrollback canvas.
     private(set) var activeStreamFirstAbsLine: Int64 = 0
     private(set) var activeStreamTotalLines = 0
