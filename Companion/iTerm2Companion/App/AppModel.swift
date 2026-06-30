@@ -1874,7 +1874,19 @@ final class AppModel {
                           onEnded: @escaping (CompanionStreamEndReason) -> Void) {
         liveWatchGuid = guid
         liveStreamPaused = false
+        // Drop the previous session's geometry/extent so the canvas waits for the
+        // new config before laying out (streamExtent can arrive first); otherwise it
+        // would briefly fetch tiles against stale geometry.
         historyTileCache.removeAll()
+        activeStreamGeometry = nil
+        activeStreamImageSize = .zero
+        activeStreamColumns = 0
+        activeStreamRows = 0
+        activeStreamLiveTop = 0
+        activeStreamFirstAbsLine = 0
+        activeStreamTotalLines = 0
+        activeStreamGeneration = 0
+        activeSelectionRange = nil
         onStreamConfig = onConfig
         onStreamMedia = onMedia
         onStreamEnded = onEnded
@@ -2085,19 +2097,28 @@ final class AppModel {
             return
         }
         guard let client, let streamID = activeStreamID else {
+            companionLog("historyTile no stream firstAbs=\(firstAbsLine)")
             completion(nil)
             return
         }
         let generation = activeStreamGeneration
+        companionLog("historyTile req firstAbs=\(firstAbsLine) lineCount=\(lineCount) stream=\(streamID) gen=\(generation)")
         Task { @MainActor in
-            guard let tile = try? await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
-                                                           lineCount: lineCount, generationId: generation),
-                  tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
+            do {
+                let tile = try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
+                                                        lineCount: lineCount, generationId: generation)
+                guard tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
+                    companionLog("historyTile reply firstAbs=\(firstAbsLine) lineCount=\(tile.lineCount) bytes=\(tile.pngData.count) -> \(tile.lineCount == 0 ? "evicted" : "undecodable")")
+                    completion(nil)
+                    return
+                }
+                historyTileCache[firstAbsLine] = image
+                companionLog("historyTile ok firstAbs=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount) bytes=\(tile.pngData.count)")
+                completion(image)
+            } catch {
+                companionLog("historyTile FAIL firstAbs=\(firstAbsLine): \(error)")
                 completion(nil)
-                return
             }
-            historyTileCache[firstAbsLine] = image
-            completion(image)
         }
     }
 
