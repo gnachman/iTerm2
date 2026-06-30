@@ -45,6 +45,7 @@
 		A28F8FAE03C27CC1088475B8 /* WorkgroupWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969B8C22B79D7C1929B7DE1A /* WorkgroupWatcher.swift */; };
 		A6F733B22FE4F475008441ED /* PushService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A6F733AB2FE4F475008441ED /* PushService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AEA57C95A686D516F061CCEE /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F0367E6521567120B3BF05 /* QRScannerView.swift */; };
+		B670983AE703D700B6537995 /* CompanionHistoryWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D1A918875A1CCD767F47E46 /* CompanionHistoryWindow.swift */; };
 		BCAC32E11E927DCC5E74A28A /* RemoteCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2C97B70ADFB001DAAE37592 /* RemoteCommand.swift */; };
 		C16ABF5366C765E01C3BB489 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A036182D7E7035DE88387064 /* HomeView.swift */; };
 		C7D3F3517CFFB87B506EF97F /* ScanningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7ACD526299252E0732D1779 /* ScanningView.swift */; };
@@ -127,6 +128,7 @@
 		969B8C22B79D7C1929B7DE1A /* WorkgroupWatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WorkgroupWatcher.swift; path = sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift; sourceTree = "<group>"; };
 		9845DDD46D6AA61085BA448F /* VoiceCaptureController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VoiceCaptureController.swift; sourceTree = "<group>"; };
 		9A766B60CE969D9AA49989C8 /* iTerm2CompanionApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTerm2CompanionApp.swift; sourceTree = "<group>"; };
+		9D1A918875A1CCD767F47E46 /* CompanionHistoryWindow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionHistoryWindow.swift; path = sources/Companion/Shared/CompanionHistoryWindow.swift; sourceTree = "<group>"; };
 		A036182D7E7035DE88387064 /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A2C97B70ADFB001DAAE37592 /* RemoteCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RemoteCommand.swift; path = sources/AITerm/RemoteCommand.swift; sourceTree = "<group>"; };
 		A3B14CF98655654318C06432 /* TerminalCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TerminalCommand.swift; path = sources/AITerm/TerminalCommand.swift; sourceTree = "<group>"; };
@@ -316,6 +318,7 @@
 				F163F73401D3427659D549FA /* CompanionHEVCFraming.swift */,
 				551830A40102EA036643794D /* CompanionHEVCSampleBuilder.swift */,
 				8CCE31EAF88D6FAF54E12B52 /* CompanionTouchMapper.swift */,
+				9D1A918875A1CCD767F47E46 /* CompanionHistoryWindow.swift */,
 			);
 			name = SharedFromMac;
 			path = ..;
@@ -503,6 +506,7 @@
 				54F5D986EBF8A12BFD55DBFE /* CompanionHEVCSampleBuilder.swift in Sources */,
 				FA3DC7672264574260BD246F /* CompanionVideoView.swift in Sources */,
 				F9DD768544783E3F190AE0F2 /* CompanionTouchMapper.swift in Sources */,
+				B670983AE703D700B6537995 /* CompanionHistoryWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
