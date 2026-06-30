@@ -769,6 +769,14 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                              selector:@selector(refreshTerminal:)
                                                  name:kRefreshTerminalNotification
                                                object:nil];
+    // Re-fit when advanced settings change so tab-bar-height settings (e.g. the
+    // default height and two-row tab bar) take effect without reopening windows.
+    // Gated in the handler because this notification fires for every advanced
+    // setting and carries no key.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(advancedSettingsDidChange:)
+                                                 name:iTermAdvancedSettingsDidChange
+                                               object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(scrollerStyleDidChange:)
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"
@@ -6434,6 +6442,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         RLog(@"NO - tab bar should not be visible");
         return NO;
     }
+    if ([iTermAdvancedSettingsModel twoRowTabBar] &&
+        [_contentView.tabBarControl horizontalRowCount] == 2) {
+        // A two-row tab bar is taller than the titlebar; the OS clips a titlebar
+        // accessory to the standard titlebar height, hiding the second row. Keep
+        // it in the content view instead, where the full height is drawn.
+        DLog(@"NO - two-row tab bar is too tall for the titlebar accessory");
+        return NO;
+    }
     switch ((PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
         case PSMTab_RightTab:
@@ -6516,7 +6532,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     if ([self tabBarShouldBeAccessory]) {
         RLog(@"tab bar should be accessory");
-        const NSRect frame = NSMakeRect(0, 0, self.window.frame.size.width, self.desiredTabBarHeight);
+        const CGFloat desiredHeight = self.desiredTabBarHeight;
+        // When the tab bar is on loan to the titlebar, iTermRootTerminalView's
+        // layoutSubviews skips updateHeightWithDefault:, so the control's height
+        // property (which drives two-row cell layout) would not track the
+        // accessory's frame height. Keep them in sync here.
+        [_contentView.tabBarControl updateHeightWithDefault:desiredHeight];
+        const NSRect frame = NSMakeRect(0, 0, self.window.frame.size.width, desiredHeight);
         NSTitlebarAccessoryViewController *viewController = [self titleBarAccessoryTabBarViewController];
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
         RLog(@"Set tabbar's fullScreenMinHeight to %@", @(tabBarHeight));
@@ -8459,6 +8481,27 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (CGFloat)tabViewDesiredTabBarHeight:(NSTabView *)tabView {
     return [self desiredTabBarHeight];
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    // iTermAdvancedSettingsDidChange fires for ANY advanced setting change and
+    // carries no key, so filter to the ones we care about: only refresh when a
+    // setting actually changed the tab bar's desired height (two-row tab bar,
+    // default/compact tab bar height). Unrelated settings must not rebuild the
+    // window chrome of every open window.
+    if (fabs([self desiredTabBarHeight] - _contentView.tabBarControl.height) < 0.5) {
+        return;
+    }
+    [self refreshTerminal:notification];
+}
+
+- (void)tabViewDidChangeDesiredHeight:(NSTabView *)tabView {
+    // The two-row tab bar changed its row count. Besides the height, this flips
+    // whether the bar belongs in the titlebar (accessory) or the content view,
+    // which requires reconfiguring the window chrome (style mask, transparency,
+    // titlebar). A partial relayout leaves the content-view bar clipped under a
+    // leftover titlebar, so do the full refresh that window-style changes use.
+    [self refreshTerminal:nil];
 }
 
 - (BOOL)isInitialized
@@ -10820,6 +10863,20 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (CGFloat)_desiredTabBarHeight {
+    const CGFloat base = [self _baseDesiredTabBarHeight];
+    // In two-row mode the bar grows to fit the number of rows the control will
+    // actually use (1 until tabs overflow a single row, then 2). The control
+    // returns 1 for vertical (left/right) bars and when the setting is off.
+    const NSInteger rows = [_contentView.tabBarControl horizontalRowCount];
+    if (rows > 1) {
+        // The two-row height model lives in PSMTabBarControl (single source of
+        // truth); pass the single-row base and let it apply the shared geometry.
+        return [_contentView.tabBarControl twoRowHeightForSingleRowHeight:base];
+    }
+    return base;
+}
+
+- (CGFloat)_baseDesiredTabBarHeight {
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
     } else {
@@ -11122,13 +11179,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                                                           effectiveAppearance:self.window.effectiveAppearance];
     [_contentView.tabBarControl setStyle:style];
     [_contentView.tabBarControl setTabsHaveCloseButtons:[iTermPreferences boolForKey:kPreferenceKeyTabsHaveCloseButton]];
+    // Assign insets before computing the height: the two-row desiredTabBarHeight
+    // derives per-row content from the control's insets, so a stale/zero inset here
+    // (e.g. on a theme switch) would size the bar wrong until the next layout.
+    self.tabBarControl.insets = [self tabBarInsets];
     [_contentView.tabBarControl updateHeightWithDefault:[self desiredTabBarHeight]];
 
     [[self currentTab] recheckBlur];
     [self updateTabColors];
     [self updateToolbeltAppearance];
     [self updateTabBarControlIsTitlebarAccessory];
-    self.tabBarControl.insets = [self tabBarInsets];
 
     [self addShortcutAccessorViewControllerToTitleBarIfNeeded];
 }

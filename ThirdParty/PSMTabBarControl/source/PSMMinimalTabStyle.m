@@ -573,7 +573,9 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
             [self drawOutlineAroundVerticalTabBarWithInteriorTabSelected:bar];
         }
     } else if (bar.tabLocation == PSMTab_TopTab) {
-        if (bar.cells.count == 1) {
+        if (bar.horizontalRowCount > 1) {
+            [self drawTwoRowOutlineForTabBar:bar bottomTabBar:NO];
+        } else if (bar.cells.count == 1) {
             [self drawOutlineAroundTopTabBarWithOneTab:bar];
         } else if (selectedIndex == 0) {
             [self drawOutlineAroundTopTabBarWithFirstTabSelected:bar];
@@ -583,7 +585,9 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
             [self drawOutlineAroundTopTabBarWithInteriorTabSelected:bar];
         }
     } else {
-        if (bar.cells.count == 1) {
+        if (bar.horizontalRowCount > 1) {
+            [self drawTwoRowOutlineForTabBar:bar bottomTabBar:YES];
+        } else if (bar.cells.count == 1) {
             [self drawOutlineAroundBottomTabBarWithOneTab:bar];
         } else if (selectedIndex == 0) {
             [self drawOutlineAroundBottomTabBarWithFirstTabSelected:bar];
@@ -651,7 +655,8 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         return;
     }
     const CGFloat left = NSMaxX(cell.frame) + 0.5;
-    const CGFloat top = 0.5;
+    // Top of the selected cell's own row (== bar top for a single row).
+    const CGFloat top = NSMinY(cell.frame) + 0.5;
     const CGFloat right = NSMaxX(bar.frame) - 0.5;
     const CGFloat bottom = NSMaxY(cell.frame) - 0.5;
 
@@ -677,7 +682,8 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
                            NSHeight(bar.frame));
     }
     const CGFloat left = 0.5;
-    const CGFloat top = 0.5;
+    // Top of the selected cell's own row (== bar top for a single row).
+    const CGFloat top = NSMinY(frame) + 0.5;
     const CGFloat right = NSMinX(frame) - 0.5;
     const CGFloat bottom = NSMaxY(frame) - 0.5;
 
@@ -724,7 +730,8 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         return;
     }
     const CGFloat left = NSMaxX(cell.frame) + 0.5;
-    const CGFloat top = 0.5;
+    // Top of the selected cell's own row (== bar top for a single row).
+    const CGFloat top = NSMinY(cell.frame) + 0.5;
     const CGFloat right = NSMaxX(bar.frame);
     const CGFloat bottom = NSMaxY(cell.frame) - 0.5;
 
@@ -750,7 +757,8 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
                            NSHeight(bar.frame));
     }
     const CGFloat left = 0;
-    const CGFloat top = 0.5;
+    // Top of the selected cell's own row (== bar top for a single row).
+    const CGFloat top = NSMinY(frame) + 0.5;
     const CGFloat right = NSMinX(frame) - 0.5;
     const CGFloat bottom = NSMaxY(frame) - 0.5;
 
@@ -760,6 +768,67 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
     [[self outlineColor] set];
     [path stroke];
+}
+
+#pragma mark Draw two-row outline (top tab bar)
+
+// Draw a plain full-width horizontal outline line at the given y.
+- (void)drawPlainHorizontalOutlineAtY:(CGFloat)y bar:(PSMTabBarControl *)bar {
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    [path moveToPoint:NSMakePoint(0, y)];
+    [path lineToPoint:NSMakePoint(NSMaxX(bar.frame), y)];
+    [[self outlineColor] set];
+    [path stroke];
+}
+
+// In two-row mode draw a boundary line at the content-facing edge of every
+// physical row (the divider between the rows and the boundary with the content),
+// each notched around the selected tab when it sits on that row. This gives
+// Minimal a clear two-row structure while keeping the selected-tab "notch" look on
+// whichever row holds it. For a top tab bar the content is below, so the boundary
+// is each row's bottom edge; for a bottom tab bar it's each row's top edge.
+- (void)drawTwoRowOutlineForTabBar:(PSMTabBarControl *)bar bottomTabBar:(BOOL)isBottom {
+    PSMTabBarCell *const selected = [self selectedCellInTabBarControl:bar];
+    const BOOL haveSelected = selected && !selected.isInOverflowMenu;
+    const CGFloat selectedRowTop = haveSelected ? NSMinY(selected.frame) : CGFLOAT_MAX;
+
+    // Distinct rows (by cell origin.y) with each row's top and bottom edges.
+    NSMutableArray<NSValue *> *rows = [NSMutableArray array];  // NSPoint(top, bottom)
+    for (PSMTabBarCell *cell in bar.cells) {
+        if (cell.isInOverflowMenu) {
+            continue;
+        }
+        const CGFloat top = NSMinY(cell.frame);
+        BOOL known = NO;
+        for (NSValue *v in rows) {
+            if (fabs(v.pointValue.x - top) < 0.5) {
+                known = YES;
+                break;
+            }
+        }
+        if (!known) {
+            [rows addObject:[NSValue valueWithPoint:NSMakePoint(top, NSMaxY(cell.frame))]];
+        }
+    }
+
+    for (NSValue *v in rows) {
+        const CGFloat rowTop = v.pointValue.x;
+        const CGFloat rowBottom = v.pointValue.y;
+        const BOOL selectedOnRow = haveSelected && fabs(selectedRowTop - rowTop) < 0.5;
+        if (selectedOnRow) {
+            // Notch around the selected tab at this row's content-facing edge (the
+            // before/after primitives use the selected cell's own row).
+            if (isBottom) {
+                [self drawOutlineBeforeSelectedTabInBottomTabBar:bar];
+                [self drawOutlineAfterSelectedTabInBottomTabBar:bar];
+            } else {
+                [self drawOutlineBeforeSelectedTabInTopTabBar:bar];
+                [self drawOutlineAfterSelectedTabInTopTabBar:bar];
+            }
+        } else {
+            [self drawPlainHorizontalOutlineAtY:(isBottom ? rowTop + 0.5 : rowBottom - 0.5) bar:bar];
+        }
+    }
 }
 
 #pragma mark Draw outline around vertical tab bar

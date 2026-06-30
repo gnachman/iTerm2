@@ -467,6 +467,17 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return [self retinaRoundRect:frame];
 }
 
+// The height a titlebar label (window number, window title) should be vertically
+// centered within. Normally the tab bar height, but when the tab bar has two rows
+// the labels belong on the first row, so center within the first row's height
+// instead of the whole (taller) bar — otherwise they drop toward the row boundary.
+- (CGFloat)tabBarLabelCenteringHeight:(CGFloat)tabBarHeight {
+    if ([_tabBarControl horizontalRowCount] > 1) {
+        return 2.0 * _tabBarControl.insets.top + [_tabBarControl twoRowContentHeight];
+    }
+    return tabBarHeight;
+}
+
 - (NSRect)frameForWindowNumberLabel {
     if (_tabBarControlOnLoan) {
         return NSZeroRect;
@@ -486,8 +497,10 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             shift = 1;  // Move down by 3 points on macOS 26 for minimal theme
         }
     }
+    // Keep the label aligned with the first row (see -tabBarLabelCenteringHeight:).
+    const CGFloat centeringHeight = [self tabBarLabelCenteringHeight:tabBarHeight];
     NSRect rect = NSMakeRect(NSMaxX(standardButtonsFrame) + [self compactProxyIconWidthIncludingMargin] + iTermRootTerminalViewWindowNumberLabelMargin,
-                             myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset - shift,
+                             myHeight - centeringHeight + (centeringHeight - capHeight) / 2.0 - baselineOffset - shift,
                              iTermRootTerminalViewWindowNumberLabelWidth,
                              windowNumberHeight);
     return [self retinaRoundRect:rect];
@@ -506,6 +519,8 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         return NSZeroRect;
     }
     const CGFloat tabBarHeight = _tabBarControl.height;
+    // Align with the first row in two-row mode (see -tabBarLabelCenteringHeight:).
+    const CGFloat centeringHeight = [self tabBarLabelCenteringHeight:tabBarHeight];
     const CGFloat baselineOffset = -textField.font.descender;
     const CGFloat capHeight = textField.font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
@@ -538,9 +553,9 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     }
     CGFloat y;
     if (hasSubtitle) {
-        y = [self retinaRound:myHeight - (tabBarHeight - fittingSize.height) / 2.0 - ceil(fittingSize.height)];
+        y = [self retinaRound:myHeight - (centeringHeight - fittingSize.height) / 2.0 - ceil(fittingSize.height)];
     } else {
-        y = [self retinaRound:myHeight - tabBarHeight + (tabBarHeight - capHeight) / 2.0 - baselineOffset];
+        y = [self retinaRound:myHeight - centeringHeight + (centeringHeight - capHeight) / 2.0 - baselineOffset];
         if (@available(macOS 26, *)) {
             y -= 1.5;
         }

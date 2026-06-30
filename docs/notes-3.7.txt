@@ -697,6 +697,11 @@ Settings Improvements:
   this Mac and in the folder, it asks which
   copy to keep rather than overwriting your
   changes.
+- A new advanced setting, “Show tab bar on
+  two rows,” distributes tabs across two
+  horizontal rows so each tab gets more room
+  for its title. Handy when many tabs are
+  open. Off by default.
 
 Bug Fixes:
 - Session Status tool: with “Merge workgroup
