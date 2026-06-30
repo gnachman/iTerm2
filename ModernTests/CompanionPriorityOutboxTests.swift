@@ -34,6 +34,41 @@ final class CompanionPriorityOutboxTests: XCTestCase {
         }
     }
 
+    func testCoalescingCollapsesToLatest() async {
+        let outbox = CompanionPriorityOutbox<Int>()
+        outbox.enqueueCoalescingControl(1, key: "sel")
+        outbox.enqueueCoalescingControl(2, key: "sel")
+        outbox.enqueueCoalescingControl(3, key: "sel")
+        outbox.finish()
+        // Only the newest survives.
+        guard case .control(let v) = await outbox.next() else { return XCTFail("expected control") }
+        XCTAssertEqual(v, 3)
+        guard case .finished = await outbox.next() else { return XCTFail("expected finished") }
+    }
+
+    func testCoalescingDrainsAfterMediaAndCannotStarveIt() async {
+        let outbox = CompanionPriorityOutbox<Int>()
+        // A flood of coalescing-state with media interleaved: media must come out
+        // first (the coalescing lane is bounded and lowest priority).
+        outbox.enqueueCoalescingControl(1, key: "sel")
+        outbox.enqueueMedia(Data([7]))
+        outbox.enqueueCoalescingControl(2, key: "sel")
+        outbox.enqueueCoalescingControl(3, key: "sel")
+        guard case .media(let m) = await outbox.next() else { return XCTFail("expected media first") }
+        XCTAssertEqual(m, Data([7]))
+        guard case .control(let v) = await outbox.next() else { return XCTFail("expected coalesced control") }
+        XCTAssertEqual(v, 3, "coalesced to latest")
+    }
+
+    func testControlStillBeatsMediaAndCoalescing() async {
+        let outbox = CompanionPriorityOutbox<Int>()
+        outbox.enqueueMedia(Data([7]))
+        outbox.enqueueCoalescingControl(9, key: "sel")
+        outbox.enqueueControl(1)
+        guard case .control(let c) = await outbox.next() else { return XCTFail("expected control") }
+        XCTAssertEqual(c, 1, "reliable control beats both media and coalescing")
+    }
+
     func testFinishedAfterDrain() async {
         let outbox = CompanionPriorityOutbox<Int>()
         outbox.enqueueControl(1)

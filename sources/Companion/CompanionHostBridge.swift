@@ -498,7 +498,11 @@ final class CompanionHostBridge {
         } else {
             range = nil
         }
-        send(.selectionRange(streamID: streamID, range: range), requestID: nil)
+        // Latest-wins state: ride the coalescing lane so a fast drag's updates
+        // collapse to the newest and never starve the media frame that actually
+        // shows the selection. Keyed per stream.
+        outbox?.enqueueCoalescingControl(HostEnvelope(requestID: nil, payload: .selectionRange(streamID: streamID, range: range)),
+                                         key: "selectionRange.\(streamID)")
     }
 
     private func handleCopySelection(guid: String, requestID: UInt64?) {
