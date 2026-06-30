@@ -16,6 +16,8 @@ private final class FakeFrameSource: CompanionFrameSource {
     let columns: Int
     let rows: Int
     let scale: Double
+    var cellGeometry = CompanionCellGeometry(cellWidth: 8, cellHeight: 16, leftMargin: 0, topMargin: 0)
+    var liveTop: Int64 = 0
     private let pixelWidth: Int
     private let pixelHeight: Int
     private var image: CGImage
@@ -164,5 +166,28 @@ final class CompanionSessionStreamerTests: XCTestCase {
         streamer.tick(nowMilliseconds: 2000)
         streamer.flush()
         XCTAssertEqual(out.medias.count, 2)
+    }
+
+    func testConfigAndFramesCarryGeometry() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        source.cellGeometry = CompanionCellGeometry(cellWidth: 13, cellHeight: 27, leftMargin: 0, topMargin: 0)
+        source.liveTop = 4321
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)
+        streamer.flush()
+
+        // The config carries the cell geometry, and the keyframe carries the
+        // generation it was rendered under plus the live top line.
+        XCTAssertEqual(out.configs.first?.cellGeometry,
+                       CompanionCellGeometry(cellWidth: 13, cellHeight: 27, leftMargin: 0, topMargin: 0))
+        let frame = try XCTUnwrap(out.medias.first)
+        XCTAssertEqual(frame.liveTop, 4321)
+        XCTAssertEqual(frame.generationId, out.configs.first?.generationId)
+        XCTAssertGreaterThan(frame.generationId, 0)
     }
 }

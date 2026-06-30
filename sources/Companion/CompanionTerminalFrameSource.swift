@@ -25,6 +25,25 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
     var rows: Int { Int(session.screen.height()) }
     var scale: Double { Double(session.textview?.window?.backingScaleFactor ?? 2.0) }
 
+    /// Cell size in encoded pixels (point metrics * render scale). Margins are 0
+    /// because the stream renders with includeMargins:false (the grid fills the
+    /// image), but they are carried so the phone's transform stays general.
+    var cellGeometry: CompanionCellGeometry {
+        let s = scale
+        let charWidth = Double(session.textview?.charWidth ?? 0)
+        let lineHeight = Double(session.textview?.lineHeight ?? 0)
+        return CompanionCellGeometry(cellWidth: charWidth * s,
+                                     cellHeight: lineHeight * s,
+                                     leftMargin: 0,
+                                     topMargin: 0)
+    }
+
+    /// Absolute line of the top visible row: scrollback lines already in the
+    /// buffer plus the lines that have scrolled off the top over the session.
+    var liveTop: Int64 {
+        Int64(session.screen.numberOfScrollbackLines()) + session.screen.totalScrollbackOverflow()
+    }
+
     func renderCurrentScreen() -> CGImage? {
         guard let textview = session.textview, textview.frame.width > 0 else {
             return nil

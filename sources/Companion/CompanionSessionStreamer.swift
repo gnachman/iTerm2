@@ -26,6 +26,12 @@ protocol CompanionFrameSource: AnyObject {
     var rows: Int { get }
     /// Encoded pixels per Mac point (the render scale).
     var scale: Double { get }
+    /// Cell/margin geometry (in encoded pixels) for touch-to-cell mapping. Read on
+    /// the main thread alongside a render; stable except across resize/font/scale.
+    var cellGeometry: CompanionCellGeometry { get }
+    /// Absolute line number of the top visible row right now (overflow-adjusted).
+    /// Changes whenever the screen scrolls, so it is captured per frame.
+    var liveTop: Int64 { get }
     /// Render the current visible screen, or nil if it cannot be produced now.
     /// The encoder and pool size themselves to the returned image's dimensions.
     func renderCurrentScreen() -> CGImage?
@@ -58,6 +64,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// nothing even though cosmetic repaints keep driving tick(). Cleared on a
     /// resize so the first frame at a new size always encodes.
     private var lastSentHash: UInt64?
+    /// Geometry captured on the main thread at render time, applied to the config
+    /// and media frame built later on the encoder thread. cellGeometry changes only
+    /// on resize; liveTop changes per frame.
+    private var lastCellGeometry: CompanionCellGeometry?
+    private var lastRenderedLiveTop: Int64 = 0
 
     // CDIAG flow-control stats, logged once a second while streaming. Counters are
     // for the current one-second bucket; reset on each log. Touched from tick()
@@ -141,7 +152,16 @@ final class CompanionSessionStreamer: @unchecked Sendable {
             return
         }
         lastSentHash = hash
-        lock.lock(); inFlight.noteSent(ptsMilliseconds: nowMilliseconds); statEmitted += 1; lock.unlock()
+        // Capture geometry on this (main) thread; handleEncoded stamps it onto the
+        // config/media frame from the encoder thread.
+        let cellGeometry = source.cellGeometry
+        let liveTop = source.liveTop
+        lock.lock()
+        inFlight.noteSent(ptsMilliseconds: nowMilliseconds)
+        statEmitted += 1
+        lastCellGeometry = cellGeometry
+        lastRenderedLiveTop = liveTop
+        lock.unlock()
         encoder.encode(pixelBuffer, ptsMilliseconds: nowMilliseconds, forceKeyframe: decision.keyframe)
     }
 
@@ -219,7 +239,8 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                     pixelHeight: dimensions.1,
                     scale: source.scale,
                     columns: source.columns,
-                    rows: source.rows))
+                    rows: source.rows,
+                    cellGeometry: lastCellGeometry))
                 flags.insert(.configChanged)
             }
         }
@@ -227,7 +248,9 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                                         sequence: sequence,
                                         ptsMilliseconds: frame.ptsMilliseconds,
                                         flags: flags,
-                                        payload: frame.accessUnit)
+                                        payload: frame.accessUnit,
+                                        generationId: generationId,
+                                        liveTop: lastRenderedLiveTop)
         sequence &+= 1
         // Charge the rolling budget; tick() pauses the stream once it is spent.
         budget.record(bytes: media.payload.count, now: CACurrentMediaTime())

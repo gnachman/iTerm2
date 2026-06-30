@@ -449,6 +449,11 @@ final class CompanionHostBridge {
         nextStreamID &+= 1
         let frameRate = params.maxFrameRate > 0 ? min(params.maxFrameRate, 60) : 30
         let bitRate = params.maxBitrate.map { max(100_000, min($0, 8_000_000)) } ?? 1_000_000
+        // Emit the highest media-frame version both sides understand: a phone that
+        // advertises nothing predates versioned frames and only decodes version 1
+        // (no per-frame geometry), while a current phone gets version 2.
+        let mediaVersion = UInt8(clamping: min(Int(CompanionMediaFrame.version),
+                                               max(1, params.maxMediaFrameVersion ?? 1)))
 
         // Capture the Sendable outbox continuation, not self: the encoder's
         // callbacks fire on a VideoToolbox thread, and yielding to the stream is
@@ -463,7 +468,7 @@ final class CompanionHostBridge {
                 outboxRef?.enqueueControl(HostEnvelope(requestID: nil, payload: .streamConfig(config)))
             },
             onMedia: { frame in
-                outboxRef?.enqueueMedia(frame.encoded())
+                outboxRef?.enqueueMedia(frame.encoded(version: mediaVersion))
             },
             onDataLimitReached: { [weak self] in
                 // Called on the main thread from the streamer's tick.

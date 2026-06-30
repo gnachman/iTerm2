@@ -1851,7 +1851,8 @@ final class AppModel {
             return
         }
         liveStreamStarting = true
-        let params = CompanionStreamParams(supportedCodecs: [.hevc], maxFrameRate: 30, maxBitrate: nil)
+        let params = CompanionStreamParams(supportedCodecs: [.hevc], maxFrameRate: 30, maxBitrate: nil,
+                                           maxMediaFrameVersion: 2)
         Task { @MainActor in
             defer { liveStreamStarting = false }
             do {

@@ -33,7 +33,12 @@ public enum CompanionProtocolVersion {
     /// media channel). It is additive and backward-compatible: control frames are
     /// unchanged on the wire, so minimumPeer stays at 1 and a peer offers
     /// streaming only when the other side advertises at least `streamingRevision`.
-    public static let current = 3
+    ///
+    /// Revision 4 adds per-stream screen geometry (cellGeometry in streamConfig,
+    /// generationId + liveTop in the media frame header) so the phone can map a
+    /// touch to a terminal cell. Still additive: the geometry fields are optional /
+    /// version-negotiated, so older peers stream without selection.
+    public static let current = 4
 
     /// The oldest peer revision this build accepts. Kept at 1 (NOT lockstep with
     /// `current`) so a revision-3 build still talks to revision-1/2 peers in the
@@ -45,6 +50,11 @@ public enum CompanionProtocolVersion {
     /// streaming only when the other side advertises at least this revision;
     /// otherwise it uses the static PNG-tile session view.
     public static let streamingRevision = 3
+
+    /// The first revision that carries screen geometry with the stream (cell size,
+    /// margins, generationId, liveTop). The phone offers touch selection only when
+    /// the mac advertises at least this revision.
+    public static let selectionGeometryRevision = 4
 
     /// The minimum peer revision that understands the contentless wakeup + unified
     /// syncSince (and therefore terminal alerts). Below this, the mac sends the
