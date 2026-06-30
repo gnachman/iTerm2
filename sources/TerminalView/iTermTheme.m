@@ -129,7 +129,7 @@
         }
     }
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    if (!tabColor || self.useMinimalStyle) {
+    if (!tabColor) {
         return [self dimmedBackgroundColorWithAppearance:effectiveAppearance
                                   sessionBackgroundColor:sessionBackgroundColor
                                         isFirstResponder:isFirstResponder
@@ -137,11 +137,22 @@
                                    adjustedDimmingAmount:adjustedDimmingAmount
                                        transparencyAlpha:transparencyAlpha];
     }
+    if (self.useMinimalStyle) {
+        NSColor *color = tabColor;
+        const BOOL inactive = !isFirstResponder;
+        if (inactive && !dimOnlyText && ![iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+            color = [color colorDimmedBy:adjustedDimmingAmount
+                        towardsGrayLevel:0.5];
+        }
+        if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
+            color = [color colorWithAlphaComponent:transparencyAlpha];
+        }
+        return color;
+    }
     NSColor *undimmedColor = tabColor;
 
     undimmedColor = [self backgroundColorForDecorativeSubviewsForTabColor:undimmedColor
-                                                                 tabStyle:[effectiveAppearance it_tabStyle:preferredStyle]
-                                                   sessionBackgroundColor:sessionBackgroundColor];
+                                                                 tabStyle:[effectiveAppearance it_tabStyle:preferredStyle]];
     if (isFirstResponder) {
         return undimmedColor;
     }
@@ -267,12 +278,7 @@
 #pragma mark Session Decoration Background Color
 
 - (NSColor *)backgroundColorForDecorativeSubviewsForTabColor:(NSColor *)tabColor
-                                                    tabStyle:(iTermPreferencesTabStyle)tabStyle
-                                      sessionBackgroundColor:(NSColor *)sessionBackgroundColor {
-    if (self.useMinimalStyle) {
-        return sessionBackgroundColor;
-    }
-
+                                                    tabStyle:(iTermPreferencesTabStyle)tabStyle {
     CGFloat hue = tabColor.hueComponent;
     CGFloat saturation = tabColor.saturationComponent;
     CGFloat brightness = tabColor.brightnessComponent;
