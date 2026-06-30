@@ -599,8 +599,13 @@ private struct LiveSessionView: View {
     }
 
     private func clampedMenuAnchor(_ point: CGPoint, viewSize: CGSize) -> CGPoint {
-        CGPoint(x: min(max(point.x, 8), max(8, viewSize.width - 8)),
-                y: min(max(point.y, 8), max(8, viewSize.height - 8)))
+        // Keep the menu within the video content (not the letterbox bars): a Select
+        // All anchors at the top of off-screen scrollback, which would otherwise
+        // pin it into the top black bar.
+        let rect = model.contentRect(in: viewSize)
+        let inset = min(8, rect.width / 2, rect.height / 2)
+        return CGPoint(x: min(max(point.x, rect.minX + inset), rect.maxX - inset),
+                       y: min(max(point.y, rect.minY + inset), rect.maxY - inset))
     }
 
     /// The Apple-style magnifier: a circle showing the content around the finger

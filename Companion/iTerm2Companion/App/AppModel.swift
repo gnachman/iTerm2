@@ -2007,6 +2007,12 @@ final class AppModel {
     /// Encoded-pixel cell height of the active stream (for sizing the magnifier).
     var activeStreamCellHeight: CGFloat { CGFloat(activeStreamGeometry?.cellHeight ?? 0) }
 
+    /// The view-space rect the video occupies (excluding letterbox bars), or the
+    /// full view if geometry is unknown.
+    func contentRect(in viewSize: CGSize) -> CGRect {
+        activeTouchMapper?.contentRect(viewSize: viewSize) ?? CGRect(origin: .zero, size: viewSize)
+    }
+
     /// Whether a touch falls on the terminal image rather than the letterbox bars
     /// around it, so a drag in the empty margins does not start a selection.
     func isInsideContent(viewPoint: CGPoint, viewSize: CGSize) -> Bool {

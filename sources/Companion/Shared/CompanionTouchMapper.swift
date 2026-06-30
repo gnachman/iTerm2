@@ -48,6 +48,20 @@ struct CompanionTouchMapper {
         return CompanionSelectionPoint(absLine: liveTop + Int64(clampedRow), column: clampedCol)
     }
 
+    /// The view-space rectangle the video actually occupies (aspect-fit, centered)
+    /// inside `viewSize` -- i.e. excluding the letterbox bars. Used to keep UI like
+    /// the selection menu within the content rather than in the black margins.
+    func contentRect(viewSize: CGSize) -> CGRect {
+        guard imageSize.width > 0, imageSize.height > 0,
+              viewSize.width > 0, viewSize.height > 0 else {
+            return CGRect(origin: .zero, size: viewSize)
+        }
+        let scale = min(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
+        let w = imageSize.width * scale
+        let h = imageSize.height * scale
+        return CGRect(x: (viewSize.width - w) / 2, y: (viewSize.height - h) / 2, width: w, height: h)
+    }
+
     /// The center of a cell in encoded-image pixels. The magnifier centers here
     /// (the cell the selection is at) rather than the raw finger, so the magnified
     /// caret lines up with the selection instead of sitting at a sub-cell offset.

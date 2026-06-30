@@ -102,6 +102,15 @@ final class CompanionTouchMapperTests: XCTestCase {
         XCTAssertGreaterThan(past?.x ?? 0, 800)
     }
 
+    func testContentRectExcludesLetterbox() {
+        // 800x500 image in a 1600x500 view: scale 1, centered -> 400px side bars.
+        let rect = mapper().contentRect(viewSize: CGSize(width: 1600, height: 500))
+        XCTAssertEqual(rect, CGRect(x: 400, y: 0, width: 800, height: 500))
+        // Same image in a 800x900 view: top/bottom bars of 200.
+        let tall = mapper().contentRect(viewSize: CGSize(width: 800, height: 900))
+        XCTAssertEqual(tall, CGRect(x: 0, y: 200, width: 800, height: 500))
+    }
+
     func testCellCenterImagePoint() {
         // 10x20 cells, no margin: cell (2, row 2 with liveTop 0) center = (25, 50).
         let center = mapper().cellCenterImagePoint(column: 2, absLine: 2)
