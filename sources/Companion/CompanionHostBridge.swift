@@ -521,12 +521,25 @@ final class CompanionHostBridge {
 
     /// Report the session's current selection span (or nil) so the phone can draw
     /// and move handles.
+    /// iTermSelection's end x is EXCLUSIVE (one past the last selected cell; select
+    /// all yields end.x == gridWidth). The phone treats the wire end as the
+    /// inclusive last cell, so convert here. An exclusive end at column 0 means the
+    /// previous line is selected through its last cell.
+    nonisolated static func inclusiveSelectionEnd(exclusiveColumn column: Int, absLine: Int64,
+                                                  gridWidth: Int) -> (column: Int, absLine: Int64) {
+        if column > 0 { return (column - 1, absLine) }
+        return (max(0, gridWidth - 1), absLine - 1)
+    }
+
     private func currentSelectionRange(_ textview: PTYTextView) -> CompanionSelectionRange? {
         guard let selection = textview.selection, selection.hasSelection else { return nil }
         let span = selection.spanningAbsRange
+        let gridWidth = Int(textview.dataSource?.width() ?? 0)
+        let end = Self.inclusiveSelectionEnd(exclusiveColumn: Int(span.end.x), absLine: span.end.y,
+                                             gridWidth: gridWidth)
         return CompanionSelectionRange(
             start: CompanionSelectionPoint(absLine: span.start.y, column: Int(span.start.x)),
-            end: CompanionSelectionPoint(absLine: span.end.y, column: Int(span.end.x)))
+            end: CompanionSelectionPoint(absLine: end.absLine, column: end.column))
     }
 
     private func sendSelectionRange(streamID: UInt32, textview: PTYTextView) {

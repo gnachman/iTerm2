@@ -1161,19 +1161,26 @@ private struct LiveCanvas: UIViewRepresentable {
                 if isStart { draggingStart = true } else { draggingEnd = true }
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
-                model.sendSelectionGesture(phase: .begin, mode: .character, point: isStart ? endpoints.end : endpoints.start)
-                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
+                // The dragged handle is the live endpoint; the fixed handle is the
+                // anchor. When dragging START, the anchor is the END (exclusive);
+                // when dragging END, the live endpoint is the END (exclusive).
+                let anchor = isStart ? exclusiveEnd(endpoints.end) : endpoints.start
+                let live = isStart ? sel : exclusiveEnd(sel)
+                model.sendSelectionGesture(phase: .begin, mode: .character, point: anchor)
+                model.sendSelectionGesture(phase: .move, mode: .character, point: live)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .changed:
-                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
+                let live = isStart ? sel : exclusiveEnd(sel)
+                model.sendSelectionGesture(phase: .move, mode: .character, point: live)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 draggingStart = false
                 draggingEnd = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, point: sel)
+                let live = isStart ? sel : exclusiveEnd(sel)
+                model.sendSelectionGesture(phase: .end, mode: .character, point: live)
                 loupe.removeFromSuperview()
                 repositionHandles()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
@@ -1185,6 +1192,15 @@ private struct LiveCanvas: UIViewRepresentable {
 
         private func moveHandle(isStart: Bool, toContentPoint point: CGPoint) {
             (isStart ? startHandle : endHandle).center = container.convert(point, from: contentView)
+        }
+
+        // The host's iTermSelection end is EXCLUSIVE (one past the last selected
+        // cell) while our endpoints are inclusive. Convert the endpoint that plays
+        // the role of the range END to exclusive before sending, so the host's
+        // verbatim begin/moveEndpoint reproduces exactly the inclusive cells we
+        // show. The START endpoint is already inclusive on both sides.
+        private func exclusiveEnd(_ p: CompanionSelectionPoint) -> CompanionSelectionPoint {
+            CompanionSelectionPoint(absLine: p.absLine, column: p.column + 1)
         }
 
         // MARK: Selection
@@ -1199,17 +1215,19 @@ private struct LiveCanvas: UIViewRepresentable {
                 editMenu.dismissMenu()
                 startHandle.isHidden = true
                 endHandle.isHidden = true
+                // Fresh drag: the first cell is the (inclusive) start anchor and the
+                // drag extends the (exclusive) end.
                 model.sendSelectionGesture(phase: .begin, mode: .character, point: sel)
                 showLoupe(at: point)
             case .changed:
                 guard selecting else { return }
-                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
+                model.sendSelectionGesture(phase: .move, mode: .character, point: exclusiveEnd(sel))
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 guard selecting else { return }
                 selecting = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, point: sel)
+                model.sendSelectionGesture(phase: .end, mode: .character, point: exclusiveEnd(sel))
                 loupe.removeFromSuperview()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
                 editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))
