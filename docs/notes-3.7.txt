@@ -1533,3 +1533,8 @@ Bug Fixes:
   value that could not be read back,
   which silently dropped the rest of
   the restored session state.
+- OSC 9;4 progress bars now draw over
+  the profile's background color
+  instead of a fixed black or white
+  background, so they blend with your
+  theme. Issue 12916.

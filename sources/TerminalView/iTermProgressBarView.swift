@@ -60,6 +60,17 @@ class iTermProgressBarView: NSView {
             updateBackgroundColor()
         }
     }
+    // The color to render behind the bar so it blends with the session's theme.
+    // When nil we fall back to a fixed black/white background based on darkMode.
+    // This can change for many reasons (profile edits, effective-appearance
+    // changes, etc.), so setting it just refreshes the layer background.
+    @objc var profileBackgroundColor: NSColor? {
+        didSet {
+            if profileBackgroundColor != oldValue {
+                updateBackgroundColor()
+            }
+        }
+    }
     @objc var darkMode = false {
         didSet {
             if darkMode != oldValue {
@@ -181,6 +192,9 @@ private extension iTermProgressBarView {
         if transparent {
             return .clear
         }
+        if let profileBackgroundColor {
+            return profileBackgroundColor.cgColor
+        }
         if dark {
             return .black
         } else {
@@ -188,18 +202,19 @@ private extension iTermProgressBarView {
         }
     }
 
+    // The default indeterminate gradient fades to nothing at its endpoints.
+    // Rather than baking in the background color (which used to be a fixed
+    // black/white), we composite over the bar's background layer via alpha so
+    // the fade blends into whatever is behind it (the profile background, or
+    // the black/white fallback, or a transparent tab bar). Over black,
+    // green(a) resolves to (0,a,0); over white, blue(a) resolves to
+    // (1-a,1-a,1), matching the previous opaque colors exactly.
     private func blue(_ blueness: CGFloat) -> NSColor {
-        if transparent {
-            return NSColor(srgbRed: 0, green: 0, blue: 1, alpha: blueness)
-        }
-        return NSColor(srgbRed: 1.0 - blueness, green: 1.0 - blueness, blue: 1, alpha: 1)
+        return NSColor(srgbRed: 0, green: 0, blue: 1, alpha: blueness)
     }
 
     private func green(_ greenness: CGFloat) -> NSColor {
-        if transparent {
-            return NSColor(srgbRed: 0, green: 1, blue: 0, alpha: greenness)
-        }
-        return NSColor(srgbRed: 0.0, green: greenness, blue: 0.0, alpha: 1)
+        return NSColor(srgbRed: 0, green: 1, blue: 0, alpha: greenness)
     }
 
     private func colorSchemeColors(scheme: String, dark: Bool, isIndeterminate: Bool) -> [NSColor] {

@@ -530,6 +530,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [CATransaction commit];
     [self updateMinimapAlpha];
     _progressBar.darkMode = color.isDark;
+    _progressBar.profileBackgroundColor = color;
 }
 
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
@@ -2054,6 +2055,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (!_progressBar) {
         _progressBar = [[iTermProgressBarView alloc] init];
         _progressBar.darkMode = _terminalBackgroundColor.isDark;
+        _progressBar.profileBackgroundColor = _terminalBackgroundColor;
         _progressBar.heightValue = _progressBarHeight;
         _progressBar.colorScheme = _progressBarColorScheme;
         [self addSubviewBelowFindView:_progressBar];
