@@ -1170,27 +1170,29 @@ private struct LiveCanvas: UIViewRepresentable {
         @objc private func handleStartPan(_ gesture: UIPanGestureRecognizer) { handleHandlePan(gesture, isStart: true) }
         @objc private func handleEndPan(_ gesture: UIPanGestureRecognizer) { handleHandlePan(gesture, isStart: false) }
 
-        /// Drag an endpoint, anchoring the selection at the opposite one.
+        /// Drag an endpoint, anchoring the selection at the opposite one. Raw
+        /// inclusive coordinates go to the host, which resolves exclusivity by
+        /// document order (so backward and crossing drags stay correct).
         private func handleHandlePan(_ gesture: UIPanGestureRecognizer, isStart: Bool) {
             let point = gesture.location(in: contentView)
-            guard let sel = selectionPoint(atContent: point) else { return }
             switch gesture.state {
             case .began:
                 guard let endpoints = model.activeSelectionEndpoints else { return }
                 if isStart { draggingStart = true } else { draggingEnd = true }
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
-                // The dragged handle is the live endpoint; the fixed handle is the
-                // anchor. When dragging START, the anchor is the END (exclusive);
-                // when dragging END, the live endpoint is the END (exclusive).
-                let anchor = isStart ? exclusiveEnd(endpoints.end) : endpoints.start
-                let live = isStart ? sel : exclusiveEnd(sel)
-                model.sendSelectionGesture(phase: .begin, mode: .character, point: anchor)
-                model.sendSelectionGesture(phase: .move, mode: .character, point: live)
+                // Reconstruct the EXACT current selection from the known endpoints so
+                // grabbing a handle never shifts it: the fixed handle is the anchor,
+                // this handle is the live endpoint. Using the endpoints (not a
+                // touch-mapped cell) avoids any grab-time bias.
+                model.sendSelectionGesture(phase: .begin, mode: .character,
+                                           point: isStart ? endpoints.end : endpoints.start)
+                model.sendSelectionGesture(phase: .move, mode: .character,
+                                           point: isStart ? endpoints.start : endpoints.end)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .changed:
-                let live = isStart ? sel : exclusiveEnd(sel)
+                guard let live = handleSelectionPoint(atContent: point, isStart: isStart) else { return }
                 model.sendSelectionGesture(phase: .move, mode: .character, point: live)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
@@ -1198,8 +1200,9 @@ private struct LiveCanvas: UIViewRepresentable {
                 draggingStart = false
                 draggingEnd = false
                 scrollView.isScrollEnabled = true
-                let live = isStart ? sel : exclusiveEnd(sel)
-                model.sendSelectionGesture(phase: .end, mode: .character, point: live)
+                if let live = handleSelectionPoint(atContent: point, isStart: isStart) {
+                    model.sendSelectionGesture(phase: .end, mode: .character, point: live)
+                }
                 loupe.removeFromSuperview()
                 repositionHandles()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
@@ -1213,13 +1216,21 @@ private struct LiveCanvas: UIViewRepresentable {
             (isStart ? startHandle : endHandle).center = container.convert(point, from: contentView)
         }
 
-        // The host's iTermSelection end is EXCLUSIVE (one past the last selected
-        // cell) while our endpoints are inclusive. Convert the endpoint that plays
-        // the role of the range END to exclusive before sending, so the host's
-        // verbatim begin/moveEndpoint reproduces exactly the inclusive cells we
-        // show. The START endpoint is already inclusive on both sides.
-        private func exclusiveEnd(_ p: CompanionSelectionPoint) -> CompanionSelectionPoint {
-            CompanionSelectionPoint(absLine: p.absLine, column: p.column + 1)
+        /// Map a handle-drag touch to an inclusive cell. A handle sits on a cell/line
+        /// BOUNDARY (the start handle at the top-left of its cell, the end handle at
+        /// the bottom-right), so snap the touch to the nearest boundary and take the
+        /// cell on the selection's side of it. Plain floor() mapping put the end
+        /// handle one cell/line too far, growing the selection by one on a grab.
+        private func handleSelectionPoint(atContent p: CGPoint, isStart: Bool) -> CompanionSelectionPoint? {
+            guard let layout, pointsPerLine > 0, cellWidthPoints > 0 else { return nil }
+            let colBoundary = Int(((p.x - leftMarginPoints) / cellWidthPoints).rounded())
+            let lineBoundary = Int((p.y / pointsPerLine).rounded())
+            let col = isStart ? colBoundary : colBoundary - 1
+            let line = isStart ? lineBoundary : lineBoundary - 1
+            let clampedCol = min(max(col, 0), layout.columns - 1)
+            let lastLine = max(0, historyLines + layout.rows - 1)
+            let clampedLine = min(max(line, 0), lastLine)
+            return CompanionSelectionPoint(absLine: layout.firstAbsLine + Int64(clampedLine), column: clampedCol)
         }
 
         // MARK: Selection
@@ -1234,19 +1245,20 @@ private struct LiveCanvas: UIViewRepresentable {
                 editMenu.dismissMenu()
                 startHandle.isHidden = true
                 endHandle.isHidden = true
-                // Fresh drag: the first cell is the (inclusive) start anchor and the
-                // drag extends the (exclusive) end.
+                // Fresh drag: the first cell is the anchor; the host resolves
+                // exclusivity by document order as the drag extends in either
+                // direction.
                 model.sendSelectionGesture(phase: .begin, mode: .character, point: sel)
                 showLoupe(at: point)
             case .changed:
                 guard selecting else { return }
-                model.sendSelectionGesture(phase: .move, mode: .character, point: exclusiveEnd(sel))
+                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 guard selecting else { return }
                 selecting = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, point: exclusiveEnd(sel))
+                model.sendSelectionGesture(phase: .end, mode: .character, point: sel)
                 loupe.removeFromSuperview()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
                 editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))

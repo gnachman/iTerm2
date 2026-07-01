@@ -43,6 +43,12 @@ final class CompanionHostBridge {
         /// Last selection pushed to the phone, to detect changes (mac-side or phone)
         /// and push a selectionRange so it can reload affected history tiles.
         var lastSentSelectionRange: CompanionSelectionRange?
+        /// The fixed endpoint of an in-progress character-mode drag (raw, inclusive),
+        /// set at .begin and used to rebuild the range by document order on each move.
+        var selectionAnchor: VT100GridAbsCoord?
+        /// The half-open range last applied for the drag, so an unchanged move is a
+        /// no-op (no re-begin, no selectionRange flood).
+        var lastAppliedCharRange: (start: VT100GridAbsCoord, end: VT100GridAbsCoord)?
         init(streamer: CompanionSessionStreamer, guid: String, timer: Timer, lastChange: TimeInterval) {
             self.streamer = streamer
             self.guid = guid
@@ -473,25 +479,73 @@ final class CompanionHostBridge {
         if wasDetached { textview.dataSource = session.screen }
         defer { if wasDetached { textview.dataSource = nil } }
 
-        var moved = true
-        switch phase {
-        case .begin:
-            textview.selection?.begin(at: coord, mode: mode.iTermSelectionMode,
-                                      resume: false, append: false)
-        case .move:
-            moved = textview.selection?.moveEndpoint(to: coord) ?? false
-        case .end:
-            moved = textview.selection?.moveEndpoint(to: coord) ?? false
-            textview.selection?.endLive()
+        let changed: Bool
+        if mode == .character {
+            changed = applyCharacterSelection(context: context, textview: textview,
+                                              phase: phase, coord: coord)
+        } else {
+            // Word/line/smart selections snap to whole-token boundaries, so there is
+            // no single-cell exclusivity to reconcile: drive iTermSelection's live
+            // selection directly.
+            var moved = true
+            switch phase {
+            case .begin:
+                textview.selection?.begin(at: coord, mode: mode.iTermSelectionMode,
+                                          resume: false, append: false)
+            case .move:
+                moved = textview.selection?.moveEndpoint(to: coord) ?? false
+            case .end:
+                moved = textview.selection?.moveEndpoint(to: coord) ?? false
+                textview.selection?.endLive()
+            }
+            changed = (phase != .move) || moved
         }
         // Only react when the selection actually changed: a no-op move neither
         // alters the rendered frame nor needs a selectionRange reply, and emitting
         // either just adds to the flood that backs up the link.
-        let changed = (phase != .move) || moved
         if changed {
             context.streamer.screenDidChange()
             sendSelectionRange(streamID: streamID, textview: textview)
         }
+    }
+
+    /// Apply a character-mode selection from the phone. The phone sends raw inclusive
+    /// coordinates (the anchor at .begin, the live point on move/end); the range is
+    /// rebuilt by document order so exclusivity is correct in every drag direction.
+    /// Returns whether the applied range changed (so a no-op move is dropped).
+    private func applyCharacterSelection(context: StreamContext, textview: PTYTextView,
+                                         phase: CompanionSelectionPhase,
+                                         coord: VT100GridAbsCoord) -> Bool {
+        let anchor: VT100GridAbsCoord
+        switch phase {
+        case .begin:
+            context.selectionAnchor = coord
+            context.lastAppliedCharRange = nil
+            anchor = coord
+        case .move, .end:
+            anchor = context.selectionAnchor ?? coord
+        }
+        let range = Self.inclusiveCharacterRange(anchor: anchor, live: coord)
+        var changed = true
+        if let last = context.lastAppliedCharRange,
+           last.start.x == range.start.x, last.start.y == range.start.y,
+           last.end.x == range.end.x, last.end.y == range.end.y {
+            changed = false
+        } else {
+            textview.selection?.begin(at: range.start, mode: .kiTermSelectionModeCharacter,
+                                      resume: false, append: false)
+            _ = textview.selection?.moveEndpoint(to: range.end)
+            context.lastAppliedCharRange = range
+        }
+        if phase == .end {
+            textview.selection?.endLive()
+            context.selectionAnchor = nil
+            context.lastAppliedCharRange = nil
+            changed = true   // always broadcast the finalized selection
+        } else if phase == .begin {
+            changed = true   // a fresh begin always establishes a selection
+        }
+        return changed
     }
 
     private func handleSelectAll(streamID: UInt32) {
@@ -529,6 +583,22 @@ final class CompanionHostBridge {
                                                   gridWidth: Int) -> (column: Int, absLine: Int64) {
         if column > 0 { return (column - 1, absLine) }
         return (max(0, gridWidth - 1), absLine - 1)
+    }
+
+    /// Given the two inclusive endpoints of a character-mode selection (the fixed
+    /// anchor and the live point, in either order), return the half-open range
+    /// iTermSelection needs: start at the earlier cell (inclusive), end one past the
+    /// later cell (exclusive). Ordering the coordinates HERE, before iTermSelection's
+    /// own unflip, is what makes the exclusive +1 land on the endpoint that actually
+    /// ends up in the END role, so backward and endpoint-crossing drags include the
+    /// cell under the finger instead of dropping or collapsing it.
+    nonisolated static func inclusiveCharacterRange(anchor: VT100GridAbsCoord,
+                                                    live: VT100GridAbsCoord)
+    -> (start: VT100GridAbsCoord, end: VT100GridAbsCoord) {
+        let anchorFirst = anchor.y < live.y || (anchor.y == live.y && anchor.x <= live.x)
+        let lo = anchorFirst ? anchor : live
+        let hi = anchorFirst ? live : anchor
+        return (lo, VT100GridAbsCoordMake(hi.x &+ 1, hi.y))
     }
 
     private func currentSelectionRange(_ textview: PTYTextView) -> CompanionSelectionRange? {
