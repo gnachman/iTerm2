@@ -40,11 +40,12 @@ final class CompanionSelectionRangeTests: XCTestCase {
 
     // MARK: inclusiveCharacterRange (document-order exclusivity)
 
-    private func range(anchor: (Int32, Int64), live: (Int32, Int64))
+    private func range(anchor: (Int32, Int64), live: (Int32, Int64), gridWidth: Int = 80)
     -> (start: VT100GridAbsCoord, end: VT100GridAbsCoord) {
         CompanionHostBridge.inclusiveCharacterRange(
             anchor: VT100GridAbsCoordMake(anchor.0, anchor.1),
-            live: VT100GridAbsCoordMake(live.0, live.1))
+            live: VT100GridAbsCoordMake(live.0, live.1),
+            gridWidth: gridWidth)
     }
 
     private func assertRange(_ r: (start: VT100GridAbsCoord, end: VT100GridAbsCoord),
@@ -84,5 +85,25 @@ final class CompanionSelectionRangeTests: XCTestCase {
     func testMultiLineBackwardOrdersByDocument() {
         // Anchor below the live point: document order puts the live line first.
         assertRange(range(anchor: (1, 7), live: (2, 5)), start: (2, 5), end: (2, 7))
+    }
+
+    func testColumnsClampToGridWidth() {
+        // A column past the grid clamps to the last cell; the exclusive end is width.
+        assertRange(range(anchor: (3, 5), live: (200, 5), gridWidth: 80),
+                    start: (3, 5), end: (80, 5))
+    }
+
+    func testHostileMaxColumnDoesNotOverflow() {
+        // Int32.max would wrap to Int32.min on the +1 without the clamp; it must
+        // instead resolve to a sane in-grid range.
+        assertRange(range(anchor: (Int32.max, 5), live: (Int32.max, 5), gridWidth: 80),
+                    start: (79, 5), end: (80, 5))
+    }
+
+    func testUnknownWidthStillAvoidsOverflow() {
+        // With no known width, the column is capped short of Int32.max so +1 is safe.
+        let r = range(anchor: (Int32.max, 5), live: (Int32.max, 5), gridWidth: 0)
+        XCTAssertEqual(r.end.x, Int32.max, "the exclusive end must not overflow to a negative column")
+        XCTAssertEqual(r.start.x, Int32.max - 1)
     }
 }

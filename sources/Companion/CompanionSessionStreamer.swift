@@ -185,6 +185,14 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         self.pacer = CompanionStreamPacer(minInterval: maxFrameRate > 0 ? 1.0 / maxFrameRate : 0)
     }
 
+    /// The generation stamped on the most recent config. Bumped only on a real
+    /// geometry change; the owner watches this to re-push state (e.g. the selection)
+    /// that the phone discards when the generation advances.
+    var currentGenerationId: UInt32 {
+        lock.lock(); defer { lock.unlock() }
+        return generationId
+    }
+
     /// Begin streaming: the first emitted frame is a keyframe.
     func start() {
         lock.lock(); pacer.requestKeyframe(); lock.unlock()
@@ -358,8 +366,13 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         }
         // A fresh encoder has fresh parameter sets the phone has not seen, so force a
         // config resend. The geometry comparison bumps the generation if the pixel
-        // dimensions actually changed.
+        // dimensions actually changed. Take the lock: mustResendConfig is otherwise
+        // only touched by handleEncoded (on the encoder callback thread) and
+        // requestKeyframe, both under lock, and an in-flight callback from the just-
+        // discarded encoder could still be running.
+        lock.lock()
         mustResendConfig = true
+        lock.unlock()
         return true
     }
 

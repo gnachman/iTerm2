@@ -43,6 +43,10 @@ final class CompanionHostBridge {
         /// Last selection pushed to the phone, to detect changes (mac-side or phone)
         /// and push a selectionRange so it can reload affected history tiles.
         var lastSentSelectionRange: CompanionSelectionRange?
+        /// The stream generation last observed while driving. A genuine generation
+        /// bump (resize/reflow/font change) makes the phone discard its selection, so
+        /// when this advances the selection is re-pushed even if its value is unchanged.
+        var lastConfigGeneration: UInt32 = 0
         /// The fixed endpoint of an in-progress character-mode drag (raw, inclusive),
         /// set at .begin and used to rebuild the range by document order on each move.
         var selectionAnchor: VT100GridAbsCoord?
@@ -481,8 +485,9 @@ final class CompanionHostBridge {
 
         let changed: Bool
         if mode == .character {
+            let gridWidth = Int(textview.dataSource?.width() ?? 0)
             changed = applyCharacterSelection(context: context, textview: textview,
-                                              phase: phase, coord: coord)
+                                              phase: phase, coord: coord, gridWidth: gridWidth)
         } else {
             // Word/line/smart selections snap to whole-token boundaries, so there is
             // no single-cell exclusivity to reconcile: drive iTermSelection's live
@@ -515,7 +520,7 @@ final class CompanionHostBridge {
     /// Returns whether the applied range changed (so a no-op move is dropped).
     private func applyCharacterSelection(context: StreamContext, textview: PTYTextView,
                                          phase: CompanionSelectionPhase,
-                                         coord: VT100GridAbsCoord) -> Bool {
+                                         coord: VT100GridAbsCoord, gridWidth: Int) -> Bool {
         let anchor: VT100GridAbsCoord
         switch phase {
         case .begin:
@@ -525,7 +530,7 @@ final class CompanionHostBridge {
         case .move, .end:
             anchor = context.selectionAnchor ?? coord
         }
-        let range = Self.inclusiveCharacterRange(anchor: anchor, live: coord)
+        let range = Self.inclusiveCharacterRange(anchor: anchor, live: coord, gridWidth: gridWidth)
         var changed = true
         if let last = context.lastAppliedCharRange,
            last.start.x == range.start.x, last.start.y == range.start.y,
@@ -548,6 +553,15 @@ final class CompanionHostBridge {
         return changed
     }
 
+    /// Forget an in-progress character-drag's anchor and last-applied range. Call
+    /// whenever the selection is cleared or replaced OUTSIDE the gesture path, so a
+    /// later phone .move that happens to recompute the same range is not dropped as a
+    /// no-op (which would make the drag look dead until the finger crosses a cell).
+    private func resetSelectionDragState(_ context: StreamContext) {
+        context.selectionAnchor = nil
+        context.lastAppliedCharRange = nil
+    }
+
     private func handleSelectAll(streamID: UInt32) {
         guard let context = streams[streamID],
               let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
@@ -558,6 +572,7 @@ final class CompanionHostBridge {
         if wasDetached { textview.dataSource = session.screen }
         defer { if wasDetached { textview.dataSource = nil } }
         textview.selectAll(nil)
+        resetSelectionDragState(context)
         context.streamer.screenDidChange()
         sendSelectionRange(streamID: streamID, textview: textview)
     }
@@ -569,6 +584,7 @@ final class CompanionHostBridge {
             return
         }
         textview.selection?.clear()
+        resetSelectionDragState(context)
         context.streamer.screenDidChange()
         sendSelectionRange(streamID: streamID, textview: textview)
     }
@@ -593,11 +609,23 @@ final class CompanionHostBridge {
     /// ends up in the END role, so backward and endpoint-crossing drags include the
     /// cell under the finger instead of dropping or collapsing it.
     nonisolated static func inclusiveCharacterRange(anchor: VT100GridAbsCoord,
-                                                    live: VT100GridAbsCoord)
+                                                    live: VT100GridAbsCoord,
+                                                    gridWidth: Int)
     -> (start: VT100GridAbsCoord, end: VT100GridAbsCoord) {
-        let anchorFirst = anchor.y < live.y || (anchor.y == live.y && anchor.x <= live.x)
-        let lo = anchorFirst ? anchor : live
-        let hi = anchorFirst ? live : anchor
+        // Clamp columns before the exclusive +1 so a hostile peer sending a column
+        // near Int32.max cannot wrap to Int32.min and hand iTermSelection a nonsense
+        // coordinate. With a known width the last valid inclusive column is width-1
+        // (so the exclusive end is at most width); without one, cap short of the
+        // Int32 max headroom for the +1.
+        let maxColumn: Int32 = gridWidth > 0 ? Int32(clamping: gridWidth - 1) : Int32.max - 1
+        func clampColumn(_ c: VT100GridAbsCoord) -> VT100GridAbsCoord {
+            VT100GridAbsCoordMake(min(max(c.x, 0), maxColumn), c.y)
+        }
+        let a = clampColumn(anchor)
+        let l = clampColumn(live)
+        let anchorFirst = a.y < l.y || (a.y == l.y && a.x <= l.x)
+        let lo = anchorFirst ? a : l
+        let hi = anchorFirst ? l : a
         return (lo, VT100GridAbsCoordMake(hi.x &+ 1, hi.y))
     }
 
@@ -721,12 +749,26 @@ final class CompanionHostBridge {
             context.lastChange = changedAt
             context.streamer.screenDidChange()
         }
+        // A genuine generation bump (resize/reflow/font change) makes the phone
+        // discard its selection, and the value-based check below would not re-push an
+        // unchanged range. Forget the last-sent value so the current selection is
+        // re-pushed once per bump, restoring the handles the phone just dropped.
+        let generation = context.streamer.currentGenerationId
+        if generation != context.lastConfigGeneration {
+            context.lastConfigGeneration = generation
+            context.lastSentSelectionRange = nil
+        }
         // Detect a selection change from any source (mac-side Cmd-A/drag as well as
         // phone gestures) and push it, so the phone reloads the affected history
         // tiles; the live band already reflects it via the rendered video.
         if let textview = session.textview {
             let current = currentSelectionRange(textview)
             if current != context.lastSentSelectionRange {
+                // A phone gesture pushes (and updates lastSentSelectionRange) inline,
+                // so a mismatch here is a change from ELSEWHERE (mac Cmd-A, a click,
+                // etc.). Forget any in-progress drag state so a resumed phone drag
+                // re-applies rather than being suppressed as a stale no-op.
+                resetSelectionDragState(context)
                 sendSelectionRange(streamID: streamID, textview: textview)
             }
         }

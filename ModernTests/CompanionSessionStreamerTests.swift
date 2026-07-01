@@ -141,6 +141,52 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertFalse(second.flags.contains(.configChanged))
     }
 
+    func testKeyframeResendReusesGenerationEndToEnd() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)   // keyframe + config, generation 1
+        streamer.flush()
+
+        // A decode-error recovery: request a keyframe with NO geometry change. The
+        // config is re-sent (so the phone can reconfigure its decoder) but under the
+        // SAME generation, so the phone does not discard its history/selection state.
+        streamer.requestKeyframe()
+        streamer.tick(nowMilliseconds: 1000)
+        streamer.flush()
+
+        XCTAssertEqual(out.configs.count, 2, "a keyframe request must re-send the config")
+        XCTAssertEqual(out.configs[0].generationId, 1)
+        XCTAssertEqual(out.configs[1].generationId, 1, "a bare resend must not bump the generation")
+    }
+
+    func testCellGeometryChangeBumpsGenerationEndToEnd() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)   // generation 1
+        streamer.flush()
+
+        // A font change that keeps the pixel dimensions but changes the cell size:
+        // the generation MUST bump so the phone re-lays-out, which is exactly the
+        // case whose selection the mac must then re-push.
+        source.cellGeometry = CompanionCellGeometry(cellWidth: 9, cellHeight: 18, leftMargin: 5, topMargin: 0)
+        streamer.requestKeyframe()
+        streamer.tick(nowMilliseconds: 1000)
+        streamer.flush()
+
+        XCTAssertEqual(out.configs.count, 2)
+        XCTAssertEqual(out.configs[1].generationId, 2, "a cell-geometry change must bump the generation")
+    }
+
     func testUnchangedPixelsAreDeduped() throws {
         try skipIfNoEncoder()
         let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)

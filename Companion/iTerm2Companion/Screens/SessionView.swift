@@ -715,6 +715,10 @@ private struct LiveCanvas: UIViewRepresentable {
         private var selecting = false
         private var draggingStart = false
         private var draggingEnd = false
+        /// The last live point sent during the current drag, used to finalize with a
+        /// valid .end even if the ending touch cannot be mapped (degenerate geometry),
+        /// so the host never keeps a selection live indefinitely.
+        private var lastDragLivePoint: CompanionSelectionPoint?
         private var menuAnchor: CGPoint = .zero
         private let loupeDiameter: CGFloat = 120
         /// Empty space kept below the content so the last line clears the tab bar.
@@ -1185,14 +1189,16 @@ private struct LiveCanvas: UIViewRepresentable {
                 // grabbing a handle never shifts it: the fixed handle is the anchor,
                 // this handle is the live endpoint. Using the endpoints (not a
                 // touch-mapped cell) avoids any grab-time bias.
+                let live = isStart ? endpoints.start : endpoints.end
                 model.sendSelectionGesture(phase: .begin, mode: .character,
                                            point: isStart ? endpoints.end : endpoints.start)
-                model.sendSelectionGesture(phase: .move, mode: .character,
-                                           point: isStart ? endpoints.start : endpoints.end)
+                model.sendSelectionGesture(phase: .move, mode: .character, point: live)
+                lastDragLivePoint = live
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .changed:
                 guard let live = handleSelectionPoint(atContent: point, isStart: isStart) else { return }
+                lastDragLivePoint = live
                 model.sendSelectionGesture(phase: .move, mode: .character, point: live)
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
@@ -1200,9 +1206,13 @@ private struct LiveCanvas: UIViewRepresentable {
                 draggingStart = false
                 draggingEnd = false
                 scrollView.isScrollEnabled = true
-                if let live = handleSelectionPoint(atContent: point, isStart: isStart) {
+                // Always finalize: fall back to the last live point if this touch
+                // cannot be mapped, so the host runs endLive and does not leave the
+                // selection live.
+                if let live = handleSelectionPoint(atContent: point, isStart: isStart) ?? lastDragLivePoint {
                     model.sendSelectionGesture(phase: .end, mode: .character, point: live)
                 }
+                lastDragLivePoint = nil
                 loupe.removeFromSuperview()
                 repositionHandles()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
@@ -1237,9 +1247,9 @@ private struct LiveCanvas: UIViewRepresentable {
 
         @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
             let point = gesture.location(in: contentView)
-            guard let sel = selectionPoint(atContent: point) else { return }
             switch gesture.state {
             case .began:
+                guard let sel = selectionPoint(atContent: point) else { return }
                 selecting = true
                 scrollView.isScrollEnabled = false
                 editMenu.dismissMenu()
@@ -1248,17 +1258,25 @@ private struct LiveCanvas: UIViewRepresentable {
                 // Fresh drag: the first cell is the anchor; the host resolves
                 // exclusivity by document order as the drag extends in either
                 // direction.
+                lastDragLivePoint = sel
                 model.sendSelectionGesture(phase: .begin, mode: .character, point: sel)
                 showLoupe(at: point)
             case .changed:
                 guard selecting else { return }
-                model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
+                if let sel = selectionPoint(atContent: point) {
+                    lastDragLivePoint = sel
+                    model.sendSelectionGesture(phase: .move, mode: .character, point: sel)
+                }
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
                 guard selecting else { return }
                 selecting = false
                 scrollView.isScrollEnabled = true
-                model.sendSelectionGesture(phase: .end, mode: .character, point: sel)
+                // Always finalize with a valid point so the host runs endLive.
+                if let sel = selectionPoint(atContent: point) ?? lastDragLivePoint {
+                    model.sendSelectionGesture(phase: .end, mode: .character, point: sel)
+                }
+                lastDragLivePoint = nil
                 loupe.removeFromSuperview()
                 menuAnchor = clampToContainer(container.convert(point, from: contentView))
                 editMenu.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: menuAnchor))
