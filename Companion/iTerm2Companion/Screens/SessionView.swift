@@ -733,6 +733,9 @@ private struct LiveCanvas: UIViewRepresentable {
         /// scrollback was trimmed or cleared.
         private var laidOutFirstAbsLine: Int64?
         private var laidOutTotalLines = 0
+        /// The generation the tiles were rendered against; a change (e.g. column
+        /// reflow) re-renders every tile, so cached ones must be dropped.
+        private var laidOutGeneration: UInt32?
         private var didScrollToBottom = false
         // History tiles, keyed by tile index (0 = oldest), like the static path.
         private var tileViews: [Int: TileView] = [:]
@@ -866,12 +869,14 @@ private struct LiveCanvas: UIViewRepresentable {
             let wasAtBottom = isPinnedToBottom
             appliedKey = key
 
-            // The history origin advanced (scrollback trimmed) or the document
-            // shrank (cleared): tiles are keyed relative to the origin and stale
-            // ones must not linger, so drop every tile view; they refetch (hitting
-            // the cache for survivors). The model cache was already pruned.
+            // Drop every tile view when the content they show is no longer valid:
+            // the history origin advanced (scrollback trimmed), the document shrank
+            // (cleared), or the generation changed (a mid-stream geometry change such
+            // as column reflow re-rendered every tile at new line boundaries). They
+            // refetch (hitting the cache for survivors); the model cache was pruned.
             let shrank = totalLines < laidOutTotalLines
-            if let prev = laidOutFirstAbsLine, prev != layout.firstAbsLine || shrank {
+            let generationChanged = laidOutGeneration != nil && laidOutGeneration != layout.generationId
+            if let prev = laidOutFirstAbsLine, prev != layout.firstAbsLine || shrank || generationChanged {
                 for view in tileViews.values { view.removeFromSuperview() }
                 tileViews.removeAll()
                 requestedTiles.removeAll()
@@ -884,6 +889,7 @@ private struct LiveCanvas: UIViewRepresentable {
             }
             laidOutFirstAbsLine = layout.firstAbsLine
             laidOutTotalLines = totalLines
+            laidOutGeneration = layout.generationId
 
             let videoHeight = size.width * layout.imageSize.height / layout.imageSize.width
             pointsPerLine = videoHeight / CGFloat(layout.rows)

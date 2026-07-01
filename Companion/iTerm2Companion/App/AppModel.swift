@@ -92,6 +92,9 @@ struct CompanionLiveCanvasLayout: Equatable {
     var rows: Int
     var firstAbsLine: Int64
     var totalLines: Int
+    /// Bumped on every geometry change (incl. column reflow). A change means all
+    /// history tiles were re-rendered, so the canvas must drop its cached ones.
+    var generationId: UInt32
 }
 
 @MainActor
@@ -1806,8 +1809,20 @@ final class AppModel {
                 activeStreamTotalLines = config.totalLines
                 // A new generation re-renders everything; stale tiles must not show.
                 if config.generationId != activeStreamGeneration {
+                    // Not the first config for this stream = a mid-stream geometry
+                    // change (e.g. column reflow), which renumbers absolute lines and
+                    // invalidates the current selection's coordinates. Drop it; the
+                    // mac re-pushes the reflowed selection. The first config keeps any
+                    // pre-existing selection couriered on subscribe.
+                    let isInitialConfig = activeStreamGeneration == 0
                     activeStreamGeneration = config.generationId
                     historyTileCache.removeAll()
+                    // Snap the live top to the new extent so a stale (pre-reflow)
+                    // value does not inflate the canvas until the next media frame.
+                    activeStreamLiveTop = config.firstAbsLine + Int64(max(0, config.totalLines - config.rows))
+                    if !isInitialConfig {
+                        activeSelectionRange = nil
+                    }
                 }
                 onStreamConfig?(config)
             }
@@ -2077,7 +2092,8 @@ final class AppModel {
                                          columns: activeStreamColumns,
                                          rows: activeStreamRows,
                                          firstAbsLine: activeStreamFirstAbsLine,
-                                         totalLines: activeStreamTotalLines)
+                                         totalLines: activeStreamTotalLines,
+                                         generationId: activeStreamGeneration)
     }
 
     /// A cached scrollback tile, if already fetched.
