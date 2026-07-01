@@ -924,7 +924,15 @@ DEFINE_BOOL(browserProfiles, YES, SECTION_EXPERIMENTAL @"Enable browser-style pr
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "
 
-DEFINE_STRING(pythonRuntimeDownloadURL, @"https://iterm2.com/downloads/pyenv/manifest.json", SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
+// The runtimes listed in manifest-new.json require macOS 27 or later.
+static NSString *iTermDefaultPythonRuntimeDownloadURL(void) {
+    if (@available(macOS 27, *)) {
+        return @"https://iterm2.com/downloads/pyenv/manifest-new.json";
+    }
+    return @"https://iterm2.com/downloads/pyenv/manifest.json";
+}
+
+DEFINE_STRING(pythonRuntimeDownloadURL, iTermDefaultPythonRuntimeDownloadURL(), SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
 DEFINE_STRING(pythonRuntimeBetaDownloadURL, @"https://iterm2.com/downloads/pyenv/betamanifest.json", SECTION_SCRIPTING @"URL to check for new Beta versions of the Python scripting runtime.");
 DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should references to undefined variables in interpolated strings be converted to empty string?\nWhen enabled, an expression in an interpolated string that references an undefined variable will be treated as an empty string. For example, “\\(bogus)”. References to undefined variables as arguments to function calls, such as “\\(f(bogus))”, are still errors.");
 DEFINE_SETTABLE_BOOL(setCookie, SetCookie, NO, SECTION_SCRIPTING @"Set ITERM2_COOKIE environment variable, allowing Python scripts to be launched without confirmation?\nThis will only affect sessions created after changing this setting.");
