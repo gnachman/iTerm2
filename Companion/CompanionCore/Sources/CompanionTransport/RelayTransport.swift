@@ -124,6 +124,7 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
         let race = ReceiveRace()
         return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
             race.read = Task { [weak self] in
+                await race.ready()
                 guard let self else {
                     if race.claim() { cont.resume(throwing: TransportError.closed) }
                     return
@@ -149,11 +150,13 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
                 }
             }
             race.close = Task { [weak self] in
+                await race.ready()
                 await self?.awaitClosed()
                 guard race.claim() else { return }
                 race.read?.cancel()
                 cont.resume(throwing: TransportError.closed)
             }
+            race.start()
         }
     }
 
@@ -249,19 +252,50 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
 
 /// One-shot arbiter for receive()'s read-vs-close race: the first of the two
 /// tasks to claim() wins and resumes the continuation; the other backs off. Holds
-/// both tasks so the winner can cancel the loser. The tasks are assigned before
-/// either runs (Task bodies are scheduled, not run inline), so reading them from
-/// the tasks needs no further synchronization.
-private final class ReceiveRace: @unchecked Sendable {
+/// both tasks so the winner can cancel the loser.
+///
+/// An unstructured Task can begin executing on another thread before the assignment
+/// `race.close = Task {...}` finishes on the spawning thread, so a task must not
+/// touch its peer reference until BOTH are stored. Each arm therefore awaits
+/// `ready()` (opened by `start()` after both assignments) before doing its work;
+/// once past that gate the winner always observes and cancels its peer.
+final class ReceiveRace: @unchecked Sendable {
     private let lock = UnfairLock()
     private var done = false
+    private var started = false
+    private var startWaiters: [CheckedContinuation<Void, Never>] = []
     var read: Task<Void, Never>?
     var close: Task<Void, Never>?
+
     func claim() -> Bool {
         lock.withLock {
             if done { return false }
             done = true
             return true
+        }
+    }
+
+    /// Open the gate after both `read` and `close` have been assigned.
+    func start() {
+        let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
+            started = true
+            let w = startWaiters
+            startWaiters = []
+            return w
+        }
+        for w in waiters { w.resume() }
+    }
+
+    /// Suspend until `start()` opens the gate, so a task never reads a peer
+    /// reference that has not been assigned yet.
+    func ready() async {
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            let already = lock.withLock { () -> Bool in
+                if started { return true }
+                startWaiters.append(cont)
+                return false
+            }
+            if already { cont.resume() }
         }
     }
 }
@@ -310,6 +344,7 @@ private func receiveParked(ws: RelayWebSocket, death: ParkedDeathSignal) async t
     let race = ReceiveRace()
     return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<RelayWebSocketMessage, Error>) in
         race.read = Task {
+            await race.ready()
             do {
                 let message = try await ws.receive()
                 guard race.claim() else { return }
@@ -322,11 +357,13 @@ private func receiveParked(ws: RelayWebSocket, death: ParkedDeathSignal) async t
             }
         }
         race.close = Task {
+            await race.ready()
             await death.wait()
             guard race.claim() else { return }
             race.read?.cancel()
             cont.resume(throwing: TransportError.closed)
         }
+        race.start()
     }
 }
 
