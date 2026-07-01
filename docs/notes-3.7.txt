@@ -516,16 +516,10 @@ Settings Improvements:
   fades. Off by default.
 
 Bug Fixes:
-- Tab drags no longer force every session
-  off the Metal renderer for the whole
-  drag. The legacy Core Text path running
-  across all windows at 60fps starved the
-  main thread so the floating tab preview
-  lagged behind the cursor while it
-  stayed inside the source window. Metal
-  is now disabled only for the tmux
-  split-pane drag case that originally
-  needed it.
+- Improve tab dragging: keep Metal enabled
+  for normal tab drags, switch reorder
+  slots near tab midpoints, and stabilize
+  split-pane target highlights.
 - tmux integration now parses pane state
   correctly on macOS 26 and later. A new
   system NSString method had shadowed ours

@@ -1972,8 +1972,12 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
     if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
-        NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
-        [_splitSelectionView updateAtPoint:point];
+        // draggingUpdated:'s draggingLocation can be stale during tab drags (see PSMTabDragAssistant).
+        const NSPoint mouseLocationInWindow = [self.window convertPointFromScreen:[NSEvent mouseLocation]];
+        const NSPoint point = [self convertPoint:mouseLocationInWindow fromView:nil];
+        const NSRect bounds = self.bounds;
+        [_splitSelectionView updateAtPoint:NSMakePoint(MIN(MAX(point.x, NSMinX(bounds)), NSMaxX(bounds)),
+                                                       MIN(MAX(point.y, NSMinY(bounds)), NSMaxY(bounds)))];
     }
     return NSDragOperationMove;
 }

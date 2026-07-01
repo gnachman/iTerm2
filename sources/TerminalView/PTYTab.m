@@ -6883,11 +6883,8 @@ typedef struct {
 
     iTermMetalUnavailableReason reason = iTermMetalUnavailableReasonNone;
     BOOL allowed = NO;
-    // Note: we turn off metal when dragging a split in a tmux tab because it's hard to keep the
-    // frame of the iTermMTKView correct without resizing it. Plain tab drags no longer disable
-    // metal: forcing every session onto the legacy Core Text renderer for the duration of a tab
-    // drag was a major source of per-frame main-thread load that made the floating tab preview
-    // lag behind the cursor while it was still inside the source window.
+    // Split drags in tmux still need legacy drawing because keeping the Metal view sized correctly
+    // is hard there. Plain tab drags can stay on Metal.
     if (_isDraggingSplitInTmuxTab) {
         _metalUnavailableReason = iTermMetalUnavailableReasonSplitPaneBeingDragged;
     } else if (resizing) {
