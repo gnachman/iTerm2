@@ -10,12 +10,17 @@ New Features:
   quiet terminal uses almost no data, the view
   stays current on a slow connection instead of
   lagging behind, and it pauses itself with a
-  notice if it would use too much data. You can
-  drag to select text in the live view and copy it
-  to the clipboard (when the Mac is new enough).
-  Scrolling back through history is not in this
-  version; older Macs keep showing the static
-  snapshot.
+  notice if it would use too much data.
+  Scroll up to browse the session's scrollback,
+  pinch to zoom in, and drag with one finger to
+  pan around. Press and hold to start selecting
+  text; drag the handles (with a magnifier) to
+  adjust the selection, then Copy, Select All, or
+  Paste from the menu. Selection works both in the
+  live screen and in scrollback, and a selection
+  made on the Mac shows on the phone too. The view
+  follows along when you resize the Mac window.
+  Older Macs keep showing the static snapshot.
 - iTerm2 Buddy now asks for notification
   permission when you turn on sending terminal
   alerts to your iPhone on the Mac, instead of
@@ -54,6 +59,11 @@ New Features:
   New Chat screen.
 
 Bug Fixes:
+- The connection now recovers from brief network
+  drops (like switching Wi-Fi or a spotty signal)
+  instead of getting stuck on "Reconnecting." The
+  Mac no longer becomes unreachable after a blip
+  until it is relaunched.
 - @-mentions in command-request messages now
   show the friendly session or workgroup name
   instead of the raw identifier.
