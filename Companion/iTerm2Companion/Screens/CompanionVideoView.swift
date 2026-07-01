@@ -103,8 +103,9 @@ final class CompanionVideoView: UIView {
                 guard let self else { return }
                 guard status == noErr, let imageBuffer else {
                     // A decode error usually means a lost reference frame; recover
-                    // with a fresh keyframe.
-                    self.onNeedsKeyframe?()
+                    // with a fresh keyframe. This callback runs on a VideoToolbox
+                    // thread and the handler touches main-actor state, so hop.
+                    DispatchQueue.main.async { self.onNeedsKeyframe?() }
                     return
                 }
                 self.present(imageBuffer, ptsSeconds: pts.seconds)

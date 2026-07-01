@@ -1973,6 +1973,13 @@ final class AppModel {
     private func restartLiveStreamAfterReconnect() {
         // A new connection means the old stream id is dead.
         activeStreamID = nil
+        // The new stream's generations restart at 1; treat its first config as
+        // initial (not a mid-stream reflow). Otherwise a stale generation from the
+        // old stream could wipe the selection the mac couriers on subscribe, and a
+        // coincidentally-equal one would skip the tile-cache clear even though
+        // content may have changed while offline.
+        activeStreamGeneration = 0
+        historyTileCache.removeAll()
         startLiveStreamIfPossible()
     }
 
