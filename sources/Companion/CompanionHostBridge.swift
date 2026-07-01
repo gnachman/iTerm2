@@ -203,6 +203,13 @@ final class CompanionHostBridge {
             subscription.unsubscribe()
         }
         subscriptions.removeAll()
+        // Resolve any in-flight host-initiated request (e.g. the notification
+        // permission prompt) so its awaiting task doesn't hang after we tear down.
+        let waiters = permissionWaiters
+        permissionWaiters.removeAll()
+        for (_, waiter) in waiters {
+            waiter.resume(returning: nil)
+        }
         send(.unpaired, requestID: nil)
         outbox?.finish()
         outbox = nil
