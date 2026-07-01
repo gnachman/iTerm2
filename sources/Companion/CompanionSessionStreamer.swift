@@ -53,6 +53,39 @@ extension CompanionFrameSource {
 final class CompanionSessionStreamer: @unchecked Sendable {
     let streamID: UInt32
 
+    /// The config fields that define a generation: a change to any of them means the
+    /// phone must re-render / re-lay-out (and drop cached history tiles). Notably
+    /// firstAbsLine/totalLines/liveTop are NOT here (they move constantly and are
+    /// carried out-of-band), so a routine config resend with unchanged geometry does
+    /// not bump the generation.
+    struct ConfigGeometry: Equatable {
+        var pixelWidth: Int
+        var pixelHeight: Int
+        var columns: Int
+        var rows: Int
+        var cellGeometry: CompanionCellGeometry?
+    }
+
+    struct ConfigResendDecision: Equatable {
+        var send: Bool
+        var generationId: UInt32
+    }
+
+    /// Decide whether to (re)send the stream config and what generation to stamp on
+    /// it. The generation is bumped only when the geometry actually changed; a forced
+    /// resend with unchanged geometry keeps the current generation.
+    static func configResendDecision(sent: ConfigGeometry?,
+                                     current: ConfigGeometry,
+                                     mustResend: Bool,
+                                     generationId: UInt32) -> ConfigResendDecision {
+        let changed = (sent != current)
+        guard changed || mustResend else {
+            return ConfigResendDecision(send: false, generationId: generationId)
+        }
+        return ConfigResendDecision(send: true,
+                                    generationId: changed ? generationId &+ 1 : generationId)
+    }
+
     private let source: CompanionFrameSource
     private let averageBitRate: Int
     private let onConfig: (CompanionStreamConfig) -> Void
@@ -80,7 +113,16 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private var frameNumber: UInt32 = 0
     private var pendingFrameNumber: UInt32 = 0
     private var generationId: UInt32 = 0
-    private var sentConfigDimensions: (Int, Int)?
+    /// The geometry of the last config sent to the phone. generationId is bumped
+    /// only when this actually changes; a bare resend (e.g. decode-error recovery)
+    /// keeps the generation so the phone reconfigures its decoder without treating
+    /// it as a new generation (which would wipe its history-tile cache and
+    /// selection).
+    private var sentConfigGeometry: ConfigGeometry?
+    /// Set when the config must be re-sent on the next keyframe even though the
+    /// geometry is unchanged (a phone keyframe request, or a fresh encoder whose
+    /// parameter sets the phone has not seen).
+    private var mustResendConfig = false
     /// Content hash of the last frame handed to the encoder. A frame whose pixels
     /// match it is skipped (the phone already shows it), so a static screen costs
     /// nothing even though cosmetic repaints keep driving tick(). Cleared on a
@@ -154,14 +196,16 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     }
 
     /// Force the next frame to be a keyframe, promptly (subscribe/resume/recovery).
-    /// Also forget the last-sent config dimensions so the next keyframe re-sends the
-    /// stream config: the phone requests a keyframe precisely when it has no usable
-    /// config (dropped in a race with activeStreamID, or undecodable), and without
-    /// this the config would only be re-sent on a pixel-dimension change.
+    /// Also force the next keyframe to re-send the stream config: the phone requests
+    /// a keyframe precisely when it has no usable config (dropped in a race with
+    /// activeStreamID, or undecodable), and without this the config would only be
+    /// re-sent on a geometry change. The resend keeps the current generation (the
+    /// geometry has not changed) so the phone reconfigures its decoder without
+    /// wiping its history-tile cache and selection.
     func requestKeyframe() {
         lock.lock()
         pacer.requestKeyframe()
-        sentConfigDimensions = nil
+        mustResendConfig = true
         lock.unlock()
     }
 
@@ -312,7 +356,10 @@ final class CompanionSessionStreamer: @unchecked Sendable {
             encoder = nil
             return false
         }
-        sentConfigDimensions = nil  // a new size needs a fresh stream config
+        // A fresh encoder has fresh parameter sets the phone has not seen, so force a
+        // config resend. The geometry comparison bumps the generation if the pixel
+        // dimensions actually changed.
+        mustResendConfig = true
         return true
     }
 
@@ -321,16 +368,25 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         var flags: CompanionMediaFrame.Flags = []
         if frame.isKeyframe { flags.insert(.keyframe) }
         if let parameterSets = frame.parameterSets {
-            let dimensions = (pool?.width ?? 0, pool?.height ?? 0)
-            if sentConfigDimensions == nil || sentConfigDimensions! != dimensions {
-                generationId &+= 1
-                sentConfigDimensions = dimensions
+            let geometry = ConfigGeometry(pixelWidth: pool?.width ?? 0,
+                                          pixelHeight: pool?.height ?? 0,
+                                          columns: lastColumns,
+                                          rows: lastRows,
+                                          cellGeometry: lastCellGeometry)
+            let decision = Self.configResendDecision(sent: sentConfigGeometry,
+                                                     current: geometry,
+                                                     mustResend: mustResendConfig,
+                                                     generationId: generationId)
+            if decision.send {
+                generationId = decision.generationId
+                sentConfigGeometry = geometry
+                mustResendConfig = false
                 onConfig(CompanionStreamConfig(
                     streamID: streamID,
                     generationId: generationId,
                     codecExtradata: CompanionHEVCFraming.encodeParameterSets(parameterSets),
-                    pixelWidth: dimensions.0,
-                    pixelHeight: dimensions.1,
+                    pixelWidth: geometry.pixelWidth,
+                    pixelHeight: geometry.pixelHeight,
                     scale: lastScale,
                     columns: lastColumns,
                     rows: lastRows,

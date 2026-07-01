@@ -221,4 +221,65 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(frame.generationId, out.configs.first?.generationId)
         XCTAssertGreaterThan(frame.generationId, 0)
     }
+
+    // MARK: Config resend vs generation bump
+
+    private func geometry(columns: Int = 80,
+                          cell: CompanionCellGeometry? = CompanionCellGeometry(cellWidth: 8, cellHeight: 16, leftMargin: 10, topMargin: 0))
+    -> CompanionSessionStreamer.ConfigGeometry {
+        CompanionSessionStreamer.ConfigGeometry(pixelWidth: 800, pixelHeight: 400,
+                                                columns: columns, rows: 25, cellGeometry: cell)
+    }
+
+    func testFirstConfigSendsAndBumpsGeneration() {
+        let d = CompanionSessionStreamer.configResendDecision(sent: nil, current: geometry(),
+                                                              mustResend: false, generationId: 0)
+        XCTAssertTrue(d.send)
+        XCTAssertEqual(d.generationId, 1)
+    }
+
+    func testUnchangedGeometryWithoutResendDoesNothing() {
+        let g = geometry()
+        let d = CompanionSessionStreamer.configResendDecision(sent: g, current: g,
+                                                              mustResend: false, generationId: 3)
+        XCTAssertFalse(d.send)
+        XCTAssertEqual(d.generationId, 3)
+    }
+
+    func testKeyframeResendKeepsGeneration() {
+        // A decode-error recovery resends the config with unchanged geometry: the
+        // phone must reconfigure its decoder WITHOUT a new generation (which would
+        // wipe its history-tile cache and selection).
+        let g = geometry()
+        let d = CompanionSessionStreamer.configResendDecision(sent: g, current: g,
+                                                              mustResend: true, generationId: 3)
+        XCTAssertTrue(d.send)
+        XCTAssertEqual(d.generationId, 3, "a bare resend must not bump the generation")
+    }
+
+    func testGeometryChangeBumpsGeneration() {
+        let d = CompanionSessionStreamer.configResendDecision(sent: geometry(columns: 80),
+                                                              current: geometry(columns: 100),
+                                                              mustResend: false, generationId: 3)
+        XCTAssertTrue(d.send)
+        XCTAssertEqual(d.generationId, 4)
+    }
+
+    func testCellGeometryChangeBumpsGenerationEvenWithSamePixels() {
+        // A font change can keep the pixel dimensions but change the cell size.
+        let a = geometry(cell: CompanionCellGeometry(cellWidth: 8, cellHeight: 16, leftMargin: 10, topMargin: 0))
+        let b = geometry(cell: CompanionCellGeometry(cellWidth: 9, cellHeight: 18, leftMargin: 10, topMargin: 0))
+        let d = CompanionSessionStreamer.configResendDecision(sent: a, current: b,
+                                                              mustResend: false, generationId: 5)
+        XCTAssertTrue(d.send)
+        XCTAssertEqual(d.generationId, 6)
+    }
+
+    func testGeometryChangeWithResendBumpsOnlyOnce() {
+        let d = CompanionSessionStreamer.configResendDecision(sent: geometry(columns: 80),
+                                                              current: geometry(columns: 100),
+                                                              mustResend: true, generationId: 3)
+        XCTAssertTrue(d.send)
+        XCTAssertEqual(d.generationId, 4)
+    }
 }
