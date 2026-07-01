@@ -1538,3 +1538,11 @@ Bug Fixes:
   instead of a fixed black or white
   background, so they blend with your
   theme. Issue 12916.
+- Fix OSC 8 file:// hyperlinks whose
+  path mixes percent-encoding with raw
+  non-ASCII characters (such as
+  ripgrep's --hyperlink-format=file
+  output) opening the wrong file. The
+  percent signs were being double-
+  encoded on macOS 14 and later. Issue
+  12914.
