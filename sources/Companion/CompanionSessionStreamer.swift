@@ -91,6 +91,16 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// on resize; liveTop changes per frame.
     private var lastCellGeometry: CompanionCellGeometry?
     private var lastRenderedLiveTop: Int64 = 0
+    /// Config geometry captured on the main thread at render time and applied to the
+    /// stream config from the encoder callback thread. The frame source is
+    /// main-thread-only (it dereferences PTYSession/VT100Screen/window), so reading
+    /// these off the VideoToolbox thread in handleEncoded races resize/output/trim
+    /// and can tear the config (columns/rows out of sync with the encoded pixels).
+    private var lastScale: Double = 2
+    private var lastColumns = 0
+    private var lastRows = 0
+    private var lastFirstAbsLine: Int64 = 0
+    private var lastTotalLines = 0
     /// When the last frame was emitted and whether it was a keyframe, to drive the
     /// insurance keyframe (below).
     private var lastEmitAt: TimeInterval = 0
@@ -144,14 +154,34 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     }
 
     /// Force the next frame to be a keyframe, promptly (subscribe/resume/recovery).
+    /// Also forget the last-sent config dimensions so the next keyframe re-sends the
+    /// stream config: the phone requests a keyframe precisely when it has no usable
+    /// config (dropped in a race with activeStreamID, or undecodable), and without
+    /// this the config would only be re-sent on a pixel-dimension change.
     func requestKeyframe() {
-        lock.lock(); pacer.requestKeyframe(); lock.unlock()
+        lock.lock()
+        pacer.requestKeyframe()
+        sentConfigDimensions = nil
+        lock.unlock()
     }
 
     /// Evaluate the pacer at `nowMilliseconds` and, if it says to emit, render and
     /// encode a frame. Call on the main thread.
     func tick(nowMilliseconds: UInt64) {
         let nowSeconds = TimeInterval(nowMilliseconds) / 1000.0
+        // Fire extent changes every tick, before any emit guard: a trim or clear
+        // changes firstAbsLine/totalLines WITHOUT changing pixels, so it must not
+        // depend on a frame being emitted (the pacer/dedup guards below would
+        // otherwise return first and the phone would keep stale history forever).
+        // Two integer reads on this (main) thread; growth rides liveTop, so only a
+        // firstAbsLine advance or a totalLines drop needs an event.
+        let currentFirstAbs = source.firstAbsLine
+        let currentTotal = source.totalLines
+        if currentFirstAbs != lastSeenFirstAbsLine || currentTotal < lastSeenTotalLines {
+            onExtentChanged(currentFirstAbs, currentTotal)
+        }
+        lastSeenFirstAbsLine = currentFirstAbs
+        lastSeenTotalLines = currentTotal
         lock.lock()
         let exhausted = budget.isExhausted(now: nowSeconds)
         // A pending keyframe (subscribe/resume) must go even if the receiver is
@@ -196,20 +226,14 @@ final class CompanionSessionStreamer: @unchecked Sendable {
             return
         }
         lastSentHash = hash
-        // Capture geometry on this (main) thread; handleEncoded stamps it onto the
-        // config/media frame from the encoder thread.
+        // Capture ALL geometry on this (main) thread; handleEncoded stamps it onto
+        // the config/media frame from the encoder callback thread, which must never
+        // touch the main-thread-only frame source.
         let cellGeometry = source.cellGeometry
         let liveTop = source.liveTop
-        // Notify the phone when scrollback was trimmed (firstAbsLine advanced) or
-        // cleared (totalLines dropped); growth is conveyed by liveTop, so it does
-        // not need an event. Called on this (main) thread.
-        let firstAbsLine = source.firstAbsLine
-        let totalLines = source.totalLines
-        if firstAbsLine != lastSeenFirstAbsLine || totalLines < lastSeenTotalLines {
-            onExtentChanged(firstAbsLine, totalLines)
-        }
-        lastSeenFirstAbsLine = firstAbsLine
-        lastSeenTotalLines = totalLines
+        let scale = source.scale
+        let columns = source.columns
+        let rows = source.rows
         let thisFrame = frameNumber
         frameNumber &+= 1
         // Optionally burn the frame number into the pixels (after the dedup hash,
@@ -223,6 +247,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         statEmitted += 1
         lastCellGeometry = cellGeometry
         lastRenderedLiveTop = liveTop
+        lastScale = scale
+        lastColumns = columns
+        lastRows = rows
+        lastFirstAbsLine = currentFirstAbs
+        lastTotalLines = currentTotal
         lastEmitAt = nowSeconds
         lastEmitWasKeyframe = decision.keyframe
         pendingFrameNumber = thisFrame
@@ -302,12 +331,12 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                     codecExtradata: CompanionHEVCFraming.encodeParameterSets(parameterSets),
                     pixelWidth: dimensions.0,
                     pixelHeight: dimensions.1,
-                    scale: source.scale,
-                    columns: source.columns,
-                    rows: source.rows,
+                    scale: lastScale,
+                    columns: lastColumns,
+                    rows: lastRows,
                     cellGeometry: lastCellGeometry,
-                    firstAbsLine: source.firstAbsLine,
-                    totalLines: source.totalLines))
+                    firstAbsLine: lastFirstAbsLine,
+                    totalLines: lastTotalLines))
                 flags.insert(.configChanged)
             }
         }

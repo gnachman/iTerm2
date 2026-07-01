@@ -276,6 +276,42 @@ struct CompanionStreamConfig: Codable, Equatable {
     var firstAbsLine: Int64 = 0
     /// Total available lines (scrollback + screen) at config time.
     var totalLines: Int = 0
+
+    init(streamID: UInt32, generationId: UInt32, codecExtradata: Data,
+         pixelWidth: Int, pixelHeight: Int, scale: Double, columns: Int, rows: Int,
+         cellGeometry: CompanionCellGeometry? = nil, firstAbsLine: Int64 = 0, totalLines: Int = 0) {
+        self.streamID = streamID
+        self.generationId = generationId
+        self.codecExtradata = codecExtradata
+        self.pixelWidth = pixelWidth
+        self.pixelHeight = pixelHeight
+        self.scale = scale
+        self.columns = columns
+        self.rows = rows
+        self.cellGeometry = cellGeometry
+        self.firstAbsLine = firstAbsLine
+        self.totalLines = totalLines
+    }
+
+    // Custom decode: synthesized Decodable ignores the property defaults and throws
+    // keyNotFound for an absent key, so a host predating firstAbsLine/totalLines
+    // (added without a revision bump) would make the whole config undecodable and
+    // leave the decoder unconfigured (permanent black view + keyframe-request loop).
+    // decodeIfPresent restores the "older hosts decode as 0" contract.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        streamID = try c.decode(UInt32.self, forKey: .streamID)
+        generationId = try c.decode(UInt32.self, forKey: .generationId)
+        codecExtradata = try c.decode(Data.self, forKey: .codecExtradata)
+        pixelWidth = try c.decode(Int.self, forKey: .pixelWidth)
+        pixelHeight = try c.decode(Int.self, forKey: .pixelHeight)
+        scale = try c.decode(Double.self, forKey: .scale)
+        columns = try c.decode(Int.self, forKey: .columns)
+        rows = try c.decode(Int.self, forKey: .rows)
+        cellGeometry = try c.decodeIfPresent(CompanionCellGeometry.self, forKey: .cellGeometry)
+        firstAbsLine = try c.decodeIfPresent(Int64.self, forKey: .firstAbsLine) ?? 0
+        totalLines = try c.decodeIfPresent(Int.self, forKey: .totalLines) ?? 0
+    }
 }
 
 /// Why a live stream ended.

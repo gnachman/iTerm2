@@ -140,4 +140,30 @@ final class CompanionStreamMessagesTests: XCTestCase {
         }
         XCTAssertEqual(text, "hello “world”")
     }
+
+    // A host predating firstAbsLine/totalLines omits those keys. Synthesized
+    // Decodable would throw keyNotFound (dropping the config -> black view); the
+    // custom decoder must fall back to 0 so the stream still configures.
+    func testStreamConfigDecodesWithoutHistoryExtentKeys() throws {
+        let json = """
+        {"streamID":7,"generationId":1,"codecExtradata":"",
+         "pixelWidth":800,"pixelHeight":500,"scale":2.0,"columns":80,"rows":25}
+        """
+        let config = try decoder().decode(CompanionStreamConfig.self, from: Data(json.utf8))
+        XCTAssertEqual(config.streamID, 7)
+        XCTAssertEqual(config.columns, 80)
+        XCTAssertEqual(config.rows, 25)
+        XCTAssertEqual(config.firstAbsLine, 0)
+        XCTAssertEqual(config.totalLines, 0)
+        XCTAssertNil(config.cellGeometry)
+    }
+
+    func testStreamConfigRoundTripsHistoryExtent() throws {
+        let original = CompanionStreamConfig(streamID: 7, generationId: 3, codecExtradata: Data([1, 2]),
+                                             pixelWidth: 800, pixelHeight: 500, scale: 2, columns: 80, rows: 25,
+                                             firstAbsLine: 1234, totalLines: 5678)
+        let data = try encoder().encode(original)
+        let decoded = try decoder().decode(CompanionStreamConfig.self, from: data)
+        XCTAssertEqual(decoded, original)
+    }
 }
