@@ -261,7 +261,10 @@ final class AppModel {
     /// fetches in flight so scroll events do not duplicate them.
     // Internal plumbing, not UI state: mutating it must not re-render SwiftUI views
     // (a tile load would otherwise trigger updateUIView and re-run selection logic).
-    @ObservationIgnored private var historyTileCache: [Int64: UIImage] = [:]
+    // Bounded so a long history browse cannot accumulate tile images without limit;
+    // the LRU evicts the least-recently-used tile past the cap and supports the
+    // key-range pruning below (unlike NSCache).
+    @ObservationIgnored private let historyTileCache = CompanionLRUCache<Int64, UIImage>(capacity: 256)
     /// The current selection span reported by the mac, for drawing handles.
     private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).
@@ -1847,7 +1850,7 @@ final class AppModel {
                     historyTileCache.removeAll()
                 } else {
                     // Trimmed: only lines below the new origin are gone.
-                    historyTileCache = historyTileCache.filter { $0.key >= firstAbsLine }
+                    historyTileCache.removeAll(where: { $0 < firstAbsLine })
                 }
             }
         case .selectionRange(let streamID, let range):
@@ -2137,6 +2140,23 @@ final class AppModel {
             do {
                 let tile = try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
                                                         lineCount: lineCount, generationId: generation)
+                // A reflow/resize (or reconnect) between request and reply bumps the
+                // generation and re-renders every tile, so a reply for the old
+                // generation must not be cached or shown as current.
+                guard generation == activeStreamGeneration else {
+                    companionLog("historyTile stale gen firstAbs=\(firstAbsLine) reqGen=\(generation) now=\(activeStreamGeneration)")
+                    completion(nil)
+                    return
+                }
+                // The host clamps to the available window and reports the range it
+                // actually covered. If that origin differs from what we requested
+                // (an eviction race), the image does not belong at this key, so treat
+                // it as a miss rather than poisoning the cache with misplaced content.
+                guard tile.firstAbsLine == firstAbsLine else {
+                    companionLog("historyTile origin drift req=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount)")
+                    completion(nil)
+                    return
+                }
                 guard tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
                     companionLog("historyTile reply firstAbs=\(firstAbsLine) lineCount=\(tile.lineCount) bytes=\(tile.pngData.count) -> \(tile.lineCount == 0 ? "evicted" : "undecodable")")
                     completion(nil)
