@@ -1950,7 +1950,6 @@ final class AppModel {
         let params = CompanionStreamParams(supportedCodecs: [.hevc], maxFrameRate: 30, maxBitrate: nil,
                                            maxMediaFrameVersion: 2)
         Task { @MainActor in
-            defer { liveStreamStarting = false }
             do {
                 let started = try await client.startSessionStream(guid: guid, params: params)
                 // Guard against races: the view may have closed, the app may have
@@ -1963,6 +1962,15 @@ final class AppModel {
                 }
             } catch {
                 companionLog("startSessionStream failed (will retry on reconnect/resume): \(String(describing: error))")
+            }
+            liveStreamStarting = false
+            // If the live intent moved to a DIFFERENT session while this attempt was
+            // in flight (superseded, or it failed and the user switched sessions),
+            // drive the new intent now instead of stranding it until the next
+            // reconnect/resume. Comparing against the attempted guid avoids a tight
+            // retry loop when the same session persistently fails to start.
+            if let current = liveWatchGuid, current != guid, activeStreamID == nil {
+                startLiveStreamIfPossible()
             }
         }
     }
