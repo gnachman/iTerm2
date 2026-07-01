@@ -429,6 +429,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (int)screenshotMaxPixelHeight;
++ (NSString *)screenshotSaveLocation;
 + (BOOL)setCookie;
 + (void)setSetCookie:(BOOL)value;
 + (BOOL)setIT2AppPath;

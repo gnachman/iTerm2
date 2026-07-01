@@ -1595,6 +1595,26 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     }
 }
 
+- (void)apiServerScreenshot:(ITMScreenshotRequest *)request
+                    handler:(void (^)(ITMScreenshotResponse *))handler {
+    ITMScreenshotResponse *response = [[ITMScreenshotResponse alloc] init];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
+    if (!session) {
+        response.status = ITMScreenshotResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+    NSData *png = [session screenshotPNGData];
+    if (!png) {
+        response.status = ITMScreenshotResponse_Status_InternalError;
+        handler(response);
+        return;
+    }
+    response.status = ITMScreenshotResponse_Status_Ok;
+    response.png = png;
+    handler(response);
+}
+
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request
                    handler:(void (^)(ITMGetPromptResponse *))handler {
     PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];

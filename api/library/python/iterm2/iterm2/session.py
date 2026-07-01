@@ -453,6 +453,26 @@ class Session:
         await iterm2.rpc.async_send_text(
             self.connection, self.__session_id, text, suppress_broadcast)
 
+    async def async_screenshot(self) -> bytes:
+        """
+        Captures a PNG screenshot of the session's visible screen contents.
+
+        :returns: PNG-encoded image data.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
+        """
+        iterm2.capabilities.check_supports_screenshot(self.connection)
+        # pylint: disable=no-member
+        result = await iterm2.rpc.async_screenshot(
+            self.connection,
+            self.session_id)
+        if (result.screenshot_response.status ==
+                iterm2.api_pb2.ScreenshotResponse.Status.Value("OK")):
+            return result.screenshot_response.png
+        raise iterm2.rpc.RPCException(
+            iterm2.api_pb2.ScreenshotResponse.Status.Name(
+                result.screenshot_response.status))
+
     async def async_split_pane(
             self,
             vertical: bool = False,

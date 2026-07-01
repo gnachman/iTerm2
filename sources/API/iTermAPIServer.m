@@ -666,6 +666,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleScreenshotRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __block BOOL handled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerScreenshot:request.screenshotRequest handler:^(ITMScreenshotResponse *screenshotResponse) {
+        assert(!handled);
+        handled = YES;
+        response.screenshotResponse = screenshotResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 - (void)handleNotificationRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
@@ -1127,6 +1140,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_ListPromptsRequest:
             [self handleListPromptsRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_ScreenshotRequest:
+            [self handleScreenshotRequest:request connection:webSocketConnection];
             break;
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_NotificationRequest:

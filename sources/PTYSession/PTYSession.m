@@ -8416,6 +8416,14 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return result;
 }
 
+- (NSData *)screenshotPNGData {
+    NSImage *image = [self terminalContentSnapshot];
+    if (!image) {
+        return nil;
+    }
+    return [iTermAnnotatedScreenshot pngDataFrom:image];
+}
+
 - (NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size {
     if (_screen.totalScrollbackOverflow > coord.y) {
         return nil;

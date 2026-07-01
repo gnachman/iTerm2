@@ -1079,6 +1079,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (nullable NSImage *)screenshotBackgroundSliceForRect:(NSRect)sliceRect
                                            ofTotalSize:(NSSize)totalSize;
 
+// Renders the visible screen contents to PNG data for the scripting API. The
+// session’s own background fill is applied by the shared snapshot path.
+- (nullable NSData *)screenshotPNGData;
+
 - (void)enterPassword:(NSString *)password;
 
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement

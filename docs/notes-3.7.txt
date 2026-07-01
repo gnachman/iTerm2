@@ -98,6 +98,16 @@ Major New Features:
   highlights and redactions using the Make
   Screenshot menu item.
 
+- The screenshot window adds a Save As… button
+  to choose where the file goes. The Save button
+  writes to the folder set by the
+  screenshotSaveLocation advanced setting, or
+  the Desktop if unset.
+
+- The Python API can now capture a session
+  screenshot with session.async_screenshot(),
+  which returns PNG data.
+
 - Session archives were added. The new Session >
   Archives menu has “Save Archive of Current
   Session…” and “Restore Archive…” commands, and

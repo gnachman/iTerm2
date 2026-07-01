@@ -374,34 +374,47 @@ class iTermAnnotatedScreenshot: NSObject {
         return saveToDesktop(nsImage: nsImage)
     }
 
-    /// Saves an NSImage to the Desktop as a PNG file
-    @objc static func saveToDesktop(nsImage: NSImage) -> URL? {
-        // Generate filename with timestamp
+    /// A timestamped default filename for a screenshot, e.g. iTerm2-Screenshot-2026-06-21-13-05-22.png
+    @objc static func defaultScreenshotFilename() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
-        let timestamp = formatter.string(from: Date())
-        let filename = "iTerm2-Screenshot-\(timestamp).png"
+        return "iTerm2-Screenshot-\(formatter.string(from: Date())).png"
+    }
 
-        // Get Desktop path
+    /// Encodes an NSImage as PNG data, or nil on failure.
+    @objc static func pngData(from nsImage: NSImage) -> Data? {
+        guard let tiffData = nsImage.tiffRepresentation,
+              let bitmapRep = NSBitmapImageRep(data: tiffData) else {
+            return nil
+        }
+        return bitmapRep.representation(using: .png, properties: [:])
+    }
+
+    /// Saves an NSImage as a timestamped PNG file in the given directory.
+    @objc static func save(nsImage: NSImage, inDirectory directory: URL) -> URL? {
+        let fileURL = directory.appendingPathComponent(defaultScreenshotFilename())
+        return write(nsImage: nsImage, to: fileURL) ? fileURL : nil
+    }
+
+    /// Writes an NSImage as a PNG to a specific file URL. Returns true on success.
+    @objc static func write(nsImage: NSImage, to url: URL) -> Bool {
+        guard let pngData = pngData(from: nsImage) else {
+            return false
+        }
+        do {
+            try pngData.write(to: url)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Saves an NSImage to the Desktop as a PNG file
+    @objc static func saveToDesktop(nsImage: NSImage) -> URL? {
         guard let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first else {
             return nil
         }
-
-        let fileURL = desktopURL.appendingPathComponent(filename)
-
-        // Create PNG data
-        guard let tiffData = nsImage.tiffRepresentation,
-              let bitmapRep = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
-            return nil
-        }
-
-        do {
-            try pngData.write(to: fileURL)
-            return fileURL
-        } catch {
-            return nil
-        }
+        return save(nsImage: nsImage, inDirectory: desktopURL)
     }
 
     // MARK: - Background Fill
