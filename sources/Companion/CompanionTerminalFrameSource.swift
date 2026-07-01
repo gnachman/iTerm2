@@ -25,16 +25,18 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
     var rows: Int { Int(session.screen.height()) }
     var scale: Double { Double(session.textview?.window?.backingScaleFactor ?? 2.0) }
 
-    /// Cell size in encoded pixels (point metrics * render scale). Margins are 0
-    /// because the stream renders with includeMargins:false (the grid fills the
-    /// image), but they are carried so the phone's transform stays general.
+    /// Cell size in encoded pixels (point metrics * render scale). The rendered
+    /// frame spans widthExcludingRightGutter, which includes the horizontal side
+    /// margins (includeMargins:false only drops the top/bottom margin), so the grid
+    /// starts leftMargin pixels in; topMargin is 0.
     var cellGeometry: CompanionCellGeometry {
         let s = scale
         let charWidth = Double(session.textview?.charWidth ?? 0)
         let lineHeight = Double(session.textview?.lineHeight ?? 0)
+        let sideMargin = Double(iTermPreferences.sideMargins())
         return CompanionCellGeometry(cellWidth: charWidth * s,
                                      cellHeight: lineHeight * s,
-                                     leftMargin: 0,
+                                     leftMargin: sideMargin * s,
                                      topMargin: 0)
     }
 

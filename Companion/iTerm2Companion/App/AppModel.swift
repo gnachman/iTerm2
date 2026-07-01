@@ -95,6 +95,12 @@ struct CompanionLiveCanvasLayout: Equatable {
     /// Bumped on every geometry change (incl. column reflow). A change means all
     /// history tiles were re-rendered, so the canvas must drop its cached ones.
     var generationId: UInt32
+    /// Cell/margin metrics in encoded pixels. The rendered frame includes the side
+    /// margins (only the vertical margin is dropped), so the canvas must offset by
+    /// leftMargin and use cellWidth rather than spreading the full image width over
+    /// the columns. nil for a host too old to report geometry (falls back to
+    /// margin-free mapping).
+    var cellGeometry: CompanionCellGeometry?
 }
 
 @MainActor
@@ -2098,7 +2104,8 @@ final class AppModel {
                                          rows: activeStreamRows,
                                          firstAbsLine: activeStreamFirstAbsLine,
                                          totalLines: activeStreamTotalLines,
-                                         generationId: activeStreamGeneration)
+                                         generationId: activeStreamGeneration,
+                                         cellGeometry: activeStreamGeometry)
     }
 
     /// A cached scrollback tile, if already fetched.

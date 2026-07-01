@@ -1120,17 +1120,36 @@ private struct LiveCanvas: UIViewRepresentable {
 
         // MARK: Whole-document coordinate mapping
 
-        /// Width of one cell in content points (the video fills the width at zoom 1).
+        /// Content points per encoded pixel (the video fills the width at zoom 1).
+        private var pointsPerPixel: CGFloat {
+            guard let layout, layout.imageSize.width > 0, contentView.bounds.width > 0 else { return 0 }
+            return contentView.bounds.width / layout.imageSize.width
+        }
+
+        /// Width of one cell in content points. The rendered frame includes the side
+        /// margins, so derive this from the reported cell width rather than dividing
+        /// the full image width by the columns (which would smear the margins across
+        /// every cell). Falls back to the margin-free estimate for an old host.
         private var cellWidthPoints: CGFloat {
             guard let layout, layout.columns > 0, contentView.bounds.width > 0 else { return 0 }
+            if let geometry = layout.cellGeometry, geometry.cellWidth > 0 {
+                return CGFloat(geometry.cellWidth) * pointsPerPixel
+            }
             return contentView.bounds.width / CGFloat(layout.columns)
+        }
+
+        /// Left side margin in content points (0 for an old host, or if the mapping
+        /// falls back to the margin-free estimate above).
+        private var leftMarginPoints: CGFloat {
+            guard let layout, let geometry = layout.cellGeometry, geometry.cellWidth > 0 else { return 0 }
+            return CGFloat(geometry.leftMargin) * pointsPerPixel
         }
 
         /// A point anywhere in the document to an absolute terminal point, clamped to
         /// the available lines/columns. Works for both history and the live band.
         private func selectionPoint(atContent p: CGPoint) -> CompanionSelectionPoint? {
             guard let layout, pointsPerLine > 0, cellWidthPoints > 0 else { return nil }
-            let col = min(max(Int((p.x / cellWidthPoints).rounded(.down)), 0), layout.columns - 1)
+            let col = min(max(Int(((p.x - leftMarginPoints) / cellWidthPoints).rounded(.down)), 0), layout.columns - 1)
             let line = Int((p.y / pointsPerLine).rounded(.down))
             let lastLine = max(0, historyLines + layout.rows - 1)
             let clampedLine = min(max(line, 0), lastLine)
@@ -1140,7 +1159,7 @@ private struct LiveCanvas: UIViewRepresentable {
         /// The content-space point of a cell corner, for placing handles / highlights.
         private func contentPoint(absLine: Int64, column: Int, rightEdge: Bool, bottomEdge: Bool) -> CGPoint {
             let line = CGFloat(absLine - (layout?.firstAbsLine ?? 0))
-            return CGPoint(x: (CGFloat(column) + (rightEdge ? 1 : 0)) * cellWidthPoints,
+            return CGPoint(x: leftMarginPoints + (CGFloat(column) + (rightEdge ? 1 : 0)) * cellWidthPoints,
                            y: (line + (bottomEdge ? 1 : 0)) * pointsPerLine)
         }
 
