@@ -520,6 +520,12 @@ Settings Improvements:
   versions continue to use manifest.json.
 
 Bug Fixes:
+- Fixed a crash in Replace Selection (e.g.,
+  Replace with Pretty-Printed JSON) when the
+  replacement had more lines than the selection.
+  Also, saved locations (marks, prompt ranges)
+  inside the replaced region are now invalidated
+  instead of drifting onto unrelated lines.
 - tmux integration now parses pane state
   correctly on macOS 26 and later. A new
   system NSString method had shadowed ours

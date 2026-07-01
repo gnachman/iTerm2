@@ -490,11 +490,10 @@ extension ResilientCoordinate {
         guard guid == dataSource?.rcGuid else {
             return
         }
-        // genericMark is OPTIONAL: the mutation-thread linesShifted post
-        // for the .fold path runs inside replaceRange:withLines: before
-        // the caller has created its FoldMark, so the post has no mark in
-        // userInfo. The shift-up sub-case below doesn't need a mark; only
-        // the entering-fold / matching-unfold sub-cases do, and they
+        // genericMark is OPTIONAL: reason .fold is also posted for plain
+        // content replacements (e.g. "Replace with Pretty-Printed JSON"),
+        // which create no FoldMark. The shift sub-cases below don't need a
+        // mark; the entering-fold / matching-unfold sub-cases do, and they
         // explicitly check for nil before using it.
         guard let reasonRaw = (notification.userInfo?[LinesShiftedNotification.reasonKey] as? NSNumber)?.intValue,
               let reason = iTermLinesShiftedReason(rawValue: reasonRaw),
@@ -507,19 +506,36 @@ extension ResilientCoordinate {
         let converterObj = notification.userInfo?[LinesShiftedNotification.converterKey]
         switch reason {
         case .fold:
-            it_assert(delta < 0)
-            let removedRange = absLine...(absLine - Int64(delta))
+            // Reason .fold covers two callers of replaceRange:withLines:.
+            // A real fold replaces N lines with fewer, creates a FoldMark,
+            // and always has delta < 0. A plain content replacement
+            // ("Replace with Pretty-Printed JSON", base64 encode/decode)
+            // passes promptLength < 0 so NO FoldMark is created, and delta
+            // can have either sign since the replacement may grow the
+            // buffer. Use the posted replacedRange; deriving the range
+            // from delta is wrong when the buffer grows.
+            guard let replacedNSRange = (notification.userInfo?[LinesShiftedNotification.replacedRangeKey] as? NSValue)?.rangeValue,
+                  let replacedRange = Range(replacedNSRange) else {
+                DLog("Bad user info \(d(notification.userInfo))")
+                return
+            }
             if let coord = unsafeCoord {
-                if removedRange.contains(coord.y),
-                   let foldMark = genericMark as? FoldMark {
-                    // We are entering a fold
-                    location = .fold(mark: .init(foldMark),
-                                     coord: VT100GridCoord(x: coord.x,
-                                                           y: Int32(clamping: coord.y - absLine)))
+                if replacedRange.contains(Int(coord.y)) {
+                    if let foldMark = genericMark as? FoldMark {
+                        // We are entering a fold
+                        location = .fold(mark: .init(foldMark),
+                                         coord: VT100GridCoord(x: coord.x,
+                                                               y: Int32(clamping: coord.y - absLine)))
+                    } else {
+                        // A plain replacement destroyed the content at
+                        // this coord and there is no fold to rejoin later.
+                        location = .invalid
+                    }
                     return
                 }
                 if absLine < coord.y {
-                    // Folded above us, shift our coord up.
+                    // Replaced above us; shift by delta (negative for a
+                    // real fold, either sign for a plain replacement).
                     location = .coord(VT100GridAbsCoord(x: coord.x, y: coord.y + Int64(delta)))
                 }
             }
