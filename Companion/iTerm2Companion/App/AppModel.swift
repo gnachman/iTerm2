@@ -42,7 +42,7 @@ func companionLog(_ message: String,
 #if DEBUG
     print(formatted)
 #else
-    logger.info("\(formatted, privacy: .public)")
+    logger.notice("\(formatted, privacy: .public)")
 #endif
 }
 
@@ -54,7 +54,7 @@ func companionLogPreformatted(_ message: String) {
 #if DEBUG
     print(formatted)
 #else
-    logger.info("\(formatted, privacy: .public)")
+    logger.notice("\(formatted, privacy: .public)")
 #endif
 }
 
@@ -1870,8 +1870,6 @@ final class AppModel {
         guard frame.streamID == activeStreamID else { return }
         // Track the top visible line so a touch maps to the right absolute line.
         activeStreamLiveTop = frame.liveTop
-        // CDIAG: phone-side media-receipt heartbeat to correlate a phone stall
-        // with the mac wedge. Remove once diagnosed.
         onStreamMedia?(frame)
     }
 
@@ -1950,7 +1948,7 @@ final class AppModel {
                 // paused, or a reconnect may have superseded this attempt.
                 if liveWatchGuid == guid, !liveStreamPaused, activeStreamID == nil {
                     activeStreamID = started.streamID
-                    companionLog("CDIAG phone stream STARTED id=\(started.streamID) guid=\(guid)")
+                    companionLog("phone stream STARTED id=\(started.streamID) guid=\(guid)")
                 } else {
                     try? await client.stopSessionStream(streamID: started.streamID)
                 }

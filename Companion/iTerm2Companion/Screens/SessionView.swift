@@ -509,10 +509,10 @@ private struct LiveSessionView: View {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
-                companionLog("CDIAG SessionView scenePhase active -> resumeLiveStream")
+                companionLog("SessionView scenePhase active -> resumeLiveStream")
                 model.resumeLiveStream()
             case .background:
-                companionLog("CDIAG SessionView scenePhase background -> pauseLiveStream")
+                companionLog("SessionView scenePhase background -> pauseLiveStream")
                 model.pauseLiveStream()
             default: break
             }

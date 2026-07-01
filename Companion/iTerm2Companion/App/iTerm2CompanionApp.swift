@@ -50,10 +50,10 @@ struct iTerm2CompanionApp: App {
             RootView()
                 .environment(model)
                 .onChange(of: scenePhase) { oldPhase, newPhase in
-                    // CDIAG: app lifecycle drives whether the relay socket is torn
+                    // App lifecycle drives whether the relay socket is torn
                     // down (iOS closes background sockets), so log every transition
                     // to attribute disconnects to backgrounding.
-                    companionLog("CDIAG scenePhase \(oldPhase) -> \(newPhase)")
+                    companionLog("scenePhase \(oldPhase) -> \(newPhase)")
                     if newPhase == .active {
                         model.checkConnectionOnForeground()
                     }

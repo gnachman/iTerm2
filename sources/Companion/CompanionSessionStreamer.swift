@@ -74,7 +74,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private var pacer: CompanionStreamPacer
     private var pool: CompanionPixelBufferPool?
     private var encoder: CompanionVideoEncoder?
-    /// Monotonic number stamped into each emitted frame's pixels (CDIAG) and used
+    /// Monotonic number stamped into each emitted frame's pixels and used
     /// as that frame's media sequence, so a screen recording's visible number
     /// matches the logs. Set in tick(), read in handleEncoded.
     private var frameNumber: UInt32 = 0
@@ -103,7 +103,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// change is decodable on its own and corrects any such drift.
     private let insuranceKeyframeDelay: TimeInterval = 0.3
 
-    // CDIAG flow-control stats, logged once a second while streaming. Counters are
+    // Flow-control stats, logged once a second while streaming. Counters are
     // for the current one-second bucket; reset on each log. Touched from tick()
     // (main) and handleEncoded (encoder thread), so guarded by `lock`.
     private var statLastLog: TimeInterval = 0
@@ -237,7 +237,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         guard now - statLastLog >= 1 else { return nil }
         let usedMB = (budget.limitBytes - budget.remaining(now: now)) / (1024 * 1024)
         let limitMB = budget.limitBytes / (1024 * 1024)
-        let line = "CDIAG flow stream=\(streamID) emitted=\(statEmitted) deduped=\(statDeduped) "
+        let line = "flow stream=\(streamID) emitted=\(statEmitted) deduped=\(statDeduped) "
             + "paced=\(statPaced) bytes=\(statBytes) lead=\(inFlight.leadMilliseconds)ms "
             + "queue=\(inFlight.queueDepth) budgetUsed=\(usedMB)MB/\(limitMB)MB"
         statEmitted = 0
@@ -324,7 +324,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         onMedia(media)
     }
 
-    // MARK: CDIAG frame-number overlay
+    // MARK: Frame-number overlay
 
     /// Burn "#N" into the top-left of the BGRA pixel buffer. Uses the same
     /// no-flip BGRA context CompanionPixelBufferPool uses to draw the frame (so a
