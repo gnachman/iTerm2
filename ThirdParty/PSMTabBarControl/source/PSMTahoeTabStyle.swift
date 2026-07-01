@@ -135,7 +135,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     var tabBarHeight: CGFloat {
         if orientation == .horizontalOrientation {
-            return Self.horizontalTabBarHeight
+            // Grow to fit however many rows the control will use (1 until tabs
+            // overflow a single row, then 2). Defaults to one row when the
+            // control isn't wired up yet; the height is corrected on next layout.
+            let rows = CGFloat(tabBar?.horizontalRowCount() ?? 1)
+            return Self.horizontalTabBarHeight * rows
         } else {
             return max(26.0, iTermAdvancedSettingsModel.defaultTabBarHeight())
         }
@@ -582,10 +586,19 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     private func clippingPath(rect: NSRect) -> NSBezierPath {
         if orientation == .horizontalOrientation {
+            // In two-row mode the track must span both rows of cells; clipping to a
+            // single barHeight-tall capsule at the top would clip the lower row away
+            // entirely (the cell drawing is clipped to this path).
+            let height: CGFloat
+            if let bar = tabBar, bar.horizontalRowCount() > 1 {
+                height = bar.height - bar.insets.top - bar.insets.bottom
+            } else {
+                height = barHeight
+            }
             return NSBezierPath(roundedRect: NSRect(x: containerSideInset - 0.5,
                                                     y: containerTopInset,
                                                     width: rect.width - containerSideInset * 2 + 1,
-                                                    height: barHeight),
+                                                    height: height),
                                 xRadius: barRadius,
                                 yRadius: barRadius)
         } else {
