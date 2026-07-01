@@ -266,6 +266,70 @@ private final class ReceiveRace: @unchecked Sendable {
     }
 }
 
+/// A one-shot awaitable used while a mac is parked (before a RelayTransport exists
+/// to own the close signal): the keepalive fires it when a ping fails, unblocking
+/// the parked read even on a half-open socket that ignores ws.cancel().
+private final class ParkedDeathSignal: @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var fired = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func fire() {
+        let toResume = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
+            if fired { return [] }
+            fired = true
+            let w = waiters
+            waiters = []
+            return w
+        }
+        for w in toResume { w.resume() }
+    }
+
+    func wait() async {
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                let already = lock.withLock { () -> Bool in
+                    if fired { return true }
+                    waiters.append(cont)
+                    return false
+                }
+                if already { cont.resume() }
+            }
+        } onCancel: {
+            fire()
+        }
+    }
+}
+
+/// Race a parked socket read against a keepalive-detected death, so a hard network
+/// drop fails the parked accept() instead of hanging forever. Mirrors
+/// RelayTransport.receive(): a task group is unusable (it awaits its children on
+/// exit, so a receive() ignoring cancellation would still hang it), so resume a
+/// one-shot continuation from whichever finishes first and abandon the loser.
+private func receiveParked(ws: RelayWebSocket, death: ParkedDeathSignal) async throws -> RelayWebSocketMessage {
+    let race = ReceiveRace()
+    return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<RelayWebSocketMessage, Error>) in
+        race.read = Task {
+            do {
+                let message = try await ws.receive()
+                guard race.claim() else { return }
+                race.close?.cancel()
+                cont.resume(returning: message)
+            } catch {
+                guard race.claim() else { return }
+                race.close?.cancel()
+                cont.resume(throwing: error)
+            }
+        }
+        race.close = Task {
+            await death.wait()
+            guard race.claim() else { return }
+            race.read?.cancel()
+            cont.resume(throwing: TransportError.closed)
+        }
+    }
+}
+
 /// Shared admission: open a WebSocket to the relay room and run the
 /// Hello -> Challenge -> Proof -> Result handshake. Returns the Result and the
 /// connected task on success.
@@ -461,6 +525,7 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
         // In a combined-listener race, the loser's accept task is cancelled;
         // tear the parked socket down so the mac releases the room's mac slot
         // instead of leaving a dangling park.
+        let deathSignal = ParkedDeathSignal()
         return try await withTaskCancellationHandler {
             defer { lock.withLock { if current === ws { current = nil } } }
             _ = try await RelayAdmissionClient.admit(ws: ws, role: .mac) { challenge in
@@ -471,16 +536,20 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
             onParked?()
             // Keep the parked socket alive while it waits, possibly long, for the
             // phone to scan and send msg1; otherwise the edge reaps it (~30s idle)
-            // and the room silently loses its mac. A failed ping cancels the
-            // socket so this parked receive() throws instead of hanging forever.
+            // and the room silently loses its mac. A failed ping cancels the socket,
+            // and its death fires the signal below, so this parked receive() throws
+            // even on a half-open socket that ignores cancellation (a hard network
+            // drop) instead of hanging forever. There is no RelayTransport yet to own
+            // the close signal, so the park wires the keepalive's death directly.
             let keepalive = relayKeepalive(for: ws, intervalNanos: keepaliveIntervalNanos)
+            keepalive.setOnDeath { deathSignal.fire() }
             keepalive.start()
             // Block until the phone actually joins and sends its first frame (Noise
             // msg1), so the combined listener doesn't treat an empty parked room as
             // an inbound connection.
             let firstMessage: RelayWebSocketMessage
             do {
-                firstMessage = try await ws.receive()
+                firstMessage = try await receiveParked(ws: ws, death: deathSignal)
             } catch {
                 keepalive.stop()
                 throw error
@@ -495,6 +564,8 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
             return transport
         } onCancel: {
             ws.cancel()
+            // Unblock the parked read even if the socket ignores cancel.
+            deathSignal.fire()
         }
     }
 
