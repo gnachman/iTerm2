@@ -516,6 +516,10 @@ Settings Improvements:
   fades. Off by default.
 
 Bug Fixes:
+- Improve tab dragging: keep Metal enabled
+  for normal tab drags, switch reorder
+  slots near tab midpoints, and stabilize
+  split-pane target highlights.
 - tmux integration now parses pane state
   correctly on macOS 26 and later. A new
   system NSString method had shadowed ours

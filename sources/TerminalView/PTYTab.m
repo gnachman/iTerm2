@@ -6883,10 +6883,10 @@ typedef struct {
 
     iTermMetalUnavailableReason reason = iTermMetalUnavailableReasonNone;
     BOOL allowed = NO;
-    // Note: we turn off metal when dragging a split in a tmux tab because it's hard to keep the
-    // frame of the iTermMTKView correct without resizing it.
-    if ([self.delegate tabAnyDragInProgress:self] || _isDraggingSplitInTmuxTab) {
-        _metalUnavailableReason = iTermMetalUnavailableReasonTabDragInProgress;
+    // Split drags in tmux still need legacy drawing because keeping the Metal view sized correctly
+    // is hard there. Plain tab drags can stay on Metal.
+    if (_isDraggingSplitInTmuxTab) {
+        _metalUnavailableReason = iTermMetalUnavailableReasonSplitPaneBeingDragged;
     } else if (resizing) {
         _metalUnavailableReason = iTermMetalUnavailableReasonWindowResizing;
     } else if (!powerOK) {
@@ -6903,8 +6903,6 @@ typedef struct {
         _metalUnavailableReason = iTermMetalUnavailableReasonScreensChanging;
     } else if ([self.delegate tabIsSwiping]) {
         _metalUnavailableReason = iTermMetalUnavailableReasonSwipingBetweenTabs;
-    } else if (_isDraggingSplitInTmuxTab) {
-        _metalUnavailableReason = iTermMetalUnavailableReasonSplitPaneBeingDragged;
     } else {
         _metalUnavailableReason = iTermMetalUnavailableReasonNone;
         allowed = YES;

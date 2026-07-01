@@ -9,6 +9,23 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "NSColor+iTerm.h"
 
+static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSPoint point) {
+    switch (half) {
+        case kWestHalf:
+            return point.x;
+        case kEastHalf:
+            return size.width - point.x;
+        case kSouthHalf:
+            return point.y;
+        case kNorthHalf:
+            return size.height - point.y;
+        case kNoHalf:
+        case kFullPane:
+            return INFINITY;
+    }
+    return INFINITY;
+}
+
 @interface SplitSelectionView ()
 
 - (void)_createTrackingArea;
@@ -254,19 +271,24 @@
     }
     SplitSessionHalf possibilities[4];
     CGFloat scores[4];
+    CGFloat distances[4];
     int numPossibilities = 0;
     if (point.x < self.frame.size.width / 2) {
         scores[numPossibilities] = point.x / self.frame.size.width;
+        distances[numPossibilities] = point.x;
         possibilities[numPossibilities++] = kWestHalf;
     } else {
         scores[numPossibilities] = (self.frame.size.width - point.x) / self.frame.size.width;
+        distances[numPossibilities] = self.frame.size.width - point.x;
         possibilities[numPossibilities++] = kEastHalf;
     }
     if (point.y < self.frame.size.height / 2) {
         scores[numPossibilities] = point.y / self.frame.size.height;
+        distances[numPossibilities] = point.y;
         possibilities[numPossibilities++] = kSouthHalf;
     } else {
         scores[numPossibilities] = (self.frame.size.height - point.y) / self.frame.size.height;
+        distances[numPossibilities] = self.frame.size.height - point.y;
         possibilities[numPossibilities++] = kNorthHalf;
     }
 
@@ -279,9 +301,20 @@
         }
     }
 
-    if (half_ != possibilities[bestIndex] && minScore < 0.4) {
-      half_ = possibilities[bestIndex];
-      [self setNeedsDisplay:YES];
+    if (half_ == possibilities[bestIndex] || minScore >= 0.4) {
+        return;
+    }
+    // Dead zone around diagonal boundaries, with a minimum size for small panes.
+    const NSSize size = self.frame.size;
+    const CGFloat currentDist = SplitHalfDistanceFromEdge(half_, size, point);
+    const CGFloat kHysteresisFraction = 0.05;
+    const CGFloat kHysteresisMinPx = 8.0;
+    const CGFloat minDim = MIN(size.width, size.height);
+    const CGFloat hysteresis = MAX(kHysteresisFraction * minDim, kHysteresisMinPx);
+    const BOOL switchNow = (currentDist == INFINITY || distances[bestIndex] < currentDist - hysteresis);
+    if (switchNow) {
+        half_ = possibilities[bestIndex];
+        [self setNeedsDisplay:YES];
     }
 }
 
