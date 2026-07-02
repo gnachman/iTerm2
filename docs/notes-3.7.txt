@@ -1597,3 +1597,9 @@ Bug Fixes:
   share one color (or none) the title
   bar keeps blending with the terminal
   background as before. Issue 12903.
+- Fix dead-key composition (such as US
+  International apostrophe then e) losing
+  its accent under the Kitty keyboard
+  protocol when both “report all keys as
+  escape codes” and “report associated
+  text” are enabled. Issue 12906.

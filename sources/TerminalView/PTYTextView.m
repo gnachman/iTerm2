@@ -727,7 +727,25 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // dispatched here. They're now handled centrally in
     // -[iTermApplication handleKeypressInTerminalWindow:] so they fire
     // regardless of first responder.
-    if ([[NSApp mainMenu] performKeyEquivalent:theEvent]) {
+    // During key-event replay (used by tests/modern-key-reporting-test.py) the
+    // synthetic events are posted through NSApp.postEvent, so they reach here on
+    // the "regular path" instead of being consumed by the terminal key handler.
+    // If we forwarded them to the main menu, macOS 15+ window-tiling items would
+    // claim them: those items match a bare Control-<key> because the Fn part of
+    // the gesture is not in the key equivalent (the OS enforces Fn at the HID
+    // layer, which a manual performKeyEquivalent: call bypasses). Replaying
+    // Control-C would then match "Center" and move the window instead of reaching
+    // the terminal. Skip the menu entirely while replaying so the event falls
+    // through to the keyboard handler below. Note we must check the flag before
+    // calling performKeyEquivalent:, since calling it is what triggers the tile.
+    BOOL mainMenuHandled = NO;
+#if DEBUG
+    if (![iTermKeyEventReplayer isReplaying])
+#endif
+    {
+        mainMenuHandled = [[NSApp mainMenu] performKeyEquivalent:theEvent];
+    }
+    if (mainMenuHandled) {
         // Originally I tried to detect when a key would be handled later by a
         // key equivalent by checking if Cmd is pressed, but that doesn't work
         // with the profoundly stupid macOS 15 window tiling shortcuts. They

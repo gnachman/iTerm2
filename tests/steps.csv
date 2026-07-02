@@ -1,4 +1,4 @@
-Key,Type,Modifiers,Option as alt?,Keyboard,Mode,Expected output,Notes
+Key,Type,Modifiers,Option as alt?,Keyboard,Mode,Expected output,Notes,Manual
 Right Arrow,"Press and repeat once",None,NA,US English,1,\e[C\e[C
 Home,"Hit",None,NA,US English,1,\e[H
 End,"Hit",None,NA,US English,1,\e[F
@@ -73,16 +73,17 @@ Option,"Hit",None,FALSE,US English,24,\e[57443;3u,
 a,"Hit",None,FALSE,US English,24,\e[97;;97u,
 a,"Hit",Shift,FALSE,US English,24,\e[57441;2u\e[97;2;65u,
 a,"Hit",Option,FALSE,US English,24,\e[57443;3u\e[97;3;229u,
-2,"Hit",Control Shift,FALSE,US English,24,\e[57448;5u\e[57441;6u\e[47;6u,
+/,"Hit",Control Shift,FALSE,US English,24,\e[57448;5u\e[57441;6u\e[47;6u,
 ,,,,,,,
 5,"Hit",Shift Option,FALSE,AZERTY,8,\e[57441;2u\e[57443;4u\e[53;4u,
 ,,,,,,,
-x,"Hit",Super,NA,US English,1,\e[120;9u,"Test this manually"
-x,"Hit",Hyper,NA,US English,1,\e[120;17u,"Test this manually"
-x,"Hit",Meta,NA,US English,1,\e[120;33u,"Test this manually"
+x,"Hit",Super,NA,US English,1,\e[120;9u,"Test this manually",TRUE
+x,"Hit",Hyper,NA,US English,1,\e[120;17u,"Test this manually",TRUE
+x,"Hit",Meta,NA,US English,1,\e[120;33u,"Test this manually",TRUE
 ,,,,,,,
-None,"Type option-e, then o",None,FALSE,US English,8,\e[57443;3u\e[111u,"Test this manually"
-None,"Type option-e, then shift-o",None,FALSE,US English,8,\e[57443;3u\e[57441;2u\e[111;2u,"Test this manually"
+None,"Type option-e, then o",None,FALSE,US English,8,\e[57443;3u\e[111u,"Test this manually",TRUE
+None,"Type option-e, then shift-o",None,FALSE,US English,8,\e[57443;3u\e[57441;2u\e[111;2u,"Test this manually",TRUE
 ,,,
 c,"Hit",Control Option,FALSE,US English,8,\e[57448;5u\e[57443;7u\e[99;7u
-e,"Press apostrophe and then hit",None,NA,US International PC,9,\e[101u,"Test this manually"
+e,"Press apostrophe and then hit",None,NA,US International PC,9,\e[101u,"Test this manually",TRUE
+e,"Press apostrophe and then hit",None,NA,US International PC,25,\e[101;;233u,"Issue 12906: dead key composition with associated text (bit 16). é is reported as 233. Bug: sends \e[101;;101u. Test this manually",TRUE
