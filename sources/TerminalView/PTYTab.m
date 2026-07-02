@@ -7001,6 +7001,23 @@ typedef struct {
 #pragma mark - PTYSessionDelegate
 // TODO: Move the rest of the delegate methods here.
 
+- (BOOL)sessionTabHasMultipleDistinctTabColors {
+    NSString *firstColor = nil;
+    for (PTYSession *session in [self sessions]) {
+        NSColor *tabColor = session.tabColor;
+        if (!tabColor) {
+            continue;
+        }
+        NSString *hex = tabColor.srgbHexString;
+        if (!firstColor) {
+            firstColor = hex;
+        } else if (![firstColor isEqualToString:hex]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.

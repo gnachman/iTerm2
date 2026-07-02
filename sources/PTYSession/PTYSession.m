@@ -19948,6 +19948,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return self.tabColor;
 }
 
+- (BOOL)sessionViewTabHasMultipleDistinctTabColors {
+    return [self.delegate sessionTabHasMultipleDistinctTabColors];
+}
+
 - (BOOL)sessionViewUseActivePaneBorder {
     return _useActivePaneBorder;
 }

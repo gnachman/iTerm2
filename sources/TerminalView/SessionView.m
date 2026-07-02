@@ -1051,7 +1051,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return nil;
 }
 - (void)tabColorDidChange {
+    // A sibling pane's tab color may have changed, which can flip whether this
+    // tab has multiple distinct tab colors and therefore whether the title bar
+    // should be tinted. Refresh both the background and text color and redraw.
     [_title updateBackgroundColor];
+    [_title updateTextColor];
+    [_title setNeedsDisplay:YES];
 }
 
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
@@ -1812,7 +1817,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                                                                                  isFirstResponder:[_delegate sessionViewTerminalIsFirstResponder]
                                                                                       dimOnlyText:[_delegate sessionViewShouldDimOnlyText]
                                                                             adjustedDimmingAmount:[self adjustedDimmingAmount]
-                                                                                transparencyAlpha:[self.delegate sessionViewTransparencyAlpha]];
+                                                                                transparencyAlpha:[self.delegate sessionViewTransparencyAlpha]
+                                                                  tabHasMultipleDistinctTabColors:[_delegate sessionViewTabHasMultipleDistinctTabColors]];
 }
 
 - (NSEdgeInsets)extraMargins {

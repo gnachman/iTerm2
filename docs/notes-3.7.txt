@@ -1589,3 +1589,11 @@ Bug Fixes:
   make box-drawing lines (such as a TUI
   input box) render dashed instead of
   solid. Issue 12907.
+- In the Minimal theme, when panes in a
+  tab have two or more different tab
+  colors, each pane's title bar is now
+  tinted with its own tab color so you
+  can tell them apart. When the panes
+  share one color (or none) the title
+  bar keeps blending with the terminal
+  background as before. Issue 12903.

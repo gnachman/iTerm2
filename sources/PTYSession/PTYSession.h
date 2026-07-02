@@ -191,6 +191,9 @@ typedef enum {
 // window is key.
 - (BOOL)sessionIsActiveInSelectedTab:(PTYSession *)session;
 
+// Do two or more panes in this tab have different (non-nil) tab colors?
+- (BOOL)sessionTabHasMultipleDistinctTabColors;
+
 // Session-initiated name change.
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
 

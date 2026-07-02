@@ -111,6 +111,9 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 // Gives the tab color for this session.
 - (nullable NSColor *)sessionViewTabColor;
 
+// Do two or more panes in this session's tab have different (non-nil) tab colors?
+- (BOOL)sessionViewTabHasMultipleDistinctTabColors;
+
 // Active pane border settings for browser sessions.
 - (BOOL)sessionViewUseActivePaneBorder;
 - (nullable NSColor *)sessionViewActivePaneBorderColor;
