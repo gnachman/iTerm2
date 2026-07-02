@@ -527,6 +527,10 @@ Bug Fixes:
   now honored, fixing “Permission denied
   (publickey)” failures that only happened with
   the SSH command type.
+- On macOS Tahoe the tab activity/progress
+  indicator now draws as an outline around the
+  pill-shaped tab instead of a bar that crowded
+  the tab title and status text.
 - Fixed a crash in Replace Selection (e.g.,
   Replace with Pretty-Printed JSON) when the
   replacement had more lines than the selection.

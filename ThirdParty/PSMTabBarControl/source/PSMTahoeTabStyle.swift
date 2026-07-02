@@ -435,23 +435,30 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         return rect
     }
 
+    // The activity indicator hugs the pill as a rounded outline rather than a
+    // bar inside it, so it never crowds the tab title or status subtitle.
+    private var progressRingWidth: CGFloat { 2 }
+
     @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
-        let cellFrame = cell.frame
-        // Enclose the progress bar within the pill-shaped background for all tabs.
-        let pillRect = backgroundRect(for: cellFrame)
-        let horizontalInset = CGFloat(4)
-        let verticalInset = CGFloat(1)
-        return NSRect(x: pillRect.origin.x + horizontalInset,
-                      y: pillRect.origin.y + verticalInset,
-                      width: max(CGFloat(0), pillRect.size.width - horizontalInset * 2),
-                      height: PSMTabBarProgressBarHeight)
+        // Grow the bar past the pill on every side so it can render as an
+        // outline around the tab. The middle is punched out by the clip path.
+        return backgroundRect(for: cell.frame).insetBy(dx: -progressRingWidth,
+                                                       dy: -progressRingWidth)
     }
 
     @objc func progressBarClipPath(forTabCell cell: PSMTabBarCell) -> NSBezierPath? {
-        let cellFrame = cell.frame
-        let rect = backgroundRect(for: cellFrame).insetBy(dx: 1, dy: 1)
-        let radius = max(0, barRadius - 2.5 - 1)
-        return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+        let pillRect = backgroundRect(for: cell.frame)
+        let pillRadius = max(0, barRadius - 2.5)
+        let outerRect = pillRect.insetBy(dx: -progressRingWidth, dy: -progressRingWidth)
+        let outerRadius = pillRadius + progressRingWidth
+        // Two nested rounded rects with even-odd winding form a ring: the outer
+        // rect is filled and the pill-shaped inner rect is punched out so the
+        // tab shows through. PSMTabBarControl applies this as an even-odd layer
+        // mask (the winding rule set here is not carried by iterm_CGPath).
+        let path = NSBezierPath(roundedRect: outerRect, xRadius: outerRadius, yRadius: outerRadius)
+        path.append(NSBezierPath(roundedRect: pillRect, xRadius: pillRadius, yRadius: pillRadius))
+        path.windingRule = .evenOdd
+        return path
     }
 
     // MARK: - Drawing

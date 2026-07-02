@@ -339,7 +339,11 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell {
     iTermProgressBarView *progressBar = (iTermProgressBarView *)view;
-    progressBar.heightValue = PSMTabBarProgressBarHeight;
+    // The gradient fills the view's full height before the clip-path mask is
+    // applied. For the flush bar styles the view is PSMTabBarProgressBarHeight
+    // tall; for the Tahoe ring it's the outset pill height, so the gradient
+    // fills the ring before the mask carves out its center.
+    progressBar.heightValue = MAX(PSMTabBarProgressBarHeight, NSHeight(view.frame));
     progressBar.transparent = [self.style respondsToSelector:@selector(progressBarClipPathForTabCell:)];
     progressBar.darkMode = self.style.useLightControls;
     progressBar.colorScheme = [self tabProgressBarColorSchemeForCell:cell];

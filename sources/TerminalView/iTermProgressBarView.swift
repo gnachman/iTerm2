@@ -44,7 +44,14 @@ extension VT100ScreenProgress {
 
 @objc
 class iTermProgressBarView: NSView {
-    @objc var heightValue: CGFloat = 2.0
+    @objc var heightValue: CGFloat = 2.0 {
+        didSet {
+            if heightValue != oldValue {
+                // desiredHeight drives the sublayer sizes in layoutSublayers(of:).
+                layer?.setNeedsLayout()
+            }
+        }
+    }
     @objc var colorScheme: String = iTermProgressBarColorSchemeDefault {
         didSet {
             if colorScheme != oldValue {
@@ -549,6 +556,16 @@ extension iTermProgressBarView {
         layer?.setNeedsLayout()
     }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        // The gradient sublayers are sized in layoutSublayers(of:). When the
+        // frame changes without the mode/state changing (e.g. the tab bar grows
+        // after a compact->regular theme switch while progress is running),
+        // nothing else marks the sublayers for layout, so they would keep their
+        // old height and the ring would only be partially filled.
+        layer?.setNeedsLayout()
+    }
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if window == nil {
@@ -600,11 +617,17 @@ extension iTermProgressBarView: CALayerDelegate {
             }
         case .indeterminate:
             indeterminateContainer.frame = CGRect(x: 0, y: 0, width: width, height: height)
-            // Only update bounds, not position — the position is driven by the
-            // scroll animation and setting frame would create a competing
-            // implicit animation.
+            // Only update bounds and the vertical position, not position.x. The
+            // horizontal position is driven by the scroll animation and setting
+            // it here would create a competing implicit animation. The layers
+            // are center-anchored, so position.y must track the container height
+            // (otherwise a bounds change from a shorter setup, e.g. the 2pt
+            // compact bar, leaves the layer centered too low and the top of a
+            // taller bar/ring goes unfilled).
             indeterminateLayer1.bounds = CGRect(origin: .zero, size: size)
             indeterminateLayer2.bounds = CGRect(origin: .zero, size: size)
+            indeterminateLayer1.position.y = height / 2.0
+            indeterminateLayer2.position.y = height / 2.0
             if indeterminateLayer1.animation(forKey: "indeterminateScroll") == nil ||
                 width != indeterminateAnimationWidth {
                 startIndeterminateAnimation()
