@@ -11,6 +11,7 @@
 #import "PTYTextView.h"
 #import "VT100Terminal.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermMetalPerFrameState.h"
@@ -36,25 +37,26 @@ static vector_float4 VectorForColor(NSColor *color) {
     _fontTable = textView.fontTable;
     _useBoldFont = textView.useBoldFont;
     _useItalicFont = textView.useItalicFont;
-    _useNonAsciiFont = textView.useNonAsciiFont;
-    _reverseVideo = textView.dataSource.terminalReverseVideo;
+    _renderInputs.useNonAsciiFont = textView.useNonAsciiFont;
+    _renderInputs.reverseVideo = textView.dataSource.terminalReverseVideo;
     _softAlternateScreenMode = drawingHelper.softAlternateScreenMode;
-    _useCustomBoldColor = textView.useCustomBoldColor;
-    _brightenBold = textView.brightenBold;
-    _thinStrokes = textView.thinStrokes;
-    _isRetina = drawingHelper.isRetina;
+    _renderInputs.useCustomBoldColor = textView.useCustomBoldColor;
+    _renderInputs.brightenBold = textView.brightenBold;
+    _renderInputs.thinStrokes = textView.thinStrokes;
+    _renderInputs.isRetina = drawingHelper.isRetina;
     _isInKeyWindow = [textView isInKeyWindow];
     _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
     _textViewIsFirstResponder = drawingHelper.textViewIsFirstResponder;
     _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.focusFollowsMouse.haveStolenFocus);
-    _blinkAllowed = textView.blinkAllowed;
+    _renderInputs.blinkAllowed = textView.blinkAllowed;
     _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
     const BOOL forceAA = (drawingHelper.forceAntialiasingOnRetina && drawingHelper.isRetina);
     _asciiAntialias = drawingHelper.asciiAntiAlias || forceAA;
-    _nonasciiAntialias = (_useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias)  || forceAA;
-    _useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
-    _useSelectedTextColor = drawingHelper.useSelectedTextColor;
-    _ligaturesEnabled = drawingHelper.asciiLigatures || drawingHelper.nonAsciiLigatures;
+    _nonasciiAntialias = (_renderInputs.useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias)  || forceAA;
+    _renderInputs.useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
+    _renderInputs.useSelectedTextColor = drawingHelper.useSelectedTextColor;
+    _renderInputs.ligaturesEnabled = drawingHelper.asciiLigatures || drawingHelper.nonAsciiLigatures;
+    _renderInputs.underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
     _showBroadcastStripes = drawingHelper.showStripes;
     NSColorSpace *colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:colorSpace];
@@ -89,11 +91,11 @@ static vector_float4 VectorForColor(NSColor *color) {
         .failure = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper errorMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector
     };
 
-    _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
-    _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
+    _renderInputs.isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
+    _renderInputs.unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
                                                                                        towardsGrayLevel:0.5]);
-    _transparencyAlpha = textView.transparencyAlpha;
-    _transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
+    _renderInputs.transparencyAlpha = textView.transparencyAlpha;
+    _renderInputs.transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
 
     // Cursor guide
     _cursorGuideEnabled = drawingHelper.highlightCursorLine;
@@ -118,7 +120,7 @@ static vector_float4 VectorForColor(NSColor *color) {
                                                                       cellHeight:_cellSize.height];
     _asciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_fontTable.asciiFont.font];
 
-    if (_useNonAsciiFont) {
+    if (_renderInputs.useNonAsciiFont) {
         _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
         _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineForFont:_fontTable.defaultNonASCIIFont.font
                                                                                 yOffset:0

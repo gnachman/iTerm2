@@ -23,6 +23,7 @@
 #import "iTermLRUDictionary.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalPerFrameStateConfiguration.h"
+#import "iTermRowRenderInputs.h"
 #import "iTermMetalPerFrameStateRow.h"
 #import "iTermMutableAttributedStringBuilder.h"
 #import "iTermPreferences.h"
@@ -440,7 +441,7 @@ typedef struct {
                                                              components[2],
                                                              components[3]);
                 } else {
-                    if (_configuration->_reverseVideo) {
+                    if (self->_configuration->_renderInputs.reverseVideo) {
                         _cursorInfo.textColor = [_configuration->_colorMap fastColorForKey:kColorMapForeground];
                     } else {
                         _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
@@ -498,13 +499,13 @@ typedef struct {
                                                                             scale:_configuration->_scale
                                                                       useBoldFont:_configuration->_useBoldFont
                                                                     useItalicFont:_configuration->_useItalicFont
-                                                                 usesNonAsciiFont:_configuration->_useNonAsciiFont
+                                                                 usesNonAsciiFont:self->_configuration->_renderInputs.useNonAsciiFont
                                                                  asciiAntiAliased:_configuration->_asciiAntialias
                                                               nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
 }
 
 - (CGFloat)transparencyAlpha {
-    return _configuration->_transparencyAlpha;
+    return self->_configuration->_renderInputs.transparencyAlpha;
 }
 
 - (CGFloat)blend {
@@ -824,10 +825,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     float alpha;
     if (iTermTextIsMonochrome()) {
         if (_backgroundImage) {
-            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
+            alpha = iTermAlphaValueForTopView(1 - self->_configuration->_renderInputs.transparencyAlpha,
                                               _configuration->_backgroundImageBlend);
         } else {
-            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha, 0);
+            alpha = iTermAlphaValueForTopView(1 - self->_configuration->_renderInputs.transparencyAlpha, 0);
         }
     } else {
         // Can assume transparencyAlpha is 1
@@ -863,7 +864,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (BOOL)shouldDrawCursorGuideBelowText {
-    return !_configuration->_useNativePowerlineGlyphs || _configuration->_cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
+    return !self->_configuration->_renderInputs.useNativePowerlineGlyphs || _configuration->_cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
 }
 
 - (BOOL)softAlternateScreenMode {
@@ -1566,11 +1567,11 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     int asIndex = -1;
     int previousVisualX = -1;
     BOOL lastSelected = NO;
-    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
+    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:self->_configuration->_renderInputs.useNativePowerlineGlyphs];
     iTermTextColorKey keys[2];
     iTermTextColorKey *currentColorKey = &keys[0];
     iTermTextColorKey *previousColorKey = &keys[1];
-    const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
+    const BOOL underlineHyperlinks = self->_configuration->_renderInputs.underlineHyperlinks;
     const BOOL darkMode = _configuration->_colorMap.backgroundIsDark;
     int nextAttributedStringLogicalStartIndex = attributedStrings.count > 0 ? [attributedStrings.firstObject sourceColumnRange].location : -1;
     id<iTermAttributedString> attributedString = nil;
@@ -1646,7 +1647,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                                    logicalIndex > 0 ? &line[logicalIndex - 1] : NULL,
                                                                                    line[logicalIndex].complexChar && (complexString != nil),
                                                                                    _configuration->_blinkingItemsVisible,
-                                                                                   _configuration->_blinkAllowed,
+                                                                                   self->_configuration->_renderInputs.blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
                                                                                    url != nil);
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
@@ -1821,7 +1822,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
     NSMutableArray<id<iTermAttributedString>> *allAttributedStrings = nil;
 
-    if (bidiInfo || _configuration->_ligaturesEnabled) {
+    if (bidiInfo || self->_configuration->_renderInputs.ligaturesEnabled) {
         allAttributedStrings = [NSMutableArray array];
 
         for (int i = 0; i < rles; i++) {
@@ -1891,7 +1892,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         vector_float4 cursorTextColor;
         if (_cursorInfo.shouldDrawText) {
             cursorTextColor = _cursorInfo.textColor;
-        } else if (_configuration->_reverseVideo) {
+        } else if (self->_configuration->_renderInputs.reverseVideo) {
             cursorTextColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapBackground],
                                              _configuration->_colorSpace);
         } else {
@@ -1922,7 +1923,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
-    switch (_configuration->_thinStrokes) {
+    switch (self->_configuration->_renderInputs.thinStrokes) {
         case iTermThinStrokesSettingAlways:
             return YES;
 
@@ -1933,13 +1934,13 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             return NO;
 
         case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
-            if (!_configuration->_isRetina) {
+            if (!self->_configuration->_renderInputs.isRetina) {
                 return NO;
             }
             break;
 
         case iTermThinStrokesSettingRetinaOnly:
-            return _configuration->_isRetina;
+            return self->_configuration->_renderInputs.isRetina;
     }
 
     const float backgroundBrightness = SIMDPerceivedBrightness(attributes->backgroundColor);
@@ -1948,22 +1949,22 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 }
 
 - (vector_float4)selectionColorForCurrentFocus {
-    if (_configuration->_isFrontTextView) {
+    if (self->_configuration->_renderInputs.isFrontTextView) {
         return VectorForColor([_configuration->_colorMap processedBackgroundColorForBackgroundColor:[_configuration->_colorMap colorForKey:kColorMapSelection]],
                               _configuration->_colorSpace);
     } else {
-        return _configuration->_unfocusedSelectionColor;
+        return self->_configuration->_renderInputs.unfocusedSelectionColor;
     }
 }
 
 - (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey
                                              isDefault:(BOOL *)isDefault {
     vector_float4 color = { 0, 0, 0, 0 };
-    CGFloat alpha = _configuration->_transparencyAlpha;
+    CGFloat alpha = self->_configuration->_renderInputs.transparencyAlpha;
     *isDefault = NO;
     if (colorKey->selected) {
         color = [self selectionColorForCurrentFocus];
-        if (_configuration->_transparencyAffectsOnlyDefaultBackgroundColor) {
+        if (self->_configuration->_renderInputs.transparencyAffectsOnlyDefaultBackgroundColor) {
             alpha = 1;
         }
     } else if (colorKey->image) {
@@ -1987,10 +1988,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         // When set in preferences, applies alpha only to the defaultBackground
         // color, useful for keeping Powerline segments opacity(background)
         // consistent with their seperator glyphs opacity(foreground).
-        if (_configuration->_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
+        if (self->_configuration->_renderInputs.transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
             alpha = 1;
         }
-        if (_configuration->_reverseVideo && defaultBackground) {
+        if (self->_configuration->_renderInputs.reverseVideo && defaultBackground) {
             // Reverse video is only applied to default background-
             // color chars.
             color = [self vectorColorForCode:ALTSEM_DEFAULT
@@ -2075,7 +2076,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                     if (isBackgroundForDefault) {
                         return kColorMapBackground;
                     } else {
-                        if (isBold && _configuration->_useCustomBoldColor) {
+                        if (isBold && self->_configuration->_renderInputs.useCustomBoldColor) {
                             return kColorMapBold;
                         } else {
                             return kColorMapForeground;
@@ -2094,7 +2095,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
             if (isBold &&
-                _configuration->_brightenBold &&
+                self->_configuration->_renderInputs.brightenBold &&
                 (theIndex < 8) &&
                 !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.
@@ -2152,7 +2153,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                      scale:scale
                                                                useBoldFont:_configuration->_useBoldFont
                                                              useItalicFont:_configuration->_useItalicFont
-                                                          usesNonAsciiFont:_configuration->_useNonAsciiFont
+                                                          usesNonAsciiFont:self->_configuration->_renderInputs.useNonAsciiFont
                                                           asciiAntiAliased:_configuration->_asciiAntialias
                                                        nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
     iTermCharacterSourceAttributes *attributes =
@@ -2208,7 +2209,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                      scale:scale
                                                                useBoldFont:_configuration->_useBoldFont
                                                              useItalicFont:_configuration->_useItalicFont
-                                                          usesNonAsciiFont:_configuration->_useNonAsciiFont
+                                                          usesNonAsciiFont:self->_configuration->_renderInputs.useNonAsciiFont
                                                           asciiAntiAliased:_configuration->_asciiAntialias
                                                        nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
     iTermCharacterSourceAttributes *attributes =
@@ -2234,7 +2235,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                          attributes:attributes
                                          boxDrawing:glyphKey->payload.regular.boxDrawing
                                              radius:radius
-                           useNativePowerlineGlyphs:_configuration->_useNativePowerlineGlyphs
+                           useNativePowerlineGlyphs:self->_configuration->_renderInputs.useNativePowerlineGlyphs
                                       lineAttribute:glyphKey->lineAttribute
                                             context:ctx];
     if (characterSource == nil) {
@@ -2337,17 +2338,17 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 }
 
 - (BOOL)thinStrokesForTimestamps {
-    switch (_configuration->_thinStrokes) {
+    switch (self->_configuration->_renderInputs.thinStrokes) {
         case iTermThinStrokesSettingNever:
             return NO;
         case iTermThinStrokesSettingAlways:
             return YES;
         case iTermThinStrokesSettingRetinaOnly:
-            return _configuration->_isRetina;
+            return self->_configuration->_renderInputs.isRetina;
         case iTermThinStrokesSettingDarkBackgroundsOnly:
             return self.timestampsBackgroundColor.isDark;
         case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
-            return _configuration->_isRetina && self.timestampsBackgroundColor.isDark;
+            return self->_configuration->_renderInputs.isRetina && self.timestampsBackgroundColor.isDark;
     }
 }
 
@@ -2393,12 +2394,12 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLink],
                                   _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
-    } else if (selected && _configuration->_useSelectedTextColor) {
+    } else if (selected && self->_configuration->_renderInputs.useSelectedTextColor) {
         // Selected text.
         rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText],
                                   _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
-    } else if (_configuration->_reverseVideo &&
+    } else if (self->_configuration->_renderInputs.reverseVideo &&
                ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
                 (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
            // Reverse video is on. Either is cursor or has default foreground color. Use
@@ -2457,7 +2458,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
 - (NSColor *)backgroundColorForCursor {
     NSColor *color;
-    if (_configuration->_reverseVideo) {
+    if (self->_configuration->_renderInputs.reverseVideo) {
         color = [[_configuration->_colorMap colorForKey:kColorMapCursorText] colorWithAlphaComponent:1.0];
     } else {
         color = [[_configuration->_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
@@ -2485,7 +2486,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                        muted:(BOOL)muted {
     BOOL isBackground = [iTermTextDrawingHelper cursorUsesBackgroundColorForScreenChar:screenChar
                                                                         wantBackground:wantBackgroundColor
-                                                                          reverseVideo:_configuration->_reverseVideo];
+                                                                          reverseVideo:self->_configuration->_renderInputs.reverseVideo];
 
     vector_float4 color;
     if (wantBackgroundColor) {
@@ -2591,7 +2592,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 #pragma mark - iTermAttributedStringBuilderDelegate
 
 - (BOOL)useSelectedTextColor {
-    return _configuration->_useSelectedTextColor;
+    return self->_configuration->_renderInputs.useSelectedTextColor;
 }
 
 // I believe this is never called because we always set the background color in the text context.
