@@ -113,6 +113,12 @@ class ShapeBuilder: NSObject {
             ctx.setLineCap(endcap)
         }
         ctx.strokePath()
+        if lineDash != nil {
+            // Restore the solid pattern so we don't leak the dash into later
+            // strokes on this shared context. Box-drawing glyphs stroke without
+            // setting their own dash and would otherwise render dashed. See #12907.
+            ctx.setLineDash(phase: 0, lengths: [])
+        }
     }
 
     // Returns filled rects equivalent to stroking the path, or nil if any segment

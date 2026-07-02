@@ -1580,3 +1580,8 @@ Bug Fixes:
   percent signs were being double-
   encoded on macOS 14 and later. Issue
   12914.
+- Fix a bug where a dashed underline on
+  screen, with ligatures enabled, could
+  make box-drawing lines (such as a TUI
+  input box) render dashed instead of
+  solid. Issue 12907.
