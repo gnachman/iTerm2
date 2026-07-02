@@ -136,6 +136,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .resolveMentions(identifiers: []),
         .fetchSessionScreenInfo(sessionGuid: "s"),
         .fetchSessionContent(sessionGuid: "s", firstLine: 0, lineCount: 1),
+        .fetchHistoryTile(streamID: 1, firstAbsLine: 2, lineCount: 3, generationId: 4),
         .fetchWorkgroupInfo(workgroupID: "w"),
         .fetchSessionTree,
         .pushStatus(authorization: .authorized, token: nil, relaySecret: nil, sandbox: false),
@@ -145,6 +146,23 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .messagesSince(collapseToken: "t", seq: 0, limit: 1, nonce: nil),
         .syncSince(messageSeq: 0, alertSeq: 0, limit: 1, nonce: nil),
         .unpairing,
+        .startSessionStream(sessionGuid: "s",
+                            params: CompanionStreamParams(supportedCodecs: [.hevc],
+                                                          maxFrameRate: 30,
+                                                          maxBitrate: 500_000)),
+        .stopSessionStream(streamID: 1),
+        .requestKeyframe(streamID: 1),
+        .updateStreamParams(streamID: 1,
+                            params: CompanionStreamParams(supportedCodecs: [.hevc, .h264],
+                                                          maxFrameRate: 60,
+                                                          maxBitrate: nil)),
+        .streamAck(streamID: 1, lastPTSMilliseconds: 0, queueDepth: 0),
+        .selectionGesture(streamID: 1, phase: .begin, mode: .character,
+                          point: CompanionSelectionPoint(absLine: 0, column: 0)),
+        .clearSelection(streamID: 1),
+        .copySelection(sessionGuid: "g"),
+        .selectAllInStream(streamID: 1),
+        .pasteText(sessionGuid: "g", text: "x"),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -166,6 +184,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .resolveMentions: return "resolveMentions"
         case .fetchSessionScreenInfo: return "fetchSessionScreenInfo"
         case .fetchSessionContent: return "fetchSessionContent"
+        case .fetchHistoryTile: return "fetchHistoryTile"
         case .fetchWorkgroupInfo: return "fetchWorkgroupInfo"
         case .fetchSessionTree: return "fetchSessionTree"
         case .pushStatus: return "pushStatus"
@@ -175,6 +194,16 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .messagesSince: return "messagesSince"
         case .syncSince: return "syncSince"
         case .unpairing: return "unpairing"
+        case .startSessionStream: return "startSessionStream"
+        case .stopSessionStream: return "stopSessionStream"
+        case .requestKeyframe: return "requestKeyframe"
+        case .updateStreamParams: return "updateStreamParams"
+        case .streamAck: return "streamAck"
+        case .selectionGesture: return "selectionGesture"
+        case .clearSelection: return "clearSelection"
+        case .copySelection: return "copySelection"
+        case .selectAllInStream: return "selectAllInStream"
+        case .pasteText: return "pasteText"
         }
     }
 
@@ -190,6 +219,9 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .sessionScreenInfo(CompanionSessionScreenInfo(guid: "s", name: "n", lineCount: 0, columns: 0,
                                                       width: 0, lineHeight: 0, scale: 1)),
         .sessionContent(CompanionSessionContent(guid: "s", firstLine: 0, lineCount: 0, pngData: Data())),
+        .historyTile(CompanionHistoryTile(streamID: 1, generationId: 2, firstAbsLine: 3, lineCount: 4,
+                                          windowFirstAbsLine: 3, windowLineCount: 10, pngData: Data())),
+        .streamExtent(streamID: 1, firstAbsLine: 2, totalLines: 3),
         .workgroupInfo(CompanionWorkgroupInfo(workgroupID: "w", name: "n", members: [])),
         .sessionTree(CompanionSessionTree(windows: [])),
         .pong,
@@ -200,6 +232,15 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .messagesSince(chatName: "", previews: [], maxSeq: 0, truncated: false, reset: false),
         syncSinceRep,
         sampleErrorMessage,
+        .streamStarted(CompanionStreamStarted(streamID: 1, codec: .hevc)),
+        .streamConfig(CompanionStreamConfig(streamID: 1, generationId: 0, codecExtradata: Data(),
+                                            pixelWidth: 100, pixelHeight: 50, scale: 2,
+                                            columns: 80, rows: 25)),
+        .streamEnded(streamID: 1, reason: .stoppedByClient),
+        .selectionText(text: "x"),
+        .selectionRange(streamID: 1, range: CompanionSelectionRange(
+            start: CompanionSelectionPoint(absLine: 0, column: 0),
+            end: CompanionSelectionPoint(absLine: 1, column: 2))),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -224,6 +265,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .mentionsResolved: return "mentionsResolved"
         case .sessionScreenInfo: return "sessionScreenInfo"
         case .sessionContent: return "sessionContent"
+        case .historyTile: return "historyTile"
+        case .streamExtent: return "streamExtent"
         case .workgroupInfo: return "workgroupInfo"
         case .sessionTree: return "sessionTree"
         case .pong: return "pong"
@@ -234,6 +277,11 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .messagesSince: return "messagesSince"
         case .syncSince: return "syncSince"
         case .error: return "error"
+        case .streamStarted: return "streamStarted"
+        case .streamConfig: return "streamConfig"
+        case .streamEnded: return "streamEnded"
+        case .selectionText: return "selectionText"
+        case .selectionRange: return "selectionRange"
         }
     }
 

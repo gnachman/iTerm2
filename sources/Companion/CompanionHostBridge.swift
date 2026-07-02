@@ -20,6 +20,7 @@
 //
 
 import Foundation
+import QuartzCore
 import CompanionProtocol
 import CompanionNoise
 
@@ -28,8 +29,40 @@ final class CompanionHostBridge {
     private let transport: MessageTransport
     private var receiveTask: Task<Void, Never>?
     private var subscriptions: [String: ChatBroker.Subscription] = [:]
-    private var outbox: AsyncStream<HostEnvelope>.Continuation?
+    /// Control frames drain ahead of media so input/replies never wait behind a
+    /// video backlog; media is never dropped (see CompanionPriorityOutbox).
+    private var outbox: CompanionPriorityOutbox<HostEnvelope>?
     private var outboxTask: Task<Void, Never>?
+
+    /// One live video stream and the main-thread timer driving it.
+    private final class StreamContext {
+        let streamer: CompanionSessionStreamer
+        let guid: String
+        let timer: Timer
+        var lastChange: TimeInterval
+        /// Last selection pushed to the phone, to detect changes (mac-side or phone)
+        /// and push a selectionRange so it can reload affected history tiles.
+        var lastSentSelectionRange: CompanionSelectionRange?
+        /// The stream generation last observed while driving. A genuine generation
+        /// bump (resize/reflow/font change) makes the phone discard its selection, so
+        /// when this advances the selection is re-pushed even if its value is unchanged.
+        var lastConfigGeneration: UInt32 = 0
+        /// The fixed endpoint of an in-progress character-mode drag (raw, inclusive),
+        /// set at .begin and used to rebuild the range by document order on each move.
+        var selectionAnchor: VT100GridAbsCoord?
+        /// The half-open range last applied for the drag, so an unchanged move is a
+        /// no-op (no re-begin, no selectionRange flood).
+        var lastAppliedCharRange: (start: VT100GridAbsCoord, end: VT100GridAbsCoord)?
+        init(streamer: CompanionSessionStreamer, guid: String, timer: Timer, lastChange: TimeInterval) {
+            self.streamer = streamer
+            self.guid = guid
+            self.timer = timer
+            self.lastChange = lastChange
+        }
+    }
+    private var streams: [UInt32: StreamContext] = [:]
+    private var streamIDForGuid: [String: UInt32] = [:]
+    private var nextStreamID: UInt32 = 1
 
     /// Host-initiated requests to the phone (today: the notification
     /// permission prompt), keyed by a host-side request id and resolved when
@@ -78,27 +111,57 @@ final class CompanionHostBridge {
 
     func start() {
         ChatBroker.instance?.ensureServiceRunning()
+        RLog("bridge start (phone connected, bridge live)")
 
-        var continuation: AsyncStream<HostEnvelope>.Continuation!
-        let stream = AsyncStream<HostEnvelope> { continuation = $0 }
-        outbox = continuation
+        let outbox = CompanionPriorityOutbox<HostEnvelope>()
+        self.outbox = outbox
         outboxTask = Task { [transport] in
-            for await envelope in stream {
+            // Diagnostic counters/heartbeat. If a send wedges
+            // (half-open splice), the heartbeat below stops logging while the
+            // bridge believes it is still connected -- the signal we need.
+            var mediaFrames = 0
+            var mediaBytes = 0
+            var controlFrames = 0
+            var lastHeartbeat = CACurrentMediaTime()
+            RLog("bridge outbox drain started")
+            drain: while true {
                 let data: Data
-                do {
-                    data = try WireCoding.encode(envelope)
-                } catch {
-                    RLog("Companion bridge: DROPPING unencodable envelope: \(error)")
-                    continue
+                let isMedia: Bool
+                switch await outbox.next() {
+                case .finished:
+                    break drain
+                case .control(let envelope):
+                    isMedia = false
+                    do {
+                        data = try WireCoding.encode(envelope)
+                    } catch {
+                        RLog("Companion bridge: DROPPING unencodable envelope: \(error)")
+                        continue
+                    }
+                case .media(let payload):
+                    isMedia = true
+                    // Control frames stay bare JSON; media frames carry the marker.
+                    data = CompanionFrameChannel.frameMedia(payload)
                 }
                 do {
                     try await transport.send(data)
                 } catch {
-                    RLog("Companion bridge: outbox send failed; outbox is dead: \(error)")
-                    break
+                    RLog("bridge outbox send FAILED (outbox dead) after \(mediaFrames) media/\(controlFrames) control: \(error)")
+                    break drain
+                }
+                if isMedia {
+                    mediaFrames += 1
+                    mediaBytes += data.count
+                } else {
+                    controlFrames += 1
+                }
+                let now = CACurrentMediaTime()
+                if now - lastHeartbeat >= 5 {
+                    RLog("bridge outbox alive: sent \(mediaFrames) media (\(mediaBytes) B), \(controlFrames) control")
+                    lastHeartbeat = now
                 }
             }
-            DLog("Companion bridge: outbox drained")
+            RLog("bridge outbox drained/exited: \(mediaFrames) media, \(controlFrames) control total")
         }
 
         receiveTask = Task { [weak self] in
@@ -139,6 +202,7 @@ final class CompanionHostBridge {
     func announceUnpairedAndStop() async {
         RLog("Companion bridge: announcing unpair")
         onClose = nil
+        endAllStreams(reason: .sessionClosed)
         for observer in chatListObservers {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -149,6 +213,13 @@ final class CompanionHostBridge {
             subscription.unsubscribe()
         }
         subscriptions.removeAll()
+        // Resolve any in-flight host-initiated request (e.g. the notification
+        // permission prompt) so its awaiting task doesn't hang after we tear down.
+        let waiters = permissionWaiters
+        permissionWaiters.removeAll()
+        for (_, waiter) in waiters {
+            waiter.resume(returning: nil)
+        }
         send(.unpaired, requestID: nil)
         outbox?.finish()
         outbox = nil
@@ -177,6 +248,7 @@ final class CompanionHostBridge {
     }
 
     private func teardownStreams() {
+        endAllStreams(reason: .sessionClosed)
         for observer in chatListObservers {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -220,11 +292,16 @@ final class CompanionHostBridge {
     // MARK: Receive loop
 
     private func runReceiveLoop() async {
+        // If the relay splice goes half-open during streaming, receive()
+        // can block forever -- we'd see "started" but never "receive FAILED" or
+        // "exited", confirming the wedge (no teardown, no re-park).
+        RLog("bridge receiveLoop started")
         while true {
             let frame: Data
             do {
                 frame = try await transport.receive()
             } catch {
+                RLog("bridge receiveLoop receive() FAILED (drop detected): \(error)")
                 break
             }
             guard let envelope = try? WireCoding.decode(ClientEnvelope.self, from: frame) else {
@@ -233,6 +310,7 @@ final class CompanionHostBridge {
             }
             handle(envelope)
         }
+        RLog("bridge receiveLoop exited -> teardownStreams + onClose (will re-park)")
         teardownStreams()
         onClose?()
     }
@@ -317,6 +395,12 @@ final class CompanionHostBridge {
                                       firstLine: firstLine,
                                       lineCount: lineCount,
                                       requestID: requestID)
+        case .fetchHistoryTile(let streamID, let firstAbsLine, let lineCount, let generationId):
+            handleFetchHistoryTile(streamID: streamID,
+                                   firstAbsLine: firstAbsLine,
+                                   lineCount: lineCount,
+                                   generationId: generationId,
+                                   requestID: requestID)
         case .fetchWorkgroupInfo(let workgroupID):
             handleFetchWorkgroupInfo(workgroupID: workgroupID, requestID: requestID)
         case .fetchSessionTree:
@@ -354,6 +438,393 @@ final class CompanionHostBridge {
         case .unpairing:
             RLog("Companion bridge: peer is unpairing")
             onPeerUnpaired?()
+        case .startSessionStream(let sessionGuid, let params):
+            handleStartSessionStream(guid: sessionGuid, params: params, requestID: requestID)
+        case .stopSessionStream(let streamID):
+            endStream(streamID, reason: .stoppedByClient)
+        case .requestKeyframe(let streamID):
+            streams[streamID]?.streamer.requestKeyframe()
+        case .updateStreamParams:
+            // Frame-rate / bitrate adaptation is handled in a later milestone.
+            break
+        case .streamAck(let streamID, let lastPTSMilliseconds, let queueDepth):
+            streams[streamID]?.streamer.noteAck(ptsMilliseconds: lastPTSMilliseconds, queueDepth: queueDepth)
+        case .selectionGesture(let streamID, let phase, let mode, let point):
+            handleSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
+        case .clearSelection(let streamID):
+            handleClearSelection(streamID: streamID)
+        case .copySelection(let sessionGuid):
+            handleCopySelection(guid: sessionGuid, requestID: requestID)
+        case .selectAllInStream(let streamID):
+            handleSelectAll(streamID: streamID)
+        case .pasteText(let sessionGuid, let text):
+            iTermController.sharedInstance().anySession(withGUID: sessionGuid)?.paste(text, flags: [])
+        }
+    }
+
+    // MARK: Live streaming
+
+    /// Drive the session's real iTermSelection from a phone gesture. The resulting
+    /// highlight is rendered into the stream (we mark the stream dirty so a frame
+    /// goes out promptly). Runs on the main actor, where PTYTextView is safe.
+    private func handleSelectionGesture(streamID: UInt32,
+                                        phase: CompanionSelectionPhase,
+                                        mode: CompanionSelectionMode,
+                                        point: CompanionSelectionPoint) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            return
+        }
+        // Clamp the absolute line to the available buffer so a hostile or stale peer
+        // cannot point iTermSelection at a line outside [firstAbs, firstAbs+lines).
+        // The column is clamped downstream (inclusiveCharacterRange / iTermSelection).
+        let clampedAbsLine = Self.clampAbsLine(point.absLine,
+                                               firstAbs: session.screen.totalScrollbackOverflow(),
+                                               lineCount: Int64(session.screen.numberOfLines()))
+        let coord = VT100GridAbsCoordMake(Int32(clamping: point.column), clampedAbsLine)
+        // Word/line/smart snapping queries the data source, which a buried session
+        // detaches; re-attach for the operation, mirroring the frame source.
+        let wasDetached = textview.dataSource == nil
+        if wasDetached { textview.dataSource = session.screen }
+        defer { if wasDetached { textview.dataSource = nil } }
+
+        let changed: Bool
+        if mode == .character {
+            let gridWidth = Int(textview.dataSource?.width() ?? 0)
+            changed = applyCharacterSelection(context: context, textview: textview,
+                                              phase: phase, coord: coord, gridWidth: gridWidth)
+        } else {
+            // Word/line/smart selections snap to whole-token boundaries, so there is
+            // no single-cell exclusivity to reconcile: drive iTermSelection's live
+            // selection directly.
+            var moved = true
+            switch phase {
+            case .begin:
+                textview.selection?.begin(at: coord, mode: mode.iTermSelectionMode,
+                                          resume: false, append: false)
+            case .move:
+                moved = textview.selection?.moveEndpoint(to: coord) ?? false
+            case .end:
+                moved = textview.selection?.moveEndpoint(to: coord) ?? false
+                textview.selection?.endLive()
+            }
+            changed = (phase != .move) || moved
+        }
+        // Only react when the selection actually changed: a no-op move neither
+        // alters the rendered frame nor needs a selectionRange reply, and emitting
+        // either just adds to the flood that backs up the link.
+        if changed {
+            context.streamer.screenDidChange()
+            sendSelectionRange(streamID: streamID, textview: textview)
+        }
+    }
+
+    /// Apply a character-mode selection from the phone. The phone sends raw inclusive
+    /// coordinates (the anchor at .begin, the live point on move/end); the range is
+    /// rebuilt by document order so exclusivity is correct in every drag direction.
+    /// Returns whether the applied range changed (so a no-op move is dropped).
+    private func applyCharacterSelection(context: StreamContext, textview: PTYTextView,
+                                         phase: CompanionSelectionPhase,
+                                         coord: VT100GridAbsCoord, gridWidth: Int) -> Bool {
+        let anchor: VT100GridAbsCoord
+        switch phase {
+        case .begin:
+            context.selectionAnchor = coord
+            context.lastAppliedCharRange = nil
+            anchor = coord
+        case .move, .end:
+            anchor = context.selectionAnchor ?? coord
+        }
+        let range = Self.inclusiveCharacterRange(anchor: anchor, live: coord, gridWidth: gridWidth)
+        var changed = true
+        if let last = context.lastAppliedCharRange,
+           last.start.x == range.start.x, last.start.y == range.start.y,
+           last.end.x == range.end.x, last.end.y == range.end.y {
+            changed = false
+        } else {
+            textview.selection?.begin(at: range.start, mode: .kiTermSelectionModeCharacter,
+                                      resume: false, append: false)
+            _ = textview.selection?.moveEndpoint(to: range.end)
+            context.lastAppliedCharRange = range
+        }
+        if phase == .end {
+            textview.selection?.endLive()
+            context.selectionAnchor = nil
+            context.lastAppliedCharRange = nil
+            changed = true   // always broadcast the finalized selection
+        } else if phase == .begin {
+            changed = true   // a fresh begin always establishes a selection
+        }
+        return changed
+    }
+
+    /// Forget an in-progress character-drag's anchor and last-applied range. Call
+    /// whenever the selection is cleared or replaced OUTSIDE the gesture path, so a
+    /// later phone .move that happens to recompute the same range is not dropped as a
+    /// no-op (which would make the drag look dead until the finger crosses a cell).
+    private func resetSelectionDragState(_ context: StreamContext) {
+        context.selectionAnchor = nil
+        context.lastAppliedCharRange = nil
+    }
+
+    private func handleSelectAll(streamID: UInt32) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            return
+        }
+        let wasDetached = textview.dataSource == nil
+        if wasDetached { textview.dataSource = session.screen }
+        defer { if wasDetached { textview.dataSource = nil } }
+        textview.selectAll(nil)
+        resetSelectionDragState(context)
+        context.streamer.screenDidChange()
+        sendSelectionRange(streamID: streamID, textview: textview)
+    }
+
+    private func handleClearSelection(streamID: UInt32) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            return
+        }
+        textview.selection?.clear()
+        resetSelectionDragState(context)
+        context.streamer.screenDidChange()
+        sendSelectionRange(streamID: streamID, textview: textview)
+    }
+
+    /// Report the session's current selection span (or nil) so the phone can draw
+    /// and move handles.
+    /// iTermSelection's end x is EXCLUSIVE (one past the last selected cell; select
+    /// all yields end.x == gridWidth). The phone treats the wire end as the
+    /// inclusive last cell, so convert here. An exclusive end at column 0 means the
+    /// previous line is selected through its last cell.
+    nonisolated static func inclusiveSelectionEnd(exclusiveColumn column: Int, absLine: Int64,
+                                                  gridWidth: Int) -> (column: Int, absLine: Int64) {
+        if column > 0 { return (column - 1, absLine) }
+        return (max(0, gridWidth - 1), absLine - 1)
+    }
+
+    /// Clamp an absolute line to the buffer's available range [firstAbs,
+    /// firstAbs+lineCount). An empty buffer (lineCount <= 0) clamps to firstAbs.
+    nonisolated static func clampAbsLine(_ absLine: Int64, firstAbs: Int64, lineCount: Int64) -> Int64 {
+        guard lineCount > 0 else { return firstAbs }
+        return min(max(absLine, firstAbs), firstAbs + lineCount - 1)
+    }
+
+    struct SelectionPushDecision: Equatable {
+        /// The selection changed from a non-gesture source, so an in-progress drag's
+        /// state is stale and must be forgotten.
+        var resetDragState: Bool
+        /// The current selection should be (re)sent to the phone.
+        var push: Bool
+    }
+
+    /// Decide how driveStream reacts to the current selection. A value change means it
+    /// came from elsewhere (a phone gesture pushes inline and updates lastSent), so
+    /// reset the drag and push. A generation bump forces a re-push of the SAME value
+    /// (the phone discarded it) but must NOT reset the drag, so a resize mid-drag
+    /// keeps the anchor.
+    nonisolated static func selectionPushDecision(current: CompanionSelectionRange?,
+                                                  lastSent: CompanionSelectionRange?,
+                                                  generationBumped: Bool) -> SelectionPushDecision {
+        let valueChanged = (current != lastSent)
+        return SelectionPushDecision(resetDragState: valueChanged,
+                                     push: valueChanged || generationBumped)
+    }
+
+    /// Given the two inclusive endpoints of a character-mode selection (the fixed
+    /// anchor and the live point, in either order), return the half-open range
+    /// iTermSelection needs: start at the earlier cell (inclusive), end one past the
+    /// later cell (exclusive). Ordering the coordinates HERE, before iTermSelection's
+    /// own unflip, is what makes the exclusive +1 land on the endpoint that actually
+    /// ends up in the END role, so backward and endpoint-crossing drags include the
+    /// cell under the finger instead of dropping or collapsing it.
+    nonisolated static func inclusiveCharacterRange(anchor: VT100GridAbsCoord,
+                                                    live: VT100GridAbsCoord,
+                                                    gridWidth: Int)
+    -> (start: VT100GridAbsCoord, end: VT100GridAbsCoord) {
+        // Clamp columns before the exclusive +1 so a hostile peer sending a column
+        // near Int32.max cannot wrap to Int32.min and hand iTermSelection a nonsense
+        // coordinate. With a known width the last valid inclusive column is width-1
+        // (so the exclusive end is at most width); without one, cap short of the
+        // Int32 max headroom for the +1.
+        let maxColumn: Int32 = gridWidth > 0 ? Int32(clamping: gridWidth - 1) : Int32.max - 1
+        func clampColumn(_ c: VT100GridAbsCoord) -> VT100GridAbsCoord {
+            VT100GridAbsCoordMake(min(max(c.x, 0), maxColumn), c.y)
+        }
+        let a = clampColumn(anchor)
+        let l = clampColumn(live)
+        let anchorFirst = a.y < l.y || (a.y == l.y && a.x <= l.x)
+        let lo = anchorFirst ? a : l
+        let hi = anchorFirst ? l : a
+        return (lo, VT100GridAbsCoordMake(hi.x &+ 1, hi.y))
+    }
+
+    private func currentSelectionRange(_ textview: PTYTextView) -> CompanionSelectionRange? {
+        guard let selection = textview.selection, selection.hasSelection else { return nil }
+        let span = selection.spanningAbsRange
+        let gridWidth = Int(textview.dataSource?.width() ?? 0)
+        let end = Self.inclusiveSelectionEnd(exclusiveColumn: Int(span.end.x), absLine: span.end.y,
+                                             gridWidth: gridWidth)
+        return CompanionSelectionRange(
+            start: CompanionSelectionPoint(absLine: span.start.y, column: Int(span.start.x)),
+            end: CompanionSelectionPoint(absLine: end.absLine, column: end.column))
+    }
+
+    private func sendSelectionRange(streamID: UInt32, textview: PTYTextView) {
+        let range = currentSelectionRange(textview)
+        streams[streamID]?.lastSentSelectionRange = range
+        RLog("Companion selectionRange push stream=\(streamID) range=\(range.map { "(\($0.start.column),\($0.start.absLine))..(\($0.end.column),\($0.end.absLine))" } ?? "none")")
+        // Latest-wins state: ride the coalescing lane so a fast drag's updates
+        // collapse to the newest and never starve the media frame that actually
+        // shows the selection. Keyed per stream.
+        outbox?.enqueueCoalescingControl(HostEnvelope(requestID: nil, payload: .selectionRange(streamID: streamID, range: range)),
+                                         key: "selectionRange.\(streamID)")
+    }
+
+    private func handleCopySelection(guid: String, requestID: UInt64?) {
+        let text = iTermController.sharedInstance().anySession(withGUID: guid)?.textview?.selectedText
+        send(.selectionText(text: text ?? ""), requestID: requestID)
+    }
+
+    private func handleStartSessionStream(guid: String,
+                                          params: CompanionStreamParams,
+                                          requestID: UInt64?) {
+        guard params.supportedCodecs.contains(.hevc) else {
+            send(.error(CompanionError(code: .badRequest,
+                                       message: "No supported video codec (HEVC required)")),
+                 requestID: requestID)
+            return
+        }
+        guard let session = contentSession(guid: guid, requestID: requestID) else {
+            return  // contentSession already replied with an error
+        }
+        // One stream per session: replace any existing one.
+        if let existing = streamIDForGuid[guid] {
+            endStream(existing, reason: .superseded)
+        }
+
+        let streamID = nextStreamID
+        nextStreamID &+= 1
+        let frameRate = params.maxFrameRate > 0 ? min(params.maxFrameRate, 60) : 30
+        let bitRate = params.maxBitrate.map { max(100_000, min($0, 8_000_000)) } ?? 1_000_000
+        // Emit the highest media-frame version both sides understand: a phone that
+        // advertises nothing predates versioned frames and only decodes version 1
+        // (no per-frame geometry), while a current phone gets version 2.
+        let mediaVersion = UInt8(clamping: min(Int(CompanionMediaFrame.version),
+                                               max(1, params.maxMediaFrameVersion ?? 1)))
+
+        // Capture the Sendable outbox continuation, not self: the encoder's
+        // callbacks fire on a VideoToolbox thread, and yielding to the stream is
+        // thread-safe whereas touching the main-actor bridge would not be.
+        let outboxRef = outbox
+        let streamer = CompanionSessionStreamer(
+            streamID: streamID,
+            source: CompanionTerminalFrameSource(session: session),
+            maxFrameRate: frameRate,
+            averageBitRate: bitRate,
+            onConfig: { config in
+                outboxRef?.enqueueControl(HostEnvelope(requestID: nil, payload: .streamConfig(config)))
+            },
+            onMedia: { frame in
+                outboxRef?.enqueueMedia(frame.encoded(version: mediaVersion))
+            },
+            onExtentChanged: { firstAbsLine, totalLines in
+                // Latest-wins on the coalescing lane: only the newest window matters.
+                outboxRef?.enqueueCoalescingControl(
+                    HostEnvelope(requestID: nil,
+                                 payload: .streamExtent(streamID: streamID, firstAbsLine: firstAbsLine, totalLines: totalLines)),
+                    key: "streamExtent.\(streamID)")
+            },
+            onDataLimitReached: { [weak self] in
+                // Called on the main thread from the streamer's tick.
+                self?.endStream(streamID, reason: .dataLimitReached)
+            })
+        streamer.start()
+
+        // A main-thread timer at the frame-rate cap drives the stream: mark dirty
+        // only when the session's content-change timestamp advanced, then tick.
+        // The pacer coalesces and enforces the cap, so a static screen emits nothing.
+        let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / frameRate, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.driveStream(streamID)
+            }
+        }
+        streams[streamID] = StreamContext(streamer: streamer, guid: guid, timer: timer,
+                                          lastChange: max(session.screenContentsLastChangedAt,
+                                                          session.view?.lastRedrawRequestedAt ?? 0))
+        streamIDForGuid[guid] = streamID
+        RLog("stream \(streamID) START guid=\(guid) fps=\(frameRate)")
+        send(.streamStarted(CompanionStreamStarted(streamID: streamID, codec: .hevc)),
+             requestID: requestID)
+        // Tell the phone about any pre-existing selection on subscribe: the history
+        // tiles are rendered with it, so the phone must know which tiles carry the
+        // highlight to invalidate them correctly when the selection later changes.
+        if let textview = session.textview {
+            sendSelectionRange(streamID: streamID, textview: textview)
+        }
+    }
+
+    private func driveStream(_ streamID: UInt32) {
+        guard let context = streams[streamID] else { return }
+        guard let session = iTermController.sharedInstance().anySession(withGUID: context.guid) else {
+            endStream(streamID, reason: .sessionClosed)
+            return
+        }
+        // Emit on any visual change: grid content (screenContentsLastChangedAt,
+        // bumped under every renderer) OR a redraw request that does not change
+        // content, such as a selection or cursor change (lastRedrawRequestedAt).
+        let changedAt = max(session.screenContentsLastChangedAt,
+                            session.view?.lastRedrawRequestedAt ?? 0)
+        if changedAt > context.lastChange {
+            context.lastChange = changedAt
+            context.streamer.screenDidChange()
+        }
+        // A genuine generation bump (resize/reflow/font change) makes the phone
+        // discard its selection, so the current range must be re-pushed even if its
+        // value is unchanged, to restore the handles the phone dropped.
+        let generation = context.streamer.currentGenerationId
+        let generationBumped = generation != context.lastConfigGeneration
+        context.lastConfigGeneration = generation
+        // Detect a selection change from any source (mac-side Cmd-A/drag as well as
+        // phone gestures) and push it, so the phone reloads the affected history
+        // tiles; the live band already reflects it via the rendered video.
+        if let textview = session.textview {
+            let current = currentSelectionRange(textview)
+            let decision = Self.selectionPushDecision(current: current,
+                                                      lastSent: context.lastSentSelectionRange,
+                                                      generationBumped: generationBumped)
+            // Only forget an in-progress drag when the change came from ELSEWHERE (a
+            // real value change: mac Cmd-A, a click). A bump-forced re-push of the
+            // SAME value must NOT reset the drag, or a resize mid-drag would wipe the
+            // anchor and collapse the selection to the cell under the finger.
+            if decision.resetDragState {
+                resetSelectionDragState(context)
+            }
+            if decision.push {
+                sendSelectionRange(streamID: streamID, textview: textview)
+            }
+        }
+        context.streamer.tick(nowMilliseconds: UInt64(max(0, CACurrentMediaTime() * 1000)))
+    }
+
+    private func endStream(_ streamID: UInt32, reason: CompanionStreamEndReason) {
+        guard let context = streams.removeValue(forKey: streamID) else { return }
+        RLog("stream \(streamID) END reason=\(reason)")
+        context.timer.invalidate()
+        context.streamer.stop()
+        if streamIDForGuid[context.guid] == streamID {
+            streamIDForGuid[context.guid] = nil
+        }
+        send(.streamEnded(streamID: streamID, reason: reason), requestID: nil)
+    }
+
+    private func endAllStreams(reason: CompanionStreamEndReason) {
+        for streamID in Array(streams.keys) {
+            endStream(streamID, reason: reason)
         }
     }
 
@@ -968,7 +1439,9 @@ final class CompanionHostBridge {
                                               name: session.name,
                                               lineCount: Int(session.screen.numberOfLines()),
                                               columns: Int(session.columns),
-                                              width: Double(textview.frame.width),
+                                              // Exclude the right gutter (accessory panels / timestamp
+                                              // slot) so it matches the rendered tile width.
+                                              width: Double(textview.widthExcludingRightGutter()),
                                               lineHeight: Double(textview.lineHeight),
                                               // Matches the fallback the offscreen renderer uses
                                               // for windowless (buried/peer) sessions.
@@ -1036,6 +1509,65 @@ final class CompanionHostBridge {
                                                      firstLine: first,
                                                      lineCount: count,
                                                      pngData: pngData)),
+             requestID: requestID)
+    }
+
+    /// Render a scrollback tile addressed by absolute line for the live canvas.
+    /// The request is clamped to what is currently available; the reply reports the
+    /// range actually covered plus the current window (oldest absolute line + total
+    /// lines), so the phone can size its canvas and resolve eviction races.
+    private func handleFetchHistoryTile(streamID: UInt32,
+                                        firstAbsLine: Int64,
+                                        lineCount: Int,
+                                        generationId: UInt32,
+                                        requestID: UInt64?) {
+        RLog("Companion historyTile req stream=\(streamID) firstAbs=\(firstAbsLine) lineCount=\(lineCount) gen=\(generationId)")
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let textview = session.textview else {
+            RLog("Companion historyTile FAIL: no such stream \(streamID)")
+            send(.error(CompanionError(code: .badRequest, message: "No such stream.")), requestID: requestID)
+            return
+        }
+        let overflow = session.screen.totalScrollbackOverflow()
+        let total = Int(session.screen.numberOfLines())
+        let window = CompanionHistoryWindow(firstAbsLine: overflow, lineCount: total)
+        // Entirely evicted (or empty): reply with a 0-line tile carrying the window
+        // so the phone marks the region unavailable without erroring.
+        guard let covered = window.clamped(absLine: firstAbsLine, count: min(lineCount, Self.maxContentLines)) else {
+            RLog("Companion historyTile EVICTED firstAbs=\(firstAbsLine) window=[\(overflow),\(overflow + Int64(total))) -> 0 lines")
+            send(.historyTile(CompanionHistoryTile(streamID: streamID, generationId: generationId,
+                                                   firstAbsLine: max(firstAbsLine, overflow), lineCount: 0,
+                                                   windowFirstAbsLine: overflow, windowLineCount: total,
+                                                   pngData: Data())),
+                 requestID: requestID)
+            return
+        }
+        let relativeFirst = Int(covered.absLine - overflow)
+        // Detached sessions (buried/parked) render zero lines; re-attach for the
+        // render and restore after, as handleFetchSessionContent does.
+        let wasDetached = textview.dataSource == nil
+        if wasDetached { textview.dataSource = session.screen }
+        defer { if wasDetached { textview.dataSource = nil } }
+        let backgroundColor = session.processedBackgroundColor ?? .black
+        // Render with the current selection so scrollback shows the same highlight
+        // as the live band; the phone refetches affected tiles when it changes.
+        guard let image = textview.renderImage(withLines: NSRange(location: relativeFirst, length: covered.count),
+                                               includeMargins: false,
+                                               backgroundColor: backgroundColor,
+                                               showCursor: false,
+                                               includeSelection: true) else {
+            RLog("Companion historyTile FAIL render covered=[\(covered.absLine),+\(covered.count)) rel=\(relativeFirst) total=\(total) detached=\(wasDetached) frame=\(NSStringFromRect(textview.frame))")
+            send(.error(CompanionError(code: .internalError, message: "Rendering the session content failed.")),
+                 requestID: requestID)
+            return
+        }
+        let pngData = image.dataForFile(of: .png)
+        RLog("Companion historyTile OK covered=[\(covered.absLine),+\(covered.count)) overflow=\(overflow) total=\(total) bytes=\(pngData.count)")
+        send(.historyTile(CompanionHistoryTile(streamID: streamID, generationId: generationId,
+                                               firstAbsLine: covered.absLine, lineCount: covered.count,
+                                               windowFirstAbsLine: overflow, windowLineCount: total,
+                                               pngData: pngData)),
              requestID: requestID)
     }
 
@@ -1115,8 +1647,21 @@ final class CompanionHostBridge {
     // MARK: Sending
 
     /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
-    /// transmit order.
+    /// transmit order among control frames, which always precede pending media.
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
-        outbox?.yield(HostEnvelope(requestID: requestID, payload: payload))
+        outbox?.enqueueControl(HostEnvelope(requestID: requestID, payload: payload))
+    }
+}
+
+private extension CompanionSelectionMode {
+    /// Map the wire selection mode to iTerm2's. Box selection is not exposed to the
+    /// phone, so there is no inverse for it.
+    var iTermSelectionMode: iTermSelectionMode {
+        switch self {
+        case .character: return .kiTermSelectionModeCharacter
+        case .word: return .kiTermSelectionModeWord
+        case .line: return .kiTermSelectionModeWholeLine
+        case .smart: return .kiTermSelectionModeSmart
+        }
     }
 }

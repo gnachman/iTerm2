@@ -681,14 +681,20 @@ final class CompanionPairingController: NSObject {
 
     private func installLogHandler() {
         CompanionLog.handler = { message in
-            DLog("\(message)")
+            // RLog (retrospective): CompanionCore logs survive debug-logging-off,
+            // so package-level traffic (e.g. the relay keepalive) is captured the
+            // same way the rest of the companion logging is.
+            RLog("\(message)")
         }
     }
 
     /// One-line trace of the relay lifecycle, stamped with the state that drives
     /// the single-mac-slot logic.
     private func relayLog(_ message: String) {
-        DLog("Companion relay: \(message) "
+        // RLog (retrospective): the park / re-park / admission lifecycle stays
+        // visible even with debug logging off, which is what we need to catch
+        // the intermittent streaming relay wedge.
+        RLog("Companion relay: \(message) "
              + "[bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) "
              + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]")
     }

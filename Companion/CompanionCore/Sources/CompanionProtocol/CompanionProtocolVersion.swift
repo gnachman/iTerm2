@@ -28,13 +28,33 @@ public enum CompanionProtocolVersion {
     /// (the all-zeros CompanionPushWakeup.collapseSentinel) drives a unified
     /// syncSince fetch covering chat messages AND terminal alerts, replacing the
     /// per-chat collapse-token push. See docs/companion-push-relay.md.
-    public static let current = 2
+    ///
+    /// Revision 3 adds live session streaming (startSessionStream and the binary
+    /// media channel). It is additive and backward-compatible: control frames are
+    /// unchanged on the wire, so minimumPeer stays at 1 and a peer offers
+    /// streaming only when the other side advertises at least `streamingRevision`.
+    ///
+    /// Revision 4 adds per-stream screen geometry (cellGeometry in streamConfig,
+    /// generationId + liveTop in the media frame header) so the phone can map a
+    /// touch to a terminal cell. Still additive: the geometry fields are optional /
+    /// version-negotiated, so older peers stream without selection.
+    public static let current = 4
 
     /// The oldest peer revision this build accepts. Kept at 1 (NOT lockstep with
-    /// `current`) so a revision-2 build still talks to revision-1 peers in the
-    /// field: the revision-2 features degrade to the legacy per-chat push when the
-    /// peer is older. See CompanionPushRegistry.peerRevision.
+    /// `current`) so a revision-3 build still talks to revision-1/2 peers in the
+    /// field: the newer features degrade gracefully when the peer is older. See
+    /// CompanionPushRegistry.peerRevision.
     public static let minimumPeer = 1
+
+    /// The first revision that supports live session streaming. A peer offers
+    /// streaming only when the other side advertises at least this revision;
+    /// otherwise it uses the static PNG-tile session view.
+    public static let streamingRevision = 3
+
+    /// The first revision that carries screen geometry with the stream (cell size,
+    /// margins, generationId, liveTop). The phone offers touch selection only when
+    /// the mac advertises at least this revision.
+    public static let selectionGeometryRevision = 4
 
     /// The minimum peer revision that understands the contentless wakeup + unified
     /// syncSince (and therefore terminal alerts). Below this, the mac sends the

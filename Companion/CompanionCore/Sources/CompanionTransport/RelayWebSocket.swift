@@ -90,7 +90,14 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
 
     func sendPing() async -> Bool { await task.sendPingAsync() }
 
-    func cancel() { task.cancel(with: .goingAway, reason: nil) }
+    func cancel() {
+        // cancel() closes with goingAway (WS close code 1001). Logging it
+        // distinguishes a deliberate client-side teardown from an OS/network close
+        // we did NOT initiate -- the latter surfaces as a receive failure with no
+        // cancel() logged here (e.g. iOS closing the socket on app suspend).
+        CompanionLog.log("Relay WS cancel() (goingAway/1001)")
+        task.cancel(with: .goingAway, reason: nil)
+    }
 }
 
 public struct URLSessionRelayWebSocketFactory: RelayWebSocketFactory {
