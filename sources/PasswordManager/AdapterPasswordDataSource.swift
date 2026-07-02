@@ -295,8 +295,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             pathToExecutable: pathToExecutable,
             mode: browser ? .browser : .terminal)
         if let fields = handshakeInfo?.settingsFields, !fields.isEmpty {
+            let credentialAlreadyAvailable = !(masterPassword?.isEmpty ?? true) || authToken != nil
             var settings = [String: String]()
             for field in fields {
+                if field.persistInKeychain && credentialAlreadyAvailable { continue }
                 if let value = storedSettingsValue(forKey: field.key) {
                     settings[field.key] = value
                 }
@@ -337,9 +339,28 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 pathToDatabase = u
             }
         }
-        if masterPassword == nil {
-            masterPassword = loadPersistedCredentials()
+        guard masterPassword == nil else { return }
+
+        if let persisted = loadPersistedCredentials(),
+           !persisted.isEmpty {
+            masterPassword = persisted
+            return
         }
+        if let secretFromSettings = persistedSecretSettingsValue(),
+           !secretFromSettings.isEmpty {
+            masterPassword = secretFromSettings
+        }
+    }
+
+    private func persistedSecretSettingsValue() -> String? {
+        guard let fields = handshakeInfo?.settingsFields else { return nil }
+        for field in fields where field.persistInKeychain {
+            if let v = storedSettingsValue(forKey: field.key)?
+                .trimmingCharacters(in: .whitespacesAndNewlines), !v.isEmpty {
+                return v
+            }
+        }
+        return nil
     }
 
     // MARK: - Settings Field Storage
@@ -707,7 +728,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     completion(error)
                 }
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
@@ -721,6 +742,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
+                self?.invalidateListAccountsCache()
                 completion(.success(()))
             }))
     }
@@ -768,7 +790,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     completion(error)
                 }
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
@@ -781,6 +803,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
+                self?.invalidateListAccountsCache()
                 completion(.success(()))
             }))
     }
@@ -805,7 +828,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         token: self.authToken,
                         userName: addRequest.userName,
                         accountName: addRequest.accountName,
-                        password: addRequest.password)
+                        password: addRequest.password,
+                        flags: addRequest.flags.isEmpty ? nil : addRequest.flags)
 
                     let encoder = JSONEncoder()
                     guard let inputData = try? encoder.encode(request) else {
@@ -830,7 +854,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     completion(error)
                 }
             },
-            outputTransformer: { output, completion in
+            outputTransformer: { [weak self] output, completion in
                 let decoder = JSONDecoder()
 
                 if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
@@ -843,6 +867,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
+                self?.invalidateListAccountsCache()
                 completion(.success(CommandLinePasswordDataSource.AccountIdentifier(value: response.accountIdentifier.accountID)))
             }))
     }
@@ -851,6 +876,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         // Cache for 30 minutes like OnePasswordDataSource
         return AnyRecipe(CachingVoidRecipe(makeListAccountsRecipe(), maxAge: 30 * 60))
     }()
+
+    fileprivate func invalidateListAccountsCache() {
+        _listAccountsRecipe.invalidateRecipe()
+    }
 
     var configuration: Configuration {
         return Configuration(
@@ -929,6 +958,22 @@ extension AdapterPasswordDataSource {
                     completion: completion)
     }
 
+    @objc(addUserName:accountName:password:flags:context:completion:)
+    func add(userName: String,
+             accountName: String,
+             password: String,
+             flags: [String: Bool],
+             context: RecipeExecutionContext,
+             completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        standardAdd(configuration,
+                    userName: userName,
+                    accountName: accountName,
+                    password: password,
+                    flags: flags,
+                    context: context,
+                    completion: completion)
+    }
+
     func resetErrors() {
         // Clear the session token to allow retry. When persistsCredentials is true,
         // the saved masterPassword will auto-login without prompting on the next attempt.
@@ -995,6 +1040,18 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
         }
     }
 
+    @objc var addAccountToggleDescriptions: [[String: Any]]? {
+        handshakeInfo?.addAccountToggles?.map { toggle in
+            var dict: [String: Any] = [
+                "key": toggle.key,
+                "label": toggle.label,
+                "defaultValue": toggle.defaultValue
+            ]
+            if let note = toggle.note { dict["note"] = note }
+            return dict
+        }
+    }
+
     private static let builtInSubcommands: Set<String> = [
         "handshake", "login", "list-accounts", "get-password",
         "set-password", "add-account", "delete-account"
@@ -1016,9 +1073,10 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
                 userAccountID: self.userAccountID,
                 token: self.authToken,
                 commandName: name)
-            self.runAdapterCommand(name, request: request) { (result: Result<CustomCommandResponse, Error>) in
+            self.runAdapterCommand(name, request: request) { [weak self] (result: Result<CustomCommandResponse, Error>) in
                 switch result {
                 case .success(let response):
+                    self?.invalidateListAccountsCache()
                     completion(response.message, nil)
                 case .failure(let error):
                     completion(nil, error)
@@ -1033,5 +1091,8 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
 
     @objc func setSettingsValue(_ value: String, forKey key: String) {
         storeSettingsValue(value, forKey: key)
+        guard handshakeInfo?.settingsFields?.contains(where: { $0.key == key }) == true else { return }
+        authToken = nil
+        masterPassword = nil
     }
 }

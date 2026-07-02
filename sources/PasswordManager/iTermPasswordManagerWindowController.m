@@ -25,6 +25,9 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 // Looks nice and is unlikely to be used already
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
+static const CGFloat kNewAccountPanelWidth = 330;
+static const CGFloat kNewAccountPanelHeightWithoutToggle = 136;
+static const CGFloat kNewAccountPanelHeightWithToggle = 196;
 
 typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     iTermPasswordManagerReloadUnlimited,
@@ -75,6 +78,8 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     IBOutlet NSTextField *_newAccount;
     IBOutlet NSButton *_newAccountOkButton;
     IBOutlet NSSecureTextField *_newAccountPassword;
+    IBOutlet NSButton *_addAccountToggleCheckbox;
+    IBOutlet NSTextField *_addAccountToggleLabel;
     IBOutlet NSView *_scrim;
     IBOutlet NSProgressIndicator *_progressIndicator;
 
@@ -611,10 +616,62 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         _newAccountPassword.stringValue = @"";
         _newAccountPassword.placeholderString = nil;
     }
+    [self configureFirstAddAccountToggle];
     [self.window beginSheet:_newAccountPanel completionHandler:^(NSModalResponse response){
         [NSApp stopModal];
     }];
     [NSApp runModalForWindow:_newAccountPanel];
+}
+
+- (NSDictionary *)firstAddAccountToggleDescription {
+    id<PasswordManagerDataSource> ds = self.currentDataSource;
+    if (![(id)ds conformsToProtocol:@protocol(iTermAdapterCapabilities)]) {
+        return nil;
+    }
+    id<iTermAdapterCapabilities> adapter = (id<iTermAdapterCapabilities>)ds;
+    NSArray<NSDictionary *> *toggles = adapter.addAccountToggleDescriptions;
+    if (toggles.count == 0) {
+        return nil;
+    }
+    if (toggles.count > 1) {
+        DLog(@"Adapter declared %@ add-account toggles; only the first is rendered.", @(toggles.count));
+    }
+    return toggles.firstObject;
+}
+
+- (void)configureFirstAddAccountToggle {
+    NSDictionary *toggle = [self firstAddAccountToggleDescription];
+    const BOOL hidden = (toggle == nil);
+    _addAccountToggleCheckbox.hidden = hidden;
+    _addAccountToggleLabel.hidden = hidden;
+    if (hidden) {
+        [_newAccountPanel setContentSize:NSMakeSize(kNewAccountPanelWidth,
+                                                    kNewAccountPanelHeightWithoutToggle)];
+        return;
+    }
+    NSString *label = toggle[@"label"];
+    NSString *note = toggle[@"note"];
+    NSNumber *defaultValue = toggle[@"defaultValue"];
+    _addAccountToggleCheckbox.title = label.length > 0 ? label : @"";
+    _addAccountToggleLabel.stringValue = note.length > 0 ? note : @"";
+    _addAccountToggleCheckbox.state = (defaultValue.boolValue
+                                       ? NSControlStateValueOn
+                                       : NSControlStateValueOff);
+    [_newAccountPanel setContentSize:NSMakeSize(kNewAccountPanelWidth,
+                                                kNewAccountPanelHeightWithToggle)];
+}
+
+- (NSDictionary<NSString *, NSNumber *> *)collectAddAccountFlags {
+    NSDictionary *toggle = [self firstAddAccountToggleDescription];
+    if (toggle == nil) {
+        return nil;
+    }
+    NSString *key = toggle[@"key"];
+    if (key.length == 0) {
+        return nil;
+    }
+    const BOOL on = (_addAccountToggleCheckbox.state == NSControlStateValueOn);
+    return @{ key: @(on) };
 }
 
 - (IBAction)cancelNewAccount:(id)sender {
@@ -639,16 +696,36 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     }
     __weak __typeof(self) weakSelf = self;
     const NSInteger cancelCount = [self incrBusy];
-    [[self currentDataSource] addUserName:_newUserName.stringValue ?: @""
-                              accountName:_newAccount.stringValue ?: @""
-                                 password:_newPassword.stringValue ?: @""
-                                  context:self.recipeExecutionContext
-                               completion:^(id<PasswordManagerAccount> _Nullable newAccount, NSError * _Nullable error) {
+    NSString *userName = _newUserName.stringValue ?: @"";
+    NSString *accountName = _newAccount.stringValue ?: @"";
+    NSString *password = _newPassword.stringValue ?: @"";
+    void (^onComplete)(id<PasswordManagerAccount>, NSError *) = ^(id<PasswordManagerAccount> _Nullable newAccount,
+                                                                  NSError * _Nullable error) {
         [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
             [weakSelf didAddAccount:newAccount withError:error];
             [weakSelf decrBusy];
         }];
-    }];
+    };
+    id<PasswordManagerDataSource> currentDataSource = self.currentDataSource;
+    NSDictionary *flags = [self collectAddAccountFlags];
+    SEL flagsSel = @selector(addUserName:accountName:password:flags:context:completion:);
+    if (flags != nil &&
+        [(id)currentDataSource conformsToProtocol:@protocol(iTermAdapterCapabilities)] &&
+        [(id)currentDataSource respondsToSelector:flagsSel]) {
+        id<iTermAdapterCapabilities> caps = (id<iTermAdapterCapabilities>)currentDataSource;
+        [caps addUserName:userName
+              accountName:accountName
+                 password:password
+                    flags:flags
+                  context:self.recipeExecutionContext
+               completion:onComplete];
+    } else {
+        [currentDataSource addUserName:userName
+                           accountName:accountName
+                              password:password
+                               context:self.recipeExecutionContext
+                            completion:onComplete];
+    }
     _newPassword.stringValue = @"";
     _newUserName.stringValue = @"";
     _newAccount.stringValue = @"";
