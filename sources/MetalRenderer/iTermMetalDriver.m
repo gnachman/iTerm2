@@ -2632,6 +2632,12 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:_offscreenCommandLineTextRenderer];
         [textState didComplete];
     }
+    if (!_backgroundColorRenderer.rendererDisabled) {
+        // Issue 12791: Read back the GPU geometry checksum witness.
+        iTermBackgroundColorRendererTransientState *bgColorState =
+            [frameData transientStateForRenderer:_backgroundColorRenderer];
+        [bgColorState didComplete];
+    }
     DLog(@"  Recording final stats");
 
 #if ENABLE_STATS

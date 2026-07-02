@@ -12,6 +12,7 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexDefaultBackgroundColorInfo,  // Points at iTermMetalBackgroundColorInfo
     iTermVertexTextInfo,
     iTermVertexColorArray,  // Points at per-quad vector_float4 color
+    iTermVertexInputIndexBgColorChecksum,  // Issue 12791: iTermBgColorChecksumParams (expected FNV-1a hash of the 6-vertex quad)
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {
@@ -31,7 +32,8 @@ typedef enum {
     iTermFragmentBufferIndexFullScreenFlashColor = 4, // Points at a float4
     iTermFragmentInputIndexAlpha = 5,  // float4 pointer. Used by transparent windows on 10.14
     iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
-    iTermFragmentBufferIndexScale = 7  // backing scale factor float
+    iTermFragmentBufferIndexScale = 7,  // backing scale factor float
+    iTermFragmentBufferIndexBgColorChecksumReport = 9,  // Issue 12791: device atomic_uint
 } iTermFragmentBufferIndex;
 
 // AND with mask to remove strikethrough bit
@@ -127,6 +129,17 @@ typedef struct {
     // Is default background color?
     unsigned char isDefault;
 } iTermBackgroundColorPIU;
+
+// Issue 12791: bg-color geometry checksum witness. The expected hash rides via
+// setVertexBytes (inline command-buffer payload, not an MTLBuffer) so a stomp on the
+// pooled unit-quad vertex buffer between CPU write and GPU read produces a mismatch.
+// This witnesses the ONE input that can make one triangle of the merged default-
+// background quad differ from the other: the per-vertex geometry (the PIU-derived
+// color is uniform across all 6 vertices). expected==0 means "don't check this draw".
+typedef struct {
+    unsigned int expected;     // FNV-1a-32 of the count*4 floats of the vertex array (0 = skip)
+    unsigned int vertexCount;  // number of iTermVertex to hash (normally 6)
+} iTermBgColorChecksumParams;
 
 typedef struct {
     vector_float4 color;

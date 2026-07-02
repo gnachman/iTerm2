@@ -22,6 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
        repeatingRows:(int)repeatingRows
            omitClear:(BOOL)omitClear;
 
+// Issue 12791: Read back the GPU-written geometry checksum report after completion.
+- (void)didComplete;
+
 @end
 
 @interface iTermBackgroundColorRenderer : NSObject<iTermMetalCellRenderer>
