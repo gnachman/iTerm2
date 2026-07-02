@@ -476,7 +476,13 @@ final class CompanionHostBridge {
               let textview = session.textview else {
             return
         }
-        let coord = VT100GridAbsCoordMake(Int32(clamping: point.column), point.absLine)
+        // Clamp the absolute line to the available buffer so a hostile or stale peer
+        // cannot point iTermSelection at a line outside [firstAbs, firstAbs+lines).
+        // The column is clamped downstream (inclusiveCharacterRange / iTermSelection).
+        let clampedAbsLine = Self.clampAbsLine(point.absLine,
+                                               firstAbs: session.screen.totalScrollbackOverflow(),
+                                               lineCount: Int64(session.screen.numberOfLines()))
+        let coord = VT100GridAbsCoordMake(Int32(clamping: point.column), clampedAbsLine)
         // Word/line/smart snapping queries the data source, which a buried session
         // detaches; re-attach for the operation, mirroring the frame source.
         let wasDetached = textview.dataSource == nil
@@ -599,6 +605,34 @@ final class CompanionHostBridge {
                                                   gridWidth: Int) -> (column: Int, absLine: Int64) {
         if column > 0 { return (column - 1, absLine) }
         return (max(0, gridWidth - 1), absLine - 1)
+    }
+
+    /// Clamp an absolute line to the buffer's available range [firstAbs,
+    /// firstAbs+lineCount). An empty buffer (lineCount <= 0) clamps to firstAbs.
+    nonisolated static func clampAbsLine(_ absLine: Int64, firstAbs: Int64, lineCount: Int64) -> Int64 {
+        guard lineCount > 0 else { return firstAbs }
+        return min(max(absLine, firstAbs), firstAbs + lineCount - 1)
+    }
+
+    struct SelectionPushDecision: Equatable {
+        /// The selection changed from a non-gesture source, so an in-progress drag's
+        /// state is stale and must be forgotten.
+        var resetDragState: Bool
+        /// The current selection should be (re)sent to the phone.
+        var push: Bool
+    }
+
+    /// Decide how driveStream reacts to the current selection. A value change means it
+    /// came from elsewhere (a phone gesture pushes inline and updates lastSent), so
+    /// reset the drag and push. A generation bump forces a re-push of the SAME value
+    /// (the phone discarded it) but must NOT reset the drag, so a resize mid-drag
+    /// keeps the anchor.
+    nonisolated static func selectionPushDecision(current: CompanionSelectionRange?,
+                                                  lastSent: CompanionSelectionRange?,
+                                                  generationBumped: Bool) -> SelectionPushDecision {
+        let valueChanged = (current != lastSent)
+        return SelectionPushDecision(resetDragState: valueChanged,
+                                     push: valueChanged || generationBumped)
     }
 
     /// Given the two inclusive endpoints of a character-mode selection (the fixed
@@ -750,25 +784,27 @@ final class CompanionHostBridge {
             context.streamer.screenDidChange()
         }
         // A genuine generation bump (resize/reflow/font change) makes the phone
-        // discard its selection, and the value-based check below would not re-push an
-        // unchanged range. Forget the last-sent value so the current selection is
-        // re-pushed once per bump, restoring the handles the phone just dropped.
+        // discard its selection, so the current range must be re-pushed even if its
+        // value is unchanged, to restore the handles the phone dropped.
         let generation = context.streamer.currentGenerationId
-        if generation != context.lastConfigGeneration {
-            context.lastConfigGeneration = generation
-            context.lastSentSelectionRange = nil
-        }
+        let generationBumped = generation != context.lastConfigGeneration
+        context.lastConfigGeneration = generation
         // Detect a selection change from any source (mac-side Cmd-A/drag as well as
         // phone gestures) and push it, so the phone reloads the affected history
         // tiles; the live band already reflects it via the rendered video.
         if let textview = session.textview {
             let current = currentSelectionRange(textview)
-            if current != context.lastSentSelectionRange {
-                // A phone gesture pushes (and updates lastSentSelectionRange) inline,
-                // so a mismatch here is a change from ELSEWHERE (mac Cmd-A, a click,
-                // etc.). Forget any in-progress drag state so a resumed phone drag
-                // re-applies rather than being suppressed as a stale no-op.
+            let decision = Self.selectionPushDecision(current: current,
+                                                      lastSent: context.lastSentSelectionRange,
+                                                      generationBumped: generationBumped)
+            // Only forget an in-progress drag when the change came from ELSEWHERE (a
+            // real value change: mac Cmd-A, a click). A bump-forced re-push of the
+            // SAME value must NOT reset the drag, or a resize mid-drag would wipe the
+            // anchor and collapse the selection to the cell under the finger.
+            if decision.resetDragState {
                 resetSelectionDragState(context)
+            }
+            if decision.push {
                 sendSelectionRange(streamID: streamID, textview: textview)
             }
         }

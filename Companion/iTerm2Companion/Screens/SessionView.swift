@@ -1203,6 +1203,10 @@ private struct LiveCanvas: UIViewRepresentable {
                 moveHandle(isStart: isStart, toContentPoint: point)
                 showLoupe(at: point)
             case .ended, .cancelled, .failed:
+                // Only finalize a drag that actually began: if .began bailed (no
+                // active selection), this handle never sent begin/move, so a stray
+                // .end would create a spurious one-cell selection on the host.
+                guard isStart ? draggingStart : draggingEnd else { return }
                 draggingStart = false
                 draggingEnd = false
                 scrollView.isScrollEnabled = true

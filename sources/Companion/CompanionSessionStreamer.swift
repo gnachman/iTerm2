@@ -349,28 +349,33 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// Ensure an encoder/pool exist for the given dimensions, recreating them on a
     /// size change. Returns false if the encoder cannot be created.
     private func ensureEncoder(width: Int, height: Int) -> Bool {
-        if let pool, pool.width == width, pool.height == height, encoder != nil {
-            return true
-        }
-        pool = CompanionPixelBufferPool(width: width, height: height)
-        lastSentHash = nil  // a new size invalidates the dedup baseline
+        // pool/encoder are read in handleEncoded (on the encoder callback thread)
+        // under lock, so read and write them here under lock too. Build the new
+        // encoder outside the lock (its creation is slow and can fail) and swap it in
+        // atomically.
+        lock.lock()
+        let reuse = pool?.width == width && pool?.height == height && encoder != nil
+        lock.unlock()
+        if reuse { return true }
+
+        let newPool = CompanionPixelBufferPool(width: width, height: height)
+        let newEncoder: CompanionVideoEncoder
         do {
-            encoder = try CompanionVideoEncoder(width: width, height: height,
-                                                averageBitRate: averageBitRate) { [weak self] frame in
+            newEncoder = try CompanionVideoEncoder(width: width, height: height,
+                                                   averageBitRate: averageBitRate) { [weak self] frame in
                 self?.handleEncoded(frame)
             }
         } catch {
             DLog("Companion streamer: cannot create HEVC encoder: \(error)")
-            encoder = nil
             return false
         }
+        lock.lock()
+        pool = newPool
+        encoder = newEncoder
+        lastSentHash = nil  // a new size invalidates the dedup baseline
         // A fresh encoder has fresh parameter sets the phone has not seen, so force a
         // config resend. The geometry comparison bumps the generation if the pixel
-        // dimensions actually changed. Take the lock: mustResendConfig is otherwise
-        // only touched by handleEncoded (on the encoder callback thread) and
-        // requestKeyframe, both under lock, and an in-flight callback from the just-
-        // discarded encoder could still be running.
-        lock.lock()
+        // dimensions actually changed.
         mustResendConfig = true
         lock.unlock()
         return true

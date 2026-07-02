@@ -106,4 +106,66 @@ final class CompanionSelectionRangeTests: XCTestCase {
         XCTAssertEqual(r.end.x, Int32.max, "the exclusive end must not overflow to a negative column")
         XCTAssertEqual(r.start.x, Int32.max - 1)
     }
+
+    // MARK: clampAbsLine
+
+    func testClampAbsLineInRangeIsUnchanged() {
+        XCTAssertEqual(CompanionHostBridge.clampAbsLine(50, firstAbs: 10, lineCount: 100), 50)
+    }
+
+    func testClampAbsLineBelowFirstAbs() {
+        XCTAssertEqual(CompanionHostBridge.clampAbsLine(-5, firstAbs: 10, lineCount: 100), 10)
+    }
+
+    func testClampAbsLineAboveLastLine() {
+        // Valid lines are [10, 10+100) -> last is 109.
+        XCTAssertEqual(CompanionHostBridge.clampAbsLine(Int64.max, firstAbs: 10, lineCount: 100), 109)
+    }
+
+    func testClampAbsLineEmptyBufferPinsToFirstAbs() {
+        XCTAssertEqual(CompanionHostBridge.clampAbsLine(50, firstAbs: 10, lineCount: 0), 10)
+    }
+
+    // MARK: selectionPushDecision
+
+    private func selRange(_ startCol: Int, _ endCol: Int) -> CompanionSelectionRange {
+        CompanionSelectionRange(start: CompanionSelectionPoint(absLine: 5, column: startCol),
+                                end: CompanionSelectionPoint(absLine: 5, column: endCol))
+    }
+
+    func testPushDecisionNoChangeNoBumpDoesNothing() {
+        let r = selRange(1, 4)
+        let d = CompanionHostBridge.selectionPushDecision(current: r, lastSent: r, generationBumped: false)
+        XCTAssertFalse(d.resetDragState)
+        XCTAssertFalse(d.push)
+    }
+
+    func testPushDecisionValueChangeResetsAndPushes() {
+        let d = CompanionHostBridge.selectionPushDecision(current: selRange(1, 4), lastSent: selRange(1, 6),
+                                                          generationBumped: false)
+        XCTAssertTrue(d.resetDragState)
+        XCTAssertTrue(d.push)
+    }
+
+    func testPushDecisionBumpOnlyPushesWithoutResetting() {
+        // The regression: a generation bump re-pushes the SAME value but must not
+        // reset an in-progress drag (which would collapse a resize-while-dragging).
+        let r = selRange(1, 4)
+        let d = CompanionHostBridge.selectionPushDecision(current: r, lastSent: r, generationBumped: true)
+        XCTAssertFalse(d.resetDragState, "a bump-forced re-push of the same value must not reset the drag")
+        XCTAssertTrue(d.push)
+    }
+
+    func testPushDecisionValueChangeAndBumpResets() {
+        let d = CompanionHostBridge.selectionPushDecision(current: selRange(1, 4), lastSent: selRange(2, 4),
+                                                          generationBumped: true)
+        XCTAssertTrue(d.resetDragState)
+        XCTAssertTrue(d.push)
+    }
+
+    func testPushDecisionNilBothWithBumpPushesWithoutReset() {
+        let d = CompanionHostBridge.selectionPushDecision(current: nil, lastSent: nil, generationBumped: true)
+        XCTAssertFalse(d.resetDragState)
+        XCTAssertTrue(d.push)
+    }
 }
