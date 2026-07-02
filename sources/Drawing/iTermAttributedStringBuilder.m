@@ -254,6 +254,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
          asciiLigaturesAvailable:(BOOL)asciiLigaturesAvailable
                   asciiLigatures:(BOOL)asciiLigatures
 preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
+             lowFiCombiningMarks:(BOOL)lowFiCombiningMarks
                         cellSize:(NSSize)cellSize
             blinkingItemsVisible:(BOOL)blinkingItemsVisible
                     blinkAllowed:(BOOL)blinkAllowed
@@ -276,6 +277,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     _asciiLigaturesAvailable = asciiLigaturesAvailable;
     _asciiLigatures = asciiLigatures;
     _preferSpeedToFullLigatureSupport = preferSpeedToFullLigatureSupport;
+    _lowFiCombiningMarks = lowFiCombiningMarks;
     _cellSize = cellSize;
     _blinkingItemsVisible = blinkingItemsVisible;
     _blinkAllowed = blinkAllowed;
@@ -321,7 +323,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         .previousForegroundColor = nil,
     };
     NSDictionary *previousImageAttributes = nil;
-    iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] init];
+    iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] initWithPreferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                                                                    lowFiCombiningMarks:_lowFiCombiningMarks];
     builder.hasBidi = bidiInfo != nil;
     builder.startColumn = indexRange.location;
     builder.zippy = self.zippy;
@@ -527,7 +530,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             if (builtString.length > 0) {
                 [attributedStrings addObject:builtString];
             }
-            builder = [[iTermMutableAttributedStringBuilder alloc] init];
+            builder = [[iTermMutableAttributedStringBuilder alloc] initWithPreferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                                                                    lowFiCombiningMarks:_lowFiCombiningMarks];
             builder.hasBidi = bidiInfo != nil;
             builder.startColumn = i;
             builder.zippy = self.zippy;
@@ -945,6 +949,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     _asciiLigaturesAvailable = other.asciiLigaturesAvailable;
     _asciiLigatures = other.asciiLigatures;
     _preferSpeedToFullLigatureSupport = other.preferSpeedToFullLigatureSupport;
+    _lowFiCombiningMarks = other.lowFiCombiningMarks;
     _cellSize = other.cellSize;
     _blinkingItemsVisible = other.blinkingItemsVisible;
     _blinkAllowed = other.blinkAllowed;

@@ -7,7 +7,6 @@
 //
 
 #import "iTermMutableAttributedStringBuilder.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "CVector.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -73,6 +72,7 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
     NSMutableString *_string;
     NSMutableData *_characterData;
     BOOL _canUseFastPath;
+    BOOL _lowFiCombiningMarks;
     BOOL _explicitDirectionControls;
     NSMutableIndexSet *_rtlIndexes;
     CTVector(int) _characterIndexToSourceCell;
@@ -80,12 +80,14 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
     int _count;  // number of cells
 }
 
-- (instancetype)init {
+- (instancetype)initWithPreferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
+                                     lowFiCombiningMarks:(BOOL)lowFiCombiningMarks {
     self = [super init];
     if (self) {
 #if ENABLE_TEXT_DRAWING_FAST_PATH
-        _canUseFastPath = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
+        _canUseFastPath = preferSpeedToFullLigatureSupport;
 #endif
+        _lowFiCombiningMarks = lowFiCombiningMarks;
         _startColumn = _endColumn = NSNotFound;
         CTVectorCreate(&_characterIndexToSourceCell, 100);
         CTVectorCreate(&_characterIndexToDrawCell, 100);
@@ -191,7 +193,7 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
     // Require a string length of 1 to avoid using zippy for combining marks, which core graphics
     // renders poorly. Zippy still has value for using core graphics for nonascii uncombined characters.
     BOOL tryZippy = _zippy;
-    if (tryZippy && ![iTermAdvancedSettingsModel lowFiCombiningMarks] && string.length > 1) {
+    if (tryZippy && !_lowFiCombiningMarks && string.length > 1) {
         tryZippy = NO;
     }
     if (tryZippy) {

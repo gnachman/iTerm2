@@ -162,6 +162,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSMutableDictionary<iTermAttributedStringProxy *, id> *_replacementLineRefCache;
 
     BOOL _preferSpeedToFullLigatureSupport;
+    BOOL _lowFiCombiningMarks;
     NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
 }
 
@@ -228,6 +229,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                   asciiLigaturesAvailable:_asciiLigaturesAvailable
                            asciiLigatures:_asciiLigatures
          preferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                      lowFiCombiningMarks:_lowFiCombiningMarks
                                  cellSize:_cellSize
                      blinkingItemsVisible:_blinkingItemsVisible
                              blinkAllowed:_blinkAllowed
@@ -4322,6 +4324,7 @@ typedef struct {
     _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
     _scrollViewDocumentVisibleRect = _visibleRectExcludingTopMargin;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
+    _lowFiCombiningMarks = [iTermAdvancedSettingsModel lowFiCombiningMarks];
 
     BOOL ignore1 = NO, ignore2 = NO;
     UTF32Char ignore3;
@@ -4344,6 +4347,7 @@ typedef struct {
     _scrollViewContentSize = NSMakeSize(frame.size.width, frame.size.height + margins);
     _scrollViewDocumentVisibleRect = visibleRect;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
+    _lowFiCombiningMarks = [iTermAdvancedSettingsModel lowFiCombiningMarks];
     _asciiLigaturesAvailable = NO;  // Safe default for offscreen rendering
 }
 
