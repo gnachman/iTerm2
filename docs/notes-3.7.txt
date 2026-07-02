@@ -658,6 +658,9 @@ Bug Fixes:
   Korean) in the AI Chat input no longer
   prematurely submits the unfinalized
   candidate text.
+- Command-clicking links in terminal output
+  no longer crashes when command-mark data
+  is unavailable.
 - Open Quickly now updates the MRU order
   when you jump to a session, so repeated
   Cmd-Shift-O Enter cycles between the two
