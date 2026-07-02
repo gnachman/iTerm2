@@ -520,6 +520,13 @@ Settings Improvements:
   versions continue to use manifest.json.
 
 Bug Fixes:
+- SSH integration now runs the ssh command
+  through your login shell, so dotfiles set up
+  your environment first. A custom SSH_AUTH_SOCK
+  (pointing at an agent that holds your keys) is
+  now honored, fixing “Permission denied
+  (publickey)” failures that only happened with
+  the SSH command type.
 - Fixed a crash in Replace Selection (e.g.,
   Replace with Pretty-Printed JSON) when the
   replacement had more lines than the selection.

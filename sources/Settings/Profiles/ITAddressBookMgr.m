@@ -884,11 +884,21 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
                 NSString *wrappedCommand = [NSString stringWithFormat:@"'%@' %@",
                                             iTermPathToSSH(),
                                             command];
-                command = [NSString stringWithFormat:@"/usr/bin/login -fpq %@ %@ -c %@",
+                // Run it2ssh through the user's login shell so dotfiles
+                // (.zshrc/.bashrc/etc.) run first and ssh sees the user's exported
+                // environment, e.g. a custom SSH_AUTH_SOCK pointing at an agent that
+                // holds their keys. ShellLauncher exec's the shell with
+                // argv[0] = "-<basename>" so login behavior is triggered uniformly
+                // across bash, zsh, fish, tcsh, and xonsh — tcsh in particular rejects
+                // -l combined with -c on the command line. it2ssh and the ssh binary
+                // it invokes are both referenced by absolute path, so a dotfile that
+                // rewrites $PATH can't stop them from launching.
+                NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
+                command = [NSString stringWithFormat:@"/usr/bin/login -fqpl %@ %@ --launch_shell - -i -c %@",
                            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-                           [iTermOpenDirectory userShell] ?: @"/bin/zsh",
+                           [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-                RLog(@"wrappedCommand=%@, command=%@", wrappedCommand, command);
+                RLog(@"ssh login-shell wrapped command=%@, wrappedCommand=%@", command, wrappedCommand);
             } else if (custom && [bookmark[KEY_RUN_COMMAND_IN_LOGIN_SHELL] boolValue]) {
                 // Wrap the user's command in their login shell so dotfiles (.zshrc/.bashrc/etc.)
                 // run first and the command sees the user's $PATH and exported environment.
