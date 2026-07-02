@@ -1652,7 +1652,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         
         // Counter
         let counterString = attributedObjectCountValue(forTabCell: cell)
-        if !counterString.string.isEmpty {
+        if cell.count > 0 && !counterString.string.isEmpty {
             let counterStringSize = counterString.size()
             let fontSize = self.fontSize
             let gravity: Gravity = orientation == .horizontalOrientation ? .center : .right
