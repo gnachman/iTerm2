@@ -1573,3 +1573,7 @@ Bug Fixes:
   percent signs were being double-
   encoded on macOS 14 and later. Issue
   12914.
+- Transparent windows with background
+  blur no longer show as a solid gray
+  rectangle in Mission Control on macOS
+  27. Issue 12911.

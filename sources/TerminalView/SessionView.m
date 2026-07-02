@@ -552,6 +552,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _imageView.transparency = 1 - transparencyAlpha;
     _imageView.blend = blend;
     [_toolbarView setTransparencyAlpha:transparencyAlpha];
+    [self updateMetalViewFramebufferOnlyForTransparencyAlpha:transparencyAlpha];
     [CATransaction commit];
 }
 
@@ -978,7 +979,17 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _driver.dataSource = dataSource;
     [_driver metalView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
+    [self updateMetalViewFramebufferOnlyForTransparencyAlpha:[self.delegate sessionViewTransparencyAlpha]];
     [self metalViewVisibilityDidChange];
+}
+
+// A framebufferOnly CAMetalLayer has no compositor-readable backing, so the window
+// server cannot snapshot it. On macOS 27 that makes a transparent+blurred window
+// render as a solid gray rectangle in Mission Control (issue 12911). Let the drawable
+// be read back when the window is transparent so the snapshot shows the real content;
+// keep framebufferOnly for opaque windows where it avoids the extra memory bandwidth.
+- (void)updateMetalViewFramebufferOnlyForTransparencyAlpha:(CGFloat)transparencyAlpha {
+    _metalView.framebufferOnly = (transparencyAlpha >= 1);
 }
 
 - (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
