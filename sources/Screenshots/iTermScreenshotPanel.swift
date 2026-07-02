@@ -205,6 +205,7 @@ class iTermScreenshotPanel: NSPanel {
                            terminalInfo: iTermScreenshotTerminalInfo,
                            tab: PTYTab,
                            completion: @escaping (URL?) -> Void) {
+        RLog("iTermScreenshotPanel.show(forSession:) session=\(session) terminalInfo totalLines=\(terminalInfo.totalLines) visibleLines=\(terminalInfo.visibleLines) textView=\(String(describing: terminalInfo.textView))")
         let panel = iTermScreenshotPanel(session: session, terminalInfo: terminalInfo, tab: tab)
         panel.completion = completion
         panel.keepalive = panel
@@ -820,18 +821,25 @@ class iTermScreenshotPanel: NSPanel {
     }
 
     private func showAsFloatingPanel() {
-        // Position panel near the terminal window
-        if let sessionWindow = session?.delegate?.realParentWindow()?.window,
-           let screen = sessionWindow.screen {
+        // Always lay out first so the panel has a real (non-zero) size regardless of
+        // whether we can find the parent window/screen below. The panel's content size
+        // comes entirely from Auto Layout, so skipping this leaves a zero-size, invisible
+        // window (issue 12893). Size must never depend on the positioning guard.
+        layoutIfNeeded()
+        let panelSize = frame.size
+        RLog("iTermScreenshotPanel.showAsFloatingPanel: after layout panelSize=\(NSStringFromSize(panelSize))")
+
+        let sessionWindow = session?.delegate?.realParentWindow()?.window
+        let screen = sessionWindow?.screen ?? NSScreen.main
+        RLog("iTermScreenshotPanel.showAsFloatingPanel: sessionWindow=\(String(describing: sessionWindow)) window.screen=\(String(describing: sessionWindow?.screen)) resolvedScreen=\(String(describing: screen))")
+
+        if let sessionWindow, let screen {
             let sessionFrame = sessionWindow.frame
             let screenFrame = screen.visibleFrame
-
-            // Get actual panel size after layout
-            layoutIfNeeded()
-            let panelSize = frame.size
+            RLog("iTermScreenshotPanel.showAsFloatingPanel: sessionFrame=\(NSStringFromRect(sessionFrame)) screenVisibleFrame=\(NSStringFromRect(screenFrame))")
 
             // Vertically center the panel relative to the terminal window
-            let panelY = sessionFrame.midY - (panelSize.height / 2)
+            var panelY = sessionFrame.midY - (panelSize.height / 2)
 
             // Try to position to the right of the terminal window
             var panelX = sessionFrame.maxX + 20
@@ -853,12 +861,30 @@ class iTermScreenshotPanel: NSPanel {
                 }
             }
 
-            setFrameOrigin(NSPoint(x: panelX, y: panelY))
+            // Clamp the origin so the panel stays fully on the screen's visible frame.
+            // Without this a short or low terminal window can push panelY below the
+            // screen (there is no auto-constraint for utility panels), leaving the panel
+            // partly or wholly off-screen (issue 12893).
+            let clampedX = clamp(panelX, min: screenFrame.minX, max: max(screenFrame.minX, screenFrame.maxX - panelSize.width))
+            panelY = clamp(panelY, min: screenFrame.minY, max: max(screenFrame.minY, screenFrame.maxY - panelSize.height))
+            let origin = NSPoint(x: clampedX, y: panelY)
+            RLog("iTermScreenshotPanel.showAsFloatingPanel: computed origin=\(NSStringFromPoint(origin)) (preclamp x=\(panelX))")
+            setFrameOrigin(origin)
+        } else {
+            // No parent window/screen to anchor to: fall back to centering on screen so
+            // the panel is always visible.
+            RLog("iTermScreenshotPanel.showAsFloatingPanel: no anchor window/screen; centering panel")
+            center()
         }
 
         makeKeyAndOrderFront(nil)
+        RLog("iTermScreenshotPanel.showAsFloatingPanel: after order front frame=\(NSStringFromRect(frame)) isVisible=\(isVisible) isOnActiveSpace=\(isOnActiveSpace) occlusionState=\(occlusionState.rawValue) level=\(level.rawValue) alpha=\(alphaValue) screen=\(String(describing: self.screen))")
         updatePreview()
         updateLargeScreenshotUI()
+    }
+
+    private func clamp(_ value: CGFloat, min minValue: CGFloat, max maxValue: CGFloat) -> CGFloat {
+        return Swift.max(minValue, Swift.min(value, maxValue))
     }
 
     private func createLineNumberFormatter() -> NumberFormatter {
@@ -914,7 +940,7 @@ class iTermScreenshotPanel: NSPanel {
         cachedNumberOfParts = numberOfParts(maxLinesPerPart: cachedMaxLinesPerPart)
 
         let lineRange = currentLineRange()
-        NSLog("updateLargeScreenshotUI: lineRange=\(lineRange), maxLinesPerPart=\(cachedMaxLinesPerPart), numberOfParts=\(cachedNumberOfParts)")
+        RLog("updateLargeScreenshotUI: lineRange=\(lineRange), maxLinesPerPart=\(cachedMaxLinesPerPart), numberOfParts=\(cachedNumberOfParts)")
 
         if cachedNumberOfParts > 1 {
             largeScreenshotWarningLabel.stringValue = "⚠️ Large screenshot will be saved as \(cachedNumberOfParts) files."
@@ -1004,6 +1030,7 @@ class iTermScreenshotPanel: NSPanel {
 
     private func updatePreview(preserveViewport: Bool) {
         guard let info = terminalInfo, let textView = info.textView else {
+            RLog("iTermScreenshotPanel.updatePreview: bailing, terminalInfo=\(String(describing: terminalInfo)) textView=\(String(describing: terminalInfo?.textView))")
             return
         }
 
@@ -1394,7 +1421,7 @@ class iTermScreenshotPanel: NSPanel {
         let totalParts = cachedNumberOfParts
         let maxLines = cachedMaxLinesPerPart
 
-        NSLog("saveWithStreamingEncoder: lineRange=\(lineRange), totalParts=\(totalParts), maxLines=\(maxLines)")
+        RLog("saveWithStreamingEncoder: lineRange=\(lineRange), totalParts=\(totalParts), maxLines=\(maxLines)")
 
         // Set up multi-part save state
         multiPartSaveState = MultiPartSaveState(
@@ -1421,7 +1448,7 @@ class iTermScreenshotPanel: NSPanel {
         let partIndex = state.currentPart
         let totalParts = state.totalParts
 
-        NSLog("saveNextPart: partIndex=\(partIndex), totalParts=\(totalParts), maxLinesPerPart=\(state.maxLinesPerPart), fullLineRange=\(state.fullLineRange)")
+        RLog("saveNextPart: partIndex=\(partIndex), totalParts=\(totalParts), maxLinesPerPart=\(state.maxLinesPerPart), fullLineRange=\(state.fullLineRange)")
 
         // Calculate line range for this part
         let partStartLine = state.fullLineRange.location + partIndex * state.maxLinesPerPart
@@ -1429,7 +1456,7 @@ class iTermScreenshotPanel: NSPanel {
         let partLineCount = min(state.maxLinesPerPart, remainingLines)
         let partLineRange = NSRange(location: partStartLine, length: partLineCount)
 
-        NSLog("saveNextPart: partStartLine=\(partStartLine), remainingLines=\(remainingLines), partLineCount=\(partLineCount), partLineRange=\(partLineRange)")
+        RLog("saveNextPart: partStartLine=\(partStartLine), remainingLines=\(remainingLines), partLineCount=\(partLineCount), partLineRange=\(partLineRange)")
 
         // Generate filename
         let filename: String
@@ -1440,7 +1467,7 @@ class iTermScreenshotPanel: NSPanel {
         }
         let destinationURL = state.directory.appendingPathComponent(filename)
 
-        NSLog("saveNextPart: filename=\(filename)")
+        RLog("saveNextPart: filename=\(filename)")
 
         // Create encoder for this part
         let encoder = iTermStreamingScreenshotEncoder(
@@ -1478,7 +1505,7 @@ class iTermScreenshotPanel: NSPanel {
             guard let self = self else { return }
             self.streamingEncoder = nil
 
-            NSLog("saveNextPart completion: url=\(String(describing: url))")
+            RLog("saveNextPart completion: url=\(String(describing: url))")
 
             if let url = url {
                 self.multiPartSaveState?.savedURLs.append(url)
@@ -1489,14 +1516,14 @@ class iTermScreenshotPanel: NSPanel {
 
             let newCurrentPart = self.multiPartSaveState?.currentPart ?? -1
             let totalParts = self.multiPartSaveState?.totalParts ?? -1
-            NSLog("saveNextPart completion: after increment currentPart=\(newCurrentPart), totalParts=\(totalParts)")
+            RLog("saveNextPart completion: after increment currentPart=\(newCurrentPart), totalParts=\(totalParts)")
 
             if let state = self.multiPartSaveState, state.currentPart < state.totalParts {
-                NSLog("saveNextPart completion: saving next part")
+                RLog("saveNextPart completion: saving next part")
                 // Save next part
                 self.saveNextPart()
             } else {
-                NSLog("saveNextPart completion: all parts done, savedURLs count=\(self.multiPartSaveState?.savedURLs.count ?? 0)")
+                RLog("saveNextPart completion: all parts done, savedURLs count=\(self.multiPartSaveState?.savedURLs.count ?? 0)")
                 // All parts done
                 self.hideEncodingProgress()
                 let firstURL = self.multiPartSaveState?.savedURLs.first
@@ -1538,6 +1565,7 @@ class iTermScreenshotPanel: NSPanel {
     }
 
     private func finish(with url: URL?) {
+        RLog("iTermScreenshotPanel.finish(with: \(String(describing: url))) frame=\(NSStringFromRect(frame)) isVisible=\(isVisible)")
         // Cancel any in-progress streaming encoder
         streamingEncoder?.cancel()
         streamingEncoder = nil
@@ -1609,6 +1637,7 @@ extension iTermScreenshotPanel: NSTableViewDelegate {
 // MARK: - NSWindowDelegate
 extension iTermScreenshotPanel: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
+        RLog("iTermScreenshotPanel.windowWillClose")
         finish(with: nil)
     }
 }

@@ -2766,19 +2766,24 @@ static iTermKeyEventReplayer *gReplayer;
         return;
     }
 
+    RLog(@"makeScreenshot: term=%@ window=%@ tab=%@ liveSession=%@", term, window, tab, liveSession);
+
     // Enter screenshot mode with synthetic session
     PTYSession *syntheticSession = [tab enterScreenshotModeForSession:liveSession];
     if (!syntheticSession) {
+        RLog(@"makeScreenshot: enterScreenshotModeForSession returned nil; beeping");
         NSBeep();
         return;
     }
 
     PTYTextView *textView = syntheticSession.textview;
     if (!textView) {
+        RLog(@"makeScreenshot: synthetic session has no textview; exiting screenshot mode and beeping");
         [tab exitScreenshotModeForSession:syntheticSession];
         NSBeep();
         return;
     }
+    RLog(@"makeScreenshot: syntheticSession=%@ realParentWindow=%@", syntheticSession, [syntheticSession.delegate realParentWindow]);
 
     // Get terminal info for line range selection (use synthetic session's text view)
     id<iTermTextDataSource> dataSource = textView.dataSource;
