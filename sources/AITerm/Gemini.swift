@@ -66,6 +66,77 @@ struct GeminiRequestBuilder: Codable {
         }
     }
 
+    private static func parametersForGemini(_ schema: JSONSchema) -> JSONSchema {
+        do {
+            let data = try JSONEncoder().encode(schema)
+            let object = try JSONSerialization.jsonObject(with: data)
+            guard let sanitized = sanitizingFunctionParameterSchema(object) as? [String: Any] else {
+                return schema
+            }
+            return JSONSchema(rawJSON: sanitized)
+        } catch {
+            DLog("Failed to sanitize Gemini function parameters: \(error)")
+            return schema
+        }
+    }
+
+    private static func sanitizingFunctionParameterSchema(_ object: Any) -> Any {
+        if let dictionary = object as? [String: Any] {
+            var result = [String: Any]()
+            for (key, value) in dictionary where key != "additionalProperties" {
+                switch key {
+                case "type":
+                    if let typeNames = value as? [Any] {
+                        let names = typeNames.compactMap { $0 as? String }
+                        if let typeName = names.first(where: { $0 != "null" }) {
+                            result[key] = typeName
+                        }
+                        if names.contains("null") {
+                            result["nullable"] = true
+                        }
+                    } else {
+                        result[key] = value
+                    }
+                case "items":
+                    if let typeName = value as? String {
+                        result[key] = ["type": typeName]
+                    } else {
+                        result[key] = sanitizingFunctionParameterSchema(value)
+                    }
+                case "properties", "$defs", "definitions", "patternProperties":
+                    // These map member names to child schemas. A member name
+                    // may itself be a JSON Schema keyword (e.g. a property
+                    // literally named "type", "items", or "additionalProperties").
+                    // Recurse each value as a schema and keep the member name
+                    // verbatim so it is never reinterpreted as a keyword.
+                    if let members = value as? [String: Any] {
+                        var sanitizedMembers = [String: Any]()
+                        for (memberName, memberSchema) in members {
+                            sanitizedMembers[memberName] = sanitizingFunctionParameterSchema(memberSchema)
+                        }
+                        result[key] = sanitizedMembers
+                    } else {
+                        result[key] = sanitizingFunctionParameterSchema(value)
+                    }
+                case "enum", "const", "default", "examples":
+                    // These carry literal data values, not subschemas. Recursing
+                    // would treat an object-valued default/const/example as a
+                    // schema and strip its additionalProperties or rewrite a
+                    // "type" array member, corrupting the actual value. Copy
+                    // verbatim. (Bites rawJSON-backed MCP/orchestrator schemas.)
+                    result[key] = value
+                default:
+                    result[key] = sanitizingFunctionParameterSchema(value)
+                }
+            }
+            return result
+        }
+        if let array = object as? [Any] {
+            return array.map { sanitizingFunctionParameterSchema($0) }
+        }
+        return object
+    }
+
     init(messages: [LLM.Message],
          functions: [LLM.AnyFunction],
          hostedTools: HostedTools) {
@@ -80,7 +151,7 @@ struct GeminiRequestBuilder: Codable {
                 FunctionDeclaration(
                     name: function.decl.name,
                     description: function.decl.description,
-                    parameters: function.decl.parameters)
+                    parameters: Self.parametersForGemini(function.decl.parameters))
             }))
         } else {
             // Gemini doesn't allow both functions and hosted tools in the same call yet.
@@ -96,7 +167,7 @@ struct GeminiRequestBuilder: Codable {
         } else {
             self.tools = tools
         }
-        self.contents = messages.compactMap { message -> Content? in
+        let rawContents = messages.compactMap { message -> Content? in
             let role: String? = switch message.role {
             case .user: "user"
             case .assistant: "model"
@@ -195,6 +266,26 @@ struct GeminiRequestBuilder: Codable {
             return Content(role: role,
                            parts: parts)
         }
+        self.contents = Self.coalescingConsecutiveRoles(rawContents)
+    }
+
+    // A reloaded tool round-trip is replayed as a single folded assistant
+    // transcript message (see ChatAgent.aiMessagesForTranscript), which can
+    // leave two consecutive `model` turns: the folded transcript followed by
+    // the model's final text reply. Gemini requires alternating user/model
+    // turns and 400s on consecutive same-role turns, so merge adjacent
+    // same-role Contents by concatenating their parts.
+    private static func coalescingConsecutiveRoles(_ contents: [Content]) -> [Content] {
+        var output: [Content] = []
+        for content in contents {
+            if let last = output.last, last.role == content.role {
+                output[output.count - 1] = Content(role: last.role,
+                                                   parts: last.parts + content.parts)
+            } else {
+                output.append(content)
+            }
+        }
+        return output
     }
 
     func body() throws -> Data {

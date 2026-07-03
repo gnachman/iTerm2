@@ -47,6 +47,14 @@ class ComposerTextView: MultiCursorTextView {
     // etc.
     @objc var autoMode = false
 
+    // Bind the undo stack to this text view's lifetime. NSUndoManager holds
+    // undo targets unowned(unsafe), so registering text-edit undo on a shared
+    // (window) undo manager leaves dangling pointers when the composer, and
+    // this text view with it, is deallocated (e.g. when its split pane is
+    // closed). The next Undo would then message freed memory and crash.
+    private lazy var privateUndoManager = UndoManager()
+    override var undoManager: UndoManager? { privateUndoManager }
+
     private var _suggestion: String?
     private var linkRange: NSRange? = nil
     @objc var suggestion: String? {

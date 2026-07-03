@@ -31,6 +31,11 @@ struct Chat: Codable {
     var permissions: String
     var vectorStore: String?
 
+    // The AI model this chat is pinned to. Set when the chat is created and
+    // when the user changes the model before the conversation is locked; used
+    // so a chat keeps its provider across restarts.
+    var modelName: String?
+
     // Targets this chat is allowed to write to via the orchestrator
     // tools (send_text / interrupt / add_workgroup_clipping for
     // workgroup-shaped targets; session_execute_command and friends

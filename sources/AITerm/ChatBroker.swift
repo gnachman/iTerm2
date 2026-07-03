@@ -86,7 +86,8 @@ class ChatBroker {
         let chat = Chat(title: title,
                         terminalSessionGuid: terminalSessionGuid,
                         browserSessionGuid: browserSessionGuid,
-                        permissions: permissions)
+                        permissions: permissions,
+                        modelName: AITermController.provider?.model.name)
         let permissionsDict = rce.permissionsDict(encoded: permissions) ?? rce.defaultPermissions(
             chatID: chat.id,
             terminalGuid: terminalSessionGuid,
@@ -153,10 +154,11 @@ class ChatBroker {
     }
 
     func requestRegistration(chatID: String,
+                             for vendor: iTermAIVendor,
                              completion: @escaping (AITermController.Registration?) -> ()) {
         for sub in subs {
             if sub.chatID == chatID, let provider = sub.registrationProvider {
-                provider.registrationProviderRequestRegistration(completion)
+                provider.registrationProviderRequestRegistration(for: vendor, completion)
                 return
             }
         }

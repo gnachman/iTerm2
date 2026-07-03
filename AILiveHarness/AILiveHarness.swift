@@ -1689,6 +1689,14 @@ final class AILiveHarness: XCTestCase {
     private enum ChatReloadScenario: String {
         case paired
         case orphan
+        // Like `paired`, but the persisted transcript also has a final assistant
+        // text reply after the tool round-trip. On reload the tool round-trip
+        // folds into a single assistant transcript message, so the rebuilt
+        // prompt contains two consecutive assistant turns (folded transcript +
+        // reply). Vendors that require strictly alternating roles (Gemini 400s;
+        // Anthropic is stricter than chat-completions) exercise the coalescing
+        // pass in Gemini.swift / CompletionsAnthropic.swift.
+        case pairedWithReply
     }
 
     private enum ChatReloadIDStyle {
@@ -1762,6 +1770,13 @@ final class AILiveHarness: XCTestCase {
             sentDate: Date(),
             uniqueID: UUID())
 
+        let assistantReply = Message(
+            chatID: chatID,
+            author: .agent,
+            content: .markdown("The diagnostic reports Darwin on arm64."),
+            sentDate: Date(),
+            uniqueID: UUID())
+
         switch scenario {
         case .paired:
             return [userQuestion, request, response]
@@ -1769,6 +1784,11 @@ final class AILiveHarness: XCTestCase {
             // Auto-approved shape: the request was squelched (ChatClient.swift
             // .always branch historically), so only the response survives.
             return [userQuestion, response]
+        case .pairedWithReply:
+            // The tool round-trip folds into one assistant transcript message,
+            // and the trailing assistant reply is a second assistant turn, so
+            // the rebuilt prompt has two consecutive assistant turns.
+            return [userQuestion, request, response, assistantReply]
         }
     }
 
@@ -2063,6 +2083,38 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
         runChatReload(vendor: "gemini", apiKey: key, streaming: true,
                       scenario: .orphan, idStyle: .nilID)
+    }
+
+    // MARK: chat-reload — consecutive assistant turns (coalescing)
+    //
+    // A reloaded chat whose tool round-trip is followed by an assistant text
+    // reply folds into two consecutive assistant turns. Gemini 400s on
+    // non-alternating `model` turns and Anthropic is strict too, so these pin
+    // the coalescing pass end to end against the real APIs.
+
+    func test_anthropic_chatReload_pairedWithReply_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: false,
+                      scenario: .pairedWithReply,
+                      idStyle: .real(callID: "toolu_test_chat_reload_reply",
+                                     itemID: "toolu_test_chat_reload_reply"))
+    }
+    func test_anthropic_chatReload_pairedWithReply_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: true,
+                      scenario: .pairedWithReply,
+                      idStyle: .real(callID: "toolu_test_chat_reload_reply",
+                                     itemID: "toolu_test_chat_reload_reply"))
+    }
+    func test_gemini_chatReload_pairedWithReply_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: false,
+                      scenario: .pairedWithReply, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_pairedWithReply_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: true,
+                      scenario: .pairedWithReply, idStyle: .nilID)
     }
 
     // MARK: chat-reload — OpenAI Responses

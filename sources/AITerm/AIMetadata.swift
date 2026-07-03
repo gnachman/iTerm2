@@ -190,6 +190,30 @@ class AIMetadata: NSObject {
         // condition has been met). nil means "no cheaper alternative; use this
         // model." See AIMetadata.economyModel(for:).
         var economyModelName: String? = nil
+
+        // OpenAI Responses reasoning models do not all accept the same effort
+        // values. Keep the request builder declarative: each model states the
+        // lowest effort to use when the UI's thinking toggle is off and the
+        // higher effort to use when it is on. Sourced from the catalog; empty
+        // reasoningEfforts/serviceTiers means the model exposes no such choice.
+        var thinkingOffEffort: ResponsesRequestBody.ReasoningOptions.Effort = .low
+        var thinkingOnEffort: ResponsesRequestBody.ReasoningOptions.Effort = .medium
+        var reasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = []
+        var serviceTiers: [ResponsesRequestBody.ServiceTier] = []
+
+        func supports(reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?) -> Bool {
+            guard let reasoningEffort else {
+                return false
+            }
+            return reasoningEfforts.contains(reasoningEffort)
+        }
+
+        func supports(serviceTier: ResponsesRequestBody.ServiceTier?) -> Bool {
+            guard let serviceTier else {
+                return false
+            }
+            return serviceTiers.contains(serviceTier)
+        }
     }
 
     // The per-vendor "latest/recommended" model is the catalog entry flagged
@@ -322,6 +346,13 @@ class AIMetadata: NSObject {
     // streaming. To find the places that implement this, search for
     // #llama-streaming-functions.
     let models: [Model] = AIModelCatalog.instance.models
+
+    // Built-in models offered as presets when creating a manual model. Apple's
+    // on-device backend is excluded because it is a classifier, not a chat model
+    // the user can point a manual configuration at.
+    @objc(presetModels) var presetModels: [AIModel] {
+        return models.filter { $0.vendor != .apple }.map { AIModel($0) }
+    }
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {
         for model in models {

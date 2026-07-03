@@ -17,7 +17,21 @@
         "configurableThinking"
       ],
       "recommended": true,
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
     },
     {
       "name": "gpt-5.5-pro",
@@ -35,7 +49,19 @@
         "configurableThinking"
       ],
       "fixtureExempt": true,
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "medium",
+      "thinkingOnEffort": "high",
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "flex"
+      ]
     },
     {
       "name": "gpt-5.4",
@@ -52,7 +78,21 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
     },
     {
       "name": "gpt-5.3-codex",
@@ -69,7 +109,18 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority"
+      ]
     },
     {
       "name": "gpt-5.2",
@@ -86,7 +137,15 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
     },
     {
       "name": "gpt-5.2-pro",
@@ -103,7 +162,14 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "medium",
+      "thinkingOnEffort": "high",
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ]
     },
     {
       "name": "gpt-5.1",
@@ -120,7 +186,14 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ]
     },
     {
       "name": "gpt-5.1-codex",
@@ -137,7 +210,12 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ]
     },
     {
       "name": "gpt-5",
@@ -155,7 +233,14 @@
         "configurableThinking"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "minimal",
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ]
     },
     {
       "name": "gpt-5-mini",
@@ -172,7 +257,14 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "vectorStore": "openAI"
+      "vectorStore": "openAI",
+      "thinkingOffEffort": "minimal",
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ]
     },
     {
       "name": "gpt-5-nano",
@@ -189,7 +281,14 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "vectorStore": "openAI"
+      "vectorStore": "openAI",
+      "thinkingOffEffort": "minimal",
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ]
     },
     {
       "name": "gpt-4.1",
@@ -270,7 +369,12 @@
         "configurableThinking"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ]
     },
     {
       "name": "o3-pro",
@@ -285,7 +389,14 @@
         "configurableThinking"
       ],
       "vectorStore": "openAI",
-      "economyModel": "gpt-5-mini"
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "medium",
+      "thinkingOnEffort": "high",
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ]
     },
     {
       "name": "o4-mini",
@@ -301,7 +412,12 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "vectorStore": "openAI"
+      "vectorStore": "openAI",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ]
     },
     {
       "name": "gemini-3.5-flash",

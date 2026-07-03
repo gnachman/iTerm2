@@ -86,6 +86,39 @@ final class AIModelCatalogTest: XCTestCase {
         }
     }
 
+    // Reasoning effort and service tier are per-model catalog data (OpenAI
+    // Responses models). The chat toolbar's reasoning-effort and service-tier
+    // pickers depend on these decoding from ai-models.json; a model that omits
+    // them must fall back to empty (feature hidden) rather than crash.
+    func testReasoningEffortAndServiceTierDecode() throws {
+        let models = try bundledModels()
+        guard let gpt55 = models.first(where: { $0.name == "gpt-5.5" }) else {
+            XCTFail("gpt-5.5 missing from catalog")
+            return
+        }
+        XCTAssertEqual(gpt55.thinkingOffEffort, .none)
+        XCTAssertEqual(gpt55.reasoningEfforts, [.none, .low, .medium, .high, .xhigh])
+        XCTAssertEqual(gpt55.serviceTiers, [.auto, .default, .priority, .flex])
+        XCTAssertTrue(gpt55.supports(reasoningEffort: .xhigh))
+        XCTAssertFalse(gpt55.supports(reasoningEffort: .minimal))
+        XCTAssertTrue(gpt55.supports(serviceTier: .priority))
+
+        // gpt-5.5-pro overrides thinkingOnEffort to .high.
+        if let pro = models.first(where: { $0.name == "gpt-5.5-pro" }) {
+            XCTAssertEqual(pro.thinkingOffEffort, .medium)
+            XCTAssertEqual(pro.thinkingOnEffort, .high)
+            XCTAssertEqual(pro.reasoningEfforts, [.medium, .high, .xhigh])
+        }
+
+        // A non-reasoning model exposes no efforts/tiers and keeps struct defaults.
+        if let gpt4o = models.first(where: { $0.name == "gpt-4o" }) {
+            XCTAssertTrue(gpt4o.reasoningEfforts.isEmpty)
+            XCTAssertTrue(gpt4o.serviceTiers.isEmpty)
+            XCTAssertEqual(gpt4o.thinkingOffEffort, .low)
+            XCTAssertEqual(gpt4o.thinkingOnEffort, .medium)
+        }
+    }
+
     func testEconomyModelResolves() throws {
         let models = try bundledModels()
         guard let opus = models.first(where: { $0.name == "claude-opus-4-8" }) else {

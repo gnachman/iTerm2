@@ -208,6 +208,10 @@ private struct ModelDTO: Decodable {
     var recommended: Bool?
     var fixtureExempt: Bool?
     var economyModel: String?
+    var thinkingOffEffort: String?
+    var thinkingOnEffort: String?
+    var reasoningEfforts: [String]?
+    var serviceTiers: [String]?
 
     func toModel() -> AIMetadata.Model? {
         guard let apiValue = ModelDTO.apiCase(from: api) else {
@@ -230,7 +234,25 @@ private struct ModelDTO: Decodable {
                                 supportsTemperature: supportsTemperature ?? true,
                                 recommended: recommended ?? false,
                                 fixtureExempt: fixtureExempt ?? false,
-                                economyModelName: economyModel)
+                                economyModelName: economyModel,
+                                thinkingOffEffort: ModelDTO.effortCase(from: thinkingOffEffort) ?? .low,
+                                thinkingOnEffort: ModelDTO.effortCase(from: thinkingOnEffort) ?? .medium,
+                                reasoningEfforts: (reasoningEfforts ?? []).compactMap { ModelDTO.effortCase(from: $0) },
+                                serviceTiers: (serviceTiers ?? []).compactMap { ModelDTO.serviceTierCase(from: $0) })
+    }
+
+    // Reasoning effort and service tier are decoded as strings and mapped here
+    // so an unknown value in a downloaded catalog is skipped fail-safe (matching
+    // featureCase) instead of failing the whole model's decode.
+    private static func effortCase(from string: String?) -> ResponsesRequestBody.ReasoningOptions.Effort? {
+        guard let string else {
+            return nil
+        }
+        return ResponsesRequestBody.ReasoningOptions.Effort(rawValue: string)
+    }
+
+    private static func serviceTierCase(from string: String) -> ResponsesRequestBody.ServiceTier? {
+        return ResponsesRequestBody.ServiceTier(rawValue: string)
     }
 
     private static func apiCase(from string: String) -> iTermAIAPI? {

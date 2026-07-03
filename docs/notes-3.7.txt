@@ -88,6 +88,123 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- In AI chat orchestration mode, references
+  to a session or workgroup now appear as a
+  clickable link, marked with a terminal
+  icon, showing its current name instead of
+  a raw identifier. Clicking the link
+  reveals that session. The tool-call
+  activity lines (e.g. “Reading screen of
+  …”) now use these same links, and show
+  “[defunct session]” once the target is
+  gone instead of leaking a raw GUID.
+
+- A new AI chat created without a session to
+  link to now offers to enable orchestration
+  mode, mirroring the link offer shown when a
+  session is available.
+
+- AI chat history entries can now be deleted
+  from the chat list.
+
+- AI chat tool activity is now rendered as
+  compact, code-formatted output instead of
+  prominent centered status panels.
+
+- AI chat no longer sends unsupported
+  additionalProperties fields in Gemini tool
+  schemas.
+
+- AI chat no longer offers deprecated
+  Gemini 2.0 models in the model picker.
+
+- AI chat no longer offers the shut-down
+  Gemini 3 Pro Preview model or the
+  deprecated Claude 4.0 Opus and Sonnet
+  models in the picker.
+
+- AI settings now let you manage API keys
+  for OpenAI, Anthropic, Gemini, and
+  DeepSeek in one sheet.
+
+- AI chats now keep the provider chosen at
+  creation time. Settings choose the default
+  provider for new chats, while existing
+  chats only offer models from their saved
+  provider.
+
+- Workgroups let you configure a session
+  to be transformed into a group of related
+  sessions — peers, split panes, or tabs —
+  each with its own toolbar. Configure
+  them in Settings > Shortcuts >
+  Workgroups. Still a work in progress.
+
+- Enter Workgroup and Exit Workgroup are
+  also available as URL-regex triggers on
+  browser profiles, so a navigation event
+  can change the active workgroup.
+
+- Workgroup sessions now have a Mode
+  setting. The new Code Review mode shows
+  an in-session prompt overlay with a Start
+  button before the program runs; the
+  entered text is exposed as the variable
+  codeReviewPrompt for swifty interpolation
+  in the command. The Claude Code
+  workgroup’s review peer uses this mode
+  by default.
+
+- The Code Review prompt overlay can save
+  multiple named prompts. A pulldown menu
+  on the overlay loads any saved prompt;
+  a dedicated Manage Prompts… window
+  handles add/rename/edit/reorder/delete.
+  The single Code Review prompt previously
+  managed in Settings > General > AI >
+  Prompts is migrated to a Default entry
+  on first launch and the entry has been
+  removed from Settings.
+
+- The Code Review system prompt is now
+  editable in Settings > General > AI >
+  Prompts. It defaults to the bundled
+  prompt and is passed to Claude Code at
+  launch.
+
+- Switching to a Code Review peer that is
+  still showing its prompt overlay now
+  focuses the prompt text field so you can
+  start typing immediately.
+
+- Workgroups now survive a restart. When
+  the app relaunches (for example after a
+  Sparkle upgrade), an active workgroup is
+  rebuilt: its Diff and Code Review peers,
+  split/tab children, toolbar, and peer
+  switching all come back with their
+  content intact.
+
+- Clippings now keep history. An archive
+  button in the clippings panel snapshots
+  the current list and clears it; back and
+  forward buttons walk the history. The
+  new `it2 session archive-clippings`
+  command and matching `iterm2.archive_
+  clippings` API call do the same. Claude
+  Code reviews now automatically archive
+  before each pass, so each review starts
+  with a clean list while old findings
+  remain reachable.
+
+- The clippings and inline AI chat panels
+  can now be resized by dragging their left
+  edge. The chosen width is remembered per
+  machine.
+
+- The Shell > Workgroups submenu now has
+  an Exit Workgroup item to leave the
+  current session’s workgroup.
 
 - The new Fold All menu item folds everything
   (aside from folds at the very top of history).
@@ -1609,3 +1726,91 @@ Bug Fixes:
   protocol when both “report all keys as
   escape codes” and “report associated
   text” are enabled. Issue 12906.
+- AI Chat messages now use a narrower,
+  more readable layout with clearer
+  command and error formatting.
+- AI Chat permission prompts now show
+  proposed commands in code blocks.
+- AI Chat command output now renders
+  as rounded Markdown code blocks.
+- AI Chat terminal-command transcripts
+  now render captured output as rounded
+  code blocks.
+- AI Chat's floating toolbar now omits
+  the chat title and resizes when model
+  controls appear or disappear.
+- AI Chat can select model-supported
+  reasoning effort and OpenAI service
+  tier from the chat toolbar.
+- AI Chat now hides reasoning effort
+  and OpenAI service tier choices for
+  models that do not declare support
+  for them.
+- AI Chat can hide and show its chat
+  list without reopening the window.
+- AI Chat's chat-list toggle now stays
+  at the top of the chat area when a
+  window is first restored.
+- AI Chat history entries can now be
+  selected in groups and deleted with a
+  single confirmation.
+- AI Chat history entries can now be
+  renamed from the chat list.
+- AI Chat no longer sends unsupported
+  low reasoning effort to OpenAI Pro
+  models.
+- AI Chat now reloads past tool runs as
+  transcript text, preventing OpenAI
+  reasoning models from rejecting old
+  function calls after a chat is
+  reopened.
+- AI Chat now closes OpenAI Responses
+  tool calls with an explicit tool
+  output on local tool failures, which
+  prevents follow-up turns from failing
+  with missing function output errors.
+- AI Chat no longer crashes while opening
+  if the toolbar refreshes before the chat
+  view is loaded.
+- AI Chat now keeps API keys separate per
+  provider, so Claude is not sent a key
+  saved for another AI service.
+- AI Chat no longer asks for an API key
+  when the active provider already has
+  one saved in Keychain.
+- AI Chat now checks saved API keys
+  before showing plugin setup warnings.
+- AI Chat now sends Gemini-compatible
+  function schemas for tool arguments
+  that accept multiple JSON types.
+- AI Chat now renders orchestration
+  session command tool calls as command
+  blocks instead of exposing raw session
+  GUIDs and JSON arguments.
+- AI Chat now lets new chats choose their
+  AI provider from the chat toolbar, while
+  keeping the provider fixed after the
+  conversation starts.
+- AI Chat's provider picker now includes
+  local Llama models and a manual model
+  configuration option when configured.
+- AI Chat can now manage multiple manual
+  AI model configurations and select them
+  from the chat model picker.
+- Manual AI model settings now show saved
+  models in a list instead of a pop-up
+  menu.
+- AI Chat now locks the provider picker
+  immediately after a conversation starts.
+- AI Chat now locks the model picker
+  immediately after a conversation starts.
+- AI Chat now shows orchestration terminal
+  command results as raw code blocks and
+  keeps session GUIDs out of user-facing
+  tool summaries.
+- AI settings now choose the default
+  model for new chats from one selector,
+  including saved manual AI models.
+- Fixed a crash when using Undo after
+  closing a split pane that contained a
+  command composer.
