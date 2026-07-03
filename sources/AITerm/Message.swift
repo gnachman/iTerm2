@@ -479,6 +479,8 @@ struct Message: Codable {
         var vectorStoreIDs: [String]
         var model: String?
         var shouldThink: Bool
+        var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
+        var serviceTier: ResponsesRequestBody.ServiceTier?
     }
     var configuration: Configuration?
 

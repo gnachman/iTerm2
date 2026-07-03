@@ -378,13 +378,20 @@ class ChatService {
             self.broker = broker
         }
         func registrationProviderRequestRegistration(_ completion: @escaping (AITermController.Registration?) -> ()) {
+            registrationProviderRequestRegistration(for: LLMMetadata.effectiveVendor, completion)
+        }
+
+        func registrationProviderRequestRegistration(for vendor: iTermAIVendor,
+                                                     _ completion: @escaping (AITermController.Registration?) -> ()) {
             // AIRegistrationProvider is a protocol with no MainActor
             // isolation, but every call site reaches us from a
             // main-isolated stack (ChatAgent's AIConversation.prepare
             // closure runs on main). assumeIsolated lets us invoke
             // broker.requestRegistration, which is now @MainActor.
             MainActor.assumeIsolated {
-                broker.requestRegistration(chatID: chatID, completion: completion)
+                broker.requestRegistration(chatID: chatID,
+                                           for: vendor,
+                                           completion: completion)
             }
         }
     }

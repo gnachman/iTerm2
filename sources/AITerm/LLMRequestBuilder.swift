@@ -14,6 +14,8 @@ struct LLMRequestBuilder {
     var hostedTools: HostedTools
     var previousResponseID: String?
     var shouldThink: Bool?
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
+    var serviceTier: ResponsesRequestBody.ServiceTier?
 
     var headers: [String: String] {
         var result = LLMAuthorizationProvider(provider: provider, apiKey: apiKey).headers
@@ -46,7 +48,9 @@ struct LLMRequestBuilder {
                                             stream: stream,
                                             hostedTools: hostedTools,
                                             previousResponseID: previousResponseID,
-                                            shouldThink: shouldThink).body()
+                                            shouldThink: shouldThink,
+                                            reasoningEffort: reasoningEffort,
+                                            serviceTier: serviceTier).body()
         case .earlyO1:
             try O1BodyRequestBuilder(messages: messages,
                                      provider: provider).body()
@@ -85,4 +89,3 @@ struct LLMRequestBuilder {
                                      streaming: stream).absoluteString)
     }
 }
-

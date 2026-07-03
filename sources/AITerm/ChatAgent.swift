@@ -284,7 +284,8 @@ class ChatAgent {
         completion: @escaping (Result<String, Error>) throws -> ()
     ) {
         let requestID = UUID()
-        pendingRemoteCommands[requestID] = .init(completion: completion, responseID: nil)
+        pendingRemoteCommands[requestID] = .init(completion: completion,
+                                                 responseID: llmMessage.responseID)
         // Flush any accumulated agent narrative into the log before
         // the tool entry (keeps Console output in chronological order).
         flushPendingAgentText()
@@ -337,12 +338,7 @@ class ChatAgent {
                 break
             }
         }
-        // Pair any orphaned tool_result with a synthesized tool_use, and any
-        // orphaned tool_use with a synthesized tool_result, so the vendor
-        // doesn't reject the rebuilt prompt. Heals conversations that were
-        // serialized before this fix as well as new ones.
-        conversation.messages = AIChatToolCallRepair.repairingOrphanedToolPairs(
-            translate(messages: messages))
+        conversation.messages = translate(messages: messages)
 
         switch mode {
         case .sessionBound:
@@ -364,23 +360,27 @@ class ChatAgent {
     // regardless of current mode, so old turns from the other mode
     // stay legible to the LLM.
     //
-    // Cross-message reconciliation: any .remoteCommandRequest without
-    // a matching .remoteCommandResponse (because iTerm2 was quit
-    // mid-tool-call) gets a synthetic "interrupted" functionOutput
-    // appended at the end so the LLM contract (every function_call
-    // followed by a function_output) holds.
+    // Persisted tool calls are translated back as plain transcript text.
+    // During a live tool round-trip, AITermController still sends real
+    // function_call/function_call_output items from its in-flight state. Once
+    // the chat is reloaded from disk, however, OpenAI reasoning models can
+    // reject historical function_call items unless the original reasoning item
+    // is also replayed. We don't persist that item, so the durable history uses
+    // a readable transcript instead of pretending to be an active tool call.
     private func translate(messages: [Message]) -> [AITermController.Message] {
+        Self.aiMessagesForTranscript(messages, stateMachine: &messageToPrompt)
+    }
+
+    private static func aiMessagesForTranscript(_ messages: [Message],
+                                                stateMachine: inout MessageToPromptStateMachine) -> [AITermController.Message] {
         struct PendingRequest {
             let name: String
-            let functionCallID: LLM.Message.FunctionCallID?
+            let description: String
+            let arguments: String?
         }
         var aiMessages: [AITermController.Message] = []
         var pendingByRequestID: [UUID: PendingRequest] = [:]
         var orderedPendingIDs: [UUID] = []
-        // aiMessages index of each request's functionCall, so an orphan's
-        // synthesized output can be inserted right after its call rather
-        // than at the end of the transcript (see the orphan filler loop).
-        var callIndexByRequestID: [UUID: Int] = [:]
 
         for message in messages {
             switch message.content {
@@ -390,103 +390,113 @@ class ChatAgent {
                 continue
 
             case .remoteCommandRequest(let payload, safe: _):
-                guard let call = payload.llmMessage.function_call else { continue }
-                let fcID = payload.llmMessage.functionCallID
-                callIndexByRequestID[message.uniqueID] = aiMessages.count
-                aiMessages.append(AITermController.Message(
-                    responseID: nil,
-                    role: .assistant,
-                    body: .functionCall(call, id: fcID)))
                 pendingByRequestID[message.uniqueID] = PendingRequest(
                     name: payload.name,
-                    functionCallID: fcID)
+                    description: payload.markdownDescription,
+                    arguments: payload.llmMessage.function_call?.arguments)
                 orderedPendingIDs.append(message.uniqueID)
 
             case .remoteCommandResponse(let result, let requestUUID, let name, let fcID):
-                // If we never saw a matching .remoteCommandRequest the
-                // tool_use record was squelched from the chat database.
-                // ChatClient.processRemoteCommandRequest's .always
-                // (auto-approve) and .never (auto-deny) paths return
-                // nil from the broker processor, which causes
-                // ChatBroker.publish to skip listModel.append entirely
-                // (ChatBroker.swift:132-140). The tool runs and its
-                // response is persisted normally, but no tool_use lands
-                // in the DB. On the NEXT turn (e.g. queued user message
-                // that arrived during the tool round-trip), load() calls
-                // back into translate which sees the orphaned
-                // tool_result; without this branch, Anthropic 400s:
-                //   messages.N.content.M: unexpected `tool_use_id` found
-                //   in `tool_result` blocks: …. Each `tool_result` block
-                //   must have a corresponding `tool_use` block in the
-                //   previous message.
-                // Synthesize the missing functionCall so the LLM
-                // contract (every tool_result preceded by a matching
-                // tool_use) holds. Args are empty because the original
-                // arguments aren't recoverable — they're not on the
-                // tool_result. The call_id is what matters for the
-                // pairing.
-                if pendingByRequestID[requestUUID] == nil {
-                    let synthesizedCall = LLM.FunctionCall(
-                        name: name,
-                        arguments: "{}",
-                        id: fcID?.callID)
-                    aiMessages.append(AITermController.Message(
-                        responseID: nil,
-                        role: .assistant,
-                        body: .functionCall(synthesizedCall, id: fcID)))
-                }
+                let pending = pendingByRequestID[requestUUID]
                 let output: String
                 switch result {
                 case .success(let value): output = value
                 case .failure(let error):
                     output = "Tool call failed: \(error.localizedDescription)"
                 }
+                let requestName = pending?.name ?? name
                 aiMessages.append(AITermController.Message(
                     responseID: nil,
-                    role: .function,
-                    body: .functionOutput(name: name,
-                                          output: output,
-                                          id: fcID)))
+                    role: .assistant,
+                    content: Self.toolTranscript(
+                        name: requestName,
+                        description: pending?.description,
+                        arguments: Self.sanitizedToolArguments(
+                            name: requestName,
+                            arguments: pending?.arguments ?? fcID.map { "call_id: \($0.callID)" }),
+                        result: output)))
                 pendingByRequestID.removeValue(forKey: requestUUID)
 
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .terminalCommand, .multipart, .watcherEvent:
-                aiMessages.append(aiMessage(from: message))
+                aiMessages.append(aiMessage(from: message, stateMachine: &stateMachine))
             }
         }
 
-        // Pair every still-orphaned request with a synthesized
-        // "interrupted" output inserted IMMEDIATELY AFTER its function
-        // call, not at the end of the transcript. OpenAI-style
-        // chat-completions vendors (DeepSeek, legacy OpenAI) require an
-        // assistant tool_calls message to be followed directly by the
-        // tool output for each tool_call_id; appending the filler at the
-        // end leaves any intervening user/assistant message between the
-        // call and its output, which DeepSeek rejects with HTTP 400
-        // "insufficient tool messages following tool_calls message"
-        // (GitLab #12883). Collect (index, message) first, then insert in
-        // descending index order so an earlier insertion doesn't shift
-        // the target index of a later one.
-        var orphanInserts: [(index: Int, message: AITermController.Message)] = []
+        // Preserve interrupted requests in insertion order.
         for requestID in orderedPendingIDs {
-            guard let pending = pendingByRequestID.removeValue(forKey: requestID),
-                  let callIndex = callIndexByRequestID[requestID] else {
+            guard let pending = pendingByRequestID.removeValue(forKey: requestID) else {
                 continue
             }
-            let filler = AITermController.Message(
+            aiMessages.append(AITermController.Message(
                 responseID: nil,
-                role: .function,
-                body: .functionOutput(
+                role: .assistant,
+                content: Self.toolTranscript(
                     name: pending.name,
-                    output: AIChatToolCallRepair.interruptedToolCallOutput,
-                    id: pending.functionCallID))
-            orphanInserts.append((callIndex + 1, filler))
-        }
-        for insert in orphanInserts.sorted(by: { $0.index > $1.index }) {
-            aiMessages.insert(insert.message, at: insert.index)
+                    description: pending.description,
+                    arguments: Self.sanitizedToolArguments(name: pending.name,
+                                                           arguments: pending.arguments),
+                    result: "[iTerm2 was restarted before this tool call completed. "
+                          + "The call did not finish; assume no side effects took place "
+                          + "and re-issue if needed.]")))
         }
 
         return aiMessages
+    }
+
+    private static func toolTranscript(name: String,
+                                       description: String?,
+                                       arguments: String?,
+                                       result: String) -> String {
+        var parts = ["iTerm2 tool transcript\nTool: \(name)"]
+        if let description,
+           !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            parts.append("Request:\n\(description)")
+        }
+        if let arguments,
+           !arguments.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            parts.append("Arguments:\n\(arguments)")
+        }
+        parts.append("Result:\n\(result)")
+        return parts.joined(separator: "\n\n")
+    }
+
+    private static func sanitizedToolArguments(name: String,
+                                               arguments: String?) -> String? {
+        guard var arguments = arguments?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !arguments.isEmpty else {
+            return nil
+        }
+        guard name.hasPrefix("session_"),
+              let data = arguments.data(using: .utf8),
+              var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return arguments
+        }
+        object.removeValue(forKey: "session_guid")
+        if object.isEmpty {
+            return nil
+        }
+        guard JSONSerialization.isValidJSONObject(object),
+              let sanitizedData = try? JSONSerialization.data(withJSONObject: object,
+                                                              options: [.prettyPrinted, .sortedKeys]),
+              let sanitized = String(data: sanitizedData, encoding: .utf8) else {
+            arguments = arguments.replacingOccurrences(
+                of: #"(?m)^\s*"session_guid"\s*:\s*"[^"]+"\s*,?\s*$"#,
+                with: "",
+                options: .regularExpression)
+            return arguments.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return sanitized
+    }
+
+    private static func aiMessage(from message: Message,
+                                  stateMachine: inout MessageToPromptStateMachine) -> AITermController.Message {
+        let body = stateMachine.body(message: message)
+        return AITermController.Message(
+            responseID: message.responseID,
+            role: AITermController.Message.role(from: message),
+            body: body,
+            reasoningContent: message.agentReasoning)
     }
 
     private func updateSystemMessage(_ permissions: Set<RemoteCommand.Content.PermissionCategory>) {
@@ -538,13 +548,26 @@ class ChatAgent {
     private func updateOrchestrationSystemMessage() {
         let template = iTermPreferences.string(
             forKey: kPreferenceKeyAIPromptAIChatOrchestration) ?? ""
-        let resolved = Self.evaluateOrchestrationPromptTemplate(template)
+        let resolved = [
+            Self.evaluateOrchestrationPromptTemplate(template),
+            Self.orchestrationDisplayPolicy
+        ]
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .joined(separator: "\n\n")
         conversation.systemMessage = resolved
         if conversation.systemMessage != lastSystemMessage {
             conversation.systemMessageDirty = true
             lastSystemMessage = conversation.systemMessage
         }
     }
+
+    private static let orchestrationDisplayPolicy = """
+    Terminal output display policy:
+    - iTerm2 displays raw terminal command output to the user as its own code block.
+    - Do not repeat raw command output in prose, do not convert it into Markdown tables, and do not reformat listings such as ls, ps, df, netstat, or grep output.
+    - After running a command, summarize only non-obvious findings or ask what to do next.
+    - Do not show session_guid values to the user in normal prose. If you need to refer to a session, use a short human-readable name.
+    """
 
     @MainActor
     private static func evaluateOrchestrationPromptTemplate(_ template: String) -> String {
@@ -598,12 +621,7 @@ class ChatAgent {
     }
 
     private func aiMessage(from message: Message) -> AITermController.Message {
-        let body = messageToPrompt.body(message: message)
-        return AITermController.Message(
-            responseID: message.responseID,
-            role: AITermController.Message.role(from: message),
-            body: body,
-            reasoningContent: message.agentReasoning)
+        Self.aiMessage(from: message, stateMachine: &messageToPrompt)
     }
 
     var supportsStreaming: Bool {
@@ -624,6 +642,7 @@ class ChatAgent {
     }
 
     private func cancelPendingCommands() {
+        drainPendingOrchestrationRequests(reason: "Cancelled.")
         if !pendingRemoteCommands.isEmpty {
             let saved = pendingRemoteCommands.values
             pendingRemoteCommands.removeAll()
@@ -810,6 +829,8 @@ class ChatAgent {
         conversation.add(userAIMessage)
         conversation.model = userMessage.configuration?.model
         conversation.shouldThink = userMessage.configuration?.shouldThink
+        conversation.reasoningEffort = userMessage.configuration?.reasoningEffort
+        conversation.serviceTier = userMessage.configuration?.serviceTier
 
         // Optional console trace (gated on the advanced setting). Not
         // coupled to orchestration mode anymore - any chat agent can
@@ -1018,10 +1039,13 @@ class ChatAgent {
                                uniqueID: UUID())
             }
 
+            let details = error.localizedDescription
+                .components(separatedBy: "\n")
+                .map { "    " + $0 }
+                .joined(separator: "\n")
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .plainText("🛑 I ran into a problem: \(error.localizedDescription)",
-                                               context: nil),
+                           content: .markdown("**Request failed**\n\n\(details)"),
                            sentDate: Date(),
                            uniqueID: UUID())
         }
@@ -1236,14 +1260,19 @@ extension ChatAgent {
     /// because `ChatAgent.init` requires a `ChatBroker`, and `ChatBroker`
     /// requires a real `ChatDatabase` / `ChatListModel` singleton that would
     /// write the user's actual chat DB during a test run. Mirror the body
-    /// here if `load(messages:)` ever changes — `AILiveHarness` reaches
-    /// `AIChatToolCallRepair` through this seam to validate the chat-restore
-    /// path end-to-end against real vendor APIs.
-    /// Translate a persisted transcript to LLM messages WITHOUT the orphan
-    /// repair pass. Production never sends this (aiMessagesForReloadingTranscript
-    /// always repairs), but the live negative-control test sends it to prove a
-    /// real vendor actually rejects an un-repaired orphan tool_result, so the
-    /// positive repair test cannot pass by accident.
+    /// here if `load(messages:)` ever changes so `AILiveHarness` validates
+    /// the chat-restore path end-to-end against real vendor APIs.
+    static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
+        var stateMachine = MessageToPromptStateMachine()
+        return aiMessagesForTranscript(messages, stateMachine: &stateMachine)
+    }
+
+    /// Test-only seam: the structured (function_call/function_output)
+    /// translation of a transcript WITHOUT the orphan-repair pass. Production
+    /// `load()` now rebuilds history as plain transcript text (see
+    /// `aiMessagesForTranscript`), but `AIChatToolCallRepair` and its live
+    /// negative-control test still exercise the structured pipeline, so this
+    /// seam preserves that coverage.
     static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
         var stateMachine = MessageToPromptStateMachine()
         return messages.compactMap { message -> AITermController.Message? in
@@ -1262,10 +1291,5 @@ extension ChatAgent {
                 return nil
             }
         }
-    }
-
-    static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
-        return AIChatToolCallRepair.repairingOrphanedToolPairs(
-            transcriptMessagesBeforeRepair(messages))
     }
 }

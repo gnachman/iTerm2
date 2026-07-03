@@ -54,6 +54,65 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         return obj
     }
 
+    private func containsKey(_ key: String, in object: Any) -> Bool {
+        if let dictionary = object as? [String: Any] {
+            if dictionary.keys.contains(key) {
+                return true
+            }
+            return dictionary.values.contains { containsKey(key, in: $0) }
+        }
+        if let array = object as? [Any] {
+            return array.contains { containsKey(key, in: $0) }
+        }
+        return false
+    }
+
+    private func containsTypeArray(in object: Any) -> Bool {
+        if let dictionary = object as? [String: Any] {
+            if dictionary["type"] is [Any] {
+                return true
+            }
+            return dictionary.values.contains { containsTypeArray(in: $0) }
+        }
+        if let array = object as? [Any] {
+            return array.contains { containsTypeArray(in: $0) }
+        }
+        return false
+    }
+
+    private func containsStringItems(in object: Any) -> Bool {
+        if let dictionary = object as? [String: Any] {
+            if dictionary["items"] is String {
+                return true
+            }
+            return dictionary.values.contains { containsStringItems(in: $0) }
+        }
+        if let array = object as? [Any] {
+            return array.contains { containsStringItems(in: $0) }
+        }
+        return false
+    }
+
+    /// Navigate a Gemini request body to the first function's parameter schema.
+    private func functionParameters(in json: [String: Any]) -> [String: Any]? {
+        guard let tools = json["tools"] as? [Any] else {
+            return nil
+        }
+        for tool in tools {
+            guard let toolDict = tool as? [String: Any],
+                  let decls = toolDict["functionDeclarations"] as? [Any] else {
+                continue
+            }
+            for decl in decls {
+                if let declDict = decl as? [String: Any],
+                   let params = declDict["parameters"] as? [String: Any] {
+                    return params
+                }
+            }
+        }
+        return nil
+    }
+
     // MARK: - Anthropic
 
     /// Image attachment alone in the message body should serialize as a
@@ -244,6 +303,33 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
                        "<svg xmlns=\"http://www.w3.org/2000/svg\"/>")
     }
 
+    /// A reloaded tool round-trip is replayed as a folded assistant transcript
+    /// message followed by the model's final assistant reply, producing two
+    /// consecutive `model` turns. Gemini requires alternating user/model turns
+    /// and 400s otherwise, so the builder must merge adjacent same-role
+    /// Contents by concatenating their parts.
+    func testGemini_consecutiveAssistantTurns_areCoalesced() throws {
+        let messages = [
+            LLM.Message(responseID: nil, role: .user, content: "hi"),
+            LLM.Message(responseID: nil, role: .assistant, content: "tool transcript"),
+            LLM.Message(responseID: nil, role: .assistant, content: "final reply"),
+        ]
+        let bodyData = try GeminiRequestBuilder(
+            messages: messages,
+            functions: [],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+        let contents = (json["contents"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(contents.count, 2,
+                       "two consecutive model turns should merge into one")
+        XCTAssertEqual(contents[0]["role"] as? String, "user")
+        XCTAssertEqual(contents[1]["role"] as? String, "model")
+        let parts = (contents[1]["parts"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(parts.compactMap { $0["text"] as? String },
+                       ["tool transcript", "final reply"],
+                       "both model texts must survive the merge, in order")
+    }
+
     /// Gemini encodes any binary file as inlineData with mime_type +
     /// base64-encoded data. Distinct from text-content blocks.
     func testGemini_imageAttachment_asInlineData() throws {
@@ -316,6 +402,194 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         // attachment support, update or delete this test.
         XCTAssertTrue(contents.isEmpty,
                       "Gemini builder unexpectedly accepted a top-level attachment; update this pinning test")
+    }
+
+    func testGemini_functionParameters_stripAdditionalProperties() throws {
+        _ = try model(named: "gemini-3-flash-preview")
+        struct ToolArgs: Codable {}
+        let schema = JSONSchema(rawJSON: [
+            "type": "object",
+            "properties": [
+                "command": [
+                    "type": "string",
+                    "additionalProperties": false,
+                ],
+                "items": [
+                    "type": "array",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "name": [
+                                "type": "string",
+                            ],
+                        ],
+                        "required": ["name"],
+                        "additionalProperties": false,
+                    ],
+                ],
+            ],
+            "required": ["command"],
+            "additionalProperties": false,
+        ])
+        let function = LLM.Function<ToolArgs>(
+            decl: ChatGPTFunctionDeclaration(
+                name: "test_tool",
+                description: "Test tool.",
+                parameters: schema),
+            call: { _, _, _ in },
+            parameterType: ToolArgs.self)
+        let message = LLM.Message(responseID: nil, role: .user, content: "Use the tool.")
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [function],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+        XCTAssertFalse(containsKey("additionalProperties", in: json),
+                       "Gemini rejects additionalProperties in tool schemas; body: \(json)")
+    }
+
+    func testGemini_functionParameters_collapseUnsupportedJSONSchemaTypes() throws {
+        _ = try model(named: "gemini-3-flash-preview")
+        struct ToolArgs: Codable {}
+        let schema = JSONSchema(rawJSON: [
+            "type": "object",
+            "properties": [
+                "value": [
+                    "type": ["string", "number", "array", "null"],
+                    "items": "string",
+                ],
+                "names": [
+                    "type": "array",
+                    "items": "string",
+                ],
+            ],
+            "required": ["value"],
+            "additionalProperties": false,
+        ])
+        let function = LLM.Function<ToolArgs>(
+            decl: ChatGPTFunctionDeclaration(
+                name: "test_tool",
+                description: "Test tool.",
+                parameters: schema),
+            call: { _, _, _ in },
+            parameterType: ToolArgs.self)
+        let message = LLM.Message(responseID: nil, role: .user, content: "Use the tool.")
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [function],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+        XCTAssertFalse(containsTypeArray(in: json),
+                       "Gemini rejects JSON Schema type arrays; body: \(json)")
+        XCTAssertFalse(containsStringItems(in: json),
+                       "Gemini expects items to be a schema object; body: \(json)")
+    }
+
+    // A function parameter whose *name* is itself a JSON Schema keyword
+    // ("type", "items", "additionalProperties") must be sanitized as a schema,
+    // not reinterpreted as the keyword. Regression test for the property-name
+    // confusion that let additionalProperties and type-unions leak to Gemini.
+    func testGemini_functionParameters_propertyNamedLikeKeyword() throws {
+        _ = try model(named: "gemini-3-flash-preview")
+        struct ToolArgs: Codable {}
+        let schema = JSONSchema(rawJSON: [
+            "type": "object",
+            "properties": [
+                // Property literally named "type" with a nested union and an
+                // additionalProperties that must be stripped.
+                "type": [
+                    "type": ["string", "null"],
+                    "additionalProperties": false,
+                ],
+                "config": [
+                    "type": "object",
+                    "properties": [
+                        // Property literally named "items".
+                        "items": [
+                            "type": "string",
+                            "additionalProperties": false,
+                        ],
+                    ],
+                    "additionalProperties": false,
+                ],
+            ],
+            "required": ["type"],
+            "additionalProperties": false,
+        ])
+        let function = LLM.Function<ToolArgs>(
+            decl: ChatGPTFunctionDeclaration(
+                name: "test_tool",
+                description: "Test tool.",
+                parameters: schema),
+            call: { _, _, _ in },
+            parameterType: ToolArgs.self)
+        let message = LLM.Message(responseID: nil, role: .user, content: "Use the tool.")
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [function],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+
+        XCTAssertFalse(containsKey("additionalProperties", in: json),
+                       "additionalProperties leaked through a property named like a keyword; body: \(json)")
+        XCTAssertFalse(containsTypeArray(in: json),
+                       "type union leaked inside a property named 'type'; body: \(json)")
+        // The members named after keywords must survive as properties.
+        let properties = functionParameters(in: json)?["properties"] as? [String: Any]
+        XCTAssertNotNil(properties?["type"], "property named 'type' was dropped; body: \(json)")
+        XCTAssertNotNil(properties?["config"], "property 'config' was dropped; body: \(json)")
+    }
+
+    /// A value-bearing keyword (default/const/examples/enum) carries literal
+    /// data, not a subschema. An object-valued `default` must pass through
+    /// verbatim; the sanitizer must NOT strip its additionalProperties or
+    /// rewrite a "type" array inside it, which would corrupt the value the tool
+    /// actually receives. Reachable via rawJSON-backed MCP/orchestrator schemas.
+    func testGemini_functionParameters_objectValuedDefaultPreservedVerbatim() throws {
+        _ = try model(named: "gemini-3-flash-preview")
+        struct ToolArgs: Codable {}
+        let schema = JSONSchema(rawJSON: [
+            "type": "object",
+            "properties": [
+                "config": [
+                    "type": "object",
+                    // Literal default value that happens to contain keys the
+                    // schema sanitizer mangles when it mistakes data for a schema.
+                    "default": [
+                        "additionalProperties": false,
+                        "type": ["a", "b"],
+                        "nested": ["x": 1],
+                    ],
+                ],
+            ],
+            "required": ["config"],
+            "additionalProperties": false,
+        ])
+        let function = LLM.Function<ToolArgs>(
+            decl: ChatGPTFunctionDeclaration(
+                name: "test_tool",
+                description: "Test tool.",
+                parameters: schema),
+            call: { _, _, _ in },
+            parameterType: ToolArgs.self)
+        let message = LLM.Message(responseID: nil, role: .user, content: "Use the tool.")
+        let bodyData = try GeminiRequestBuilder(
+            messages: [message],
+            functions: [function],
+            hostedTools: HostedTools()).body()
+        let json = try decode(bodyData)
+
+        let properties = functionParameters(in: json)?["properties"] as? [String: Any]
+        let config = properties?["config"] as? [String: Any]
+        let defaultValue = config?["default"] as? [String: Any]
+        XCTAssertNotNil(defaultValue,
+                        "object-valued default was dropped or mangled; body: \(json)")
+        XCTAssertEqual(defaultValue?["additionalProperties"] as? Bool, false,
+                       "sanitizer stripped additionalProperties from a literal default value; body: \(json)")
+        XCTAssertNotNil(defaultValue?["type"] as? [Any],
+                        "sanitizer rewrote the type array inside a literal default value; body: \(json)")
+        XCTAssertNotNil((defaultValue?["nested"] as? [String: Any]),
+                        "nested literal value inside default was dropped; body: \(json)")
     }
 
     // MARK: - OpenAI Responses API

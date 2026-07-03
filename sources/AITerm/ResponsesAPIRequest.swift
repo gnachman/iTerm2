@@ -1018,11 +1018,13 @@ public struct ResponsesRequestBody: Codable {
 
     /// Controls reasoning summaries or encrypted reasoning content.
     public struct ReasoningOptions: Codable {
-        enum Effort: String, Codable {
+        enum Effort: String, Codable, CaseIterable {
+            case none
             case minimal
             case low
             case medium
             case high
+            case xhigh
         }
         var effort: Effort?
 
@@ -1041,6 +1043,7 @@ public struct ResponsesRequestBody: Codable {
         case auto
         case `default`
         case flex
+        case priority
     }
     var serviceTier: ServiceTier?
 
@@ -1643,6 +1646,8 @@ struct ResponsesBodyRequestBuilder {
     var hostedTools: HostedTools
     var previousResponseID: String?
     var shouldThink: Bool?
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
+    var serviceTier: ResponsesRequestBody.ServiceTier?
 
     private func transform(message: LLM.Message) -> [ResponsesRequestBody.Input.ItemListEntry] {
         switch message.role {
@@ -1864,13 +1869,16 @@ struct ResponsesBodyRequestBuilder {
             stream: stream,
             toolChoice: tools.isEmpty ? ResponsesRequestBody.ToolChoice.none : .auto,
             tools: tools)
-        if let shouldThink {
-            if shouldThink {
-                body.reasoning = .init(effort: .medium, summary: .auto)
-            } else {
-                body.reasoning = .init(effort: .low)
-            }
+        if let reasoningEffort {
+            body.reasoning = .init(
+                effort: reasoningEffort,
+                summary: shouldThink == true && reasoningEffort != .none ? .auto : nil)
+        } else if let shouldThink {
+            body.reasoning = .init(
+                effort: shouldThink ? provider.model.thinkingOnEffort : provider.model.thinkingOffEffort,
+                summary: shouldThink ? .auto : nil)
         }
+        body.serviceTier = serviceTier
         let bodyEncoder = JSONEncoder()
         // OpenAI prompt caching needs a byte-exact prefix match, and the
         // tools array serializes [String: Property] / [String: AnyCodable]

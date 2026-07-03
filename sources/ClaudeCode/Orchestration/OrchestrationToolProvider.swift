@@ -370,10 +370,15 @@ final class OrchestrationToolProvider: ToolProvider {
         default:
             if name.hasPrefix("session_") {
                 let raw = String(name.dropFirst("session_".count))
+                if raw == "execute_command",
+                   let cmd = dict["command"] as? String,
+                   !cmd.isEmpty {
+                    return "Executing `\(cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 80))`"
+                }
                 // Use the @<guid> mention form (not a bare backticked guid) so
                 // OrchestrationMentionRenderer rewrites it to the session's name
                 // (or "[defunct session]" when it no longer resolves).
-                return "`\(prettifyToolName(raw))` on " + sessionDescription(args: dict)
+                return "\(prettifyToolName(raw)) in " + sessionDescription(args: dict)
             }
             return prettifyToolName(name)
         }

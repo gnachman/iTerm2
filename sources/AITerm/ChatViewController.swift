@@ -132,6 +132,11 @@ class ChatViewController: NSViewController {
     private var model: ChatViewControllerModel?
     private let listModel: ChatListModel
     private let client: ChatClient
+    // The provider popup item the user explicitly chose, so the selection stays
+    // put even when the chat's model name is ambiguous (a manual config whose
+    // name also matches a built-in model). Reset when the chat changes; falls
+    // back to deriving from the model when nil or no longer consistent.
+    var providerSelectionIdentifier: String?
     private var estimatedCount = 0
     private var _commandDidExitObserver: (any NSObjectProtocol)?
     private(set) var streaming = false {
@@ -205,9 +210,6 @@ class ChatViewController: NSViewController {
                                                selector: #selector(sessionWillTerminate(_:)),
                                                name: NSNotification.Name.iTermSessionWillTerminate,
                                                object: nil)
-        userDefaultsObserver.observeKey(Self.preferredModelDefaultsKey) { [weak self] in
-            self?.chatToolbar.update()
-        }
     }
 
     required init?(coder: NSCoder) {
@@ -505,8 +507,236 @@ extension Message {
 }
 
 extension ChatViewController {
-    private func modelIsValid(_ name: String) -> Bool {
-        return AITermController.allProvidersForCurrentVendor.map({ $0.model }).contains { $0.name == name }
+    private static let chatSelectableProviders: [iTermAIVendor] = [
+        .openAI,
+        .anthropic,
+        .gemini,
+        .deepSeek,
+        .llama
+    ]
+
+    private func model(named name: String?) -> AIMetadata.Model? {
+        guard let name else {
+            return nil
+        }
+        // Built-in wins over a manual config that shares the name, matching how
+        // AIConversation resolves the pinned model at request time.
+        if let builtIn = AIMetadata.instance.models.first(where: { $0.name == name }) {
+            return builtIn
+        }
+        return manualConfiguredModels.first { $0.name == name }
+    }
+
+    private var storedChatModel: AIMetadata.Model? {
+        guard let chatID else {
+            return nil
+        }
+        return model(named: listModel.chat(id: chatID)?.modelName)
+    }
+
+    private var latestConfiguredMessageModel: AIMetadata.Model? {
+        guard let chatID,
+              let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return nil
+        }
+        // Walk from the newest message backward, stopping at the first one that
+        // carries a resolvable model. This avoids materializing the whole
+        // DatabaseBackedArray (as `Array(messages)` would) on every toolbar and
+        // row-event access, which is a hot path during a streamed response.
+        var i = messages.count - 1
+        while i >= 0 {
+            if let result = model(named: messages[i].configuration?.model) {
+                return result
+            }
+            i -= 1
+        }
+        return nil
+    }
+
+    // The model this chat was pinned to, whether or not it still resolves.
+    private var pinnedChatModelName: String? {
+        if let chatID, let name = listModel.chat(id: chatID)?.modelName {
+            return name
+        }
+        guard let chatID,
+              let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return nil
+        }
+        var i = messages.count - 1
+        while i >= 0 {
+            if let name = messages[i].configuration?.model {
+                return name
+            }
+            i -= 1
+        }
+        return nil
+    }
+
+    // If the chat was pinned to a model that has since been retired from
+    // AIMetadata, keep it on the same provider (its recommended model) rather
+    // than silently falling through to the global default, which could be a
+    // different vendor the user has no key for and cannot change because the
+    // provider picker is locked once a chat has messages.
+    private var retiredModelFallback: AIMetadata.Model? {
+        guard let name = pinnedChatModelName,
+              model(named: name) == nil else {
+            return nil
+        }
+        // vendor(forModelName:) returns nil for OpenAI names (gpt-*, o3, o4-mini,
+        // codex, ...) because its nil is meaningful for manual-model
+        // classification. Here nil just means "unrecognized", and OpenAI is the
+        // right default (matching LLMMetadata.manualVendor), so a retired OpenAI
+        // model stays on OpenAI instead of falling through to the global default
+        // vendor - which the locked provider picker won't let the user change.
+        let vendor = LLMMetadata.vendor(forModelName: name) ?? .openAI
+        return recommendedModel(for: vendor)
+    }
+
+    private var effectiveChatModel: AIMetadata.Model? {
+        return storedChatModel
+            ?? latestConfiguredMessageModel
+            ?? retiredModelFallback
+            ?? AITermController.provider?.model
+    }
+
+    private var effectiveChatProvider: iTermAIVendor? {
+        return effectiveChatModel?.vendor
+    }
+
+    private var manualConfiguredModels: [AIMetadata.Model] {
+        return LLMMetadata.manualModels()
+    }
+
+    private var defaultManualConfiguredModel: AIMetadata.Model? {
+        let models = manualConfiguredModels
+        if let name = iTermPreferences.string(forKey: kPreferenceKeyAIModel),
+           let model = models.first(where: { $0.name == name }) {
+            return model
+        }
+        return models.first
+    }
+
+    private var currentProviderIdentifier: String? {
+        // Honor the user's explicit pick as long as it still matches the chat's
+        // model, so a selection (vendor or a specific manual model) never flips
+        // on its own.
+        if let providerSelectionIdentifier,
+           providerSelectionIsConsistent(providerSelectionIdentifier) {
+            return providerSelectionIdentifier
+        }
+        return derivedProviderIdentifier
+    }
+
+    // Classify the chat's model with no memory of what the user picked.
+    private var derivedProviderIdentifier: String? {
+        guard let effectiveChatModel else {
+            return nil
+        }
+        let name = effectiveChatModel.name
+        // A name that matches a built-in catalog model belongs to that model's
+        // vendor even if a manual config shares the name (the built-in wins at
+        // request time). Only a name that exists solely as a manual config is a
+        // manual selection.
+        if let builtInVendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
+            return ChatProviderOption.vendorIdentifier(builtInVendor)
+        }
+        if manualConfiguredModels.contains(where: { $0.name == name }) {
+            return ChatProviderOption.manualModel(name: name).identifier
+        }
+        if let effectiveChatProvider {
+            return ChatProviderOption.vendorIdentifier(effectiveChatProvider)
+        }
+        return nil
+    }
+
+    private func providerSelectionIsConsistent(_ identifier: String) -> Bool {
+        guard let modelName = effectiveChatModel?.name else {
+            return false
+        }
+        if let manualName = ChatProviderOption.manualName(from: identifier) {
+            return manualName == modelName &&
+                manualConfiguredModels.contains { $0.name == modelName }
+        }
+        if let vendor = ChatProviderOption.vendor(from: identifier) {
+            return AIMetadata.instance.models.contains { $0.name == modelName && $0.vendor == vendor }
+        }
+        return false
+    }
+
+    private func providerIsAvailable(_ vendor: iTermAIVendor) -> Bool {
+        guard !LLMMetadata.alternateModels(for: vendor).isEmpty else {
+            return false
+        }
+        let key = AITermControllerObjC.apiKey(for: vendor)
+        return key?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+    }
+
+    private func recommendedModel(for provider: iTermAIVendor) -> AIMetadata.Model? {
+        return LLMMetadata.recommendedModel(for: provider) ?? LLMMetadata.alternateModels(for: provider).first
+    }
+
+    private func setCurrentChatModelIfNeeded(_ modelName: String) {
+        guard let chatID,
+              listModel.chat(id: chatID)?.modelName != modelName else {
+            return
+        }
+        do {
+            try listModel.setModel(chatID: chatID, modelName: modelName)
+        } catch {
+            DLog("Failed to persist AI chat model \(modelName) for chat \(chatID): \(error)")
+        }
+    }
+
+    private func ensureCurrentChatHasModel() {
+        guard let chatID,
+              listModel.chat(id: chatID)?.modelName == nil,
+              let modelName = effectiveChatModel?.name else {
+            return
+        }
+        do {
+            try listModel.setModel(chatID: chatID, modelName: modelName)
+        } catch {
+            DLog("Failed to initialize AI chat model for chat \(chatID): \(error)")
+        }
+    }
+
+    private var chatProviderIsLocked: Bool {
+        if viewModelLocksProvider {
+            return true
+        }
+        guard let chatID,
+              let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return false
+        }
+        return messages.contains { Self.messageLocksProvider($0) }
+    }
+
+    private var viewModelLocksProvider: Bool {
+        guard let model else {
+            return false
+        }
+        for i in 0..<model.items.count {
+            let item = model.items[i]
+            guard let message = item.existingMessage?.message else {
+                continue
+            }
+            if Self.messageLocksProvider(message) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func messageLocksProvider(_ message: Message) -> Bool {
+        switch message.content {
+        case .plainText, .markdown, .explanationRequest, .explanationResponse,
+                .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
+                .append, .appendAttachment, .terminalCommand, .multipart, .watcherEvent,
+                .unsupported:
+            return true
+        case .clientLocal, .renameChat, .commit, .userCommand, .setPermissions, .vectorStoreCreated:
+            return false
+        }
     }
 
     var chatTitle: String {
@@ -537,6 +767,9 @@ extension ChatViewController {
         if streaming {
             stopStreaming()
         }
+        // The tracked provider pick belongs to the outgoing chat; let the new
+        // chat derive its own from its stored model.
+        providerSelectionIdentifier = nil
         guard let window = view.window else {
             return
         }
@@ -586,6 +819,8 @@ extension ChatViewController {
                 inputView.setAttachedFiles(draft.attachments)
             }
         }
+        ensureCurrentChatHasModel()
+        chatToolbar.update()
 
         // Update window title via window controller. Skip when this CVC is
         // hosted as an inline gutter panel — its window is the terminal
@@ -772,15 +1007,42 @@ extension ChatViewController {
 
     private static let webSearchUserDefaultsKey = "AI Web Search Enabled"
     private static let thinkUserDefaultsKey = "AI High Effort Enabled"
-    private static let preferredModelDefaultsKey = "NoSync AI Preferred Model"
+    static let reasoningEffortUserDefaultsKey = "NoSync AI Reasoning Effort"
+    static let serviceTierUserDefaultsKey = "NoSync AI Service Tier"
 
-    // The last value selected in the model picker, but it might be invalid so check it with modelIsValid before use.
-    private var preferredModel: String? {
+    private var preferredReasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? {
         get {
-            iTermUserDefaults.userDefaults().string(forKey: Self.preferredModelDefaultsKey)
+            guard let value = iTermUserDefaults.userDefaults().string(
+                forKey: Self.reasoningEffortUserDefaultsKey) else {
+                return nil
+            }
+            return ResponsesRequestBody.ReasoningOptions.Effort(rawValue: value)
         }
         set {
-            iTermUserDefaults.userDefaults().set(newValue, forKey: Self.preferredModelDefaultsKey)
+            if let newValue {
+                iTermUserDefaults.userDefaults().set(newValue.rawValue,
+                                                     forKey: Self.reasoningEffortUserDefaultsKey)
+            } else {
+                iTermUserDefaults.userDefaults().removeObject(forKey: Self.reasoningEffortUserDefaultsKey)
+            }
+        }
+    }
+
+    private var preferredServiceTier: ResponsesRequestBody.ServiceTier? {
+        get {
+            guard let value = iTermUserDefaults.userDefaults().string(
+                forKey: Self.serviceTierUserDefaultsKey) else {
+                return nil
+            }
+            return ResponsesRequestBody.ServiceTier(rawValue: value)
+        }
+        set {
+            if let newValue, newValue != .auto {
+                iTermUserDefaults.userDefaults().set(newValue.rawValue,
+                                                     forKey: Self.serviceTierUserDefaultsKey)
+            } else {
+                iTermUserDefaults.userDefaults().removeObject(forKey: Self.serviceTierUserDefaultsKey)
+            }
         }
     }
 
@@ -1893,11 +2155,16 @@ extension ChatViewController: ChatInputViewDelegate {
         let vectorStoreIDs = [listModel.chat(id: chatID)?.vectorStore].compactMap { $0 }
         var configuration = Message.Configuration(hostedWebSearchEnabled: webSearchEnabled,
                                                   vectorStoreIDs: vectorStoreIDs,
-                                                  shouldThink: thinkingEnabled)
+                                                  shouldThink: thinkingEnabled,
+                                                  reasoningEffort: selectedReasoningEffort,
+                                                  serviceTier: selectedServiceTier)
 
-        // Set the model if one is selected
-        if let modelIdentifier = chatToolbar.selectedModelIdentifier {
+        // Set the chat-pinned model for this request. The model selector only
+        // offers models from the chat's provider, so switching OpenAI/Gemini/
+        // Anthropic/DeepSeek mid-conversation cannot corrupt the request chain.
+        if let modelIdentifier = chatToolbar.selectedModelIdentifier ?? effectiveModel {
             configuration.model = modelIdentifier
+            setCurrentChatModelIfNeeded(modelIdentifier)
         }
 
         // Auto-populate terminal state. This must stay in sync with autopopulatedWhenAlways.
@@ -2032,6 +2299,9 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         if let model {
             assertMessageTypeAllowed(model.items[i].existingMessage?.message)
         }
+        if viewModelLocksProvider {
+            chatToolbar.update()
+        }
         DLog("Insert tableview row at \(i)")
         estimatedCount += 1
         it_assert(i <= estimatedCount)
@@ -2064,6 +2334,9 @@ extension ChatViewController: ChatViewControllerModelDelegate {
             for i in indexSet {
                 assertMessageTypeAllowed(model.items[i].existingMessage?.message)
             }
+        }
+        if viewModelLocksProvider {
+            chatToolbar.update()
         }
         guard let scrollView = tableView.enclosingScrollView,
               scrollView.documentView != nil else {
@@ -2232,9 +2505,9 @@ extension Message.Content {
                     + "or enable orchestration?**\n\n"
                     + "Linking gives the AI access to this \(kind) session subject to "
                     + "your per-call permission. **Orchestration** is an alternative "
-                    + "mode where the AI can coordinate multiple sessions across "
-                    + "workgroups; it uses one-time per-session approval instead of "
-                    + "per-call prompts."
+                    + "mode where the AI can coordinate multiple sessions. "
+                    + "It uses automatic safety checking and one-time per-session approval instead of "
+                    + "fine-grained permissions."
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case .offerOrchestration:
                 let body = "**Enable orchestration for this chat?**\n\n"
@@ -2454,13 +2727,95 @@ extension ChatViewController: NSMenuItemValidation {
 }
 
 extension ChatViewController: ChatToolbarDataSource {
+    private func reasoningEffort(for model: AIMetadata.Model) -> ResponsesRequestBody.ReasoningOptions.Effort? {
+        guard !model.reasoningEfforts.isEmpty else {
+            return nil
+        }
+        if let preferredReasoningEffort,
+           model.supports(reasoningEffort: preferredReasoningEffort) {
+            return preferredReasoningEffort
+        }
+        let fallback = iTermUserDefaults.userDefaults().bool(forKey: Self.thinkUserDefaultsKey)
+            ? model.thinkingOnEffort
+            : model.thinkingOffEffort
+        if model.supports(reasoningEffort: fallback) {
+            return fallback
+        }
+        return model.reasoningEfforts.first
+    }
+
+    private func serviceTier(for model: AIMetadata.Model) -> ResponsesRequestBody.ServiceTier? {
+        guard !model.serviceTiers.isEmpty else {
+            return nil
+        }
+        if let preferredServiceTier,
+           model.supports(serviceTier: preferredServiceTier) {
+            return preferredServiceTier
+        }
+        return nil
+    }
+
     var provider: LLMProvider? {
-        if let effectiveModelName = preferredModel,
-           modelIsValid(effectiveModelName),
-           let model = AIMetadata.instance.models.first(where: { $0.name == effectiveModelName }) {
+        if let model = effectiveChatModel {
             return LLMProvider(model: model)
         }
         return AITermController.provider
+    }
+
+    var availableProviderOptions: [ChatProviderOption] {
+        // Providers the user has configured a key for come first.
+        var options = Self.chatSelectableProviders
+            .filter { providerIsAvailable($0) }
+            .map { ChatProviderOption.vendor($0) }
+
+        // Keep the current chat's provider visible even if its key was removed
+        // (e.g. an existing/locked chat), so its selection can still be shown.
+        if let currentProviderIdentifier,
+           let vendor = ChatProviderOption.vendor(from: currentProviderIdentifier),
+           !options.contains(where: { $0.identifier == currentProviderIdentifier }),
+           !LLMMetadata.alternateModels(for: vendor).isEmpty {
+            options.append(ChatProviderOption.vendor(vendor))
+        }
+
+        // Then a separator followed by each manually-configured model.
+        let manualModels = manualConfiguredModels
+        if !manualModels.isEmpty {
+            if !options.isEmpty {
+                options.append(ChatProviderOption.separator())
+            }
+            for model in manualModels {
+                options.append(ChatProviderOption.manualModel(name: model.name))
+            }
+        }
+        return options
+    }
+
+    var effectiveProviderIdentifier: String? {
+        return currentProviderIdentifier
+    }
+
+    var canChangeProvider: Bool {
+        return chatID != nil && !chatProviderIsLocked
+    }
+
+    var canChangeModel: Bool {
+        return chatID != nil && !chatProviderIsLocked
+    }
+
+    var availableModels: [AIMetadata.Model] {
+        // A manual model is the whole selection (it lives in the provider
+        // popup), so there is no sub-model list to offer.
+        if let identifier = currentProviderIdentifier,
+           ChatProviderOption.manualName(from: identifier) != nil {
+            return effectiveChatModel.map { [$0] } ?? []
+        }
+        guard let model = effectiveChatModel else {
+            return []
+        }
+        guard let vendor = effectiveChatProvider else {
+            return [model]
+        }
+        return LLMMetadata.alternateModels(for: vendor)
     }
 
     var webSearchEnabled: Bool {
@@ -2488,11 +2843,38 @@ extension ChatViewController: ChatToolbarDataSource {
             if !model.features.contains(.configurableThinking) {
                 return false
             }
+            if let effort = reasoningEffort(for: model) {
+                return effort != model.thinkingOffEffort
+            }
             return iTermUserDefaults.userDefaults().bool(forKey: Self.thinkUserDefaultsKey)
         }
         set {
-            return iTermUserDefaults.userDefaults().set(newValue, forKey: Self.thinkUserDefaultsKey)
+            iTermUserDefaults.userDefaults().set(newValue, forKey: Self.thinkUserDefaultsKey)
+            guard let model = provider?.model,
+                  !model.reasoningEfforts.isEmpty else {
+                return
+            }
+            let effort = newValue ? model.thinkingOnEffort : model.thinkingOffEffort
+            if model.supports(reasoningEffort: effort) {
+                preferredReasoningEffort = effort
+            } else {
+                preferredReasoningEffort = model.reasoningEfforts.first
+            }
         }
+    }
+
+    var selectedReasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? {
+        guard let model = provider?.model else {
+            return nil
+        }
+        return reasoningEffort(for: model)
+    }
+
+    var selectedServiceTier: ResponsesRequestBody.ServiceTier? {
+        guard let model = provider?.model else {
+            return nil
+        }
+        return serviceTier(for: model)
     }
 
     func showSessionButtonMenu(_ sender: NSButton) {
@@ -2500,9 +2882,6 @@ extension ChatViewController: ChatToolbarDataSource {
             return
         }
         let menu = NSMenu()
-
-        menu.addItem(withTitle: "Delete Chat", action: #selector(deleteChat(_:)), target: self)
-        menu.addItem(NSMenuItem.separator())
 
         // Orchestration mode is mutually exclusive with session/
         // browser binding. The toggle clears any binding when
@@ -2623,11 +3002,71 @@ extension ChatViewController: ChatToolbarDataSource {
     }
 
     func toolbarDidUpdate() {
+        guard isViewLoaded else {
+            return
+        }
+        if let floating = floatingControlsView as? FloatingChatToolbarView {
+            floating.setNeedsLayoutNow()
+        }
+        view.needsLayout = true
         delegate?.chatViewControllerDidUpdateToolbar(self)
     }
 
     func selectedModelDidChange() {
-        preferredModel = chatToolbar.modelSelectorButton?.selectedItem?.title
+        guard canChangeModel else {
+            chatToolbar.update()
+            return
+        }
+        guard let modelName = chatToolbar.selectedModelIdentifier,
+              let selectedModel = model(named: modelName) else {
+            return
+        }
+        setCurrentChatModelIfNeeded(modelName)
+    }
+
+    func selectedProviderDidChange() {
+        guard canChangeProvider,
+              let identifier = chatToolbar.selectedProviderIdentifier else {
+            chatToolbar.update()
+            return
+        }
+        // A specific manual model was chosen.
+        if let manualName = ChatProviderOption.manualName(from: identifier),
+           let model = manualConfiguredModels.first(where: { $0.name == manualName }) {
+            providerSelectionIdentifier = identifier
+            setCurrentChatModelIfNeeded(model.name)
+            return
+        }
+        // A vendor was chosen: pin to its recommended model.
+        guard let provider = ChatProviderOption.vendor(from: identifier),
+              let model = recommendedModel(for: provider) else {
+            chatToolbar.update()
+            return
+        }
+        providerSelectionIdentifier = identifier
+        setCurrentChatModelIfNeeded(model.name)
+    }
+
+    func selectedReasoningEffortDidChange() {
+        guard let rawValue = chatToolbar.reasoningEffortButton?.selectedItem?.representedObject as? String,
+              let effort = ResponsesRequestBody.ReasoningOptions.Effort(rawValue: rawValue),
+              let model = provider?.model,
+              model.supports(reasoningEffort: effort) else {
+            return
+        }
+        preferredReasoningEffort = effort
+        iTermUserDefaults.userDefaults().set(effort != model.thinkingOffEffort,
+                                             forKey: Self.thinkUserDefaultsKey)
+    }
+
+    func selectedServiceTierDidChange() {
+        guard let rawValue = chatToolbar.serviceTierButton?.selectedItem?.representedObject as? String,
+              let tier = ResponsesRequestBody.ServiceTier(rawValue: rawValue),
+              let model = provider?.model,
+              model.supports(serviceTier: tier) else {
+            return
+        }
+        preferredServiceTier = tier
     }
 
     var effectiveModel: String? {
@@ -3154,4 +3593,3 @@ extension ChatViewController {
     }
 
 }
-
