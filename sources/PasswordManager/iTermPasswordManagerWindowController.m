@@ -29,6 +29,34 @@ static const CGFloat kNewAccountPanelWidth = 330;
 static const CGFloat kNewAccountPanelHeightWithoutToggle = 136;
 static const CGFloat kNewAccountPanelHeightWithToggle = 196;
 
+static void iTermFixViewY(NSView *view, CGFloat y) {
+    if (view == nil) {
+        return;
+    }
+    view.autoresizingMask = NSViewNotSizable;
+    NSRect frame = view.frame;
+    frame.origin.y = y;
+    view.frame = frame;
+}
+
+static void iTermSetNewAccountPanelContentHeight(NSPanel *panel, CGFloat height) {
+    NSRect frame = panel.frame;
+    NSRect contentRect = [panel contentRectForFrameRect:frame];
+    contentRect.size.width = kNewAccountPanelWidth;
+    contentRect.size.height = height;
+    frame = [panel frameRectForContentRect:contentRect];
+    [panel setFrame:frame display:NO];
+    NSView *contentView = panel.contentView;
+    if (contentView != nil) {
+        NSRect cvFrame = contentView.frame;
+        cvFrame.size.width = kNewAccountPanelWidth;
+        cvFrame.size.height = height;
+        cvFrame.origin = NSZeroPoint;
+        contentView.frame = cvFrame;
+        [contentView layoutSubtreeIfNeeded];
+    }
+}
+
 typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     iTermPasswordManagerReloadUnlimited,
     iTermPasswordManagerReloadOnce,
@@ -78,6 +106,10 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     IBOutlet NSTextField *_newAccount;
     IBOutlet NSButton *_newAccountOkButton;
     IBOutlet NSSecureTextField *_newAccountPassword;
+    IBOutlet NSTextField *_newAccountLabel;
+    IBOutlet NSTextField *_newUserNameLabel;
+    IBOutlet NSTextField *_newPasswordLabel;
+    IBOutlet NSButton *_generatePasswordButton;
     IBOutlet NSButton *_addAccountToggleCheckbox;
     IBOutlet NSTextField *_addAccountToggleLabel;
     IBOutlet NSView *_scrim;
@@ -620,6 +652,8 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [self.window beginSheet:_newAccountPanel completionHandler:^(NSModalResponse response){
         [NSApp stopModal];
     }];
+    // beginSheet can reset subview frames via autoresizing; apply layout again.
+    [self configureFirstAddAccountToggle];
     [NSApp runModalForWindow:_newAccountPanel];
 }
 
@@ -639,14 +673,38 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     return toggles.firstObject;
 }
 
+- (void)configureNewAccountPanelFieldLayoutShowingToggle:(BOOL)showingToggle {
+    if (showingToggle) {
+        iTermFixViewY(_newAccount, 162);
+        iTermFixViewY(_newAccountLabel, 165);
+        iTermFixViewY(_newUserName, 135);
+        iTermFixViewY(_newUserNameLabel, 138);
+        iTermFixViewY(_newAccountPassword, 108);
+        iTermFixViewY(_newPasswordLabel, 111);
+        iTermFixViewY(_generatePasswordButton, 105);
+        iTermFixViewY(_addAccountToggleCheckbox, 76);
+        iTermFixViewY(_addAccountToggleLabel, 49);
+    } else {
+        iTermFixViewY(_newAccount, 102);
+        iTermFixViewY(_newAccountLabel, 105);
+        iTermFixViewY(_newUserName, 75);
+        iTermFixViewY(_newUserNameLabel, 78);
+        iTermFixViewY(_newAccountPassword, 48);
+        iTermFixViewY(_newPasswordLabel, 51);
+        iTermFixViewY(_generatePasswordButton, 45);
+    }
+}
+
 - (void)configureFirstAddAccountToggle {
     NSDictionary *toggle = [self firstAddAccountToggleDescription];
     const BOOL hidden = (toggle == nil);
     _addAccountToggleCheckbox.hidden = hidden;
     _addAccountToggleLabel.hidden = hidden;
+    const CGFloat height = hidden ? kNewAccountPanelHeightWithoutToggle
+                                  : kNewAccountPanelHeightWithToggle;
+    iTermSetNewAccountPanelContentHeight(_newAccountPanel, height);
+    [self configureNewAccountPanelFieldLayoutShowingToggle:!hidden];
     if (hidden) {
-        [_newAccountPanel setContentSize:NSMakeSize(kNewAccountPanelWidth,
-                                                    kNewAccountPanelHeightWithoutToggle)];
         return;
     }
     NSString *label = toggle[@"label"];
@@ -657,8 +715,6 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     _addAccountToggleCheckbox.state = (defaultValue.boolValue
                                        ? NSControlStateValueOn
                                        : NSControlStateValueOff);
-    [_newAccountPanel setContentSize:NSMakeSize(kNewAccountPanelWidth,
-                                                kNewAccountPanelHeightWithToggle)];
 }
 
 - (NSDictionary<NSString *, NSNumber *> *)collectAddAccountFlags {

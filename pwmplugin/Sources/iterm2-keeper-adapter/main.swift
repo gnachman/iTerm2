@@ -179,7 +179,7 @@ private func handleGetPassword() {
 private func handleSetPassword() {
     KeeperAdapterLog.write("handleSetPassword: invoked")
     guard let data = readStdin() else {
-        KeeperAdapterLog.write("handleSetPassword: no stdin input — aborting")
+        KeeperAdapterLog.write("handleSetPassword: no stdin input, aborting")
         writeError("No input provided")
         exit(1)
     }
@@ -203,7 +203,7 @@ private func handleSetPassword() {
 private func handleAddAccount() {
     KeeperAdapterLog.write("handleAddAccount: invoked")
     guard let data = readStdin() else {
-        KeeperAdapterLog.write("handleAddAccount: no stdin input — aborting")
+        KeeperAdapterLog.write("handleAddAccount: no stdin input, aborting")
         writeError("No input provided")
         exit(1)
     }
@@ -233,7 +233,7 @@ private func handleAddAccount() {
 private func handleDeleteAccount() {
     KeeperAdapterLog.write("handleDeleteAccount: invoked")
     guard let data = readStdin() else {
-        KeeperAdapterLog.write("handleDeleteAccount: no stdin input — aborting")
+        KeeperAdapterLog.write("handleDeleteAccount: no stdin input, aborting")
         writeError("No input provided")
         exit(1)
     }
