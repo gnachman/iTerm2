@@ -245,6 +245,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fullWidthFlags;
 + (BOOL)generativeAIAllowed;
 + (BOOL)companionPairingAllowed;
++ (NSString *)companionRelayOrigin;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (void)setGitTimeout:(double)value;

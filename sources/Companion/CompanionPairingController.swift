@@ -758,10 +758,11 @@ final class CompanionPairingController: NSObject {
     /// the QR, so an invalid value is ignored (logged) rather than producing a
     /// QR the phone rejects.
     static let relayOriginKey = "CompanionRelayOrigin"
-    static let defaultRelayOrigin = "https://companion-relay.iterm2.com"
 
     private static func configuredRelayOrigin() -> String? {
-        let raw = iTermUserDefaults.userDefaults().string(forKey: relayOriginKey) ?? defaultRelayOrigin
+        // Configurable via the CompanionRelayOrigin advanced setting, which
+        // supplies the default project relay when unset.
+        let raw = iTermAdvancedSettingsModel.companionRelayOrigin() ?? ""
         guard !raw.isEmpty else {
             // Explicitly disabled.
             return nil

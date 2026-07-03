@@ -462,6 +462,8 @@ Core Improvements:
   debug logging was never turned on.
 
 Settings Improvements:
+- Add an advanced setting to change the relay
+  origin used for companion iOS device pairing.
 - Window frames are remembered per-profile rather
   than globally. When you open a window, the
   default frame will come from a previous window
