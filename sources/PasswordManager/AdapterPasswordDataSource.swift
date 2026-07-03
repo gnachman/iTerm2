@@ -1090,9 +1090,13 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
     }
 
     @objc func setSettingsValue(_ value: String, forKey key: String) {
+        let field = handshakeInfo?.settingsFields?.first(where: { $0.key == key })
         storeSettingsValue(value, forKey: key)
-        guard handshakeInfo?.settingsFields?.contains(where: { $0.key == key }) == true else { return }
+        guard field != nil else { return }
         authToken = nil
         masterPassword = nil
+        if field?.persistInKeychain == true {
+            deletePersistedCredentials()
+        }
     }
 }

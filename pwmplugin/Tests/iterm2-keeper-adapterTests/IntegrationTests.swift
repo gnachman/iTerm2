@@ -68,29 +68,44 @@ class H(BaseHTTPRequestHandler):
             req_id = self.path.rsplit("/", 1)[-1]
             cmd = REQUESTS.get(req_id, "")
             if cmd.startswith("nsf-list"):
+                nsf_data = [
+                    {"Item Type": "Folder", "Parent/Folder": "",
+                     "Title": "NewDemoFolder", "Type": "folder",
+                     "UID": "FOLDERUID123456789"},
+                    {"Item Type": "Record", "Parent/Folder": "NewDemoFolder",
+                     "Title": "DemoNsfRecord", "Type": "login",
+                     "UID": "UIDNSF1234567890"},
+                ]
+                if SCENARIO == "duplicate_uid":
+                    nsf_data.append(
+                        {"Item Type": "Record", "Parent/Folder": "NewDemoFolder",
+                         "Title": "DupShared", "Type": "login",
+                         "UID": "UIDDUP12345678901"})
                 result = {
                     "command": "nsf-list --records",
                     "status": "success",
-                    "data": [
-                        {"Item Type": "Record", "Parent/Folder": "NewDemoFolder",
-                         "Title": "DemoNsfRecord", "Type": "login",
-                         "UID": "UIDNSF1234567890"},
-                    ],
+                    "data": nsf_data,
                 }
                 _send(self, 200, {"status": "success", "result": json.dumps(result)})
                 return
             if cmd.startswith("list "):
+                list_data = [
+                    {"description": "user@example.com @ https://testbook.com",
+                     "record_category": "Classic", "record_uid": "UIDAAAAAAAAAAAAAA",
+                     "shared": True, "title": "Web", "type": "login"},
+                    {"description": "hborase@keepersecurity.com @ 127.0.0.1:3366",
+                     "record_category": "Classic", "record_uid": "UID1234567890123",
+                     "shared": True, "title": "Mysql", "type": "login"},
+                ]
+                if SCENARIO == "duplicate_uid":
+                    list_data.append(
+                        {"description": "dup@example.com",
+                         "record_category": "Classic", "record_uid": "UIDDUP12345678901",
+                         "shared": True, "title": "DupShared", "type": "login"})
                 result = {
                     "command": "list",
                     "status": "success",
-                    "data": [
-                        {"description": "user@example.com @ https://testbook.com",
-                         "record_category": "Classic", "record_uid": "UIDAAAAAAAAAAAAAA",
-                         "shared": True, "title": "Web", "type": "login"},
-                        {"description": "hborase@keepersecurity.com @ 127.0.0.1:3366",
-                         "record_category": "Classic", "record_uid": "UID1234567890123",
-                         "shared": True, "title": "Mysql", "type": "login"},
-                    ],
+                    "data": list_data,
                 }
                 _send(self, 200, {"status": "success", "result": json.dumps(result)})
                 return
@@ -110,7 +125,7 @@ class H(BaseHTTPRequestHandler):
                 _send(self, 200, {
                     "command": "nsf-record-add",
                     "data": None,
-                    "message": "NSFUID123456789",
+                    "message": "Record NSFUID123456789 was added successfully.",
                     "status": "success",
                 })
                 return
@@ -171,7 +186,7 @@ server.serve_forever()
         let process = Process()
         process.executableURL = adapterURL
         process.arguments = [subcommand]
-        var env = ProcessInfo.processInfo.environment
+        let env = ProcessInfo.processInfo.environment
         process.environment = env
 
         let stdin = Pipe()
@@ -260,6 +275,33 @@ server.serve_forever()
         XCTAssertEqual(accounts[2]["userName"] as? String, "")
         XCTAssertEqual((accounts[2]["identifier"] as? [String: Any])?["accountID"] as? String,
                        "nested:UIDNSF1234567890")
+    }
+
+    func testListAccountsExcludesNsfFolders() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        XCTAssertEqual(accounts.count, 3)
+        XCTAssertFalse(accounts.contains { ($0["accountName"] as? String)?.contains("NewDemoFolder") == true })
+    }
+
+    func testListAccountsPrefersNsfListForDuplicateUid() throws {
+        let server = try MockKeeperServer(scenario: "duplicate_uid")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        let dup = try XCTUnwrap(accounts.first { account in
+            ((account["identifier"] as? [String: Any])?["accountID"] as? String)?
+                .hasSuffix("UIDDUP12345678901") == true
+        })
+        XCTAssertEqual(dup["accountName"] as? String, "DupShared (Nested)")
+        XCTAssertEqual((dup["identifier"] as? [String: Any])?["accountID"] as? String,
+                       "nested:UIDDUP12345678901")
     }
 
     func testGetPasswordSuccess() throws {
