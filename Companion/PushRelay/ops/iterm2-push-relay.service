@@ -1,0 +1,71 @@
+# systemd unit for the self-hosted push relay (the off-Cloudflare deployment of
+# src/worker.js; see host/ and bin/push-relay.js).
+#
+# Install (mirrors the companion relay's layout on the same box):
+#   sudo cp ops/iterm2-push-relay.service /etc/systemd/system/
+#   sudo cp ops/push-relay.env.example /etc/iterm2-push-relay.env   # then edit
+#   sudo install -m 0600 AuthKey_XXXXXXXXXX.p8 /etc/iterm2-push-relay/apns.p8
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now iterm2-push-relay
+#
+# Assumes the app is at /opt/iterm2-push-relay with deps installed
+# (npm ci --omit=dev, which builds better-sqlite3) and node at /usr/bin/node.
+# Listens on loopback; put the existing TLS reverse proxy in front and route the
+# public push hostname to it (see ops/DEPLOY.md).
+
+[Unit]
+Description=iTerm2 Buddy push relay (self-hosted APNs forwarder)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/iterm2-push-relay
+ExecStart=/usr/bin/node bin/push-relay.js
+EnvironmentFile=/etc/iterm2-push-relay.env
+
+# The APNs signing key (.p8) is passed as a systemd credential, NOT an env var:
+# systemd mounts it readable ONLY to this service (even under DynamicUser) at
+# $CREDENTIALS_DIRECTORY/apns.p8, and bin/push-relay.js reads APNS_P8_FILE. This
+# keeps the private key out of the environment block and off world-readable paths.
+LoadCredential=apns.p8:/etc/iterm2-push-relay/apns.p8
+Environment=APNS_P8_FILE=%d/apns.p8
+
+# SQLite state: systemd creates/owns /var/lib/iterm2-push-relay for the
+# DynamicUser. push-relay.env points PUSH_DB here.
+StateDirectory=iterm2-push-relay
+StateDirectoryMode=0700
+
+Restart=always
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# --- Hardening (identical posture to the companion relay unit) ---
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+# NOT MemoryDenyWriteExecute: V8's JIT needs writable->executable pages; that
+# flag makes Node crash at startup (verified on this host / Node 20).
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+# EPERM (not SIGSYS) for filtered syscalls: Node/libuv probes io_uring at startup,
+# which @system-service excludes; SIGSYS would crash-loop, EPERM lets libuv fall
+# back to its threadpool. Same rationale as the companion relay unit.
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target
