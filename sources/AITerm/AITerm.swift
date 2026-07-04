@@ -450,9 +450,20 @@ class AITermController {
     private func requestRegistration(continuation: State) {
         state = .ground
         delegate?.aitermControllerRequestRegistration(self) { [weak self] registration in
-            self?._registration = registration
-            self?.state = continuation
-            self?.handle(event: .begin)
+            guard let self else {
+                return
+            }
+            _registration = registration
+            state = continuation
+            // If the registration we just stored still doesn't satisfy the
+            // getter (e.g. it was issued for the wrong vendor), retrying
+            // .begin would request registration again and recurse forever.
+            // Fail instead of overflowing the stack.
+            guard self.registration != nil else {
+                handle(event: .error(AIError("Could not obtain a valid API key registration for this model’s provider.")))
+                return
+            }
+            handle(event: .begin)
         }
     }
 

@@ -178,6 +178,18 @@ class AITermRegistrationWindow: NSWindow {
 protocol AIRegistrationProvider: AnyObject {
     func registrationProviderRequestRegistration(
         _ completion: @escaping (AITermController.Registration?) -> ())
+
+    // This must be a protocol requirement, not just an extension method.
+    // Otherwise a call through an `AIRegistrationProvider` existential
+    // dispatches statically to the default implementation below, silently
+    // dropping `vendor` and substituting `LLMMetadata.effectiveVendor`. When
+    // the active model's vendor differs from the effective vendor the
+    // resulting Registration fails `isValid(for:)`, so AITermController's
+    // `registration` getter stays nil and `handle(.begin)` re-requests
+    // registration forever, overflowing the stack.
+    func registrationProviderRequestRegistration(
+        for vendor: iTermAIVendor,
+        _ completion: @escaping (AITermController.Registration?) -> ())
 }
 
 extension AIRegistrationProvider {
