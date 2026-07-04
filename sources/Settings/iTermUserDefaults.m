@@ -48,6 +48,7 @@ static NSString *const iTermUserDefaultsKeyWorkgroupsData = @"Workgroups";
 static NSString *const iTermUserDefaultsKeyWorkgroupShortcutsBackfilled = @"NoSyncWorkgroupShortcutsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled = @"NoSyncClaudeCodeDiffModeBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled = @"NoSyncClaudeCodeReviewSystemPromptCommandBackfilled";
+static NSString *const iTermUserDefaultsKeyAIModelCatalogUpdateConsent = @"NoSyncAIModelCatalogUpdateConsent";
 
 @implementation iTermUserDefaults
 
@@ -383,6 +384,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeReviewSystemPromptCommandBackfilled:(BOOL)value {
     [self.userDefaults setBool:value
                         forKey:iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled];
+}
+
++ (iTermAIModelCatalogUpdateConsent)aiModelCatalogUpdateConsent {
+    return [self.userDefaults integerForKey:iTermUserDefaultsKeyAIModelCatalogUpdateConsent];
+}
+
++ (void)setAiModelCatalogUpdateConsent:(iTermAIModelCatalogUpdateConsent)value {
+    [self.userDefaults setInteger:value
+                           forKey:iTermUserDefaultsKeyAIModelCatalogUpdateConsent];
 }
 
 + (BOOL)lastShutdownWasClean {

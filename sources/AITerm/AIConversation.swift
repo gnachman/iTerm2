@@ -106,7 +106,17 @@ struct AIConversation {
     }
 
     var messages: [AITermController.Message]
+    // Selects the model by name, resolved against the public catalog
+    // (AIMetadata.instance.models) at request time. Use this when the catalog's
+    // own endpoint is what you want.
     var model: String?
+    // A fully-specified model to use instead of `model`/the configured provider.
+    // Unlike `model` (a name that gets re-resolved to the catalog's public
+    // endpoint), this is used verbatim, so it preserves a custom url/api/auth.
+    // Callers that must not leak the API key past a user's custom base URL (e.g.
+    // the economy-model path) set this rather than `model`. Takes precedence over
+    // `model`. Not carried by the AIConversation(_:) copy initializer.
+    var modelOverride: AIMetadata.Model?
     var shouldThink: Bool? = nil {
         didSet {
             controller.shouldThink = shouldThink
@@ -382,7 +392,11 @@ struct AIConversation {
             }
         }
         let lastAssistantMessage = self.messages.last { $0.role == .assistant }
-        if let modelName = model, let model = AIMetadata.instance.models.first(where: { $0.name == modelName }) {
+        if let modelOverride {
+            // Used verbatim: preserves the caller's url/api/auth (see the
+            // economy-model path in ScreenWatchPoller).
+            controller.providerOverride = LLMProvider(model: modelOverride)
+        } else if let modelName = model, let model = AIMetadata.instance.models.first(where: { $0.name == modelName }) {
             controller.providerOverride = LLMProvider(model: model)
         } else {
             controller.providerOverride = nil

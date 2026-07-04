@@ -194,10 +194,29 @@ final class ScreenWatchPoller {
 
     // Judge one poll. If the first reply doesn't parse, ask once for a clean
     // REACHED/NOT_YET in the same conversation before giving up as unknown.
+    // Prefer a cheaper same-vendor model for these frequent, low-stakes
+    // judgements (e.g. Opus -> Haiku), where the primary chat model would be
+    // overkill and too expensive to run every few seconds. nil (no economy
+    // alternative, or an unconfigured/unknown model) leaves the conversation on
+    // the user's configured chat model. The returned model preserves the
+    // configured model's url/api, so a user's custom base URL (proxy/gateway) is
+    // honored and the API key is not leaked to the public vendor host.
+    private static func economyModel() -> AIMetadata.Model? {
+        guard let configured = LLMMetadata.model() else {
+            return nil
+        }
+        return AIMetadata.economyModel(for: configured)
+    }
+
     private func evaluate(window: [Capture], kind: SessionKind) async -> Verdict {
+        let economyModel = Self.economyModel()
         var conversation = AIConversation(registrationProvider: nil)
         conversation.systemMessage = Self.systemPrompt(for: watcher)
         conversation.shouldThink = false
+        // Set via modelOverride (a full model), not `model` (a name that
+        // AIConversation re-resolves to the catalog's public endpoint), so the
+        // configured transport/auth is preserved.
+        conversation.modelOverride = economyModel
         conversation.add(text: Self.userPrompt(window: window, kind: kind),
                          role: .user)
         guard let (reply, amended) = await complete(conversation) else {
@@ -213,7 +232,12 @@ final class ScreenWatchPoller {
         // Unparseable: ask once for a clean answer in the same context, then
         // accept whatever we can parse (still unknown if it flubs it again).
         log("Unparseable reply; asking the model to rephrase.")
+        // AIConversation's copy initializer carries neither modelOverride nor
+        // shouldThink onto the amended conversation, so re-set both to keep the
+        // rephrase turn on the economy model with thinking off.
         var retry = amended
+        retry.modelOverride = economyModel
+        retry.shouldThink = false
         retry.add(text: "Reply with exactly one word and nothing else: "
                       + "REACHED or NOT_YET.",
                   role: .user)

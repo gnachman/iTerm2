@@ -266,6 +266,10 @@ AI Improvements:
   the prior turns from cache instead of paying
   full input price every turn.
 - AI models updated.
+- The built-in AI model list is now
+  data-driven and refreshes in the
+  background, so new models appear
+  without updating iTerm2.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to
   enable. Reasoning summaries appear live in

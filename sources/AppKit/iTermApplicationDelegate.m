@@ -1522,6 +1522,10 @@ void TurnOnDebugLoggingAutomatically(void) {
     // Create the app support directory
     [self createVersionFile];
 
+    // Refresh the AI model catalog in the background (rate-limited to once per
+    // day). New models take effect on the next launch.
+    [[iTermAIModelCatalogUpdater instance] performPeriodicCheck];
+
     // Prevent the input manager from swallowing control-q. See explanation here:
     // https://web.archive.org/web/20111102073237/https://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system
     CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),

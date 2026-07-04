@@ -31,21 +31,39 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
 
         var missing: [String] = []
         for model in AIMetadata.instance.models {
-            // Skip vendors that don't make sense to fixture-capture:
-            //   - llama:  local Ollama, no real "refusal" semantics
-            //   - apple:  on-device classifier-only backend, no HTTP request
-            //             to capture a refusal from
-            //   - none:   shouldn't happen, but skip rather than crash
-            guard let vendor = model.vendor, vendor != .llama, vendor != .apple else { continue }
-            // Skip models that are deprecated to new keys. They still work
-            // for grandfathered accounts so we keep the AIMetadata entry,
-            // but a fixture can't be captured from a fresh API key. The list
-            // is short and easy to revisit when Google fully removes a model.
-            if AILiveHarness.unreachableForNewKeys.contains(model.name) { continue }
-            // Skip models that block the refusal prompt at the API layer
-            // (HTTP 400) rather than returning a refusal: there's no refusal
-            // response to capture or parse. See AILiveHarness.refusalBlockedAtHTTP.
-            if AILiveHarness.refusalBlockedAtHTTP.contains(model.name) { continue }
+            guard let vendor = model.vendor else { continue }
+            // Exemption is now a data field on the catalog entry (fixtureExempt
+            // in ai-models.json). It covers models that don't make sense to
+            // fixture-capture: local Llama (no refusal semantics), on-device
+            // Apple (no HTTP request), models unreachable for new keys, and
+            // models that block the refusal prompt at HTTP 400.
+            //
+            // Drift guard, both directions, so a data field in ai-models.json
+            // can't silently opt a cloud model out of coverage:
+            //
+            //   - Structural exemption: vendor .llama (local, no refusal
+            //     semantics) and .apple (on-device, no HTTP request) are
+            //     inherently unfixturable.
+            //   - Sanctioned exemption: a cloud model may only be exempt if the
+            //     live harness genuinely can't exercise it for a refusal, i.e.
+            //     it's in unreachableForNewKeys or refusalBlockedAtHTTP.
+            //
+            // Forward: anything the harness skips must be marked fixtureExempt.
+            // Reverse: any fixtureExempt cloud model must have a sanctioned
+            // reason (be in one of those harness sets). Together this keeps the
+            // flag from drifting away from the harness in either direction.
+            let harnessSkips = AILiveHarness.unreachableForNewKeys.contains(model.name) ||
+                AILiveHarness.refusalBlockedAtHTTP.contains(model.name)
+            let structurallyExempt = vendor == .llama || vendor == .apple
+            if harnessSkips {
+                XCTAssertTrue(model.fixtureExempt,
+                              "\(model.name) is skipped by the live harness but is not marked fixtureExempt in ai-models.json")
+            }
+            if model.fixtureExempt && !structurallyExempt {
+                XCTAssertTrue(harnessSkips,
+                              "\(model.name) is marked fixtureExempt in ai-models.json but has no sanctioned reason: a cloud model may only be exempt if it is in AILiveHarness.unreachableForNewKeys or refusalBlockedAtHTTP")
+            }
+            if model.fixtureExempt { continue }
             let vendorString = AIMetadataFixtureCoverageTest.vendorSlug(for: vendor)
             let safeModel = AIMetadataFixtureCoverageTest.sanitize(model.name)
             // Filenames are <vendor>_<safeModel>_refusal_<mode>_<seq>.json.

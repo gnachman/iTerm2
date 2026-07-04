@@ -126,7 +126,8 @@ final class AILiveHarness: XCTestCase {
     // call, so exercising them on a default sweep is pure noise. An
     // explicit ITERM2_AI_LIVE_<VENDOR>_MODELS override still lets you
     // target them deliberately if a grandfathered key works.
-    // Keep in sync with AIMetadataFixtureCoverageTest.deprecatedToNewKeys.
+    // Models in this set must be marked fixtureExempt in ai-models.json;
+    // AIMetadataFixtureCoverageTest asserts they agree.
     static let unreachableForNewKeys: Set<String> = [
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
