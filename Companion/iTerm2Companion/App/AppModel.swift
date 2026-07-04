@@ -331,7 +331,7 @@ final class AppModel {
     /// The canonical relay host. A pairing whose relay host differs from this is
     /// shown in punycode at confirmation time so a homograph host cannot
     /// masquerade as the real one.
-    static let defaultRelayHost = "companion-relay.iterm2.com"
+    static let defaultRelayHost = "relay.iterm2.com"
     // The relay room name whose verifier this device has registered. Per ROOM,
     // not a global flag: pairing to a different Mac (a new pid, e.g. after the
     // user re-scans a QR) is a different room and must register (and, under

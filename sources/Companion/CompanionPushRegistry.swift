@@ -26,6 +26,8 @@ enum CompanionPushRegistry {
     private static let peerRevisionKey = "NoSyncCompanionPeerRevision"
     private static let alertsEverEnabledKey = "NoSyncCompanionAlertsEverEnabled"
     private static let everPairedKey = "NoSyncCompanionEverPaired"
+    private static let pushRelayURLKey = "NoSyncCompanionPushRelayBaseURL"
+    private static let mainRelayOriginKey = "NoSyncCompanionMainRelayOrigin"
 
     // The secret authorizes push to the paired phone, so it is kept in the
     // keychain, not UserDefaults. To avoid a keychain prompt while the user is
@@ -184,6 +186,37 @@ enum CompanionPushRegistry {
         iTermUserDefaults.userDefaults().set(value, forKey: everPairedKey)
     }
 
+    /// The push relay origin the current pairing registered its phone against,
+    /// recorded when the pairing completed. nil for a device paired before the
+    /// mac tracked this - which is to say, before the relays moved. The pairing
+    /// controller treats nil as an old host (see relayConfigurationChanged).
+    static var registeredPushRelayURL: String? {
+        iTermUserDefaults.userDefaults().string(forKey: pushRelayURLKey)
+    }
+
+    /// The main (pairing/transport) relay origin this pairing was established
+    /// against, recorded when the pairing completed. nil for a device paired
+    /// before the mac tracked this, or for a pairing made with the relay
+    /// disabled.
+    static var registeredMainRelayOrigin: String? {
+        iTermUserDefaults.userDefaults().string(forKey: mainRelayOriginKey)
+    }
+
+    /// Stamp the relays this pairing belongs to. Called when a fresh pairing
+    /// completes: the phone registers its APNs token with the push relay, and the
+    /// pairing itself was carried over the main relay, both keyed to whatever
+    /// hosts this build points at. Recording them makes a later host move (see
+    /// CompanionPushRelay and the CompanionRelayOrigin setting) detectable.
+    static func recordCurrentRelays(pushRelayURL: String, mainRelayOrigin: String?) {
+        let defaults = iTermUserDefaults.userDefaults()
+        defaults.set(pushRelayURL, forKey: pushRelayURLKey)
+        if let mainRelayOrigin {
+            defaults.set(mainRelayOrigin, forKey: mainRelayOriginKey)
+        } else {
+            defaults.removeObject(forKey: mainRelayOriginKey)
+        }
+    }
+
     /// True when asking for permission could possibly succeed: iOS only ever
     /// shows the prompt while the state is notDetermined; after a decline,
     /// only the Settings app can change it. Gating the request tool on this
@@ -263,6 +296,8 @@ enum CompanionPushRegistry {
         defaults.removeObject(forKey: sandboxKey)
         defaults.removeObject(forKey: authorizationKey)
         defaults.removeObject(forKey: peerRevisionKey)
+        defaults.removeObject(forKey: pushRelayURLKey)
+        defaults.removeObject(forKey: mainRelayOriginKey)
         // alertsEverEnabled is intentionally NOT cleared: it is device-global user
         // intent, so a freshly paired phone is still asked for permission.
         CompanionMacIdentity.deletePairedPushSecret()

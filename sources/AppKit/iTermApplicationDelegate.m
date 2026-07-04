@@ -1495,6 +1495,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     // If a companion device is paired, quietly listen so it can reconnect.
     [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
+    // If the pairing predates the push relay host move, ask the user to re-pair.
+    [[iTermCompanionPairingController shared] promptToRepairAfterRelayMoveIfNeeded];
     // Surface paired-device presence (menu bar status item + connect toast).
     [[iTermCompanionPresenceController shared] start];
     // Give the Companion Device Settings menu item its glyph and hide it when

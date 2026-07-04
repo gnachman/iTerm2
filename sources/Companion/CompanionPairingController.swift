@@ -123,6 +123,51 @@ final class CompanionPairingController: NSObject {
         alert.runModal()
     }
 
+    /// A device is paired but the relays it was established against no longer
+    /// match where this build points (the push relay it registered with, or the
+    /// main relay it paired over). Includes the "never recorded" case: a device
+    /// paired before the mac tracked the origins, i.e. before the relays moved.
+    /// The phone is pinned to the old relays until the user pairs again.
+    private var relayConfigurationChanged: Bool {
+        guard hasPairedDevice else { return false }
+        if CompanionPushRegistry.registeredPushRelayURL != CompanionPushRelay.baseURL.absoluteString {
+            return true
+        }
+        return CompanionPushRegistry.registeredMainRelayOrigin != Self.configuredRelayOrigin()
+    }
+
+    /// Called once at app launch. If a device is paired, the feature is enabled,
+    /// and the pairing predates a relay host move (see CompanionPushRelay and the
+    /// CompanionRelayOrigin setting), tell the user their phone must be paired
+    /// again to keep working, and open Companion Device Settings if they accept.
+    /// The phone need not be connected: the check is entirely local. "Later"
+    /// defers to the next launch, since the condition still holds until they
+    /// re-pair.
+    @objc func promptToRepairAfterRelayMoveIfNeeded() {
+        // Defer past launch so the alert appears after the app's windows settle,
+        // and re-check the conditions on the main actor at that point.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            guard self.hasPairedDevice,
+                  Self.gate() == .allowed,
+                  self.relayConfigurationChanged else {
+                return
+            }
+            let alert = NSAlert()
+            alert.messageText = "Re-pair Your Companion Device"
+            alert.informativeText =
+                "The iTerm2 server has moved to a new address. Your paired "
+                + "iPhone is still registered with the old server. The old "
+                + "server will go away soon. You should re-pair to avoid "
+                + "problems when that happens."
+            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: "Later")
+            if alert.runModal() == .alertFirstButtonReturn {
+                CompanionOnboardingRouter.openSettingsOrWizard()
+            }
+        }
+    }
+
     /// The bridge classified its connection on the first request. solicited ==
     /// valid push nonce (the mac's own fetch); otherwise warn.
     private func connectionDidClassify(_ connection: CompanionHostBridge, solicited: Bool) {
@@ -938,7 +983,8 @@ final class CompanionPairingController: NSObject {
                     continue
                 }
 
-                if code.pairingID != pairedPID {
+                let isFreshPairing = code.pairingID != pairedPID
+                if isFreshPairing {
                     // Fresh pairing (pid not yet persisted): the user types the
                     // SAS code the phone shows; the verdict is the first frame on
                     // the encrypted channel. On acceptance the phone static is
@@ -1033,6 +1079,17 @@ final class CompanionPairingController: NSObject {
                     return
                 }
                 pairedPID = code.pairingID
+                if isFreshPairing {
+                    // Record the relays this pairing belongs to (the push relay
+                    // the phone registers with, and the main relay this pairing
+                    // was carried over), so a later host move can prompt the user
+                    // to re-pair. Only on a fresh pairing: a reconnect re-uses the
+                    // stored origins and proves nothing about where the phone is
+                    // registered.
+                    CompanionPushRegistry.recordCurrentRelays(
+                        pushRelayURL: CompanionPushRelay.baseURL.absoluteString,
+                        mainRelayOrigin: Self.configuredRelayOrigin())
+                }
                 // Now established: reconnect is keyed on pairedPID, so the
                 // fresh-pairing intent is done.
                 freshPairingActive = false

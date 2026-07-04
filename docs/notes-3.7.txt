@@ -1883,3 +1883,7 @@ Bug Fixes:
   Messages sent from the iTerm2 Buddy
   app now run on the chat's own model
   instead of the global default.
+- The iTerm2 companion relay servers moved
+  to new addresses. If you paired an iPhone
+  on an earlier build, iTerm2 now asks you
+  to pair it again so it keeps working.
