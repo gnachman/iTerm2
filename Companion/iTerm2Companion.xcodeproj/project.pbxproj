@@ -28,6 +28,7 @@
 		461469648CC3E9213136AAD9 /* AIExplanationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93134C0A08E84BDB95861B8 /* AIExplanationResponse.swift */; };
 		48B44593508149D5D655C1DE /* MacTypeShadows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADBF604814A5CBED79B600C /* MacTypeShadows.swift */; };
 		491AC0533D5590064E7D128A /* CompanionSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42ECCE549BC946C0443BA106 /* CompanionSession.swift */; };
+		4C1A6A3E94F16DF690886366 /* AIReasoningTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46ADB98E9027B7F88123F82 /* AIReasoningTypes.swift */; };
 		4DDAA65A7C58466BD16987AA /* NSDictionaryCodableBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5781E96CAC04116A07415C7 /* NSDictionaryCodableBox.swift */; };
 		5192743F4A4C787FF77D38A8 /* CompanionMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8352A86C7CEC1F3B06ED35B4 /* CompanionMessages.swift */; };
 		54F5D986EBF8A12BFD55DBFE /* CompanionHEVCSampleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 551830A40102EA036643794D /* CompanionHEVCSampleBuilder.swift */; };
@@ -136,6 +137,7 @@
 		A7ACD526299252E0732D1779 /* ScanningView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScanningView.swift; sourceTree = "<group>"; };
 		ADE240F5507B1D96C3F2E615 /* SessionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
 		B3A63C83AA13E583E9BE1A3D /* LaunchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LaunchView.swift; sourceTree = "<group>"; };
+		B46ADB98E9027B7F88123F82 /* AIReasoningTypes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AIReasoningTypes.swift; path = sources/AITerm/AIReasoningTypes.swift; sourceTree = "<group>"; };
 		C4678F772D92B8DEB080E170 /* CompanionFileLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionFileLog.swift; sourceTree = "<group>"; };
 		CF709FF4160D9B396A413048 /* JSONValue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		D8D3FEA6984796DC4CD99692 /* AppModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -151,7 +153,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A6F733B62FE4F475008441ED /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		A6F733B62FE4F475008441ED /* Exceptions for "PushService" folder in "PushService" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -161,7 +163,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A6F733AC2FE4F475008441ED /* PushService */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A6F733B62FE4F475008441ED /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = PushService; sourceTree = "<group>"; };
+		A6F733AC2FE4F475008441ED /* PushService */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A6F733B62FE4F475008441ED /* Exceptions for "PushService" folder in "PushService" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = PushService;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -308,6 +321,7 @@
 				551830A40102EA036643794D /* CompanionHEVCSampleBuilder.swift */,
 				8CCE31EAF88D6FAF54E12B52 /* CompanionTouchMapper.swift */,
 				9D1A918875A1CCD767F47E46 /* CompanionHistoryWindow.swift */,
+				B46ADB98E9027B7F88123F82 /* AIReasoningTypes.swift */,
 			);
 			name = SharedFromMac;
 			path = ..;
@@ -496,6 +510,7 @@
 				FA3DC7672264574260BD246F /* CompanionVideoView.swift in Sources */,
 				F9DD768544783E3F190AE0F2 /* CompanionTouchMapper.swift in Sources */,
 				B670983AE703D700B6537995 /* CompanionHistoryWindow.swift in Sources */,
+				4C1A6A3E94F16DF690886366 /* AIReasoningTypes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

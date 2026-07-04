@@ -1018,14 +1018,9 @@ public struct ResponsesRequestBody: Codable {
 
     /// Controls reasoning summaries or encrypted reasoning content.
     public struct ReasoningOptions: Codable {
-        enum Effort: String, Codable, CaseIterable {
-            case none
-            case minimal
-            case low
-            case medium
-            case high
-            case xhigh
-        }
+        // Defined in AIReasoningTypes.swift so Message.Configuration (compiled
+        // into the iOS Companion app) can share it without this file.
+        typealias Effort = AIReasoningEffort
         var effort: Effort?
 
         /// e.g. ["summary": "auto"] or {"detailed": true}
@@ -1039,12 +1034,9 @@ public struct ResponsesRequestBody: Codable {
     var reasoning: ReasoningOptions?
 
     /// Specifies the latency tier to use for processing the request. This parameter is relevant for customers subscribed to the scale tier service.
-    enum ServiceTier: String, Codable {
-        case auto
-        case `default`
-        case flex
-        case priority
-    }
+    // Defined in AIReasoningTypes.swift so Message.Configuration (compiled into
+    // the iOS Companion app) can share it without this file.
+    typealias ServiceTier = AIServiceTier
     var serviceTier: ServiceTier?
 
     /// Whether to store this response in the conversation history.
