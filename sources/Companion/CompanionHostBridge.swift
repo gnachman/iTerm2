@@ -361,12 +361,18 @@ final class CompanionHostBridge {
                     throw CompanionMacError.chatSystemUnavailable
                 }
                 try client.delete(chatID: chatID)
+                CompanionChatMuteRegistry.forget(chatID: chatID)
             } catch {
                 // The phone removed the row optimistically; tell it the Mac
                 // disagrees so it can resync instead of silently diverging.
                 send(.error(CompanionError(code: .internalError, message: "\(error)")),
                      requestID: requestID)
             }
+        case .setChatMuted(let chatID, let muted):
+            // The phone toggled the row optimistically; persist so the push
+            // path (agent-activity notifier + syncSince) honors it even while
+            // the phone is unreachable.
+            CompanionChatMuteRegistry.setMuted(muted, chatID: chatID)
         case .subscribe(let chatID):
             handleSubscribe(chatID: chatID, requestID: requestID)
         case .unsubscribe(let chatID):
@@ -1188,10 +1194,26 @@ final class CompanionHostBridge {
         var infoByUniqueID = [UUID: (seq: Int64, date: Date)](minimumCapacity: messageRows.count)
         var byChat = [String: [Message]]()
         var chatOrder = [String]()
+        // A muted chat's messages never become notifications, even when another
+        // chat's activity fired the wakeup. They still count toward the floor
+        // targets above, so they are consumed silently rather than deferred
+        // (unmuting does not retroactively notify).
+        let mutedIDs = CompanionChatMuteRegistry.mutedChatIDs
+        var mutedDropCounts = [String: Int]()
         for row in messageRows {
+            if mutedIDs.contains(row.message.chatID) {
+                mutedDropCounts[row.message.chatID, default: 0] += 1
+                continue
+            }
             infoByUniqueID[row.message.uniqueID] = (row.seq, row.message.sentDate)
             if byChat[row.message.chatID] == nil { chatOrder.append(row.message.chatID) }
             byChat[row.message.chatID, default: []].append(row.message)
+        }
+        if !mutedDropCounts.isEmpty {
+            let detail = mutedDropCounts.sorted { $0.key < $1.key }
+                .map { "\($0.key) x\($0.value)" }
+                .joined(separator: ", ")
+            RLog("Companion bridge: syncSince dropped muted-chat message(s): \(detail)")
         }
         var dated = [(item: CompanionSyncItem, date: Date)]()
         for chatID in chatOrder {
@@ -1625,12 +1647,16 @@ final class CompanionHostBridge {
 
     private func chatEntries() -> [CompanionChatListEntry] {
         guard let model = ChatListModel.instance else { return [] }
+        let mutedIDs = CompanionChatMuteRegistry.mutedChatIDs
+        RLog("Companion bridge: chat list (\(model.count) chat(s); muted: "
+             + (mutedIDs.isEmpty ? "none" : mutedIDs.sorted().joined(separator: ", ")) + ")")
         var result = [CompanionChatListEntry]()
         for index in 0..<model.count {
             let chat = model.chat(at: index)
             result.append(CompanionChatListEntry(
                 chat: chat,
-                snippet: model.snippet(forChatID: chat.id, maxLength: Self.snippetLength)))
+                snippet: model.snippet(forChatID: chat.id, maxLength: Self.snippetLength),
+                muted: mutedIDs.contains(chat.id)))
         }
         return result
     }
@@ -1640,7 +1666,8 @@ final class CompanionHostBridge {
         return CompanionChatListEntry(
             chat: chat,
             snippet: ChatListModel.instance?.snippet(forChatID: chatID,
-                                                     maxLength: Self.snippetLength))
+                                                     maxLength: Self.snippetLength),
+            muted: CompanionChatMuteRegistry.isMuted(chatID: chatID))
     }
 
     private func history(chatID: String) -> [Message] {

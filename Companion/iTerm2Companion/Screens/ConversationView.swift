@@ -34,6 +34,22 @@ struct ConversationView: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // Mute needs a mac that persists the muted set; hide the toggle
+            // rather than offer one that does nothing on an older mac.
+            if model.macSupportsChatMuting {
+                ToolbarItem(placement: .primaryAction) {
+                    let muted = model.isChatMuted(chatID: chatID)
+                    Button {
+                        model.setChatMuted(chatID: chatID, muted: !muted)
+                    } label: {
+                        Label(muted ? "Unmute" : "Mute",
+                              systemImage: muted ? "bell.slash.fill" : "bell")
+                    }
+                    .accessibilityLabel(muted ? "Unmute this chat" : "Mute this chat")
+                }
+            }
+        }
         .onAppear {
             model.conversationDidAppear(chatID: chatID)
             warmDictationModel()

@@ -1280,6 +1280,37 @@ final class AppModel {
         }
     }
 
+    /// Whether the connected Mac persists per-chat mute state; the mute UI is
+    /// offered only then (an older mac would silently ignore the toggle).
+    var macSupportsChatMuting: Bool {
+        macRevision >= CompanionProtocolVersion.chatMuteRevision
+    }
+
+    /// Whether the chat is muted, as of the last list refresh (or an optimistic
+    /// local toggle awaiting the next refresh).
+    func isChatMuted(chatID: String) -> Bool {
+        chats.first { $0.chat.id == chatID }?.muted == true
+    }
+
+    /// Mute/unmute: flip the row optimistically and tell the Mac, which owns
+    /// the muted set (it decides whether to push, possibly while this phone is
+    /// unreachable). The next chat-list refresh carries the persisted state.
+    func setChatMuted(chatID: String, muted: Bool) {
+        companionLog("Setting chat \(chatID) muted=\(muted) (mac revision \(macRevision))")
+        if let index = chats.firstIndex(where: { $0.chat.id == chatID }) {
+            chats[index].muted = muted
+        }
+        Task {
+            do {
+                let client = try await currentClient(label: "Mute chat")
+                try await client.setChatMuted(chatID: chatID, muted: muted)
+                companionLog("setChatMuted(\(muted)) for chat \(chatID) sent to the mac")
+            } catch {
+                companionLog("Set chat muted failed: \(String(describing: error))")
+            }
+        }
+    }
+
     /// The Session view's chat button: continue the session's most recently
     /// active chat if it was touched in the last 24 hours, otherwise start a
     /// fresh one. Conversations live on the Chats tab, so either way this

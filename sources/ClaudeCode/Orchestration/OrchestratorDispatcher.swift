@@ -478,7 +478,10 @@ final class OrchestratorDispatcher {
         var pushed: Bool?
         if watcher.notifyUser == true,
            reason == .stateReached || reason == .conditionMet {
-            if CompanionPushRegistry.canNotify {
+            if CompanionChatMuteRegistry.isMuted(chatID: chatID) {
+                RLog("[Orchestrator \(chatID)] watcher push suppressed: chat is muted")
+                pushed = false
+            } else if CompanionPushRegistry.canNotify {
                 let title = watcher.workgroupName == watcher.roleName
                     ? watcher.workgroupName
                     : "\(watcher.workgroupName): \(watcher.roleName)"
@@ -1392,6 +1395,11 @@ final class OrchestratorDispatcher {
                 throw OrchestratorError.unsupported(
                     reason: "No paired companion phone is registered for notifications.")
             }
+        }
+        if CompanionChatMuteRegistry.isMuted(chatID: chatID) {
+            RLog("[Orchestrator \(chatID)] notify tool suppressed: chat is muted")
+            throw OrchestratorError.unsupported(
+                reason: "The user has muted this chat's notifications on their phone, so the notification was not sent. Do not try to work around it.")
         }
         do {
             try await CompanionPushSender.send(title: args.title, body: args.body)

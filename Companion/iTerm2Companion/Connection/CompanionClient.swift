@@ -108,6 +108,13 @@ actor CompanionClient {
         try await session.send(.deleteChat(chatID: chatID))
     }
 
+    /// Mute or unmute a chat. The mac persists the muted set and stops sending
+    /// pushes for muted chats. Fire-and-forget, like deleteChat. Only send to a
+    /// mac at chatMuteRevision or newer.
+    func setChatMuted(chatID: String, muted: Bool) async throws {
+        try await session.send(.setChatMuted(chatID: chatID, muted: muted))
+    }
+
     /// Subscribe to a chat and return its existing history.
     func subscribe(chatID: String) async throws -> [Message] {
         let reply = try await session.request(.subscribe(chatID: chatID))

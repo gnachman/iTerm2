@@ -606,6 +606,7 @@ final class CompanionPairingController: NSObject {
         CompanionMacIdentity.deletePairedRoomSecret()
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
+        CompanionChatMuteRegistry.clear()
         DLog("Companion: unpaired; key material deleted")
         notifyPresenceChanged()
     }
@@ -648,6 +649,7 @@ final class CompanionPairingController: NSObject {
         CompanionMacIdentity.deletePairedRoomSecret()
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
+        CompanionChatMuteRegistry.clear()
         onDisconnect?()
         notifyPresenceChanged()
     }

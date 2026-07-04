@@ -1,6 +1,15 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- You can now mute a chat so it stops sending
+  push notifications to your phone. Swipe right
+  on a chat in the list, or use the bell button
+  in the conversation, to mute or unmute it. A
+  muted chat shows a slashed bell in the list.
+  The Mac remembers the choice, so pushes stay
+  off even while your phone is unreachable.
+  Requires a Mac new enough to support it; the
+  controls are hidden otherwise.
 - Live session view. When the paired Mac is new
   enough, tapping a session shows live video that
   updates as the terminal changes, instead of a

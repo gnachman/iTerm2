@@ -29,6 +29,7 @@ final class CompanionAgentActivityNotifier {
     private let debounceInterval: TimeInterval
     private let clock: () -> Date
     private let gate: () -> Bool
+    private let muted: (_ chatID: String) -> Bool
     private let resolve: (_ streamID: UUID, _ chatID: String) -> Message?
     private let send: (_ chatID: String) -> Void
     private var lastFire: [String: Date] = [:]
@@ -39,11 +40,13 @@ final class CompanionAgentActivityNotifier {
     init(debounceInterval: TimeInterval = 30,
          clock: @escaping () -> Date = { Date() },
          gate: @escaping () -> Bool,
+         muted: @escaping (String) -> Bool = { _ in false },
          resolve: @escaping (UUID, String) -> Message?,
          send: @escaping (String) -> Void) {
         self.debounceInterval = debounceInterval
         self.clock = clock
         self.gate = gate
+        self.muted = muted
         self.resolve = resolve
         self.send = send
     }
@@ -97,6 +100,14 @@ final class CompanionAgentActivityNotifier {
             DLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) gated off (not paired, phone connected, or notifications off)")
             return
         }
+        // A muted chat gets no push at all, not even userActionRequired; the
+        // debounce is left untouched so unmuting doesn't inherit a stale stamp.
+        // RLog (not DLog): rare (at most once per completed turn) and exactly
+        // what a field debug log needs to show when muting misbehaves.
+        guard !muted(chatID) else {
+            RLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) suppressed (chat is muted)")
+            return
+        }
         let now = clock()
         if trigger == .turnComplete,
            let last = lastFire[chatID],
@@ -136,6 +147,9 @@ final class CompanionAgentActivityNotifier {
                 CompanionPushRegistry.devicePaired
                     && !CompanionPushRegistry.interactivePhoneConnected
                     && CompanionPushRegistry.canNotify
+            },
+            muted: { chatID in
+                CompanionChatMuteRegistry.isMuted(chatID: chatID)
             },
             resolve: { streamID, chatID in
                 guard let model = ChatListModel.instance,

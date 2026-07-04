@@ -51,6 +51,10 @@ public struct CompanionSessionSummary: Codable, Equatable, Hashable {
 struct CompanionChatListEntry: Codable {
     var chat: Chat
     var snippet: String?
+    /// Whether the chat is muted (no pushes; see `.setChatMuted`). The mac owns
+    /// this state. Optional for cross-version compatibility: a mac older than
+    /// chatMuteRevision omits it, decoding as nil.
+    var muted: Bool?
 }
 
 /// How one @-mention identifier resolved on the Mac. The phone renders the
@@ -398,6 +402,13 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// Delete a chat. No reply beyond an optional `.error`.
     case deleteChat(chatID: String)
 
+    /// Mute or unmute a chat. The mac persists the muted set (it is the side
+    /// that decides whether to push, possibly while the phone is unreachable)
+    /// and stops sending push notifications for muted chats; chat-list entries
+    /// carry the flag back so the phone UI stays authoritative. No reply beyond
+    /// an optional `.error`. Requires a mac at chatMuteRevision or newer.
+    case setChatMuted(chatID: String, muted: Bool)
+
     /// Begin receiving `.delivery` / `.typingStatus` events for a chat and
     /// replay its history. Replied to with `.history`, then a live stream.
     case subscribe(chatID: String)
@@ -548,6 +559,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "listChatsAndSessions", "createChat", "deleteChat",
+        "setChatMuted",
         "subscribe", "unsubscribe", "publish", "selectSessionResponse",
         "remoteCommandDecision", "linkSession", "resolveMentions",
         "fetchSessionScreenInfo", "fetchSessionContent", "fetchHistoryTile", "fetchWorkgroupInfo",

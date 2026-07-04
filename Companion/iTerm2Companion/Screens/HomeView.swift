@@ -27,6 +27,21 @@ struct HomeView: View {
                             Label("Delete", systemImage: "trash")
                         }
                     }
+                    .swipeActions(edge: .leading) {
+                        // Mute needs a mac that persists the muted set; hide
+                        // the action rather than offer a toggle that does
+                        // nothing on an older mac.
+                        if model.macSupportsChatMuting {
+                            let muted = entry.muted == true
+                            Button {
+                                model.setChatMuted(chatID: entry.chat.id, muted: !muted)
+                            } label: {
+                                Label(muted ? "Unmute" : "Mute",
+                                      systemImage: muted ? "bell" : "bell.slash")
+                            }
+                            .tint(.indigo)
+                        }
+                    }
                 }
                 .listStyle(.plain)
                 .refreshable { model.refreshHome() }
@@ -86,6 +101,12 @@ private struct ChatRow: View {
                     Text(chat.title)
                         .font(.headline)
                         .lineLimit(1)
+                    if entry.muted == true {
+                        Image(systemName: "bell.slash.fill")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Muted")
+                    }
                     Spacer(minLength: 8)
                     Text(Self.timestamp(for: chat.lastModifiedDate))
                         .font(.subheadline)

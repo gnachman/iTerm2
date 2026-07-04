@@ -38,7 +38,12 @@ public enum CompanionProtocolVersion {
     /// generationId + liveTop in the media frame header) so the phone can map a
     /// touch to a terminal cell. Still additive: the geometry fields are optional /
     /// version-negotiated, so older peers stream without selection.
-    public static let current = 4
+    ///
+    /// Revision 5 adds per-chat muting (setChatMuted, the muted flag on chat-list
+    /// entries). Additive: an older mac ignores the message and omits the flag, so
+    /// the phone offers muting only when the mac advertises at least
+    /// `chatMuteRevision`.
+    public static let current = 5
 
     /// The oldest peer revision this build accepts. Kept at 1 (NOT lockstep with
     /// `current`) so a revision-3 build still talks to revision-1/2 peers in the
@@ -60,6 +65,11 @@ public enum CompanionProtocolVersion {
     /// syncSince (and therefore terminal alerts). Below this, the mac sends the
     /// legacy per-chat collapse push and the alert UI is disabled.
     public static let contentlessWakeupRevision = 2
+
+    /// The first revision whose mac persists per-chat mute state (setChatMuted and
+    /// the muted flag on chat-list entries). The phone offers the mute UI only when
+    /// the mac advertises at least this revision.
+    public static let chatMuteRevision = 5
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

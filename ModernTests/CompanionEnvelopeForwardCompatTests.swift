@@ -127,6 +127,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .listChatsAndSessions,
         .createChat(title: "t", mode: .orchestrator),
         .deleteChat(chatID: "c"),
+        .setChatMuted(chatID: "c", muted: true),
         .subscribe(chatID: "c"),
         .unsubscribe(chatID: "c"),
         .publish(message: sampleMessage, toChatID: "c", partial: false),
@@ -175,6 +176,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .listChatsAndSessions: return "listChatsAndSessions"
         case .createChat: return "createChat"
         case .deleteChat: return "deleteChat"
+        case .setChatMuted: return "setChatMuted"
         case .subscribe: return "subscribe"
         case .unsubscribe: return "unsubscribe"
         case .publish: return "publish"

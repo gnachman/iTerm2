@@ -1860,3 +1860,10 @@ Bug Fixes:
 - The AI chat wire log now redacts API keys
   (in request headers, URLs, and bodies),
   keeping only a short fingerprint.
+- Chats can now be muted from the iTerm2
+  Buddy app. A muted chat sends no push
+  notifications to the phone, even for
+  permission requests, until it is
+  unmuted. The muted set is remembered
+  on the Mac so it applies even while
+  the phone is unreachable.

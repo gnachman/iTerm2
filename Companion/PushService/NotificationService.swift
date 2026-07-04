@@ -348,6 +348,18 @@ final class NotificationService: UNNotificationServiceExtension {
         // push and the host's repeated resends of an unknown-kind item all reuse it,
         // so they coalesce onto ONE standing notification rather than stacking.
         let placeholderID = "companion.placeholder"
+        // One compact line naming each item's chat/alert source, so a
+        // notification that should have been muted can be traced to what the
+        // mac actually returned (the chatID stays on-device; only the log).
+        NSELog.log("deliverSyncContent: items = ["
+                   + items.map { item in
+                       switch item {
+                       case let .message(chatID, _, _, _, _): return "message(chat \(chatID))"
+                       case let .alert(_, threadKey, _, _): return "alert(thread \(threadKey))"
+                       case .placeholder: return "placeholder"
+                       }
+                   }.joined(separator: ", ")
+                   + "]")
         let specs: [Spec] = items.map { item in
             switch item {
             case let .message(chatID, chatName, uniqueID, _, body):

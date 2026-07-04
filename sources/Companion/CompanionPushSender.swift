@@ -121,7 +121,8 @@ enum CompanionPushSender {
                 } else if let collapse {
                     try await sendMutable(collapse: collapse, nonce: sealedNonce)
                 }
-                RLog("Companion push: sent \(useWakeup ? "wakeup" : "legacy") push")
+                RLog("Companion push: sent \(useWakeup ? "wakeup" : "legacy") push"
+                     + (chatID.map { " (trigger chat \($0))" } ?? " (no chat context)"))
             } catch {
                 // The push didn't go out, so free the slot we optimistically took.
                 if sealedNonce != nil {
