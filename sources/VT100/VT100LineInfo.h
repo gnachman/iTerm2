@@ -15,6 +15,9 @@
 @protocol VT100LineInfoReading<NSObject>
 @property(nonatomic, readonly) iTermImmutableMetadata immutableMetadata;
 
+// Globally-unique identifier of this line's current content. Advances whenever
+// the line is marked dirty. Equal generations imply equal content.
+- (int64_t)generation;
 - (BOOL)isDirtyAtOffset:(int)x;
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;

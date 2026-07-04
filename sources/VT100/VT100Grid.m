@@ -388,6 +388,10 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return [lineInfo dirtyRange];
 }
 
+- (int64_t)generationForLine:(int)y {
+    return [[self lineInfoAtLineNumber:y] generation];
+}
+
 - (int)cursorX {
     return cursor_.x;
 }

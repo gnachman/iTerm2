@@ -8,9 +8,20 @@
 
 #import "VT100LineInfo.h"
 
+#import <stdatomic.h>
+
+// Globally-unique, monotonically increasing generation for grid lines. Global
+// (not per-line) so a generation value identifies a line's content uniquely
+// across all lines, which the per-row draw cache relies on to avoid collisions.
+static int64_t VT100LineInfoAllocateGeneration(void) {
+    static _Atomic int64_t next = 1;
+    return atomic_fetch_add_explicit(&next, 1, memory_order_relaxed);
+}
+
 @implementation VT100LineInfo {
     int width_;
     BOOL _dirty;
+    int64_t _generation;
     NSData *_cachedEncodedMetadata;
 }
 
@@ -38,7 +49,15 @@
     if (dirty && now) {
         [self updateTimestamp:now];
     }
+    if (dirty) {
+        // Content changed: advance the generation so caches keyed on it miss.
+        _generation = VT100LineInfoAllocateGeneration();
+    }
     _dirty = dirty;
+}
+
+- (int64_t)generation {
+    return _generation;
 }
 
 - (iTermImmutableMetadata)immutableMetadata {

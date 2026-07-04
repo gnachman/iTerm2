@@ -63,6 +63,11 @@
 - (NSIndexSet *)dirtyIndexesOnLine:(int)line;
 - (VT100GridRange)dirtyRangeForLine:(int)y;
 
+// Globally-unique identifier of the content of grid line |y|. Advances when the
+// line changes; equal generations imply equal content. Used to key a per-row
+// draw cache.
+- (int64_t)generationForLine:(int)y;
+
 // Returns the count of lines excluding totally empty lines at the bottom, and always including the
 // line the cursor is on.
 - (int)numberOfLinesUsed;
