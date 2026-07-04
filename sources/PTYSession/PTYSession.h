@@ -403,6 +403,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // so there's no point re-checking).
 @property(nonatomic, readonly) NSTimeInterval screenContentsLastChangedAt;
 
+// Whether textViewDidFindDirtyRects has fired at least once. Until it has,
+// the two properties above describe session creation, not an actual screen
+// change, so consumers reporting "screen last changed N ago" should treat
+// the age as unknown rather than implying fresh output.
+@property(nonatomic, readonly) BOOL screenContentsHaveEverChanged;
+
 @property(nonatomic, readonly, nullable) DVR *dvr;
 @property(nonatomic, readonly, nullable) DVRDecoder *dvrDecoder;
 // Returns the "real" session while in instant replay, else nil if not in IR.

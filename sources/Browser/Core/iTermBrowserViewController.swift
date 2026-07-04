@@ -1652,7 +1652,8 @@ extension iTermBrowserViewController: iTermBrowserTriggerHandlerDelegate {
             return
         }
         iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: uniqueIdentifier,
-                                                on: session)
+                                                on: session,
+                                                mechanism: .browserTrigger)
     }
 
     func browserTriggerExitWorkgroup() {

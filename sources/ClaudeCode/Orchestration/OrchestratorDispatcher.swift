@@ -495,6 +495,13 @@ final class OrchestratorDispatcher {
                 pushed = false
             }
         }
+        // Screen age at fire time: lets the agent distinguish a fresh
+        // transition (screen changed seconds ago, likely mid-workflow)
+        // from a long-quiet session, without a get_screen_contents
+        // round trip.
+        let screenLastChanged = sessionByGUID(watcher.sessionGUID).flatMap {
+            WorkgroupIntrospection.screenAgeDescription(for: $0)
+        }
         let payload = StatusUpdate(
             watcherID: watcher.watcherID,
             workgroupID: watcher.workgroupID,
@@ -505,7 +512,8 @@ final class OrchestratorDispatcher {
             stateReached: stateReached,
             timestamp: Date(),
             detail: detail,
-            pushed: pushed)
+            pushed: pushed,
+            screenLastChanged: screenLastChanged)
         do {
             try broker?.publishMessageFromUser(
                 chatID: chatID,
@@ -1971,6 +1979,32 @@ final class OrchestratorDispatcher {
                 "The new session was created but is no longer reachable. "
                 + "The command likely exited immediately (e.g. binary not on PATH "
                 + "or a non-zero startup script) and the window auto-closed.")
+        }
+        // Record who conjured this session so other chats seeing it in
+        // their <workgroups> snapshot (directly, or chained through a
+        // workgroup provenance like "a trigger in session X entered
+        // this workgroup") can tell it belongs to another agent's work
+        // rather than something the user set up for them.
+        await MainActor.run {
+            // Re-check liveness: the hop here is a suspension point, so
+            // the session can terminate between the reachability check
+            // above and this block. Its terminate notification has
+            // already fired by then (removing nothing), and an entry
+            // set now would never be cleaned up.
+            guard iTermController.sharedInstance()?.anySession(withGUID: session.guid) != nil,
+                  !session.exited else {
+                return
+            }
+            let title = ChatListModel.instance?.chat(id: chatID)?.title
+            let chatDescription: String
+            if let title, !title.isEmpty {
+                chatDescription = "chat \u{201C}\(title)\u{201D} (\(chatID))"
+            } else {
+                chatDescription = "chat \(chatID)"
+            }
+            SessionProvenanceRegistry.instance.set(
+                "Created by the agent in \(chatDescription).",
+                forSessionGUID: session.guid)
         }
         return .startedSession(sessionGuid: session.guid)
     }

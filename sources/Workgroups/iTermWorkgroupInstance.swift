@@ -31,6 +31,13 @@ final class iTermWorkgroupInstance: NSObject {
 
     @objc weak var mainSession: PTYSession?
 
+    // How this instance came to exist, e.g. "A trigger in session
+    // <guid> entered this workgroup". Set once by the controller right
+    // after entry/adoption and surfaced to orchestrator agents in the
+    // <workgroups> snapshot, so a chat that sees an unfamiliar
+    // workgroup appear can tell what created it instead of guessing.
+    @objc var provenance: String?
+
     // Config snapshot at entry time.
     let workgroup: iTermWorkgroup
 

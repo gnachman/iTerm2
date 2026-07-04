@@ -21,6 +21,7 @@ struct Session: ParsableCommand {
             SetName.self,
             SetColor.self,
             SetStatus.self,
+            GetBackgroundTasks.self,
             GetVar.self,
             SetVar.self,
             AddClipping.self,
@@ -969,6 +970,9 @@ extension Session {
         @Option(name: .long, help: "Optional detail text shown alongside the status.")
         var detail: String?
 
+        @Option(name: .long, help: "Number of background tasks still running (stored in memory for later get-background-tasks queries).")
+        var backgroundTasks: Int?
+
         func run() throws {
             let client = try APIClient.connect()
             defer { client.disconnect() }
@@ -991,6 +995,9 @@ extension Session {
             if let detail = detail {
                 args.append("detail: \(jsonString(detail))")
             }
+            if let backgroundTasks = backgroundTasks {
+                args.append("background_tasks: \(backgroundTasks)")
+            }
 
             invoke.invocation = "iterm2.set_status(\(args.joined(separator: ", ")))"
 
@@ -1010,6 +1017,48 @@ extension Session {
             }
 
             print("Session status updated.")
+        }
+    }
+}
+
+// MARK: - session get-background-tasks
+
+extension Session {
+    struct GetBackgroundTasks: ParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "get-background-tasks",
+            abstract: "Print the background-task count last stored via set-status --background-tasks."
+        )
+
+        @Option(name: .shortAndLong, help: "Target session ID.")
+        var session: String
+
+        func run() throws {
+            let client = try APIClient.connect()
+            defer { client.disconnect() }
+
+            let invoke = ITMInvokeFunctionRequest()
+            let sessionContext = ITMInvokeFunctionRequest_Session()
+            sessionContext.sessionId = session
+            invoke.session = sessionContext
+            invoke.invocation = "iterm2.get_background_task_count()"
+
+            let request = ITMClientOriginatedMessage()
+            request.id_p = client.nextId()
+            request.invokeFunctionRequest = invoke
+
+            let response = try client.send(request)
+            guard response.submessageOneOfCase == .invokeFunctionResponse,
+                  let invokeResp = response.invokeFunctionResponse else {
+                throw IT2Error.apiError("No invoke function response")
+            }
+
+            if invokeResp.dispositionOneOfCase == .error {
+                let reason = invokeResp.error?.errorReason ?? "unknown"
+                throw IT2Error.apiError("Get background tasks failed: \(reason)")
+            }
+
+            print(invokeResp.success?.jsonResult ?? "0")
         }
     }
 }

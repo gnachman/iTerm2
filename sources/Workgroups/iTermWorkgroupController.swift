@@ -7,6 +7,38 @@
 
 import Foundation
 
+// Who initiated a workgroup entry. Recorded on the resulting instance
+// as a human-readable provenance string so orchestrator agents (which
+// see every workgroup in their <workgroups> snapshot, including ones
+// other windows created) can tell where an unfamiliar workgroup came
+// from. The session GUID in the description lets an agent chain to
+// that session's own provenance (e.g. "Created by agent in chat X").
+@objc(iTermWorkgroupEntryMechanism)
+enum iTermWorkgroupEntryMechanism: Int {
+    // A terminal trigger (e.g. the Claude Code integration trigger
+    // that fires when claude launches in a session).
+    case trigger
+    // A browser trigger.
+    case browserTrigger
+    // The user, via the Workgroups menu.
+    case menu
+    // The user accepted the Claude Code onboarding prompt (Try It Now).
+    case onboarding
+
+    func provenanceDescription(sessionGUID: String) -> String {
+        switch self {
+        case .trigger:
+            return "A trigger in session \(sessionGUID) entered this workgroup."
+        case .browserTrigger:
+            return "A browser trigger in session \(sessionGUID) entered this workgroup."
+        case .menu:
+            return "The user entered this workgroup from the Workgroups menu in session \(sessionGUID)."
+        case .onboarding:
+            return "The user entered this workgroup by accepting the Claude Code onboarding prompt in session \(sessionGUID)."
+        }
+    }
+}
+
 // Public API for entering and exiting workgroups on sessions. Owns no
 // trigger logic — callers (trigger sources like ClaudeCodeModeController,
 // menu actions, API calls) invoke these methods directly.
@@ -34,12 +66,18 @@ final class iTermWorkgroupController: NSObject {
     // `session`. Idempotent: entering the same workgroup twice is a
     // no-op; entering a different one while one is already running
     // exits the old one first.
+    //
+    // `mechanism` records who initiated the entry; it becomes the
+    // instance's provenance string, which orchestrator agents see in
+    // the <workgroups> snapshot.
     @objc
     @discardableResult
     func enter(workgroupUniqueIdentifier identifier: String,
-               on session: PTYSession) -> Bool {
+               on session: PTYSession,
+               mechanism: iTermWorkgroupEntryMechanism) -> Bool {
         return enter(workgroupUniqueIdentifier: identifier,
                      on: session,
+                     mechanism: mechanism,
                      spawner: DefaultWorkgroupSessionSpawner())
     }
 
@@ -49,6 +87,7 @@ final class iTermWorkgroupController: NSObject {
     @discardableResult
     func enter(workgroupUniqueIdentifier identifier: String,
                on session: PTYSession,
+               mechanism: iTermWorkgroupEntryMechanism = .menu,
                spawner: WorkgroupSessionSpawner) -> Bool {
         switch enterDisposition(workgroupUniqueIdentifier: identifier, on: session) {
         case .alreadyEntered:
@@ -87,6 +126,7 @@ final class iTermWorkgroupController: NSObject {
                 RLog("iTermWorkgroupController.enter: instance \(instance.instanceUniqueIdentifier) was torn down during entry (a member died mid-spawn); not registering")
                 return false
             }
+            instance.provenance = mechanism.provenanceDescription(sessionGUID: session.guid)
             instances[instance.instanceUniqueIdentifier] = instance
             session.delegate?.sessionDidChangeDesiredToolbarItems(session)
             checkConsistency()
@@ -259,6 +299,7 @@ final class iTermWorkgroupController: NSObject {
             RLog("iTermWorkgroupController.adopt: instance \(instance.instanceUniqueIdentifier) was torn down during adoption; not registering")
             return nil
         }
+        instance.provenance = "Restored from a saved window arrangement at launch."
         instances[instance.instanceUniqueIdentifier] = instance
         checkConsistency()
         return instance

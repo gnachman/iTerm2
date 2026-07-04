@@ -1270,6 +1270,10 @@ class ClaudeCodeOnboarding: NSObject {
         "PreToolUse",
         "PostToolUse",
         "SessionStart",
+        // Keeps the background-task count current between turns: it is
+        // the only event that fires when a background subagent finishes
+        // while the main loop sits at the prompt.
+        "SubagentStop",
     ]
 
     private func claudeSessionGUIDs() -> Set<String> {

@@ -98,12 +98,12 @@ extension OrchestratorCommand {
 
         ToolDefinition(
             name: ToolName.listWorkgroups.rawValue,
-            description: "List all active workgroups and their member sessions. Each session reports its role within the workgroup, current status (idle/working/waiting), status_source, and kind (claude-code/shell/tui/other). status_source says how much to trust `status`: \u{201C}reported\u{201D} means the program announces its own status (accurate, and state watchers fire on exact transitions); \u{201C}inferred\u{201D} means iTerm2 is guessing from indicators, so `status` is unreliable (e.g. a program waiting at a splash screen looks \u{201C}idle\u{201D}). Standalone sessions appear as single-session workgroups with a synthetic ID prefixed \u{201C}session:\u{201D}.",
+            description: "List all active workgroups and their member sessions. Each session reports its role within the workgroup, current status (idle/working/waiting), status_source, and kind (claude-code/shell/tui/other). status_source says how much to trust `status`: \u{201C}reported\u{201D} means the program announces its own status (accurate, and state watchers fire on exact transitions); \u{201C}inferred\u{201D} means iTerm2 is guessing from indicators, so `status` is unreliable (e.g. a program waiting at a splash screen looks \u{201C}idle\u{201D}). screen_last_changed says how long ago the session's screen last changed; use it to tell stale output from fresh activity. provenance (on workgroups and sessions) says who created them, e.g. a workgroup entered by a trigger in some session, or a session created by an agent in another chat; a workgroup whose provenance traces to a different chat belongs to that chat's work, so don't drive it unless asked. Standalone sessions appear as single-session workgroups with a synthetic ID prefixed \u{201C}session:\u{201D}.",
             inputSchema: emptyObjectSchema),
 
         ToolDefinition(
             name: ToolName.getState.rawValue,
-            description: "Get rich state for a single session, including the last cc-status detail message for Claude Code sessions. The status_source field says whether `status` is announced by the program itself (\u{201C}reported\u{201D}, trustworthy) or guessed from indicators (\u{201C}inferred\u{201D}, unreliable).",
+            description: "Get rich state for a single session, including the last cc-status detail message for Claude Code sessions. The status_source field says whether `status` is announced by the program itself (\u{201C}reported\u{201D}, trustworthy) or guessed from indicators (\u{201C}inferred\u{201D}, unreliable). screen_last_changed says how long ago the screen last changed, and provenance says who created the session when it wasn't the user.",
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
             ], required: ["session_guid"])),

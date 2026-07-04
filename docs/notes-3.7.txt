@@ -1830,3 +1830,23 @@ Bug Fixes:
   example the TLS or HTTP problem)
   instead of an unhelpful generic
   PluginError message.
+- The Claude Code integration's session status
+  now stays “working” while background agents
+  or background tasks are still running, so
+  AI chat watchers no longer fire on the idle
+  lulls between subagent phases. Requires
+  Claude Code 2.1.198 or later.
+- AI orchestration: workgroups and sessions in
+  the agent's snapshot now carry provenance,
+  such as which trigger entered a workgroup
+  and which chat's agent created a session,
+  so an agent is not confused by workgroups
+  that other windows or chats created.
+- AI orchestration: session snapshots, screen
+  contents, and watcher status updates now
+  report how long ago the screen last
+  changed, so agents can tell stale content
+  from fresh activity.
+- The AI chat wire log now redacts API keys
+  (in request headers, URLs, and bodies),
+  keeping only a short fingerprint.

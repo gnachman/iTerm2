@@ -451,6 +451,11 @@ struct ScreenContents: Codable {
     // prompt overlay is up (the overlay is an NSView, not in the PTY
     // buffer), so we surface it explicitly.
     let pendingAction: String?
+    // How long ago the rendered screen last changed, humanized (e.g.
+    // "< 1 min ago", "27 min ago"). The screen text itself carries no
+    // recency cues, so without this a stale transcript from half an
+    // hour ago reads exactly like something that just happened.
+    let screenLastChanged: String?
     enum CodingKeys: String, CodingKey {
         case text
         case kind
@@ -458,16 +463,23 @@ struct ScreenContents: Codable {
         case screen
         case mouseReporting = "mouse_reporting"
         case pendingAction = "pending_action"
+        case screenLastChanged = "screen_last_changed"
     }
 }
 
 struct WorkgroupSummary: Codable {
     let workgroupID: String
     let workgroupName: String
+    // How this workgroup came to exist, e.g. "A trigger in session
+    // <guid> entered this workgroup." Lets an agent that sees an
+    // unfamiliar workgroup (another window's, typically) trace where
+    // it came from instead of asking the user or guessing.
+    let provenance: String?
     let sessions: [SessionSummary]
     enum CodingKeys: String, CodingKey {
         case workgroupID = "workgroup_id"
         case workgroupName = "workgroup_name"
+        case provenance
         case sessions
     }
 }
@@ -484,8 +496,16 @@ struct SessionSummary: Codable {
     // Whether `status` is announced by the program (reported) or a
     // best-effort guess (inferred). See StatusSource.
     let statusSource: StatusSource
-    let lastActivityISO: String?
+    // How long ago the rendered screen last changed, humanized (e.g.
+    // "< 1 min ago", "27 min ago"). Gives status a recency dimension:
+    // an "idle" session whose screen changed seconds ago is between
+    // steps; one untouched for half an hour is genuinely done.
+    let screenLastChanged: String?
     let currentCommand: String?
+    // How this session came to exist when iTerm2 knows it wasn't the
+    // user, e.g. "Created by the agent in chat X." Absent for
+    // user-created sessions.
+    let provenance: String?
     // Same surface as SessionStateInfo.pendingAction. Carried on the
     // snapshot so the agent doesn't have to call get_state on every
     // .waiting role to find out what it's blocked on — without this,
@@ -498,8 +518,9 @@ struct SessionSummary: Codable {
         case kind
         case status
         case statusSource = "status_source"
-        case lastActivityISO = "last_activity_iso"
+        case screenLastChanged = "screen_last_changed"
         case currentCommand = "current_command"
+        case provenance
         case pendingAction = "pending_action"
     }
 }
@@ -514,9 +535,12 @@ struct SessionStateInfo: Codable {
     // Whether `status` is announced by the program (reported) or a
     // best-effort guess (inferred). See StatusSource.
     let statusSource: StatusSource
-    let lastActivityISO: String?
+    // See SessionSummary.screenLastChanged.
+    let screenLastChanged: String?
     let currentCommand: String?
     let lastMessage: String?  // last cc-status detail for CC sessions
+    // See SessionSummary.provenance.
+    let provenance: String?
     // Non-nil when the role is blocked on a UI affordance the agent
     // can act on (e.g. the Code Review prompt overlay). The string
     // describes what's expected and how to unblock it; the agent
@@ -530,9 +554,10 @@ struct SessionStateInfo: Codable {
         case kind
         case status
         case statusSource = "status_source"
-        case lastActivityISO = "last_activity_iso"
+        case screenLastChanged = "screen_last_changed"
         case currentCommand = "current_command"
         case lastMessage = "last_message"
+        case provenance
         case pendingAction = "pending_action"
     }
 }

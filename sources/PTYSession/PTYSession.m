@@ -12388,6 +12388,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)textViewDidFindDirtyRects {
     _lastScreenContentsChangeTime = [NSDate it_timeSinceBoot];
+    _screenContentsHaveEverChanged = YES;
     if (_updateSubscriptions.count) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
@@ -23846,7 +23847,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             return;
         }
         [iTermWorkgroupController.instance enterWithWorkgroupUniqueIdentifier:identifier
-                                                                           on:strongSelf];
+                                                                           on:strongSelf
+                                                                    mechanism:iTermWorkgroupEntryMechanismTrigger];
     });
 }
 
