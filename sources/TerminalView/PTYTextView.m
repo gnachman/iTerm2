@@ -3215,17 +3215,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _accessibilityPendingOutputCursorLineString = nil;
 }
 
-- (void)accessibilityPostOutputLayoutChangedNotification {
-    NSDictionary *info = @{
-        NSAccessibilityUIElementsKey: @[ self ],
-        NSAccessibilityPriorityKey: @(NSAccessibilityPriorityLow)
-    };
-    NSAccessibilityPostNotificationWithUserInfo(
-        self,
-        NSAccessibilityLayoutChangedNotification,
-        info);
-}
-
 + (NSArray<NSString *> *)accessibilityAnnouncementLinesForTrimmedLines:(NSArray<NSString *> *)trimmedLines
                                                      firstAbsoluteLine:(long long)firstAbsoluteLine
                                                        oldAbsoluteCursorY:(long long)oldAbsoluteCursorY
@@ -3278,12 +3267,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     AccLog(@"Output settle: firstAbsY=%lld lastAbsY=%lld cursorAbsY=%lld overflow=%lld", firstAbsY, lastAbsY, absCursorY, overflow);
 
-    if (firstAbsY > lastAbsY) {
-        AccLog(@"No lines to announce (firstAbsY > lastAbsY)");
-        [self accessibilityClearPendingOutputState];
-        return;
-    }
-
+    // When firstAbsY > lastAbsY (e.g. a bare clear) the loop collects nothing and no
+    // announcement is made, but the clear+refresh tail below must still run.
     NSMutableArray<NSString *> *trimmedLines = [NSMutableArray array];
     for (long long absLine = firstAbsY; absLine <= lastAbsY; absLine++) {
         int relativeIndex = (int)(absLine - overflow);
@@ -3300,10 +3285,27 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     AccLog(@"Filtered %@ lines down to %@ (oldCursorLine=\"%@\")", @(trimmedLines.count), @(outputLines.count), _accessibilityPendingOutputCursorLineString);
     if (outputLines.count > 0) {
         [self accessibilityAnnounce:[outputLines componentsJoinedByString:@"\n"] target:NSApp];
-        [self accessibilityPostOutputLayoutChangedNotification];
     }
 
     [self accessibilityClearPendingOutputState];
+
+    // Must come after the announcement so VoiceOver does not read the prompt line
+    // first — the same premature read the in-burst suppression in
+    // -refreshAccessibility exists to prevent.
+    [self accessibilityPostSettleContentRefresh];
+}
+
+// Refresh VoiceOver's cached content after an output burst settles so an active
+// QuickNav interaction can reach the new text. Value-changed alone updates the cached
+// text but VoiceOver does not extend its navigable model until the accompanying
+// selected-text-changed arrives (the same pair -refreshAccessibility posts when not
+// suppressed). Do not post NSAccessibilityLayoutChangedNotification here: with
+// NSAccessibilityUIElementsKey it directs VoiceOver to move its cursor to the listed
+// element, relocating the user's review cursor to the top of the terminal.
+- (void)accessibilityPostSettleContentRefresh {
+    AccLog(@"Post notification: value changed + selected text changed (post-settle)");
+    NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
+    NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
 }
 
 // Update accessibility, to be called periodically.
@@ -6886,6 +6888,25 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (BOOL)isAccessibilityElement {
     return YES;
+}
+
+// Match Terminal.app's text-area accessibility surface while VoiceOver runs: Terminal
+// exposes neither AXDocument nor a settable AXValue. Advertising them (AXValue is
+// settable only because of the no-op setter kept for Full Keyboard Access, Issue
+// 10023) makes VoiceOver treat the terminal as more than a plain text area and wedges
+// QuickNav when the user interacts with it. The gate keeps Full Keyboard Access
+// working while VoiceOver is off; when both run at once, hiding AXValue wins because
+// QuickNav breaks otherwise. The sibling setAccessibilityContents: needs no gate:
+// AXContents is not advertised at all (it has no getter).
+- (BOOL)isAccessibilitySelectorAllowed:(SEL)selector {
+    // Check the selector first: this method runs for every accessibility attribute
+    // operation, and isVoiceOverEnabled is a preferences lookup, not an ivar read.
+    if ((selector == @selector(accessibilityDocument) ||
+         selector == @selector(setAccessibilityValue:)) &&
+        [[NSWorkspace sharedWorkspace] isVoiceOverEnabled]) {
+        return NO;
+    }
+    return [super isAccessibilitySelectorAllowed:selector];
 }
 
 - (NSInteger)accessibilityLineForIndex:(NSInteger)index {

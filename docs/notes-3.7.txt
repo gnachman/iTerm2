@@ -1816,3 +1816,14 @@ Bug Fixes:
   command composer.
 - Closing the inline AI chat panel now
   returns keyboard focus to the terminal.
+- Fix VoiceOver QuickNav navigation not
+  engaging after interacting with the
+  terminal, which previously required
+  toggling QuickNav off and on.
+- Fix VoiceOver reading stale terminal
+  text when the screen was cleared and
+  new output arrived while interacting.
+- Fix VoiceOver focus jumping to the top
+  of the terminal when new output
+  arrived, and make new output reachable
+  without re-interacting.
