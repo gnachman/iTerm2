@@ -26,6 +26,9 @@ static vector_float4 VectorForColor(NSColor *color) {
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                              textView:(PTYTextView *)textView
                                  glue:(id<iTermMetalPerFrameStateDelegate>)glue {
+    // Zero so the struct's padding is defined for byte-wise fingerprinting.
+    memset(&_renderInputs, 0, sizeof(_renderInputs));
+
     _cellSize = drawingHelper.cellSize;
     _cellSizeWithoutSpacing = drawingHelper.cellSizeWithoutSpacing;
     _scale = textView.window.backingScaleFactor;
@@ -34,6 +37,7 @@ static vector_float4 VectorForColor(NSColor *color) {
                                   textView.dataSource.height);
     _baselineOffset = drawingHelper.baselineOffset;
     _colorMap = [textView.colorMap copy];
+    _renderInputs.colorMapGeneration = _colorMap.generation;
     _fontTable = textView.fontTable;
     _useBoldFont = textView.useBoldFont;
     _useItalicFont = textView.useItalicFont;
@@ -163,6 +167,14 @@ static vector_float4 VectorForColor(NSColor *color) {
     _selectedCommandRegion = drawingHelper.selectedCommandRegion;
     _selectedCommandRegion.location += drawingHelper.totalScrollbackOverflow;
     _totalScrollbackOverflow = drawingHelper.totalScrollbackOverflow;
+
+    // All row-build inputs are populated. Derive a per-textview config
+    // generation by exact comparison against the previous frame (collision-free,
+    // unlike a hash). The color space and font table are compared as objects
+    // since they can't be flattened exactly into the struct.
+    _configGeneration = [glue metalConfigGenerationForRenderInputs:&_renderInputs
+                                                        colorSpace:_colorSpace
+                                                         fontTable:_fontTable];
 }
 
 @end

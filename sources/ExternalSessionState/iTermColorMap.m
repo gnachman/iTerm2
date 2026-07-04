@@ -664,6 +664,7 @@ const int kColorMapAnsiBrightModifier = 8;
     other->_darkMode = _darkMode;
     other->_faintTextAlpha = _faintTextAlpha;
     other->_harmonize = _harmonize;
+    other->_generation = _generation;
 
     return other;
 }

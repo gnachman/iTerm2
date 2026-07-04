@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "iTermMetalDriver.h"
 #import "iTermMetalGlyphKey.h"
+#import "iTermRowRenderInputs.h"
 #import "iTermTextRendererCommon.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -15,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class PTYTextView;
 @class VT100Screen;
 @class iTermAttributedStringBuilder;
+@class iTermFontTable;
 @class iTermImageWrapper;
 
 @protocol iTermMetalPerFrameStateDelegate <NSObject>
@@ -26,6 +28,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermImageWrapper *backgroundImage;
 @property (nonatomic, readonly) iTermBackgroundImageMode backroundImageMode;
 @property (nonatomic, readonly) CGFloat backgroundImageBlend;
+
+// Returns a per-textview identifier for the row-build inputs, advanced only when
+// the inputs differ from the previous frame (exact comparison, collision-free).
+// Used to key the per-row output cache.
+- (uint64_t)metalConfigGenerationForRenderInputs:(const iTermRowRenderInputs *)inputs
+                                      colorSpace:(NSColorSpace *)colorSpace
+                                       fontTable:(nullable iTermFontTable *)fontTable;
 @end
 
 @interface iTermMetalPerFrameState : NSObject<

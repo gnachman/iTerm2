@@ -26,11 +26,22 @@
 #import <simd/simd.h>
 #import "ITAddressBookMgr.h"   // iTermThinStrokesSetting
 
+// This struct holds only exactly-comparable values (counters and exact
+// scalars); it does NOT hold lossy hashes, so a config generation derived by
+// comparing it (memcmp) is collision-free. Objects that can't be flattened
+// exactly (color space, font table) are compared alongside it rather than
+// hashed into it. The owner must memset(0) the struct before populating so its
+// padding is defined for memcmp.
 typedef struct {
+    // 16-byte
     vector_float4 unfocusedSelectionColor;
-    CGFloat transparencyAlpha;
-    iTermThinStrokesSetting thinStrokes;
 
+    // 8-byte
+    CGFloat transparencyAlpha;
+    iTermThinStrokesSetting thinStrokes;  // NSInteger-width
+    NSInteger colorMapGeneration;         // iTermColorMap.generation: exact palette identity
+
+    // 1-byte
     BOOL reverseVideo;
     BOOL useCustomBoldColor;
     BOOL brightenBold;
@@ -43,4 +54,6 @@ typedef struct {
     BOOL blinkAllowed;
     BOOL useNonAsciiFont;
     BOOL underlineHyperlinks;
+
+    uint8_t reserved[12];  // pad to a multiple of 16; kept zeroed by memset
 } iTermRowRenderInputs;

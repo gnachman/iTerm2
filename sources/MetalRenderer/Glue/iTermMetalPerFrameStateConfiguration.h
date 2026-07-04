@@ -32,6 +32,10 @@ NS_ASSUME_NONNULL_BEGIN
     // iTermRowRenderInputs.h. Populated in loadSettingsWithDrawingHelper:.
     iTermRowRenderInputs _renderInputs;
 
+    // Fingerprint of _renderInputs, computed at the end of loadSettings. Two
+    // frames with equal values share a value; used to key a per-row cache.
+    uint64_t _configGeneration;
+
     // Geometry
     CGSize _cellSize;
     CGSize _cellSizeWithoutSpacing;
