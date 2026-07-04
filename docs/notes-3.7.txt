@@ -1816,3 +1816,12 @@ Bug Fixes:
   command composer.
 - Closing the inline AI chat panel now
   returns keyboard focus to the terminal.
+- Companion relay connections now retry
+  with capped backoff after failures,
+  instead of reconnecting (and, during
+  pairing, regenerating the QR code) many
+  times per second when the relay is
+  unreachable, for example due to a bad
+  TLS certificate. Connection errors
+  during pairing are now shown in the
+  pairing window.

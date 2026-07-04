@@ -220,7 +220,7 @@ final class CompanionPairingController: NSObject {
     /// just waiting for the phone" state from "paired but not listening at all"
     /// (the phone cannot reconnect). Both have bridge == nil and would otherwise
     /// look identical in the UI.
-    var isListening: Bool { acceptTask != nil || listenerRetryTask != nil }
+    var isListening: Bool { acceptTask != nil || pairedListenerRetry.isPending }
 
     /// When the mac's CONTINUOUS relay presence began (it parked, or a phone
     /// bridged), or nil while not connected. Stays set across park -> phone
@@ -313,7 +313,10 @@ final class CompanionPairingController: NSObject {
         // both happen before this runs so there is nothing left to tear down
         // here: turning off the consent checkbox (handled in the pairing window)
         // and the plugin disappearing (see unpairIfPluginMissing).
-        guard bridge != nil || acceptTask != nil else { return }
+        // Pending retry/regeneration tasks count as serving: left alone they
+        // would re-park (or mint a new QR) after the gate closed.
+        guard bridge != nil || acceptTask != nil || pairedListenerRetry.isPending
+                || freshPairingRegen.isPending else { return }
         RLog("Companion: gate closed; dropping any live connection and stopping listener")
         if bridge != nil {
             bridge?.stop()
@@ -368,9 +371,15 @@ final class CompanionPairingController: NSObject {
         // bridge's onClose nils `bridge` before calling here, so a genuine
         // reconnect (after the connection is gone) still proceeds; only callers
         // firing while connected (launch races, gate changes) are held off.
-        guard acceptTask == nil, bridge == nil, let pid = desiredListeningPID else {
+        // A pending fresh-pairing regeneration owns the next park (under a NEW
+        // pid): an externally triggered resume (the gate-change notifications
+        // fire on every settings write) must not re-park the pid being retired,
+        // sidestepping the failure backoff.
+        guard acceptTask == nil, bridge == nil, !freshPairingRegen.isPending,
+              let pid = desiredListeningPID else {
             relayLog("resume: SKIP guard "
                      + "(acceptTaskNil=\(acceptTask == nil) bridgeNil=\(bridge == nil) "
+                     + "regenPending=\(freshPairingRegen.isPending) "
                      + "hasPID=\(desiredListeningPID != nil))")
             return
         }
@@ -388,30 +397,33 @@ final class CompanionPairingController: NSObject {
     /// The background listener must outlive transient failures (sleep/wake
     /// and network changes can kill the NW listener): whenever it dies while
     /// a device is paired, retry until it sticks. Without this the mac
-    /// silently stops advertising and the phone can never reconnect.
-    private var listenerRetryTask: Task<Void, Never>?
+    /// silently stops advertising and the phone can never reconnect. Retries
+    /// back off (see RelayRetryScheduler) so a relay that fails every connect,
+    /// e.g. with a bad TLS certificate, is not hammered on a fixed cadence.
+    private let pairedListenerRetry = RelayRetryScheduler()
 
-    /// Routine re-park delay after a park loss (idle reap, redeploy, network blip).
-    private static let defaultListenerRetryNanos: UInt64 = 5_000_000_000
     /// A park displaced by another mac-role connection (a duplicate instance in the
     /// same room) backs off much longer than the routine delay so the two don't
     /// ping-pong evicting each other; finite so the slot is reclaimed if the other
     /// instance exits.
     private static let displacedListenerRetryNanos: UInt64 = 60_000_000_000
 
-    private func scheduleListenerRetry(after delayNanos: UInt64 = defaultListenerRetryNanos) {
-        guard listenerRetryTask == nil, desiredListeningPID != nil else {
+    /// Failure-driven fresh-pairing regeneration uses the same backoff: a dead
+    /// QR park is re-advertised under a NEW pid, and doing that instantly for a
+    /// connection that fails in milliseconds would mint pids, redraw the QR, and
+    /// hit the relay dozens of times per second.
+    private let freshPairingRegen = RelayRetryScheduler()
+
+    private func scheduleListenerRetry(after overrideNanos: UInt64? = nil) {
+        guard !pairedListenerRetry.isPending, desiredListeningPID != nil else {
             return
         }
         // A retry is scheduled because we are NOT connected: end the connected
         // timer so settings shows "reconnecting" with the last-attempt time.
         relayConnectedSince = nil
         notifyPresenceChanged()
-        listenerRetryTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: delayNanos)
-            guard let self, !Task.isCancelled else { return }
-            self.listenerRetryTask = nil
-            self.resumePairedListeningIfNeeded()
+        pairedListenerRetry.schedule(overrideNanos: overrideNanos) { [weak self] in
+            self?.resumePairedListeningIfNeeded()
         }
     }
 
@@ -448,6 +460,14 @@ final class CompanionPairingController: NSObject {
     func startPairing() throws -> PairingCode {
         installLogHandler()
         relayLog("startPairing() called (fresh QR)")
+        // A user-initiated session starts the backoff ratchets over. A
+        // failure-driven regeneration re-enters here with freshPairingActive
+        // still true and must NOT reset, or the backoff would forget itself on
+        // every retry.
+        if !freshPairingActive {
+            pairedListenerRetry.reset()
+            freshPairingRegen.reset()
+        }
         stopAdvertising()
         let keyPair = try CompanionMacIdentity.keyPair()
         let pairingID = Self.makePairingID()
@@ -505,6 +525,29 @@ final class CompanionPairingController: NSObject {
         } catch {
             RLog("Companion: could not regenerate pairing code: \(error)")
             onFailed?(Self.userFacingDescription(of: error))
+        }
+    }
+
+    /// Regenerate the fresh-pairing pid after a park loss, on the scheduler's
+    /// capped doubling delay. A park that succeeded resets the delay to the
+    /// floor (onParked calls noteSuccess), so the routine relay-teardown case
+    /// re-advertises promptly, while a park that never succeeds backs off
+    /// toward the cap however long each failure takes (an instant bad-cert
+    /// rejection or a slow connect timeout alike).
+    private func scheduleFreshPairingRegeneration(reason: String) {
+        guard !freshPairingRegen.isPending else { return }
+        relayLog("scheduleFreshPairingRegeneration(\(reason)): regenerating in "
+                 + "\(freshPairingRegen.nextDelaySeconds)s")
+        // Not parked while waiting: end the connected timer, as scheduleListenerRetry does.
+        relayConnectedSince = nil
+        notifyPresenceChanged()
+        freshPairingRegen.schedule { [weak self] in
+            guard let self else { return }
+            // Never yank the pid out from under a phone mid-handshake or
+            // mid-SAS; those paths decide what happens next themselves (the
+            // same deferral startFreshPairingExpiry applies).
+            guard self.bridge == nil, !self.confirmationInProgress else { return }
+            self.regenerateFreshPairing(reason: reason)
         }
     }
 
@@ -619,8 +662,11 @@ final class CompanionPairingController: NSObject {
         freshPairingActive = false
         freshPairingExpiry?.cancel()
         freshPairingExpiry = nil
-        listenerRetryTask?.cancel()
-        listenerRetryTask = nil
+        // Cancel pending retries but keep their ratcheted delays: teardown is
+        // not evidence the relay recovered. The ratchets reset on a successful
+        // park (onParked) or a genuinely new session (startPairing).
+        freshPairingRegen.cancel()
+        pairedListenerRetry.cancel()
         // An accept loop parked in SAS entry must not leak its continuation.
         submitSASEntry(nil)
         acceptTask?.cancel()
@@ -734,7 +780,15 @@ final class CompanionPairingController: NSObject {
             // actor this controller is isolated to.
             onParked: { [weak self] in
                 Task { @MainActor in
-                    guard let self, self.relayConnectedSince == nil else { return }
+                    guard let self else { return }
+                    // A successful park proves the relay reachable: the failure
+                    // backoffs start over, and the waiting status becomes true.
+                    // Emitted here rather than at accept-loop start so it cannot
+                    // paper over a connection error surfaced while re-parking.
+                    self.pairedListenerRetry.noteSuccess()
+                    self.freshPairingRegen.noteSuccess()
+                    self.onStatus?("Waiting for your iPhone…")
+                    guard self.relayConnectedSince == nil else { return }
                     self.relayConnectedSince = Date()
                     self.notifyPresenceChanged()
                 }
@@ -779,7 +833,8 @@ final class CompanionPairingController: NSObject {
                             code: PairingCode) async {
         RLog("Companion pairing: accept loop started (pid \(code.pairingID))")
         relayLog("acceptLoop START pid=\(code.pairingID); awaiting a connection (park)")
-        onStatus?("Waiting for your iPhone…")
+        // No status here: "Waiting for your iPhone…" is emitted from onParked,
+        // once the relay actually admits the park.
         while !Task.isCancelled {
             let transport: MessageTransport
             do {
@@ -801,13 +856,26 @@ final class CompanionPairingController: NSObject {
                 // left the mac silently dark: paired, not parked, and
                 // unreachable by the phone until the next relaunch.
                 let cancelled = Task.isCancelled || error is CancellationError
+                // Classify once for both lanes below: a routine relay close
+                // (idle reap, redeploy, network blip) retries quietly; anything
+                // else (DNS, TLS, refused) is actionable and surfaced. Without
+                // that, a misconfigured relay is just a QR that never pairs.
+                let routineClose = (error as? TransportError) == .closed
                 // A fresh-pairing park that dies without our cancelling it means
                 // the relay tore the room down (e.g. the anti-grind cycle cap
                 // tripped). Re-advertise under a new pid rather than going dark,
                 // so a photographed QR cannot keep targeting the dead room.
                 if !cancelled, freshPairingActive, bridge == nil {
-                    relayLog("acceptLoop: fresh-pairing park closed by relay; regenerating pid")
-                    regenerateFreshPairing(reason: "park-closed")
+                    relayLog("acceptLoop: fresh-pairing park closed; scheduling pid regeneration")
+                    if routineClose {
+                        // The displayed QR is dead until the regeneration
+                        // fires; say so instead of leaving the stale
+                        // "Waiting for your iPhone…" up.
+                        onStatus?("Reconnecting to the relay…")
+                    } else {
+                        onFailed?(Self.userFacingDescription(of: error))
+                    }
+                    scheduleFreshPairingRegeneration(reason: "park-closed")
                     return
                 }
                 RLog("Companion pairing: accept ended: \(error), cancelled=\(cancelled)")
@@ -834,7 +902,7 @@ final class CompanionPairingController: NSObject {
                 // the phone can reconnect; without this the mac goes silently
                 // dark. A closed park is routine churn, so retry quietly and
                 // surface only real faults (e.g. a connection/DNS failure).
-                if (error as? TransportError) != .closed {
+                if !routineClose {
                     onFailed?(Self.userFacingDescription(of: error))
                 }
                 scheduleListenerRetry()
@@ -1045,5 +1113,65 @@ final class CompanionPairingController: NSObject {
         let image = NSImage(size: NSSize(width: pointSize, height: pointSize))
         image.addRepresentation(representation)
         return image
+    }
+}
+
+/// One-shot retry scheduling with capped exponential backoff, shared by the
+/// paired re-park lane and the fresh-pairing regeneration lane. schedule()
+/// waits the current delay and doubles it for next time; noteSuccess() (a
+/// successful relay park) resets it to the floor. So routine churn retries at
+/// the floor while a relay that fails every connection attempt, at whatever
+/// latency (an instant bad-cert rejection or a slow connect timeout alike),
+/// backs off toward the cap instead of spinning.
+@MainActor
+private final class RelayRetryScheduler {
+    private static let minDelayNanos: UInt64 = 5_000_000_000
+    private static let maxDelayNanos: UInt64 = 60_000_000_000
+    private var delayNanos = RelayRetryScheduler.minDelayNanos
+    private var task: Task<Void, Never>?
+
+    nonisolated init() {}
+
+    var isPending: Bool { task != nil }
+
+    /// Seconds schedule() would wait right now; for logging.
+    var nextDelaySeconds: Int { Int(delayNanos / 1_000_000_000) }
+
+    /// The relay was reached: the next failure starts over at the floor.
+    func noteSuccess() {
+        delayNanos = Self.minDelayNanos
+    }
+
+    /// Cancel a pending retry, keeping the ratcheted delay (teardown is not
+    /// evidence of recovery).
+    func cancel() {
+        task?.cancel()
+        task = nil
+    }
+
+    /// Cancel and forget the ratchet, for a genuinely new pairing session.
+    func reset() {
+        cancel()
+        delayNanos = Self.minDelayNanos
+    }
+
+    /// Run `action` after the current delay, doubling it for next time; or
+    /// after `overrideNanos` (the displaced-park case), leaving the ratchet
+    /// alone. No-op while a retry is already pending.
+    func schedule(overrideNanos: UInt64? = nil, action: @escaping @MainActor () -> Void) {
+        guard task == nil else { return }
+        let delay: UInt64
+        if let overrideNanos {
+            delay = overrideNanos
+        } else {
+            delay = delayNanos
+            delayNanos = min(delayNanos * 2, Self.maxDelayNanos)
+        }
+        task = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: delay)
+            guard let self, !Task.isCancelled else { return }
+            self.task = nil
+            action()
+        }
     }
 }
