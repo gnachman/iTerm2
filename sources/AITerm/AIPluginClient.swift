@@ -71,13 +71,17 @@ struct WebResponse: Codable {
     var error: String?
 }
 
-struct PluginError: Error, Equatable, CustomDebugStringConvertible {
+struct PluginError: LocalizedError, Equatable, CustomDebugStringConvertible {
     static let cancelled = PluginError(reason: "cancelled")
 
     var debugDescription: String {
         return "<PluginError \(reason)>"
     }
-    var localizedDescription: String {
+    // LocalizedError, not a plain localizedDescription property: only
+    // errorDescription survives NSError bridging, so an `Error` existential's
+    // localizedDescription shows `reason` instead of the useless
+    // "The operation couldn't be completed. (... PluginError error 1.)".
+    var errorDescription: String? {
         reason
     }
     var reason: String

@@ -1825,3 +1825,8 @@ Bug Fixes:
   TLS certificate. Connection errors
   during pairing are now shown in the
   pairing window.
+- Companion pairing connection failures
+  now report the underlying error (for
+  example the TLS or HTTP problem)
+  instead of an unhelpful generic
+  PluginError message.
