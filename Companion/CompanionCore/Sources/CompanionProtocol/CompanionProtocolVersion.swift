@@ -40,16 +40,25 @@ public enum CompanionProtocolVersion {
     /// version-negotiated, so older peers stream without selection.
     ///
     /// Revision 5 adds per-chat muting (setChatMuted, the muted flag on chat-list
-    /// entries). Additive: an older mac ignores the message and omits the flag, so
-    /// the phone offers muting only when the mac advertises at least
-    /// `chatMuteRevision`.
+    /// entries). By itself that is additive: an older mac ignores the message and
+    /// omits the flag, so the phone offers muting only when the mac advertises at
+    /// least `chatMuteRevision`.
+    ///
+    /// Revision 5 also moves the companion relays (the push relay and the main
+    /// pairing/transport relay) to new addresses. Every build before this one has
+    /// the old relays hardcoded and registers / parks on servers that are going
+    /// away, so a cross-revision pairing cannot actually deliver pushes or, once
+    /// the old relay is retired, even connect. This is a HARD incompatibility, not
+    /// a gracefully-degradable feature, so minimumPeer is raised to 5 to refuse
+    /// any peer that predates the move.
     public static let current = 5
 
-    /// The oldest peer revision this build accepts. Kept at 1 (NOT lockstep with
-    /// `current`) so a revision-3 build still talks to revision-1/2 peers in the
-    /// field: the newer features degrade gracefully when the peer is older. See
+    /// The oldest peer revision this build accepts. Raised to 5 (lockstep with
+    /// `current`) for the relay move: peers older than revision 5 have the old
+    /// relay addresses baked in and cannot interoperate, so they are refused with
+    /// an upgrade wall rather than allowed to pair into a broken state. See
     /// CompanionPushRegistry.peerRevision.
-    public static let minimumPeer = 1
+    public static let minimumPeer = 5
 
     /// The first revision that supports live session streaming. A peer offers
     /// streaming only when the other side advertises at least this revision;

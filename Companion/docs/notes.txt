@@ -83,3 +83,9 @@ Bug Fixes:
   peer workgroup now shows as a container with
   its own icon and is no longer tappable. Only
   the individual peers beneath it open a session.
+- The relay servers moved to new addresses.
+  Pairing now requires an up-to-date iTerm2
+  and iTerm2 Buddy; a version that predates
+  the move shows an update prompt instead of
+  pairing into a state that cannot receive
+  notifications.
