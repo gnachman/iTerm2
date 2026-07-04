@@ -1814,3 +1814,5 @@ Bug Fixes:
 - Fixed a crash when using Undo after
   closing a split pane that contained a
   command composer.
+- Closing the inline AI chat panel now
+  returns keyboard focus to the terminal.

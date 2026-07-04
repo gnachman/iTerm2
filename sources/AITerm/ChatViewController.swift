@@ -3303,7 +3303,13 @@ extension ChatViewController: InlineChatToolbarViewDelegate {
     }
 
     func inlineChatToolbarDidTapClose() {
-        currentInlinePanelSession?.inlineChatVisible = false
+        guard let session = currentInlinePanelSession else {
+            return
+        }
+        session.inlineChatVisible = false
+        // Hiding the panel leaves first responder dangling on the now-gone
+        // chat view; return focus to the terminal.
+        session.takeFocus()
     }
 }
 
