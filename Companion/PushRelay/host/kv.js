@@ -100,6 +100,17 @@ export class SqliteKV {
     return this._sweep.run(this.now()).changes;
   }
 
+  // Count live (non-expired) keys matching `prefix` — used for the metrics
+  // devices gauge (prefix "device:"). Literal prefix match; escapes glob metas.
+  countPrefix(prefix) {
+    const escaped = prefix.replace(/[[\]*?]/g, (c) => `[${c}]`);
+    const row = this.db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM kv WHERE key GLOB ? AND (expires_at IS NULL OR expires_at > ?)")
+      .get(`${escaped}*`, this.now());
+    return row ? row.n : 0;
+  }
+
   close() {
     this.db.close();
   }

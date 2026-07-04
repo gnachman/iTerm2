@@ -13,6 +13,7 @@ import http from "node:http";
 import worker from "../src/worker.js";
 import { SqliteKV } from "./kv.js";
 import { createApnsClient } from "./apns.js";
+import { Metrics, COUNTER_NAMES } from "./metrics.js";
 
 // Read at most this many bytes before rejecting: the worker enforces the real
 // 4 KiB payload cap, this is just a coarse guard so a huge upload can't buffer.
@@ -65,6 +66,43 @@ function collectBody(req) {
   });
 }
 
+// A /metrics scrape is allowed only from a direct loopback peer with no proxy
+// headers — so the public Apache vhost (which sets these) can never reach it.
+function isLocalScrape(req) {
+  const addr = req.socket.remoteAddress || "";
+  const loopback = addr === "127.0.0.1" || addr === "::1" || addr === "::ffff:127.0.0.1";
+  const h = req.headers;
+  return loopback && !h["x-forwarded-for"] && !h["cf-connecting-ip"];
+}
+
+// Classify a completed request into the aggregate counters, from (path, status)
+// plus the response body for the two 403 reasons and the register skip flag. The
+// worker stays metrics-free (it also runs on Cloudflare); classification lives
+// here in the host, mirroring how the companion relay counts in host/server.js.
+function countRequest(metrics, path, status, text) {
+  metrics.inc("http_requests_total");
+  if (status >= 500 && status !== 502) metrics.inc("http_errors_total");
+  let body = null;
+  try { body = JSON.parse(text); } catch { /* non-JSON (shouldn't happen) */ }
+
+  if (path === "/register") {
+    metrics.inc("register_total");
+    if (status === 200) metrics.inc(body && body.skipped ? "register_skipped_total" : "register_written_total");
+    else if (status === 429) { metrics.inc("register_rejected_total"); metrics.inc("rate_limited_total"); }
+    else metrics.inc("register_rejected_total");
+    return;
+  }
+  if (path === "/push" || path === "/push/mutable") {
+    metrics.inc("push_total");
+    if (status === 200) metrics.inc("push_delivered_total");
+    else if (status === 429) metrics.inc("rate_limited_total");
+    else if (status === 502) metrics.inc("push_apns_error_total");
+    else if (status === 403 && body && body.error === "bad secret") metrics.inc("push_bad_secret_total");
+    else if (status === 403 && body && body.error === "unknown device token") metrics.inc("push_unknown_token_total");
+    return;
+  }
+}
+
 export function createPushRelay(options = {}) {
   const {
     dbPath = ":memory:",
@@ -79,6 +117,8 @@ export function createPushRelay(options = {}) {
   } = options;
 
   const kv = new SqliteKV(dbPath, { now });
+  const metrics = new Metrics();
+  metrics.preregister(COUNTER_NAMES); // every line present from the first scrape
 
   // The `env` object worker.js reads: KV binding, APNs transport, and the vars
   // that were wrangler [vars]/secrets, now plain environment variables.
@@ -99,6 +139,23 @@ export function createPushRelay(options = {}) {
   }
 
   async function handleRequest(req, res) {
+    const path = (req.url || "").split("?")[0];
+
+    // Localhost-only aggregate metrics, handled before anything else. Like the
+    // companion relay, a scrape must come from loopback with no proxy headers,
+    // so /metrics is never reachable through the public Apache vhost (which sets
+    // X-Forwarded-For / CF-Connecting-IP).
+    if (req.method === "GET" && path === "/metrics") {
+      if (!isLocalScrape(req)) {
+        res.writeHead(403, { "content-type": "text/plain" });
+        res.end("forbidden");
+        return;
+      }
+      res.writeHead(200, { "content-type": "text/plain; version=0.0.4" });
+      res.end(metrics.render({ devices: kv.countPrefix("device:") }));
+      return;
+    }
+
     let bodyBuf;
     try {
       bodyBuf = await collectBody(req);
@@ -122,6 +179,8 @@ export function createPushRelay(options = {}) {
     try {
       response = await worker.fetch(request, workerEnv);
     } catch (e) {
+      metrics.inc("http_requests_total");
+      metrics.inc("http_errors_total");
       res.writeHead(500, { "content-type": "application/json" });
       res.end(JSON.stringify({ error: String(e?.message || e) }));
       return;
@@ -130,6 +189,7 @@ export function createPushRelay(options = {}) {
     const headers = {};
     for (const [k, v] of response.headers) headers[k] = v;
     const text = await response.text();
+    countRequest(metrics, path, response.status, text);
     res.writeHead(response.status, headers);
     res.end(text);
   }
@@ -140,6 +200,7 @@ export function createPushRelay(options = {}) {
   return {
     httpServer,
     kv,
+    metrics,
     // Exposed for tests / diagnostics.
     _env: workerEnv,
     listen(port, host) {

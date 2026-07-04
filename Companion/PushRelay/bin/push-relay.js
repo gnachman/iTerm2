@@ -57,6 +57,7 @@ const EXC_WINDOW_MS = 60_000;
 const EXC_LIMIT = 25;
 const excTimes = [];
 function onProcessException(kind, err) {
+  relay.metrics.inc("process_exceptions_total"); // visible in /metrics, not just logs
   console.error(`push-relay: ${kind} (continuing):`, err?.message ?? err);
   const now = Date.now();
   excTimes.push(now);

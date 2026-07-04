@@ -135,6 +135,29 @@ Reading the failures (both observed while bringing this up):
 The `baseURL` in `sources/Companion/Shared/CompanionPushRelay.swift` then becomes
 `https://push.iterm2.com`.
 
+## Metrics
+
+The Node host exposes aggregate, zero-PII metrics in Prometheus text on a
+**loopback-only** `/metrics` (the same posture as the companion relay — a scrape
+must be a direct 127.0.0.1 peer with no proxy headers, so the public vhost can't
+reach it):
+
+```sh
+curl -s 127.0.0.1:8790/metrics        # pushrelay_* counters + devices gauge
+```
+
+Counters mirror the worker's decisions — `pushrelay_register_written_total` vs
+`pushrelay_register_skipped_total` (the idempotency signal), and
+`pushrelay_push_delivered_total` vs `pushrelay_push_bad_secret_total` /
+`_unknown_token_total` / `_apns_error_total` — plus a `pushrelay_devices` gauge
+(live registrations). The Cloudflare Worker does not expose this (observability is
+off there); it's a host-only feature for the on-box dashboard.
+
+The **relay dashboard** (`mcnachman.cloud/relay-dashboard`) scrapes this endpoint
+and renders a "Push relay" section; see that service's `ops/DASHBOARD.md`. It
+defaults to `http://127.0.0.1:8790/metrics`, so no config is needed once both run
+on the same box.
+
 ## Deploying a code change
 
 - **VPS host:** re-run `./ops/deploy.sh` from the updated checkout. It refreshes
