@@ -783,7 +783,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             }
         }
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
-            *reasonOut = @"This will only work if the remote shell is compatible.";
+            *reasonOut = @"Requires bash, fish, tcsh, xonsh, or zsh.";
             return YES;
 
         case iTermGeneralProfilePreferenceCustomCommandTagBrowser:
