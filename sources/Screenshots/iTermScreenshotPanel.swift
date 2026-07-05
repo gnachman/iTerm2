@@ -1248,6 +1248,7 @@ class iTermScreenshotPanel: NSPanel {
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
             pasteboard.writeObjects([image])
+            flashCopyFeedback()
         }
     }
 
@@ -1310,6 +1311,32 @@ class iTermScreenshotPanel: NSPanel {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setData(pngData, forType: .png)
+        flashCopyFeedback()
+    }
+
+    /// Generation counter so a rapid second copy cancels the previous revert timer.
+    private var copyFeedbackGeneration: UInt64 = 0
+
+    /// Briefly transforms the Copy button into a green “Copied!” confirmation. The copy
+    /// itself is otherwise silent (unlike Save, which closes the panel), so without this
+    /// the button reads as dead even though the image reached the clipboard.
+    private func flashCopyFeedback() {
+        copyFeedbackGeneration &+= 1
+        let generation = copyFeedbackGeneration
+
+        copyButton.image = NSImage(systemSymbolName: SFSymbol.checkmarkCircleFill.rawValue,
+                                   accessibilityDescription: "Copied")
+        copyButton.imagePosition = .imageLeading
+        copyButton.contentTintColor = .systemGreen
+        copyButton.title = "Copied!"
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self, self.copyFeedbackGeneration == generation else { return }
+            self.copyButton.image = nil
+            self.copyButton.imagePosition = .noImage
+            self.copyButton.contentTintColor = nil
+            self.copyButton.title = "Copy to Clipboard"
+        }
     }
 
     /// The directory used by the one-click “Save” button: the configured

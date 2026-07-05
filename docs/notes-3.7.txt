@@ -240,6 +240,10 @@ Major New Features:
   screenshotSaveLocation advanced setting, or
   the Desktop if unset.
 
+- The screenshot window’s Copy to Clipboard
+  button now flashes a “Copied!” confirmation
+  so you get feedback that the image was copied.
+
 - The Python API can now capture a session
   screenshot with session.async_screenshot(),
   which returns PNG data.
