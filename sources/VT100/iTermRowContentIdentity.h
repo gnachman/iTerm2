@@ -12,17 +12,17 @@
 //  IMPORTANT for the (not-yet-written) cache consumer: this identifies content
 //  ONLY. It is necessary but NOT sufficient as a cache key. A correct lookup key
 //  must ALSO incorporate:
-//    - the frame-config generation (iTermConfigGenerationTracker), and
-//    - the per-row OVERLAYS that the row build consumes but that are captured by
-//      neither identity: selection set, find matches, semantic-history underline
-//      range, annotation ranges, selected-command dimming (_x_inDeselectedRegion),
-//      and the timestamp date.
-//  Additionally, several frame-config inputs the row build reads are not yet in
-//  iTermRowRenderInputs (cell metrics/scale/baseline, ascii/nonascii antialias,
-//  bold/italic font enables, underline descriptors, softAlternateScreenMode, and
-//  colors outside iTermColorMap such as the cursor-guide, offscreen-command-line,
-//  and line-style-mark colors). Those must be folded into iTermRowRenderInputs or
-//  a separate overlay key before the cache can be trusted.
+//    - the frame-config generation (iTermConfigGenerationTracker over
+//      iTermRowRenderInputs + colorMap/fontTable/colorSpace), and
+//    - the per-row OVERLAYS that change the blobs but are NOT captured by the
+//      content identity: selection set, find matches, semantic-history/hover
+//      underline range, and annotation ranges. (External attributes ARE covered
+//      by the content generation. selected-command dimming and the timestamp are
+//      draw-time/separate-renderer effects, NOT blob inputs.)
+//  Render-only inputs (antialiasing, cell metrics/scale/baseline, underline
+//  descriptors, and non-cell renderers) are deliberately excluded from both keys:
+//  they affect the downstream glyph texture (keyed on the glyph key) or separate
+//  renderers, not the cached blobs.
 //
 
 #import <Foundation/Foundation.h>

@@ -12,6 +12,7 @@
 #import "VT100Terminal.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermAttributedStringBuilder.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermMetalPerFrameState.h"
@@ -61,6 +62,19 @@ static vector_float4 VectorForColor(NSColor *color) {
     _renderInputs.useSelectedTextColor = drawingHelper.useSelectedTextColor;
     _renderInputs.ligaturesEnabled = drawingHelper.asciiLigatures || drawingHelper.nonAsciiLigatures;
     _renderInputs.underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
+
+    // Shaping settings that change the glyph-keys blob. Read from the same
+    // attributed-string builder the metal glue snapshots via copySettingsFrom:,
+    // so the fingerprint matches exactly what the row build uses.
+    iTermAttributedStringBuilder *asb = drawingHelper.attributedStringBuilder;
+    _renderInputs.asciiLigatures = asb.asciiLigatures;
+    _renderInputs.asciiLigaturesAvailable = asb.asciiLigaturesAvailable;
+    _renderInputs.nonAsciiLigatures = asb.nonAsciiLigatures;
+    _renderInputs.zippy = asb.zippy;
+    _renderInputs.preferSpeedToFullLigatureSupport = asb.preferSpeedToFullLigatureSupport;
+    _renderInputs.lowFiCombiningMarks = asb.lowFiCombiningMarks;
+    _renderInputs.boldAllowed = asb.boldAllowed;
+    _renderInputs.italicAllowed = asb.italicAllowed;
     _showBroadcastStripes = drawingHelper.showStripes;
     NSColorSpace *colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:colorSpace];

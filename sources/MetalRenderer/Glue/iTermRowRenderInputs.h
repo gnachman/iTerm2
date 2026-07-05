@@ -16,11 +16,13 @@
 //    - per-row overlays (selection, find, underline range, annotations, eaIndex)
 //    - blink PHASE (_blinkingItemsVisible): a per-entry bit, not a config input
 //
-//  This is an incremental migration: fields are added here as their reads are
-//  routed through the struct. Not yet migrated: attributed-string-builder
-//  settings, the two advanced settings read in iTermMutableAttributedStringBuilder,
-//  cell metrics / scale / baselineOffset, and the object-identity fields that
-//  the (not-yet-added) fingerprint will need.
+//  This holds every frame-constant input that changes the row BUILD output (the
+//  glyph-keys/attributes/background-RLE blobs). Inputs that only affect downstream
+//  glyph-texture rasterization (antialiasing, cell metrics, scale, baseline,
+//  underline descriptors) or separate renderers (cursor guide, offscreen command
+//  line, marks) are deliberately NOT here: the texture cache is keyed on the glyph
+//  key, and those renderers are outside the cached blobs. minimumContrast is
+//  blob-affecting but lives on iTermColorMap, so it's covered by colorMapGeneration.
 
 #import <Cocoa/Cocoa.h>
 #import <simd/simd.h>
@@ -55,5 +57,18 @@ typedef struct {
     BOOL useNonAsciiFont;
     BOOL underlineHyperlinks;
 
-    uint8_t reserved[12];  // pad to a multiple of 16; kept zeroed by memset
+    // Attributed-string-builder shaping settings. Each independently changes the
+    // glyph-keys blob (fast path vs CoreText shaping, ligature level, font
+    // variant), so each must be compared. ligaturesEnabled above is just
+    // (asciiLigatures || nonAsciiLigatures) used as a gate and is NOT sufficient.
+    BOOL asciiLigatures;
+    BOOL asciiLigaturesAvailable;
+    BOOL nonAsciiLigatures;
+    BOOL zippy;
+    BOOL preferSpeedToFullLigatureSupport;
+    BOOL lowFiCombiningMarks;
+    BOOL boldAllowed;
+    BOOL italicAllowed;
+
+    uint8_t reserved[4];  // pad to a multiple of 16; kept zeroed by memset
 } iTermRowRenderInputs;
