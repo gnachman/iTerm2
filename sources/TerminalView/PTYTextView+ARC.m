@@ -731,7 +731,13 @@ iTermCommandInfoViewControllerDelegate>
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else if ([_mouseHandler mouseReportingAllowedForEvent:event] &&
                [_mouseHandler terminalWantsMouseReports]) {
-        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
+        // If the app explicitly requested a pointer shape via OSC 22, honor it
+        // even while mouse reporting is enabled: an app that sets pointer
+        // shapes is mouse-aware, and hover-driven shapes (e.g. Turbo Vision,
+        // vim mouse support) inherently require any-motion reporting. The
+        // IBeamWithCircle affordance remains the fallback when no shape was
+        // requested.
+        changed = [self setCursor:self.delegate.textViewDefaultPointer ?: [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
     } else if ([self contextMenu:_contextMenuHelper offscreenCommandLineForClickAt:event.locationInWindow]) {
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else if ([self mouseIsOverButtonInEvent:event]) {
