@@ -69,6 +69,21 @@
     task.executableURL = [NSURL fileURLWithPath:@"/usr/bin/git"];
     task.currentDirectoryURL = [NSURL fileURLWithPath:dir];
     task.arguments = args;
+    // The test host can run under ASan/malloc diagnostics, and NSTask
+    // children inherit those env vars: git then prints MallocStackLogging
+    // noise into the output this fixture asserts on, and can exit nonzero
+    // outright. Give the child a pristine environment.
+    NSMutableDictionary<NSString *, NSString *> *environment =
+        [[[NSProcessInfo processInfo] environment] mutableCopy];
+    for (NSString *key in environment.allKeys) {
+        if ([key hasPrefix:@"Malloc"] ||
+            [key hasPrefix:@"DYLD_"] ||
+            [key hasPrefix:@"NSZombie"] ||
+            [key hasPrefix:@"ASAN_"]) {
+            [environment removeObjectForKey:key];
+        }
+    }
+    task.environment = environment;
     NSPipe *out = [NSPipe pipe];
     task.standardOutput = out;
     task.standardError = out;
