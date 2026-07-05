@@ -141,7 +141,10 @@ final class ReasoningReplayTests: XCTestCase {
     /// one multipart assistant message with the reasoning items attached.
     /// The replay order [reasoning, text message, function_call] is the
     /// API's own output order for such a turn and is accepted on re-send
-    /// (live-verified); pin that the builder emits exactly that order.
+    /// (live-verified). The encrypted payload binds the turn's ORIGINAL
+    /// structure, so faithfully preserving the parser's part order (which
+    /// mirrors the response) is what keeps replays valid; pin that the
+    /// builder emits exactly that order.
     func testResponsesRequest_multipartTurn_replaysReasoningThenTextThenCall() throws {
         let call = LLM.FunctionCall(name: "lookup", arguments: "{}")
         let id = LLM.Message.FunctionCallID(callID: "call_42", itemID: "fc_1")

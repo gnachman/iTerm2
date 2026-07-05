@@ -2359,8 +2359,7 @@ final class AILiveHarness: XCTestCase {
             "content": [["type": "input_text",
                          "text": "In one short sentence, what did the tool return?"]]]
 
-        func replay(includeReasoning: Bool, includeItemID: Bool,
-                    interleavedText: String? = nil) async throws -> [String: Any] {
+        func replay(includeReasoning: Bool, includeItemID: Bool) async throws -> [String: Any] {
             var fc: [String: Any] = ["type": "function_call", "call_id": callID,
                                      "name": "lookup", "arguments": callArguments]
             if includeItemID { fc["id"] = itemID }
@@ -2369,13 +2368,6 @@ final class AILiveHarness: XCTestCase {
                 input.append(["type": "reasoning", "id": reasoning["id"] as? String ?? "",
                               "summary": [],
                               "encrypted_content": encrypted])
-            }
-            if let interleavedText {
-                // The shape a text+tool-call turn replays as: the assistant's
-                // preamble lands BETWEEN the reasoning item and the call,
-                // matching the API's own output order for such a turn.
-                input.append(["role": "assistant",
-                              "content": [["type": "output_text", "text": interleavedText]]])
             }
             input.append(contentsOf: [fc, outputItem, followUp])
             return try await rawResponses(apiKey: key, body: [
@@ -2397,14 +2389,58 @@ final class AILiveHarness: XCTestCase {
                        "legacy id-stripped replay was not accepted")
         print("[reasoningReplay] legacy id-stripped replay accepted")
 
-        // 3b. Interleaved replay: a turn with a text preamble replays as
-        //     [reasoning, assistant text, function_call] - the API's own
-        //     output order - and must be accepted.
-        let interleaved = try await replay(includeReasoning: true, includeItemID: true,
-                                           interleavedText: "I will look that up.")
-        XCTAssertEqual(interleaved["status"] as? String, "completed",
-                       "reasoning/text/function_call interleaved replay was not accepted")
-        print("[reasoningReplay] interleaved text replay accepted")
+        // 3b. Interleaved replay: a turn whose REAL output was
+        //     [reasoning, message, function_call] must replay in that same
+        //     order and be accepted. The encrypted payload binds the turn's
+        //     structure: fabricating a text item inside a turn that had none
+        //     is rejected ("function_call provided without its required
+        //     reasoning item"), so this leg makes its own setup call that
+        //     asks for a preamble and replays the REAL items verbatim -
+        //     exactly what the production builder does with a multipart
+        //     text+call turn.
+        let preamblePrompt: [String: Any] = [
+            "role": "user",
+            "content": [["type": "input_text",
+                         "text": "Briefly say you will look it up, then use the lookup tool to fetch the value for key answer."]]]
+        let second = try await rawResponses(apiKey: key, body: [
+            "model": model, "input": [preamblePrompt],
+            "tools": [toolDef], "tool_choice": "auto",
+            "reasoning": ["effort": "low"],
+            "include": ["reasoning.encrypted_content"], "store": true,
+        ])
+        let output2 = try XCTUnwrap(second["output"] as? [[String: Any]])
+        if let reasoning2 = output2.first(where: { ($0["type"] as? String) == "reasoning" }),
+           let message2 = output2.first(where: { ($0["type"] as? String) == "message" }),
+           let call2 = output2.first(where: { ($0["type"] as? String) == "function_call" }),
+           let encrypted2 = reasoning2["encrypted_content"] as? String,
+           let callID2 = call2["call_id"] as? String {
+            let text2 = ((message2["content"] as? [[String: Any]])?.first?["text"] as? String) ?? ""
+            let interleaved = try await rawResponses(apiKey: key, body: [
+                "model": model,
+                "input": [
+                    preamblePrompt,
+                    ["type": "reasoning", "id": reasoning2["id"] as? String ?? "",
+                     "summary": [], "encrypted_content": encrypted2],
+                    ["role": "assistant",
+                     "content": [["type": "output_text", "text": text2]]],
+                    ["type": "function_call", "id": call2["id"] as? String ?? "",
+                     "call_id": callID2, "name": "lookup",
+                     "arguments": call2["arguments"] as? String ?? "{}"],
+                    ["type": "function_call_output", "call_id": callID2,
+                     "output": "{\"value\": \"42\"}"],
+                    followUp,
+                ],
+                "tools": [toolDef], "reasoning": ["effort": "low"],
+            ])
+            XCTAssertEqual(interleaved["status"] as? String, "completed",
+                           "reasoning/text/function_call replay of a REAL mixed turn was not accepted")
+            print("[reasoningReplay] interleaved text replay (real mixed turn) accepted")
+        } else {
+            // The model chose not to emit a preamble this run; the leg proves
+            // nothing without a real mixed turn, so report and move on rather
+            // than fabricate one (which the API rejects by design).
+            print("[reasoningReplay] interleaved leg skipped: setup turn produced no text+call mix")
+        }
 
         // 4. Negative control, reported only: the id WITHOUT its reasoning.
         do {
