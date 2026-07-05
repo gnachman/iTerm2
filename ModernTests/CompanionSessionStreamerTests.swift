@@ -245,6 +245,36 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(out.medias.count, 3, "insurance keyframe is sent once, not repeatedly")
     }
 
+    func testUpdateFrameRateCapLowersEmissionRate() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)   // keyframe
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 1)
+
+        // The phone lowers the cap to 1 fps on the running stream (e.g. on cellular).
+        streamer.updateFrameRateCap(1)
+
+        // A change 100 ms later would emit at the original 30 fps (33 ms interval),
+        // but the 1 fps cap now suppresses it -- FPS drops, quality is untouched.
+        source.setFill(0x90)
+        streamer.screenDidChange()
+        streamer.tick(nowMilliseconds: 100)
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 1, "the lowered cap must suppress the change")
+
+        // Past the 1 s interval the pending change is emitted as a normal P-frame.
+        streamer.tick(nowMilliseconds: 1100)
+        streamer.flush()
+        XCTAssertEqual(out.medias.count, 2)
+        XCTAssertFalse(out.medias[1].flags.contains(.keyframe))
+    }
+
     func testConfigAndFramesCarryGeometry() throws {
         try skipIfNoEncoder()
         let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
@@ -327,5 +357,91 @@ final class CompanionSessionStreamerTests: XCTestCase {
                                                               mustResend: true, generationId: 3)
         XCTAssertTrue(d.send)
         XCTAssertEqual(d.generationId, 4)
+    }
+
+    // MARK: Resolution-aware bitrate
+
+    func testBitrateScalesWithResolution() {
+        // A large window must not get the same bitrate as a small one. Both are
+        // below the default ceiling here, so the target is purely pixel-driven.
+        let small = CompanionSessionStreamer.targetBitrate(width: 1280, height: 800,
+                                                           frameRate: 30, ceiling: 24_000_000)
+        let large = CompanionSessionStreamer.targetBitrate(width: 5512, height: 5760,
+                                                           frameRate: 30, ceiling: 24_000_000)
+        XCTAssertGreaterThan(large, small)
+        // Four times the pixels -> four times the target (linear in pixel count).
+        // Dimensions chosen so both land between the floor and ceiling.
+        let base = CompanionSessionStreamer.targetBitrate(width: 2000, height: 2000,
+                                                          frameRate: 30, ceiling: 100_000_000)
+        let quad = CompanionSessionStreamer.targetBitrate(width: 4000, height: 4000,
+                                                          frameRate: 30, ceiling: 100_000_000)
+        XCTAssertEqual(quad, base * 4)
+    }
+
+    func testBitrateClampedToFloorAndCeiling() {
+        // A tiny window still gets at least the floor.
+        let tiny = CompanionSessionStreamer.targetBitrate(width: 64, height: 64,
+                                                         frameRate: 30, ceiling: 24_000_000)
+        XCTAssertEqual(tiny, CompanionSessionStreamer.minimumBitrate)
+        // A huge window is capped at the ceiling, not the raw pixel-driven value.
+        let huge = CompanionSessionStreamer.targetBitrate(width: 8000, height: 8000,
+                                                        frameRate: 60, ceiling: 24_000_000)
+        XCTAssertEqual(huge, 24_000_000)
+    }
+
+    func testBitrateMultiplierScalesTargetBeforeClamping() {
+        let w = 3000, h = 3000  // large enough that neither result hits the floor
+        let base = CompanionSessionStreamer.targetBitrate(width: w, height: h,
+                                                          frameRate: 30, ceiling: 100_000_000)
+        let doubled = CompanionSessionStreamer.targetBitrate(width: w, height: h,
+                                                            frameRate: 30, ceiling: 100_000_000,
+                                                            multiplier: 2.0)
+        XCTAssertEqual(doubled, base * 2)
+        // A non-positive multiplier is ignored (treated as 1), never zeroing the rate.
+        let zeroed = CompanionSessionStreamer.targetBitrate(width: w, height: h,
+                                                           frameRate: 30, ceiling: 100_000_000,
+                                                           multiplier: 0)
+        XCTAssertEqual(zeroed, base)
+        // The multiplier is still bounded by the ceiling.
+        let capped = CompanionSessionStreamer.targetBitrate(width: w, height: h,
+                                                          frameRate: 30, ceiling: base,
+                                                          multiplier: 10.0)
+        XCTAssertEqual(capped, base)
+    }
+
+    // MARK: Resolution-aware frame rate
+
+    func testFrameRateHeldForSmallWindowThrottledForLarge() {
+        // A small window runs at the full requested rate.
+        let small = CompanionSessionStreamer.effectiveFrameRate(width: 1280, height: 800,
+                                                               maxFrameRate: 30)
+        XCTAssertEqual(small, 30, accuracy: 0.001)
+        // A large window is throttled below the requested rate but not below the floor.
+        let large = CompanionSessionStreamer.effectiveFrameRate(width: 5512, height: 5760,
+                                                               maxFrameRate: 30)
+        XCTAssertLessThan(large, 30)
+        XCTAssertGreaterThanOrEqual(large, CompanionSessionStreamer.minFrameRate)
+    }
+
+    func testThrottlingBoundsBitrateAsResolutionGrows() {
+        // The point of throttling: emitting fewer frames of a big window keeps the
+        // bitrate far below what the full frame rate would demand, while per-frame
+        // sharpness (bitrate / fps) is unchanged.
+        let w = 5512, h = 5760
+        let fullRate = 30.0
+        let throttled = CompanionSessionStreamer.effectiveFrameRate(width: w, height: h,
+                                                                    maxFrameRate: fullRate)
+        let bitrateFull = CompanionSessionStreamer.targetBitrate(width: w, height: h,
+                                                                 frameRate: fullRate, ceiling: 100_000_000)
+        let bitrateThrottled = CompanionSessionStreamer.targetBitrate(width: w, height: h,
+                                                                      frameRate: throttled, ceiling: 100_000_000)
+        XCTAssertLessThan(bitrateThrottled, bitrateFull)
+    }
+
+    func testFrameRateFloorNeverExceedsRequestedMax() {
+        // A phone that asks for a low rate is not sped up by the floor.
+        let fps = CompanionSessionStreamer.effectiveFrameRate(width: 6000, height: 6000,
+                                                             maxFrameRate: 5)
+        XCTAssertEqual(fps, 5, accuracy: 0.001)
     }
 }

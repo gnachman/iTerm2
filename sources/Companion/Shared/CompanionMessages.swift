@@ -510,7 +510,10 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// arrives on the media channel.
     case requestKeyframe(streamID: UInt32)
 
-    /// Update a running stream's parameters (frame-rate cap, bandwidth budget).
+    /// Update a running stream's parameters. Only the frame-rate cap is adapted on
+    /// a live stream: per-frame quality (bits per pixel) is held fixed so terminal
+    /// text stays legible, making frame rate the sole flexible dimension. The
+    /// maxBitrate field is ignored here (it is an upper bound applied only at start).
     case updateStreamParams(streamID: UInt32, params: CompanionStreamParams)
 
     /// Periodic flow-control feedback: the newest media PTS the phone has

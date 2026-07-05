@@ -87,7 +87,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     }
 
     private let source: CompanionFrameSource
-    private let averageBitRate: Int
+    /// The requested frame-rate cap. Mutable: the phone can retune it live via
+    /// updateStreamParams (the one quality-preserving adaptation lever for a
+    /// terminal). Guarded by `lock`.
+    private var maxFrameRate: Double
+    private let bitrateCeiling: Int
     private let onConfig: (CompanionStreamConfig) -> Void
     private let onMedia: (CompanionMediaFrame) -> Void
     /// Called on the main thread when the history window changes by trim/clear
@@ -164,10 +168,60 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private var statPaced = 0
     private var statBytes = 0
 
+    /// Bits allotted per pixel per frame for the encoder's average-bitrate target.
+    /// Screen content is mostly static text and the stream is change-driven and
+    /// deduped, so this governs per-frame quality (how hard the rate control
+    /// compresses a frame it does encode) far more than steady-state bandwidth.
+    /// Kept small so a small window stays a few Mbps while a Retina 5K window lands
+    /// around 20 Mbps rather than the crushed, fixed 1 Mbps that made large windows
+    /// look blurry.
+    static let bitsPerPixelPerFrame = 0.02
+
+    /// Floor so a tiny window still gets a usable bitrate.
+    static let minimumBitrate = 1_000_000
+    /// Ceiling used when the phone does not request a maximum. Generous so a large
+    /// Retina window is not starved; the phone can lower it via maxBitrate.
+    static let defaultBitrateCeiling = 24_000_000
+
+    /// Peak pixels-per-second the feed targets. Since per-frame sharpness is
+    /// `bitsPerPixelPerFrame` regardless of rate, total bandwidth is
+    /// pixels x fps x bitsPerPixelPerFrame; holding pixels x fps at this budget
+    /// keeps Mbps bounded as the window grows. 180 Mpx/s lets a ~6 Mpx fullscreen
+    /// Retina laptop hold the full requested rate; bigger windows are throttled.
+    static let maxPixelsPerSecond = 180_000_000.0
+    /// Frame-rate floor so even a very large window stays watchable/interactive
+    /// rather than being throttled toward zero.
+    static let minFrameRate = 10.0
+
+    /// The frame rate to actually emit at for a frame of the given pixel count:
+    /// `maxFrameRate` for small windows, throttled toward `minFrameRate` for large
+    /// ones so pixels x fps stays near `maxPixelsPerSecond`. A low requested max is
+    /// respected (the floor never raises the rate above what the phone asked for).
+    static func effectiveFrameRate(width: Int, height: Int, maxFrameRate: Double) -> Double {
+        let pixels = Double(width * height)
+        guard pixels > 0, maxFrameRate > 0 else { return maxFrameRate }
+        let throttled = maxPixelsPerSecond / pixels
+        let floor = min(minFrameRate, maxFrameRate)
+        return max(floor, min(maxFrameRate, throttled))
+    }
+
+    /// Encoder average bitrate scaled to the frame's pixel count and (effective)
+    /// frame rate, clamped to [minimumBitrate, ceiling]. Recomputed whenever the
+    /// encoder is (re)built for a new size, so the feed's quality tracks the window
+    /// instead of being pinned to a fixed rate that collapses as the window grows.
+    /// `multiplier` is the user's advanced-setting quality knob (1 = default); it
+    /// scales the pixel-derived rate before clamping.
+    static func targetBitrate(width: Int, height: Int, frameRate: Double, ceiling: Int,
+                              multiplier: Double = 1.0) -> Int {
+        let raw = Double(width * height) * bitsPerPixelPerFrame * max(1, frameRate)
+        let scaled = raw * (multiplier > 0 ? multiplier : 1.0)
+        return max(minimumBitrate, min(ceiling, Int(scaled)))
+    }
+
     init(streamID: UInt32,
          source: CompanionFrameSource,
          maxFrameRate: Double = 30,
-         averageBitRate: Int = 1_000_000,
+         bitrateCeiling: Int = CompanionSessionStreamer.defaultBitrateCeiling,
          dailyByteBudget: Int = 400 * 1024 * 1024,
          onConfig: @escaping (CompanionStreamConfig) -> Void,
          onMedia: @escaping (CompanionMediaFrame) -> Void,
@@ -175,13 +229,18 @@ final class CompanionSessionStreamer: @unchecked Sendable {
          onDataLimitReached: @escaping () -> Void = {}) {
         self.streamID = streamID
         self.source = source
-        self.averageBitRate = averageBitRate
+        self.maxFrameRate = maxFrameRate > 0 ? maxFrameRate : 30
+        self.bitrateCeiling = bitrateCeiling
         self.onConfig = onConfig
         self.onMedia = onMedia
         self.onExtentChanged = onExtentChanged
         self.onDataLimitReached = onDataLimitReached
         self.budget = CompanionStreamBudget(limitBytes: dailyByteBudget)
-        self.inFlight = CompanionInFlightLimiter()
+        // The in-flight limiter's back-off thresholds are user-tunable (advanced
+        // settings); they are read once per stream, so a change applies to new streams.
+        self.inFlight = CompanionInFlightLimiter(
+            maxLeadMilliseconds: UInt64(max(0, Int(iTermAdvancedSettingsModel.companionStreamMaxLeadMilliseconds()))),
+            maxQueueDepth: max(0, Int(iTermAdvancedSettingsModel.companionStreamMaxQueueDepth())))
         self.pacer = CompanionStreamPacer(minInterval: maxFrameRate > 0 ? 1.0 / maxFrameRate : 0)
     }
 
@@ -335,6 +394,27 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         lock.lock(); inFlight.noteAck(ptsMilliseconds: ptsMilliseconds, queueDepth: queueDepth); lock.unlock()
     }
 
+    /// Retune the frame-rate cap on a running stream (from the phone's
+    /// updateStreamParams). This is the ONLY live adaptation lever for a terminal:
+    /// per-frame quality (bits per pixel) is left untouched so text stays legible,
+    /// and only how often frames are emitted changes. The effective rate is still
+    /// clamped by the current resolution's throttle, so a big window is not sped up
+    /// past what its bandwidth allows. No encoder rebuild: the pacer just recoalesces
+    /// to the new interval. A value <= 0 restores the 30 fps default.
+    func updateFrameRateCap(_ requestedMaxFrameRate: Double) {
+        lock.lock()
+        let newMax = requestedMaxFrameRate > 0 ? requestedMaxFrameRate : 30
+        maxFrameRate = newMax
+        let width = pool?.width ?? 0
+        let height = pool?.height ?? 0
+        let effective = width > 0 && height > 0
+            ? Self.effectiveFrameRate(width: width, height: height, maxFrameRate: newMax)
+            : newMax
+        pacer.setMinInterval(effective > 0 ? 1.0 / effective : 0)
+        lock.unlock()
+        RLog("stream \(streamID) updateFrameRateCap max=\(newMax) effective=\(effective)")
+    }
+
     /// Flush in-flight frames (teardown, and to make encoding synchronous in tests).
     func flush() {
         encoder?.finish()
@@ -355,23 +435,36 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // atomically.
         lock.lock()
         let reuse = pool?.width == width && pool?.height == height && encoder != nil
+        let currentMaxFrameRate = maxFrameRate
         lock.unlock()
         if reuse { return true }
 
         let newPool = CompanionPixelBufferPool(width: width, height: height)
+        // Throttle the frame rate for large frames first, then size the bitrate to
+        // that effective rate: a big window emits fewer frames of the same per-frame
+        // sharpness rather than the same frame count at a ballooning bitrate.
+        let frameRate = Self.effectiveFrameRate(width: width, height: height,
+                                                maxFrameRate: currentMaxFrameRate)
+        let bitRate = Self.targetBitrate(width: width, height: height,
+                                         frameRate: frameRate, ceiling: bitrateCeiling,
+                                         multiplier: iTermAdvancedSettingsModel.companionStreamBitrateMultiplier())
         let newEncoder: CompanionVideoEncoder
         do {
             newEncoder = try CompanionVideoEncoder(width: width, height: height,
-                                                   averageBitRate: averageBitRate) { [weak self] frame in
+                                                   averageBitRate: bitRate) { [weak self] frame in
                 self?.handleEncoded(frame)
             }
         } catch {
             DLog("Companion streamer: cannot create HEVC encoder: \(error)")
             return false
         }
+        RLog("stream \(streamID) encoder \(width)x\(height) fps=\(frameRate) bitrate=\(bitRate) (ceiling=\(bitrateCeiling))")
         lock.lock()
         pool = newPool
         encoder = newEncoder
+        // The change-driven Timer still ticks at the requested max, but the pacer
+        // now coalesces emission down to the resolution-throttled effective rate.
+        pacer.setMinInterval(frameRate > 0 ? 1.0 / frameRate : 0)
         lastSentHash = nil  // a new size invalidates the dedup baseline
         // A fresh encoder has fresh parameter sets the phone has not seen, so force a
         // config resend. The geometry comparison bumps the generation if the pixel

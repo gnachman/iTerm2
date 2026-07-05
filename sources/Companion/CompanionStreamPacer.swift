@@ -13,8 +13,10 @@
 import Foundation
 
 struct CompanionStreamPacer: Equatable {
-    /// Minimum seconds between emitted frames (1 / fps cap).
-    let minInterval: TimeInterval
+    /// Minimum seconds between emitted frames (1 / fps cap). Not a `let`: the
+    /// effective cap is lowered once the rendered resolution is known, so a large
+    /// window is emitted less often and total bandwidth stays bounded.
+    private(set) var minInterval: TimeInterval
 
     private var lastEmit: TimeInterval?
     private var dirty = false
@@ -22,6 +24,12 @@ struct CompanionStreamPacer: Equatable {
 
     init(minInterval: TimeInterval) {
         self.minInterval = minInterval
+    }
+
+    /// Retune the frame-rate cap (e.g. after the rendered resolution is known).
+    /// The pending change/keyframe state is preserved.
+    mutating func setMinInterval(_ interval: TimeInterval) {
+        minInterval = interval
     }
 
     /// Whether an urgent keyframe is pending. The streamer lets a keyframe bypass

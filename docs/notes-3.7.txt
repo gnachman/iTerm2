@@ -36,6 +36,16 @@ Major New Features:
   the encrypted channel, so the relay and Apple
   never see it or which chat it belongs to.
 
+- The Companion app’s live session video feed
+  now scales its bitrate to the window’s
+  resolution, so large windows stay sharp
+  instead of being pinned to a fixed low rate.
+  Very large windows trade frame rate for
+  sharpness so bandwidth stays reasonable.
+  Advanced settings can tune the feed’s
+  bitrate multiplier and the flow-control
+  back-off thresholds.
+
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.

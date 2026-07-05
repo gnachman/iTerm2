@@ -444,9 +444,15 @@ final class CompanionHostBridge {
             endStream(streamID, reason: .stoppedByClient)
         case .requestKeyframe(let streamID):
             streams[streamID]?.streamer.requestKeyframe()
-        case .updateStreamParams:
-            // Frame-rate / bitrate adaptation is handled in a later milestone.
-            break
+        case .updateStreamParams(let streamID, let params):
+            // Only the frame-rate cap adapts on a running stream. Per-frame quality
+            // (bits per pixel) is deliberately NOT touched: a terminal feed must stay
+            // legible, so FPS is the sole flexible dimension. The maxBitrate field is
+            // ignored here (it is only an upper bound applied when the stream starts).
+            // Lowering the cap takes effect immediately (the pacer coalesces);
+            // raising it is bounded by the main-thread driving timer, which is fixed
+            // at the stream's initial rate, so the supported direction is downward.
+            streams[streamID]?.streamer.updateFrameRateCap(params.maxFrameRate)
         case .streamAck(let streamID, let lastPTSMilliseconds, let queueDepth):
             streams[streamID]?.streamer.noteAck(ptsMilliseconds: lastPTSMilliseconds, queueDepth: queueDepth)
         case .selectionGesture(let streamID, let phase, let mode, let point):
@@ -710,7 +716,12 @@ final class CompanionHostBridge {
         let streamID = nextStreamID
         nextStreamID &+= 1
         let frameRate = params.maxFrameRate > 0 ? min(params.maxFrameRate, 60) : 30
-        let bitRate = params.maxBitrate.map { max(100_000, min($0, 8_000_000)) } ?? 1_000_000
+        // The phone may cap the bitrate; otherwise the streamer scales it to the
+        // rendered resolution (a fixed rate collapses quality as the window grows).
+        // A phone-supplied cap is only an upper bound: the resolution-aware target
+        // still applies below it.
+        let bitrateCeiling = params.maxBitrate.map { max(100_000, min($0, 40_000_000)) }
+            ?? CompanionSessionStreamer.defaultBitrateCeiling
         // Emit the highest media-frame version both sides understand: a phone that
         // advertises nothing predates versioned frames and only decodes version 1
         // (no per-frame geometry), while a current phone gets version 2.
@@ -725,7 +736,7 @@ final class CompanionHostBridge {
             streamID: streamID,
             source: CompanionTerminalFrameSource(session: session),
             maxFrameRate: frameRate,
-            averageBitRate: bitRate,
+            bitrateCeiling: bitrateCeiling,
             onConfig: { config in
                 outboxRef?.enqueueControl(HostEnvelope(requestID: nil, payload: .streamConfig(config)))
             },

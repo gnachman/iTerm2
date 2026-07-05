@@ -73,4 +73,18 @@ final class CompanionStreamPacerTests: XCTestCase {
         // After emitting, the keyframe flag and dirty are cleared.
         XCTAssertNil(p.evaluate(now: 1.0))
     }
+
+    func testSetMinIntervalRetunesCapAndPreservesState() {
+        var p = pacer()
+        p.noteDirty()
+        _ = p.evaluate(now: 0)   // emits; lastEmit = 0
+        // Widen the cap to 1s (as the resolution throttle would for a big window).
+        p.setMinInterval(1.0)
+        XCTAssertEqual(p.minInterval, 1.0, accuracy: 0.0001)
+        // A change 0.1s later must now wait (it would have emitted at 30 fps).
+        p.noteDirty()
+        XCTAssertNil(p.evaluate(now: 0.1), "the widened cap must suppress the change")
+        // Past the new interval it emits, and the pending change was preserved.
+        XCTAssertEqual(p.evaluate(now: 1.0), .init(keyframe: false))
+    }
 }
