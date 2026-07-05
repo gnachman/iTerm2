@@ -1867,3 +1867,19 @@ Bug Fixes:
   unmuted. The muted set is remembered
   on the Mac so it applies even while
   the phone is unreachable.
+- AI chats reopened after a restart now
+  replay their tool-call history to the
+  model faithfully. Reasoning state
+  (OpenAI encrypted reasoning, Gemini
+  thought signatures) is saved with the
+  chat and replayed, so reasoning models
+  no longer reject reopened chats or
+  invent fake tool results. Chats from
+  older versions keep working through a
+  compatibility path.
+- A chat is now locked to the AI
+  provider it started with, enforced in
+  the model layer as well as the UI.
+  Messages sent from the iTerm2 Buddy
+  app now run on the chat's own model
+  instead of the global default.

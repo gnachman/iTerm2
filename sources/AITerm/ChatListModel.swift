@@ -72,6 +72,12 @@ class ChatListModel: ChatListDataSource {
         chatStorage.first { $0.id == chatID }?.title
     }
 
+    /// Side-effect-free model lookup (see title(forChatID:)): the chat's
+    /// pinned model, which also binds the chat's provider (ChatProviderBinding).
+    func modelName(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.modelName
+    }
+
     func index(of chatID: String) -> Int? {
         return chatStorage.firstIndex {
             $0.id == chatID

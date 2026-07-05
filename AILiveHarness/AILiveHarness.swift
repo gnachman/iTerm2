@@ -2213,4 +2213,205 @@ final class AILiveHarness: XCTestCase {
                       idStyle: .real(callID: "call_test_chat_reload_orphan",
                                      itemID: "call_test_chat_reload_orphan"))
     }
+
+    // MARK: encrypted-reasoning probe
+    //
+    // Design probe for the reasoning-persistence project: does the Responses
+    // API return reasoning.encrypted_content when store:true? If yes, a
+    // hybrid is possible (previous_response_id for live turns, locally
+    // persisted blobs as the reload/expiry fallback). If no, store:false is
+    // the only way to obtain the blobs and requests must run stateless.
+    // The store:false leg doubles as the control: if IT returns no blob the
+    // probe itself is broken and the test fails instead of reporting a
+    // false "no".
+
+    /// One raw Responses call (bypasses the builder, which doesn't emit
+    /// store/include yet). Returns (reasoning items seen, of which with
+    /// non-empty encrypted_content), or throws with the HTTP error body.
+    private func probeEncryptedReasoning(apiKey: String,
+                                         model: String,
+                                         store: Bool) async throws -> (reasoningItems: Int, encrypted: Int) {
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        let body: [String: Any] = [
+            "model": model,
+            "input": [["role": "user",
+                       "content": [["type": "input_text",
+                                    "text": "What is 17*23? Reply with just the number."]]]],
+            "reasoning": ["effort": "low"],
+            "include": ["reasoning.encrypted_content"],
+            "store": store,
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        guard (200..<300).contains(status) else {
+            throw NSError(domain: "probe", code: status, userInfo: [
+                NSLocalizedDescriptionKey: "HTTP \(status): \(String(data: data, encoding: .utf8) ?? "<binary>")"])
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let output = json["output"] as? [[String: Any]] else {
+            throw NSError(domain: "probe", code: 0, userInfo: [
+                NSLocalizedDescriptionKey: "unparseable body: \(String(data: data, encoding: .utf8) ?? "<binary>")"])
+        }
+        let reasoning = output.filter { ($0["type"] as? String) == "reasoning" }
+        let encrypted = reasoning.filter {
+            if let content = $0["encrypted_content"] as? String { return !content.isEmpty }
+            return false
+        }
+        return (reasoning.count, encrypted.count)
+    }
+
+    func test_openai_probe_encryptedReasoning_storeTrueVsFalse() async throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        let model = "gpt-5-mini"
+
+        // Control: store:false must yield encrypted content, else the probe
+        // itself is wrong (bad model choice, API drift) and no verdict can
+        // be trusted.
+        let control = try await probeEncryptedReasoning(apiKey: key, model: model, store: false)
+        print("[probe] store:false -> reasoning items: \(control.reasoningItems), with encrypted_content: \(control.encrypted)")
+        XCTAssertGreaterThan(control.reasoningItems, 0, "[probe] control returned no reasoning items at all; pick a reasoning model")
+        XCTAssertGreaterThan(control.encrypted, 0, "[probe] store:false returned no encrypted_content; probe is invalid")
+
+        // The question: does store:true also return the blobs?
+        do {
+            let hybrid = try await probeEncryptedReasoning(apiKey: key, model: model, store: true)
+            print("[probe] store:true  -> reasoning items: \(hybrid.reasoningItems), with encrypted_content: \(hybrid.encrypted)")
+            print("[probe] VERDICT: hybrid (store:true + encrypted_content) is \(hybrid.encrypted > 0 ? "POSSIBLE" : "NOT possible (no blob returned)")")
+        } catch {
+            print("[probe] store:true request REJECTED: \(error.localizedDescription)")
+            print("[probe] VERDICT: hybrid is NOT possible (request rejected)")
+        }
+    }
+
+    // MARK: reasoning replay after reload (API contract)
+    //
+    // Pins the API contract the reasoning-persistence design rests on, with
+    // REAL blobs (a fabricated encrypted_content would be rejected outright):
+    //   1. A live turn produces a reasoning item + function_call.
+    //   2. Replaying [reasoning, function_call(id), output] statelessly (no
+    //      previous_response_id) is accepted - the reload path for chats
+    //      with persisted reasoning.
+    //   3. Replaying the call with NO reasoning and NO item id is accepted -
+    //      the best-effort path for pre-persistence chats.
+    //   4. (Reported, not asserted) the call WITH its item id but WITHOUT
+    //      its reasoning item - the shape that motivated the id strip.
+
+    private func rawResponses(apiKey: String, body: [String: Any]) async throws -> [String: Any] {
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        guard (200..<300).contains(status) else {
+            throw NSError(domain: "probe", code: status, userInfo: [
+                NSLocalizedDescriptionKey: "HTTP \(status): \(String(data: data, encoding: .utf8) ?? "<binary>")"])
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "probe", code: 0, userInfo: [
+                NSLocalizedDescriptionKey: "unparseable body"])
+        }
+        return json
+    }
+
+    func test_openai_reasoningReplay_afterReload() async throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        let model = "gpt-5-mini"
+        let toolDef: [String: Any] = [
+            "type": "function", "name": "lookup",
+            "description": "Look up a fact by key.",
+            "parameters": ["type": "object",
+                           "properties": ["key": ["type": "string"]],
+                           "required": ["key"],
+                           "additionalProperties": false],
+            "strict": true,
+        ]
+        let userTurn: [String: Any] = [
+            "role": "user",
+            "content": [["type": "input_text",
+                         "text": "Use the lookup tool to fetch the value for key answer, then tell me what it is."]]]
+
+        // 1. Live turn: capture a real reasoning item and function_call.
+        let first = try await rawResponses(apiKey: key, body: [
+            "model": model, "input": [userTurn], "tools": [toolDef],
+            "tool_choice": "required", "reasoning": ["effort": "low"],
+            "include": ["reasoning.encrypted_content"], "store": true,
+        ])
+        let output = try XCTUnwrap(first["output"] as? [[String: Any]])
+        let reasoning = try XCTUnwrap(output.first { ($0["type"] as? String) == "reasoning" },
+                                      "setup turn produced no reasoning item")
+        let call = try XCTUnwrap(output.first { ($0["type"] as? String) == "function_call" },
+                                 "setup turn produced no function_call")
+        let encrypted = try XCTUnwrap(reasoning["encrypted_content"] as? String,
+                                      "setup turn returned no encrypted_content")
+        let callID = try XCTUnwrap(call["call_id"] as? String)
+        let itemID = try XCTUnwrap(call["id"] as? String)
+        let callArguments = call["arguments"] as? String ?? "{}"
+        let outputItem: [String: Any] = ["type": "function_call_output",
+                                         "call_id": callID, "output": "{\"value\": \"42\"}"]
+        let followUp: [String: Any] = [
+            "role": "user",
+            "content": [["type": "input_text",
+                         "text": "In one short sentence, what did the tool return?"]]]
+
+        func replay(includeReasoning: Bool, includeItemID: Bool,
+                    interleavedText: String? = nil) async throws -> [String: Any] {
+            var fc: [String: Any] = ["type": "function_call", "call_id": callID,
+                                     "name": "lookup", "arguments": callArguments]
+            if includeItemID { fc["id"] = itemID }
+            var input: [[String: Any]] = [userTurn]
+            if includeReasoning {
+                input.append(["type": "reasoning", "id": reasoning["id"] as? String ?? "",
+                              "summary": [],
+                              "encrypted_content": encrypted])
+            }
+            if let interleavedText {
+                // The shape a text+tool-call turn replays as: the assistant's
+                // preamble lands BETWEEN the reasoning item and the call,
+                // matching the API's own output order for such a turn.
+                input.append(["role": "assistant",
+                              "content": [["type": "output_text", "text": interleavedText]]])
+            }
+            input.append(contentsOf: [fc, outputItem, followUp])
+            return try await rawResponses(apiKey: key, body: [
+                "model": model, "input": input, "tools": [toolDef],
+                "reasoning": ["effort": "low"],
+            ])
+        }
+
+        // 2. Full-fidelity replay (persisted reasoning): must be accepted.
+        let full = try await replay(includeReasoning: true, includeItemID: true)
+        XCTAssertEqual(full["status"] as? String, "completed",
+                       "reasoning+id replay was not accepted")
+        print("[reasoningReplay] full-fidelity replay accepted")
+
+        // 3. Legacy replay (no reasoning persisted, item id stripped): must
+        //    be accepted - this is the pre-persistence chat's path.
+        let legacy = try await replay(includeReasoning: false, includeItemID: false)
+        XCTAssertEqual(legacy["status"] as? String, "completed",
+                       "legacy id-stripped replay was not accepted")
+        print("[reasoningReplay] legacy id-stripped replay accepted")
+
+        // 3b. Interleaved replay: a turn with a text preamble replays as
+        //     [reasoning, assistant text, function_call] - the API's own
+        //     output order - and must be accepted.
+        let interleaved = try await replay(includeReasoning: true, includeItemID: true,
+                                           interleavedText: "I will look that up.")
+        XCTAssertEqual(interleaved["status"] as? String, "completed",
+                       "reasoning/text/function_call interleaved replay was not accepted")
+        print("[reasoningReplay] interleaved text replay accepted")
+
+        // 4. Negative control, reported only: the id WITHOUT its reasoning.
+        do {
+            _ = try await replay(includeReasoning: false, includeItemID: true)
+            print("[reasoningReplay] NOTE: id-without-reasoning was ACCEPTED; the id strip is precautionary")
+        } catch {
+            print("[reasoningReplay] id-without-reasoning rejected as expected: \(error.localizedDescription)")
+        }
+    }
 }

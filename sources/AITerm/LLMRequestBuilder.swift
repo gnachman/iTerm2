@@ -58,7 +58,8 @@ struct LLMRequestBuilder {
         case .gemini:
             try GeminiRequestBuilder(messages: messages,
                                      functions: functions,
-                                     hostedTools: hostedTools).body()
+                                     hostedTools: hostedTools,
+                                     modelName: provider.model.name).body()
 
         case .llama:
             try LlamaBodyRequestBuilder(messages: messages,

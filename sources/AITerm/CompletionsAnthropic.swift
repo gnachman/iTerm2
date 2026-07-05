@@ -892,10 +892,9 @@ struct AnthropicRequestBuilder {
         return Self.coalesceConsecutiveAssistantMessages(Self.enforceToolUseAdjacency(convertedMessages))
     }
 
-    // A reloaded tool round-trip is replayed as a single folded assistant
-    // transcript message (see ChatAgent.aiMessagesForTranscript), which can
-    // leave two consecutive assistant messages: the folded transcript followed
-    // by the model's final text reply. Anthropic requires strictly alternating
+    // A reloaded chat can produce two consecutive assistant messages (e.g. a
+    // replayed tool call followed by the model's final text reply; see
+    // ChatAgent's structured replay). Anthropic requires strictly alternating
     // user/assistant roles, so merge adjacent assistant messages into one by
     // concatenating their content blocks. Runs after tool_use/tool_result
     // adjacency enforcement, so a tool_use assistant message is already

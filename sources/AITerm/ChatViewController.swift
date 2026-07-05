@@ -2799,7 +2799,11 @@ extension ChatViewController: ChatToolbarDataSource {
     }
 
     var canChangeModel: Bool {
-        return chatID != nil && !chatProviderIsLocked
+        // Only the PROVIDER locks once a conversation starts; switching
+        // models within the provider stays allowed mid-chat (availableModels
+        // is already restricted to the effective provider's own models, and
+        // ChatProviderBinding enforces the same rule at the model layer).
+        return chatID != nil
     }
 
     var availableModels: [AIMetadata.Model] {

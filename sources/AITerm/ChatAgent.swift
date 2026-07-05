@@ -360,28 +360,25 @@ class ChatAgent {
     // regardless of current mode, so old turns from the other mode
     // stay legible to the LLM.
     //
-    // Persisted tool calls are translated back as plain transcript text.
-    // During a live tool round-trip, AITermController still sends real
-    // function_call/function_call_output items from its in-flight state. Once
-    // the chat is reloaded from disk, however, OpenAI reasoning models can
-    // reject historical function_call items unless the original reasoning item
-    // is also replayed. We don't persist that item, so the durable history uses
-    // a readable transcript instead of pretending to be an active tool call.
+    // Persisted tool calls replay STRUCTURED (function_call/functionOutput
+    // items), never as prose: replaying them as assistant text taught the
+    // model to imitate the format and fabricate tool results instead of
+    // calling tools. OpenAI reasoning models require the reasoning item
+    // alongside a historical function_call; it is persisted with the call
+    // (llmMessage.reasoningItems) and rides here, while pre-persistence
+    // calls replay without their OpenAI item id so the API treats them as
+    // developer-provided context (see ResponsesBodyRequestBuilder). The
+    // repair pass heals both orphan directions (interrupted calls,
+    // auto-approved responses whose request was never persisted) so every
+    // vendor accepts the rebuilt prompt.
     private func translate(messages: [Message]) -> [AITermController.Message] {
-        Self.aiMessagesForTranscript(messages, stateMachine: &messageToPrompt)
+        AIChatToolCallRepair.repairingOrphanedToolPairs(
+            Self.aiMessagesForStructuredReplay(messages, stateMachine: &messageToPrompt))
     }
 
-    private static func aiMessagesForTranscript(_ messages: [Message],
-                                                stateMachine: inout MessageToPromptStateMachine) -> [AITermController.Message] {
-        struct PendingRequest {
-            let name: String
-            let description: String
-            let arguments: String?
-        }
+    private static func aiMessagesForStructuredReplay(_ messages: [Message],
+                                                      stateMachine: inout MessageToPromptStateMachine) -> [AITermController.Message] {
         var aiMessages: [AITermController.Message] = []
-        var pendingByRequestID: [UUID: PendingRequest] = [:]
-        var orderedPendingIDs: [UUID] = []
-
         for message in messages {
             switch message.content {
             case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
@@ -390,103 +387,54 @@ class ChatAgent {
                 continue
 
             case .remoteCommandRequest(let payload, safe: _):
-                pendingByRequestID[message.uniqueID] = PendingRequest(
-                    name: payload.name,
-                    description: payload.markdownDescription,
-                    arguments: payload.llmMessage.function_call?.arguments)
-                orderedPendingIDs.append(message.uniqueID)
-
-            case .remoteCommandResponse(let result, let requestUUID, let name, let fcID):
-                let pending = pendingByRequestID[requestUUID]
-                let output: String
-                switch result {
-                case .success(let value): output = value
-                case .failure(let error):
-                    output = "Tool call failed: \(error.localizedDescription)"
-                }
-                let requestName = pending?.name ?? name
-                aiMessages.append(AITermController.Message(
-                    responseID: nil,
-                    role: .assistant,
-                    content: Self.toolTranscript(
-                        name: requestName,
-                        description: pending?.description,
-                        arguments: Self.sanitizedToolArguments(
-                            name: requestName,
-                            arguments: pending?.arguments ?? fcID.map { "call_id: \($0.callID)" }),
-                        result: output)))
-                pendingByRequestID.removeValue(forKey: requestUUID)
+                // A request with no function_call has nothing to replay
+                // (squelched/auto-approved shapes); its orphaned response,
+                // if any, is healed by the repair pass.
+                guard payload.llmMessage.function_call != nil else { continue }
+                var call = aiMessage(from: message, stateMachine: &stateMachine)
+                // The persisted llmMessage carries the turn's reasoning
+                // items; ride them onto the rebuilt call so the request
+                // builder can replay them ahead of it.
+                call.reasoningItems = payload.llmMessage.reasoningItems
+                aiMessages.append(call)
 
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .terminalCommand, .multipart, .watcherEvent:
+                    .terminalCommand, .multipart, .watcherEvent, .remoteCommandResponse:
                 aiMessages.append(aiMessage(from: message, stateMachine: &stateMachine))
             }
         }
-
-        // Preserve interrupted requests in insertion order.
-        for requestID in orderedPendingIDs {
-            guard let pending = pendingByRequestID.removeValue(forKey: requestID) else {
-                continue
-            }
-            aiMessages.append(AITermController.Message(
-                responseID: nil,
-                role: .assistant,
-                content: Self.toolTranscript(
-                    name: pending.name,
-                    description: pending.description,
-                    arguments: Self.sanitizedToolArguments(name: pending.name,
-                                                           arguments: pending.arguments),
-                    result: "[iTerm2 was restarted before this tool call completed. "
-                          + "The call did not finish; assume no side effects took place "
-                          + "and re-issue if needed.]")))
-        }
-
         return aiMessages
     }
 
-    private static func toolTranscript(name: String,
-                                       description: String?,
-                                       arguments: String?,
-                                       result: String) -> String {
-        var parts = ["iTerm2 tool transcript\nTool: \(name)"]
-        if let description,
-           !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            parts.append("Request:\n\(description)")
-        }
-        if let arguments,
-           !arguments.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            parts.append("Arguments:\n\(arguments)")
-        }
-        parts.append("Result:\n\(result)")
-        return parts.joined(separator: "\n\n")
+    /// Resolve a turn's model name the same way request routing does
+    /// (AIConversation.complete: built-in catalog, then manual models). nil
+    /// for an unknown or absent name; the caller falls back to the global
+    /// default, keeping capability gating and routing in agreement.
+    static func resolvedModel(named name: String?) -> AIMetadata.Model? {
+        guard let name else { return nil }
+        return AIMetadata.instance.models.first { $0.name == name }
+            ?? LLMMetadata.manualModels().first { $0.name == name }
     }
 
-    private static func sanitizedToolArguments(name: String,
-                                               arguments: String?) -> String? {
-        guard var arguments = arguments?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !arguments.isEmpty else {
-            return nil
+    /// Hosted-tool enablement for a turn, pure over the effective model's
+    /// features and the turn's configuration so it can never silently read
+    /// the global default model.
+    static func hostedTools(features: Set<AIMetadata.Model.Feature>,
+                            configuration: Message.Configuration?) -> HostedTools {
+        var tools = HostedTools()
+        if features.contains(.hostedWebSearch), let configuration {
+            tools.webSearch = configuration.hostedWebSearchEnabled
+        } else {
+            tools.webSearch = false
         }
-        guard name.hasPrefix("session_"),
-              let data = arguments.data(using: .utf8),
-              var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return arguments
+        tools.codeInterpreter = features.contains(.hostedCodeInterpreter)
+        if features.contains(.hostedFileSearch),
+           let vectorStoreIDs = configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
+            tools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
+        } else {
+            tools.fileSearch = nil
         }
-        object.removeValue(forKey: "session_guid")
-        if object.isEmpty {
-            return nil
-        }
-        guard JSONSerialization.isValidJSONObject(object),
-              let sanitizedData = try? JSONSerialization.data(withJSONObject: object,
-                                                              options: [.prettyPrinted, .sortedKeys]),
-              let sanitized = String(data: sanitizedData, encoding: .utf8) else {
-            arguments = arguments.replacingOccurrences(
-                of: #"(?m)^\s*"session_guid"\s*:\s*"[^"]+"\s*,?\s*$"#,
-                with: "",
-                options: .regularExpression)
-            return arguments.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        return sanitized
+        return tools
     }
 
     private static func aiMessage(from message: Message,
@@ -788,25 +736,45 @@ class ChatAgent {
                                                   history: [Message],
                                                   streaming: ((StreamingUpdate) -> ())?,
                                                   completion: @escaping (Message?) -> ()) {
+        // Model-layer provider lock: the UI's picker lock can't cover turns
+        // that arrive with no configuration (the phone) or with a stale one,
+        // so the binding is enforced here on every turn, BEFORE any
+        // conversation state is touched. A rejected turn becomes an ordinary
+        // agent reply and never reaches the API.
+        let verdict = ChatProviderBinding.evaluate(
+            boundModelName: ChatListModel.instance?.modelName(forChatID: chatID),
+            turnModelName: userMessage.configuration?.model,
+            defaultModelName: LLMMetadata.model()?.name,
+            vendor: ChatProviderBinding.vendor(forModelName:))
+        let turnModelName: String?
+        switch verdict {
+        case .reject(let reason):
+            RLog("ChatAgent: rejected cross-provider turn in \(chatID): \(reason)")
+            completion(Message(chatID: userMessage.chatID,
+                               author: .agent,
+                               content: .markdown(reason),
+                               sentDate: Date(),
+                               uniqueID: UUID()))
+            return
+        case .proceed(let modelName, let bindChatTo):
+            turnModelName = modelName
+            if let bindChatTo {
+                try? ChatListModel.instance?.setModel(chatID: chatID, modelName: bindChatTo)
+            }
+        }
+
         cancelPendingCommands()
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
-        if LLMMetadata.model()?.features.contains(.hostedWebSearch) == true,
-           let configuration = userMessage.configuration {
-            conversation.hostedTools.webSearch = configuration.hostedWebSearchEnabled
-        } else {
-            conversation.hostedTools.webSearch = false
-        }
-
-        let useCodeInterpeter = (LLMMetadata.model()?.features.contains(.hostedCodeInterpreter) == true)
-        conversation.hostedTools.codeInterpreter = useCodeInterpeter
-
-        if LLMMetadata.model()?.features.contains(.hostedFileSearch) == true,
-           let vectorStoreIDs = userMessage.configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
-            conversation.hostedTools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
-        } else {
-            conversation.hostedTools.fileSearch = nil
-        }
+        // Hosted-tool capability comes from the model the turn will ACTUALLY
+        // run on (the binding's verdict, resolved the same way request
+        // routing resolves conversation.model), not the global default.
+        // With the provider lock, a configuration-less turn runs on the
+        // chat's bound model, which can differ from the default; gating on
+        // the default could attach code_interpreter to a model that 400s it.
+        let effectiveModel = Self.resolvedModel(named: turnModelName) ?? LLMMetadata.model()
+        conversation.hostedTools = Self.hostedTools(features: effectiveModel?.features ?? [],
+                                                    configuration: userMessage.configuration)
 
         if let responseID = userMessage.inResponseTo {
             conversation.deleteMessages(after: responseID)
@@ -827,7 +795,9 @@ class ChatAgent {
             body: transformedBody,
             reasoningContent: baseUserAIMessage.reasoningContent)
         conversation.add(userAIMessage)
-        conversation.model = userMessage.configuration?.model
+        // The binding's verdict, not the raw configuration: a turn with no
+        // configuration runs on the chat's bound model.
+        conversation.model = turnModelName
         conversation.shouldThink = userMessage.configuration?.shouldThink
         conversation.reasoningEffort = userMessage.configuration?.reasoningEffort
         conversation.serviceTier = userMessage.configuration?.serviceTier
@@ -1263,33 +1233,15 @@ extension ChatAgent {
     /// here if `load(messages:)` ever changes so `AILiveHarness` validates
     /// the chat-restore path end-to-end against real vendor APIs.
     static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
-        var stateMachine = MessageToPromptStateMachine()
-        return aiMessagesForTranscript(messages, stateMachine: &stateMachine)
+        AIChatToolCallRepair.repairingOrphanedToolPairs(
+            transcriptMessagesBeforeRepair(messages))
     }
 
-    /// Test-only seam: the structured (function_call/function_output)
-    /// translation of a transcript WITHOUT the orphan-repair pass. Production
-    /// `load()` now rebuilds history as plain transcript text (see
-    /// `aiMessagesForTranscript`), but `AIChatToolCallRepair` and its live
-    /// negative-control test still exercise the structured pipeline, so this
-    /// seam preserves that coverage.
+    /// Test-only seam: the structured translation WITHOUT the orphan-repair
+    /// pass, for the live negative controls that prove vendors really do
+    /// reject un-repaired orphans (so the positive tests aren't vacuous).
     static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
         var stateMachine = MessageToPromptStateMachine()
-        return messages.compactMap { message -> AITermController.Message? in
-            switch message.content {
-            case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
-                    .multipart, .watcherEvent:
-                let body = stateMachine.body(message: message)
-                return AITermController.Message(
-                    responseID: message.responseID,
-                    role: AITermController.Message.role(from: message),
-                    body: body,
-                    reasoningContent: message.agentReasoning)
-            case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
-                    .commit, .vectorStoreCreated, .userCommand, .setPermissions, .unsupported:
-                return nil
-            }
-        }
+        return aiMessagesForStructuredReplay(messages, stateMachine: &stateMachine)
     }
 }

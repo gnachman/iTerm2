@@ -880,6 +880,15 @@ class AITermController {
                                     accumulatingMessage.reasoningContent =
                                         (accumulatingMessage.reasoningContent ?? "") + reasoning
                                 }
+                                // Reasoning items are sibling state like
+                                // reasoningContent: accumulate them on the
+                                // turn so they ride into doFunctionCall (and
+                                // from there into the persisted tool-call
+                                // message) and the final assistant message.
+                                if let items = choice.reasoningItems, !items.isEmpty {
+                                    accumulatingMessage.reasoningItems =
+                                        (accumulatingMessage.reasoningItems ?? []) + items
+                                }
                                 if !accumulatingMessage.tryAppend(choice.body) {
                                     DLog("Failed to append \(choice.body) to \(accumulatingMessage). Drain and start a new message.")
                                     // drain() resets accumulatingMessage.body but does not
@@ -890,7 +899,8 @@ class AITermController {
                                         responseID: previousResponseID,
                                         role: choice.role,
                                         body: choice.body,
-                                        reasoningContent: accumulatingMessage.reasoningContent)
+                                        reasoningContent: accumulatingMessage.reasoningContent,
+                                        reasoningItems: accumulatingMessage.reasoningItems)
                                     DLog("accumulating message is now\n\(accumulatingMessage)")
                                 } else {
                                     DLog("Appended \(choice.body). accumulating message is now\n\(accumulatingMessage)")

@@ -1348,6 +1348,7 @@ struct ResponsesResponse: LLM.AnyResponse {
         // single multipart-bodied .assistant message so AITerm sees the
         // same shape produced by every other vendor.
         var bodies: [LLM.Message.Body] = []
+        var reasoningItems: [LLM.ReasoningItem] = []
         for item in body.output {
             switch item {
             case .functionToolCall(let call):
@@ -1363,7 +1364,16 @@ struct ResponsesResponse: LLM.AnyResponse {
                         bodies.append(.text("The request was refused: \(refusal.refusal)"))
                     }
                 }
-            case .fileSearchToolCall,  .webSearchToolCall,  .computerToolCall,  .reasoning,
+            case .reasoning(let item):
+                // Captured (id + encrypted payload) so the turn's reasoning
+                // can be persisted and replayed ahead of its function calls
+                // when the conversation is re-sent after a reload. Summaries
+                // surface to the user via the streaming status path, not here.
+                let summaries = item.summary.map(\.text).filter { !$0.isEmpty }
+                reasoningItems.append(LLM.ReasoningItem(id: item.id,
+                                                        encryptedContent: item.encryptedContent,
+                                                        summary: summaries.isEmpty ? nil : summaries))
+            case .fileSearchToolCall,  .webSearchToolCall,  .computerToolCall,
                     .imageGenerationCall,  .codeInterpreterToolCall,  .localShellCall,
                     .mcpToolCall,  .mcpListTools,  .mcpApprovalRequest:
                 break
@@ -1371,11 +1381,18 @@ struct ResponsesResponse: LLM.AnyResponse {
         }
         let combinedBody: LLM.Message.Body
         switch bodies.count {
-        case 0: return []
+        case 0:
+            // A reasoning-only turn (e.g. incomplete/max-token) still carries
+            // captured reasoning items; surface them on a bodiless message
+            // exactly as the streaming parser does rather than silently
+            // dropping them. A turn with neither remains empty.
+            guard !reasoningItems.isEmpty else { return [] }
+            combinedBody = .uninitialized
         case 1: combinedBody = bodies[0]
         default: combinedBody = .multipart(bodies)
         }
-        return [LLM.Message(responseID: nil, role: .assistant, body: combinedBody)]
+        return [LLM.Message(responseID: nil, role: .assistant, body: combinedBody,
+                            reasoningItems: reasoningItems.isEmpty ? nil : reasoningItems)]
     }
 }
 
