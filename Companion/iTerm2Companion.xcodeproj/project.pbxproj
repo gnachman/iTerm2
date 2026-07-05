@@ -38,6 +38,7 @@
 		73E61C64578BE54180942C4E /* CompanionHEVCFraming.swift in Sources */ = {isa = PBXBuildFile; fileRef = F163F73401D3427659D549FA /* CompanionHEVCFraming.swift */; };
 		7B624200888E205C4A51E37E /* CompanionNoise in Frameworks */ = {isa = PBXBuildFile; productRef = 142EA5B59C3ABC475159B7C4 /* CompanionNoise */; };
 		7DD44318B35BC2C0A110C3D2 /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8FA2D649F5A4E95296B9158 /* MessageBubbleView.swift */; };
+		7F305ED1D03CFC72AF4AA9BB /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4189CBA671D0F325CD1D2B5 /* ActivityView.swift */; };
 		86F3DB672FE3CEEDA09AF5C3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E24A92F9477597959F9353E0 /* Foundation.framework */; };
 		899BA5A9CE049957894AB94C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3B43AD250E788FB7B7F9B6C1 /* Assets.xcassets */; };
 		8E8B430A5226B5953DB08846 /* CompanionTransport in Frameworks */ = {isa = PBXBuildFile; productRef = 9068012419B4B4FD8700E194 /* CompanionTransport */; };
@@ -138,6 +139,7 @@
 		ADE240F5507B1D96C3F2E615 /* SessionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
 		B3A63C83AA13E583E9BE1A3D /* LaunchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LaunchView.swift; sourceTree = "<group>"; };
 		B46ADB98E9027B7F88123F82 /* AIReasoningTypes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AIReasoningTypes.swift; path = sources/AITerm/AIReasoningTypes.swift; sourceTree = "<group>"; };
+		C4189CBA671D0F325CD1D2B5 /* ActivityView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		C4678F772D92B8DEB080E170 /* CompanionFileLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionFileLog.swift; sourceTree = "<group>"; };
 		CF709FF4160D9B396A413048 /* JSONValue.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		D8D3FEA6984796DC4CD99692 /* AppModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -220,6 +222,7 @@
 				798B48FD1DB7BE770F0C9FE4 /* MailComposeView.swift */,
 				7E032AB4B164634905B48697 /* UpgradeRequiredView.swift */,
 				698CE0B1D8A47BB2E6D41FA0 /* CompanionVideoView.swift */,
+				C4189CBA671D0F325CD1D2B5 /* ActivityView.swift */,
 			);
 			path = Screens;
 			sourceTree = "<group>";
@@ -511,6 +514,7 @@
 				F9DD768544783E3F190AE0F2 /* CompanionTouchMapper.swift in Sources */,
 				B670983AE703D700B6537995 /* CompanionHistoryWindow.swift in Sources */,
 				4C1A6A3E94F16DF690886366 /* AIReasoningTypes.swift in Sources */,
+				7F305ED1D03CFC72AF4AA9BB /* ActivityView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
