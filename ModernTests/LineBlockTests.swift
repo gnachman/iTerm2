@@ -3134,6 +3134,50 @@ class LineBlockTests: XCTestCase {
         XCTAssertEqual(convert(3), Loc(x: 0, y: 2))
         XCTAssertEqual(convert(4), Loc(x: 1, y: 2))
     }
+
+    // MARK: - Content mutation counter (per-row draw cache identity)
+
+    func testMutationCounterAdvancesOnAppend() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        let before = block.mutationCounter
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        XCTAssertNotEqual(block.mutationCounter, before)
+    }
+
+    // Erasing RTL status mutates characters in place and does NOT bump
+    // `generation`, so the mutation counter must advance to keep the cache
+    // identity honest.
+    func testMutationCounterAdvancesOnInPlaceRTLErasure() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        let generationBefore = block.generation
+        let mutationBefore = block.mutationCounter
+        block.eraseRTLStatusInAllCharacters()
+        XCTAssertEqual(block.generation, generationBefore) // in-place: generation unchanged
+        XCTAssertNotEqual(block.mutationCounter, mutationBefore)
+    }
+
+    func testMutationCounterSurvivesCopy() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        block.eraseRTLStatusInAllCharacters()
+        let expected = block.mutationCounter
+        let copy = block.copy(withAbsoluteBlockNumber: 2)
+        XCTAssertEqual(copy.mutationCounter, expected)
+    }
+
+    // Two COW siblings that each take a different in-place edit must end up with
+    // distinct mutation counters. A per-block ++ would collide at the same value
+    // for different content; a globally-allocated value keeps them distinct.
+    func testMutationCounterDistinguishesDivergentCowSiblings() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        let sibling = block.cowCopy()
+        XCTAssertEqual(block.mutationCounter, sibling.mutationCounter)
+        block.eraseRTLStatusInAllCharacters()
+        sibling.eraseRTLStatusInAllCharacters()
+        XCTAssertNotEqual(block.mutationCounter, sibling.mutationCounter)
+    }
 }
 
 extension LineBlock {

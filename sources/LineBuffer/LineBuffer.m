@@ -966,6 +966,22 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                               eligibleForDWC:eligibleForDWC];
 }
 
+- (BOOL)getGeneration:(out int64_t *)generation
+        mutationCount:(out int64_t *)mutationCount
+            remainder:(out int *)remainder
+              forLine:(int)line
+                width:(int)width {
+    int rem = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:line width:width remainder:&rem];
+    if (!block) {
+        return NO;
+    }
+    *generation = block.generation;
+    *mutationCount = block.mutationCounter;
+    *remainder = rem;
+    return YES;
+}
+
 - (ScreenCharArray *)maybeScreenCharArrayForLine:(int)line
                                            width:(int)width
                                         paddedTo:(int)paddedSize

@@ -54,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
             _date = [textView drawingHelperTimestampForLine:i];
         }
         _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
+        _contentIdentity = [screen contentIdentityForLine:i];
 #if DEBUG
         assert(_screenCharLine != nil);
 #endif

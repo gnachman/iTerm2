@@ -704,6 +704,16 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         const int j = VT100GridLineInfoIndex(self, line);
         [lineInfos_[j] resetMetadata];
     }
+
+    // Advance the generation of the recycled (now-blank) lines. setAllDirty:YES
+    // above only flips the allDirty_ flag and resetMetadata does not touch the
+    // generation, so without this the rotated-in bottom lines would keep
+    // advertising the generation (and content identity) of the top-of-screen
+    // rows they used to hold, and the per-row draw cache would render them as
+    // ghost copies of that old text.
+    [self markCharsDirty:YES
+              inRectFrom:VT100GridCoordMake(0, height - y - 1)
+                      to:VT100GridCoordMake(width - 1, height - 1)];
 }
 
 - (int)scrollWholeScreenUpIntoLineBuffer:(LineBuffer *)lineBuffer
@@ -1262,20 +1272,28 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     [self setSize:otherGrid.size];
     for (int i = 0; i < size_.height; i++) {
         const VT100GridRange dirtyRange = [otherGrid dirtyRangeForLine:i];
-        if (!didScroll && !sizeChanged && dirtyRange.length <= 0) {
-            continue;
+        if (didScroll || sizeChanged || dirtyRange.length > 0) {
+            screen_char_t *dest = [self screenCharsAtLineNumber:i];
+            const screen_char_t *source = [otherGrid immutableScreenCharsAtLineNumber:i];
+            memmove(dest,
+                    source,
+                    sizeof(screen_char_t) * (size_.width + 1));
+            iTermMetadata metadata = iTermMetadataCopy([otherGrid metadataAtLineNumber:i]);
+            [self setMetadata:metadata forLineNumber:i];
+            iTermMetadataRelease(metadata);
+            if (dirtyRange.length > 0) {
+                [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
+            }
         }
-        screen_char_t *dest = [self screenCharsAtLineNumber:i];
-        const screen_char_t *source = [otherGrid immutableScreenCharsAtLineNumber:i];
-        memmove(dest,
-                source,
-                sizeof(screen_char_t) * (size_.width + 1));
-        iTermMetadata metadata = iTermMetadataCopy([otherGrid metadataAtLineNumber:i]);
-        [self setMetadata:metadata forLineNumber:i];
-        iTermMetadataRelease(metadata);
-        if (dirtyRange.length > 0) {
-            [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
-        }
+        // Mirror the source's content generation onto the destination for EVERY
+        // line (cheap; no allocation), after any setDirty: above. Without this,
+        // scrolled/resized/bidi-only lines get new content here but keep the
+        // generation the cache already bound to their old content (screenTop_ is
+        // not propagated, so the source rotates while the dest slots are fixed).
+        // The mutable grid tracks generation correctly through rotation, so
+        // adopting it makes the immutable grid the renderer reads report the
+        // right identity while still hitting the cache for truly-unchanged lines.
+        [[self lineInfoAtLineNumber:i] setGeneration:[otherGrid generationForLine:i]];
     }
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
@@ -2688,16 +2706,17 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo forLine:(int)line {
-    if (bidiInfo) {
-        if ([_bidiInfo[line] isKindOfClass:[NSNull class]]) {
-            _bidiDirty = YES;
-        }
-        _bidiInfo[line] = bidiInfo;
-    } else {
-        if (![_bidiInfo[line] isKindOfClass:[NSNull class]]) {
-            _bidiDirty = YES;
-        }
-        _bidiInfo[line] = [NSNull null];
+    id newValue = bidiInfo ?: (id)[NSNull null];
+    // Compare by value (iTermBidiDisplayInfo has content-based isEqual:) so a
+    // reordering change to an already-present line is detected, not just a
+    // null<->non-null transition.
+    const BOOL changed = ![_bidiInfo[line] isEqual:newValue];
+    _bidiInfo[line] = newValue;
+    if (changed) {
+        _bidiDirty = YES;
+        // Bidi changes a line's visual order, so it changes rendered content; the
+        // per-line generation must advance even though no cells were marked dirty.
+        [[self lineInfoAtLineNumber:line] advanceGeneration];
     }
 }
 

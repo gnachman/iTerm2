@@ -17,6 +17,7 @@
 #import "iTermData.h"
 #import "iTermImageInfo.h"
 #import "iTermMarkRenderer.h"
+#import "iTermConfigGenerationTracker.h"
 #import "iTermMetalPerFrameState.h"
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
@@ -43,14 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableSet<NSString *> *_missingImages;
     NSMutableSet<NSString *> *_loadedImages;
     iTermAttributedStringBuilderStats _stats;
-
-    // Config-generation comparison state (main thread only). See
-    // metalConfigGenerationForRenderInputs:colorSpace:fontTable:.
-    iTermRowRenderInputs _lastRenderInputs;
-    NSColorSpace *_lastColorSpace;
-    iTermFontTable *_lastFontTable;
-    uint64_t _configGeneration;
-    BOOL _haveLastRenderInputs;
+    iTermConfigGenerationTracker *_configGenerationTracker;
 }
 
 @synthesize oldCursorScreenCoord = _oldCursorScreenCoord;
@@ -59,21 +53,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (uint64_t)metalConfigGenerationForRenderInputs:(const iTermRowRenderInputs *)inputs
                                       colorSpace:(NSColorSpace *)colorSpace
                                        fontTable:(nullable iTermFontTable *)fontTable {
-    // fontTable is a stable stored property on the text view (new object only on
-    // font change), so pointer comparison is correct. Color space needs isEqual:
-    // because AppKit may vend a fresh instance for the same profile.
-    const BOOL changed = (!_haveLastRenderInputs ||
-                          memcmp(inputs, &_lastRenderInputs, sizeof(*inputs)) != 0 ||
-                          fontTable != _lastFontTable ||
-                          !(colorSpace == _lastColorSpace || [colorSpace isEqual:_lastColorSpace]));
-    if (changed) {
-        _configGeneration++;
-        _lastRenderInputs = *inputs;
-        _lastColorSpace = colorSpace;
-        _lastFontTable = fontTable;
-        _haveLastRenderInputs = YES;
-    }
-    return _configGeneration;
+    return [_configGenerationTracker generationForRenderInputs:inputs
+                                                    colorSpace:colorSpace
+                                                     fontTable:fontTable];
 }
 
 - (instancetype)init {
@@ -85,6 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                    object:nil];
         _missingImages = [NSMutableSet set];
         _loadedImages = [NSMutableSet set];
+        _configGenerationTracker = [[iTermConfigGenerationTracker alloc] init];
         iTermPreciseTimerSetEnabled(YES);
         iTermPreciseTimerStatsInit(&_stats.attrsForChar, "Compute Attrs");
         iTermPreciseTimerStatsInit(&_stats.shouldSegment, "Segment");

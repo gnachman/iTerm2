@@ -13,6 +13,13 @@
 // Globally-unique, monotonically increasing generation for grid lines. Global
 // (not per-line) so a generation value identifies a line's content uniquely
 // across all lines, which the per-row draw cache relies on to avoid collisions.
+//
+// Tradeoff: this single process-wide counter is bumped on the hot dirty path
+// (once per markCharsDirty: range, per line), so under many concurrently busy
+// sessions its cache line can ping-pong between cores (relaxed ordering keeps it
+// cheap but not free). If the per-row cache consumer that reads this doesn't
+// land, consider gating this bump, or moving to a per-grid counter combined with
+// a grid identity in the cache key (cheaper, no cross-session sharing) instead.
 static int64_t VT100LineInfoAllocateGeneration(void) {
     static _Atomic int64_t next = 1;
     return atomic_fetch_add_explicit(&next, 1, memory_order_relaxed);
@@ -58,6 +65,14 @@ static int64_t VT100LineInfoAllocateGeneration(void) {
 
 - (int64_t)generation {
     return _generation;
+}
+
+- (void)setGeneration:(int64_t)generation {
+    _generation = generation;
+}
+
+- (void)advanceGeneration {
+    _generation = VT100LineInfoAllocateGeneration();
 }
 
 - (iTermImmutableMetadata)immutableMetadata {
@@ -106,6 +121,11 @@ static int64_t VT100LineInfoAllocateGeneration(void) {
 - (id)copyWithZone:(NSZone *)zone {
     VT100LineInfo *theCopy = [[VT100LineInfo alloc] initWithWidth:width_];
     theCopy->_dirty = _dirty;
+    // The generation identifies the line's content and must survive copying: the
+    // grid copy that feeds the renderer would otherwise reset every line to
+    // generation 0, defeating the per-row cache (and violating the -generation
+    // contract that equal generations imply equal content).
+    theCopy->_generation = _generation;
     iTermMetadataRelease(theCopy->_metadata);
     theCopy->_metadata = iTermMetadataCopy(_metadata);
 

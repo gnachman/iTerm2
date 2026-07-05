@@ -18,6 +18,8 @@
 #import "iTermCache.h"
 #import "iTermColorMap.h"
 #import "iTermCommandRunner.h"
+#import "iTermConfigGenerationTracker.h"
+#import "iTermRowRenderInputs.h"
 #import "iTermTLVCodec.h"
 #import "PTYSession.h"
 #import "PTYTab.h"

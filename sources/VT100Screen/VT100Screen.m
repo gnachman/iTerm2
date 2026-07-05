@@ -497,6 +497,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return [_state screenCharArrayForLine:line];
 }
 
+- (iTermRowContentIdentity)contentIdentityForLine:(int)line {
+    return [_state contentIdentityForLine:line];
+}
+
 - (NSDate *)dateForLine:(int)line {
     return [_state dateForLine:line];
 }

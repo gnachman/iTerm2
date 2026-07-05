@@ -173,6 +173,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, nullable) LineBlock *owner;  // nil if I am an owner. This is the line block that is responsible for freeing malloced data.
 @property(nonatomic) iTermLegacyAtomicMutableArrayOfWeakObjects *clients;  // Copy-on write instances that still exist and have me as the owner.
 @property(nonatomic, readwrite) NSInteger generation;
+@property(nonatomic, readwrite) int64_t mutationCounter;
 @property(atomic, readwrite) BOOL hasBeenCopied;
 
 - (int)bufferStartOffset;

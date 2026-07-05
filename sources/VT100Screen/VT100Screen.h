@@ -15,6 +15,7 @@
 #import "VT100SyncResult.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
+#import "iTermRowContentIdentity.h"
 
 @class DVR;
 @class iTermNotificationController;
@@ -303,6 +304,10 @@ additionalWordCharacters:(nullable NSString *)additionalWordCharacters
 - (void)fireEventTrigger:(Trigger *)trigger
          capturedStrings:(NSArray<NSString *> *)capturedStrings
         useInterpolation:(BOOL)useInterpolation;
+
+// Collision-free identity of the content of displayed line |line| (grid or
+// scrollback), for keying the per-row draw cache.
+- (iTermRowContentIdentity)contentIdentityForLine:(int)line;
 
 @end
 

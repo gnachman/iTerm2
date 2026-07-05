@@ -38,6 +38,16 @@ NS_ASSUME_NONNULL_BEGIN
 // if a block's generation equals the database record's generation, it's unchanged.
 @property(nonatomic, readonly) NSInteger generation;
 
+// Advanced on every content mutation, including in-place ones that do NOT bump
+// `generation` (setBidiForLastRawLine:, RTL erasure, reloadBidiInfo). Each bump
+// takes a fresh GLOBALLY-unique value from iTermAllocateGeneration() (not a
+// per-block ++), and copies preserve it verbatim. Combined with `generation` it
+// forms a collision-free content identity for the per-row draw cache: because
+// the value is globally unique, two COW copies of a block that each take a
+// different in-place edit get distinct mutationCounters (a per-block counter
+// would have collided at the same value for different content).
+@property(nonatomic, readonly) int64_t mutationCounter;
+
 // Block this was copied from.
 @property(nonatomic, weak, readonly, nullable) LineBlock *progenitor;
 @property(nonatomic, readonly) BOOL invalidated;

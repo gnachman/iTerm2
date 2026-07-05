@@ -176,6 +176,7 @@ static void LineBlockSetMinimumGeneration(NSInteger minValue) {
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock, const char * reason) {
     const NSInteger g = iTermAllocateGeneration();
     lineBlock->_generation = g;
+    lineBlock->_mutationCounter = iTermAllocateGeneration();
 }
 
 - (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer 
@@ -495,6 +496,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
 
         // Preserve these so delta encoding will continue to work when you encode a copy.
         theCopy->_generation = _generation;
+        theCopy->_mutationCounter = _mutationCounter;
         theCopy.hasBeenCopied = YES;
 
         return theCopy;
@@ -521,6 +523,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     theCopy->cached_numlines = cached_numlines;
     theCopy->cached_numlines_width = cached_numlines_width;
     theCopy->_generation = _generation;
+    theCopy->_mutationCounter = _mutationCounter;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
     theCopy.hasBeenCopied = YES;
 
@@ -1975,23 +1978,64 @@ firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
 }
 
 - (void)reloadBidiInfo {
+    // Skip entirely if no line needs bidi work (all LTR with nil bidi), so LTR
+    // blocks don't COW-clone the buffer or advance the identity on every commit.
+    if (![self anyLineNeedsBidiReload]) {
+        return;
+    }
     [_metadataArray willMutate];
-    [self reallyReloadBidiInfo];
+    // reallyReloadBidiInfo rewrites rtlStatus into _characterBuffer in place.
+    // Route it through ModifyLineBlock so the (possibly COW-shared) buffer is
+    // uniquified first (validMutationCertificate clones _characterBuffer in
+    // place), otherwise a sibling block sharing the buffer would be corrupted.
+    ModifyLineBlock(self, [self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        (void)cert;  // Needed only for its uniquification side effect.
+        [self reallyReloadBidiInfo];
+    });
+    // Rewrites rtlStatus and (re)computes bidi without going through
+    // iTermLineBlockDidChange, so bump the content-identity counter like the
+    // other in-place mutators. Reordering affects rendering, and this runs on
+    // the sync/display path (commitLastBlock), not just on resize.
+    //
+    // LIMITATION (follow-up): this bumps whenever anyLineNeedsBidiReload is true,
+    // even when the recomputed bidi is byte-identical, and the ModifyLineBlock
+    // above COW-clones the character buffer every time when a snapshot exists. So
+    // a block that legitimately contains RTL advances its identity and clones its
+    // buffer on every commit, meaning its wrapped rows never hit the per-row cache
+    // (cache defeat) and an RTL session churns memory per frame. The correct fix
+    // is to compute bidi ONCE and annotate/store/bump only when the bidi object
+    // OR the cell rtlStatus/rtlFound actually differs (a naive "compare the bidi
+    // object" gate is wrong: it misses the rtlStatus annotation, so an
+    // eraseRTLStatusInAllCharacters'd block on restore would render LTR). Left as
+    // a scheduled follow-up since output stays correct.
+    _mutationCounter = iTermAllocateGeneration();
 }
 
 - (void)setBidiForLastRawLine:(iTermBidiDisplayInfo *)bidi {
     assert(cll_entries > 0);
     [_metadataArray setBidiInfo:bidi atLine:cll_entries - 1 rtlFound:bidi != nil];
+    // In-place mutation that does not go through iTermLineBlockDidChange, so bump
+    // the content-identity counter here (bidi affects rendering).
+    _mutationCounter = iTermAllocateGeneration();
 }
 
 - (void)eraseRTLStatusInAllCharacters {
     if (cll_entries == 0) {
         return;
     }
-    screen_char_t *c = _characterBuffer.mutablePointer;
-    for (int i = self.bufferStartOffset; i < cumulative_line_lengths[cll_entries - 1]; i++) {
-        c[i].rtlStatus = RTLStatusUnknown;
-    }
+    // Route through ModifyLineBlock so the (possibly COW-shared) character buffer
+    // is uniquified before we write rtlStatus; writing _characterBuffer directly
+    // would corrupt a sibling block that shares the buffer. cert.mutableRawBuffer
+    // is that uniquified buffer.
+    ModifyLineBlock(self, [self](id<iTermLineBlockMutationCertificate> cert) -> void {
+        screen_char_t *c = cert.mutableRawBuffer;
+        for (int i = self.bufferStartOffset; i < self->cumulative_line_lengths[self->cll_entries - 1]; i++) {
+            c[i].rtlStatus = RTLStatusUnknown;
+        }
+    });
+    // In-place character mutation that does not bump generation; keep the
+    // content-identity counter honest (RTL status affects rendering).
+    _mutationCounter = iTermAllocateGeneration();
 }
 
 // self and other will have a common ancestor by following `owner`. It may be like:
