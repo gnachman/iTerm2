@@ -280,19 +280,32 @@ final class OrchestratorDispatcher {
         if tornDown { return }
         guard case let .delivery(message, _, _) = update,
               message.author == .user,
-              case let .userCommand(command) = message.content,
-              case let .workgroupPermissionResponse(requestID, approved) = command else {
+              case let .userCommand(command) = message.content else {
             return
         }
-        // Normalize case at the lookup boundary. UUID().uuidString returns
-        // uppercase, and pendingPermissionPrompts is keyed by that exact
-        // string. If anything in the message round-trip ever lower-cases
-        // the requestID (e.g. a future JSON round-trip, a UI bridge that
-        // canonicalizes IDs), the lookup would miss and the continuation
-        // would park forever with no diagnostic.
-        let key = requestID.uppercased()
-        if let continuation = pendingPermissionPrompts.removeValue(forKey: key) {
-            continuation.resume(returning: approved)
+        switch command {
+        case let .workgroupPermissionResponse(requestID, approved):
+            // Normalize case at the lookup boundary. UUID().uuidString returns
+            // uppercase, and pendingPermissionPrompts is keyed by that exact
+            // string. If anything in the message round-trip ever lower-cases
+            // the requestID (e.g. a future JSON round-trip, a UI bridge that
+            // canonicalizes IDs), the lookup would miss and the continuation
+            // would park forever with no diagnostic.
+            let key = requestID.uppercased()
+            if let continuation = pendingPermissionPrompts.removeValue(forKey: key) {
+                continuation.resume(returning: approved)
+            }
+        case .stop:
+            // The user pressed Stop. ChatService cancels the in-flight turn and
+            // clears the queued backlog; cancel this chat's registered watchers
+            // too, so a later status transition can't publish a watcherEvent
+            // that silently re-arms the orchestration loop after the user asked
+            // everything to stop.
+            cancelAllWatchers()
+        case .enableOrchestrationResponse, .revokeOrchestrationPermission:
+            // Consumed elsewhere (ChatAgent / OrchestratorClient via their own
+            // broker subscriptions). Not the dispatcher's concern.
+            break
         }
     }
 
@@ -1651,6 +1664,29 @@ final class OrchestratorDispatcher {
         }
         removeWatcherAuxiliaries(watcherID: watcherID)
         return .ack
+    }
+
+    // Cancel and forget every watcher on this chat, tearing down each one's
+    // escalation timer and screen poller. Called when the user presses Stop:
+    // combined with ChatService cancelling the in-flight turn and clearing the
+    // queued backlog, dropping the watchers means a later status transition
+    // can't fire a watcherEvent that restarts the loop. No status_update is
+    // published (the user asked to stop, not to be notified); watches they
+    // still want can be re-registered by asking the agent again.
+    @MainActor
+    private func cancelAllWatchers() {
+        guard !watchers.isEmpty else { return }
+        let ids = watchers.map { $0.watcherID }
+        watchers.removeAll()
+        for id in ids {
+            removeWatcherAuxiliaries(watcherID: id)
+        }
+        // Transition history is only meaningful while a watcher is armed;
+        // doRegisterWatch reseeds it before appending, so clearing it now just
+        // avoids carrying stale per-session state.
+        sessionStateHistory.removeAll()
+        persistWatchers()
+        RLog("[Orchestrator \(chatID)] Stop: cancelled \(ids.count) watcher(s)")
     }
 
     @MainActor

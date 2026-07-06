@@ -109,6 +109,15 @@ Major New Features:
   “[defunct session]” once the target is
   gone instead of leaking a raw GUID.
 
+- In AI chat orchestration mode, pressing Stop
+  now halts the whole pipeline: it cancels the
+  in-flight reply, drops any queued turns, and
+  cancels the chat’s registered watchers, so a
+  session going idle can no longer restart the
+  loop after you asked it to stop. A message you
+  type also jumps ahead of pending status
+  updates instead of waiting behind them.
+
 - A new AI chat created without a session to
   link to now offers to enable orchestration
   mode, mirroring the link offer shown when a
