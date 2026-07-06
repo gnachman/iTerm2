@@ -1563,6 +1563,15 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 aLine[cursor_.x + charsToInsert].code = 0;
             }
             aLine[cursor_.x + charsToInsert].complexChar = NO;
+            // This cell is one past the copied run, so it is outside the
+            // markCharsDirty: rect above, and that dirty call is itself gated by the
+            // memcmp "did anything change" optimization. Mark this cell dirty
+            // explicitly so the DWC-skip/blank side-write always advances the line's
+            // content generation (otherwise a row cache keyed on it could serve a
+            // stale blob that draws a stray glyph here).
+            [self markCharsDirty:YES
+                      inRectFrom:VT100GridCoordMake(cursor_.x + charsToInsert, lineNumber)
+                              to:VT100GridCoordMake(cursor_.x + charsToInsert, lineNumber)];
         }
         self.cursorX = newx;
         idx += charsToInsert;
@@ -1873,6 +1882,12 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                 [self screenCharsAtLineNumber:lineNumberAboveScrollRegion];
             if (pred[size_.width].code == EOL_SOFT) {
                 pred[size_.width].code = EOL_HARD;
+                // This line is above the scrolled rect, so the markCharsDirty: above
+                // does not cover it. Mark it dirty so its generation advances and
+                // the changed continuation mark re-syncs to the immutable grid.
+                [self markCharsDirty:YES
+                          inRectFrom:VT100GridCoordMake(size_.width - 1, lineNumberAboveScrollRegion)
+                                  to:VT100GridCoordMake(size_.width - 1, lineNumberAboveScrollRegion)];
             }
         }
         if (rect.origin.x + rect.size.width == size_.width && !softBreak) {
@@ -3084,6 +3099,14 @@ static void DumpBuf(screen_char_t* p, int n) {
         } else {
             NSLog(@"Warning! EOL_DWC without DWC_SKIP at line %d", lineNumber);
         }
+        // A cell (and the continuation mark) on this line changed. Mark it dirty so
+        // its per-line generation advances and copyDirtyFromGrid: re-syncs the row;
+        // callers here (e.g. scrollRect: on the line above the region) do not
+        // otherwise cover this line, which would leave the row cache serving the
+        // stale DWC_SKIP glyph.
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(size_.width - 1, lineNumber)
+                          to:VT100GridCoordMake(size_.width - 1, lineNumber)];
     }
 }
 

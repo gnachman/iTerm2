@@ -186,7 +186,14 @@ static vector_float4 VectorForColor(NSColor *color) {
     // generation by exact comparison against the previous frame (collision-free,
     // unlike a hash). The color space and font table are compared as objects
     // since they can't be flattened exactly into the struct.
+    // Pass the SOURCE color map (textView.colorMap), not _colorMap: the latter is
+    // a fresh copy made every frame (line above), so its identity would differ
+    // each frame and bump the generation unconditionally, defeating the cache. The
+    // source object is stable across frames and only changes on an actual map swap
+    // (profile/theme change), which is exactly what the identity check must catch;
+    // in-place palette edits are still caught by _renderInputs.colorMapGeneration.
     _configGeneration = [glue metalConfigGenerationForRenderInputs:&_renderInputs
+                                                          colorMap:textView.colorMap
                                                         colorSpace:_colorSpace
                                                          fontTable:_fontTable];
 }

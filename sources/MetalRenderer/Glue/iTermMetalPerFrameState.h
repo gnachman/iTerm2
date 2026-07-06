@@ -16,8 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 @class PTYTextView;
 @class VT100Screen;
 @class iTermAttributedStringBuilder;
+@class iTermColorMap;
 @class iTermFontTable;
 @class iTermImageWrapper;
+@class iTermRowOutputCache;
 
 @protocol iTermMetalPerFrameStateDelegate <NSObject>
 // Screen-relative cursor location on last frame
@@ -33,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 // the inputs differ from the previous frame (exact comparison, collision-free).
 // Used to key the per-row output cache.
 - (uint64_t)metalConfigGenerationForRenderInputs:(const iTermRowRenderInputs *)inputs
+                                        colorMap:(nullable iTermColorMap *)colorMap
                                       colorSpace:(NSColorSpace *)colorSpace
                                        fontTable:(nullable iTermFontTable *)fontTable;
 @end
@@ -51,7 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue
                          context:(CGContextRef)context
               doubleWidthContext:(CGContextRef)doubleWidthContext
-         attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder NS_DESIGNATED_INITIALIZER;
+         attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder
+                  rowOutputCache:(nullable iTermRowOutputCache *)rowOutputCache NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

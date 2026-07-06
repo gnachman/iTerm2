@@ -46,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
                                 width:(size_t)width
                   allowOtherMarkStyle:(BOOL)allowOtherMarkStyle
                     timestampsEnabled:(BOOL)timestampsEnabled
+                 buildContentIdentity:(BOOL)buildContentIdentity
                                   row:(int)i
               totalScrollbackOverflow:(long long)totalScrollbackOverflow {
     self = [super init];
@@ -54,7 +55,13 @@ NS_ASSUME_NONNULL_BEGIN
             _date = [textView drawingHelperTimestampForLine:i];
         }
         _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
-        _contentIdentity = [screen contentIdentityForLine:i];
+        // Only the per-row output cache consumes the content identity, and building
+        // it can walk the line-buffer block index for scrollback rows. Skip it when
+        // the cache is disabled (the default): generation 0 is the uncacheable
+        // sentinel, so a zeroed identity is a correct no-op.
+        if (buildContentIdentity) {
+            _contentIdentity = [screen contentIdentityForLine:i];
+        }
 #if DEBUG
         assert(_screenCharLine != nil);
 #endif
@@ -146,6 +153,7 @@ NS_ASSUME_NONNULL_BEGIN
     long long _totalScrollbackOverflow;
     BOOL _allowOtherMarkStyle;
     BOOL _timestampsEnabled;
+    BOOL _cacheEnabled;
 }
 
 - (instancetype)initWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -162,6 +170,7 @@ NS_ASSUME_NONNULL_BEGIN
         _totalScrollbackOverflow = [screen totalScrollbackOverflow];
         _allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
         _timestampsEnabled = configuration->_timestampsEnabled;
+        _cacheEnabled = [iTermAdvancedSettingsModel metalRowOutputCacheEnabled];
     }
     return self;
 }
@@ -173,6 +182,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                width:_width
                                                  allowOtherMarkStyle:_allowOtherMarkStyle
                                                    timestampsEnabled:_timestampsEnabled
+                                                buildContentIdentity:_cacheEnabled
                                                                  row:line
                                              totalScrollbackOverflow:_totalScrollbackOverflow];
 }

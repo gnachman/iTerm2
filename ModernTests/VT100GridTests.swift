@@ -1225,8 +1225,9 @@ class VT100GridTests: XCTestCase {
         ]
         XCTAssertEqual(grid.allLinesAsStrings, expected)
 
-        // Only the two rows in the scrolled region (1 and 2) should be marked dirty
-        XCTAssertEqual(grid.dirtyIndexes, IndexSet([1, 2]))
+        // Rows 1 and 2 are the scrolled region; row 0 (above it) had its broken
+        // split-DWC cleaned up, so it is dirty too.
+        XCTAssertEqual(grid.dirtyIndexes, IndexSet([0, 1, 2]))
     }
 
     func testScrollRectDownBy_One_CleansSplitDWCAtTop() {
@@ -1265,8 +1266,9 @@ class VT100GridTests: XCTestCase {
         ]
         XCTAssertEqual(grid.allLinesAsStrings, expectedContent)
 
-        // Only the two rows in the region (1 and 2) should be marked dirty
-        XCTAssertEqual(grid.dirtyIndexes, IndexSet([1, 2]))
+        // Rows 1 and 2 are the region; row 0 (above it) had its broken split-DWC
+        // cleaned up, so it is dirty too.
+        XCTAssertEqual(grid.dirtyIndexes, IndexSet([0, 1, 2]))
     }
 
     func testScrollRectDownBy_NegativeOne_FullRegion_CleansSplitDwc() {
@@ -1367,8 +1369,9 @@ class VT100GridTests: XCTestCase {
         ]
         XCTAssertEqual(grid.allLinesAsStrings, expectedContent)
 
-        // Only rows 1, 2, 3 (the scrolled region) are dirty
-        XCTAssertEqual(grid.dirtyIndexes, IndexSet([1, 2, 3]))
+        // Rows 1, 2, 3 are the scrolled region; row 0 (above it) had its split-DWC
+        // at the end cleaned up, so it is dirty too.
+        XCTAssertEqual(grid.dirtyIndexes, IndexSet([0, 1, 2, 3]))
     }
 
     func testScrollRectDownBy_NegativeOne_RegionFromCol1ToRightMargin_CleansSplitDwcAndMarksDirty() {
@@ -1495,8 +1498,9 @@ class VT100GridTests: XCTestCase {
         ]
         XCTAssertEqual(grid.allLinesAsStrings, expectedContent)
 
-        // Only the two rows in the scrolled region (rows 1 and 2) should be dirty
-        XCTAssertEqual(grid.dirtyIndexes, IndexSet([1, 2]))
+        // Rows 1 and 2 are the scrolled region; row 0 (above it) had its split-DWC
+        // cleaned up, so it is dirty too.
+        XCTAssertEqual(grid.dirtyIndexes, IndexSet([0, 1, 2]))
     }
 
     func testScrollRectDownBy_MoveContinuationMarkToEdgeOfRect() {
@@ -1524,8 +1528,9 @@ class VT100GridTests: XCTestCase {
         ]
         XCTAssertEqual(grid.allLinesAsStrings, expectedContent)
 
-        // Only the two rows in the scrolled region (rows 1 and 2) should be dirty
-        XCTAssertEqual(grid.dirtyIndexes, IndexSet([1, 2, 3]))
+        // Rows 1, 2, 3 are the scrolled region; row 0 (above it) had its split-DWC
+        // cleaned up, so it is dirty too.
+        XCTAssertEqual(grid.dirtyIndexes, IndexSet([0, 1, 2, 3]))
     }
 
     func testScrollRectDownBy_MoveContinuationMarkToEdgeOfRect_ScrollUp() {
@@ -1552,7 +1557,8 @@ class VT100GridTests: XCTestCase {
             "\n"
         ]
         XCTAssertEqual(grid.allLinesAsStrings, expectedContent)
-        XCTAssertEqual(grid.dirtyIndexes, IndexSet([1, 2, 3]))
+        // Row 0 (above the region) had its split-DWC cleaned up, so it is dirty too.
+        XCTAssertEqual(grid.dirtyIndexes, IndexSet([0, 1, 2, 3]))
     }
 
 
@@ -2447,7 +2453,10 @@ class VT100GridTests: XCTestCase {
                                                          startingAtOffset: 0,
                                                          with: dc))
         XCTAssertEqual(grid3.allLinesAsStrings, ["ab\n", "\n"])
-        XCTAssertEqual(grid3.dirtyIndexes, IndexSet([1]))  // Don't need to set DWC_SKIP->NULL char to dirty
+        // The prior line's DWC_SKIP cell and continuation mark changed, so it is
+        // marked dirty to keep the per-line content generation accurate (the row
+        // cache keys on it). Line 1 is dirty from the erase itself.
+        XCTAssertEqual(grid3.dirtyIndexes, IndexSet([0, 1]))
     }
 
     func testMoveCursorToLeftMargin() {

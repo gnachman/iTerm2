@@ -4,10 +4,10 @@
 //
 //  Assigns a stable, collision-free generation to a set of row-build inputs by
 //  exact comparison against the previous call (not by hashing). The generation
-//  advances only when the inputs, color space, or font table actually change,
-//  so unchanged frames keep the same value and a per-row cache keyed on it stays
-//  valid. Because it compares rather than hashes, distinct inputs can never map
-//  to the same generation (a collision would serve a stale cached row).
+//  advances only when the inputs, color map, color space, or font table actually
+//  change, so unchanged frames keep the same value and a per-row cache keyed on
+//  it stays valid. Because it compares rather than hashes, distinct inputs can
+//  never map to the same generation (a collision would serve a stale cached row).
 //
 //  One instance per text view (the comparison is against that view's previous
 //  frame). Not thread-safe; use from a single thread (the main thread).
@@ -18,11 +18,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermColorMap;
 @class iTermFontTable;
 
 @interface iTermConfigGenerationTracker : NSObject
 
 - (uint64_t)generationForRenderInputs:(const iTermRowRenderInputs *)inputs
+                             colorMap:(nullable iTermColorMap *)colorMap
                            colorSpace:(NSColorSpace *)colorSpace
                             fontTable:(nullable iTermFontTable *)fontTable;
 

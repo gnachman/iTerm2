@@ -713,6 +713,20 @@ typedef struct {
         iTermMetadata metadata = lineInfo.metadata;
         metadata.lineAttribute = attr;
         lineInfo.metadata = metadata;
+        if (oldAttr != attr) {
+            // The screen_char_t contents are unchanged, but the row build bakes
+            // lineAttribute into the glyph keys (top-half vs bottom-half glyph
+            // selection for double-height lines), so a DHL-top → DHL-bottom (or
+            // DWL → DHL) transition changes what is drawn. Mark the line dirty over
+            // its full width, matching the sibling width-changing branch below.
+            // This advances the content generation AND makes copyDirtyFromGrid:
+            // actually copy the changed metadata into the immutable grid the
+            // renderer reads; advancing the generation alone would leave that grid
+            // reporting a fresh identity with the stale lineAttribute.
+            [lineInfo setDirty:YES
+                       inRange:VT100GridRangeMake(0, width)
+             updateTimestampTo:metadata.timestamp];
+        }
         return;
     }
 

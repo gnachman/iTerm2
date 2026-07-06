@@ -10,61 +10,35 @@
 
 #import <list>
 #import <string.h>
+#import <string>
+#import <string_view>
 
 namespace {
 
-// Owns malloc'd copies of the three blobs (no ObjC objects in the container, so
-// no ARC-in-C++-container subtleties). Move-only.
+// Owns byte copies of the three blobs in std::string members (arbitrary bytes,
+// not text), so the struct is trivially movable/destructible: no ObjC objects in
+// the container (no ARC-in-C++-container subtleties) and no hand-rolled
+// rule-of-five to keep in sync.
 struct Entry {
-    iTermRowCacheKey key;
-    void *glyphKeys = nullptr;
-    size_t glyphKeysLength = 0;
-    void *attributes = nullptr;
-    size_t attributesLength = 0;
-    void *background = nullptr;
-    size_t backgroundLength = 0;
+    iTermRowCacheKey key{};
+    std::string glyphKeys;
+    std::string attributes;
+    std::string background;
     NSUInteger glyphKeyCount = 0;
     int rleCount = 0;
     int drawableGlyphs = 0;
     bool hasUnderlineOrStrikethrough = false;
-
-    Entry() = default;
-    ~Entry() {
-        free(glyphKeys);
-        free(attributes);
-        free(background);
-    }
-    Entry(Entry &&other) noexcept { moveFrom(other); }
-    Entry &operator=(Entry &&other) noexcept {
-        if (this != &other) {
-            free(glyphKeys);
-            free(attributes);
-            free(background);
-            moveFrom(other);
-        }
-        return *this;
-    }
-    Entry(const Entry &) = delete;
-    Entry &operator=(const Entry &) = delete;
-
-private:
-    void moveFrom(Entry &other) {
-        key = other.key;
-        glyphKeys = other.glyphKeys;             glyphKeysLength = other.glyphKeysLength;
-        attributes = other.attributes;           attributesLength = other.attributesLength;
-        background = other.background;            backgroundLength = other.backgroundLength;
-        glyphKeyCount = other.glyphKeyCount;
-        rleCount = other.rleCount;
-        drawableGlyphs = other.drawableGlyphs;
-        hasUnderlineOrStrikethrough = other.hasUnderlineOrStrikethrough;
-        other.glyphKeys = other.attributes = other.background = nullptr;
-    }
 };
 
 struct KeyHash {
     using is_avalanching = void;
     size_t operator()(const iTermRowCacheKey &k) const noexcept {
-        return (size_t)ankerl::unordered_dense::detail::wyhash::hash(&k, sizeof(k));
+        // Hash the key's raw bytes via the library's PUBLIC string_view hash
+        // (avoiding the detail::wyhash internal path, which could move on a
+        // library update). Safe because the key is hole-free and memset(0) before
+        // population, so its byte image is deterministic.
+        return (size_t)ankerl::unordered_dense::hash<std::string_view>{}(
+            std::string_view(reinterpret_cast<const char *>(&k), sizeof(k)));
     }
 };
 
@@ -117,9 +91,9 @@ hasUnderlineOrStrikethrough:(out BOOL *)hasUnderlineOrStrikethrough {
     if (glyphKeys.count < entry.glyphKeyCount) {
         glyphKeys.count = entry.glyphKeyCount;
     }
-    memcpy(glyphKeys.mutableBytes, entry.glyphKeys, entry.glyphKeysLength);
-    memcpy(attributes, entry.attributes, entry.attributesLength);
-    memcpy(background, entry.background, entry.backgroundLength);
+    memcpy(glyphKeys.mutableBytes, entry.glyphKeys.data(), entry.glyphKeys.size());
+    memcpy(attributes, entry.attributes.data(), entry.attributes.size());
+    memcpy(background, entry.background.data(), entry.background.size());
     *glyphKeyCount = entry.glyphKeyCount;
     *rleCount = entry.rleCount;
     *drawableGlyphs = entry.drawableGlyphs;
@@ -147,15 +121,9 @@ hasUnderlineOrStrikethrough:(BOOL)hasUnderlineOrStrikethrough {
 
     Entry entry;
     entry.key = *key;
-    entry.glyphKeys = malloc(glyphKeysLength);
-    memcpy(entry.glyphKeys, glyphKeys, glyphKeysLength);
-    entry.glyphKeysLength = glyphKeysLength;
-    entry.attributes = malloc(attributesLength);
-    memcpy(entry.attributes, attributes, attributesLength);
-    entry.attributesLength = attributesLength;
-    entry.background = malloc(backgroundLength);
-    memcpy(entry.background, background, backgroundLength);
-    entry.backgroundLength = backgroundLength;
+    entry.glyphKeys.assign(reinterpret_cast<const char *>(glyphKeys), glyphKeysLength);
+    entry.attributes.assign(reinterpret_cast<const char *>(attributes), attributesLength);
+    entry.background.assign(reinterpret_cast<const char *>(background), backgroundLength);
     entry.glyphKeyCount = glyphKeyCount;
     entry.rleCount = rleCount;
     entry.drawableGlyphs = drawableGlyphs;

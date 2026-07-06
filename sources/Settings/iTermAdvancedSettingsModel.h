@@ -523,6 +523,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)threeFingerDragSendsMouseReports;
 + (BOOL)throttleMetalConcurrentFrames;
 + (BOOL)metalSynchronizedDrawing;
++ (BOOL)metalRowOutputCacheEnabled;
 + (double)timeBetweenBlinks;
 + (double)timeBetweenTips;
 + (void)setTimeBetweenTips:(double)time;

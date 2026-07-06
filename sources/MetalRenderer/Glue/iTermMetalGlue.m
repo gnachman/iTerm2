@@ -19,6 +19,7 @@
 #import "iTermMarkRenderer.h"
 #import "iTermConfigGenerationTracker.h"
 #import "iTermMetalPerFrameState.h"
+#import "iTermRowOutputCache.h"
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
@@ -45,15 +46,19 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableSet<NSString *> *_loadedImages;
     iTermAttributedStringBuilderStats _stats;
     iTermConfigGenerationTracker *_configGenerationTracker;
+    // Persists across frames so unchanged rows can be reused. One per text view.
+    iTermRowOutputCache *_rowOutputCache;
 }
 
 @synthesize oldCursorScreenCoord = _oldCursorScreenCoord;
 @synthesize lastTimeCursorMoved = _lastTimeCursorMoved;
 
 - (uint64_t)metalConfigGenerationForRenderInputs:(const iTermRowRenderInputs *)inputs
+                                        colorMap:(nullable iTermColorMap *)colorMap
                                       colorSpace:(NSColorSpace *)colorSpace
                                        fontTable:(nullable iTermFontTable *)fontTable {
     return [_configGenerationTracker generationForRenderInputs:inputs
+                                                      colorMap:colorMap
                                                     colorSpace:colorSpace
                                                      fontTable:fontTable];
 }
@@ -68,6 +73,12 @@ NS_ASSUME_NONNULL_BEGIN
         _missingImages = [NSMutableSet set];
         _loadedImages = [NSMutableSet set];
         _configGenerationTracker = [[iTermConfigGenerationTracker alloc] init];
+        // Only visible rows are looked up in a frame; caching beyond the viewport
+        // only speeds scrollback navigation, so a modest multiple of a tall
+        // viewport is plenty. Each entry owns row-sized blobs (~20-25 KB on a wide
+        // pane), so a larger cap would retain tens of MB per text view across split
+        // panes and tabs for near-zero extra hit rate.
+        _rowOutputCache = [[iTermRowOutputCache alloc] initWithCapacity:256];
         iTermPreciseTimerSetEnabled(YES);
         iTermPreciseTimerStatsInit(&_stats.attrsForChar, "Compute Attrs");
         iTermPreciseTimerStatsInit(&_stats.shouldSegment, "Segment");
@@ -128,7 +139,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                         glue:self
                                                      context:self.delegate.metalGlueContext
                                          doubleWidthContext:self.delegate.metalGlueContextDoubleWidth
-                                     attributedStringBuilder:attributedStringBuilder];
+                                     attributedStringBuilder:attributedStringBuilder
+                                              rowOutputCache:_rowOutputCache];
 }
 
 - (void)metalDidFindImages:(NSSet<NSString *> *)foundImages

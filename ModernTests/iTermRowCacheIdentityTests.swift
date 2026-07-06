@@ -126,8 +126,8 @@ final class iTermRowCacheIdentityTests: XCTestCase {
         let tracker = iTermConfigGenerationTracker()
         var inputs = iTermRowRenderInputs()
         let colorSpace = NSColorSpace.sRGB
-        let g1 = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
-        let g2 = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        let g1 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
+        let g2 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         XCTAssertEqual(g1, g2)
     }
 
@@ -135,9 +135,9 @@ final class iTermRowCacheIdentityTests: XCTestCase {
         let tracker = iTermConfigGenerationTracker()
         var inputs = iTermRowRenderInputs()
         let colorSpace = NSColorSpace.sRGB
-        let g1 = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        let g1 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         inputs.reverseVideo = true
-        let g2 = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        let g2 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         XCTAssertNotEqual(g1, g2)
     }
 
@@ -145,17 +145,36 @@ final class iTermRowCacheIdentityTests: XCTestCase {
         let tracker = iTermConfigGenerationTracker()
         var inputs = iTermRowRenderInputs()
         let colorSpace = NSColorSpace.sRGB
-        let g1 = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        let g1 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         inputs.colorMapGeneration = 42
-        let g2 = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        let g2 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         XCTAssertNotEqual(g1, g2)
+    }
+
+    // A colorMap OBJECT swap must advance the generation even when the scalar
+    // colorMapGeneration coincides (a fresh map's per-object counter can match the
+    // previous map's last value). Object identity, not the scalar, catches this.
+    func testConfigGenerationAdvancesWhenColorMapObjectSwapsWithSameScalar() {
+        let tracker = iTermConfigGenerationTracker()
+        var inputs = iTermRowRenderInputs()
+        let colorSpace = NSColorSpace.sRGB
+        let mapA = iTermColorMap()
+        let mapB = iTermColorMap()
+        // Both freshly constructed, so inputs.colorMapGeneration (left at 0) is the
+        // same for both: only the object identity differs.
+        let g1 = tracker.generation(for: &inputs, colorMap: mapA, colorSpace: colorSpace, fontTable: nil)
+        let g2 = tracker.generation(for: &inputs, colorMap: mapB, colorSpace: colorSpace, fontTable: nil)
+        XCTAssertNotEqual(g1, g2)
+        // Same object again with unchanged inputs: stable.
+        let g3 = tracker.generation(for: &inputs, colorMap: mapB, colorSpace: colorSpace, fontTable: nil)
+        XCTAssertEqual(g2, g3)
     }
 
     func testConfigGenerationAdvancesWhenColorSpaceChanges() {
         let tracker = iTermConfigGenerationTracker()
         var inputs = iTermRowRenderInputs()
-        let g1 = tracker.generation(for: &inputs, colorSpace: .sRGB, fontTable: nil)
-        let g2 = tracker.generation(for: &inputs, colorSpace: .genericRGB, fontTable: nil)
+        let g1 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: .sRGB, fontTable: nil)
+        let g2 = tracker.generation(for: &inputs, colorMap: nil, colorSpace: .genericRGB, fontTable: nil)
         XCTAssertNotEqual(g1, g2)
     }
 
@@ -165,11 +184,11 @@ final class iTermRowCacheIdentityTests: XCTestCase {
         let tracker = iTermConfigGenerationTracker()
         var inputs = iTermRowRenderInputs()
         let colorSpace = NSColorSpace.sRGB
-        let a = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        let a = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         inputs.reverseVideo = true
-        _ = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        _ = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         inputs.reverseVideo = false
-        let c = tracker.generation(for: &inputs, colorSpace: colorSpace, fontTable: nil)
+        let c = tracker.generation(for: &inputs, colorMap: nil, colorSpace: colorSpace, fontTable: nil)
         XCTAssertNotEqual(a, c)
     }
 }
