@@ -1043,6 +1043,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                      name:@"iTermWindowWillMiniaturize"
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowOcclusionStateDidChange:)
+                                                     name:NSWindowDidChangeOcclusionStateNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(autoComposerDidChange:)
                                                      name:iTermAutoComposerDidChangeNotification
                                                    object:nil];
@@ -7807,6 +7811,21 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     DLog(@"windowDidMiniaturize for %@", self);
     if (_alertOnMarksinOffscreenSessions) {
         [self sync];
+    }
+}
+
+// Fires on orderOut/orderFront (e.g., a hotkey window being hidden or revealed), which do not go
+// through the miniaturize or tab-selection paths that normally poke the cadence controller.
+- (void)windowOcclusionStateDidChange:(NSNotification *)notification {
+    if (notification.object != self.view.window) {
+        return;
+    }
+    DLog(@"windowOcclusionStateDidChange for %@", self);
+    [_cadenceController changeCadenceIfNeeded];
+    if (self.view.window.occlusionState & NSWindowOcclusionStateVisible) {
+        // Ensure the content is fresh the moment the window is revealed rather than waiting for
+        // the next cadence tick.
+        [_textview requestDelegateRedraw];
     }
 }
 
@@ -21361,7 +21380,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     iTermUpdateCadenceState state;
     state.active = _active;
     state.idle = self.isIdle;
-    state.visible = [_delegate sessionBelongsToVisibleTab] && !self.view.window.isMiniaturized;
+    // isVisible distinguishes windows that were ordered out (e.g., a hidden hotkey window) from
+    // on-screen windows. Without it, a hidden hotkey window with a non-idle session redraws at
+    // the full active cadence forever. See the offscreen predicate in -shouldAlert for precedent.
+    state.visible = ([_delegate sessionBelongsToVisibleTab] &&
+                     self.view.window.isVisible &&
+                     !self.view.window.isMiniaturized);
 
     if (self.useMetal) {
         if ([iTermPreferences maximizeThroughput] &&

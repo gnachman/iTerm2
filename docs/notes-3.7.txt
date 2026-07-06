@@ -2691,3 +2691,12 @@ Bug Fixes:
   animates: the member tabs slide shut and open.
   Works on horizontal and vertical tab bars in
   every theme.
+- Hidden hotkey windows no longer redraw
+  at the full active cadence. Sessions
+  with continuous output (builds, tails,
+  agents) in a hidden hotkey window used
+  to burn CPU and GPU rendering frames
+  nobody could see, spinning fans on
+  laptops. Hidden windows now drop to
+  the background refresh rate and repaint
+  the instant they are revealed.
