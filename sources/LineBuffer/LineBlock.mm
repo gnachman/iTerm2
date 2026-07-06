@@ -179,6 +179,16 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock,
     lineBlock->_mutationCounter = iTermAllocateGeneration();
 }
 
+// Central hook for an IN-PLACE content mutation: a cell/bidi/rtlStatus rewrite
+// that changes what a row renders but not the block's structure (line count /
+// offsets). It advances only the content-identity mutation counter, unlike
+// iTermLineBlockDidChange which also advances _generation for structural changes.
+// Every in-place mutator must call this so "content changed" and "identity
+// advanced" cannot diverge (the per-row draw cache keys on the counter).
+NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lineBlock, const char *reason) {
+    lineBlock->_mutationCounter = iTermAllocateGeneration();
+}
+
 - (instancetype)initWithCharacterBuffer:(iTermCharacterBuffer *)characterBuffer 
                                    guid:(NSString *)guid {
     self = [super init];
@@ -2008,15 +2018,15 @@ firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
     // object" gate is wrong: it misses the rtlStatus annotation, so an
     // eraseRTLStatusInAllCharacters'd block on restore would render LTR). Left as
     // a scheduled follow-up since output stays correct.
-    _mutationCounter = iTermAllocateGeneration();
+    iTermLineBlockDidMutateInPlace(self, "reload bidi");
 }
 
 - (void)setBidiForLastRawLine:(iTermBidiDisplayInfo *)bidi {
     assert(cll_entries > 0);
     [_metadataArray setBidiInfo:bidi atLine:cll_entries - 1 rtlFound:bidi != nil];
-    // In-place mutation that does not go through iTermLineBlockDidChange, so bump
-    // the content-identity counter here (bidi affects rendering).
-    _mutationCounter = iTermAllocateGeneration();
+    // In-place mutation that does not go through iTermLineBlockDidChange (bidi
+    // affects rendering).
+    iTermLineBlockDidMutateInPlace(self, "set bidi for last raw line");
 }
 
 - (void)eraseRTLStatusInAllCharacters {
@@ -2033,9 +2043,9 @@ firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
             c[i].rtlStatus = RTLStatusUnknown;
         }
     });
-    // In-place character mutation that does not bump generation; keep the
-    // content-identity counter honest (RTL status affects rendering).
-    _mutationCounter = iTermAllocateGeneration();
+    // In-place character mutation that does not change structure (RTL status
+    // affects rendering).
+    iTermLineBlockDidMutateInPlace(self, "erase RTL status");
 }
 
 // self and other will have a common ancestor by following `owner`. It may be like:

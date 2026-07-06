@@ -12,6 +12,11 @@
 #import "VT100GridTypes.h"
 #import "iTermMetadata.h"
 
+// Reserves a contiguous block of `count` line-content generations from the global
+// sequence and returns its base, so a caller can hand out `count` distinct,
+// never-reused identities in O(1). Used for the all-dirty grid case.
+int64_t VT100LineInfoAllocateGenerationBlock(int64_t count);
+
 @protocol VT100LineInfoReading<NSObject>
 @property(nonatomic, readonly) iTermImmutableMetadata immutableMetadata;
 

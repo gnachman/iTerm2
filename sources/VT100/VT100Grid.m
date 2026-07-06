@@ -49,6 +49,13 @@ static NSString *const kGridSizeKey = @"Size";
     NSMutableData *resultLine_;
     screen_char_t savedDefaultChar_;
     NSTimeInterval _allDirtyTimestamp;
+    BOOL allDirty_;
+    // Base of a reserved block of line generations for the current all-dirty
+    // epoch. While allDirty_ is set, generationForLine: hands line y the identity
+    // _allDirtyGenerationBase + y so every line reports a distinct, never-reused
+    // generation (the per-row cache misses uniformly) without touching every
+    // VT100LineInfo. Reserved once per NO->YES transition; see setAllDirty:.
+    int64_t _allDirtyGenerationBase;
     NSMutableArray *_bidiInfo;  // iTermBidiDisplayInfo or NSNull
     BOOL _bidiDirty;  // Did _bidiInfo change?
     // Number of lines counting from the top that we know are DWC-free.
@@ -59,7 +66,6 @@ static NSString *const kGridSizeKey = @"Size";
 @synthesize scrollRegionRows = scrollRegionRows_;
 @synthesize scrollRegionCols = scrollRegionCols_;
 @synthesize useScrollRegionCols = useScrollRegionCols_;
-@synthesize allDirty = allDirty_;
 @synthesize lines = lines_;
 @synthesize savedDefaultChar = savedDefaultChar_;
 @synthesize cursor = cursor_;
@@ -388,8 +394,32 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return [lineInfo dirtyRange];
 }
 
+- (BOOL)isAllDirty {
+    return allDirty_;
+}
+
+- (void)setAllDirty:(BOOL)allDirty {
+    if (allDirty && !allDirty_) {
+        // Entering an all-dirty epoch: reserve a fresh, never-reused block of
+        // `height` generations so generationForLine: can give each line a distinct
+        // identity below. O(1) (one atomic) rather than bumping every line, which
+        // matters because this is on the hot scroll path.
+        _allDirtyGenerationBase = VT100LineInfoAllocateGenerationBlock(MAX(1, size_.height));
+    }
+    allDirty_ = allDirty;
+}
+
 - (int64_t)generationForLine:(int)y {
-    return [[self lineInfoAtLineNumber:y] generation];
+    const int64_t perLine = [[self lineInfoAtLineNumber:y] generation];
+    if (allDirty_) {
+        // Everything is dirty but setAllDirty: (unlike markAllCharsDirty:) does not
+        // advance per-line generations. Hand out a distinct fresh identity per line
+        // from the reserved block so the row cache misses uniformly. Take the max
+        // with the per-line value so a line individually dirtied after the epoch
+        // began (which got a generation past the reserved block) still wins.
+        return MAX(perLine, _allDirtyGenerationBase + y);
+    }
+    return perLine;
 }
 
 - (int)cursorX {

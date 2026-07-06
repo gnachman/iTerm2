@@ -20,9 +20,20 @@
 // cheap but not free). If the per-row cache consumer that reads this doesn't
 // land, consider gating this bump, or moving to a per-grid counter combined with
 // a grid identity in the cache key (cheaper, no cross-session sharing) instead.
+static _Atomic int64_t gVT100LineInfoNextGeneration = 1;
+
 static int64_t VT100LineInfoAllocateGeneration(void) {
-    static _Atomic int64_t next = 1;
-    return atomic_fetch_add_explicit(&next, 1, memory_order_relaxed);
+    return atomic_fetch_add_explicit(&gVT100LineInfoNextGeneration, 1, memory_order_relaxed);
+}
+
+// Reserves a contiguous block of `count` generations from the same global
+// sequence and returns its base, so a caller can hand out `count` distinct,
+// never-reused identities in O(1) (one atomic) instead of bumping each line.
+int64_t VT100LineInfoAllocateGenerationBlock(int64_t count) {
+    if (count < 1) {
+        count = 1;
+    }
+    return atomic_fetch_add_explicit(&gVT100LineInfoNextGeneration, count, memory_order_relaxed);
 }
 
 @implementation VT100LineInfo {

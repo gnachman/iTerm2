@@ -40,6 +40,37 @@ final class iTermRowCacheIdentityTests: XCTestCase {
         XCTAssertNotEqual(grid.generation(forLine: 0), grid.generation(forLine: 1))
     }
 
+    // setAllDirty: (used on the hot scroll path) does not advance per-line
+    // generations, so generationForLine: must synthesize a fresh, distinct
+    // identity per line while all-dirty holds, or the cache would serve stale rows
+    // (or collide two lines onto one identity).
+    func testAllDirtyGivesEveryLineAFreshDistinctGeneration() {
+        let grid = makeGrid()
+        grid.markCharDirty(true, at: VT100GridCoord(x: 0, y: 0), updateTimestamp: false)
+        let before = (0..<3).map { grid.generation(forLine: Int32($0)) }
+        grid.isAllDirty = true
+        let after = (0..<3).map { grid.generation(forLine: Int32($0)) }
+        // Every line's identity changed...
+        for y in 0..<3 {
+            XCTAssertNotEqual(before[y], after[y], "line \(y) identity should change when all-dirty")
+        }
+        // ...and no two lines collide.
+        XCTAssertEqual(Set(after).count, 3)
+    }
+
+    // A line individually dirtied after the all-dirty epoch began got a generation
+    // past the reserved block, so it must still report that newer identity.
+    func testLineDirtiedAfterAllDirtyStillWins() {
+        let grid = makeGrid()
+        grid.isAllDirty = true
+        let allDirtyGen = grid.generation(forLine: 1)
+        grid.markCharDirty(true, at: VT100GridCoord(x: 0, y: 1), updateTimestamp: false)
+        XCTAssertNotEqual(allDirtyGen, grid.generation(forLine: 1))
+        // Still distinct from its neighbors.
+        XCTAssertNotEqual(grid.generation(forLine: 1), grid.generation(forLine: 0))
+        XCTAssertNotEqual(grid.generation(forLine: 1), grid.generation(forLine: 2))
+    }
+
     // The grid copy is what feeds the renderer, so the line generation must
     // survive copying, else all static lines revert to 0 and collide.
     func testGridLineGenerationSurvivesGridCopy() {
