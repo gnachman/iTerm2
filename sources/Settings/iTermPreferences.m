@@ -447,8 +447,17 @@ NSString *iTermDefaultAIPromptAIChatOrchestration =
 @"session_guid, or a workgroup_id) prefixed with an @ sign, e.g. "
 @"@01234567-89ab-cdef-0123-456789abcdef. iTerm2 rewrites each such reference into a "
 @"clickable link showing the entity's current name, so the user sees a meaningful name "
-@"rather than a raw UUID. Never show the user a bare session/workgroup UUID without the leading @; on its own "
-@"it's meaningless to them.\n";
+@"rather than a raw UUID.\n"
+@"- Write the identifier in FULL every time: the @ sign immediately followed by the "
+@"complete id, copied character-for-character from the snapshot, with nothing removed, "
+@"shortened, or reformatted. There is no abbreviated form. Never write just the first "
+@"block or any prefix of the id (not @01234567), and never write a bare id with no @ "
+@"(not 01234567, not \"the 01234567 review\"). Anything less than the full @-prefixed id "
+@"does NOT become a link; it renders as meaningless dead text the user cannot click or "
+@"identify.\n"
+@"- If a full id would clutter the sentence, do not shorten it: instead refer to the "
+@"session or workgroup by its role and workgroup name (e.g. the Code Review in the Claude "
+@"Code workgroup) and omit the id entirely. Naming it is fine; a truncated id is not.\n";
 
 // NOTE: If you update this list, also update preferences.py.
 
