@@ -79,6 +79,11 @@ Bug Fixes:
 - @-mentions in command-request messages now
   show the friendly session or workgroup name
   instead of the raw identifier.
+- @-mentions in chat messages that could not be
+  resolved (for example while the Mac was briefly
+  unreachable) now show the session name once the
+  connection recovers or you reopen the chat,
+  instead of staying a raw identifier.
 - In the Sessions tab, a split pane that hosts a
   peer workgroup now shows as a container with
   its own icon and is no longer tappable. Only

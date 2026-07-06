@@ -221,6 +221,13 @@ final class AppModel {
     /// misses are requested in batches as messages arrive.
     var mentionResolutions: [String: CompanionMentionResolution] = [:]
     private var mentionResolutionsInFlight: Set<String> = []
+    /// Identifiers we asked about and got no live name for (the Mac was
+    /// unreachable, or the guid did not resolve at that instant). This gate
+    /// stops a failed lookup from being re-requested on every incremental
+    /// message delivery; it is cleared on reconnect and on chat open (see
+    /// retryUnresolvedMentions) so a transient miss recovers instead of leaving
+    /// the bubble showing a raw @UUID forever.
+    private var unresolvedMentions: Set<String> = []
 
     private var pairingTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
@@ -584,6 +591,8 @@ final class AppModel {
         sessionTreeError = nil
         messages = []
         mentionResolutions = [:]
+        mentionResolutionsInFlight = []
+        unresolvedMentions = []
         openChatID = nil
         isAgentTyping = false
         isLoadingConversation = false
@@ -1170,6 +1179,10 @@ final class AppModel {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
+                    // The Mac is reachable again: reopen the retry gate so the
+                    // list-snippet and conversation re-scans below re-resolve any
+                    // mention that failed while we were disconnected.
+                    retryUnresolvedMentions()
                     // Re-run the version handshake on every reconnect so the mac's
                     // "user wants alerts" signal (carried in the .hello reply) is
                     // honored on each connect, not just the initial pairing. A
@@ -1392,6 +1405,9 @@ final class AppModel {
                 return
             }
             messages = history.filter { !$0.hiddenFromClient }
+            // Opening (or re-subscribing) a chat is a fresh chance to resolve
+            // any mention that failed before, so reopen the retry gate first.
+            retryUnresolvedMentions()
             noteMentions(in: messages)
             companionLog("Conversation loaded (\(messages.count) messages)")
         } catch {
@@ -1751,26 +1767,50 @@ final class AppModel {
         let identifiers = Set(texts
             .flatMap { MentionParser.mentions(in: $0) }
             .map { $0.identifier })
-        let unresolved = identifiers.filter {
-            mentionResolutions[$0] == nil && !mentionResolutionsInFlight.contains($0)
+        // Skip ids we already resolved, have a request in flight for, or tried
+        // and failed (the retry gate). Everything else gets requested.
+        let toRequest = identifiers.filter {
+            mentionResolutions[$0] == nil
+                && !mentionResolutionsInFlight.contains($0)
+                && !unresolvedMentions.contains($0)
         }
-        guard !unresolved.isEmpty else { return }
-        mentionResolutionsInFlight.formUnion(unresolved)
-        companionLog("Resolving \(unresolved.count) mention(s)")
+        guard !toRequest.isEmpty else { return }
+        mentionResolutionsInFlight.formUnion(toRequest)
+        companionLog("Resolving \(toRequest.count) mention(s)")
         Task {
             do {
                 let client = try await currentClient(label: "Resolve mentions")
-                let resolutions = try await client.resolveMentions(Array(unresolved))
-                for resolution in resolutions {
-                    mentionResolutions[resolution.identifier] = resolution
+                let resolutions = try await client.resolveMentions(Array(toRequest))
+                let byIdentifier = Dictionary(
+                    resolutions.map { ($0.identifier, $0) },
+                    uniquingKeysWith: { _, last in last })
+                for id in toRequest {
+                    // Cache only a real hit (a live name). A miss (nil
+                    // displayName, or no entry returned at all) goes to the
+                    // retry gate so a later trigger can ask again, rather than
+                    // caching an unresolved id and rendering a raw @UUID forever.
+                    if let resolution = byIdentifier[id], resolution.displayName != nil {
+                        mentionResolutions[id] = resolution
+                    } else {
+                        unresolvedMentions.insert(id)
+                    }
                 }
             } catch {
-                // Leave them unresolved; the raw identifiers stay readable and
-                // the next delivery retries.
+                // The whole batch failed (Mac unreachable). Gate them so we
+                // don't fire a fresh request on every delivery; a reconnect or
+                // chat open clears the gate and retries.
                 companionLog("Mention resolution failed: \(String(describing: error))")
+                unresolvedMentions.formUnion(toRequest)
             }
-            mentionResolutionsInFlight.subtract(unresolved)
+            mentionResolutionsInFlight.subtract(toRequest)
         }
+    }
+
+    /// Reopen the retry gate so mentions that failed to resolve earlier (Mac was
+    /// down, or a session was still launching) get another attempt. The re-scan
+    /// itself is done by the caller's own noteMentions pass that follows.
+    private func retryUnresolvedMentions() {
+        unresolvedMentions.removeAll()
     }
 
     /// A chat-list snippet, ready to display: inline markdown rendered (so
@@ -2273,6 +2313,8 @@ final class AppModel {
         sessionTreeError = nil
         messages = []
         mentionResolutions = [:]
+        mentionResolutionsInFlight = []
+        unresolvedMentions = []
         openChatID = nil
         isAgentTyping = false
         isLoadingConversation = false
