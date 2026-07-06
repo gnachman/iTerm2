@@ -26,7 +26,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
     private var hasProbationers = false
     @objc var enteringFullScreen = false {
         didSet {
-            DLog("enteringFullScreen set to \(enteringFullScreen)")
+            RLog("enteringFullScreen set to \(enteringFullScreen)")
             if enteringFullScreen {
                 safe = false
             }
@@ -75,14 +75,14 @@ class iTermTitlebarAccessoryNanny: NSObject {
         if viewControllers.contains(viewController) {
             return;
         }
-        DLog("Add \(viewController)")
+        RLog("Add \(viewController)")
         viewControllers.append(viewController)
         needsUpdate = true
     }
 
     @objc private func reviewProbation() {
         if !safe {
-            DLog("Entering full screen. Retry twiddle later. This code path sucks and should be avoided.")
+            RLog("Entering full screen. Retry twiddle later. This code path sucks and should be avoided.")
             Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
                 self?.reviewProbation()
             }
@@ -122,7 +122,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
         guard viewControllers.contains(viewController) else {
             return
         }
-        DLog("Remove \(viewController)")
+        RLog("Remove \(viewController)")
         viewControllers.removeAll {
             $0 === viewController
         }
@@ -136,7 +136,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
         guard !viewControllers.isEmpty else {
             return
         }
-        DLog("Remove all view controllers")
+        RLog("Remove all view controllers")
         viewControllers = []
         pendingUpdates = [:]
         lastRequestedMinHeight = [:]
@@ -224,7 +224,7 @@ class iTermTitlebarAccessoryNanny: NSObject {
         guard let window = windowController?.window else {
             return
         }
-        DLog("Force re-adding all view controllers to fix content view layout")
+        RLog("Force re-adding all view controllers to fix content view layout")
         var toReadd = [NSTitlebarAccessoryViewController]()
         for vc in viewControllers {
             if window.titlebarAccessoryViewControllers.contains(vc) {

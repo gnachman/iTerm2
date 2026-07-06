@@ -93,6 +93,19 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // reason as workgroupShortcutsBackfilled.
 @property (class, nonatomic) BOOL claudeCodeReviewSystemPromptCommandBackfilled;
 
+// Tri-state consent for the AI model catalog updater (AIModelCatalogUpdater) to
+// periodically download a refreshed, signed model list from the network.
+// Defaults to Unknown; we ask the user once (and only if AI is fully enabled)
+// before the very first download, because contacting the network is a change to
+// the privacy model. NoSync: a privacy decision that should not travel through
+// synced prefs to other machines.
+typedef NS_ENUM(NSInteger, iTermAIModelCatalogUpdateConsent) {
+    iTermAIModelCatalogUpdateConsentUnknown = 0,
+    iTermAIModelCatalogUpdateConsentGranted = 1,
+    iTermAIModelCatalogUpdateConsentDenied = 2
+};
+@property (class, nonatomic) iTermAIModelCatalogUpdateConsent aiModelCatalogUpdateConsent;
+
 // Returns whether the previous process exited cleanly. The value is latched on
 // first access: the on-disk flag is read then immediately reset so that if this
 // process crashes before +markShutdownAsClean is called, the next launch will

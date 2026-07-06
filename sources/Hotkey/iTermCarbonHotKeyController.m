@@ -141,7 +141,7 @@
 #pragma mark - Notifications
 
 - (void)sessionDidBecomeActive:(NSNotification *)notification {
-    DLog(@"sessionDidBecomeActive");
+    RLog(@"sessionDidBecomeActive");
     if (!_suspended) {
         return;
     }
@@ -175,7 +175,7 @@
 }
 
 - (void)sessionDidResignActive:(NSNotification *)notification {
-    DLog(@"sessionDidResignActive");
+    RLog(@"sessionDidResignActive");
     if (_suspended) {
         return;
     }
@@ -211,7 +211,7 @@
     const UInt32 carbonModifiers = [NSEvent carbonModifiersForCocoaModifiers:shortcut.modifiers];
     iTermHotKey *existingHotKey =
         [[self hotKeysWithKeyCode:shortcut.keyCode modifiers:shortcut.modifiers] firstObject];
-    DLog(@"Registering shortcut %@. Existing hotkeys: %@", shortcut, existingHotKey);
+    RLog(@"Registering shortcut %@. Existing hotkeys: %@", shortcut, existingHotKey);
     EventHotKeyID hotKeyID;
     if (!existingHotKey) {
         DLog(@"Should register for keycode %@, mods %@", @(shortcut.keyCode), @(shortcut.modifiers));
@@ -225,11 +225,11 @@
                                                         0,
                                                         &eventHotKey);
             if (status) {
-                DLog(@"RegisterEventHotKey failed with %@", @(status));
+                RLog(@"RegisterEventHotKey failed with %@", @(status));
                 return nil;
             }
         } else {
-            DLog(@"Not registering because suspended");
+            RLog(@"Not registering because suspended");
         }
     } else {
         DLog(@"There is an existing hotkey for keycode %@, mods %@", @(shortcut.keyCode), @(shortcut.modifiers));
@@ -255,7 +255,7 @@
 }
 
 - (void)unregisterHotKey:(iTermHotKey *)hotKey {
-    DLog(@"Unregister %@", hotKey);
+    RLog(@"Unregister %@", hotKey);
     if (_suspended) {
         DLog(@"Remove from suspended list %@", _suspendedHotKeys);
         [_suspendedHotKeys removeObject:hotKey];
@@ -316,7 +316,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
         DLog(@"Handled hotkey event");
         return noErr;
     } else {
-        DLog(@"Did not handle hotkey event");
+        RLog(@"Did not handle hotkey event");
         return eventNotHandledErr;
     }
 }
@@ -330,12 +330,12 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
                           sizeof(EventHotKeyID),
                           NULL,
                           &hotKeyID)) {
-        DLog(@"failed to get event params");
+        RLog(@"failed to get event params");
         return NO;
     }
 
     NSArray<iTermHotKey *> *hotkeys = [self hotKeysWithID:hotKeyID];
-    DLog(@"You pressed a hotkey. The registered events for this are:\n%@", hotkeys);
+    RLog(@"You pressed a hotkey. The registered events for this are:\n%@", hotkeys);
 
     NSWindow *keyWindow = [NSApp keyWindow];
     NSResponder *firstResponder = [keyWindow firstResponder];

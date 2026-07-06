@@ -16,6 +16,7 @@ import XCTest
 final class CompanionAgentActivityNotifierTests: XCTestCase {
     private var now = Date(timeIntervalSince1970: 1_000)
     private var gateOpen = true
+    private var mutedChatIDs: Set<String> = []
     private var resolveResult: Message?
     private var sends: [String] = []
 
@@ -24,6 +25,7 @@ final class CompanionAgentActivityNotifierTests: XCTestCase {
             debounceInterval: debounce,
             clock: { self.now },
             gate: { self.gateOpen },
+            muted: { self.mutedChatIDs.contains($0) },
             resolve: { _, _ in self.resolveResult },
             send: { self.sends.append($0) })
     }
@@ -162,5 +164,40 @@ final class CompanionAgentActivityNotifierTests: XCTestCase {
         let inner = msg(.markdown("approve?"))
         n.handle(message: msg(.selectSessionRequest(inner, terminal: true)), chatID: "c", partial: false)
         XCTAssertTrue(sends.isEmpty)
+    }
+
+    // MARK: Muting
+
+    func testMutedChatSuppressesEverything() {
+        mutedChatIDs = ["c"]
+        let n = makeNotifier()
+        resolveResult = msg(.markdown("done"))
+        n.handle(message: msg(.commit(UUID())), chatID: "c", partial: false)
+        n.handle(message: msg(.markdown("done")), chatID: "c", partial: false)
+        // Even a permission request (which bypasses the debounce) stays silent.
+        let inner = msg(.markdown("approve?"))
+        n.handle(message: msg(.selectSessionRequest(inner, terminal: true)), chatID: "c", partial: false)
+        XCTAssertTrue(sends.isEmpty)
+    }
+
+    func testMuteIsPerChat() {
+        mutedChatIDs = ["muted"]
+        let n = makeNotifier()
+        n.handle(message: msg(.markdown("a")), chatID: "muted", partial: false)
+        n.handle(message: msg(.markdown("b")), chatID: "other", partial: false)
+        XCTAssertEqual(sends, ["other"])
+    }
+
+    func testMuteDoesNotConsumeDebounce() {
+        // A suppressed muted turn must not stamp the debounce: unmuting and
+        // completing a turn right after should fire immediately.
+        mutedChatIDs = ["c"]
+        let n = makeNotifier(debounce: 30)
+        n.handle(message: msg(.markdown("while muted")), chatID: "c", partial: false)
+        XCTAssertTrue(sends.isEmpty)
+        mutedChatIDs = []
+        now = now.addingTimeInterval(1)
+        n.handle(message: msg(.markdown("after unmute")), chatID: "c", partial: false)
+        XCTAssertEqual(sends, ["c"])
     }
 }

@@ -730,7 +730,7 @@ static void iTermAdvancedSettingsSaveSecureString(NSDictionary *dict, NSString *
         case kiTermAdvancedSettingTypeBoolean:
         case kiTermAdvancedSettingTypeOptionalBoolean:
         case kiTermAdvancedSettingTypeIntEnum:
-            DLog(@"A popup ended editing somehow");
+            RLog(@"A popup ended editing somehow");
             break;
 
         case kiTermAdvancedSettingTypeFloat:

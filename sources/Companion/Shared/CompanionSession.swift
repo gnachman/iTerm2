@@ -21,6 +21,7 @@ actor CompanionSession {
     private var waiters: [UInt64: CheckedContinuation<CompanionHostMessage, Error>] = [:]
     private var receiveLoop: Task<Void, Never>?
     private var eventHandler: (@Sendable (CompanionHostMessage) -> Void)?
+    private var mediaHandler: (@Sendable (CompanionMediaFrame) -> Void)?
     private var closedHandler: (@Sendable () -> Void)?
     private var closed = false
 
@@ -32,9 +33,11 @@ actor CompanionSession {
     /// message (one with no requestID); `onClose` fires once if the connection
     /// dies remotely (a locally requested close() does not fire it).
     func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void,
-               onClose: @escaping @Sendable () -> Void) {
+               onClose: @escaping @Sendable () -> Void,
+               onMedia: (@Sendable (CompanionMediaFrame) -> Void)? = nil) {
         guard receiveLoop == nil else { return }
         eventHandler = onEvent
+        mediaHandler = onMedia
         closedHandler = onClose
         receiveLoop = Task { [weak self] in
             await self?.runReceiveLoop()
@@ -104,12 +107,22 @@ actor CompanionSession {
                 }
                 return
             }
-            do {
-                let envelope = try WireCoding.decode(HostEnvelope.self, from: frame)
-                deliver(envelope)
-            } catch {
-                CompanionLog.log("CompanionSession: DROPPING undecodable frame (\(frame.count) bytes): \(error)")
-                continue
+            switch CompanionFrameChannel.classify(frame) {
+            case .media(let payload):
+                do {
+                    mediaHandler?(try CompanionMediaFrame(decoding: payload))
+                } catch {
+                    CompanionLog.log("CompanionSession: DROPPING undecodable media frame (\(payload.count) bytes): \(error)")
+                }
+            case .control(let bytes):
+                do {
+                    let envelope = try WireCoding.decode(HostEnvelope.self, from: bytes)
+                    deliver(envelope)
+                } catch {
+                    CompanionLog.log("CompanionSession: DROPPING undecodable frame (\(bytes.count) bytes): \(error)")
+                }
+            case .none:
+                CompanionLog.log("CompanionSession: DROPPING empty frame")
             }
         }
     }
@@ -136,6 +149,7 @@ actor CompanionSession {
         case .mentionsResolved: "mentionsResolved"
         case .sessionScreenInfo: "sessionScreenInfo"
         case .sessionContent: "sessionContent"
+        case .historyTile: "historyTile"
         case .workgroupInfo: "workgroupInfo"
         case .sessionTree: "sessionTree"
         case .chatListChanged: "chatListChanged"
@@ -143,8 +157,15 @@ actor CompanionSession {
         case .pong: "pong"
         case .relayRoomSecretStored: "relayRoomSecretStored"
         case .messagesSince: "messagesSince"
+        case .syncSince: "syncSince"
         case .unpaired: "unpaired"
         case .error: "error"
+        case .streamStarted: "streamStarted"
+        case .streamConfig: "streamConfig"
+        case .streamEnded: "streamEnded"
+        case .streamExtent: "streamExtent"
+        case .selectionText: "selectionText"
+        case .selectionRange: "selectionRange"
         }
     }
 

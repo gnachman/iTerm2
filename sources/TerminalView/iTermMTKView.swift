@@ -100,7 +100,7 @@ public class iTermMTKView: iTermMetalView {
     @objc
     override public var colorspace: CGColorSpace? {
         set {
-            DLog("Set colorspace of \(self) to \(String(describing: newValue))")
+            RLog("Set colorspace of \(self) to \(String(describing: newValue))")
             super.colorspace = newValue
         }
         get {

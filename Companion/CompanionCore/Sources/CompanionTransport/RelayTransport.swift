@@ -36,9 +36,16 @@ private func relayKeepalive(for ws: RelayWebSocket,
                             intervalNanos: UInt64 = relayKeepaliveDefaultIntervalNanos) -> RelayKeepalive {
     RelayKeepalive(intervalNanos: intervalNanos) { [weak ws] in
         guard let ws else { return false }
-        if await ws.sendPing() { return true }
+        if await ws.sendPing() {
+            // Confirms the WS-to-edge link is alive. If this keeps logging
+            // while the relay reports "mac offline", the splice/park died but the
+            // socket did not -- the half-open-at-the-app-layer wedge.
+            CompanionLog.log("relay keepalive ping ok")
+            return true
+        }
         // Ping failed -> the socket is dead. Tear it down so the parked
         // receive()/accept() throws and the caller's retry path engages.
+        CompanionLog.log("relay keepalive ping FAILED -> cancelling socket")
         ws.cancel()
         return false
     }
@@ -66,6 +73,13 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     // before it parks again (see RelayTransportListener.accept).
     private var closeWaiters: [CheckedContinuation<Void, Never>] = []
     private var closeSignaled = false
+    // Waiters that receive() races the socket read against, so a close (e.g. from a
+    // keepalive-detected death) unblocks an in-flight read even when ws.receive()
+    // does not throw on cancel. Distinct from closeWaiters because these resume
+    // WITHOUT side effects on the awaiter's cancellation (a normal read losing the
+    // race must not signal the connection closed).
+    private var closeAwaitWaiters: [Int: CheckedContinuation<Void, Never>] = [:]
+    private var nextCloseAwaitID = 0
 
     init(ws: RelayWebSocket,
          firstFrame: Data? = nil,
@@ -75,9 +89,16 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
         self.pendingFirstFrame = firstFrame
         self.registrationToken = registrationToken
         self.keepalive = keepalive
+        // A keepalive-detected death hard-closes this transport so the bridge's
+        // receive() unblocks and its owner re-parks; otherwise the mac goes
+        // silently dark (present in its own mind, "offline" to the relay).
+        keepalive?.setOnDeath { [weak self] in self?.cancelAndSignalClosed() }
     }
 
     public func send(_ frame: Data) async throws {
+        // Once the connection is known gone, fail fast so the outbox stops feeding
+        // a dead socket (whose buffered writes can otherwise "succeed" silently).
+        if lock.withLock({ closeSignaled }) { throw TransportError.closed }
         do {
             try await ws.send(.data(frame))
         } catch {
@@ -93,21 +114,74 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
         }) {
             return buffered
         }
-        let message: RelayWebSocketMessage
-        do {
-            message = try await ws.receive()
-        } catch {
-            signalClosed()
-            throw TransportError.closed
+        // Race the socket read against the close signal: a keepalive-detected death
+        // (or close()) must unblock this even when ws.receive() does not throw on
+        // cancel, which is what left the mac wedged streaming into a dead socket. A
+        // task group is unusable here because it awaits its children on exit, so a
+        // ws.receive() that ignores cancellation would still hang the group; instead
+        // resume a one-shot continuation from whichever finishes first and abandon
+        // the loser (it ends when the socket actually closes; bounded, once).
+        let race = ReceiveRace()
+        return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            race.read = Task { [weak self] in
+                await race.ready()
+                guard let self else {
+                    if race.claim() { cont.resume(throwing: TransportError.closed) }
+                    return
+                }
+                do {
+                    let message = try await self.ws.receive()
+                    guard race.claim() else { return }
+                    race.close?.cancel()
+                    switch message {
+                    case .data(let data):
+                        cont.resume(returning: data)
+                    case .text:
+                        // Post-admission frames are always binary; a text frame is
+                        // the relay closing or a protocol error.
+                        self.signalClosed()
+                        cont.resume(throwing: TransportError.malformedFrame)
+                    }
+                } catch {
+                    guard race.claim() else { return }
+                    race.close?.cancel()
+                    self.signalClosed()
+                    cont.resume(throwing: TransportError.closed)
+                }
+            }
+            race.close = Task { [weak self] in
+                await race.ready()
+                await self?.awaitClosed()
+                guard race.claim() else { return }
+                race.read?.cancel()
+                cont.resume(throwing: TransportError.closed)
+            }
+            race.start()
         }
-        switch message {
-        case .data(let data):
-            return data
-        case .text:
-            // Post-admission frames are always binary; a text frame here is the
-            // relay closing or a protocol error.
-            signalClosed()
-            throw TransportError.malformedFrame
+    }
+
+    /// Resolve when the connection is signaled closed. Unlike waitUntilClosed(),
+    /// cancelling the awaiting task (the loser of receive()'s race) just removes
+    /// the waiter and resumes it -- it does NOT signal the connection closed, so a
+    /// normal read winning the race cannot tear the connection down.
+    private func awaitClosed() async {
+        let id = lock.withLock { () -> Int in
+            nextCloseAwaitID += 1
+            return nextCloseAwaitID
+        }
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                let alreadyClosed = lock.withLock { () -> Bool in
+                    if closeSignaled { return true }
+                    closeAwaitWaiters[id] = cont
+                    return false
+                }
+                if alreadyClosed { cont.resume() }
+            }
+        } onCancel: {
+            if let cont = lock.withLock({ closeAwaitWaiters.removeValue(forKey: id) }) {
+                cont.resume()
+            }
         }
     }
 
@@ -151,17 +225,21 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
     }
 
     private func signalClosed() {
-        let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>]? in
+        let resumed = lock.withLock { () -> ([CheckedContinuation<Void, Never>],
+                                             [CheckedContinuation<Void, Never>])? in
             if closeSignaled { return nil }
             closeSignaled = true
             let w = closeWaiters
             closeWaiters = []
-            return w
+            let a = Array(closeAwaitWaiters.values)
+            closeAwaitWaiters = [:]
+            return (w, a)
         }
-        guard let waiters else { return }
+        guard let (waiters, awaitWaiters) = resumed else { return }
         // The connection is gone: stop pinging it (idempotent).
         keepalive?.stop()
         for w in waiters { w.resume() }
+        for w in awaitWaiters { w.resume() }
     }
 
     deinit {
@@ -169,6 +247,123 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
             ws.cancel()
         }
         signalClosed()
+    }
+}
+
+/// One-shot arbiter for receive()'s read-vs-close race: the first of the two
+/// tasks to claim() wins and resumes the continuation; the other backs off. Holds
+/// both tasks so the winner can cancel the loser.
+///
+/// An unstructured Task can begin executing on another thread before the assignment
+/// `race.close = Task {...}` finishes on the spawning thread, so a task must not
+/// touch its peer reference until BOTH are stored. Each arm therefore awaits
+/// `ready()` (opened by `start()` after both assignments) before doing its work;
+/// once past that gate the winner always observes and cancels its peer.
+final class ReceiveRace: @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var done = false
+    private var started = false
+    private var startWaiters: [CheckedContinuation<Void, Never>] = []
+    var read: Task<Void, Never>?
+    var close: Task<Void, Never>?
+
+    func claim() -> Bool {
+        lock.withLock {
+            if done { return false }
+            done = true
+            return true
+        }
+    }
+
+    /// Open the gate after both `read` and `close` have been assigned.
+    func start() {
+        let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
+            started = true
+            let w = startWaiters
+            startWaiters = []
+            return w
+        }
+        for w in waiters { w.resume() }
+    }
+
+    /// Suspend until `start()` opens the gate, so a task never reads a peer
+    /// reference that has not been assigned yet.
+    func ready() async {
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            let already = lock.withLock { () -> Bool in
+                if started { return true }
+                startWaiters.append(cont)
+                return false
+            }
+            if already { cont.resume() }
+        }
+    }
+}
+
+/// A one-shot awaitable used while a mac is parked (before a RelayTransport exists
+/// to own the close signal): the keepalive fires it when a ping fails, unblocking
+/// the parked read even on a half-open socket that ignores ws.cancel().
+private final class ParkedDeathSignal: @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var fired = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func fire() {
+        let toResume = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
+            if fired { return [] }
+            fired = true
+            let w = waiters
+            waiters = []
+            return w
+        }
+        for w in toResume { w.resume() }
+    }
+
+    func wait() async {
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                let already = lock.withLock { () -> Bool in
+                    if fired { return true }
+                    waiters.append(cont)
+                    return false
+                }
+                if already { cont.resume() }
+            }
+        } onCancel: {
+            fire()
+        }
+    }
+}
+
+/// Race a parked socket read against a keepalive-detected death, so a hard network
+/// drop fails the parked accept() instead of hanging forever. Mirrors
+/// RelayTransport.receive(): a task group is unusable (it awaits its children on
+/// exit, so a receive() ignoring cancellation would still hang it), so resume a
+/// one-shot continuation from whichever finishes first and abandon the loser.
+private func receiveParked(ws: RelayWebSocket, death: ParkedDeathSignal) async throws -> RelayWebSocketMessage {
+    let race = ReceiveRace()
+    return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<RelayWebSocketMessage, Error>) in
+        race.read = Task {
+            await race.ready()
+            do {
+                let message = try await ws.receive()
+                guard race.claim() else { return }
+                race.close?.cancel()
+                cont.resume(returning: message)
+            } catch {
+                guard race.claim() else { return }
+                race.close?.cancel()
+                cont.resume(throwing: error)
+            }
+        }
+        race.close = Task {
+            await race.ready()
+            await death.wait()
+            guard race.claim() else { return }
+            race.read?.cancel()
+            cont.resume(throwing: TransportError.closed)
+        }
+        race.start()
     }
 }
 
@@ -367,6 +562,7 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
         // In a combined-listener race, the loser's accept task is cancelled;
         // tear the parked socket down so the mac releases the room's mac slot
         // instead of leaving a dangling park.
+        let deathSignal = ParkedDeathSignal()
         return try await withTaskCancellationHandler {
             defer { lock.withLock { if current === ws { current = nil } } }
             _ = try await RelayAdmissionClient.admit(ws: ws, role: .mac) { challenge in
@@ -377,16 +573,20 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
             onParked?()
             // Keep the parked socket alive while it waits, possibly long, for the
             // phone to scan and send msg1; otherwise the edge reaps it (~30s idle)
-            // and the room silently loses its mac. A failed ping cancels the
-            // socket so this parked receive() throws instead of hanging forever.
+            // and the room silently loses its mac. A failed ping cancels the socket,
+            // and its death fires the signal below, so this parked receive() throws
+            // even on a half-open socket that ignores cancellation (a hard network
+            // drop) instead of hanging forever. There is no RelayTransport yet to own
+            // the close signal, so the park wires the keepalive's death directly.
             let keepalive = relayKeepalive(for: ws, intervalNanos: keepaliveIntervalNanos)
+            keepalive.setOnDeath { deathSignal.fire() }
             keepalive.start()
             // Block until the phone actually joins and sends its first frame (Noise
             // msg1), so the combined listener doesn't treat an empty parked room as
             // an inbound connection.
             let firstMessage: RelayWebSocketMessage
             do {
-                firstMessage = try await ws.receive()
+                firstMessage = try await receiveParked(ws: ws, death: deathSignal)
             } catch {
                 keepalive.stop()
                 throw error
@@ -401,6 +601,8 @@ public final class RelayTransportListener: TransportListener, @unchecked Sendabl
             return transport
         } onCancel: {
             ws.cancel()
+            // Unblock the parked read even if the socket ignores cancel.
+            deathSignal.fire()
         }
     }
 

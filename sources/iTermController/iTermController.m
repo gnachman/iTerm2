@@ -112,7 +112,7 @@ static iTermController *gSharedInstance;
 }
 
 + (void)releaseSharedInstance {
-    DLog(@"releaseSharedInstance");
+    RLog(@"releaseSharedInstance");
     [gSharedInstance cleanUpIfNeeded];
     gSharedInstance = nil;
 }
@@ -212,9 +212,9 @@ static iTermController *gSharedInstance;
         //
         // In either case, we only get here if we're pretty sure everything will get restored
         // nicely.
-        DLog(@"Intentionally leaving sessions running on quit");
+        RLog(@"Intentionally leaving sessions running on quit");
     } else {
-        DLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
+        RLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
         // Terminate buried sessions
         [[iTermBuriedSessions sharedInstance] terminateAll];
         // Close all terminal windows, killing jobs.
@@ -291,7 +291,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
-    DLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
+    RLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
@@ -711,7 +711,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-    DLog(@"Controller: window exited fullscreen");
+    RLog(@"Controller: window exited fullscreen");
     if (_arrangeHorizontallyPendingFullScreenTransitions &&
         [[iTermFullScreenWindowManager sharedInstance] numberOfQueuedTransitions] == 0) {
         _arrangeHorizontallyPendingFullScreenTransitions = NO;
@@ -1423,7 +1423,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)killRestorableSessions {
-    DLog(@"killRestorableSessions");
+    RLog(@"killRestorableSessions");
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     for (iTermRestorableSession *restorableSession in _restorableSessions) {
         for (PTYSession *aSession in restorableSession.sessions) {
@@ -1550,7 +1550,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                                 screen:screen
                                                                profile:nil];
     if (!term) {
-        DLog(@"Failed to create a window to revive %@", session);
+        RLog(@"Failed to create a window to revive %@", session);
         return nil;
     }
     [self addTerminalWindow:term];
@@ -1897,7 +1897,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         // The current window’s layout is locked. Don’t split it or add a tab;
         // open the URL in a new window so the lock is honored and the open still
         // succeeds.
-        DLog(@"Current window is layout-locked; opening URL in a new window instead");
+        RLog(@"Current window is layout-locked; opening URL in a new window instead");
         term = nil;
     }
     if (!term) {
@@ -1987,7 +1987,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                profile:windowProfile];
     [self addTerminalWindow:term];
 
-    DLog(@"Open single-use browser window with url: %@", url);
+    RLog(@"Open single-use browser window with url: %@", url);
     PTYSession *(^makeSession)(Profile *, PseudoTerminal *) =
     ^PTYSession *(Profile *profile, PseudoTerminal *term) {
         profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
@@ -2108,7 +2108,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (options & iTermSingleUseWindowOptionsCommandNotSwiftyString) {
         command = [command stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
     }
-    DLog(@"Open single-use window with command: %@", command);
+    RLog(@"Open single-use window with command: %@", command);
     void (^makeSession)(Profile *, PseudoTerminal *, void (^)(PTYSession *)) =
     ^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *))  {
         profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];

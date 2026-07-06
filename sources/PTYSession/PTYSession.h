@@ -191,6 +191,9 @@ typedef enum {
 // window is key.
 - (BOOL)sessionIsActiveInSelectedTab:(PTYSession *)session;
 
+// Do two or more panes in this tab have different (non-nil) tab colors?
+- (BOOL)sessionTabHasMultipleDistinctTabColors;
+
 // Session-initiated name change.
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
 
@@ -400,6 +403,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // changed since it last read it (an unchanged screen yields the same verdict,
 // so there's no point re-checking).
 @property(nonatomic, readonly) NSTimeInterval screenContentsLastChangedAt;
+
+// Whether textViewDidFindDirtyRects has fired at least once. Until it has,
+// the two properties above describe session creation, not an actual screen
+// change, so consumers reporting "screen last changed N ago" should treat
+// the age as unknown rather than implying fresh output.
+@property(nonatomic, readonly) BOOL screenContentsHaveEverChanged;
 
 @property(nonatomic, readonly, nullable) DVR *dvr;
 @property(nonatomic, readonly, nullable) DVRDecoder *dvrDecoder;
@@ -678,6 +687,7 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermEchoProbe *echoProbe;
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
+@property(nonatomic) BOOL needsNewTerminalKeyboardForced;
 
 // nil unless this session has an active workgroup instance.
 @property(nonatomic, readonly, nullable) NSArray<iTermSessionToolbarItem *> *desiredToolbarItems;
@@ -1079,6 +1089,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // pieces. Must be called on the main thread. The result is opaque.
 - (nullable NSImage *)screenshotBackgroundSliceForRect:(NSRect)sliceRect
                                            ofTotalSize:(NSSize)totalSize;
+
+// Renders the visible screen contents to PNG data for the scripting API. The
+// session’s own background fill is applied by the shared snapshot path.
+- (nullable NSData *)screenshotPNGData;
 
 - (void)enterPassword:(NSString *)password;
 

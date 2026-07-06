@@ -117,12 +117,41 @@ async function register(payload, env, request) {
       return json(429, { error: "rate limited" });
     }
   }
+  // Idempotent write: KV writes are the scarce resource (the free plan caps
+  // daily puts, and the phone re-registers on EVERY connection — see the header
+  // doc), whereas reads are effectively unmetered. So read first and skip the
+  // put when nothing that matters changed. Without this a reconnect storm (e.g.
+  // a flapping pairing) exhausts the daily write budget, after which a genuine
+  // secret rotation can no longer be persisted and every push 403s "bad secret".
+  //
+  // Two things still force a write:
+  //   1. secretHash or sandbox changed — the whole point of /register; a rotated
+  //      secret (reinstall / re-pair) MUST reach KV or pushes break.
+  //   2. the record is more than halfway to its TTL — re-arm the self-expiry so
+  //      a live pairing's registration never lapses, while a dead pairing (which
+  //      stops re-registering) still ages out. Halfway means an active device
+  //      writes at most once per TTL/2, not once per connection.
+  const ttl = registrationTtlSeconds(env);
+  const existing = await env.PUSH_KV.get(`device:${token}`, "json");
+  const now = Date.now();
+  const unchanged = existing &&
+    existing.secretHash === secretHash &&
+    !!existing.sandbox === !!sandbox;
+  const fresh = unchanged &&
+    typeof existing.registeredAt === "number" &&
+    now - existing.registeredAt < (ttl * 1000) / 2;
+  if (fresh) {
+    // Nothing to persist; the existing record already authorizes this device
+    // and its expiry is not near. `skipped` is advisory (aids debugging); the
+    // caller treats any 2xx as success.
+    return json(200, { ok: true, skipped: true });
+  }
   // Self-expiring write: a registration that is never refreshed (a dead pairing)
   // ages out instead of lingering forever.
   await env.PUSH_KV.put(
     `device:${token}`,
-    JSON.stringify({ secretHash, sandbox: !!sandbox, registeredAt: Date.now() }),
-    { expirationTtl: registrationTtlSeconds(env) }
+    JSON.stringify({ secretHash, sandbox: !!sandbox, registeredAt: now }),
+    { expirationTtl: ttl }
   );
   return json(200, { ok: true });
 }
@@ -221,7 +250,13 @@ async function deliverToAPNs(env, token, record, apsBody, extraHeaders = {}) {
   const host = record.sandbox
     ? "api.sandbox.push.apple.com"
     : "api.push.apple.com";
-  const response = await fetch(`https://${host}/3/device/${token}`, {
+  // APNs requires HTTP/2. On Cloudflare the global `fetch` speaks it natively,
+  // so env.fetchImpl is undefined and this is a plain fetch. Under Node, whose
+  // global fetch is HTTP/1.1 (which APNs refuses), the self-hosted host injects
+  // env.fetchImpl — an HTTP/2 client with the same (url, init) -> Response shape
+  // (see ../host/apns.js). The rest of the worker is transport-agnostic.
+  const doFetch = env.fetchImpl || fetch;
+  const response = await doFetch(`https://${host}/3/device/${token}`, {
     method: "POST",
     headers: {
       authorization: `bearer ${await providerJWT(env)}`,

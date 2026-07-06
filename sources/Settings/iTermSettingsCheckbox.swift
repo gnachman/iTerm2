@@ -14,7 +14,7 @@ class SettingsCheckbox: NSButton, ExpressionBindableView {
     @objc var expression: String? {
         didSet {
             if expression != oldValue {
-                DLog("Change to \(expression ?? "(nil)")")
+                RLog("Change to \(expression ?? "(nil)")")
                 updateIcon()
                 if expression?.isEmpty == false {
                     title = "\u{2003}" + title

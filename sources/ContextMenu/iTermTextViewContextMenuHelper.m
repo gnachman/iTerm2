@@ -207,7 +207,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     NSMenu *contextMenu = [self menuAtCoord:coord];
 
     id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
-    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark firstLineOfCommand]);
+    RLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark firstLineOfCommand]);
     [self addFoldUnfoldMenuItemForLine:y contextMenu:contextMenu];
     if (mark.name) {
         NSMenuItem *nameItem = [[NSMenuItem alloc] initWithTitle:mark.name action:nil keyEquivalent:@""];
@@ -982,7 +982,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)removeNamedMark:(id)sender {
     id<VT100ScreenMarkReading> mark = [sender representedObject];
-    DLog(@"Remove named mark %@", mark);
+    RLog(@"Remove named mark %@", mark);
     if (mark.name) {
         [_delegate contextMenu:self removeNamedMark:mark];
     }
@@ -990,7 +990,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)revealCommandInfo:(id)sender {
     id<VT100ScreenMarkReading> mark = [sender representedObject];
-    DLog(@"Reveal command info %@", mark);
+    RLog(@"Reveal command info %@", mark);
     if (!mark || ![mark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
         DLog(@"Bogus");
         return;
@@ -1303,7 +1303,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 }
 
 - (void)restartSession:(id)sender {
-    DLog(@"restartSession");
+    RLog(@"restartSession");
     [self.delegate contextMenuRestartSession:self];
 }
 
@@ -1324,7 +1324,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 - (void)selectOutputOfCommandMark:(id<VT100ScreenMarkReading>)mark {
     VT100GridCoordRange range = [self.delegate contextMenu:self rangeOfOutputForCommandMark:mark];
     if (range.start.x == -1) {
-        DLog(@"Beep: can't select output");
+        RLog(@"Beep: can't select output");
         NSBeep();
         return;
     }

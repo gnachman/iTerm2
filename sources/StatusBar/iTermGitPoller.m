@@ -50,7 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
     _enabled = enabled;
     if (!enabled) {
-        DLog(@"%@: Enabled set to false. Calling update to clear display.", self);
+        RLog(@"%@: Enabled set to false. Calling update to clear display.", self);
         _update();
     }
 }
@@ -75,7 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)clearTimeoutFlagAndRetry {
-    DLog(@"%@: Clearing timeout flag and retrying", self);
+    RLog(@"%@: Clearing timeout flag and retrying", self);
     _lastPollTimedOut = NO;
     // Refresh the UI so any "timed out" display goes away now, rather than waiting for the
     // retry to complete.
@@ -118,7 +118,7 @@ NS_ASSUME_NONNULL_BEGIN
         if (![strongSelf.currentDirectory isEqualToString:polledPath]) {
             // Directory changed while the poll was in flight; the result is for a stale path
             // and must not update our per-directory flags or state.
-            DLog(@"%@: Discarding stale poll result for %@ (current is %@)",
+            RLog(@"%@: Discarding stale poll result for %@ (current is %@)",
                  strongSelf, polledPath, strongSelf.currentDirectory);
             return;
         }
@@ -144,7 +144,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setGitBase:(NSString * _Nullable)gitBase {
-    DLog(@"%@: Set gitBase to %@", self, gitBase);
+    RLog(@"%@: Set gitBase to %@", self, gitBase);
     NSString *normalizedNew = gitBase.length > 0 ? gitBase : nil;
     NSString *normalizedOld = _gitBase.length > 0 ? _gitBase : nil;
     if (normalizedNew == normalizedOld ||

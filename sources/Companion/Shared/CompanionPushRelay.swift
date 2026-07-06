@@ -14,7 +14,7 @@
 import Foundation
 
 enum CompanionPushRelay {
-    static let baseURL = URL(string: "https://iterm2-push-relay.gnachman.workers.dev")!
+    static let baseURL = URL(string: "https://push.iterm2.com")!
 
     static var registerURL: URL { baseURL.appendingPathComponent("register") }
     static var pushURL: URL { baseURL.appendingPathComponent("push") }

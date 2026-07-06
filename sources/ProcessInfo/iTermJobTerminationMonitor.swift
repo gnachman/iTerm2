@@ -69,7 +69,7 @@ class iTermJobTerminationMonitor: NSObject {
             self?.processDidTerminate(pid)
         }
         source.resume()
-        DLog("Began monitoring pid \(pid) (\(name ?? "")) for termination")
+        RLog("Began monitoring pid \(pid) (\(name ?? "")) for termination")
         postStateDidChange()
         return true
     }

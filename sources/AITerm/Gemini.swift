@@ -53,6 +53,36 @@ struct GeminiRequestBuilder: Codable {
         var parameters: JSONSchema
     }
 
+    /// Gemini 3-series rejects a replayed functionCall part that has no
+    /// thought_signature (its analog of OpenAI's reasoning items). Live calls
+    /// capture and echo the real signature; a call persisted before capture
+    /// existed (or made by another vendor) has none, so on models that
+    /// require signatures it replays with Google's documented bypass token
+    /// for developer-constructed calls.
+    /// See https://ai.google.dev/gemini-api/docs/thought-signatures.
+    static let missingThoughtSignatureFallback = "context_engineering_is_the_way_to_go"
+
+    /// Whether the model demands thought signatures on functionCall parts:
+    /// generation 3 and later. Only a POSITIVELY identified pre-3 generation
+    /// opts out; a name whose generation can't be parsed (Google's
+    /// generation-less aliases like gemini-flash-latest, or a manually
+    /// configured name) gets the token, because those resolve to current
+    /// Gemini, which 400s a signature-less replayed call, while pre-3 models
+    /// merely tolerate a token they didn't ask for (live-verified on 2.5).
+    /// nil means no model knowledge at all (test-only paths) and injects
+    /// nothing.
+    static func requiresThoughtSignature(modelName: String?) -> Bool {
+        guard let modelName else { return false }
+        let lowered = modelName.lowercased()
+        if let range = lowered.range(of: "gemini-") {
+            let digits = lowered[range.upperBound...].prefix { $0.isNumber }
+            if let major = Int(digits), major < 3 {
+                return false
+            }
+        }
+        return true
+    }
+
     private static func encodedArgs(_ args: String?) -> [String: AnyCodable] {
         guard let args else {
             return [:]
@@ -61,14 +91,95 @@ struct GeminiRequestBuilder: Codable {
             return try JSONDecoder().decode([String: AnyCodable].self,
                                             from: args.lossyData)
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
             return [:]
         }
     }
 
+    private static func parametersForGemini(_ schema: JSONSchema) -> JSONSchema {
+        do {
+            let data = try JSONEncoder().encode(schema)
+            let object = try JSONSerialization.jsonObject(with: data)
+            guard let sanitized = sanitizingFunctionParameterSchema(object) as? [String: Any] else {
+                return schema
+            }
+            return JSONSchema(rawJSON: sanitized)
+        } catch {
+            DLog("Failed to sanitize Gemini function parameters: \(error)")
+            return schema
+        }
+    }
+
+    private static func sanitizingFunctionParameterSchema(_ object: Any) -> Any {
+        if let dictionary = object as? [String: Any] {
+            var result = [String: Any]()
+            for (key, value) in dictionary where key != "additionalProperties" {
+                switch key {
+                case "type":
+                    if let typeNames = value as? [Any] {
+                        let names = typeNames.compactMap { $0 as? String }
+                        if let typeName = names.first(where: { $0 != "null" }) {
+                            result[key] = typeName
+                        }
+                        if names.contains("null") {
+                            result["nullable"] = true
+                        }
+                    } else {
+                        result[key] = value
+                    }
+                case "items":
+                    if let typeName = value as? String {
+                        result[key] = ["type": typeName]
+                    } else {
+                        result[key] = sanitizingFunctionParameterSchema(value)
+                    }
+                case "properties", "$defs", "definitions", "patternProperties":
+                    // These map member names to child schemas. A member name
+                    // may itself be a JSON Schema keyword (e.g. a property
+                    // literally named "type", "items", or "additionalProperties").
+                    // Recurse each value as a schema and keep the member name
+                    // verbatim so it is never reinterpreted as a keyword.
+                    if let members = value as? [String: Any] {
+                        var sanitizedMembers = [String: Any]()
+                        for (memberName, memberSchema) in members {
+                            sanitizedMembers[memberName] = sanitizingFunctionParameterSchema(memberSchema)
+                        }
+                        result[key] = sanitizedMembers
+                    } else {
+                        result[key] = sanitizingFunctionParameterSchema(value)
+                    }
+                case "enum", "const", "default", "examples":
+                    // These carry literal data values, not subschemas. Recursing
+                    // would treat an object-valued default/const/example as a
+                    // schema and strip its additionalProperties or rewrite a
+                    // "type" array member, corrupting the actual value. Copy
+                    // verbatim. (Bites rawJSON-backed MCP/orchestrator schemas.)
+                    result[key] = value
+                default:
+                    result[key] = sanitizingFunctionParameterSchema(value)
+                }
+            }
+            return result
+        }
+        if let array = object as? [Any] {
+            return array.map { sanitizingFunctionParameterSchema($0) }
+        }
+        return object
+    }
+
     init(messages: [LLM.Message],
          functions: [LLM.AnyFunction],
-         hostedTools: HostedTools) {
+         hostedTools: HostedTools,
+         modelName: String? = nil) {
+        // Only signature-requiring generations (3-series and later) get the
+        // bypass token for signature-less calls; older Gemini never emits
+        // signatures and must keep receiving none, both on reload and on the
+        // live tool round-trip (Gemini has no previous_response_id, so the
+        // just-made call is re-sent too). Not persisted state: modelName is
+        // consumed here and deliberately not a stored/encoded property.
+        let fallbackSignature = Self.requiresThoughtSignature(modelName: modelName)
+            ? Self.missingThoughtSignatureFallback
+            : nil
         if let systemInstructions = messages.first(where: { $0.role == .system })?.body.content as? String {
             self.system_instruction = .init(parts: [.init(text: systemInstructions)])
         } else {
@@ -80,7 +191,7 @@ struct GeminiRequestBuilder: Codable {
                 FunctionDeclaration(
                     name: function.decl.name,
                     description: function.decl.description,
-                    parameters: function.decl.parameters)
+                    parameters: Self.parametersForGemini(function.decl.parameters))
             }))
         } else {
             // Gemini doesn't allow both functions and hosted tools in the same call yet.
@@ -96,7 +207,7 @@ struct GeminiRequestBuilder: Codable {
         } else {
             self.tools = tools
         }
-        self.contents = messages.compactMap { message -> Content? in
+        let rawContents = messages.compactMap { message -> Content? in
             let role: String? = switch message.role {
             case .user: "user"
             case .assistant: "model"
@@ -122,7 +233,7 @@ struct GeminiRequestBuilder: Codable {
                 if let name = call.name {
                     [Part(functionCall: FunctionCall(name: name,
                                                      args: Self.encodedArgs(call.arguments)),
-                          thoughtSignature: call.thoughtSignature)]
+                          thoughtSignature: call.thoughtSignature ?? fallbackSignature)]
                 } else {
                     []
                 }
@@ -154,7 +265,7 @@ struct GeminiRequestBuilder: Codable {
                             return Part(functionCall: FunctionCall(
                                             name: name,
                                             args: Self.encodedArgs(call.arguments)),
-                                        thoughtSignature: call.thoughtSignature)
+                                        thoughtSignature: call.thoughtSignature ?? fallbackSignature)
                         }
                         return nil
                     case .functionOutput(name: let name, output: let output, id: _):
@@ -195,6 +306,32 @@ struct GeminiRequestBuilder: Codable {
             return Content(role: role,
                            parts: parts)
         }
+        self.contents = Self.coalescingConsecutiveRoles(rawContents)
+    }
+
+    // A reloaded chat can produce consecutive same-role turns (e.g. two
+    // model turns: a replayed tool call followed by the final text reply).
+    // Gemini rejects consecutive same-role turns in general, so adjacent
+    // same-role Contents merge by concatenating their parts - EXCEPT across
+    // a functionResponse boundary: folding a user's follow-up text into the
+    // same Content as a functionResponse makes Gemini return an empty
+    // answer (finishReason STOP, no usable parts), and Gemini accepts a
+    // functionResponse Content followed by a separate user text Content, so
+    // that seam must stay unmerged.
+    private static func coalescingConsecutiveRoles(_ contents: [Content]) -> [Content] {
+        var output: [Content] = []
+        for content in contents {
+            if let last = output.last,
+               last.role == content.role,
+               !(last.parts.contains { $0.functionResponse != nil }
+                 && content.parts.contains { $0.text != nil }) {
+                output[output.count - 1] = Content(role: last.role,
+                                                   parts: last.parts + content.parts)
+            } else {
+                output.append(content)
+            }
+        }
+        return output
     }
 
     func body() throws -> Data {

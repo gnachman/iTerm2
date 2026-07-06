@@ -385,7 +385,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         return;
     }
     // Copy the shared colors to the per-mode colors in user defaults if they do not already exist.
-    DLog(@"-- begin copying colors --");
+    RLog(@"-- begin copying colors --");
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     for (NSString *baseKey in [self keysForBulkCopy]) {
         if ([baseKey isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
@@ -407,11 +407,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             [super setObject:newValue forKey:key];
         }
     }
-    DLog(@"-- finished copying colors --");
+    RLog(@"-- finished copying colors --");
 }
 
 - (void)copyCurrentModeColorsToShared {
-    DLog(@"-- begin copying colors to shared --");
+    RLog(@"-- begin copying colors to shared --");
     NSString *suffix = _mode.selectedTag == 1 ? COLORS_DARK_MODE_SUFFIX : COLORS_LIGHT_MODE_SUFFIX;
     for (NSString *baseKey in [self keysForBulkCopy]) {
         NSString *key = [baseKey stringByAppendingString:suffix];
@@ -423,7 +423,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         DLog(@"Set %@ = %@ [source key=%@]", baseKey, newValue, key);
         [super setObject:newValue forKey:baseKey];
     }
-    DLog(@"-- finished copying colors to shared --");
+    RLog(@"-- finished copying colors to shared --");
 }
 
 - (void)maybeWarnAboutExcessiveContrast {

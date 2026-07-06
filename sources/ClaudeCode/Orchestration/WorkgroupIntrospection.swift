@@ -109,6 +109,7 @@ enum WorkgroupIntrospection {
         return WorkgroupSummary(
             workgroupID: instance.instanceUniqueIdentifier,
             workgroupName: workgroupName(for: instance),
+            provenance: instance.provenance,
             sessions: sessions)
     }
 
@@ -118,6 +119,7 @@ enum WorkgroupIntrospection {
         return WorkgroupSummary(
             workgroupID: workgroupID,
             workgroupName: roleName,
+            provenance: nil,
             sessions: [
                 sessionSummary(roleID: syntheticRoleID,
                                roleName: roleName,
@@ -220,9 +222,10 @@ enum WorkgroupIntrospection {
             kind: kind(for: resolved.session),
             status: state(for: resolved.session),
             statusSource: statusSource(for: resolved.session),
-            lastActivityISO: nil,
+            screenLastChanged: screenAgeDescription(for: resolved.session),
             currentCommand: currentCommand(for: resolved.session),
             lastMessage: lastMessage(for: resolved.session),
+            provenance: SessionProvenanceRegistry.instance.provenance(forSessionGUID: resolved.session.guid),
             pendingAction: pendingActionDescription(for: resolved.session))
     }
 
@@ -236,9 +239,28 @@ enum WorkgroupIntrospection {
             kind: kind(for: session),
             status: state(for: session),
             statusSource: statusSource(for: session),
-            lastActivityISO: nil,
+            screenLastChanged: screenAgeDescription(for: session),
             currentCommand: currentCommand(for: session),
+            provenance: SessionProvenanceRegistry.instance.provenance(forSessionGUID: session.guid),
             pendingAction: pendingActionDescription(for: session))
+    }
+
+    // MARK: - Recency
+
+    // Humanized "how long ago did this session's rendered screen last
+    // change" (e.g. "< 1 min ago", "27 min ago"). Screen text carries
+    // no recency cues of its own: a transcript from half an hour ago
+    // reads exactly like one printed a second ago, which has caused
+    // agents to mistake a stale screen for fresh work. nil until the
+    // session has rendered at least once: before then the change
+    // timestamp describes session creation, and reporting that as
+    // fresh would bias the agent toward reading an empty screen as
+    // current activity.
+    static func screenAgeDescription(for session: PTYSession) -> String? {
+        guard session.screenContentsHaveEverChanged else { return nil }
+        let age = session.timeSinceScreenContentsLastChanged
+        guard age >= 0 else { return nil }
+        return "\(DateFormatter.compactDateDifferenceString(fromTimeDelta: age)) ago"
     }
 
     // MARK: - Screen contents
@@ -271,13 +293,15 @@ enum WorkgroupIntrospection {
         // (their Ink frames would otherwise look like dozens of duplicate
         // screens in the transcript). Expose just the visible grid and let
         // the agent scroll the wheel to reveal older content.
+        let screenAge = screenAgeDescription(for: session)
         if surface == .alternate {
             return ScreenContents(text: snapshot(of: session),
                                   kind: kind,
                                   isSnapshot: true,
                                   screen: .alternate,
                                   mouseReporting: mouseReporting,
-                                  pendingAction: pending)
+                                  pendingAction: pending,
+                                  screenLastChanged: screenAge)
         }
         // Primary screen: scrollback is real linear history.
         let text = trailingTranscript(of: session,
@@ -287,7 +311,8 @@ enum WorkgroupIntrospection {
                               isSnapshot: false,
                               screen: .primary,
                               mouseReporting: mouseReporting,
-                              pendingAction: pending)
+                              pendingAction: pending,
+                              screenLastChanged: screenAge)
     }
 
     // Semantic screen surface: alternate when the program is on (or would

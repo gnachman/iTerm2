@@ -263,7 +263,7 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             // Returning false would let ⌥⇧⌘<digit> fall through the
             // dispatch chain and reach the focused shell as input;
             // consume it as a no-op instead.
-            DLog("iTermWorkgroupPeerPort.activatePeer(byShortcutDigit:): consuming chord for \(identifier), whose spawn failed")
+            RLog("iTermWorkgroupPeerPort.activatePeer(byShortcutDigit:): consuming chord for \(identifier), whose spawn failed")
             return true
         }
         return activate(identifier: identifier)
@@ -555,7 +555,7 @@ extension iTermWorkgroupPeerPort: WorkgroupModeSwitcherItemDelegate {
 extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
     func diffDidSelect(filename: String,
                        sender: CCDiffSelectorItem) {
-        DLog("iTermWorkgroupPeerPort.diffDidSelect \(filename) owner=\(sender.ownerPeerID ?? "nil")")
+        RLog("iTermWorkgroupPeerPort.diffDidSelect \(filename) owner=\(sender.ownerPeerID ?? "nil")")
         guard let ownerPeerID = sender.ownerPeerID,
               let cfg = peerConfigs.first(where: {
                   $0.uniqueIdentifier == ownerPeerID
@@ -596,7 +596,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
     // entry command — what diff would show with no filter. Restart
     // the peer with cfg.command, NOT cfg.perFileCommand.
     func diffDidSelectAllFiles(sender: CCDiffSelectorItem) {
-        DLog("iTermWorkgroupPeerPort.diffDidSelectAllFiles owner=\(sender.ownerPeerID ?? "nil")")
+        RLog("iTermWorkgroupPeerPort.diffDidSelectAllFiles owner=\(sender.ownerPeerID ?? "nil")")
         // No isRestartable gate — restart(withCommand:) early-returns
         // for non-restartable sessions internally (PTYSession.m:3399),
         // and matching the per-file path's lack of gate keeps both
@@ -625,7 +625,7 @@ extension iTermWorkgroupPeerPort: CCGitBaseSelectorItemDelegate {
     // a selector on a different port commits.
     func gitBaseDidChange(base: String,
                           sender: CCGitBaseSelectorItem) {
-        DLog("iTermWorkgroupPeerPort.gitBaseDidChange \(base) owner=\(sender.ownerPeerID ?? "nil")")
+        RLog("iTermWorkgroupPeerPort.gitBaseDidChange \(base) owner=\(sender.ownerPeerID ?? "nil")")
         workgroupInstance?.gitBaseChanged(base, fromSender: sender)
     }
 }

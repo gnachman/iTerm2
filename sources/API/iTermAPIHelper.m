@@ -1595,6 +1595,26 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     }
 }
 
+- (void)apiServerScreenshot:(ITMScreenshotRequest *)request
+                    handler:(void (^)(ITMScreenshotResponse *))handler {
+    ITMScreenshotResponse *response = [[ITMScreenshotResponse alloc] init];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
+    if (!session) {
+        response.status = ITMScreenshotResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+    NSData *png = [session screenshotPNGData];
+    if (!png) {
+        response.status = ITMScreenshotResponse_Status_InternalError;
+        handler(response);
+        return;
+    }
+    response.status = ITMScreenshotResponse_Status_Ok;
+    response.png = png;
+    handler(response);
+}
+
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request
                    handler:(void (^)(ITMGetPromptResponse *))handler {
     PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
@@ -3265,14 +3285,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                           connectionKey:(NSString *)connectionKey {
     NSString *key = result.requestId;
     if (!key) {
-        DLog(@"Bogus key %@", key);
+        RLog(@"Bogus key %@", key);
         return;
     }
 
     iTermServerOriginatedRPCCompletionBlock block = _serverOriginatedRPCCompletionBlocks[key];
     if (!block) {
         // Could be a timeout already occurred.
-        DLog(@"Key %@ doesn't match a pending RPC", key);
+        RLog(@"Key %@ doesn't match a pending RPC", key);
         return;
     }
     [_serverOriginatedRPCCompletionBlocks removeObjectForKey:key];
@@ -4048,7 +4068,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         }
         PseudoTerminal *term = [PseudoTerminal castFrom:tab.realParentWindow];
         if (!term) {
-            DLog(@"Strange, the tab's window is not a PseudoTerminal");
+            RLog(@"Strange, the tab's window is not a PseudoTerminal");
             [response.statusesArray addValue:ITMCloseResponse_Status_NotFound];
             continue;
         }

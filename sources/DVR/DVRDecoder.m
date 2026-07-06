@@ -279,7 +279,7 @@
 // *sum if possible.
 static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
     if (summand < 0 || addend < 0) {
-        DLog(@"Have negative value: summand=%@ addend=%@", @(summand), @(addend));
+        RLog(@"Have negative value: summand=%@ addend=%@", @(summand), @(addend));
         return NO;
     }
     assert(sizeof(long long) > sizeof(int));
@@ -287,7 +287,7 @@ static BOOL NS_WARN_UNUSED_RESULT SafeIncr(int summand, int addend, int *sum) {
     const long long temp2 = addend;
     const long long temp3 = temp1 + temp2;
     if (temp3 > INT_MAX) {
-        DLog(@"Prevented overflow: summand=%@ addend=%@", @(summand), @(addend));
+        RLog(@"Prevented overflow: summand=%@ addend=%@", @(summand), @(addend));
         return NO;
     }
     *sum = temp3;

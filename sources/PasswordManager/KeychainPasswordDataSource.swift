@@ -42,7 +42,7 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
                 // It stored username in account and accountName in label.
                 // But label is part of the value, not part of the key, so it's not a good place to store the account name.
                 // Unfortunately username ended up being the unique key.
-                DLog("Defective modern account label=\(label) combined=\(combinedAccountName)")
+                RLog("Defective modern account label=\(label) combined=\(combinedAccountName)")
                 accountName = label
                 userName = combinedAccountName;
                 keychainAccountName = combinedAccountName

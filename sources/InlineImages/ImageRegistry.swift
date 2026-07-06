@@ -94,7 +94,7 @@ class ImageRegistry: NSObject {
     @objc
     func collectGarbage() {
         mutex.sync {
-            DLog("Garbage collect")
+            RLog("Garbage collect")
             for (key, value) in codeToImage {
                 guard value.provisional else {
                     continue

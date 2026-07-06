@@ -214,15 +214,31 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             let id: String  // e.g., fc_xxx. Use this when responding.
             enum OutputItemType: String, Codable {
                 case webSearchCall = "web_search_call"
+                case reasoning
             }
 
             let type: OutputItemType
-            let status: String  // "completed"
+            let status: String?  // "completed"; reasoning items can omit it
             let action: Action?
+            // Reasoning items only: the encrypted payload (present when the
+            // request asked for include: ["reasoning.encrypted_content"])
+            // and the summary texts.
+            let encryptedContent: String?
+            let summary: [SummaryPart]?
 
             struct Action: Codable {
                 var type: String?
                 var query: String?
+            }
+
+            struct SummaryPart: Codable {
+                var text: String
+                var type: String?
+            }
+
+            enum CodingKeys: String, CodingKey {
+                case id, type, status, action, summary
+                case encryptedContent = "encrypted_content"
             }
         }
     }
@@ -555,6 +571,22 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                                             type: .statusUpdate(.webSearchFinished(query))))))
                     }
                     parsedResponse?.ignore = false
+                case .reasoning:
+                    // The completed reasoning item carries the encrypted
+                    // payload; surface it (bodiless) so the accumulator can
+                    // attach it to the turn and it persists with any tool
+                    // call the turn goes on to make. Summary display rides
+                    // the separate reasoning_summary_text.done event.
+                    let summaries = (callEvent.item.summary ?? []).map(\.text).filter { !$0.isEmpty }
+                    choiceMessages.append(
+                        LLM.Message(responseID: nil,
+                                    role: .assistant,
+                                    body: .uninitialized,
+                                    reasoningItems: [LLM.ReasoningItem(
+                                        id: callEvent.item.id,
+                                        encryptedContent: callEvent.item.encryptedContent,
+                                        summary: summaries.isEmpty ? nil : summaries)]))
+                    parsedResponse?.ignore = false
                 }
             case let argumentsDeltaEvent as ResponseFunctionCallArgumentsDeltaEvent:
                 choiceMessages.append(LLM.Message(
@@ -567,12 +599,12 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
                 parsedResponse?.ignore = false
 
             case let createdEvent as ResponseCreatedEvent:
-                DLog("Response started: \(createdEvent.response.id)")
+                RLog("Response started: \(createdEvent.response.id)")
                 parsedResponse?.newlyCreatedResponseID = createdEvent.response.id
                 parsedResponse?.ignore = false
 
             case let doneEvent as ResponseDoneEvent:
-                DLog("\nResponse completed. Status: \(doneEvent.response.status)")
+                RLog("\nResponse completed. Status: \(doneEvent.response.status)")
                 parsedResponse = nil
 
             case let funcArgsEvent as ResponseFunctionCallArgumentsDoneEvent:

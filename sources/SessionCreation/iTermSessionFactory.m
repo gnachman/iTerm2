@@ -343,6 +343,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Initialize a new session
     aSession = [[PTYSession alloc] initSynthetic:NO];
+    aSession.needsNewTerminalKeyboardForced = YES;
 
     if ([[NSNumber castFrom:profile[KEY_SHORT_LIVED_SINGLE_USE]] boolValue]) {
         aSession.shortLivedSingleUse = YES;
@@ -362,10 +363,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)attachOrLaunchWithRequest:(iTermSessionAttachOrLaunchRequest *)request {
     request.delegate = self;
-    DLog(@"attachOrLaunchWithRequest:%@", request);
+    RLog(@"attachOrLaunchWithRequest:%@", request);
     [request realizeWithCompletion:^(BOOL realized) {
         if (!realized) {
-            DLog(@"Realization failed");
+            RLog(@"Realization failed");
             return;
         }
         DLog(@"Realized ok");

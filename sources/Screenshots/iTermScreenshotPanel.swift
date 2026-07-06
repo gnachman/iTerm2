@@ -7,6 +7,7 @@
 
 import AppKit
 import ColorPicker
+import UniformTypeIdentifiers
 
 @objc(iTermBlurredScreenshotObscureMethod)
 class iTermBlurredScreenshotObscureMethod: NSObject {
@@ -141,9 +142,16 @@ class iTermScreenshotPanel: NSPanel {
     // Multi-part save state
     private var multiPartSaveState: MultiPartSaveState?
 
+    /// Where a screenshot should be written. `baseName` excludes the .png extension
+    /// and is used to derive per-part filenames for multi-part output.
+    private struct SaveDestination {
+        let directory: URL
+        let baseName: String
+    }
+
     private struct MultiPartSaveState {
-        let timestamp: String
-        let desktopURL: URL
+        let directory: URL
+        let baseName: String
         let totalParts: Int
         let maxLinesPerPart: Int
         let fullLineRange: NSRange
@@ -519,11 +527,16 @@ class iTermScreenshotPanel: NSPanel {
         largeScreenshotWarningLabel.isHidden = true
         contentView.addSubview(largeScreenshotWarningLabel)
 
-        let saveButton = NSButton(title: "Save to Desktop", target: self, action: #selector(saveClicked(_:)))
+        let saveButton = NSButton(title: "Save", target: self, action: #selector(saveClicked(_:)))
         saveButton.keyEquivalent = "\r" // Return
         saveButton.bezelStyle = .rounded
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(saveButton)
+
+        let saveAsButton = NSButton(title: "Save As…", target: self, action: #selector(saveAsClicked(_:)))
+        saveAsButton.bezelStyle = .rounded
+        saveAsButton.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(saveAsButton)
 
         // Layout
         let margin: CGFloat = 20
@@ -668,8 +681,11 @@ class iTermScreenshotPanel: NSPanel {
             saveButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -margin),
             saveButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -margin),
 
+            saveAsButton.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor),
+            saveAsButton.trailingAnchor.constraint(equalTo: saveButton.leadingAnchor, constant: -8),
+
             copyButton.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor),
-            copyButton.trailingAnchor.constraint(equalTo: saveButton.leadingAnchor, constant: -8),
+            copyButton.trailingAnchor.constraint(equalTo: saveAsButton.leadingAnchor, constant: -8),
 
             cancelButton.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor),
             cancelButton.trailingAnchor.constraint(equalTo: copyButton.leadingAnchor, constant: -8),
@@ -1296,36 +1312,77 @@ class iTermScreenshotPanel: NSPanel {
         pasteboard.setData(pngData, forType: .png)
     }
 
+    /// The directory used by the one-click “Save” button: the configured
+    /// screenshot folder if it exists, otherwise the Desktop.
+    private func resolvedSaveDirectory() -> URL? {
+        let configured = (iTermAdvancedSettingsModel.screenshotSaveLocation() ?? "") as NSString
+        let expanded = configured.expandingTildeInPath
+        if !expanded.isEmpty {
+            var isDirectory: ObjCBool = false
+            if FileManager.default.fileExists(atPath: expanded, isDirectory: &isDirectory),
+               isDirectory.boolValue {
+                return URL(fileURLWithPath: expanded, isDirectory: true)
+            }
+        }
+        return FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
+    }
+
     @objc private func saveClicked(_ sender: Any) {
+        guard let directory = resolvedSaveDirectory() else {
+            finish(with: nil)
+            return
+        }
+        let baseName = (iTermAnnotatedScreenshot.defaultScreenshotFilename() as NSString).deletingPathExtension
+        save(to: SaveDestination(directory: directory, baseName: baseName))
+    }
+
+    @objc private func saveAsClicked(_ sender: Any) {
+        let savePanel = iTermModernSavePanel()
+        let defaultName = iTermAnnotatedScreenshot.defaultScreenshotFilename()
+        savePanel.defaultFilename = defaultName
+        savePanel.nameFieldStringValue = defaultName
+        savePanel.canCreateDirectories = true
+        savePanel.allowedContentTypes = [.png]
+        if let directory = resolvedSaveDirectory() {
+            NSSavePanel.setDirectoryURL(directory, onceForID: "SaveScreenshot", savePanel: savePanel)
+        }
+        // Keep clicks outside the picker working by making the panel activating.
+        styleMask.remove(.nonactivatingPanel)
+        makeKey()
+        savePanel.beginSheetModal(for: self) { [weak self] response in
+            guard let self = self else { return }
+            self.styleMask.insert(.nonactivatingPanel)
+            guard response == .OK, let item = savePanel.item, item.host.isLocalhost else {
+                return
+            }
+            let url = URL(fileURLWithPath: item.filename)
+            let directory = url.deletingLastPathComponent()
+            let baseName = (url.lastPathComponent as NSString).deletingPathExtension
+            self.save(to: SaveDestination(directory: directory, baseName: baseName))
+        }
+    }
+
+    private func save(to destination: SaveDestination) {
         let lineRange = currentLineRange()
 
         // Use streaming encoder when approaching pixel limits or multi-part output is needed
         let useStreaming = lineRange.length >= cachedMaxLinesPerPart || cachedNumberOfParts > 1
         if useStreaming {
-            saveWithStreamingEncoder()
+            saveWithStreamingEncoder(to: destination)
         } else {
             // Standard path for smaller screenshots
             guard let image = renderFinalImage() else {
                 finish(with: nil)
                 return
             }
-            let url = iTermAnnotatedScreenshot.saveToDesktop(nsImage: image)
+            let fileURL = destination.directory.appendingPathComponent(destination.baseName + ".png")
+            let url = iTermAnnotatedScreenshot.write(nsImage: image, to: fileURL) ? fileURL : nil
             finish(with: url)
         }
     }
 
-    private func saveWithStreamingEncoder() {
+    private func saveWithStreamingEncoder(to destination: SaveDestination) {
         guard let info = terminalInfo, info.textView != nil else {
-            finish(with: nil)
-            return
-        }
-
-        // Generate timestamp for filenames
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
-        let timestamp = formatter.string(from: Date())
-
-        guard let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first else {
             finish(with: nil)
             return
         }
@@ -1341,8 +1398,8 @@ class iTermScreenshotPanel: NSPanel {
 
         // Set up multi-part save state
         multiPartSaveState = MultiPartSaveState(
-            timestamp: timestamp,
-            desktopURL: desktopURL,
+            directory: destination.directory,
+            baseName: destination.baseName,
             totalParts: totalParts,
             maxLinesPerPart: maxLines,
             fullLineRange: lineRange,
@@ -1377,11 +1434,11 @@ class iTermScreenshotPanel: NSPanel {
         // Generate filename
         let filename: String
         if totalParts == 1 {
-            filename = "iTerm2-Screenshot-\(state.timestamp).png"
+            filename = "\(state.baseName).png"
         } else {
-            filename = "iTerm2-Screenshot-\(state.timestamp)-part-\(partIndex + 1)-of-\(totalParts).png"
+            filename = "\(state.baseName)-part-\(partIndex + 1)-of-\(totalParts).png"
         }
-        let destinationURL = state.desktopURL.appendingPathComponent(filename)
+        let destinationURL = state.directory.appendingPathComponent(filename)
 
         NSLog("saveNextPart: filename=\(filename)")
 

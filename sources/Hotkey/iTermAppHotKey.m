@@ -54,22 +54,22 @@
         if (prefsWindow != keyWindow ||
             prefsWindowController.window.firstResponder != prefsWindowController.hotkeyField) {
             if (_previousState && (keyWindow.styleMask & NSWindowStyleMaskFullScreen)) {
-                DLog(@"Retore previously active app %@", _previousState);
+                RLog(@"Retore previously active app %@", _previousState);
                 [_previousState restorePreviouslyActiveApp];
             } else {
-                DLog(@"Hide app");
+                RLog(@"Hide app");
                 [NSApp hide:nil];
             }
         } else {
-            DLog(@"Ignoring hotkey because prefs is active");
+            RLog(@"Ignoring hotkey because prefs is active");
         }
     } else {
         iTermController *controller = [iTermController sharedInstance];
         int numberOfTerminals = [controller numberOfTerminals];
-        DLog(@"Activate app");
+        RLog(@"Activate app");
         [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
         if (numberOfTerminals == 0) {
-            DLog(@"Make new window");
+            RLog(@"Make new window");
             [controller newWindow:nil];
         }
     }

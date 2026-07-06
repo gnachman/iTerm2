@@ -63,7 +63,7 @@
 
 - (void)broke {
     _isBroken = YES;
-    DLog(@"Image is broken");
+    RLog(@"Image is broken");
     _image = [iTermImage imageWithNativeImage:[NSImage it_imageNamed:@"broken_image" forClass:self.class]];
     assert(_image);
 }
@@ -226,7 +226,7 @@
 }
 
 - (BOOL)writeTextDocumentToGrid:(VT100Grid *)grid {
-    DLog(@"Write text document %@ at %@", _name, VT100GridCoordDescription(grid.cursor));
+    RLog(@"Write text document %@ at %@", _name, VT100GridCoordDescription(grid.cursor));
 
     NSData *data = [NSData dataWithBase64EncodedString:_base64String];
     if (!data) {
@@ -272,7 +272,7 @@
 }
 
 - (void)writeImage:(VT100DecodedImage *)decodedImage toGrid:(VT100Grid *)grid {
-    DLog(@"Write decoded image %@ named %@ at %@", decodedImage, _name, VT100GridCoordDescription(grid.cursor));
+    RLog(@"Write decoded image %@ named %@ at %@", decodedImage, _name, VT100GridCoordDescription(grid.cursor));
     screen_char_t c;
     int width;
     int height;

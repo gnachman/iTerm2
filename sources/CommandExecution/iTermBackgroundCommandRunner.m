@@ -48,7 +48,7 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
 
 - (void)didSelectNotification:(NSNotification *)notification {
     NSString *identifier = notification.userInfo[@"identifier"];
-    DLog(@"Did select notification with identifier %@", identifier);
+    RLog(@"Did select notification with identifier %@", identifier);
     if (!identifier) {
         return;
     }
@@ -127,7 +127,7 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
 }
 
 - (void)reallyRun {
-    DLog(@"%@", self);
+    RLog(@"%@", self);
     assert(!_running);
     _running = YES;
     iTermCommandRunner *commandRunner = [[iTermCommandRunner alloc] initWithCommand:@"/bin/sh"
@@ -165,7 +165,7 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
 }
 
 - (void)didCompleteWithStatus:(int)status entry:(iTermScriptHistoryEntry *)entry {
-    DLog(@"%@", self);
+    RLog(@"%@", self);
     [activeRunners removeObject:self];
     if (status) {
         [entry addOutput:[NSString stringWithFormat:@"\nFinished with status %d", status]
@@ -174,7 +174,7 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
     [entry stopRunning];
     _running = NO;
     if (self.notificationTitle && status) {
-        DLog(@"%@ post notification with identifier %@", self, entry.identifier);
+        RLog(@"%@ post notification with identifier %@", self, entry.identifier);
         [iTermBackgroundCommandRunnerNotificationObserver sharedInstance];
         [self.class maybeNotify:^(NSInteger deferCount) {
             NSString *detail = [NSString stringWithFormat:@"\nFinished with status %d", status];

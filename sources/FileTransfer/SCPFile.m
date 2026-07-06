@@ -372,7 +372,7 @@ static NSError *SCPFileError(NSString *description) {
         };
     });
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
-    DLog(@"performTransfer download=%@ agentAllowed=%@ path=%@ baseName=%@",
+    RLog(@"performTransfer download=%@ agentAllowed=%@ path=%@ baseName=%@",
          @(isDownload), @(agentAllowed), self.path, baseName);
     if (!baseName) {
         self.error = [NSString stringWithFormat:@"Invalid path: %@", self.path.path];
@@ -388,7 +388,7 @@ static NSError *SCPFileError(NSString *description) {
         self.session.delegate = self;
         effectivePort = self.session.port.intValue;
     } else {
-        DLog(@"Create seession to hostname=%@ configs=%@ port=%@ username=%@",
+        RLog(@"Create seession to hostname=%@ configs=%@ port=%@ username=%@",
              [self hostname], [SCPFile configs], @([self port]), self.path.username);
         self.session = [[NMSSHSession alloc] initWithHost:[self hostname]
                                                   configs:[SCPFile configs]
@@ -407,7 +407,7 @@ static NSError *SCPFileError(NSString *description) {
     }
     NSURL *url = [self sessionURL];
     if (!self.session.isConnected) {
-        DLog(@"Not connected");
+        RLog(@"Not connected");
         NSError *theError = [self lastError];
         if (!theError) {
             // If connection fails, there is no rawSession in NMSSHSession, so it can't return an
@@ -569,7 +569,7 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     if (!self.session.session && didConnectToAgent) {
-        DLog(@"Retry without agent");
+        RLog(@"Retry without agent");
         // Try again without agent. I got into a state where using the agent prevented connections
         // from going through.
         [self.session disconnect];
@@ -578,7 +578,7 @@ static NSError *SCPFileError(NSString *description) {
         return;
     }
     if (!self.session.isAuthorized) {
-        DLog(@"Still not authenticated.");
+        RLog(@"Still not authenticated.");
         __block NSError *error = [self lastError];
         [self performOnMainThread:^{
             if (!error) {
@@ -659,7 +659,7 @@ static NSError *SCPFileError(NSString *description) {
         __block NSError *error = nil;
         __block NSString *finalDestination = nil;
         if (ok) {
-            DLog(@"Download OK");
+            RLog(@"Download OK");
             error = nil;
             // We determine the filename and perform the move in the main thread to avoid two
             // threads trying to determine the final destination at the same time.
@@ -682,12 +682,12 @@ static NSError *SCPFileError(NSString *description) {
             }];
             if (error) {
                 self.error = error.localizedDescription;
-                DLog(@"%@", error);
+                RLog(@"%@", error);
             }
             [[NSFileManager defaultManager] removeItemAtPath:tempfile error:NULL];
             self.destination = finalDestination;
         } else {
-            DLog(@"Download failed.");
+            RLog(@"Download failed.");
             const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:tempfile error:&error];
             DLog(@"Remove %@: %@", tempfile, error);
             if (quarantineError && (!ok || error)) {
@@ -732,7 +732,7 @@ static NSError *SCPFileError(NSString *description) {
     } else {
         DLog(@"Will upload");
         self.status = kTransferrableFileStatusTransferring;
-        DLog(@"Upload “%@” to “%@”", [self localPath], self.path.path);
+        RLog(@"Upload “%@” to “%@”", [self localPath], self.path.path);
         BOOL ok = [self.session.channel uploadFile:[self localPath]
                                                 to:self.path.path
                                           progress:^BOOL (NSUInteger bytes) {
@@ -746,10 +746,10 @@ static NSError *SCPFileError(NSString *description) {
         }];
         NSError *error;
         if (ok) {
-            DLog(@"Upload OK");
+            RLog(@"Upload OK");
             error = nil;
         } else {
-            DLog(@"Upload failed: %@", error);
+            RLog(@"Upload failed: %@", error);
             if (self.stopped) {
                 [self performOnMainThread:^{
                     [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
@@ -883,7 +883,7 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     NSError *attributesError = nil;
     NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:self.localPath error:&attributesError];
     if (attributesError) {
-        DLog(@"Failed to get attributes for %@: %@", self.localPath, attributesError);
+        RLog(@"Failed to get attributes for %@: %@", self.localPath, attributesError);
         self.error = [NSString stringWithFormat:@"Cannot read file: %@", attributesError.localizedDescription];
         [[FileTransferManager sharedInstance] transferrableFile:self
                                  didFinishTransmissionWithError:attributesError];

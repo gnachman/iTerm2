@@ -21,6 +21,10 @@ const TEST_APNS_P8 = [
 export default defineWorkersConfig({
   test: {
     name: "push-relay",
+    // The *.host.test.js suite exercises the self-hosted Node shim (better-sqlite3,
+    // node:http2) and must run under plain vitest, not workerd. See
+    // vitest.host.config.js.
+    exclude: ["**/node_modules/**", "**/*.host.test.js"],
     poolOptions: {
       workers: {
         main: "./src/worker.js",

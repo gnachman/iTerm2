@@ -74,13 +74,10 @@ extension AILiveHarness {
         guard let broker = ChatBroker.instance else {
             throw XCTSkip("ChatBroker.instance unavailable")
         }
-        // Critical isolation invariant: do NOT touch ChatClient.instance.
-        // If we did, it would register a broker processor that intercepts
-        // .remoteCommandRequest before the test can act as the tool
-        // runner. Sanity check: nothing in the harness should have
-        // pre-instantiated it.
-        XCTAssertFalse(chatClientAlreadyInstantiated(),
-                       "ChatClient.instance must not exist; this test plays the role of the broker-side tool runner")
+        // This test acts as the broker-side tool runner, so no processor
+        // (notably ChatClient's, which exists at launch on a machine with a
+        // paired companion) may intercept its messages.
+        suspendBrokerProcessors(broker)
 
         // 2) Encode permissions that grant runCommands=.always so the
         //    LLM is offered the execute_command tool. The chatID/guid
@@ -169,11 +166,16 @@ extension AILiveHarness {
         let userMessageBBody = "Reply with the single digit answer to 1+1, nothing else."
 
         var agentTurnEndCount = 0
+        var toolRequestSeen = false
         recorder.onEntry = { entry, _ in
             switch entry {
             case .delivery(let message, _):
+                // One-shot: a later turn can legitimately call the tool
+                // again, and a second fulfill() would assert (crashing the
+                // host, since asserts are enabled).
                 if case .remoteCommandRequest = message.content,
-                   message.author == .agent {
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
                     sawToolRequest.fulfill()
                 }
             case .typing(let isTyping, let participant):
@@ -296,6 +298,7 @@ extension AILiveHarness {
         guard let broker = ChatBroker.instance else {
             throw XCTSkip("ChatBroker.instance unavailable")
         }
+        suspendBrokerProcessors(broker)
 
         let recorder = BrokerEventRecorder()
         let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
@@ -323,6 +326,7 @@ extension AILiveHarness {
         let sawBTurnEnd = expectation(description: "B's turn ends (typing=false)")
         var sawStream = false
         var bTurnStarted = false
+        var bTurnEnded = false
         recorder.onEntry = { entry, _ in
             switch entry {
             case .delivery(let message, _):
@@ -339,7 +343,8 @@ extension AILiveHarness {
                 guard participant == .agent else { return }
                 if isTyping {
                     if sawStream { bTurnStarted = true }
-                } else if bTurnStarted {
+                } else if bTurnStarted, !bTurnEnded {
+                    bTurnEnded = true
                     sawBTurnEnd.fulfill()
                 }
             }
@@ -430,6 +435,7 @@ extension AILiveHarness {
         guard let broker = ChatBroker.instance else {
             throw XCTSkip("ChatBroker.instance unavailable")
         }
+        suspendBrokerProcessors(broker)
 
         let perms = #"[{"guid":"queue-test","category":"Run Commands","chatID":"queue-test"},"always"]"#
         let recorder = BrokerEventRecorder()
@@ -464,10 +470,16 @@ extension AILiveHarness {
         let sawBTurnEnd    = expectation(description: "B's turn ends (typing=false)")
         var turnEndsAfterStop = 0
         var pressedStop = false
+        var toolRequestSeen = false
         recorder.onEntry = { entry, _ in
             switch entry {
             case .delivery(let message, _):
-                if case .remoteCommandRequest = message.content, message.author == .agent {
+                // One-shot: B's turn (or the orphan-response turn) can call
+                // the tool again; a second fulfill() would assert and crash
+                // the host.
+                if case .remoteCommandRequest = message.content,
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
                     sawToolRequest.fulfill()
                 }
             case .typing(let isTyping, let participant):
@@ -567,6 +579,7 @@ extension AILiveHarness {
         guard let broker = ChatBroker.instance else {
             throw XCTSkip("ChatBroker.instance unavailable")
         }
+        suspendBrokerProcessors(broker)
 
         // Build a transcript that already holds an orphan tool call
         // (a .remoteCommandRequest with no matching .remoteCommandResponse)
@@ -604,9 +617,11 @@ extension AILiveHarness {
         // seeded transcript and (with the bug) ships the orphan call far
         // from its synthesized output.
         let sawTurnEnd = expectation(description: "agent turn ends (typing=false)")
+        var turnEnded = false
         recorder.onEntry = { entry, _ in
             if case .typing(let isTyping, let participant) = entry,
-               !isTyping, participant == .agent {
+               !isTyping, participant == .agent, !turnEnded {
+                turnEnded = true
                 sawTurnEnd.fulfill()
             }
         }
@@ -707,14 +722,24 @@ extension AILiveHarness {
         }
     }
 
-    /// Best-effort check that nobody has pre-instantiated ChatClient.
-    /// We don't want to read its private singleton, so probe indirectly
-    /// — if ChatClient.instance were already created, its broker
-    /// processor would be in broker.processors. Since processors are
-    /// just closures, we can't introspect them; instead we accept this
-    /// returns false here and rely on the test path not calling it.
-    private func chatClientAlreadyInstantiated() -> Bool {
-        return false
+    /// These tests play the broker-side tool runner themselves, so no broker
+    /// processor may intercept their messages. That used to be "ensured" by
+    /// assuming ChatClient.instance had never been created, but the guard was
+    /// unenforceable (processors are anonymous closures) and the assumption
+    /// is simply false on a machine with a paired companion device: the
+    /// companion bridge and agent-activity notifier touch the lazily-creating
+    /// ChatClient.instance at app launch, and its processor then wraps this
+    /// fixture's .remoteCommandRequest (fabricated session guid, no live
+    /// PTYSession) in .selectSessionRequest, which the recorder never
+    /// matches. Suspend ALL processors for the test's duration and restore
+    /// them on teardown; every test in this file was authored under the
+    /// no-processor assumption.
+    private func suspendBrokerProcessors(_ broker: ChatBroker) {
+        let saved = broker.processors
+        broker.processors = []
+        addTeardownBlock { @MainActor in
+            broker.processors = saved
+        }
     }
 
     /// Static config-value lookup mirrors AILiveDriver.configValue.
@@ -821,7 +846,14 @@ private final class FakeToolResponder {
     private let delay: TimeInterval
     private let output: String
     private var subscription: ChatBroker.Subscription?
-    private var responded = false
+    // One response per REQUEST, not one total: a later turn can re-issue
+    // the tool (the interrupted-call filler in a rebuilt history invites a
+    // retry), and if that call never got an answer the turn would park in
+    // pendingRemoteCommands forever and the test would time out on turn-end.
+    // Responding per-request keeps the ORPHAN semantics intact where they
+    // matter: a response whose dispatcher was cleared by Stop is still an
+    // orphan no matter how many requests get answered.
+    private var respondedRequestIDs = Set<UUID>()
 
     init(broker: ChatBroker, chatID: String, delay: TimeInterval, output: String) {
         self.broker = broker
@@ -841,10 +873,9 @@ private final class FakeToolResponder {
 
     private func handle(_ update: ChatBroker.Update) {
         guard case .delivery(let message, _, _) = update else { return }
-        guard !responded else { return }
         guard case .remoteCommandRequest(let payload, _) = message.content else { return }
         guard case .classic(let cmd) = payload else { return }
-        responded = true
+        guard respondedRequestIDs.insert(message.uniqueID).inserted else { return }
         let requestID = message.uniqueID
         let functionName = cmd.content.functionName
         // Round-trip the LLM-side function_call id (carried inside the

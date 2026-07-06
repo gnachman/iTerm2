@@ -22,6 +22,23 @@ final class RelayKeepalive: @unchecked Sendable {
     private let lock = UnfairLock()
     private var task: Task<Void, Never>?
     private var stopped = false
+    private var onDeath: (@Sendable () -> Void)?
+
+    /// Invoked once if the ping fails (the socket died), as opposed to a deliberate
+    /// stop(). Lets the owner tear down and recover even when the in-flight
+    /// receive() does not unblock on cancel (observed under a hard network drop).
+    /// Settable after creation so the transport can wire it to its own close once
+    /// it has adopted the keepalive.
+    func setOnDeath(_ handler: @escaping @Sendable () -> Void) {
+        lock.withLock { onDeath = handler }
+    }
+
+    private func fireDeath() {
+        let handler = lock.withLock { () -> (@Sendable () -> Void)? in
+            stopped ? nil : onDeath
+        }
+        handler?()
+    }
 
     /// - intervalNanos: delay between pings. Comfortably under the observed
     ///   idle-reap window so a ping always lands first.
@@ -43,11 +60,16 @@ final class RelayKeepalive: @unchecked Sendable {
             return true
         }
         guard go else { return }
-        let t = Task { [intervalNanos, ping] in
+        let t = Task { [weak self, intervalNanos, ping] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: intervalNanos)
                 if Task.isCancelled { break }
-                if await ping() == false { break }
+                if await ping() == false {
+                    // The socket is gone (not a deliberate stop): notify the owner
+                    // so it can hard-close and recover.
+                    self?.fireDeath()
+                    break
+                }
             }
         }
         lock.withLock {

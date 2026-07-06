@@ -171,11 +171,11 @@ class iTermBrowserGateway: NSObject {
 
     private static func verifyApp(bundleID: String, teamID: String) -> Bool {
         guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            DLog("Error: No app found with bundle ID '\(bundleID)'")
+            RLog("Error: No app found with bundle ID '\(bundleID)'")
             return false
         }
 
-        DLog("Found app at: \(appURL.path)")
+        RLog("Found app at: \(appURL.path)")
         return verifyCodeSignature(at: appURL, teamID: teamID)
     }
 
@@ -186,7 +186,7 @@ class iTermBrowserGateway: NSObject {
         // Create a static code object from the app URL
         let result = SecStaticCodeCreateWithPath(url as CFURL, [], &staticCode)
         guard result == errSecSuccess, let code = staticCode else {
-            DLog("Error: Failed to create static code object (OSStatus: \(result))")
+            RLog("Error: Failed to create static code object (OSStatus: \(result))")
             return false
         }
 
@@ -196,7 +196,7 @@ class iTermBrowserGateway: NSObject {
         var requirement: SecRequirement?
         let reqResult = SecRequirementCreateWithString(requirementString as CFString, [], &requirement)
         guard reqResult == errSecSuccess, let req = requirement else {
-            DLog("Error: Failed to create requirement (OSStatus: \(reqResult))")
+            RLog("Error: Failed to create requirement (OSStatus: \(reqResult))")
             return false
         }
 
@@ -208,7 +208,7 @@ class iTermBrowserGateway: NSObject {
             return true
         } else {
             let reason = SecCopyErrorMessageString(verifyResult, nil) as String?
-            DLog("Invalid: Error code \(verifyResult): \(reason.d)")
+            RLog("Invalid: Error code \(verifyResult): \(reason.d)")
             return false
         }
     }

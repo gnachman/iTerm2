@@ -75,7 +75,7 @@ class iTermBrowserPageSaver {
         let htmlFile = location.appendingPathComponent("index.html")
         try await htmlFile.endpoint.create(htmlFile.path, content: processedHTML.lossyData)
 
-        DLog("Page saved successfully to \(htmlFile.description)")
+        RLog("Page saved successfully to \(htmlFile.description)")
     }
     
     private func extractResourceURLs() async -> [String] {
@@ -93,7 +93,7 @@ class iTermBrowserPageSaver {
             DLog("Extracted \(urls.count) resource URLs: \(urls)")
             return urls
         } catch {
-            DLog("Error extracting resource URLs: \(error)")
+            RLog("Error extracting resource URLs: \(error)")
             return []
         }
     }
@@ -116,7 +116,7 @@ class iTermBrowserPageSaver {
             _ = try await webView.evaluateJavaScript(script, contentWorld: .page)
             DLog("Added saved resource attributes")
         } catch {
-            DLog("Error adding saved resource attributes: \(error)")
+            RLog("Error adding saved resource attributes: \(error)")
         }
     }
     
@@ -176,7 +176,7 @@ class iTermBrowserPageSaver {
             let result = try await webView.evaluateJavaScript(cloneAndProcessScript, contentWorld: .page)
             return result as? String
         } catch {
-            DLog("Error getting HTML with saved attributes: \(error)")
+            RLog("Error getting HTML with saved attributes: \(error)")
             return nil
         }
     }

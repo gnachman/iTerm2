@@ -178,6 +178,9 @@ struct MessageToPromptStateMachine {
         if !payload.stateReached.isEmpty {
             lines.append("Reached state: \(xmlEscapeText(payload.stateReached))")
         }
+        if let screenLastChanged = payload.screenLastChanged {
+            lines.append("Screen last changed: \(xmlEscapeText(screenLastChanged))")
+        }
         if !payload.detail.isEmpty {
             lines.append("Detail: \(xmlEscapeText(payload.detail))")
         }

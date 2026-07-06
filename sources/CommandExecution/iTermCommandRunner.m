@@ -35,7 +35,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
      destination:(NSString *)destination
    callbackQueue:(dispatch_queue_t)callbackQueue
       completion:(void (^)(NSError *))completion {
-    DLog(@"zipURL=%@ arguments=%@ destination=%@", zipURL, arguments, destination);
+    RLog(@"zipURL=%@ arguments=%@ destination=%@", zipURL, arguments, destination);
     
     NSArray<NSString *> *fullArgs = [arguments arrayByAddingObject:zipURL.path];
     iTermCommandRunner *runner = [[self alloc] initWithCommand:@"/usr/bin/unzip"
@@ -58,7 +58,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         handled();
     };
     runner.completion = ^(int status) {
-        DLog(@"completed status=%@", @(status));
+        RLog(@"completed status=%@", @(status));
         if (!status) {
             completion(nil);
             return;
@@ -95,7 +95,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         DLog(@"%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
         completion();
     };
-    DLog(@"Running %@ %@", runner.command, [runner.arguments componentsJoinedByString:@" "]);
+    RLog(@"Running %@ %@", runner.command, [runner.arguments componentsJoinedByString:@" "]);
     [runner run];
 }
 
@@ -172,12 +172,12 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         int pid = _task.processIdentifier;
         if (pid) {
             int rc = kill(pid, SIGKILL);
-            DLog(@"kill -%@ %@ returned %@", @(SIGKILL), @(_task.processIdentifier), @(rc));
+            RLog(@"kill -%@ %@ returned %@", @(SIGKILL), @(_task.processIdentifier), @(rc));
         } else {
             DLog(@"command runner %@ process ID is 0. Should terminate after launch.", self);
         }
     } @catch (NSException *exception) {
-        DLog(@"terminate threw %@", exception);
+        RLog(@"terminate threw %@", exception);
     }
 }
 
@@ -200,7 +200,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         DLog(@"Launched %@", self);
     } @catch (NSException *e) {
         NSLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
-        DLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
+        RLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
         if (self.completion) {
             dispatch_async(_callbackQueue, ^{
                 self.completion(-1);
@@ -339,7 +339,7 @@ static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
     [[iTermBufferedCommandRunner alloc] initWithCommand:path
                                           withArguments:arguments
                                                    path:[[NSFileManager defaultManager] currentDirectoryPath]];
-    DLog(@"Launch %@ %@ in runner %@", path, arguments, runner);
+    RLog(@"Launch %@ %@ in runner %@", path, arguments, runner);
     runner.maximumOutputSize = @(1024 * 10);
     __weak __typeof(runner) weakRunner = runner;
     runner.completion = ^(int status) {
@@ -356,7 +356,7 @@ static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
 
 + (void)runnerDidFinish:(iTermBufferedCommandRunner *)runner withStatus:(int)status {
     [gCommandRunners removeObject:runner];
-    DLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(gCommandRunners.count));
+    RLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(gCommandRunners.count));
     if (!status) {
         return;
     }

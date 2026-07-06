@@ -221,6 +221,7 @@ extern NSString *const kPreferenceKeyAIFeatureHostedWebSearch;
 extern NSString *const kPreferenceKeyAIFeatureFunctionCalling;
 extern NSString *const kPreferenceKeyAIFeatureStreamingResponses;
 extern NSString *const kPreferenceKeyAIVectorStore;
+extern NSString *const kPreferenceKeyAIManualModelConfigurations;  // NSArray of NSDictionary
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
@@ -303,6 +304,7 @@ extern NSString *const kPreferenceKeyEmulateUSKeyboard;  // See issue 6994
 
 extern NSString *const kPreferenceKeyHotkeyEnabled;
 extern NSString *const kPreferenceKeyForceKeyboard;
+extern NSString *const kPreferenceKeyForceKeyboardOncePerSession;
 extern NSString *const kPreferenceKeyAllowSymbolicHotKeys;
 extern NSString *const kPreferenceKeyKeyboardLocale;
 extern NSString *const kPreferenceKeyHotKeyCode;

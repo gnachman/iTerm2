@@ -528,19 +528,19 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     DLog(@"Want to find first child of process %@", @(parentPid));
     iTermProcessInfo *parentInfo = [[iTermProcessCache sharedInstance] processInfoForPid:parentPid];
     if (!parentInfo) {
-        DLog(@"Forcing a synchronous update of the process cache");
+        RLog(@"Forcing a synchronous update of the process cache");
         [[iTermProcessCache sharedInstance] updateSynchronously];
         parentInfo = [[iTermProcessCache sharedInstance] processInfoForPid:parentPid];
     }
     if (!parentInfo) {
-        DLog(@"No parent with pid %@", @(parentPid));
+        RLog(@"No parent with pid %@", @(parentPid));
         return -1;
     }
     iTermProcessInfo *firstChild = [parentInfo.children minWithBlock:^NSComparisonResult(iTermProcessInfo *obj1, iTermProcessInfo *obj2) {
         return [obj1.startTime compare:obj2.startTime];
     }];
     if (!firstChild) {
-        DLog(@"Process is childless");
+        RLog(@"Process is childless");
         return -1;
     }
     return firstChild.processID;
@@ -604,13 +604,13 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
                                                                  completion:^(NSString *rawDir) {
         DLog(@"getWorkingDirectoyrOfProcessWithID:%@ returned %@", @(pid), rawDir);
         if (!rawDir) {
-            DLog(@"Failed to get working directory of %@", @(pid));
+            RLog(@"Failed to get working directory of %@", @(pid));
         }
         if (!rawDir && canFallBack) {
-            DLog(@"Will attempt fallback");
+            RLog(@"Will attempt fallback");
             pid_t childPid = [self pidOfFirstChildOf:pid];
             if (childPid <= 0) {
-                DLog(@"Failed to get first child. Giving up.");
+                RLog(@"Failed to get first child. Giving up.");
                 block(nil);
                 return;
             }

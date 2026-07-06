@@ -46,7 +46,7 @@
                                              absLine:lineNumber
                                                scope:scopeProvider
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull currentDirectory) {
-        DLog(@"SetDirectoryTrigger completed substitution with %@", currentDirectory);
+        RLog(@"SetDirectoryTrigger completed substitution with %@", currentDirectory);
         if (currentDirectory.length) {
             [scheduler scheduleTriggerCallback:^{
                 [aSession triggerSession:self setCurrentDirectory:currentDirectory];

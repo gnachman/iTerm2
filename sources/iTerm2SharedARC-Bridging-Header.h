@@ -117,6 +117,7 @@
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermScriptArchive.h"
+#import "iTermSignatureVerifier.h"
 #import "SIGIdentity.h"
 #import "iTermSSHHelpers.h"
 #import "iTermScriptExporter.h"

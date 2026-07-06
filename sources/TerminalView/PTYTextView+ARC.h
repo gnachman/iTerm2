@@ -199,6 +199,12 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 // Uses iTermTextDrawingHelper for accurate rendering of images, box-drawing, etc.
 - (NSImage * _Nullable)renderMinimapWithWidth:(CGFloat)width height:(CGFloat)height;
 
+// The view's width minus the right gutter (panel reservation plus the
+// timestamp slot), i.e. the width of the terminal content area. Offscreen
+// content renders use this so streamed/snapshot images don't include the empty
+// accessory gutter.
+- (CGFloat)widthExcludingRightGutter;
+
 // Renders the specified range of lines to an image.
 // Lines are 0-based absolute line numbers (including scrollback).
 // Returns nil if the range is invalid.
@@ -210,6 +216,16 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
                            includeMargins:(BOOL)includeMargins
                           backgroundColor:(NSColor * _Nullable)backgroundColor
                                showCursor:(BOOL)showCursor;
+
+// As above, but when includeSelection is YES the current text selection is drawn
+// (in the focused selection color) so a streamed/live frame shows the user's
+// selection. The 4-argument form omits it (includeSelection:NO), matching the
+// snapshot/tile behavior.
+- (NSImage * _Nullable)renderImageWithLines:(NSRange)lineRange
+                           includeMargins:(BOOL)includeMargins
+                          backgroundColor:(NSColor * _Nullable)backgroundColor
+                               showCursor:(BOOL)showCursor
+                         includeSelection:(BOOL)includeSelection;
 
 // Renders lines in batches to avoid blocking the main thread.
 // Each batch is rendered, then control returns to the run loop before the next batch.

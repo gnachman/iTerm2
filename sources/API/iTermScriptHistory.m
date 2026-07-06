@@ -203,7 +203,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     }
     pid_t pgid = getpgid(pid);
     if (pgid <= 0) {
-        DLog(@"Failed to get the process group id %@", @(errno));
+        RLog(@"Failed to get the process group id %@", @(errno));
         kill(pid, signal);
         return;
     }

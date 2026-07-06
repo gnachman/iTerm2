@@ -135,7 +135,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
         // oh ffs, you have to do this to get the web inspector to show up
         [prefs setValue:@YES forKey:@"developerExtrasEnabled"];
     } @catch (NSException *exception) {
-        DLog(@"When setting developerExtrasEnabled: %@", exception);
+        RLog(@"When setting developerExtrasEnabled: %@", exception);
     }
 
     configuration.preferences = prefs;
@@ -163,7 +163,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
                                             encoding:NSUTF8StringEncoding
                                                error:NULL];
     if (!js) {
-        DLog(@"Failed to get iterm2Invoke.js");
+        RLog(@"Failed to get iterm2Invoke.js");
         return;
     }
 

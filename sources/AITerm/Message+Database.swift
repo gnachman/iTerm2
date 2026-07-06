@@ -80,6 +80,30 @@ extension Message: iTermDatabaseElement {
          [chatID])
     }
 
+    /// A window of rows ACROSS ALL CHATS with seq greater than `seq`, for the
+    /// unified contentless-wakeup (syncSince) responder. Carries the chatID column
+    /// so the host can group rows by chat. Over-fetches (windowLimit) for the same
+    /// hiddenFromClient reason as messagesSinceQuery.
+    ///
+    /// `ascending` selects the window's END: ASC returns the LOWEST seqs above the
+    /// floor (the normal drain - the floor then advances only to what was covered,
+    /// so a truncated window leaves the tail for the next wakeup), DESC returns the
+    /// HIGHEST (the first-run teaser - show the newest few, jump the floor to the
+    /// tip, skip the backlog).
+    static func messagesSinceGlobalQuery(seq: Int64, windowLimit: Int, ascending: Bool) -> (String, [Any?]) {
+        ("""
+         select * from Message
+         where \(Columns.seq.rawValue)>?
+         order by \(Columns.seq.rawValue) \(ascending ? "asc" : "desc") limit ?
+         """,
+         [seq, windowLimit])
+    }
+
+    /// The global highest seq across all chats (0 if the table is empty).
+    static func maxSeqGlobalQuery() -> (String, [Any?]) {
+        ("select max(\(Columns.seq.rawValue)) as maxseq from Message", [])
+    }
+
     static func tableInfoQuery() -> String {
         "PRAGMA table_info(Message)"
     }

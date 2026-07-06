@@ -152,7 +152,7 @@ class RemoteCommandExecutor {
     func load(encodedPermissions: String) {
         let sub = permissionsDict(encoded: encodedPermissions)
         guard let sub else {
-            DLog("Failed to decode \(encodedPermissions)")
+            RLog("Failed to decode \(encodedPermissions)")
             return
         }
         storage.merge(sub) { lhs, rhs in

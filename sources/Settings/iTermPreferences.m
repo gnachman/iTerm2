@@ -166,6 +166,7 @@ NSString *const kPreferenceKeyEnableSoundForEsc = @"SoundForEsc";
 NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
 NSString *const kPreferenceKeyLanguageAgnosticKeyBindings = @"LanguageAgnosticKeyBindings";
 NSString *const kPreferenceKeyForceKeyboard = @"ForceKeyboard";  // bool
+NSString *const kPreferenceKeyForceKeyboardOncePerSession = @"ForceKeyboardOncePerSession";  // bool
 NSString *const kPreferenceKeyAllowSymbolicHotKeys = @"AllowSymbolicHotKeys";  // bool
 NSString *const kPreferenceKeyKeyboardLocale = @"KeyboardLocale";  // string
 NSString *const kPreferenceKeyRemapModifiersGlobally = @"RemapModifiersGlobally";  // bool
@@ -255,6 +256,7 @@ NSString *const kPreferenceKeyAIFeatureHostedWebSearch = @"AIFeatureHostedWebSea
 NSString *const kPreferenceKeyAIFeatureFunctionCalling = @"AIFeatureFunctionCalling";
 NSString *const kPreferenceKeyAIFeatureStreamingResponses = @"AIFeatureStreamingResponses";
 NSString *const kPreferenceKeyAIVectorStore = @"AIVectorStore";
+NSString *const kPreferenceKeyAIManualModelConfigurations = @"AIManualModelConfigurations";
 NSString *const kPreferenceKeyUseRecommendedAIModel = @"UseRecommendedAIModel";
 NSString *const kPreferenceKeyAIVendor = @"AIVendor";
 NSString *const kPreferenceKeyAISafetyCheck = @"AI Safety Check";
@@ -744,6 +746,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIFeatureHostedWebSearch: @NO,
                   kPreferenceKeyAIFeatureFunctionCalling: @NO,
                   kPreferenceKeyAIFeatureStreamingResponses: @NO,
+                  kPreferenceKeyAIManualModelConfigurations: @[],
                   kPreferenceKeyUseRecommendedAIModel: @YES,
                   kPreferenceKeyAIVectorStore: @0,
                   kPreferenceKeyAIVendor: @(iTermAIVendorOpenAI),
@@ -802,7 +805,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyLeftControlRemapping: @(kPreferencesModifierTagLeftControl),
                   kPreferenceKeyRightControlRemapping: @(kPreferencesModifierTagRightControl),
                   kPreferenceKeyKeyboardLocale: [NSNull null],
-                  
+
                   kPreferenceKeyLeftOptionRemapping: @(kPreferencesModifierTagLeftOption),
                   kPreferenceKeyRightOptionRemapping: @(kPreferencesModifierTagRightOption),
                   kPreferenceKeyLeftCommandRemapping: @(kPreferencesModifierTagLeftCommand),
@@ -815,6 +818,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHotkeyEnabled: @NO,
                   kPreferenceKeyRemapModifiersGlobally: @YES,
                   kPreferenceKeyForceKeyboard: @NO,
+                  kPreferenceKeyForceKeyboardOncePerSession: @NO,
                   kPreferenceKeyAllowSymbolicHotKeys: @YES,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,

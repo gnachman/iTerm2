@@ -88,4 +88,53 @@ final class NSEMessagesSinceCrossCheckTests: XCTestCase {
         }
         XCTAssertNil(nonce, "a nonce-less request must decode (cross-version), not throw")
     }
+
+    // MARK: syncSince (contentless wakeup, revision >= 2)
+
+    // The sync item structs (CompanionSyncItem etc.) now live in the
+    // CompanionProtocol package and are SHARED with the NSE, so there is no
+    // separate production mirror to drift from - their shape is pinned by the
+    // package's NSESyncSinceTests. This target therefore does not name those types
+    // (it doesn't link the package); it round-trips the shared wire vector through
+    // the production CompanionHostMessage envelope and checks the scalar cursors.
+
+    func testProductionSyncReplyRoundTripsWireVector() throws {
+        let data = try XCTUnwrap(CompanionWireVectors.syncSinceReply.data(using: .utf8))
+        let envelope = try decoder().decode(HostEnvelope.self, from: data)
+        let reencoded = try object(encoder().encode(envelope))
+        let vector = try XCTUnwrap(CompanionWireVectors.object(CompanionWireVectors.syncSinceReply))
+        XCTAssertEqual(reencoded, vector, "production syncSince reply must round-trip the shared wire vector")
+    }
+
+    func testProductionDecodesSyncReplyScalars() throws {
+        let data = try XCTUnwrap(CompanionWireVectors.syncSinceReply.data(using: .utf8))
+        let envelope = try decoder().decode(HostEnvelope.self, from: data)
+        // Ignore `items` (its shape is the package test's job); pin the envelope's
+        // discriminator and scalar cursors.
+        guard case .syncSince(_, let maxMessageSeq, let maxAlertSeq, let messageReset, let alertReset, let truncated) = envelope.payload else {
+            return XCTFail("expected .syncSince, got \(envelope.payload)")
+        }
+        XCTAssertEqual(maxMessageSeq, 7)
+        XCTAssertEqual(maxAlertSeq, 4)
+        XCTAssertFalse(messageReset)
+        XCTAssertFalse(alertReset)
+        XCTAssertTrue(truncated)
+    }
+
+    func testProductionSyncRequestMatchesWireVector() throws {
+        let env = ClientEnvelope(requestID: 9,
+                                 payload: .syncSince(messageSeq: 5, alertSeq: 3, limit: 10, nonce: "ab12"))
+        let produced = try object(encoder().encode(env))
+        let vector = try XCTUnwrap(CompanionWireVectors.object(CompanionWireVectors.syncSinceRequest))
+        XCTAssertEqual(produced, vector, "production syncSince request must match the shared NSE wire vector")
+    }
+
+    func testProductionDecodesSyncRequestWithoutNonce() throws {
+        let data = try XCTUnwrap(CompanionWireVectors.syncSinceRequestNoNonce.data(using: .utf8))
+        let env = try decoder().decode(ClientEnvelope.self, from: data)
+        guard case let .syncSince(_, _, _, nonce) = env.payload else {
+            return XCTFail("expected .syncSince, got \(env.payload)")
+        }
+        XCTAssertNil(nonce, "a nonce-less syncSince request must decode (cross-version), not throw")
+    }
 }

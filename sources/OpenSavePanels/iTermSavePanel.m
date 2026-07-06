@@ -251,7 +251,7 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
     if (options & kSavePanelOptionAppendOrReplace) {
         if (!delegate.filename) {
             // Something went wrong.
-            DLog(@"Save panel's delegate has no filename!");
+            RLog(@"Save panel's delegate has no filename!");
             completion(iTermSavePanelActionAbort);
             return;
         }

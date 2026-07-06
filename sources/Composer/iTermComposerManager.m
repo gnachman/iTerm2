@@ -273,7 +273,7 @@
 }
 
 - (BOOL)dismissAnimated:(BOOL)animated {
-    DLog(@"dismissAnimated. isAutoComposer <- NO");
+    RLog(@"dismissAnimated. isAutoComposer <- NO");
     self.isAutoComposer = NO;
 
     if (!_dropDownComposerViewIsVisible) {
@@ -354,7 +354,7 @@
     _saved = nil;
     [self.delegate composerManager:self sendCommand:addNewline ? [command stringByAppendingString:@"\n"] : command];
     if (reset) {
-        DLog(@"Erase composer content after sending command");
+        RLog(@"Erase composer content after sending command");
         [self setStringValue:@""];
     }
 }
@@ -506,7 +506,7 @@
 
 - (void)finishDismissingMinimalView:(iTermMinimalComposerViewController *)vc {
     if (_dismissCanceled) {
-        DLog(@"Dismiss canceled");
+        RLog(@"Dismiss canceled");
         return;
     }
     DLog(@"Remove view %@ from hierarchy", vc.view);

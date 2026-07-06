@@ -59,7 +59,7 @@ class InputSourceForcer: NSObject {
 
     @objc
     func begin() {
-        DLog("Begin input source forcing")
+        RLog("Begin input source forcing")
         it_assert(!begun)
         active = NSApp.isActive
         begun = true
@@ -72,6 +72,30 @@ class InputSourceForcer: NSObject {
             DLog("Force keyboard pref changed")
             self?.update()
         }
+        iTermPreferences.addObserver(forKey: kPreferenceKeyForceKeyboardOncePerSession) { [weak self] _, _ in
+            DLog("Force keyboard once-per-session pref changed")
+            // Leaving once-per-session mode should resume sustained forcing;
+            // entering it should stop update() from re-forcing.
+            self?.update()
+        }
+    }
+
+    @objc
+    func forceKeyboardForSessionIfNeeded(_ session: PTYSession) {
+        guard session.needsNewTerminalKeyboardForced else {
+            return
+        }
+        // Only the once-per-session mode forces here. In the sustained mode
+        // update() already keeps the locale forced, so there is nothing to do.
+        guard oncePerSession else {
+            return
+        }
+        guard let locale = desiredLocale else {
+            return
+        }
+        session.needsNewTerminalKeyboardForced = false
+        RLog("Force keyboard once to \(locale) for session \(session.guid)")
+        setInputLocale(locale)
     }
 
     @objc private func appDidBecomeActive(notification: Notification) {
@@ -85,7 +109,7 @@ class InputSourceForcer: NSObject {
         guard active else {
             return
         }
-        DLog("Keyboard selection did change to \(systemLocale ?? "none")")
+        RLog("Keyboard selection did change to \(systemLocale ?? "none")")
         guard !haveChangedSinceBecomingActive else {
             DLog("Already forced after becoming active so ignoring keyboard selection change")
             return
@@ -102,6 +126,13 @@ class InputSourceForcer: NSObject {
             return
         }
         active = false
+        if oncePerSession {
+            // Once-per-session forcing is a one-shot that intentionally leaves
+            // the layout in place (it relies on macOS per-document input-source
+            // tracking), so do not restore the system locale on resign.
+            DLog("Once-per-session mode; leaving keyboard as-is on resign")
+            return
+        }
         if let systemLocale {
             DLog("Switch to \(systemLocale) when resigining active")
             setInputLocale(systemLocale)
@@ -114,6 +145,13 @@ class InputSourceForcer: NSObject {
         return iTermPreferences.bool(forKey: kPreferenceKeyForceKeyboard)
     }
 
+    // When set, "Force keyboard" applies the chosen locale once, the first time
+    // a newly created session receives keyboard focus, instead of continuously
+    // forcing it while iTerm2 is active.
+    private var oncePerSession: Bool {
+        return forcingEnabled && iTermPreferences.bool(forKey: kPreferenceKeyForceKeyboardOncePerSession)
+    }
+
     private var desiredLocale: String? {
         if !forcingEnabled {
             return nil
@@ -124,6 +162,10 @@ class InputSourceForcer: NSObject {
     private func update() {
         guard forcingEnabled else {
             DLog("update: not enabled")
+            return
+        }
+        guard !oncePerSession else {
+            DLog("update: once-per-session mode; not sustaining the forced locale")
             return
         }
         guard active else {
@@ -152,7 +194,7 @@ class InputSourceForcer: NSObject {
             DLog("selectInputLocale: Found input source with id \(keyboardID) and selecting it")
             TISSelectInputSource(inputSource)
         } else {
-            DLog("selectInputLocale: there is no input source with id \(keyboardID)")
+            RLog("selectInputLocale: there is no input source with id \(keyboardID)")
         }
     }
 }

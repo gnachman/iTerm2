@@ -55,6 +55,52 @@ describe("POST /register", () => {
     expect(record.sandbox).toBe(true);
   });
 
+  it("skips the KV write when re-registering an unchanged record", async () => {
+    // KV writes are the free-plan's scarce resource; an unchanged re-registration
+    // (the common case — the phone re-registers on every connection) must not
+    // spend one. The write is observable through `registeredAt`: a skipped write
+    // leaves it untouched, and the response flags `skipped`.
+    const token = freshToken();
+    const { secretHash } = await makeSecret();
+
+    const first = await post("/register", { token, secretHash, sandbox: false });
+    expect(first.body).toEqual({ ok: true });
+    const before = await env.PUSH_KV.get(`device:${token}`, "json");
+
+    const second = await post("/register", { token, secretHash, sandbox: false });
+    expect(second.status).toBe(200);
+    expect(second.body).toEqual({ ok: true, skipped: true });
+
+    const after = await env.PUSH_KV.get(`device:${token}`, "json");
+    expect(after.registeredAt).toBe(before.registeredAt); // no rewrite happened
+  });
+
+  it("rewrites (does not skip) when the secret rotates", async () => {
+    // The reinstall / re-pair case: a new secret MUST be persisted even though
+    // the token is unchanged, or the relay keeps the stale hash and every push
+    // 403s "bad secret".
+    const token = freshToken();
+    const first = await makeSecret();
+    const second = await makeSecret();
+
+    await post("/register", { token, secretHash: first.secretHash, sandbox: false });
+    const res = await post("/register", { token, secretHash: second.secretHash, sandbox: false });
+    expect(res.body).toEqual({ ok: true }); // wrote, not skipped
+
+    const record = await env.PUSH_KV.get(`device:${token}`, "json");
+    expect(record.secretHash).toBe(second.secretHash);
+  });
+
+  it("rewrites (does not skip) when only the sandbox flag changes", async () => {
+    const token = freshToken();
+    const { secretHash } = await makeSecret();
+    await post("/register", { token, secretHash, sandbox: false });
+    const res = await post("/register", { token, secretHash, sandbox: true });
+    expect(res.body).toEqual({ ok: true }); // sandbox is part of the record, so a write
+    const record = await env.PUSH_KV.get(`device:${token}`, "json");
+    expect(record.sandbox).toBe(true);
+  });
+
   it("rejects a malformed token", async () => {
     const { secretHash } = await makeSecret();
     const res = await post("/register", { token: "nothex!!", secretHash, sandbox: false });

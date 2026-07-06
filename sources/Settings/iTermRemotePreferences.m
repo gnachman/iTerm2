@@ -123,11 +123,11 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
     __block NSData *data = nil;
 
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    DLog(@"Create task for %@", url);
+    RLog(@"Create task for %@", url);
     NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData * _Nullable taskData,
                                                                              NSURLResponse * _Nullable taskResponse,
                                                                              NSError * _Nullable taskError) {
-        DLog(@"Task progressing with %@ bytes", @(taskData.length));
+        RLog(@"Task progressing with %@ bytes", @(taskData.length));
         data = taskData;
         error = taskError;
         dispatch_semaphore_signal(sema);
@@ -193,16 +193,16 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
                                         window:nil];
             switch (selection) {
                 case kiTermWarningSelection0:
-                    DLog(@"Keep local changes");
+                    RLog(@"Keep local changes");
                     return nil;
                 case kiTermWarningSelection1:
-                    DLog(@"Disable url");
+                    RLog(@"Disable url");
                     [iTermPreferences setBool:NO forKey:kPreferenceKeyLoadPrefsFromCustomFolder];
                     [[iTermUserDefaults userDefaults] setObject:nil
                                                               forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
                     return nil;
                 case kiTermWarningSelection2:
-                    DLog(@"Discard local");
+                    RLog(@"Discard local");
                     [[iTermUserDefaults userDefaults] setObject:nil
                                                               forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
                     break;
@@ -223,12 +223,12 @@ respectingTimeoutSetting:(BOOL)respectingTimeoutSetting
 
         remotePrefs = [NSDictionary it_dictionaryWithContentsOfData:data];
     } else {
-        DLog(@"Will load dictionary from %@", filename);
+        RLog(@"Will load dictionary from %@", filename);
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];
         DLog(@"Did load dictionary from %@", filename);
     }
     if (!remotePrefs.count) {
-        DLog(@"It's empty");
+        RLog(@"It's empty");
         if ([[self customFolderOrURL] length] == 0) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Error Loading Settings";
@@ -353,7 +353,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     NSError *error = nil;
     const BOOL ok = [data writeToFile:[filename stringByResolvingSymlinksInPath] options:NSDataWritingAtomic error:&error];
     if (!ok) {
-        DLog(@"Failed to save to %@: %@", filename, error);
+        RLog(@"Failed to save to %@: %@", filename, error);
         return nil;
     }
     return myDict;
@@ -534,7 +534,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
             // The debounced setNeedsSave path can lose the race against app
             // exit, leaving a stale remote file that overwrites the local
             // copy on next launch. Flush synchronously instead. Issue 12844.
-            DLog(@"Save changes on quit (Automatic)");
+            RLog(@"Save changes on quit (Automatic)");
             [self saveLocalUserDefaultsToRemotePrefs];
         } else {
             // Not a URL
@@ -551,7 +551,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
             warning.doNotRememberLabels = @[ @"Lose Changes" ];
             iTermWarningSelection selection = [warning runModal];
             if (selection == kiTermWarningSelection0) {
-                DLog(@"Save changes on quit");
+                RLog(@"Save changes on quit");
                 [self saveLocalUserDefaultsToRemotePrefs];
             }
         }

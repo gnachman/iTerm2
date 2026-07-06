@@ -29,6 +29,7 @@ final class CompanionAgentActivityNotifier {
     private let debounceInterval: TimeInterval
     private let clock: () -> Date
     private let gate: () -> Bool
+    private let muted: (_ chatID: String) -> Bool
     private let resolve: (_ streamID: UUID, _ chatID: String) -> Message?
     private let send: (_ chatID: String) -> Void
     private var lastFire: [String: Date] = [:]
@@ -39,11 +40,13 @@ final class CompanionAgentActivityNotifier {
     init(debounceInterval: TimeInterval = 30,
          clock: @escaping () -> Date = { Date() },
          gate: @escaping () -> Bool,
+         muted: @escaping (String) -> Bool = { _ in false },
          resolve: @escaping (UUID, String) -> Message?,
          send: @escaping (String) -> Void) {
         self.debounceInterval = debounceInterval
         self.clock = clock
         self.gate = gate
+        self.muted = muted
         self.resolve = resolve
         self.send = send
     }
@@ -97,6 +100,14 @@ final class CompanionAgentActivityNotifier {
             DLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) gated off (not paired, phone connected, or notifications off)")
             return
         }
+        // A muted chat gets no push at all, not even userActionRequired; the
+        // debounce is left untouched so unmuting doesn't inherit a stale stamp.
+        // RLog (not DLog): rare (at most once per completed turn) and exactly
+        // what a field debug log needs to show when muting misbehaves.
+        guard !muted(chatID) else {
+            RLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) suppressed (chat is muted)")
+            return
+        }
         let now = clock()
         if trigger == .turnComplete,
            let last = lastFire[chatID],
@@ -107,7 +118,7 @@ final class CompanionAgentActivityNotifier {
         // userActionRequired bypasses the debounce but still updates it, so an
         // immediately-following turn-complete in the same chat doesn't double-fire.
         lastFire[chatID] = now
-        DLog("CompanionAgentActivityNotifier: firing \(trigger) push for \(chatID)")
+        RLog("CompanionAgentActivityNotifier: firing \(trigger) push for \(chatID)")
         send(chatID)
     }
 
@@ -125,7 +136,7 @@ final class CompanionAgentActivityNotifier {
     /// chats and, on a qualifying event, sends a content-free push (section 5).
     static func start() {
         guard shared == nil else { return }
-        DLog("CompanionAgentActivityNotifier: starting; subscribing to all chats")
+        RLog("CompanionAgentActivityNotifier: starting; subscribing to all chats")
         let notifier = CompanionAgentActivityNotifier(
             gate: {
                 // Suppress only for an INTERACTIVE connection (a foreground app
@@ -137,6 +148,9 @@ final class CompanionAgentActivityNotifier {
                     && !CompanionPushRegistry.interactivePhoneConnected
                     && CompanionPushRegistry.canNotify
             },
+            muted: { chatID in
+                CompanionChatMuteRegistry.isMuted(chatID: chatID)
+            },
             resolve: { streamID, chatID in
                 guard let model = ChatListModel.instance,
                       let index = model.index(ofMessageID: streamID, inChat: chatID),
@@ -146,39 +160,11 @@ final class CompanionAgentActivityNotifier {
                 return messages[index]
             },
             send: { chatID in
-                // Content-free mutable push, collapsed per chat by the opaque
-                // token so the chatID never leaves the device. The NSE fetches
-                // and renders the real content over Noise.
-                guard let roomSecret = CompanionMacIdentity.pairedRoomSecret() else {
-                    DLog("CompanionAgentActivityNotifier: no room secret; skipping push for \(chatID)")
-                    return
-                }
-                let collapse = CompanionCollapseToken.make(roomSecret: roomSecret, chatID: chatID)
-                // A one-time nonce so the mac recognizes the NSE fetch this push
-                // triggers as its own (solicited) and skips the presence warning.
-                // Only the phone receives the push, so only the real NSE can echo
-                // it back; retained by capacity (not time) so an APNs-delayed push
-                // still matches. SEALED under the room secret so the relay/Apple
-                // (which carry the push but lack the room secret) see only
-                // ciphertext. See CompanionPushNonceRegistry / CompanionPushNonceCrypto.
-                let nonce = CompanionPushNonceRegistry.shared.mintNonce()
-                let sealedNonce = try? CompanionPushNonceCrypto.seal(nonce: nonce, roomSecret: roomSecret)
-                Task {
-                    do {
-                        try await CompanionPushSender.sendMutable(collapse: collapse, nonce: sealedNonce)
-                        // Record the nonce ONLY after the push actually went out,
-                        // and only if it carried the nonce (seal succeeded). A
-                        // failed seal/send must not consume a capacity slot for a
-                        // nonce no push delivered, which would evict a real
-                        // outstanding nonce sooner than warranted.
-                        if sealedNonce != nil {
-                            await MainActor.run { CompanionPushNonceRegistry.shared.record(nonce) }
-                        }
-                        DLog("CompanionAgentActivityNotifier: sent mutable push for \(chatID)")
-                    } catch {
-                        DLog("CompanionAgentActivityNotifier: mutable push failed for \(chatID): \(error)")
-                    }
-                }
+                // A content-free push the NSE fetches over Noise. The format
+                // (contentless wakeup for revision >= 2, else legacy per-chat
+                // collapse) and the one-time nonce bookkeeping live in
+                // CompanionPushSender.dispatchPush, shared with the alert bridge.
+                CompanionPushSender.dispatchPush(chatID: chatID)
             })
         shared = notifier
         notifier.subscription = ChatClient.instance?.subscribe(chatID: nil,

@@ -148,7 +148,7 @@ extension PTYSession {
             try text.write(toFile: path, atomically: true, encoding: .utf8)
             return path
         } catch {
-            DLog("Failed to write code review system prompt to \(path): \(error)")
+            RLog("Failed to write code review system prompt to \(path): \(error)")
             return nil
         }
     }

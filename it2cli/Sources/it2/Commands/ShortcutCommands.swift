@@ -199,12 +199,16 @@ struct SetStatusShortcut: ParsableCommand {
     @Option(name: .long, help: "Optional detail text shown alongside the status.")
     var detail: String?
 
+    @Option(name: .long, help: "Number of background tasks still running (stored in memory for later get-background-tasks queries).")
+    var backgroundTasks: Int?
+
     func run() throws {
         var args: [String] = ["-s", session]
         if let st = status { args += ["--status", st] }
         if let dc = dotColor { args += ["--dot-color", dc] }
         if let tc = textColor { args += ["--text-color", tc] }
         if let d = detail { args += ["--detail", d] }
+        if let bt = backgroundTasks { args += ["--background-tasks", String(bt)] }
         let cmd = try Session.SetStatus.parse(args)
         try cmd.run()
     }

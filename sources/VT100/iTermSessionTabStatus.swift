@@ -22,6 +22,13 @@ class VT100TabStatusUpdate: NSObject {
     @objc var detailPresence: VT100TabStatusUpdateFieldPresence = .notSet
     @objc var detail: String? = nil
 
+    // Count of background tasks/subagents the status-reporting program
+    // says are still running. Written by cc-status so that later hook
+    // events with no task info (idle_prompt) can read the last known
+    // count back instead of keeping state of their own on disk.
+    @objc var backgroundTasksPresence: VT100TabStatusUpdateFieldPresence = .notSet
+    @objc var backgroundTasks: Int = 0
+
     override var description: String {
         var parts = [String]()
         switch indicatorPresence {
@@ -62,6 +69,14 @@ class VT100TabStatusUpdate: NSObject {
             parts.append("detail=\(detail ?? "")")
         @unknown default: break
         }
+        switch backgroundTasksPresence {
+        case .notSet: break
+        case .cleared:
+            parts.append("background-tasks=cleared")
+        case .set:
+            parts.append("background-tasks=\(backgroundTasks)")
+        @unknown default: break
+        }
         if parts.isEmpty {
             return "VT100TabStatusUpdate{empty}"
         }
@@ -86,6 +101,10 @@ class iTermSessionTabStatus: NSObject {
         var hasStatusTextColor: Bool = false
         var statusTextColor: iTermSRGBColor = iTermSRGBColor(r: 0, g: 0, b: 0)
         var detailText: String? = nil
+        // Last background-task count reported via set_status. RAM only:
+        // deliberately excluded from arrangementDictionary() so it never
+        // reaches disk (see that method).
+        var backgroundTasks: Int = 0
     }
     private var state = State()
     // Whether mutations post the global iTermSessionTabStatusDidChange
@@ -145,6 +164,14 @@ class iTermSessionTabStatus: NSObject {
         }
         set {
             state.detailText = newValue
+        }
+    }
+    @objc var backgroundTasks: Int {
+        get {
+            state.backgroundTasks
+        }
+        set {
+            state.backgroundTasks = newValue
         }
     }
 
@@ -217,6 +244,17 @@ class iTermSessionTabStatus: NSObject {
         @unknown default:
             break
         }
+
+        switch update.backgroundTasksPresence {
+        case .notSet:
+            break
+        case .cleared:
+            backgroundTasks = 0
+        case .set:
+            backgroundTasks = update.backgroundTasks
+        @unknown default:
+            break
+        }
         if state == before {
             return false
         }
@@ -231,6 +269,7 @@ class iTermSessionTabStatus: NSObject {
         hasStatusTextColor = false
         statusTextColor = iTermSRGBColor(r: 0, g: 0, b: 0)
         detailText = nil
+        backgroundTasks = 0
         notify()
     }
 
@@ -288,6 +327,11 @@ class iTermSessionTabStatus: NSObject {
     private static let arrangementStatusTextColorKey = "Status Text Color"
     private static let arrangementDetailTextKey = "Detail Text"
 
+    // backgroundTasks is deliberately NOT encoded here: it exists so
+    // stateless hook invocations (cc-status) can park a count in RAM
+    // between events, and it must not leak to disk via arrangements.
+    // It would also be wrong after a restore, since the tasks it
+    // counted died with the original session's program.
     @objc func arrangementDictionary() -> NSDictionary? {
         guard hasActiveStatus else {
             return nil
@@ -341,6 +385,7 @@ class iTermSessionTabStatus: NSObject {
         copy.hasStatusTextColor = hasStatusTextColor
         copy.statusTextColor = statusTextColor
         copy.detailText = detailText
+        copy.backgroundTasks = backgroundTasks
         return copy
     }
 }

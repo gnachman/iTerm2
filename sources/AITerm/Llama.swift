@@ -12,7 +12,7 @@ struct LlamaResponseParser: LLMResponseParser {
         let decoder = JSONDecoder()
         let response = try decoder.decode(LlamaResponse<LlamaNonStreamingValue>.self,
                                           from: data)
-        DLog("RESPONSE:\n\(response)")
+        RLog("RESPONSE:\n\(response)")
         parsedResponse = response
         return response
     }
@@ -187,7 +187,7 @@ struct LlamaBodyRequestBuilder {
             tools: stream ? nil : maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
             stream: stream)
-        DLog("REQUEST:\n\(body)")
+        RLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
         }

@@ -528,6 +528,7 @@ DEFINE_FLOAT(dynamicProfilesNotificationLatency, 0.1, SECTION_GENERAL @"Delay be
 DEFINE_BOOL(addDynamicTagToDynamicProfiles, NO, SECTION_GENERAL @"Add a 'Dynamic' tag to dynamic profiles.\nWhen enabled, dynamic profiles will have a 'Dynamic' tag added to them, which can be used to filter or identify them.");
 DEFINE_STRING(gitSearchPath, @"", SECTION_GENERAL @"$PATH used when running git for the status bar component.\nChange this to use a custom install of git. You must restart iTerm2 for a change here to take effect.");
 DEFINE_INT(screenshotMaxPixelHeight, 30000, SECTION_GENERAL @"Maximum pixel height for a single screenshot file.\nScreenshots taller than this will be split into multiple files. Also affects the maximum total pixels (this value squared / 5).");
+DEFINE_STRING(screenshotSaveLocation, @"", SECTION_GENERAL @"Folder where the “Save” button in the screenshot window writes files.\nLeave empty to save to the Desktop. The “Save As…” button ignores this and always prompts for a location.");
 DEFINE_SETTABLE_FLOAT(gitTimeout, GitTimeout, 4, SECTION_GENERAL @"Timeout in seconds when running git for the status bar component.");
 DEFINE_STRING(preferredBaseDir, @"", SECTION_GENERAL @"Folder for config files. There must not be a space in the path.\nIf empty, then ~/.config/iterm2 will be the default location.");
 DEFINE_INT(maximumNumberOfTriggerCommands, 16, SECTION_GENERAL @"Maximum number of trigger-launched commands that can run at once.\nIf too many “Run Command…” triggers fire their commands will be queued. You must restart iTerm2 for changes to this setting to take effect.");
@@ -912,18 +913,32 @@ DEFINE_INT(codeciergeCommandWarningCount, 10, SECTION_EXPERIMENTAL @"After this 
 DEFINE_STRING(codeciergeRegularPrompt, @"You help a me in a terminal emulator. My goal is $GOAL. $CONTEXT. Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button.", SECTION_EXPERIMENTAL @"Prompt to send to LLM for Codecierge when it is NOT able to execute commands automatically.\n$GOAL and $CONTEXT are replaced with the user-specified goal and info about the running environment, respectively." );
 DEFINE_BOOL(generativeAIAllowed, YES, SECTION_GENERAL @"Allow the use of large language model APIs?\nThe purpose of this setting is to make it easy for managed environments to disable the use of LLMs. The user defaults key is `GenerativeAIAllowed`.");
 DEFINE_BOOL(companionPairingAllowed, YES, SECTION_GENERAL @"Allow pairing a companion iOS device?\nOff by default while this feature is in development. When off, the Companion Device Settings menu item is hidden. Managed environments can also use this to disable the feature. The user defaults key is `CompanionPairingAllowed`.");
+DEFINE_STRING(companionRelayOrigin, @"https://relay.iterm2.com", SECTION_GENERAL @"Relay origin for companion iOS device pairing.\nMust be a bare https origin (scheme and host, no path), such as https://companion-relay.iterm2.com. The relay is the only transport, so this must be set for pairing to work; forks can point it at their own Worker. Leave empty to disable the relay entirely. The user defaults key is `CompanionRelayOrigin`.");
 DEFINE_STRING(llmPlatform, @"OpenAI", SECTION_GENERAL @"LLM Platform.\nLegal values are: OpenAI, Azure, Gemini. This determines the format of requests and responses.");
+DEFINE_STRING(aiModelCatalogURL, @"https://iterm2.com/downloads/ai/manifest.json", SECTION_GENERAL @"URL to check for updates to the AI model catalog.\nThe catalog defines the built-in AI models (context window, capabilities, and the recommended model per vendor). iTerm2 periodically downloads a signed newer copy so new models become available without an app update. This happens only when AI features are enabled and you have granted permission; a non-empty URL by itself does not enable checking. Clearing this URL disables checking entirely.");
 DEFINE_BOOL(alternateScreenBidi, YES, SECTION_EXPERIMENTAL @"When right-to-left text support is enabled, also support it in alternate screen mode?");
 DEFINE_BOOL(aquaSKKBugfixEnabled, NO, SECTION_EXPERIMENTAL @"Enable AquaSKK bugfix?")
 DEFINE_BOOL(channelsEnabled, NO, SECTION_EXPERIMENTAL @"Enable Channels feature?")
 DEFINE_BOOL(rightJustifyRTLLines, YES, SECTION_EXPERIMENTAL @"Right-justify lines in paragraphs with base writing direction of right-to-left?\nRequires BOTH “right-to-left text support” and “auto-detect paragraph writing detection” to be enabled.");
 DEFINE_BOOL(detectParagraphDirection, NO, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
 DEFINE_BOOL(browserProfiles, YES, SECTION_EXPERIMENTAL @"Enable browser-style profiles?\nYou must restart iTerm2 for this to take effect.");
+DEFINE_BOOL(companionStreamFrameNumbers, NO, SECTION_EXPERIMENTAL @"Stamp frame numbers into the iTerm2 Buddy live stream?\nDraws a monotonic counter onto each streamed video frame, for debugging the phone’s live session view.");
+DEFINE_INT(companionStreamMaxLeadMilliseconds, 500, SECTION_EXPERIMENTAL @"iTerm2 Buddy live stream: maximum capture-time lead, in milliseconds.\nThe host stops sending new frames once it is more than this far ahead of the last frame the phone acknowledged, then resumes when the phone catches up. Larger values tolerate more link latency at the cost of a live view that can lag further behind. Only the frame rate is affected; per-frame quality is unchanged.");
+DEFINE_INT(companionStreamMaxQueueDepth, 4, SECTION_EXPERIMENTAL @"iTerm2 Buddy live stream: maximum phone decode-queue depth.\nThe host stops sending new frames once the phone reports more than this many frames queued for decode/display, then resumes as the queue drains. Larger values let more frames pile up on the phone before backing off. Only the frame rate is affected; per-frame quality is unchanged.");
+DEFINE_FLOAT(companionStreamBitrateMultiplier, 1.0, SECTION_EXPERIMENTAL @"iTerm2 Buddy live stream: video bitrate multiplier.\nScales the resolution-derived encoder bitrate. Values above 1 make streamed text sharper at the cost of bandwidth; values below 1 save bandwidth at the cost of sharpness. The result is still clamped to the stream’s minimum and ceiling bitrates.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "
 
-DEFINE_STRING(pythonRuntimeDownloadURL, @"https://iterm2.com/downloads/pyenv/manifest.json", SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
+// The runtimes listed in manifest-new.json require macOS 27 or later.
+static NSString *iTermDefaultPythonRuntimeDownloadURL(void) {
+    if (@available(macOS 27, *)) {
+        return @"https://iterm2.com/downloads/pyenv/manifest-new.json";
+    }
+    return @"https://iterm2.com/downloads/pyenv/manifest.json";
+}
+
+DEFINE_STRING(pythonRuntimeDownloadURL, iTermDefaultPythonRuntimeDownloadURL(), SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
 DEFINE_STRING(pythonRuntimeBetaDownloadURL, @"https://iterm2.com/downloads/pyenv/betamanifest.json", SECTION_SCRIPTING @"URL to check for new Beta versions of the Python scripting runtime.");
 DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should references to undefined variables in interpolated strings be converted to empty string?\nWhen enabled, an expression in an interpolated string that references an undefined variable will be treated as an empty string. For example, “\\(bogus)”. References to undefined variables as arguments to function calls, such as “\\(f(bogus))”, are still errors.");
 DEFINE_SETTABLE_BOOL(setCookie, SetCookie, NO, SECTION_SCRIPTING @"Set ITERM2_COOKIE environment variable, allowing Python scripts to be launched without confirmation?\nThis will only affect sessions created after changing this setting.");

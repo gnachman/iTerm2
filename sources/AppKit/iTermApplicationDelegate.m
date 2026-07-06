@@ -754,7 +754,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
  * end tell
  */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
-    DLog(@"application:%@ openFile:%@", theApplication, filename);
+    RLog(@"application:%@ openFile:%@", theApplication, filename);
     if ([[filename pathExtension] isEqualToString:@"its"]) {
         if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
             return NO;
@@ -780,7 +780,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         return YES;
     }
     if ([filename hasSuffix:@".itermcolors"]) {
-        DLog(@"Importing color presets from %@", filename);
+        RLog(@"Importing color presets from %@", filename);
         if ([iTermColorPresets importColorPresetFromFile:filename]) {
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
             alert.messageText = @"Colors Scheme Imported";
@@ -847,7 +847,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             bookmark[KEY_DISABLE_AUTO_FRAME] = @YES;
             DLog(@"Disable auto frame. Profile is:\n%@", bookmark);
         }
-        DLog(@"application:openFile: launching new session in window %@", windowController);
+        RLog(@"application:openFile: launching new session in window %@", windowController);
         iTermOpenStyle style = iTermOpenStyleTab;
         NSInteger stylePreference = [iTermAdvancedSettingsModel newInstanceOpenStyle];
         if (stylePreference >= 0 && stylePreference <= 3) {
@@ -884,7 +884,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             if (!profileHotkey) {
                 return;
             }
-            DLog(@"application:openFile: revealing hotkey window");
+            RLog(@"application:openFile: revealing hotkey window");
             [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
         }
                                   completion:nil];
@@ -899,13 +899,13 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         // Don't quit while restoring windows. This can happen if a modal dialog
         // (like the database integrity check timeout alert) is dismissed before
         // any terminal windows have been restored. Issue 12674.
-        DLog(@"Not quitting because window restoration is in progress");
+        RLog(@"Not quitting because window restoration is in progress");
         return NO;
     }
     NSArray *terminals = [[iTermController sharedInstance] terminals];
     if (terminals.count > 0) {
         // The last window wasn't really closed, it was just the hotkey window getting ordered out or a window entering fullscreen.
-        DLog(@"Not quitting automatically. Terminals are %@", terminals);
+        RLog(@"Not quitting automatically. Terminals are %@", terminals);
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {
@@ -1018,7 +1018,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     }
 
     if (reason.hasReason) {
-        DLog(@"Showing quit alert");
+        RLog(@"Showing quit alert");
         NSString *message;
         if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
             message = @"Sessions will be restored automatically when iTerm2 is relaunched.";
@@ -1046,7 +1046,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         alert.accessoryView = unfucker;
         [alert layout];
         if ([alert runModal] != NSAlertFirstButtonReturn) {
-            DLog(@"User declined to quit");
+            RLog(@"User declined to quit");
             return NSTerminateCancel;
         }
     }
@@ -1061,7 +1061,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if (optionHeldAtQuit &&
         [[iTermUserDefaults userDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"] &&
         ![self systemIsShuttingDown]) {
-        DLog(@"Option held on user-initiated quit; force discarding saved state.");
+        RLog(@"Option held on user-initiated quit; force discarding saved state.");
         iTermRestorableStateController.forceDiscardState = YES;
     }
 
@@ -1101,7 +1101,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
-    DLog(@"applicationWillTerminate called");
+    RLog(@"applicationWillTerminate called");
     [iTermController releaseSharedInstance];
     [[iTermModifierRemapper sharedInstance] setRemapModifiers:NO];
     DLog(@"applicationWillTerminate returning");
@@ -1113,7 +1113,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     DLog(@"Open untitled file");
     if ([iTermRestorableStateController shouldIgnoreOpenUntitledFile] &&
         _restorableStateController.numberOfWindowsRestored > 0) {
-        DLog(@"Already restored one of our own windows so not opening an untitled file during window state restoration.");
+        RLog(@"Already restored one of our own windows so not opening an untitled file during window state restoration.");
         return NO;
     }
     if ([self isAppleScriptTestApp]) {
@@ -1121,7 +1121,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         // Don't want to do this for applescript testing so we have a blank slate.
         return NO;
     }
-    DLog(@"finishedLaunching=%@ openArrangementAtStartup=%@ openNoWindowsAtStartup=%@ alwaysOpenWindowAtStartup=%@",
+    RLog(@"finishedLaunching=%@ openArrangementAtStartup=%@ openNoWindowsAtStartup=%@ alwaysOpenWindowAtStartup=%@",
          @(finishedLaunching_),
          @([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]),
          @([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]),
@@ -1423,7 +1423,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     DLog(@"Start iTermSecretServer");
     [[iTermSecretServer instance] listenAndReturnError:&error];
     if (error) {
-        DLog(@"Secret server failed to start: %@", error);
+        RLog(@"Secret server failed to start: %@", error);
     }
 
     DLog(@"willFinishLaunching");
@@ -1444,7 +1444,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 - (void)restoreWindows {
     DLog(@"restoreWindows");
     [_restorableStateController restoreWindowsWithCompletion:^{
-        DLog(@"Window restoration is totally complete");
+        RLog(@"Window restoration is totally complete");
         [_untitledWindowStateMachine didFinishRestoringWindows];
         ScreenCharGarbageCollectImages();
         [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
@@ -1514,6 +1514,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     // If a companion device is paired, quietly listen so it can reconnect.
     [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
+    // If the pairing predates the push relay host move, ask the user to re-pair.
+    [[iTermCompanionPairingController shared] promptToRepairAfterRelayMoveIfNeeded];
     // Surface paired-device presence (menu bar status item + connect toast).
     [[iTermCompanionPresenceController shared] start];
     // Give the Companion Device Settings menu item its glyph and hide it when
@@ -1540,6 +1542,10 @@ void TurnOnDebugLoggingAutomatically(void) {
     finishedLaunching_ = YES;
     // Create the app support directory
     [self createVersionFile];
+
+    // Refresh the AI model catalog in the background (rate-limited to once per
+    // day). New models take effect on the next launch.
+    [[iTermAIModelCatalogUpdater instance] performPeriodicCheck];
 
     // Prevent the input manager from swallowing control-q. See explanation here:
     // https://web.archive.org/web/20111102073237/https://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system
@@ -1612,7 +1618,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         !self.isAppleScriptTestApp) {
         DLog(@"Set post-retoration completion block from appDidFinishLaunching");
         [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
-            DLog(@"Running post-retoration completion block from appDidFinishLaunching");
+            RLog(@"Running post-retoration completion block from appDidFinishLaunching");
             [self restoreBuriedSessionsState];
             [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
             if ([[iTermController sharedInstance] numberOfDecodesPending] == 0) {
@@ -1892,7 +1898,7 @@ static iTermKeyEventReplayer *gReplayer;
         if (guid && blockID) {
             PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
             if (!session) {
-                DLog(@"No session with guid %@", guid);
+                RLog(@"No session with guid %@", guid);
                 return YES;
             }
             [session copyTextFromBlockWithID:blockID];
@@ -2455,7 +2461,7 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)pairCompanionDevice:(id)sender {
-    [[iTermCompanionPairingWindowController shared] showAndBeginPairing];
+    [iTermCompanionOnboardingRouter openSettingsOrWizard];
 }
 
 - (IBAction)installClaudeCodeIntegration:(id)sender {
@@ -2907,7 +2913,7 @@ static iTermKeyEventReplayer *gReplayer;
         @try {
             [undoResponder performSelector:@selector(undo:) withObject:sender];
         } @catch (NSException *exception) {
-            DLog(@"%@", exception);
+            RLog(@"%@", exception);
         }
     } else {
         [self undoCloseSession:nil];
@@ -3047,6 +3053,35 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)debugLogging:(id)sender {
     ToggleDebugLogging();
+}
+
+- (IBAction)saveRetrospectiveDebugLogs:(id)sender {
+    NSString *ring = iTermRetrospectiveLogString();
+    if (ring.length == 0) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"No Retrospective Logs";
+        alert.informativeText = @"No retrospective debug logs have been recorded yet.";
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
+        return;
+    }
+    // Prepend the same header a regular debug log gets (version, screens, window
+    // and view hierarchy, pinned messages). No footer: this is a one-time snapshot.
+    NSString *log = [iTermDebugLogHeaderString() stringByAppendingString:ring];
+    NSSavePanel *panel = [NSSavePanel savePanel];
+    panel.nameFieldStringValue = @"retrospective-debuglog.txt";
+    panel.title = @"Save Retrospective Debug Logs";
+    if ([panel runModal] != NSModalResponseOK || panel.URL == nil) {
+        return;
+    }
+    NSError *error = nil;
+    if (![log writeToURL:panel.URL atomically:YES encoding:NSUTF8StringEncoding error:&error]) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Could Not Save";
+        alert.informativeText = [NSString stringWithFormat:@"Failed to save retrospective debug logs: %@", error.localizedDescription];
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
+    }
 }
 
 - (IBAction)toggleShowAlertsWithRememberedSelections:(id)sender {
@@ -3654,7 +3689,7 @@ static iTermKeyEventReplayer *gReplayer;
 #pragma mark - iTermRestorableStateControllerDelegate
 
 - (void)restorableStateDidFinishRequestingRestorations:(iTermRestorableStateController *)sender {
-    DLog(@"All restorations requested. Set external restoration complete");
+    RLog(@"All restorations requested. Set external restoration complete");
     [PseudoTerminalRestorer runQueuedBlocks];
     [PseudoTerminalRestorer externalRestorationDidComplete];
 
@@ -3863,7 +3898,7 @@ static iTermKeyEventReplayer *gReplayer;
 #pragma mark - iTermUntitledWindowStateMachineDelegate
 
 - (void)untitledWindowStateMachineCreateNewWindow:(iTermUntitledWindowStateMachine *)sender {
-    DLog(@"untitledWindowStateMachineCreateNewWindow");
+    RLog(@"untitledWindowStateMachineCreateNewWindow");
     [self newWindow:nil];
 }
 

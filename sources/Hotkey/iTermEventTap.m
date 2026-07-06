@@ -64,13 +64,13 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 }
 
 - (void)addObserver:(id<iTermEventTapObserver>)observer {
-    DLog(@"Add observer %@", observer);
+    RLog(@"Add observer %@", observer);
     [_weakObservers addObject:[iTermWeakBox boxFor:observer]];
     [self setEnabled:[self shouldBeEnabled]];
 }
 
 - (void)removeObserver:(id<iTermEventTapObserver>)observer {
-    DLog(@"Remove observer %@", observer);
+    RLog(@"Remove observer %@", observer);
     [_weakObservers removeWeakBoxedObject:observer];
     [self setEnabled:[self shouldBeEnabled]];
 }
@@ -97,7 +97,7 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
     [self pruneReleasedObservers];
     DLog(@"%@ remappingDelegate=%@ observers=%@", self, self.remappingDelegate, self.weakObservers);
     if (![self allowedByEventTap]) {
-        DLog(@"Event tap %@ not allowed by secure input", self.class);
+        RLog(@"Event tap %@ not allowed by secure input", self.class);
         return NO;
     }
     return (self.remappingDelegate != nil) || (self.weakObservers.count > 0);
@@ -123,7 +123,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                         void *refcon) {
     iTermEventTap *eventTap = (__bridge id)refcon;
     if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
-        DLog(@"event tap special type %@", @(type));
+        RLog(@"event tap special type %@", @(type));
     } else {
         @try {
             DLog(@"event tap %@ for %@", eventTap, [NSEvent eventWithCGEvent:event]);
@@ -139,9 +139,9 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
                                   event:(CGEventRef)event {
     DLog(@"Event tap running");
     if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
-        DLog(@"Event tap disabled (type is %@)", @(type));
+        RLog(@"Event tap disabled (type is %@)", @(type));
         if ([self isEnabled]) {
-            DLog(@"Re-enabling event tap");
+            RLog(@"Re-enabling event tap");
             [self reEnable];
         }
         return NULL;
@@ -224,7 +224,7 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 }
 
 - (BOOL)startEventTap {
-    DLog(@"Start event tap");
+    RLog(@"Start event tap");
     assert(!self.isEnabled);
 
     AppendPinnedDebugLogMessage(@"EventTap", @"Register event tap.");

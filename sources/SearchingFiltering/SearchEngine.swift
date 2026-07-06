@@ -139,7 +139,7 @@ class iTermSearchRequest: NSObject {
     func setAbsLineRange(_ absLineRange: NSRange) {
         self.absLineRange = Range(safe: absLineRange)
         if self.absLineRange == nil {
-            DLog("Invalid NSRange passed to setAbsLineRange: \(absLineRange)")
+            RLog("Invalid NSRange passed to setAbsLineRange: \(absLineRange)")
         }
     }
 
@@ -582,7 +582,7 @@ class SearchOperation: Pausable {
                                                    hasWrapped: wrapped) {
                 stop = position
             } else {
-                DLog("This shouldn't happen")
+                RLog("This shouldn't happen")
 #if DEUG
                 fatalError()
 #endif

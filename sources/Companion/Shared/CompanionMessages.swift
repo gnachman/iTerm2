@@ -51,6 +51,10 @@ public struct CompanionSessionSummary: Codable, Equatable, Hashable {
 struct CompanionChatListEntry: Codable {
     var chat: Chat
     var snippet: String?
+    /// Whether the chat is muted (no pushes; see `.setChatMuted`). The mac owns
+    /// this state. Optional for cross-version compatibility: a mac older than
+    /// chatMuteRevision omits it, decoding as nil.
+    var muted: Bool?
 }
 
 /// How one @-mention identifier resolved on the Mac. The phone renders the
@@ -145,6 +149,185 @@ struct CompanionSessionContent: Codable {
     var pngData: Data
 }
 
+/// A rendered scrollback tile addressed by absolute (overflow-adjusted) line,
+/// plus the current availability window so the phone can size its history canvas
+/// and resolve eviction races deterministically.
+struct CompanionHistoryTile: Codable, Equatable {
+    var streamID: UInt32
+    var generationId: UInt32
+    /// First absolute line actually rendered (clamped to what is available).
+    var firstAbsLine: Int64
+    /// Lines actually rendered (0 if the request was entirely evicted).
+    var lineCount: Int
+    /// Oldest available absolute line right now (== totalScrollbackOverflow).
+    var windowFirstAbsLine: Int64
+    /// Total available lines right now (scrollback + screen).
+    var windowLineCount: Int
+    var pngData: Data
+}
+
+/// A codec for a live session stream.
+enum CompanionStreamCodec: String, Codable, Equatable {
+    case hevc
+    case h264
+}
+
+/// Phone-supplied parameters for a live session stream.
+struct CompanionStreamParams: Codable, Equatable {
+    /// Codecs the phone can decode, best first; the host picks the first it can
+    /// produce.
+    var supportedCodecs: [CompanionStreamCodec]
+    /// Upper bound on frames per second the phone wants delivered.
+    var maxFrameRate: Double
+    /// Phone-permitted sustained bandwidth ceiling in bits per second (e.g.
+    /// tighter on cellular); the host streams at the min of this and its own
+    /// budget. nil means the phone imposes no limit.
+    var maxBitrate: Int?
+    /// Highest media-frame wire version the phone can decode. nil/absent means the
+    /// phone predates versioned frames, so the host must emit version 1. The host
+    /// emits min(this, its own current version), so an old phone keeps working
+    /// (without per-frame geometry) and a new phone gets generationId/liveTop.
+    var maxMediaFrameVersion: Int? = nil
+
+    init(supportedCodecs: [CompanionStreamCodec],
+         maxFrameRate: Double,
+         maxBitrate: Int?,
+         maxMediaFrameVersion: Int? = nil) {
+        self.supportedCodecs = supportedCodecs
+        self.maxFrameRate = maxFrameRate
+        self.maxBitrate = maxBitrate
+        self.maxMediaFrameVersion = maxMediaFrameVersion
+    }
+}
+
+/// Reply to `.startSessionStream`: the stream is live with the negotiated codec.
+struct CompanionStreamStarted: Codable, Equatable {
+    var streamID: UInt32
+    var codec: CompanionStreamCodec
+}
+
+/// The fixed (per-generation) screen geometry needed to map a touch on the
+/// encoded image to a terminal cell, all in ENCODED PIXELS (the units of
+/// pixelWidth/pixelHeight), so the phone works entirely in image space:
+///   column = floor((imageX - leftMargin) / cellWidth)
+///   row    = floor((imageY - topMargin)  / cellHeight)
+/// Margins are 0 today (the stream renders without margins) but are carried so
+/// the transform stays correct if that changes. This changes only on a
+/// resize/font/scale change, so it rides streamConfig with the generationId; the
+/// per-frame top line (liveTop) rides the media-frame header instead.
+struct CompanionCellGeometry: Codable, Equatable {
+    var cellWidth: Double
+    var cellHeight: Double
+    var leftMargin: Double
+    var topMargin: Double
+}
+
+/// A point in absolute terminal coordinates, computed by the phone from a touch
+/// using the stream geometry: column is a 0-based cell, absLine is the
+/// overflow-adjusted absolute line (so it stays valid as scrollback grows). The
+/// host maps it to a VT100GridAbsCoord to drive the real selection.
+struct CompanionSelectionPoint: Codable, Equatable {
+    var absLine: Int64
+    var column: Int
+}
+
+/// The current selection's span in absolute terminal coordinates, reported by the
+/// host so the phone can draw draggable handles at the endpoints. start is the
+/// earlier coordinate, end the later one.
+struct CompanionSelectionRange: Codable, Equatable {
+    var start: CompanionSelectionPoint
+    var end: CompanionSelectionPoint
+}
+
+/// Phase of a phone-driven selection drag.
+enum CompanionSelectionPhase: String, Codable, Equatable {
+    case begin
+    case move
+    case end
+}
+
+/// How a selection snaps. character = exact cells; word/line/smart match the
+/// Mac's double/triple/smart selection. Only meaningful on `.begin`.
+enum CompanionSelectionMode: String, Codable, Equatable {
+    case character
+    case word
+    case line
+    case smart
+}
+
+/// Decoder configuration for a live stream: the codec parameter sets plus the
+/// pixel geometry of the encoded frames. Re-sent with a fresh generationId
+/// whenever the geometry changes.
+struct CompanionStreamConfig: Codable, Equatable {
+    var streamID: UInt32
+    /// Bumped on every geometry change; media frames carry the generation they
+    /// were rendered at so the phone applies the matching configuration.
+    var generationId: UInt32
+    /// Codec parameter sets (hvcC for HEVC, avcC for H.264) for decoder setup.
+    var codecExtradata: Data
+    var pixelWidth: Int
+    var pixelHeight: Int
+    /// Render scale (encoded pixels per Mac point).
+    var scale: Double
+    var columns: Int
+    var rows: Int
+    /// Cell/margin geometry for touch-to-cell mapping. Optional: a host too old
+    /// to send it (pre-geometry build) decodes as nil, and the phone keeps the
+    /// video working but cannot offer selection.
+    var cellGeometry: CompanionCellGeometry? = nil
+    /// Oldest available absolute line (== totalScrollbackOverflow) at config time,
+    /// so the phone can lay out the history canvas. Older hosts decode as 0.
+    var firstAbsLine: Int64 = 0
+    /// Total available lines (scrollback + screen) at config time.
+    var totalLines: Int = 0
+
+    init(streamID: UInt32, generationId: UInt32, codecExtradata: Data,
+         pixelWidth: Int, pixelHeight: Int, scale: Double, columns: Int, rows: Int,
+         cellGeometry: CompanionCellGeometry? = nil, firstAbsLine: Int64 = 0, totalLines: Int = 0) {
+        self.streamID = streamID
+        self.generationId = generationId
+        self.codecExtradata = codecExtradata
+        self.pixelWidth = pixelWidth
+        self.pixelHeight = pixelHeight
+        self.scale = scale
+        self.columns = columns
+        self.rows = rows
+        self.cellGeometry = cellGeometry
+        self.firstAbsLine = firstAbsLine
+        self.totalLines = totalLines
+    }
+
+    // Custom decode: synthesized Decodable ignores the property defaults and throws
+    // keyNotFound for an absent key, so a host predating firstAbsLine/totalLines
+    // (added without a revision bump) would make the whole config undecodable and
+    // leave the decoder unconfigured (permanent black view + keyframe-request loop).
+    // decodeIfPresent restores the "older hosts decode as 0" contract.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        streamID = try c.decode(UInt32.self, forKey: .streamID)
+        generationId = try c.decode(UInt32.self, forKey: .generationId)
+        codecExtradata = try c.decode(Data.self, forKey: .codecExtradata)
+        pixelWidth = try c.decode(Int.self, forKey: .pixelWidth)
+        pixelHeight = try c.decode(Int.self, forKey: .pixelHeight)
+        scale = try c.decode(Double.self, forKey: .scale)
+        columns = try c.decode(Int.self, forKey: .columns)
+        rows = try c.decode(Int.self, forKey: .rows)
+        cellGeometry = try c.decodeIfPresent(CompanionCellGeometry.self, forKey: .cellGeometry)
+        firstAbsLine = try c.decodeIfPresent(Int64.self, forKey: .firstAbsLine) ?? 0
+        totalLines = try c.decodeIfPresent(Int.self, forKey: .totalLines) ?? 0
+    }
+}
+
+/// Why a live stream ended.
+enum CompanionStreamEndReason: String, Codable, Equatable {
+    case stoppedByClient
+    case sessionClosed
+    case superseded
+    case error
+    /// The host paused the stream to stay within the relay's data budget.
+    case dataLimitReached
+}
+
 /// The phone's notification-permission state, as iOS reports it.
 enum CompanionPushAuthorization: String, Codable {
     /// The user has never been asked; the prompt can be shown.
@@ -190,6 +373,11 @@ struct CompanionMessagePreview: Codable, Equatable {
     }
 }
 
+// CompanionSyncItem / CompanionSyncMessageItem / CompanionSyncAlertItem (the
+// leaf wire structs of a `.syncSince` reply) live in the CompanionProtocol
+// package so the NSE and this production enum share one definition. See
+// CompanionSyncItem.swift.
+
 /// Sent by the phone (client) to the mac (host).
 enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// A message type this build does not recognize (a newer phone sent it). The
@@ -213,6 +401,13 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
 
     /// Delete a chat. No reply beyond an optional `.error`.
     case deleteChat(chatID: String)
+
+    /// Mute or unmute a chat. The mac persists the muted set (it is the side
+    /// that decides whether to push, possibly while the phone is unreachable)
+    /// and stops sending push notifications for muted chats; chat-list entries
+    /// carry the flag back so the phone UI stays authoritative. No reply beyond
+    /// an optional `.error`. Requires a mac at chatMuteRevision or newer.
+    case setChatMuted(chatID: String, muted: Bool)
 
     /// Begin receiving `.delivery` / `.typingStatus` events for a chat and
     /// replay its history. Replied to with `.history`, then a live stream.
@@ -248,6 +443,10 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// Session view: render a range of lines as a bitmap. Replied to with
     /// `.sessionContent`.
     case fetchSessionContent(sessionGuid: String, firstLine: Int, lineCount: Int)
+
+    /// Render a scrollback tile by absolute (overflow-adjusted) line for the live
+    /// canvas's history. Replied to with `.historyTile`.
+    case fetchHistoryTile(streamID: UInt32, firstAbsLine: Int64, lineCount: Int, generationId: UInt32)
 
     /// Workgroup view: list a workgroup's members with their status. Replied
     /// to with `.workgroupInfo`.
@@ -294,20 +493,82 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// older NSE (or a push that carried none) omits it, decoding as nil.
     case messagesSince(collapseToken: String, seq: Int64, limit: Int, nonce: String?)
 
+    /// Relay push (revision >= 2): woken by a contentless wakeup (the fixed
+    /// `CompanionPushWakeup.collapseSentinel` collapse id), the NSE asks for
+    /// everything new across ALL chats and alerts in one round trip. `messageSeq`
+    /// is the phone's global message floor, `alertSeq` its global alert floor;
+    /// the mac returns chat messages with seq > messageSeq and alerts with
+    /// seq > alertSeq. Replied to with `.syncSince`. `nonce` works exactly as in
+    /// `.messagesSince` (echoed back so the mac recognizes its own solicited
+    /// fetch). Supersedes the per-chat `.messagesSince` push for new peers.
+    case syncSince(messageSeq: Int64, alertSeq: Int64, limit: Int, nonce: String?)
+
     /// The phone is unpairing: the mac should forget the pairing and destroy
     /// its key material. No reply; the phone closes after sending.
     case unpairing
+
+    /// Live view: begin streaming a session's visible screen as encoded video on
+    /// the media channel. Replied to with `.streamStarted`, then a
+    /// `.streamConfig`, then a push stream of media frames.
+    case startSessionStream(sessionGuid: String, params: CompanionStreamParams)
+
+    /// Stop a live stream started with `.startSessionStream`. No reply beyond an
+    /// eventual `.streamEnded`.
+    case stopSessionStream(streamID: UInt32)
+
+    /// Ask the host to emit a keyframe now (on (re)subscribe, after a decode
+    /// error, or when resuming from background). No direct reply; a keyframe
+    /// arrives on the media channel.
+    case requestKeyframe(streamID: UInt32)
+
+    /// Update a running stream's parameters. Only the frame-rate cap is adapted on
+    /// a live stream: per-frame quality (bits per pixel) is held fixed so terminal
+    /// text stays legible, making frame rate the sole flexible dimension. The
+    /// maxBitrate field is ignored here (it is an upper bound applied only at start).
+    case updateStreamParams(streamID: UInt32, params: CompanionStreamParams)
+
+    /// Periodic flow-control feedback: the newest media PTS the phone has
+    /// received/displayed and its current decode-queue depth, so the host can
+    /// pace end-to-end (the relay hides TCP-level signals). No reply.
+    case streamAck(streamID: UInt32, lastPTSMilliseconds: UInt64, queueDepth: Int)
+
+    /// Live-view text selection driven from the phone. `.begin` starts a live
+    /// selection at `point` (snapped per `mode`), `.move` extends its end, `.end`
+    /// finalizes it; the resulting highlight is rendered into the streamed frames.
+    /// No reply. `mode` is only consulted on `.begin`.
+    case selectionGesture(streamID: UInt32, phase: CompanionSelectionPhase,
+                          mode: CompanionSelectionMode, point: CompanionSelectionPoint)
+
+    /// Clear any live-view selection on the session. No reply.
+    case clearSelection(streamID: UInt32)
+
+    /// Copy the session's current selection to a string. Replied to with
+    /// `.selectionText`.
+    case copySelection(sessionGuid: String)
+
+    /// Select the entire terminal content (edit-menu Select All). No reply; a
+    /// `.selectionRange` follows.
+    case selectAllInStream(streamID: UInt32)
+
+    /// Paste text into the session as input (edit-menu Paste of the phone's
+    /// clipboard). No reply.
+    case pasteText(sessionGuid: String, text: String)
 
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "listChatsAndSessions", "createChat", "deleteChat",
+        "setChatMuted",
         "subscribe", "unsubscribe", "publish", "selectSessionResponse",
         "remoteCommandDecision", "linkSession", "resolveMentions",
-        "fetchSessionScreenInfo", "fetchSessionContent", "fetchWorkgroupInfo",
+        "fetchSessionScreenInfo", "fetchSessionContent", "fetchHistoryTile", "fetchWorkgroupInfo",
         "fetchSessionTree", "pushStatus", "notificationPermissionResponse", "ping",
-        "relayRoomSecret", "messagesSince", "unpairing",
+        "relayRoomSecret", "messagesSince", "syncSince", "unpairing",
+        "startSessionStream", "stopSessionStream", "requestKeyframe",
+        "updateStreamParams", "streamAck",
+        "selectionGesture", "clearSelection", "copySelection",
+        "selectAllInStream", "pasteText",
     ]
 }
 
@@ -323,8 +584,12 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
 
     /// Reply to the phone's `.hello`: the mac's companion-protocol revision and
     /// the oldest peer revision it accepts, so the phone can decide whether an
-    /// app upgrade is required.
-    case hello(revision: Int, minimumPeer: Int)
+    /// app upgrade is required. `wantsNotificationPermission` is true when the user
+    /// has opted into phone alerts: the phone, knowing its own permission state and
+    /// foreground status, asks iOS for notification permission if it hasn't yet.
+    /// Sent on every connect so it never depends on timing. Optional for
+    /// cross-version compatibility: an older mac omits it (decodes as nil -> false).
+    case hello(revision: Int, minimumPeer: Int, wantsNotificationPermission: Bool?)
 
     /// Reply to `.listChatsAndSessions`.
     case chatsAndSessions(chats: [CompanionChatListEntry], sessions: [CompanionSessionSummary])
@@ -355,6 +620,9 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
 
     /// Reply to `.fetchSessionContent`.
     case sessionContent(CompanionSessionContent)
+
+    /// Reply to `.fetchHistoryTile`.
+    case historyTile(CompanionHistoryTile)
 
     /// Reply to `.fetchWorkgroupInfo`.
     case workgroupInfo(CompanionWorkgroupInfo)
@@ -396,8 +664,45 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// either way the NSE shows the generic fallback.
     case messagesSince(chatName: String, previews: [CompanionMessagePreview], maxSeq: Int64, truncated: Bool, reset: Bool)
 
+    /// Reply to `.syncSince`: every new chat message and alert, oldest first
+    /// (items carry their own `seq` so the NSE both orders and filters them).
+    /// `maxMessageSeq` / `maxAlertSeq` are the global tips the phone advances its
+    /// floors to. `messageReset` / `alertReset` mean the corresponding floor was
+    /// beyond the host's tip (the store rewound) and must be set DOWN rather than
+    /// max-merged. `truncated` means more items existed than the limit. Empty
+    /// items mean nothing new; the NSE shows the generic fallback.
+    case syncSince(items: [CompanionSyncItem], maxMessageSeq: Int64, maxAlertSeq: Int64, messageReset: Bool, alertReset: Bool, truncated: Bool)
+
     /// An error, optionally correlated to a request via the envelope.
     case error(CompanionError)
+
+    /// Reply to `.startSessionStream`: the stream is live with a negotiated codec.
+    case streamStarted(CompanionStreamStarted)
+
+    /// Stream (re)configuration: codec parameter sets and pixel geometry. Sent
+    /// right after `.streamStarted`, and again with a fresh generationId whenever
+    /// the geometry changes; the next media frame after a change sets its
+    /// configChanged flag.
+    case streamConfig(CompanionStreamConfig)
+
+    /// Unsolicited: the stream ended (client stopped it, the session closed, it
+    /// was superseded, or an error occurred).
+    case streamEnded(streamID: UInt32, reason: CompanionStreamEndReason)
+
+    /// Unsolicited: the history window changed in a way the live top alone cannot
+    /// convey -- scrollback trimmed (firstAbsLine advanced) or cleared (totalLines
+    /// dropped). Carries the current oldest available absolute line and total line
+    /// count so the phone can drop evicted tiles and reanchor its canvas.
+    case streamExtent(streamID: UInt32, firstAbsLine: Int64, totalLines: Int)
+
+    /// Reply to `.copySelection`: the selected text (empty if nothing is
+    /// selected). The phone places it on the clipboard.
+    case selectionText(text: String)
+
+    /// Unsolicited: the session's selection changed (after a phone gesture or any
+    /// other cause). Carries the span so the phone can draw/move handles; nil when
+    /// there is no selection.
+    case selectionRange(streamID: UInt32, range: CompanionSelectionRange?)
 
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
@@ -405,7 +710,9 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "delivery", "typingStatus", "mentionsResolved", "sessionScreenInfo",
         "sessionContent", "workgroupInfo", "sessionTree", "pong",
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
-        "unpaired", "messagesSince", "error",
+        "unpaired", "messagesSince", "syncSince", "error",
+        "streamStarted", "streamConfig", "streamEnded", "selectionText",
+        "selectionRange", "historyTile", "streamExtent",
     ]
 }
 

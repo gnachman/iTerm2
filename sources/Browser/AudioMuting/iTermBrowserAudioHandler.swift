@@ -73,7 +73,7 @@ class iTermBrowserAudioHandler {
                 delegate?.browserAudioHandlerDidStartPlaying(self, inFrame: message.frameInfo)
             }
         case .none: 
-            DLog("[Audio Detection] Unknown event: \(event)")
+            RLog("[Audio Detection] Unknown event: \(event)")
             return
         }
     }
@@ -85,7 +85,7 @@ class iTermBrowserAudioHandler {
                                                      contentWorld: .page)
             mutedFrames.append(frame)
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
         }
     }
 
@@ -96,7 +96,7 @@ class iTermBrowserAudioHandler {
                                                      contentWorld: .page)
             mutedFrames.remove(object: frame)
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
         }
     }
 }

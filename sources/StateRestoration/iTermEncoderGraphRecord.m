@@ -396,7 +396,7 @@ NSString *const iTermEncoderGraphRecordGenerationKeySuffix = @"_Generation";
     NSError *error = nil;
     NSData *data = [NSData it_dataWithSecurelyArchivedObject:self.pod error:&error];
     if (error) {
-        DLog(@"Failed to serialize pod %@ in %@: %@", self.pod, self, error);
+        RLog(@"Failed to serialize pod %@ in %@: %@", self.pod, self, error);
     }
     return data;
 }

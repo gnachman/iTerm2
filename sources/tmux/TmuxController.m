@@ -291,7 +291,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                    object:nil];
 
         _windowSizes = [[NSMutableDictionary alloc] init];
-        DLog(@"Create %@ with gateway=%@", self, gateway_);
+        RLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
 }
@@ -344,7 +344,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     DLog(@"openWindowWithIndex:%d name:%@ affinities:%@ flags:%@ initial:%@",
          windowIndex, name, affinities, windowFlags, @(initial));
     if (!gateway_) {
-        DLog(@"Deciding NOT to open window because gateway is nil");
+        RLog(@"Deciding NOT to open window because gateway is nil");
         return;
     }
     NSNumber *n = [NSNumber numberWithInt:windowIndex];
@@ -421,13 +421,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 // For buried sessions, we must rewrite the terminal GUID since it has no affinity with other tabs
 // by window ID.
 - (void)replaceOldTerminalGUID:(NSString *)oldGUID with:(NSString *)newGUID {
-    DLog(@"rename %@ to %@", oldGUID, newGUID);
+    RLog(@"rename %@ to %@", oldGUID, newGUID);
     if (_buriedWindows[oldGUID] == nil) {
         DLog(@"no buried windows for that old guid");
         return;
     }
     if (_buriedWindows[newGUID] != nil) {
-        DLog(@"already have buried windows for the new guid (wtf?)");
+        RLog(@"already have buried windows for the new guid (wtf?)");
         return;
     }
     _buriedWindows[newGUID] = _buriedWindows[oldGUID];
@@ -552,10 +552,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)initialListWindowsResponse:(NSString *)response {
-    DLog(@"initialListWindowsResponse called");
+    RLog(@"initialListWindowsResponse called");
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields] workAroundTabBug:_shouldWorkAroundTabBug];
     if (!doc) {
-        DLog(@"Failed to parse %@", response);
+        RLog(@"Failed to parse %@", response);
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for initial list windows request: %@", response]];
         return;
     }
@@ -888,7 +888,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)detach {
-    DLog(@"%@: detach", self);
+    RLog(@"%@: detach", self);
     _phonyCommandOutstanding = NO;
     self.sessionGuid = nil;
     [listSessionsTimer_ invalidate];
@@ -1161,7 +1161,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)enablePauseModeIfPossible {
-    DLog(@"enablePauseModeIfPossible min=%@ max=%@", gateway_.minimumServerVersion, gateway_.maximumServerVersion);
+    RLog(@"enablePauseModeIfPossible min=%@ max=%@", gateway_.minimumServerVersion, gateway_.maximumServerVersion);
     if (gateway_.minimumServerVersion &&
         [gateway_.minimumServerVersion compare:[NSDecimalNumber decimalNumberWithString:@"3.2"]] == NSOrderedAscending) {
         DLog(@"min < 3.2");
@@ -1493,7 +1493,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (!gateway_.maximumServerVersion ||
         [gateway_.maximumServerVersion compare:number] == NSOrderedDescending) {
         gateway_.maximumServerVersion = number;
-        DLog(@"Decreasing maximum server version to %@", number);
+        RLog(@"Decreasing maximum server version to %@", number);
     }
 }
 
@@ -1502,7 +1502,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (!gateway_.minimumServerVersion ||
         [gateway_.minimumServerVersion compare:number] == NSOrderedAscending) {
         gateway_.minimumServerVersion = number;
-        DLog(@"Increasing minimum server version to %@", number);
+        RLog(@"Increasing minimum server version to %@", number);
     }
 }
 
@@ -1514,7 +1514,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)handleDisplayMessageVersion:(NSString *)response {
-    DLog(@"handleDisplayMessageVersion: %@", response);
+    RLog(@"handleDisplayMessageVersion: %@", response);
     if ([response isEqualToString:@"openbsd-7.1"]) {
         [self handleDisplayMessageVersion:@"3.4"];
         return;
@@ -1658,7 +1658,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 // Actions to perform after the version number is known.
 - (void)didGuessVersion {
-    DLog(@"didGuessVersion");
+    RLog(@"didGuessVersion");
     [self enablePauseModeIfPossible];
     [self loadServerPID];
     [self loadTitleFormat];
@@ -1726,7 +1726,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)initializeClientTracker {
     if (!_clientTracker && [self shouldHandleOSC4Queries]) {
-        DLog(@"Initialize client tracker");
+        RLog(@"Initialize client tracker");
         // Query our tmux client name first, then create the tracker
         [gateway_ sendCommand:@"display-message -p '#{client_name}'"
                responseTarget:self
@@ -1738,7 +1738,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)didGetTmuxClientName:(NSString *)response {
     NSString *tmuxClientName = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
- DLog(@"didGetTmuxClientName: %@", tmuxClientName);
+ RLog(@"didGetTmuxClientName: %@", tmuxClientName);
     if (tmuxClientName.length == 0) {
         return;
     }
@@ -1973,7 +1973,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
     if (additions.count > 1) {
-        DLog(@"Multiple additions found! Picking one at random.");
+        RLog(@"Multiple additions found! Picking one at random.");
     }
     NSString *string = [additions anyObject];
     if (![string hasPrefix:@"%"]) {
@@ -3310,7 +3310,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 - (void)listedWindowsToOpenOne:(NSString *)response
       forWindowIdAndAffinities:(NSArray *)values {
     if (response == nil) {
-        DLog(@"Listing windows failed. Maybe the window died before we could get to it?");
+        RLog(@"Listing windows failed. Maybe the window died before we could get to it?");
         return;
     }
     NSNumber *windowId = values[0];
@@ -3444,7 +3444,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
             [affinities_ removeValue:windowId];
         }
     } else {
-        DLog(@"Response to new-window doesn't look like a window id: \"%@\"", responseStr);
+        RLog(@"Response to new-window doesn't look like a window id: \"%@\"", responseStr);
     }
 }
 
@@ -3462,7 +3462,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)windowDidOpen:(TmuxWindowOpener *)windowOpener {
     NSNumber *windowIndex = @(windowOpener.windowIndex);
-    DLog(@"TmuxController windowDidOpen for index %@ with error count %@", windowIndex, @(windowOpener.errorCount));
+    RLog(@"TmuxController windowDidOpen for index %@ with error count %@", windowIndex, @(windowOpener.errorCount));
     [pendingWindowOpens_ removeObject:windowIndex];
     if (windowOpener.errorCount != 0) {
         [affinities_ removeValue:[@(windowOpener.windowIndex) stringValue]];

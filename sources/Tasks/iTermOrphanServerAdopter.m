@@ -97,14 +97,14 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
         if ([iTermMultiServerJobManager available]) {
             dispatch_group_enter(_group);
             iTermOrphanServerAdopterFindMultiServers(^(NSArray<NSString *> *paths) {
-                DLog(@"Have found multiservers at %@", paths);
+                RLog(@"Have found multiservers at %@", paths);
                 self->_pathsOfMultiServers = paths;
                 dispatch_group_leave(self->_group);
             });
         }
         dispatch_group_enter(_group);
         iTermOrphanServerAdopterFindMonoServers(^(NSArray<NSString *> *paths) {
-            DLog(@"Have found monoservers at %@", paths);
+            RLog(@"Have found monoservers at %@", paths);
             self->_pathsOfOrphanedMonoServers = paths;
             dispatch_group_leave(self->_group);
         });
@@ -147,10 +147,10 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
 }
 
 - (void)adoptMonoServerOrphanWithPath:(NSString *)filename completion:(void (^)(PTYSession *))completion {
-    DLog(@"Try to connect to orphaned server at %@", filename);
+    RLog(@"Try to connect to orphaned server at %@", filename);
     pid_t pid = iTermFileDescriptorProcessIdFromPath(filename.UTF8String);
     if (pid < 0) {
-        DLog(@"Invalid pid in filename %@", filename);
+        RLog(@"Invalid pid in filename %@", filename);
         return;
     }
 
@@ -171,13 +171,13 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
             completion(session);
         }];
     } else {
-        DLog(@"Failed: %s", serverConnection.error);
+        RLog(@"Failed: %s", serverConnection.error);
         completion(nil);
     }
 }
 
 - (void)enqueueAdoptionsOfMultiServerOrphansWithPath:(NSString *)filename completion:(void (^)(void))completion {
-    DLog(@"Try to connect to multiserver at %@", filename);
+    RLog(@"Try to connect to multiserver at %@", filename);
     NSString *basename = filename.lastPathComponent.stringByDeletingPathExtension;
     NSString *const prefix = @"iterm2-daemon-";
     // Transitional: a pre-fix 3.7 beta wrote {suite}-daemon-N.socket. Accept either form.
@@ -197,7 +197,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
     if (![scanner scanInteger:&number]) {
         return;
     }
-    DLog(@"iTermOrphanServerAdopter: get connection for multiserver socket %@", @(number));
+    RLog(@"iTermOrphanServerAdopter: get connection for multiserver socket %@", @(number));
     [iTermMultiServerConnection getConnectionForSocketNumber:number
                                             createIfPossible:NO
                                                     callback:[iTermThread.main newCallbackWithBlock:^(iTermMainThreadState *state, iTermResult<iTermMultiServerConnection *> *result) {
@@ -240,7 +240,7 @@ static void iTermOrphanServerAdopterFindMultiServers(void (^completion)(NSArray<
             }
         };
         dispatch_group_enter(group);
-        DLog(@"Orphan server adopter wants to open session for pid %@ on socket %@", @(child.pid), @(number));
+        RLog(@"Orphan server adopter wants to open session for pid %@ on socket %@", @(child.pid), @(number));
         [self.delegate orphanServerAdopterOpenSessionForConnection:generalConnection
                                                           inWindow:self->_window
                                                         completion:^(PTYSession *session) {

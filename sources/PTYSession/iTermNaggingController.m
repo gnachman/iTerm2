@@ -231,7 +231,7 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
 - (void)arrangementWithName:(NSString *)savedArrangementName
         missingProfileNamed:(NSString *)missingProfileName
                        guid:(NSString *)guid {
-    DLog(@"Can’t find profile %@ guid %@", missingProfileName, guid);
+    RLog(@"Can’t find profile %@ guid %@", missingProfileName, guid);
     if ([iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
         return;
     }
@@ -262,7 +262,7 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
 - (void)arrangementWithName:(NSString *)arrangementName
               hasInvalidPWD:(NSString *)badPWD
          forSessionWithGuid:(NSString *)sessionGUID {
-    DLog(@"Arrangement %@ has bad pwd of %@ for session guid %@", arrangementName, badPWD, sessionGUID);
+    RLog(@"Arrangement %@ has bad pwd of %@ for session guid %@", arrangementName, badPWD, sessionGUID);
     if ([iTermAdvancedSettingsModel noSyncSuppressBadPWDInArrangementWarning]) {
         return;
     }
@@ -917,7 +917,7 @@ static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlway
     NSString *allowHostKey = [NSString stringWithFormat:@"NoSyncAllowOpenURL_host:%@", url.host];
 
     if ([iTermAdvancedSettingsModel noSyncDisableOpenURL]) {
-        DLog(@"OpenUrl disabled");
+        RLog(@"OpenUrl disabled");
         return;
     }
     if ([iTermSecureUserDefaults openURLWithHost:url.host]) {
@@ -980,7 +980,7 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
     }
     NSNumber *setting = [[iTermUserDefaults userDefaults] objectForKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey];
     if (setting != nil) {
-        DLog(@"Touch ID for sudo offer disabled by user default: %@", setting);
+        RLog(@"Touch ID for sudo offer disabled by user default: %@", setting);
         return;
     }
     if ([iTermTouchIDHelper isTouchIDEnabledForSudo]) {

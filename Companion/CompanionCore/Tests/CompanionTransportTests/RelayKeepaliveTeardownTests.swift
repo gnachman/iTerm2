@@ -69,6 +69,76 @@ private struct SingleSocketFactory: RelayWebSocketFactory {
     }
 }
 
+/// A socket whose receive() blocks forever and does NOT unblock on cancel(),
+/// modeling the observed wedge where a hard network drop leaves a bridged
+/// URLSession socket's in-flight receive hung even after task.cancel(). Its ping
+/// fails, so the keepalive must drive recovery on its own.
+private final class CancelIgnoringWebSocket: RelayWebSocket, @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var waiter: CheckedContinuation<RelayWebSocketMessage, Error>?
+
+    func resume() {}
+    func send(_ message: RelayWebSocketMessage) async throws {}
+    func receive() async throws -> RelayWebSocketMessage {
+        // Parks and does NOT unblock on cancel() -- models a half-open socket whose
+        // in-flight receive does not throw on its own.
+        try await withCheckedThrowingContinuation { cont in
+            lock.withLock { waiter = cont }
+        }
+    }
+    func sendPing() async -> Bool { false }   // dead
+    func cancel() {}                          // deliberately does nothing
+
+    /// Test cleanup: release the parked receive so the test does not leak a
+    /// continuation. Called after the assertion, never as part of cancel().
+    func releaseForTeardown() {
+        let w = lock.withLock { () -> CheckedContinuation<RelayWebSocketMessage, Error>? in
+            let w = waiter; waiter = nil; return w
+        }
+        w?.resume(throwing: TransportError.closed)
+    }
+}
+
+/// Scripts the admission handshake, then parks on receive() and does NOT unblock
+/// on cancel() -- the hard-drop case, but for a mac still PARKED (no RelayTransport
+/// exists yet). The park must be unblocked by the keepalive death alone.
+private final class CancelIgnoringParkedWebSocket: RelayWebSocket, @unchecked Sendable {
+    private let lock = UnfairLock()
+    private var scripted: [RelayWebSocketMessage]
+    private var waiter: CheckedContinuation<RelayWebSocketMessage, Error>?
+    private(set) var wasCancelled = false
+
+    init(admissionReplies: [RelayWebSocketMessage]) { self.scripted = admissionReplies }
+
+    func resume() {}
+    func send(_ message: RelayWebSocketMessage) async throws {}
+    func receive() async throws -> RelayWebSocketMessage {
+        if let next = lock.withLock({ scripted.isEmpty ? nil : scripted.removeFirst() }) {
+            return next   // admission Challenge / Result
+        }
+        // The park: blocks and does NOT unblock on cancel().
+        return try await withCheckedThrowingContinuation { cont in
+            lock.withLock { waiter = cont }
+        }
+    }
+    func sendPing() async -> Bool { false }               // half-open: ping fails
+    func cancel() { lock.withLock { wasCancelled = true } } // does NOT unblock receive
+
+    func releaseForTeardown() {
+        let w = lock.withLock { () -> CheckedContinuation<RelayWebSocketMessage, Error>? in
+            let w = waiter; waiter = nil; return w
+        }
+        w?.resume(throwing: TransportError.closed)
+    }
+}
+
+private struct SingleParkedFactory: RelayWebSocketFactory {
+    let ws: RelayWebSocket
+    func makeWebSocket(url: URL, headers: [String: String], timeout: TimeInterval?) -> RelayWebSocket {
+        ws
+    }
+}
+
 final class RelayKeepaliveTeardownTests: XCTestCase {
     func test_failedKeepalivePingCancelsParkedAcceptSoItThrows() async {
         let ws = HalfOpenWebSocket(admissionReplies: [
@@ -89,5 +159,48 @@ final class RelayKeepaliveTeardownTests: XCTestCase {
             // receive() threw instead of hanging forever.
         }
         XCTAssertTrue(ws.wasCancelled, "the keepalive must cancel the socket on ping failure")
+    }
+
+    func test_keepaliveDeath_unblocksBridgedReceive_evenWhenSocketIgnoresCancel() async {
+        // The bridged case from the field: the socket's receive() never unblocks on
+        // cancel, so the only way out is the keepalive death hard-closing the
+        // transport (onDeath) and receive() racing that close. Without the fix this
+        // hangs forever -> the mac stays "online" to itself but offline to the relay.
+        let ws = CancelIgnoringWebSocket()
+        let keepalive = RelayKeepalive(intervalNanos: 0, ping: { await ws.sendPing() })
+        let transport = RelayTransport(ws: ws, keepalive: keepalive)
+        keepalive.start()
+        do {
+            _ = try await transport.receive()
+            XCTFail("receive() must throw once the keepalive detects the dead socket")
+        } catch {
+            // Expected: the keepalive's onDeath hard-closed the transport, which
+            // resolved receive()'s close race.
+        }
+        ws.releaseForTeardown()
+    }
+
+    func test_parkedAccept_unblocksOnKeepaliveDeath_evenWhenSocketIgnoresCancel() async {
+        // The park has no RelayTransport yet to own a close signal, so before the
+        // fix a hard drop (ping fails, cancel ignored) left accept() blocked on
+        // ws.receive() forever. The keepalive death must now unblock it directly.
+        let ws = CancelIgnoringParkedWebSocket(admissionReplies: [
+            .text(#"{"nonce":"3q2+7w=="}"#),   // Challenge
+            .text(#"{"ok":true}"#),            // Result
+        ])
+        let listener = RelayTransportListener(
+            relayOrigin: "https://relay.example.com",
+            roomName: "room",
+            webSocketFactory: SingleParkedFactory(ws: ws),
+            keepaliveIntervalNanos: 0)   // ping immediately, deterministically
+
+        do {
+            _ = try await listener.accept()
+            XCTFail("a parked accept must throw once the keepalive detects the dead socket, even if cancel is ignored")
+        } catch {
+            // Expected: the keepalive death fired the park's death signal, resolving
+            // the parked receive race.
+        }
+        ws.releaseForTeardown()
     }
 }

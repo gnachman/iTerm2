@@ -42,7 +42,7 @@ func companionLog(_ message: String,
 #if DEBUG
     print(formatted)
 #else
-    logger.info("\(formatted, privacy: .public)")
+    logger.notice("\(formatted, privacy: .public)")
 #endif
 }
 
@@ -54,7 +54,7 @@ func companionLogPreformatted(_ message: String) {
 #if DEBUG
     print(formatted)
 #else
-    logger.info("\(formatted, privacy: .public)")
+    logger.notice("\(formatted, privacy: .public)")
 #endif
 }
 
@@ -82,6 +82,27 @@ private func withTimeout<T: Sendable>(_ seconds: TimeInterval,
 // unrelated mutations (loading a conversation's history) re-rendered the view
 // containing the NavigationStack mid-transition, which killed the push
 // animation.
+
+/// The geometry the live canvas needs to lay out its scrollable document: history
+/// tiles fill [firstAbsLine, firstAbsLine + totalLines - rows); the live video is
+/// the bottom `rows` lines.
+struct CompanionLiveCanvasLayout: Equatable {
+    var imageSize: CGSize
+    var columns: Int
+    var rows: Int
+    var firstAbsLine: Int64
+    var totalLines: Int
+    /// Bumped on every geometry change (incl. column reflow). A change means all
+    /// history tiles were re-rendered, so the canvas must drop its cached ones.
+    var generationId: UInt32
+    /// Cell/margin metrics in encoded pixels. The rendered frame includes the side
+    /// margins (only the vertical margin is dropped), so the canvas must offset by
+    /// leftMargin and use cellWidth rather than spreading the full image width over
+    /// the columns. nil for a host too old to report geometry (falls back to
+    /// margin-free mapping).
+    var cellGeometry: CompanionCellGeometry?
+}
+
 @MainActor
 @Observable
 final class AppModel {
@@ -212,6 +233,55 @@ final class AppModel {
 
     private var client: CompanionClient?
 
+    /// Whether the connected Mac supports live session streaming (advertised
+    /// protocol revision >= streamingRevision). The session view shows live video
+    /// when true and falls back to PNG tiles otherwise. Set on each handshake.
+    private(set) var macSupportsStreaming = false
+
+    /// The live stream the session view is currently watching, and the handlers
+    /// it registered. Only one session is streamed at a time.
+    private var activeStreamID: UInt32?
+    private var onStreamConfig: ((CompanionStreamConfig) -> Void)?
+    private var onStreamMedia: ((CompanionMediaFrame) -> Void)?
+    private var onStreamEnded: ((CompanionStreamEndReason) -> Void)?
+    /// Geometry of the active stream (from the latest config) and the live top
+    /// line (from the latest media frame), used to map a touch to a terminal cell
+    /// for phone-driven selection. Whether selection is offered depends on the
+    /// mac advertising selectionGeometryRevision and the config carrying geometry.
+    private(set) var activeStreamGeometry: CompanionCellGeometry?
+    private(set) var activeStreamImageSize: CGSize = .zero
+    private(set) var activeStreamColumns = 0
+    private(set) var activeStreamRows = 0
+    private(set) var activeStreamLiveTop: Int64 = 0
+    /// History extent from the latest config, for laying out the scrollback canvas.
+    private(set) var activeStreamFirstAbsLine: Int64 = 0
+    private(set) var activeStreamTotalLines = 0
+    private var activeStreamGeneration: UInt32 = 0
+    /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
+    /// fetches in flight so scroll events do not duplicate them.
+    // Internal plumbing, not UI state: mutating it must not re-render SwiftUI views
+    // (a tile load would otherwise trigger updateUIView and re-run selection logic).
+    // Bounded so a long history browse cannot accumulate tile images without limit;
+    // the LRU evicts the least-recently-used tile past the cap and supports the
+    // key-range pruning below (unlike NSCache).
+    @ObservationIgnored private let historyTileCache = CompanionLRUCache<Int64, UIImage>(capacity: 256)
+    /// The current selection span reported by the mac, for drawing handles.
+    private(set) var activeSelectionRange: CompanionSelectionRange?
+    /// The mac's advertised protocol revision (0 until the handshake).
+    private(set) var macRevision = 0
+    var sessionSelectionSupported: Bool {
+        macRevision >= CompanionProtocolVersion.selectionGeometryRevision && activeStreamGeometry != nil
+    }
+    /// The session the live view wants to watch. Held across reconnects so the
+    /// stream restarts automatically once the connection is back, instead of
+    /// surfacing a transient "unavailable" error. nil when no live view is open.
+    private var liveWatchGuid: String?
+    /// True while the app is backgrounded: intent is kept but no stream runs.
+    private var liveStreamPaused = false
+    /// True while a start request is in flight, so a reconnect and a foreground
+    /// resume firing together don't open two streams.
+    private var liveStreamStarting = false
+
     // How the phone reaches the mac, built per pairing code: the relay connector
     // when the code carries a relay origin (off-LAN reach), else a connector that
     // fails fast. Injectable for tests; production uses
@@ -261,7 +331,7 @@ final class AppModel {
     /// The canonical relay host. A pairing whose relay host differs from this is
     /// shown in punycode at confirmation time so a homograph host cannot
     /// masquerade as the real one.
-    static let defaultRelayHost = "companion-relay.iterm2.com"
+    static let defaultRelayHost = "relay.iterm2.com"
     // The relay room name whose verifier this device has registered. Per ROOM,
     // not a global flag: pairing to a different Mac (a new pid, e.g. after the
     // user re-scans a QR) is a different room and must register (and, under
@@ -279,11 +349,23 @@ final class AppModel {
     /// attestation; false until a registration actually succeeds, so a failed
     /// attempt is retried on the next connect (self-healing).
     private func verifierRegistered(for code: PairingCode) -> Bool {
-        UserDefaults.standard.string(forKey: Self.registeredRoomDefault) == roomName(for: code)
+        let target = roomName(for: code)
+        if PhoneIdentity.registeredRoomName() == target {
+            return true
+        }
+        // Promote a marker left by an older build in UserDefaults (which a reinstall
+        // wipes) into the keychain, so it survives future reinstalls like the
+        // pairing code and room secret. Without this, a reinstall would forget the
+        // room was established and wrongly attest on reconnect.
+        if UserDefaults.standard.string(forKey: Self.registeredRoomDefault) == target {
+            try? PhoneIdentity.storeRegisteredRoomName(target)
+            return true
+        }
+        return false
     }
 
     private func markVerifierRegistered(for code: PairingCode) {
-        UserDefaults.standard.set(roomName(for: code), forKey: Self.registeredRoomDefault)
+        try? PhoneIdentity.storeRegisteredRoomName(roomName(for: code))
     }
 
     /// The pairing from the last successful handshake. The responder key is
@@ -361,14 +443,16 @@ final class AppModel {
 
     func forgetStoredPairing() {
         // Clear the pairing code from the keychain (current location) and from
-        // both UserDefaults suites (legacy location). The registered-room marker
-        // is NoSync / app-only and stays in standard.
+        // both UserDefaults suites (legacy location).
         PhoneIdentity.deletePairingCode()
         for defaults in [UserDefaults(suiteName: PhoneIdentity.appGroup), UserDefaults.standard].compactMap({ $0 }) {
             defaults.removeObject(forKey: Self.storedKeyDefault)
             defaults.removeObject(forKey: Self.storedPIDDefault)
             defaults.removeObject(forKey: Self.storedRelayOriginDefault)
         }
+        // Clear the verifier-registered marker from the keychain (current location)
+        // and UserDefaults (legacy location).
+        PhoneIdentity.deleteRegisteredRoomName()
         UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
         // Drop the per-chat push watermarks (shared with the NSE): they are keyed
         // by the old room secret and meaningless once unpaired. reset() clears by
@@ -676,6 +760,14 @@ final class AppModel {
     /// Generous: a human is walking to a keyboard.
     private static let sasConfirmationTimeout: TimeInterval = 180
 
+    /// True when admission failed because the relay required a signed join (the room
+    /// is established and the verifier is registered). Used to self-heal a lost
+    /// "established" marker by retrying with a signature.
+    private static func admissionNeedsSignature(_ error: Error) -> Bool {
+        guard case let TransportError.connectionFailed(message) = error else { return false }
+        return message.range(of: "signature required", options: .caseInsensitive) != nil
+    }
+
     private func establish(code: PairingCode,
                            handshakeTimeout: TimeInterval = firstPairHandshakeTimeout,
                            requireConfirmation: Bool = false) async throws {
@@ -696,9 +788,26 @@ final class AppModel {
         companionLog("Admission proof: "
             + (pairingTicket != nil ? "App Attest ticket"
                : established ? "join signature" : "empty (open mode)"))
-        let transport = try await connector.connect(
-            to: PairingRendezvous(pairingID: code.pairingID),
-            timeout: 30)
+        let rendezvous = PairingRendezvous(pairingID: code.pairingID)
+        let transport: MessageTransport
+        do {
+            transport = try await connector.connect(to: rendezvous, timeout: 30)
+        } catch let error where !established
+                && Self.admissionNeedsSignature(error)
+                && PhoneIdentity.existingRoomSecret() != nil {
+            // Self-heal a lost/stale "established" marker: the relay still holds our
+            // verifier and demands a SIGNED join, but we attested because the marker
+            // was gone (e.g. a reinstall wiped the legacy UserDefaults copy before
+            // it was moved to the keychain). We DO have the room secret, so persist
+            // the marker and retry by signing - recovering without a re-pair, and
+            // signing first-try on every later connect. (Couples to the relay's
+            // "signature required" reason; if that drifts, the keychain marker plus a
+            // manual re-pair still recover.)
+            companionLog("Admission rejected (signature required) after attesting; retrying signed")
+            markVerifierRegistered(for: code)
+            let signingConnector = connectorForCode(code, nil, true)
+            transport = try await signingConnector.connect(to: rendezvous, timeout: 30)
+        }
         // The relay mints this for the phone at admission; present it to
         // /register. Captured before the handshake wraps the transport.
         let registrationToken = (transport as? RelayTransport)?.registrationToken
@@ -748,6 +857,10 @@ final class AppModel {
         }, onClose: { [weak self] in
             Task { @MainActor in
                 self?.connectionLost()
+            }
+        }, onMedia: { [weak self] frame in
+            Task { @MainActor in
+                self?.handleStreamMedia(frame)
             }
         })
         self.client = client
@@ -935,9 +1048,9 @@ final class AppModel {
         //     a deliberate teardown (CancellationError) propagates to the normal
         //     pairing retry path. We do NOT claim "upgrade the Mac" just because
         //     the connection broke.
-        let verdict: CompanionProtocolVersion.Compatibility
+        let handshake: CompanionClient.HandshakeResult
         do {
-            verdict = try await withThrowingTaskGroup(of: CompanionProtocolVersion.Compatibility.self) { group in
+            handshake = try await withThrowingTaskGroup(of: CompanionClient.HandshakeResult.self) { group in
                 group.addTask { try await client.handshakeVersion() }
                 group.addTask {
                     // A genuine elapse throws the sentinel; a cancelled sleep
@@ -967,7 +1080,7 @@ final class AppModel {
         // Any OTHER error - a real transport drop (TransportError) or a deliberate
         // teardown (CancellationError) - is not an upgrade signal and propagates
         // out of loadHome to the normal pairing retry path.
-        switch verdict {
+        switch handshake.compatibility {
         case .compatible:
             break
         case .selfMustUpgrade:
@@ -978,6 +1091,13 @@ final class AppModel {
             companionLog("Version handshake: the Mac app must upgrade")
             phase = .needsUpgrade(.mac)
             return
+        }
+        macSupportsStreaming = handshake.supportsStreaming
+        macRevision = handshake.peerRevision
+        // The mac says the user opted into phone alerts: ask iOS for notification
+        // permission if we haven't yet (deferring to foreground if backgrounded).
+        if handshake.wantsNotificationPermission {
+            ensureNotificationPermission(replyTo: nil)
         }
         try await refreshLists()
         navigationPath = []
@@ -1033,6 +1153,9 @@ final class AppModel {
         guard !isReconnecting else { return }
         companionLog("Connection lost")
         client = nil
+        // The stream id belongs to the dead connection; drop it but keep the
+        // live-watch intent so the stream restarts after reconnect.
+        activeStreamID = nil
         guard phase == .home else { return }
         guard let code = storedPairingCode else {
             phase = .scanning
@@ -1047,6 +1170,22 @@ final class AppModel {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
+                    // Re-run the version handshake on every reconnect so the mac's
+                    // "user wants alerts" signal (carried in the .hello reply) is
+                    // honored on each connect, not just the initial pairing. A
+                    // failure here must not abort the reconnect, so it's best-effort.
+                    if let client {
+                        do {
+                            let handshake = try await client.handshakeVersion()
+                            macSupportsStreaming = handshake.supportsStreaming
+        macRevision = handshake.peerRevision
+                            if handshake.wantsNotificationPermission {
+                                ensureNotificationPermission(replyTo: nil)
+                            }
+                        } catch {
+                            companionLog("Reconnect version handshake failed: \(String(describing: error))")
+                        }
+                    }
                     reportPushStatus()
                     try await refreshLists()
                     if sessionTree != nil || selectedTab == .sessions {
@@ -1062,6 +1201,8 @@ final class AppModel {
                         openChatID = nil
                         conversationDidAppear(chatID: chatID)
                     }
+                    // Resume a live session view that was open across the drop.
+                    restartLiveStreamAfterReconnect()
                 } catch is CancellationError {
                     // App-driven teardown; nothing to report.
                 } catch {
@@ -1135,6 +1276,37 @@ final class AppModel {
                 try await client.deleteChat(chatID: chatID)
             } catch {
                 companionLog("Delete chat failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    /// Whether the connected Mac persists per-chat mute state; the mute UI is
+    /// offered only then (an older mac would silently ignore the toggle).
+    var macSupportsChatMuting: Bool {
+        macRevision >= CompanionProtocolVersion.chatMuteRevision
+    }
+
+    /// Whether the chat is muted, as of the last list refresh (or an optimistic
+    /// local toggle awaiting the next refresh).
+    func isChatMuted(chatID: String) -> Bool {
+        chats.first { $0.chat.id == chatID }?.muted == true
+    }
+
+    /// Mute/unmute: flip the row optimistically and tell the Mac, which owns
+    /// the muted set (it decides whether to push, possibly while this phone is
+    /// unreachable). The next chat-list refresh carries the persisted state.
+    func setChatMuted(chatID: String, muted: Bool) {
+        companionLog("Setting chat \(chatID) muted=\(muted) (mac revision \(macRevision))")
+        if let index = chats.firstIndex(where: { $0.chat.id == chatID }) {
+            chats[index].muted = muted
+        }
+        Task {
+            do {
+                let client = try await currentClient(label: "Mute chat")
+                try await client.setChatMuted(chatID: chatID, muted: muted)
+                companionLog("setChatMuted(\(muted)) for chat \(chatID) sent to the mac")
+            } catch {
+                companionLog("Set chat muted failed: \(String(describing: error))")
             }
         }
     }
@@ -1475,24 +1647,66 @@ final class AppModel {
     /// notification-permission prompt. Replies with the outcome; a grant is
     /// followed by a pushStatus carrying the token once APNs issues it.
     private func handleNotificationPermissionRequest(requestID: UInt64) {
-        Task {
-            let center = UNUserNotificationCenter.current()
-            var authorization = Self.authorization(
-                from: await center.notificationSettings().authorizationStatus)
-            if authorization == .notDetermined {
-                let granted = (try? await center.requestAuthorization(
-                    options: [.alert, .sound, .badge])) ?? false
-                authorization = granted ? .authorized : .denied
-                companionLog("Notification permission prompt answered: \(authorization.rawValue)")
+        companionLog("Received notification-permission request \(requestID)")
+        ensureNotificationPermission(replyTo: requestID)
+    }
+
+    /// Observer token for a deferred prompt; non-nil means we're waiting for the app
+    /// to become active before showing the iOS notification prompt.
+    private var becomeActiveObserver: NSObjectProtocol?
+
+    /// Ask iOS for notification permission when it makes sense, robustly:
+    ///  - already decided (authorized/denied): just report (and register if granted);
+    ///  - undetermined + app ACTIVE: show the prompt now;
+    ///  - undetermined + app NOT active (e.g. a background reconnect delivered the
+    ///    request): DEFER and show it the next time the app becomes active, so the
+    ///    prompt never depends on the request happening to land while foreground.
+    /// `replyTo` answers the orchestrator's request-id flow; nil for the hello flow.
+    private func ensureNotificationPermission(replyTo requestID: UInt64?) {
+        Task { await ensureNotificationPermissionImpl(replyTo: requestID) }
+    }
+
+    private func ensureNotificationPermissionImpl(replyTo requestID: UInt64?) async {
+        let center = UNUserNotificationCenter.current()
+        var authorization = Self.authorization(from: await center.notificationSettings().authorizationStatus)
+        companionLog("ensureNotificationPermission: status=\(authorization.rawValue), "
+            + "appState=\(UIApplication.shared.applicationState.rawValue)")
+        if authorization == .notDetermined {
+            guard UIApplication.shared.applicationState == .active else {
+                companionLog("App not active; deferring notification prompt to next foreground")
+                scheduleNotificationPromptOnNextActive()
+                if let requestID, let client {
+                    try? await client.sendNotificationPermissionResponse(requestID: requestID,
+                                                                         authorization: .notDetermined)
+                }
+                return
             }
-            if authorization == .authorized {
-                UIApplication.shared.registerForRemoteNotifications()
+            let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+            authorization = granted ? .authorized : .denied
+            companionLog("Notification permission prompt answered: \(authorization.rawValue)")
+        }
+        if authorization == .authorized {
+            UIApplication.shared.registerForRemoteNotifications()
+        }
+        if let requestID, let client {
+            try? await client.sendNotificationPermissionResponse(requestID: requestID,
+                                                                 authorization: authorization)
+        }
+        await sendPushStatus(authorization)
+    }
+
+    private func scheduleNotificationPromptOnNextActive() {
+        guard becomeActiveObserver == nil else { return }
+        becomeActiveObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                if let observer = self.becomeActiveObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                    self.becomeActiveObserver = nil
+                }
+                await self.ensureNotificationPermissionImpl(replyTo: nil)
             }
-            if let client {
-                try? await client.sendNotificationPermissionResponse(requestID: requestID,
-                                                                     authorization: authorization)
-            }
-            await sendPushStatus(authorization)
         }
     }
 
@@ -1625,9 +1839,422 @@ final class AppModel {
             handleNotificationPermissionRequest(requestID: requestID)
         case .unpaired:
             handleRemoteUnpair()
+        case .streamConfig(let config):
+            if config.streamID == activeStreamID {
+                activeStreamGeometry = config.cellGeometry
+                activeStreamImageSize = CGSize(width: config.pixelWidth, height: config.pixelHeight)
+                activeStreamColumns = config.columns
+                activeStreamRows = config.rows
+                activeStreamFirstAbsLine = config.firstAbsLine
+                activeStreamTotalLines = config.totalLines
+                // A new generation re-renders everything; stale tiles must not show.
+                if config.generationId != activeStreamGeneration {
+                    // Not the first config for this stream = a mid-stream geometry
+                    // change (e.g. column reflow), which renumbers absolute lines and
+                    // invalidates the current selection's coordinates. Drop it; the
+                    // mac re-pushes the reflowed selection. The first config keeps any
+                    // pre-existing selection couriered on subscribe.
+                    let isInitialConfig = activeStreamGeneration == 0
+                    activeStreamGeneration = config.generationId
+                    historyTileCache.removeAll()
+                    // Snap the live top to the new extent so a stale (pre-reflow)
+                    // value does not inflate the canvas until the next media frame.
+                    activeStreamLiveTop = config.firstAbsLine + Int64(max(0, config.totalLines - config.rows))
+                    if !isInitialConfig {
+                        activeSelectionRange = nil
+                    }
+                }
+                onStreamConfig?(config)
+            }
+        case .streamExtent(let streamID, let firstAbsLine, let totalLines):
+            if streamID == activeStreamID,
+               firstAbsLine != activeStreamFirstAbsLine || totalLines != activeStreamTotalLines {
+                let shrank = totalLines < activeStreamTotalLines
+                activeStreamFirstAbsLine = firstAbsLine
+                activeStreamTotalLines = totalLines
+                if shrank {
+                    // Cleared/reset: the content at existing absolute lines changed
+                    // and the (pre-clear) live top is now stale, which would inflate
+                    // the canvas until the next frame. Snap the live top to the new
+                    // extent and drop every cached tile.
+                    activeStreamLiveTop = firstAbsLine + Int64(max(0, totalLines - activeStreamRows))
+                    historyTileCache.removeAll()
+                } else {
+                    // Trimmed: only lines below the new origin are gone.
+                    historyTileCache.removeAll(where: { $0 < firstAbsLine })
+                }
+            }
+        case .selectionRange(let streamID, let range):
+            if streamID == activeStreamID {
+                activeSelectionRange = range
+            }
+        case .streamEnded(let streamID, let reason):
+            if streamID == activeStreamID {
+                activeStreamID = nil
+                activeStreamGeometry = nil
+                activeSelectionRange = nil
+                // A host-side end is terminal: drop the intent so it does not
+                // restart, and tell the view (which shows it only for reasons
+                // worth surfacing, e.g. the session closed).
+                liveWatchGuid = nil
+                onStreamEnded?(reason)
+            }
         default:
             break
         }
+    }
+
+    // MARK: Live session streaming
+
+    private func handleStreamMedia(_ frame: CompanionMediaFrame) {
+        guard frame.streamID == activeStreamID else { return }
+        // Track the top visible line so a touch maps to the right absolute line.
+        activeStreamLiveTop = frame.liveTop
+        onStreamMedia?(frame)
+    }
+
+    private func clearStreamHandlers() {
+        onStreamConfig = nil
+        onStreamMedia = nil
+        onStreamEnded = nil
+    }
+
+    /// Express intent to watch a session live. The handlers receive the stream
+    /// config (parameter sets + geometry), each media frame, and a terminal end
+    /// event. The stream starts when the connection is ready and restarts after a
+    /// reconnect; a not-yet-connected state is NOT an error (no onEnded fires).
+    func watchSessionLive(guid: String,
+                          onConfig: @escaping (CompanionStreamConfig) -> Void,
+                          onMedia: @escaping (CompanionMediaFrame) -> Void,
+                          onEnded: @escaping (CompanionStreamEndReason) -> Void) {
+        liveWatchGuid = guid
+        liveStreamPaused = false
+        // Drop the previous session's geometry/extent so the canvas waits for the
+        // new config before laying out (streamExtent can arrive first); otherwise it
+        // would briefly fetch tiles against stale geometry.
+        historyTileCache.removeAll()
+        activeStreamGeometry = nil
+        activeStreamImageSize = .zero
+        activeStreamColumns = 0
+        activeStreamRows = 0
+        activeStreamLiveTop = 0
+        activeStreamFirstAbsLine = 0
+        activeStreamTotalLines = 0
+        activeStreamGeneration = 0
+        activeSelectionRange = nil
+        onStreamConfig = onConfig
+        onStreamMedia = onMedia
+        onStreamEnded = onEnded
+        startLiveStreamIfPossible()
+    }
+
+    /// Drop the live-watch intent and stop any running stream (on leaving the view).
+    func stopWatchingSessionLive() {
+        liveWatchGuid = nil
+        stopActiveStream()
+        clearStreamHandlers()
+    }
+
+    /// Backgrounded: keep the intent but stop the running stream so the Mac stops
+    /// encoding while the phone can't display anything.
+    func pauseLiveStream() {
+        liveStreamPaused = true
+        stopActiveStream()
+    }
+
+    /// Foregrounded: resume if a live view is still open. Safe if not connected
+    /// yet (the reconnect path will start it).
+    func resumeLiveStream() {
+        liveStreamPaused = false
+        startLiveStreamIfPossible()
+    }
+
+    /// Start the live stream for the watched session if everything is ready;
+    /// otherwise a no-op (a later reconnect/resume retries). Never surfaces a
+    /// transient failure as a stream end.
+    private func startLiveStreamIfPossible() {
+        guard let guid = liveWatchGuid, !liveStreamPaused, macSupportsStreaming,
+              activeStreamID == nil, !liveStreamStarting, let client else {
+            return
+        }
+        liveStreamStarting = true
+        let params = CompanionStreamParams(supportedCodecs: [.hevc], maxFrameRate: 30, maxBitrate: nil,
+                                           maxMediaFrameVersion: 2)
+        Task { @MainActor in
+            do {
+                let started = try await client.startSessionStream(guid: guid, params: params)
+                // Guard against races: the view may have closed, the app may have
+                // paused, or a reconnect may have superseded this attempt.
+                if liveWatchGuid == guid, !liveStreamPaused, activeStreamID == nil {
+                    activeStreamID = started.streamID
+                    companionLog("phone stream STARTED id=\(started.streamID) guid=\(guid)")
+                } else {
+                    try? await client.stopSessionStream(streamID: started.streamID)
+                }
+            } catch {
+                companionLog("startSessionStream failed (will retry on reconnect/resume): \(String(describing: error))")
+            }
+            liveStreamStarting = false
+            // If the live intent moved to a DIFFERENT session while this attempt was
+            // in flight (superseded, or it failed and the user switched sessions),
+            // drive the new intent now instead of stranding it until the next
+            // reconnect/resume. Comparing against the attempted guid avoids a tight
+            // retry loop when the same session persistently fails to start.
+            if let current = liveWatchGuid, current != guid, activeStreamID == nil {
+                startLiveStreamIfPossible()
+            }
+        }
+    }
+
+    /// Tell the connected Mac to stop the active stream and forget its id. Keeps
+    /// the watch intent so it can restart.
+    private func stopActiveStream() {
+        guard let streamID = activeStreamID else { return }
+        activeStreamID = nil
+        guard let client else { return }
+        Task { try? await client.stopSessionStream(streamID: streamID) }
+    }
+
+    /// Called after a (re)connect completes so an open live view resumes.
+    private func restartLiveStreamAfterReconnect() {
+        // A new connection means the old stream id is dead.
+        activeStreamID = nil
+        // The new stream's generations restart at 1; treat its first config as
+        // initial (not a mid-stream reflow). Otherwise a stale generation from the
+        // old stream could wipe the selection the mac couriers on subscribe, and a
+        // coincidentally-equal one would skip the tile-cache clear even though
+        // content may have changed while offline.
+        activeStreamGeneration = 0
+        historyTileCache.removeAll()
+        startLiveStreamIfPossible()
+    }
+
+    /// Ask the Mac for a fresh keyframe (on resume, or after a decode error).
+    func requestActiveStreamKeyframe() {
+        guard let client, let streamID = activeStreamID else { return }
+        Task { try? await client.requestStreamKeyframe(streamID: streamID) }
+    }
+
+    /// Report flow-control feedback for the active stream.
+    func sendActiveStreamAck(lastPTSMilliseconds: UInt64, queueDepth: Int) {
+        guard let client, let streamID = activeStreamID else { return }
+        Task {
+            try? await client.sendStreamAck(streamID: streamID,
+                                            lastPTSMilliseconds: lastPTSMilliseconds,
+                                            queueDepth: queueDepth)
+        }
+    }
+
+    /// A mapper for the current stream geometry, or nil if selection is not
+    /// available yet.
+    private var activeTouchMapper: CompanionTouchMapper? {
+        guard let geometry = activeStreamGeometry else { return nil }
+        return CompanionTouchMapper(imageSize: activeStreamImageSize,
+                                    cellGeometry: geometry,
+                                    columns: activeStreamColumns,
+                                    rows: activeStreamRows,
+                                    liveTop: activeStreamLiveTop)
+    }
+
+    /// View-space points for the selection's start (top-left) and end
+    /// (bottom-right) handles, or nil if there is no selection/geometry.
+    func selectionHandlePoints(viewSize: CGSize) -> (start: CGPoint, end: CGPoint)? {
+        guard let range = activeSelectionRange, let mapper = activeTouchMapper,
+              let start = mapper.viewPoint(column: range.start.column, absLine: range.start.absLine,
+                                           rightEdge: false, bottomEdge: false, viewSize: viewSize),
+              let end = mapper.viewPoint(column: range.end.column, absLine: range.end.absLine,
+                                         rightEdge: true, bottomEdge: true, viewSize: viewSize) else {
+            return nil
+        }
+        return (start, end)
+    }
+
+    /// Drive a live-view selection from a touch at `viewPoint` in a view of
+    /// `viewSize`, mapping it to an absolute terminal point with the current
+    /// stream geometry. No-op if selection is not supported.
+    func sendSelectionGesture(phase: CompanionSelectionPhase,
+                              mode: CompanionSelectionMode,
+                              viewPoint: CGPoint,
+                              viewSize: CGSize) {
+        guard let mapper = activeTouchMapper else { return }
+        sendSelectionGesture(phase: phase, mode: mode,
+                             point: mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize))
+    }
+
+    /// Drive a selection with an explicit absolute point (used to anchor a handle
+    /// drag at the opposite, fixed endpoint).
+    func sendSelectionGesture(phase: CompanionSelectionPhase,
+                              mode: CompanionSelectionMode,
+                              point: CompanionSelectionPoint) {
+        guard let client, let streamID = activeStreamID else { return }
+        // Coalesce: a drag fires a touch event per frame, but the selection only
+        // changes when the mapped CELL changes. Sending a move per event (often
+        // the same cell) floods the link in both directions (the move, plus the
+        // mac's selectionRange reply) and backs it up for seconds. Drop a .move
+        // whose cell is unchanged; begin/end always go.
+        if phase == .move && point == lastSentSelectionPoint { return }
+        lastSentSelectionPoint = (phase == .end) ? nil : point
+        sendOrderedSelection {
+            try? await client.sendSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
+        }
+    }
+    private var lastSentSelectionPoint: CompanionSelectionPoint?
+
+    /// Serialize selection sends. A drag fires begin/move/move/.../end in quick
+    /// succession; wrapping each in its own Task does NOT preserve order, so the
+    /// opening .begin (anchor) could reach the mac after the first .move and the
+    /// move would be lost (the symptom: the selection only updates after a
+    /// "jiggle" produces a later move). Chaining each send after the previous one
+    /// guarantees in-order delivery.
+    private var lastSelectionSend: Task<Void, Never>?
+    private func sendOrderedSelection(_ operation: @escaping () async -> Void) {
+        let previous = lastSelectionSend
+        lastSelectionSend = Task {
+            await previous?.value
+            await operation()
+        }
+    }
+
+    /// The selection's start/end as absolute points (for anchoring handle drags).
+    var activeSelectionEndpoints: (start: CompanionSelectionPoint, end: CompanionSelectionPoint)? {
+        activeSelectionRange.map { ($0.start, $0.end) }
+    }
+
+    /// Where to center the magnifier: the CENTER OF THE CELL the finger maps to,
+    /// not the raw finger point. The selection (and its caret in the video) sits
+    /// at that cell, so this lines the magnified caret up with the selection
+    /// instead of leaving a persistent sub-cell offset. Computed locally, so it is
+    /// instant and independent of the round-trip.
+    func selectionImagePoint(viewPoint: CGPoint, viewSize: CGSize) -> CGPoint? {
+        guard let mapper = activeTouchMapper else { return nil }
+        let point = mapper.selectionPoint(viewPoint: viewPoint, viewSize: viewSize)
+        return mapper.cellCenterImagePoint(column: point.column, absLine: point.absLine)
+    }
+
+    /// Encoded-pixel cell height of the active stream (for sizing the magnifier).
+    var activeStreamCellHeight: CGFloat { CGFloat(activeStreamGeometry?.cellHeight ?? 0) }
+
+    /// The layout the live canvas needs to size its scrollable document (history
+    /// above, live video at the bottom). Nil until a config with geometry arrives.
+    var liveCanvasLayout: CompanionLiveCanvasLayout? {
+        guard activeStreamImageSize.width > 0, activeStreamImageSize.height > 0,
+              activeStreamRows > 0, activeStreamTotalLines > 0 else {
+            return nil
+        }
+        return CompanionLiveCanvasLayout(imageSize: activeStreamImageSize,
+                                         columns: activeStreamColumns,
+                                         rows: activeStreamRows,
+                                         firstAbsLine: activeStreamFirstAbsLine,
+                                         totalLines: activeStreamTotalLines,
+                                         generationId: activeStreamGeneration,
+                                         cellGeometry: activeStreamGeometry)
+    }
+
+    /// A cached scrollback tile, if already fetched.
+    func cachedHistoryTile(firstAbsLine: Int64) -> UIImage? { historyTileCache[firstAbsLine] }
+
+    /// Drop a cached tile so it is re-rendered (e.g. a partial tile that has since
+    /// grown more lines).
+    func invalidateHistoryTile(firstAbsLine: Int64) { historyTileCache[firstAbsLine] = nil }
+
+    /// Fetch a scrollback tile; `completion` ALWAYS runs on the main actor (with the
+    /// image, or nil on failure / no stream / empty-evicted range) so the caller can
+    /// clear its in-flight state. De-duplication and staleness are the caller's job
+    /// (the canvas keys requests by tile and ignores out-of-date completions); doing
+    /// it here by absolute line silently dropped re-requests after an invalidation,
+    /// leaving tiles stuck loading or showing a stale highlight.
+    func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (UIImage?) -> Void) {
+        if let image = historyTileCache[firstAbsLine] {
+            completion(image)
+            return
+        }
+        guard let client, let streamID = activeStreamID else {
+            companionLog("historyTile no stream firstAbs=\(firstAbsLine)")
+            completion(nil)
+            return
+        }
+        let generation = activeStreamGeneration
+        companionLog("historyTile req firstAbs=\(firstAbsLine) lineCount=\(lineCount) stream=\(streamID) gen=\(generation)")
+        Task { @MainActor in
+            do {
+                let tile = try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
+                                                        lineCount: lineCount, generationId: generation)
+                // A reflow/resize (or reconnect) between request and reply bumps the
+                // generation and re-renders every tile, so a reply for the old
+                // generation must not be cached or shown as current.
+                guard generation == activeStreamGeneration else {
+                    companionLog("historyTile stale gen firstAbs=\(firstAbsLine) reqGen=\(generation) now=\(activeStreamGeneration)")
+                    completion(nil)
+                    return
+                }
+                // The host clamps to the available window and reports the range it
+                // actually covered. If that origin differs from what we requested
+                // (an eviction race), the image does not belong at this key, so treat
+                // it as a miss rather than poisoning the cache with misplaced content.
+                guard tile.firstAbsLine == firstAbsLine else {
+                    companionLog("historyTile origin drift req=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount)")
+                    completion(nil)
+                    return
+                }
+                guard tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
+                    companionLog("historyTile reply firstAbs=\(firstAbsLine) lineCount=\(tile.lineCount) bytes=\(tile.pngData.count) -> \(tile.lineCount == 0 ? "evicted" : "undecodable")")
+                    completion(nil)
+                    return
+                }
+                historyTileCache[firstAbsLine] = image
+                companionLog("historyTile ok firstAbs=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount) bytes=\(tile.pngData.count)")
+                completion(image)
+            } catch {
+                companionLog("historyTile FAIL firstAbs=\(firstAbsLine): \(error)")
+                completion(nil)
+            }
+        }
+    }
+
+    /// The view-space rect the video occupies (excluding letterbox bars), or the
+    /// full view if geometry is unknown.
+    func contentRect(in viewSize: CGSize) -> CGRect {
+        activeTouchMapper?.contentRect(viewSize: viewSize) ?? CGRect(origin: .zero, size: viewSize)
+    }
+
+    /// Whether a touch falls on the terminal image rather than the letterbox bars
+    /// around it, so a drag in the empty margins does not start a selection.
+    func isInsideContent(viewPoint: CGPoint, viewSize: CGSize) -> Bool {
+        guard let mapper = activeTouchMapper,
+              let p = mapper.imagePoint(viewPoint: viewPoint, viewSize: viewSize) else {
+            return false
+        }
+        return p.x >= 0 && p.x <= activeStreamImageSize.width
+            && p.y >= 0 && p.y <= activeStreamImageSize.height
+    }
+
+    /// Clear the live-view selection on the mac. Ordered with gestures so a clear
+    /// that follows a drag cannot overtake the drag's final messages.
+    func clearActiveSelection() {
+        guard let client, let streamID = activeStreamID else { return }
+        sendOrderedSelection { try? await client.clearSelection(streamID: streamID) }
+    }
+
+    /// Copy the active session's selection to the iOS clipboard.
+    func copyActiveSelection() {
+        guard let client, let guid = liveWatchGuid else { return }
+        Task {
+            guard let text = try? await client.copySelection(sessionGuid: guid), !text.isEmpty else { return }
+            UIPasteboard.general.string = text
+        }
+    }
+
+    /// Select the entire terminal content (edit-menu Select All). Ordered with
+    /// gestures so it cannot overtake a drag's tail.
+    func selectAllActiveStream() {
+        guard let client, let streamID = activeStreamID else { return }
+        sendOrderedSelection { try? await client.selectAll(streamID: streamID) }
+    }
+
+    /// Paste the iOS clipboard into the session as input (edit-menu Paste).
+    func pasteIntoActiveSession() {
+        guard let client, let guid = liveWatchGuid, let text = UIPasteboard.general.string, !text.isEmpty else { return }
+        Task { try? await client.pasteText(sessionGuid: guid, text: text) }
     }
 
     /// The mac kicked this device: forget the pairing and go back to the scan

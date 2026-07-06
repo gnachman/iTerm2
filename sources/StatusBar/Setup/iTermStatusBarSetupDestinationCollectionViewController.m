@@ -338,7 +338,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
         data = [item dataForType:iTermStatusBarElementPasteboardType];
     }];
     if (!data) {
-        DLog(@"No objects on pasteboard");
+        RLog(@"No objects on pasteboard");
         return NO;
     }
     NSError *error = nil;
@@ -346,7 +346,7 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     unarchiver.requiresSecureCoding = NO;
     iTermStatusBarSetupElement *element = [data it_unarchivedObjectOfClasses:@[ [iTermStatusBarSetupElement class] ]];
     if (error || !element) {
-        DLog(@"Reject drop: %@", error);
+        RLog(@"Reject drop: %@", error);
         return NO;
     }
     element.delegate = self;

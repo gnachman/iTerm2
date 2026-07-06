@@ -270,23 +270,23 @@
         };
         _hostRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionHostname vendor:scope];
         _hostRef.onChangeBlock = ^{
-            DLog(@"Hostname changed, update git poller enabled");
+            RLog(@"Hostname changed, update git poller enabled");
             [weakSelf updatePollerEnabled];
         };
         _remoteObserver = [[iTermRemoteGitStateObserver alloc] initWithScope:scope
                                                                        block:^{
-            DLog(@"Remote git state changed; update enabled");
+            RLog(@"Remote git state changed; update enabled");
             [weakSelf updatePollerEnabled];
             [weakSelf.delegate gitStringDidChange];
         }];
         [self updatePollerEnabled];
-        DLog(@"Initializing git component %@ for scope of session with ID %@. poller is %@", self, scope.ID, _maker.gitPoller);
+        RLog(@"Initializing git component %@ for scope of session with ID %@. poller is %@", self, scope.ID, _maker.gitPoller);
     }
     return self;
 }
 
 - (void)pwdDidChange {
-    DLog(@"PWD changed, update git poller directory");
+    RLog(@"PWD changed, update git poller directory");
     _maker.gitPoller.currentDirectory = [_maker.scope valueForVariableName:iTermVariableKeySessionPath];
 }
 
@@ -296,16 +296,16 @@
 
 - (BOOL)gitPollerShouldBeEnabled {
     if (_maker.onLocalhost) {
-        DLog(@"Enable git poller: on localhost");
+        RLog(@"Enable git poller: on localhost");
         return YES;
     }
 
     if ([[iTermGitState alloc] initWithScope:_maker.scope]) {
-        DLog(@"Enable git poller: can construct git state");
+        RLog(@"Enable git poller: can construct git state");
         return YES;
     }
 
-    DLog(@"DISABLE GIT POLLER");
+    RLog(@"DISABLE GIT POLLER");
     return NO;
 }
 

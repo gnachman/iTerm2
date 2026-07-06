@@ -359,7 +359,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     const int code = mark.imageCode.intValue;
     iTermImageInfo *imageInfo = [[iTermImageRegistry sharedInstance] infoForCode:code];
     if (!imageInfo) {
-        DLog(@"No image info with code %d", code);
+        RLog(@"No image info with code %d", code);
         return NO;
     }
     const long long aboveY = aboveAbsY - self.cumulativeScrollbackOverflow;

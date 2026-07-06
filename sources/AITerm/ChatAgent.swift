@@ -183,7 +183,7 @@ class ChatAgent {
                 content: .clientLocal(
                     .init(action: .enableOrchestrationRequest(requestID: requestID))))
         } catch {
-            DLog("Failed to publish enable-orchestration request: \(error)")
+            RLog("Failed to publish enable-orchestration request: \(error)")
             pendingOrchestrationRequests.removeValue(forKey: requestID)
             try? completion(.success("Failed to surface the request: \(error.localizedDescription)"))
         }
@@ -208,7 +208,7 @@ class ChatAgent {
                 // next app launch would rebuild this chat as
                 // session-bound while the conversation history already
                 // references orchestrator tool calls.
-                DLog("Failed to set orchestrationEnabled: \(error)")
+                RLog("Failed to set orchestrationEnabled: \(error)")
                 try? completion(.success(
                     "Failed to enable orchestration: \(error.localizedDescription). "
                     + "The chat remains in its current mode."))
@@ -284,7 +284,8 @@ class ChatAgent {
         completion: @escaping (Result<String, Error>) throws -> ()
     ) {
         let requestID = UUID()
-        pendingRemoteCommands[requestID] = .init(completion: completion, responseID: nil)
+        pendingRemoteCommands[requestID] = .init(completion: completion,
+                                                 responseID: llmMessage.responseID)
         // Flush any accumulated agent narrative into the log before
         // the tool entry (keeps Console output in chronological order).
         flushPendingAgentText()
@@ -318,7 +319,7 @@ class ChatAgent {
         } catch {
             // Drop the parked completion and surface the failure to
             // the LLM rather than leaving it parked forever.
-            DLog("Failed to publish orchestration tool request: \(error)")
+            RLog("Failed to publish orchestration tool request: \(error)")
             pendingRemoteCommands.removeValue(forKey: requestID)
             try? completion(.failure(error))
         }
@@ -337,12 +338,7 @@ class ChatAgent {
                 break
             }
         }
-        // Pair any orphaned tool_result with a synthesized tool_use, and any
-        // orphaned tool_use with a synthesized tool_result, so the vendor
-        // doesn't reject the rebuilt prompt. Heals conversations that were
-        // serialized before this fix as well as new ones.
-        conversation.messages = AIChatToolCallRepair.repairingOrphanedToolPairs(
-            translate(messages: messages))
+        conversation.messages = translate(messages: messages)
 
         switch mode {
         case .sessionBound:
@@ -364,24 +360,25 @@ class ChatAgent {
     // regardless of current mode, so old turns from the other mode
     // stay legible to the LLM.
     //
-    // Cross-message reconciliation: any .remoteCommandRequest without
-    // a matching .remoteCommandResponse (because iTerm2 was quit
-    // mid-tool-call) gets a synthetic "interrupted" functionOutput
-    // appended at the end so the LLM contract (every function_call
-    // followed by a function_output) holds.
+    // Persisted tool calls replay STRUCTURED (function_call/functionOutput
+    // items), never as prose: replaying them as assistant text taught the
+    // model to imitate the format and fabricate tool results instead of
+    // calling tools. OpenAI reasoning models require the reasoning item
+    // alongside a historical function_call; it is persisted with the call
+    // (llmMessage.reasoningItems) and rides here, while pre-persistence
+    // calls replay without their OpenAI item id so the API treats them as
+    // developer-provided context (see ResponsesBodyRequestBuilder). The
+    // repair pass heals both orphan directions (interrupted calls,
+    // auto-approved responses whose request was never persisted) so every
+    // vendor accepts the rebuilt prompt.
     private func translate(messages: [Message]) -> [AITermController.Message] {
-        struct PendingRequest {
-            let name: String
-            let functionCallID: LLM.Message.FunctionCallID?
-        }
-        var aiMessages: [AITermController.Message] = []
-        var pendingByRequestID: [UUID: PendingRequest] = [:]
-        var orderedPendingIDs: [UUID] = []
-        // aiMessages index of each request's functionCall, so an orphan's
-        // synthesized output can be inserted right after its call rather
-        // than at the end of the transcript (see the orphan filler loop).
-        var callIndexByRequestID: [UUID: Int] = [:]
+        AIChatToolCallRepair.repairingOrphanedToolPairs(
+            Self.aiMessagesForStructuredReplay(messages, stateMachine: &messageToPrompt))
+    }
 
+    private static func aiMessagesForStructuredReplay(_ messages: [Message],
+                                                      stateMachine: inout MessageToPromptStateMachine) -> [AITermController.Message] {
+        var aiMessages: [AITermController.Message] = []
         for message in messages {
             switch message.content {
             case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
@@ -390,103 +387,64 @@ class ChatAgent {
                 continue
 
             case .remoteCommandRequest(let payload, safe: _):
-                guard let call = payload.llmMessage.function_call else { continue }
-                let fcID = payload.llmMessage.functionCallID
-                callIndexByRequestID[message.uniqueID] = aiMessages.count
-                aiMessages.append(AITermController.Message(
-                    responseID: nil,
-                    role: .assistant,
-                    body: .functionCall(call, id: fcID)))
-                pendingByRequestID[message.uniqueID] = PendingRequest(
-                    name: payload.name,
-                    functionCallID: fcID)
-                orderedPendingIDs.append(message.uniqueID)
-
-            case .remoteCommandResponse(let result, let requestUUID, let name, let fcID):
-                // If we never saw a matching .remoteCommandRequest the
-                // tool_use record was squelched from the chat database.
-                // ChatClient.processRemoteCommandRequest's .always
-                // (auto-approve) and .never (auto-deny) paths return
-                // nil from the broker processor, which causes
-                // ChatBroker.publish to skip listModel.append entirely
-                // (ChatBroker.swift:132-140). The tool runs and its
-                // response is persisted normally, but no tool_use lands
-                // in the DB. On the NEXT turn (e.g. queued user message
-                // that arrived during the tool round-trip), load() calls
-                // back into translate which sees the orphaned
-                // tool_result; without this branch, Anthropic 400s:
-                //   messages.N.content.M: unexpected `tool_use_id` found
-                //   in `tool_result` blocks: …. Each `tool_result` block
-                //   must have a corresponding `tool_use` block in the
-                //   previous message.
-                // Synthesize the missing functionCall so the LLM
-                // contract (every tool_result preceded by a matching
-                // tool_use) holds. Args are empty because the original
-                // arguments aren't recoverable — they're not on the
-                // tool_result. The call_id is what matters for the
-                // pairing.
-                if pendingByRequestID[requestUUID] == nil {
-                    let synthesizedCall = LLM.FunctionCall(
-                        name: name,
-                        arguments: "{}",
-                        id: fcID?.callID)
-                    aiMessages.append(AITermController.Message(
-                        responseID: nil,
-                        role: .assistant,
-                        body: .functionCall(synthesizedCall, id: fcID)))
-                }
-                let output: String
-                switch result {
-                case .success(let value): output = value
-                case .failure(let error):
-                    output = "Tool call failed: \(error.localizedDescription)"
-                }
-                aiMessages.append(AITermController.Message(
-                    responseID: nil,
-                    role: .function,
-                    body: .functionOutput(name: name,
-                                          output: output,
-                                          id: fcID)))
-                pendingByRequestID.removeValue(forKey: requestUUID)
+                // A request with no function_call has nothing to replay
+                // (squelched/auto-approved shapes); its orphaned response,
+                // if any, is healed by the repair pass.
+                guard payload.llmMessage.function_call != nil else { continue }
+                var call = aiMessage(from: message, stateMachine: &stateMachine)
+                // The persisted llmMessage carries the turn's reasoning
+                // items; ride them onto the rebuilt call so the request
+                // builder can replay them ahead of it.
+                call.reasoningItems = payload.llmMessage.reasoningItems
+                aiMessages.append(call)
 
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .terminalCommand, .multipart, .watcherEvent:
-                aiMessages.append(aiMessage(from: message))
+                    .terminalCommand, .multipart, .watcherEvent, .remoteCommandResponse:
+                aiMessages.append(aiMessage(from: message, stateMachine: &stateMachine))
             }
         }
-
-        // Pair every still-orphaned request with a synthesized
-        // "interrupted" output inserted IMMEDIATELY AFTER its function
-        // call, not at the end of the transcript. OpenAI-style
-        // chat-completions vendors (DeepSeek, legacy OpenAI) require an
-        // assistant tool_calls message to be followed directly by the
-        // tool output for each tool_call_id; appending the filler at the
-        // end leaves any intervening user/assistant message between the
-        // call and its output, which DeepSeek rejects with HTTP 400
-        // "insufficient tool messages following tool_calls message"
-        // (GitLab #12883). Collect (index, message) first, then insert in
-        // descending index order so an earlier insertion doesn't shift
-        // the target index of a later one.
-        var orphanInserts: [(index: Int, message: AITermController.Message)] = []
-        for requestID in orderedPendingIDs {
-            guard let pending = pendingByRequestID.removeValue(forKey: requestID),
-                  let callIndex = callIndexByRequestID[requestID] else {
-                continue
-            }
-            let filler = AITermController.Message(
-                responseID: nil,
-                role: .function,
-                body: .functionOutput(
-                    name: pending.name,
-                    output: AIChatToolCallRepair.interruptedToolCallOutput,
-                    id: pending.functionCallID))
-            orphanInserts.append((callIndex + 1, filler))
-        }
-        for insert in orphanInserts.sorted(by: { $0.index > $1.index }) {
-            aiMessages.insert(insert.message, at: insert.index)
-        }
-
         return aiMessages
+    }
+
+    /// Resolve a turn's model name the same way request routing does
+    /// (AIConversation.complete: built-in catalog, then manual models). nil
+    /// for an unknown or absent name; the caller falls back to the global
+    /// default, keeping capability gating and routing in agreement.
+    static func resolvedModel(named name: String?) -> AIMetadata.Model? {
+        guard let name else { return nil }
+        return AIMetadata.instance.models.first { $0.name == name }
+            ?? LLMMetadata.manualModels().first { $0.name == name }
+    }
+
+    /// Hosted-tool enablement for a turn, pure over the effective model's
+    /// features and the turn's configuration so it can never silently read
+    /// the global default model.
+    static func hostedTools(features: Set<AIMetadata.Model.Feature>,
+                            configuration: Message.Configuration?) -> HostedTools {
+        var tools = HostedTools()
+        if features.contains(.hostedWebSearch), let configuration {
+            tools.webSearch = configuration.hostedWebSearchEnabled
+        } else {
+            tools.webSearch = false
+        }
+        tools.codeInterpreter = features.contains(.hostedCodeInterpreter)
+        if features.contains(.hostedFileSearch),
+           let vectorStoreIDs = configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
+            tools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
+        } else {
+            tools.fileSearch = nil
+        }
+        return tools
+    }
+
+    private static func aiMessage(from message: Message,
+                                  stateMachine: inout MessageToPromptStateMachine) -> AITermController.Message {
+        let body = stateMachine.body(message: message)
+        return AITermController.Message(
+            responseID: message.responseID,
+            role: AITermController.Message.role(from: message),
+            body: body,
+            reasoningContent: message.agentReasoning)
     }
 
     private func updateSystemMessage(_ permissions: Set<RemoteCommand.Content.PermissionCategory>) {
@@ -538,13 +496,26 @@ class ChatAgent {
     private func updateOrchestrationSystemMessage() {
         let template = iTermPreferences.string(
             forKey: kPreferenceKeyAIPromptAIChatOrchestration) ?? ""
-        let resolved = Self.evaluateOrchestrationPromptTemplate(template)
+        let resolved = [
+            Self.evaluateOrchestrationPromptTemplate(template),
+            Self.orchestrationDisplayPolicy
+        ]
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .joined(separator: "\n\n")
         conversation.systemMessage = resolved
         if conversation.systemMessage != lastSystemMessage {
             conversation.systemMessageDirty = true
             lastSystemMessage = conversation.systemMessage
         }
     }
+
+    private static let orchestrationDisplayPolicy = """
+    Terminal output display policy:
+    - iTerm2 displays raw terminal command output to the user as its own code block.
+    - Do not repeat raw command output in prose, do not convert it into Markdown tables, and do not reformat listings such as ls, ps, df, netstat, or grep output.
+    - After running a command, summarize only non-obvious findings or ask what to do next.
+    - Do not show session_guid values to the user in normal prose. If you need to refer to a session, use a short human-readable name.
+    """
 
     @MainActor
     private static func evaluateOrchestrationPromptTemplate(_ template: String) -> String {
@@ -598,12 +569,7 @@ class ChatAgent {
     }
 
     private func aiMessage(from message: Message) -> AITermController.Message {
-        let body = messageToPrompt.body(message: message)
-        return AITermController.Message(
-            responseID: message.responseID,
-            role: AITermController.Message.role(from: message),
-            body: body,
-            reasoningContent: message.agentReasoning)
+        Self.aiMessage(from: message, stateMachine: &messageToPrompt)
     }
 
     var supportsStreaming: Bool {
@@ -624,6 +590,7 @@ class ChatAgent {
     }
 
     private func cancelPendingCommands() {
+        drainPendingOrchestrationRequests(reason: "Cancelled.")
         if !pendingRemoteCommands.isEmpty {
             let saved = pendingRemoteCommands.values
             pendingRemoteCommands.removeAll()
@@ -711,7 +678,7 @@ class ChatAgent {
             // silently cancel any actively in-flight queued turn,
             // orphaning its completion and stalling the queue.
             // Pinned by AILiveHarness.test_chat_orphanToolResponseAfterStop_doesNotOrphanQueuedMessage.
-            DLog("Dropping orphan .remoteCommandResponse for cancelled tool")
+            RLog("Dropping orphan .remoteCommandResponse for cancelled tool")
             completion(nil)
             return
         case .setPermissions(let allowedCategories):
@@ -769,25 +736,45 @@ class ChatAgent {
                                                   history: [Message],
                                                   streaming: ((StreamingUpdate) -> ())?,
                                                   completion: @escaping (Message?) -> ()) {
+        // Model-layer provider lock: the UI's picker lock can't cover turns
+        // that arrive with no configuration (the phone) or with a stale one,
+        // so the binding is enforced here on every turn, BEFORE any
+        // conversation state is touched. A rejected turn becomes an ordinary
+        // agent reply and never reaches the API.
+        let verdict = ChatProviderBinding.evaluate(
+            boundModelName: ChatListModel.instance?.modelName(forChatID: chatID),
+            turnModelName: userMessage.configuration?.model,
+            defaultModelName: LLMMetadata.model()?.name,
+            vendor: ChatProviderBinding.vendor(forModelName:))
+        let turnModelName: String?
+        switch verdict {
+        case .reject(let reason):
+            RLog("ChatAgent: rejected cross-provider turn in \(chatID): \(reason)")
+            completion(Message(chatID: userMessage.chatID,
+                               author: .agent,
+                               content: .markdown(reason),
+                               sentDate: Date(),
+                               uniqueID: UUID()))
+            return
+        case .proceed(let modelName, let bindChatTo):
+            turnModelName = modelName
+            if let bindChatTo {
+                try? ChatListModel.instance?.setModel(chatID: chatID, modelName: bindChatTo)
+            }
+        }
+
         cancelPendingCommands()
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
-        if LLMMetadata.model()?.features.contains(.hostedWebSearch) == true,
-           let configuration = userMessage.configuration {
-            conversation.hostedTools.webSearch = configuration.hostedWebSearchEnabled
-        } else {
-            conversation.hostedTools.webSearch = false
-        }
-
-        let useCodeInterpeter = (LLMMetadata.model()?.features.contains(.hostedCodeInterpreter) == true)
-        conversation.hostedTools.codeInterpreter = useCodeInterpeter
-
-        if LLMMetadata.model()?.features.contains(.hostedFileSearch) == true,
-           let vectorStoreIDs = userMessage.configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
-            conversation.hostedTools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
-        } else {
-            conversation.hostedTools.fileSearch = nil
-        }
+        // Hosted-tool capability comes from the model the turn will ACTUALLY
+        // run on (the binding's verdict, resolved the same way request
+        // routing resolves conversation.model), not the global default.
+        // With the provider lock, a configuration-less turn runs on the
+        // chat's bound model, which can differ from the default; gating on
+        // the default could attach code_interpreter to a model that 400s it.
+        let effectiveModel = Self.resolvedModel(named: turnModelName) ?? LLMMetadata.model()
+        conversation.hostedTools = Self.hostedTools(features: effectiveModel?.features ?? [],
+                                                    configuration: userMessage.configuration)
 
         if let responseID = userMessage.inResponseTo {
             conversation.deleteMessages(after: responseID)
@@ -808,8 +795,12 @@ class ChatAgent {
             body: transformedBody,
             reasoningContent: baseUserAIMessage.reasoningContent)
         conversation.add(userAIMessage)
-        conversation.model = userMessage.configuration?.model
+        // The binding's verdict, not the raw configuration: a turn with no
+        // configuration runs on the chat's bound model.
+        conversation.model = turnModelName
         conversation.shouldThink = userMessage.configuration?.shouldThink
+        conversation.reasoningEffort = userMessage.configuration?.reasoningEffort
+        conversation.serviceTier = userMessage.configuration?.serviceTier
 
         // Optional console trace (gated on the advanced setting). Not
         // coupled to orchestration mode anymore - any chat agent can
@@ -941,10 +932,10 @@ class ChatAgent {
                     // model call and display next to the wrong title.
                     self?.requestIconGeneration(title: newName)
                 } catch {
-                    DLog("renameChat failed: \(error)")
+                    RLog("renameChat failed: \(error)")
                 }
             } else {
-                DLog("Rename produced no usable title")
+                RLog("Rename produced no usable title")
             }
         }
     }
@@ -967,7 +958,7 @@ class ChatAgent {
             do {
                 try ChatListModel.instance?.setIcon(data, forChatID: chatID)
             } catch {
-                DLog("Failed to save icon for chat \(chatID): \(error)")
+                RLog("Failed to save icon for chat \(chatID): \(error)")
             }
         }
     }
@@ -1018,10 +1009,13 @@ class ChatAgent {
                                uniqueID: UUID())
             }
 
+            let details = error.localizedDescription
+                .components(separatedBy: "\n")
+                .map { "    " + $0 }
+                .joined(separator: "\n")
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .plainText("🛑 I ran into a problem: \(error.localizedDescription)",
-                                               context: nil),
+                           content: .markdown("**Request failed**\n\n\(details)"),
                            sentDate: Date(),
                            uniqueID: UUID())
         }
@@ -1236,36 +1230,18 @@ extension ChatAgent {
     /// because `ChatAgent.init` requires a `ChatBroker`, and `ChatBroker`
     /// requires a real `ChatDatabase` / `ChatListModel` singleton that would
     /// write the user's actual chat DB during a test run. Mirror the body
-    /// here if `load(messages:)` ever changes — `AILiveHarness` reaches
-    /// `AIChatToolCallRepair` through this seam to validate the chat-restore
-    /// path end-to-end against real vendor APIs.
-    /// Translate a persisted transcript to LLM messages WITHOUT the orphan
-    /// repair pass. Production never sends this (aiMessagesForReloadingTranscript
-    /// always repairs), but the live negative-control test sends it to prove a
-    /// real vendor actually rejects an un-repaired orphan tool_result, so the
-    /// positive repair test cannot pass by accident.
-    static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
-        var stateMachine = MessageToPromptStateMachine()
-        return messages.compactMap { message -> AITermController.Message? in
-            switch message.content {
-            case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
-                    .multipart, .watcherEvent:
-                let body = stateMachine.body(message: message)
-                return AITermController.Message(
-                    responseID: message.responseID,
-                    role: AITermController.Message.role(from: message),
-                    body: body,
-                    reasoningContent: message.agentReasoning)
-            case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
-                    .commit, .vectorStoreCreated, .userCommand, .setPermissions, .unsupported:
-                return nil
-            }
-        }
+    /// here if `load(messages:)` ever changes so `AILiveHarness` validates
+    /// the chat-restore path end-to-end against real vendor APIs.
+    static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
+        AIChatToolCallRepair.repairingOrphanedToolPairs(
+            transcriptMessagesBeforeRepair(messages))
     }
 
-    static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
-        return AIChatToolCallRepair.repairingOrphanedToolPairs(
-            transcriptMessagesBeforeRepair(messages))
+    /// Test-only seam: the structured translation WITHOUT the orphan-repair
+    /// pass, for the live negative controls that prove vendors really do
+    /// reject un-repaired orphans (so the positive tests aren't vacuous).
+    static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
+        var stateMachine = MessageToPromptStateMachine()
+        return aiMessagesForStructuredReplay(messages, stateMachine: &stateMachine)
     }
 }

@@ -63,6 +63,21 @@ class ChatListModel: ChatListDataSource {
         return result
     }
 
+    /// Side-effect-free title lookup. Unlike chat(id:), this does NOT load the
+    /// chat's permissions into the process-global RemoteCommandExecutor, so it is
+    /// safe to call from a background, non-interactive path (e.g. the companion
+    /// push fetch) that must not reconfigure the live tool-call permission policy
+    /// an unrelated foreground session is relying on.
+    func title(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.title
+    }
+
+    /// Side-effect-free model lookup (see title(forChatID:)): the chat's
+    /// pinned model, which also binds the chat's provider (ChatProviderBinding).
+    func modelName(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.modelName
+    }
+
     func index(of chatID: String) -> Int? {
         return chatStorage.firstIndex {
             $0.id == chatID
@@ -91,7 +106,7 @@ class ChatListModel: ChatListDataSource {
             do {
                 try messages.removeAll(where: { _ in true })
             } catch {
-                DLog("Failed to delete messages for chat \(chatID): \(error)")
+                RLog("Failed to delete messages for chat \(chatID): \(error)")
             }
         }
         try chatStorage.remove(at: i)
@@ -119,7 +134,7 @@ class ChatListModel: ChatListDataSource {
             // Defense in depth: ChatAgent sanitizes model-supplied titles
             // before publishing, but nothing stops a future producer from
             // publishing a blank .renameChat. Never blank the title.
-            DLog("Ignoring rename of \(chatID) to a blank title")
+            RLog("Ignoring rename of \(chatID) to a blank title")
             return
         }
         if chatStorage[i].title == trimmedNewName {
@@ -219,7 +234,7 @@ class ChatListModel: ChatListDataSource {
         do {
             try messages.removeAll(where: { messageIDs.contains($0.uniqueID) })
         } catch {
-            DLog("Failed to delete messages from chat \(chatID): \(error)")
+            RLog("Failed to delete messages from chat \(chatID): \(error)")
         }
     }
 
@@ -411,6 +426,16 @@ class ChatListModel: ChatListDataSource {
             try chatStorage.set(at: i, temp)
             postMetadataChange()
         }
+    }
+
+    func setModel(chatID: String, modelName: String?) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        temp.modelName = modelName
+        try chatStorage.set(at: i, temp)
+        postMetadataChange()
     }
 
     // MARK: - Orchestrator-mode accessors

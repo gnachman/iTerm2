@@ -330,7 +330,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                 fromAddress:(iTermSocketAddress *)address
                                        euid:(NSNumber *)euid
                                     retries:(NSInteger)retries {
-    DLog(@"Accepted connection");
+    RLog(@"Accepted connection");
     dispatch_queue_t queue = _queue;
     dispatch_async(queue, ^{
         DLog(@"Private queue: accept - begin");
@@ -348,7 +348,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                           retries:(NSInteger)retries {
     DLog(@"reallyDidAcceptConnection with retries=%@", @(retries));
     if (!connection.euid || connection.euid.unsignedIntValue != geteuid()) {
-        DLog(@"Deny bad euid %@ != mine of %@", connection.euid, @(geteuid()));
+        RLog(@"Deny bad euid %@ != mine of %@", connection.euid, @(geteuid()));
         dispatch_async(connection.queue, ^{
             NSString *reason = [NSString stringWithFormat:@"Peer's euid of %@ not equal to my euid of %@",
                                 connection.euid, @(geteuid())];
@@ -436,7 +436,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                                           advisoryName:webSocketConnection.advisoryName
                                                                 reason:&reason
                                                            displayName:&displayName];
-            DLog(@"ok=%@ reason=%@", @(ok), reason);
+            RLog(@"ok=%@ reason=%@", @(ok), reason);
             if (ok) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
                                                                     object:webSocketConnection.key
@@ -662,6 +662,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         assert(!handled);
         handled = YES;
         response.listPromptsResponse = listPromptsResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
+- (void)handleScreenshotRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __block BOOL handled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerScreenshot:request.screenshotRequest handler:^(ITMScreenshotResponse *screenshotResponse) {
+        assert(!handled);
+        handled = YES;
+        response.screenshotResponse = screenshotResponse;
         [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
     }];
 }
@@ -1129,6 +1142,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             [self handleListPromptsRequest:request connection:webSocketConnection];
             break;
 
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_ScreenshotRequest:
+            [self handleScreenshotRequest:request connection:webSocketConnection];
+            break;
+
         case ITMClientOriginatedMessage_Submessage_OneOfCase_NotificationRequest:
             [self handleNotificationRequest:request connection:webSocketConnection];
             break;
@@ -1287,7 +1304,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 // _queue
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
-    DLog(@"Private queue: Connection terminated - begin");
+    RLog(@"Private queue: Connection terminated - begin");
     [self->_connections removeObjectForKey:webSocketConnection.guid];
     dispatch_async(self->_executionQueue, ^{
         if (self.transaction.connection == webSocketConnection) {

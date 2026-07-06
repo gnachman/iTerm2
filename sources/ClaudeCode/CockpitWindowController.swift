@@ -100,7 +100,7 @@ class CockpitWindowController: NSWindowController {
 
     private func configurePanel() {
         guard let panel = window as? NSPanel else {
-            DLog("Cockpit: window is not an NSPanel; check Cockpit.xib custom class")
+            RLog("Cockpit: window is not an NSPanel; check Cockpit.xib custom class")
             return
         }
         // Mirror iTermGlobalSearchWindowController: float above iTerm2

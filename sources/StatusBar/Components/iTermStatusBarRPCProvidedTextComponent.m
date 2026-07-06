@@ -501,7 +501,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
 
 - (void)launchScript {
     if (!_savedRegistrationRequest.statusBarComponentAttributes.uniqueIdentifier) {
-        DLog(@"No uniqueIdentifier");
+        RLog(@"No uniqueIdentifier");
         return;
     }
     NSString *fullPath = [self fullPathOfScript];

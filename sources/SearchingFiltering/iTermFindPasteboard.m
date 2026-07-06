@@ -42,7 +42,7 @@
 
     const NSInteger maxLength = 10 * 1024;
     if (stringValue.length > maxLength) {
-        DLog(@"Refusing to set find pasteboard to a string longer than %@", @(maxLength));
+        RLog(@"Refusing to set find pasteboard to a string longer than %@", @(maxLength));
         return NO;
     }
     _localValue = [stringValue copy];

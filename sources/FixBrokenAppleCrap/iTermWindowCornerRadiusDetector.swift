@@ -36,7 +36,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
     private static var inFlightDetections = MutableAtomicObject([String: InFlightDetection]())
 
     @objc static func windowWillTransitionFullScreen(_ window: NSWindow) {
-        DLog("windowWillTransitionFullScreen windowNumber=\(window.windowNumber)")
+        RLog("windowWillTransitionFullScreen windowNumber=\(window.windowNumber)")
         windowsTransitioningFullScreen.mutate { set in
             var newSet = set
             newSet.insert(window.windowNumber)
@@ -45,7 +45,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
     }
 
     @objc static func windowDidTransitionFullScreen(_ window: NSWindow) {
-        DLog("windowDidTransitionFullScreen windowNumber=\(window.windowNumber)")
+        RLog("windowDidTransitionFullScreen windowNumber=\(window.windowNumber)")
         windowsTransitioningFullScreen.mutate { set in
             var newSet = set
             newSet.remove(window.windowNumber)
@@ -54,7 +54,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
     }
 
     @objc static func windowDidClose(_ window: NSWindow) {
-        DLog("windowDidClose windowNumber=\(window.windowNumber)")
+        RLog("windowDidClose windowNumber=\(window.windowNumber)")
         windowsTransitioningFullScreen.mutate { set in
             var newSet = set
             newSet.remove(window.windowNumber)
@@ -117,7 +117,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
         }
 
         guard let windowID = CGWindowID(exactly: window.windowNumber), windowID != 0 else {
-            DLog("detectCornerRadius failed - invalid windowID for window \(window.windowNumber)")
+            RLog("detectCornerRadius failed - invalid windowID for window \(window.windowNumber)")
             completion(0, false)
             return
         }
@@ -140,7 +140,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
                 shouldStartDetection = false
             } else {
                 // Create new in-flight detection
-                DLog("detectCornerRadius starting new detection for key \(cacheKeyValue)")
+                RLog("detectCornerRadius starting new detection for key \(cacheKeyValue)")
                 newDict[cacheKeyValue] = InFlightDetection(windows: [windowInfo], completions: [completion])
                 shouldStartDetection = true
             }
@@ -182,7 +182,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
             if let radius = detectRadius(windowID: windowInfo.windowID,
                                           backingScaleFactor: windowInfo.backingScaleFactor) {
                 DispatchQueue.main.async {
-                    DLog("detectCornerRadius completed for key \(cacheKeyValue) radius=\(radius)")
+                    RLog("detectCornerRadius completed for key \(cacheKeyValue) radius=\(radius)")
                     // Cache the result
                     var cache = iTermUserDefaults.windowCornerRadiusCache ?? [:]
                     cache[cacheKeyValue] = NSNumber(value: radius)
@@ -288,7 +288,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
     private static func detectRadius(windowID: CGWindowID,
                                      backingScaleFactor: CGFloat) -> CGFloat? {
         guard let image = captureWindow(windowID: windowID) else {
-            DLog("detectRadius failed - captureWindow returned nil for windowID=\(windowID)")
+            RLog("detectRadius failed - captureWindow returned nil for windowID=\(windowID)")
             return nil
         }
 
@@ -323,7 +323,7 @@ class iTermWindowCornerRadiusDetector: NSObject {
             saveImageToTmp(image, windowID: windowID, suffix: "full")
             return nil
         }
-        DLog("detectRadius radius(pt)=\(radius) for windowID=\(windowID)")
+        RLog("detectRadius radius(pt)=\(radius) for windowID=\(windowID)")
         return radius
     }
 

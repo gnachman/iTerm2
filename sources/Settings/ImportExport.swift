@@ -30,7 +30,7 @@ class ImportExport: NSObject {
         guard let url = savePanel.url else {
             return .cancelled
         }
-        DLog("Export to \(url.path)")
+        RLog("Export to \(url.path)")
         do {
             let exporter = Exporter()
             try exporter.export(to: url)
@@ -39,7 +39,7 @@ class ImportExport: NSObject {
             }
             return .success
         } catch {
-            DLog("Failed: \(error)")
+            RLog("Failed: \(error)")
             switch error {
             case ImportExportError.failedToCreateTempDir(let reason):
                 return .failure("Failed to create temporary directory: \(reason)")
@@ -891,7 +891,7 @@ private struct UserDefaultsImporterExporter {
 extension NSApplication {
     @objc
     func relaunch() -> Never {
-        DLog("Relaunch")
+        RLog("Relaunch")
         let pid = ProcessInfo().processIdentifier
         let pathToSelf = Bundle.main.bundlePath
         let quotedPathToSelf = pathToSelf.withEscapedShellCharacters(includingNewlines: true) as String
@@ -1041,7 +1041,7 @@ private struct ScriptsImporterExporter {
         }
         group.wait()
         if let error {
-            DLog("Failed \(error)")
+            RLog("Failed \(error)")
             throw ImportExportError.scriptExportFailed(error)
         }
     }
@@ -1082,7 +1082,7 @@ private struct ScriptsImporterExporter {
             CFRunLoopStop(RunLoop.current.getCFRunLoop())
         }
         waitForDone()
-        DLog("\(source.path) \(autolaunch) \(error ?? "ok")")
+        RLog("\(source.path) \(autolaunch) \(error ?? "ok")")
     }
 
     // The scripts path is passed in (rather than re-queried) because it

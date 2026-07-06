@@ -416,7 +416,7 @@
             }
             NSNumber *lastInsertRowID = state.db.lastInsertRowId;
             if (parent.integerValue == 0) {
-                DLog(@"Insert root node with path %@, rowid %@", path, lastInsertRowID);
+                RLog(@"Insert root node with path %@, rowid %@", path, lastInsertRowID);
             }
             assert(lastInsertRowID);
             @try {
@@ -429,7 +429,7 @@
         }
         if (before && after) {
             if (before.parent == nil) {
-                DLog(@"Updating root with path %@, rowid %@", path, before.rowid);
+                RLog(@"Updating root with path %@, rowid %@", path, before.rowid);
             }
             if (after.rowid == nil) {
                 after.rowid = before.rowid;
@@ -636,7 +636,7 @@
     __block NSDictionary *result = @{};
     [_thread dispatchSync:^(iTermGraphDatabaseState *state) {
         if (!state.db) {
-            DLog(@"Database is nil, cannot load large data for rowid %@", rowid);
+            RLog(@"Database is nil, cannot load large data for rowid %@", rowid);
             return;
         }
         FMResultSet *rs = [state.db executeQuery:@"SELECT large_data FROM Node WHERE rowid = ?", rowid];
@@ -648,7 +648,7 @@
                 if (pod && !error) {
                     result = pod;
                 } else {
-                    DLog(@"Failed to unarchive large_data for rowid %@: %@", rowid, error);
+                    RLog(@"Failed to unarchive large_data for rowid %@: %@", rowid, error);
                 }
             }
         }

@@ -383,18 +383,18 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     DLog(@"-[iTermPasteHelper pasteString:flags:");
     DLog(@"length=%@, flags=%@", @(pasteEvent.string.length), @(pasteEvent.flags));
     if ([pasteEvent.string length] == 0) {
-        DLog(@"Beep: Tried to paste 0-byte string. Beep.");
+        RLog(@"Beep: Tried to paste 0-byte string. Beep.");
         NSBeep();
         return;
     }
     if (!(pasteEvent.flags & (kPasteFlagsCommands | kPasteFlagsDisableWarnings))) {
         if (![self maybeWarnAboutMultiLinePaste:pasteEvent]) {
-            DLog(@"Multiline paste declined.");
+            RLog(@"Multiline paste declined.");
             return;
         }
     }
     if ([self isPasting]) {
-        DLog(@"Already pasting. Enqueue event.");
+        RLog(@"Already pasting. Enqueue event.");
         [self enqueueEvent:pasteEvent];
         return;
     }
@@ -425,7 +425,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 
     DLog(@"String to paste now has length %@", @(pasteEvent.string.length));
     if ([pasteEvent.string length] == 0) {
-        DLog(@"Beep: Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
+        RLog(@"Beep: Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
         NSBeep();
         return;
     }
@@ -567,7 +567,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             _timer = nil;
         }
     } else {
-        DLog(@"Done pasting");
+        RLog(@"Done pasting");
         _timer = nil;
         [self hidePasteIndicator];
         _pasteContext = nil;
@@ -617,7 +617,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     }
 
     if (_pasteContext.blockAtNewline && [_delegate pasteHelperShouldWaitForPrompt]) {
-        DLog(@"Not at shell prompt at start of paste.");
+        RLog(@"Not at shell prompt at start of paste.");
         _pasteContext.isBlocked = YES;
         return;
     }
@@ -650,7 +650,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                 case kiTermWarningSelection0:
                     break;
                 case kiTermWarningSelection1:
-                    DLog(@"canceled 'ok to paste N characters': return NO");
+                    RLog(@"canceled 'ok to paste N characters': return NO");
                     return NO;
                 case kiTermWarningSelection2:
                     DLog(@"chose Advanced for 'ok to paste N characters': return NO");
@@ -701,7 +701,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         [iTermWarningAction warningActionWithLabel:@"Paste Without Newline"
                                              block:^(iTermWarningSelection selection) {
             [pasteEvent trimNewlines];
-            DLog(@"paste without newline selected: set result to YES");
+            RLog(@"paste without newline selected: set result to YES");
             result = YES;
         }];
 
@@ -743,7 +743,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             flags |= kPTYSessionPasteSlowly;
             // The other two flags do not appear to be used
         }
-        DLog(@"Advanced chosen: set result to NO");
+        RLog(@"Advanced chosen: set result to NO");
         [self showAdvancedPasteWithFlags:flags];
         result = NO;
     }]];

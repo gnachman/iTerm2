@@ -56,7 +56,7 @@ extern NSString *kWindowPasteboardType;
 
 - (void)setSessionObjects:(NSArray<iTermTmuxSessionObject *> *)sessions
 {
-    DLog(@"dashboard: setSessionObjects:%@", sessions);
+    RLog(@"dashboard: setSessionObjects:%@", sessions);
     // Reload in case a cell is being edited. Otherwise NSTableView asks for its row.
     [tableView_ reloadData];
     [_model removeAllObjects];
@@ -98,7 +98,7 @@ extern NSString *kWindowPasteboardType;
 
 - (IBAction)attach:(id)sender {
     NSNumber *number = [self selectedSessionNumber];
-    DLog(@"attach %@", number);
+    RLog(@"attach %@", number);
     if (number) {
         [delegate_ attachToSessionWithNumber:number.intValue];
     }
@@ -106,7 +106,7 @@ extern NSString *kWindowPasteboardType;
 
 - (IBAction)detach:(id)sender {
     NSNumber *number = [self selectedSessionNumber];
-    DLog(@"dashboard: detach %@", number);
+    RLog(@"dashboard: detach %@", number);
     if (number) {
         [delegate_ detach];
     }

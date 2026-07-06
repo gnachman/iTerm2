@@ -47,12 +47,12 @@ class PluginClient {
         }
 
         func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            DLog("HTTPStreamDelegate \(it_addressString): complete. error=\(error.d)")
+            RLog("HTTPStreamDelegate \(it_addressString): complete. error=\(error.d)")
             if let error = error {
-                DLog("URLSession error: \(error)")
+                RLog("URLSession error: \(error)")
                 callback(receivedData.lossyString, "HTTP request failed with \(error.localizedDescription)")
             } else if let httpResponse = task.response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                DLog("Got response\n\(httpResponse.statusCode)\n\(httpResponse.allHeaderFields)\n\n\(receivedData.lossyString)\n\n")
+                RLog("Got response\n\(httpResponse.statusCode)\n\(httpResponse.allHeaderFields)\n\n\(receivedData.lossyString)\n\n")
                 callback(receivedData.lossyString,
                          "HTTP request failed with status \(httpResponse.statusCode).")
             } else {
@@ -109,7 +109,7 @@ class PluginClient {
                                     callback: @escaping (String?, String?) -> Void) {
         DLog("performHTTPRequest(\(method), \(url), \(headers), \(body.lossyString), \(streaming)")
         guard let url = URL(string: url) else {
-            DLog("Invalid url \(url)")
+            RLog("Invalid url \(url)")
             callback(nil, "Invalid URL")
             return
         }
@@ -229,7 +229,7 @@ class PluginClient {
         context.evaluateScript(code)
         var exc: String?
         context.exceptionHandler = { context, exception in
-            DLog("JS EXCEPTION: \(exception?.toString() ?? "nil exception")")
+            RLog("JS EXCEPTION: \(exception?.toString() ?? "nil exception")")
             exc = exception?.toString()
         }
         if let exc {
@@ -271,7 +271,7 @@ class PluginClient {
 
         // Handle JavaScript errors
         context.exceptionHandler = { context, exception in
-            DLog("JS Error: \(exception?.toString() ?? "unknown error")")
+            RLog("JS Error: \(exception?.toString() ?? "unknown error")")
         }
 
         // Evaluate the provided JavaScript code

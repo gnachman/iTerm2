@@ -25,7 +25,7 @@
 
 - (void)dealloc {
     if (!_message && _fileDescriptor && _fileDescriptor.intValue >= 0) {
-        DLog(@"Close file descriptor %d in message that was never decoded", _fileDescriptor.intValue);
+        RLog(@"Close file descriptor %d in message that was never decoded", _fileDescriptor.intValue);
         close(_fileDescriptor.intValue);
     }
 }

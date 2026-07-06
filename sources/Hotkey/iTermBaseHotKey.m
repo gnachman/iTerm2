@@ -62,7 +62,7 @@
 }
 
 - (void)register {
-    DLog(@"register %@", self);
+    RLog(@"register %@", self);
     for (iTermShortcut *shortcut in self.shortcuts) {
         [self registerShortcut:shortcut];
     }
@@ -94,7 +94,7 @@
 }
 
 - (void)unregister {
-    DLog(@"Unregister %@", self);
+    RLog(@"Unregister %@", self);
     while (_carbonHotKeys.count) {
         [self unregisterCarbonHotKey:_carbonHotKeys.firstObject];
     }
@@ -154,7 +154,7 @@
 }
 
 - (void)didDoublePressActivationModifier {
-    DLog(@"is double tap");
+    RLog(@"is double tap");
     NSArray *siblings = [[[iTermFlagsChangedEventTap sharedInstance] weakObservers] mapWithBlock:^id(iTermWeakBox<id<iTermEventTapObserver>> *box) {
         id<iTermEventTapObserver> anObject = box.object;
         if (![anObject isKindOfClass:[self class]]) {
@@ -175,13 +175,13 @@
 #pragma mark - Actions
 
 - (NSArray<iTermBaseHotKey *> *)carbonHotkeyPressed:(NSDictionary *)userInfo siblings:(NSArray<iTermHotKey *> *)siblings {
-    DLog(@"carbonHotkeyPressed running");
+    RLog(@"carbonHotkeyPressed running");
     if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
-        DLog(@"workspace session inactive");
+        RLog(@"workspace session inactive");
         return nil;
     }
     if ([NSApp modalWindow]) {
-        DLog(@"Ignore hotkey because there is a modal window %@", [NSApp modalWindow]);
+        RLog(@"Ignore hotkey because there is a modal window %@", [NSApp modalWindow]);
         return nil;
     }
 

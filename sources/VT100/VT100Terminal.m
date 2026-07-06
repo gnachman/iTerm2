@@ -293,7 +293,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)setTermType:(NSString *)termtype {
     self.dirty = YES;
-    DLog(@"setTermType:%@", termtype);
+    RLog(@"setTermType:%@", termtype);
     _termType = [termtype copy];
     if ([iTermAdvancedSettingsModel convertItalicsToReverseVideoForTmuxBugwardsCompatible]) {
         _isScreenLike = [termtype containsString:@"screen"] || [termtype containsString:@"tmux"];
@@ -383,7 +383,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)commonReset {
-    DLog(@"TERMINAL RESET");
+    RLog(@"TERMINAL RESET");
     self.dirty = YES;
     self.cursorMode = NO;
     _reverseVideo = NO;
@@ -451,7 +451,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetForReason:(VT100TerminalResetReason)reason {
-    DLog(@"Reset for reason %@", @(reason));
+    RLog(@"Reset for reason %@", @(reason));
     const BOOL userInitiated = (reason == VT100TerminalResetReasonUserRequest);
     const BOOL controlSequence = (reason == VT100TerminalResetReasonControlSequence);
     [self resetAllowingResize:YES
@@ -1756,7 +1756,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         [_delegate terminalDidTransitionOutOfTmuxMode];
         // Nil out last token so we don't take this code path a second time.
         _lastToken = nil;
-        DLog(@"Rollback because transitioning out of tmux");
+        RLog(@"Rollback because transitioning out of tmux");
         return;
     }
     if (token.sshInfo.valid &&
@@ -2683,7 +2683,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case SSH_RECOVERY_BOUNDARY:
             if (token.csi->p[0] == self.framerBoundaryNumber) {
-                DLog(@"Recovery boundary received. Assuming future tokens were parsed correctly.");
+                RLog(@"Recovery boundary received. Assuming future tokens were parsed correctly.");
                 self.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
                 [self.delegate terminalDidResynchronizeSSH];
             } else {
@@ -3039,7 +3039,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
             
         case SSH_END: {
-            DLog(@"Executing SSH_END: %@", token);
+            RLog(@"Executing SSH_END: %@", token);
             NSString *s = token.string;
             NSArray<NSString *> *parts = [s componentsSeparatedByString:@" "];
             if (parts.count < 3) {
@@ -3995,7 +3995,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 }
 
 - (void)startReceivingFile {
-    DLog(@"Start file receipt");
+    RLog(@"Start file receipt");
     receivingFile_ = YES;
 }
 
@@ -4240,7 +4240,7 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
         [_delegate terminalDidFinishReceivingFile];
         receivingFile_ = NO;
     } else if ([key isEqualToString:@"Copy"]) {
-        DLog(@"Handling Copy key with value=%@", value);
+        RLog(@"Handling Copy key with value=%@", value);
         if ([_delegate terminalIsTrusted]) {
             NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
             int mode;
@@ -4873,7 +4873,7 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
             // (or any arg order) both parse correctly via the helpers.
             NSString *aid = [self aidFromArgs:args];
             if (inCommand_) {
-                DLog(@"D inCommand_=YES (no C between B and D) -> abort path aid=%@", aid);
+                RLog(@"D inCommand_=YES (no C between B and D) -> abort path aid=%@", aid);
                 [_delegate terminalAbortCommandWithAid:aid];
                 self.dirty = YES;
                 inCommand_ = NO;
@@ -4900,10 +4900,10 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
                 returnCode = @0;
             }
             if (returnCode != nil || aid != nil) {
-                DLog(@"D dispatch: returnCode=%@ aid=%@", returnCode, aid);
+                RLog(@"D dispatch: returnCode=%@ aid=%@", returnCode, aid);
                 [_delegate terminalReturnCodeOfLastCommandWas:returnCode aid:aid];
             } else {
-                DLog(@"D drop (no code, no aid, malformed): args=%@", args);
+                RLog(@"D drop (no code, no aid, malformed): args=%@", args);
             }
             break;
         }
@@ -5409,7 +5409,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 - (void)setEmulationLevel:(iTermEmulationLevel)level {
     _vtLevel = level;
     _output.emulationLevel = _vtLevel;
-    DLog(@"Set vt level to %@", @(_vtLevel));
+    RLog(@"Set vt level to %@", @(_vtLevel));
 }
 
 - (void)sendGraphicsAttributeReportForToken:(VT100Token *)token

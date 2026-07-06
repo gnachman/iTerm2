@@ -180,7 +180,7 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
     @try {
         [self.fileHandle writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
     } @catch (NSException *exception) {
-        DLog(@"%@", exception);
+        RLog(@"%@", exception);
     }
 }
 
@@ -306,7 +306,7 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
     @try {
         [fileHandle writeData:data];
     } @catch (NSException *exception) {
-        DLog(@"Exception while logging %@ bytes of data: %@", @(data.length), exception);
+        RLog(@"Exception while logging %@ bytes of data: %@", @(data.length), exception);
         [self.fileHandle closeFile];
         self.fileHandle = nil;
         dispatch_async(dispatch_get_main_queue(), ^{

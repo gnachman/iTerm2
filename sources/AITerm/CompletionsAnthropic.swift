@@ -631,7 +631,7 @@ struct AnthropicResponseParser: LLMResponseParser {
     mutating func parse(data: Data) throws -> LLM.AnyResponse? {
         let decoder = JSONDecoder()
         let response = try decoder.decode(AnthropicResponse.self, from: data)
-        DLog("RESPONSE:\n\(response)")
+        RLog("RESPONSE:\n\(response)")
         parsedResponse = response
         return response
     }
@@ -889,7 +889,38 @@ struct AnthropicRequestBuilder {
             }
         }
 
-        return Self.enforceToolUseAdjacency(convertedMessages)
+        return Self.coalesceConsecutiveAssistantMessages(Self.enforceToolUseAdjacency(convertedMessages))
+    }
+
+    // A reloaded chat can produce two consecutive assistant messages (e.g. a
+    // replayed tool call followed by the model's final text reply; see
+    // ChatAgent's structured replay). Anthropic requires strictly alternating
+    // user/assistant roles, so merge adjacent assistant messages into one by
+    // concatenating their content blocks. Runs after tool_use/tool_result
+    // adjacency enforcement, so a tool_use assistant message is already
+    // separated from later assistant text by its user tool_result message.
+    static func coalesceConsecutiveAssistantMessages(_ messages: [AnthropicMessage]) -> [AnthropicMessage] {
+        var output: [AnthropicMessage] = []
+        for message in messages {
+            if message.role == .assistant,
+               let last = output.last,
+               last.role == .assistant {
+                let merged = contentBlocks(last.content) + contentBlocks(message.content)
+                output[output.count - 1] = AnthropicMessage(role: .assistant, content: .array(merged))
+            } else {
+                output.append(message)
+            }
+        }
+        return output
+    }
+
+    private static func contentBlocks(_ content: AnthropicMessage.AnthropicContent) -> [AnthropicMessage.AnthropicContentBlock] {
+        switch content {
+        case .string(let string):
+            return [.text(.init(text: string))]
+        case .array(let blocks):
+            return blocks
+        }
     }
 
     // Anthropic requires that every tool_use block in an assistant message be

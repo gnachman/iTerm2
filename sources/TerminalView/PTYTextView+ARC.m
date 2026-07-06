@@ -410,7 +410,7 @@ iTermCommandInfoViewControllerDelegate>
     }
     NSString *path = action.fullPath;
     if (path == nil) {
-        DLog(@"path is nil");
+        RLog(@"path is nil");
         return;
     }
 
@@ -435,7 +435,7 @@ iTermCommandInfoViewControllerDelegate>
     draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
     draggingSession.draggingFormation = NSDraggingFormationNone;
     [_mouseHandler didDragSemanticHistory];
-    DLog(@"did semantic history drag");
+    RLog(@"did semantic history drag");
 }
 
 #pragma mark - Underlined Actions
@@ -2431,10 +2431,31 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     return image;
 }
 
+- (CGFloat)widthExcludingRightGutter {
+    // The right gutter (panel reservation plus the timestamp slot) is part of
+    // the view's width but holds only accessory views (chat, clippings,
+    // timestamps) that an offscreen content render never draws. Excluding it
+    // keeps streamed and snapshot images free of empty right-hand space.
+    const CGFloat gutter = MAX(0, self.delegate.textViewRightExtra);
+    return MAX(1, self.frame.size.width - gutter);
+}
+
 - (NSImage *)renderImageWithLines:(NSRange)lineRange
                    includeMargins:(BOOL)includeMargins
                   backgroundColor:(NSColor *)backgroundColor
                        showCursor:(BOOL)showCursor {
+    return [self renderImageWithLines:lineRange
+                       includeMargins:includeMargins
+                      backgroundColor:backgroundColor
+                           showCursor:showCursor
+                     includeSelection:NO];
+}
+
+- (NSImage *)renderImageWithLines:(NSRange)lineRange
+                   includeMargins:(BOOL)includeMargins
+                  backgroundColor:(NSColor *)backgroundColor
+                       showCursor:(BOOL)showCursor
+                 includeSelection:(BOOL)includeSelection {
     id<iTermTextDataSource> dataSource = self.dataSource;
     if (!dataSource) {
         return nil;
@@ -2450,7 +2471,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     }
 
     const CGFloat lineHeight = self.lineHeight;
-    const CGFloat imageWidth = self.frame.size.width;
+    const CGFloat imageWidth = [self widthExcludingRightGutter];
     const CGFloat vmargin = includeMargins ? [iTermPreferences topBottomMargins] : 0;
     const CGFloat imageHeight = actualLength * lineHeight + vmargin * 2;
 
@@ -2496,11 +2517,33 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                           imageHeight);
 
     iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
+    // The offscreen bitmap is always rasterized at `scale` (the retina 2.0
+    // fallback when there is no window), but configureDrawingHelper derived
+    // isRetina from self.window.backingScaleFactor, which is 0 for a session in a
+    // background tab (its view has no window). That made isRetina=NO, so with
+    // thin-strokes set to RetinaOnly the glyphs were drawn with font smoothing
+    // (heavier strokes) whenever the streamed tab was not frontmost. Pin isRetina
+    // (and the matching antialias shift) to the scale we actually render at, so
+    // stroke weight does not depend on which tab is foreground.
+    helper.isRetina = (scale > 1.0);
+    helper.antiAliasedShift = (scale > 1.0) ? 0.5 : 0;
     if (showCursor) {
         helper.isCursorVisible = YES;
         helper.cursorType = self.drawingHelper.cursorType;
         helper.cursorCoord = VT100GridCoordMake(self.dataSource.cursorX - 1,
                                                  self.dataSource.cursorY - 1);
+    }
+    if (includeSelection) {
+        // newDrawingHelperForOffscreenRendering clears the selection (snapshots
+        // omit it); restore it and the selected-text color so a streamed frame
+        // shows the selection the user made. selectionColorForCurrentFocus
+        // returns the real (focused) selection color only when isFrontTextView is
+        // set; otherwise it uses unfocusedSelectionColor, which the offscreen
+        // helper never sets (nil), making the selection invisible. isFrontTextView
+        // feeds nothing else in the drawing helper.
+        helper.selection = self.selection;
+        helper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
+        helper.isFrontTextView = YES;
     }
     [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
                                         visibleRect:contentRect];

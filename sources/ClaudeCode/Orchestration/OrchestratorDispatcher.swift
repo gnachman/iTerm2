@@ -478,7 +478,10 @@ final class OrchestratorDispatcher {
         var pushed: Bool?
         if watcher.notifyUser == true,
            reason == .stateReached || reason == .conditionMet {
-            if CompanionPushRegistry.canNotify {
+            if CompanionChatMuteRegistry.isMuted(chatID: chatID) {
+                RLog("[Orchestrator \(chatID)] watcher push suppressed: chat is muted")
+                pushed = false
+            } else if CompanionPushRegistry.canNotify {
                 let title = watcher.workgroupName == watcher.roleName
                     ? watcher.workgroupName
                     : "\(watcher.workgroupName): \(watcher.roleName)"
@@ -487,13 +490,20 @@ final class OrchestratorDispatcher {
                     do {
                         try await CompanionPushSender.send(title: title, body: body)
                     } catch {
-                        DLog("Orchestrator dispatcher: watcher push failed: \(error)")
+                        RLog("Orchestrator dispatcher: watcher push failed: \(error)")
                     }
                 }
                 pushed = true
             } else {
                 pushed = false
             }
+        }
+        // Screen age at fire time: lets the agent distinguish a fresh
+        // transition (screen changed seconds ago, likely mid-workflow)
+        // from a long-quiet session, without a get_screen_contents
+        // round trip.
+        let screenLastChanged = sessionByGUID(watcher.sessionGUID).flatMap {
+            WorkgroupIntrospection.screenAgeDescription(for: $0)
         }
         let payload = StatusUpdate(
             watcherID: watcher.watcherID,
@@ -505,13 +515,14 @@ final class OrchestratorDispatcher {
             stateReached: stateReached,
             timestamp: Date(),
             detail: detail,
-            pushed: pushed)
+            pushed: pushed,
+            screenLastChanged: screenLastChanged)
         do {
             try broker?.publishMessageFromUser(
                 chatID: chatID,
                 content: .watcherEvent(payload))
         } catch {
-            DLog("Orchestrator dispatcher: failed to publish status_update: \(error)")
+            RLog("Orchestrator dispatcher: failed to publish status_update: \(error)")
         }
     }
 
@@ -759,7 +770,7 @@ final class OrchestratorDispatcher {
             try broker?.listModel
                 .setClaimedScopes(claimedScopes, forChatID: chatID)
         } catch {
-            DLog("Orchestrator dispatcher: failed to persist claimed workgroups: \(error)")
+            RLog("Orchestrator dispatcher: failed to persist claimed workgroups: \(error)")
         }
     }
 
@@ -768,7 +779,7 @@ final class OrchestratorDispatcher {
             try broker?.listModel
                 .setWatchers(watchers, forChatID: chatID)
         } catch {
-            DLog("Orchestrator dispatcher: failed to persist watchers: \(error)")
+            RLog("Orchestrator dispatcher: failed to persist watchers: \(error)")
         }
     }
 
@@ -1252,7 +1263,7 @@ final class OrchestratorDispatcher {
                                                   workgroupName: workgroupName,
                                                   summary: summary))))
             } catch {
-                DLog("Orchestrator dispatcher: failed to publish permission request: \(error)")
+                RLog("Orchestrator dispatcher: failed to publish permission request: \(error)")
                 if let cont = pendingPermissionPrompts.removeValue(forKey: requestID) {
                     cont.resume(returning: false)
                 }
@@ -1307,7 +1318,7 @@ final class OrchestratorDispatcher {
                 content: .clientLocal(.init(action:
                     .orchestrationPermissionGranted(scope: scope, name: name))))
         } catch {
-            DLog("Orchestrator dispatcher: failed to publish permission-granted notice: \(error)")
+            RLog("Orchestrator dispatcher: failed to publish permission-granted notice: \(error)")
         }
     }
 
@@ -1327,7 +1338,7 @@ final class OrchestratorDispatcher {
         do {
             try broker?.publishNotice(chatID: chatID, notice: notice)
         } catch {
-            DLog("Orchestrator dispatcher: failed to publish revoke notice: \(error)")
+            RLog("Orchestrator dispatcher: failed to publish revoke notice: \(error)")
         }
     }
 
@@ -1384,6 +1395,11 @@ final class OrchestratorDispatcher {
                 throw OrchestratorError.unsupported(
                     reason: "No paired companion phone is registered for notifications.")
             }
+        }
+        if CompanionChatMuteRegistry.isMuted(chatID: chatID) {
+            RLog("[Orchestrator \(chatID)] notify tool suppressed: chat is muted")
+            throw OrchestratorError.unsupported(
+                reason: "The user has muted this chat's notifications on their phone, so the notification was not sent. Do not try to work around it.")
         }
         do {
             try await CompanionPushSender.send(title: args.title, body: args.body)
@@ -1972,6 +1988,32 @@ final class OrchestratorDispatcher {
                 + "The command likely exited immediately (e.g. binary not on PATH "
                 + "or a non-zero startup script) and the window auto-closed.")
         }
+        // Record who conjured this session so other chats seeing it in
+        // their <workgroups> snapshot (directly, or chained through a
+        // workgroup provenance like "a trigger in session X entered
+        // this workgroup") can tell it belongs to another agent's work
+        // rather than something the user set up for them.
+        await MainActor.run {
+            // Re-check liveness: the hop here is a suspension point, so
+            // the session can terminate between the reachability check
+            // above and this block. Its terminate notification has
+            // already fired by then (removing nothing), and an entry
+            // set now would never be cleaned up.
+            guard iTermController.sharedInstance()?.anySession(withGUID: session.guid) != nil,
+                  !session.exited else {
+                return
+            }
+            let title = ChatListModel.instance?.chat(id: chatID)?.title
+            let chatDescription: String
+            if let title, !title.isEmpty {
+                chatDescription = "chat \u{201C}\(title)\u{201D} (\(chatID))"
+            } else {
+                chatDescription = "chat \(chatID)"
+            }
+            SessionProvenanceRegistry.instance.set(
+                "Created by the agent in \(chatDescription).",
+                forSessionGUID: session.guid)
+        }
         return .startedSession(sessionGuid: session.guid)
     }
 
@@ -2100,7 +2142,7 @@ final class OrchestratorDispatcher {
         // if it already exists from a prior start_code_review on this role).
         armScreenEscalation(for: watcher)
 
-        DLog("[Orchestrator \(chatID)] Code Review started for \(resolved.roleName) "
+        RLog("[Orchestrator \(chatID)] Code Review started for \(resolved.roleName) "
              + "in \(resolved.workgroupName) using \(promptLabel); watcher \(watcher.watcherID)")
 
         return .watcherRegistered(Self.description(of: watcher))
@@ -2141,7 +2183,7 @@ final class OrchestratorDispatcher {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + timeoutSeconds) {
                 if resolved.tryResolve() {
-                    DLog("withResolvedOnce timed out after \(timeoutSeconds)s")
+                    RLog("withResolvedOnce timed out after \(timeoutSeconds)s")
                     continuation.resume(returning: nil)
                 }
             }

@@ -191,13 +191,13 @@
 }
 
 - (NSKeyedUnarchiver *)unarchiver {
-    DLog(@"Restore %@", @(self.windowNumber));
+    RLog(@"Restore %@", @(self.windowNumber));
     NSError *error = nil;
     NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:self.plaintext
                                                                                 error:&error];
     unarchiver.requiresSecureCoding = NO;
     if (error) {
-        DLog(@"Restoration failed with %@", error);
+        RLog(@"Restoration failed with %@", error);
         unlink(self.url.path.UTF8String);
         return nil;
     }

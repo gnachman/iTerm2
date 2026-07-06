@@ -96,6 +96,14 @@ struct StatusUpdate: Codable, Equatable {
     // requested. Drives the agent-side guidance so the model neither
     // double-notifies nor stays silent when it shouldn't.
     var pushed: Bool? = nil
+    // Humanized age of the watched session's screen at fire time
+    // (e.g. "< 1 min ago"). Sampled when the event is published, not at
+    // render time, so history reloads keep showing what was true when
+    // the watcher fired. Lets the agent tell a just-went-idle blip
+    // from a session that has been quiet for a long time. nil for
+    // events without a live session (drops) and for old persisted
+    // messages that predate the field.
+    var screenLastChanged: String? = nil
 }
 
 struct ClientLocal: Codable {
@@ -479,6 +487,8 @@ struct Message: Codable {
         var vectorStoreIDs: [String]
         var model: String?
         var shouldThink: Bool
+        var reasoningEffort: AIReasoningEffort?
+        var serviceTier: AIServiceTier?
     }
     var configuration: Configuration?
 

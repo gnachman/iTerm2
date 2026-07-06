@@ -790,6 +790,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                 NSBezierPath *localPath = [transform transformBezierPath:clipPath];
                 CAShapeLayer *mask = [CAShapeLayer layer];
                 mask.path = [localPath iterm_CGPath];
+                // Even-odd so a clip path with a nested subpath (e.g. the Tahoe
+                // ring around the pill) punches out its interior. Harmless for
+                // single-subpath clip paths, where it matches nonzero.
+                mask.fillRule = kCAFillRuleEvenOdd;
                 progressBar.wantsLayer = YES;
                 progressBar.layer.mask = mask;
                 [transform release];

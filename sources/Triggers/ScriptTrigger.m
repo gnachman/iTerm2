@@ -74,7 +74,7 @@
 }
 
 - (void)runCommand:(NSString *)command session:(id<iTermTriggerSession>)session {
-    DLog(@"Invoking command %@", command);
+    RLog(@"Invoking command %@", command);
 
     [session triggerSession:self runCommand:command withRunnerPool:[ScriptTrigger commandRunnerPool]];
 }

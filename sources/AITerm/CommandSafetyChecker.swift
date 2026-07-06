@@ -51,20 +51,20 @@ class CommandSafetyChecker {
                 inTUI: false)
             switch decision {
             case .allow:
-                DLog("For '\(command)' classifier says: allow -> SAFE")
+                RLog("For '\(command)' classifier says: allow -> SAFE")
                 return true
             case .needsManualApproval(let reason):
-                DLog("For '\(command)' classifier says: needsManualApproval (\(reason)) -> unsafe")
+                RLog("For '\(command)' classifier says: needsManualApproval (\(reason)) -> unsafe")
                 return false
             case .block(let reason):
-                DLog("For '\(command)' classifier says: block (\(reason)) -> unsafe")
+                RLog("For '\(command)' classifier says: block (\(reason)) -> unsafe")
                 return false
             case .unparseable:
-                DLog("For '\(command)' classifier returned unparseable -> unsafe")
+                RLog("For '\(command)' classifier returned unparseable -> unsafe")
                 return false
             }
         } catch {
-            DLog("Error checking command '\(command)': \(error) - treating as unsafe")
+            RLog("Error checking command '\(command)': \(error) - treating as unsafe")
             return false
         }
     }

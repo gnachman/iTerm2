@@ -19,6 +19,7 @@ extension Chat: iTermDatabaseElement {
         case browserSessionGuid
         case permissions
         case vectorStore
+        case modelName
         case claimedScopes
         case watchers
         case icon
@@ -35,6 +36,7 @@ extension Chat: iTermDatabaseElement {
              \(Columns.browserSessionGuid.rawValue) text,
              \(Columns.permissions.rawValue) text,
              \(Columns.vectorStore.rawValue) text,
+             \(Columns.modelName.rawValue) text,
              \(Columns.claimedScopes.rawValue) text,
              \(Columns.watchers.rawValue) text,
              \(Columns.icon.rawValue) blob)
@@ -44,6 +46,9 @@ extension Chat: iTermDatabaseElement {
         var result = [Migration]()
         if !existingColumns.contains(Columns.vectorStore.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.vectorStore.rawValue) text", args: []))
+        }
+        if !existingColumns.contains(Columns.modelName.rawValue) {
+            result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.modelName.rawValue) text", args: []))
         }
         if !existingColumns.contains(Columns.terminalSessionGuid.rawValue) {
             result.append(.init(query: "ALTER TABLE Chat ADD COLUMN \(Columns.terminalSessionGuid.rawValue) text", args: []))
@@ -90,10 +95,11 @@ extension Chat: iTermDatabaseElement {
              \(Columns.browserSessionGuid.rawValue),
              \(Columns.permissions.rawValue),
              \(Columns.vectorStore.rawValue),
+             \(Columns.modelName.rawValue),
              \(Columns.claimedScopes.rawValue),
              \(Columns.watchers.rawValue),
              \(Columns.icon.rawValue))
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
          [
             id,
@@ -105,6 +111,7 @@ extension Chat: iTermDatabaseElement {
             browserSessionGuid ?? NSNull(),
             permissions,
             vectorStore ?? NSNull(),
+            modelName ?? NSNull(),
             Self.encodeIDList(claimedScopes),
             Self.encodeWatchers(watchers),
             icon ?? NSNull(),
@@ -121,6 +128,7 @@ extension Chat: iTermDatabaseElement {
                         \(Columns.browserSessionGuid.rawValue) = ?,
                         \(Columns.permissions.rawValue) = ?,
                         \(Columns.vectorStore.rawValue) = ?,
+                        \(Columns.modelName.rawValue) = ?,
                         \(Columns.claimedScopes.rawValue) = ?,
                         \(Columns.watchers.rawValue) = ?,
                         \(Columns.icon.rawValue) = ?
@@ -135,6 +143,7 @@ extension Chat: iTermDatabaseElement {
             browserSessionGuid ?? NSNull(),
             permissions,
             vectorStore ?? NSNull(),
+            modelName ?? NSNull(),
             Self.encodeIDList(claimedScopes),
             Self.encodeWatchers(watchers),
             icon ?? NSNull(),
@@ -162,6 +171,7 @@ extension Chat: iTermDatabaseElement {
         self.browserSessionGuid = result.string(forColumn: Columns.browserSessionGuid.rawValue)
         self.permissions = result.string(forColumn: Columns.permissions.rawValue) ?? ""
         self.vectorStore = result.string(forColumn: Columns.vectorStore.rawValue)
+        self.modelName = result.string(forColumn: Columns.modelName.rawValue)
         self.claimedScopes = Self.decodeIDList(
             result.string(forColumn: Columns.claimedScopes.rawValue))
         self.watchers = Self.decodeWatchers(
@@ -195,7 +205,7 @@ extension Chat: iTermDatabaseElement {
         do {
             let data = try encoder.encode(watchers)
             guard let str = String(data: data, encoding: .utf8) else {
-                DLog("encodeWatchers: utf8 decode of JSON bytes failed")
+                RLog("encodeWatchers: utf8 decode of JSON bytes failed")
                 return ""
             }
             return str
@@ -204,7 +214,7 @@ extension Chat: iTermDatabaseElement {
             // watchers would vanish on next encode round-trip. Log so
             // future schema changes don't disappear watchers without
             // any user-visible diagnostic.
-            DLog("encodeWatchers failed: \(error)")
+            RLog("encodeWatchers failed: \(error)")
             return ""
         }
     }
@@ -219,7 +229,7 @@ extension Chat: iTermDatabaseElement {
         do {
             return try decoder.decode([WorkgroupWatcher].self, from: data)
         } catch {
-            DLog("decodeWatchers failed (\(encoded.count) bytes): \(error)")
+            RLog("decodeWatchers failed (\(encoded.count) bytes): \(error)")
             return []
         }
     }

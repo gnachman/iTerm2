@@ -42,18 +42,18 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(NSStri
     int flags;
 
     const char *path = pathString.UTF8String;
-    DLog(@"Trying to connect to %s", path);
+    RLog(@"Trying to connect to %s", path);
     do {
         struct sockaddr_un remote;
         if (strlen(path) + 1 > sizeof(remote.sun_path)) {
-            DLog(@"Path is too long: %s", path);
+            RLog(@"Path is too long: %s", path);
             return iTermFileDescriptorMultiClientAttachStatusFatalError;
         }
 
         DLog(@"Calling socket()");
         socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (socketFd == -1) {
-            DLog(@"Failed to create socket: %s\n", strerror(errno));
+            RLog(@"Failed to create socket: %s\n", strerror(errno));
             return iTermFileDescriptorMultiClientAttachStatusFatalError;
         }
         remote.sun_family = AF_UNIX;
@@ -85,12 +85,12 @@ iTermFileDescriptorMultiClientAttachStatus iTermConnectToUnixDomainSocket(NSStri
                 return iTermFileDescriptorMultiClientAttachStatusSuccess;
             }
             interrupted = (errno == EINTR);
-            DLog(@"Connect failed: %s\n", strerror(errno));
+            RLog(@"Connect failed: %s\n", strerror(errno));
             close(socketFd);
             if (!interrupted) {
                 return iTermFileDescriptorMultiClientAttachStatusConnectFailed;
             }
-            DLog(@"Trying again because connect returned EINTR.");
+            RLog(@"Trying again because connect returned EINTR.");
         } else {
             interrupted = 0;
         }
@@ -109,7 +109,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString
     };
 
     if (result.lockFD < 0) {
-        DLog(@"Failed to acquire lock.");
+        RLog(@"Failed to acquire lock.");
         return (iTermUnixDomainSocketConnectResult) {
             .ok = NO,
             .listenFD = -1,
@@ -124,7 +124,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString
     // To do an async connect you have to first listen, then connect, then accept.
     result.listenFD = iTermFileDescriptorServerSocketBindListen(path);
 
-    DLog(@"Connect asynchronously to UDS at %s", path);
+    RLog(@"Connect asynchronously to UDS at %s", path);
     const iTermFileDescriptorMultiClientAttachStatus connectStatus =
         iTermConnectToUnixDomainSocket(pathString,
                                        &result.connectedFD,
@@ -224,7 +224,7 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString
 
     int pipeFds[2];
     if (pipe(pipeFds) == -1) {
-        DLog(@"Failed to create file descriptors in pipe(): %s", strerror(errno));
+        RLog(@"Failed to create file descriptors in pipe(): %s", strerror(errno));
         return forkState;
     }
 

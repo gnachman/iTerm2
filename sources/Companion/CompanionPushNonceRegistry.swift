@@ -97,6 +97,33 @@ final class CompanionPushNonceRegistry {
         return nonce
     }
 
+    /// Touch the keychain at launch, while the user is present, so the push hot
+    /// path never does. Simply CONSTRUCTING `shared` reads the persisted list
+    /// (init -> store.load()); call this at launch so that read does not happen
+    /// later inside dispatchPush() while the user is away. It also REWRITES the
+    /// list so the item is owned by the current binary, so the record()/consume()
+    /// saves on the push and fetch paths - and any code-signature confirmation
+    /// prompt after a rebuild - are answered now rather than mid-send. Idempotent.
+    func primeAtLaunch() {
+        store.save(order)
+    }
+
+    /// Undo a record() when the push that would have carried the nonce failed to
+    /// send. Removes it from the live set (persisted); it was never delivered, so
+    /// nothing will echo it, and the capacity slot is freed. No-op if absent (e.g.
+    /// already evicted). Used by the record-before-send ordering so a nonce that
+    /// rides out in a push is recorded BEFORE the send completes (closing the
+    /// suspend-between-send-and-record window that would misclassify the mac's own
+    /// fetch as unsolicited), while a genuinely failed send still doesn't keep a
+    /// slot.
+    func unrecord(_ nonce: String) {
+        guard live.remove(nonce) != nil else { return }
+        if let index = order.firstIndex(of: nonce) {
+            order.remove(at: index)
+        }
+        store.save(order)
+    }
+
     /// Whether a nonce is recognizable as the mac's OWN, WITHOUT consuming it.
     /// True for an outstanding nonce OR a recently-consumed one (a duplicate APNs
     /// delivery of the same push). Used only to classify a connection as solicited
@@ -164,7 +191,7 @@ final class KeychainNonceStore: CompanionNonceStore {
         // is a real failure that silently disables cross-restart nonce
         // suppression, so log it for diagnosis.
         if status != errSecSuccess && status != errSecItemNotFound {
-            DLog("CompanionPushNonceRegistry: keychain load failed (\(status))")
+            RLog("CompanionPushNonceRegistry: keychain load failed (\(status))")
         }
         guard status == errSecSuccess,
               let data = item as? Data,
@@ -186,14 +213,14 @@ final class KeychainNonceStore: CompanionNonceStore {
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let deleteStatus = SecItemDelete(base as CFDictionary)
         if deleteStatus != errSecSuccess && deleteStatus != errSecItemNotFound {
-            DLog("CompanionPushNonceRegistry: keychain delete failed (\(deleteStatus))")
+            RLog("CompanionPushNonceRegistry: keychain delete failed (\(deleteStatus))")
         }
         let addStatus = SecItemAdd(add as CFDictionary, nil)
         // A persistent add failure means nonces don't survive a restart, so a
         // post-relaunch fetch is misclassified as unsolicited (spurious presence
         // warning) with no other clue; surface it.
         if addStatus != errSecSuccess {
-            DLog("CompanionPushNonceRegistry: keychain add failed (\(addStatus)); nonce won't survive restart")
+            RLog("CompanionPushNonceRegistry: keychain add failed (\(addStatus)); nonce won't survive restart")
         }
     }
 }

@@ -105,6 +105,17 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
         DLog(args); \
         NSLog(args); \
     } while (0)
+
+// Retrospective log: like DLog, but when debug logging is OFF the message is
+// retained in a byte-bounded in-memory ring (instead of being dropped) so the
+// lead-up to a low-frequency event can be recovered after the fact. The ring is
+// deliberately NOT included in debug logs (the user never opted into capturing
+// it); retrieve it explicitly via iTermRetrospectiveLogString when you have a
+// specific reason to surface it. When debug logging is already on, this behaves
+// identically to DLog. Use for low-frequency events only; the format string is
+// always evaluated.
+#define RLog(args...) \
+    RetrospectiveLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args])
 #endif
 
 #define ITAssert(condition) \
@@ -216,6 +227,13 @@ void iTermFatalError(NSString *s) __attribute__((noreturn));
 NSString *iTermDebugLogHeaderString(void);
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
+void RetrospectiveLogImpl(const char *file, int line, const char *function, NSString *value);
+// Returns the current contents of the retrospective ring (lines retained by
+// RLog while debug logging was off). Deliberately NOT included in debug logs,
+// since the user never opted into capturing it; surface it only when you have a
+// specific reason to. iTermClearRetrospectiveLog empties the ring.
+NSString *iTermRetrospectiveLogString(void);
+void iTermClearRetrospectiveLog(void);
 void LogForNextCrash(const char *file, int line, const char *function, NSString* value, BOOL force);
 void TurnOnDebugLoggingSilently(void);
 BOOL TurnOffDebugLoggingSilently(void);

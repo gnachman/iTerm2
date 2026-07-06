@@ -727,7 +727,25 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // dispatched here. They're now handled centrally in
     // -[iTermApplication handleKeypressInTerminalWindow:] so they fire
     // regardless of first responder.
-    if ([[NSApp mainMenu] performKeyEquivalent:theEvent]) {
+    // During key-event replay (used by tests/modern-key-reporting-test.py) the
+    // synthetic events are posted through NSApp.postEvent, so they reach here on
+    // the "regular path" instead of being consumed by the terminal key handler.
+    // If we forwarded them to the main menu, macOS 15+ window-tiling items would
+    // claim them: those items match a bare Control-<key> because the Fn part of
+    // the gesture is not in the key equivalent (the OS enforces Fn at the HID
+    // layer, which a manual performKeyEquivalent: call bypasses). Replaying
+    // Control-C would then match "Center" and move the window instead of reaching
+    // the terminal. Skip the menu entirely while replaying so the event falls
+    // through to the keyboard handler below. Note we must check the flag before
+    // calling performKeyEquivalent:, since calling it is what triggers the tile.
+    BOOL mainMenuHandled = NO;
+#if DEBUG
+    if (![iTermKeyEventReplayer isReplaying])
+#endif
+    {
+        mainMenuHandled = [[NSApp mainMenu] performKeyEquivalent:theEvent];
+    }
+    if (mainMenuHandled) {
         // Originally I tried to detect when a key would be handled later by a
         // key equivalent by checking if Cmd is pressed, but that doesn't work
         // with the profoundly stupid macOS 15 window tiling shortcuts. They
@@ -5023,9 +5041,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)maybeUpload:(NSArray *)tuple {
     NSArray *propertyList = tuple[0];
     SCPPath *dropScpPath = tuple[1];
-    DLog(@"Confirm upload to %@", dropScpPath);
+    RLog(@"Confirm upload to %@", dropScpPath);
     if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
-        DLog(@"initiating upload");
+        RLog(@"initiating upload");
         [self.delegate uploadFiles:propertyList toPath:dropScpPath];
     }
 }
@@ -5061,7 +5079,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self.delegate textViewDidUpdateDropTargetVisibility];
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
-    DLog(@"Perform drag operation");
+    RLog(@"Perform drag operation");
     if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric | NSDragOperationLink)) {
         DLog(@"Drag operation is acceptable");
         NSArray *types = [draggingPasteboard types];
@@ -5070,28 +5088,28 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             if (filenames.count > 0) {
                 if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
                     // Option key held - upload files
-                    DLog(@"Option key held, uploading files: %@", filenames);
+                    RLog(@"Option key held, uploading files: %@", filenames);
                     NSPoint windowDropPoint = [sender draggingLocation];
                     return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
                 } else if ([self.delegate textViewIsOnLocalhost]) {
                     // On localhost, just paste the paths directly
-                    DLog(@"On localhost, pasting file paths directly: %@", filenames);
+                    RLog(@"On localhost, pasting file paths directly: %@", filenames);
                     return [self pasteValuesOnPasteboard:draggingPasteboard
                                            cdToDirectory:(dragOperation == NSDragOperationGeneric)];
                 } else {
                     // On remote host, show paste options dialog
-                    DLog(@"On remote host, showing paste options for dropped files: %@", filenames);
+                    RLog(@"On remote host, showing paste options for dropped files: %@", filenames);
                     [self.delegate textViewShowPasteOptionsForDroppedFiles:filenames];
                     return YES;
                 }
             }
         }
         // Fall back to pasting text values
-        DLog(@"No files, pasting text values");
+        RLog(@"No files, pasting text values");
         return [self pasteValuesOnPasteboard:draggingPasteboard
                                cdToDirectory:(dragOperation == NSDragOperationGeneric)];
     }
-    DLog(@"Drag/drop Failing");
+    RLog(@"Drag/drop Failing");
     return NO;
 }
 
@@ -6744,7 +6762,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)unfoldBlock:(NSString *)blockID {
     const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
     if (range.start.x < 0){
-        DLog(@"Failed to find block %@", blockID);
+        RLog(@"Failed to find block %@", blockID);
         return;
     }
     const long long offset = [self.dataSource totalScrollbackOverflow];
@@ -6756,7 +6774,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)foldBlock:(NSString *)blockID {
     const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
     if (range.start.x < 0 || range.start.y == range.end.y) {
-        DLog(@"Failed to fold block %@. range=%@", blockID, VT100GridCoordRangeDescription(range));
+        RLog(@"Failed to fold block %@. range=%@", blockID, VT100GridCoordRangeDescription(range));
         return;
     }
     const long long offset = [self.dataSource totalScrollbackOverflow];

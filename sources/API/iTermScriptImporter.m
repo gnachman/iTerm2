@@ -28,7 +28,7 @@ static BOOL sInstallingScript;
               callbackQueue:(dispatch_queue_t)callbackQueue
                     avoidUI:(BOOL)avoidUI
                  completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
-    DLog(@"dowloadedURL=%@ userInitiated=%@ offerAutoLaunch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
+    RLog(@"dowloadedURL=%@ userInitiated=%@ offerAutoLaunch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -61,7 +61,7 @@ static BOOL sInstallingScript;
                        completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     DLog(@"downloadedURL=%@ userInitiated=%@ offerAutoLauch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
     if (sInstallingScript) {
-        DLog(@"already installing");
+        RLog(@"already installing");
         completion(@"Another import is in progress. Please try again after it completes.", NO, nil);
         return;
     }
@@ -82,7 +82,7 @@ static BOOL sInstallingScript;
     sInstallingScript = YES;
     DLog(@"Will verify and unwrap");
     [self verifyAndUnwrapArchive:downloadedURL requireSignature:!userInitiated completion:^(NSURL *url, NSString *errorMessage, BOOL trusted, BOOL reveal, BOOL quiet) {
-        DLog(@"Verify and unwrap done with errorMessage=%@", errorMessage);
+        RLog(@"Verify and unwrap done with errorMessage=%@", errorMessage);
         if (errorMessage) {
             completion(errorMessage, quiet, nil);
             sInstallingScript = NO;
@@ -117,7 +117,7 @@ static BOOL sInstallingScript;
                                  avoidUI:avoidUI
                           withCompletion:
              ^(NSString *errorMessage, BOOL quiet, NSURL *location) {
-                DLog(@"All done! errorMessage=%@", errorMessage);
+                RLog(@"All done! errorMessage=%@", errorMessage);
                 sInstallingScript = NO;
                 if (reveal) {
                     completion(errorMessage, errorMessage == nil || quiet, nil);
@@ -195,7 +195,7 @@ static BOOL sInstallingScript;
         [self confirmInstallationOfVerifiedArchive:verifier.reader
                                    withCertificate:cert
                                         completion:^(BOOL ok, BOOL reveal) {
-            DLog(@"Confirmation ok=%@ reveal=%@", @(ok), @(reveal));
+            RLog(@"Confirmation ok=%@ reveal=%@", @(ok), @(reveal));
             if (!ok) {
                 DLog(@"Canceled");
                 completion(nil, @"Installation canceled by user request.", NO, NO, YES);
@@ -280,7 +280,7 @@ static BOOL sInstallingScript;
     iTermScriptArchive *archive = [iTermScriptArchive archiveFromContainer:tempDir
                                                                 deprecated:&deprecated];
     if (!archive) {
-        DLog(@"Failed to extract archive from container");
+        RLog(@"Failed to extract archive from container");
         if (deprecated) {
             DLog(@"deprecated");
             completion(@"This archive was created by an older version of iTerm2. This kind of archive is no longer supported and cannot be installed.", NO, nil);
@@ -323,7 +323,7 @@ static BOOL sInstallingScript;
             offerAutoLaunch:offerAutoLaunch
                     avoidUI:avoidUI
              withCompletion:^(NSError *error, NSURL *location) {
-        DLog(@"Install finished with %@", error);
+        RLog(@"Install finished with %@", error);
         completion(error.localizedDescription, NO, location);
     }];
 }

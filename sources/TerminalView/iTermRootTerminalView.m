@@ -978,7 +978,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (iTermTabBarControlView *)borrowTabBarControl {
-    DLog(@"Borrow tabbar control");
+    RLog(@"Borrow tabbar control");
     assert(!_tabBarControlOnLoan);
     iTermTabBarControlView *view = _tabBarControl;
     _tabBarControlOnLoan = YES;
@@ -995,7 +995,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl {
-    DLog(@"Return tabbar control");
+    RLog(@"Return tabbar control");
     assert(_tabBarControlOnLoan);
     _tabBarControlOnLoan = NO;
     [_tabBarBacking addSubview:tabBarControl];

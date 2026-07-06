@@ -218,7 +218,7 @@
 - (void)cancelExpectation:(iTermExpectation *)expectation {
     _dirty = YES;
     if (expectation != nil) {
-        DLog(@"cancel %@ dry=%d", expectation, _dry);
+        RLog(@"cancel %@ dry=%d", expectation, _dry);
     }
     [expectation cancel];
     [_expectations removeObject:expectation];

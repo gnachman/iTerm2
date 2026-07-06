@@ -1,6 +1,42 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- You can now mute a chat so it stops sending
+  push notifications to your phone. Swipe right
+  on a chat in the list, or use the bell button
+  in the conversation, to mute or unmute it. A
+  muted chat shows a slashed bell in the list.
+  The Mac remembers the choice, so pushes stay
+  off even while your phone is unreachable.
+  Requires a Mac new enough to support it; the
+  controls are hidden otherwise.
+- Live session view. When the paired Mac is new
+  enough, tapping a session shows live video that
+  updates as the terminal changes, instead of a
+  static snapshot. The Mac renders and streams the
+  visible screen, so inline images, colors, and
+  full-screen apps look exactly as on the Mac. A
+  quiet terminal uses almost no data, the view
+  stays current on a slow connection instead of
+  lagging behind, and it pauses itself with a
+  notice if it would use too much data.
+  Scroll up to browse the session's scrollback,
+  pinch to zoom in, and drag with one finger to
+  pan around. Press and hold to start selecting
+  text; drag the handles (with a magnifier) to
+  adjust the selection, then Copy, Select All, or
+  Paste from the menu. Selection works both in the
+  live screen and in scrollback, and a selection
+  made on the Mac shows on the phone too. The view
+  follows along when you resize the Mac window.
+  Older Macs keep showing the static snapshot.
+- iTerm2 Buddy now asks for notification
+  permission when you turn on sending terminal
+  alerts to your iPhone on the Mac, instead of
+  only when an AI chat needs them.
+- The app now rotates to landscape on iPhone,
+  not just portrait. (iPad already supported
+  all orientations.)
 - Messages from a newer iTerm2 that this app
   doesn't understand now show a placeholder
   ("You need a newer version of iTerm2 Buddy to
@@ -35,6 +71,21 @@ New Features:
   New Chat screen.
 
 Bug Fixes:
+- The connection now recovers from brief network
+  drops (like switching Wi-Fi or a spotty signal)
+  instead of getting stuck on "Reconnecting." The
+  Mac no longer becomes unreachable after a blip
+  until it is relaunched.
 - @-mentions in command-request messages now
   show the friendly session or workgroup name
   instead of the raw identifier.
+- In the Sessions tab, a split pane that hosts a
+  peer workgroup now shows as a container with
+  its own icon and is no longer tappable. Only
+  the individual peers beneath it open a session.
+- The relay servers moved to new addresses.
+  Pairing now requires an up-to-date iTerm2
+  and iTerm2 Buddy; a version that predates
+  the move shows an update prompt instead of
+  pairing into a state that cannot receive
+  notifications.

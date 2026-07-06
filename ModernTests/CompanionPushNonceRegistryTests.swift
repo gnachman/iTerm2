@@ -43,6 +43,30 @@ final class CompanionPushNonceRegistryTests: XCTestCase {
         XCTAssertFalse(reg.consume("never-issued"), "a nonce that was never issued is rejected (the attacker case)")
     }
 
+    func testUnrecordRemovesAFailedSendNonce() {
+        // record-before-send optimistically records; a failed send undoes it via
+        // unrecord, so it neither matches later nor occupies a capacity slot.
+        let store = MemoryNonceStore()
+        let reg = makeRegistry(store: store)
+        let nonce = reg.mintNonce()
+        reg.record(nonce)
+        XCTAssertTrue(reg.contains(nonce))
+        reg.unrecord(nonce)
+        XCTAssertFalse(reg.contains(nonce), "an unrecorded nonce is no longer recognized")
+        XCTAssertFalse(reg.consume(nonce), "and it cannot be consumed")
+        XCTAssertEqual(store.saved, [], "the persisted list no longer holds it")
+    }
+
+    func testUnrecordIsANoOpForAConsumedNonce() {
+        // unrecord must not resurrect or corrupt state for a nonce already consumed
+        // (a successful send that the NSE later echoed).
+        let reg = makeRegistry()
+        let nonce = reg.makeNonce()
+        XCTAssertTrue(reg.consume(nonce))
+        reg.unrecord(nonce)   // no-op: already out of the live set
+        XCTAssertTrue(reg.contains(nonce), "still classifiable as solicited via recently-consumed")
+    }
+
     func testNonceNeverExpiresByTime() {
         // No clock: a nonce stays valid no matter how much "time" passes, so an
         // APNs-delayed push that delivers it late still matches. As long as we

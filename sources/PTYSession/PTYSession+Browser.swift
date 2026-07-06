@@ -155,7 +155,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewControllerOnboardingEnableAdBlocker(_ controller: iTermBrowserViewController) {
         // Enable ad blocking globally
         iTermAdvancedSettingsModel.setWebKitAdblockEnabled(true)
-        DLog("Ad blocking enabled from onboarding")
+        RLog("Ad blocking enabled from onboarding")
     }
     
     func browserViewControllerOnboardingEnableInstantReplay(_ controller: iTermBrowserViewController) {

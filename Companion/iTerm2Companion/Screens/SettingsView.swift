@@ -16,6 +16,10 @@ struct SettingsView: View {
     @State private var confirmingDisableLogs = false
     @State private var showingMail = false
     @State private var mailUnavailable = false
+    #if DEBUG
+    @State private var airdropURL: URL?
+    @State private var noLogsToAirdrop = false
+    #endif
 
     var body: some View {
         @Bindable var manager = model.whisperManager
@@ -71,6 +75,16 @@ struct SettingsView: View {
                     CompanionFileLog.shared.flushNow()
                     showingMail = true
                 }
+                #if DEBUG
+                Button("AirDrop Latest Log") {
+                    CompanionFileLog.shared.flushNow()
+                    guard let latest = CompanionFileLog.shared.logFileURLs().last else {
+                        noLogsToAirdrop = true
+                        return
+                    }
+                    airdropURL = latest
+                }
+                #endif
             } header: {
                 Text("Diagnostics")
             } footer: {
@@ -122,6 +136,23 @@ struct SettingsView: View {
         } message: {
             Text("Set up the Mail app on this device to email your logs.")
         }
+        #if DEBUG
+        .sheet(isPresented: Binding(
+            get: { airdropURL != nil },
+            set: { if !$0 { airdropURL = nil } })) {
+            if let airdropURL {
+                ActivityView(items: [airdropURL]) {
+                    self.airdropURL = nil
+                }
+                .ignoresSafeArea()
+            }
+        }
+        .alert("No Logs", isPresented: $noLogsToAirdrop) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("There are no log files to share yet.")
+        }
+        #endif
     }
 
     @ViewBuilder

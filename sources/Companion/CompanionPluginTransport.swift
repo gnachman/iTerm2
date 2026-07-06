@@ -13,6 +13,12 @@ import Foundation
 import CompanionProtocol
 import CompanionTransport
 
+/// Thrown when the relay closes our socket because another mac-role connection
+/// took the room's single mac slot (a "displaced" close). Distinct from
+/// TransportError.closed so the park loop can recognize an eviction (a duplicate
+/// instance in the same room) and back off long rather than re-grab the slot.
+struct RelayDisplacedError: Error {}
+
 /// One plugin-backed relay socket. The connection is opened lazily on resume()
 /// (mirroring an un-resumed URLSessionWebSocketTask); send/receive await it.
 final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
@@ -53,10 +59,33 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
 
     func receive() async throws -> RelayWebSocketMessage {
         let id = try await connectionID()
-        switch try await client.wsRecv(id) {
+        let incoming: CompanionPluginClient.Incoming
+        do {
+            incoming = try await client.wsRecv(id)
+        } catch {
+            // The plugin RPC itself failed (JS bridge gone, promise rejected): not a
+            // clean WebSocket close, so there's no close code to report.
+            let ns = error as NSError
+            CompanionLog.log("Relay WS (plugin) recv error: \(ns.domain)#\(ns.code) \(ns.localizedDescription)")
+            throw error
+        }
+        switch incoming {
         case .text(let s): return .text(s)
         case .data(let d): return .data(d)
-        case .closed: throw TransportError.closed
+        case .closed(let code, let reason):
+            // The relay (or an edge proxy) closed the socket. Surface the close code
+            // and reason so a short-lived park can be diagnosed: a clean relay close
+            // (1000/1001 with a reason) vs an abnormal drop with no close frame
+            // (1006, set by the plugin on a transport error).
+            CompanionLog.log("Relay WS (plugin) closed: closeCode=\(code) reason=\(reason.isEmpty ? "-" : reason)")
+            // "displaced": the relay handed the room's single mac slot to a newer
+            // mac-role connection. Distinguish it from routine churn so the park loop
+            // can back off long instead of immediately re-grabbing the slot (an
+            // eviction storm between two instances in the same room).
+            if reason.localizedCaseInsensitiveContains("displaced") {
+                throw RelayDisplacedError()
+            }
+            throw TransportError.closed
         }
     }
 

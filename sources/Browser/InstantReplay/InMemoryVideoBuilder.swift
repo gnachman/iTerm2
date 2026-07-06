@@ -57,7 +57,7 @@ final class InMemoryVideoBuilder {
         
         // Calculate bitrate from bitsPerPixel
         let bitrate = Int(Double(pixelSize.width * pixelSize.height) * frameRate * bitsPerPixel)
-        DLog("Setting bitrate to \(bitrate) bps for \(pixelSize)px at \(frameRate)fps with \(bitsPerPixel) bpp")
+        RLog("Setting bitrate to \(bitrate) bps for \(pixelSize)px at \(frameRate)fps with \(bitsPerPixel) bpp")
 
         // Create VideoToolbox session
         var s: VTCompressionSession?
@@ -74,7 +74,7 @@ final class InMemoryVideoBuilder {
             compressionSessionOut: &s
         )
         guard let sess = s else {
-            DLog("Failed to create rolling recorder of size \(pixelSize)px")
+            RLog("Failed to create rolling recorder of size \(pixelSize)px")
             throw RuntimeError.sessionCreationError
         }
         session = sess
@@ -102,7 +102,7 @@ final class InMemoryVideoBuilder {
                              key: kVTCompressionPropertyKey_ProfileLevel,
                              value: profile.cfString)
         VTCompressionSessionPrepareToEncodeFrames(session)
-        DLog("Allocating a new rolling recorder of size \(pixelSize): \(ObjectIdentifier(self))")
+        RLog("Allocating a new rolling recorder of size \(pixelSize): \(ObjectIdentifier(self))")
     }
 }
 

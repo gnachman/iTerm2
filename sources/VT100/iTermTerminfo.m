@@ -68,7 +68,7 @@
         char *term = strdup(_term.UTF8String);
         int ignored = 0;
         if (setupterm(term, 1, &ignored) != OK || cur_term == NULL) {
-            DLog(@"Failed to compute terminfo database for \(term)");
+            RLog(@"Failed to compute terminfo database for \(term)");
             free(term);
             return nil;
         }

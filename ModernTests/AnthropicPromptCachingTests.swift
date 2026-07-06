@@ -61,6 +61,10 @@ final class AnthropicPromptCachingTests: XCTestCase {
         return LLM.Message(responseID: nil, role: .system, content: text)
     }
 
+    private func assistantMessage(_ text: String) -> LLM.Message {
+        return LLM.Message(responseID: nil, role: .assistant, content: text)
+    }
+
     private func decode(_ data: Data) throws -> [String: Any] {
         guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             XCTFail("Body is not a JSON object")
@@ -127,6 +131,49 @@ final class AnthropicPromptCachingTests: XCTestCase {
         if value == nil { return }
         if value is NSNull { return }
         XCTFail("Expected system field to be omitted; got \(String(describing: value))")
+    }
+
+    // MARK: - Consecutive assistant coalescing
+
+    /// A reloaded tool round-trip is replayed as a single folded assistant
+    /// transcript message followed by the model's final assistant reply, which
+    /// yields two consecutive assistant turns. Anthropic requires strictly
+    /// alternating user/assistant roles, so the builder must merge adjacent
+    /// assistant messages into one, preserving both texts as content blocks.
+    func testConsecutiveAssistantMessagesAreCoalesced() throws {
+        let json = try buildBody(
+            messages: [userMessage("hi"),
+                       assistantMessage("tool transcript"),
+                       assistantMessage("final reply")],
+            tools: [])
+        guard let messages = json["messages"] as? [[String: Any]] else {
+            XCTFail("Expected messages array, got \(String(describing: json["messages"]))")
+            return
+        }
+        XCTAssertEqual(messages.count, 2,
+                       "two consecutive assistant turns should merge into one")
+        XCTAssertEqual(messages[0]["role"] as? String, "user")
+        XCTAssertEqual(messages[1]["role"] as? String, "assistant")
+        let blocks = (messages[1]["content"] as? [[String: Any]]) ?? []
+        let texts = blocks.compactMap { $0["text"] as? String }
+        XCTAssertEqual(texts, ["tool transcript", "final reply"],
+                       "both assistant texts must survive the merge, in order")
+    }
+
+    /// Coalescing must only touch adjacent same-role turns: a normal
+    /// user/assistant/user/assistant transcript must be left alone.
+    func testAlternatingRolesAreNotCoalesced() throws {
+        let json = try buildBody(
+            messages: [userMessage("q1"),
+                       assistantMessage("a1"),
+                       userMessage("q2"),
+                       assistantMessage("a2")],
+            tools: [])
+        let messages = (json["messages"] as? [[String: Any]]) ?? []
+        XCTAssertEqual(messages.count, 4,
+                       "properly alternating turns must not be merged")
+        XCTAssertEqual(messages.compactMap { $0["role"] as? String },
+                       ["user", "assistant", "user", "assistant"])
     }
 
     // MARK: - Tools breakpoint

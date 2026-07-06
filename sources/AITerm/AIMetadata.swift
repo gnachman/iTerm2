@@ -8,10 +8,33 @@
 //  ADDING A NEW MODEL: checklist
 //  ============================================================================
 //
-//  1. Declare the Model below as a `private static let`.
-//  2. Append it to the `models` array (under the right vendor section).
-//  3. Capture a refusal fixture so the live-harness regression suite covers
-//     this model's response shape:
+//  The model catalog is data-driven. Models are NOT declared here; they live in
+//  OtherResources/ai-models.json and are loaded by AIModelCatalog. This struct
+//  only maps that data and exposes it to the rest of the app.
+//
+//  1. Add an entry to `models` in OtherResources/ai-models.json. Order matters:
+//     the first entry is the default model, and display order follows the file.
+//     Set `vendor`, `api`, `url`, `contextWindowTokens`, `maxResponseTokens`,
+//     and `features` (string-keyed; see AIModelCatalog for the legal values).
+//     Optional flags default as noted:
+//       - `recommended` (default false): the "latest" model for its vendor.
+//         Keep exactly one per vendor.
+//       - `supportsTemperature` (default true): set false if the model 400s
+//         when a temperature is sent (e.g. Anthropic Opus 4.7+).
+//       - `vectorStore` (default "disabled").
+//       - `fixtureExempt` (default false): true for models that can't be
+//         refusal-fixtured (local Llama, on-device Apple, models unreachable
+//         for new keys, or models that block the refusal prompt at HTTP 400).
+//         Anything in AILiveHarness.unreachableForNewKeys / refusalBlockedAtHTTP
+//         MUST be marked fixtureExempt; the coverage test asserts they agree.
+//       - `economyModel` (optional): the name of a cheaper same-vendor model to
+//         prefer for high-frequency, low-stakes work (e.g. the orchestration
+//         screen-watch poller). Must name another entry in this catalog. See
+//         AIMetadata.economyModel(for:).
+//  2. Bump the top-level `version` in ai-models.json so a shipped catalog can
+//     supersede a stale downloaded cache.
+//  3. Unless the model is `fixtureExempt`, capture a refusal fixture so the
+//     live-harness regression suite covers this model's response shape:
 //
 //        # one model:
 //        ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> \
@@ -22,14 +45,11 @@
 //
 //     <vendor> is openai / anthropic / gemini / deepseek (lowercase).
 //
-//  4. `git add ModernTests/Resources/SafetyRefusalFixtures/*` and commit
-//     alongside the AIMetadata change.
+//  4. `git add OtherResources/ai-models.json
+//     ModernTests/Resources/SafetyRefusalFixtures/*` and commit together.
 //
 //  AIMetadataFixtureCoverageTest in ModernTests fails if step 3-4 is skipped,
 //  so `make test` will catch a missed capture before the change ships.
-//
-//  Llama models (vendor: .llama) are local-only and do not require fixtures;
-//  the coverage test skips them.
 //  ============================================================================
 
 @objc(iTermAIModel)
@@ -153,30 +173,132 @@ class AIMetadata: NSObject {
         // that reject it set it false so the request builder omits the
         // field. Defaults to true so existing entries are unaffected.
         var supportsTemperature: Bool = true
+
+        // True for the per-vendor "latest/recommended" model. Sourced from the
+        // catalog; the recommended<Vendor>Model accessors select the flagged
+        // entry for each vendor.
+        var recommended: Bool = false
+
+        // True for models that must not require a captured refusal fixture:
+        // local Llama, on-device Apple, and vendor-deprecated/unreachable
+        // models. See AIMetadataFixtureCoverageTest.
+        var fixtureExempt: Bool = false
+
+        // Optional catalog name of a cheaper same-vendor model to prefer for
+        // high-frequency, low-stakes work where the primary model would be
+        // overkill (e.g. the orchestration screen-watch poller judging whether a
+        // condition has been met). nil means "no cheaper alternative; use this
+        // model." See AIMetadata.economyModel(for:).
+        var economyModelName: String? = nil
+
+        // OpenAI Responses reasoning models do not all accept the same effort
+        // values. Keep the request builder declarative: each model states the
+        // lowest effort to use when the UI's thinking toggle is off and the
+        // higher effort to use when it is on. Sourced from the catalog; empty
+        // reasoningEfforts/serviceTiers means the model exposes no such choice.
+        var thinkingOffEffort: ResponsesRequestBody.ReasoningOptions.Effort = .low
+        var thinkingOnEffort: ResponsesRequestBody.ReasoningOptions.Effort = .medium
+        var reasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = []
+        var serviceTiers: [ResponsesRequestBody.ServiceTier] = []
+
+        func supports(reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?) -> Bool {
+            guard let reasoningEffort else {
+                return false
+            }
+            return reasoningEfforts.contains(reasoningEffort)
+        }
+
+        func supports(serviceTier: ResponsesRequestBody.ServiceTier?) -> Bool {
+            guard let serviceTier else {
+                return false
+            }
+            return serviceTiers.contains(serviceTier)
+        }
+    }
+
+    // The per-vendor "latest/recommended" model is the catalog entry flagged
+    // recommended for that vendor, falling back to the first entry of that
+    // vendor if none is flagged.
+    private static func recommendedModel(for vendor: iTermAIVendor) -> Model {
+        if let model = firstModel(from: instance.models, vendor: vendor) {
+            return model
+        }
+        // The active catalog (which may be a downloaded one) has no entry for
+        // this vendor. Fall back to the bundled snapshot, which always ships one
+        // per shipped vendor, rather than crossing vendors. Crossing vendors
+        // here would be a latent footgun: recommendedAppleModel backs the
+        // on-device safety classifier (AISafetyClassifierBackend), so handing it
+        // a cloud model would silently attempt a network request instead of
+        // failing closed.
+        if let model = firstModel(from: AIModelCatalog.bundledModels, vendor: vendor) {
+            return model
+        }
+        // Unreachable: every shipped vendor is present in the bundled snapshot.
+        it_assert(false, "No AI model for vendor \(vendor.rawValue) in catalog or bundle")
+        return instance.models[0]
+    }
+
+    private static func firstModel(from models: [Model], vendor: iTermAIVendor) -> Model? {
+        return AIModelCatalog.recommendedModel(for: vendor, in: models)
+    }
+
+    // The cheaper same-vendor model to prefer for high-frequency, low-stakes
+    // work (e.g. the orchestration screen-watch poller), or nil if `model` has no
+    // economy alternative. Resolves `model`'s economyModelName to a catalog
+    // entry. If `model` carries no pointer (it may have come from settings in
+    // manual mode, which doesn't populate the field), fall back to the catalog
+    // entry of the same name, so a manually-selected catalog model still gets its
+    // economy variant. Returns nil if the pointer names a model absent from the
+    // catalog.
+    //
+    // The returned model PRESERVES `model`'s transport (url and api, and hence
+    // which host the API key is sent to); only the model identity and its size
+    // limits change. This is load-bearing for security: a manual-mode user may
+    // point a catalog-named model at a custom base URL (corporate proxy /
+    // gateway), and resolving to the economy entry's own public endpoint would
+    // bypass that proxy and leak the configured API key to the public vendor
+    // host. Same-vendor guarantees the economy model speaks the same protocol.
+    static func economyModel(for model: Model) -> Model? {
+        return economyModel(for: model, in: instance.models)
+    }
+
+    // Testable core: resolves within an explicit model list (tests pin to the
+    // bundled catalog; production passes the active catalog via the overload
+    // above).
+    static func economyModel(for model: Model, in models: [Model]) -> Model? {
+        let economyName = model.economyModelName
+            ?? models.first(where: { $0.name == model.name })?.economyModelName
+        guard let economyName,
+              var economy = models.first(where: { $0.name == economyName }) else {
+            return nil
+        }
+        economy.url = model.url
+        economy.api = model.api
+        return economy
     }
 
     static var recommendedOpenAIModel: Model {
-        return AIMetadata.gpt5_5
+        return recommendedModel(for: .openAI)
     }
 
     static var recommendedDeepSeekModel: Model {
-        return AIMetadata.deepseek_v4_flash
+        return recommendedModel(for: .deepSeek)
     }
 
     static var recommendedGeminiModel: Model {
-        return AIMetadata.gemini_3_5_flash
+        return recommendedModel(for: .gemini)
     }
 
     static var recommendedLlamaModel: Model {
-        return AIMetadata.llama_4_latest
+        return recommendedModel(for: .llama)
     }
 
     static var recommendedAnthropicModel: Model {
-        return AIMetadata.claude_4_8_opus
+        return recommendedModel(for: .anthropic)
     }
 
     static var recommendedAppleModel: Model {
-        return AIMetadata.appleOnDevice
+        return recommendedModel(for: .apple)
     }
 
     static var alternateOpenAIModels: [Model] {
@@ -215,490 +337,22 @@ class AIMetadata: NSObject {
         }
     }
 
-    private static let gpt5_5 = Model(
-        name: "gpt-5.5",
-        contextWindowTokens: 1_050_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5_5_pro = Model(
-        name: "gpt-5.5-pro",
-        contextWindowTokens: 1_050_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5_4 = Model(
-        name: "gpt-5.4",
-        contextWindowTokens: 1_050_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5_3_codex = Model(
-        name: "gpt-5.3-codex",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5_2 = Model(
-        name: "gpt-5.2",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5_2_pro = Model(
-        name: "gpt-5.2-pro",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5_1 = Model(
-        name: "gpt-5.1",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5_1_codex = Model(
-        name: "gpt-5.1-codex",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vendor: .openAI
-    )
-    private static let gpt5 = Model(
-        name: "gpt-5",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let gpt5_mini = Model(
-        name: "gpt-5-mini",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let gpt5_nano = Model(
-        name: "gpt-5-nano",
-        contextWindowTokens: 400_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter, .configurableThinking],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let gpt4_1 = Model(
-        name: "gpt-4.1",
-        contextWindowTokens: 1_000_000,
-        maxResponseTokens: 32_768,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let gpt4o = Model(
-        name: "gpt-4o",
-        contextWindowTokens: 128_000,
-        maxResponseTokens: 16_384,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let gpt4o_mini = Model(
-        name: "gpt-4o-mini",
-        contextWindowTokens: 128_000,
-        maxResponseTokens: 16_384,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let gpt41_mini = Model(
-        name: "gpt-4.1-mini",
-        contextWindowTokens: 1_000_000,
-        maxResponseTokens: 16_384,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedFileSearch, .hostedWebSearch, .streaming, .hostedCodeInterpreter],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let o3 = Model(
-        name: "o3",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 100_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.hostedFileSearch, .hostedCodeInterpreter, .configurableThinking],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let o3_pro = Model(
-        name: "o3-pro",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 100_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.functionCalling, .hostedCodeInterpreter, .configurableThinking],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let o4_mini = Model(
-        name: "o4-mini",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 100_000,
-        url: "https://api.openai.com/v1/responses",
-        api: .responses,
-        features: [.hostedFileSearch, .streaming, .functionCalling, .hostedCodeInterpreter, .configurableThinking],
-        vectorStoreConfig: .openAI,
-        vendor: .openAI
-    )
-    private static let deepseek_v4_flash = Model(
-        name: "deepseek-v4-flash",
-        contextWindowTokens: 1_000_000,
-        maxResponseTokens: 384_000,
-        url: "https://api.deepseek.com/chat/completions",
-        api: .deepSeek,
-        features: [.functionCalling, .streaming, .configurableThinking],
-        vendor: .deepSeek
-    )
-    private static let deepseek_v4_pro = Model(
-        name: "deepseek-v4-pro",
-        contextWindowTokens: 1_000_000,
-        maxResponseTokens: 384_000,
-        url: "https://api.deepseek.com/chat/completions",
-        api: .deepSeek,
-        features: [.functionCalling, .streaming, .configurableThinking],
-        vendor: .deepSeek
-    )
-    // Deprecated by DeepSeek on 2026-07-24; remove after that date
-    private static let deepseek_chat = Model(
-        name: "deepseek-chat",
-        contextWindowTokens: 128_000,
-        maxResponseTokens: 8_000,
-        url: "https://api.deepseek.com/v1/chat/completions",
-        api: .deepSeek,
-        features: [.functionCalling, .streaming],
-        vendor: .deepSeek
-    )
-    private static let gemini_2_0_flash = Model(
-        name: "gemini-2.0-flash",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 8_192,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-    private static let llama_4_latest = Model(
-        name: "llama4:latest",
-        contextWindowTokens: 10_000_000,
-        maxResponseTokens: 10_000_000,
-        url: "http://localhost:11434/api/chat",
-        api: .llama,
-        features: [.streaming, .functionCalling],
-        vendor: .llama
-    )
-    static private let llama_3_3_latest = Model(
-        name: "llama3.3:latest",
-        contextWindowTokens: 131_072,
-        maxResponseTokens: 131_072,
-        url: "http://localhost:11434/api/chat",
-        api: .llama,
-        features: [.streaming, .functionCalling],
-        vendor: .llama
-    )
-    // Returns 404 "no longer available to new users" for Gemini API keys
-    // minted after Google's 2026 deprecation cutoff. Pre-existing keys still
-    // work, so the entry remains. The fixture-coverage test skips deprecated
-    // models via the comment marker below.
-    private static let gemini_2_0_flash_lite = Model(
-        name: "gemini-2.0-flash-lite",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 8_192,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-    private static let gemini_2_5_pro = Model(
-        name: "gemini-2.5-pro",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
+    // The model catalog is data-driven: entries come from ai-models.json (a
+    // signed resource that AIModelCatalogUpdater can refresh at runtime). The
+    // JSON preserves display order and the first entry is the default model.
+    //
+    // Llama supports function calling only without streaming. We don't expose a
+    // "streamingFunctionCalling" feature, so tools are silently omitted while
+    // streaming. To find the places that implement this, search for
+    // #llama-streaming-functions.
+    let models: [Model] = AIModelCatalog.instance.models
 
-    private static let gemini_3_5_flash = Model(
-        name: "gemini-3.5-flash",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-
-    private static let gemini_3_1_pro = Model(
-        name: "gemini-3.1-pro-preview",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-
-    private static let gemini_3_pro = Model(
-        name: "gemini-3-pro-preview",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-
-    private static let gemini_3_flash = Model(
-        name: "gemini-3-flash-preview",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-
-    private static let gemini_2_5_flash = Model(
-        name: "gemini-2.5-flash",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-
-    private static let gemini_2_5_flash_lite = Model(
-        name: "gemini-2.5-flash-lite",
-        contextWindowTokens: 1_048_576,
-        maxResponseTokens: 65_536,
-        url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-        api: .gemini,
-        features: [.functionCalling, .streaming],
-        vendor: .gemini
-    )
-
-
-    private static let claude_4_8_opus = Model(
-        name: "claude-opus-4-8",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic,
-        supportsTemperature: false
-    )
-    private static let claude_4_7_opus = Model(
-        name: "claude-opus-4-7",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic,
-        supportsTemperature: false
-    )
-    private static let claude_4_6_opus = Model(
-        name: "claude-opus-4-6",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 128_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-    private static let claude_4_6_sonnet = Model(
-        name: "claude-sonnet-4-6",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 64_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-    private static let claude_4_5_sonnet = Model(
-        name: "claude-sonnet-4-5",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 64_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-    private static let claude_4_5_haiku = Model(
-        name: "claude-haiku-4-5",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 64_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-    private static let claude_4_1_opus = Model(
-        name: "claude-opus-4-1",
-        contextWindowTokens: 200_000,
-        maxResponseTokens: 32_000,
-        url: "https://api.anthropic.com/v1/messages",
-        api: .anthropic,
-        features: [.functionCalling, .streaming],
-        vendor: .anthropic
-    )
-    // Deprecated by DeepSeek on 2026-07-24; remove after that date
-    private static let deepseek_coder = Model(
-        name: "deepseek-coder",
-        contextWindowTokens: 65_536,
-        maxResponseTokens: 8_000,
-        url: "https://api.deepseek.com/v1/chat/completions",
-        api: .deepSeek,
-        features: [.functionCalling, .streaming],
-        vendor: .deepSeek
-    )
-    private static let deepseek_reasoner = Model(
-        name: "deepseek-reasoner",
-        contextWindowTokens: 64_000,
-        maxResponseTokens: 8_000,
-        url: "https://api.deepseek.com/v1/chat/completions",
-        api: .deepSeek,
-        features: [.functionCalling, .streaming],
-        vendor: .deepSeek
-    )
-
-    // MARK: - Apple Intelligence (on-device)
-
-    // Runs through Apple's on-device Foundation Models framework rather than
-    // an HTTP endpoint, so `url` is unused and the request/response is handled
-    // by a bypass in AITermController. Feature-limited on purpose: no
-    // streaming, no function calling, no attachments. Used today only to power
-    // the command safety classifier (see AISafetyClassifierBackend). Token
-    // limits are modest because the on-device model has a small context.
-    private static let appleOnDevice = Model(
-        name: "apple-on-device",
-        contextWindowTokens: 8192,
-        maxResponseTokens: 1024,
-        url: "",
-        api: .appleIntelligence,
-        features: [],
-        vendor: .apple
-    )
-
-    let models: [Model] = [
-        // The first model will be the default.
-        AIMetadata.gpt5_5,
-        AIMetadata.gpt5_5_pro,
-        AIMetadata.gpt5_4,
-        AIMetadata.gpt5_3_codex,
-        AIMetadata.gpt5_2,
-        AIMetadata.gpt5_2_pro,
-        AIMetadata.gpt5_1,
-        AIMetadata.gpt5_1_codex,
-        AIMetadata.gpt5,
-        AIMetadata.gpt5_mini,
-        AIMetadata.gpt5_nano,
-        AIMetadata.gpt4_1,
-        AIMetadata.gpt4o,
-        AIMetadata.gpt4o_mini,
-        AIMetadata.gpt41_mini,
-        AIMetadata.o3,
-        AIMetadata.o3_pro,
-        AIMetadata.o4_mini,
-
-        // MARK: - Google Models
-        AIMetadata.gemini_3_5_flash,
-        AIMetadata.gemini_3_1_pro,
-        AIMetadata.gemini_3_pro,
-        AIMetadata.gemini_3_flash,
-        AIMetadata.gemini_2_5_flash_lite,
-        AIMetadata.gemini_2_5_flash,
-        AIMetadata.gemini_2_5_pro,
-        AIMetadata.gemini_2_0_flash,
-        // Deprecated by Google: returns 404 for new keys. Kept for users
-        // with grandfathered access. Skipped by AIMetadataFixtureCoverageTest.
-        AIMetadata.gemini_2_0_flash_lite,
-
-        // MARK: - DeepSeek Models
-        AIMetadata.deepseek_v4_flash,
-        AIMetadata.deepseek_v4_pro,
-        // Deprecated by DeepSeek on 2026-07-24; remove after that date
-        AIMetadata.deepseek_chat,
-        AIMetadata.deepseek_coder,
-        AIMetadata.deepseek_reasoner,
-
-
-        // MARK: - Anthropic Models
-        AIMetadata.claude_4_8_opus,
-        AIMetadata.claude_4_7_opus,
-        AIMetadata.claude_4_6_opus,
-        AIMetadata.claude_4_6_sonnet,
-        AIMetadata.claude_4_5_sonnet,
-        AIMetadata.claude_4_5_haiku,
-        AIMetadata.claude_4_1_opus,
-
-        // MARK: - Local Models (via Ollama)
-
-        // Llama models
-        // Llama supports function calling only without streaming. I dont want
-        // to expose a "streamingFunctionCalling" feature and add that to the
-        // UI. Some day this restriction may go away. For now, we'll have to
-        // silently offer no tools whwn streaming is on :(
-        // Per https://ollama.readthedocs.io/en/api/#generate-a-chat-completion:
-        //   "tools: tools for the model to use if supported. Requires stream to be set
-        //    to false"
-        // To find places where you need to make changes to adjust this logic search for
-        // #llama-streaming-functions
-        AIMetadata.llama_4_latest,
-        AIMetadata.llama_3_3_latest,
-
-        // MARK: - Apple Intelligence
-        AIMetadata.appleOnDevice,
-    ]
+    // Built-in models offered as presets when creating a manual model. Apple's
+    // on-device backend is excluded because it is a classifier, not a chat model
+    // the user can point a manual configuration at.
+    @objc(presetModels) var presetModels: [AIModel] {
+        return models.filter { $0.vendor != .apple }.map { AIModel($0) }
+    }
 
     @objc(enumerateModels:) func enumerateModels(_ closure: (String, Int, String?) -> ()) {
         for model in models {

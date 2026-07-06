@@ -558,7 +558,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (void)connectionAccepted:(NSNotification *)notification {
     NSString *key = notification.object;
-    DLog(@"Connection accepted with key %@", key);
+    RLog(@"Connection accepted with key %@", key);
     iTermScriptHistoryEntry *entry = nil;
     if (key) {
         entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:key];

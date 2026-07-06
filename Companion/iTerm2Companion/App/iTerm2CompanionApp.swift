@@ -49,7 +49,11 @@ struct iTerm2CompanionApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
-                .onChange(of: scenePhase) { _, newPhase in
+                .onChange(of: scenePhase) { oldPhase, newPhase in
+                    // App lifecycle drives whether the relay socket is torn
+                    // down (iOS closes background sockets), so log every transition
+                    // to attribute disconnects to backgrounding.
+                    companionLog("scenePhase \(oldPhase) -> \(newPhase)")
                     if newPhase == .active {
                         model.checkConnectionOnForeground()
                     }

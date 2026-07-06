@@ -31,6 +31,13 @@ final class iTermWorkgroupInstance: NSObject {
 
     @objc weak var mainSession: PTYSession?
 
+    // How this instance came to exist, e.g. "A trigger in session
+    // <guid> entered this workgroup". Set once by the controller right
+    // after entry/adoption and surfaced to orchestrator agents in the
+    // <workgroups> snapshot, so a chat that sees an unfamiliar
+    // workgroup appear can tell what created it instead of guessing.
+    @objc var provenance: String?
+
     // Config snapshot at entry time.
     let workgroup: iTermWorkgroup
 
@@ -249,7 +256,7 @@ final class iTermWorkgroupInstance: NSObject {
         // loop), and invalidate() is the only thing that terminates a
         // port's born-buried peers. Kill them now instead.
         guard !didTeardown else {
-            DLog("iTermWorkgroupInstance.registerNestedPeerPort: instance torn down mid-spawn; invalidating port for \(hostConfig.uniqueIdentifier)")
+            RLog("iTermWorkgroupInstance.registerNestedPeerPort: instance torn down mid-spawn; invalidating port for \(hostConfig.uniqueIdentifier)")
             port.invalidate()
             // invalidate() deliberately spares the port's leader —
             // which is the host pane, already installed in the window
@@ -289,7 +296,7 @@ final class iTermWorkgroupInstance: NSObject {
         // children at the corpse (same invariant as
         // attachBackPointers).
         guard !didTeardown else {
-            DLog("iTermWorkgroupInstance.registerNonPeer: ignoring \(config.uniqueIdentifier); instance already torn down")
+            RLog("iTermWorkgroupInstance.registerNonPeer: ignoring \(config.uniqueIdentifier); instance already torn down")
             return
         }
         let items = buildNonPeerToolbarItems(for: config)
@@ -414,11 +421,11 @@ final class iTermWorkgroupInstance: NSObject {
     @objc
     func teardown() {
         if didTeardown {
-            DLog("iTermWorkgroupInstance.teardown: reentered for instance=\(instanceUniqueIdentifier); ignoring")
+            RLog("iTermWorkgroupInstance.teardown: reentered for instance=\(instanceUniqueIdentifier); ignoring")
             return
         }
         didTeardown = true
-        DLog("iTermWorkgroupInstance.teardown: workgroup=\(workgroupUniqueIdentifier) instance=\(instanceUniqueIdentifier) mainSession=\((mainSession?.guid).d) peerPort members=[\(peerPort.membersDebugDescription)] nestedPorts=\(nestedPeerPorts.count) nonPeerConfigIDs=\(nonPeerOrderedConfigIDs)")
+        RLog("iTermWorkgroupInstance.teardown: workgroup=\(workgroupUniqueIdentifier) instance=\(instanceUniqueIdentifier) mainSession=\((mainSession?.guid).d) peerPort members=[\(peerPort.membersDebugDescription)] nestedPorts=\(nestedPeerPorts.count) nonPeerConfigIDs=\(nonPeerOrderedConfigIDs)")
         // Captured before invalidate() empties the ports. Their
         // back-pointers are cleared at the end of teardown so a peer
         // that outlives the workgroup (terminated peers aren't
@@ -746,7 +753,7 @@ final class iTermWorkgroupInstance: NSObject {
                 // the copy's teardown would invalidate the original's
                 // port. Treat it as not-restored and spawn fresh.
                 if let stolen = restored {
-                    DLog("iTermWorkgroupInstance.adopt: peer \(peer.uniqueIdentifier) resolves to session \(stolen.guid) already owned by another workgroup; spawning fresh instead")
+                    RLog("iTermWorkgroupInstance.adopt: peer \(peer.uniqueIdentifier) resolves to session \(stolen.guid) already owned by another workgroup; spawning fresh instead")
                 }
                 // Spawn fresh, exactly like enter(): .diff resolves
                 // gitBase at fire time, others substitute now.
@@ -783,7 +790,7 @@ final class iTermWorkgroupInstance: NSObject {
             // instance. Stealing its back-pointer would let THIS
             // instance's teardown close the other workgroup's pane.
             guard session.workgroupInstance == nil else {
-                DLog("iTermWorkgroupInstance.adopt: child \(child.uniqueIdentifier) resolves to session \(session.guid) already owned by \(session.workgroupInstance!.instanceUniqueIdentifier); not adopting it")
+                RLog("iTermWorkgroupInstance.adopt: child \(child.uniqueIdentifier) resolves to session \(session.guid) already owned by \(session.workgroupInstance!.instanceUniqueIdentifier); not adopting it")
                 continue
             }
             switch child.kind {
@@ -805,7 +812,7 @@ final class iTermWorkgroupInstance: NSObject {
     // spawner already installed the session in a tab); a delegate-less
     // stray can only be terminated directly.
     func closeStraySpawn(_ session: PTYSession) {
-        DLog("iTermWorkgroupInstance.closeStraySpawn: closing \(session.guid); teardown ran mid-spawn")
+        RLog("iTermWorkgroupInstance.closeStraySpawn: closing \(session.guid); teardown ran mid-spawn")
         guard session.delegate != nil else {
             session.terminate()
             return
@@ -861,7 +868,7 @@ final class iTermWorkgroupInstance: NSObject {
             // synchronously (the willTerminate observer is live);
             // stop spawning into the dead workgroup.
             guard !didTeardown else {
-                DLog("iTermWorkgroupInstance.spawnNonPeerChildren: aborting; instance torn down mid-spawn")
+                RLog("iTermWorkgroupInstance.spawnNonPeerChildren: aborting; instance torn down mid-spawn")
                 return
             }
             switch child.kind {

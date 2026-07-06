@@ -64,7 +64,7 @@ static NSString *const iTermBaseMinimapViewInvalidateNotification = @"iTermBaseM
         self.hidden = NO;
         [self.layer setNeedsDisplay];
     } else if (!self.hidden) {
-        DLog(@"Hiding %@", self);
+        RLog(@"Hiding %@", self);
         self.hidden = YES;
     }
 }

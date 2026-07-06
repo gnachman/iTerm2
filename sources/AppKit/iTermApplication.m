@@ -178,7 +178,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)it_applicationDidResignActive:(NSNotification *)notification {
-    DLog(@"Resign active");
+    RLog(@"Resign active");
     if (_leader) {
         [self toggleLeader];
     }
@@ -215,7 +215,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)it_modalWindowDidChangeFrom:(NSWindow *)oldValue to:(NSWindow *)newValue {
-    DLog(@"modal window did change from %@ to %@", oldValue, newValue);
+    RLog(@"modal window did change from %@ to %@", oldValue, newValue);
     if (oldValue == nil && newValue != nil) {
         _it_modalWindowOpen = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillShowModalWindow object:nil];
@@ -373,7 +373,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         int digit = [self digitKeyForEvent:event];
         if (digit >= 1 && digit <= 9) {
             PseudoTerminal* termWithNumber = [[iTermController sharedInstance] terminalWithNumber:(digit - 1)];
-            DLog(@"Switching windows");
+            RLog(@"Switching windows");
             if (termWithNumber) {
                 if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
                     iTermProfileHotKey *hotKey =
@@ -468,13 +468,13 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             int numSessions = [orderedSessions count];
             if (digit == 9 && numSessions > 0) {
                 // Modifier+9: Switch to last split pane if there are fewer than 9.
-                DLog(@"Switching to last split pane");
+                RLog(@"Switching to last split pane");
                 ok = YES;
                 return [orderedSessions lastObject];
             }
             if (digit >= 1 && digit <= numSessions) {
                 // Modifier+number: Switch to split pane by number.
-                DLog(@"Switching to split pane");
+                RLog(@"Switching to split pane");
                 ok = YES;
                 return orderedSessions[digit - 1];
             }
@@ -495,13 +495,13 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         int digit = [self digitKeyForEvent:event];
         if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
             // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
-            DLog(@"Switching to last tab");
+            RLog(@"Switching to last tab");
             [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
             return YES;
         }
         if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
             // Command (or selected modifier)+number: Switch to tab by number.
-            DLog(@"Switching tabs");
+            RLog(@"Switching tabs");
             [tabView selectTabViewItemAtIndex:digit-1];
             return YES;
         }
@@ -588,7 +588,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
         // User pressed the hotkey while secure input is enabled so the event
         // tap won't get it. Do what the event tap would do in this case.
-        DLog(@"Directing to hotkey handler");
+        RLog(@"Directing to hotkey handler");
         [[iTermHotKeyController sharedInstance] hotkeyPressed:event];
         return YES;
     }
@@ -955,7 +955,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         // Gotta wait for a spin of the runloop or else it doesn't activate. That's bad news
         // when toggling the preference because all the windows disappear.
         dispatch_async(dispatch_get_main_queue(), ^{
-            DLog(@"uiElement=%@", @(uiElement));
+            RLog(@"uiElement=%@", @(uiElement));
             [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         });
 
@@ -996,9 +996,9 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)activateAppWithCompletion:(void (^)(void))completion {
-    DLog(@"Activate with completion...");
+    RLog(@"Activate with completion...");
     if ([self isActive]) {
-        DLog(@"Application already active. Run completion block synchronously");
+        RLog(@"Application already active. Run completion block synchronously");
         completion();
         return;
     }
@@ -1036,7 +1036,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             return;
         }
         strongSelf->_activated = YES;
-        DLog(@"Application did become active. Invoke completion block");
+        RLog(@"Application did become active. Invoke completion block");
         finish();
     }];
 
@@ -1065,7 +1065,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         DLog(@"rescheduling with interval 0.2");
         [self performSelector:@selector(activateWithRetry:) withObject:finish afterDelay:0.2];
     } else {
-        DLog(@"giving up; running completion anyway so callers don't get stuck");
+        RLog(@"giving up; running completion anyway so callers don't get stuck");
         finish();
     }
 }
@@ -1153,7 +1153,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 
 - (void)toggleLeader {
     if (_leader) {
-        DLog(@"leader up");
+        RLog(@"leader up");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [[NSCursor arrowCursor] set];
         });
@@ -1170,7 +1170,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
                                             keyCode:kVK_Help];
         [self sendEvent:flagUp];
     } else {
-        DLog(@"leader down");
+        RLog(@"leader down");
         [self makeCursorSparkles];
         NSEvent *event = [self currentEvent];
         NSEvent *flagDown = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
@@ -1242,15 +1242,15 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 // Prevent this by canceling the roll-out.
 - (NSModalResponse)runModalForWindow:(NSWindow *)window {
     PseudoTerminal *pseudoterminal = [PseudoTerminal castFrom:[window.sheetParent delegate]];
-    DLog(@"pseudoterminal is %@", pseudoterminal);
+    RLog(@"pseudoterminal is %@", pseudoterminal);
     if (pseudoterminal) {
         iTermProfileHotKey *hotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:pseudoterminal];
-        DLog(@"hotkey is %@", hotkey);
+        RLog(@"hotkey is %@", hotkey);
         if ([hotkey rollOutCancelable]) {
-            DLog(@"cancel roll out");
+            RLog(@"cancel roll out");
             [hotkey cancelRollOut];
         } else if (window.alphaValue < 1) {
-            DLog(@"show hotkey window");
+            RLog(@"show hotkey window");
             [hotkey showHotKeyWindow];
         }
     }

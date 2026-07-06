@@ -53,7 +53,7 @@
     if (target) {
         ((void (*)(id, SEL, NSTimer *))[target methodForSelector:self.selector])(target, self.selector, timer);
     } else {
-        DLog(@"Automatically invalidate timer for selector %@", NSStringFromSelector(self.selector));
+        RLog(@"Automatically invalidate timer for selector %@", NSStringFromSelector(self.selector));
         [timer invalidate];
     }
 }

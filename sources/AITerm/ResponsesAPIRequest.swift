@@ -444,6 +444,10 @@ public struct ResponsesRequestBody: Codable {
                         var type = "summary_text"
                     }
                     var type = "reasoning"
+                    // REQUIRED on input items: replaying a reasoning item
+                    // without a summary key 400s ("Missing required
+                    // parameter: 'input[N].summary'"), even when empty.
+                    var summary: [Summary] = []
                     var encrypted_content: String?
                     enum Status: String, Codable {
                         case in_progress, completed, incomplete
@@ -1018,12 +1022,9 @@ public struct ResponsesRequestBody: Codable {
 
     /// Controls reasoning summaries or encrypted reasoning content.
     public struct ReasoningOptions: Codable {
-        enum Effort: String, Codable {
-            case minimal
-            case low
-            case medium
-            case high
-        }
+        // Defined in AIReasoningTypes.swift so Message.Configuration (compiled
+        // into the iOS Companion app) can share it without this file.
+        typealias Effort = AIReasoningEffort
         var effort: Effort?
 
         /// e.g. ["summary": "auto"] or {"detailed": true}
@@ -1037,11 +1038,9 @@ public struct ResponsesRequestBody: Codable {
     var reasoning: ReasoningOptions?
 
     /// Specifies the latency tier to use for processing the request. This parameter is relevant for customers subscribed to the scale tier service.
-    enum ServiceTier: String, Codable {
-        case auto
-        case `default`
-        case flex
-    }
+    // Defined in AIReasoningTypes.swift so Message.Configuration (compiled into
+    // the iOS Companion app) can share it without this file.
+    typealias ServiceTier = AIServiceTier
     var serviceTier: ServiceTier?
 
     /// Whether to store this response in the conversation history.
@@ -1643,6 +1642,8 @@ struct ResponsesBodyRequestBuilder {
     var hostedTools: HostedTools
     var previousResponseID: String?
     var shouldThink: Bool?
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
+    var serviceTier: ResponsesRequestBody.ServiceTier?
 
     private func transform(message: LLM.Message) -> [ResponsesRequestBody.Input.ItemListEntry] {
         switch message.role {
@@ -1653,19 +1654,23 @@ struct ResponsesBodyRequestBuilder {
             // shape (text content + function_tool_call as siblings) is
             // preserved when the local conversation is fully re-sent
             // (previousResponseID == nil). The previousResponseID==set path
-            // strips all but the last item before sending, so emitting
-            // multiple here is also correct there.
-            return assistantEntries(for: message.body)
+            // strips all but the last message before sending, so emitting
+            // multiple here is also correct there. Reasoning items replay
+            // FIRST: the API requires them to precede the function calls
+            // they produced.
+            return reasoningEntries(for: message)
+                + assistantEntries(for: message.body,
+                                   keepItemIDs: hasReasoningItems(message))
         case .function:
-            if let call = message.function_call {
-                // Function call request
-                guard let args = call.arguments, let id = message.functionCallID, let name = call.name else {
-                    return []
-                }
-                return [.item(.functionToolCall(.init(arguments: args,
-                                                      callID: id.callID,
-                                                      name: name,
-                                                      id: id.itemID)))]
+            if message.function_call != nil {
+                // Function call request. Routed through assistantEntries so
+                // there is exactly ONE functionToolCall construction site and
+                // one id-gating rule; a divergence here would reintroduce the
+                // reasoning-item-missing 400 on one replay path but not the
+                // other.
+                return reasoningEntries(for: message)
+                    + assistantEntries(for: message.body,
+                                       keepItemIDs: hasReasoningItems(message))
             }
             if let callID = message.functionCallID,
                let content = message.content {
@@ -1749,7 +1754,29 @@ struct ResponsesBodyRequestBuilder {
         }
     }
 
-    private func assistantEntries(for body: LLM.Message.Body) -> [ResponsesRequestBody.Input.ItemListEntry] {
+    /// Reasoning items persisted with a message replay verbatim (id +
+    /// encrypted payload), ahead of the message's own entries.
+    private func reasoningEntries(for message: LLM.Message) -> [ResponsesRequestBody.Input.ItemListEntry] {
+        guard let items = message.reasoningItems else { return [] }
+        return items.map { item in
+            .item(.reasoning(.init(id: item.id,
+                                   summary: (item.summary ?? []).map { .init(text: $0) },
+                                   encrypted_content: item.encryptedContent)))
+        }
+    }
+
+    private func hasReasoningItems(_ message: LLM.Message) -> Bool {
+        message.reasoningItems?.isEmpty == false
+    }
+
+    /// `keepItemIDs`: a function call replayed WITH its reasoning items keeps
+    /// its OpenAI item id (the API pairs them); one persisted WITHOUT
+    /// reasoning (a pre-persistence chat, or another vendor's history) must
+    /// drop the item id so the API treats it as developer-provided context
+    /// instead of rejecting it for the missing reasoning item. call_id is
+    /// always kept - it pairs the call with its output.
+    private func assistantEntries(for body: LLM.Message.Body,
+                                  keepItemIDs: Bool) -> [ResponsesRequestBody.Input.ItemListEntry] {
         switch body {
         case .text(let text):
             return [.message(.init(content: .text(text), role: .assistant))]
@@ -1760,9 +1787,9 @@ struct ResponsesBodyRequestBuilder {
             return [.item(.functionToolCall(.init(arguments: args,
                                                   callID: id.callID,
                                                   name: name,
-                                                  id: id.itemID)))]
+                                                  id: keepItemIDs ? id.itemID : nil)))]
         case .multipart(let parts):
-            return parts.flatMap { assistantEntries(for: $0) }
+            return parts.flatMap { assistantEntries(for: $0, keepItemIDs: keepItemIDs) }
         case .attachment(let attachment):
             // Persisted assistant turns can carry attachments. Responses
             // assistant-role messages only accept text/refusal on the wire
@@ -1851,10 +1878,15 @@ struct ResponsesBodyRequestBuilder {
     func body() throws -> Data {
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
-        var itemList = messages.flatMap { transform(message: $0) }
-        if previousResponseID != nil && !itemList.isEmpty {
-            itemList.removeFirst(itemList.count - 1)
-        }
+        // With a usable previousResponseID the server already holds the
+        // history, so only the newest MESSAGE is sent. Truncating by message
+        // (not by wire item) keeps multi-item expansions intact - a message
+        // that fans out to [reasoning, function_call] must never lose its
+        // reasoning half to truncation.
+        let effectiveMessages = (previousResponseID != nil && !messages.isEmpty)
+            ? Array(messages.suffix(1))
+            : messages
+        var itemList = effectiveMessages.flatMap { transform(message: $0) }
         let tools = functions.map { transform(function: $0) } + transformedHostedTools
         var body = ResponsesRequestBody(
             input: .itemList(itemList),
@@ -1864,13 +1896,25 @@ struct ResponsesBodyRequestBuilder {
             stream: stream,
             toolChoice: tools.isEmpty ? ResponsesRequestBody.ToolChoice.none : .auto,
             tools: tools)
-        if let shouldThink {
-            if shouldThink {
-                body.reasoning = .init(effort: .medium, summary: .auto)
-            } else {
-                body.reasoning = .init(effort: .low)
-            }
+        if let reasoningEffort {
+            body.reasoning = .init(
+                effort: reasoningEffort,
+                summary: shouldThink == true && reasoningEffort != .none ? .auto : nil)
+        } else if let shouldThink {
+            body.reasoning = .init(
+                effort: shouldThink ? provider.model.thinkingOnEffort : provider.model.thinkingOffEffort,
+                summary: shouldThink ? .auto : nil)
         }
+        // Ask for the encrypted reasoning payloads (returned regardless of
+        // store; probe-verified). They are persisted with the chat so
+        // tool-call history can be replayed after a reload, when
+        // previous_response_id no longer helps. Gated on the model actually
+        // reasoning: non-reasoning models (gpt-4.1, gpt-4o) 400 the include
+        // with "Encrypted content is not supported with this model".
+        if provider.model.features.contains(.configurableThinking) {
+            body.include = [.reasoningEncryptedContent]
+        }
+        body.serviceTier = serviceTier
         let bodyEncoder = JSONEncoder()
         // OpenAI prompt caching needs a byte-exact prefix match, and the
         // tools array serializes [String: Property] / [String: AnyCodable]

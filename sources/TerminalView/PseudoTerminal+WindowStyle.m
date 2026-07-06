@@ -283,7 +283,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (BOOL)changeToWindowType:(iTermWindowType)newWindowType {
-    DLog(@"%@ %@", self, @(newWindowType));
+    RLog(@"%@ %@", self, @(newWindowType));
     if (newWindowType == self.windowType) {
         DLog(@"Already that type");
         return NO;
@@ -494,7 +494,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     DLog(@"willEnterTraditionalFullScreenMode");
     oldFrame_ = self.window.frame;
     oldFrameSizeIsBogus_ = NO;
-    DLog(@"Set saved window type to %@", @(self.windowType));
+    RLog(@"Set saved window type to %@", @(self.windowType));
     _savedWindowType = self.windowType;
     if (self.contentView.tabBarControlOnLoan) {
         DLog(@"returnTabBarToContentView");
@@ -597,7 +597,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:savedToolbeltWidth];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad didToggleTraditionalFullScreenMode];
-    DLog(@"done toggling trad fullscreen. fullscreen=%@", @(_fullScreen));
+    RLog(@"done toggling trad fullscreen. fullscreen=%@", @(_fullScreen));
 }
 
 - (void)didExitTraditionalFullScreenMode {
@@ -755,7 +755,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
 - (void)toggleFullScreenModeImpl:(id)sender
                       completion:(void (^)(BOOL))completion {
-    DLog(@"toggleFullScreenMode:. window type is %d", self.windowType);
+    RLog(@"toggleFullScreenMode:. window type is %d", self.windowType);
     if (self.toggleFullScreenShouldUseLionFullScreen) {
         [[self ptyWindow] toggleFullScreen:self];
         if (completion) {
@@ -803,7 +803,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 #pragma mark - Lion Full screen
 
 - (void)windowWillEnterFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window will enter lion fullscreen %@", self);
+    RLog(@"Window will enter lion fullscreen %@", self);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -816,14 +816,14 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.contentView didChangeCompactness];
     [self updateTabBarControlIsTitlebarAccessory];
     if (self.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
-        DLog(@"Set saved window type to %@", @(self.windowType));
+        RLog(@"Set saved window type to %@", @(self.windowType));
         _savedWindowType = self.windowType;
         _windowType = WINDOW_TYPE_LION_FULL_SCREEN;
     }
 }
 
 - (void)windowDidEnterFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window did enter lion fullscreen %@", self);
+    RLog(@"Window did enter lion fullscreen %@", self);
 
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
@@ -866,7 +866,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
-    DLog(@"didFinishFullScreenTransitionSuccessfully:%@", @(success));
+    RLog(@"didFinishFullScreenTransitionSuccessfully:%@", @(success));
     NSArray<void (^)(BOOL)> *blocks = [_toggleFullScreenModeCompletionBlocks copy];
     [_toggleFullScreenModeCompletionBlocks removeAllObjects];
     for (void (^block)(BOOL) in blocks) {
@@ -875,7 +875,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowDidFailToEnterFullScreenImpl:(NSWindow *)window {
-    DLog(@"windowDidFailToEnterFullScreen %@", self);
+    RLog(@"windowDidFailToEnterFullScreen %@", self);
     [self didFinishFullScreenTransitionSuccessfully:NO];
     if (!togglingLionFullScreen_) {
         DLog(@"It's ok though because togglingLionFullScreen is off");
@@ -883,13 +883,13 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     }
     if (_fullScreenRetryCount < 3) {
         _fullScreenRetryCount++;
-        DLog(@"Increment retry count to %@ and schedule an attempt after a delay %@", @(_fullScreenRetryCount), self);
+        RLog(@"Increment retry count to %@ and schedule an attempt after a delay %@", @(_fullScreenRetryCount), self);
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            DLog(@"About to retry entering full screen with count %@: %@", @(self->_fullScreenRetryCount), self);
+            RLog(@"About to retry entering full screen with count %@: %@", @(self->_fullScreenRetryCount), self);
             [self.window toggleFullScreen:self];
         });
     } else {
-        DLog(@"Giving up after three retries: %@", self);
+        RLog(@"Giving up after three retries: %@", self);
         togglingLionFullScreen_ = NO;
         _fullScreenRetryCount = 0;
         [self.contentView didChangeCompactness];
@@ -900,7 +900,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowWillExitFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window will exit lion fullscreen %@", self);
+    RLog(@"Window will exit lion fullscreen %@", self);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -923,12 +923,12 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowDidExitFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window did exit lion fullscreen %@", self);
+    RLog(@"Window did exit lion fullscreen %@", self);
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
 
-    DLog(@"Window did exit fullscreen. Set window type to %d", self.savedWindowType);
+    RLog(@"Window did exit fullscreen. Set window type to %d", self.savedWindowType);
     [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
                                                     savedWindowType:self.savedWindowType
                                                    hotkeyWindowType:self.hotkeyWindowType]];

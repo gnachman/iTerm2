@@ -19,8 +19,9 @@ actor CompanionClient {
     }
 
     func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void,
-               onClose: @escaping @Sendable () -> Void) async {
-        await session.start(onEvent: onEvent, onClose: onClose)
+               onClose: @escaping @Sendable () -> Void,
+               onMedia: (@Sendable (CompanionMediaFrame) -> Void)? = nil) async {
+        await session.start(onEvent: onEvent, onClose: onClose, onMedia: onMedia)
     }
 
     /// Liveness check; throws if the mac does not answer.
@@ -46,12 +47,29 @@ actor CompanionClient {
     /// mac's reply from the phone's side. Call FIRST, before any other request.
     /// .selfMustUpgrade -> upgrade the phone app; .peerMustUpgrade -> upgrade the
     /// Mac app.
-    func handshakeVersion() async throws -> CompanionProtocolVersion.Compatibility {
+    struct HandshakeResult {
+        var compatibility: CompanionProtocolVersion.Compatibility
+        /// The mac says the user has opted into phone alerts; if this phone hasn't
+        /// been asked for notification permission yet, it should ask.
+        var wantsNotificationPermission: Bool
+        /// The mac's advertised protocol revision, for feature detection (e.g.
+        /// live streaming requires >= CompanionProtocolVersion.streamingRevision).
+        var peerRevision: Int
+
+        /// Whether the mac supports live session streaming.
+        var supportsStreaming: Bool { peerRevision >= CompanionProtocolVersion.streamingRevision }
+    }
+
+    func handshakeVersion() async throws -> HandshakeResult {
         let reply = try await session.request(.hello(revision: CompanionProtocolVersion.current,
                                                      minimumPeer: CompanionProtocolVersion.minimumPeer))
         switch reply {
-        case .hello(let revision, let minimumPeer):
-            return CompanionProtocolVersion.evaluate(peerRevision: revision, peerMinimumPeer: minimumPeer)
+        case .hello(let revision, let minimumPeer, let wantsNotificationPermission):
+            return HandshakeResult(
+                compatibility: CompanionProtocolVersion.evaluate(peerRevision: revision,
+                                                                 peerMinimumPeer: minimumPeer),
+                wantsNotificationPermission: wantsNotificationPermission ?? false,
+                peerRevision: revision)
         case .error(let error):
             throw error
         default:
@@ -88,6 +106,13 @@ actor CompanionClient {
     /// error) afterwards.
     func deleteChat(chatID: String) async throws {
         try await session.send(.deleteChat(chatID: chatID))
+    }
+
+    /// Mute or unmute a chat. The mac persists the muted set and stops sending
+    /// pushes for muted chats. Fire-and-forget, like deleteChat. Only send to a
+    /// mac at chatMuteRevision or newer.
+    func setChatMuted(chatID: String, muted: Bool) async throws {
+        try await session.send(.setChatMuted(chatID: chatID, muted: muted))
     }
 
     /// Subscribe to a chat and return its existing history.
@@ -186,6 +211,94 @@ actor CompanionClient {
             throw error
         default:
             throw CompanionError(code: .badRequest, message: "Unexpected reply to session content request")
+        }
+    }
+
+    /// Fetch a scrollback tile for the live canvas, addressed by absolute line.
+    func historyTile(streamID: UInt32, firstAbsLine: Int64, lineCount: Int, generationId: UInt32) async throws -> CompanionHistoryTile {
+        let reply = try await session.request(.fetchHistoryTile(streamID: streamID,
+                                                                firstAbsLine: firstAbsLine,
+                                                                lineCount: lineCount,
+                                                                generationId: generationId))
+        switch reply {
+        case .historyTile(let tile):
+            return tile
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to history tile request")
+        }
+    }
+
+    /// Begin a live video stream of a session. The mac replies with the started
+    /// stream, then sends a stream config and a push stream of media frames
+    /// (delivered via the onMedia handler passed to start). Streaming requires a
+    /// mac at CompanionProtocolVersion.streamingRevision or newer.
+    func startSessionStream(guid: String,
+                            params: CompanionStreamParams) async throws -> CompanionStreamStarted {
+        let reply = try await session.request(.startSessionStream(sessionGuid: guid, params: params))
+        switch reply {
+        case .streamStarted(let started):
+            return started
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to start-stream request")
+        }
+    }
+
+    /// Stop a live stream. The mac confirms with an unsolicited streamEnded.
+    func stopSessionStream(streamID: UInt32) async throws {
+        try await session.send(.stopSessionStream(streamID: streamID))
+    }
+
+    /// Ask the mac to emit a keyframe now (on resume, or after a decode error).
+    func requestStreamKeyframe(streamID: UInt32) async throws {
+        try await session.send(.requestKeyframe(streamID: streamID))
+    }
+
+    /// Flow-control feedback: the newest media PTS displayed and the decode-queue
+    /// depth, so the mac can pace end-to-end.
+    func sendStreamAck(streamID: UInt32, lastPTSMilliseconds: UInt64, queueDepth: Int) async throws {
+        try await session.send(.streamAck(streamID: streamID,
+                                          lastPTSMilliseconds: lastPTSMilliseconds,
+                                          queueDepth: queueDepth))
+    }
+
+    /// Drive a live-view selection on the mac (begin/move/end at an absolute point).
+    func sendSelectionGesture(streamID: UInt32,
+                              phase: CompanionSelectionPhase,
+                              mode: CompanionSelectionMode,
+                              point: CompanionSelectionPoint) async throws {
+        try await session.send(.selectionGesture(streamID: streamID, phase: phase,
+                                                 mode: mode, point: point))
+    }
+
+    /// Clear the live-view selection on the mac.
+    func clearSelection(streamID: UInt32) async throws {
+        try await session.send(.clearSelection(streamID: streamID))
+    }
+
+    /// Select the entire terminal content.
+    func selectAll(streamID: UInt32) async throws {
+        try await session.send(.selectAllInStream(streamID: streamID))
+    }
+
+    /// Paste text into the session as input.
+    func pasteText(sessionGuid: String, text: String) async throws {
+        try await session.send(.pasteText(sessionGuid: sessionGuid, text: text))
+    }
+
+    /// Copy the session's current selection; returns the selected text ("" if none).
+    func copySelection(sessionGuid: String) async throws -> String {
+        let reply = try await session.request(.copySelection(sessionGuid: sessionGuid))
+        switch reply {
+        case .selectionText(let text):
+            return text
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to copySelection")
         }
     }
 

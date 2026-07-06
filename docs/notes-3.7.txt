@@ -20,6 +20,31 @@ Major New Features:
   different
   networks, and end-to-end encryption ensures that
   your data is only visible to you.
+  First-time setup is now a guided wizard: it
+  installs the AI and companion plugins, turns on
+  both features with a single password prompt,
+  takes your API key, and walks you through
+  pairing your phone.
+
+- The Companion app can now receive push
+  notifications for terminal alerts. Turn on
+  "Send alerts to paired iPhone" in a profile's
+  Terminal settings (Filter Alerts) to have
+  "alert on next mark" and Post Notification
+  triggers also notify your phone. Pushes are
+  content-free: the phone fetches the text over
+  the encrypted channel, so the relay and Apple
+  never see it or which chat it belongs to.
+
+- The Companion app’s live session video feed
+  now scales its bitrate to the window’s
+  resolution, so large windows stay sharp
+  instead of being pinned to a fixed low rate.
+  Very large windows trade frame rate for
+  sharpness so bandwidth stays reasonable.
+  Advanced settings can tune the feed’s
+  bitrate multiplier and the flow-control
+  back-off thresholds.
 
 - There's a new kind of AI chat called
   "orchestration" which can view all your
@@ -73,6 +98,123 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- In AI chat orchestration mode, references
+  to a session or workgroup now appear as a
+  clickable link, marked with a terminal
+  icon, showing its current name instead of
+  a raw identifier. Clicking the link
+  reveals that session. The tool-call
+  activity lines (e.g. “Reading screen of
+  …”) now use these same links, and show
+  “[defunct session]” once the target is
+  gone instead of leaking a raw GUID.
+
+- A new AI chat created without a session to
+  link to now offers to enable orchestration
+  mode, mirroring the link offer shown when a
+  session is available.
+
+- AI chat history entries can now be deleted
+  from the chat list.
+
+- AI chat tool activity is now rendered as
+  compact, code-formatted output instead of
+  prominent centered status panels.
+
+- AI chat no longer sends unsupported
+  additionalProperties fields in Gemini tool
+  schemas.
+
+- AI chat no longer offers deprecated
+  Gemini 2.0 models in the model picker.
+
+- AI chat no longer offers the shut-down
+  Gemini 3 Pro Preview model or the
+  deprecated Claude 4.0 Opus and Sonnet
+  models in the picker.
+
+- AI settings now let you manage API keys
+  for OpenAI, Anthropic, Gemini, and
+  DeepSeek in one sheet.
+
+- AI chats now keep the provider chosen at
+  creation time. Settings choose the default
+  provider for new chats, while existing
+  chats only offer models from their saved
+  provider.
+
+- Workgroups let you configure a session
+  to be transformed into a group of related
+  sessions — peers, split panes, or tabs —
+  each with its own toolbar. Configure
+  them in Settings > Shortcuts >
+  Workgroups. Still a work in progress.
+
+- Enter Workgroup and Exit Workgroup are
+  also available as URL-regex triggers on
+  browser profiles, so a navigation event
+  can change the active workgroup.
+
+- Workgroup sessions now have a Mode
+  setting. The new Code Review mode shows
+  an in-session prompt overlay with a Start
+  button before the program runs; the
+  entered text is exposed as the variable
+  codeReviewPrompt for swifty interpolation
+  in the command. The Claude Code
+  workgroup’s review peer uses this mode
+  by default.
+
+- The Code Review prompt overlay can save
+  multiple named prompts. A pulldown menu
+  on the overlay loads any saved prompt;
+  a dedicated Manage Prompts… window
+  handles add/rename/edit/reorder/delete.
+  The single Code Review prompt previously
+  managed in Settings > General > AI >
+  Prompts is migrated to a Default entry
+  on first launch and the entry has been
+  removed from Settings.
+
+- The Code Review system prompt is now
+  editable in Settings > General > AI >
+  Prompts. It defaults to the bundled
+  prompt and is passed to Claude Code at
+  launch.
+
+- Switching to a Code Review peer that is
+  still showing its prompt overlay now
+  focuses the prompt text field so you can
+  start typing immediately.
+
+- Workgroups now survive a restart. When
+  the app relaunches (for example after a
+  Sparkle upgrade), an active workgroup is
+  rebuilt: its Diff and Code Review peers,
+  split/tab children, toolbar, and peer
+  switching all come back with their
+  content intact.
+
+- Clippings now keep history. An archive
+  button in the clippings panel snapshots
+  the current list and clears it; back and
+  forward buttons walk the history. The
+  new `it2 session archive-clippings`
+  command and matching `iterm2.archive_
+  clippings` API call do the same. Claude
+  Code reviews now automatically archive
+  before each pass, so each review starts
+  with a clean list while old findings
+  remain reachable.
+
+- The clippings and inline AI chat panels
+  can now be resized by dragging their left
+  edge. The chosen width is remembered per
+  machine.
+
+- The Shell > Workgroups submenu now has
+  an Exit Workgroup item to leave the
+  current session’s workgroup.
 
 - The new Fold All menu item folds everything
   (aside from folds at the very top of history).
@@ -82,6 +224,16 @@ Major New Features:
 - You can now create screenshots including
   highlights and redactions using the Make
   Screenshot menu item.
+
+- The screenshot window adds a Save As… button
+  to choose where the file goes. The Save button
+  writes to the folder set by the
+  screenshotSaveLocation advanced setting, or
+  the Desktop if unset.
+
+- The Python API can now capture a session
+  screenshot with session.async_screenshot(),
+  which returns PNG data.
 
 - Session archives were added. The new Session >
   Archives menu has “Save Archive of Current
@@ -241,6 +393,10 @@ AI Improvements:
   the prior turns from cache instead of paying
   full input price every turn.
 - AI models updated.
+- The built-in AI model list is now
+  data-driven and refreshes in the
+  background, so new models appear
+  without updating iTerm2.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to
   enable. Reasoning summaries appear live in
@@ -431,8 +587,14 @@ Core Improvements:
   so app launch does not hang when there are a
   huge number of crash logs.
 - Prompt for local-network permission on launch.
+- New iTerm2 menu item, Save Retrospective Debug
+  Logs, writes recently captured low-frequency
+  diagnostics to a file you choose, even when
+  debug logging was never turned on.
 
 Settings Improvements:
+- Add an advanced setting to change the relay
+  origin used for companion iOS device pairing.
 - Window frames are remembered per-profile rather
   than globally. When you open a window, the
   default frame will come from a previous window
@@ -485,8 +647,29 @@ Settings Improvements:
   curves, and how long the cursor dwells
   fully visible and fully hidden between
   fades. Off by default.
+- On macOS 27 and later, the Python API
+  runtime now downloads from
+  manifest-new.json by default. Older OS
+  versions continue to use manifest.json.
 
 Bug Fixes:
+- SSH integration now runs the ssh command
+  through your login shell, so dotfiles set up
+  your environment first. A custom SSH_AUTH_SOCK
+  (pointing at an agent that holds your keys) is
+  now honored, fixing “Permission denied
+  (publickey)” failures that only happened with
+  the SSH command type.
+- On macOS Tahoe the tab activity/progress
+  indicator now draws as an outline around the
+  pill-shaped tab instead of a bar that crowded
+  the tab title and status text.
+- Fixed a crash in Replace Selection (e.g.,
+  Replace with Pretty-Printed JSON) when the
+  replacement had more lines than the selection.
+  Also, saved locations (marks, prompt ranges)
+  inside the replaced region are now invalidated
+  instead of drifting onto unrelated lines.
 - tmux integration now parses pane state
   correctly on macOS 26 and later. A new
   system NSString method had shadowed ours
@@ -1506,6 +1689,13 @@ Bug Fixes:
   silenceable, so you can make it
   always save to Downloads or always
   show a save panel. Issue 12897.
+- Settings > Keys > “Force keyboard” gains
+  an option to only force the keyboard
+  locale once per session, the first time
+  a newly created terminal receives
+  keyboard focus, instead of forcing it
+  continuously. Restored sessions are not
+  affected.
 - Fix a bug where a pane could restore
   in your home directory instead of its
   previous working directory after
@@ -1514,3 +1704,186 @@ Bug Fixes:
   value that could not be read back,
   which silently dropped the rest of
   the restored session state.
+- OSC 9;4 progress bars now draw over
+  the profile's background color
+  instead of a fixed black or white
+  background, so they blend with your
+  theme. Issue 12916.
+- Fix OSC 8 file:// hyperlinks whose
+  path mixes percent-encoding with raw
+  non-ASCII characters (such as
+  ripgrep's --hyperlink-format=file
+  output) opening the wrong file. The
+  percent signs were being double-
+  encoded on macOS 14 and later. Issue
+  12914.
+- Fix a bug where a dashed underline on
+  screen, with ligatures enabled, could
+  make box-drawing lines (such as a TUI
+  input box) render dashed instead of
+  solid. Issue 12907.
+- In the Minimal theme, when panes in a
+  tab have two or more different tab
+  colors, each pane's title bar is now
+  tinted with its own tab color so you
+  can tell them apart. When the panes
+  share one color (or none) the title
+  bar keeps blending with the terminal
+  background as before. Issue 12903.
+- Fix dead-key composition (such as US
+  International apostrophe then e) losing
+  its accent under the Kitty keyboard
+  protocol when both “report all keys as
+  escape codes” and “report associated
+  text” are enabled. Issue 12906.
+- AI Chat messages now use a narrower,
+  more readable layout with clearer
+  command and error formatting.
+- AI Chat permission prompts now show
+  proposed commands in code blocks.
+- AI Chat command output now renders
+  as rounded Markdown code blocks.
+- AI Chat terminal-command transcripts
+  now render captured output as rounded
+  code blocks.
+- AI Chat's floating toolbar now omits
+  the chat title and resizes when model
+  controls appear or disappear.
+- AI Chat can select model-supported
+  reasoning effort and OpenAI service
+  tier from the chat toolbar.
+- AI Chat now hides reasoning effort
+  and OpenAI service tier choices for
+  models that do not declare support
+  for them.
+- AI Chat can hide and show its chat
+  list without reopening the window.
+- AI Chat's chat-list toggle now stays
+  at the top of the chat area when a
+  window is first restored.
+- AI Chat history entries can now be
+  selected in groups and deleted with a
+  single confirmation.
+- AI Chat history entries can now be
+  renamed from the chat list.
+- AI Chat no longer sends unsupported
+  low reasoning effort to OpenAI Pro
+  models.
+- AI Chat now reloads past tool runs as
+  transcript text, preventing OpenAI
+  reasoning models from rejecting old
+  function calls after a chat is
+  reopened.
+- AI Chat now closes OpenAI Responses
+  tool calls with an explicit tool
+  output on local tool failures, which
+  prevents follow-up turns from failing
+  with missing function output errors.
+- AI Chat no longer crashes while opening
+  if the toolbar refreshes before the chat
+  view is loaded.
+- AI Chat now keeps API keys separate per
+  provider, so Claude is not sent a key
+  saved for another AI service.
+- AI Chat no longer asks for an API key
+  when the active provider already has
+  one saved in Keychain.
+- AI Chat now checks saved API keys
+  before showing plugin setup warnings.
+- AI Chat now sends Gemini-compatible
+  function schemas for tool arguments
+  that accept multiple JSON types.
+- AI Chat now renders orchestration
+  session command tool calls as command
+  blocks instead of exposing raw session
+  GUIDs and JSON arguments.
+- AI Chat now lets new chats choose their
+  AI provider from the chat toolbar, while
+  keeping the provider fixed after the
+  conversation starts.
+- AI Chat's provider picker now includes
+  local Llama models and a manual model
+  configuration option when configured.
+- AI Chat can now manage multiple manual
+  AI model configurations and select them
+  from the chat model picker.
+- Manual AI model settings now show saved
+  models in a list instead of a pop-up
+  menu.
+- AI Chat now locks the provider picker
+  immediately after a conversation starts.
+- AI Chat now locks the model picker
+  immediately after a conversation starts.
+- AI Chat now shows orchestration terminal
+  command results as raw code blocks and
+  keeps session GUIDs out of user-facing
+  tool summaries.
+- AI settings now choose the default
+  model for new chats from one selector,
+  including saved manual AI models.
+- Fixed a crash when using Undo after
+  closing a split pane that contained a
+  command composer.
+- Closing the inline AI chat panel now
+  returns keyboard focus to the terminal.
+- Companion relay connections now retry
+  with capped backoff after failures,
+  instead of reconnecting (and, during
+  pairing, regenerating the QR code) many
+  times per second when the relay is
+  unreachable, for example due to a bad
+  TLS certificate. Connection errors
+  during pairing are now shown in the
+  pairing window.
+- Companion pairing connection failures
+  now report the underlying error (for
+  example the TLS or HTTP problem)
+  instead of an unhelpful generic
+  PluginError message.
+- The Claude Code integration's session status
+  now stays “working” while background agents
+  or background tasks are still running, so
+  AI chat watchers no longer fire on the idle
+  lulls between subagent phases. Requires
+  Claude Code 2.1.198 or later.
+- AI orchestration: workgroups and sessions in
+  the agent's snapshot now carry provenance,
+  such as which trigger entered a workgroup
+  and which chat's agent created a session,
+  so an agent is not confused by workgroups
+  that other windows or chats created.
+- AI orchestration: session snapshots, screen
+  contents, and watcher status updates now
+  report how long ago the screen last
+  changed, so agents can tell stale content
+  from fresh activity.
+- The AI chat wire log now redacts API keys
+  (in request headers, URLs, and bodies),
+  keeping only a short fingerprint.
+- Chats can now be muted from the iTerm2
+  Buddy app. A muted chat sends no push
+  notifications to the phone, even for
+  permission requests, until it is
+  unmuted. The muted set is remembered
+  on the Mac so it applies even while
+  the phone is unreachable.
+- AI chats reopened after a restart now
+  replay their tool-call history to the
+  model faithfully. Reasoning state
+  (OpenAI encrypted reasoning, Gemini
+  thought signatures) is saved with the
+  chat and replayed, so reasoning models
+  no longer reject reopened chats or
+  invent fake tool results. Chats from
+  older versions keep working through a
+  compatibility path.
+- A chat is now locked to the AI
+  provider it started with, enforced in
+  the model layer as well as the UI.
+  Messages sent from the iTerm2 Buddy
+  app now run on the chat's own model
+  instead of the global default.
+- The iTerm2 companion relay servers moved
+  to new addresses. If you paired an iPhone
+  on an earlier build, iTerm2 now asks you
+  to pair it again so it keeps working.

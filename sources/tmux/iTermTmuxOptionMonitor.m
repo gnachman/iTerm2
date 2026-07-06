@@ -92,7 +92,7 @@
 
 - (void)startTimer {
     if (_subscriptionHandle.isValid) {
-        DLog(@"Not starting timer because there is a valid subscription for %@", self);
+        RLog(@"Not starting timer because there is a valid subscription for %@", self);
         return;
     }
     [_timer invalidate];
@@ -104,7 +104,7 @@
 }
 
 - (void)invalidate {
-    DLog(@"Invalidate %@", self);
+    RLog(@"Invalidate %@", self);
     [_timer invalidate];
     _timer = nil;
     _scope = nil;
@@ -119,7 +119,7 @@
 - (void)update:(NSTimer *)timer {
     [self updateOnce];
     if (_subscriptionHandle.isValid) {
-        DLog(@"Invalidate timer because subscription for %@ is now valid", self);
+        RLog(@"Invalidate timer because subscription for %@ is now valid", self);
         [_timer invalidate];
         _timer = nil;
     }

@@ -275,7 +275,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         command = [command substringFromIndex:lastSlash + 1];
     }
     if ([command isEqualToString:@"git"]) {
-        DLog(@"Bump because command %@ looks like git", wholeCommand);
+        RLog(@"Bump because command %@ looks like git", wholeCommand);
         [self bump];
     }
 }
@@ -593,7 +593,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
 
 - (void)runGitInWindowWithArguments:(NSArray<NSString *> *)args pwd:(NSString *)pwd status:(NSString *)status bury:(BOOL)bury {
     if (_maker.status) {
-        DLog(@"Not running command because status is %@", _maker.status);
+        RLog(@"Not running command because status is %@", _maker.status);
         return;
     }
 

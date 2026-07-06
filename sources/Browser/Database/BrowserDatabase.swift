@@ -132,7 +132,7 @@ actor BrowserDatabase {
                 return false
             }
             if !self.createTables(db: db) {
-                DLog("FAILED TO CREATE BROWSER TABLES, CLOSING BROWSER DB")
+                RLog("FAILED TO CREATE BROWSER TABLES, CLOSING BROWSER DB")
                 db.close()
                 return false
             }
@@ -150,15 +150,15 @@ actor BrowserDatabase {
             db.close()
             db.unlink()
             if !db.lock() {
-                DLog("LOCK FAILED")
+                RLog("LOCK FAILED")
                 return false
             }
             if !db.open() {
-                DLog("OPEN FAILED")
+                RLog("OPEN FAILED")
                 return false
             }
             if !self.createTables(db: db) {
-                DLog("FAILED TO CREATE BROWSER TABLES, CLOSING BROWSER DB")
+                RLog("FAILED TO CREATE BROWSER TABLES, CLOSING BROWSER DB")
                 db.close()
                 return false
             }

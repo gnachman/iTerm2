@@ -63,13 +63,13 @@
 - (void)windowWillTransition:(NSNotification *)notification {
     DLog(@"%@", notification);
     ++_numberOfTransitions;
-    DLog(@"Window will enter/exit full screen. Count is now %ld", _numberOfTransitions);
+    RLog(@"Window will enter/exit full screen. Count is now %ld", _numberOfTransitions);
 }
 
 - (void)windowDidTransition:(NSNotification *)notification {
     DLog(@"%@", notification);
     --_numberOfTransitions;
-    DLog(@"Window did enter/exit full screen. Count is now %ld", _numberOfTransitions);
+    RLog(@"Window did enter/exit full screen. Count is now %ld", _numberOfTransitions);
     if (_numberOfTransitions == 0) {
         [self transitionNextWindowInQueue];
     }
@@ -122,7 +122,7 @@
 }
 
 - (void)makeWindowEnterFullScreen:(NSWindow *)window {
-    DLog(@"Make window enter full screen: %@", window);
+    RLog(@"Make window enter full screen: %@", window);
 
     if ([self haveTransitionWithWindow:window removeIfEntering:YES]) {
         return;
@@ -137,7 +137,7 @@
 }
 
 - (void)makeWindowExitFullScreen:(NSWindow *)window {
-    DLog(@"Make window exit full screen: %@", window);
+    RLog(@"Make window exit full screen: %@", window);
 
     if ([self haveTransitionWithWindow:window removeIfEntering:NO]) {
         return;

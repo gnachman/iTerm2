@@ -517,6 +517,9 @@ it2cli: force
 	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 	cp it2cli/.build/release/it2 it2cli/bin
 
+paranoid-it2cli: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) it2cli
+
 cc-status: force
 	cd cc-status/ && ./build.sh
 
@@ -529,6 +532,9 @@ sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
 	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
+
+paranoid-cc-status: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) cc-status
 
 paranoid-CoreParse: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" CoreParse

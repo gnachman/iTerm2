@@ -88,7 +88,7 @@
             return NO;
         }
 
-        DLog(@"Send %d code", code);
+        RLog(@"Send %d code", code);
         BOOL ok;
         ok = [self writeString:[NSString stringWithFormat:@"HTTP/1.1 %d %@\r\n", code, reason]];
         if (!ok) {
@@ -287,9 +287,9 @@
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc <= 0) {
         if (rc < 0) {
-            DLog(@"Read failed with %s", strerror(errno));
+            RLog(@"Read failed with %s", strerror(errno));
         } else {
-            DLog(@"EOF reached");
+            RLog(@"EOF reached");
         }
         @synchronized(_lock) {
             _stream = nil;
@@ -338,10 +338,10 @@
         }
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {
-        DLog(@"select timed out");
+        RLog(@"select timed out");
         return NO;
     } else if (rc < 0) {
-        DLog(@"Select failed with %s", strerror(errno));
+        RLog(@"Select failed with %s", strerror(errno));
         return NO;
     }
 
@@ -373,7 +373,7 @@
         } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
         if (rc <= 0) {
             if (rc < 0) {
-                DLog(@"Write failed with %s", strerror(errno));
+                RLog(@"Write failed with %s", strerror(errno));
             } else {
                 DLog(@"EOF reached");
             }

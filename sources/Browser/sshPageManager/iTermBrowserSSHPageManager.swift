@@ -41,7 +41,7 @@ class iTermBrowserSSHPageManager {
 
     func handleURLSchemeTask(_ urlSchemeTask: WKURLSchemeTask, url: URL) -> Bool {
         let oid = ObjectIdentifier(urlSchemeTask)
-        DLog("\(oid): handleURLSchemeTask called with \(url)")
+        RLog("\(oid): handleURLSchemeTask called with \(url)")
         guard url.scheme == iTermBrowserSchemes.ssh else {
             return false
         }
@@ -91,7 +91,7 @@ class iTermBrowserSSHPageManager {
                 mimeType: mimeType(for: ext) ?? "application/octet-stream",
                 expectedContentLength: info.size ?? -1,
                 textEncodingName: "utf-8")
-            DLog("\(job.oid): Response's mime type is \(response.mimeType ?? "(nil)") and expectedContentLength is \(response.expectedContentLength)")
+            RLog("\(job.oid): Response's mime type is \(response.mimeType ?? "(nil)") and expectedContentLength is \(response.expectedContentLength)")
             if job.stopped {
                 return
             }
@@ -106,20 +106,20 @@ class iTermBrowserSSHPageManager {
             if job.stopped {
                 return
             }
-            DLog("\(job.oid): did finish")
+            RLog("\(job.oid): did finish")
             urlSchemeTask.didFinish()
         } catch {
             if job.stopped {
                 return
             }
-            DLog("\(job.oid): did fail \(error)")
+            RLog("\(job.oid): did fail \(error)")
             urlSchemeTask.didFailWithError(error)
         }
     }
 
     func stop(urlSchemeTask: WKURLSchemeTask) {
         let oid = ObjectIdentifier(urlSchemeTask)
-        DLog("\(oid): stop called")
+        RLog("\(oid): stop called")
         jobs[oid]?.stop()
         jobs.removeValue(forKey: oid)
     }

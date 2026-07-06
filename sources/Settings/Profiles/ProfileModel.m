@@ -603,7 +603,7 @@ static NSInteger gLessLoggingCount;
 }
 
 - (void)removeBookmarkAtIndex:(int)i {
-    DLog(@"Remove profile at index %d", i);
+    RLog(@"Remove profile at index %d", i);
     assert(i >= 0);
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self identifier:nil]];
     [ProfileModel log:[NSString stringWithFormat:@"%@: Remove bookmark with guid %@",
@@ -623,7 +623,7 @@ static NSInteger gLessLoggingCount;
 }
 
 - (void)removeProfileWithGuid:(NSString*)guid {
-    DLog(@"Remove profile with guid %@", guid);
+    RLog(@"Remove profile with guid %@", guid);
     int i = [self indexOfProfileWithGuid:guid];
     DLog(@"Index is %d", i);
     if (i >= 0) {

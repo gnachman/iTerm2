@@ -288,7 +288,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     case .success(let updated):
                         delegate?.session(session: self, didProduceText: updated.messages.last!.content ?? "")
                     case .failure(let error):
-                        DLog("\(error)")
+                        RLog("\(error)")
                         delegate?.session(session: self, didProduceText: "There was an error: \(error.localizedDescription)")
                     }
                 }
@@ -303,7 +303,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     self.conversation = updated
                     delegate?.session(session: self, didProduceAdditionalText: updated.messages.last!.content ?? "")
                 case .failure(let error):
-                    DLog("\(error)")
+                    RLog("\(error)")
                     delegate?.session(session: self, didProduceAdditionalText: "There was an error: \(error.localizedDescription)")
                 }
             }
@@ -331,7 +331,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 case .success(let updated):
                     self.conversation = updated
                 case .failure(let error):
-                    DLog("\(error)")
+                    RLog("\(error)")
                 }
                 closure(result)
                 dequeueIfPossible()

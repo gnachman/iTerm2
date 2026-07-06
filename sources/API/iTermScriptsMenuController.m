@@ -291,7 +291,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)didFindScriptArchive:(NSString *)file autolaunch:(BOOL)autolaunch {
-    DLog(@"didFindScriptArchive:%@ autolaunch:%@", file, @(autolaunch));
+    RLog(@"didFindScriptArchive:%@ autolaunch:%@", file, @(autolaunch));
     static NSMutableSet<NSString *> *alreadyFound;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -487,7 +487,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)importDidFinishWithErrorMessage:(nullable NSString *)errorMessage
                                location:(NSURL *)location
                             originalURL:(NSURL *)url {
-    DLog(@"error=%@ location=%@ url=%@", errorMessage, location, url);
+    RLog(@"error=%@ location=%@ url=%@", errorMessage, location, url);
     if (errorMessage) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Could Not Install Script";
@@ -593,13 +593,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
-    DLog(@"launch path=%@ args=%@", fullPath, arguments);
+    RLog(@"launch path=%@ args=%@", fullPath, arguments);
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath
                                                      checkForMain:YES
                                                     checkForSaved:YES];
     if (venv) {
         if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
-            DLog(@"Not launching %@ because the API is not enabled", fullPath);
+            RLog(@"Not launching %@ because the API is not enabled", fullPath);
             return;
         }
         if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
@@ -618,7 +618,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     if ([[fullPath pathExtension] isEqualToString:@"py"]) {
         if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
-            DLog(@"Not launching %@ because the API is not enabled", fullPath);
+            RLog(@"Not launching %@ because the API is not enabled", fullPath);
             return;
         }
         if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
@@ -781,7 +781,7 @@ NS_ASSUME_NONNULL_BEGIN
                                   picker:(iTermScriptTemplatePickerWindowController *)picker
                             dependencies:(NSArray<NSString *> *)dependencies
                            pythonVersion:(nullable NSString *)pythonVersion {
-    DLog(@"url=%@ deps=%@ pythonVersion=%@ selectedEnvironment=%@", url, dependencies, pythonVersion, @(picker.selectedEnvironment));
+    RLog(@"url=%@ deps=%@ pythonVersion=%@ selectedEnvironment=%@", url, dependencies, pythonVersion, @(picker.selectedEnvironment));
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
         NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];

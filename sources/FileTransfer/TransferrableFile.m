@@ -163,7 +163,7 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 }
 
 - (void)didFailWithError:(NSString *)error {
-    DLog(@"didFailWithError:%@", error);
+    RLog(@"didFailWithError:%@", error);
     @synchronized(self) {
         if (_status != kTransferrableFileStatusFinishedWithError) {
             _status = kTransferrableFileStatusFinishedWithError;

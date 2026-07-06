@@ -137,6 +137,6 @@ final class CompanionPresenceController: NSObject {
     }
 
     @objc private func openSettings() {
-        CompanionPairingWindowController.shared.showAndBeginPairing()
+        CompanionOnboardingRouter.openSettingsOrWizard()
     }
 }

@@ -62,7 +62,7 @@ static NSString *const iTermToolWebViewLogger = @"logger";
             @try {
                 [prefs setValue:@YES forKey:@"developerExtrasEnabled"];
             } @catch (NSException *exception) {
-                DLog(@"When setting developerExtrasEnabled: %@", exception);
+                RLog(@"When setting developerExtrasEnabled: %@", exception);
             }
 
             WKWebView *webView = [[WKWebView alloc] initWithFrame:self.bounds
@@ -123,7 +123,7 @@ static NSString *const iTermToolWebViewLogger = @"logger";
 
 - (void)loadURL {
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:_url];
-    DLog(@"%@: load %@", self, _url);
+    RLog(@"%@: load %@", self, _url);
     [_webView loadRequest:request];
 }
 

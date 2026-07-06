@@ -256,7 +256,7 @@ class iTermBrowserAdblockManager: NSObject {
     }
     
     private func handleFailure(_ error: Error) {
-        DLog("Adblock update failed: \(error.localizedDescription)")
+        RLog("Adblock update failed: \(error.localizedDescription)")
 
         // Check if we should notify user about prolonged failures
         checkForProlongedFailure()

@@ -177,7 +177,7 @@ NSString *kStateDictPaneKeyMode = @"pane_key_mode";  // tmux 3.5+; reports per-p
             if (objectToStore) {
                 [result setObject:objectToStore forKey:key];
             } else {
-                DLog(@"Ignoring nil value for key \"%@\" in tmux state \"%@\"", key, kvp);
+                RLog(@"Ignoring nil value for key \"%@\" in tmux state \"%@\"", key, kvp);
             }
         } else if ([kvp length] > 0) {
             NSLog(@"Bogus result in control command: \"%@\"", kvp);

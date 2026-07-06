@@ -195,7 +195,7 @@ final class OrchestratorClient {
                 toChatID: chatID,
                 partial: false)
         } catch {
-            DLog("OrchestratorClient: failed to publish tool response: \(error)")
+            RLog("OrchestratorClient: failed to publish tool response: \(error)")
         }
     }
 

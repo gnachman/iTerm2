@@ -409,7 +409,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                 byExtendingSelection:NO];
         [_tableView scrollRowToVisible:index];
     } else if (!self.dataSourceProvider.authenticated) {
-        DLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
+        RLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
     } else {
         DLog(@"failed to find %@ among %@", name, [[_entries mapWithBlock:^id _Nullable(id<PasswordManagerAccount>  _Nonnull anObject) {
@@ -1418,7 +1418,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
                 }];
             }
         } else {
-            DLog(@"Auth failed. Close window.");
+            RLog(@"Auth failed. Close window.");
             [self closeOrEndSheet];
         }
     }];
@@ -1427,7 +1427,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 - (void)didBecomeReady {
     DLog(@"didBecomeReady");
     if (_accountNameToSelectAfterAuthentication) {
-        DLog(@"will select %@", _accountNameToSelectAfterAuthentication);
+        RLog(@"will select %@", _accountNameToSelectAfterAuthentication);
         [self selectAccountName:_accountNameToSelectAfterAuthentication];
         _accountNameToSelectAfterAuthentication = nil;
     } else {
@@ -1475,7 +1475,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
         [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
             [weakSelf decrBusy];
             if (error) {
-                DLog(@"passwordForRow: return nil, keychain gave error %@", error);
+                RLog(@"passwordForRow: return nil, keychain gave error %@", error);
 
                 NSAlert *alert = [[NSAlert alloc] init];
                 alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@",
@@ -1873,7 +1873,7 @@ static NSArray<NSString *> *gBrowserCachedCombinedAccountNames;
 
 - (void)reallySelectAccountName:(NSString *)name {
     if (!self.dataSourceProvider.authenticated) {
-        DLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
+        RLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
         return;
     }
