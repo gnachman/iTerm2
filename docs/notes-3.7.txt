@@ -662,6 +662,13 @@ Settings Improvements:
   versions continue to use manifest.json.
 
 Bug Fixes:
+- AI chat: fixed a race where a streamed tool
+  call could be dispatched with empty arguments
+  when the response completed before its argument
+  chunks were consumed. The agent would loop
+  retrying the same call, and the turn could end
+  with an empty message. Finalization now
+  reconciles against the full response body.
 - SSH integration now runs the ssh command
   through your login shell, so dotfiles set up
   your environment first. A custom SSH_AUTH_SOCK

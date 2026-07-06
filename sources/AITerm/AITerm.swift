@@ -70,6 +70,13 @@ class AITermController {
     private var consecutiveToolFailures = 0
     static let maxConsecutiveToolFailures = 6
 
+    // Total assistant text surfaced to the delegate (via didStreamUpdate
+    // deltas) during the current streaming response. Reset at the start of
+    // each request round-trip. Used at stream finalization to stream only the
+    // un-surfaced tail if the completion callback raced ahead of the last text
+    // chunks (see the `final` branch of parseStreamingResponse).
+    private var streamedText = ""
+
     var truncate: (([Message]) -> ([Message]))?
 
     struct Registration {
@@ -174,11 +181,13 @@ class AITermController {
     }
 
     func request(query: String, stream: Bool = false) {
+        streamedText = ""
         state = .initialized(query: .completion(query), stream: stream)
         handle(event: .begin)
     }
 
     func request(messages: [Message], stream: Bool) {
+        streamedText = ""
         state = .initializedMessages(messages: messages, stream: stream)
         handle(event: .begin)
     }
@@ -781,7 +790,40 @@ class AITermController {
         }
         var accumulatingMessage = parserState.message
         if final {
-            if let functionCall = accumulatingMessage.function_call {
+            // The incremental `.word` channel can race the completion
+            // callback: the AI plugin may deliver the final WebResponse
+            // before the last stream chunks have been consumed, leaving
+            // `accumulatingMessage` missing trailing events. The most
+            // damaging case is a tool_use block whose `input_json_delta`
+            // argument fragments arrive only in that tail — the call would
+            // then dispatch with empty `{}` arguments and the tool rejects it
+            // as malformed. `data` here is the COMPLETE response body, so
+            // reparse it and prefer whichever message carries the more
+            // complete tool call before dispatching.
+            let authoritative = finalMessageByReparsingCompleteBody(data)
+            let incrementalCall = accumulatingMessage.function_call
+            let authoritativeCall = authoritative?.function_call
+            let preferAuthoritativeCall: Bool
+            if let authoritativeCall {
+                if let incrementalCall {
+                    // Same call; the incremental args may be truncated by the
+                    // race, so take the body's copy when it is longer.
+                    preferAuthoritativeCall =
+                        (authoritativeCall.arguments?.count ?? 0) > (incrementalCall.arguments?.count ?? 0)
+                } else {
+                    // The completion beat the tool_use block entirely: the
+                    // incremental accumulator has no call at all and would
+                    // otherwise finalize as a (truncated) text turn, ending
+                    // the conversation. The body has the real call.
+                    preferAuthoritativeCall = true
+                }
+            } else {
+                preferAuthoritativeCall = false
+            }
+
+            if preferAuthoritativeCall, let authoritative, let functionCall = authoritative.function_call {
+                doFunctionCall(authoritative, call: functionCall)
+            } else if let functionCall = incrementalCall {
                 doFunctionCall(accumulatingMessage, call: functionCall)
             } else {
                 // For streaming non-tool-call replies, the accumulator has
@@ -790,9 +832,21 @@ class AITermController {
                 // attach it to the persisted assistant Message. Tool-call
                 // paths preserve reasoning via doFunctionCall (its
                 // `amended.append(message)` keeps reasoningContent intact)
-                // so they don't need this hook.
-                if let reasoning = accumulatingMessage.reasoningContent, !reasoning.isEmpty {
+                // so they don't need this hook. Prefer the authoritative
+                // reasoning from the full body in case the tail was raced.
+                if let reasoning = authoritative?.reasoningContent ?? accumulatingMessage.reasoningContent,
+                   !reasoning.isEmpty {
                     delegate?.aitermController(self, didReceiveReasoning: reasoning)
+                }
+                // If the completion raced ahead of the streamed text deltas,
+                // the UI bubble is missing the tail (in the worst case it is
+                // empty). Surface whatever text was not yet streamed live.
+                if let fullText = authoritative?.body.maybeContent, fullText.count > streamedText.count {
+                    let tail = String(fullText.dropFirst(streamedText.count))
+                    if !tail.isEmpty {
+                        streamedText += tail
+                        delegate?.aitermController(self, didStreamUpdate: tail)
+                    }
                 }
                 consecutiveToolFailures = 0
                 delegate?.aitermController(self, didStreamUpdate: nil)
@@ -815,6 +869,7 @@ class AITermController {
             case .text(let string):
                 if !string.isEmpty {
                     DLog("drain sending \(string). Accumulating message is: \(accumulatingMessage)")
+                    self.streamedText += string
                     self.delegate?.aitermController(self, didStreamUpdate: string)
                 }
                 DLog("Reset accumulating message to uninitialized")
@@ -922,6 +977,64 @@ class AITermController {
 
         DLog("parseStreamingResponse will return updated state with accumulating message:\n\(accumulatingMessage)")
         return StreamParserState(message: accumulatingMessage, buffer: rest.data(using: .utf8)!)
+    }
+
+    // Reparse a COMPLETE streamed response body (every SSE event) into the
+    // single logical assistant message it represents, with no delegate side
+    // effects. Used only at stream finalization to recover content the
+    // incremental `.word` channel may have missed when the completion
+    // callback raced ahead of the last chunks. Mirrors the accumulation in
+    // parseStreamingResponse: append each parsed choice, and on a
+    // non-mergeable part (e.g. a text preamble followed by a tool_use block)
+    // start a fresh message — the earlier part was already surfaced live, so
+    // only the final logical part is authoritative here. Returns nil if the
+    // provider has no streaming parser or the body yields nothing.
+    private func finalMessageByReparsingCompleteBody(_ data: Data) -> LLM.Message? {
+        guard let llmProvider,
+              let splitter = llmProvider.streamingResponseParser(stream: true) else {
+            return nil
+        }
+        let string = String(data: data, encoding: .utf8) ?? ""
+        var (first, rest) = splitter.splitFirstJSONEvent(from: string)
+        var message = LLM.Message(role: nil)
+        var started = false
+        while let event = first {
+            if event == "[DONE]" {
+                break
+            }
+            if let eventData = event.data(using: .utf8),
+               var parser = llmProvider.streamingResponseParser(stream: true),
+               let response = try? parser.parse(data: eventData),
+               !response.ignore {
+                for choice in response.choiceMessages {
+                    if let role = choice.role {
+                        message.role = role
+                    }
+                    if let reasoning = choice.reasoningContent, !reasoning.isEmpty {
+                        message.reasoningContent = (message.reasoningContent ?? "") + reasoning
+                    }
+                    if let items = choice.reasoningItems, !items.isEmpty {
+                        message.reasoningItems = (message.reasoningItems ?? []) + items
+                    }
+                    if !started {
+                        message.body = choice.body
+                        started = true
+                    } else if !message.tryAppend(choice.body) {
+                        message = LLM.Message(
+                            responseID: previousResponseID,
+                            role: choice.role,
+                            body: choice.body,
+                            reasoningContent: message.reasoningContent,
+                            reasoningItems: message.reasoningItems)
+                    }
+                }
+            }
+            guard let parser = llmProvider.streamingResponseParser(stream: true) else {
+                break
+            }
+            (first, rest) = parser.splitFirstJSONEvent(from: rest)
+        }
+        return started ? message : nil
     }
 
     private func parseNonStreamingResponse(data: Data) {
