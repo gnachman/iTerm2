@@ -91,6 +91,13 @@ Major New Features:
   code review or perform in-terminal diffs of a
   git repo.
 
+- Background images can now be videos (mp4 or
+  mov). Videos play muted in a seamless loop
+  and respect the blend and scaling settings.
+  They work with both the GPU and legacy
+  renderers, and panes showing the same video
+  share one decoder.
+
 - Clippings is a new side panel that contains a
   list of items formatted as markdown. They're a
   useful place to store text that you need
