@@ -63,6 +63,13 @@ NS_ASSUME_NONNULL_BEGIN
     // Set when validMutationCertificate clones buffer for a copy (self.owner != nil).
     // Used to prevent incremental merge for diverged copies.
     BOOL _hasDiverged;
+
+    // The value of _mutationCounter when bidi info was last brought up to date by
+    // reloadBidiInfo. Since every content mutation bumps _mutationCounter and bidi
+    // is a pure function of the raw content, an equal value means bidi is still
+    // valid and reloadBidiInfo can return in O(1) without recomputing anything.
+    // -1 (never computed) forces the first reload to run.
+    int64_t _bidiValidForMutationCounter;
 }
 
 // These are synchronized on [LineBlock class]. Sample graph:

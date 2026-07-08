@@ -281,6 +281,7 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
         _guid = [[NSUUID UUID] UUIDString];
     }
     cached_numlines_width = -1;
+    _bidiValidForMutationCounter = -1;  // Never computed; force the first reload.
     _metadataArray = [[LineBlockMetadataArray alloc] initWithCapacity:cll_capacity
                                                           useDWCCache:gEnableDoubleWidthCharacterLineCache];
     assert(_metadataArray != nil);
@@ -507,6 +508,9 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
         // Preserve these so delta encoding will continue to work when you encode a copy.
         theCopy->_generation = _generation;
         theCopy->_mutationCounter = _mutationCounter;
+        // The copy shares the buffer and bidi metadata, so its bidi is valid for
+        // the same mutation counter.
+        theCopy->_bidiValidForMutationCounter = _bidiValidForMutationCounter;
         theCopy.hasBeenCopied = YES;
 
         return theCopy;
@@ -534,6 +538,7 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
     theCopy->cached_numlines_width = cached_numlines_width;
     theCopy->_generation = _generation;
     theCopy->_mutationCounter = _mutationCounter;
+    theCopy->_bidiValidForMutationCounter = _bidiValidForMutationCounter;
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
     theCopy.hasBeenCopied = YES;
 
@@ -1988,9 +1993,23 @@ firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
 }
 
 - (void)reloadBidiInfo {
-    // Skip entirely if no line needs bidi work (all LTR with nil bidi), so LTR
-    // blocks don't COW-clone the buffer or advance the identity on every commit.
+    // O(1) fast path. Bidi is a pure function of the raw content, and every content
+    // mutation bumps _mutationCounter (iTermLineBlockDidChange and
+    // iTermLineBlockDidMutateInPlace both do), so if it has not moved since bidi was
+    // last brought up to date the stored bidi and per-cell rtlStatus are still
+    // valid. reloadBidiInfo runs on every commit (commitLastBlock); without this an
+    // RTL block would recompute bidi and COW-clone its whole character buffer every
+    // commit even when nothing changed, defeating the per-row draw cache for exactly
+    // the RTL sessions doing bidi work and churning a full-buffer allocation per
+    // frame.
+    if (_mutationCounter == _bidiValidForMutationCounter) {
+        return;
+    }
+    // Something changed. Skip the (COW-cloning) reload if no line has RTL content or
+    // a stored bidi to clear, but record the watermark so repeated commits of an
+    // unchanged all-LTR block still take the O(1) path above.
     if (![self anyLineNeedsBidiReload]) {
+        _bidiValidForMutationCounter = _mutationCounter;
         return;
     }
     [_metadataArray willMutate];
@@ -2003,22 +2022,11 @@ firstSurvivorPartialOffset:(int *)firstSurvivorPartialOffset {
         [self reallyReloadBidiInfo];
     });
     // Rewrites rtlStatus and (re)computes bidi without going through
-    // iTermLineBlockDidChange, so bump the content-identity counter like the
-    // other in-place mutators. Reordering affects rendering, and this runs on
-    // the sync/display path (commitLastBlock), not just on resize.
-    //
-    // LIMITATION (follow-up): this bumps whenever anyLineNeedsBidiReload is true,
-    // even when the recomputed bidi is byte-identical, and the ModifyLineBlock
-    // above COW-clones the character buffer every time when a snapshot exists. So
-    // a block that legitimately contains RTL advances its identity and clones its
-    // buffer on every commit, meaning its wrapped rows never hit the per-row cache
-    // (cache defeat) and an RTL session churns memory per frame. The correct fix
-    // is to compute bidi ONCE and annotate/store/bump only when the bidi object
-    // OR the cell rtlStatus/rtlFound actually differs (a naive "compare the bidi
-    // object" gate is wrong: it misses the rtlStatus annotation, so an
-    // eraseRTLStatusInAllCharacters'd block on restore would render LTR). Left as
-    // a scheduled follow-up since output stays correct.
+    // iTermLineBlockDidChange, so bump the content-identity counter like the other
+    // in-place mutators.
     iTermLineBlockDidMutateInPlace(self, "reload bidi");
+    // Bidi is now current as of the just-bumped mutation counter.
+    _bidiValidForMutationCounter = _mutationCounter;
 }
 
 - (void)setBidiForLastRawLine:(iTermBidiDisplayInfo *)bidi {
