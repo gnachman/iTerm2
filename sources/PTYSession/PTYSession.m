@@ -3589,7 +3589,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Request that the session close. It may or may not be undoable. Only undoable terminations support
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
-    DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    RLog(@"terminate called from %@", [NSThread callStackSymbols]);
     if (self.isBrowserSession) {
         [self terminateBrowser];
     }
@@ -3615,7 +3615,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         if (n == 0) {
             // The last session in this tab closed so check if the client has
             // changed size
-            DLog(@"Last session in tab closed. Check if the client has changed size");
+            RLog(@"Last session in tab closed. Check if the client has changed size");
             [_tmuxController fitLayoutToWindows];
         }
         _tmuxStatusBarMonitor.active = NO;
@@ -3651,7 +3651,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_liveSession terminate];
     }
 
-    DLog(@"  terminate: exited = YES");
+    RLog(@"  terminate: exited = YES");
     [self setExited:YES];
     [_view retain];  // hardstop and revive will release this.
     if (undoable) {
@@ -4389,9 +4389,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)brokenPipeWithError:(NSString *)message {
-    DLog(@"  brokenPipe %@ task=%@ message=%@\n%@", self, self.shell, message, [NSThread callStackSymbols]);
+    RLog(@"  brokenPipe %@ task=%@ message=%@\n%@", self, self.shell, message, [NSThread callStackSymbols]);
     if (_exited) {
-        DLog(@"  brokenPipe: Already exited");
+        RLog(@"  brokenPipe: Already exited");
         return;
     }
     // Ensure we don't leak the monoserver unix domain socket file descriptor.
@@ -4406,7 +4406,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                               [_delegate tabNumber]]];
     }
 
-    DLog(@"  brokenPipe: set exited = YES");
+    RLog(@"  brokenPipe: set exited = YES");
     [self cleanUpAfterBrokenPipe];
 
     if (_shouldRestart) {
@@ -11945,10 +11945,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 
     if (self.filter.length) {
-        DLog(@"stopFiltering");
+        RLog(@"stopFiltering");
         [self stopFiltering];
     } else {
-        DLog(@"Unzooming");
+        RLog(@"Unzooming");
         [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     }
     return YES;

@@ -514,10 +514,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         screenNumber == -1) {
         NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:defaultScreen];
         if (n == NSNotFound) {
-            DLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
+            RLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
             return 0;
         } else {
-            DLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
+            RLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
             return n;
         }
     } else if (screenNumber == -2) {
@@ -537,11 +537,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     NSScreen *screen = nil;
     if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
-        DLog(@"Screen number %d is out of range [0,%d] so using 0",
+        RLog(@"Screen number %d is out of range [0,%d] so using 0",
              screenNumber, (int)[[NSScreen screens] count]);
         [_windowPositioner setAnchoredScreenNumber:-1];
     } else if (screenNumber >= 0) {
-        DLog(@"Selecting screen number %d", screenNumber);
+        RLog(@"Selecting screen number %d", screenNumber);
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
         [_windowPositioner setAnchoredScreenNumber:screenNumber];
     }
@@ -669,12 +669,12 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                 double yoffset = initialFrame.origin.y - basePoint.y;
                 NSPoint destPoint = [screen visibleFrame].origin;
 
-                DLog(@"Assigned screen has origin %@, destination screen has origin %@", NSStringFromPoint(baseScreen.visibleFrame.origin),
+                RLog(@"Assigned screen has origin %@, destination screen has origin %@", NSStringFromPoint(baseScreen.visibleFrame.origin),
                      NSStringFromPoint(destPoint));
                 destPoint.x += xoffset;
                 destPoint.y += yoffset;
                 initialFrame.origin = destPoint;
-                DLog(@"New initial frame is %@", NSStringFromRect(initialFrame));
+                RLog(@"New initial frame is %@", NSStringFromRect(initialFrame));
                 // Make sure the top-right corner of the window is on the screen too
                 NSRect destScreenFrame = [screen visibleFrame];
                 double xover = destPoint.x + initialFrame.size.width - (destScreenFrame.origin.x + destScreenFrame.size.width);
@@ -685,7 +685,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                 if (yover > 0) {
                     destPoint.y -= yover;
                 }
-                DLog(@"after adjusting top right, initial origin is %@", NSStringFromPoint(destPoint));
+                RLog(@"after adjusting top right, initial origin is %@", NSStringFromPoint(destPoint));
                 [[self window] setFrameOrigin:destPoint];
             }
             break;
@@ -716,10 +716,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                            savedWindowType:savedWindowType
                                           hotkeyWindowType:hotkeyWindowType];
     }
-    DLog(@"Initialize saved window type to %@", @(savedWindowType));
+    RLog(@"Initialize saved window type to %@", @(savedWindowType));
     _savedWindowType = savedWindowType;
 
-    DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
+    RLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     // This is necessary to do here because the collection behavior is computed in setWindowWithWindowType,
     // and the window may become full screen thereafter. That's no good for a hotkey window.to
     _hotkeyWindowType = hotkeyWindowType;
@@ -849,8 +849,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _shortcutAccessoryViewController.ordinal = number_ + 1;
     _shortcutAccessoryViewController.titlebarStyle = [iTermWindowShortcutLabelTitlebarAccessoryViewController titlebarStyleForWindowType:self.windowType];
 
-    DLog(@"Creating window with profile:%@", profile);
-    DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"Creating window with profile:%@", profile);
+    RLog(@"%@\n%@", self, [NSThread callStackSymbols]);
     if ([iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_WINDOW_TITLE inProfile:profile]) {
         NSString *override = [iTermProfilePreferences stringForKey:KEY_CUSTOM_WINDOW_TITLE inProfile:profile];
         [self.scope setValue:override.length ? override : @" " forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
@@ -872,7 +872,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     };
     [self updateVariables];
     _windowNeedsInitialSize = YES;
-    DLog(@"Done initializing PseudoTerminal %@", self);
+    RLog(@"Done initializing PseudoTerminal %@", self);
 }
 
 - (void)updateVariables {
@@ -1170,7 +1170,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)notifyTmuxOfWindowResize {
-    DLog(@"notifyTmuxOfWindowResize from:\n%@", [NSThread callStackSymbols]);
+    RLog(@"notifyTmuxOfWindowResize from:\n%@", [NSThread callStackSymbols]);
     NSArray *tmuxControllers = [self uniqueTmuxControllers];
     if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
         for (TmuxController *controller in tmuxControllers) {
@@ -1185,7 +1185,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)windowIsResizing {
     const BOOL result = togglingFullScreen_ || liveResize_ || togglingLionFullScreen_ || exitingLionFullscreen_ || zooming_;
-    DLog(@"togglingFullScreen=%@ liveResize=%@ togglingLionFullscreen=%@ exitingLionFullscreen=%@ zooming=%@ DISPOSITION=%@ self=%@",
+    RLog(@"togglingFullScreen=%@ liveResize=%@ togglingLionFullscreen=%@ exitingLionFullscreen=%@ zooming=%@ DISPOSITION=%@ self=%@",
          @(togglingFullScreen_), @(liveResize_), @(togglingLionFullScreen_), @(exitingLionFullscreen_), @(zooming_), @(result), self);
     return result;
 }
@@ -1314,7 +1314,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // toggling clippings (or any other gutter panel) doesn't bloat the window
 // past the screen edge.
 - (void)rightExtraDidChangeImpl {
-    DLog(@"rightExtraDidChangeImpl");
+    RLog(@"rightExtraDidChangeImpl");
     // actualRightExtra/desiredRightExtra live on each SessionView; capture
     // before updateSessionScrollbars syncs them so we can decide whether the
     // window grow is even visible to the user. Resizing the window for a
@@ -1448,7 +1448,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification {
-    DLog(@"tmuxFontDidChange");
+    RLog(@"tmuxFontDidChange");
     PTYSession *session = notification.object;
     if ([[self uniqueTmuxControllers] count]) {
         if ([self.tabs anyWithBlock:^BOOL(PTYTab *tab) {
@@ -1585,7 +1585,7 @@ ITERM_WEAKLY_REFERENCEABLE
     const double fractionOnScreen = [NSScreen fractionOfFrameOnAnyScreen:self.window.frame
                                                        recommendedOrigin:&recommendedOrigin];
     if (fractionOnScreen < 0.05) {
-        DLog(@"Frame %@ is %@ percent onscreen. Move to %@",
+        RLog(@"Frame %@ is %@ percent onscreen. Move to %@",
              NSStringFromRect(self.window.frame),
              @(fractionOnScreen),
              NSStringFromPoint(recommendedOrigin));
@@ -1621,22 +1621,22 @@ ITERM_WEAKLY_REFERENCEABLE
     const int anchoredScreenNumber = [_windowPositioner getAnchoredScreenNumber];
     const int screenNumberFromFirstProfile = _windowPositioner.screenNumberFromFirstProfile;
     if (screens.count == 0) {
-        DLog(@"We are headless");
+        RLog(@"We are headless");
         return nil;
     } else if (_windowPositioner.isAnchoredToScreen && anchoredScreenNumber < screens.count) {
-        DLog(@"Anchor screen preference %d respected", anchoredScreenNumber);
+        RLog(@"Anchor screen preference %d respected", anchoredScreenNumber);
         return screens[anchoredScreenNumber];
     } else if (self.window.screen) {
-        DLog(@"Not anchored, or anchored screen does not exist. Using current screen.");
+        RLog(@"Not anchored, or anchored screen does not exist. Using current screen.");
         return self.window.screen;
     } else if (screenNumberFromFirstProfile >= 0 && screenNumberFromFirstProfile < screens.count) {
-        DLog(@"Using screen number from first profile %d", screenNumberFromFirstProfile);
+        RLog(@"Using screen number from first profile %d", screenNumberFromFirstProfile);
         return screens[screenNumberFromFirstProfile];
     } else {
         // screenNumberFromFirstProfile must be no preference (-1), where
         // cursor was at creation time (-2), or out of range. We'll use the
         // first screen for lack of any better option.
-        DLog(@"Using first screen because screen number from first profile is %d", screenNumberFromFirstProfile);
+        RLog(@"Using first screen because screen number from first profile is %d", screenNumberFromFirstProfile);
         return screens.firstObject;
     }
 }
@@ -1690,6 +1690,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)closeSession:(PTYSession *)aSession soft:(BOOL)soft {
+    RLog(@"closeSession:%@ soft:%@", aSession, @(soft));
     if (!soft &&
         [aSession isTmuxClient] &&
         [[aSession tmuxController] isAttached]) {
@@ -1735,7 +1736,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_ACCESSORY:
-                DLog(@"Returning YES");
+                RLog(@"Returning YES");
                 return YES;
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -1755,7 +1756,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    DLog(@"Returning NO");
+    RLog(@"Returning NO");
     return NO;
 }
 
@@ -1882,25 +1883,25 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)terminalWindowWillMoveToScreen:(NSScreen *)screen {
-    DLog(@"moving to screen with frame %@. self=%@", NSStringFromRect(screen.frame), self);
+    RLog(@"moving to screen with frame %@. self=%@", NSStringFromRect(screen.frame), self);
     if (!_windowPositioner.isAnchoredToScreen) {
-        DLog(@"Not anchored, do nothing");
+        RLog(@"Not anchored, do nothing");
         return;
     }
     NSArray<NSScreen *> *screens = [NSScreen screens];
     const int anchoredScreenNumber = [_windowPositioner getAnchoredScreenNumber];
     if (anchoredScreenNumber >= screens.count) {
-        DLog(@"Am anchored to screen %@ but there aren't that many screens. Unanchor", @(anchoredScreenNumber));
+        RLog(@"Am anchored to screen %@ but there aren't that many screens. Unanchor", @(anchoredScreenNumber));
         [_windowPositioner clearScreenAnchor];
         return;
     }
 
     NSScreen *currentScreen = screens[anchoredScreenNumber];
     if (NSEqualRects(currentScreen.frame, screen.frame)) {
-        DLog(@"New screen has same frame. Doing nothing.");
+        RLog(@"New screen has same frame. Doing nothing.");
         return;
     }
-    DLog(@"Current screen has frame %@. Moving.", NSStringFromRect(currentScreen.frame));
+    RLog(@"Current screen has frame %@. Moving.", NSStringFromRect(currentScreen.frame));
     [_windowPositioner clearScreenAnchor];
 }
 
@@ -1925,7 +1926,7 @@ ITERM_WEAKLY_REFERENCEABLE
     destinationFrame.origin.x = MAX(destinationScreenFrame.origin.x, destinationFrame.origin.x - overage);
     overage = MAX(0, NSMaxY(destinationFrame) - NSMaxY(destinationScreenFrame));
     destinationFrame.origin.y = MAX(destinationScreenFrame.origin.y, destinationFrame.origin.y - overage);
-    DLog(@"Failed to move window. Current screen is %@. Desired screen is %@. originalFrame=%@ destinationFrame=%@ sourceScreenFrame=%@ destinationScreenFrame=%@ originOffset=%@ offsetFraction=%@ destinationOrigin=%@",
+    RLog(@"Failed to move window. Current screen is %@. Desired screen is %@. originalFrame=%@ destinationFrame=%@ sourceScreenFrame=%@ destinationScreenFrame=%@ originOffset=%@ offsetFraction=%@ destinationOrigin=%@",
          self.window.screen,
          screen,
          NSStringFromRect(originalFrame),
@@ -1943,11 +1944,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.window &&
         ![self.window.screen.it_uniqueKey isEqualToString:screen.it_uniqueKey] &&
         !self.window.isFullScreen) {
-        DLog(@"Hit the backstop");
+        RLog(@"Hit the backstop");
         [self moveToScreen:screen];
     }
     if (_needsCanonicalize) {
-        DLog(@"moveToScreen finished so do deferred frame canonicalization");
+        RLog(@"moveToScreen finished so do deferred frame canonicalization");
         [self canonicalizeWindowFrame];
     }
     _needsCanonicalize = NO;
@@ -1987,7 +1988,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)ptyWindowDidMakeKeyAndOrderFront:(id<PTYWindow>)window {
-    DLog(@"%@", self);
+    RLog(@"%@", self);
     [[self currentTab] recheckBlur];
 }
 
@@ -2227,7 +2228,7 @@ ITERM_WEAKLY_REFERENCEABLE
     restorableSession.group = kiTermRestorableSessionGroupWindow;
     restorableSession.windowTitle = [self.scope windowTitleOverrideFormat];
     [self storeWindowStateInRestorableSession:restorableSession];
-    DLog(@"Create restorable session with terminal guid %@", restorableSession.terminalGuid);
+    RLog(@"Create restorable session with terminal guid %@", restorableSession.terminalGuid);
     return restorableSession;
 }
 
@@ -2240,7 +2241,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (iTermRestorableSession *)restorableSessionForTab:(PTYTab *)aTab {
-    DLog(@"Create restorable session for tab %@", aTab);
+    RLog(@"Create restorable session for tab %@", aTab);
     if (!aTab) {
         return nil;
     }
@@ -2397,7 +2398,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)updateFullScreenTabBar:(NSNotification *)notification {
-    DLog(@"%@", self);
+    RLog(@"%@", self);
     if ([self anyFullScreen]) {
         [self updateTabBarControlIsTitlebarAccessory];
         [self updateSessionProgressBarVisibility];
@@ -2405,14 +2406,14 @@ ITERM_WEAKLY_REFERENCEABLE
         [self repositionWidgets];
         [self fitTabsToWindow];
     } else {
-        DLog(@"Not full screen");
+        RLog(@"Not full screen");
     }
 }
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-    DLog(@"Active space did change. active=%@ self.window.isOnActiveSpace=%@", @(NSApp.isActive), @(self.window.isOnActiveSpace));
+    RLog(@"Active space did change. active=%@ self.window.isOnActiveSpace=%@", @(NSApp.isActive), @(self.window.isOnActiveSpace));
     if ([(iTermApplication *)NSApp isUIElement] && !NSApp.isActive && self.lionFullScreen && self.window.isOnActiveSpace) {
-        DLog(@"Activating app because lion full screen window is on active space. %@", self);
+        RLog(@"Activating app because lion full screen window is on active space. %@", self);
         [NSApp activateIgnoringOtherApps:YES];
     }
 }
@@ -2456,7 +2457,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)closeSessionWithConfirmation:(PTYSession *)aSession {
     if (_layoutLocked) {
-        DLog(@"Layout is locked, refusing to close session");
+        RLog(@"Layout is locked, refusing to close session");
         return NO;
     }
     PTYTab *tab = [self tabForSession:aSession];
@@ -2489,12 +2490,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)restartSession:(id)sender {
-    DLog(@"restartSession");
+    RLog(@"restartSession");
     [self restartSessionWithConfirmation:self.currentSession];
 }
 
 - (IBAction)duplicateSession:(id)sender {
-    DLog(@"duplicateSession");
+    RLog(@"duplicateSession");
     PTYSession *session = self.currentSession;
     MutableProfile *profile = [[session.profile mutableCopy] autorelease];
     NSArray<iTermSSHReconnectionInfo *> *pendingJumps = nil;
@@ -2537,7 +2538,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // session is created from the arrangement. See +[PTYSession sessionFromArrangement:…].
         profile[KEY_GUID] = [[NSUUID UUID] UUIDString];
     }
-    DLog(@"Will use profile:\n%@", profile);
+    RLog(@"Will use profile:\n%@", profile);
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     iTermMutableDictionaryEncoderAdapter *encoder =
         [[[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict] autorelease];
@@ -2671,20 +2672,20 @@ ITERM_WEAKLY_REFERENCEABLE
 
     NSString *subtitle = (self.canShowSubtitleInTitlebar ? self.currentSession.subtitle : @"") ?: @"";
     if (self.isShowingTransientTitle) {
-        DLog(@"showing transient title");
+        RLog(@"showing transient title");
         PTYSession *session = self.currentSession;
         NSString *aTitle;
         VT100GridSize size = VT100GridSizeMake(session.columns, session.rows);
         if (!_lockTransientTitle) {
             if (VT100GridSizeEquals(_previousGridSize, VT100GridSizeMake(0, 0))) {
                 _previousGridSize = size;
-                DLog(@"NOT showing transient title because of no previous grid sizes");
+                RLog(@"NOT showing transient title because of no previous grid sizes");
                 [self setWindowTitle:[self undecoratedWindowTitle]
                             subtitle:subtitle];
                 return;
             }
             if (VT100GridSizeEquals(size, _previousGridSize)) {
-                DLog(@"NOT showing transient title because of equal grid sizes");
+                RLog(@"NOT showing transient title because of equal grid sizes");
                 [self setWindowTitle:[self undecoratedWindowTitle]
                             subtitle:subtitle];
                 return;
@@ -2692,7 +2693,7 @@ ITERM_WEAKLY_REFERENCEABLE
             _lockTransientTitle = YES;
         }
         _previousGridSize = size;
-        DLog(@"showing transient title %@", @(self.timeOfLastResize));
+        RLog(@"showing transient title %@", @(self.timeOfLastResize));
         if (self.window.frame.size.width < 250) {
             aTitle = [NSString stringWithFormat:@"%d✕%d", session.columns, session.rows];
         } else {
@@ -2753,10 +2754,10 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setWindowTitle:(NSString *)title subtitle:(NSString *)subtitle {
-    DLog(@"setWindowTitle:%@ for %@", title, self);
+    RLog(@"setWindowTitle:%@ for %@", title, self);
     if (_deallocing) {
         // This uses -weakSelf and can be called during dealloc. Doing so is a crash.
-        DLog(@"deallocing");
+        RLog(@"deallocing");
         return;
     }
     if (title == nil) {
@@ -2800,7 +2801,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [title isEqualToString:self.window.title]) {
         // Title is already up to date.
         [_contentView setSubtitle:subtitle];
-        DLog(@"Title has not changed");
+        RLog(@"Title has not changed");
         return;
     }
 
@@ -2811,7 +2812,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // around to delayed performs until the live resize is done (bug 2812).
         self.window.title = title;
         [self updateWindowMenu];
-        DLog(@"in a live resize");
+        RLog(@"in a live resize");
         return;
     }
     // In bug 2593, we see a crazy thing where setting the window title right
@@ -2825,19 +2826,19 @@ ITERM_WEAKLY_REFERENCEABLE
     // terminal goes nuts and sends lots of title-change sequences.
     BOOL hadTimer = (self.desiredTitle != nil);
     self.desiredTitle = title;
-    DLog(@"After adjusting title, setWindowTitle:%@", title);
+    RLog(@"After adjusting title, setWindowTitle:%@", title);
     if (!hadTimer) {
         if (!_windowWasJustCreated && ![self.ptyWindow titleChangedRecently]) {
             // Unless the window was just created, set the title immediately. Issue 5876.
-            DLog(@"set title immediately to %@", self.desiredTitle);
+            RLog(@"set title immediately to %@", self.desiredTitle);
             self.window.title = self.desiredTitle;
             [self updateWindowMenu];
         }
         __weak __typeof(self) weakSelf = self;
-        DLog(@"schedule timer to set window title");
+        RLog(@"schedule timer to set window title");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermWindowTitleChangeMinimumInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {
-                DLog(@"timer fired. Set title to %@", weakSelf.desiredTitle);
+                RLog(@"timer fired. Set title to %@", weakSelf.desiredTitle);
                 weakSelf.window.title = weakSelf.desiredTitle;
                 [weakSelf updateWindowMenu];
             }
@@ -2891,15 +2892,15 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)broadcastInputHelper:(iTermBroadcastInputHelper *)helper tabWithSessionIsBroadcasting:(NSString *)sessionID {
     PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:sessionID];
     if (!session) {
-        DLog(@"NO: No session with id %@", sessionID);
+        RLog(@"NO: No session with id %@", sessionID);
         return NO;
     }
     PTYTab *tab = [self tabForSession:session];
     if (!tab) {
-        DLog(@"NO: Session %@ belongs to no tab (wtf)", session);
+        RLog(@"NO: Session %@ belongs to no tab (wtf)", session);
         return NO;
     }
-    DLog(@"Return %@", @(tab.isBroadcasting));
+    RLog(@"Return %@", @(tab.isBroadcasting));
     return tab.isBroadcasting;
 }
 
@@ -3216,19 +3217,19 @@ ITERM_WEAKLY_REFERENCEABLE
 + (void)performWhenWindowCreationIsSafeForLionFullScreen:(BOOL)lionFullScreen
                                                    block:(void (^)(void))block {
     BOOL shouldDelay = NO;
-    DLog(@"begin");
+    RLog(@"begin");
     if ([PseudoTerminal willAutoFullScreenNewWindow] &&
         [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
-        DLog(@"Prevented by autofullscreen + a window entering.");
+        RLog(@"Prevented by autofullscreen + a window entering.");
         shouldDelay = YES;
     }
     if (lionFullScreen &&
         [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
-        DLog(@"Prevented by fs arrangement + a window entering.");
+        RLog(@"Prevented by fs arrangement + a window entering.");
         shouldDelay = YES;
     }
     if (shouldDelay) {
-        DLog(@"Trying again in .25 sec");
+        RLog(@"Trying again in .25 sec");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [self performWhenWindowCreationIsSafeForLionFullScreen:lionFullScreen block:block];
         });
@@ -3249,9 +3250,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([[iTermHotKeyMigrationHelper sharedInstance] didMigration] && [[[iTermHotKeyController sharedInstance] profileHotKeys] count] == 1) {
             iTermProfileHotKey *profileHotKey = [[[iTermHotKeyController sharedInstance] profileHotKeys] firstObject];
             guid = profileHotKey.profile[KEY_GUID];
-            DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. Guessing that it's the profile named %@ because there is only one hotkey profile", profileHotKey.profile[KEY_NAME]);
+            RLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. Guessing that it's the profile named %@ because there is only one hotkey profile", profileHotKey.profile[KEY_NAME]);
         } else {
-            DLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. There is more than one hotkey profile so I give up.");
+            RLog(@"Restoring an arrangement with a hotkey window but its profile's GUID is missing. There is more than one hotkey profile so I give up.");
             return NO;
         }
     }
@@ -3395,7 +3396,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // I'm not sure why but at least we can repair them to be visible. Issue 12505.
             rect.size = originalSize;
         }
-        DLog(@"Initialize nonfullscreen window to saved frame %@", NSStringFromRect(rect));
+        RLog(@"Initialize nonfullscreen window to saved frame %@", NSStringFromRect(rect));
         rect = [self sanitizedWindowFrame:rect];
         [[term window] setFrame:rect display:NO];
     }
@@ -3527,14 +3528,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (IBAction)filter:(id)sender {
-    DLog(@"begin");
+    RLog(@"begin");
     [self.currentSession showFilter];
 }
 - (IBAction)findUrls:(id)sender {
-    DLog(@"begin");
+    RLog(@"begin");
     iTermFindDriver *findDriver = self.currentSession.view.findDriverCreatingIfNeeded;
     NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
-    DLog(@"findDriver=%@ regex=%@", findDriver, regex);
+    RLog(@"findDriver=%@ regex=%@", findDriver, regex);
     __weak PTYSession *session = self.currentSession;
     __block BOOL done = NO;
     const BOOL browser = session.isBrowserSession;
@@ -3585,7 +3586,7 @@ ITERM_WEAKLY_REFERENCEABLE
     TmuxController *controller = [[self currentSession] tmuxController];
     if (!controller) {
         controller = [[[iTermController sharedInstance] anyTmuxSession] tmuxController];
-        DLog(@"No controller for current session %@, picking one at random: %@",
+        RLog(@"No controller for current session %@, picking one at random: %@",
              [self currentSession], controller);
     }
     return controller;
@@ -3623,18 +3624,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSSize)tmuxCompatibleSize {
-    DLog(@"Computing the tmux-compatible size...");
+    RLog(@"Computing the tmux-compatible size...");
     NSSize tmuxSize = NSMakeSize(INT_MAX, INT_MAX);
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab]) {
             NSSize tabSize = [aTab tmuxSize];
-            DLog(@"tab %@ size is %@", aTab, NSStringFromSize(tabSize));
+            RLog(@"tab %@ size is %@", aTab, NSStringFromSize(tabSize));
 
             tmuxSize.width = (int) MIN(tmuxSize.width, tabSize.width);
             tmuxSize.height = (int) MIN(tmuxSize.height, tabSize.height);
         }
     }
-    DLog(@"tmux-compatible size is %@", NSStringFromSize(tmuxSize));
+    RLog(@"tmux-compatible size is %@", NSStringFromSize(tmuxSize));
     return tmuxSize;
 }
 
@@ -3653,9 +3654,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                openInBackground:[iTermAdvancedSettingsModel tmuxWindowsOpenInBackground]];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
-    DLog(@"loadTmuxLayout: window frame before lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
+    RLog(@"loadTmuxLayout: window frame before lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
     [self lazyFitWindowToTabs];
-    DLog(@"loadTmuxLayout: window frame after lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
+    RLog(@"loadTmuxLayout: window frame after lazyFitWindowToTabs=%@", NSStringFromRect(self.window.frame));
     [tab setReportIdealSizeAsCurrent:NO];
 
     for (PTYSession *aSession in [tab sessions]) {
@@ -3855,7 +3856,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Set _widthAdjustment here because it will be used below in the call to
         // -rectByAdjustingWidth:.
         _widthAdjustment = preferredWidth - savedWidth;
-        DLog(@"Computing scroller width adjustment. preferredWidth=%@ savedWidth=%@ adjustment=%@",
+        RLog(@"Computing scroller width adjustment. preferredWidth=%@ savedWidth=%@ adjustment=%@",
               @(preferredWidth), @(savedWidth), @(_widthAdjustment));
     }
 
@@ -3865,7 +3866,7 @@ ITERM_WEAKLY_REFERENCEABLE
         switch (windowType) {
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             case WINDOW_TYPE_LION_FULL_SCREEN:
-                DLog(@"We shouldn't set the frame");
+                RLog(@"We shouldn't set the frame");
                 setFrame = NO;
                 break;
             case WINDOW_TYPE_TOP_PERCENTAGE:
@@ -3874,25 +3875,25 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_RIGHT_PERCENTAGE:
                 if (_percentage.width >= 0) {
                     // Width specified in percentage
-                    DLog(@"Neither width adjustment nor sanitization needed.");
+                    RLog(@"Neither width adjustment nor sanitization needed.");
                 } else {
                     // Width specified in cells
-                    DLog(@"No sanitization but width adjustment.");
+                    RLog(@"No sanitization but width adjustment.");
                     frame = [self rectByAdjustingWidth:rect];
                 }
                 break;
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
-                DLog(@"Neither width adjustment nor sanitization needed.");
+                RLog(@"Neither width adjustment nor sanitization needed.");
                 break;
 
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_COMPACT:
-                DLog(@"Needs width adjustment and sanitization.");
+                RLog(@"Needs width adjustment and sanitization.");
                 frame = [PseudoTerminal sanitizedWindowFrame:[self rectByAdjustingWidth:rect]];
-                DLog(@"Set width adjustment to 0 for %@", self);
+                RLog(@"Set width adjustment to 0 for %@", self);
                 _widthAdjustment = 0;
                 break;
 
@@ -3901,7 +3902,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_RIGHT_CELLS:
             case WINDOW_TYPE_CENTERED:
-                DLog(@"No sanitization but width adjustment.");
+                RLog(@"No sanitization but width adjustment.");
                 // There's a good chance that sanitization would make sense here but I'm afraid of
                 // breaking things I don't understand by changing it.
                 frame = [self rectByAdjustingWidth:rect];
@@ -3918,12 +3919,12 @@ ITERM_WEAKLY_REFERENCEABLE
             // Note: this has no effect when using system window restoration because the window's size
             // is set from the completion block passed to PseudoTerminalRestorer, which is controlled
             // by the system. However, it is still effective when restoring a saved arrangement.
-            DLog(@"Set frame with adjustments %@ in %@", NSStringFromRect(frame), self);
+            RLog(@"Set frame with adjustments %@ in %@", NSStringFromRect(frame), self);
             [[self window] setFrame:frame display:YES];
-            DLog(@"Now canonicalize the frame %@", self);
+            RLog(@"Now canonicalize the frame %@", self);
             [self canonicalizeWindowFrame];
         } else {
-            DLog(@"No change needed");
+            RLog(@"No change needed");
         }
     }
 
@@ -3964,7 +3965,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // their cursors where they needed to be. Move the cursors to their rightful places. See the
     // comment where preferredCursorPosition is set for more details.
     for (PTYSession *session in self.allSessions) {
-        DLog(@"restore preferred cursor position for %@", session);
+        RLog(@"restore preferred cursor position for %@", session);
         [session.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             [mutableState.currentGrid restorePreferredCursorPositionIfPossible];
         }];
@@ -4199,8 +4200,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     result[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] = @(useTransparency);
 
-    DLog(@"While creating arrangement for %@ save frame of %@", self, NSStringFromRect(rect));
-    DLog(@"%@", [NSThread callStackSymbols]);
+    RLog(@"While creating arrangement for %@ save frame of %@", self, NSStringFromRect(rect));
+    RLog(@"%@", [NSThread callStackSymbols]);
     result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(shouldShowToolbelt);
     if (proportions) {
         result[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS] = proportions;
@@ -4315,9 +4316,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     const CGFloat scrollerWidth = iTermScrollbarWidth();
     if (!isMaximized) {
         result[TERMINAL_ARRANGEMENT_SCROLLER_WIDTH] = @(scrollerWidth);
-        DLog(@"Save scroller width of %@", @(scrollerWidth));
+        RLog(@"Save scroller width of %@", @(scrollerWidth));
     } else {
-        DLog(@"Window is maximized so don't save scroller width.");
+        RLog(@"Window is maximized so don't save scroller width.");
     }
 
     return YES;
@@ -4338,7 +4339,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 // NSWindow delegate methods
 - (void)windowDidDeminiaturize:(NSNotification *)aNotification {
-    DLog(@"windowDidDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowDidDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [[iTermDockBadgeController sharedInstance] resetBellCount];
     if ([[self currentTab] blur]) {
         [self enableBlur:[[self currentTab] blurRadius]];
@@ -4394,7 +4395,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (BOOL)windowShouldClose:(NSNotification *)aNotification {
-    DLog(@"windowShouldClose %@", self);
+    RLog(@"windowShouldClose %@", self);
     // This counts as an interaction because it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
     iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
@@ -4421,7 +4422,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
 
-    DLog(@"Return %@", @(shouldClose));
+    RLog(@"Return %@", @(shouldClose));
     return shouldClose;
 }
 
@@ -4602,7 +4603,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillMiniaturize:(NSNotification *)aNotification {
-    DLog(@"windowWillMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowWillMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [self disableBlur];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowWillMiniaturize"
                                                         object:self
@@ -4610,8 +4611,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
-    DLog(@"windowDidBecomeKey:%@ window=%@ stack:\n%@",
-         aNotification, self.window, [NSThread callStackSymbols]);
+    RLog(@"windowDidBecomeKey:%@ window=%@", aNotification, self.window);
+    DLog(@"%@", [NSThread callStackSymbols]);
 
     if ([NSApp isActive]) {
         _hasBeenKeySinceActivation = YES;
@@ -4664,7 +4665,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // Some users report that the first responder isn't always set properly. Let's try to fix that.
     // This attempt (4/20/13) is to fix bug 2431.
     if (!self.window.firstResponder.it_preferredFirstResponder) {
-        DLog(@"Window's first responder %@ is not preferred so schedule makeCurrentSessionFirstResponder",
+        RLog(@"Window's first responder %@ is not preferred so schedule makeCurrentSessionFirstResponder",
               self.window.firstResponder);
         [self performSelector:@selector(makeCurrentSessionFirstResponderIfNoPreferred)
                    withObject:nil
@@ -4754,7 +4755,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     PtyLog(@"canonicalizeWindowFrame %@\n%@", self, [NSThread callStackSymbols]);
     if (self.ptyWindow.it_isMovingScreen) {
         _needsCanonicalize = YES;
-        DLog(@"Moving screens so don't canonicalize");
+        RLog(@"Moving screens so don't canonicalize");
         return;
     }
     // It's important that this method respect the current screen if possible because
@@ -4809,7 +4810,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 [[self window] setFrame:[self canonicalFrameForScreen:screen] display:YES];
 
                 if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
-                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
+                    RLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
                     [self fitTabsToWindow];
                     if (!tmuxOriginatedResizeInProgress_) {
                         // When opening a new tmux tab in a fullscreen window, it'll be initialized
@@ -4827,7 +4828,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                     return [NSString stringWithInt:anObject.tmuxWindow];
                                 }];
                                 if (windows.count > 0) {
-                                    DLog(@"Calling window did resize because canonicalizing a full screen window, scrollbar style changed, and variable size tmux windows is enabled");
+                                    RLog(@"Calling window did resize because canonicalizing a full screen window, scrollbar style changed, and variable size tmux windows is enabled");
                                     [controller windowDidResize:self];
                                 }
                             } else {
@@ -4875,21 +4876,21 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSRect)screenFrameForEdgeSpanningWindows:(NSScreen *)screen {
-    DLog(@"Begin");
+    RLog(@"Begin");
     if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
-        DLog(@"It floats");
+        RLog(@"It floats");
         const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
-        DLog(@"menuBarIsHidden=%@", @(menuBarIsHidden));
+        RLog(@"menuBarIsHidden=%@", @(menuBarIsHidden));
         if (menuBarIsHidden && ![screen it_hasAnotherAppsFullScreenWindow]) {
-            DLog(@"Using screen frame %@", NSStringFromRect(screen.frame));
+            RLog(@"Using screen frame %@", NSStringFromRect(screen.frame));
             // When the menu bar is hidden because it hides automatically, we should go all the way to the top of the screen (issue 7149).
             // But if we are on another app's full-screen space, the system won't allow us to do that (issue 9978).
             return screen.frame;
         }
-        DLog(@"Using screen frame excluding menu bar %@", NSStringFromRect(screen.frameExceptMenuBar));
+        RLog(@"Using screen frame excluding menu bar %@", NSStringFromRect(screen.frameExceptMenuBar));
         return screen.frameExceptMenuBar;
     } else {
-        DLog(@"non-floating hotkey window uses visible frame ignoring hidden dock %@",
+        RLog(@"non-floating hotkey window uses visible frame ignoring hidden dock %@",
              NSStringFromRect([screen visibleFrameIgnoringHiddenDock]));
         return [screen visibleFrameIgnoringHiddenDock];
     }
@@ -4897,7 +4898,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (NSRect)visibleFrameForScreen:(NSScreen *)screen {
     if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
-        DLog(@"visibleFrameForScreen: floating hotkey window gets frameExceptMenuBar");
+        RLog(@"visibleFrameForScreen: floating hotkey window gets frameExceptMenuBar");
         const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
         if (menuBarIsHidden) {
             return screen.frame;
@@ -4906,7 +4907,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     if (self.fullScreen) {
-        DLog(@"visibleFrameForScreen: fullScreen gets visibleFrame %@", NSStringFromRect(screen.visibleFrame));
+        RLog(@"visibleFrameForScreen: fullScreen gets visibleFrame %@", NSStringFromRect(screen.visibleFrame));
         return screen.visibleFrame;
     }
 
@@ -4925,10 +4926,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
     if (otherScreenHasLionFullscreenTerminalWindow) {
-        DLog(@"visibleFrameForScreen: otherScreenHasLionFullscreenTerminalWindow gets frameExceptMenuBar");
+        RLog(@"visibleFrameForScreen: otherScreenHasLionFullscreenTerminalWindow gets frameExceptMenuBar");
         return screen.frameExceptMenuBar;
     } else {
-        DLog(@"visibleFrameForScreen: !otherScreenHasLionFullscreenTerminalWindow gets visibleFrame %@", NSStringFromRect(screen.visibleFrame));
+        RLog(@"visibleFrameForScreen: !otherScreenHasLionFullscreenTerminalWindow gets visibleFrame %@", NSStringFromRect(screen.visibleFrame));
         return screen.visibleFrame;
     }
 }
@@ -4950,10 +4951,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                        windowType:(iTermWindowType)windowType {
     PTYSession* session = [self currentSession];
     NSRect screenVisibleFrame = [self visibleFrameForScreen:screen];
-    DLog(@"screenVisibleFrame is %@", NSStringFromRect(screenVisibleFrame));
+    RLog(@"screenVisibleFrame is %@", NSStringFromRect(screenVisibleFrame));
     NSRect screenVisibleFrameIgnoringHiddenDock = [self screenFrameForEdgeSpanningWindows:screen];
 
-    PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:screenVisibleFrame]);
+    RLog(@"The new screen visible frame is %@", [NSValue valueWithRect:screenVisibleFrame]);
 
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
@@ -4963,13 +4964,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // Note: During window state restoration, this may be called before the tabs are created from
     // the arrangement, in which case the line height and char width will be 0.
     if (self.tabs.count == 0) {
-        DLog(@"Window has no tabs. Returning early.");
+        RLog(@"Window has no tabs. Returning early.");
         return self.window.frame;
     }
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
     PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
     if (session.textview.lineHeight == 0 || session.textview.charWidth == 0) {
-        DLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
+        RLog(@"Line height or char width is 0. Returning existing frame. session=%@", session);
         return self.window.frame;
     }
 
@@ -5026,13 +5027,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowDidResignKey:(NSNotification *)aNotification {
-    PtyLog(@"PseudoTerminal windowDidResignKey");
+    RLog(@"PseudoTerminal windowDidResignKey");
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
     }
     if (_openingPopupWindow) {
-        DLog(@"Ignoring it because we're opening a popup window now");
+        RLog(@"Ignoring it because we're opening a popup window now");
         return;
     }
 
@@ -5053,19 +5054,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     BOOL shouldAutoHideHotkeyWindow = YES;
     if (self.ptyWindow.it_openingSheet) {
         shouldAutoHideHotkeyWindow = NO;
-        DLog(@"windowDidResignKey not auto-hiding hotkey window because a sheet is being opened.");
+        RLog(@"windowDidResignKey not auto-hiding hotkey window because a sheet is being opened.");
     }
     if ([iTermApplication sharedApplication].it_characterPanelIsOpen) {
         shouldAutoHideHotkeyWindow = NO;
-        DLog(@"windowDidResignKey not auto-hiding hotkey window because the character panel is open.");
+        RLog(@"windowDidResignKey not auto-hiding hotkey window because the character panel is open.");
     }
-    DLog(@"Active app = %@", [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier);
+    RLog(@"Active app = %@", [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier);
     if ([[NSWorkspace sharedWorkspace] it_securityAgentIsActive]) {
         shouldAutoHideHotkeyWindow = NO;
-        DLog(@"windowDidResignKey not auto-hiding because SecurityAgent is open");
+        RLog(@"windowDidResignKey not auto-hiding because SecurityAgent is open");
     }
     NSWindow *newKeyWindow = [NSApp keyWindow] ?: [[iTermApplication sharedApplication] it_windowBecomingKey];
-    DLog(@"Window %@ resiging key. New key window (or key-window-elect) is %@", self, newKeyWindow);
+    RLog(@"Window %@ resiging key. New key window (or key-window-elect) is %@", self, newKeyWindow);
     if (shouldAutoHideHotkeyWindow) {
         NSArray<NSWindowController *> *siblings = [[iTermHotKeyController sharedInstance] siblingWindowControllersOf:self];
         NSWindowController *newKeyWindowController = [newKeyWindow windowController];
@@ -5383,7 +5384,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {
-    DLog(@"windowWillResize: self=%@, proposedFrameSize=%@ screen=%@",
+    RLog(@"windowWillResize: self=%@, proposedFrameSize=%@ screen=%@",
            self, NSStringFromSize(proposedFrameSize), self.window.screen.it_description);
     DLog(@"%@", [NSThread callStackSymbols]);
     if (self.swipeIdentifier) {
@@ -5391,24 +5392,24 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                             object:self.swipeIdentifier];
     }
     if (self.togglingLionFullScreen || self.lionFullScreen || self.window.screen == nil) {
-        DLog(@"Accepting proposal");
+        RLog(@"Accepting proposal");
         return proposedFrameSize;
     }
     if (self.ptyWindow.it_isMovingScreen) {
-        DLog(@"Accepting proposal (2)");
+        RLog(@"Accepting proposal (2)");
         return proposedFrameSize;
     }
     if (self.ptyWindow.it_resizingForTiling) {
-        DLog(@"Accepting proposal (resizing for tiling)");
+        RLog(@"Accepting proposal (resizing for tiling)");
         return proposedFrameSize;
     }
     if (self.windowType == WINDOW_TYPE_MAXIMIZED || self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED) {
-        DLog( @"Blocking resize" );
+        RLog( @"Blocking resize" );
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         return self.window.screen.visibleFrameIgnoringHiddenDock.size;
     }
     if (_sizeLocked && self.windowTypeSupportsSizeLock) {
-        DLog(@"Blocking resize because size is locked");
+        RLog(@"Blocking resize because size is locked");
         self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
         return self.window.frame.size;
     }
@@ -5529,7 +5530,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     // If the original proposal was to fill the screen then allow it
     NSRect screenFrame = self.window.screen.visibleFrame;
-    DLog(@"screenFrame=%@ accepted=%@ originalProposal=%@ charSize=%@",
+    RLog(@"screenFrame=%@ accepted=%@ originalProposal=%@ charSize=%@",
           NSStringFromSize(screenFrame.size),
           NSStringFromSize(proposedFrameSize),
           NSStringFromSize(originalProposal),
@@ -5595,23 +5596,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             variableWindowSize:(BOOL)variableWindowSize {
     DLog(@"%@", [NSThread callStackSymbols]);
     if (liveResize_) {
-        DLog(@"During live resize");
+        RLog(@"During live resize");
         if (nontrivialChange) {
             postponedTmuxTabLayoutChange_ = variableWindowSize ? iTermPostponeTmuxTabLayoutChangeStateVariableSizeWindow : iTermPostponeTmuxTabLayoutChangeStateFixedSizeWindow;
         }
         return;
     }
-    DLog(@"Check if any tmux controller has outstanding window resizes.");
+    RLog(@"Check if any tmux controller has outstanding window resizes.");
     for (TmuxController *controller in [self uniqueTmuxControllers]) {
         if ([controller hasOutstandingWindowResize]) {
-            DLog(@"Yes - %@ does", controller);
+            RLog(@"Yes - %@ does", controller);
             return;
         }
     }
-    DLog(@"No - proceeding");
+    RLog(@"No - proceeding");
     if (variableWindowSize) {
         if (![iTermAdvancedSettingsModel disableTmuxWindowResizing]) {
-            DLog(@"Variable window size and tmux window resizing is not disabled. Fit window to tab.");
+            RLog(@"Variable window size and tmux window resizing is not disabled. Fit window to tab.");
             if (tab) {
                 [self fitWindowToTab:tab];
             } else {
@@ -5619,7 +5620,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
         }
     } else {
-        DLog(@"tmuxTabLayoutDidChange. Fit window to tabs");
+        RLog(@"tmuxTabLayoutDidChange. Fit window to tabs");
         [self beginTmuxOriginatedResize];
         // Make the window the right size for the tmux tabs. This prevents the
         // non-tmux tabs from causing a window resize, which could get us into
@@ -5655,7 +5656,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)setTmuxPerWindowSetting:(NSString *)setting 
                  tmuxController:(TmuxController *)tmuxController {
-    DLog(@"SET per-window settings %@ for %@", setting, self.terminalGuid);
+    RLog(@"SET per-window settings %@ for %@", setting, self.terminalGuid);
     NSArray<NSString *> *parts = [setting componentsSeparatedByString:@"&"];
     for (NSString *part in parts) {
         iTermTuple<NSString *, NSString *> *kvp = [part it_stringBySplittingOnFirstSubstring:@"="];
@@ -5665,7 +5666,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         if ([kvp.firstObject isEqualToString:@"toolbelt"]) {
             const BOOL shouldShow = [kvp.secondObject boolValue];
             if (shouldShow != [self shouldShowToolbelt]) {
-                DLog(@"TOGGLE toolbelt");
+                RLog(@"TOGGLE toolbelt");
                 [self toggleToolbeltVisibilityWithSideEffects:NO];
             }
         } else if ([iTermAdvancedSettingsModel rememberTmuxWindowSizes] &&
@@ -5679,7 +5680,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                     dispatch_async(dispatch_get_main_queue(), ^{
                         NSRect frame = self.window.frame;
                         frame.size = size;
-                        DLog(@"Recorded size for %@ is %@. Will set frame to %@",
+                        RLog(@"Recorded size for %@ is %@. Will set frame to %@",
                              self, kvp.secondObject, NSStringFromRect(frame));
 
                         [self.window setFrame:frame display:YES];
@@ -5699,29 +5700,30 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)windowDidChangeScreen:(NSNotification *)notification {
     // See comments on -forceFrame:
-    DLog(@"windowDidChangeScreen frame=%@ forceFrame=%@ time left in forceFrameUntil=%@ screenConfig=%@\n%@",
+    RLog(@"windowDidChangeScreen frame=%@ forceFrame=%@ time left in forceFrameUntil=%@ screenConfig=%@",
          NSStringFromRect(self.window.frame),
          NSStringFromRect(_forceFrame),
          @([NSDate it_timeSinceBoot] - _forceFrameUntil),
-         _screenConfigurationAtTimeOfForceFrame,
+         _screenConfigurationAtTimeOfForceFrame);
+    DLog(@"%@",
          [NSThread callStackSymbols]);
     if (!NSEqualRects(self.window.frame, _forceFrame) &&
         !NSEqualRects(NSZeroRect, _forceFrame) &&
         [NSDate it_timeSinceBoot] < _forceFrameUntil &&
         [[self screenConfiguration] isEqual:_screenConfigurationAtTimeOfForceFrame]) {
-        DLog(@"Schedule a set frame");
+        RLog(@"Schedule a set frame");
         NSRect rect = _forceFrame;
-        DLog(@"Setting frame due to force-frame to %@", NSStringFromRect(rect));
+        RLog(@"Setting frame due to force-frame to %@", NSStringFromRect(rect));
         [self.window setFrame:rect display:YES animate:NO];
-        DLog(@"Returning early");
+        RLog(@"Returning early");
         return;
     } else {
-        DLog(@"Allowing screen change to go on");
+        RLog(@"Allowing screen change to go on");
     }
     BOOL canonicalize = ![self miniaturizedWindowShouldPreserveFrameUntilDeminiaturized];
     // This gets called when any part of the window enters or exits the screen and
     // appears to be spuriously called for nonnative fullscreen windows.
-    DLog(@"windowDidChangeScreen called. This is known to happen when the screen didn't really change! screen=%@",
+    RLog(@"windowDidChangeScreen called. This is known to happen when the screen didn't really change! screen=%@",
          self.window.screen);
     if (canonicalize && !_inWindowDidChangeScreen) {
         // Nicolas reported a bug where canonicalizeWindowFrame moved the window causing this to
@@ -5732,7 +5734,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self canonicalizeWindowFrame];
         _inWindowDidChangeScreen = NO;
     } else {
-        DLog(@"** Re-entrant call to windowDidChangeScreen:! Not canonicalizing. **");
+        RLog(@"** Re-entrant call to windowDidChangeScreen:! Not canonicalizing. **");
     }
     for (PTYSession *session in self.allSessions) {
         [session updateMetalDriver];
@@ -5743,7 +5745,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     const CGFloat scaleFactor = self.window.screen.backingScaleFactor;
     if (!NSEqualSizes(screenSize, _previousScreenSize) ||
         scaleFactor != _previousScreenScaleFactor) {
-        DLog(@"Screen changed size %@->%@ scale %@->%@ so bounce metal",
+        RLog(@"Screen changed size %@->%@ scale %@->%@ so bounce metal",
              NSStringFromSize(_previousScreenSize),
              NSStringFromSize(screenSize),
              @(_previousScreenScaleFactor),
@@ -5761,7 +5763,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [(id<iTermViewScreenNotificationHandling>)view enclosingWindowDidMoveToScreen:self.window.screen];
         }
     }];
-    DLog(@"Returning from windowDidChangeScreen:.");
+    RLog(@"Returning from windowDidChangeScreen:.");
 }
 
 - (NSArray *)screenConfiguration {
@@ -5773,16 +5775,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)windowWillMove:(NSNotification *)notification {
     // AFAICT this is only called when you move the window by dragging it or double-click the title bar.
-    DLog(@"Looks like the user started dragging the window.");
+    RLog(@"Looks like the user started dragging the window.");
     [self clearForceFrame];
     _windowIsMoving = YES;
     _screenBeforeMoving = [[NSScreen screens] indexOfObject:self.window.screen];
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
-    DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
+    RLog(@"%@: Window %@ moved", self, self.window);
+    DLog(@"Called from %@", [NSThread callStackSymbols]);
     if (_inWindowDidMove) {
-        DLog(@"WARNING! Reentrant call to windowDidMove. Return early.");
+        RLog(@"WARNING! Reentrant call to windowDidMove. Return early.");
         return;
     }
     _inWindowDidMove = YES;
@@ -5793,7 +5796,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (_windowIsMoving && _windowPositioner.isAnchoredToScreen) {
         NSInteger screenIndex = [[NSScreen screens] indexOfObject:self.window.screen];
         if (screenIndex != _screenBeforeMoving) {
-            DLog(@"User appears to have dragged the window from screen %@ to screen %@. Removing screen anchor.", @(_screenBeforeMoving), @(screenIndex));
+            RLog(@"User appears to have dragged the window from screen %@ to screen %@. Removing screen anchor.", @(_screenBeforeMoving), @(screenIndex));
             [_windowPositioner clearScreenAnchor];
         }
     }
@@ -5811,7 +5814,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
     if (zooming_) {
-        DLog(@"zooming so pretend nothing happened for better performance");
+        RLog(@"zooming so pretend nothing happened for better performance");
         // Pretend nothing happened to avoid slowing down zooming.
         return;
     }
@@ -5939,22 +5942,22 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)addShortcutAccessorViewControllerToTitleBarIfNeeded {
-    DLog(@"addShortcutAccessorViewControllerToTitleBarIfNeeded");
+    RLog(@"addShortcutAccessorViewControllerToTitleBarIfNeeded");
     if (!_shortcutAccessoryViewController) {
-        DLog(@"Don't already have a shortcut accessory view controller");
+        RLog(@"Don't already have a shortcut accessory view controller");
         return;
     }
     if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
-        DLog(@"Style mask does not include titled");
+        RLog(@"Style mask does not include titled");
         return;
     }
     if (self.shouldHaveShortcutAccessory &&
         [_titlebarAccessoryNanny.viewControllers containsObject:_shortcutAccessoryViewController]) {
-        DLog(@"Have one and should have one");
+        RLog(@"Have one and should have one");
         return;
     }
     if ([self shouldHaveShortcutAccessory]) {
-        DLog(@"Need to add one");
+        RLog(@"Need to add one");
         // Explicitly load the view before adding. Otherwise, for some reason, on WINDOW_TYPE_MAXIMIZED windows,
         // the NSWindow miscalculates the size, and ends up resizing the iTermRootTerminalView incorrectly.
         [_shortcutAccessoryViewController view];
@@ -5965,7 +5968,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (BOOL)shouldHaveShortcutAccessory {
-    DLog(@"windowType=%@", @(self.windowType));
+    RLog(@"windowType=%@", @(self.windowType));
 
     switch (iTermThemedWindowType(self.windowType)) {
         case WINDOW_TYPE_TOP_PERCENTAGE:
@@ -6012,7 +6015,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (IBAction)setWindowStyle:(id)sender {
     NSMenuItem *menuItem = [NSMenuItem castFrom:sender];
     if (!menuItem) {
-        DLog(@"Bogus sender: %@", sender);
+        RLog(@"Bogus sender: %@", sender);
         return;
     }
     // Setting the percentage to 100% x (invalid) is not ideal but I don't want to make the UI more
@@ -6072,13 +6075,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)updateWindowMenu {
     if ([iTermAdvancedSettingsModel includeShortcutInWindowsMenu]) {
-        DLog(@"Include shortcut");
+        RLog(@"Include shortcut");
         [NSApp changeWindowsItem:self.window title:[self titleForWindowMenu] filename:NO];
         return;
     }
 
     if (!self.fullScreen) {
-        DLog(@"No - not fullscreen %@", self);
+        RLog(@"No - not fullscreen %@", self);
         return;
     }
     switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
@@ -6091,10 +6094,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case TAB_STYLE_LIGHT_HIGH_CONTRAST:
         case TAB_STYLE_DARK:
         case TAB_STYLE_DARK_HIGH_CONTRAST:
-            DLog(@"No - not minimal/compact %@", self);
+            RLog(@"No - not minimal/compact %@", self);
             return;
     }
-    DLog(@"Yes - changeWindowsItem %@", self);
+    RLog(@"Yes - changeWindowsItem %@", self);
     [NSApp changeWindowsItem:self.window title:self.window.title filename:NO];
 }
 
@@ -6155,7 +6158,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:(NSWindow *)window {
     const BOOL haveTransparency = [self anyPaneIsTransparent];
-    DLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
+    RLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
     // Let's try enabling window shadow on 10.16 when there is transparency. Now that I set the
     // background color to NSColor.clearColor.withAlphaComponent(0.01) maybe shadows will magically
     // start working again.
@@ -6225,7 +6228,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 - (void)windowWillStartLiveResize:(NSNotification *)notification {
-    DLog(@"self=%@", self);
+    RLog(@"self=%@", self);
 
     [self clearForceFrame];
     liveResize_ = YES;
@@ -6266,7 +6269,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowDidEndLiveResize:(NSNotification *)notification {
-    DLog(@"self=%@", self);
+    RLog(@"self=%@", self);
     NSScreen *screen = self.window.screen;
     [_contentView setShowsWindowSize:NO];
     if (@available(macOS 10.16, *)) {
@@ -6324,7 +6327,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     liveResize_ = NO;
     BOOL wasZooming = zooming_;
-    DLog(@"set zooming=NO");
+    RLog(@"set zooming=NO");
     zooming_ = NO;
     if (wasZooming) {
         // Reached zoom size. Update size.
@@ -6353,13 +6356,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case PSMTab_LeftTab:
         case PSMTab_RightTab:
         case PSMTab_BottomTab:
-            DLog(@"side or bottom tabbar - return NO");
+            RLog(@"side or bottom tabbar - return NO");
             return NO;
 
         case PSMTab_TopTab:
             if ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
                 ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
-                DLog(@"kPreferenceKeyFlashTabBarInFullscreen && !kPreferenceKeyShowFullscreenTabBar - return NO");
+                RLog(@"kPreferenceKeyFlashTabBarInFullscreen && !kPreferenceKeyShowFullscreenTabBar - return NO");
                 return NO;
             }
             if (@available(macOS 13.0, *)) {
@@ -6375,7 +6378,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 }
             } else {
                 if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
-                    DLog(@"macOS 11 + kPreferenceKeyShowFullscreenTabBar - return NO");
+                    RLog(@"macOS 11 + kPreferenceKeyShowFullscreenTabBar - return NO");
                     // This prevents a shadow from being drawn between the tabbar and the rest of the window.
                     // When the tabbar is hidden, it must be a titlebar accessory vc or else you'd never see it.
                     // The only downside I see is that when you reveal the titlebar it overlaps the tabbar
@@ -6385,57 +6388,57 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
             break;
     }
-    DLog(@"return YES");
+    RLog(@"return YES");
     return YES;
 }
 
 // Returns whether a permanent (i.e., not flashing) tabbar ought to be drawn while in full screen.
 // It does not check if you're already in full screen.
 - (BOOL)shouldShowPermanentFullScreenTabBar {
-    DLog(@"%@", self);
+    RLog(@"%@", self);
     if (togglingLionFullScreen_) {
-        DLog(@"togglingLionFullSCreen so return YES");
+        RLog(@"togglingLionFullSCreen so return YES");
         return YES;
     }
 
     if (![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
-        DLog(@"Not showing fullscreen tab bar so return NO");
+        RLog(@"Not showing fullscreen tab bar so return NO");
         return NO;
     }
 
     if ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] && self.tabs.count == 1) {
-        DLog(@"Not hiding it because of there being only one tab so return NO");
+        RLog(@"Not hiding it because of there being only one tab so return NO");
         return NO;
     }
 
-    DLog(@"Return YES");
+    RLog(@"Return YES");
     return YES;
 }
 
 - (BOOL)tabBarShouldBeAccessory {
-    DLog(@"%@", self);
+    RLog(@"%@", self);
     if (!(self.window.styleMask & NSWindowStyleMaskTitled)) {
         // You get an assertion if you try to add an accessory to an untitled window.
-        DLog(@"NO - window not titled");
+        RLog(@"NO - window not titled");
         return NO;
     }
     if (!exitingLionFullscreen_) {
-        DLog(@"!exitingLionFullscreen");
+        RLog(@"!exitingLionFullscreen");
         const BOOL assumeFullScreen = (self.lionFullScreen || togglingLionFullScreen_);
         if (assumeFullScreen) {
-            DLog(@"tabBarShouldBeAccessory - assuming full screen, should=%@", @([self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]));
+            RLog(@"tabBarShouldBeAccessory - assuming full screen, should=%@", @([self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen]));
             return [self shouldMoveTabBarToTitlebarAccessoryInLionFullScreen];
         }
     }
     if (!self.tabBarShouldBeVisibleEvenWhenOnLoan) {
-        DLog(@"NO - tab bar should not be visible");
+        RLog(@"NO - tab bar should not be visible");
         return NO;
     }
     switch ((PSMTabPosition)[iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_LeftTab:
         case PSMTab_RightTab:
         case PSMTab_BottomTab:
-            DLog(@"NO - tabs not on top");
+            RLog(@"NO - tabs not on top");
             return NO;
 
         case PSMTab_TopTab:
@@ -6444,7 +6447,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_MINIMAL:
         case TAB_STYLE_COMPACT:
-            DLog(@"NO - minimal or compact");
+            RLog(@"NO - minimal or compact");
             return NO;
 
         case TAB_STYLE_AUTOMATIC:
@@ -6468,16 +6471,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            DLog(@"NO - window type is %@", @(self.windowType));
+            RLog(@"NO - window type is %@", @(self.windowType));
             return NO;
             
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            DLog(@"lion full screen. return %@", @(!exitingLionFullscreen_));
+            RLog(@"lion full screen. return %@", @(!exitingLionFullscreen_));
             return !exitingLionFullscreen_;
 
         case WINDOW_TYPE_NORMAL:
             if (@available(macOS 26, *)) {
-                DLog(@"YES - macOS 26 with window type %@", @(self.windowType));
+                RLog(@"YES - macOS 26 with window type %@", @(self.windowType));
                 return YES;
             }
             // FALL THROUGH
@@ -6486,7 +6489,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
                 return NO;
             }
-            DLog(@"YES - normal, accessory, or maximized");
+            RLog(@"YES - normal, accessory, or maximized");
             return YES;
     }
     assert(NO);
@@ -6506,23 +6509,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 //  This reverted the remove/re-add approach because it broke the tab bar visibility when revealing the
 //  menu bar.
 - (void)updateTabBarControlIsTitlebarAccessory {
-    DLog(@"updateTabBarControlIsTitlebarAccessory %@", self);
+    RLog(@"updateTabBarControlIsTitlebarAccessory %@", self);
     if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
-        DLog(@"Style mask does not include titled");
+        RLog(@"Style mask does not include titled");
         return;
     }
     if ([self tabBarShouldBeAccessory]) {
-        DLog(@"tab bar should be accessory");
+        RLog(@"tab bar should be accessory");
         const NSRect frame = NSMakeRect(0, 0, self.window.frame.size.width, self.desiredTabBarHeight);
         NSTitlebarAccessoryViewController *viewController = [self titleBarAccessoryTabBarViewController];
         const CGFloat tabBarHeight = self.shouldShowPermanentFullScreenTabBar ? self.desiredTabBarHeight : 0;
-        DLog(@"Set tabbar's fullScreenMinHeight to %@", @(tabBarHeight));
-        DLog(@"View controller state: %@", viewController);
-        DLog(@"Actual tab bar control: hidden=%@ alpha=%@ frame=%@",
+        RLog(@"Set tabbar's fullScreenMinHeight to %@", @(tabBarHeight));
+        RLog(@"View controller state: %@", viewController);
+        RLog(@"Actual tab bar control: hidden=%@ alpha=%@ frame=%@",
              @(_contentView.tabBarControl.isHidden),
              @(_contentView.tabBarControl.alphaValue),
              NSStringFromRect(_contentView.tabBarControl.frame));
-        DLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
+        RLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
 
         [_titlebarAccessoryNanny add:viewController];
         const BOOL minHeightChanged = [_titlebarAccessoryNanny updateViewController:viewController
@@ -6538,20 +6541,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             });
         }
     } else if (_contentView.tabBarControlOnLoan) {
-        DLog(@"tab bar should NOT be accessory, but is on loan.");
+        RLog(@"tab bar should NOT be accessory, but is on loan.");
         [self returnTabBarToContentView];
     }
     [self updateSessionProgressBarVisibility];
-    DLog(@"Tab bar state after updateTabBarControlIsTitlebarAccessory: hidden=%@ alpha=%@ frame=%@",
+    RLog(@"Tab bar state after updateTabBarControlIsTitlebarAccessory: hidden=%@ alpha=%@ frame=%@",
          @(_contentView.tabBarControl.isHidden),
          @(_contentView.tabBarControl.alphaValue),
          NSStringFromRect(_contentView.tabBarControl.frame));
 }
 
 - (void)returnTabBarToContentView {
-    DLog(@"returnTabBarToContentView %@", self);
+    RLog(@"returnTabBarToContentView %@", self);
     if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
-        DLog(@"Style mask does not include titled");
+        RLog(@"Style mask does not include titled");
         return;
     }
     if (![_titlebarAccessoryNanny has:_titleBarAccessoryTabBarViewController]) {
@@ -6592,13 +6595,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)hideStandardWindowButtonsAndTitlebarAccessories {
-    DLog(@"hideStandardWindowButtonsAndTitlebarAccessories %@", self);
+    RLog(@"hideStandardWindowButtonsAndTitlebarAccessories %@", self);
     [[self.window standardWindowButton:NSWindowCloseButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
     [[self.window standardWindowButton:NSWindowZoomButton] setHidden:YES];
     [self returnTabBarToContentView];
     if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
-        DLog(@"Style mask does not include titled");
+        RLog(@"Style mask does not include titled");
         return;
     }
     [_titlebarAccessoryNanny removeAll];
@@ -6619,7 +6622,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)updateActivePaneBordersAfterFullScreenTransition {
-    DLog(@"updateActivePaneBordersAfterFullScreenTransition window=%d sessionCount=%d", (int)self.window.windowNumber, (int)self.allSessions.count);
+    RLog(@"updateActivePaneBordersAfterFullScreenTransition window=%d sessionCount=%d", (int)self.window.windowNumber, (int)self.allSessions.count);
     for (PTYSession *session in self.allSessions) {
         [session.view updateActivePaneBorder];
     }
@@ -6633,13 +6636,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame {
-    DLog(@"windowWillUseStandardFrame. defaultFrame=%@ self=%@", NSStringFromRect(defaultFrame), self);
+    RLog(@"windowWillUseStandardFrame. defaultFrame=%@ self=%@", NSStringFromRect(defaultFrame), self);
     // Disable redrawing during zoom-initiated live resize.
-    DLog(@"Set zooming=YES");
+    RLog(@"Set zooming=YES");
     zooming_ = YES;
     [self updateUseMetalInAllTabs];
     if (togglingLionFullScreen_) {
-        DLog(@"Currently toggling lion full screen so accept default frame");
+        RLog(@"Currently toggling lion full screen so accept default frame");
         // Tell it to use the whole screen when entering Lion fullscreen.
         // This is actually called twice in a row when entering fullscreen.
         return defaultFrame;
@@ -6657,32 +6660,32 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (togglingLionFullScreen_ || [[self ptyWindow] isTogglingLionFullScreen] || [self lionFullScreen]) {
         // Going into lion fullscreen mode. Disregard the "maximize vertically"
         // preference.
-        DLog(@"Going into lion fullscreen mode so disregard maximize vertically preference");
+        RLog(@"Going into lion fullscreen mode so disregard maximize vertically preference");
         verticalOnly = NO;
     } else {
         maxVerticallyPref = [iTermPreferences boolForKey:kPreferenceKeyMaximizeVerticallyOnly];
         if ([[NSApp currentEvent] type] == NSEventTypeKeyDown) {
-            DLog(@"Is due to keydown");
+            RLog(@"Is due to keydown");
             verticalOnly = maxVerticallyPref;
         } else if (maxVerticallyPref ^
                    (([[iTermApplication sharedApplication] it_modifierFlags] & NSEventModifierFlagShift) != 0)) {
-            DLog(@"Not keydown, holding shift, pref is not for vertical only. maximize vertically only");
+            RLog(@"Not keydown, holding shift, pref is not for vertical only. maximize vertically only");
             verticalOnly = YES;
         }
     }
 
     if (verticalOnly) {
-        DLog(@"verticalOnly=true");
+        RLog(@"verticalOnly=true");
         // Keep the width the same
         proposedFrame.size.width = [sender frame].size.width;
     } else {
-        DLog(@"!verticalOnly");
+        RLog(@"!verticalOnly");
         proposedFrame.size.width = defaultFrame.size.width;
         proposedFrame.origin.x = defaultFrame.origin.x;
     }
     proposedFrame.size.height = defaultFrame.size.height;
     proposedFrame.origin.y = defaultFrame.origin.y;
-    DLog(@"Return frame %@", NSStringFromRect(proposedFrame));
+    RLog(@"Return frame %@", NSStringFromRect(proposedFrame));
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf resetZoomIfNotLiveResizing];
@@ -6692,7 +6695,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)resetZoomIfNotLiveResizing {
     if (liveResize_) {
-        DLog(@"Not resetting zoom");
+        RLog(@"Not resetting zoom");
         return;
     }
     zooming_ = NO;
@@ -6704,7 +6707,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
-    DLog(@"sessionInitiatedResize: %dx%d\n%@", width, height, [NSThread callStackSymbols]);
+    RLog(@"sessionInitiatedResize: %dx%d", width, height);
+    DLog(@"%@", [NSThread callStackSymbols]);
     __block BOOL result;
     [session resetMode];
     [session.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -6866,7 +6870,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
     if (![[self currentSession] exited]) {
-        DLog(@"Clear new-output flag in %@", [self currentSession]);
+        RLog(@"Clear new-output flag in %@", [self currentSession]);
         [[self currentSession] setNewOutput:NO];
     }
     // If the user is currently select-dragging the text view, stop it so it
@@ -6907,7 +6911,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
-    DLog(@"Did select tab view %@", tabViewItem);
+    RLog(@"Did select tab view %@", tabViewItem);
     [_contentView.tabBarControl setFlashing:YES];
 
     if (self.autoCommandHistorySessionGuid) {
@@ -6915,7 +6919,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     PTYTab *tab = [tabViewItem identifier];
     for (PTYSession *aSession in [tab sessions]) {
-        DLog(@"Clear new-output flag in %@", aSession);
+        RLog(@"Clear new-output flag in %@", aSession);
         [aSession setNewOutput:NO];
 
         // Background tabs' timers run infrequently so make sure the display is
@@ -6999,7 +7003,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     [tab didSelectTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
-    DLog(@"Finished");
+    RLog(@"Finished");
 }
 
 - (void)updateUseMetalInAllTabs {
@@ -7066,18 +7070,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     __weak __typeof(self) weakSelf = self;
     PTYSession *session = self.currentSession;
     id<iTermOrderedToken> token = [[_proxyIconOrderEnforcer newToken] autorelease];
-    DLog(@"Getting current location async for prixy icon");
+    RLog(@"Getting current location async for prixy icon");
     [session asyncGetCurrentLocationWithCompletion:^(NSURL *url) {
-        DLog(@"Got updated local pwd for proxy icon for %@: %@", session, url);
+        RLog(@"Got updated local pwd for proxy icon for %@: %@", session, url);
         if (weakSelf.currentSession != session) {
-            DLog(@"Current session changed, ignore it");
+            RLog(@"Current session changed, ignore it");
             return;
         }
         if (![token commit]) {
-            DLog(@"Out of order result, ignore it");
+            RLog(@"Out of order result, ignore it");
             return;
         }
-        DLog(@"Assign to representedURL");
+        RLog(@"Assign to representedURL");
         self.window.representedURL = url;
         [self updateProxyIconVisibility];
     }];
@@ -7129,7 +7133,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tabView:(NSTabView *)tabView
     willInsertTabViewItem:(NSTabViewItem *)tabViewItem
         atIndex:(int)anIndex {
-    DLog(@"%@: tabView:%@ willInsertTabViewItem:%@ atIndex:%d", self, tabView, tabViewItem, anIndex);
+    RLog(@"%@: tabView:%@ willInsertTabViewItem:%@ atIndex:%d", self, tabView, tabViewItem, anIndex);
     PTYTab* theTab = [tabViewItem identifier];
     [theTab setParentWindow:self];
     theTab.delegate = self;
@@ -7139,7 +7143,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if ([theTab isTmuxTab]) {
         [theTab recompact];
         [theTab notifyWindowChanged];
-        DLog(@"Update client size");
+        RLog(@"Update client size");
         if (self.tabs.count > 0) {
             // When there are no tabs the size is the initial frame computed in
             // finishInitializationWithSmartLayout: so we shouldn't set it. The size should come
@@ -7465,9 +7469,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             const BOOL neededInitialSize = _windowNeedsInitialSize;
             const NSRect frameBefore = self.window.frame;
             if (_windowNeedsInitialSize) {
-                DLog(@"Perform initial fitWindowToTabs");
+                RLog(@"Perform initial fitWindowToTabs");
             }
-            DLog(@"tabViewDidChangeNumberOfTabViewItems: tmuxOriginatedResizeInProgress=%d window frame before=%@",
+            RLog(@"tabViewDidChangeNumberOfTabViewItems: tmuxOriginatedResizeInProgress=%d window frame before=%@",
                  tmuxOriginatedResizeInProgress_, NSStringFromRect(self.window.frame));
             // Always use lazyFitWindowToTabs here. It falls back to fitWindowToTabs when
             // no tmux tabs are present, and avoids sub-cell shrinkage when there are tmux
@@ -7475,7 +7479,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             // pre-tmux session is buried after tmux init completes). Issue 9480.
             [self lazyFitWindowToTabs];
             const NSRect frameAfter = self.window.frame;
-            DLog(@"tabViewDidChangeNumberOfTabViewItems: window frame after=%@", NSStringFromRect(frameAfter));
+            RLog(@"tabViewDidChangeNumberOfTabViewItems: window frame after=%@", NSStringFromRect(frameAfter));
             if (NSEqualRects(frameBefore, frameAfter) && neededInitialSize) {
                 // If the initial window frame happened to exactly equal the fitWindowToTabs size
                 // the session will remain at its initial size specified by its profile. It's
@@ -7488,7 +7492,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                    wouldCauseExcursion &&
                    preserveDueToShowing &&
                    preserveOnlyIfExcursion) {
-            DLog(@"Prevented due to excursion.");
+            RLog(@"Prevented due to excursion.");
             // Set this flag because if the tab bar goes away later we don't want it to shrink.
             _excursionPrevented = YES;
         } else if (preserveDueToHiding) {
@@ -7496,7 +7500,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
         // May need to enter or exit being a titlebar accessory if its visibility changed.
         [self updateTabBarControlIsTitlebarAccessory];
-        DLog(@"After updateTabBarControlIsTitlebarAccessory with %ld tabs: tabBarControl.hidden=%@ alpha=%@ frame=%@",
+        RLog(@"After updateTabBarControlIsTitlebarAccessory with %ld tabs: tabBarControl.hidden=%@ alpha=%@ frame=%@",
              (long)_contentView.tabView.numberOfTabViewItems,
              @(_contentView.tabBarControl.isHidden),
              @(_contentView.tabBarControl.alphaValue),
@@ -7570,7 +7574,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return NO;
     }
     const NSRect screenFrame = self.window.screen.visibleFrame;
-    DLog(@"Proposed frame is %@, current frame is %@, screen is %@ with visible frame %@",
+    RLog(@"Proposed frame is %@, current frame is %@, screen is %@ with visible frame %@",
          NSStringFromRect(proposedFrame),
          NSStringFromRect(self.window.frame),
          self.window.screen,
@@ -7584,7 +7588,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return NO;
     }
 
-    DLog(@"Frame would leave the screen");
+    RLog(@"Frame would leave the screen");
     return YES;
 }
 
@@ -8049,32 +8053,32 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (BOOL)tabBarProvidesProgressVisibility {
     if (togglingLionFullScreen_ || self.anyFullScreen) {
         const BOOL result = self.shouldShowPermanentFullScreenTabBar;
-        DLog(@"tabBarProvidesProgressVisibility: fullscreen path -> shouldShowPermanentFullScreenTabBar=%d", result);
+        RLog(@"tabBarProvidesProgressVisibility: fullscreen path -> shouldShowPermanentFullScreenTabBar=%d", result);
         return result;
     }
     const BOOL result = self.tabBarShouldBeVisible;
-    DLog(@"tabBarProvidesProgressVisibility: normal path -> tabBarShouldBeVisible=%d", result);
+    RLog(@"tabBarProvidesProgressVisibility: normal path -> tabBarShouldBeVisible=%d", result);
     return result;
 }
 
 - (BOOL)shouldShowInlineProgressBarForSession:(PTYSession *)session tabBarVisible:(BOOL)tabBarVisible {
     PTYTab *tab = [self tabForSession:session];
     if (!tab) {
-        DLog(@"shouldShowInlineProgressBarForSession: no tab, return YES");
+        RLog(@"shouldShowInlineProgressBarForSession: no tab, return YES");
         return YES;
     }
     const BOOL hasSingleTab = (self.numberOfTabs == 1);
     const BOOL hasSplitPanes = (tab.sessions.count > 1);
     const BOOL isInOverflow = [_contentView.tabBarControl isInOverflowMenuForTabWithIdentifier:tab];
     const BOOL result = (hasSingleTab || hasSplitPanes || isInOverflow || !tabBarVisible);
-    DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
+    RLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
          hasSingleTab, hasSplitPanes, isInOverflow, tabBarVisible, result);
     return result;
 }
 
 - (void)updateSessionProgressBarVisibility {
     const BOOL tabBarVisible = [self tabBarProvidesProgressVisibility];
-    DLog(@"updateSessionProgressBarVisibility: tabBarVisible=%d sessions=%d", tabBarVisible, (int)self.allSessions.count);
+    RLog(@"updateSessionProgressBarVisibility: tabBarVisible=%d sessions=%d", tabBarVisible, (int)self.allSessions.count);
     for (PTYSession *session in self.allSessions) {
         session.view.showInlineProgressBar = [self shouldShowInlineProgressBarForSession:session
                                                                            tabBarVisible:tabBarVisible];
@@ -8114,13 +8118,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)safeSetAppearance:(NSAppearance *)appearance {
     if (_deferSetAppearance) {
-        DLog(@"Defer set appearance to %@ for %@", appearance.name, self);
+        RLog(@"Defer set appearance to %@ for %@", appearance.name, self);
         _haveDesiredAppearance = YES;
         [_desiredAppearance autorelease];
         _desiredAppearance = [appearance retain];
         return;
     }
-    DLog(@"Immediately set appearance to %@ for %@", appearance.name, self);
+    RLog(@"Immediately set appearance to %@ for %@", appearance.name, self);
     self.window.appearance = appearance;
 }
 
@@ -8494,18 +8498,18 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                          didSendUserName:(void (^)(void))didSendUserName {
     RLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
     if (session && !session.canOpenPasswordManager) {
-        DLog(@"Can't open password manager right now");
+        RLog(@"Can't open password manager right now");
         return;
     }
     if (_passwordManagerWindowController != nil) {
-        DLog(@"Password manager sheet already open");
+        RLog(@"Password manager sheet already open");
         return;
     }
     // It would be a shame to send a focus report to a password prompt.
     PTYSession *effectiveSession = session ?: self.currentSession;
     [effectiveSession performBlockWithoutFocusReporting:^{
         [session reveal];
-        DLog(@"Show the password manager as a sheet");
+        RLog(@"Show the password manager as a sheet");
         _passwordManagerWindowController.delegate = nil;
         [_passwordManagerWindowController autorelease];
         if (effectiveSession.isBrowserSession) {
@@ -8661,7 +8665,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (![[self currentSession] liveSession]) {
         if (dir > 0) {
             // Can't go forward in time from live view (though that would be nice!)
-            DLog(@"Beep: no time travel allowed");
+            RLog(@"Beep: no time travel allowed");
             NSBeep();
             return;
         }
@@ -8769,7 +8773,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYTab *theTab = [tabViewItem identifier];
     newSession.delegate = theTab;
 
-    DLog(@"Live session: %@, synthetic session: %@", oldSession, newSession);
+    RLog(@"Live session: %@, synthetic session: %@", oldSession, newSession);
     return newSession;
 }
 
@@ -8849,7 +8853,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [session retain];
     timer = [[NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer *t) {
         if (session.view.driver.captureDebugInfoForNextFrame) {
-            DLog(@"Still waiting for frame capture");
+            RLog(@"Still waiting for frame capture");
             return;
         }
         for (NSString *guid in tokens) {
@@ -8865,6 +8869,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)zoomOut:(id)sender {
+    RLog(@"zoomOut:");
     if (self.currentSession.filter.length) {
         [self.currentSession stopFiltering];
     } else {
@@ -8913,6 +8918,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)showLiveSession:(PTYSession *)liveSession inPlaceOf:(PTYSession *)syntheticSession {
+    RLog(@"showLiveSession:%@ inPlaceOf:%@", liveSession, syntheticSession);
     PTYTab *theTab = [self tabForSession:syntheticSession];
     [_instantReplayWindowController updateInstantReplayView];
 
@@ -8940,12 +8946,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)windowPerformMiniaturize:(id)sender {
-    DLog(@"windowPerformMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowPerformMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [[self window] performMiniaturize:sender];
 }
 
 - (void)windowDeminiaturize:(id)sender {
-    DLog(@"windowDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
     [[self window] deminiaturize:sender];
 }
 
@@ -8961,7 +8967,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (BOOL)windowIsMiniaturized {
     const BOOL result = [[self window] isMiniaturized];
-    DLog(@"windowIsMiniaturized returning %@", @(result));
+    RLog(@"windowIsMiniaturized returning %@", @(result));
     return result;
 }
 
@@ -9032,7 +9038,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 {
     if (sender == coprocessOkButton_) {
         if ([[[coprocessCommand_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0) {
-            DLog(@"Beep: empty coprocess");
+            RLog(@"Beep: empty coprocess");
             NSBeep();
             return;
         }
@@ -9162,7 +9168,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         [self hideAutoCommandHistory];
-        DLog(@"ACH Cancel delayed perform of show ACH window");
+        RLog(@"ACH Cancel delayed perform of show ACH window");
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(reallyShowAutoCommandHistoryForSession:)
                                                    object:session];
@@ -9184,7 +9190,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix
                                 inSession:(PTYSession *)session
                               popIfNeeded:(BOOL)popIfNeeded {
-    DLog(@"ACH prefix=%@ session=%@ popIfNeeded=%@", prefix, session, @(popIfNeeded));
+    RLog(@"ACH prefix=%@ session=%@ popIfNeeded=%@", prefix, session, @(popIfNeeded));
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:YES];
@@ -9192,30 +9198,30 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
                                                                                      partialCommand:prefix
                                                                                              expand:NO];
-        DLog(@"ACH commands=%@", commands);
+        RLog(@"ACH commands=%@", commands);
         if (commands.count) {
             if (popIfNeeded) {
-                DLog(@"ACH Pop");
+                RLog(@"ACH Pop");
                 [commandHistoryPopup popWithDelegate:session inWindow:self.window];
             }
         } else {
-            DLog(@"ACH no commands");
+            RLog(@"ACH no commands");
             [commandHistoryPopup close];
             return;
         }
         if ([commands count] == 1) {
             iTermCommandHistoryCommandUseMO *commandUse = commands[0];
             if ([commandUse.command isEqualToString:prefix]) {
-                DLog(@"ACH one command that equals prefix");
+                RLog(@"ACH one command that equals prefix");
                 [commandHistoryPopup close];
                 return;
             }
         }
         if (![[commandHistoryPopup window] isVisible]) {
-            DLog(@"ACH show");
+            RLog(@"ACH show");
             [self showAutoCommandHistoryForSession:session];
         }
-        DLog(@"ACH load commands");
+        RLog(@"ACH load commands");
         [commandHistoryPopup loadCommands:commands
                            partialCommand:prefix
                       sortChronologically:NO];
@@ -9225,7 +9231,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         NSArray<NSString *> *commands = [[history commandHistoryEntriesWithPrefix:prefix onHost:[session currentHost]] mapWithBlock:^id(iTermCommandHistoryEntryMO *anObject) {
             return anObject.command;
         }];
-        DLog(@"ACH Set candidates=%@", commands);
+        RLog(@"ACH Set candidates=%@", commands);
         [_autocompleteCandidateListItem setCandidates:commands ?: @[]
                                      forSelectedRange:NSMakeRange(0, prefix.length)
                                              inString:prefix];
@@ -9236,7 +9242,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)showAutoCommandHistoryForSession:(PTYSession *)session {
     if ([iTermPreferences boolForKey:kPreferenceAutoCommandHistory]) {
         // Use a delay so we don't get a flurry of windows appearing when restoring arrangements.
-        DLog(@"ACH show after 0.2 second delay for session %@", session);
+        RLog(@"ACH show after 0.2 second delay for session %@", session);
         [self performSelector:@selector(reallyShowAutoCommandHistoryForSession:)
                    withObject:session
                    afterDelay:0.2];
@@ -9244,7 +9250,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
-    DLog(@"ACH session=%@ currentSession=%@ window.isKey=%@ currentCommand=%@ eligible=%@",
+    RLog(@"ACH session=%@ currentSession=%@ window.isKey=%@ currentCommand=%@ eligible=%@",
          session,
          self.currentSession,
          @(self.window.isKeyWindow),
@@ -9274,10 +9280,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         autocompleteView = [[AutocompleteView alloc] init];
     }
     if ([[autocompleteView window] isVisible]) {
-        DLog(@"more");
+        RLog(@"more");
         [autocompleteView more];
     } else {
-        DLog(@"Will open popup");
+        RLog(@"Will open popup");
         [self openPopupWindow:autocompleteView];
         NSString *currentCommand = [[self currentSession] currentCommand];
         [autocompleteView addCommandEntries:[[self currentSession] autocompleteSuggestionsForCurrentCommand]
@@ -9288,7 +9294,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile *)theBookmark {
     if ([self inInstantReplay]) {
         // Things get very complicated in this case. Just disallow it.
-        DLog(@"In instant replay");
+        RLog(@"In instant replay");
         return NO;
     }
     NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]
@@ -9341,13 +9347,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions
              revive:(BOOL)revive {
-    DLog(@"Re-create tab");
+    RLog(@"Re-create tab");
     NSInteger tabIndex = [_contentView.tabView indexOfTabViewItemWithIdentifier:tab];
     if (tabIndex == NSNotFound) {
-        DLog(@"The requested tab does not exist any more");
+        RLog(@"The requested tab does not exist any more");
         return;
     }
-    DLog(@"OK");
+    RLog(@"OK");
     NSMutableArray *allSessions = [NSMutableArray array];
     [allSessions addObjectsFromArray:sessions];
     [allSessions addObjectsFromArray:[tab sessions]];
@@ -9356,26 +9362,26 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     BOOL ok = (theMap != nil);
     if (ok) {
-        DLog(@"Found session map");
+        RLog(@"Found session map");
         // Make sure the proposed tab has at least all the sessions already in the current tab.
         for (PTYSession *sessionInExistingTab in [tab sessions]) {
             BOOL found = NO;
             for (PTYSession *sessionInProposedTab in [theMap allValues]) {
                 if (sessionInProposedTab == sessionInExistingTab) {
-                    DLog(@"A session in the tab matches a session in the map");
+                    RLog(@"A session in the tab matches a session in the map");
                     found = YES;
                     break;
                 }
             }
             if (!found) {
-                DLog(@"No session in the tab matches any session in the map");
+                RLog(@"No session in the tab matches any session in the map");
                 ok = NO;
                 break;
             }
         }
     }
     if (!ok) {
-        DLog(@"Can't do it. Just add each session as its own tab.");
+        RLog(@"Can't do it. Just add each session as its own tab.");
         for (PTYSession *session in sessions) {
             if (revive) {
                 [session revive];
@@ -9390,7 +9396,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
     }
 
-    DLog(@"Replace tab with temporary tab");
+    RLog(@"Replace tab with temporary tab");
     PTYSession *originalActiveSession = [tab activeSession];
     PTYTab *temporaryTab = [PTYTab tabWithArrangement:arrangement
                                                 named:nil
@@ -9412,23 +9418,24 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                      uniqueId:(int)tabUniqueId
                      sessions:(NSArray *)sessions
                  predecessors:(NSArray *)predecessors {
+    RLog(@"Begin with %@ sessions", @(sessions.count));
     DLog(@"construct session map with sessions: %@\nArrangement:\n%@", sessions, arrangement);
     NSDictionary<NSString *, PTYSession *> *sessionMap = [PTYTab sessionMapWithArrangement:arrangement
                                                                                   sessions:sessions];
     if (!sessionMap) {
-        DLog(@"Failed to create a session map");
+        RLog(@"Failed to create a session map");
         // Can't do it. Just add each session as its own tab.
         for (PTYSession *session in sessions) {
-            DLog(@"Revive %@", session);
+            RLog(@"Revive %@", session);
             if ([session revive]) {
-                DLog(@"Succeeded. Add revived session as a tab");
+                RLog(@"Succeeded. Add revived session as a tab");
                 [self addRevivedSession:session];
             }
         }
         return;
     }
 
-    DLog(@"Creating a tab to receive the arrangement");
+    RLog(@"Creating a tab to receive the arrangement");
     PTYTab *tab = [PTYTab tabWithArrangement:arrangement
                                        named:nil
                                   inTerminal:self
@@ -9442,7 +9449,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     tab.uniqueId = tabUniqueId;
     for (NSString *theKey in sessionMap) {
         PTYSession *session = sessionMap[theKey];
-        DLog(@"Revive %@", session);
+        RLog(@"Revive %@", session);
         [session revive];
     }
 
@@ -9583,7 +9590,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                   completion:(void (^)(PTYSession *, BOOL ok))completion
                        ready:(void (^)(PTYSession *, BOOL ok))ready {
     if (_layoutLocked) {
-        DLog(@"Layout is locked, refusing to split");
+        RLog(@"Layout is locked, refusing to split");
         if (ready) {
             ready(nil, NO);
         }
@@ -9637,7 +9644,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (currentSession) {
         [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:theBookmark.sshIdentity
                                                                                        completion:^(NSString *oldCWD) {
-            DLog(@"Get local pwd so I can split: %@", oldCWD);
+            RLog(@"Get local pwd so I can split: %@", oldCWD);
             PTYSession *session = [self splitVertically:isVertical
                                                  before:before
                                                 profile:theBookmark
@@ -9686,9 +9693,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         return nil;
     }
-    PtyLog(@"--------- splitVertically -----------");
+    RLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
-        DLog(@"Beep: can't split");
+        RLog(@"Beep: can't split");
         NSBeep();
         return nil;
     }
@@ -9733,6 +9740,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                windowController:self
                                                           ready:^(BOOL ok) {
         if (!ok) {
+            RLog(@"Launch failed");
             [newSession terminate];
             [[weakSelf tabForSession:newSession] removeSession:newSession];
         }
@@ -9820,8 +9828,7 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
 - (NSSize)sizeOfLargestTabWithExclusion:(PseudoTerminalTabSizeExclusion)exclusion {
     // Determine the size of the largest tab.
     NSSize maxTabSize = NSZeroSize;
-    PtyLog(@"fitWindowToTabs.......");
-    DLog(@"Finding the biggest tab:");
+    RLog(@"Finding the biggest tab:");
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
         PTYTab* tab = [item identifier];
         switch (exclusion) {
@@ -9856,7 +9863,7 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
             maxTabSize.height = tabSize.height;
         }
     }
-    DLog(@"Max tab size is %@", NSStringFromSize(maxTabSize));
+    RLog(@"Max tab size is %@", NSStringFromSize(maxTabSize));
     return maxTabSize;
 }
 
@@ -9888,21 +9895,22 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
                         preservingHeight:(BOOL)preserveHeight
                         sizeOfLargestTab:(NSSize)maxTabSize {
-    DLog(@"fitWindowToTabsExcludingTmuxTabs:%@ preservingHeight:%@ sizeOfLargestTab:%@ from\n%@",
-         @(excludeTmux), @(preserveHeight), NSStringFromSize(maxTabSize), [NSThread callStackSymbols]);
+    RLog(@"fitWindowToTabsExcludingTmuxTabs:%@ preservingHeight:%@ sizeOfLargestTab:%@",
+         @(excludeTmux), @(preserveHeight), NSStringFromSize(maxTabSize));
+    DLog(@"%@", [NSThread callStackSymbols]);
 
     _windowNeedsInitialSize = NO;
     if (togglingFullScreen_) {
-        DLog(@"Toggling full screen, abort");
+        RLog(@"Toggling full screen, abort");
         return;
     }
 
     if (NSEqualSizes(NSZeroSize, maxTabSize)) {
         // all tabs are tmux tabs.
-        DLog(@"max tab size is zero, abort");
+        RLog(@"max tab size is zero, abort");
         return;
     }
-    PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
+    RLog(@"fitWindowToTabs - calling fitWindowToTabSize");
     NSNumber *preferredHeight = preserveHeight ? @(self.window.frame.size.height) : nil;
     if (![self fitWindowToTabSize:maxTabSize preferredHeight:preferredHeight]) {
         // Sometimes the window doesn't resize but widgets need to be moved. For example, when toggling
@@ -9927,32 +9935,32 @@ typedef struct {
 
 - (PseudoTerminalWindowFrameInfo)windowFrameForTabSize:(NSSize)tabSize
                                        preferredHeight:(NSNumber *)preferredHeight {
-    DLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
+    RLog(@"fitWindowToTabSize:%@ preferredHeight:%@", NSStringFromSize(tabSize), preferredHeight);
     PseudoTerminalWindowFrameInfo result = {
         .ok = NO,
         .mustResizeTabs = NO,
     };
     if ([self anyFullScreen]) {
-        DLog(@"Full screen - fit tabs to window instead.");
+        RLog(@"Full screen - fit tabs to window instead.");
         [self fitTabsToWindow];
         return result;
     }
     // Set the window size to be large enough to encompass that tab plus its decorations.
     NSSize decorationSize = [self windowDecorationSize];
-    DLog(@"decorationSize=%@", NSStringFromSize(decorationSize));
+    RLog(@"decorationSize=%@", NSStringFromSize(decorationSize));
     NSSize winSize = tabSize;
     winSize.width += decorationSize.width;
     winSize.height += decorationSize.height;
 
     if (preferredHeight && preferredHeight.doubleValue > winSize.height) {
-        DLog(@"Respecting preferred height %@", preferredHeight);
+        RLog(@"Respecting preferred height %@", preferredHeight);
         winSize.height = preferredHeight.doubleValue;
     } else {
-        DLog(@"Ignoring preferred height %@ with winSize.height %@", preferredHeight, @(winSize.height));
+        RLog(@"Ignoring preferred height %@ with winSize.height %@", preferredHeight, @(winSize.height));
     }
 
     result.frame = [[self window] frame];
-    DLog(@"Original frame: %@ maxy=%@", NSStringFromRect(result.frame), @(NSMaxY(result.frame)));
+    RLog(@"Original frame: %@ maxy=%@", NSStringFromRect(result.frame), @(NSMaxY(result.frame)));
 
     if (_contentView.shouldShowToolbelt) {
         winSize.width += floor(_contentView.toolbeltWidth);
@@ -9975,13 +9983,13 @@ typedef struct {
     winSize.height = MIN(winSize.height, maxFrameSize.height);
 
     CGFloat heightChange = winSize.height - [[self window] frame].size.height;
-    DLog(@"Existing height is %@. heightChange is %@", @([[self window] frame].size.height), @(heightChange));
+    RLog(@"Existing height is %@. heightChange is %@", @([[self window] frame].size.height), @(heightChange));
     result.frame.size = winSize;
     result.frame.origin.y -= heightChange;
 
     // Set the frame for X-of-screen windows. The size doesn't change
     // for _PARTIAL window types.
-    DLog(@"fitWindowToTabSize using screen number %@ with frame %@", @([[NSScreen screens] indexOfObject:self.screen]),
+    RLog(@"fitWindowToTabSize using screen number %@ with frame %@", @([[NSScreen screens] indexOfObject:self.screen]),
          NSStringFromRect(self.screen.frame));
 
     // Update the frame for the window style, but don't mess with the size we've computed except
@@ -10032,13 +10040,14 @@ typedef struct {
 
 // This is like fitWindowToTabSize but it avoids shrinking the window by less than one cell.
 - (void)lazyFitWindowToTabSize:(NSSize)tabSize cellSize:(NSSize)cellSize {
-    DLog(@"lazyFitWindowToTabSize:%@ cellSize:%@ window frame:%@ from\n%@",
+    RLog(@"lazyFitWindowToTabSize:%@ cellSize:%@ window frame:%@",
          NSStringFromSize(tabSize), NSStringFromSize(cellSize),
-         NSStringFromRect(self.window.frame), [NSThread callStackSymbols]);
+         NSStringFromRect(self.window.frame));
+    DLog(@"%@", [NSThread callStackSymbols]);
     PseudoTerminalWindowFrameInfo frameInfo = [self windowFrameForTabSize:tabSize
                                                           preferredHeight:nil];
     if (!frameInfo.ok) {
-        DLog(@"lazyFitWindowToTabSize: frameInfo not ok, bailing");
+        RLog(@"lazyFitWindowToTabSize: frameInfo not ok, bailing");
         return;
     }
     const NSSize currentSize = self.window.frame.size;
@@ -10048,7 +10057,7 @@ typedef struct {
     // Block the resize only when every dimension's change is a sub-cell shrink (or zero).
     const BOOL widthNeedsResize = (dw > 0 || -dw > cellSize.width);
     const BOOL heightNeedsResize = (dh > 0 || -dh > cellSize.height);
-    DLog(@"lazyFitWindowToTabSize: proposed frame=%@ dw=%f dh=%f cellSize=%@ widthNeedsResize=%@ heightNeedsResize=%@ -> %@",
+    RLog(@"lazyFitWindowToTabSize: proposed frame=%@ dw=%f dh=%f cellSize=%@ widthNeedsResize=%@ heightNeedsResize=%@ -> %@",
          NSStringFromRect(frameInfo.frame), dw, dh, NSStringFromSize(cellSize),
          @(widthNeedsResize), @(heightNeedsResize),
          (widthNeedsResize || heightNeedsResize) ? @"RESIZE" : @"SKIP");
@@ -10059,7 +10068,8 @@ typedef struct {
 
 // Like fitWindowToTabs but avoids shrinking the window by less than one cell for tmux tabs.
 - (void)lazyFitWindowToTabs {
-    DLog(@"lazyFitWindowToTabs from\n%@", [NSThread callStackSymbols]);
+    RLog(@"begin");
+    DLog(@"%@", [NSThread callStackSymbols]);
     NSSize cellSize = NSZeroSize;
     for (PTYTab *tab in self.tabs) {
         if (tab.isTmuxTab) {
@@ -10068,14 +10078,14 @@ typedef struct {
         }
     }
     if (NSEqualSizes(cellSize, NSZeroSize)) {
-        DLog(@"lazyFitWindowToTabs: no tmux tabs, falling back to fitWindowToTabs");
+        RLog(@"lazyFitWindowToTabs: no tmux tabs, falling back to fitWindowToTabs");
         [self fitWindowToTabs];
         return;
     }
     NSSize maxTabSize = [self sizeOfLargestTabWithExclusion:PseudoTerminalTabSizeExclusionNone];
-    DLog(@"lazyFitWindowToTabs: cellSize=%@ maxTabSize=%@", NSStringFromSize(cellSize), NSStringFromSize(maxTabSize));
+    RLog(@"lazyFitWindowToTabs: cellSize=%@ maxTabSize=%@", NSStringFromSize(cellSize), NSStringFromSize(maxTabSize));
     if (NSEqualSizes(NSZeroSize, maxTabSize)) {
-        DLog(@"lazyFitWindowToTabs: max tab size is zero, bailing");
+        RLog(@"lazyFitWindowToTabs: max tab size is zero, bailing");
         return;
     }
     [self lazyFitWindowToTabSize:maxTabSize cellSize:cellSize];
@@ -10102,11 +10112,11 @@ typedef struct {
     NSUInteger savedMask = 0;
     NSView *bugFixView = [self addBugfixView:&savedMask];
     const BOOL didResize = !NSEqualRects([[self window] frame], frame);
-    DLog(@"Set window frame to %@", NSStringFromRect(frame));
+    RLog(@"Set window frame to %@", NSStringFromRect(frame));
 
     self.contentView.autoresizesSubviews = NO;
     _windowDidResize = NO;
-    DLog(@"Call self.window.setFrame:%@", NSStringFromRect(frame));
+    RLog(@"Call self.window.setFrame:%@", NSStringFromRect(frame));
     [[self window] setFrame:frame display:YES];
     self.contentView.autoresizesSubviews = YES;
     if (_windowDidResize) {
@@ -10120,7 +10130,7 @@ typedef struct {
         // I do not trust Cocoa, so this is a backstop to ensure we don't end
         // up with a screwy layout in case it doesn't get called in som edge
         // case.
-        DLog(@"Using backstop - windowDidResize DID NOT RUN");
+        RLog(@"Using backstop - windowDidResize DID NOT RUN");
         [self repositionWidgets];
     }
 
@@ -10369,7 +10379,7 @@ typedef struct {
 }
 
 - (void)setBroadcastMode:(BroadcastMode)mode {
-    DLog(@"setBroadcastMode:%@ self=%@", @(mode), self);
+    RLog(@"setBroadcastMode:%@ self=%@", @(mode), self);
     _broadcastInputHelper.broadcastMode = mode;
 }
 
@@ -10400,7 +10410,7 @@ typedef struct {
 
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex {
     if (_layoutLocked) {
-        DLog(@"Layout is locked, refusing to move tab");
+        RLog(@"Layout is locked, refusing to move tab");
         return;
     }
     if (destinationIndex < 0) {
@@ -10545,7 +10555,7 @@ typedef struct {
         i++;
     }
 
-    DLog(@"Point %lf,%lf not in any screen", p.x, p.y);
+    RLog(@"Point %lf,%lf not in any screen", p.x, p.y);
     return 0;
 }
 
@@ -10576,7 +10586,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)scrollerStyleDidChange:(NSNotification *)notification {
-    DLog(@"scrollerStyleDidChange %@", @([NSScroller preferredScrollerStyle]));
+    RLog(@"scrollerStyleDidChange %@", @([NSScroller preferredScrollerStyle]));
     [self scrollerStyleOrRightExtraDidChange];
 }
 
@@ -10586,7 +10596,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)scrollerStyleOrRightExtraDidChange {
-    DLog(@"scrollerStyleOrRightExtraDidChange");
+    RLog(@"scrollerStyleOrRightExtraDidChange");
     [self updateSessionScrollbars];
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
@@ -10596,14 +10606,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         // the existing pixel dimensions of the tabs.
 
         // Resize the window only if doing so would not cause it to lose maximized state.
-        DLog(@"screen visibleFrame is %@, window frame is %@",
+        RLog(@"screen visibleFrame is %@, window frame is %@",
              NSStringFromRect(self.window.screen.visibleFrame),
              NSStringFromRect(self.window.frame));
         if (fabs(NSMaxX(self.window.screen.visibleFrame) - NSMaxX(self.window.frame)) > 0.5) {
-            DLog(@"Fit window to idealized tabs preserving height");
+            RLog(@"Fit window to idealized tabs preserving height");
             [self fitWindowToIdealizedTabsPreservingHeight:YES];
         } else {
-            DLog(@"Window's frame matches screen's visible frame so not adjusting window size due to scroller style change");
+            RLog(@"Window's frame matches screen's visible frame so not adjusting window size due to scroller style change");
         }
         [self fitTabsToWindow];
         for (TmuxController *controller in [self uniqueTmuxControllers]) {
@@ -10615,7 +10625,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 - (void)refreshTerminal:(NSNotification *)aNotification {
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
     if (_settingStyleMask) {
-        DLog(@"Prevent re-entrant style mask setting");
+        RLog(@"Prevent re-entrant style mask setting");
         dispatch_async(dispatch_get_main_queue(), ^{
             [self refreshTerminal:nil];
         });
@@ -10693,7 +10703,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     // If updatePaneTitles caused any session to change dimensions, then tell tmux
     // controllers that our capacity has changed.
     if (needResize) {
-        DLog(@"refreshTerminal needs resize");
+        RLog(@"refreshTerminal needs resize");
         NSArray *tmuxControllers = [self uniqueTmuxControllers];
         for (TmuxController *c in tmuxControllers) {
             [c windowDidResize:self];
@@ -10989,16 +10999,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 // which handles the case when the tab bar IS a functioning accessory.
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop {
     if ([PseudoTerminal windowTypeHasFullSizeContentView:self.windowType]) {
-        DLog(@"YES because window type %@ has full size content view", @(self.windowType));
+        RLog(@"YES because window type %@ has full size content view", @(self.windowType));
         return YES;
     }
     if (!self.anyFullScreen) {
-        DLog(@"NO because not any full screen");
+        RLog(@"NO because not any full screen");
         return NO;
     }
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     if (!topTabBar) {
-        DLog(@"NO because tabbar not on top");
+        RLog(@"NO because tabbar not on top");
         return NO;
     }
 
@@ -11006,17 +11016,17 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         // macOS 13+: We need to leave an empty area at the top only if the tabbar is NOT
         // a titlebar accessory (i.e., it's part of the content view instead).
         const BOOL result = ![self tabBarShouldBeAccessory];
-        DLog(@"macOS 13+: tabBarShouldBeAccessory=%@ so returning %@", @([self tabBarShouldBeAccessory]), @(result));
+        RLog(@"macOS 13+: tabBarShouldBeAccessory=%@ so returning %@", @([self tabBarShouldBeAccessory]), @(result));
         return result;
     } else {
         // macOS 12: Preserve old behavior to avoid requiring testing on this deprecated OS.
         // This had a bug where Minimal and Regular themes behaved differently, but we're
         // leaving it as-is since macOS 12 support will be dropped eventually.
         if ([PseudoTerminal windowTypeHasFullSizeContentView:self.savedWindowType]) {
-            DLog(@"macOS 12: YES because saved window type %@ has full size content view", @(self.savedWindowType));
+            RLog(@"macOS 12: YES because saved window type %@ has full size content view", @(self.savedWindowType));
             return YES;
         }
-        DLog(@"macOS 12: NO because saved window type %@ does not have full size content view", @(self.savedWindowType));
+        RLog(@"macOS 12: NO because saved window type %@ does not have full size content view", @(self.savedWindowType));
         return NO;
     }
 }
@@ -11102,6 +11112,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     return nil;
 }
 - (void)updateTabBarStyle {
+    RLog(@"begin");
     DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
     id<PSMTabStyle> style = [[iTermTheme sharedInstance] tabStyleWithDelegate:self
                                                           effectiveAppearance:self.window.effectiveAppearance];
@@ -11636,18 +11647,18 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             }
         }
         if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
-            DLog(@"insertTab: window is initialized, not full screen, and we are not restoring windows.");
+            RLog(@"insertTab: window is initialized, not full screen, and we are not restoring windows.");
             if (self.isHotKeyWindow && self.window.alphaValue == 0) {
-                DLog(@"This appears to be an invisible hotkey window %@", self);
+                RLog(@"This appears to be an invisible hotkey window %@", self);
                 iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
                 if (!profileHotkey.rollingIn && profileHotkey.windowController.weaklyReferencedObject == self) {
-                    DLog(@"not already rolling in. show it");
+                    RLog(@"not already rolling in. show it");
                     [profileHotkey showHotKeyWindow];
                 } else {
-                    DLog(@"already rolling in or still being created - no need to do anything");
+                    RLog(@"already rolling in or still being created - no need to do anything");
                 }
             } else if (openInBackground) {
-                DLog(@"Opening in background. Reveal the window without taking key focus.");
+                RLog(@"Opening in background. Reveal the window without taking key focus.");
                 NSWindow *keyWindow = NSApp.keyWindow;
                 if (keyWindow && keyWindow != self.window) {
                     [self.window orderWindow:NSWindowBelow relativeTo:keyWindow.windowNumber];
@@ -11655,7 +11666,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                     [[self window] orderFront:self];
                 }
             } else if (_automaticallyOrderFrontNewTabs || self.tabs.count == 1) {
-                DLog(@"not a hidden hotkey window. Just order front.");
+                RLog(@"not a hidden hotkey window. Just order front.");
                 [[self window] makeKeyAndOrderFront:self];
             }
         } else {
@@ -11675,7 +11686,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)setRestoringWindow:(BOOL)restoringWindow {
-    DLog(@"%@ -> %@\n%@", @(_restoringWindow), @(restoringWindow), [NSThread callStackSymbols]);
+    RLog(@"%@ -> %@", @(_restoringWindow), @(restoringWindow));
+    DLog(@"%@", [NSThread callStackSymbols]);
     if (_restoringWindow != restoringWindow) {
         _restoringWindow = restoringWindow;
         if (restoringWindow) {
@@ -12342,14 +12354,14 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)fitNonTmuxTabsToWindow {
-    DLog(@"fitNonTmuxTabsToWindow starting");
+    RLog(@"fitNonTmuxTabsToWindow starting");
     for (PTYTab *tab in self.tabs) {
         if (tab.tmuxTab) {
             continue;
         }
         [self fitTabToWindow:tab];
     }
-    DLog(@"fitNonTmuxTabsToWindow returning");
+    RLog(@"fitNonTmuxTabsToWindow returning");
 }
 
 // Show a dialog confirming close. Returns YES if the window should be closed.
@@ -12398,7 +12410,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (IBAction)duplicateTab:(id)sender {
     if (_layoutLocked) {
-        DLog(@"Layout is locked, refusing to duplicate tab");
+        RLog(@"Layout is locked, refusing to duplicate tab");
         return;
     }
     [self createDuplicateOfTab:(PTYTab *)[[sender representedObject] identifier]];
@@ -12419,7 +12431,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)createDuplicateOfTab:(PTYTab *)theTab {
-    DLog(@"Duplicate tab %@", theTab);
+    RLog(@"Duplicate tab %@", theTab);
     if (!theTab) {
         theTab = [self currentTab];
     }
@@ -12496,7 +12508,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)closeOtherTabs:(id)sender
 {
     if (_layoutLocked) {
-        DLog(@"Layout is locked, refusing to close other tabs");
+        RLog(@"Layout is locked, refusing to close other tabs");
         return;
     }
     NSTabViewItem *aTabViewItem = [sender representedObject];
@@ -12514,7 +12526,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)closeTabsToTheRight:(id)sender
 {
     if (_layoutLocked) {
-        DLog(@"Layout is locked, refusing to close tabs to the right");
+        RLog(@"Layout is locked, refusing to close tabs to the right");
         return;
     }
     NSTabViewItem *aTabViewItem = [sender representedObject];
@@ -12548,7 +12560,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab {
     if (_layoutLocked) {
-        DLog(@"Layout is locked, refusing to move tab to a new window");
+        RLog(@"Layout is locked, refusing to move tab to a new window");
         return nil;
     }
     if (aTab == nil) {
@@ -12652,7 +12664,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                                                      windowType:self.windowType
                                                                   defaultScreen:[[self window] screen]];
             [self anchorToScreenNumber:screenNumber];
-            DLog(@"Change hotkey window's anchored screen to %@ (isAnchored=%@) for %@",
+            RLog(@"Change hotkey window's anchored screen to %@ (isAnchored=%@) for %@",
                  @([_windowPositioner getAnchoredScreenNumber]), @(_windowPositioner.isAnchoredToScreen), self);
         }
     }
@@ -12874,7 +12886,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     __weak __typeof(self) weakSelf = self;
     [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectoryWithSSHIdentity:profile.sshIdentity
                                                                                    completion:^(NSString *pwd) {
-        DLog(@"Got local pwd so I can create a tab: %@", pwd);
+        RLog(@"Got local pwd so I can create a tab: %@", pwd);
         PseudoTerminal *strongSelf = [[weakSelf retain] autorelease];
         if (!strongSelf) {
             return;
@@ -12909,7 +12921,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     // has one (a frozen layout can't grow). The first tab of a brand-new window
     // (objectType == iTermWindowObject) is still allowed.
     if (_layoutLocked && objectType == iTermTabObject) {
-        DLog(@"Layout is locked, refusing to add a tab");
+        RLog(@"Layout is locked, refusing to add a tab");
         if (completion) {
             completion(nil, NO);
         }
@@ -13024,16 +13036,16 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
                                      timeout:(void (^)(NSArray *))timeout
                                   completion:(void (^)(NSDictionary *))completion {
-    DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: begin");
+    RLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: begin");
     __block BOOL haveNotified = NO;
     NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
     dispatch_group_t group = dispatch_group_create();
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
         dispatch_group_enter(group);
-        DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: request for tab");
+        RLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: request for tab");
         [PTYTab openPartialAttachmentsForArrangement:tabArrangement
                                           completion:^(NSDictionary *tabResult) {
-            DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: got result for tab");
+            RLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: got result for tab");
             if (haveNotified) {
                 // Timed out.
                 timeout([tabResult allValues]);
@@ -13046,7 +13058,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([iTermAdvancedSettingsModel timeoutForDaemonAttachment] * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (haveNotified) {
-            DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: no timeout, already notified.");
+            RLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: no timeout, already notified.");
             return;
         }
         haveNotified = YES;
@@ -13054,9 +13066,9 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         completion([result autorelease]);
     });
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
-        DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: got results for all tabs");
+        RLog(@"PseudoTerminal.openPartialAttachmentsForArrangement: got results for all tabs");
         if (haveNotified) {
-            DLog(@"PseudoTerminal.openPartialAttachmentsForArrangement:timeout");
+            RLog(@"PseudoTerminal.openPartialAttachmentsForArrangement:timeout");
             // result gets freed by the timeout handler.
             return;
         }
@@ -13076,7 +13088,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)setRestorableStateDecodePending:(BOOL)restorableStateDecodePending {
-    DLog(@"%@ -> %@\n%@", @(restorableStateDecodePending), @(restorableStateDecodePending), [NSThread callStackSymbols]);
+    RLog(@"%@ -> %@", @(restorableStateDecodePending), @(restorableStateDecodePending));
+    DLog(@"%@", [NSThread callStackSymbols]);
     if (_restorableStateDecodePending != restorableStateDecodePending) {
         _restorableStateDecodePending = restorableStateDecodePending;
         if (!restorableStateDecodePending) {
@@ -13151,11 +13164,11 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [lastArrangement_ release];
         NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
         BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
-        DLog(@"Encoding restorable state for %@", self);
+        RLog(@"Encoding restorable state for %@", self);
         lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES
                                              includingContents:includeContents] retain];
         NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
-        DLog(@"Time to encode state for window %@: %@", self, @(end - start));
+        RLog(@"Time to encode state for window %@: %@", self, @(end - start));
     }
     // For whatever reason, setting the value in the coder here doesn't work but
     // doing it in PTYWindow immediately after this method's caller returns does
@@ -13233,7 +13246,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         [[NSScreen screens] enumerateObjectsUsingBlock:^(NSScreen * _Nonnull screen, NSUInteger i, BOOL * _Nonnull stop) {
             if (NSPointInRect(cursor, screen.frame)) {
                 [_windowPositioner setAnchoredScreenNumber:i];
-                DLog(@"Move window to screen %d %@", (int)i, NSStringFromRect(screen.frame));
+                RLog(@"Move window to screen %d %@", (int)i, NSStringFromRect(screen.frame));
                 *stop = YES;
             }
         }];
@@ -13272,10 +13285,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
     PTYTextView *textView = [session textview];
     if (textView) {
-        DLog(@"jump to selection");
+        RLog(@"jump to selection");
         [textView scrollToSelection];
     } else {
-        DLog(@"Beep: no text view to jump in");
+        RLog(@"Beep: no text view to jump in");
         NSBeep();
     }
 }
@@ -13478,7 +13491,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                                                       minimumInterval:0.5];
     }
     [_touchBarRateLimitedUpdate performRateLimitedBlock:^{
-        DLog(@"Called");
+        RLog(@"Called");
         [self updateTouchBarWithWordAtCursor:word];
     }];
 }
@@ -13747,11 +13760,11 @@ setBackgroundImage:(iTermImageWrapper *)image
        mode:(iTermBackgroundImageMode)imageMode
 backgroundColor:(NSColor *)backgroundColor {
     if (tab != self.currentTab) {
-        DLog(@"Inactive tab tried to set the background image. Ignore it.");
+        RLog(@"Inactive tab tried to set the background image. Ignore it.");
         return;
     }
     if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-        DLog(@"Using per-pane backbround images. Ignore.");
+        RLog(@"Using per-pane backbround images. Ignore.");
         return;
     }
     [self setSharedBackgroundImage:image mode:imageMode backgroundColor:backgroundColor];
@@ -13760,7 +13773,7 @@ backgroundColor:(NSColor *)backgroundColor {
 - (void)setSharedBackgroundImage:(iTermImageWrapper *)image
                             mode:(iTermBackgroundImageMode)imageMode
                  backgroundColor:(NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
-    DLog(@"setSharedBackgroundImage:%@", image);
+    RLog(@"setSharedBackgroundImage:%@", image);
     _contentView.backgroundImage.image = image;
     _contentView.backgroundImage.contentMode = imageMode;
     _contentView.backgroundImage.backgroundColor = backgroundColor;
@@ -13821,7 +13834,7 @@ backgroundColor:(NSColor *)backgroundColor {
 #pragma mark - PSMMinimalTabStyleDelegate
 
 - (NSColor *)minimalTabStyleBackgroundColor {
-    DLog(@"Getting bg color for session %@, colormap %@", self.currentSession, self.currentSession.screen.colorMap);
+    RLog(@"Getting bg color for session %@, colormap %@", self.currentSession, self.currentSession.screen.colorMap);
     return self.currentSession.effectiveUnprocessedBackgroundColor;
 }
 
@@ -13868,7 +13881,7 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (void)broadcastInputHelperDidUpdate:(iTermBroadcastInputHelper *)helper {
-    DLog(@"broadcastInputHelperDidUpdate");
+    RLog(@"broadcastInputHelperDidUpdate");
     for (PTYTab *tab in [self tabs]) {
         for (PTYSession *session in tab.sessions) {
             [session.view setNeedsDisplay:YES];
@@ -13976,8 +13989,8 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (id)swipeHandlerBeginSessionAtOffset:(CGFloat)offset identifier:(nonnull id)identifier {
-    DLog(@"swipeHandlerBeginSessionAtOffset:%@ identifier:%@", @(offset), identifier);
-    
+    RLog(@"swipeHandlerBeginSessionAtOffset:%@ identifier:%@", @(offset), identifier);
+
     assert(!_swipeContainerView);
     self.swipeIdentifier = identifier;
     
@@ -14021,20 +14034,20 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (void)swipeHandlerSetOffset:(CGFloat)rawOffset forSession:(id)session {
-    DLog(@"setOffset:%@ forSession:%@", @(rawOffset), session);
-    
+    RLog(@"setOffset:%@ forSession:%@", @(rawOffset), session);
+
     NSRect frame = _swipeContainerView.frame;
     const CGFloat offset = -[self truncatedSwipeOffset:-rawOffset];
     frame.origin.x = offset;
     
-    DLog(@"_swipeContainerView.frame=%@", NSStringFromRect(frame));
+    RLog(@"_swipeContainerView.frame=%@", NSStringFromRect(frame));
     _swipeContainerView.frame = frame;
     
     DLog(@"After setting frame:\n%@", [self.window.contentView iterm_recursiveDescription]);
 }
 
 - (void)swipeHandlerEndSession:(id)session atIndex:(NSInteger)index {
-    DLog(@"swipeHandlerEndSession:%@ atIndex:%@", session, @(index));
+    RLog(@"swipeHandlerEndSession:%@ atIndex:%@", session, @(index));
     self.swipeIdentifier = nil;
     [_contentView.tabView addSubview:self.currentTab.realRootView];
     self.currentTab.realRootView.frame = _contentView.tabView.bounds;
@@ -14083,24 +14096,24 @@ backgroundColor:(NSColor *)backgroundColor {
 #pragma mark - iTermRestorableWindowController
 
 - (void)didFinishRestoringWindow {
-    DLog(@"%@ widthAdjustment=%@", self, @(_widthAdjustment));
+    RLog(@"%@ widthAdjustment=%@", self, @(_widthAdjustment));
     if (_widthAdjustment == 0) {
         return;
     }
-    DLog(@"windowType=%@", @(self.windowType));
+    RLog(@"windowType=%@", @(self.windowType));
     NSRect rect = [self rectByAdjustingWidth:self.window.frame];
     if (!NSEqualRects(rect, self.window.frame)) {
-        DLog(@"Change window frame for width adjustment");
+        RLog(@"Change window frame for width adjustment");
         [self.window setFrame:rect display:YES];
         [self fitTabsToWindow];
     }
     
-    DLog(@"Set width adjustment to 0 for %@", self);
+    RLog(@"Set width adjustment to 0 for %@", self);
     _widthAdjustment = 0;
 }
 
 - (NSRect)rectByAdjustingWidth:(NSRect)rect {
-    DLog(@"%@: Computing width adjustment for window type %@ rect %@ widthAdjustment %@",
+    RLog(@"%@: Computing width adjustment for window type %@ rect %@ widthAdjustment %@",
          self, @(self.windowType), NSStringFromRect(rect), @(_widthAdjustment));
     switch (self.windowType) {
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -14109,7 +14122,7 @@ backgroundColor:(NSColor *)backgroundColor {
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
-            DLog(@"No width adjustment because of window type");
+            RLog(@"No width adjustment because of window type");
             return rect;
             
         case WINDOW_TYPE_CENTERED:
@@ -14123,9 +14136,9 @@ backgroundColor:(NSColor *)backgroundColor {
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY: {
-            DLog(@"Will apply width adjustment of %@", @(_widthAdjustment));
+            RLog(@"Will apply width adjustment of %@", @(_widthAdjustment));
             rect.size.width += _widthAdjustment;
-            DLog(@"Return %@", NSStringFromRect(rect));
+            RLog(@"Return %@", NSStringFromRect(rect));
             return rect;
         }
     }

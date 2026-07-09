@@ -827,6 +827,7 @@ final class iTermWorkgroupInstance: NSObject {
     // the fallback the optional-chained close would silently no-op and
     // leave a stray running shell that no teardown sweep can reach.
     static func deferredClose(_ session: PTYSession) {
+        RLog("deferredClose for session \(session.description)")
         DispatchQueue.main.async {
             if let delegate = session.delegate {
                 delegate.close(session)
