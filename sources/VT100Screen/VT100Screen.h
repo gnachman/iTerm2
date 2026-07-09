@@ -309,6 +309,11 @@ additionalWordCharacters:(nullable NSString *)additionalWordCharacters
 // scrollback), for keying the per-row draw cache.
 - (iTermRowContentIdentity)contentIdentityForLine:(int)line;
 
+// Returns the row and its content identity in a single pass (one block walk for a
+// scrollback line), for the per-row draw cache's row build which needs both.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                            contentIdentity:(out iTermRowContentIdentity *)identity;
+
 @end
 
 NS_ASSUME_NONNULL_END

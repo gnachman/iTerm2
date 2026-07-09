@@ -1590,6 +1590,58 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     };
 }
 
+// Returns the row AND its content identity in a single pass. Equivalent to calling
+// screenCharArrayForLine: and contentIdentityForLine: back to back, but for a
+// scrollback line it resolves the containing block once instead of twice (and
+// computes numLinesWithWidth: and gridTopIsDWCEligible once). Used by the per-row
+// draw cache's row build, which needs both.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                            contentIdentity:(out iTermRowContentIdentity *)identityOut {
+    const int width = self.width;
+    const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
+    if (line < numLinesInLineBuffer) {
+        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1) && [self gridTopIsDWCEligible];
+        int64_t generation = 0;
+        int64_t mutationCount = 0;
+        int remainder = 0;
+        ScreenCharArray *sca = [self.linebuffer screenCharArrayForLine:line
+                                                                 width:width
+                                                              paddedTo:width
+                                                        eligibleForDWC:eligibleForDWC
+                                                            generation:&generation
+                                                         mutationCount:&mutationCount
+                                                             remainder:&remainder];
+        if (identityOut) {
+            if (!sca) {
+                // Matches contentIdentityForLine:'s fallback: uncacheable sentinel
+                // rather than a bogus identity that could collide.
+                *identityOut = (iTermRowContentIdentity){ .source = iTermRowContentSourceHistory, .generation = 0, .mutationCount = 0, .remainder = 0 };
+            } else {
+                *identityOut = (iTermRowContentIdentity){
+                    .source = iTermRowContentSourceHistory,
+                    .generation = generation,
+                    .mutationCount = mutationCount,
+                    .remainder = remainder,
+                    .width = width,
+                    .eligibleForDWC = eligibleForDWC
+                };
+            }
+        }
+        return sca;
+    }
+    const int screenIndex = (int)(line - numLinesInLineBuffer);
+    if (identityOut) {
+        *identityOut = (iTermRowContentIdentity){
+            .source = iTermRowContentSourceGrid,
+            .generation = [self.currentGrid generationForLine:screenIndex],
+            .mutationCount = 0,
+            .remainder = 0,
+            .width = width
+        };
+    }
+    return [self screenCharArrayAtScreenIndex:screenIndex];
+}
+
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
     const screen_char_t *line = [self.currentGrid immutableScreenCharsAtLineNumber:index];
     const int width = self.width;

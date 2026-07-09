@@ -116,6 +116,28 @@ class VT100ScreenTests: XCTestCase {
         })
     }
 
+    // The per-row cache's combined screenCharArrayForLine:contentIdentity: must
+    // return exactly what the two separate calls (screenCharArrayForLine: and
+    // contentIdentityForLine:) return, for every displayed line across the history
+    // and grid boundary. Guards the single-pass fold against copy-paste drift.
+    func testScreenCharArrayForLineContentIdentityMatchesSeparateCalls() {
+        let screen = fiveByFourScreenWithThreeLinesOneWrapped()
+        appendLinesNoNewline(["hello world"], screen: screen)
+        for line in 0..<screen.numberOfLines() {
+            var combinedIdentity = iTermRowContentIdentity()
+            let combinedSCA = screen.screenCharArray(forLine: line, contentIdentity: &combinedIdentity)
+            let separateIdentity = screen.contentIdentity(forLine: line)
+            let separateSCA = screen.screenCharArray(forLine: line)
+            XCTAssertEqual(combinedIdentity.generation, separateIdentity.generation, "line \(line) generation")
+            XCTAssertEqual(combinedIdentity.mutationCount, separateIdentity.mutationCount, "line \(line) mutationCount")
+            XCTAssertEqual(combinedIdentity.remainder, separateIdentity.remainder, "line \(line) remainder")
+            XCTAssertEqual(combinedIdentity.width, separateIdentity.width, "line \(line) width")
+            XCTAssertEqual(combinedIdentity.source, separateIdentity.source, "line \(line) source")
+            XCTAssertEqual(combinedIdentity.eligibleForDWC, separateIdentity.eligibleForDWC, "line \(line) eligibleForDWC")
+            XCTAssertEqual(combinedSCA.stringValue, separateSCA.stringValue, "line \(line) content")
+        }
+    }
+
     func testResizeNoteInPrimaryWhileInAltAndSomeHistory() {
         // Put a note on the primary grid, switch to alt, resize width, swap back to primary. Note should
         // still be there.

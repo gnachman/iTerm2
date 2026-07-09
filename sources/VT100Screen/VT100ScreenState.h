@@ -271,6 +271,11 @@ extern NSString *const kScreenStateOpenAidStackKey;
 // scrollback), for keying the per-row draw cache.
 - (iTermRowContentIdentity)contentIdentityForLine:(int)line;
 
+// Returns the row and its content identity in a single pass (one block walk for a
+// scrollback line), for the per-row draw cache's row build which needs both.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                            contentIdentity:(out iTermRowContentIdentity *)identity;
+
 // Always returns the main-thread pool guid even on
 // VT100ScreenMutableState, where -rcGuid is overridden to return the
 // mutation-thread uniqueIdentifier. Used by initWithState:predecessor:

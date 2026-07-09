@@ -953,12 +953,41 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                       width:(int)width
                                    paddedTo:(int)paddedSize
                              eligibleForDWC:(BOOL)eligibleForDWC {
+    return [self screenCharArrayForLine:line
+                                  width:width
+                               paddedTo:paddedSize
+                         eligibleForDWC:eligibleForDWC
+                             generation:NULL
+                          mutationCount:NULL
+                              remainder:NULL];
+}
+
+// Also returns the containing block's content-identity components (generation,
+// mutationCount, remainder) from the SAME block walk, so a caller that needs both
+// the row and its identity (the per-row draw cache) does not walk the block index
+// twice. The out-params are optional.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                                      width:(int)width
+                                   paddedTo:(int)paddedSize
+                             eligibleForDWC:(BOOL)eligibleForDWC
+                                 generation:(out int64_t *)generation
+                              mutationCount:(out int64_t *)mutationCount
+                                  remainder:(out int *)remainderOut {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:line width:width remainder:&remainder];
     if (!block) {
         ITAssertWithMessage(NO, @"Failed to find line %@ with width %@. Cache is: %@", @(line), @(width),
                             [[[[_lineBlocks dumpForCrashlog] dataUsingEncoding:NSUTF8StringEncoding] it_compressedData] it_hexEncoded]);
         return nil;
+    }
+    if (generation) {
+        *generation = block.generation;
+    }
+    if (mutationCount) {
+        *mutationCount = block.mutationCounter;
+    }
+    if (remainderOut) {
+        *remainderOut = remainder;
     }
     return [block screenCharArrayForWrappedLineWithWrapWidth:width
                                                      lineNum:remainder

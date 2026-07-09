@@ -501,6 +501,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return [_state contentIdentityForLine:line];
 }
 
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                            contentIdentity:(out iTermRowContentIdentity *)identity {
+    return [_state screenCharArrayForLine:line contentIdentity:identity];
+}
+
 - (NSDate *)dateForLine:(int)line {
     return [_state dateForLine:line];
 }

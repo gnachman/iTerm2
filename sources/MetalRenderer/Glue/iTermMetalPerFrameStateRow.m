@@ -54,13 +54,16 @@ NS_ASSUME_NONNULL_BEGIN
         if (timestampsEnabled) {
             _date = [textView drawingHelperTimestampForLine:i];
         }
-        _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
         // Only the per-row output cache consumes the content identity, and building
         // it can walk the line-buffer block index for scrollback rows. Skip it when
         // the cache is disabled (the default): generation 0 is the uncacheable
-        // sentinel, so a zeroed identity is a correct no-op.
+        // sentinel, so a zeroed identity is a correct no-op. When enabled, fetch the
+        // row and its identity in a single pass so the block index is walked once.
         if (buildContentIdentity) {
-            _contentIdentity = [screen contentIdentityForLine:i];
+            _screenCharLine = [[screen screenCharArrayForLine:i
+                                              contentIdentity:&_contentIdentity] paddedOrTruncatedToLength:width];
+        } else {
+            _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
         }
 #if DEBUG
         assert(_screenCharLine != nil);
