@@ -109,10 +109,10 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
 }
 
 - (void)setEndColumn:(NSInteger)endColumn {
+    // The source-columns range is added to the attributes once, in -attributedString
+    // (from _startColumn/_endColumn), rather than rebuilding the whole dictionary
+    // here per run. -attributedString is always called right after -setEndColumn:.
     _endColumn = endColumn;
-    NSValue *value = [NSValue valueWithRange:NSMakeRange(_startColumn, _endColumn - _startColumn)];
-    _attributes = [_attributes dictionaryBySettingObject:value
-                                                  forKey:iTermSourceColumnsAttribute];
 }
 
 - (BOOL)willCreateCheap {
@@ -173,12 +173,13 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
 }
 
 - (id<iTermAttributedString>)attributedString {
-    NSData *data = CTVectorGetData(&_characterIndexToSourceCell);
+    // Add the source-columns range and the two per-run cell-index blobs in a single
+    // dictionary construction rather than a separate rebuild in -setEndColumn: plus
+    // this one, so each run copies the base attributes only once.
     NSMutableDictionary *temp = [_attributes mutableCopy];
-    temp[iTermSourceCellIndexAttribute] = data;
-
-    data = CTVectorGetData(&_characterIndexToDrawCell);
-    temp[iTermDrawInCellIndexAttribute] = data;
+    temp[iTermSourceColumnsAttribute] = [NSValue valueWithRange:NSMakeRange(_startColumn, _endColumn - _startColumn)];
+    temp[iTermSourceCellIndexAttribute] = CTVectorGetData(&_characterIndexToSourceCell);
+    temp[iTermDrawInCellIndexAttribute] = CTVectorGetData(&_characterIndexToDrawCell);
 
     _attributes = temp;
 
