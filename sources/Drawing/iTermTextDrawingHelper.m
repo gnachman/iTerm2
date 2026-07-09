@@ -169,7 +169,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (instancetype)init {
     self = [super init];
     if (self) {
-        iTermPreciseTimerSetEnabled(YES);
         iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
         iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
         iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
@@ -252,7 +251,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                         rectCount:(NSInteger)rectCount
                     virtualOffset:(CGFloat)virtualOffset {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
-    iTermPreciseTimerSetEnabled(YES);
     _debug = [iTermAdvancedSettingsModel showDirtyRectsInLegacyRenderer];
     if (_debug) {
         [[NSColor redColor] set];

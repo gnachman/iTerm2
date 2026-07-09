@@ -80,7 +80,6 @@ NS_ASSUME_NONNULL_BEGIN
         // pane), so a larger cap would retain tens of MB per text view across split
         // panes and tabs for near-zero extra hit rate.
         _rowOutputCache = [[iTermRowOutputCache alloc] initWithCapacity:256];
-        iTermPreciseTimerSetEnabled(YES);
         iTermPreciseTimerStatsInit(&_stats.attrsForChar, "Compute Attrs");
         iTermPreciseTimerStatsInit(&_stats.shouldSegment, "Segment");
         iTermPreciseTimerStatsInit(&_stats.buildMutableAttributedString, "Build attr strings");
