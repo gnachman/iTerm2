@@ -660,6 +660,16 @@ Settings Improvements:
   runtime now downloads from
   manifest-new.json by default. Older OS
   versions continue to use manifest.json.
+- When you load settings from a custom
+  folder, snippets, global notes, and
+  session icon customizations can now sync
+  along with your other settings. Because
+  notes and snippets can hold sensitive
+  text, iTerm2 asks once before including
+  them. If the same item changed both on
+  this Mac and in the folder, it asks which
+  copy to keep rather than overwriting your
+  changes.
 
 Bug Fixes:
 - AI chat: fixed a race where a streamed tool

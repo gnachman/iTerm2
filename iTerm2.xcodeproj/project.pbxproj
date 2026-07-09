@@ -5436,6 +5436,7 @@
 		C830C051D65A5F7AD589177D /* AIModelCatalogUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6AA187B9B6E8DFF2E4B36AD /* AIModelCatalogUpdater.swift */; };
 		CB10EBA37793C92210F9AF8C /* iTermCursorBlinkFadeAnimator.h in Sources */ = {isa = PBXBuildFile; fileRef = 8A2C1B2F615C047DFEEA6404 /* iTermCursorBlinkFadeAnimator.h */; };
 		CC1EDD90C29B2AFC43831C81 /* VT100StringConversionConfig.h in Sources */ = {isa = PBXBuildFile; fileRef = 6F87CB3CBFBF0D0E8781513C /* VT100StringConversionConfig.h */; };
+		CCBFF5C9FA0B931ADA3F66F6 /* iTermRemoteDataFileSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ACD26966C02B9319DD9A9EF /* iTermRemoteDataFileSync.swift */; };
 		CD2E8590B507B08EBD3313A3 /* iTermCompactProxyIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CB27B6647329ACD05CE222 /* iTermCompactProxyIconView.swift */; };
 		CF138846630690AA6A7BCFD5 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
@@ -6341,6 +6342,7 @@
 		47517A7059741FDED2F2DF2D /* Message+Database.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Message+Database.swift"; sourceTree = "<group>"; };
 		479FDFE9C0F424FEC10526EC /* iTermCursorSlideAnimator.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = iTermCursorSlideAnimator.m; path = sources/Drawing/iTermCursorSlideAnimator.m; sourceTree = SOURCE_ROOT; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
+		4ACD26966C02B9319DD9A9EF /* iTermRemoteDataFileSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermRemoteDataFileSync.swift; sourceTree = "<group>"; };
 		4C6497326253C17BB616E191 /* iTermBackgroundImageRotationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBackgroundImageRotationManager.swift; sourceTree = "<group>"; };
 		4C811516EBB14A113E1C7B83 /* iTermSplitTreeRebuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSplitTreeRebuilder.swift; sourceTree = "<group>"; };
 		4E5DDCA91496BE450D5BC387 /* CompanionHEVCSampleBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionHEVCSampleBuilder.swift; sourceTree = "<group>"; };
@@ -13904,6 +13906,7 @@
 				11FDA9247035DE0FCCE7D23D /* iTermCursorBlinkFadeCurveIcon.h */,
 				698A89FD3A725D31E135A5A6 /* iTermCursorBlinkFadePreset.m */,
 				530EEE3BD040B9AF8FBD0955 /* iTermCursorBlinkFadePreset.h */,
+				4ACD26966C02B9319DD9A9EF /* iTermRemoteDataFileSync.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -21839,6 +21842,7 @@
 				81452CA045B91E22E967CA37 /* iTermConfigGenerationTracker.m in Sources */,
 				370BED167A8A71DDDF7C4DBF /* iTermRowOutputCache.mm in Sources */,
 				209F0A26446C06FAE37D67A0 /* iTermRowOutputCache.h in Sources */,
+				CCBFF5C9FA0B931ADA3F66F6 /* iTermRemoteDataFileSync.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

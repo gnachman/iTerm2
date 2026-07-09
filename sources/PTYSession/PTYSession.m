@@ -1022,6 +1022,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                  selector:@selector(broadcastDomainsDidChange:)
                                                      name:iTermBroadcastDomainsDidChangeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(graphicSourceDidReload:)
+                                                     name:iTermGraphicSourceDidReloadNotification
+                                                   object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -21295,6 +21299,74 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [self.delegate sessionDidChangeGraphic:self shouldShow:self.shouldShowTabGraphic image:self.tabGraphic];
     }
     [self.delegate sessionJobDidChange:self];
+}
+
+- (void)graphicSourceDidReload:(NSNotification *)notification {
+    // The icon/color maps changed (e.g. a settings-sync import). Recompute this session's icon from
+    // its current job so the change is visible without waiting for the next foreground-job change.
+    //
+    // Only an Automatic-icon, non-browser session actually resolves its tab graphic from
+    // _graphicSource (see -tabGraphicForProfile:): iTermProfileIconNone shows nothing, Custom shows a
+    // fixed image, and a browser shows its favicon, none of which the maps affect. Skip the expensive
+    // process-tree walk (deepestForegroundJobForPid + ancestors) and the redundant redraw for those,
+    // matching the real branching rather than just its tmux-vs-pid split.
+    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:self.profile];
+    if (icon != iTermProfileIconAutomatic) {
+        return;
+    }
+    if (_exited) {
+        // An exited-but-on-screen session keeps its last positive effectiveRootPid (it's only assigned
+        // while !_exited and never cleared), so the rootPid <= 0 guard below can't catch it. Recomputing
+        // from the dead pid resolves to a nil image and would blank the icon the tab is still showing;
+        // leave the current icon, matching the intent of that guard.
+        return;
+    }
+    if (_view.isBrowser) {
+        // A browser resolves its tab graphic from its favicon, not _graphicSource, so the map reload
+        // doesn't affect it. (No @available guard: isBrowser is a plain BOOL and the deployment target
+        // is macOS 12, so a macOS 11 check would always be true.)
+        return;
+    }
+    // Mirror the branching in -tabGraphicForProfile:: tmux clients resolve by foreground job name
+    // (self.shell.pid is the local client, not the remote job), everyone else by the root pid.
+    const BOOL enabled = [self shouldShowTabGraphic];
+    BOOL changed;
+    if (self.isTmuxClient) {
+        NSString *jobName = self.tmuxForegroundJobMonitor.lastValue;
+        if (jobName.length == 0) {
+            // The monitor hasn't reported a foreground job yet; recomputing with a nil name would
+            // blank the existing tab icon. Leave the current icon until the next job update.
+            return;
+        }
+        changed = [_graphicSource updateImageForJobName:jobName enabled:enabled];
+    } else {
+        NSNumber *rootPid = self.variablesScope.effectiveRootPid;
+        if (rootPid == nil || rootPid.intValue <= 0) {
+            // No known root pid (e.g. mid-teardown); recomputing with pid 0 resolves to a nil image
+            // and would blank an existing tab graphic. Leave the current icon, symmetric to the tmux
+            // guard above.
+            return;
+        }
+        if (enabled && [self.processInfoProvider deepestForegroundJobForPid:rootPid.intValue] == nil) {
+            // The process tree for this live pid isn't populated in the cache yet. This notification is
+            // posted synchronously during a settings-sync import (often at launch), when process trees
+            // may not be resolved; recomputing now would resolve to a nil image and blank a
+            // correctly-displaying icon. Leave the current icon until the next foreground-job change,
+            // symmetric to the tmux and rootPid guards above. (When !enabled a nil image is the intended
+            // result - the tab graphic is off - so skip this guard and let the blank apply. The lookup
+            // is a cheap cached-dict read, so doing it here plus inside updateImageForProcessID: is fine.)
+            return;
+        }
+        changed = [_graphicSource updateImageForProcessID:rootPid.intValue
+                                                  enabled:enabled
+                                      processInfoProvider:self.processInfoProvider];
+    }
+    if (changed) {
+        // Pass the image _graphicSource just computed above rather than self.tabGraphic: for this gated
+        // case (Automatic icon, non-browser) -tabGraphicForProfile: would only re-run the same
+        // deepestForegroundJobForPid + ancestor walk a second time and return this very image.
+        [self.delegate sessionDidChangeGraphic:self shouldShow:enabled image:_graphicSource.image];
+    }
 }
 
 #pragma mark - iTermEchoProbeDelegate
