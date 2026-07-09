@@ -52,6 +52,8 @@ static NSString *const kAIManualModelHostedWebSearchKey = @"hostedWebSearch";
 static NSString *const kAIManualModelFunctionCallingKey = @"functionCalling";
 static NSString *const kAIManualModelStreamingKey = @"streaming";
 static NSString *const kAIManualModelVectorStoreKey = @"vectorStore";
+static NSString *const kAIManualModelSupportsTemperatureKey = @"supportsTemperature";
+static NSString *const kAIManualModelConfigurableThinkingKey = @"configurableThinking";
 
 static NSString *const kAIManualModelsDefaultColumn = @"default";
 static NSString *const kAIManualModelsModelColumn = @"model";
@@ -128,6 +130,7 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
 - (void)manualModelsPanel:(iTermManualAIModelsPanelController *)panel duplicateRow:(NSInteger)row;
 - (void)manualModelsPanel:(iTermManualAIModelsPanelController *)panel deleteRow:(NSInteger)row;
 - (void)manualModelsPanel:(iTermManualAIModelsPanelController *)panel setDefaultRow:(NSInteger)row;
+- (void)manualModelsPanel:(iTermManualAIModelsPanelController *)panel setEconomyRow:(NSInteger)row;
 - (void)manualModelsPanelDone:(iTermManualAIModelsPanelController *)panel;
 @end
 
@@ -138,10 +141,12 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
 @property(nonatomic, readonly) NSWindow *window;
 @property(nonatomic, strong) NSMutableArray<NSMutableDictionary *> *configurations;
 @property(nonatomic, copy) NSString *defaultModelName;
+@property(nonatomic, copy) NSString *economyModelName;
 @property(nonatomic) NSInteger selectedIndex;
 @property(nonatomic, weak) id<iTermManualAIModelsPanelDelegate> delegate;
 - (instancetype)initWithConfigurations:(NSArray<NSDictionary *> *)configurations
                       defaultModelName:(NSString *)defaultModelName
+                      economyModelName:(NSString *)economyModelName
                          selectedIndex:(NSInteger)selectedIndex;
 - (void)reloadSelectingIndex:(NSInteger)index;
 @end
@@ -188,6 +193,7 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
 
 - (instancetype)initWithConfigurations:(NSArray<NSDictionary *> *)configurations
                       defaultModelName:(NSString *)defaultModelName
+                      economyModelName:(NSString *)economyModelName
                          selectedIndex:(NSInteger)selectedIndex {
     self = [super init];
     if (self) {
@@ -196,6 +202,7 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
             [_configurations addObject:[configuration mutableCopy]];
         }
         _defaultModelName = [defaultModelName copy];
+        _economyModelName = [economyModelName copy];
         _selectedIndex = selectedIndex;
         [self buildWindow];
         [self reloadSelectingIndex:selectedIndex];
@@ -268,7 +275,10 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
     _editControl = [self makeSegmentedControlWithSegments:@[
         @{ @"symbol": SFSymbolGetString(SFSymbolPencil), @"tip": @"Edit" },
         @{ @"symbol": SFSymbolGetString(SFSymbolPlusSquareOnSquare), @"tip": @"Duplicate" },
-        @{ @"symbol": SFSymbolGetString(SFSymbolStar), @"tip": @"Toggle Default" }
+        @{ @"symbol": SFSymbolGetString(SFSymbolStar), @"tip": @"Toggle Default" },
+        @{ @"symbol": SFSymbolGetString(SFSymbolLeaf),
+           @"tip": @"Toggle Economy Model. A cheaper model used for frequent background jobs "
+                   @"like command-safety checks and screen-idle detection." }
     ] action:@selector(editControlClicked:)];
 
     const CGFloat controlY = bottomRowY + (okHeight - _addDeleteControl.frame.size.height) / 2.0;
@@ -323,8 +333,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             ? configuration[kAIManualModelNameKey]
             : @"Untitled model";
         // A leading black star marks the default model, matching the profile list.
+        // A leaf SF Symbol marks the economy model. The two are mutually
+        // exclusive per row.
         if ([name isEqualToString:self.defaultModelName]) {
             return [@"★ " stringByAppendingString:name];
+        }
+        if (self.economyModelName.length > 0 && [name isEqualToString:self.economyModelName]) {
+            return [self economyMarkedNameForColumn:tableColumn name:name];
         }
         return name;
     }
@@ -338,6 +353,35 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return iTermManualAIModelHost(configuration);
     }
     return @"";
+}
+
+// The model-name cell for the economy model: a leaf SF Symbol (tinted to the
+// text color so it stays monochrome, like the default row's star) followed by
+// the model name.
+- (NSAttributedString *)economyMarkedNameForColumn:(NSTableColumn *)column name:(NSString *)name {
+    NSFont *font = [column.dataCell isKindOfClass:NSCell.class] ? [column.dataCell font] : nil;
+    if (!font) {
+        font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    }
+    NSDictionary *attributes = @{ NSFontAttributeName: font,
+                                  NSForegroundColorAttributeName: NSColor.labelColor };
+
+    NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+    NSImageSymbolConfiguration *config =
+        [NSImageSymbolConfiguration configurationWithHierarchicalColor:NSColor.labelColor];
+    NSImage *image = [[NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLeaf)
+                               accessibilityDescription:@"Economy model"]
+                      imageWithSymbolConfiguration:config];
+    const CGFloat side = font.pointSize + 1;
+    image.size = NSMakeSize(side, side);
+    attachment.image = image;
+
+    NSMutableAttributedString *result =
+        [[NSMutableAttributedString alloc] initWithAttributedString:
+            [NSAttributedString attributedStringWithAttachment:attachment]];
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:[@" " stringByAppendingString:name]
+                                                                   attributes:attributes]];
+    return result;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
@@ -377,8 +421,22 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const BOOL hasSelection = self.selectedIndex >= 0 && self.selectedIndex < (NSInteger)self.configurations.count;
     [_addDeleteControl setEnabled:YES forSegment:0];        // Add is always available.
     [_addDeleteControl setEnabled:hasSelection forSegment:1]; // Delete needs a selection.
+
+    // The economy toggle is the last (leaf) segment. It is unavailable for the
+    // default model because a model can't be both the default and the economy
+    // model. Disabling the control (rather than beeping on click) shows the
+    // reason: the selected row already carries the default star.
+    NSString *selectedName = nil;
+    if (hasSelection) {
+        id value = self.configurations[(NSUInteger)self.selectedIndex][kAIManualModelNameKey];
+        selectedName = [value isKindOfClass:NSString.class] ? value : nil;
+    }
+    const BOOL selectedIsDefault = selectedName != nil &&
+        [selectedName isEqualToString:self.defaultModelName];
+    const NSInteger economySegment = _editControl.segmentCount - 1;
     for (NSInteger i = 0; i < _editControl.segmentCount; i++) {
-        [_editControl setEnabled:hasSelection forSegment:i];
+        const BOOL enabled = hasSelection && !(i == economySegment && selectedIsDefault);
+        [_editControl setEnabled:enabled forSegment:i];
     }
 }
 
@@ -412,6 +470,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         case 2:
             [self.delegate manualModelsPanel:self setDefaultRow:self.selectedIndex];
             break;
+        case 3:
+            [self.delegate manualModelsPanel:self setEconomyRow:self.selectedIndex];
+            break;
         default:
             break;
     }
@@ -435,6 +496,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSTextField *_contextField;
     NSTextField *_responseField;
     NSPopUpButton *_vectorStorePopup;
+    NSButton *_supportsTemperatureButton;
+    NSButton *_configurableThinkingButton;
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
     NSDictionary *_result;
     BOOL (^_nameIsTaken)(NSString *name);
@@ -456,9 +519,31 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return _window;
 }
 
+// A checkbox for a per-model quirk the config could not previously express. Its
+// initial state matches the runtime fallback in LLMMetadata.manualModel: a
+// stored value wins; when absent it uses catalogValue (the same-named built-in's
+// value). Advances *y down one row so callers can stack more controls.
+- (NSButton *)addQuirkCheckboxWithTitle:(NSString *)title
+                                    key:(NSString *)key
+                           catalogValue:(BOOL)catalogValue
+                                tooltip:(NSString *)tooltip
+                                    toY:(CGFloat *)y
+                                 fieldX:(CGFloat)fieldX
+                                  width:(CGFloat)fieldWidth
+                                content:(NSView *)content {
+    NSButton *button = [NSButton checkboxWithTitle:title target:nil action:nil];
+    button.frame = NSMakeRect(fieldX, *y, fieldWidth, 22);
+    const BOOL value = (_base[key] != nil) ? iTermManualAIModelBoolValue(_base, key) : catalogValue;
+    button.state = value ? NSControlStateValueOn : NSControlStateValueOff;
+    button.toolTip = tooltip;
+    [content addSubview:button];
+    *y -= 26;
+    return button;
+}
+
 - (void)buildWindow {
     const CGFloat width = 540;
-    const CGFloat height = 476;
+    const CGFloat height = 528;
     const CGFloat margin = 20;
     const CGFloat labelWidth = 150;
     const CGFloat fieldX = margin + labelWidth + 12;
@@ -573,6 +658,36 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         y -= 26;
     }
 
+    // Configurable thinking and temperature-support are per-model quirks that
+    // the request builder reads but the manual config could not previously
+    // express. Both use the same rule: a stored value wins; when absent, inherit
+    // from a built-in with the same name so cloning a preset (or an older config
+    // predating the field) matches the built-in. A blank default that a Save
+    // then persisted would silently disable thinking or send a rejected
+    // temperature.
+    NSString *baseName = [_base[kAIManualModelNameKey] isKindOfClass:NSString.class]
+        ? _base[kAIManualModelNameKey] : @"";
+    _configurableThinkingButton =
+        [self addQuirkCheckboxWithTitle:@"Configurable thinking"
+                                    key:kAIManualModelConfigurableThinkingKey
+                           catalogValue:[[AIMetadata instance] modelSupportsConfigurableThinking:baseName]
+                                tooltip:@"Enable for reasoning models with a thinking mode, such as GPT-5, "
+                                        @"o-series, or DeepSeek models, so the chat’s Think toggle appears."
+                                    toY:&y
+                                 fieldX:fieldX
+                                  width:fieldWidth
+                                content:content];
+    _supportsTemperatureButton =
+        [self addQuirkCheckboxWithTitle:@"Supports temperature"
+                                    key:kAIManualModelSupportsTemperatureKey
+                           catalogValue:[[AIMetadata instance] modelSupportsTemperature:baseName]
+                                tooltip:@"Uncheck for models that reject a temperature parameter, such as "
+                                        @"Anthropic Opus 4.7 and later."
+                                    toY:&y
+                                 fieldX:fieldX
+                                  width:fieldWidth
+                                content:content];
+
     NSButton *save = [NSButton buttonWithTitle:(_isEditing ? @"Save" : @"Add")
                                         target:self
                                         action:@selector(saveClicked:)];
@@ -617,8 +732,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return;
     }
     iTermAIModel *preset = _presets[(NSUInteger)index];
-    // Leave the model name to the user (built-in names would collide with a
-    // built-in at request time); copy everything else from the preset.
+    // Fill every field, including the model name, from the preset so choosing a
+    // preset actually configures the model the user picked. The provider needs
+    // the real model name in the request; a user who is proxying can rename it
+    // afterward if they want a name distinct from the built-in catalog entry.
+    _nameField.stringValue = preset.name ?: @"";
     _urlField.stringValue = preset.url ?: @"";
     [_apiPopup selectItemWithTag:(NSInteger)preset.api];
     _contextField.stringValue = [NSString stringWithFormat:@"%ld", (long)preset.contextWindowTokens];
@@ -634,10 +752,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.hostedFileSearchFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedCodeInterpreterKey].state =
         preset.hostedCodeInterpreterFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
-    // If the model name is still empty, seed it from the preset as a starting point.
-    if ([_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length == 0) {
-        _nameField.stringValue = preset.name ?: @"";
-    }
+    _configurableThinkingButton.state =
+        preset.configurableThinkingFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+    _supportsTemperatureButton.state =
+        preset.supportsTemperature ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)cancelClicked:(id)sender {
@@ -677,6 +795,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     result[kAIManualModelContextWindowTokensKey] = @(_contextField.integerValue);
     result[kAIManualModelMaxResponseTokensKey] = @(_responseField.integerValue);
     result[kAIManualModelVectorStoreKey] = @(_vectorStorePopup.selectedItem.tag);
+    result[kAIManualModelSupportsTemperatureKey] =
+        @(_supportsTemperatureButton.state == NSControlStateValueOn);
+    result[kAIManualModelConfigurableThinkingKey] =
+        @(_configurableThinkingButton.state == NSControlStateValueOn);
     for (NSString *key in _featureButtons) {
         result[key] = @(_featureButtons[key].state == NSControlStateValueOn);
     }
@@ -1812,6 +1934,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return [self stringForKey:kPreferenceKeyAIModel];
 }
 
+- (NSString *)currentEconomyModelName {
+    NSString *name = [self stringForKey:kPreferenceKeyAIEconomyModelName];
+    return name.length > 0 ? name : nil;
+}
+
+- (void)setCurrentEconomyModelName:(NSString *)name {
+    [self setString:name ?: @"" forKey:kPreferenceKeyAIEconomyModelName];
+}
+
 - (NSDictionary *)manualAIModelConfigurationNamed:(NSString *)name
                                 inConfigurations:(NSArray<NSDictionary *> *)configurations {
     if (name.length == 0) {
@@ -1953,6 +2084,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)selectManualConfigurationAsDefaultForNewChats:(NSDictionary *)configuration {
     if (!configuration) {
         return;
+    }
+    // A model cannot be both the default and the economy model. If the model
+    // becoming the default is the current economy model, drop the economy
+    // designation so the invariant holds however the default was chosen (panel
+    // toggle or the default-model popup).
+    NSString *name = configuration[kAIManualModelNameKey];
+    if ([name isKindOfClass:NSString.class] &&
+        [name isEqualToString:[self currentEconomyModelName]]) {
+        [self setCurrentEconomyModelName:nil];
     }
     [self setBool:NO forKey:kPreferenceKeyUseRecommendedAIModel];
     [self applyManualAIModelConfigurationToDefaults:configuration];
@@ -2882,9 +3022,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *deletedName = panel.configurations[(NSUInteger)row][kAIManualModelNameKey];
     const BOOL deletingDefault = [deletedName isKindOfClass:NSString.class] &&
         [deletedName isEqualToString:[self currentDefaultManualModelName]];
+    const BOOL deletingEconomy = [deletedName isKindOfClass:NSString.class] &&
+        [deletedName isEqualToString:[self currentEconomyModelName]];
     [panel.configurations removeObjectAtIndex:(NSUInteger)row];
     const NSInteger nextIndex = MIN(row, (NSInteger)panel.configurations.count - 1);
     [self saveManualAIModelConfigurations:panel.configurations];
+    if (deletingEconomy) {
+        [self setCurrentEconomyModelName:nil];
+    }
     if (deletingDefault) {
         [self fallbackAfterDeletingDefaultManualModel:panel.configurations selectedIndex:nextIndex];
     } else {
@@ -2892,6 +3037,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [self updateAIEnabled];
     }
     panel.defaultModelName = [self currentDefaultManualModelName];
+    panel.economyModelName = [self currentEconomyModelName];
     [panel reloadSelectingIndex:nextIndex];
 }
 
@@ -2908,9 +3054,42 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         // Toggle off: fall back to the provider's recommended model.
         [self selectProviderAsDefaultForNewChats:(iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor]];
     } else {
+        // selectManualConfigurationAsDefaultForNewChats: drops the economy
+        // designation if this row was the economy model (default and economy
+        // are mutually exclusive).
         [self selectManualConfigurationAsDefaultForNewChats:panel.configurations[(NSUInteger)row]];
     }
     panel.defaultModelName = [self currentDefaultManualModelName];
+    panel.economyModelName = [self currentEconomyModelName];
+    [panel reloadSelectingIndex:row];
+}
+
+- (void)manualModelsPanel:(iTermManualAIModelsPanelController *)panel setEconomyRow:(NSInteger)row {
+    if (row < 0 || row >= (NSInteger)panel.configurations.count) {
+        NSBeep();
+        return;
+    }
+    [self saveManualAIModelConfigurations:panel.configurations];
+    NSString *name = panel.configurations[(NSUInteger)row][kAIManualModelNameKey];
+    if (![name isKindOfClass:NSString.class] || name.length == 0) {
+        NSBeep();
+        return;
+    }
+    const BOOL alreadyEconomy = [name isEqualToString:[self currentEconomyModelName]];
+    if (alreadyEconomy) {
+        // Toggle off.
+        [self setCurrentEconomyModelName:nil];
+    } else {
+        // The economy model must be distinct from the default model. The leaf
+        // toggle is disabled for the default row (see updateSegmentEnabled), so
+        // this is just defense in depth: ignore the request rather than create
+        // a model that is both.
+        if ([name isEqualToString:[self currentDefaultManualModelName]]) {
+            return;
+        }
+        [self setCurrentEconomyModelName:name];
+    }
+    panel.economyModelName = [self currentEconomyModelName];
     [panel reloadSelectingIndex:row];
 }
 
@@ -2953,8 +3132,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             NSString *oldName = panel.configurations[(NSUInteger)editingIndex][kAIManualModelNameKey];
             const BOOL editingDefault = [oldName isKindOfClass:NSString.class] &&
                 [oldName isEqualToString:[strongSelf currentDefaultManualModelName]];
+            // If the economy model was renamed, carry the designation to the new
+            // name so the pointer doesn't dangle.
+            const BOOL editingEconomy = [oldName isKindOfClass:NSString.class] &&
+                [oldName isEqualToString:[strongSelf currentEconomyModelName]];
             panel.configurations[(NSUInteger)editingIndex] = [result mutableCopy];
             [strongSelf saveManualAIModelConfigurations:panel.configurations];
+            if (editingEconomy) {
+                NSString *newName = result[kAIManualModelNameKey];
+                [strongSelf setCurrentEconomyModelName:[newName isKindOfClass:NSString.class] ? newName : nil];
+            }
             if (editingDefault) {
                 [strongSelf selectManualConfigurationAsDefaultForNewChats:result];
             } else {
@@ -2968,6 +3155,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             [strongSelf saveManualAIModelConfigurationsAndRefresh:panel.configurations];
         }
         panel.defaultModelName = [strongSelf currentDefaultManualModelName];
+        panel.economyModelName = [strongSelf currentEconomyModelName];
         [panel reloadSelectingIndex:nextIndex];
     }];
 }
@@ -2995,6 +3183,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     iTermManualAIModelsPanelController *panel =
         [[iTermManualAIModelsPanelController alloc] initWithConfigurations:[self mutableManualAIModelConfigurations]
                                                           defaultModelName:[self currentDefaultManualModelName]
+                                                          economyModelName:[self currentEconomyModelName]
                                                              selectedIndex:0];
     panel.delegate = self;
     _manualModelsPanel = panel;

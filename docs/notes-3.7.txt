@@ -1823,6 +1823,28 @@ Bug Fixes:
 - AI Chat can now manage multiple manual
   AI model configurations and select them
   from the chat model picker.
+- A manual AI model now takes precedence
+  over a built-in model with the same
+  name, so you can proxy a known model
+  through a custom URL by reusing its
+  name.
+- Manual AI models now have a “Supports
+  temperature” checkbox, set from the
+  preset, so a manual model cloned from
+  Anthropic Opus 4.7+ no longer sends a
+  temperature the API rejects. Existing
+  manual models inherit this from the
+  matching built-in. The OpenAI and
+  DeepSeek request paths now honor this
+  setting too, not just Anthropic.
+- Manual AI models now have a
+  “Configurable thinking” checkbox, set
+  from the preset, so a manual reasoning
+  model (such as a GPT-5 or DeepSeek model
+  behind a proxy) keeps its thinking
+  toggle. Same-named clones also inherit
+  the built-in’s reasoning-effort and
+  service-tier choices.
 - Manual AI model settings now show saved
   models in a list instead of a pop-up
   menu.
@@ -1837,6 +1859,12 @@ Bug Fixes:
 - AI settings now choose the default
   model for new chats from one selector,
   including saved manual AI models.
+- You can now designate a manual AI model
+  as the “economy” model (leaf toggle in
+  Manual AI Models). It is used for cheap
+  background jobs like command-safety
+  checks and screen-idle detection instead
+  of your main model.
 - Fixed a crash when using Undo after
   closing a split pane that contained a
   command composer.

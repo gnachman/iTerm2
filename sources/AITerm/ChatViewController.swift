@@ -519,12 +519,12 @@ extension ChatViewController {
         guard let name else {
             return nil
         }
-        // Built-in wins over a manual config that shares the name, matching how
-        // AIConversation resolves the pinned model at request time.
-        if let builtIn = AIMetadata.instance.models.first(where: { $0.name == name }) {
-            return builtIn
+        // A manual config wins over a built-in that shares the name, matching
+        // how AIConversation resolves the pinned model at request time.
+        if let manual = manualConfiguredModels.first(where: { $0.name == name }) {
+            return manual
         }
-        return manualConfiguredModels.first { $0.name == name }
+        return AIMetadata.instance.models.first { $0.name == name }
     }
 
     private var storedChatModel: AIMetadata.Model? {
@@ -633,15 +633,15 @@ extension ChatViewController {
             return nil
         }
         let name = effectiveChatModel.name
-        // A name that matches a built-in catalog model belongs to that model's
-        // vendor even if a manual config shares the name (the built-in wins at
-        // request time). Only a name that exists solely as a manual config is a
-        // manual selection.
-        if let builtInVendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
-            return ChatProviderOption.vendorIdentifier(builtInVendor)
-        }
+        // A manual config wins over a built-in that shares the name (it wins at
+        // request time), so a name present as a manual config is a manual
+        // selection. Only a name that exists solely in the built-in catalog
+        // belongs to that catalog model's vendor.
         if manualConfiguredModels.contains(where: { $0.name == name }) {
             return ChatProviderOption.manualModel(name: name).identifier
+        }
+        if let builtInVendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
+            return ChatProviderOption.vendorIdentifier(builtInVendor)
         }
         if let effectiveChatProvider {
             return ChatProviderOption.vendorIdentifier(effectiveChatProvider)
@@ -3022,7 +3022,7 @@ extension ChatViewController: ChatToolbarDataSource {
             return
         }
         guard let modelName = chatToolbar.selectedModelIdentifier,
-              let selectedModel = model(named: modelName) else {
+              model(named: modelName) != nil else {
             return
         }
         setCurrentChatModelIfNeeded(modelName)

@@ -257,6 +257,7 @@ NSString *const kPreferenceKeyAIFeatureFunctionCalling = @"AIFeatureFunctionCall
 NSString *const kPreferenceKeyAIFeatureStreamingResponses = @"AIFeatureStreamingResponses";
 NSString *const kPreferenceKeyAIVectorStore = @"AIVectorStore";
 NSString *const kPreferenceKeyAIManualModelConfigurations = @"AIManualModelConfigurations";
+NSString *const kPreferenceKeyAIEconomyModelName = @"AIEconomyModelName";
 NSString *const kPreferenceKeyUseRecommendedAIModel = @"UseRecommendedAIModel";
 NSString *const kPreferenceKeyAIVendor = @"AIVendor";
 NSString *const kPreferenceKeyAISafetyCheck = @"AI Safety Check";
@@ -756,6 +757,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIFeatureFunctionCalling: @NO,
                   kPreferenceKeyAIFeatureStreamingResponses: @NO,
                   kPreferenceKeyAIManualModelConfigurations: @[],
+                  kPreferenceKeyAIEconomyModelName: @"",
                   kPreferenceKeyUseRecommendedAIModel: @YES,
                   kPreferenceKeyAIVectorStore: @0,
                   kPreferenceKeyAIVendor: @(iTermAIVendorOpenAI),
