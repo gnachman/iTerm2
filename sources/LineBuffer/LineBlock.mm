@@ -156,6 +156,12 @@ static inline void ModifyLineBlock(LineBlock *self,
 @synthesize progenitor = _progenitor;
 @synthesize absoluteBlockNumber = _absoluteBlockNumber;
 
+// Globally-unique, monotonically increasing counter for LineBlock content
+// identity. Deliberately separate from VT100LineInfo's grid-line generation
+// counter, not a duplicate to consolidate: this one must ALWAYS advance because
+// the reloadBidiInfo watermark keys on _mutationCounter, whereas the grid counter
+// is gated on the (default-off) per-row cache. The cache key's `source` field
+// (grid vs history) discriminates the two, so they need not share a sequence.
 static std::atomic<NSInteger> nextGeneration(1);
 
 NS_INLINE NSInteger iTermAllocateGeneration(void) {

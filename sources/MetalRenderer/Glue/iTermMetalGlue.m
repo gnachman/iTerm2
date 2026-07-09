@@ -20,6 +20,7 @@
 #import "iTermConfigGenerationTracker.h"
 #import "iTermMetalPerFrameState.h"
 #import "iTermRowOutputCache.h"
+#import "VT100LineInfo.h"
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
@@ -125,6 +126,13 @@ NS_ASSUME_NONNULL_BEGIN
     }
     ITBetaAssert(self.delegate != nil, @"Nil delegate");
     ITBetaAssert(self.delegate.metalGlueContext != nil, @"Nil metal glue context");
+    if ([iTermAdvancedSettingsModel metalRowOutputCacheEnabled]) {
+        // The per-row cache keys grid rows on the per-line generation, which is not
+        // advanced unless tracking is on (it is off by default so idle sessions
+        // don't bump the shared counter on every dirty line). Turn it on now that a
+        // cache-enabled frame is being built.
+        VT100LineInfoEnableGenerationTracking();
+    }
     iTermAttributedStringBuilderStatsPointers statsPointers = {
         .attrsForChar = &_stats.attrsForChar,
         .shouldSegment = &_stats.shouldSegment,

@@ -17,6 +17,12 @@
 // never-reused identities in O(1). Used for the all-dirty grid case.
 int64_t VT100LineInfoAllocateGenerationBlock(int64_t count);
 
+// Enables advancing the per-line grid generation on setDirty:. The bump is off by
+// default because its only consumer is the (default-off) per-row draw cache; the
+// metal glue calls this the first time it renders with the cache enabled. Sticky:
+// once enabled it stays enabled for the process lifetime.
+void VT100LineInfoEnableGenerationTracking(void);
+
 @protocol VT100LineInfoReading<NSObject>
 @property(nonatomic, readonly) iTermImmutableMetadata immutableMetadata;
 

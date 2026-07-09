@@ -12,6 +12,14 @@ import XCTest
 
 final class iTermRowCacheIdentityTests: XCTestCase {
 
+    override func setUp() {
+        super.setUp()
+        // The grid generation bump is gated off by default (its only consumer is
+        // the per-row cache). These tests exercise that generation, so turn it on.
+        // It is a sticky process-global, which is fine for tests.
+        VT100LineInfoEnableGenerationTracking()
+    }
+
     // MARK: - Grid line content generation
 
     private func makeGrid() -> VT100Grid {
