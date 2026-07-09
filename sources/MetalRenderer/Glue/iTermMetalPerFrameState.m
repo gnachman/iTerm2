@@ -2429,6 +2429,12 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     _rows[0]->_screenCharLine = [[ScreenCharArray alloc] initWithData:mutableData
                                                              metadata:_rows[0]->_screenCharLine.metadata
                                                          continuation:_rows[0]->_screenCharLine.continuation];
+    // The FPS meter text replaces row 0's content but not its content identity, and
+    // it changes every frame, so mark the row uncacheable (like the offscreen
+    // command line and IME marked text). Otherwise the per-row cache serves the
+    // stale underlying row and the meter is hidden -- reliably so when row 0 is a
+    // stable scrollback line that is already cached.
+    _rows[0]->_contentIdentity.generation = iTermRowContentGenerationUncacheable;
 }
 
 - (id)screenCharArrayForRow:(int)y {
