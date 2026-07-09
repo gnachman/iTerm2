@@ -7,6 +7,7 @@
 //
 
 #import "iTermColorMap.h"
+#import "iTermAdvancedSettingsModel.h"
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
@@ -83,6 +84,13 @@ const int kColorMapAnsiBrightModifier = 8;
     NSMutableDictionary<NSNumber *, NSData *> *_fastMap;
     id<iTermColorMapReading> _sanitizingAdapter;
     iTermColorVectorCache *_colorVectorCache;
+
+    // Memoized answer to "is this target color space the app's native 8-bit
+    // space?", so the 24-bit fast path in fastColorForKey:colorSpace: avoids an
+    // NSColorSpace isEqual: per cell. The space is constant across a frame's cells,
+    // so this is keyed on object identity.
+    NSColorSpace *_lastFastPathColorSpace;
+    BOOL _lastFastPathColorSpaceIsNative;
 }
 
 @synthesize generation = _generation;
@@ -196,11 +204,45 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 }
 
+// YES if the target color space is the same one 24-bit truecolor keys are defined
+// in (Display P3 or sRGB per the p3 setting), so their raw r/255,g/255,b/255
+// components need no conversion. Memoized because the space is constant across a
+// frame's cells and NSColorSpace isEqual: is not free.
+- (BOOL)targetColorSpaceIsNative:(NSColorSpace *)colorSpace {
+    if (colorSpace == _lastFastPathColorSpace) {
+        return _lastFastPathColorSpaceIsNative;
+    }
+    NSColorSpace *native = [iTermAdvancedSettingsModel p3] ? [NSColorSpace displayP3ColorSpace] : [NSColorSpace sRGBColorSpace];
+    const BOOL isNative = (colorSpace == native) || [colorSpace isEqual:native];
+    _lastFastPathColorSpace = colorSpace;
+    _lastFastPathColorSpaceIsNative = isNative;
+    return isNative;
+}
+
 - (vector_float4)fastColorForKey:(iTermColorMapKey)theKey colorSpace:(NSColorSpace *)colorSpace {
     if (!colorSpace) {
         return [self fastColorForKey:theKey];
     }
-    
+
+    // A 24-bit truecolor key is defined directly in the app's native 8-bit color
+    // space with components r/255,g/255,b/255 (see +colorWith8BitRed:). When the
+    // target space is that same space -- the common case on a matching display --
+    // the components are already correct, so return them without the per-cell
+    // colorUsingColorSpace: (ColorSync) conversion, which was ~9% of the render
+    // thread in issue 12763. Bit-identical to the conversion path in this case.
+    if (theKey >= kColorMap24bitBase &&
+        theKey < kExtendedColorsBase &&
+        [self targetColorSpaceIsNative:colorSpace]) {
+        const int n = theKey - kColorMap24bitBase;
+        const int blue = (n & 0xff);
+        const int green = (n >> 8) & 0xff;
+        const int red = (n >> 16) & 0xff;
+        return simd_make_float4(red / 255.0,
+                                green / 255.0,
+                                blue / 255.0,
+                                1);
+    }
+
     if (!_colorVectorCache) {
         _colorVectorCache = [[iTermColorVectorCache alloc] init];
     }
