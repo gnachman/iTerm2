@@ -812,16 +812,33 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         paragraphStyle.tabStops = @[];
         paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
     });
-    NSWritingDirection writingDirection;
-    switch (attributes->rtlStatus) {
-        case RTLStatusUnknown:
-        case RTLStatusLTR:
-            writingDirection = NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride;
-            break;
-        case RTLStatusRTL:
-            writingDirection = NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride;
-            break;
+    // The writing-direction attribute has only two possible values, so intern the
+    // two one-element arrays instead of allocating one per run.
+    static NSArray *ltrWritingDirection;
+    static NSArray *rtlWritingDirection;
+    static dispatch_once_t writingDirectionOnce;
+    dispatch_once(&writingDirectionOnce, ^{
+        ltrWritingDirection = @[@(NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride)];
+        rtlWritingDirection = @[@(NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride)];
+    });
+    NSArray *writingDirection = (attributes->rtlStatus == RTLStatusRTL) ? rtlWritingDirection : ltrWritingDirection;
+
+    // The underline-color components array is only read when hasUnderlineColor is
+    // set (see -underlineColorForAttributes:), which is rare. Use a shared
+    // placeholder otherwise so the common case allocates no array.
+    static NSArray *placeholderUnderlineColor;
+    static dispatch_once_t underlineColorOnce;
+    dispatch_once(&underlineColorOnce, ^{
+        placeholderUnderlineColor = @[@0, @0, @0, @0];
+    });
+    NSArray *underlineColor = placeholderUnderlineColor;
+    if (attributes->hasUnderlineColor) {
+        underlineColor = @[ @(attributes->underlineColor.red),
+                            @(attributes->underlineColor.green),
+                            @(attributes->underlineColor.blue),
+                            @(attributes->underlineColor.mode) ];
     }
+
     return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
               (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
               NSFontAttributeName: attributes->font,
@@ -832,14 +849,11 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
               iTermFaintAttribute: @(attributes->faint),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
               iTermHasUnderlineColorAttribute: @(attributes->hasUnderlineColor),
-              iTermUnderlineColorAttribute: @[ @(attributes->underlineColor.red),
-                                               @(attributes->underlineColor.green),
-                                               @(attributes->underlineColor.blue),
-                                               @(attributes->underlineColor.mode) ],
+              iTermUnderlineColorAttribute: underlineColor,
               NSUnderlineStyleAttributeName: @(underlineStyle),
               NSStrikethroughStyleAttributeName: @(strikethroughStyle),
               NSParagraphStyleAttributeName: paragraphStyle,
-              NSWritingDirectionAttributeName: @[@(writingDirection)],
+              NSWritingDirectionAttributeName: writingDirection,
     };
 }
 
