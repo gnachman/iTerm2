@@ -177,7 +177,12 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
     // dictionary construction rather than a separate rebuild in -setEndColumn: plus
     // this one, so each run copies the base attributes only once.
     NSMutableDictionary *temp = [_attributes mutableCopy];
-    temp[iTermSourceColumnsAttribute] = [NSValue valueWithRange:NSMakeRange(_startColumn, _endColumn - _startColumn)];
+    // Only set the source-columns range once the end column has been assigned, so
+    // the key stays absent otherwise (as it was when setEndColumn: added it). The
+    // two callers always assign it before calling this, so this is defensive.
+    if (_endColumn != NSNotFound) {
+        temp[iTermSourceColumnsAttribute] = [NSValue valueWithRange:NSMakeRange(_startColumn, _endColumn - _startColumn)];
+    }
     temp[iTermSourceCellIndexAttribute] = CTVectorGetData(&_characterIndexToSourceCell);
     temp[iTermDrawInCellIndexAttribute] = CTVectorGetData(&_characterIndexToDrawCell);
 
