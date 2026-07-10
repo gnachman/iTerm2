@@ -68,6 +68,11 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // port's peers in the handler.
     private var tabStatusObserver: NSObjectProtocol?
 
+    // Last observed idle/working/waiting state per peer identifier. Used to
+    // detect the working -> idle edge that drives the code-review auto-send-
+    // clippings toggle (see maybeAutoSendClippings).
+    private var lastPeerState: [String: SessionState] = [:]
+
     init(peers: [String: iTermPromise<PTYSession>],
          peerConfigs: [iTermWorkgroupSessionConfig],
          activeSessionIdentifier: String,
@@ -109,7 +114,10 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 navigationDelegate: self,
                 diffSelectorDelegate: self,
                 gitBaseSelectorDelegate: self,
-                displayName: cfg.displayName)
+                displayName: cfg.displayName,
+                autoSendClippingsDelegate: self,
+                autoSendClippingsInitiallyOn:
+                    peers[cfg.uniqueIdentifier]?.maybeValue?.autoSendClippingsWhenIdle ?? false)
             var views: [SessionToolbarGenericView] = []
             let augmented = WorkgroupToolbarBuilder
                 .injectAutoItems(into: cfg.toolbarItems)
@@ -168,8 +176,69 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
               let identifier = identifier(for: session) else {
             return
         }
-        let working = WorkgroupIntrospection.state(forTabStatus: status) == .working
-        setBusy(working, forPeerIdentifier: identifier)
+        let state = WorkgroupIntrospection.state(forTabStatus: status)
+        setBusy(state == .working, forPeerIdentifier: identifier)
+        maybeAutoSendClippings(session: session,
+                               identifier: identifier,
+                               newState: state)
+    }
+
+    // Delay between pasting the clippings into the main session and sending
+    // the submit Return. Pasting alone leaves the text in the coding agent's
+    // input box; the trailing Return actually submits it. The beat lets the
+    // paste (which may be bracketed and land asynchronously) settle before
+    // the Return, so the submit doesn't race ahead of the pasted content.
+    private static let autoSendSubmitDelay: TimeInterval = 0.2
+
+    // When a code-review peer with the auto-send toggle on transitions from
+    // working to idle, paste its clippings into the workgroup's main session
+    // and submit them with a Return. Gated to the working -> idle edge (not
+    // any -> idle) so a spurious first status, or a session that is idle at
+    // launch, never fires; it also means one send per completed review run
+    // rather than a resend on every idle notification. Clippings are the
+    // peer-group's shared list (anchored on the main session), so this
+    // delivers the review's findings as input to whatever is running in the
+    // main session.
+    // Pure decision behind the auto-send: the text to deliver to the main
+    // session on a state change, or nil to do nothing. Split out from the
+    // wiring below so the gating (edge, mode, toggle, non-empty) can be unit-
+    // tested without a live port, sessions, or the paste path.
+    static func clippingsToAutoSend(previousState: SessionState?,
+                                    newState: SessionState,
+                                    mode: iTermWorkgroupSessionMode,
+                                    toggleOn: Bool,
+                                    clippings: [PTYSessionClipping]) -> String? {
+        guard previousState == .working, newState == .idle else { return nil }
+        guard mode == .codeReview, toggleOn else { return nil }
+        let text = clippings.joinedForSending()
+        return text.isEmpty ? nil : text
+    }
+
+    @MainActor
+    private func maybeAutoSendClippings(session: PTYSession,
+                                        identifier: String,
+                                        newState: SessionState) {
+        let previous = lastPeerState[identifier]
+        lastPeerState[identifier] = newState
+        guard let text = Self.clippingsToAutoSend(
+                previousState: previous,
+                newState: newState,
+                mode: session.workgroupSessionMode,
+                toggleOn: session.autoSendClippingsWhenIdle,
+                clippings: session.clippings) else {
+            return
+        }
+        guard let mainSession = workgroupInstance?.mainSession,
+              mainSession !== session else { return }
+        RLog("iTermWorkgroupPeerPort: auto-sending \(session.clippings.count) clipping(s) from code-review peer \(session.guid) to main session \(mainSession.guid)")
+        mainSession.paste(text, flags: [])
+        // Send the submit Return after a beat so it lands after the paste,
+        // not interleaved with it. \r is the Enter key at the TTY (\n would
+        // leave the line unsubmitted).
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.autoSendSubmitDelay) {
+            [weak mainSession] in
+            mainSession?.writeTaskNoBroadcast("\r")
+        }
     }
 
     // Reflect a peer's busy state on every switcher in the group: each
@@ -193,11 +262,17 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     private func seedBusyStates() {
         for session in realizedPeerSessions {
             guard let identifier = identifier(for: session),
-                  let status = session.tabStatus,
-                  WorkgroupIntrospection.state(forTabStatus: status) == .working else {
+                  let status = session.tabStatus else {
                 continue
             }
-            setBusy(true, forPeerIdentifier: identifier)
+            // Record the current state so the first observed transition is a
+            // real edge (a peer already working at re-entry, then finishing,
+            // still fires the auto-send working -> idle path).
+            let state = WorkgroupIntrospection.state(forTabStatus: status)
+            lastPeerState[identifier] = state
+            if state == .working {
+                setBusy(true, forPeerIdentifier: identifier)
+            }
         }
     }
 
@@ -612,6 +687,19 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
         session.restart(withCommand: wrapped)
+    }
+}
+
+// MARK: - Auto-send-clippings toggle delegate
+
+extension iTermWorkgroupPeerPort: WorkgroupAutoSendClippingsToolbarItemDelegate {
+    func workgroupAutoSendClippings(ownerPeerID: String?, isOn: Bool) {
+        guard let ownerPeerID,
+              let session = session(forIdentifier: ownerPeerID) else {
+            return
+        }
+        RLog("iTermWorkgroupPeerPort.workgroupAutoSendClippings owner=\(ownerPeerID) isOn=\(isOn)")
+        session.autoSendClippingsWhenIdle = isOn
     }
 }
 

@@ -74,6 +74,13 @@ class PTYSessionSwiftState: NSObject {
     // re-launch the same session.
     var pendingDiffLaunch: (() -> Void)?
 
+    // For .codeReview sessions, whether the "auto-send clippings when idle"
+    // toolbar toggle is on. When on, the workgroup peer port sends this
+    // session's clippings to the workgroup's main session each time the
+    // review session transitions from working to idle. Runtime-only and
+    // defaults off: re-entering a workgroup starts with the toggle off.
+    var autoSendClippingsWhenIdle = false
+
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 
     // Canonical storage for this session's clippings. Sessions in a peer group
@@ -2111,6 +2118,14 @@ extension PTYSession {
                 swiftState.clippings = newValue
             }
         }
+    }
+
+    // Runtime toggle backing the code-review "auto-send clippings when idle"
+    // toolbar item. Stored directly on the session (not peer-delegated) since
+    // it controls this one review session's behavior, not shared group state.
+    @objc var autoSendClippingsWhenIdle: Bool {
+        get { swiftState.autoSendClippingsWhenIdle }
+        set { swiftState.autoSendClippingsWhenIdle = newValue }
     }
 
     // Bypasses peer-port delegation. Used by PTYSessionPeerPort to talk to its
