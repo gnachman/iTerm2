@@ -56,6 +56,18 @@ struct WorkgroupToolbarContext {
     // hosts that don't surface a label here (the modeSwitcher already
     // shows the active peer's name in that case).
     let displayName: String
+
+    // Delegate for the .codeReview auto-send-clippings toggle. The peer
+    // port sets itself here; it flips the owning session's runtime flag
+    // and performs the idle-driven send. Non-peer toolbars leave it nil
+    // (the toggle is only meaningful on peer-group code-review sessions,
+    // which is the only shape the preset and settings UI produce).
+    weak var autoSendClippingsDelegate: WorkgroupAutoSendClippingsToolbarItemDelegate? = nil
+
+    // Initial on/off state for a freshly-built auto-send-clippings toggle,
+    // read from the owning session's runtime flag (defaults off). Lets a
+    // toolbar rebuilt mid-session show the toggle's current state.
+    var autoSendClippingsInitiallyOn = false
 }
 
 // Does an item in a given peer-group need the shared git poller to be
@@ -191,6 +203,14 @@ enum WorkgroupToolbarBuilder {
             let view = CCGitBaseSelectorItem(identifier: id,
                                              priority: 2)
             view.gitBaseSelectorDelegate = context.gitBaseSelectorDelegate
+            view.ownerPeerID = ownerPeerID
+            return view
+        case .autoSendClippingsWhenIdle:
+            let view = WorkgroupAutoSendClippingsToolbarItem(
+                identifier: id,
+                priority: 1,
+                isOn: context.autoSendClippingsInitiallyOn)
+            view.autoSendDelegate = context.autoSendClippingsDelegate
             view.ownerPeerID = ownerPeerID
             return view
         case .name:

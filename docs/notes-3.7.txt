@@ -191,6 +191,15 @@ Major New Features:
   prompt and is passed to Claude Code at
   launch.
 
+- Code Review peers have an Auto-Send
+  Clippings When Idle toolbar toggle. When
+  on, the review session’s clippings are
+  pasted into the workgroup’s main session
+  each time the review finishes. The
+  Claude Code workgroup’s review peer
+  includes it by default; the toggle itself
+  starts off.
+
 - Switching to a Code Review peer that is
   still showing its prompt overlay now
   focuses the prompt text field so you can

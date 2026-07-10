@@ -93,6 +93,11 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // reason as workgroupShortcutsBackfilled.
 @property (class, nonatomic) BOOL claudeCodeReviewSystemPromptCommandBackfilled;
 
+// Latched once the one-time migration that adds the Auto-Send Clippings
+// When Idle toolbar item to the Claude Code workgroup's Code Review peer
+// has run. NoSync for the same reason as workgroupShortcutsBackfilled.
+@property (class, nonatomic) BOOL claudeCodeAutoSendClippingsBackfilled;
+
 // Tri-state consent for the AI model catalog updater (AIModelCatalogUpdater) to
 // periodically download a refreshed, signed model list from the network.
 // Defaults to Unknown; we ask the user once (and only if AI is fully enabled)
