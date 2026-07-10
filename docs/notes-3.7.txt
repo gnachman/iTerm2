@@ -1941,3 +1941,30 @@ Bug Fixes:
   to new addresses. If you paired an iPhone
   on an earlier build, iTerm2 now asks you
   to pair it again so it keeps working.
+- AI orchestration: commands the agent runs in
+  a session now go through the same automatic
+  safety check as regular AI chat, instead of
+  running once a session is approved. This
+  covers both execute_command and commands the
+  agent types at a shell prompt and submits.
+  Risky commands are held for your approval
+  rather than run automatically.
+- AI orchestration: keystrokes the agent sends
+  into a full-screen program (vim, less, htop,
+  a coding agent, etc.) are now safety-checked
+  too. The AI reads the current screen and the
+  conversation to judge whether the keystroke
+  is safe given what you asked for, and holds
+  anything dangerous or unrequested for your
+  approval.
+- AI orchestration: the automatic command
+  safety check no longer hard-blocks anything.
+  Refusing a command outright could dead-end a
+  task you asked for (like deleting a directory
+  you had just created). Instead the AI now
+  judges each command against what you asked
+  for, and a scary-but-legitimate one is held
+  for one-tap approval rather than refused.
+  Deleting a subdirectory you requested just
+  runs; only a real root or home wipe, or a
+  suspicious command, stops to ask first.

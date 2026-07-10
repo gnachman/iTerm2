@@ -1,0 +1,26 @@
+pick 0198edf tweak tokenizer
+pick 09b6185 handle empty input
+pick 5cf7151 fix off-by-one
+
+# Rebase 9eea458..5cf7151 onto 9eea458 (3 commands)
+#
+# Commands:
+# p, pick <commit> = use commit
+# r, reword <commit> = use commit, but edit the commit message
+# e, edit <commit> = use commit, but stop for amending
+# s, squash <commit> = use commit, but meld into previous commit
+# f, fixup [-C | -c] <commit> = like "squash" but keep only the previous
+#                    commit's log message, unless -C is used, in which case
+#                    keep only this commit's message; -c is same as -C but
+#                    opens the editor
+# x, exec <command> = run command (the rest of the line) using shell
+# b, break = stop here (continue rebase later with 'git rebase --continue')
+# d, drop <commit> = remove commit
+# l, label <label> = label current HEAD with a name
+# t, reset <label> = reset HEAD to a label
+# m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]
+#         create a merge commit using the original merge commit's
+#         message (or the oneline, if no original merge commit was
+1 .git/rebase-merge/git-rebase-todo 1/34 (2%), 1                                     (-1 )
+"/private/var/folders/jk/2nklbh0x5ksc192jsm9nhnhc0000gn/T/tmp.UCQlHvVkF4/proj/.git/rebase-
+merge/git-rebase-todo" 34 lines, 1570 bytes

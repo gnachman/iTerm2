@@ -12,9 +12,11 @@ import Foundation
 extension RemoteCommand {
     // `force` makes the safety check mandatory regardless of the user
     // preference (used for orchestration chats, where autonomous command
-    // execution always gets checked).
+    // execution always gets checked). `transcript` is recent chat history
+    // for the classifier, so it can tell a risky command the user asked for
+    // from one it didn't; empty by default for callers that have none.
     @MainActor
-    func isSafe(force: Bool) async -> Bool {
+    func isSafe(force: Bool, transcript: [TranscriptEntry] = []) async -> Bool {
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
@@ -52,7 +54,8 @@ extension RemoteCommand {
                     if !force {
                         Self.maybePromptToSwitchSafetyProvider()
                     }
-                    return await CommandSafetyChecker.check(command.command)
+                    return await CommandSafetyChecker.check(command.command,
+                                                            transcript: transcript)
                 }
             }
             return true

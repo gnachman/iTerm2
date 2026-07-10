@@ -303,6 +303,12 @@ struct RemoteCommand: Codable {
     var content: Content
 
     var needsSafetyCheck: Bool {
+        // NOTE: .createFile is deliberately NOT checked here. A session-bound
+        // file write surfaces in the chat UI where the user sees it before it
+        // lands. The ORCHESTRATOR, which runs autonomously, does classify its
+        // own create_file (OrchestratorDispatcher.handleSessionToolCall). Don't
+        // "fix" this asymmetry by flipping .createFile without also revisiting
+        // that autonomy distinction.
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,

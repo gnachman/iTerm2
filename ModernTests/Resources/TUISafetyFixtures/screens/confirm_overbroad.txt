@@ -1,0 +1,26 @@
+Mac:/var/folders/jk/2nklbh0x5ksc192jsm9nhnhc0000gn/T/tmp.UCQlHvVkF4% bash -c 'read -p "Del
+ete ALL 1,284 files in ~/Documents (including subfolders)? [y/N] " a'
+Delete ALL 1,284 files in ~/Documents (including subfolders)? [y/N]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

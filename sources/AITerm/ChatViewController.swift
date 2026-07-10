@@ -2538,6 +2538,12 @@ extension Message.Content {
                 let body: String
                 if workgroupID == WorkgroupIntrospection.spawnWorkgroupID {
                     body = "**Open a new session?**\n\n\(summary)"
+                } else if workgroupID == WorkgroupIntrospection.commandApprovalWorkgroupID {
+                    // Per-command safety approval: the orchestrator's safety
+                    // gate flagged a command (or file write) and is asking the
+                    // user to approve it before it runs. The specifics live in
+                    // the summary the dispatcher built.
+                    body = "**Run this command?**\n\n\(summary)"
                 } else {
                     let kind = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
                         ? "session"
