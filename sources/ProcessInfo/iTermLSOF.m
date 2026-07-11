@@ -521,6 +521,31 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     }
 }
 
++ (NSString *)nameFailureDiagnosisForPid:(pid_t)pid {
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
+    struct kinfo_proc kp;
+    // Zero the whole struct so that, if the sysctl reports success but writes nothing
+    // (Darwin returns 0 bytes for a pid that wasn't matched during its process-list
+    // walk), p_stat/p_flag read back as 0 rather than as garbage.
+    memset(&kp, 0, sizeof(kp));
+    size_t bufSize = sizeof(kp);
+    errno = 0;
+    const int rc = sysctl(mib, 4, &kp, &bufSize, NULL, 0);
+    if (rc < 0) {
+        return [NSString stringWithFormat:@"sysctl KERN_PROC_PID error rc=%d errno=%d (%s)",
+                rc, errno, strerror(errno)];
+    }
+    if (bufSize == 0) {
+        return @"pid not in the kernel process list (not matched; likely exited or momentarily unreferenceable)";
+    }
+    if (kp.kp_proc.p_comm[0] == 0) {
+        return [NSString stringWithFormat:@"matched but empty p_comm (p_stat=%d p_flag=0x%x; typically mid-exec)",
+                (int)kp.kp_proc.p_stat, kp.kp_proc.p_flag];
+    }
+    return [NSString stringWithFormat:@"readable now as \"%s\" (original failure was transient)",
+            kp.kp_proc.p_comm];
+}
+
 // This is a stunningly brittle hack. Find the child of parentPid with the
 // oldest start time. This relies on undocumented APIs, but short of forking
 // ps, I can't see another way to do it.

@@ -468,6 +468,9 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                 }
             }];
         });
+        // Computing the ancestries above records resolved process names in the name
+        // cache; drop entries for pids that are no longer alive so it stays bounded.
+        [iTermProcessNameCache.shared pruneToLivePids:collection.processIDs];
         [self postForegroundJobAncestorChanges:ancestorChanges];
     }
 }
