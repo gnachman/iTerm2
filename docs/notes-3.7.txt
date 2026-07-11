@@ -689,6 +689,19 @@ Bug Fixes:
   code-review peer holding a steady “working”
   status no longer loses the row to a sibling
   chat peer the moment it goes idle.
+- Code review and diff workgroup sessions now
+  restore showing their last output instead of
+  launching a stray replacement shell when the
+  original program is gone. The code review prompt
+  panel reappears only if it was open when you
+  quit, and its reload button remembers the prompt
+  you last submitted.
+- Session restoration no longer breaks when iTerm2
+  receives a signal (such as ^C when it was
+  started from a terminal): the background process
+  server is now insulated from signals sent to
+  iTerm2, so your running programs survive to be
+  reattached on the next launch.
 - AI chat: fixed a race where a streamed tool
   call could be dispatched with empty arguments
   when the response completed before its argument
