@@ -672,6 +672,14 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Session Status tool: with “Merge workgroup
+  statuses” on, a merged row now shows the status
+  of the peer you’re actually looking at (the
+  visible peer of the switcher) instead of
+  whichever peer changed most recently. A busy
+  code-review peer holding a steady “working”
+  status no longer loses the row to a sibling
+  chat peer the moment it goes idle.
 - AI chat: fixed a race where a streamed tool
   call could be dispatched with empty arguments
   when the response completed before its argument
