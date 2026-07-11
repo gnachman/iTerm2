@@ -70,15 +70,25 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
 
     // Last observed idle/working/waiting state per peer identifier. Used to
     // detect the working -> idle edge that drives the code-review auto-send-
-    // clippings toggle (see maybeAutoSendClippings).
+    // clippings toggle (see maybeAutoSendClippings) and the main session's
+    // auto-request-review toggle (see maybeAutoRequestReview).
     private var lastPeerState: [String: SessionState] = [:]
+
+    // Count of code-review-mode sessions across the WHOLE workgroup (not just
+    // this port's peers). The main session's auto-request-review toggle is
+    // enabled only when this is exactly 1. Passed in by assemble, which has
+    // the full workgroup config; defaults 0 for ports built without it (e.g.
+    // nested peer ports, which never host the main session's toggle).
+    private let codeReviewSessionCount: Int
 
     init(peers: [String: iTermPromise<PTYSession>],
          peerConfigs: [iTermWorkgroupSessionConfig],
          activeSessionIdentifier: String,
          leaderIdentifier: String,
          leaderScope: iTermVariableScope,
-         gitPoller: iTermGitPoller?) {
+         gitPoller: iTermGitPoller?,
+         codeReviewSessionCount: Int = 0) {
+        self.codeReviewSessionCount = codeReviewSessionCount
         self.peerMembers = peerConfigs.map { cfg in
             (identifier: cfg.uniqueIdentifier,
              label: cfg.displayName.isEmpty ? "Peer" : cfg.displayName,
@@ -117,7 +127,11 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 displayName: cfg.displayName,
                 autoSendClippingsDelegate: self,
                 autoSendClippingsInitiallyOn:
-                    peers[cfg.uniqueIdentifier]?.maybeValue?.autoSendClippingsWhenIdle ?? false)
+                    peers[cfg.uniqueIdentifier]?.maybeValue?.autoSendClippingsWhenIdle ?? false,
+                autoRequestReviewDelegate: self,
+                autoRequestReviewInitiallyOn:
+                    peers[cfg.uniqueIdentifier]?.maybeValue?.autoRequestReviewWhenIdle ?? false,
+                autoRequestReviewEnabled: codeReviewSessionCount == 1)
             var views: [SessionToolbarGenericView] = []
             let augmented = WorkgroupToolbarBuilder
                 .injectAutoItems(into: cfg.toolbarItems)
@@ -176,11 +190,58 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
               let identifier = identifier(for: session) else {
             return
         }
-        let state = WorkgroupIntrospection.state(forTabStatus: status)
-        setBusy(state == .working, forPeerIdentifier: identifier)
+        // The busy spinner reflects the general state (indicator included).
+        setBusy(WorkgroupIntrospection.state(forTabStatus: status) == .working,
+                forPeerIdentifier: identifier)
+        // The idle-driven auto behaviors track the STRICT reported state so a
+        // session restart (which clears the tab status) doesn't register as a
+        // working -> idle edge. Read the prior state once and advance it here
+        // so both behaviors below see the same edge.
+        let reported = WorkgroupIntrospection.reportedState(forTabStatus: status)
+        let previous = lastPeerState[identifier]
+        lastPeerState[identifier] = reported
         maybeAutoSendClippings(session: session,
-                               identifier: identifier,
-                               newState: state)
+                               previousState: previous,
+                               newState: reported)
+        maybeAutoRequestReview(session: session,
+                               previousState: previous,
+                               newState: reported)
+    }
+
+    // Pure decision behind the main session's auto-request-review: whether a
+    // review should be requested on this state change. Split out for the same
+    // testability reason as clippingsToAutoSend. `reviewCount` is the count of
+    // code-review sessions in the workgroup; the request needs exactly one
+    // unambiguous target.
+    static func shouldAutoRequestReview(previousState: SessionState?,
+                                        newState: SessionState,
+                                        isMainSession: Bool,
+                                        toggleOn: Bool,
+                                        reviewCount: Int) -> Bool {
+        guard previousState == .working, newState == .idle else { return false }
+        guard isMainSession, toggleOn, reviewCount == 1 else { return false }
+        return true
+    }
+
+    // When the main session (with the toggle on) transitions working -> idle
+    // and the workgroup has exactly one code-review session, ask the
+    // workgroup instance to run a review on it. Same working -> idle edge and
+    // rationale as maybeAutoSendClippings.
+    @MainActor
+    private func maybeAutoRequestReview(session: PTYSession,
+                                        previousState: SessionState?,
+                                        newState: SessionState) {
+        guard let instance = workgroupInstance else { return }
+        guard Self.shouldAutoRequestReview(
+                previousState: previousState,
+                newState: newState,
+                isMainSession: instance.mainSession === session,
+                toggleOn: session.autoRequestReviewWhenIdle,
+                reviewCount: codeReviewSessionCount) else {
+            return
+        }
+        RLog("iTermWorkgroupPeerPort: auto-requesting review after main session \(session.guid) went idle")
+        instance.requestCodeReviewFromSoleReviewSession()
     }
 
     // When a code-review peer with the auto-send toggle on transitions from
@@ -217,22 +278,32 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
 
     @MainActor
     private func maybeAutoSendClippings(session: PTYSession,
-                                        identifier: String,
+                                        previousState: SessionState?,
                                         newState: SessionState) {
-        let previous = lastPeerState[identifier]
-        lastPeerState[identifier] = newState
         guard let mainSession = workgroupInstance?.mainSession,
               mainSession !== session else { return }
+        // Read the shared clipping list straight from the leader (main
+        // session). Reading through the review session's own `clippings` goes
+        // via its peer-port weak ref, which a GUID-changing restart (the
+        // reload path) can leave stale — then the review would see an empty
+        // list and never send. The leader owns the canonical list.
+        let clippings = mainSession.clippings
+        // Log the guard inputs on every code-review idle so a field debug log
+        // shows why a send did or didn't happen (the guards below are
+        // otherwise silent on the not-sent path).
+        if session.workgroupSessionMode == .codeReview, newState == .idle {
+            RLog("iTermWorkgroupPeerPort.maybeAutoSendClippings: review=\(session.guid) prev=\(previousState.map { "\($0)" } ?? "nil") toggle=\(session.autoSendClippingsWhenIdle) reviewHasPeerPort=\(session.peerPort != nil) reviewClippings=\(session.clippings.count) mainClippings=\(clippings.count)")
+        }
         guard let text = Self.clippingsToAutoSend(
-                previousState: previous,
+                previousState: previousState,
                 newState: newState,
                 mode: session.workgroupSessionMode,
                 toggleOn: session.autoSendClippingsWhenIdle,
                 mainSessionState: WorkgroupIntrospection.state(for: mainSession),
-                clippings: session.clippings) else {
+                clippings: clippings) else {
             return
         }
-        RLog("iTermWorkgroupPeerPort: auto-sending \(session.clippings.count) clipping(s) from code-review peer \(session.guid) to main session \(mainSession.guid)")
+        RLog("iTermWorkgroupPeerPort: auto-sending \(clippings.count) clipping(s) from code-review peer \(session.guid) to main session \(mainSession.guid)")
         // Paste the content (bracketed, so the coding agent treats it as pasted
         // input), then submit with a Return sent as its OWN paste with bracketing
         // disabled. Paste events serialize through the paste helper's queue, so
@@ -244,10 +315,17 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         // leave the line unsubmitted).
         mainSession.paste(text, flags: [])
         mainSession.paste("\r", flags: .bracketingDisabled)
-        // Archive the sent clippings (snapshot-and-clear the shared live list) so
-        // the next review run delivers only its NEW findings, not the whole
-        // accumulated list re-sent from the top.
-        session.archiveClippings()
+        // Archive the sent clippings (snapshot into history, clear the live
+        // list) so the next review's idle doesn't resend the same ones. This is
+        // also what breaks the auto-request/auto-send loop: once sent, the live
+        // list is empty, so a subsequent review-idle finds nothing to send and
+        // stops feeding the main session. Archive on the leader for the same
+        // stale-peer-port reason as the read above.
+        mainSession.archiveClippings()
+        // Bring the main session forward so the user sees the review results
+        // land. reveal() swaps this peer into the tab and buries the review
+        // peer that was showing.
+        mainSession.reveal()
     }
 
     // Reflect a peer's busy state on every switcher in the group: each
@@ -720,6 +798,17 @@ extension iTermWorkgroupPeerPort: WorkgroupAutoSendClippingsToolbarItemDelegate 
         }
         RLog("iTermWorkgroupPeerPort.workgroupAutoSendClippings owner=\(ownerPeerID) isOn=\(isOn)")
         session.autoSendClippingsWhenIdle = isOn
+    }
+}
+
+extension iTermWorkgroupPeerPort: WorkgroupAutoRequestReviewToolbarItemDelegate {
+    func workgroupAutoRequestReview(ownerPeerID: String?, isOn: Bool) {
+        guard let ownerPeerID,
+              let session = session(forIdentifier: ownerPeerID) else {
+            return
+        }
+        RLog("iTermWorkgroupPeerPort.workgroupAutoRequestReview owner=\(ownerPeerID) isOn=\(isOn)")
+        session.autoRequestReviewWhenIdle = isOn
     }
 }
 

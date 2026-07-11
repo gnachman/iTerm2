@@ -30,6 +30,7 @@ final class iTermWorkgroupModel: NSObject {
         backfillClaudeCodeDiffModeIfNeeded()
         backfillCodeReviewSystemPromptCommandIfNeeded()
         backfillClaudeCodeAutoSendClippingsIfNeeded()
+        backfillClaudeCodeAutoRequestReviewIfNeeded()
     }
 
     // MARK: - Top-level mutations
@@ -233,6 +234,50 @@ final class iTermWorkgroupModel: NSObject {
                 guard !alreadyHasItem else { continue }
                 copy[wgIdx].sessions[sIdx].toolbarItems
                     = items + [.autoSendClippingsWhenIdle]
+                changed = true
+            }
+        }
+        return changed ? copy : nil
+    }
+
+    // One-time migration mirroring backfillClaudeCodeAutoSendClippingsIfNeeded,
+    // but for the main (root) session's Auto-Request Review When Idle item.
+    // Covers existing installs' in-place upgrade and, by making the item
+    // already present, reinstall-over-existing (installWorkgroupIfNeeded is a
+    // no-op there). Latched in NoSync user defaults.
+    private func backfillClaudeCodeAutoRequestReviewIfNeeded() {
+        guard !iTermUserDefaults.claudeCodeAutoRequestReviewBackfilled else { return }
+        defer { iTermUserDefaults.claudeCodeAutoRequestReviewBackfilled = true }
+
+        if let migrated = Self.addingAutoRequestReviewToClaudeCodeMainSession(workgroups) {
+            workgroups = migrated
+            persist()
+        }
+    }
+
+    // Pure transform behind backfillClaudeCodeAutoRequestReviewIfNeeded:
+    // returns a copy of `workgroups` with the Auto-Request Review When Idle
+    // item appended to the Claude Code main (root) session when absent, or nil
+    // when nothing needed changing. Scoped to the Claude Code workgroup's main
+    // session by ID.
+    static func addingAutoRequestReviewToClaudeCodeMainSession(
+        _ workgroups: [iTermWorkgroup]) -> [iTermWorkgroup]? {
+        var copy = workgroups
+        var changed = false
+        for wgIdx in copy.indices
+        where copy[wgIdx].uniqueIdentifier
+                == ClaudeCodeWorkgroupTemplate.ID.workgroup {
+            for sIdx in copy[wgIdx].sessions.indices
+            where copy[wgIdx].sessions[sIdx].uniqueIdentifier
+                    == ClaudeCodeWorkgroupTemplate.ID.main {
+                let items = copy[wgIdx].sessions[sIdx].toolbarItems
+                let alreadyHasItem = items.contains {
+                    if case .autoRequestReviewWhenIdle = $0 { return true }
+                    return false
+                }
+                guard !alreadyHasItem else { continue }
+                copy[wgIdx].sessions[sIdx].toolbarItems
+                    = items + [.autoRequestReviewWhenIdle]
                 changed = true
             }
         }

@@ -68,6 +68,21 @@ struct WorkgroupToolbarContext {
     // read from the owning session's runtime flag (defaults off). Lets a
     // toolbar rebuilt mid-session show the toggle's current state.
     var autoSendClippingsInitiallyOn = false
+
+    // Delegate for the main session's auto-request-review toggle. The peer
+    // port sets itself here; it flips the owning session's runtime flag and
+    // performs the idle-driven request. Non-peer toolbars leave it nil.
+    weak var autoRequestReviewDelegate: WorkgroupAutoRequestReviewToolbarItemDelegate? = nil
+
+    // Initial on/off state for a freshly-built auto-request-review toggle,
+    // read from the owning session's runtime flag (defaults off).
+    var autoRequestReviewInitiallyOn = false
+
+    // Whether the auto-request-review toggle can do anything: true iff the
+    // workgroup has exactly one code-review session to target. When false
+    // the toggle renders disabled. Defaults false so a context that never
+    // sets it (non-peer toolbars) yields a disabled toggle.
+    var autoRequestReviewEnabled = false
 }
 
 // Does an item in a given peer-group need the shared git poller to be
@@ -211,6 +226,15 @@ enum WorkgroupToolbarBuilder {
                 priority: 1,
                 isOn: context.autoSendClippingsInitiallyOn)
             view.autoSendDelegate = context.autoSendClippingsDelegate
+            view.ownerPeerID = ownerPeerID
+            return view
+        case .autoRequestReviewWhenIdle:
+            let view = WorkgroupAutoRequestReviewToolbarItem(
+                identifier: id,
+                priority: 1,
+                isOn: context.autoRequestReviewInitiallyOn,
+                enabled: context.autoRequestReviewEnabled)
+            view.autoRequestDelegate = context.autoRequestReviewDelegate
             view.ownerPeerID = ownerPeerID
             return view
         case .name:

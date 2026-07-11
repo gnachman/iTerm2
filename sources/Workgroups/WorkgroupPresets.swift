@@ -89,7 +89,7 @@ enum WorkgroupPresets {
             profileGUID: nil,
             command: "",
             urlString: "",
-            toolbarItems: [.modeSwitcher, .gitStatus],
+            toolbarItems: [.modeSwitcher, .gitStatus, .autoRequestReviewWhenIdle],
             displayName: "Chat")
 
         let diff = iTermWorkgroupSessionConfig(

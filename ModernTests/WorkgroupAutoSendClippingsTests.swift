@@ -244,4 +244,206 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
                 "mainState=\(mainState) is safe to send into")
         }
     }
+
+    // MARK: - Auto-request review: toolbar model
+
+    func test_requestReviewItem_codableRoundTrip() throws {
+        let original: iTermWorkgroupToolbarItem = .autoRequestReviewWhenIdle
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(iTermWorkgroupToolbarItem.self,
+                                               from: data)
+        XCTAssertEqual(decoded, original)
+        XCTAssertEqual(decoded.kind, .autoRequestReviewWhenIdle)
+    }
+
+    func test_requestReviewItem_registryIncludesItem() {
+        let metadata = iTermWorkgroupToolbarItemRegistry.metadata(
+            forKind: .autoRequestReviewWhenIdle)
+        XCTAssertNotNil(metadata)
+        XCTAssertEqual(metadata?.hasParameters, false)
+        XCTAssertEqual(metadata?.defaultValue, .autoRequestReviewWhenIdle)
+    }
+
+    func test_requestReviewItem_presetMainSessionIncludesItByDefault() {
+        let wg = WorkgroupPresets.buildCodingAgentPlusDiffPlusCodeReview()
+        XCTAssertEqual(wg.root?.toolbarItems.contains(.autoRequestReviewWhenIdle),
+                       true,
+                       "Main (root) session should ship with the toggle by default")
+    }
+
+    func test_requestReviewItem_claudeCodeTemplateMainSessionIncludesIt() {
+        let main = ClaudeCodeWorkgroupTemplate.config.session(
+            withUniqueIdentifier: ClaudeCodeWorkgroupTemplate.ID.main)
+        XCTAssertNotNil(main)
+        XCTAssertTrue(main!.toolbarItems.contains(.autoRequestReviewWhenIdle))
+    }
+
+    // MARK: - Auto-request review: backfill transform
+
+    private func legacyClaudeCodeWorkgroupMissingRequestReview()
+        -> iTermWorkgroup {
+        let main = iTermWorkgroupSessionConfig(
+            uniqueIdentifier: ClaudeCodeWorkgroupTemplate.ID.main,
+            parentID: nil, kind: .root, profileGUID: nil, command: "",
+            urlString: "", toolbarItems: [.modeSwitcher, .gitStatus],
+            displayName: "Chat")
+        let review = iTermWorkgroupSessionConfig(
+            uniqueIdentifier: ClaudeCodeWorkgroupTemplate.ID.review,
+            parentID: ClaudeCodeWorkgroupTemplate.ID.main, kind: .peer,
+            profileGUID: nil, command: "claude", urlString: "",
+            toolbarItems: [.modeSwitcher], displayName: "Code Review",
+            mode: .codeReview)
+        return iTermWorkgroup(
+            uniqueIdentifier: ClaudeCodeWorkgroupTemplate.ID.workgroup,
+            name: "Claude Code", sessions: [main, review])
+    }
+
+    func test_requestReviewBackfill_addsToLegacyMainSession() {
+        let migrated = iTermWorkgroupModel
+            .addingAutoRequestReviewToClaudeCodeMainSession(
+                [legacyClaudeCodeWorkgroupMissingRequestReview()])
+        XCTAssertNotNil(migrated)
+        let main = migrated?.first?.session(
+            withUniqueIdentifier: ClaudeCodeWorkgroupTemplate.ID.main)
+        XCTAssertEqual(main?.toolbarItems.last, .autoRequestReviewWhenIdle)
+        XCTAssertEqual(main?.toolbarItems.first, .modeSwitcher)
+    }
+
+    func test_requestReviewBackfill_idempotentWhenAlreadyPresent() {
+        var wg = legacyClaudeCodeWorkgroupMissingRequestReview()
+        var main = wg.sessions[0]
+        main.toolbarItems = main.toolbarItems + [.autoRequestReviewWhenIdle]
+        wg = iTermWorkgroup(uniqueIdentifier: wg.uniqueIdentifier,
+                            name: wg.name, sessions: [main, wg.sessions[1]])
+        XCTAssertNil(
+            iTermWorkgroupModel.addingAutoRequestReviewToClaudeCodeMainSession([wg]))
+    }
+
+    func test_requestReviewBackfill_ignoresNonClaudeCodeWorkgroup() {
+        var wg = legacyClaudeCodeWorkgroupMissingRequestReview()
+        wg = iTermWorkgroup(uniqueIdentifier: "other-workgroup",
+                            name: wg.name, sessions: wg.sessions)
+        XCTAssertNil(
+            iTermWorkgroupModel.addingAutoRequestReviewToClaudeCodeMainSession([wg]))
+    }
+
+    // MARK: - Auto-request review: decision
+
+    func test_requestReviewDecision_firesForMainOnWorkingToIdle() {
+        XCTAssertTrue(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+            previousState: .working, newState: .idle,
+            isMainSession: true, toggleOn: true, reviewCount: 1))
+    }
+
+    func test_requestReviewDecision_noFireWhenNotMainSession() {
+        XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+            previousState: .working, newState: .idle,
+            isMainSession: false, toggleOn: true, reviewCount: 1))
+    }
+
+    func test_requestReviewDecision_noFireWhenToggleOff() {
+        XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+            previousState: .working, newState: .idle,
+            isMainSession: true, toggleOn: false, reviewCount: 1))
+    }
+
+    func test_requestReviewDecision_noFireWhenNotExactlyOneReview() {
+        for count in [0, 2, 3] {
+            XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+                previousState: .working, newState: .idle,
+                isMainSession: true, toggleOn: true, reviewCount: count),
+                "reviewCount=\(count) must not fire")
+        }
+    }
+
+    func test_requestReviewDecision_noFireWhenNotEdgeFromWorking() {
+        for previous: SessionState? in [.idle, .waiting, .unknown, nil] {
+            XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+                previousState: previous, newState: .idle,
+                isMainSession: true, toggleOn: true, reviewCount: 1),
+                "previous=\(String(describing: previous)) must not fire")
+        }
+    }
+
+    func test_requestReviewDecision_noFireWhenNewStateNotIdle() {
+        XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+            previousState: .working, newState: .working,
+            isMainSession: true, toggleOn: true, reviewCount: 1))
+    }
+
+    // MARK: - Arrangement save/restore of the toggle flags
+
+    // The arrangement keys are private statics in PTYSession.m; the tests
+    // reference them by their literal string values (kept in sync there).
+    private let autoSendKey = "Auto Send Clippings When Idle"
+    private let autoRequestKey = "Auto Request Review When Idle"
+
+    private func encodedArrangement(_ session: PTYSession) -> [AnyHashable: Any] {
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        session.encodeArrangement(withContents: false, encoder: encoder)
+        return encoder.mutableDictionary as? [AnyHashable: Any] ?? [:]
+    }
+
+    func test_arrangement_encodesFlagsWhenOn() {
+        let session = PTYSession(synthetic: false)!
+        session.autoSendClippingsWhenIdle = true
+        session.autoRequestReviewWhenIdle = true
+        let dict = encodedArrangement(session)
+        XCTAssertEqual(dict[autoSendKey] as? Bool, true)
+        XCTAssertEqual(dict[autoRequestKey] as? Bool, true)
+    }
+
+    // Off is the default, so the keys are omitted to keep arrangements lean.
+    func test_arrangement_omitsFlagsWhenOff() {
+        let session = PTYSession(synthetic: false)!
+        let dict = encodedArrangement(session)
+        XCTAssertNil(dict[autoSendKey])
+        XCTAssertNil(dict[autoRequestKey])
+    }
+
+    // MARK: - Strict reported-idle (loop / restart race)
+
+    private func tabStatus(sessionID: String, statusText: String?) -> iTermSessionTabStatus {
+        let status = iTermSessionTabStatus(sessionID: sessionID)
+        if let statusText {
+            let update = VT100TabStatusUpdate()
+            update.statusPresence = .set
+            update.status = statusText
+            _ = status.apply(update)
+        }
+        return status
+    }
+
+    // A restart clears the tab status. The general state falls back to .idle,
+    // which is what made a restart look like a "review finished" edge; the
+    // strict reported state returns .unknown so no working -> idle edge fires.
+    @MainActor
+    func test_reportedState_clearedStatusIsUnknownNotIdle() {
+        let status = tabStatus(sessionID: "s", statusText: nil)
+        XCTAssertEqual(WorkgroupIntrospection.state(forTabStatus: status), .idle)
+        XCTAssertEqual(WorkgroupIntrospection.reportedState(forTabStatus: status), .unknown)
+    }
+
+    @MainActor
+    func test_reportedState_readsExplicitStatusText() {
+        let cases: [(String, SessionState)] = [
+            ("idle", .idle), ("working", .working), ("waiting", .waiting)]
+        for (text, expected) in cases {
+            let status = tabStatus(sessionID: "s", statusText: text)
+            XCTAssertEqual(WorkgroupIntrospection.reportedState(forTabStatus: status),
+                           expected, "text=\(text)")
+        }
+    }
+
+    // The restart-induced sequence working -> (cleared) is .working -> .unknown
+    // under the strict state, which is NOT the working -> idle edge, so neither
+    // auto behavior fires on a restart.
+    func test_decision_restartClearIsNotAWorkingToIdleEdge() {
+        XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
+            previousState: .working, newState: .unknown,
+            mode: .codeReview, toggleOn: true, clippings: oneClipping))
+        XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
+            previousState: .working, newState: .unknown,
+            isMainSession: true, toggleOn: true, reviewCount: 1))
+    }
 }

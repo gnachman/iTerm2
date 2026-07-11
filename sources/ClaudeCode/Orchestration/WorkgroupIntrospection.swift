@@ -550,6 +550,25 @@ enum WorkgroupIntrospection {
         return .idle
     }
 
+    // Like state(forTabStatus:) but returns .unknown when there is no
+    // explicit recognized statusText, instead of falling back to .idle. Used
+    // by the workgroup's idle-driven auto behaviors (auto-send clippings /
+    // auto-request review), whose working -> idle edge must reflect a program
+    // that actually finished. A session restart CLEARS the tab status, and
+    // the fallback .idle above would otherwise read as a spurious "finished"
+    // edge right after the restart and drive an infinite request/send loop.
+    static func reportedState(forTabStatus status: iTermSessionTabStatus) -> SessionState {
+        guard let text = status.statusText?.lowercased(), !text.isEmpty else {
+            return .unknown
+        }
+        switch text {
+        case "idle": return .idle
+        case "working": return .working
+        case "waiting": return .waiting
+        default: return .unknown
+        }
+    }
+
     // Whether the session exposes a machine-readable status source we
     // can build exact tab-status-transition watchers on. True only when
     // a recognized status string (idle/working/waiting) is currently

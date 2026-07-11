@@ -75,6 +75,33 @@ extension PTYSession {
         }
     }
 
+    // Programmatically kick off a code review without a manual Start click.
+    // Used by the main session's "auto-request review when idle" toggle,
+    // which targets this (the sole code-review) session. Returns true if a
+    // review was started.
+    //
+    // Two cases, both reusing the overlay's own onStart (the tested launch /
+    // restart path) rather than duplicating command assembly:
+    //   1. An overlay is already showing (initial deferred launch not yet
+    //      started, or a prior reload) — submit it with its current default
+    //      text so its onStart fires.
+    //   2. The review already ran and there's no overlay — re-present it
+    //      (restart path) and immediately submit, so a fresh review runs.
+    //      Gated on isRestartable() exactly like the toolbar Reload button.
+    @objc @discardableResult
+    func autoRequestCodeReview() -> Bool {
+        guard workgroupSessionMode == .codeReview else { return false }
+        if let overlay = view?.codeReviewPromptOverlay {
+            overlay.onStart?(overlay.text)
+            return true
+        }
+        guard isRestartable(), codeReviewRawCommand != nil else { return false }
+        reloadCodeReviewPromptOverlay()
+        guard let overlay = view?.codeReviewPromptOverlay else { return false }
+        overlay.onStart?(overlay.text)
+        return true
+    }
+
     private func showCodeReviewPromptOverlay(onStart: @escaping (String) -> Void) {
         guard let sessionView: SessionView = view else { return }
         // On the second and later presentations for this session, default to

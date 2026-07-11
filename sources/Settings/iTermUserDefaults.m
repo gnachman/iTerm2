@@ -49,6 +49,7 @@ static NSString *const iTermUserDefaultsKeyWorkgroupShortcutsBackfilled = @"NoSy
 static NSString *const iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled = @"NoSyncClaudeCodeDiffModeBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled = @"NoSyncClaudeCodeReviewSystemPromptCommandBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled = @"NoSyncClaudeCodeAutoSendClippingsBackfilled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled = @"NoSyncClaudeCodeAutoRequestReviewBackfilled";
 static NSString *const iTermUserDefaultsKeyAIModelCatalogUpdateConsent = @"NoSyncAIModelCatalogUpdateConsent";
 
 @implementation iTermUserDefaults
@@ -394,6 +395,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeAutoSendClippingsBackfilled:(BOOL)value {
     [self.userDefaults setBool:value
                         forKey:iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled];
+}
+
++ (BOOL)claudeCodeAutoRequestReviewBackfilled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled];
+}
+
++ (void)setClaudeCodeAutoRequestReviewBackfilled:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled];
 }
 
 + (iTermAIModelCatalogUpdateConsent)aiModelCatalogUpdateConsent {

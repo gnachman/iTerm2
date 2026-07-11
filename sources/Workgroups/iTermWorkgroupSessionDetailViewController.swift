@@ -967,6 +967,13 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
                 && session?.mode != .codeReview {
                 continue
             }
+            // Auto-request-review-when-idle drives the workgroup's sole
+            // code-review session from the main (root) session, so it's
+            // only meaningful there. Hide it from non-root sessions.
+            if metadata.kind == .autoRequestReviewWhenIdle
+                && session?.kind != .root {
+                continue
+            }
             let item = menu.addItem(withTitle: metadata.displayName,
                                     action: #selector(addToolbarItemMenuSelected(_:)),
                                     keyEquivalent: "")

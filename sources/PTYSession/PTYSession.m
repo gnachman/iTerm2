@@ -333,6 +333,8 @@ static NSString *const SESSION_ARRANGEMENT_CLIPPINGS = @"Clippings";  // NSArray
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE = @"Clippings Visible";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archive";  // NSArray<NSArray<NSDictionary<NSString *, NSString *> *> *>, oldest first.
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
+static NSString *const SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE = @"Auto Send Clippings When Idle";  // BOOL. Code-review peer's toolbar toggle state.
+static NSString *const SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE = @"Auto Request Review When Idle";  // BOOL. Main session's toolbar toggle state.
 static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
 static NSString *const SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT = @"Code Review Last Prompt";  // NSString. The prompt text the user last submitted in a code-review session, so a reload after restore defaults to their edited prompt.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
@@ -1715,6 +1717,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     aSession.clippingsVisible = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE]] boolValue];
+    // Workgroup code-review toolbar toggle state. Restored onto the session
+    // before the workgroup adopts it and builds the toolbar, so the rebuilt
+    // toggle reflects the saved state. Absent keys leave the flags at their
+    // default (off).
+    aSession.autoSendClippingsWhenIdle = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE]] boolValue];
+    aSession.autoRequestReviewWhenIdle = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE]] boolValue];
     // Inline AI chat is restored earlier, synchronously, in
     // sessionFromArrangement: (see the comment there) so the panel's reserved
     // width is in place before the window first fits its grid.
@@ -6882,6 +6890,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX] = @(self.localClippingsViewIndex);
     }
     result[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE] = @(self.clippingsVisible);
+    // Workgroup code-review toolbar toggles. Per-session runtime flags,
+    // default off; written only when on so a plain session's arrangement
+    // doesn't grow. Restored in setContentsFromArrangement so the toggle
+    // (and its idle-driven behavior) survive a relaunch.
+    if (self.autoSendClippingsWhenIdle) {
+        result[SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE] = @(YES);
+    }
+    if (self.autoRequestReviewWhenIdle) {
+        result[SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE] = @(YES);
+    }
 
     // Inline AI chat gutter panel. Only meaningful when a chat is bound, so
     // the visibility flag rides along with the id rather than being written

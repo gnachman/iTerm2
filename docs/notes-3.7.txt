@@ -200,6 +200,17 @@ Major New Features:
   includes it by default; the toggle itself
   starts off.
 
+- The main session has a companion
+  Auto-Request Review When Idle toolbar
+  toggle. When on, a code review is
+  requested from the workgroup’s sole
+  code-review session each time the main
+  session goes idle. It is disabled unless
+  the workgroup has exactly one code-review
+  session. The Claude Code workgroup’s main
+  session includes it by default; the toggle
+  starts off.
+
 - Switching to a Code Review peer that is
   still showing its prompt overlay now
   focuses the prompt text field so you can
