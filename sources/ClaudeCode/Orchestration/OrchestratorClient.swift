@@ -37,9 +37,23 @@ final class OrchestratorClient {
         return _instance
     }
 
+    // Test seam: build an isolated client (NOT the shared singleton, and NOT
+    // stored in _instance) so the dispatcher-creation wiring -- which must hand
+    // every per-chat dispatcher the SAME typed-input store -- can be exercised
+    // end to end. Kept out of the singleton path so a test client never leaks
+    // into production lookups.
+    static func makeForTesting(broker: ChatBroker) -> OrchestratorClient {
+        OrchestratorClient(broker: broker)
+    }
+
     private let broker: ChatBroker
     private var subscription: ChatBroker.Subscription?
+    private var sessionWillTerminateObserver: NSObjectProtocol?
     private var dispatchers: [String: OrchestratorDispatcher] = [:]
+    // One per-session typed-input accumulator shared by every dispatcher this
+    // client creates, so the safety gate's accumulator is per-session (keyed by
+    // session GUID) rather than per-chat. See OrchestratorTypedInputStore.
+    private let typedInput = OrchestratorTypedInputStore()
 
     private init(broker: ChatBroker) {
         self.broker = broker
@@ -74,10 +88,39 @@ final class OrchestratorClient {
                     self?.dropDispatcher(forChatID: chatID)
                 }
             }
+        // Clear the shared typed-input store when a session terminates. This
+        // lives on the CLIENT (process lifetime) rather than a per-chat
+        // dispatcher: a dispatcher's own iTermSessionWillTerminate observer runs
+        // only while that chat is open, so if the chat that typed into a session
+        // closes before the session dies, the dispatcher-side cleanup never fires
+        // and pending[guid]/contaminated[guid] would leak for the rest of the
+        // process (GUIDs are never reused). The client owns the store, so this
+        // always runs. (Per-dispatcher cleanup stays too -- it's the fast path
+        // while the chat is live.)
+        // queue: .main (not nil) so the block is delivered on the main thread
+        // regardless of the post thread, matching the sibling observers of this
+        // notification (OrchestratorDispatcher, SessionProvenanceRegistry) and
+        // keeping the MainActor.assumeIsolated below safe. (iTermSessionWillTerminate
+        // is posted from -[PTYSession terminate], a main-thread teardown today,
+        // but .main guarantees it.)
+        self.sessionWillTerminateObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name.iTermSessionWillTerminate,
+            object: nil,
+            queue: .main) { [weak self] notification in
+                MainActor.assumeIsolated {
+                    guard let self,
+                          let session = notification.object as? PTYSession else { return }
+                    self.typedInput.pending.removeValue(forKey: session.guid)
+                    self.typedInput.contaminated.remove(session.guid)
+                }
+            }
     }
 
     deinit {
         subscription?.unsubscribe()
+        if let sessionWillTerminateObserver {
+            NotificationCenter.default.removeObserver(sessionWillTerminateObserver)
+        }
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -199,11 +242,14 @@ final class OrchestratorClient {
         }
     }
 
-    private func dispatcher(forChatID chatID: String) -> OrchestratorDispatcher {
+    // Internal (not private) so wiring tests can obtain two dispatchers for two
+    // chatIDs and confirm they share this client's single typed-input store.
+    func dispatcher(forChatID chatID: String) -> OrchestratorDispatcher {
         if let existing = dispatchers[chatID] {
             return existing
         }
-        let created = OrchestratorDispatcher(chatID: chatID, broker: broker)
+        let created = OrchestratorDispatcher(chatID: chatID, broker: broker,
+                                             typedInput: typedInput)
         dispatchers[chatID] = created
         return created
     }

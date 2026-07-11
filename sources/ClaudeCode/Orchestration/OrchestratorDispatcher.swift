@@ -98,14 +98,29 @@ final class OrchestratorDispatcher {
     // same task instead of spawning a new prompt.
     private var pendingClaimTasks: [String: Task<Bool, Never>] = [:]
 
-    // What the orchestrator has typed into each session's shell prompt since the
-    // last submit, keyed by session GUID. This is the only LAG-FREE record of
-    // prior typed fragments (shell integration and the screen grid both trail our
-    // PTY writes), so gateTypedText uses it to classify a command split across
-    // back-to-back sends as a whole. Per-session (not per-chat) so two chats
-    // driving one PTY can't split a payload past the gate. Cleared on submit, on
-    // any cursor/control byte, on interrupt, and on session termination.
-    private var pendingTypedInput: [String: String] = [:]
+    // Per-SESSION typed-input state, keyed by session GUID. SHARED across every
+    // per-chat dispatcher of the owning OrchestratorClient (see
+    // OrchestratorTypedInputStore), so the accumulator is genuinely per-session,
+    // not per-(chat, session): two chats driving one PTY share one accumulator,
+    // and a payload split across the two chats is still reconstructed whole. The
+    // GUID key namespaces sessions; the shared store is what makes the guarantee
+    // hold across chats. `.pending` is the only LAG-FREE record of prior typed
+    // fragments (shell integration and the screen grid both trail our PTY
+    // writes), so gateTypedText uses it to classify a command split across
+    // back-to-back sends as a whole. `.contaminated` marks sessions where a
+    // disturbing keystroke (Tab/arrows/Ctrl-*) was allowed on a primary-screen
+    // shell, wiping the accumulator but leaving the already-typed prefix on the
+    // prompt: while contaminated, gateTypedText forces screen-aware
+    // classification (the echoed full line) rather than trusting the accumulator.
+    // Both are cleared on submit, on interrupt, and on session termination --
+    // each resets the prompt line. Entries are keyed by session, not chat, so a
+    // chat/dispatcher tearing down never clears a session another chat may drive.
+    private let typedInput: OrchestratorTypedInputStore
+
+    // Test seam: the store this dispatcher was handed at construction. Wiring
+    // tests compare it across two dispatchers to confirm the client shares one
+    // per-session accumulator rather than minting a fresh one per chat.
+    var typedInputStoreForTesting: OrchestratorTypedInputStore { typedInput }
 
     // Observer on iTermSessionTabStatusDidChange — the source of
     // truth for "a session's state changed". When a notification
@@ -141,9 +156,11 @@ final class OrchestratorDispatcher {
     // escalating to the screen-observation backstop.
     private static let tabStatusEscalationDelay: TimeInterval = 300  // 5 minutes
 
-    init(chatID: String, broker: ChatBroker) {
+    init(chatID: String, broker: ChatBroker,
+         typedInput: OrchestratorTypedInputStore) {
         self.chatID = chatID
         self.broker = broker
+        self.typedInput = typedInput
         let listModel = broker.listModel
         self.claimedScopes = listModel.claimedScopes(forChatID: chatID)
         self.watchers = listModel.watchers(forChatID: chatID)
@@ -408,7 +425,8 @@ final class OrchestratorDispatcher {
         // see a stale "previous state" from the prior session's last
         // tabStatus event.
         sessionStateHistory.removeValue(forKey: guid)
-        pendingTypedInput.removeValue(forKey: guid)
+        typedInput.pending.removeValue(forKey: guid)
+        typedInput.contaminated.remove(guid)
         let dropped = watchers.filter { $0.sessionGUID == guid }
         guard !dropped.isEmpty else { return }
         let droppedIDs = Set(dropped.map { $0.watcherID })
@@ -1875,13 +1893,16 @@ final class OrchestratorDispatcher {
         // the line to classify from the most reliable source and returns the
         // accumulator's next value.
         let guid = session.guid
+        let priorBuffer = typedInput.pending[guid] ?? ""
+        let priorContaminated = typedInput.contaminated.contains(guid)
         let plan = Self.planTypedGate(
-            priorBuffer: pendingTypedInput[guid] ?? "",
+            priorBuffer: priorBuffer,
             decoded: text,
             appendNewline: appendNewline,
             screenAware: usesScreenAwareClassification(session),
             full: session.currentCommand,
-            upToCursor: session.currentCommandUpToCursor)
+            upToCursor: session.currentCommandUpToCursor,
+            contaminated: priorContaminated)
 
         // Classify FIRST, then advance the accumulator -- and only if the verdict
         // did not throw. A blocked send is never typed (the throw skips
@@ -1909,10 +1930,57 @@ final class OrchestratorDispatcher {
                               actionSummary: "The agent wants to run a command in the session.")
         }
 
-        if let newBuffer = plan.newBuffer {
-            pendingTypedInput[guid] = newBuffer
-        } else {
-            pendingTypedInput.removeValue(forKey: guid)
+        // Concurrency guard. gateTypedText runs on the main actor, but the
+        // classify `await` above is a suspension point, and the accumulator store
+        // is SHARED across a client's per-chat dispatchers (so two chats driving
+        // one session share it). A concurrent send on the SAME session could have
+        // mutated the accumulator OR the contamination flag while we were awaiting
+        // the classifier, so our plan -- computed from the now-stale priorBuffer /
+        // priorContaminated -- must not clobber it (dropping a fragment from a
+        // later classification, or clearing a contamination another chat just
+        // set). The race resolution is factored into resolveConcurrentSend so it
+        // can be unit-tested without a live session. (The accumulate path has no
+        // await, so it never trips this.)
+        let sendSubmits = appendNewline || text.contains("\r") || text.contains("\n")
+        switch Self.resolveConcurrentSend(
+            priorBuffer: priorBuffer,
+            observedBuffer: typedInput.pending[guid] ?? "",
+            priorContaminated: priorContaminated,
+            observedContaminated: typedInput.contaminated.contains(guid),
+            sendSubmits: sendSubmits,
+            plannedNewBuffer: plan.newBuffer,
+            plannedContaminated: plan.contaminated) {
+        case .failClosed:
+            // A concurrent send typed onto the same physical prompt during our
+            // await, so the shell would run a fusion we never classified whole
+            // (the serialized path classifies that fusion and catches it -- only
+            // the race is the hole). Contaminate and block THIS send rather than
+            // letting the caller type/submit a stale-classified line.
+            typedInput.contaminated.insert(guid)
+            throw OrchestratorError.safetyBlocked(
+                reason: "a concurrent send changed this session's prompt during the safety check; resubmit so the whole line is re-checked.")
+        case .markContaminatedAndReturn:
+            // Inert send raced by a concurrent write: leave its keystroke on the
+            // now-contaminated prompt; the next submit is judged against the
+            // screen. Do not clobber the concurrent writer's accumulator.
+            typedInput.contaminated.insert(guid)
+            return
+        case .commit(let buffer, let contaminate):
+            // No race. Apply the plan's accumulator advance. Reached only on an
+            // ALLOWED send (a blocked route threw above), matching the "contaminate
+            // only when a disturbing keystroke is allowed" contract: a blocked
+            // disturbing keystroke is never typed, so it leaves nothing on the
+            // prompt to account for.
+            if let buffer {
+                typedInput.pending[guid] = buffer
+            } else {
+                typedInput.pending.removeValue(forKey: guid)
+            }
+            if contaminate {
+                typedInput.contaminated.insert(guid)
+            } else {
+                typedInput.contaminated.remove(guid)
+            }
         }
     }
 
@@ -2073,7 +2141,10 @@ final class OrchestratorDispatcher {
         }
         // Ctrl-C clears the shell's current line, so drop any accumulated
         // pending input; otherwise a later send would classify a stale line.
-        pendingTypedInput.removeValue(forKey: resolved.session.guid)
+        // The reset also clears contamination -- the leftover prompt content
+        // that made the accumulator untrustworthy is gone.
+        typedInput.pending.removeValue(forKey: resolved.session.guid)
+        typedInput.contaminated.remove(resolved.session.guid)
         resolved.session.writeTaskNoBroadcast("\u{03}")
         return .ack
     }
