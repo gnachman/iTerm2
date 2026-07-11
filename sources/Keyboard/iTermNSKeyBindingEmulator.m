@@ -100,7 +100,7 @@ static struct {
                                 allowedActions:(NSSet<NSString *> *)allowedActions {
     NSDictionary *theDict = [NSDictionary dictionaryWithContentsOfFile:bindPath];
     AppendPinnedDebugLogMessage(@"NSKeyBindingEmulator", @"Load dictionary\n%@", theDict);
-    RLog(@"Loaded key bindings dictionary:\n%@", theDict);
+    DLog(@"Loaded key bindings dictionary:\n%@", theDict);
 
     NSDictionary *keyBindingDictionary = [self keyBindingDictionaryByNormalizingModifiersInKeys:theDict];
     NSDictionary *result = [self keyBindingDictionaryByPruningUselessBranches:keyBindingDictionary

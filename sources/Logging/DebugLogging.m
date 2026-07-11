@@ -255,6 +255,9 @@ void RetrospectiveLogImpl(const char *file, int line, const char *function, NSSt
         [gRetrospectiveLog removeObjectAtIndex:0];
     }
     [GetDebugLogLock() unlock];
+#if ITERM_DEBUG
+    fputs(entry.UTF8String, stderr);
+#endif
 }
 
 NSString *iTermRetrospectiveLogString(void) {
