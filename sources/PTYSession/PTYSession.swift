@@ -1744,7 +1744,7 @@ extension PTYSession {
     // Prompt text last submitted from the code-review overlay; used as the
     // default when re-presenting the overlay so prior (possibly hand-edited)
     // input is preserved across reloads. See PTYSession+CodeReviewPrompt.
-    var codeReviewLastUsedPrompt: String? {
+    @objc var codeReviewLastUsedPrompt: String? {
         get { swiftState.codeReviewLastUsedPrompt }
         set { swiftState.codeReviewLastUsedPrompt = newValue }
     }

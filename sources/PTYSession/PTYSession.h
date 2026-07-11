@@ -64,6 +64,11 @@ extern NSString *const PTYSessionArrangementOptionsForDuplication;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
 extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
+// When set, restoration will not launch a replacement program if there is
+// no running program to attach to; the session is finalized showing its
+// restored contents. Used for code-review/diff workgroup peers so a dead
+// peer leaves its last output on screen instead of spawning a stray shell.
+extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
