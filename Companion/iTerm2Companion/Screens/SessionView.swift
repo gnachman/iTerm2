@@ -22,10 +22,85 @@ struct SessionView: View {
     @Environment(AppModel.self) private var model
     let guid: String
     let title: String
+    /// The chat the user tapped an @-mention in to reach this view, if any. The
+    /// compose overlay sends into it (rather than a session-bound chat) and a
+    /// reply notification pops back to it. Nil when reached from the session
+    /// list or a workgroup.
+    var originatingChatID: String? = nil
     /// When false, the "chat about this session" toolbar button is hidden. The
     /// mention picker shows this view only to preview a session, where starting
     /// a chat would push onto the stack behind the picker sheet.
     var allowsChat: Bool = true
+
+    /// Whether the compose overlay (text field + dictation + send) is up.
+    @State private var showComposer = false
+    /// The chat this visit's compose overlay sends into. Resolved on the first
+    /// send (the originating chat, or the session's recent/new session-bound
+    /// chat) and reused for the rest of the visit.
+    @State private var composeChatID: String?
+    /// Set once the @-mention's originating chat is found deleted, so later sends
+    /// stop preferring the (dead) originatingChatID and fall through to creating a
+    /// fresh session-bound chat - otherwise recovery is impossible for this visit.
+    @State private var originatingChatIsDead = false
+    /// Identifies THIS session view's watch, so a different session view leaving
+    /// (or a stale send) can't tear down or steal this view's reply watch.
+    @State private var watchToken = UUID()
+    /// A send failure for THIS view's compose overlay (scoped locally so it can't
+    /// surface on a different SessionView via shared state).
+    @State private var sendError: String?
+    /// Whether the compose overlay's draft is empty; a scrim tap only dismisses
+    /// (discarding the draft) when it is.
+    @State private var composeIsEmpty = true
+    /// Text to seed the overlay with, used to restore a draft whose send failed.
+    @State private var composeInitialText = ""
+    /// Bumped on the failed-send restore path to re-seed composeInitialText into
+    /// the composer. Edge-triggered so the restore works even when SwiftUI reuses
+    /// the same composer instance (e.g. a restore that lands inside the exit
+    /// animation window, where showComposer false->true just reverses the
+    /// transition) - no view-identity churn needed.
+    @State private var composerSeedGeneration = 0
+
+    private static let messageAgentLabel = "Message the agent"
+
+    /// The originating @-mention chat this overlay targets, or nil once it's dead
+    /// (recovery: sends create a fresh session-bound chat) or for a plain session
+    /// view. Sends and the label/disable logic all key off this.
+    private var effectiveOriginatingChatID: String? {
+        originatingChatIsDead ? nil : originatingChatID
+    }
+
+    /// Whether the RESOLVED send target is a chat the Mac deleted, independent of
+    /// openChatID (a tab round-trip repoints it). Reactive dead-detection flips
+    /// effectiveOriginatingChatID to nil, so this only stays true in the brief
+    /// window before recovery kicks in (or for an already-resolved, since-deleted
+    /// composeChatID).
+    private var composerTargetIsDeleted: Bool {
+        guard let target = composeChatID ?? effectiveOriginatingChatID else { return false }
+        return !model.chatExists(target)
+    }
+
+    /// Whether the originating @-mention chat is present in the chat list, for
+    /// reactive dead-detection.
+    private var originatingChatPresent: Bool {
+        guard let originatingChatID else { return true }
+        return model.chatExists(originatingChatID)
+    }
+
+    /// Whether the resolved send chat is present in the chat list, for reactive
+    /// dead-detection (a session-list send resolves composeChatID, which has no
+    /// @-mention recovery path of its own).
+    private var composeChatPresent: Bool {
+        guard let composeChatID else { return true }
+        return model.chatExists(composeChatID)
+    }
+
+    /// Run `recover` when a tracked target chat (`id`) has left an AUTHORITATIVE
+    /// list. Shared guard for the two reactive dead-detection handlers: only when
+    /// the id was actually set, it is now absent, AND `chats` is non-empty (an empty
+    /// list is "not synced yet", not "deleted", so it must not trigger recovery).
+    private func recoverIfChatDeleted(id: String?, present: Bool, recover: () -> Void) {
+        if id != nil, !present, !model.chats.isEmpty { recover() }
+    }
 
     /// Lines per fetched tile: large enough to amortize round trips, small
     /// enough that each tile's PNG stays a lightweight frame.
@@ -52,8 +127,65 @@ struct SessionView: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .overlay(alignment: .bottom) {
+            if showComposer {
+                composeOverlay
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: showComposer)
+        .alert("Couldn’t Send Message",
+               isPresented: Binding(get: { sendError != nil },
+                                    set: { if !$0 { sendError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(sendError ?? "")
+        }
+        .onAppear {
+            // This view is alive; un-mark its token as departed (onDisappear fires
+            // on a tab switch/cover while the view stays in the stack, and the
+            // token outlives that).
+            model.watchViewDidAppear(guid: guid, token: watchToken)
+        }
+        .onDisappear {
+            // onDisappear fires on a tab switch/cover too, not just a pop, so this
+            // only ends the watch when the session is genuinely gone from the nav
+            // stack - otherwise switching to the Chats tab to wait for the reply
+            // would kill the very notification the user is waiting for.
+            model.sessionViewDidDisappear(guid: guid, token: watchToken)
+        }
+        .onChange(of: originatingChatPresent) { _, present in
+            // The @-mention's originating chat left an AUTHORITATIVE list (deleted
+            // on the Mac): switch to session-bound recovery so the composer stays
+            // usable (the next send creates a fresh chat) instead of silently
+            // targeting a dead chat and only revealing it on Send.
+            recoverIfChatDeleted(id: originatingChatID, present: present) {
+                originatingChatIsDead = true
+            }
+        }
+        .onChange(of: composeChatPresent) { _, present in
+            // The resolved send chat was deleted on the Mac: drop it so the composer
+            // re-enables and the next send re-resolves (creates a fresh chat),
+            // instead of the whole bar dead-ending disabled with no way to recover.
+            recoverIfChatDeleted(id: composeChatID, present: present) { composeChatID = nil }
+        }
         .toolbar {
             if allowsChat {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        // Only reset emptiness when actually opening; the overlay's
+                        // scrim doesn't cover the nav bar, so re-tapping while a
+                        // draft is up must not mark it empty (a scrim tap would
+                        // then discard it).
+                        if !showComposer {
+                            composeIsEmpty = true
+                            composeInitialText = ""
+                            showComposer = true
+                        }
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .accessibilityLabel(Self.messageAgentLabel)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         model.openOrCreateChat(forSessionGuid: guid)
@@ -79,6 +211,120 @@ struct SessionView: View {
                 await load()
             }
         }
+    }
+
+    // MARK: Compose overlay
+
+    /// A dim scrim plus a bottom-docked message bar. The bar rides above the
+    /// keyboard (default safe-area avoidance); tapping the scrim or the close
+    /// button dismisses it. Sending routes to the originating chat, if any, or a
+    /// session-bound chat, and starts watching that chat for the agent's reply.
+    private var composeOverlay: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                // A scrim tap is an easy accidental target while typing; only
+                // dismiss (destroying the draft) when the field is empty. Use the
+                // close button to abandon a non-empty draft deliberately.
+                .onTapGesture { if composeIsEmpty { dismissComposer() } }
+            VStack(spacing: 0) {
+                HStack {
+                    Text(effectiveOriginatingChatID != nil ? "Message this chat" : Self.messageAgentLabel)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button {
+                        dismissComposer()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Close")
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                AgentComposerBar(placeholder: Self.messageAgentLabel,
+                                 showsMentionButton: false,
+                                 autoFocus: true,
+                                 // Disable only if the RESOLVED target chat is
+                                 // deleted (independent of openChatID, which a tab
+                                 // round-trip can repoint). A dead originating chat
+                                 // switches effectiveOriginatingChatID to nil
+                                 // (recovery), so this stays enabled and the next
+                                 // send creates a fresh session-bound chat.
+                                 isDisabled: composerTargetIsDeleted,
+                                 onEmptyChanged: { composeIsEmpty = $0 },
+                                 initialText: composeInitialText,
+                                 seedGeneration: composerSeedGeneration) { text in
+                    sendComposed(text)
+                }
+            }
+            .background(.regularMaterial)
+        }
+        .transition(.opacity)
+    }
+
+    private func sendComposed(_ text: String) {
+        // This is the single point that rejects empty input: reject BEFORE
+        // claiming the watch, since a claim that isn't followed by a real send
+        // would cancel a concurrent view's valid in-flight watch.
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            dismissComposer()
+            return
+        }
+        // Claim the watch slot synchronously (before the async Task), so if the
+        // view disappears before the Task runs, its onDisappear clears the claim
+        // and the late send installs no leaked watch. Keep the prior claim to
+        // restore it if this send fails.
+        let claim = model.claimSessionWatch(token: watchToken)
+        Task {
+            let outcome = await model.sendFromSessionView(text: text,
+                                                          sessionGuid: guid,
+                                                          resolvedChatID: composeChatID,
+                                                          originatingChatID: effectiveOriginatingChatID,
+                                                          watchToken: watchToken,
+                                                          claimSequence: claim.sequence)
+            switch outcome {
+            case .sent(let chatID):
+                // Only advance on a successful resolution; a failed/empty send
+                // must not clobber an already-resolved id.
+                composeChatID = chatID
+            case .failed(let message):
+                restoreFailedDraft(text, error: message, claim: claim)
+            case .chatDeleted(let message):
+                // Drop BOTH the dead resolved id and (if the dead target was the
+                // @-mention's originating chat) the preference for originatingChatID,
+                // so the NEXT send re-resolves and creates a fresh session-bound
+                // chat instead of re-targeting the deleted chat every time.
+                composeChatID = nil
+                originatingChatIsDead = true
+                restoreFailedDraft(text, error: message, claim: claim)
+            }
+        }
+        dismissComposer()
+    }
+
+    /// Restore a failed send's draft: show the error, undo the watch claim, and
+    /// re-seed the (optimistically cleared) text so the user can retry.
+    private func restoreFailedDraft(_ text: String, error: String,
+                                    claim: AppModel.SessionWatchClaim) {
+        sendError = error
+        model.restoreSessionWatchClaim(claim)
+        // The bar cleared the draft optimistically and the overlay was dismissed;
+        // restore the text. Any optimistic echo (the @-mention case, where the
+        // originating chat is open below) was rolled back on the failed publish, so
+        // the restored draft is the sole representation of the failed send.
+        composeInitialText = text
+        composeIsEmpty = false
+        // Request a re-seed (edge-triggered) so the draft is restored even if the
+        // composer instance is reused mid-exit-animation.
+        composerSeedGeneration += 1
+        showComposer = true
+    }
+
+    private func dismissComposer() {
+        showComposer = false
     }
 
     @ViewBuilder

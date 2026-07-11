@@ -50,8 +50,14 @@ extension Message.Subpart {
             return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .attachment(let attachment):
             switch attachment.type {
-            case .file, .fileID, .code:
+            case .file, .fileID:
                 return true
+            case .code(let text):
+                // Whitespace-only code is NOT substance. previewAndLabel returns the
+                // RAW code text (not nil) for it; THIS substance gate is what filters
+                // it out, so without this a whitespace-only .code would pass and fall
+                // back to the literal "Empty message" in snippetText.
+                return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             case .statusUpdate:
                 return false   // ephemeral reasoning/status, not a real reply
             }

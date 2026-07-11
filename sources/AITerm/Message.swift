@@ -227,6 +227,38 @@ struct Message: Codable {
         case attachment(LLM.Message.Attachment)
         // Extra info in user-sent messages to add to context
         case context(String)
+
+        /// The one-line preview for this subpart plus whether it is a rendered
+        /// attachment LABEL ("📄 name") rather than real text, or nil for a
+        /// non-previewable subpart (.context). One definition of the subpart ->
+        /// preview mapping, used by snippetText and by the companion's streamed
+        /// reply-preview classifier so they can never drift.
+        func previewAndLabel(maxLength: Int) -> (text: String, isLabel: Bool)? {
+            // The RAW per-subpart mapping (nil only for a non-previewable subpart).
+            // It does NOT apply a substance policy: snippetText wants the last
+            // non-context subpart's text (blank if empty), while the companion's
+            // reply preview wants the last SUBSTANTIVE subpart - so each caller
+            // decides substance-skipping (via hasDisplayableSubstance) rather than
+            // baking one policy in here (which would flash "Empty message" in the Mac
+            // chat list for a transient empty streamed subpart).
+            switch self {
+            case .plainText(let text), .markdown(let text):
+                return (text.truncatedWithTrailingEllipsis(to: maxLength), false)
+            case .attachment(let attachment):
+                switch attachment.type {
+                case .code(let text):
+                    return (text.truncatedWithTrailingEllipsis(to: maxLength), false)
+                case .statusUpdate(let statusUpdate):
+                    return (statusUpdate.displayString, true)
+                case .file(let file):
+                    return ("📄 " + file.name, true)
+                case .fileID(_, let name):
+                    return ("📄 " + name, true)
+                }
+            case .context:
+                return nil
+            }
+        }
     }
 
     indirect enum Content: Codable {
@@ -439,23 +471,11 @@ struct Message: Codable {
             case .terminalCommand(let cmd):
                 return "Ran `\(cmd.command.truncatedWithTrailingEllipsis(to: maxLength - 4))`"
             case .multipart(let subparts, _):
+                // Return the last substantive subpart's preview (shared with the
+                // companion's reply-preview classifier via Subpart.previewAndLabel).
                 for subpart in subparts.reversed() {
-                    switch subpart {
-                    case .plainText(let text), .markdown(let text):
-                        return text.truncatedWithTrailingEllipsis(to: maxLength)
-                    case .attachment(let attachment):
-                        switch attachment.type {
-                        case .code(let text):
-                            return text.truncatedWithTrailingEllipsis(to: maxLength)
-                        case .statusUpdate(let statusUpdate):
-                            return statusUpdate.displayString
-                        case .file(let file):
-                            return "📄 " + file.name
-                        case .fileID(_, let name):
-                            return "📄 " + name
-                        }
-                    case .context(_):
-                        break
+                    if let preview = subpart.previewAndLabel(maxLength: maxLength) {
+                        return preview.text
                     }
                 }
                 return "Empty message"
