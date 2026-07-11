@@ -411,6 +411,15 @@ final class CompanionPairingController: NSObject {
             relayLog("resume: SKIP (AI gate not allowed)")
             return
         }
+        // A paired device means an AI query can arrive from the phone while the
+        // user is away. Warm the API key cache now (at launch, or after a
+        // disconnect) so that query serves its key from memory rather than
+        // blocking on, or prompting for, keychain access with nobody present.
+        // Gated on an actual pairing and idempotent, so this is a cheap no-op
+        // on the reconnect-driven calls.
+        if hasPairedDevice {
+            AITermControllerObjC.prewarmAPIKeyCache()
+        }
         // Park only when nothing is connected. The relay room has a single mac
         // slot, so parking while a bridge is live would displace it. The
         // bridge's onClose nils `bridge` before calling here, so a genuine
@@ -1080,6 +1089,13 @@ final class CompanionPairingController: NSObject {
                 }
                 pairedPID = code.pairingID
                 if isFreshPairing {
+                    // A brand-new device just paired while the user is present
+                    // (they just confirmed the SAS code): warm the AI key cache
+                    // now so a query later driven from the away phone serves its
+                    // key from memory without a keychain prompt. The launch path
+                    // covers devices already paired at startup; this covers a
+                    // pairing that happens while the app is already running.
+                    AITermControllerObjC.prewarmAPIKeyCache()
                     // Record the relays this pairing belongs to (the push relay
                     // the phone registers with, and the main relay this pairing
                     // was carried over), so a later host move can prompt the user

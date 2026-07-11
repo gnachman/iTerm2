@@ -705,6 +705,14 @@ Bug Fixes:
   or when a notification is sent. The paired
   identity is now read once at launch, while you
   are present, instead of mid-connection.
+- When a companion device is paired, your AI
+  API keys are now loaded at launch, and when a
+  phone pairs, so a query sent from your phone
+  while you are away never has to prompt for
+  keychain access.
+- Opening Settings no longer reads the keychain
+  or prompts for access. The AI API key row no
+  longer shows an “N of 4 configured” count.
 - Restoring a window with an open inline AI chat
   panel now reopens the panel on the chat it was
   showing, instead of widening the terminal.
