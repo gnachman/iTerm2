@@ -6930,6 +6930,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self setDimmingForSession:aSession];
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
         [[aSession view] didBecomeVisible];
+        // A workgroup .diff session's initial launch is deferred until it
+        // is shown. Its tab was just selected, so fire the deferred
+        // launch now if there are diffable changes.
+        [aSession fireDeferredDiffLaunchIfVisibleNow];
         [aSession.textview updateScrollerForBackgroundColor];
     }
 

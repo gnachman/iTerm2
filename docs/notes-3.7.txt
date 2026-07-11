@@ -205,6 +205,13 @@ Major New Features:
   focuses the prompt text field so you can
   start typing immediately.
 
+- A Diff session now waits to run its diff
+  until you first switch to it, so the diff
+  reflects your changes at that moment
+  instead of from whenever they first began.
+  It is not re-run when you switch away and
+  back.
+
 - Workgroups now survive a restart. When
   the app relaunches (for example after a
   Sparkle upgrade), an active workgroup is

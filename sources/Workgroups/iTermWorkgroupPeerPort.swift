@@ -297,6 +297,17 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         syncModeSwitchers(to: identifier)
     }
 
+    // A .diff peer's initial launch is deferred until the peer is shown.
+    // Its view was just swapped into the tab, so give it a chance to fire
+    // the deferred launch. fireDeferredDiffLaunchIfVisibleNow self-checks
+    // visibility (the swap can land on a background tab) and firing
+    // state, so this is a no-op for a background swap, a non-diff peer, or
+    // a diff that already launched; switching between peers never re-runs
+    // the diff.
+    override func didSwapInPeer(_ session: PTYSession) {
+        session.fireDeferredDiffLaunchIfVisibleNow()
+    }
+
     private func syncModeSwitchers(to identifier: String) {
         for views in itemsByPeerID.values {
             for view in views {

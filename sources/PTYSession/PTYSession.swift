@@ -1866,6 +1866,46 @@ extension PTYSession {
         presentDiffWaitingPromptOverlayForQueuedReload()
     }
 
+    // Whether the user can currently see this session: it has a live
+    // delegate (a buried peer has none) and its tab is the selected one.
+    // Gates the deferred .diff launch so the diff runs against the tree
+    // as it stands when the session is actually shown, not whenever the
+    // poller first happened to see a change.
+    var isVisibleForDeferredDiff: Bool {
+        return delegate?.sessionBelongsToVisibleTab() ?? false
+    }
+
+    // Called when a .diff session may have become visible (a peer swapped
+    // into its tab, or a tab selected). The initial diff launch is
+    // deferred until the session is actually shown, so if it is now
+    // visible and the poller already reports diffable changes, fire it
+    // rather than making the user wait for the next poll tick. If there's
+    // nothing diffable yet, the "waiting for changes" overlay stays up
+    // and the next poll tick fires it (the session is visible now, so
+    // fireDeferredDiffLaunches' gate passes).
+    //
+    // The isVisibleForDeferredDiff guard is load-bearing: a peer swap can
+    // complete on a background tab (workgroup restoration across tabs, a
+    // programmatic reveal), and firing there would run the diff against
+    // the swap-in-time tree instead of what's on screen when the user
+    // first sees it. A background swap is a no-op here; the tab-select
+    // hook or the next poll tick picks the session up once it truly
+    // reaches the foreground.
+    //
+    // This only ever fires the one deferred launch: firePendingDiffLaunch
+    // clears the closure, so re-showing a diff that already ran does
+    // nothing. Switching between peers never re-runs the diff.
+    @objc
+    func fireDeferredDiffLaunchIfVisibleNow() {
+        guard workgroupSessionMode == .diff,
+              hasPendingDiffLaunch,
+              isVisibleForDeferredDiff,
+              workgroupInstance?.diffLaunchReady == true else {
+            return
+        }
+        firePendingDiffLaunch()
+    }
+
     // Build a peer session for a workgroup's configured peer, driven
     // by an iTermWorkgroupSessionConfig config (profile override, command
     // override, buried until activated). `workgroupInstanceID` is

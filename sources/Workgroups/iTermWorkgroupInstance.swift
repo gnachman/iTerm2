@@ -971,6 +971,14 @@ final class iTermWorkgroupInstance: NSObject {
     // launch. Safe to call repeatedly: firePendingDiffLaunch clears
     // the closure as it runs, so a session that already launched is
     // a no-op on subsequent calls.
+    //
+    // The launch is gated on the session being visible: a buried .diff
+    // peer's diff must not start until the user actually switches to it,
+    // otherwise the diff reflects the tree at whatever moment the poller
+    // first saw a change (e.g. the instant the Claude Code leader touched
+    // a file) rather than what's there when the peer is first shown. The
+    // visibility hooks (peer swap, tab select) fire the launch directly
+    // for the session that just became visible.
     private func fireDeferredDiffLaunches() {
         var sessions: [PTYSession] = peerPort.realizedPeerSessions
         for port in nestedPeerPorts {
@@ -979,7 +987,8 @@ final class iTermWorkgroupInstance: NSObject {
         for entry in nonPeerEntriesByConfigID.values {
             sessions.append(entry.session)
         }
-        for session in sessions where session.hasPendingDiffLaunch {
+        for session in sessions
+        where session.hasPendingDiffLaunch && session.isVisibleForDeferredDiff {
             session.firePendingDiffLaunch()
         }
     }
