@@ -45,13 +45,6 @@ final class WorkgroupAutoSendClippingsToolbarItem: SessionToolbarControl {
         button.action = #selector(didToggle(_:))
     }
 
-    // Reflect a state set programmatically (e.g. when the runtime resets the
-    // flag) without firing the delegate.
-    func setOn(_ isOn: Bool) {
-        button.state = isOn ? .on : .off
-        Self.configure(button: button, isOn: isOn)
-    }
-
     private static func configure(button: NSButton, isOn: Bool) {
         let symbol: SFSymbol = isOn ? .paperplaneFill : .paperplane
         button.image = NSImage(systemSymbolName: symbol.rawValue,

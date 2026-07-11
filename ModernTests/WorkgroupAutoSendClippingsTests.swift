@@ -180,7 +180,8 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
     func test_decision_firesOnWorkingToIdle() {
         let text = iTermWorkgroupPeerPort.clippingsToAutoSend(
             previousState: .working, newState: .idle,
-            mode: .codeReview, toggleOn: true, clippings: oneClipping)
+            mode: .codeReview, toggleOn: true, mainSessionState: .idle,
+            clippings: oneClipping)
         XCTAssertEqual(text, oneClipping.joinedForSending())
     }
 
@@ -189,7 +190,8 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
         for previous: SessionState? in [.idle, .waiting, .unknown, nil] {
             XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
                 previousState: previous, newState: .idle,
-                mode: .codeReview, toggleOn: true, clippings: oneClipping),
+                mode: .codeReview, toggleOn: true, mainSessionState: .idle,
+                clippings: oneClipping),
                 "previous=\(String(describing: previous)) must not fire")
         }
     }
@@ -197,20 +199,23 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
     func test_decision_noFireWhenNewStateNotIdle() {
         XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
             previousState: .working, newState: .working,
-            mode: .codeReview, toggleOn: true, clippings: oneClipping))
+            mode: .codeReview, toggleOn: true, mainSessionState: .idle,
+            clippings: oneClipping))
     }
 
     func test_decision_noFireWhenToggleOff() {
         XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
             previousState: .working, newState: .idle,
-            mode: .codeReview, toggleOn: false, clippings: oneClipping))
+            mode: .codeReview, toggleOn: false, mainSessionState: .idle,
+            clippings: oneClipping))
     }
 
     func test_decision_noFireWhenNotCodeReview() {
         for mode: iTermWorkgroupSessionMode in [.regular, .diff] {
             XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
                 previousState: .working, newState: .idle,
-                mode: mode, toggleOn: true, clippings: oneClipping),
+                mode: mode, toggleOn: true, mainSessionState: .idle,
+                clippings: oneClipping),
                 "mode=\(mode) must not fire")
         }
     }
@@ -218,6 +223,25 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
     func test_decision_noFireWhenNoClippings() {
         XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
             previousState: .working, newState: .idle,
-            mode: .codeReview, toggleOn: true, clippings: []))
+            mode: .codeReview, toggleOn: true, mainSessionState: .idle,
+            clippings: []))
+    }
+
+    /// The main session being mid-turn (.working) defers the auto-send so an
+    /// autonomous paste + submit never clobbers the agent's in-progress input.
+    /// idle / waiting / unknown all proceed.
+    func test_decision_noFireWhenMainSessionWorking() {
+        XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
+            previousState: .working, newState: .idle,
+            mode: .codeReview, toggleOn: true, mainSessionState: .working,
+            clippings: oneClipping),
+            "must not inject while the main session's agent is working")
+        for mainState: SessionState in [.idle, .waiting, .unknown] {
+            XCTAssertNotNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
+                previousState: .working, newState: .idle,
+                mode: .codeReview, toggleOn: true, mainSessionState: mainState,
+                clippings: oneClipping),
+                "mainState=\(mainState) is safe to send into")
+        }
     }
 }

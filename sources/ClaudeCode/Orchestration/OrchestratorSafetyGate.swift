@@ -310,6 +310,22 @@ extension OrchestratorDispatcher {
         return s.trimmingCharacters(in: submitNewlines)
     }
 
+    // True if a Character IS (or contains) a submit newline scalar (CR 0x0D or
+    // LF 0x0A). `"\r\n"` is a SINGLE Swift grapheme cluster that equals NEITHER
+    // "\r" NOR "\n", so a Character-level `c == "\r" || c == "\n"` (or
+    // `.contains("\r")`) misses a CRLF submit boundary entirely -- letting
+    // `send_text("rm -rf /\r\n")` slip past as accumulate-only and run
+    // unclassified. Test the scalars, matching disturbsLinearAccumulation.
+    nonisolated static func isSubmitNewline(_ c: Character) -> Bool {
+        c.unicodeScalars.contains { $0.value == 0x0D || $0.value == 0x0A }
+    }
+
+    // True if `s` contains any CR/LF submit-newline scalar, including one buried
+    // inside a `\r\n` grapheme (see isSubmitNewline).
+    nonisolated static func containsSubmitNewline(_ s: String) -> Bool {
+        s.unicodeScalars.contains { $0.value == 0x0D || $0.value == 0x0A }
+    }
+
     // Trim only a TRAILING run of submit newlines (CR/LF) -- never leading or
     // interior ones, and never spaces. Used to build the CLASSIFIED line: a
     // leading/interior `\r` is a real submit boundary that runs earlier content
@@ -323,7 +339,7 @@ extension OrchestratorDispatcher {
         while end > s.startIndex {
             let prev = s.index(before: end)
             let c = s[prev]
-            guard c == "\r" || c == "\n" else { break }
+            guard isSubmitNewline(c) else { break }
             end = prev
         }
         return String(s[s.startIndex..<end])
@@ -346,7 +362,7 @@ extension OrchestratorDispatcher {
     // accept-line), which is the threat model here -- assuming it doesn't would
     // let a leading `\n` submit an accumulated command that was never classified.
     nonisolated static func residualAfterLastSubmit(_ s: String) -> String {
-        guard let idx = s.lastIndex(where: { $0 == "\r" || $0 == "\n" }) else { return s }
+        guard let idx = s.lastIndex(where: isSubmitNewline) else { return s }
         return String(s[s.index(after: idx)...])
     }
 
@@ -371,7 +387,7 @@ extension OrchestratorDispatcher {
         if appendNewline {
             return trimTrailingSubmit(combined)
         }
-        guard let idx = combined.lastIndex(where: { $0 == "\r" || $0 == "\n" }) else {
+        guard let idx = combined.lastIndex(where: isSubmitNewline) else {
             return trimTrailingSubmit(combined)
         }
         return trimTrailingSubmit(String(combined[...idx]))
@@ -405,7 +421,7 @@ extension OrchestratorDispatcher {
         // canonical-mode shell (Ctrl-J is accept-line), so it counts -- assuming
         // otherwise would let a leading `\n` submit an accumulated command that
         // was never classified.
-        let submits = appendNewline || decoded.contains("\r") || decoded.contains("\n")
+        let submits = appendNewline || containsSubmitNewline(decoded)
         // ownDecoded preserves leading/interior submit newlines (only a trailing
         // submit run is trimmed), used for the accumulate/integration paths; the
         // submitted line for classification is computed via `submittedLine`.
@@ -482,6 +498,19 @@ extension OrchestratorDispatcher {
             if isCtrlC || !contaminated {
                 let afterKill = String(
                     decoded.unicodeScalars[decoded.unicodeScalars.index(after: lastKill)...])
+                // The kill wipes the prompt, but bytes typed AFTER it in the same
+                // send (DEL, ESC-arrows, other C0) are not wiped -- they edit the
+                // post-kill line non-linearly, exactly what the accumulator cannot
+                // model. Storing afterKill verbatim with contamination cleared
+                // would launder them: the next submit classifies a stale,
+                // mis-tokenized line (a DEL read as an ordinary char turns
+                // `rm -rf /` into a benign subpath, bypassing the catastrophic
+                // tripwire). If the post-kill text disturbs, drop it and stay
+                // contaminated so the next submit is judged against the screen.
+                if disturbsLinearAccumulation(afterKill) {
+                    return TypedGatePlan(route: .screenAware, newBuffer: nil,
+                                         contaminated: true)
+                }
                 return TypedGatePlan(route: .screenAware,
                                      newBuffer: afterKill.isEmpty ? nil : capPending(afterKill),
                                      contaminated: false)

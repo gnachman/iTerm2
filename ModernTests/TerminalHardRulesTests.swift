@@ -83,6 +83,21 @@ final class TerminalHardRulesTests: XCTestCase {
         }
     }
 
+    /// A `>` INSIDE a quoted string is a literal, not a redirect operator, so a
+    /// quoted block-device path must NOT trip the device-write approval. (The
+    /// prior whole-word regex scan ran after quotes were stripped and over-flagged
+    /// these.) The real unquoted redirects above are still caught.
+    func testDefer_quotedRedirectLooksLikeDeviceWrite() {
+        for line in [
+            "echo \"run cat foo >/dev/sda\"",
+            "git commit -m \"note about >/dev/sdb\"",
+            "grep \"err 2>/dev/sda\" file",
+            "echo 'x >/dev/sda'",
+        ] {
+            assertDefers(line)
+        }
+    }
+
     /// Pipe-to-shell: the fetched bytes are invisible to the classifier. Every
     /// spacing and every common shell, matched by tokenizing the pipe target --
     /// NOT by a `| sh` substring (which caught `| sha256sum`).
@@ -242,6 +257,24 @@ final class TerminalHardRulesTests: XCTestCase {
         ] {
             assertDefers(line)
         }
+    }
+
+    /// Parameter expansions that merely CONTAIN `!` are not history expansion:
+    /// `$!` (last-background-PID) and `${!ref}` (indirect expansion). They must
+    /// defer, not nag for approval. A bare `{!` (brace with no `$`) is NOT exempt.
+    func testDefer_parameterExpansionsWithBang() {
+        for line in [
+            "echo ${!ref}", "foo $!bar", "echo ${!prefix@}", "wait $!",
+            "kill $!", "echo ${!arr[@]}",
+        ] {
+            assertDefers(line)
+        }
+    }
+
+    /// The parameter-expansion exemption is precise: a `!` NOT part of `$!`/`${`
+    /// still flags, so a bare-brace `{!!}` is caught.
+    func testApprove_bareBraceHistoryStillFlags() {
+        assertApproves("echo {!!}")
     }
 
     /// Structure the classifier reads in full defers (redirection, substitution,

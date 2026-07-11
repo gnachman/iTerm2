@@ -528,6 +528,90 @@ final class OrchestratorSafetyGateTests: XCTestCase {
                        "the submit must be judged against the screen, not a stale fragment")
     }
 
+    // MARK: - CRLF submit boundary (a `\r\n` grapheme is ONE Character)
+
+    /// The grapheme trap this fixes: `"\r\n"` is a single Swift Character that
+    /// equals neither "\r" nor "\n", so a Character-level `.contains` misses it.
+    /// The scalar-aware helpers must see it.
+    func testContainsSubmitNewline_crlfGrapheme() {
+        let s = "rm -rf /\r\n"
+        XCTAssertFalse(s.contains("\r"), "the CRLF grapheme is not the lone CR Character")
+        XCTAssertFalse(s.contains("\n"), "the CRLF grapheme is not the lone LF Character")
+        XCTAssertTrue(OrchestratorDispatcher.containsSubmitNewline(s),
+                      "the scalar test must find the CR/LF inside the CRLF grapheme")
+        XCTAssertEqual(OrchestratorDispatcher.trimTrailingSubmit(s), "rm -rf /")
+        XCTAssertEqual(OrchestratorDispatcher.residualAfterLastSubmit(s), "",
+                       "a trailing CRLF submits everything; nothing stays at the prompt")
+        XCTAssertEqual(
+            OrchestratorDispatcher.residualAfterLastSubmit("safe\r\nrm -rf /"), "rm -rf /")
+        XCTAssertEqual(
+            OrchestratorDispatcher.submittedLine(
+                priorBuffer: "", decoded: "rm -rf /\r\n", appendNewline: false),
+            "rm -rf /")
+    }
+
+    /// The end-to-end exploit: `send_text("rm -rf /\r\n", appendNewline: false)`.
+    /// Before the fix, the CRLF grapheme was invisible to `submits`, so the route
+    /// was accumulateOnly and the classifier was never invoked. Now the CRLF
+    /// counts as a submit and the whole line is classified.
+    func testPlan_crlfPayload_submitsAndClassifies() {
+        let p = OrchestratorDispatcher.planTypedGate(
+            priorBuffer: "", decoded: "rm -rf /\r\n", appendNewline: false,
+            screenAware: false, full: nil, upToCursor: nil)
+        XCTAssertEqual(p.route, .classifyLine("rm -rf /"),
+                       "a CRLF-terminated line must be classified, not silently accumulated")
+    }
+
+    /// The split variant: `safe\nrm -rf /\r\n` must reach classification as the
+    /// whole multi-line body (not just the benign `safe` prefix).
+    func testPlan_crlfSplitPayload_classifiesWholeLine() {
+        let p = OrchestratorDispatcher.planTypedGate(
+            priorBuffer: "", decoded: "safe\nrm -rf /\r\n", appendNewline: false,
+            screenAware: false, full: nil, upToCursor: nil)
+        XCTAssertEqual(p.route, .classifyLine("safe\nrm -rf /"),
+                       "the dangerous second command must be part of the classified line")
+    }
+
+    // MARK: - Kill + trailing disturbing bytes must not launder (finding 2)
+
+    /// A kill byte followed by disturbing bytes in the SAME send: the post-kill
+    /// text (DELs edit it non-linearly) must NOT be trusted as a clean accumulator
+    /// reset. Storing it verbatim would let the next submit classify a stale,
+    /// mis-tokenized line whose DELs turn `rm -rf /` into a benign subpath and
+    /// bypass the catastrophic tripwire. It must drop the text and stay
+    /// contaminated so the next submit is judged against the screen.
+    func testPlan_ctrlCThenDelBytes_staysContaminatedNotLaundered() {
+        let payload = "\u{03}rm -rf /home/user/proj/build" + String(repeating: "\u{7F}", count: 20)
+        let p = OrchestratorDispatcher.planTypedGate(
+            priorBuffer: "", decoded: payload, appendNewline: false,
+            screenAware: false, full: nil, upToCursor: nil, contaminated: false)
+        XCTAssertEqual(p.route, .screenAware)
+        XCTAssertNil(p.newBuffer, "the disturbing post-kill text must not be stored as the whole line")
+        XCTAssertTrue(p.contaminated, "post-kill disturbance must force a screen-aware next submit")
+    }
+
+    /// Ctrl-U variant on a non-contaminated session with trailing DELs: same
+    /// laundering avoided.
+    func testPlan_ctrlUThenDelBytes_staysContaminated() {
+        let payload = "\u{15}rm -rf /x" + String(repeating: "\u{7F}", count: 5)
+        let p = OrchestratorDispatcher.planTypedGate(
+            priorBuffer: "junk", decoded: payload, appendNewline: false,
+            screenAware: false, full: nil, upToCursor: nil, contaminated: false)
+        XCTAssertEqual(p.route, .screenAware)
+        XCTAssertNil(p.newBuffer)
+        XCTAssertTrue(p.contaminated)
+    }
+
+    /// Guard rail: a kill with CLEAN post-kill text (no disturbing bytes) still
+    /// resets the accumulator and clears contamination, unchanged by the fix.
+    func testPlan_ctrlCThenCleanText_stillResets() {
+        let p = OrchestratorDispatcher.planTypedGate(
+            priorBuffer: "old", decoded: "\u{03}ls -la", appendNewline: false,
+            screenAware: false, full: nil, upToCursor: nil, contaminated: true)
+        XCTAssertEqual(p.newBuffer, "ls -la", "clean post-kill text still resets the accumulator")
+        XCTAssertFalse(p.contaminated)
+    }
+
     /// A clean submit (no residual) DOES clear contamination and the accumulator.
     func testPlan_contaminatedCleanSubmit_clears() {
         let p = OrchestratorDispatcher.planTypedGate(

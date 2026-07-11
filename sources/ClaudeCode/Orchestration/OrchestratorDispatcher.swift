@@ -1941,7 +1941,7 @@ final class OrchestratorDispatcher {
         // set). The race resolution is factored into resolveConcurrentSend so it
         // can be unit-tested without a live session. (The accumulate path has no
         // await, so it never trips this.)
-        let sendSubmits = appendNewline || text.contains("\r") || text.contains("\n")
+        let sendSubmits = appendNewline || Self.containsSubmitNewline(text)
         switch Self.resolveConcurrentSend(
             priorBuffer: priorBuffer,
             observedBuffer: typedInput.pending[guid] ?? "",

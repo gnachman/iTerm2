@@ -130,6 +130,15 @@ final class TerminalHardRules {
             if c == "\"" { inDouble.toggle(); continue }
             if c == "'" && !inDouble { inSingle = true; continue }
             guard c == "!" else { continue }          // `!` expands even inside ""
+            // `$!` (last-background-PID special parameter) and `${!ref}` (indirect
+            // expansion) are parameter expansions, NOT history expansion -- bash/
+            // zsh do not resurrect a command there. Skip a `!` that directly
+            // follows `$`, or one inside `${...}` (a `{` that itself follows `$`).
+            // A bare `{!` (brace with no `$`) still flags, so this is precise, not
+            // a blanket exemption.
+            let prev: Character? = i > 0 ? chars[i - 1] : nil
+            if prev == "$" { continue }
+            if prev == "{", i >= 2, chars[i - 2] == "$" { continue }
             let next: Character? = i + 1 < chars.count ? chars[i + 1] : nil
             switch next {
             case nil, " ", "\t", "=", "(", "\n":
@@ -236,8 +245,10 @@ final class TerminalHardRules {
                 return .needsManualApproval(reason: Self.historyExpansionReason)
             }
             let words = Self.tokenizeWords(segment.text)
-            // Redirect (`>`/`>>`) to a raw block device, on any command.
-            if Self.redirectsToBlockDevice(words) {
+            // Redirect (`>`/`>>`) to a raw block device, on any command. Scans the
+            // raw segment text (quote-aware) so a `>` inside a quoted string is
+            // not mistaken for a real redirect operator.
+            if Self.redirectsToBlockDevice(segment.text) {
                 return .needsManualApproval(reason: "the command writes directly to a device")
             }
             guard let (cmd, args) = Self.effectiveCommand(words) else { continue }
@@ -328,29 +339,47 @@ final class TerminalHardRules {
         return nil
     }
 
-    // True if any word writes to a raw block device via redirect (`> /dev/sda`,
-    // `>/dev/sda`, `2>/dev/sda`, or the space-free `cat x>/dev/sda`), on any
-    // command. Complements the dd `of=` check.
-    private static func redirectsToBlockDevice(_ words: [String]) -> Bool {
-        for (i, w) in words.enumerated() {
-            // The shell treats `>`/`>>` (optionally preceded by an fd number or
-            // `&`) as a word boundary even with NO surrounding spaces, but our
-            // whitespace tokenizer does not split there. Scan the WHOLE word for a
-            // redirect operator, not just its start, so `cat /dev/zero>/dev/sda`
-            // and `x>>/dev/sda` are caught like the spaced `> /dev/sda`. The
-            // pattern always contains a `>`, so a match is never zero-length.
-            var searchStart = w.startIndex
-            while let r = w.range(of: #"&?[0-9]*>>?"#, options: .regularExpression,
-                                  range: searchStart..<w.endIndex) {
-                let target = String(w[r.upperBound...])
-                if !target.isEmpty {
-                    if isBlockDevicePath(target) { return true }   // "…>/dev/sda"
-                } else if i + 1 < words.count, isBlockDevicePath(words[i + 1]) {
-                    return true                                     // "…>" "/dev/sda"
+    // True if the segment writes to a raw block device via an UNQUOTED redirect
+    // (`> /dev/sda`, `>/dev/sda`, `2>/dev/sda`, `&>/dev/sda`, `>>/dev/sda`, or
+    // the space-free `cat x>/dev/sda`), on any command. Complements the dd `of=`
+    // check.
+    //
+    // Scans the RAW segment text tracking quote state rather than the
+    // quote-stripped words: tokenizeWords discards quoting, so a literal `>`
+    // inside a string (`echo "run cat foo >/dev/sda"`, `git commit -m "note >…"`)
+    // is indistinguishable from a real redirect operator once the words are
+    // built, producing a spurious approval prompt. A `>` inside single OR double
+    // quotes is a literal here and is skipped; only an unquoted operator counts.
+    private static func redirectsToBlockDevice(_ text: String) -> Bool {
+        let chars = Array(text)
+        var inSingle = false, inDouble = false, escaped = false
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            if inSingle { if c == "'" { inSingle = false }; i += 1; continue }
+            if escaped { escaped = false; i += 1; continue }
+            if c == "\\" { escaped = true; i += 1; continue }
+            if c == "\"" { inDouble.toggle(); i += 1; continue }
+            if inDouble { i += 1; continue }        // a `>` inside "" is literal
+            if c == "'" { inSingle = true; i += 1; continue }
+            guard c == ">" else { i += 1; continue }
+            // Unquoted redirect operator (any leading fd number or `&` was already
+            // passed over and is irrelevant). Consume the second `>` of `>>`, skip
+            // spaces, then read the target up to the next unquoted whitespace or
+            // operator, dropping quote characters around a quoted target.
+            var j = i + 1
+            if j < chars.count, chars[j] == ">" { j += 1 }
+            while j < chars.count, chars[j] == " " || chars[j] == "\t" { j += 1 }
+            var target = ""
+            reading: while j < chars.count {
+                switch chars[j] {
+                case " ", "\t", ">", "<", "|", ";", "&", "\n": break reading
+                case "\"", "'": j += 1                 // quoted target: drop quote
+                default: target.append(chars[j]); j += 1
                 }
-                if r.upperBound >= w.endIndex { break }
-                searchStart = r.upperBound
             }
+            if isBlockDevicePath(target) { return true }
+            i = j
         }
         return false
     }

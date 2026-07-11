@@ -48,6 +48,7 @@ final class OrchestratorClient {
 
     private let broker: ChatBroker
     private var subscription: ChatBroker.Subscription?
+    private var chatWasDeletedObserver: NSObjectProtocol?
     private var sessionWillTerminateObserver: NSObjectProtocol?
     private var dispatchers: [String: OrchestratorDispatcher] = [:]
     // One per-session typed-input accumulator shared by every dispatcher this
@@ -75,7 +76,13 @@ final class OrchestratorClient {
         // this, the dispatcher's NotificationCenter observers and
         // broker subscription leak for the rest of the process
         // lifetime since this client holds the only strong reference.
-        NotificationCenter.default.addObserver(
+        // The token is retained and removed in deinit: block-based
+        // observers are NOT removed by removeObserver(self) (the observer
+        // is an opaque token, not self), so a deinit-able client (e.g.
+        // makeForTesting) would otherwise leak this block plus its captured
+        // closure onto the process-global center. Mirrors
+        // sessionWillTerminateObserver below.
+        self.chatWasDeletedObserver = NotificationCenter.default.addObserver(
             forName: ChatListModel.chatWasDeleted,
             object: nil,
             queue: nil) { [weak self] notification in
@@ -118,6 +125,9 @@ final class OrchestratorClient {
 
     deinit {
         subscription?.unsubscribe()
+        if let chatWasDeletedObserver {
+            NotificationCenter.default.removeObserver(chatWasDeletedObserver)
+        }
         if let sessionWillTerminateObserver {
             NotificationCenter.default.removeObserver(sessionWillTerminateObserver)
         }

@@ -183,13 +183,6 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                                newState: state)
     }
 
-    // Delay between pasting the clippings into the main session and sending
-    // the submit Return. Pasting alone leaves the text in the coding agent's
-    // input box; the trailing Return actually submits it. The beat lets the
-    // paste (which may be bracketed and land asynchronously) settle before
-    // the Return, so the submit doesn't race ahead of the pasted content.
-    private static let autoSendSubmitDelay: TimeInterval = 0.2
-
     // When a code-review peer with the auto-send toggle on transitions from
     // working to idle, paste its clippings into the workgroup's main session
     // and submit them with a Return. Gated to the working -> idle edge (not
@@ -201,15 +194,23 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // main session.
     // Pure decision behind the auto-send: the text to deliver to the main
     // session on a state change, or nil to do nothing. Split out from the
-    // wiring below so the gating (edge, mode, toggle, non-empty) can be unit-
-    // tested without a live port, sessions, or the paste path.
+    // wiring below so the gating (edge, mode, toggle, main-session state,
+    // non-empty) can be unit-tested without a live port, sessions, or the
+    // paste path.
     static func clippingsToAutoSend(previousState: SessionState?,
                                     newState: SessionState,
                                     mode: iTermWorkgroupSessionMode,
                                     toggleOn: Bool,
+                                    mainSessionState: SessionState,
                                     clippings: [PTYSessionClipping]) -> String? {
         guard previousState == .working, newState == .idle else { return nil }
         guard mode == .codeReview, toggleOn else { return nil }
+        // Don't inject while the main session's agent is mid-turn: an autonomous
+        // paste + submit would land on top of whatever the agent (or the user) is
+        // doing and clobber in-progress input. Only .working defers -- idle /
+        // waiting / unknown proceed. Dropping this run is safer than interrupting:
+        // a review can be re-requested, but a clobbered turn cannot be undone.
+        guard mainSessionState != .working else { return nil }
         let text = clippings.joinedForSending()
         return text.isEmpty ? nil : text
     }
@@ -220,25 +221,33 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                                         newState: SessionState) {
         let previous = lastPeerState[identifier]
         lastPeerState[identifier] = newState
+        guard let mainSession = workgroupInstance?.mainSession,
+              mainSession !== session else { return }
         guard let text = Self.clippingsToAutoSend(
                 previousState: previous,
                 newState: newState,
                 mode: session.workgroupSessionMode,
                 toggleOn: session.autoSendClippingsWhenIdle,
+                mainSessionState: WorkgroupIntrospection.state(for: mainSession),
                 clippings: session.clippings) else {
             return
         }
-        guard let mainSession = workgroupInstance?.mainSession,
-              mainSession !== session else { return }
         RLog("iTermWorkgroupPeerPort: auto-sending \(session.clippings.count) clipping(s) from code-review peer \(session.guid) to main session \(mainSession.guid)")
-        mainSession.paste(text, flags: [])
-        // Send the submit Return after a beat so it lands after the paste,
-        // not interleaved with it. \r is the Enter key at the TTY (\n would
+        // Paste the content (bracketed, so the coding agent treats it as pasted
+        // input), then submit with a Return sent as its OWN paste with bracketing
+        // disabled. Paste events serialize through the paste helper's queue, so
+        // the \r is written only AFTER the last content chunk drains, regardless
+        // of payload size, and lands OUTSIDE the bracketed region so it actually
+        // submits. A fixed timer raced the chunked paste for large reviews
+        // (>~9 KB): the \r landed mid-stream, became a literal newline inside the
+        // bracket, and never submitted. \r is the Enter key at the TTY (\n would
         // leave the line unsubmitted).
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.autoSendSubmitDelay) {
-            [weak mainSession] in
-            mainSession?.writeTaskNoBroadcast("\r")
-        }
+        mainSession.paste(text, flags: [])
+        mainSession.paste("\r", flags: .bracketingDisabled)
+        // Archive the sent clippings (snapshot-and-clear the shared live list) so
+        // the next review run delivers only its NEW findings, not the whole
+        // accumulated list re-sent from the top.
+        session.archiveClippings()
     }
 
     // Reflect a peer's busy state on every switcher in the group: each
