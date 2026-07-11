@@ -414,6 +414,31 @@ final class iTermWorkgroupInstance: NSObject {
         })
     }
 
+    // Configs of every code-review-mode session in the workgroup.
+    private var codeReviewSessionConfigs: [iTermWorkgroupSessionConfig] {
+        return workgroup.sessions.filter { $0.mode == .codeReview }
+    }
+
+    // Run a code review on the workgroup's sole code-review session, if there
+    // is exactly one. Called by the main session's auto-request-review toggle
+    // when the main session goes idle. Returns true if a review was started.
+    // No-op (returns false) when there isn't exactly one review session or it
+    // isn't live, which mirrors the toggle's disabled state.
+    @discardableResult
+    func requestCodeReviewFromSoleReviewSession() -> Bool {
+        let reviews = codeReviewSessionConfigs
+        guard reviews.count == 1,
+              let session = liveSession(forConfigID: reviews[0].uniqueIdentifier) else {
+            return false
+        }
+        guard session.autoRequestCodeReview() else { return false }
+        // Bring the code-review session forward so the user sees the review
+        // start. reveal() swaps this peer into the tab and buries the main
+        // session that was showing.
+        session.reveal()
+        return true
+    }
+
     // Tear down peers, terminate non-peer children, and release
     // references. Leaves the main session in a clean state so a later
     // enter() can install a fresh port — PTYSession.set(peerPort:)
@@ -605,13 +630,21 @@ final class iTermWorkgroupInstance: NSObject {
             : nil
         poller?.includeDiffStats = true
 
+        // Workgroup-wide code-review session count, used to enable the main
+        // session's auto-request-review toggle only when there's exactly one
+        // unambiguous review target.
+        let codeReviewSessionCount = workgroup.sessions.filter {
+            $0.mode == .codeReview
+        }.count
+
         let port = iTermWorkgroupPeerPort(
             peers: peers,
             peerConfigs: peerConfigs,
             activeSessionIdentifier: activeSessionIdentifier,
             leaderIdentifier: root.uniqueIdentifier,
             leaderScope: mainSession.genericScope,
-            gitPoller: poller)
+            gitPoller: poller,
+            codeReviewSessionCount: codeReviewSessionCount)
 
         mainSession.peerPort = port
 

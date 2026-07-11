@@ -251,7 +251,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 
 - (NSEvent *)eventByRemappingEvent:(NSEvent *)event {
     if (![[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
-        RLog(@"Not remapping modifiers");
+        DLog(@"Not remapping modifiers");
         return event;
     }
     CGEventRef cgEvent;
@@ -908,7 +908,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         case NSEventTypeOtherMouseUp:
         case NSEventTypeOtherMouseDown:
         case NSEventTypeOtherMouseDragged:
-            RLog(@"begin mouse event");
+            DLog(@"begin mouse event");
             event = [self eventByRemappingEvent:event];
             event.it_functionModifierPressed = _functionPressed;
             break;

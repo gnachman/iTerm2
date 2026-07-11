@@ -850,7 +850,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     _shortcutAccessoryViewController.titlebarStyle = [iTermWindowShortcutLabelTitlebarAccessoryViewController titlebarStyleForWindowType:self.windowType];
 
     RLog(@"Creating window with profile:%@", profile);
-    RLog(@"%@\n%@", self, [NSThread callStackSymbols]);
+    DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
     if ([iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_WINDOW_TITLE inProfile:profile]) {
         NSString *override = [iTermProfilePreferences stringForKey:KEY_CUSTOM_WINDOW_TITLE inProfile:profile];
         [self.scope setValue:override.length ? override : @" " forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
@@ -1170,7 +1170,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)notifyTmuxOfWindowResize {
-    RLog(@"notifyTmuxOfWindowResize from:\n%@", [NSThread callStackSymbols]);
+    DLog(@"notifyTmuxOfWindowResize from:\n%@", [NSThread callStackSymbols]);
     NSArray *tmuxControllers = [self uniqueTmuxControllers];
     if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
         for (TmuxController *controller in tmuxControllers) {
@@ -2754,7 +2754,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setWindowTitle:(NSString *)title subtitle:(NSString *)subtitle {
-    RLog(@"setWindowTitle:%@ for %@", title, self);
+    DLog(@"setWindowTitle:%@ for %@", title, self);
     if (_deallocing) {
         // This uses -weakSelf and can be called during dealloc. Doing so is a crash.
         RLog(@"deallocing");
@@ -2801,7 +2801,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [title isEqualToString:self.window.title]) {
         // Title is already up to date.
         [_contentView setSubtitle:subtitle];
-        RLog(@"Title has not changed");
+        DLog(@"Title has not changed");
         return;
     }
 
@@ -2826,16 +2826,16 @@ ITERM_WEAKLY_REFERENCEABLE
     // terminal goes nuts and sends lots of title-change sequences.
     BOOL hadTimer = (self.desiredTitle != nil);
     self.desiredTitle = title;
-    RLog(@"After adjusting title, setWindowTitle:%@", title);
+    DLog(@"After adjusting title, setWindowTitle:%@", title);
     if (!hadTimer) {
         if (!_windowWasJustCreated && ![self.ptyWindow titleChangedRecently]) {
             // Unless the window was just created, set the title immediately. Issue 5876.
-            RLog(@"set title immediately to %@", self.desiredTitle);
+            DLog(@"set title immediately to %@", self.desiredTitle);
             self.window.title = self.desiredTitle;
             [self updateWindowMenu];
         }
         __weak __typeof(self) weakSelf = self;
-        RLog(@"schedule timer to set window title");
+        DLog(@"schedule timer to set window title");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermWindowTitleChangeMinimumInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!(weakSelf.window.title == weakSelf.desiredTitle || [weakSelf.window.title isEqualToString:weakSelf.desiredTitle])) {
                 RLog(@"timer fired. Set title to %@", weakSelf.desiredTitle);
@@ -4201,7 +4201,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     result[TERMINAL_ARRANGEMENT_USE_TRANSPARENCY] = @(useTransparency);
 
     RLog(@"While creating arrangement for %@ save frame of %@", self, NSStringFromRect(rect));
-    RLog(@"%@", [NSThread callStackSymbols]);
+    DLog(@"%@", [NSThread callStackSymbols]);
     result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(shouldShowToolbelt);
     if (proportions) {
         result[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS] = proportions;
@@ -6075,7 +6075,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)updateWindowMenu {
     if ([iTermAdvancedSettingsModel includeShortcutInWindowsMenu]) {
-        RLog(@"Include shortcut");
+        DLog(@"Include shortcut");
         [NSApp changeWindowsItem:self.window title:[self titleForWindowMenu] filename:NO];
         return;
     }
@@ -8057,7 +8057,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return result;
     }
     const BOOL result = self.tabBarShouldBeVisible;
-    RLog(@"tabBarProvidesProgressVisibility: normal path -> tabBarShouldBeVisible=%d", result);
+    DLog(@"tabBarProvidesProgressVisibility: normal path -> tabBarShouldBeVisible=%d", result);
     return result;
 }
 
@@ -8071,14 +8071,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     const BOOL hasSplitPanes = (tab.sessions.count > 1);
     const BOOL isInOverflow = [_contentView.tabBarControl isInOverflowMenuForTabWithIdentifier:tab];
     const BOOL result = (hasSingleTab || hasSplitPanes || isInOverflow || !tabBarVisible);
-    RLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
+    DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
          hasSingleTab, hasSplitPanes, isInOverflow, tabBarVisible, result);
     return result;
 }
 
 - (void)updateSessionProgressBarVisibility {
     const BOOL tabBarVisible = [self tabBarProvidesProgressVisibility];
-    RLog(@"updateSessionProgressBarVisibility: tabBarVisible=%d sessions=%d", tabBarVisible, (int)self.allSessions.count);
+    DLog(@"updateSessionProgressBarVisibility: tabBarVisible=%d sessions=%d", tabBarVisible, (int)self.allSessions.count);
     for (PTYSession *session in self.allSessions) {
         session.view.showInlineProgressBar = [self shouldShowInlineProgressBarForSession:session
                                                                            tabBarVisible:tabBarVisible];
@@ -8967,7 +8967,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (BOOL)windowIsMiniaturized {
     const BOOL result = [[self window] isMiniaturized];
-    RLog(@"windowIsMiniaturized returning %@", @(result));
+    DLog(@"windowIsMiniaturized returning %@", @(result));
     return result;
 }
 

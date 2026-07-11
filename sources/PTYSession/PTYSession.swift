@@ -81,6 +81,13 @@ class PTYSessionSwiftState: NSObject {
     // defaults off: re-entering a workgroup starts with the toggle off.
     var autoSendClippingsWhenIdle = false
 
+    // For the main (root) session, whether the "auto-request review when
+    // idle" toolbar toggle is on. When on, the workgroup peer port asks
+    // the sole code-review session to run a review each time the main
+    // session transitions from working to idle. Runtime-only and defaults
+    // off, same as autoSendClippingsWhenIdle.
+    var autoRequestReviewWhenIdle = false
+
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 
     // Canonical storage for this session's clippings. Sessions in a peer group
@@ -2126,6 +2133,14 @@ extension PTYSession {
     @objc var autoSendClippingsWhenIdle: Bool {
         get { swiftState.autoSendClippingsWhenIdle }
         set { swiftState.autoSendClippingsWhenIdle = newValue }
+    }
+
+    // Runtime toggle backing the main session's "auto-request review when
+    // idle" toolbar item. Stored on the main session; controls its own
+    // idle-driven behavior, not shared group state.
+    @objc var autoRequestReviewWhenIdle: Bool {
+        get { swiftState.autoRequestReviewWhenIdle }
+        set { swiftState.autoRequestReviewWhenIdle = newValue }
     }
 
     // Bypasses peer-port delegation. Used by PTYSessionPeerPort to talk to its

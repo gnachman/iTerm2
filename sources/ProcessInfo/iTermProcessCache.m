@@ -400,7 +400,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                 if (rootStartTime) {
                     _ttyRdevByPidWQ[root] = @[rdevNumber, rootStartTime];
                 }
-                RLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
+                DLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
             } else {
                 // Don't keep a stale entry; re-derive next update in case the tty
                 // becomes readable later.
