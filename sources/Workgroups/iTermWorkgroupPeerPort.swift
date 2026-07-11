@@ -322,10 +322,13 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         // stops feeding the main session. Archive on the leader for the same
         // stale-peer-port reason as the read above.
         mainSession.archiveClippings()
-        // Bring the main session forward so the user sees the review results
-        // land. reveal() swaps this peer into the tab and buries the review
-        // peer that was showing.
-        mainSession.reveal()
+        // Switch the peer switcher to the main session so focus follows the
+        // active side within the shared pane. This only swaps the peer view in
+        // (visible when that tab is already frontmost); it deliberately does
+        // NOT order the window front, activate the app, or change the selected
+        // tab, so the auto-send doesn't yank the user's window/tab focus away
+        // from whatever they're doing.
+        mainSession.revealAsPeerWithoutActivatingWindow()
     }
 
     // Reflect a peer's busy state on every switcher in the group: each

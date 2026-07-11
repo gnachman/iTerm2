@@ -432,10 +432,13 @@ final class iTermWorkgroupInstance: NSObject {
             return false
         }
         guard session.autoRequestCodeReview() else { return false }
-        // Bring the code-review session forward so the user sees the review
-        // start. reveal() swaps this peer into the tab and buries the main
-        // session that was showing.
-        session.reveal()
+        // Switch the peer switcher to the code-review session so focus follows
+        // the active side within the shared pane. This only swaps the peer view
+        // in (visible when that tab is already frontmost); it deliberately does
+        // NOT order the window front, activate the app, or change the selected
+        // tab, so the auto-request doesn't yank the user's window/tab focus away
+        // from whatever they're doing.
+        session.revealAsPeerWithoutActivatingWindow()
         return true
     }
 

@@ -1067,6 +1067,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
+// Switch the workgroup peer switcher to this session within its shared pane,
+// if needed, without ordering the window front, activating the app, or
+// changing the selected tab. See the implementation for details.
+- (void)revealAsPeerWithoutActivatingWindow;
 - (void)revealSelection:(iTermSelection *)selection;
 - (void)highlightMarkOrNote:(nullable id<IntervalTreeImmutableObject>)obj;
 

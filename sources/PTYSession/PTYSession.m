@@ -15448,6 +15448,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self.textview refuseFirstResponderAtCurrentMouseLocation];
 }
 
+// Switch the workgroup peer switcher to show this session in the pane it
+// shares with its siblings, if it isn't already the active peer. This is the
+// peer-swap portion of -reveal and nothing else: it does NOT order the window
+// front, activate the app, disinter a buried session, or change the selected
+// tab. The swapped-in view becomes visible only if its tab is already the
+// foreground one; otherwise the switch is silent until the user visits that
+// tab. Used by the workgroup auto-request-review / auto-send-clippings paths,
+// which want the switcher to follow the active side within the shared pane
+// without yanking the user's window, tab, or app focus around.
+- (void)revealAsPeerWithoutActivatingWindow {
+    PTYSessionPeerPort *port = self.peerPort;
+    NSString *portIdentifier = [port identifierForSession:self];
+    if (port && portIdentifier && port.activeSession != self) {
+        RLog(@"Switch peer switcher to %@ without activating window/tab/app", portIdentifier);
+        [port activateIdentifier:portIdentifier];
+    }
+}
+
 - (void)reveal {
     RLog(@"Reveal session %@", self);
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
