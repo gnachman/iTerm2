@@ -27,14 +27,28 @@ let package = Package(
                 .linkedFramework("Foundation")
             ]
         ),
-        .executableTarget(
-            name: "it2",
+        .target(
+            name: "it2core",
             dependencies: [
                 "ProtobufRuntime",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Yams", package: "Yams")
             ],
+            path: "Sources/it2core"
+        ),
+        .executableTarget(
+            name: "it2",
+            dependencies: [
+                "it2core"
+            ],
             path: "Sources/it2"
+        ),
+        .testTarget(
+            name: "it2coreTests",
+            dependencies: [
+                "it2core"
+            ],
+            path: "Tests/it2coreTests"
         )
     ]
 )
