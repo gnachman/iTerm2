@@ -1,5 +1,12 @@
 iTerm2 Buddy (Companion App) Release Notes
 
+Bug Fixes:
+- Fast-scrolling a session's scrollback no longer
+  floods the relay with tile requests, which
+  could trip its rate limit and silently drop
+  the connection to the Mac while the phone still
+  looked connected. Requests are now paced.
+
 New Features:
 - You can now mute a chat so it stops sending
   push notifications to your phone. Swipe right
