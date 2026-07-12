@@ -79,8 +79,7 @@ extension Monitor {
 
                 // Loop receiving notifications.
                 while true {
-                    let data = try client.receiveRaw()
-                    let response = try ITMServerOriginatedMessage.parse(from: data)
+                    let response = try client.receiveMessage()
 
                     if response.submessageOneOfCase == .notification,
                        let notif = response.notification,
@@ -213,8 +212,7 @@ extension Monitor {
             installSigintHandler()
 
             while true {
-                let data = try client.receiveRaw()
-                let response = try ITMServerOriginatedMessage.parse(from: data)
+                let response = try client.receiveMessage()
 
                 if response.submessageOneOfCase == .notification,
                    let notif = response.notification,
@@ -307,8 +305,7 @@ extension Monitor {
             installSigintHandler()
 
             while true {
-                let data = try client.receiveRaw()
-                let response = try ITMServerOriginatedMessage.parse(from: data)
+                let response = try client.receiveMessage()
 
                 if response.submessageOneOfCase == .notification,
                    let notif = response.notification,
@@ -382,8 +379,7 @@ extension Monitor {
             installSigintHandler()
 
             while true {
-                let data = try client.receiveRaw()
-                let response = try ITMServerOriginatedMessage.parse(from: data)
+                let response = try client.receiveMessage()
 
                 if response.submessageOneOfCase == .notification,
                    let notif = response.notification,

@@ -2,28 +2,22 @@ import Foundation
 import ProtobufRuntime
 
 /// High-level client for the iTerm2 API.
-class APIClient {
-    private let ws: WebSocketClient
+///
+/// Transport-agnostic: it composes an `APIChannel` and layers on request-id
+/// assignment, response matching, and the higher-level helpers used across
+/// commands. The transport (socket vs. in-process) varies via the injected
+/// channel, not via subclassing.
+final class APIClient {
+    private let channel: APIChannel
     private var requestId: Int64 = 0
 
-    private init(ws: WebSocketClient) {
-        self.ws = ws
+    init(channel: APIChannel) {
+        self.channel = channel
     }
 
+    /// Connect to a running iTerm2 over its local unix domain socket.
     static func connect() throws -> APIClient {
-        let socket = try SocketConnection.connect()
-        let ws = WebSocketClient(socket: socket)
-
-        let (cookie, key) = CookieAuth.getCredentials()
-
-        do {
-            try ws.handshake(cookie: cookie, key: key)
-        } catch {
-            socket.disconnect()
-            throw error
-        }
-
-        return APIClient(ws: ws)
+        return APIClient(channel: try SocketChannel.connect())
     }
 
     func nextId() -> Int64 {
@@ -36,16 +30,11 @@ class APIClient {
             request.id_p = nextId()
         }
 
-        guard let data = request.data() else {
-            throw IT2Error.apiError("Failed to serialize request")
-        }
-
-        try ws.sendBinary(data)
+        try channel.send(request)
 
         let expectedId = request.id_p
         while true {
-            let responseData = try ws.receiveBinary()
-            let response = try ITMServerOriginatedMessage.parse(from: responseData)
+            let response = try channel.receiveMessage()
 
             if response.submessageOneOfCase == .error {
                 throw IT2Error.apiError("Server error: \(response.error ?? "unknown")")
@@ -95,8 +84,10 @@ class APIClient {
         throw IT2Error.targetNotFound("No active session found")
     }
 
-    func receiveRaw() throws -> Data {
-        return try ws.receiveBinary()
+    /// Block until the next server message is available. Used by streaming
+    /// (monitor) commands that receive an unbounded sequence of notifications.
+    func receiveMessage() throws -> ITMServerOriginatedMessage {
+        return try channel.receiveMessage()
     }
 
     static func normalizeSessionId(_ id: String) -> String {
@@ -113,6 +104,6 @@ class APIClient {
     }
 
     func disconnect() {
-        ws.disconnect()
+        channel.disconnect()
     }
 }

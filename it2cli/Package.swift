@@ -46,7 +46,8 @@ let package = Package(
         .testTarget(
             name: "it2coreTests",
             dependencies: [
-                "it2core"
+                "it2core",
+                "ProtobufRuntime"
             ],
             path: "Tests/it2coreTests"
         )
