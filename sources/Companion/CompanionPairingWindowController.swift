@@ -236,6 +236,13 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             } else {
                 relayStatusLabel.stringValue = "Not connected to relay"
             }
+        case .quotaExceeded(let retryAt):
+            relayStatusLabel.isHidden = false
+            relayStatusLabel.textColor = .systemOrange
+            let wait = Self.remaining(until: retryAt)
+            relayStatusLabel.stringValue = wait.isEmpty
+                ? "Daily relay data limit reached (reconnecting…)"
+                : "Daily relay data limit reached (retry in \(wait))"
         }
     }
 
@@ -243,6 +250,17 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     /// "1h 04m". Whole seconds, since the label ticks once a second.
     private static func elapsed(_ since: Date) -> String {
         let total = max(0, Int(Date().timeIntervalSince(since)))
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        if h > 0 { return "\(h)h \(String(format: "%02d", m))m" }
+        if m > 0 { return "\(m)m \(String(format: "%02d", s))s" }
+        return "\(s)s"
+    }
+
+    /// Compact countdown to a future date ("29m 58s"), same format as `elapsed`.
+    /// Empty once the deadline has passed, so the caller can show "reconnecting…".
+    private static func remaining(until date: Date) -> String {
+        let total = Int(date.timeIntervalSinceNow.rounded())
+        guard total > 0 else { return "" }
         let h = total / 3600, m = (total % 3600) / 60, s = total % 60
         if h > 0 { return "\(h)h \(String(format: "%02d", m))m" }
         if m > 0 { return "\(m)m \(String(format: "%02d", s))s" }

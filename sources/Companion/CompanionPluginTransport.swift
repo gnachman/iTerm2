@@ -85,6 +85,15 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
             if reason.localizedCaseInsensitiveContains("displaced") {
                 throw RelayDisplacedError()
             }
+            // "daily quota exceeded" (WS 1008): the relay tore the room down for the
+            // day. NOT transient churn, so surface it distinctly and let the accept
+            // loop back off long instead of re-parking on the routine 5s timer only
+            // to be closed again. Match the reason text, not the bare code: 1008 is
+            // also "frame rate exceeded" (a transient per-second limiter) and "bad
+            // hello".
+            if reason.localizedCaseInsensitiveContains("daily quota") {
+                throw TransportError.quotaExceeded
+            }
             throw TransportError.closed
         }
     }

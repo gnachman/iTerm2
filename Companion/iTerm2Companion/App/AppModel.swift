@@ -382,6 +382,16 @@ final class AppModel {
     /// as a banner; the user keeps their place in the UI).
     var isReconnecting = false
 
+    /// Non-nil while the relay is refusing us for hitting its daily data limit
+    /// (WS 1008 "daily quota exceeded"); holds the time we will next retry.
+    /// Reconnecting sooner just trips the same limit, so the reconnect loop waits
+    /// this out instead of the routine ~2s retry, and the UI shows a distinct
+    /// "daily limit reached" banner (with a Reconnect now override) rather than
+    /// the plain reconnecting banner. Cleared once a connection succeeds.
+    var quotaBackoffUntil: Date?
+    /// Set by the banner's "Reconnect now" button to end the quota backoff early.
+    private var manualQuotaRetry = false
+
     /// True when the open conversation's chat was deleted on the Mac. The
     /// conversation stays on screen (yanking it away would be disruptive)
     /// with composing disabled; it is gone from the list once the user
@@ -845,6 +855,7 @@ final class AppModel {
         wipeAllKeyMaterial()
         activePairingCode = nil
         isReconnecting = false
+        quotaBackoffUntil = nil
         pairingStartedAt = nil
         clearPairedMacData()
     }
@@ -1055,6 +1066,11 @@ final class AppModel {
     /// cadence until one lands on a ready mac. Kept short so a mac that just
     /// finished relaunching is picked up quickly.
     private static let reconnectRetryDelayNanos: UInt64 = 2_000_000_000
+    /// How long to back off after the relay reports its daily data limit is
+    /// exhausted. Fixed (the relay reports no reset time), long enough not to
+    /// hammer the limit, short enough to recover within a day once the relay's
+    /// 24h window rolls over. The user can override it with "Reconnect now".
+    private static let quotaBackoffSeconds: TimeInterval = 30 * 60
 
     /// How long the phone waits for the user to type the SAS code on the Mac.
     /// Generous: a human is walking to a keyboard.
@@ -1154,9 +1170,9 @@ final class AppModel {
             Task { @MainActor in
                 self?.handle(event: event)
             }
-        }, onClose: { [weak self] in
+        }, onClose: { [weak self] error in
             Task { @MainActor in
-                self?.connectionLost()
+                self?.connectionLost(dueTo: error)
             }
         }, onMedia: { [weak self] frame in
             Task { @MainActor in
@@ -1467,8 +1483,10 @@ final class AppModel {
 
     /// The session's receive loop died: the mac quit, restarted, or the
     /// network dropped. Reconnect with the stored pairing, keeping the user's
-    /// place in the UI.
-    private func connectionLost() {
+    /// place in the UI. `error` is the terminating transport error when known, so
+    /// a relay daily-quota teardown enters the long backoff immediately rather
+    /// than after a first doomed attempt.
+    private func connectionLost(dueTo error: Error? = nil) {
         guard !isReconnecting else { return }
         companionLog("Connection lost")
         client = nil
@@ -1480,15 +1498,33 @@ final class AppModel {
             phase = .scanning
             return
         }
+        // A relay quota teardown is not transient: show the "daily limit reached"
+        // banner up front and make the loop wait out the backoff before its first
+        // attempt, instead of hammering the exhausted quota.
+        if (error as? TransportError) == .quotaExceeded {
+            companionLog("Connection lost: relay daily data limit reached")
+            quotaBackoffUntil = Date().addingTimeInterval(Self.quotaBackoffSeconds)
+            manualQuotaRetry = false
+        }
         isReconnecting = true
         reconnectTask = Task {
             var attempt = 0
             while true {
+                // Wait out a relay quota backoff (or a manual "Reconnect now")
+                // before attempting, so we don't re-trip an exhausted daily limit.
+                // quotaBackoffUntil stays set through the attempt (banner stays up);
+                // it is cleared only on success or a non-quota exit below.
+                if quotaBackoffUntil != nil {
+                    await waitOutQuotaBackoff()
+                    if Task.isCancelled { break }
+                }
                 attempt += 1
                 do {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
+                    // Reachable again: leave any quota state so the banner clears.
+                    quotaBackoffUntil = nil
                     // The Mac is reachable again: reopen the retry gate so the
                     // list-snippet and conversation re-scans below re-resolve any
                     // mention that failed while we were disconnected.
@@ -1582,6 +1618,20 @@ final class AppModel {
                 } catch is CancellationError {
                     // App-driven teardown; nothing to report.
                 } catch {
+                    // The relay hit its daily data limit: back off long (the loop
+                    // top waits it out) and show the limit banner instead of the
+                    // ~2s poll, which would only keep tripping the same limit.
+                    if (error as? TransportError) == .quotaExceeded {
+                        companionLog("Reconnect attempt \(attempt): relay daily data limit reached; backing off")
+                        quotaBackoffUntil = Date().addingTimeInterval(Self.quotaBackoffSeconds)
+                        manualQuotaRetry = false
+                        continue
+                    }
+                    // A non-quota failure means the relay is no longer quota-blocking
+                    // us (we reached admission, or it is a plain network error): drop
+                    // any lingering backoff so the banner reverts from the limit
+                    // message to the ordinary "reconnecting" pill.
+                    quotaBackoffUntil = nil
                     // Keep the user's place and keep trying; transient network
                     // trouble must not dump them on the pairing screen.
                     companionLog("Reconnect attempt \(attempt) failed: \(String(describing: error))")
@@ -1595,7 +1645,29 @@ final class AppModel {
                 break
             }
             isReconnecting = false
+            quotaBackoffUntil = nil
+            manualQuotaRetry = false
         }
+    }
+
+    /// Poll-wait out the relay quota backoff, returning when the deadline passes,
+    /// the user taps "Reconnect now", or the reconnect task is torn down. The 1s
+    /// tick keeps the banner countdown live and lets a manual retry engage
+    /// promptly; quotaBackoffUntil is left set so the banner stays up through the
+    /// following attempt (cleared only on success or a non-quota exit).
+    private func waitOutQuotaBackoff() async {
+        while let until = quotaBackoffUntil, until > Date(), !manualQuotaRetry, !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+    }
+
+    /// The quota banner's "Reconnect now" button: end the backoff early so the
+    /// reconnect loop attempts immediately (e.g. after the user freed up quota or
+    /// just wants to check).
+    func reconnectNowAfterQuota() {
+        guard quotaBackoffUntil != nil else { return }
+        companionLog("Quota backoff: manual reconnect requested")
+        manualQuotaRetry = true
     }
 
     /// Called when the app returns to the foreground: sockets often die

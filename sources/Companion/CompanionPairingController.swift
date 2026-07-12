@@ -275,16 +275,28 @@ final class CompanionPairingController: NSObject {
     /// When the mac last ATTEMPTED to (re)establish its relay park. Drives the
     /// "last try…" timer while not connected.
     private(set) var lastRelayAttempt: Date?
+    /// Set when the relay tore the room down for hitting its daily data quota;
+    /// holds the time the mac will next attempt to reconnect. While in the future
+    /// the mac deliberately stays backed off (re-parking sooner only trips the same
+    /// limit), and the settings UI shows the quota state instead of "reconnecting".
+    /// Cleared once the mac parks successfully again.
+    private(set) var relayQuotaBackoffUntil: Date?
 
     /// The mac's relay status for the settings UI.
     enum RelayStatus: Equatable {
         case idle                          // not paired: nothing to show
         case connected(since: Date)        // parked / phone-bridged: reachable
         case reconnecting(lastAttempt: Date?)  // not connected; retrying
+        case quotaExceeded(retryAt: Date)  // relay daily data limit hit; backing off
     }
     var relayStatus: RelayStatus {
         guard hasPairedDevice else { return .idle }
         if let since = relayConnectedSince { return .connected(since: since) }
+        // A quota teardown outranks the generic "reconnecting" while the backoff
+        // window is still in the future, so the user learns WHY it is not connected.
+        if let until = relayQuotaBackoffUntil, until > Date() {
+            return .quotaExceeded(retryAt: until)
+        }
         return .reconnecting(lastAttempt: lastRelayAttempt)
     }
 
@@ -462,6 +474,12 @@ final class CompanionPairingController: NSObject {
     /// instance exits.
     private static let displacedListenerRetryNanos: UInt64 = 60_000_000_000
 
+    /// After a relay daily-quota teardown, wait this long before re-parking:
+    /// reconnecting sooner just trips the same limit and hammers an already
+    /// exhausted quota. Fixed (the relay reports no reset time), so this is a
+    /// gentle poll that recovers once the relay's 24h window rolls over.
+    private static let quotaListenerRetryNanos: UInt64 = 30 * 60 * 1_000_000_000
+
     /// Failure-driven fresh-pairing regeneration uses the same backoff: a dead
     /// QR park is re-advertised under a NEW pid, and doing that instantly for a
     /// connection that fails in milliseconds would mint pids, redraw the QR, and
@@ -479,6 +497,22 @@ final class CompanionPairingController: NSObject {
         pairedListenerRetry.schedule(overrideNanos: overrideNanos) { [weak self] in
             self?.resumePairedListeningIfNeeded()
         }
+    }
+
+    /// Enter the relay daily-quota backoff: record when we will next try (for the
+    /// settings UI) and schedule the re-park far enough out that we do not hammer
+    /// the exhausted quota. Called from both the live-bridge close and a parked
+    /// socket close, since either can carry the quota teardown.
+    private func enterRelayQuotaBackoff(reason: String) {
+        let minutes = Self.quotaListenerRetryNanos / 1_000_000_000 / 60
+        relayQuotaBackoffUntil = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        relayLog("relay daily quota exceeded (\(reason)); backing off \(minutes)m before re-parking")
+        // Drop any pending routine (5s) retry so the long quota backoff wins;
+        // otherwise a re-park fires in seconds and trips the same limit again.
+        pairedListenerRetry.cancel()
+        // Schedules the re-park AND clears relayConnectedSince + notifies presence,
+        // so relayStatus flips to .quotaExceeded for the settings UI.
+        scheduleListenerRetry(after: Self.quotaListenerRetryNanos)
     }
 
     /// Require the device owner to authenticate before showing a fresh pairing
@@ -843,6 +877,9 @@ final class CompanionPairingController: NSObject {
                     // paper over a connection error surfaced while re-parking.
                     self.pairedListenerRetry.noteSuccess()
                     self.freshPairingRegen.noteSuccess()
+                    // The park succeeded, so any prior quota teardown is behind us:
+                    // clear the backoff marker so the UI leaves the quota state.
+                    self.relayQuotaBackoffUntil = nil
                     self.onStatus?("Waiting for your iPhone…")
                     guard self.relayConnectedSince == nil else { return }
                     self.relayConnectedSince = Date()
@@ -954,6 +991,14 @@ final class CompanionPairingController: NSObject {
                     scheduleListenerRetry(after: Self.displacedListenerRetryNanos)
                     return
                 }
+                // The relay hit its daily data quota and tore the room down. Re-parking
+                // on the routine 5s timer just trips the same limit again all day, so
+                // back off long and let the settings UI explain the wait. Not a
+                // user-facing FAULT (no onFailed); the quota status carries it.
+                if (error as? TransportError) == .quotaExceeded {
+                    enterRelayQuotaBackoff(reason: "park closed")
+                    return
+                }
                 // A genuine park loss while a device is still paired. Re-park so
                 // the phone can reconnect; without this the mac goes silently
                 // dark. A closed park is routine churn, so retry quietly and
@@ -1034,7 +1079,7 @@ final class CompanionPairingController: NSObject {
                 relayLog("acceptLoop: handshake COMPLETE; creating bridge")
 
                 let newBridge = CompanionHostBridge(transport: channel)
-                newBridge.onClose = { [weak self, weak newBridge] in
+                newBridge.onClose = { [weak self, weak newBridge] error in
                     guard let self, let newBridge, self.bridge === newBridge else {
                         // A stale bridge must not tear down its replacement.
                         DLog("Companion: stale bridge closed; ignoring")
@@ -1045,6 +1090,13 @@ final class CompanionPairingController: NSObject {
                     self.relayLog("bridge.onClose: LIVE bridge closed; nil-ing bridge + resuming")
                     self.bridge = nil
                     self.onDisconnect?()
+                    // The relay tore the live connection down for its daily quota:
+                    // re-parking now just trips the same limit, so back off long and
+                    // let the settings UI explain it instead of the routine re-park.
+                    if (error as? TransportError) == .quotaExceeded {
+                        self.enterRelayQuotaBackoff(reason: "live bridge closed")
+                        return
+                    }
                     self.resumePairedListeningIfNeeded()
                 }
                 newBridge.onPeerUnpaired = { [weak self] in

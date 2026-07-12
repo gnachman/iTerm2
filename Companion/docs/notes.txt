@@ -130,3 +130,8 @@ Bug Fixes:
   the move shows an update prompt instead of
   pairing into a state that cannot receive
   notifications.
+- When the relay hits its daily data limit,
+  the app now shows a “Daily data limit
+  reached” banner with a Reconnect now
+  button and stops retrying every couple
+  seconds until the limit resets.

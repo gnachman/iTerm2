@@ -103,7 +103,9 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
             try await ws.send(.data(frame))
         } catch {
             signalClosed()
-            throw TransportError.closed
+            // Preserve a quota close (not transient churn) so the reconnect logic
+            // can back off; everything else is the ordinary "connection gone".
+            throw (error as? TransportError) == .quotaExceeded ? TransportError.quotaExceeded : TransportError.closed
         }
     }
 
@@ -146,7 +148,10 @@ public final class RelayTransport: MessageTransport, @unchecked Sendable {
                     guard race.claim() else { return }
                     race.close?.cancel()
                     self.signalClosed()
-                    cont.resume(throwing: TransportError.closed)
+                    // Preserve a quota close so the caller (session/bridge receive
+                    // loop) can back off instead of fast-retrying; else "gone".
+                    cont.resume(throwing: (error as? TransportError) == .quotaExceeded
+                                ? TransportError.quotaExceeded : TransportError.closed)
                 }
             }
             race.close = Task { [weak self] in

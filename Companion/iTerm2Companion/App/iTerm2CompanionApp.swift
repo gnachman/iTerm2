@@ -155,7 +155,7 @@ struct RootView: View {
                 Tab("Chats", systemImage: "bubble.left.and.bubble.right", value: AppModel.AppTab.chats) {
                     NavigationStack(path: $model.navigationPath) {
                         HomeView()
-                            .reconnectingBanner(model.isReconnecting)
+                            .reconnectingBanner(model)
                             .navigationDestination(for: AppModel.Destination.self) { destination in
                                 destinationView(destination)
                             }
@@ -164,7 +164,7 @@ struct RootView: View {
                 Tab("Sessions", systemImage: "terminal", value: AppModel.AppTab.sessions) {
                     NavigationStack(path: $model.sessionsPath) {
                         SessionBrowserView()
-                            .reconnectingBanner(model.isReconnecting)
+                            .reconnectingBanner(model)
                             .navigationDestination(for: AppModel.Destination.self) { destination in
                                 destinationView(destination)
                             }
@@ -194,19 +194,19 @@ struct RootView: View {
         switch destination {
         case .create:
             CreateView()
-                .reconnectingBanner(model.isReconnecting)
+                .reconnectingBanner(model)
         case .conversation(let chatID):
             ConversationView(chatID: chatID)
-                .reconnectingBanner(model.isReconnecting)
+                .reconnectingBanner(model)
         case .settings:
             SettingsView()
-                .reconnectingBanner(model.isReconnecting)
+                .reconnectingBanner(model)
         case .session(let guid, let title, let originatingChatID):
             SessionView(guid: guid, title: title, originatingChatID: originatingChatID)
-                .reconnectingBanner(model.isReconnecting)
+                .reconnectingBanner(model)
         case .workgroup(let id, let title):
             WorkgroupView(workgroupID: id, title: title)
-                .reconnectingBanner(model.isReconnecting)
+                .reconnectingBanner(model)
         }
     }
 }
@@ -214,12 +214,35 @@ struct RootView: View {
 // The reconnecting pill is inset into each screen's CONTENT (below its
 // navigation bar) rather than onto the NavigationStack, where it would share
 // the safe-area band with the bar title and render text on text.
+//
+// Two mutually exclusive states: a relay daily-limit teardown (not transient,
+// so it gets a distinct orange banner with a Reconnect now override) takes
+// precedence over the ordinary yellow "reconnecting" pill.
 private struct ReconnectingBanner: ViewModifier {
-    let isReconnecting: Bool
+    let model: AppModel
 
     func body(content: Content) -> some View {
         content.safeAreaInset(edge: .top) {
-            if isReconnecting {
+            if let retryAt = model.quotaBackoffUntil {
+                HStack(spacing: 10) {
+                    Label {
+                        Text("Daily data limit reached · retries \(retryAt.formatted(date: .omitted, time: .shortened))")
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                    }
+                    .font(.footnote.weight(.medium))
+                    Button("Reconnect now") { model.reconnectNowAfterQuota() }
+                        .font(.footnote.weight(.semibold))
+                        .buttonStyle(.borderedProminent)
+                        .tint(.black)
+                        .controlSize(.small)
+                }
+                .foregroundStyle(.black)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.orange, in: Capsule())
+                .padding(.top, 4)
+            } else if model.isReconnecting {
                 Label("Reconnecting to your Mac…", systemImage: "wifi.exclamationmark")
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(.black)
@@ -233,7 +256,7 @@ private struct ReconnectingBanner: ViewModifier {
 }
 
 extension View {
-    func reconnectingBanner(_ isReconnecting: Bool) -> some View {
-        modifier(ReconnectingBanner(isReconnecting: isReconnecting))
+    func reconnectingBanner(_ model: AppModel) -> some View {
+        modifier(ReconnectingBanner(model: model))
     }
 }

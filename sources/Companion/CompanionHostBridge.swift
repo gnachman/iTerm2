@@ -75,8 +75,10 @@ final class CompanionHostBridge {
     private var nextHostRequestID: UInt64 = 1
 
     /// Called once the transport closes remotely, so the owner can drop this
-    /// bridge. A user-initiated stop() does not fire it.
-    var onClose: (@MainActor () -> Void)?
+    /// bridge. A user-initiated stop() does not fire it. Carries the terminating
+    /// transport error (e.g. `.quotaExceeded`) so the owner can distinguish a relay
+    /// quota teardown from ordinary loss and back off; nil when unavailable.
+    var onClose: (@MainActor (Error?) -> Void)?
 
     /// Called when the phone announces it is unpairing.
     var onPeerUnpaired: (@MainActor () -> Void)?
@@ -296,12 +298,14 @@ final class CompanionHostBridge {
         // can block forever -- we'd see "started" but never "receive FAILED" or
         // "exited", confirming the wedge (no teardown, no re-park).
         RLog("bridge receiveLoop started")
+        var dropError: Error?
         while true {
             let frame: Data
             do {
                 frame = try await transport.receive()
             } catch {
                 RLog("bridge receiveLoop receive() FAILED (drop detected): \(error)")
+                dropError = error
                 break
             }
             guard let envelope = try? WireCoding.decode(ClientEnvelope.self, from: frame) else {
@@ -312,7 +316,7 @@ final class CompanionHostBridge {
         }
         RLog("bridge receiveLoop exited -> teardownStreams + onClose (will re-park)")
         teardownStreams()
-        onClose?()
+        onClose?(dropError)
     }
 
     private func handle(_ envelope: ClientEnvelope) {
