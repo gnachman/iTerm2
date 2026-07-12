@@ -125,15 +125,25 @@ final class CompanionPairingController: NSObject {
 
     /// A device is paired but the relays it was established against no longer
     /// match where this build points (the push relay it registered with, or the
-    /// main relay it paired over). Includes the "never recorded" case: a device
-    /// paired before the mac tracked the origins, i.e. before the relays moved.
-    /// The phone is pinned to the old relays until the user pairs again.
+    /// main relay it paired over): the phone is pinned to the old relays until
+    /// the user pairs again. Only a POSITIVELY recorded origin that differs
+    /// counts as a move. A never-recorded origin (nil) is NOT a move: it just
+    /// means this pairing predates the mac tracking these hosts. The main relay is
+    /// backfilled on the next successful reconnect (see recordCurrentMainRelay);
+    /// the push relay stays nil until a re-pair, since a reconnect cannot evidence
+    /// it. Either way, treating nil as "moved" here would nag a perfectly working
+    /// pairing on every launch.
     private var relayConfigurationChanged: Bool {
         guard hasPairedDevice else { return false }
-        if CompanionPushRegistry.registeredPushRelayURL != CompanionPushRelay.baseURL.absoluteString {
+        if let recorded = CompanionPushRegistry.registeredPushRelayURL,
+           recorded != CompanionPushRelay.baseURL.absoluteString {
             return true
         }
-        return CompanionPushRegistry.registeredMainRelayOrigin != Self.configuredRelayOrigin()
+        if let recorded = CompanionPushRegistry.registeredMainRelayOrigin,
+           recorded != Self.configuredRelayOrigin() {
+            return true
+        }
+        return false
     }
 
     /// Called once at app launch. If a device is paired, the feature is enabled,
@@ -1141,6 +1151,14 @@ final class CompanionPairingController: NSObject {
                 }
                 pairedPID = code.pairingID
                 if isFreshPairing {
+                    // Fresh pairing: as part of pairing the phone registers its APNs
+                    // token against its (current) push relay, and this connection was
+                    // carried over the main relay, so BOTH origins are evidenced.
+                    // Record them so a later host move can prompt a re-pair (see
+                    // relayConfigurationChanged).
+                    CompanionPushRegistry.recordCurrentRelays(
+                        pushRelayURL: CompanionPushRelay.baseURL.absoluteString,
+                        mainRelayOrigin: Self.configuredRelayOrigin())
                     // A brand-new device just paired while the user is present
                     // (they just confirmed the SAS code): warm the AI key cache
                     // now so a query later driven from the away phone serves its
@@ -1148,15 +1166,19 @@ final class CompanionPairingController: NSObject {
                     // covers devices already paired at startup; this covers a
                     // pairing that happens while the app is already running.
                     AITermControllerObjC.prewarmAPIKeyCache()
-                    // Record the relays this pairing belongs to (the push relay
-                    // the phone registers with, and the main relay this pairing
-                    // was carried over), so a later host move can prompt the user
-                    // to re-pair. Only on a fresh pairing: a reconnect re-uses the
-                    // stored origins and proves nothing about where the phone is
-                    // registered.
-                    CompanionPushRegistry.recordCurrentRelays(
-                        pushRelayURL: CompanionPushRelay.baseURL.absoluteString,
-                        mainRelayOrigin: Self.configuredRelayOrigin())
+                } else {
+                    // Reconnect: refresh ONLY the main relay. This connection is
+                    // carried over the main relay, so it proves the phone still
+                    // reaches us there (and backfills a pairing older than this
+                    // tracking so a later main-relay move is detectable). It proves
+                    // NOTHING about the push relay: the phone registers against its
+                    // OWN build's CompanionPushRelay URL, which after a mac-only
+                    // upgrade differs from ours until the phone app is itself updated
+                    // and APNs re-registers. Stamping our push URL here would make
+                    // relayConfigurationChanged see recorded == current and suppress a
+                    // legitimate re-pair prompt while the phone still cannot receive
+                    // pushes. So leave the recorded push relay untouched.
+                    CompanionPushRegistry.recordCurrentMainRelay(Self.configuredRelayOrigin())
                 }
                 // Now established: reconnect is keyed on pairedPID, so the
                 // fresh-pairing intent is done.

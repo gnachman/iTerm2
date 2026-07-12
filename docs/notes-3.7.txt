@@ -2024,6 +2024,12 @@ Bug Fixes:
   Deleting a subdirectory you requested just
   runs; only a real root or home wipe, or a
   suspicious command, stops to ask first.
+- Companion: a paired device that still worked
+  no longer nags you to re-pair on every launch
+  after installing a new version. The re-pair
+  prompt now only appears after a genuine relay
+  move, and a normal reconnect records the
+  current relay so the false alarm stops.
 - Companion: when the relay hits its daily
   data limit, the Mac now shows “Daily relay
   data limit reached” in Companion settings
