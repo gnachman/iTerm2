@@ -64,6 +64,11 @@ extern NSString *const PTYSessionArrangementOptionsForDuplication;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
 extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
+// When set, restoration will not launch a replacement program if there is
+// no running program to attach to; the session is finalized showing its
+// restored contents. Used for code-review/diff workgroup peers so a dead
+// peer leaves its last output on screen instead of spawning a stray shell.
+extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
@@ -1062,6 +1067,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
+// Switch the workgroup peer switcher to this session within its shared pane,
+// if needed, without ordering the window front, activating the app, or
+// changing the selected tab. See the implementation for details.
+- (void)revealAsPeerWithoutActivatingWindow;
 - (void)revealSelection:(iTermSelection *)selection;
 - (void)highlightMarkOrNote:(nullable id<IntervalTreeImmutableObject>)obj;
 

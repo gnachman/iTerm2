@@ -333,7 +333,10 @@ static NSString *const SESSION_ARRANGEMENT_CLIPPINGS = @"Clippings";  // NSArray
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE = @"Clippings Visible";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archive";  // NSArray<NSArray<NSDictionary<NSString *, NSString *> *> *>, oldest first.
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
+static NSString *const SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE = @"Auto Send Clippings When Idle";  // BOOL. Code-review peer's toolbar toggle state.
+static NSString *const SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE = @"Auto Request Review When Idle";  // BOOL. Main session's toolbar toggle state.
 static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
+static NSString *const SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT = @"Code Review Last Prompt";  // NSString. The prompt text the user last submitted in a code-review session, so a reload after restore defaults to their edited prompt.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE = @"Inline Chat Visible";  // BOOL. Whether that panel was showing.
 
@@ -381,6 +384,7 @@ NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrange
 NSString *const PTYSessionArrangementOptionsUnlimitedHistory = @"PTYSessionArrangementOptionsUnlimitedHistory";
 NSString *const PTYSessionArrangementOptionsArchive = @"PTYSessionArrangementOptionsArchive";
 NSString *const PTYSessionArrangementOptionsLargeContentProvider = @"PTYSessionArrangementOptionsLargeContentProvider";
+NSString *const PTYSessionArrangementOptionsInhibitRelaunch = @"PTYSessionArrangementOptionsInhibitRelaunch";
 
 static char iTermEffectiveAppearanceKey;
 
@@ -1713,6 +1717,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     aSession.clippingsVisible = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE]] boolValue];
+    // Workgroup code-review toolbar toggle state. Restored onto the session
+    // before the workgroup adopts it and builds the toolbar, so the rebuilt
+    // toggle reflects the saved state. Absent keys leave the flags at their
+    // default (off).
+    aSession.autoSendClippingsWhenIdle = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE]] boolValue];
+    aSession.autoRequestReviewWhenIdle = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE]] boolValue];
     // Inline AI chat is restored earlier, synchronously, in
     // sessionFromArrangement: (see the comment there) so the panel's reserved
     // width is in place before the window first fits its grid.
@@ -2062,6 +2072,10 @@ ITERM_WEAKLY_REFERENCEABLE
                             (arrangement[SESSION_ARRANGEMENT_BROWSER_STATE] != nil || contents) &&
                             [iTermAdvancedSettingsModel restoreWindowContents]);
     BOOL attachedToServer = NO;
+    // Opaque workgroup peer-group descriptor, owned by
+    // iTermWorkgroupRestoration. Read once: used both by the inhibit-relaunch
+    // decision below and by the restoration-coordinator registration later.
+    NSDictionary *workgroupState = arrangement[SESSION_ARRANGEMENT_WORKGROUP];
     typedef void (^iTermSessionCreationCompletionBlock)(PTYSession *, BOOL ok);
     void (^runCommandBlock)(iTermSessionCreationCompletionBlock) =
     ^(iTermSessionCreationCompletionBlock innerCompletion) {
@@ -2162,6 +2176,47 @@ ITERM_WEAKLY_REFERENCEABLE
                     aSession->_conductor = nil;
                     aSession->_shell.sshIntegrationActive = NO;
                 }
+            }
+        }
+
+        // Nothing was attached to (either the server-restore path above
+        // failed, or session restoration servers are off entirely). For a
+        // code-review or diff workgroup session that had a live program at
+        // save time, don't launch a replacement: leave the restored last
+        // output on screen. The signal comes either from an explicit option
+        // (buried peers, set by WorkgroupRestorationCoordinator) or, for the
+        // anchor, from its workgroup config + saved overlay state. When the
+        // session WAS showing its pre-launch overlay at save time the
+        // coordinator re-presents it and relies on a relaunched shell, so
+        // those cases are excluded. Evaluated outside the runJobsInServers
+        // block so the buried-peer option and the anchor check apply even
+        // when session restoration servers are off.
+        //
+        // Gate on isRestartable: the inhibited session is put into the exited
+        // state, which is only useful if it can be restarted later
+        // (restartSession/replaceTerminatedShellWithNewInstance and the reload
+        // paths all require isRestartable, i.e. a non-nil _program). If the
+        // arrangement carried no restartable program, fall through to the
+        // normal path rather than stranding a dead, unrestartable pane.
+        if (runCommand && aSession.isRestartable) {
+            if ([options[PTYSessionArrangementOptionsInhibitRelaunch] boolValue] ||
+                (workgroupState &&
+                 [iTermWorkgroupRestoration shouldInhibitRelaunchForAnchorState:workgroupState])) {
+                DLog(@"Inhibiting relaunch for code-review/diff workgroup session with no program to attach to");
+                runCommand = NO;
+                // Put the session in the exited state so the workgroup
+                // reload/restart affordance works: restartSession takes the
+                // replaceTerminatedShellWithNewInstance path, which requires
+                // _exited (and isRestartable, gated above). We leave the
+                // restored last output on screen; nothing relaunches until
+                // the user asks.
+                //
+                // Set it silently: restore is synthesizing an exited state,
+                // not observing a real program exit. The program was orphaned
+                // by app quit (with servers on it may still have been alive,
+                // so its Session Ended trigger never fired), so firing the
+                // trigger now would be spurious.
+                [aSession setExitedSilently:YES];
             }
         }
 
@@ -2291,11 +2346,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
     [aSession updateMarksMinimapRangeOfVisibleLines];
 
+    // Restore the prompt the user last submitted in a code-review session
+    // so a reload defaults to it (see SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT).
+    NSString *codeReviewLastPrompt = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT]];
+    if (codeReviewLastPrompt) {
+        aSession.codeReviewLastUsedPrompt = codeReviewLastPrompt;
+    }
+
     // If this session was the visible/anchor member of a workgroup peer
     // group, hand the opaque descriptor to the restoration coordinator;
     // it rebuilds the peer group (adopting the embedded buried members)
     // once the window/tab finishes restoring.
-    NSDictionary *workgroupState = arrangement[SESSION_ARRANGEMENT_WORKGROUP];
     if (workgroupState) {
         [iTermWorkgroupRestoration registerForRestorationWithSession:aSession
                                                               state:workgroupState];
@@ -3698,6 +3759,15 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_eventTriggerEvaluator sessionEnded];
         }
     }
+    [self setExitedSilently:exited];
+}
+
+// Set the exited state without firing Session Ended triggers. Used when
+// restoring a session that is already in the exited state (its program
+// ended before the app quit): the Session Ended event already fired then,
+// so re-firing it on every launch would spuriously repeat the trigger's
+// action.
+- (void)setExitedSilently:(BOOL)exited {
     _exited = exited;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.exited = exited;
@@ -6820,6 +6890,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX] = @(self.localClippingsViewIndex);
     }
     result[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE] = @(self.clippingsVisible);
+    // Workgroup code-review toolbar toggles. Per-session runtime flags,
+    // default off; written only when on so a plain session's arrangement
+    // doesn't grow. Restored in setContentsFromArrangement so the toggle
+    // (and its idle-driven behavior) survive a relaunch.
+    if (self.autoSendClippingsWhenIdle) {
+        result[SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE] = @(YES);
+    }
+    if (self.autoRequestReviewWhenIdle) {
+        result[SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE] = @(YES);
+    }
 
     // Inline AI chat gutter panel. Only meaningful when a chat is bound, so
     // the visibility flag rides along with the id rather than being written
@@ -6838,6 +6918,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                                    includeContents:includeContents];
     if (workgroupState) {
         result[SESSION_ARRANGEMENT_WORKGROUP] = workgroupState;
+    }
+
+    // The prompt the user last submitted in a code-review session. Not
+    // derivable from the workgroup config (which only has the raw command
+    // template), so persist it here; on restore a reload defaults to the
+    // user's edited prompt instead of the store default.
+    if (self.codeReviewLastUsedPrompt) {
+        result[SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT] = self.codeReviewLastUsedPrompt;
     }
 
     NSString *pwd = [self currentLocalWorkingDirectory];
@@ -15358,6 +15446,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
     }
     [self.textview refuseFirstResponderAtCurrentMouseLocation];
+}
+
+// Switch the workgroup peer switcher to show this session in the pane it
+// shares with its siblings, if it isn't already the active peer. This is the
+// peer-swap portion of -reveal and nothing else: it does NOT order the window
+// front, activate the app, disinter a buried session, or change the selected
+// tab. The swapped-in view becomes visible only if its tab is already the
+// foreground one; otherwise the switch is silent until the user visits that
+// tab. Used by the workgroup auto-request-review / auto-send-clippings paths,
+// which want the switcher to follow the active side within the shared pane
+// without yanking the user's window, tab, or app focus around.
+- (void)revealAsPeerWithoutActivatingWindow {
+    PTYSessionPeerPort *port = self.peerPort;
+    NSString *portIdentifier = [port identifierForSession:self];
+    if (port && portIdentifier && port.activeSession != self) {
+        RLog(@"Switch peer switcher to %@ without activating window/tab/app", portIdentifier);
+        [port activateIdentifier:portIdentifier];
+    }
 }
 
 - (void)reveal {

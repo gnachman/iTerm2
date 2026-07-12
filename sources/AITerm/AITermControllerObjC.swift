@@ -28,6 +28,29 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         }
     }
 
+    // The vendors worth prewarming: every provider that authenticates with a
+    // keychain-stored key. Llama is included because a self-hosted deployment
+    // can require a token; Apple Intelligence is omitted because it runs
+    // on-device and needs no key.
+    private static let prewarmableVendors: [iTermAIVendor] = [
+        .openAI, .anthropic, .gemini, .deepSeek, .llama
+    ]
+
+    // Read every provider's key from the keychain into the in-memory cache.
+    // Meant to run at launch, and on a fresh pairing, whenever a companion
+    // device is paired: a query later driven from the away phone then serves
+    // its key from cache and never blocks on, or prompts for, keychain access
+    // with nobody present to approve it. Runs off the main thread on the same
+    // serial queue that guards all key access; idempotent, since already-cached
+    // vendors short circuit inside apiKeyOnQueue.
+    @objc static func prewarmAPIKeyCache() {
+        apiKeyQueue.async {
+            for vendor in prewarmableVendors {
+                _ = apiKeyOnQueue(for: vendor)
+            }
+        }
+    }
+
     @objc static var apiKey: String? {
         get {
             apiKey(for: LLMMetadata.effectiveVendor)

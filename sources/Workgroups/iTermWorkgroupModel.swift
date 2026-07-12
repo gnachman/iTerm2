@@ -29,6 +29,8 @@ final class iTermWorkgroupModel: NSObject {
         backfillToolbarShortcutsIfNeeded()
         backfillClaudeCodeDiffModeIfNeeded()
         backfillCodeReviewSystemPromptCommandIfNeeded()
+        backfillClaudeCodeAutoSendClippingsIfNeeded()
+        backfillClaudeCodeAutoRequestReviewIfNeeded()
     }
 
     // MARK: - Top-level mutations
@@ -181,6 +183,105 @@ final class iTermWorkgroupModel: NSObject {
         if changed {
             persist()
         }
+    }
+
+    // One-time migration: add the Auto-Send Clippings When Idle toolbar
+    // item to the Claude Code workgroup's Code Review peer for users who
+    // installed the integration before the item existed. Fresh installs
+    // and true uninstall/reinstalls already get it from the template
+    // builder (WorkgroupPresets.buildCodingAgentPlusDiffPlusCodeReview);
+    // this backfill is what covers the in-place upgrade case, and by
+    // making the item already present it also covers a Reinstall over an
+    // existing workgroup (installWorkgroupIfNeeded is a no-op there).
+    //
+    // Scoped to the Claude Code workgroup's review peer by ID, like
+    // backfillClaudeCodeDiffModeIfNeeded: this is a defaults change to
+    // one known peer, not a blanket edit of every code-review session.
+    // Only added when absent, so a user who already has it (or who runs
+    // a newer build first) isn't given a duplicate. Latched in NoSync
+    // user defaults so a user who intentionally removes the item doesn't
+    // get it re-added on the next launch.
+    private func backfillClaudeCodeAutoSendClippingsIfNeeded() {
+        guard !iTermUserDefaults.claudeCodeAutoSendClippingsBackfilled else { return }
+        defer { iTermUserDefaults.claudeCodeAutoSendClippingsBackfilled = true }
+
+        if let migrated = Self.addingAutoSendClippingsToClaudeCodeReviewPeer(workgroups) {
+            workgroups = migrated
+            persist()
+        }
+    }
+
+    // Pure transform behind backfillClaudeCodeAutoSendClippingsIfNeeded:
+    // returns a copy of `workgroups` with the Auto-Send Clippings When Idle
+    // item appended to the Claude Code review peer when it's absent, or nil
+    // when nothing needed changing. Split out from the latch/persist wiring
+    // so the ID scoping and idempotency can be unit-tested directly.
+    static func addingAutoSendClippingsToClaudeCodeReviewPeer(
+        _ workgroups: [iTermWorkgroup]) -> [iTermWorkgroup]? {
+        var copy = workgroups
+        var changed = false
+        for wgIdx in copy.indices
+        where copy[wgIdx].uniqueIdentifier
+                == ClaudeCodeWorkgroupTemplate.ID.workgroup {
+            for sIdx in copy[wgIdx].sessions.indices
+            where copy[wgIdx].sessions[sIdx].uniqueIdentifier
+                    == ClaudeCodeWorkgroupTemplate.ID.review {
+                let items = copy[wgIdx].sessions[sIdx].toolbarItems
+                let alreadyHasItem = items.contains {
+                    if case .autoSendClippingsWhenIdle = $0 { return true }
+                    return false
+                }
+                guard !alreadyHasItem else { continue }
+                copy[wgIdx].sessions[sIdx].toolbarItems
+                    = items + [.autoSendClippingsWhenIdle]
+                changed = true
+            }
+        }
+        return changed ? copy : nil
+    }
+
+    // One-time migration mirroring backfillClaudeCodeAutoSendClippingsIfNeeded,
+    // but for the main (root) session's Auto-Request Review When Idle item.
+    // Covers existing installs' in-place upgrade and, by making the item
+    // already present, reinstall-over-existing (installWorkgroupIfNeeded is a
+    // no-op there). Latched in NoSync user defaults.
+    private func backfillClaudeCodeAutoRequestReviewIfNeeded() {
+        guard !iTermUserDefaults.claudeCodeAutoRequestReviewBackfilled else { return }
+        defer { iTermUserDefaults.claudeCodeAutoRequestReviewBackfilled = true }
+
+        if let migrated = Self.addingAutoRequestReviewToClaudeCodeMainSession(workgroups) {
+            workgroups = migrated
+            persist()
+        }
+    }
+
+    // Pure transform behind backfillClaudeCodeAutoRequestReviewIfNeeded:
+    // returns a copy of `workgroups` with the Auto-Request Review When Idle
+    // item appended to the Claude Code main (root) session when absent, or nil
+    // when nothing needed changing. Scoped to the Claude Code workgroup's main
+    // session by ID.
+    static func addingAutoRequestReviewToClaudeCodeMainSession(
+        _ workgroups: [iTermWorkgroup]) -> [iTermWorkgroup]? {
+        var copy = workgroups
+        var changed = false
+        for wgIdx in copy.indices
+        where copy[wgIdx].uniqueIdentifier
+                == ClaudeCodeWorkgroupTemplate.ID.workgroup {
+            for sIdx in copy[wgIdx].sessions.indices
+            where copy[wgIdx].sessions[sIdx].uniqueIdentifier
+                    == ClaudeCodeWorkgroupTemplate.ID.main {
+                let items = copy[wgIdx].sessions[sIdx].toolbarItems
+                let alreadyHasItem = items.contains {
+                    if case .autoRequestReviewWhenIdle = $0 { return true }
+                    return false
+                }
+                guard !alreadyHasItem else { continue }
+                copy[wgIdx].sessions[sIdx].toolbarItems
+                    = items + [.autoRequestReviewWhenIdle]
+                changed = true
+            }
+        }
+        return changed ? copy : nil
     }
 
     // One-time migration: stamp the default keyboard shortcuts onto

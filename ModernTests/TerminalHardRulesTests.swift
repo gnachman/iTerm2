@@ -52,6 +52,13 @@ final class TerminalHardRulesTests: XCTestCase {
             "chmod -R 777 /", "chmod 777 -R /", "chmod -R 000 /", "chmod -R 777 ~",
             "chown -R root /", "chown -R root:root ~", "chgrp -R staff /",
             "find / -delete", "find / -name foo -exec rm {} \\;",
+            // Boolean option flags on a modifier must not become the command:
+            // `sudo -i rm -rf /` still surfaces `rm`.
+            "sudo -i rm -rf /", "sudo -H rm -rf /", "sudo -E rm -rf ~",
+            "env -i rm -rf /", "sudo -- rm -rf /",
+            // find -exec into a shell interpreter runs an invisible `-c` string.
+            "find / -exec sh -c 'rm -rf /' \\;", "find ~ -exec bash -c 'x' \\;",
+            "find / -execdir zsh -c 'x' \\;",
         ] {
             assertApproves(line)
         }
@@ -67,8 +74,27 @@ final class TerminalHardRulesTests: XCTestCase {
             "echo x > /dev/sda", "> /dev/sda", "cat img >/dev/sda",
             "echo x &>/dev/sda", "echo x &> /dev/sda", "echo x 2>/dev/sda",
             "mkfs.ext4 /dev/sda1", "mkfs -t ext4 /dev/sda",
+            // Space-free redirect: the `>` is mid-token, so the whitespace
+            // tokenizer doesn't split there, but the shell does.
+            "cat /dev/zero>/dev/sda", "echo x>/dev/sda", "cat img>>/dev/sda",
+            "echo x&>/dev/sda", "echo x2>/dev/sda",
         ] {
             assertApproves(line)
+        }
+    }
+
+    /// A `>` INSIDE a quoted string is a literal, not a redirect operator, so a
+    /// quoted block-device path must NOT trip the device-write approval. (The
+    /// prior whole-word regex scan ran after quotes were stripped and over-flagged
+    /// these.) The real unquoted redirects above are still caught.
+    func testDefer_quotedRedirectLooksLikeDeviceWrite() {
+        for line in [
+            "echo \"run cat foo >/dev/sda\"",
+            "git commit -m \"note about >/dev/sdb\"",
+            "grep \"err 2>/dev/sda\" file",
+            "echo 'x >/dev/sda'",
+        ] {
+            assertDefers(line)
         }
     }
 
@@ -132,6 +158,13 @@ final class TerminalHardRulesTests: XCTestCase {
             "cd /tmp && bash install.sh", "make && sh deploy.sh",
             "echo done; bash build.sh", "git pull && zsh",
             "git pull || zsh", "make || sh", "curl x || bash", "cmd || sh",
+            // A VALUE-carrying modifier option is deliberately NOT unwound: `root`
+            // (the value of `-u`) becomes the command, isn't a catastrophic verb,
+            // so this defers to the LLM. (Boolean flags like `-i` ARE skipped.)
+            "sudo -u root rm -rf /", "nice -n 10 rm -rf /",
+            // find -exec into a read-only command stays a defer even with a shell
+            // name as a later argument (the exec target is grep, not sh).
+            "find / -name x -exec grep sh {} \\;",
         ] {
             assertDefers(line)
         }
@@ -167,15 +200,81 @@ final class TerminalHardRulesTests: XCTestCase {
         }
     }
 
-    /// `mapfile`/`readarray` are ordinary bash builtins; `!` is logical
-    /// negation, not history expansion. Both defer.
+    /// History expansion at line start resurrects a previous command the
+    /// classifier cannot see, so it surfaces for approval regardless of the
+    /// designator form (`!!`, `!rm`, `!-2`, `!string`, word designators).
+    func testApprove_historyExpansion() {
+        for line in [
+            "!!", "!rm", "!-2", "!sudo rm -rf /", "!$", "!^", "!*", "!:0",
+            "!string arg", "!?foo?",
+        ] {
+            assertApproves(line)
+        }
+    }
+
+    /// History expansion is not confined to line start: bash/zsh expand an
+    /// unquoted `!`-designator ANYWHERE in the line, so `sudo !!` etc. surface.
+    /// Double quotes do NOT protect `!` in bash (histexpand precedes quote
+    /// removal), so `echo "!rm"` surfaces too.
+    func testApprove_historyExpansion_midLine() {
+        for line in [
+            "sudo !!", "echo x; !rm", "true && !!", "x | !ls",
+            "echo \"!rm\"",
+            // A literal apostrophe INSIDE double quotes must not open a phantom
+            // single-quote region that swallows the `!!` (which still expands
+            // inside double quotes).
+            "echo \"don't stop!!\"",
+        ] {
+            assertApproves(line)
+        }
+    }
+
+    /// `^old^new^` quick substitution (valid as the first char of a line) re-runs
+    /// the previous command with a substitution -- the same invisible resurrection.
+    func testApprove_quickSubstitution() {
+        for line in ["^old^new^", "^foo^bar"] {
+            assertApproves(line)
+        }
+    }
+
+    /// Literal-`!` forms that are NOT history expansion defer: single quotes and a
+    /// backslash disable it, and `!` before a newline is literal (the multi-line
+    /// command then defers as usual).
+    func testDefer_literalBangForms() {
+        for line in ["echo '!rm'", "echo \\!rm", "!\nls -la"] {
+            assertDefers(line)
+        }
+    }
+
+    /// `mapfile`/`readarray` are ordinary bash builtins; a leading `!` followed
+    /// by whitespace (`! cmd`), `=`, or `(` is logical negation / a glob, NOT
+    /// history expansion. All defer.
     func testDefer_ordinaryBuiltinsAndNegation() {
         for line in [
             "mapfile -t arr < file.txt", "readarray -t arr < file.txt",
             "! grep -q foo file", "! test -f x", "test x = y",
+            "!(ls)", "!= x",
         ] {
             assertDefers(line)
         }
+    }
+
+    /// Parameter expansions that merely CONTAIN `!` are not history expansion:
+    /// `$!` (last-background-PID) and `${!ref}` (indirect expansion). They must
+    /// defer, not nag for approval. A bare `{!` (brace with no `$`) is NOT exempt.
+    func testDefer_parameterExpansionsWithBang() {
+        for line in [
+            "echo ${!ref}", "foo $!bar", "echo ${!prefix@}", "wait $!",
+            "kill $!", "echo ${!arr[@]}",
+        ] {
+            assertDefers(line)
+        }
+    }
+
+    /// The parameter-expansion exemption is precise: a `!` NOT part of `$!`/`${`
+    /// still flags, so a bare-brace `{!!}` is caught.
+    func testApprove_bareBraceHistoryStillFlags() {
+        assertApproves("echo {!!}")
     }
 
     /// Structure the classifier reads in full defers (redirection, substitution,
@@ -206,6 +305,22 @@ final class TerminalHardRulesTests: XCTestCase {
         ] {
             assertDefers(line)
         }
+    }
+
+    /// The deliberate asymmetry between the two history-expansion checks on
+    /// multi-line input: the line-START `!!`/`^` check runs BEFORE the LF defer,
+    /// so a command whose FIRST line is history expansion is still caught even
+    /// with a trailing body. The per-segment MID-line scan runs AFTER the LF
+    /// defer (single-line only), so a `!` buried in a later body line defers to
+    /// the classifier rather than over-blocking a heredoc body that merely
+    /// mentions `!`.
+    func testHistoryExpansion_multiLineAsymmetry() {
+        // First physical line IS history expansion -> caught despite the body.
+        assertApproves("!!\nls")
+        assertApproves("^old^new^\necho done")
+        // `!` only in a LATER body line (e.g. a heredoc body) -> defers.
+        assertDefers("cat <<'EOF'\nplease run !rm\nEOF")
+        assertDefers("echo start\necho end!now")
     }
 
     // MARK: - Non-toolCall entries

@@ -277,6 +277,16 @@ iTermUnixDomainSocketConnectResult iTermCreateConnectedUnixDomainSocket(NSString
         case 0: {
             // child
             close(pipeFds[1]);
+            // Put the server in its own session and process group. We do not daemonize (see the
+            // "Don't daemonize iTermServer" commit and issue 9276, which relies on the server
+            // remaining a child of iTerm2 so tools can walk the shell's parent chain to the app),
+            // so setsid is the only thing that detaches the server from iTerm2's session. Without
+            // it, when iTerm2 is launched from a terminal the server shares that terminal's
+            // foreground process group and a signal to iTerm2 (e.g. ^C sending SIGINT) also kills
+            // the server, which then can't be reattached to on the next launch. setsid keeps the
+            // parent pointer at iTerm2 (preserving 9276) while giving the server its own session.
+            // This is async-signal-safe, which matters between fork and exec.
+            setsid();
             iTermPosixMoveFileDescriptors(fds, numberOfFileDescriptorsToPreserve);
             iTermExec(argpath,
                       cargv,

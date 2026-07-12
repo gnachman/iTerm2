@@ -46,6 +46,14 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 + (NSArray<NSNumber *> *)allPids;
 + (pid_t)ppidForPid:(pid_t)childPid;
 + (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground;
+
+// Best-effort human-readable explanation of why nameOfProcessWithPid: would return
+// nil for this pid, obtained by re-reading. Intended for a cold diagnostic path (an
+// ancestry name that unexpectedly came back empty), not routine use, since it does
+// another sysctl. Distinguishes a sysctl error, a pid that isn't in the process list
+// (not matched / likely exited), a matched-but-empty comm (mid-exec), and the case
+// where the name is readable again (the original failure was transient).
++ (NSString *)nameFailureDiagnosisForPid:(pid_t)pid;
 + (NSString *)workingDirectoryOfProcess:(pid_t)pid;
 + (void)asyncWorkingDirectoryOfProcess:(pid_t)pid
                                  queue:(dispatch_queue_t)queue

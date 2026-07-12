@@ -101,6 +101,55 @@ final class TerminalHardRules {
         "null", "zero", "stdout", "stderr", "tty", "random", "urandom", "full",
     ]
 
+    // Shared reason for every history-expansion / quick-substitution surface.
+    private static let historyExpansionReason =
+        "the command uses shell history expansion (`!`/`^`), which resurrects a previous command that can't be safety-checked"
+
+    // True if `segment` contains an unquoted, unescaped `!` that triggers history
+    // expansion: a `!` NOT immediately followed by whitespace, `=`, `(`, a
+    // newline, or end-of-string (those are a literal `!` in bash/zsh). Quote-
+    // aware, tracking single AND double quote state like the sibling scanners
+    // (`scan`, `tokenizeWords`): single quotes and a preceding backslash disable
+    // expansion; DOUBLE quotes do NOT (bash runs histexpand before quote removal,
+    // so `!` expands inside them), but a `'` inside double quotes is a LITERAL
+    // apostrophe and must not open a phantom single-quote region that swallows a
+    // following `!`. Used per operator-separated segment so mid-line resurrection
+    // (`sudo !!`, `echo "don't stop!!"`) is caught, not just a leading `!`.
+    private static func hasHistoryExpansion(_ segment: String) -> Bool {
+        let chars = Array(segment)
+        var inSingle = false
+        var inDouble = false
+        var escaped = false
+        for (i, c) in chars.enumerated() {
+            if inSingle {
+                if c == "'" { inSingle = false }
+                continue                              // single quotes: fully literal
+            }
+            if escaped { escaped = false; continue }  // char after a backslash
+            if c == "\\" { escaped = true; continue } // escapes next (incl. `\!` in "")
+            if c == "\"" { inDouble.toggle(); continue }
+            if c == "'" && !inDouble { inSingle = true; continue }
+            guard c == "!" else { continue }          // `!` expands even inside ""
+            // `$!` (last-background-PID special parameter) and `${!ref}` (indirect
+            // expansion) are parameter expansions, NOT history expansion -- bash/
+            // zsh do not resurrect a command there. Skip a `!` that directly
+            // follows `$`, or one inside `${...}` (a `{` that itself follows `$`).
+            // A bare `{!` (brace with no `$`) still flags, so this is precise, not
+            // a blanket exemption.
+            let prev: Character? = i > 0 ? chars[i - 1] : nil
+            if prev == "$" { continue }
+            if prev == "{", i >= 2, chars[i - 2] == "$" { continue }
+            let next: Character? = i + 1 < chars.count ? chars[i + 1] : nil
+            switch next {
+            case nil, " ", "\t", "=", "(", "\n":
+                continue                              // literal `!`
+            default:
+                return true                           // history expansion
+            }
+        }
+        return false
+    }
+
     func evaluate(_ action: TranscriptEntry) -> ClassifierDecision? {
         guard case .toolCall(_, let raw) = action else { return nil }
         let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -122,6 +171,28 @@ final class TerminalHardRules {
         if line.unicodeScalars.contains(where: { $0.value == 0x0D }) {
             return .needsManualApproval(
                 reason: "the command contains a carriage return, which the shell and the safety check tokenize differently")
+        }
+
+        // History expansion / quick substitution at LINE START (`!!`, `!rm`,
+        // `!-2`, `!string`, `^old^new`) resurrects a previous command we cannot
+        // inspect statically -- the shell rebuilds it from history, handing the
+        // classifier an opaque token, not the command it runs. Same invisible-
+        // payload rationale as pipe-to-shell. Checked BEFORE the multi-line defer
+        // so it is caught even as the first physical line of a heredoc/for-loop:
+        // deferring an opaque `!!` to the LLM would not help, since the LLM can't
+        // inspect the resurrected command either. BANG_HIST (zsh) / histexpand
+        // (bash) are on by default interactively. A `!` followed by whitespace
+        // (`! cmd`, logical negation -- a commandModifier), `=`, `(` (a glob /
+        // subshell under zsh or extglob), or a newline (`!\n`, a literal `!`) is
+        // NOT expansion. Mid-line `!` (`sudo !!`, `echo x; !rm`) is caught by the
+        // per-segment scan further down (single-line only).
+        if line.hasPrefix("^") {
+            return .needsManualApproval(reason: Self.historyExpansionReason)
+        }
+        if line.hasPrefix("!"), let second = line.dropFirst().first,
+           second != " ", second != "\t", second != "=", second != "(",
+           second != "\n" {
+            return .needsManualApproval(reason: Self.historyExpansionReason)
         }
 
         // A plain (LF) multi-line command -- a heredoc, a for-loop, a multi-line
@@ -155,9 +226,29 @@ final class TerminalHardRules {
         // `$IFS`, /proc/environ, sudo, `rm` of a subpath, git, plain reads, and
         // the fork bomb (rare, and the classifier recognizes it) -- defers.
         for segment in scanned.segments {
+            // History expansion is not confined to line start: bash/zsh expand an
+            // unquoted `!`-designator ANYWHERE (`sudo !!`, `echo x; !rm`,
+            // `x | !ls`). Scan every operator-separated segment, exactly as the
+            // pipe-to-shell / catastrophic checks do, rather than testing only the
+            // prefix.
+            //
+            // This runs AFTER the LF multi-line defer, so it only sees single-line
+            // commands. That asymmetry with the line-START `!`/`^` check (which
+            // runs BEFORE the defer, so it catches a line that STARTS with history
+            // expansion even in multi-line input) is deliberate: a MID-line `!` on
+            // a later physical line is usually a heredoc/here-doc body byte, and
+            // scanning multi-line bodies for `!` reintroduces exactly the heredoc
+            // false positives the LF defer exists to avoid. A line that STARTS
+            // with `!!`/`^` is unambiguously history; a `!` buried in a later body
+            // line is not, so it defers to the LLM like the rest of the body.
+            if Self.hasHistoryExpansion(segment.text) {
+                return .needsManualApproval(reason: Self.historyExpansionReason)
+            }
             let words = Self.tokenizeWords(segment.text)
-            // Redirect (`>`/`>>`) to a raw block device, on any command.
-            if Self.redirectsToBlockDevice(words) {
+            // Redirect (`>`/`>>`) to a raw block device, on any command. Scans the
+            // raw segment text (quote-aware) so a `>` inside a quoted string is
+            // not mistaken for a real redirect operator.
+            if Self.redirectsToBlockDevice(segment.text) {
                 return .needsManualApproval(reason: "the command writes directly to a device")
             }
             guard let (cmd, args) = Self.effectiveCommand(words) else { continue }
@@ -214,7 +305,7 @@ final class TerminalHardRules {
         // (`find ~ -exec grep {} \;`, a read-only exec, defers).
         if cmd == "find",
            args.contains(where: Self.isCatastrophicTarget),
-           Self.findIsDestructive(args) {
+           Self.findIsDestructive(args, shellInterpreters: shellInterpreters) {
             return .needsManualApproval(
                 reason: "the command deletes or runs a destructive command across the filesystem root or home directory with find")
         }
@@ -224,35 +315,71 @@ final class TerminalHardRules {
     // A tokenized segment's effective command and arguments: leading `VAR=val`
     // env assignments and command modifiers (sudo/env/eval/`!`/...) skipped, so
     // `sudo rm -rf /`, `FOO=1 rm -rf /`, and `! rm -rf /` all surface `rm`.
+    // Option flags belonging to a modifier are skipped too, so `sudo -i rm -rf /`
+    // and `env -i rm -rf /` still surface `rm` rather than the flag `-i`. A
+    // VALUE-carrying option (`sudo -u root rm ...`) is NOT unwound: its value
+    // becomes the command, which isn't a catastrophic verb, so it defers to the
+    // LLM -- matching the best-effort note on `commandModifiers`.
     // Returns nil for an empty segment or a bare env-assignment (`FOO=bar`).
     static func effectiveCommand(_ words: [String]) -> (cmd: String, args: [String])? {
         var i = 0
+        var sawModifier = false
         while i < words.count {
             let w = words[i]
             if isEnvAssignment(w) { i += 1; continue }
             let base = baseCommandName(w.hasPrefix("\\") ? String(w.dropFirst()) : w)
-            if commandModifiers.contains(base) { i += 1; continue }
+            if commandModifiers.contains(base) { sawModifier = true; i += 1; continue }
+            // After a modifier, an option flag (`-i`, `-H`, `--login`, `--`) is the
+            // modifier's, not the command; skip it so the real command after the
+            // flags is found. Only after a modifier: a leading `-flag` with no
+            // modifier is a malformed line we leave alone.
+            if sawModifier && w.hasPrefix("-") && w.count > 1 { i += 1; continue }
             return (base, Array(words[(i + 1)...]))
         }
         return nil
     }
 
-    // True if any word writes to a raw block device via redirect (`> /dev/sda`,
-    // `>/dev/sda`, `2>/dev/sda`), on any command. Complements the dd `of=` check.
-    private static func redirectsToBlockDevice(_ words: [String]) -> Bool {
-        for (i, w) in words.enumerated() {
-            // Leading `&` (`&>`), fd number (`2>`), and `>`/`>>` are all redirect
-            // operator prefixes; what follows must be the device path.
-            if let r = w.range(of: #"^&?[0-9]*>>?"#, options: .regularExpression),
-               r.upperBound != w.startIndex,
-               isBlockDevicePath(String(w[r.upperBound...])) {
-                return true                      // ">/dev/sda", "&>/dev/sda", "2>/dev/sda"
+    // True if the segment writes to a raw block device via an UNQUOTED redirect
+    // (`> /dev/sda`, `>/dev/sda`, `2>/dev/sda`, `&>/dev/sda`, `>>/dev/sda`, or
+    // the space-free `cat x>/dev/sda`), on any command. Complements the dd `of=`
+    // check.
+    //
+    // Scans the RAW segment text tracking quote state rather than the
+    // quote-stripped words: tokenizeWords discards quoting, so a literal `>`
+    // inside a string (`echo "run cat foo >/dev/sda"`, `git commit -m "note >…"`)
+    // is indistinguishable from a real redirect operator once the words are
+    // built, producing a spurious approval prompt. A `>` inside single OR double
+    // quotes is a literal here and is skipped; only an unquoted operator counts.
+    private static func redirectsToBlockDevice(_ text: String) -> Bool {
+        let chars = Array(text)
+        var inSingle = false, inDouble = false, escaped = false
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            if inSingle { if c == "'" { inSingle = false }; i += 1; continue }
+            if escaped { escaped = false; i += 1; continue }
+            if c == "\\" { escaped = true; i += 1; continue }
+            if c == "\"" { inDouble.toggle(); i += 1; continue }
+            if inDouble { i += 1; continue }        // a `>` inside "" is literal
+            if c == "'" { inSingle = true; i += 1; continue }
+            guard c == ">" else { i += 1; continue }
+            // Unquoted redirect operator (any leading fd number or `&` was already
+            // passed over and is irrelevant). Consume the second `>` of `>>`, skip
+            // spaces, then read the target up to the next unquoted whitespace or
+            // operator, dropping quote characters around a quoted target.
+            var j = i + 1
+            if j < chars.count, chars[j] == ">" { j += 1 }
+            while j < chars.count, chars[j] == " " || chars[j] == "\t" { j += 1 }
+            var target = ""
+            reading: while j < chars.count {
+                switch chars[j] {
+                case " ", "\t", ">", "<", "|", ";", "&", "\n": break reading
+                case "\"", "'": j += 1                 // quoted target: drop quote
+                default: target.append(chars[j]); j += 1
+                }
             }
-            if w.range(of: #"^&?[0-9]*>>?$"#, options: .regularExpression) != nil,
-               w != "&",                          // a bare "&" is background, not a redirect
-               i + 1 < words.count, isBlockDevicePath(words[i + 1]) {
-                return true                      // ">" "/dev/sda", "&>" "/dev/sda"
-            }
+            if isBlockDevicePath(target) { return true }
+            i = j
         }
         return false
     }
@@ -271,13 +398,19 @@ final class TerminalHardRules {
     }
 
     // A `find` invocation is destructive if it deletes, or -execs a destructive
-    // command (rm/dd/...). `-exec grep`/`-exec cat` (read-only) is not.
-    private static func findIsDestructive(_ args: [String]) -> Bool {
+    // command (rm/dd/...) OR a shell interpreter (`find / -exec sh -c '...'` is
+    // the most common way to run arbitrary destructive work under find, and the
+    // shell's `-c` string is invisible to the classifier -- the same reason
+    // pipe-to-shell is caught). `-exec grep`/`-exec cat` (read-only) is not.
+    // `shellInterpreters` is passed in because it is the extensible instance set.
+    private static func findIsDestructive(_ args: [String],
+                                          shellInterpreters: Set<String>) -> Bool {
         if args.contains("-delete") { return true }
         for (i, a) in args.enumerated()
         where ["-exec", "-execdir", "-ok", "-okdir"].contains(a) {
-            if i + 1 < args.count,
-               destructiveExecCommands.contains(baseCommandName(args[i + 1])) {
+            guard i + 1 < args.count else { continue }
+            let target = baseCommandName(args[i + 1])
+            if destructiveExecCommands.contains(target) || shellInterpreters.contains(target) {
                 return true
             }
         }

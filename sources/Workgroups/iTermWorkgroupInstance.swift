@@ -414,6 +414,34 @@ final class iTermWorkgroupInstance: NSObject {
         })
     }
 
+    // Configs of every code-review-mode session in the workgroup.
+    private var codeReviewSessionConfigs: [iTermWorkgroupSessionConfig] {
+        return workgroup.sessions.filter { $0.mode == .codeReview }
+    }
+
+    // Run a code review on the workgroup's sole code-review session, if there
+    // is exactly one. Called by the main session's auto-request-review toggle
+    // when the main session goes idle. Returns true if a review was started.
+    // No-op (returns false) when there isn't exactly one review session or it
+    // isn't live, which mirrors the toggle's disabled state.
+    @discardableResult
+    func requestCodeReviewFromSoleReviewSession() -> Bool {
+        let reviews = codeReviewSessionConfigs
+        guard reviews.count == 1,
+              let session = liveSession(forConfigID: reviews[0].uniqueIdentifier) else {
+            return false
+        }
+        guard session.autoRequestCodeReview() else { return false }
+        // Switch the peer switcher to the code-review session so focus follows
+        // the active side within the shared pane. This only swaps the peer view
+        // in (visible when that tab is already frontmost); it deliberately does
+        // NOT order the window front, activate the app, or change the selected
+        // tab, so the auto-request doesn't yank the user's window/tab focus away
+        // from whatever they're doing.
+        session.revealAsPeerWithoutActivatingWindow()
+        return true
+    }
+
     // Tear down peers, terminate non-peer children, and release
     // references. Leaves the main session in a clean state so a later
     // enter() can install a fresh port — PTYSession.set(peerPort:)
@@ -605,13 +633,21 @@ final class iTermWorkgroupInstance: NSObject {
             : nil
         poller?.includeDiffStats = true
 
+        // Workgroup-wide code-review session count, used to enable the main
+        // session's auto-request-review toggle only when there's exactly one
+        // unambiguous review target.
+        let codeReviewSessionCount = workgroup.sessions.filter {
+            $0.mode == .codeReview
+        }.count
+
         let port = iTermWorkgroupPeerPort(
             peers: peers,
             peerConfigs: peerConfigs,
             activeSessionIdentifier: activeSessionIdentifier,
             leaderIdentifier: root.uniqueIdentifier,
             leaderScope: mainSession.genericScope,
-            gitPoller: poller)
+            gitPoller: poller,
+            codeReviewSessionCount: codeReviewSessionCount)
 
         mainSession.peerPort = port
 
@@ -971,6 +1007,14 @@ final class iTermWorkgroupInstance: NSObject {
     // launch. Safe to call repeatedly: firePendingDiffLaunch clears
     // the closure as it runs, so a session that already launched is
     // a no-op on subsequent calls.
+    //
+    // The launch is gated on the session being visible: a buried .diff
+    // peer's diff must not start until the user actually switches to it,
+    // otherwise the diff reflects the tree at whatever moment the poller
+    // first saw a change (e.g. the instant the Claude Code leader touched
+    // a file) rather than what's there when the peer is first shown. The
+    // visibility hooks (peer swap, tab select) fire the launch directly
+    // for the session that just became visible.
     private func fireDeferredDiffLaunches() {
         var sessions: [PTYSession] = peerPort.realizedPeerSessions
         for port in nestedPeerPorts {
@@ -979,7 +1023,8 @@ final class iTermWorkgroupInstance: NSObject {
         for entry in nonPeerEntriesByConfigID.values {
             sessions.append(entry.session)
         }
-        for session in sessions where session.hasPendingDiffLaunch {
+        for session in sessions
+        where session.hasPendingDiffLaunch && session.isVisibleForDeferredDiff {
             session.firePendingDiffLaunch()
         }
     }

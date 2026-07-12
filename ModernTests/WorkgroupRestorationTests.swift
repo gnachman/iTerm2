@@ -275,6 +275,85 @@ final class WorkgroupRestorationTests: WorkgroupEntryTestBase {
                        "An unrelated GUID is never reported as restoring")
     }
 
+    // MARK: - inhibit-relaunch decision
+
+    // The shared predicate that both restore paths (anchor and buried
+    // peer) key off. If this drifts the two paths diverge: one keeps its
+    // last output while the other spawns a stray shell.
+    func test_modeInhibitsRelaunch_codeReviewAndDiffOnly() {
+        XCTAssertTrue(iTermWorkgroupRestoration.modeInhibitsRelaunch(.codeReview))
+        XCTAssertTrue(iTermWorkgroupRestoration.modeInhibitsRelaunch(.diff))
+        XCTAssertFalse(iTermWorkgroupRestoration.modeInhibitsRelaunch(.regular))
+    }
+
+    private func anchorState(_ wg: iTermWorkgroup,
+                             anchorID: String,
+                             pending: Bool) -> [AnyHashable: Any] {
+        let K = iTermWorkgroupRestoration.Key.self
+        return [K.workgroupID: wg.uniqueIdentifier,
+                K.anchorID: anchorID,
+                K.anchorPending: pending]
+    }
+
+    // Classify against an in-memory workgroup via the injectable-model
+    // seam so these tests never touch iTermWorkgroupModel.instance (whose
+    // mutators persist to user defaults and post notifications).
+    private func inhibits(_ wg: iTermWorkgroup,
+                          anchorID: String,
+                          pending: Bool) -> Bool {
+        return iTermWorkgroupRestoration.shouldInhibitRelaunch(
+            forAnchorState: anchorState(wg, anchorID: anchorID, pending: pending),
+            workgroupForID: { $0 == wg.uniqueIdentifier ? wg : nil })
+    }
+
+    // A code-review/diff anchor that had a live program at save time (not
+    // showing its overlay) must inhibit relaunch so restore leaves the
+    // last output on screen instead of spawning a stray shell.
+    func test_shouldInhibitRelaunch_codeReviewAnchorNotPending() {
+        let root = WGFix.makeRoot()
+        let review = WGFix.makePeer(parentID: root.uniqueIdentifier,
+                                    command: "claude", mode: .codeReview)
+        let wg = WGFix.wrap(name: "wgInhibitCR", sessions: [root, review])
+        XCTAssertTrue(inhibits(wg, anchorID: review.uniqueIdentifier, pending: false))
+    }
+
+    func test_shouldInhibitRelaunch_diffAnchorNotPending() {
+        let root = WGFix.makeRoot()
+        let diff = WGFix.makePeer(parentID: root.uniqueIdentifier,
+                                  command: "git diff", mode: .diff)
+        let wg = WGFix.wrap(name: "wgInhibitDiff", sessions: [root, diff])
+        XCTAssertTrue(inhibits(wg, anchorID: diff.uniqueIdentifier, pending: false))
+    }
+
+    // A pending anchor (overlay was showing at save time) must NOT inhibit:
+    // that path relaunches the shell and re-presents the overlay.
+    func test_shouldInhibitRelaunch_pendingAnchorDoesNotInhibit() {
+        let root = WGFix.makeRoot()
+        let review = WGFix.makePeer(parentID: root.uniqueIdentifier,
+                                    command: "claude", mode: .codeReview)
+        let wg = WGFix.wrap(name: "wgInhibitPending", sessions: [root, review])
+        XCTAssertFalse(inhibits(wg, anchorID: review.uniqueIdentifier, pending: true))
+    }
+
+    // A regular-mode anchor keeps the normal relaunch behavior.
+    func test_shouldInhibitRelaunch_regularAnchorDoesNotInhibit() {
+        let root = WGFix.makeRoot()
+        let wg = WGFix.wrap(name: "wgInhibitRegular", sessions: [root])
+        XCTAssertFalse(inhibits(wg, anchorID: root.uniqueIdentifier, pending: false))
+    }
+
+    // A descriptor whose workgroup config is gone can't be classified, so
+    // it must not inhibit (degrade to normal restore).
+    func test_shouldInhibitRelaunch_unknownWorkgroupDoesNotInhibit() {
+        let K = iTermWorkgroupRestoration.Key.self
+        let state: [AnyHashable: Any] = [K.workgroupID: "does-not-exist",
+                                         K.anchorID: "nobody",
+                                         K.anchorPending: false]
+        XCTAssertFalse(iTermWorkgroupRestoration.shouldInhibitRelaunch(
+            forAnchorState: state,
+            workgroupForID: { _ in nil }))
+    }
+
     // MARK: - encode recursion guard
 
     // encodeState embeds each OTHER member's arrangement; those embedded

@@ -191,10 +191,37 @@ Major New Features:
   prompt and is passed to Claude Code at
   launch.
 
+- Code Review peers have an Auto-Send
+  Clippings When Idle toolbar toggle. When
+  on, the review session’s clippings are
+  pasted into the workgroup’s main session
+  each time the review finishes. The
+  Claude Code workgroup’s review peer
+  includes it by default; the toggle itself
+  starts off.
+
+- The main session has a companion
+  Auto-Request Review When Idle toolbar
+  toggle. When on, a code review is
+  requested from the workgroup’s sole
+  code-review session each time the main
+  session goes idle. It is disabled unless
+  the workgroup has exactly one code-review
+  session. The Claude Code workgroup’s main
+  session includes it by default; the toggle
+  starts off.
+
 - Switching to a Code Review peer that is
   still showing its prompt overlay now
   focuses the prompt text field so you can
   start typing immediately.
+
+- A Diff session now waits to run its diff
+  until you first switch to it, so the diff
+  reflects your changes at that moment
+  instead of from whenever they first began.
+  It is not re-run when you switch away and
+  back.
 
 - Workgroups now survive a restart. When
   the app relaunches (for example after a
@@ -676,6 +703,27 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Session Status tool: with “Merge workgroup
+  statuses” on, a merged row now shows the status
+  of the peer you’re actually looking at (the
+  visible peer of the switcher) instead of
+  whichever peer changed most recently. A busy
+  code-review peer holding a steady “working”
+  status no longer loses the row to a sibling
+  chat peer the moment it goes idle.
+- Code review and diff workgroup sessions now
+  restore showing their last output instead of
+  launching a stray replacement shell when the
+  original program is gone. The code review prompt
+  panel reappears only if it was open when you
+  quit, and its reload button remembers the prompt
+  you last submitted.
+- Session restoration no longer breaks when iTerm2
+  receives a signal (such as ^C when it was
+  started from a terminal): the background process
+  server is now insulated from signals sent to
+  iTerm2, so your running programs survive to be
+  reattached on the next launch.
 - AI chat: fixed a race where a streamed tool
   call could be dispatched with empty arguments
   when the response completed before its argument
@@ -709,6 +757,14 @@ Bug Fixes:
   or when a notification is sent. The paired
   identity is now read once at launch, while you
   are present, instead of mid-connection.
+- When a companion device is paired, your AI
+  API keys are now loaded at launch, and when a
+  phone pairs, so a query sent from your phone
+  while you are away never has to prompt for
+  keychain access.
+- Opening Settings no longer reads the keychain
+  or prompts for access. The AI API key row no
+  longer shows an “N of 4 configured” count.
 - Restoring a window with an open inline AI chat
   panel now reopens the panel on the chat it was
   showing, instead of widening the terminal.

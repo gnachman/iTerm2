@@ -956,9 +956,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     IBOutlet NSButton *_openAIAPIKey;
     IBOutlet NSTextField *_openAIAPIKeyLabel;
-    // Optional status field ("N of M configured") laid out in the XIB next to
-    // the Manage button. Nil until wired; updateAIAPIKeysStatus tolerates that.
-    IBOutlet NSTextField *_aiAPIKeysStatus;
     NSMutableArray<NSSecureTextField *> *_aiAPIKeySheetFields;
 
     IBOutlet NSPopUpButton *_promptSelector;
@@ -1077,7 +1074,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _awoken = YES;
 
     [self setupCustomHeadersSection];
-    [self setupAIAPIKeysRow];
     [self setupDefaultAIModelSelector];
     PreferenceInfo *info;
 
@@ -2219,11 +2215,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [self updateAIEnabled];
 }
 
-- (void)viewDidAppear {
-    DLog(@"viewDidAppear");
-    [self updateAIAPIKeysStatus];
-}
-
 - (NSArray<NSNumber *> *)aiAPIKeyProviderVendors {
     return @[
         @(iTermAIVendorOpenAI),
@@ -2250,78 +2241,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
 }
 
-- (BOOL)aiAPIKeyStringIsConfigured:(NSString *)string {
-    return [[string stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] length] > 0;
-}
-
-- (BOOL)aiAPIKeyIsConfiguredForVendor:(iTermAIVendor)vendor {
-    // Read-only presence check: does not migrate or write, unlike apiKeyForVendor:.
-    return [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
-}
-
-- (void)setupAIAPIKeysRow {
-    // The button title ("Manage…"), the "API Keys:" label, and the status
-    // field's placement all live in the XIB. Here we only fill in the dynamic
-    // status text.
-    [self updateAIAPIKeysStatus];
-}
-
-- (void)updateAIAPIKeysStatus {
-    NSArray<NSNumber *> *vendors = [self aiAPIKeyProviderVendors];
-    // Keychain reads can block and can prompt, so do them off the main thread
-    // and hop back to update the label. This keeps merely selecting the General
-    // tab from hitching the UI or synchronously touching the keychain.
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        NSMutableArray<NSNumber *> *configuredVendors = [NSMutableArray array];
-        for (NSNumber *number in vendors) {
-            iTermAIVendor vendor = (iTermAIVendor)number.unsignedIntegerValue;
-            if ([AITermControllerObjC apiKeyIsConfiguredForVendor:vendor]) {
-                [configuredVendors addObject:number];
-            }
-        }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf updateAIAPIKeysStatusLabelForConfiguredVendors:configuredVendors
-                                                        totalVendors:vendors.count];
-        });
-    });
-}
-
-- (void)updateAIAPIKeysStatusLabelForConfiguredVendors:(NSArray<NSNumber *> *)configuredVendors
-                                          totalVendors:(NSUInteger)totalVendors {
-    NSMutableArray<NSString *> *configured = [NSMutableArray array];
-    for (NSNumber *number in configuredVendors) {
-        [configured addObject:[self aiAPIKeyProviderNameForVendor:(iTermAIVendor)number.unsignedIntegerValue]];
-    }
-
-    switch (configured.count) {
-        case 0:
-            _aiAPIKeysStatus.stringValue = @"No provider keys configured";
-            break;
-        case 1:
-            _aiAPIKeysStatus.stringValue =
-                [NSString stringWithFormat:@"%@ configured", configured[0]];
-            break;
-        case 2:
-            _aiAPIKeysStatus.stringValue =
-                [NSString stringWithFormat:@"%@ configured",
-                 [configured componentsJoinedByString:@", "]];
-            break;
-        default:
-            _aiAPIKeysStatus.stringValue =
-                [NSString stringWithFormat:@"%lu of %lu configured",
-                 (unsigned long)configured.count,
-                 (unsigned long)totalVendors];
-            break;
-    }
-}
-
 - (void)updateAIEnabled {
     _enableAI.enabled = _pluginOK;
 
     const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
     _openAIAPIKey.enabled = allowed;
-    _aiAPIKeysStatus.enabled = allowed;
     _aiPrompt.editable = allowed;
     _aiModel.enabled = allowed;
     _aiTokenLimit.enabled = allowed;
@@ -2549,7 +2473,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                     iTermAIVendor vendor = (iTermAIVendor)vendors[i].unsignedIntegerValue;
                     [AITermControllerObjC setAPIKey:newValue forVendor:vendor];
                 }
-                [self updateAIAPIKeysStatus];
                 break;
             }
             case NSAlertSecondButtonReturn: {

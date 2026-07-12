@@ -89,7 +89,7 @@ enum WorkgroupPresets {
             profileGUID: nil,
             command: "",
             urlString: "",
-            toolbarItems: [.modeSwitcher, .gitStatus],
+            toolbarItems: [.modeSwitcher, .gitStatus, .autoRequestReviewWhenIdle],
             displayName: "Chat")
 
         let diff = iTermWorkgroupSessionConfig(
@@ -120,7 +120,8 @@ enum WorkgroupPresets {
             command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(codeReviewSystemPromptFile)' --settings '\\(iterm2.appBundlePath)/Contents/Resources/code-review-settings.txt'",
             urlString: "",
             toolbarItems: [.modeSwitcher,
-                           .reload(WorkgroupToolbarShortcut.reloadDefault)],
+                           .reload(WorkgroupToolbarShortcut.reloadDefault),
+                           .autoSendClippingsWhenIdle],
             displayName: "Code Review",
             mode: .codeReview)
 
