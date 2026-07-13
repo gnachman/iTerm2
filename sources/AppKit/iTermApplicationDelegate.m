@@ -1497,6 +1497,10 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
     // If the pairing predates the push relay host move, ask the user to re-pair.
     [[iTermCompanionPairingController shared] promptToRepairAfterRelayMoveIfNeeded];
+    // If the pairing is half-present (pid persisted but keychain credentials
+    // missing, e.g. after a rebuild/reinstall), tell the user to re-pair instead
+    // of failing every relay park silently.
+    [[iTermCompanionPairingController shared] promptToRepairIfPairingIncompleteIfNeeded];
     // Surface paired-device presence (menu bar status item + connect toast).
     [[iTermCompanionPresenceController shared] start];
     // Give the Companion Device Settings menu item its glyph and hide it when

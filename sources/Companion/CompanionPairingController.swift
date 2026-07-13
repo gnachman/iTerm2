@@ -178,6 +178,72 @@ final class CompanionPairingController: NSObject {
         }
     }
 
+    /// Whether the persisted pairing has everything a reconnect actually needs.
+    /// `pairedPID` (UserDefaults) only says "a device is paired" and is what makes
+    /// the mac try to park. The credentials that authenticate the reconnect live in
+    /// the keychain and can be lost INDEPENDENTLY of the pid: a code-signature change
+    /// after rebuilding/reinstalling denies the login-keychain items, a `-suite`
+    /// mismatch reads a different account, or a pairing committed the pid but not
+    /// (yet) every keychain write. In that half-paired state the relay refuses the
+    /// park forever ("signature required"), so we detect it and tell the user to
+    /// re-pair rather than spin.
+    enum PairingCompleteness: Equatable {
+        case unpaired
+        case complete
+        case incomplete(missing: [String])
+    }
+
+    func pairingCompleteness() -> PairingCompleteness {
+        guard hasPairedDevice else { return .unpaired }
+        var missing: [String] = []
+        if !CompanionMacIdentity.hasKeyPair() { missing.append("the Mac identity key") }
+        if CompanionMacIdentity.pairedPhoneStaticPublicKey() == nil { missing.append("the paired phone key") }
+        // The room secret signs the relay park; a local-network-only pairing needs none.
+        if Self.configuredRelayOrigin() != nil, CompanionMacIdentity.pairedRoomSecret() == nil {
+            missing.append("the relay room secret")
+        }
+        return missing.isEmpty ? .complete : .incomplete(missing: missing)
+    }
+
+    /// Log exactly which pairing pieces are present vs absent, so a half-paired
+    /// state is diagnosable at a glance (pid in UserDefaults; the rest in keychain).
+    func logPairingState(context: String) {
+        RLog("Companion pairing state (\(context)): pairedPID=\(pairedPID ?? "nil") "
+            + "identityKey=\(CompanionMacIdentity.hasKeyPair()) "
+            + "phoneStatic=\(CompanionMacIdentity.pairedPhoneStaticPublicKey() != nil) "
+            + "roomSecret=\(CompanionMacIdentity.pairedRoomSecret() != nil) "
+            + "pushSecret=\(CompanionMacIdentity.pairedPushSecret() != nil) "
+            + "relayConfigured=\(Self.configuredRelayOrigin() != nil)")
+    }
+
+    /// Called once at app launch (alongside promptToRepairAfterRelayMoveIfNeeded).
+    /// If the device is marked paired but the credentials a reconnect needs are
+    /// missing, the pairing can never authenticate: tell the user to re-pair (and
+    /// open settings/wizard on accept) instead of silently failing every park.
+    @objc func promptToRepairIfPairingIncompleteIfNeeded() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.logPairingState(context: "launch")
+            guard Self.gate() == .allowed,
+                  case .incomplete(let missing) = self.pairingCompleteness() else {
+                return
+            }
+            RLog("Companion pairing incomplete at launch (missing: \(missing.joined(separator: ", "))); prompting to re-pair")
+            let alert = NSAlert()
+            alert.messageText = "Re-pair Your Companion Device"
+            alert.informativeText =
+                "Your paired iPhone can’t connect because some pairing information "
+                + "stored on this Mac is missing (\(missing.joined(separator: ", "))). "
+                + "This can happen after reinstalling or rebuilding iTerm2, or after a "
+                + "keychain reset. Re-pair to fix it."
+            alert.addButton(withTitle: "Re-pair…")
+            alert.addButton(withTitle: "Later")
+            if alert.runModal() == .alertFirstButtonReturn {
+                CompanionOnboardingRouter.openSettingsOrWizard()
+            }
+        }
+    }
+
     /// The bridge classified its connection on the first request. solicited ==
     /// valid push nonce (the mac's own fetch); otherwise warn.
     private func connectionDidClassify(_ connection: CompanionHostBridge, solicited: Bool) {
@@ -457,6 +523,17 @@ final class CompanionPairingController: NSObject {
                      + "(acceptTaskNil=\(acceptTask == nil) bridgeNil=\(bridge == nil) "
                      + "regenPending=\(freshPairingRegen.isPending) "
                      + "hasPID=\(desiredListeningPID != nil))")
+            return
+        }
+        // A persisted pid whose keychain credentials are missing can never
+        // authenticate a reconnect: the relay just refuses the park forever
+        // ("signature required"). Don't spin - the launch prompt (and settings) tell
+        // the user to re-pair. Fresh pairing is exempt (it legitimately parks
+        // open-mode before any credential exists; pairedPID is still nil then, so
+        // pairingCompleteness would report .unpaired anyway - the flag is belt and
+        // suspenders for a re-pair over an existing pairing).
+        if !freshPairingActive, case .incomplete(let missing) = pairingCompleteness() {
+            relayLog("resume: SKIP - pairing incomplete (missing: \(missing.joined(separator: ", "))); re-pair required, not parking")
             return
         }
         do {
@@ -857,6 +934,16 @@ final class CompanionPairingController: NSObject {
         let roomName = relayOrigin == nil ? "n/a"
             : RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
         relayLog("startListening pid=\(pairingID) relayOrigin=\(relayOrigin ?? "nil") room=\(roomName)")
+        if relayOrigin != nil {
+            // The park is signed only if we can read the couriered room secret from
+            // the keychain. A rebuilt app whose code signature differs from the writer
+            // is denied that item (see keychainLoad logging), so the secret reads as
+            // nil and we park open-mode -- which the relay refuses with "signature
+            // required" once the room's mac verifier is registered. Re-pair (or grant
+            // the keychain prompt) to recover.
+            let hasSecret = CompanionMacIdentity.pairedRoomSecret() != nil
+            relayLog("startListening park proof: room secret \(hasSecret ? "present -> SIGNED park" : "MISSING -> open-mode park (relay will refuse \"signature required\" if the verifier is registered; re-pair or grant the keychain prompt)")")
+        }
         // Record the attempt for the settings "last try…" timer.
         lastRelayAttempt = Date()
         notifyPresenceChanged()

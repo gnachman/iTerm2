@@ -37,6 +37,13 @@ final class CompanionMacIdentity: NSObject {
         return generated
     }
 
+    /// Whether a persisted identity key exists, WITHOUT generating one (unlike
+    /// keyPair(), which mints and stores one on a miss). For a pairing-completeness
+    /// check that must not create new key material for an unpaired / half-paired mac.
+    static func hasKeyPair() -> Bool {
+        load(account: account) != nil
+    }
+
     /// Destroy the stored identity (used when unpairing); the next pairing
     /// generates a fresh keypair.
     static func deleteKeyPair() {
@@ -165,10 +172,31 @@ final class CompanionMacIdentity: NSObject {
         ]
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
-        guard status == errSecSuccess, let data = item as? Data, data.count == 32 else {
-            return nil
+        if status == errSecSuccess, let data = item as? Data, data.count == 32 {
+            return data
         }
-        return data
+        if status == errSecItemNotFound {
+            // Genuinely absent (never stored under this account, or deleted). Normal
+            // for an unpaired item; for the room secret it means the mac parks
+            // open-mode and the relay refuses. RLog (not DLog) so the absent-vs-denied
+            // distinction is captured even with debug logging off. Note the account is
+            // suite-namespaced: `make run` launches with `-suite <dir>`, so a pairing
+            // stored by a differently-suited (or released) build lives under a
+            // different account and reads as not-found here.
+            RLog("Companion keychain: '\(suitedAccount(account))' not found (absent, not access-denied)")
+        } else if status == errSecSuccess {
+            RLog("Companion keychain: '\(suitedAccount(account))' present but malformed (\((item as? Data)?.count ?? -1) bytes)")
+        } else {
+            // A real error (errSecAuthFailed / errSecInteractionNotAllowed / a denied
+            // confirmation prompt): the item likely EXISTS but this binary's code
+            // signature differs from the writer's, so the login keychain refuses it.
+            // For the relay room secret this makes the mac park unsigned and the relay
+            // refuse admission ("signature required"). Re-pair (or grant the keychain
+            // prompt) to recover. RLog so it is captured without debug logging on.
+            let message = (SecCopyErrorMessageString(status, nil) as String?) ?? "unknown"
+            RLog("Companion keychain: FAILED to read '\(suitedAccount(account))': OSStatus \(status) (\(message)). A code-signature mismatch (e.g. a rebuilt app) denies access; this breaks relay park signing.")
+        }
+        return nil
     }
 
     private static func keychainStore(_ key: Data, account: String) throws {
