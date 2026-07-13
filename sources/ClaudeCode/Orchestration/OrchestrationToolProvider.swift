@@ -210,8 +210,17 @@ final class OrchestrationToolProvider: ToolProvider {
             case .getUserIdentity(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getCurrentDirectory(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .setClipboard(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
-            case .insertTextAtCursor(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
-            case .deleteCurrentLine(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
+            case .insertTextAtCursor, .deleteCurrentLine:
+                // NOT offered in orchestration mode. These .typeForYou tools
+                // write straight to the PTY with no classification (unlike the
+                // gated send_text and execute_command paths), and their payload
+                // can submit an arbitrary command (insert_text_at_cursor with a
+                // CR, delete_current_line via Ctrl-U), which would bypass the
+                // safety gate entirely. send_text (screen/shell-aware gated)
+                // already covers typing and control keys, so these are
+                // redundant here as well. (handleSessionToolCall also rejects
+                // them defensively.)
+                break
             case .getManPage(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .createFile(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .searchBrowser(let p): registerSessionTool(content: content, prototype: p, on: &conversation)

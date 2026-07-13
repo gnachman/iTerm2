@@ -46,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
                                 width:(size_t)width
                   allowOtherMarkStyle:(BOOL)allowOtherMarkStyle
                     timestampsEnabled:(BOOL)timestampsEnabled
+                 buildContentIdentity:(BOOL)buildContentIdentity
                                   row:(int)i
               totalScrollbackOverflow:(long long)totalScrollbackOverflow {
     self = [super init];
@@ -53,7 +54,17 @@ NS_ASSUME_NONNULL_BEGIN
         if (timestampsEnabled) {
             _date = [textView drawingHelperTimestampForLine:i];
         }
-        _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
+        // Only the per-row output cache consumes the content identity, and building
+        // it can walk the line-buffer block index for scrollback rows. Skip it when
+        // the cache is disabled (the default): generation 0 is the uncacheable
+        // sentinel, so a zeroed identity is a correct no-op. When enabled, fetch the
+        // row and its identity in a single pass so the block index is walked once.
+        if (buildContentIdentity) {
+            _screenCharLine = [[screen screenCharArrayForLine:i
+                                              contentIdentity:&_contentIdentity] paddedOrTruncatedToLength:width];
+        } else {
+            _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
+        }
 #if DEBUG
         assert(_screenCharLine != nil);
 #endif
@@ -145,6 +156,7 @@ NS_ASSUME_NONNULL_BEGIN
     long long _totalScrollbackOverflow;
     BOOL _allowOtherMarkStyle;
     BOOL _timestampsEnabled;
+    BOOL _cacheEnabled;
 }
 
 - (instancetype)initWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -161,6 +173,7 @@ NS_ASSUME_NONNULL_BEGIN
         _totalScrollbackOverflow = [screen totalScrollbackOverflow];
         _allowOtherMarkStyle = [iTermAdvancedSettingsModel showYellowMarkForJobStoppedBySignal];
         _timestampsEnabled = configuration->_timestampsEnabled;
+        _cacheEnabled = [iTermAdvancedSettingsModel metalRowOutputCacheEnabled];
     }
     return self;
 }
@@ -172,6 +185,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                width:_width
                                                  allowOtherMarkStyle:_allowOtherMarkStyle
                                                    timestampsEnabled:_timestampsEnabled
+                                                buildContentIdentity:_cacheEnabled
                                                                  row:line
                                              totalScrollbackOverflow:_totalScrollbackOverflow];
 }

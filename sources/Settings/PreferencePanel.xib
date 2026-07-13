@@ -1293,7 +1293,6 @@ CA
                 <outlet property="_advancedGPU" destination="2nT-Ny-kwd" id="0Md-l7-fQI"/>
                 <outlet property="_advancedGPUPrefsButton" destination="2nT-Ny-kwd" id="O9q-ng-5kk"/>
                 <outlet property="_aiAPI" destination="kbZ-hI-Nk6" id="Zng-eM-6yk"/>
-                <outlet property="_aiAPIKeysStatus" destination="Myt-Vp-Jmv" id="30M-0z-jHT"/>
                 <outlet property="_aiCompletions" destination="ont-f3-jdH" id="GsL-FZ-Ddx"/>
                 <outlet property="_aiCustomHeadersAddRemove" destination="LDZ-op-tPZ" id="4cT-cz-pNL"/>
                 <outlet property="_aiCustomHeadersEnabled" destination="WaV-I3-TdK" id="VZV-ho-hLp"/>
@@ -7248,15 +7247,6 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                                 <action selector="changeAPIKey:" target="9Se-ld-UJa" id="Hx4-Uk-llL"/>
                                                                             </connections>
                                                                         </button>
-                                                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Myt-Vp-Jmv">
-                                                                            <rect key="frame" x="213" y="6" width="398" height="14"/>
-                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" controlSize="small" lineBreakMode="clipping" title="API keys status" id="mdA-9B-iui">
-                                                                                <font key="font" metaFont="smallSystem"/>
-                                                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                            </textFieldCell>
-                                                                        </textField>
                                                                     </subviews>
                                                                 </customView>
                                                                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iHH-Wt-Fb5">

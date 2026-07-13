@@ -400,7 +400,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                 if (rootStartTime) {
                     _ttyRdevByPidWQ[root] = @[rdevNumber, rootStartTime];
                 }
-                RLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
+                DLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
             } else {
                 // Don't keep a stale entry; re-derive next update in case the tty
                 // becomes readable later.
@@ -468,6 +468,9 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                 }
             }];
         });
+        // Computing the ancestries above records resolved process names in the name
+        // cache; drop entries for pids that are no longer alive so it stays bounded.
+        [iTermProcessNameCache.shared pruneToLivePids:collection.processIDs];
         [self postForegroundJobAncestorChanges:ancestorChanges];
     }
 }

@@ -55,7 +55,7 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             }
         } catch {
             logFailure("send", error)
-            throw error
+            throw mapQuotaClose(error)
         }
     }
 
@@ -65,7 +65,7 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             message = try await task.receive()
         } catch {
             logFailure("receive", error)
-            throw error
+            throw mapQuotaClose(error)
         }
         switch message {
         case .string(let s): return .text(s)
@@ -86,6 +86,20 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
         let ns = error as NSError
         CompanionLog.log("Relay WS \(op) failed: closeCode=\(code) reason=\(reason) "
             + "error=\(ns.domain)#\(ns.code) \(ns.localizedDescription)")
+    }
+
+    /// The relay closes the room with WebSocket 1008 + "daily quota exceeded" when
+    /// it hits the daily byte quota. Surface that as a distinct, non-transient
+    /// error so the reconnect logic backs off instead of hammering an exhausted
+    /// quota. A bare 1008 is NOT enough to match: the relay also uses 1008 for the
+    /// transient "frame rate exceeded" per-second limiter and for "bad hello", so
+    /// key off the reason text. Any other close falls through to the original error.
+    private func mapQuotaClose(_ fallback: Error) -> Error {
+        guard task.closeCode.rawValue == 1008 else { return fallback }
+        let reason = task.closeReason.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        return reason.range(of: "daily quota", options: .caseInsensitive) != nil
+            ? TransportError.quotaExceeded
+            : fallback
     }
 
     func sendPing() async -> Bool { await task.sendPingAsync() }

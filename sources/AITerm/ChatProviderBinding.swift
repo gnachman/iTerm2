@@ -70,14 +70,15 @@ enum ChatProviderBinding {
         return .reject(reason: "This chat uses “\(bound)”, and “\(turn)” belongs to a different AI provider. A chat cannot change providers once the conversation has started; start a new chat to use “\(turn)”.")
     }
 
-    /// Resolve a model name to its vendor the way request routing does: the
-    /// built-in catalog first, then manually configured models, then the
-    /// name-based heuristic for retired models.
+    /// Resolve a model name to its vendor the way request routing does:
+    /// manually configured models first (a manual config wins over a built-in
+    /// that shares its name), then the built-in catalog, then the name-based
+    /// heuristic for retired models.
     static func vendor(forModelName name: String) -> iTermAIVendor? {
-        if let vendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
+        if let vendor = LLMMetadata.manualModels().first(where: { $0.name == name })?.vendor {
             return vendor
         }
-        if let vendor = LLMMetadata.manualModels().first(where: { $0.name == name })?.vendor {
+        if let vendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
             return vendor
         }
         return LLMMetadata.vendor(forModelName: name)

@@ -407,13 +407,14 @@ class ChatAgent {
     }
 
     /// Resolve a turn's model name the same way request routing does
-    /// (AIConversation.complete: built-in catalog, then manual models). nil
-    /// for an unknown or absent name; the caller falls back to the global
+    /// (AIConversation.complete: manual models first, then the built-in
+    /// catalog, so a manual config wins over a built-in that shares its name).
+    /// nil for an unknown or absent name; the caller falls back to the global
     /// default, keeping capability gating and routing in agreement.
     static func resolvedModel(named name: String?) -> AIMetadata.Model? {
         guard let name else { return nil }
-        return AIMetadata.instance.models.first { $0.name == name }
-            ?? LLMMetadata.manualModels().first { $0.name == name }
+        return LLMMetadata.manualModels().first { $0.name == name }
+            ?? AIMetadata.instance.models.first { $0.name == name }
     }
 
     /// Hosted-tool enablement for a turn, pure over the effective model's
@@ -1145,7 +1146,9 @@ extension ChatAgent {
                                   completion: @escaping (Result<String, Error>) throws -> ()) throws {
         if remoteCommand.needsSafetyCheck {
             Task { @MainActor in
-                let safe = await remoteCommand.isSafe(force: mode == .orchestration)
+                let transcript = SafetyTranscript.forChat(chatID)
+                let safe = await remoteCommand.isSafe(force: mode == .orchestration,
+                                                      transcript: transcript)
                 do {
                     try reallyRunCommand(remoteCommand,
                                          responseID,

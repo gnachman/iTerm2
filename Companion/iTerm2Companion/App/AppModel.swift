@@ -132,33 +132,164 @@ final class AppModel {
         case create
         case conversation(chatID: String)
         case settings
-        case session(guid: String, title: String)
+        // originatingChatID is the chat the user tapped an @-mention in to reach
+        // this session, if any; nil when reached from the session list or a
+        // workgroup. The session view's compose overlay sends into that chat
+        // (rather than a fresh session-bound one) and a reply notification pops
+        // back to it.
+        case session(guid: String, title: String, originatingChatID: String?)
         case workgroup(id: String, title: String)
+
+        /// The chat id if this is a conversation entry, else nil. One definition
+        /// so every "extract the conversation from a Destination" site stays in
+        /// lockstep.
+        var conversationID: String? {
+            if case .conversation(let id) = self { return id }
+            return nil
+        }
     }
 
     /// The paired UI's top-level modes (the tab bar).
-    enum AppTab: Hashable {
+    enum AppTab: String, Hashable {
         case chats
         case sessions
     }
 
     var phase: Phase = .launch
-    var selectedTab: AppTab = .chats
+    var selectedTab: AppTab = .chats {
+        didSet {
+            guard oldValue != selectedTab else { return }
+            // A TabView keeps both tabs' bars mounted and does NOT fire the hidden
+            // tab's onDisappear, so a dictation started on the leaving tab would
+            // otherwise keep the mic recording. The controller cancels it if its
+            // owner is no longer on the visible tab (covering a start still mid-
+            // await, whose post-await re-check then bails).
+            dictation.tabChanged(to: selectedTab)
+            // A tab switch is NOT a user-initiated open of the now-visible chat, so
+            // its cache-backed refresh failures don't count toward the escalate-to-
+            // red streak (tab-switch churn on a flaky link shouldn't look permanent).
+            syncOpenConversationToActiveTab(userInitiated: false)
+        }
+    }
+
+    /// Point the single shared open-conversation state at the conversation
+    /// VISIBLE on the now-active tab (its stack's last conversation). A
+    /// conversation can be mounted on both tabs at once, and openChatID/messages
+    /// are shared, so on tab switch we resync to the visible one.
+    /// conversationDidAppear is a no-op when it's already open.
+    ///
+    /// If the active tab holds NO conversation, we DON'T clear openChatID: the
+    /// conversation is still mounted (just hidden on the other tab), so leaving
+    /// it open keeps its live deliveries flowing into `messages` and avoids
+    /// wiping+refetching (an empty flash) every time the user rounds-trips
+    /// through a conversation-free tab. A genuine pop clears it via
+    /// conversationWasPopped instead.
+    private func syncOpenConversationToActiveTab(userInitiated: Bool) {
+        let ids = activePath.map(\.conversationID)
+        if let active = SessionNavOpen.activeConversationID(in: ids) {
+            conversationDidAppear(chatID: active, userInitiated: userInitiated)
+        }
+    }
+
+    /// Detach the shared open-conversation display state without unsubscribing
+    /// (the conversation may still be mounted on the other tab). Subscription
+    /// teardown is handled separately by conversationWasPopped/the watch.
+    private func clearOpenConversationDisplay() {
+        guard openChatID != nil else { return }
+        openChatID = nil
+        openChatWasDeleted = false
+        resetRefreshFailureState()
+        messages = []
+        isLoadingConversation = false
+    }
+
+    /// Reset the BANNER state (soft flag + escalated error) as one unit. Does NOT
+    /// touch refreshFailuresByChat: the per-chat failure count must survive an
+    /// open/close of the same chat so a persistently-failing load can escalate.
+    private func resetRefreshFailureState() {
+        conversationRefreshFailed = false
+        conversationRefreshError = nil
+    }
     /// The Sessions tab's navigation stack (the browser and what it pushes).
-    var sessionsPath: [Destination] = []
+    /// A conversation can be pushed here too (from a live session view's reply
+    /// notification), so it also tears down the subscription when popped.
+    var sessionsPath: [Destination] = [] {
+        didSet {
+            conversationTeardownIfPopped(old: oldValue, new: sessionsPath, otherStack: navigationPath)
+            // Resync the shared open-conversation state after any change to the
+            // ACTIVE tab's stack (not just tab switches), so popping a
+            // dual-mounted conversation off the visible tab doesn't leave
+            // openChatID/messages stale.
+            // A stack change (the user pushed/popped a conversation) IS a user open
+            // of the now-visible chat, so its load failures may escalate the banner.
+            if selectedTab == .sessions { syncOpenConversationToActiveTab(userInitiated: true) }
+        }
+    }
     /// The Chats tab's navigation stack.
     var navigationPath: [Destination] = [] {
         didSet {
-            // Swipe-back and the back button mutate the path directly; when
-            // the conversation gets popped, tear down its subscription.
-            let hadConversation = oldValue.contains { if case .conversation = $0 { return true } else { return false } }
-            let hasConversation = navigationPath.contains { if case .conversation = $0 { return true } else { return false } }
-            if hadConversation && !hasConversation {
-                didLeaveConversation()
-            }
+            conversationTeardownIfPopped(old: oldValue, new: navigationPath, otherStack: sessionsPath)
+            if selectedTab == .chats { syncOpenConversationToActiveTab(userInitiated: true) }
         }
     }
+
+    /// Swipe-back and the back button mutate a path directly; when a conversation
+    /// leaves it, tear down that conversation's shared open state/subscription.
+    /// open-conversation state (openChatID/messages) and the Mac-side
+    /// subscription are a single shared resource, and a chat can be mounted on
+    /// both tabs at once, so a chat is torn down only once its LAST mount is gone
+    /// across BOTH stacks (SessionNavTeardown, unit-tested) - never just because
+    /// one stack lost it.
+    private func conversationTeardownIfPopped(old: [Destination],
+                                              new: [Destination],
+                                              otherStack: [Destination]) {
+        let gone = SessionNavTeardown.fullyRemoved(before: conversationIDs(in: old),
+                                                   after: conversationIDs(in: new),
+                                                   otherStack: conversationIDs(in: otherStack))
+        for chatID in gone {
+            conversationWasPopped(chatID)
+        }
+    }
+
+    private func conversationIDs(in path: [Destination]) -> Set<String> {
+        Set(path.compactMap(\.conversationID))
+    }
+
+    /// Every conversation mounted somewhere (either tab's stack). One definition
+    /// of "mounted anywhere".
+    private var mountedConversationIDs: Set<String> {
+        conversationIDs(in: navigationPath).union(conversationIDs(in: sessionsPath))
+    }
+
+    /// The navigation stack of the currently-selected tab.
+    private var activePath: [Destination] {
+        selectedTab == .chats ? navigationPath : sessionsPath
+    }
+
+    /// Whether a chat is mounted as a conversation on either tab's stack, i.e.
+    /// some ConversationView owns its (single, non-refcounted) Mac subscription.
+    /// Short-circuiting scan; no Set allocation on these navigation-time paths.
+    private func isConversationMounted(_ chatID: String) -> Bool {
+        let isChat: (Destination) -> Bool = { $0.conversationID == chatID }
+        return navigationPath.contains(where: isChat) || sessionsPath.contains(where: isChat)
+    }
+
+    /// Whether a chat still has an owner that needs its (unrefcounted) Mac
+    /// subscription: a mounted conversation on either tab, the live session-view
+    /// watch, or an in-flight watch intent a concurrent send registered before its
+    /// subscribe. SINGLE source of truth so the unsubscribe path and the reconnect
+    /// re-subscribe path can't drift on what "still needed" means (drift between
+    /// those two definitions was the root of the subscribe/unsubscribe races).
+    private func shouldRemainSubscribed(_ chatID: String) -> Bool {
+        isConversationMounted(chatID) || watchState.needsSubscription(chatID)
+    }
     var chats: [CompanionChatListEntry] = []
+    /// One place the "does this chat exist / fetch it" identity rule lives, so the
+    /// ~handful of send/notification/existence-guard sites don't each hand-roll the
+    /// `chats.contains { $0.chat.id == X }` scan (and a future change like treating
+    /// a soft-deleted chat as absent is one edit).
+    func chatExists(_ chatID: String) -> Bool { chats.contains { $0.chat.id == chatID } }
+    func chat(for chatID: String) -> CompanionChatListEntry? { chats.first { $0.chat.id == chatID } }
     var sessions: [CompanionSessionSummary] = []
     /// The Sessions tab's window/tab/pane/peer hierarchy.
     var sessionTree: CompanionSessionTree?
@@ -169,13 +300,67 @@ final class AppModel {
     // Conversation state for the open chat.
     var openChatID: String?
     var messages: [Message] = []
-    var isAgentTyping = false
+    /// Last-seen transcript per chat, so switching between two co-mounted
+    /// conversations (one per tab) serves the cached messages instantly instead
+    /// of flashing empty while a full history refetch runs. Bounded to mounted
+    /// conversations (pruned on each switch).
+    private var transcriptCache: [String: [Message]] = [:]
+    /// Chats whose agent is currently typing. Tracked for ALL chats (typingStatus
+    /// is edge-triggered and only delivered while a chat is watched/subscribed, so
+    /// a status that arrived while a chat was hidden would otherwise be lost), so
+    /// re-selecting a co-mounted chat mid-turn shows the right indicator.
+    private var agentTypingChats: Set<String> = []
+    /// Whether the OPEN chat's agent is typing. Derived, so switching tabs to a
+    /// co-mounted chat reflects ITS state instead of being blanket-cleared.
+    var isAgentTyping: Bool { openChatID.map { agentTypingChats.contains($0) } ?? false }
+
+    // MARK: Live session view compose/notify
+
+    /// userInfo keys on the local notifications the live session view posts when
+    /// an agent reply arrives: the chat id to route to, and the tab whose stack
+    /// the originating session view lives on (so a tap pushes the chat above it
+    /// there, not onto whatever tab happens to be selected). The nav key's
+    /// presence also distinguishes these from push-driven NSE alerts, which
+    /// carry no routing payload.
+    static let sessionChatNavKey = "sessionChatNav"
+    static let sessionChatTabKey = "sessionChatTab"
+
+    /// The session-view reply WATCH: a single slot plus its per-send claim
+    /// bookkeeping, owned by one value type so the token/tab/chatID/sequence/
+    /// departed-token transitions live and are tested in one place (see
+    /// SessionWatchState). A SINGLE slot: two session views can be mounted at once
+    /// (a TabView keeps both tabs' stacks), so a second view's send replaces the
+    /// first's watch - a keyed set of watches would be the next step.
+    private var watchState = SessionWatchState()
+    /// Live (appeared, not-yet-popped) session-view watch tokens, keyed by session
+    /// guid. The watch is token-keyed but the pop-vs-tab-switch decision was
+    /// guid-keyed; when the SAME guid is mounted more than once (two nav stacks, or
+    /// twice in one), a guid-only "still mounted?" check keeps returning true after
+    /// the watch-owning view pops, so its watch would leak. Comparing the count of
+    /// mounted destinations for a guid against the number of live tokens tells a
+    /// genuine pop (one destination removed) apart from a tab switch (none removed),
+    /// per token.
+    private var appearedSessionTokens: [String: Set<UUID>] = [:]
+    /// Pure decision logic for when to fire the reply notification (unit-tested in
+    /// CompanionProtocol). The app feeds it normalized delivery/typing events; the
+    /// trigger now also owns the per-id reply-text accumulation (one id->text
+    /// surface, so there is no separate accumulator to keep keyed in lockstep).
+    private var replyTrigger = SessionReplyTrigger()
+    /// De-dupes concurrent session-bound chat resolution by session guid, so two
+    /// quick sends before the first resolves don't each create a new chat.
+    private var pendingChatResolution: [String: Task<String, Error>] = [:]
+    /// A reply-notification tap that arrived before the app finished launching
+    /// (cold launch); replayed once phase == .home, since loadHome resets the
+    /// nav paths and no NavigationStack is mounted before then.
+    private var pendingSessionChatNav: (chatID: String, tab: AppTab)?
 
     /// On-device speech-to-text for the composer. Lazily prepared (download +
     /// load) on first use, not at launch.
     let whisperManager = WhisperModelManager()
-    /// Drives live microphone dictation into the composer.
-    let voiceCapture: VoiceCaptureController
+    /// Single owner of dictation (recorder + ownership token + owning tab), so
+    /// claim/start/stop are atomic across the two composer bars that can be
+    /// mounted at once. Composer bars drive it; nothing else touches the recorder.
+    let dictation: DictationController
 
     /// A user-facing error for the pairing screen. Nil while in progress.
     var pairingError: String?
@@ -197,11 +382,93 @@ final class AppModel {
     /// as a banner; the user keeps their place in the UI).
     var isReconnecting = false
 
+    /// Non-nil while the relay is refusing us for hitting its daily data limit
+    /// (WS 1008 "daily quota exceeded"); holds the time we will next retry.
+    /// Reconnecting sooner just trips the same limit, so the reconnect loop waits
+    /// this out instead of the routine ~2s retry, and the UI shows a distinct
+    /// "daily limit reached" banner (with a Reconnect now override) rather than
+    /// the plain reconnecting banner. Cleared once a connection succeeds.
+    var quotaBackoffUntil: Date?
+    /// Set by the banner's "Reconnect now" button to end the quota backoff early.
+    private var manualQuotaRetry = false
+
     /// True when the open conversation's chat was deleted on the Mac. The
     /// conversation stays on screen (yanking it away would be disruptive)
     /// with composing disabled; it is gone from the list once the user
-    /// leaves.
+    /// leaves. Always set together with the explanatory notice, and only from
+    /// an authoritative chat list (see checkOpenChatStillExists).
     var openChatWasDeleted = false
+
+    /// The single explanatory notice appended when the open chat is found
+    /// deleted (display text only).
+    static let deletedChatNoticeText =
+        "This chat was deleted on your Mac. You can keep reading it until you leave, but nothing new can be sent."
+
+    /// The message shown when a session-view send resolves to a deleted chat (the
+    /// recovery path then creates a fresh chat). Hoisted so the three .chatDeleted
+    /// returns and any localization stay in one place.
+    static let chatDeletedRecoveryText =
+        "This chat was deleted on your Mac. Start a new chat to keep talking to the agent."
+
+    /// Stable, non-localized identity for that synthetic notice, so dedupe and
+    /// removal key off the message id - not the user-visible body text, which
+    /// would break if the wording is ever edited or localized. Only ever one such
+    /// notice exists at a time (messages holds a single open chat's transcript),
+    /// and the reserved value never collides with a real (random) message id.
+    private static let deletedChatNoticeID =
+        UUID(uuidString: "0000DE1E-7ED0-0000-0000-000000000000")!
+
+    /// Stable id for the synthetic "Could not load this chat" notice, so it is
+    /// never snapshotted into transcriptCache as if it were real loaded content
+    /// (which would then render an error bubble AND a "showing cached" banner).
+    private static let loadErrorNoticeID =
+        UUID(uuidString: "0000E770-0000-0000-0000-000000000000")!
+
+    /// The synthetic local-notice ids that must NEVER be cached as real content: a
+    /// cached "Could not load" or "This chat was deleted" bubble would re-render on
+    /// return (behind a contradictory "showing cached" banner) as if it were loaded
+    /// transcript. One list so a future notice can't be excluded at one snapshot
+    /// site but missed at another.
+    private static let uncacheableNoticeIDs: Set<UUID> = [loadErrorNoticeID, deletedChatNoticeID]
+
+    /// Snapshot the currently-open transcript into transcriptCache so returning to
+    /// it serves content instead of flashing empty and refetching, UNLESS it holds a
+    /// synthetic notice (see uncacheableNoticeIDs). The single definition of the
+    /// snapshot policy, shared by the navigate-away and reconnect-re-serve paths.
+    private func cacheOpenTranscript() {
+        guard let openChatID,
+              !messages.contains(where: { Self.uncacheableNoticeIDs.contains($0.uniqueID) }) else {
+            return
+        }
+        transcriptCache[openChatID] = messages
+    }
+
+    /// True when the open conversation is showing a cached transcript because a
+    /// refresh failed (e.g. a subscribe timeout during a tab switch). The cache
+    /// may be missing messages that arrived while disconnected, so the view shows
+    /// a non-destructive "couldn't refresh" banner. Cleared on the next
+    /// successful load or when the conversation is left.
+    var conversationRefreshFailed = false
+
+    /// The real error text for the refresh-failed banner once the failure is no
+    /// longer plausibly transient (a non-transport error, or a transport error
+    /// that has repeated). nil while the soft "showing cached" banner is enough,
+    /// so a permanent failure (auth loss / inaccessible history) is surfaced
+    /// rather than hidden behind arbitrarily stale content.
+    var conversationRefreshError: String?
+
+    /// Consecutive failed loads PER chat, so escalation survives re-opening the
+    /// same chat (the banner flags reset on open, but this does not). Cleared for a
+    /// chat on its next successful load. Keyed by chatID rather than a single
+    /// counter, which reset on every open and so never reached the escalation
+    /// threshold across reconnect/re-open retries.
+    private var refreshFailuresByChat: [String: Int] = [:]
+
+    /// Whether the currently open chat's transcript is being served from the cache
+    /// (so a failed refresh should keep it behind the soft banner, even when the
+    /// cached transcript is legitimately EMPTY - which `messages.isEmpty` alone
+    /// can't distinguish from "never loaded").
+    private var openChatServedFromCache = false
 
     /// Interactive bubbles the user already answered, so their buttons render
     /// disabled (mirrors the Mac's one-shot buttons).
@@ -221,6 +488,13 @@ final class AppModel {
     /// misses are requested in batches as messages arrive.
     var mentionResolutions: [String: CompanionMentionResolution] = [:]
     private var mentionResolutionsInFlight: Set<String> = []
+    /// Identifiers we asked about and got no live name for (the Mac was
+    /// unreachable, or the guid did not resolve at that instant). This gate
+    /// stops a failed lookup from being re-requested on every incremental
+    /// message delivery; it is cleared on reconnect and on chat open (see
+    /// retryUnresolvedMentions) so a transient miss recovers instead of leaving
+    /// the bubble showing a raw @UUID forever.
+    private var unresolvedMentions: Set<String> = []
 
     private var pairingTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
@@ -241,6 +515,9 @@ final class AppModel {
     /// The live stream the session view is currently watching, and the handlers
     /// it registered. Only one session is streamed at a time.
     private var activeStreamID: UInt32?
+    /// Whether a live stream is currently running (the canvas uses this to decide
+    /// whether an unchanged-geometry layout pass should still re-drive tiles).
+    var hasActiveStream: Bool { activeStreamID != nil }
     private var onStreamConfig: ((CompanionStreamConfig) -> Void)?
     private var onStreamMedia: ((CompanionMediaFrame) -> Void)?
     private var onStreamEnded: ((CompanionStreamEndReason) -> Void)?
@@ -265,6 +542,64 @@ final class AppModel {
     // the LRU evicts the least-recently-used tile past the cap and supports the
     // key-range pruning below (unlike NSCache).
     @ObservationIgnored private let historyTileCache = CompanionLRUCache<Int64, UIImage>(capacity: 256)
+
+    // History-tile request throttle. A fast fling scroll can walk through dozens of
+    // viewports in under a second, and each viewport wants ~17 tiles; issuing them
+    // all at once floods the relay and trips its per-connection frame-rate limit,
+    // which closes the bridge (closeCode 1008 "frame rate exceeded"). Cap the number
+    // of tile requests in flight and queue the rest. This bounds the burst; it reduces
+    // (does not eliminate) the risk of tripping the relay's sustained rate limit,
+    // which is why the relay also tears down both legs on a frame-rate close.
+    @ObservationIgnored private var historyTilePending: [(firstAbsLine: Int64, lineCount: Int, epoch: Int, completion: (HistoryTileOutcome) -> Void)] = []
+    // In-flight fetch Tasks, keyed by a monotonic id so each can remove itself on
+    // completion and flushHistoryTileThrottle can cancel the prior stream's fetches.
+    // This set IS the in-flight count: the throttle gate is its size, so there is no
+    // separate counter to keep in sync (and no way to drive one negative). Without
+    // cancellation, a transition that cleared the count while old fetches kept running
+    // would let rapid session switches over one connection push real concurrency past
+    // maxHistoryTilesInFlight and trip the relay's frame-rate limit.
+    @ObservationIgnored private var historyTileTasks: [Int: Task<Void, Never>] = [:]
+    @ObservationIgnored private var historyTileTaskCounter = 0
+    // Per-stream epoch for the throttle. Generations restart at 1 for every stream
+    // (see restartLiveStreamAfterReconnect), and a session switch reuses the same live
+    // connection, so generation alone cannot tell one stream's tiles from another's.
+    // The epoch bumps on every stream transition (watch/stop/pause/reconnect/ended/lost);
+    // an in-flight request or a queued entry from a prior epoch is stale and must not
+    // decrement the (reset) in-flight count, be cached, or be re-sent against the new
+    // stream. See flushHistoryTileThrottle.
+    @ObservationIgnored private var historyTileEpoch = 0
+    // Set to true when a request is rejected because the backlog is full, and cleared
+    // when the pipeline next drains to spare capacity. It gates the slot-available
+    // signal so the canvas re-drives paced by network replies (when a slot actually
+    // frees) instead of busy-looping a self-scheduled refresh while still saturated.
+    @ObservationIgnored private var historyTileOverflowed = false
+    /// Called on the main actor when the throttle drains to spare capacity after having
+    /// rejected requests (and once per flush), so the canvas can re-request whatever it
+    /// still wants. Two LiveCanvas coordinators can share this one AppModel (the Sessions
+    /// tab and the session-mention preview), so the live coordinator claims ownership via
+    /// historyTileSlotOwner and only the owner clears it; otherwise a dismissed preview
+    /// would nil out the still-live tab's callback. See SessionView.
+    ///
+    /// This is a latency optimization, not a correctness dependency: the canvas also
+    /// recovers rejected/spinner tiles from its 4 Hz growthTick pass (which runs on every
+    /// live coordinator regardless of zoom), so a briefly-stranded or clobbered callback
+    /// self-heals within ~250 ms and is reclaimed on the owner's next updateUIView.
+    @ObservationIgnored var onHistoryTileSlotAvailable: (() -> Void)?
+    @ObservationIgnored var historyTileSlotOwner: ObjectIdentifier?
+    /// Most tile requests in flight at once.
+    private let maxHistoryTilesInFlight = 6
+    /// Deadline for a single tile fetch. CompanionSession.request has no timeout of its
+    /// own: a lost or never-produced reply that does not close the socket would await
+    /// forever and pin an in-flight slot, wedging the whole pipeline once all slots are
+    /// stuck. Bounding the fetch frees the slot as .failed so the throttle recovers.
+    private let historyTileTimeout: TimeInterval = 20
+    /// Most tile requests waiting behind the in-flight window. A fling scroll enqueues
+    /// far more than can matter by the time they run; cap the backlog and drop the
+    /// oldest (furthest from where the user has since scrolled) so it cannot grow
+    /// without bound. A dropped request reports .throttled so the caller keeps any
+    /// current image and re-requests from its current position if still visible.
+    private let maxHistoryTilesPending = 24
+
     /// The current selection span reported by the mac, for drawing handles.
     private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).
@@ -309,7 +644,7 @@ final class AppModel {
         self.appAttestService = appAttestService
         self.attestKeyStore = attestKeyStore
         self.connectorForCode = connectorForCode
-        self.voiceCapture = VoiceCaptureController(modelManager: whisperManager)
+        self.dictation = DictationController(whisper: whisperManager)
         // Route the transport/crypto layers' diagnostics into the unified log
         // (visible in Console.app and `log stream`).
         CompanionLog.handler = { message in
@@ -527,8 +862,10 @@ final class AppModel {
     }
 
     /// Tapping an @-mention in a bubble pushes the read-only session view.
-    func openSession(guid: String, title: String) {
-        appendToActivePath(.session(guid: guid, title: title))
+    /// fromChatID is the chat the mention lived in, so the session view's
+    /// compose overlay can send back into it (nil from the session list).
+    func openSession(guid: String, title: String, fromChatID: String? = nil) {
+        appendToActivePath(.session(guid: guid, title: title, originatingChatID: fromChatID))
     }
 
     /// Tapping a workgroup @-mention pushes the member list.
@@ -578,21 +915,56 @@ final class AppModel {
         // Noise identity, room secret, push secret, and verifier registration.
         wipeAllKeyMaterial()
         activePairingCode = nil
+        isReconnecting = false
+        quotaBackoffUntil = nil
+        pairingStartedAt = nil
+        clearPairedMacData()
+    }
+
+    /// Shared privacy teardown for the two unpair paths (user-initiated
+    /// disconnectFromMac and Mac-initiated handleRemoteUnpair): drop EVERYTHING
+    /// in memory that belonged to the just-unpaired Mac so nothing lingers until
+    /// a future pairing. Path-specific bits (pairing code / reconnect flags) stay
+    /// in the callers. Keep this the single source of truth so the two paths
+    /// can't drift (transcriptCache and the reply buffers were previously missed
+    /// here, leaving full transcripts and buffered reply text in memory).
+    private func clearPairedMacData() {
         chats = []
         sessions = []
         sessionTree = nil
         sessionTreeError = nil
         messages = []
+        transcriptCache = [:]
         mentionResolutions = [:]
+        mentionResolutionsInFlight = []
+        unresolvedMentions = []
         openChatID = nil
-        isAgentTyping = false
+        openChatWasDeleted = false
+        resetRefreshFailureState()
+        refreshFailuresByChat = [:]
+        openChatServedFromCache = false
+        agentTypingChats = []
         isLoadingConversation = false
-        isReconnecting = false
+        // The live session view's watch and its buffered agent-reply text also
+        // reference the unpaired Mac's chats.
+        watchState.reset()
+        appearedSessionTokens = [:]
+        resetWatchedReplyState()
+        // A deferred reply-tap replay would otherwise navigate the NEXT paired Mac
+        // to a chat id that never existed there.
+        pendingSessionChatNav = nil
+        // Cancel any in-flight session-bound chat resolution so it stops calling
+        // createChat against the just-unpaired Mac.
+        pendingChatResolution.values.forEach { $0.cancel() }
+        pendingChatResolution = [:]
+        // Cancel dictation directly: setting selectedTab = .chats below is a no-op
+        // (and skips its tab-change side effect) when already on .chats, which
+        // would leave the mic recording through the teardown transition.
+        dictation.cancelActive()
         navigationPath = []
         sessionsPath = []
         selectedTab = .chats
         pairingError = nil
-        pairingStartedAt = nil
         phase = .scanning
     }
 
@@ -755,6 +1127,11 @@ final class AppModel {
     /// cadence until one lands on a ready mac. Kept short so a mac that just
     /// finished relaunching is picked up quickly.
     private static let reconnectRetryDelayNanos: UInt64 = 2_000_000_000
+    /// How long to back off after the relay reports its daily data limit is
+    /// exhausted. Fixed (the relay reports no reset time), long enough not to
+    /// hammer the limit, short enough to recover within a day once the relay's
+    /// 24h window rolls over. The user can override it with "Reconnect now".
+    private static let quotaBackoffSeconds: TimeInterval = 30 * 60
 
     /// How long the phone waits for the user to type the SAS code on the Mac.
     /// Generous: a human is walking to a keyboard.
@@ -854,9 +1231,9 @@ final class AppModel {
             Task { @MainActor in
                 self?.handle(event: event)
             }
-        }, onClose: { [weak self] in
+        }, onClose: { [weak self] error in
             Task { @MainActor in
-                self?.connectionLost()
+                self?.connectionLost(dueTo: error)
             }
         }, onMedia: { [weak self] frame in
             Task { @MainActor in
@@ -1107,6 +1484,9 @@ final class AppModel {
             selectedTab = .chats
         }
         phase = .home
+        // A reply-notification tap during launch was deferred (the nav paths
+        // were just reset and no stack was mounted before now); replay it.
+        applyPendingSessionChatNav()
     }
 
     private func refreshLists() async throws {
@@ -1118,10 +1498,26 @@ final class AppModel {
         companionLog("Received \(chats.count) chat(s), \(sessions.count) session(s)")
         self.chats = chats
         self.sessions = sessions
+        // This is a wholesale list replacement (reconnect/foreground), so prune
+        // state for chats deleted while offline - same as chatListChanged.
+        pruneStateForLiveChats(Set(chats.map { $0.chat.id }))
         // Snippets can contain @-mentions; resolve them so the chat list
         // shows names instead of raw UUIDs.
         noteMentions(inTexts: chats.compactMap { $0.snippet })
         checkOpenChatStillExists()
+    }
+
+    /// Prune per-chat derived state (and the live watch) for chats that no longer
+    /// exist after a wholesale chat-list replacement. Shared by chatListChanged and
+    /// refreshLists so an offline deletion can't leave a stale cache / typing entry
+    /// / failure counter / watch+subscription behind on either path.
+    private func pruneStateForLiveChats(_ liveChatIDs: Set<String>) {
+        transcriptCache = transcriptCache.filter { liveChatIDs.contains($0.key) }
+        agentTypingChats.formIntersection(liveChatIDs)
+        refreshFailuresByChat = refreshFailuresByChat.filter { liveChatIDs.contains($0.key) }
+        if let watchedID = watchState.watchedChatID, !liveChatIDs.contains(watchedID) {
+            tearDownCurrentWatch()
+        }
     }
 
     // MARK: Connection lifecycle
@@ -1148,28 +1544,52 @@ final class AppModel {
 
     /// The session's receive loop died: the mac quit, restarted, or the
     /// network dropped. Reconnect with the stored pairing, keeping the user's
-    /// place in the UI.
-    private func connectionLost() {
+    /// place in the UI. `error` is the terminating transport error when known, so
+    /// a relay daily-quota teardown enters the long backoff immediately rather
+    /// than after a first doomed attempt.
+    private func connectionLost(dueTo error: Error? = nil) {
         guard !isReconnecting else { return }
         companionLog("Connection lost")
         client = nil
-        // The stream id belongs to the dead connection; drop it but keep the
-        // live-watch intent so the stream restarts after reconnect.
-        activeStreamID = nil
+        // The stream id belongs to the dead connection; drop it (neutralizing the tile
+        // throttle first) but keep the live-watch intent so it restarts after reconnect.
+        neutralizeDeadStream()
         guard phase == .home else { return }
         guard let code = storedPairingCode else {
             phase = .scanning
             return
         }
+        // A relay quota teardown is not transient: show the "daily limit reached"
+        // banner up front and make the loop wait out the backoff before its first
+        // attempt, instead of hammering the exhausted quota.
+        if (error as? TransportError) == .quotaExceeded {
+            companionLog("Connection lost: relay daily data limit reached")
+            quotaBackoffUntil = Date().addingTimeInterval(Self.quotaBackoffSeconds)
+            manualQuotaRetry = false
+        }
         isReconnecting = true
         reconnectTask = Task {
             var attempt = 0
             while true {
+                // Wait out a relay quota backoff (or a manual "Reconnect now")
+                // before attempting, so we don't re-trip an exhausted daily limit.
+                // quotaBackoffUntil stays set through the attempt (banner stays up);
+                // it is cleared only on success or a non-quota exit below.
+                if quotaBackoffUntil != nil {
+                    await waitOutQuotaBackoff()
+                    if Task.isCancelled { break }
+                }
                 attempt += 1
                 do {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
+                    // Reachable again: leave any quota state so the banner clears.
+                    quotaBackoffUntil = nil
+                    // The Mac is reachable again: reopen the retry gate so the
+                    // list-snippet and conversation re-scans below re-resolve any
+                    // mention that failed while we were disconnected.
+                    retryUnresolvedMentions()
                     // Re-run the version handshake on every reconnect so the mac's
                     // "user wants alerts" signal (carried in the .hello reply) is
                     // honored on each connect, not just the initial pairing. A
@@ -1198,14 +1618,81 @@ final class AppModel {
                         // Re-subscribe the open conversation on the new
                         // session. Skipped when a load is already parked in
                         // currentClient(); it resumes by itself.
+                        //
+                        // Snapshot the CURRENT live transcript into the cache
+                        // first: forcing conversationDidAppear to re-run (by
+                        // nil-ing openChatID) makes it serve transcriptCache[chatID],
+                        // which is otherwise the stale snapshot from the last
+                        // navigate-away (the open chat's cache entry is never
+                        // refreshed by live deliveries). Without this, the reconnect
+                        // clobbers messages received since - and if the reconnect-time
+                        // reload then fails, strands the user on that stale transcript
+                        // behind the soft "showing cached" banner. cacheOpenTranscript
+                        // excludes the synthetic notices (never cache those as content).
+                        cacheOpenTranscript()
                         openChatID = nil
                         conversationDidAppear(chatID: chatID)
                     }
+                    // Subscriptions are per-connection. Re-subscribe EVERY mounted
+                    // conversation across both tabs' stacks (not just openChatID +
+                    // the watch): a conversation on the inactive tab (e.g. pushed
+                    // there by a reply-notification tap, then handed off from the
+                    // watch) is neither, and would otherwise silently drop live
+                    // deliveries until the user switched to its tab.
+                    if let client {
+                        // Include openChatID: the conversationDidAppear above is
+                        // skipped while a load is parked, and if that load already
+                        // failed on the dead client (isLoadingConversation flipped
+                        // false), nothing else re-subscribes the open chat.
+                        // Every id here is mounted by construction, so no filter is
+                        // needed (shouldRemainSubscribed would always be true);
+                        // resubscribeVerifyingOwnership re-checks ownership after its
+                        // await regardless.
+                        for chatID in mountedConversationIDs {
+                            await resubscribeVerifyingOwnership(chatID, client: client)
+                        }
+                        // The watch's chat may not be mounted as a conversation; make
+                        // sure it too is re-subscribed (same ownership-verified idiom).
+                        if let watched = watchState.watch, watched.chatID != openChatID,
+                           !isConversationMounted(watched.chatID) {
+                            await resubscribeVerifyingOwnership(watched.chatID, client: client)
+                        }
+                    }
+                    // Reset the reply trigger for a live watch: a typingStatus that
+                    // arrived during the drop is not replayed, so stale turn state
+                    // must not carry across. NOTE this is broader than "completed
+                    // while disconnected": a turn that STARTED before the drop and
+                    // finishes just after (a brief mobile blip) also loses its
+                    // notification, because turnStarted was cleared. Preferred over
+                    // false fires from replayed-but-incomplete state; a full fix
+                    // would re-query the chat's current typing status on reconnect.
+                    if watchState.watch != nil {
+                        resetWatchedReplyState()
+                    }
+                    // typingStatus is edge-triggered and NOT re-asserted on
+                    // reconnect, so a turn's completing false may have been lost
+                    // during the drop; clear typing state to avoid a stuck
+                    // indicator (a still-typing chat re-asserts on its next turn).
+                    agentTypingChats = []
                     // Resume a live session view that was open across the drop.
                     restartLiveStreamAfterReconnect()
                 } catch is CancellationError {
                     // App-driven teardown; nothing to report.
                 } catch {
+                    // The relay hit its daily data limit: back off long (the loop
+                    // top waits it out) and show the limit banner instead of the
+                    // ~2s poll, which would only keep tripping the same limit.
+                    if (error as? TransportError) == .quotaExceeded {
+                        companionLog("Reconnect attempt \(attempt): relay daily data limit reached; backing off")
+                        quotaBackoffUntil = Date().addingTimeInterval(Self.quotaBackoffSeconds)
+                        manualQuotaRetry = false
+                        continue
+                    }
+                    // A non-quota failure means the relay is no longer quota-blocking
+                    // us (we reached admission, or it is a plain network error): drop
+                    // any lingering backoff so the banner reverts from the limit
+                    // message to the ordinary "reconnecting" pill.
+                    quotaBackoffUntil = nil
                     // Keep the user's place and keep trying; transient network
                     // trouble must not dump them on the pairing screen.
                     companionLog("Reconnect attempt \(attempt) failed: \(String(describing: error))")
@@ -1219,7 +1706,29 @@ final class AppModel {
                 break
             }
             isReconnecting = false
+            quotaBackoffUntil = nil
+            manualQuotaRetry = false
         }
+    }
+
+    /// Poll-wait out the relay quota backoff, returning when the deadline passes,
+    /// the user taps "Reconnect now", or the reconnect task is torn down. The 1s
+    /// tick keeps the banner countdown live and lets a manual retry engage
+    /// promptly; quotaBackoffUntil is left set so the banner stays up through the
+    /// following attempt (cleared only on success or a non-quota exit).
+    private func waitOutQuotaBackoff() async {
+        while let until = quotaBackoffUntil, until > Date(), !manualQuotaRetry, !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+    }
+
+    /// The quota banner's "Reconnect now" button: end the backoff early so the
+    /// reconnect loop attempts immediately (e.g. after the user freed up quota or
+    /// just wants to check).
+    func reconnectNowAfterQuota() {
+        guard quotaBackoffUntil != nil else { return }
+        companionLog("Quota backoff: manual reconnect requested")
+        manualQuotaRetry = true
     }
 
     /// Called when the app returns to the foreground: sockets often die
@@ -1255,7 +1764,7 @@ final class AppModel {
                 let client = try await currentClient(label: "Create chat")
                 let title = (mode == .orchestrator) ? "Orchestrator" : "New Chat"
                 let entry = try await client.createChat(title: title, mode: mode)
-                if !chats.contains(where: { $0.chat.id == entry.chat.id }) {
+                if !chatExists(entry.chat.id) {
                     chats.insert(entry, at: 0)
                 }
                 openConversation(chatID: entry.chat.id, replacingPath: true)
@@ -1270,6 +1779,20 @@ final class AppModel {
     /// restores the row if the Mac refused).
     func deleteChat(chatID: String) {
         chats.removeAll { $0.chat.id == chatID }
+        transcriptCache[chatID] = nil
+        // Uphold the same per-chat cleanup invariant as pruneStateForLiveChats (the
+        // chatListChanged / refreshLists paths): a deletion must not leave a stale
+        // typing entry or failure counter behind. Otherwise a swipe-delete mid-turn
+        // leaves agentTypingChats[chatID] lingering until the Mac's delete echo
+        // pushes a fresh list.
+        agentTypingChats.remove(chatID)
+        refreshFailuresByChat[chatID] = nil
+        // Stop watching a chat we just deleted, or its trailing typing(false) /
+        // delivery would still fire a reply notification for a chat that no longer
+        // exists (and can't be opened when tapped).
+        if watchState.isWatching(chatID) {
+            tearDownCurrentWatch()
+        }
         Task {
             do {
                 let client = try await currentClient(label: "Delete chat")
@@ -1316,11 +1839,7 @@ final class AppModel {
     /// fresh one. Conversations live on the Chats tab, so either way this
     /// switches there.
     func openOrCreateChat(forSessionGuid guid: String) {
-        let attached = chats
-            .filter { $0.chat.terminalSessionGuid == guid }
-            .max { $0.chat.lastModifiedDate < $1.chat.lastModifiedDate }
-        if let attached,
-           Date().timeIntervalSince(attached.chat.lastModifiedDate) < 24 * 60 * 60 {
+        if let attached = recentAttachedChat(forSessionGuid: guid) {
             companionLog("Continuing chat \(attached.chat.id) for session \(guid)")
             openConversation(chatID: attached.chat.id, replacingPath: true)
         } else {
@@ -1329,43 +1848,126 @@ final class AppModel {
         }
     }
 
+    /// The session's most recently active chat if it was touched within the last
+    /// 24 hours, else nil. One definition shared by the session-list "chat about
+    /// this session" button and the session-view compose overlay so their reuse
+    /// rule can't silently diverge.
+    private func recentAttachedChat(forSessionGuid guid: String) -> CompanionChatListEntry? {
+        guard let attached = chats
+            .filter({ $0.chat.terminalSessionGuid == guid })
+            .max(by: { $0.chat.lastModifiedDate < $1.chat.lastModifiedDate }),
+              Date().timeIntervalSince(attached.chat.lastModifiedDate) < 24 * 60 * 60 else {
+            return nil
+        }
+        return attached
+    }
+
     // MARK: Conversation
 
     /// Called from ConversationView.onAppear. Chat rows are NavigationLinks,
     /// so the system performs the (animated) push itself; this just starts the
     /// history load for the chat that appeared.
-    func conversationDidAppear(chatID: String) {
+    /// `userInitiated` is true only for a real navigation to the chat
+    /// (ConversationView.onAppear); the tab-sync and reconnect callers pass false,
+    /// so their background cache-backed refresh failures show the soft banner but
+    /// don't count toward the escalate-to-red streak (tab-switch churn on a flaky
+    /// link shouldn't look like a permanent error).
+    func conversationDidAppear(chatID: String, userInitiated: Bool = false) {
         guard openChatID != chatID else {
             return
         }
+        // Snapshot the outgoing chat so returning to it (a tab switch back) serves
+        // its transcript instead of flashing empty + refetching. Excludes the
+        // synthetic notices (see cacheOpenTranscript), which must not be cached as
+        // real content.
+        cacheOpenTranscript()
         openChatID = chatID
+        // Presumed live on open. Deletion is inferred ONLY from an authoritative
+        // list (checkOpenChatStillExists), never from the possibly-not-yet-synced
+        // local list here: a cold-launch notification tap mounts this before
+        // `chats` has synced, and latching true from that would strand the
+        // composer disabled with no notice and no recovery.
         openChatWasDeleted = false
-        messages = []
-        isAgentTyping = false
-        isLoadingConversation = true
+        resetRefreshFailureState()
+        // isAgentTyping is derived from agentTypingChats + openChatID, so switching
+        // to a co-mounted chat mid-turn reflects ITS typing state (no blanket reset,
+        // which used to drop the indicator for a turn in flight).
+        if let cached = transcriptCache[chatID] {
+            // Serve the cache immediately; loadConversation still refreshes below.
+            messages = cached
+            isLoadingConversation = false
+            openChatServedFromCache = true
+            // A cache entry only exists mid-session, where `chats` is kept live by
+            // chatListChanged, so it IS authoritative here: a chat missing from it
+            // was deleted while backgrounded. Disable + explain now (deduped)
+            // rather than waiting for the next list push. The notice is re-asserted
+            // after loadConversation, which replaces `messages`.
+            checkOpenChatStillExists()
+        } else {
+            messages = []
+            isLoadingConversation = true
+            openChatServedFromCache = false
+        }
+        // Bound the cache to conversations still mounted somewhere.
+        let mounted = mountedConversationIDs
+        transcriptCache = transcriptCache.filter { mounted.contains($0.key) }
         Task {
-            await loadConversation(chatID: chatID)
+            await loadConversation(chatID: chatID, userInitiated: userInitiated)
         }
     }
 
-    /// The open chat vanished from a fresh list snapshot: it was deleted on
-    /// the Mac. Disable composing and say why, but leave the transcript up.
-    private func checkOpenChatStillExists() {
-        guard let openChatID, !openChatWasDeleted else { return }
-        guard !chats.contains(where: { $0.chat.id == openChatID }) else { return }
-        companionLog("Open chat \(openChatID) was deleted on the Mac")
-        openChatWasDeleted = true
+    private func isDeletedChatNotice(_ message: Message) -> Bool {
+        message.uniqueID == Self.deletedChatNoticeID
+    }
+
+    /// Append the deleted-chat notice to the open transcript, once. Safe to call
+    /// after the transcript is (re)loaded, since loadConversation replaces
+    /// `messages` and would otherwise drop a notice appended earlier.
+    private func appendDeletedChatNoticeIfNeeded() {
+        guard openChatWasDeleted, let openChatID else { return }
+        guard !messages.contains(where: { isDeletedChatNotice($0) }) else { return }
         messages.append(Message(chatID: openChatID,
                                 author: .agent,
                                 content: .clientLocal(ClientLocal(action: .notice(
-                                    "This chat was deleted on your Mac. You can keep reading it until you leave, but nothing new can be sent."))),
+                                    Self.deletedChatNoticeText))),
                                 sentDate: Date(),
-                                uniqueID: UUID()))
+                                uniqueID: Self.deletedChatNoticeID))
+    }
+
+    /// Reconcile the open chat against an AUTHORITATIVE list snapshot
+    /// (refreshLists / chatListChanged, or the mid-session cache path where the
+    /// local list is kept live). Latches deletion WITH its notice, or recovers a
+    /// false positive if the chat is present again. This is the single place that
+    /// flips `openChatWasDeleted`, so the flag and the notice never diverge and a
+    /// fresh list can clear a stale positive. Not called from the cold-launch /
+    /// fresh-open path, where `chats` may not have synced yet.
+    private func checkOpenChatStillExists() {
+        guard let openChatID else { return }
+        if !chatExists(openChatID) {
+            if !openChatWasDeleted {
+                companionLog("Open chat \(openChatID) was deleted on the Mac")
+                openChatWasDeleted = true
+            }
+            appendDeletedChatNoticeIfNeeded()
+        } else if openChatWasDeleted {
+            companionLog("Open chat \(openChatID) is present again; re-enabling composer")
+            clearDeletedChatState()
+        }
+    }
+
+    /// The open chat is present again after a (possibly transient) deletion latch:
+    /// re-enable the composer and drop the "deleted" notice, together. One
+    /// definition so the flag and its notice never diverge; callers confirm presence
+    /// (an authoritative list, or a successful subscribe+load) first.
+    private func clearDeletedChatState() {
+        openChatWasDeleted = false
+        messages.removeAll { isDeletedChatNotice($0) }
     }
 
     /// Programmatic open used by the Create flow: replaces the stack so back
     /// returns to Home, then lets conversationDidAppear load the history.
     func openConversation(chatID: String, replacingPath: Bool) {
+        handOffWatchedChatIfOpening(chatID)
         withAnimation {
             // Conversations live on the Chats tab (callers can be on the
             // Sessions tab, e.g. the session view's chat button).
@@ -1378,7 +1980,25 @@ final class AppModel {
         }
     }
 
-    private func loadConversation(chatID: String) async {
+    /// The user is opening a conversation the live session view was watching for
+    /// replies. Stop watching (the user is about to read it, and leaving the
+    /// session view must not unsubscribe the chat the conversation is taking
+    /// over) but keep the subscription: opening the conversation re-subscribes
+    /// idempotently, and its own teardown handles the unsubscribe. Runs
+    /// synchronously before the navigation, so a subsequent session-view
+    /// onDisappear finds nothing to tear down and can't race the re-subscribe.
+    private func handOffWatchedChatIfOpening(_ chatID: String) {
+        // Cancel the watch INTENT (installed or in-flight) only when the chat being
+        // opened is the one it's for: a send suspended in beginWatchingSessionChat
+        // would otherwise re-install a watch for the chat the user is now reading.
+        // The watch KEEPS its subscription (the conversation re-subscribes
+        // idempotently and owns teardown), so no unsubscribe here.
+        if watchState.handOffIfOpening(chatID) {
+            resetWatchedReplyState()
+        }
+    }
+
+    private func loadConversation(chatID: String, userInitiated: Bool) async {
         companionLog("Loading conversation \(chatID)")
         do {
             let client = try await currentClient(label: "Load conversation")
@@ -1392,46 +2012,164 @@ final class AppModel {
                 return
             }
             messages = history.filter { !$0.hiddenFromClient }
+            // Opening (or re-subscribing) a chat is a fresh chance to resolve
+            // any mention that failed before, so reopen the retry gate first.
+            retryUnresolvedMentions()
             noteMentions(in: messages)
+            // A successful subscribe+history load is authoritative that the chat
+            // EXISTS (a genuinely-deleted chat errors -> the catch keeps the flag).
+            // So clear any stale deletion flag the cache path may have latched from
+            // a transiently-incomplete `chats`, re-enabling the composer; a real
+            // deletion re-latches on the next authoritative chatListChanged.
+            if openChatWasDeleted {
+                clearDeletedChatState()
+            }
+            resetRefreshFailureState()
+            refreshFailuresByChat[chatID] = nil   // recovered; forget the streak
+            // The refetch replaced the cache with authoritative history.
+            openChatServedFromCache = false
             companionLog("Conversation loaded (\(messages.count) messages)")
         } catch {
             companionLog("Conversation load failed: \(String(describing: error))")
             guard openChatID == chatID else { return }
-            messages = [Message(chatID: chatID,
-                                author: .agent,
-                                content: .clientLocal(ClientLocal(action: .notice(
-                                    "Could not load this chat: \(userMessage(for: error))"))),
-                                sentDate: Date(),
-                                uniqueID: UUID())]
+            // Discriminate on whether a CACHED transcript is on screen (which may
+            // be legitimately empty), NOT on messages.isEmpty - a momentary blip on
+            // an empty/new chat must still degrade to the soft banner, not a scary
+            // "Could not load" notice.
+            if openChatServedFromCache {
+                // A cached transcript is still on screen; keep it, but don't
+                // silently pretend it's current: show the soft "showing cached"
+                // banner. Escalation to the red permanent-error banner is gated on
+                // userInitiated - a background tab-sync/reconnect refresh must not
+                // count toward the failure streak, or tab-switch churn on a flaky
+                // link would look like a permanent error. For a user-initiated
+                // open, a non-transport failure escalates at once, and a repeating
+                // transient one (streak >= 2) escalates too.
+                conversationRefreshFailed = true
+                if userInitiated {
+                    let failures = (refreshFailuresByChat[chatID] ?? 0) + 1
+                    refreshFailuresByChat[chatID] = failures
+                    if !(error is TransportError) || failures >= 2 {
+                        conversationRefreshError = userMessage(for: error)
+                    }
+                }
+            } else {
+                // Never had content to preserve: the error notice IS the content.
+                if userInitiated {
+                    refreshFailuresByChat[chatID] = (refreshFailuresByChat[chatID] ?? 0) + 1
+                }
+                messages = [Message(chatID: chatID,
+                                    author: .agent,
+                                    content: .clientLocal(ClientLocal(action: .notice(
+                                        "Could not load this chat: \(userMessage(for: error))"))),
+                                    sentDate: Date(),
+                                    uniqueID: Self.loadErrorNoticeID)]
+            }
         }
         if openChatID == chatID {
             isLoadingConversation = false
         }
     }
 
-    /// Called from the path observer once the conversation has been popped
-    /// (back button or swipe); the pop animation is already underway.
-    private func didLeaveConversation() {
-        if let chatID = openChatID, let client {
-            Task { try? await client.unsubscribe(chatID: chatID) }
+    /// Called from the path observer once a specific conversation has been
+    /// popped (back button or swipe); the pop animation is already underway.
+    /// Unsubscribes that chat, and clears the open-conversation state only when
+    /// the popped chat is the one currently open (it may belong to the other
+    /// tab's stack).
+    private func conversationWasPopped(_ chatID: String) {
+        // If the live session view's watch still needs this chat, hand the
+        // subscription to the watch so exactly one path unsubscribes later
+        // (tearDownCurrentWatch), regardless of pop ordering. Otherwise this pop is
+        // the sole owner of the (unrefcounted) subscription: release it.
+        //
+        // Only the unsubscribe branch drops chatID from agentTypingChats (once
+        // unsubscribed, its typing(false) will never arrive). On the ADOPT branch we
+        // deliberately do NOT: the subscription is kept, so a live turn's
+        // typing(false) still arrives and self-heals the indicator - dropping it
+        // here would wrongly hide "typing…" for an in-progress turn. Only a
+        // genuinely HUNG turn (never emits typing(false)) leaves a stale indicator,
+        // which reconnect/unpair clears.
+        if !watchState.adoptSubscription(for: chatID) {
+            unsubscribeIfUnused(chatID)
         }
-        openChatID = nil
-        openChatWasDeleted = false
-        messages = []
-        isAgentTyping = false
+        // Clear the shared display state if this was the open chat (single source
+        // of truth, so the isLoadingConversation reset can't drift out of sync).
+        if openChatID == chatID {
+            clearOpenConversationDisplay()
+        }
+    }
+
+    /// Unsubscribe a chat, but re-check just before sending that nothing owns it
+    /// now: the deferred send runs later than the (synchronous) decision to
+    /// unsubscribe, and the Mac sub isn't refcounted, so a re-navigation/re-watch
+    /// in between would otherwise have its fresh subscription cut by this stale
+    /// unsubscribe.
+    private func unsubscribeIfUnused(_ chatID: String) {
+        guard let client else { return }
+        Task {
+            // shouldRemainSubscribed also covers an IN-FLIGHT watch intent
+            // (watchState.activeChatID), which a concurrent send sets synchronously
+            // at the start of beginWatchingSessionChat, BEFORE its subscribe await
+            // and before it installs the watch. Without that, the window lets us
+            // unsubscribe a chat the concurrent send is about to (or just did)
+            // subscribe. The guard + the unsubscribe send run without a suspension
+            // between them, so once any owner is visible we never send.
+            guard !shouldRemainSubscribed(chatID) else { return }
+            // Once unsubscribed we won't receive this chat's typingStatus(false), so
+            // a turn that finishes while we're away would leave a STUCK "typing…"
+            // indicator on re-open. Drop its (now unverifiable) typing state.
+            agentTypingChats.remove(chatID)
+            try? await client.unsubscribe(chatID: chatID)
+        }
+    }
+
+    /// Re-subscribe a chat on reconnect, then re-check ownership AFTER the await
+    /// (each await is a @MainActor reentrancy point where a Back tap could pop the
+    /// chat and run its unsubscribe) and undo a resurrect nothing owns, so the
+    /// unrefcounted Mac subscription can't leak. One copy of this delicate idiom,
+    /// used for both mounted conversations and the watch chat.
+    private func resubscribeVerifyingOwnership(_ chatID: String, client: CompanionClient) async {
+        _ = try? await client.subscribe(chatID: chatID)
+        if !shouldRemainSubscribed(chatID) {
+            _ = try? await client.unsubscribe(chatID: chatID)
+        }
     }
 
     func send(text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let chatID = openChatID, !openChatWasDeleted else { return }
+        publishUserMessage(trimmed, toChatID: chatID, echo: true)
+    }
+
+    /// Build a user message, optionally echo it into the open transcript, note
+    /// its mentions, and publish it. Shared by the chat composer (send) and the
+    /// live session view (sendFromSessionView) so message construction and the
+    /// publish path stay in one place. The text is assumed already trimmed.
+    /// Build the user message, guard a deleted chat, optimistically echo it, and
+    /// note its mentions. Returns nil when the chat was deleted (nothing to
+    /// publish). Shared prep for both the fire-and-forget and awaitable paths.
+    private func prepareUserMessage(_ text: String, toChatID chatID: String, echo: Bool) -> Message? {
+        // Never publish into a chat the Mac deleted (belt-and-suspenders: send()
+        // and sendFromSessionView both pre-check, but this is the single choke
+        // point for constructing a user message).
+        if chatID == openChatID, openChatWasDeleted { return nil }
         let message = Message(chatID: chatID,
                               author: .user,
-                              content: .plainText(trimmed, context: nil),
+                              content: .plainText(text, context: nil),
                               sentDate: Date(),
                               uniqueID: UUID())
         // Optimistic local echo so the bubble appears immediately.
-        messages.append(message)
+        if echo {
+            messages.append(message)
+        }
         noteMentions(in: [message])
+        return message
+    }
+
+    /// Fire-and-forget publish for the chat composer (send()), which echoes the
+    /// bubble so a swallowed failure is at least visible as an un-answered message.
+    private func publishUserMessage(_ text: String, toChatID chatID: String, echo: Bool) {
+        guard let message = prepareUserMessage(text, toChatID: chatID, echo: echo) else { return }
         Task {
             do {
                 let client = try await currentClient(label: "Send message")
@@ -1440,6 +2178,629 @@ final class AppModel {
                 companionLog("Send failed: \(String(describing: error))")
             }
         }
+    }
+
+    /// Awaitable publish for the session-view send, which AWAITS the delivery and
+    /// rethrows: a session-bound send has no echo, so a swallowed failure would
+    /// make the message vanish silently (dismissed overlay, cleared draft, no
+    /// bubble, no error). Surfacing the throw lets sendFromSessionView return
+    /// .failed and restore the draft.
+    private func publishUserMessageAwaitingDelivery(_ text: String,
+                                                    toChatID chatID: String,
+                                                    echo: Bool) async throws {
+        // prepareUserMessage returns nil ONLY for a chat the Mac deleted (which
+        // openChatWasDeleted can flip to true across the awaits sendFromSessionView
+        // makes before this). Throw so the caller reports .chatDeleted rather than a
+        // .sent for a message that was never published.
+        guard let message = prepareUserMessage(text, toChatID: chatID, echo: echo) else {
+            throw SessionSendChatDeleted()
+        }
+        do {
+            let client = try await currentClient(label: "Send message")
+            try await client.publish(message, toChatID: chatID)
+        } catch {
+            // Roll back the optimistic echo before rethrowing. On the @-mention path
+            // the originating chat sits open below the session view, so echo == true
+            // appended a bubble; the caller (sendComposed) then RESTORES the draft
+            // into the composer on .failed. Without this rollback the failed message
+            // shows BOTH as an undelivered phantom bubble AND back in the composer,
+            // and each retry echoes another never-delivered bubble. The fire-and-
+            // forget send() path keeps its bubble on purpose (no draft restore) and
+            // uses publishUserMessage, so it is unaffected.
+            if echo {
+                rollBackEcho(id: message.uniqueID, chatID: chatID)
+            }
+            throw error
+        }
+    }
+
+    /// Undo an optimistic echo for `chatID` after its publish failed, keyed by the
+    /// TARGET chat rather than the live `messages`. During the publish await the user
+    /// may have navigated away, which snapshots the echo into transcriptCache[chatID]
+    /// and repoints `messages` to another chat; removing only from `messages` would
+    /// then no-op and leave the phantom bubble in the cache (re-served on return).
+    /// Purge both the live transcript (if that chat is still open) and its cache.
+    private func rollBackEcho(id: UUID, chatID: String) {
+        if openChatID == chatID {
+            messages.removeAll { $0.uniqueID == id }
+        }
+        transcriptCache[chatID]?.removeAll { $0.uniqueID == id }
+    }
+
+    /// Thrown when a session-view send resolves to a chat the Mac deleted, so the
+    /// caller surfaces the same .chatDeleted recovery as its up-front precheck.
+    private struct SessionSendChatDeleted: Error {}
+
+    // MARK: Live session view compose + reply notifications
+
+    /// Outcome of a session-view send, scoped to the caller so its error alert
+    /// doesn't leak onto a different SessionView via shared state.
+    enum SessionSendOutcome {
+        case sent(chatID: String)
+        case failed(message: String)
+        /// The resolved target chat was deleted on the Mac. Distinct from a
+        /// transient .failed so the caller can drop its cached composeChatID and
+        /// let the next send resolve/create a fresh session-bound chat, instead of
+        /// re-targeting the dead id forever.
+        case chatDeleted(message: String)
+    }
+
+    /// Claim the watch slot for this session view synchronously, BEFORE the async
+    /// send Task runs (so a dismiss during startup clears it via
+    /// endWatchingSessionChat). The caller must only claim for a non-empty send.
+    /// Returns the prior claim so a failed send can restore it.
+    /// The claim a send holds, used to restore it on failure without cutting a
+    /// newer same-view send (which shares watchToken but has a higher sequence).
+    typealias SessionWatchClaim = SessionWatchState.Claim
+
+    func claimSessionWatch(token: UUID) -> SessionWatchClaim {
+        // Capture the session view's tab NOW (synchronously). beginWatching runs
+        // after an await, by which point the user may have switched tabs; reading
+        // selectedTab there would stamp the watch with the wrong tab and a reply
+        // tap would push the chat onto the wrong stack.
+        watchState.claim(token: token, tab: selectedTab)
+    }
+
+    /// Undo a claim when the send it was made for didn't install a watch (failed),
+    /// but only if this exact send is still the active claim (a newer same-view
+    /// send bumps the sequence) - so it doesn't cut a concurrent valid watch, and
+    /// not if the prior view has departed.
+    func restoreSessionWatchClaim(_ claim: SessionWatchClaim) {
+        watchState.restore(claim)
+    }
+
+    /// Send a message from the live session view's compose overlay. Resolves
+    /// which chat it belongs to (the chat already resolved this visit, else the
+    /// originating @-mention chat, else the session's recent chat or a fresh
+    /// session-bound one), publishes it, and starts watching that chat so the
+    /// agent's reply raises a local notification. `watchToken` identifies the
+    /// calling session view (already claimed via claimSessionWatch) so a stale
+    /// send or a different view leaving can't steal/cancel this view's watch.
+    func sendFromSessionView(text: String,
+                             sessionGuid: String,
+                             resolvedChatID: String?,
+                             originatingChatID: String?,
+                             watchToken: UUID,
+                             claimSequence: Int) async -> SessionSendOutcome {
+        // The caller (sendComposed) is the single point that rejects empty input,
+        // BEFORE it claims the watch; by here the text is guaranteed non-empty.
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Whether THIS send installed a fresh watch, so the unwind paths tear down
+        // only their own (not a prior successful send's, which shares watchToken).
+        var installedWatch = false
+        do {
+            // Precheck a live connection so a send while disconnected fails fast
+            // (the resolvedChatID/originatingChatID branches below don't otherwise
+            // touch the client). The resolve/watch/publish steps each fetch the
+            // live client themselves so they self-heal across a reconnect.
+            _ = try await currentClient(label: "Message from session")
+            let chatID: String
+            if let resolvedChatID {
+                chatID = resolvedChatID
+            } else if let originatingChatID {
+                chatID = originatingChatID
+            } else {
+                chatID = try await resolveSessionBoundChat(forSessionGuid: sessionGuid)
+            }
+            // Don't publish into a chat the Mac deleted. Check the RESOLVED target
+            // against the chat list, not `chatID == openChatID && openChatWasDeleted`:
+            // an @-mention target (originatingChatID) can differ from openChatID
+            // once syncOpenConversationToActiveTab repoints it, so the single
+            // openChatWasDeleted flag wouldn't cover it. (A freshly created/reused
+            // chat is inserted into `chats` before we get here, so it's present.)
+            if !chatExists(chatID) {
+                return .chatDeleted(message: Self.chatDeletedRecoveryText)
+            }
+            // Subscribe (start watching) BEFORE publishing, so the phone is
+            // subscribed before the Mac starts the turn: otherwise its
+            // typing(true) could land before the subscription and the reply
+            // trigger (which requires a turn start) would never fire.
+            installedWatch = await beginWatchingSessionChat(chatID: chatID, token: watchToken)
+            // Re-check deletion AFTER the awaits above: a chatListChanged during the
+            // resolve/subscribe could have deleted chatID, and prepareUserMessage's
+            // guard only covers the OPEN chat, so a session-bound chat would still be
+            // published into (silently lost - no echo). Unwind our own watch and
+            // route to the same .chatDeleted recovery.
+            if !chatExists(chatID) {
+                unwindWatchForFailedSend(installedWatch: installedWatch, token: watchToken, claimSequence: claimSequence)
+                return .chatDeleted(message: Self.chatDeletedRecoveryText)
+            }
+            // Echo into the transcript only when this is the open chat (the
+            // @-mention case, whose conversation sits below the session view). Await
+            // the delivery so a publish failure surfaces as .failed rather than a
+            // silently-vanished message.
+            try await publishUserMessageAwaitingDelivery(trimmed, toChatID: chatID,
+                                                         echo: chatID == openChatID)
+            return .sent(chatID: chatID)
+        } catch {
+            // The compose overlay already cleared the draft optimistically and
+            // (session-bound case) echoes nowhere the user can see, so a swallowed
+            // failure looks like a sent message that vanished. Report it to the
+            // caller (which scopes the alert to its own view).
+            companionLog("Send from session failed: \(String(describing: error))")
+            // Tear down ONLY a watch THIS send installed (installedWatch): a failed
+            // follow-up send must not destroy a prior successful send's still-valid
+            // watch (they share the per-view watchToken).
+            unwindWatchForFailedSend(installedWatch: installedWatch, token: watchToken, claimSequence: claimSequence)
+            // A chat deleted between the precheck and the publish gets the same
+            // recovery (drop the dead id, create a fresh chat) as the precheck.
+            if error is SessionSendChatDeleted {
+                return .chatDeleted(message: Self.chatDeletedRecoveryText)
+            }
+            return .failed(message: userMessage(for: error))
+        }
+    }
+
+    /// Unwind a watch a FAILED send installed. Only tears down when this send
+    /// actually installed a fresh watch AND that watch is still ours (same token),
+    /// so it never cuts a prior successful send's watch or a newer view's. Does NOT
+    /// mark the token departed - the view is still up (unlike endWatchingSessionChat).
+    private func unwindWatchForFailedSend(installedWatch: Bool, token: UUID, claimSequence: Int) {
+        guard let removed = watchState.unwindFailedSend(installedWatch: installedWatch,
+                                                        token: token,
+                                                        claimSequence: claimSequence) else {
+            return
+        }
+        resetWatchedReplyState()
+        if removed.subscribedHere { unsubscribeIfUnused(removed.chatID) }
+    }
+
+    /// Reuse the session's most recently active chat if it was touched in the
+    /// last 24 hours (same rule as openOrCreateChat), otherwise create a new
+    /// session-bound chat. De-dupes concurrent resolutions for the same session
+    /// (a second send arriving before the first's createChat returns would
+    /// otherwise create a duplicate chat, since the new chat isn't in `chats`
+    /// yet). Does not navigate; just yields the chat id for a background send.
+    private func resolveSessionBoundChat(forSessionGuid guid: String) async throws -> String {
+        if let inFlight = pendingChatResolution[guid] {
+            return try await inFlight.value
+        }
+        var thisTask: Task<String, Error>!
+        thisTask = Task<String, Error> {
+            // Clear the slot when the TASK finishes (not when an awaiting caller
+            // returns): if a caller's outer Task is cancelled mid-send, a
+            // caller-scoped defer would free the slot while this unstructured Task
+            // keeps running createChat, and a second send would then create a
+            // duplicate chat. Guard on TASK IDENTITY (Task is Hashable): a
+            // cancelled old task unwinding later must not evict a NEWER task's slot
+            // (e.g. after unpair+repair reused this guid).
+            defer { if self.pendingChatResolution[guid] == thisTask { self.pendingChatResolution[guid] = nil } }
+            // Fetch the LIVE client at await time (mirrors beginWatchingSessionChat)
+            // so a reconnect during a long createChat self-heals, instead of every
+            // coalesced waiter failing against a captured, now-dead connection.
+            let client = try await self.currentClient(label: "Resolve session chat")
+            return try await self.resolveSessionBoundChatUncoalesced(forSessionGuid: guid, client: client)
+        }
+        pendingChatResolution[guid] = thisTask
+        return try await thisTask.value
+    }
+
+    private func resolveSessionBoundChatUncoalesced(forSessionGuid guid: String,
+                                                    client: CompanionClient) async throws -> String {
+        if let attached = recentAttachedChat(forSessionGuid: guid) {
+            return attached.chat.id
+        }
+        // Time-bound the createChat like the other client calls: a hung Mac must
+        // not park this (coalesced) resolution forever, which would stick the
+        // pendingChatResolution slot and block all future sends for this session.
+        let entry = try await withTimeout(15, "Creating a chat") {
+            try await client.createChat(title: "New Chat", mode: .session(guid: guid))
+        }
+        if !chatExists(entry.chat.id) {
+            chats.insert(entry, at: 0)
+        }
+        return entry.chat.id
+    }
+
+    /// Begin watching a chat for the agent's reply while the session view is up.
+    /// If the chat is not already open, subscribe so its deliveries stream in.
+    /// Runs async (after publish/subscribe); if this send is no longer the active
+    /// watch intent (its view left, or a newer send superseded it) we install
+    /// nothing and undo any subscription made just now, so a departed/superseded
+    /// send can't leak a watcher or clobber a newer valid watch.
+    /// Returns whether THIS call installed a fresh watch (vs reused an existing
+    /// one, or no-op'd because superseded). A caller unwinding a failed send must
+    /// only tear the watch down when it installed one - otherwise a failed
+    /// follow-up send would destroy a PRIOR successful send's still-valid watch
+    /// (both sends from a view share one per-view token, so token identity can't
+    /// tell them apart).
+    @discardableResult
+    private func beginWatchingSessionChat(chatID: String, token: UUID) async -> Bool {
+        // Record the intent (and no-op if a stale/superseded send lost ownership
+        // BEFORE any destructive work).
+        guard watchState.recordIntent(chatID: chatID, token: token) else { return false }
+        // Already watching this chat: transfer ownership (token + tab) to the newer
+        // view but keep the existing subscription. Reused, not freshly installed.
+        if watchState.reuseIfSameChat(chatID, token: token) {
+            return false
+        }
+        // Switching to a different watched chat: drop the previous one first.
+        tearDownCurrentWatch()
+        // Subscribe only if no mounted conversation already owns this chat's
+        // subscription (checking BOTH stacks, not just openChatID - the chat may
+        // be mounted on the other tab).
+        var subscribedHere = false
+        if !isConversationMounted(chatID) {
+            // Fetch the LIVE client (self-heals across a reconnect that happened
+            // since the send began) rather than a captured instance that may be
+            // dead; otherwise the subscribe hits a defunct connection.
+            if let client = try? await currentClient(label: "Watch subscribe") {
+                do {
+                    _ = try await client.subscribe(chatID: chatID)
+                    subscribedHere = true
+                } catch {
+                    companionLog("Watch-subscribe failed for \(chatID): \(String(describing: error))")
+                }
+            }
+        }
+        // The view may have left (or a newer send superseded us) during the
+        // awaited subscribe; honor the token so we don't watch/leak for it.
+        guard watchState.isActiveOwner(token) else {
+            companionLog("Session view left/superseded before watch could start; unwinding \(chatID)")
+            // Don't unsubscribe if a newer watch already adopted this chat (Mac
+            // subscribe/unsubscribe isn't refcounted, so we'd cut its stream) or
+            // a conversation now mounts it (re-checked in unsubscribeIfUnused).
+            if subscribedHere {
+                unsubscribeIfUnused(chatID)
+            }
+            return false
+        }
+        resetWatchedReplyState()
+        // install() uses the tab captured synchronously at claim time (NOT
+        // selectedTab here, post-await): a reply tap must push the chat onto the
+        // stack the session view actually lives on.
+        watchState.install(chatID: chatID, subscribedHere: subscribedHere, token: token)
+        companionLog("Watching chat \(chatID) for replies (subscribedHere=\(subscribedHere), openChat=\(openChatID ?? "nil"))")
+        return true
+    }
+
+    /// A session view (re)appeared: its token is alive again, so un-mark it as
+    /// departed. onDisappear fires while a view stays in the stack (a tab switch, a
+    /// cover), and its @State watchToken outlives that, so without this a live
+    /// view's token would linger and wrongly block a restore.
+    func watchViewDidAppear(guid: String, token: UUID) {
+        appearedSessionTokens[guid, default: []].insert(token)
+        watchState.viewDidAppear(token: token)
+    }
+
+    /// How many session-view destinations for `guid` are mounted across both tabs'
+    /// stacks. A count (not a bool) because the same guid can be mounted more than
+    /// once, and a genuine pop is detected as the count dropping below the number of
+    /// live views for that guid.
+    private func mountedSessionCount(_ guid: String) -> Int {
+        let matches: (Destination) -> Bool = {
+            if case .session(let g, _, _) = $0 { return g == guid }
+            return false
+        }
+        return navigationPath.filter(matches).count + sessionsPath.filter(matches).count
+    }
+
+    /// A session view's onDisappear. onDisappear ALSO fires on a tab switch / cover
+    /// while the view stays in the nav stack, and tearing the watch down then would
+    /// kill the reply notification for a message the user just sent before
+    /// switching to the Chats tab to wait. Only a genuine pop ends the watch.
+    ///
+    /// The pop test is token-aware: a genuine pop removes THIS view's destination
+    /// from the nav stack, so the count of mounted `.session(guid)` destinations
+    /// drops below the number of live tokens for that guid; a tab switch / cover
+    /// leaves them equal. A guid-only "still mounted?" bool would wrongly see a
+    /// co-mounted duplicate of the same guid and skip the teardown, leaking this
+    /// token's watch (and its Mac subscription) permanently.
+    func sessionViewDidDisappear(guid: String, token: UUID) {
+        let live = appearedSessionTokens[guid]?.count ?? 0
+        guard mountedSessionCount(guid) < live else { return }   // tab switch / cover
+        appearedSessionTokens[guid]?.remove(token)
+        if appearedSessionTokens[guid]?.isEmpty == true { appearedSessionTokens[guid] = nil }
+        endWatchingSessionChat(token: token)
+    }
+
+    /// A genuine departure (view popped): mark the token departed (blocks a later
+    /// restore from reviving it) and tear down the watch if it owned it.
+    func endWatchingSessionChat(token: UUID) {
+        if let removed = watchState.depart(token: token) {
+            resetWatchedReplyState()
+            if removed.subscribedHere { unsubscribeIfUnused(removed.chatID) }
+        }
+    }
+
+    /// Drop the current watch (if any) and its watch-only subscription.
+    private func tearDownCurrentWatch() {
+        guard let removed = watchState.removeWatch() else { return }
+        resetWatchedReplyState()
+        // Unsubscribe only if this watch owns the subscription and no mounted
+        // conversation still needs it (one may have mounted the chat since the
+        // watch began; its own teardown then handles the unsubscribe). The
+        // re-check runs again just before the send.
+        if removed.subscribedHere {
+            unsubscribeIfUnused(removed.chatID)
+        }
+    }
+
+    private func resetWatchedReplyState() {
+        // The trigger owns the reply-text accumulation, so a fresh trigger clears it.
+        replyTrigger = SessionReplyTrigger()
+    }
+
+    /// A delivery arrived for the chat the session view is watching. A reply may
+    /// arrive as streaming append deltas, as growing whole-message snapshots, or
+    /// (for a non-streaming model) as a single final message published AFTER the
+    /// turn's typingStatus false, so no single delivery is "the reply is done".
+    /// Deliveries are normalized to SessionReplyTrigger events (unit-tested),
+    /// which decides when to fire. (The .commit that ends a streamed turn is
+    /// hiddenFromClient and never forwarded, so it isn't a signal here.)
+    /// Note: this watches the whole CHAT, not a specific turn, so while the
+    /// session view is up ANY agent turn on the watched chat (an
+    /// orchestration/watcher-triggered turn, a queued follow-up, or activity from
+    /// another paired device) fires a notification. That breadth is intentional:
+    /// any agent reply on the chat the user is engaged with is worth surfacing.
+    private func noteWatchedSessionDelivery(_ message: Message, chatID: String) {
+        guard let watched = watchState.watch, chatID == watched.chatID else { return }
+        guard message.author == .agent, !message.hiddenFromClient else { return }
+        // Resolve any @-mentions in the reply so the notification body (and the
+        // transcript when the user opens the chat) shows names, not raw @<guid>.
+        // For the OPEN chat apply() already parsed it this delivery, so only do it
+        // here for a watched-but-covered chat (avoids a second O(text) regex scan
+        // per streamed token when the chat is both open and watched).
+        if chatID != openChatID {
+            noteMentions(in: [message])
+        }
+        // Normalize the delivery to a raw accumulation chunk (or a request/no-op).
+        // The trigger owns the single id->text surface now, so the chunk carries its
+        // own id: a streamed delta reuses the delta's uuid (which reuses the .begin
+        // id); a whole message uses the uniqueID.
+        let id = message.uniqueID.uuidString
+        let event: SessionReplyTrigger.Event
+        switch message.content {
+        case .append(let string, let uuid):
+            // A streamed text delta; concatenates onto the .begin snapshot's text.
+            event = .reply(chunk: .appendText(id: uuid.uuidString, delta: string))
+        case .appendAttachment(let attachment, let uuid):
+            // A streamed attachment delta; keeps the .begin preview if any, else the
+            // attachment's preview + label-ness (a "📄 name" label REPLACES on the
+            // next text delta; .code text EXTENDS, like the whole-message path).
+            let preview = Self.attachmentPreview(attachment)
+            event = .reply(chunk: .appendAttachment(id: uuid.uuidString,
+                                                    previewIfEmpty: preview.text,
+                                                    isLabel: preview.isLabel))
+        case .plainText(let text, _), .markdown(let text):
+            // A whole message, OR the .begin first chunk of a streamed reply
+            // (later chunks arrive as .append reusing this uniqueID). Seed with the
+            // RAW text (isLabel: false) so those chunks concatenate onto it instead
+            // of dropping the first chunk.
+            event = .reply(chunk: .begin(id: id, preview: text, isLabel: false))
+        case .multipart, .explanationResponse:
+            // isLabel comes from what the preview actually is (an attachment label
+            // vs real text), computed inside replyPreview from the last substantive
+            // subpart - not from subpart-type presence, which mis-flags a trailing
+            // attachment label as text when an empty .markdown("") is present.
+            let preview = Self.replyPreview(for: message)
+            event = .reply(chunk: .begin(id: id, preview: preview.text, isLabel: preview.isLabel))
+        case .remoteCommandRequest(_, safe: .some(false)), .selectSessionRequest:
+            // A block-on-user request that needs the user: a remote command
+            // needing approval (safe == false) or a select-session. Auto-executed
+            // commands (safe == true / nil) are mid-turn tool calls that DON'T
+            // match here and fall to default, so the turn's final text reply still
+            // fires on typing(false) rather than being pre-empted by the tool call.
+            event = .userActionRequest(id: id, fallback: Self.requestDescription(for: message.content))
+        default:
+            // Tool calls, local notices, commits, bookkeeping: not the preview.
+            return
+        }
+        applyReplyTrigger(event, watched: watched)
+    }
+
+    /// Max length of a reply-notification body preview (one source of truth).
+    private static let notificationBodyMaxLength = 200
+
+    /// The preview walks below feed the reply NOTIFICATION, whose body is
+    /// @-mention-rendered and then truncated ONCE at the end (postReplyNotification,
+    /// matching "render mentions BEFORE truncating"). Truncating inside a preview
+    /// first would cut a @<guid> token (37 chars) that straddles the 200-char
+    /// boundary before it is resolved, leaving a raw fragment on the lock screen. So
+    /// the previews pass an effectively-unbounded length; the streamed plainText/
+    /// markdown path already seeds the accumulator with the raw untruncated text, and
+    /// this keeps the multipart / attachment / request paths consistent with it.
+    private static let untruncatedPreviewLength = Int.max
+
+    /// A user-facing one-line preview of a streamed attachment, plus its label-ness
+    /// (a "📄 name" file label vs real .code text), from one walk. Ephemeral
+    /// reasoning/status is excluded (returns "") so a reasoning-only streamed turn's
+    /// notification isn't the "Thinking…" text - matching the whole-message path.
+    private static func attachmentPreview(_ attachment: LLM.Message.Attachment) -> (text: String, isLabel: Bool) {
+        // Map the single attachment subpart directly (no throwaway multipart Content
+        // allocated per streamed delta), applying the same substance policy the
+        // whole-message path uses: Subpart.hasDisplayableSubstance already encodes
+        // "a statusUpdate / empty .code is not a preview", so a non-substantive
+        // subpart yields ("", false) and the trigger's empty guard suppresses the
+        // fire - without re-implementing the statusUpdate rule here.
+        let sub = Message.Subpart.attachment(attachment)
+        guard sub.hasDisplayableSubstance else { return ("", false) }
+        return sub.previewAndLabel(maxLength: untruncatedPreviewLength) ?? ("", false)
+    }
+
+    /// The user-facing preview for an agent REPLY, matching the bubble the user
+    /// will see, plus whether that preview is a rendered ATTACHMENT LABEL ("📄
+    /// name") rather than real text - both from ONE walk (previewAndLabel) so the
+    /// preview and its flag can't drift. isLabel drives whether a following streamed
+    /// text delta REPLACES the preview (a label) or extends it (real text).
+    ///
+    /// Strips ephemeral reasoning/status subparts first, then returns ("", false)
+    /// for substance-free content so the trigger's empty guard suppresses the fire
+    /// (rather than showing a placeholder).
+    private static func replyPreview(for message: Message) -> (text: String, isLabel: Bool) {
+        var cleaned = message
+        cleaned.removeReasoningStatusSubparts()
+        guard cleaned.content.hasDisplayableSubstance else { return ("", false) }
+        return cleaned.content.previewAndLabel(maxLength: untruncatedPreviewLength)
+            ?? (cleaned.content.shortDescription, false)
+    }
+
+    /// Description of a block-on-user request (remote command / select session)
+    /// for its notification body. Unlike replyPreview this is NOT gated on
+    /// hasDisplayableSubstance (which is false for requests) - the request
+    /// description IS the substance here.
+    private static func requestDescription(for content: Message.Content) -> String {
+        content.snippetText(maxLength: untruncatedPreviewLength) ?? content.shortDescription
+    }
+
+    /// Agent typing changed for the watched chat. A turn starting resets the
+    /// accumulation; a turn finishing (typing false) may fire (see the trigger).
+    private func noteWatchedTypingStatus(isTyping: Bool, chatID: String) {
+        guard let watched = watchState.watch, chatID == watched.chatID else { return }
+        // typing(true) resets the trigger (and its accumulator) for the new turn.
+        applyReplyTrigger(.typing(isTyping), watched: watched)
+    }
+
+    private func applyReplyTrigger(_ event: SessionReplyTrigger.Event, watched: SessionWatchState.Watch) {
+        // Suppression is passed INTO the trigger so a fire suppressed for visibility
+        // does not latch (burn the turn's one-fire opportunity / mark text
+        // notified): if the user later navigates away, a subsequent off-screen
+        // message in the same turn can still fire. If the watched chat is the
+        // visible top view, the user sees the reply land live via apply(), so a
+        // notification would be redundant. (The @-mention case, where the session
+        // view covers the conversation, is NOT the visible top, so it still fires.)
+        let shouldFire: (String) -> Bool = { _ in
+            // Suppress ONLY when the reply is actually being seen live: the chat is
+            // the visible-top conversation AND the app is foreground+active. When
+            // backgrounded/locked the nav position is unchanged but nothing is on
+            // screen, so a reply that lands in the still-connected window must still
+            // notify (don't rely on the APNs/NSE path covering it).
+            let active = UIApplication.shared.applicationState == .active
+            let suppress = active && self.isWatchedChatVisibleTop(watched)
+            if suppress {
+                companionLog("Reply for visible chat \(watched.chatID); shown live, not notifying")
+            }
+            return !suppress
+        }
+        if case .fire(let body) = replyTrigger.handle(event, shouldFire: shouldFire) {
+            postReplyNotification(watched: watched, body: body)
+        }
+    }
+
+    private func isWatchedChatVisibleTop(_ watched: SessionWatchState.Watch) -> Bool {
+        // Whether the watched chat is the conversation on top of the CURRENTLY
+        // selected tab (independent of watched.tab - the chat can be mounted on
+        // both, and the user may be reading it on the other tab where apply()
+        // already renders the reply live).
+        activePath.last?.conversationID == watched.chatID
+    }
+
+    /// Replace raw @<guid> mention tokens with the resolved entity name (with the
+    /// terminal glyph) for a PLAIN-TEXT context (the notification body). Delegates
+    /// to the SAME shared renderer the push/NSE preview path uses, so the two
+    /// lock-screen notification paths agree for a given mention (both show
+    /// "🖥 name", not one bare and one prefixed) and there's a single copy of the
+    /// parse-and-replace loop.
+    private func renderMentionsPlainText(_ text: String) -> String {
+        MentionPlainTextRenderer.render(text) { mentionResolutions[$0]?.displayName }
+    }
+
+    private func postReplyNotification(watched: SessionWatchState.Watch, body: String) {
+        // Belt-and-suspenders: never post for a chat that no longer exists (the tap
+        // handler would refuse to navigate to it). The watch is torn down on
+        // deletion, but a delivery could race that teardown. One lookup for both the
+        // existence check and the title (no double scan / divergence).
+        guard let entry = chat(for: watched.chatID) else {
+            companionLog("Skipping reply notification for missing chat \(watched.chatID)")
+            return
+        }
+        let chatTitle = entry.chat.title
+        let content = UNMutableNotificationContent()
+        content.title = chatTitle
+        // Render @-mentions to names BEFORE truncating (matching the push path),
+        // so the lock screen shows a readable name, not a raw @<guid>.
+        content.body = renderMentionsPlainText(body)
+            .truncatedWithTrailingEllipsis(to: Self.notificationBodyMaxLength)
+        content.sound = .default
+        content.threadIdentifier = "sessionchat-\(watched.chatID)"
+        content.userInfo = [
+            Self.sessionChatNavKey: watched.chatID,
+            Self.sessionChatTabKey: watched.tab.rawValue,
+        ]
+        let request = UNNotificationRequest(identifier: UUID().uuidString,
+                                            content: content,
+                                            trigger: nil)
+        companionLog("Posting reply notification for chat \(watched.chatID) tab=\(watched.tab.rawValue) (\(body.count) chars)")
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                companionLog("Failed to post session reply notification: \(String(describing: error))")
+            }
+        }
+    }
+
+    /// A tap on a session-view reply notification: push the chat onto the tab the
+    /// originating session view lives on (above the session), so Back returns the
+    /// user to that session view rather than the home screen. On a cold launch
+    /// the home screen isn't up yet (and loadHome clears the nav paths), so defer
+    /// the tap until phase == .home.
+    func handleSessionChatNotificationTap(chatID: String, tab: AppTab) {
+        guard phase == .home else {
+            companionLog("Reply-notification tap before home; deferring nav to \(chatID)")
+            pendingSessionChatNav = (chatID, tab)
+            return
+        }
+        // The chat may have been deleted on the Mac since the notification was
+        // posted (a stale tap, or a cold-launch replay of an old one). `chats` is
+        // authoritative here - refreshLists runs before any deferred replay, and
+        // live taps keep it fresh - so silently ignore the tap rather than
+        // navigating to a broken/empty "Could not load this chat".
+        guard chatExists(chatID) else {
+            companionLog("Ignoring reply-notification tap for missing chat \(chatID)")
+            return
+        }
+        handOffWatchedChatIfOpening(chatID)
+        // Bind the target stack once so the read and the write can't drift to
+        // different stacks.
+        let stack: ReferenceWritableKeyPath<AppModel, [Destination]> =
+            (tab == .chats) ? \.navigationPath : \.sessionsPath
+        // Put the chat on top exactly once, keeping any session view below it so
+        // Back returns to the session view. If it's already mounted (the
+        // @-mention case, sitting below the session), remove that copy first so
+        // there's no duplicate.
+        switch SessionNavOpen.action(forOpening: chatID, in: self[keyPath: stack].map(\.conversationID)) {
+        case .noChange:
+            break
+        case .moveToTop(let removeIndices):
+            var newStack = self[keyPath: stack]
+            for index in removeIndices.sorted(by: >) {
+                newStack.remove(at: index)
+            }
+            newStack.append(.conversation(chatID: chatID))
+            self[keyPath: stack] = newStack
+        }
+        // Switch to the target tab AFTER mutating its stack, so the single
+        // resulting selectedTab.didSet sync runs against the final stack (not the
+        // pre-push one, which would load the wrong conversation first).
+        selectedTab = tab
+    }
+
+    /// Replay a reply-notification tap that arrived during launch, once home is
+    /// up. Called at the end of loadHome.
+    private func applyPendingSessionChatNav() {
+        guard phase == .home, let pending = pendingSessionChatNav else { return }
+        pendingSessionChatNav = nil
+        companionLog("Applying deferred reply-notification nav to \(pending.chatID)")
+        handleSessionChatNotificationTap(chatID: pending.chatID, tab: pending.tab)
     }
 
     // MARK: Interactive message responses
@@ -1751,26 +3112,50 @@ final class AppModel {
         let identifiers = Set(texts
             .flatMap { MentionParser.mentions(in: $0) }
             .map { $0.identifier })
-        let unresolved = identifiers.filter {
-            mentionResolutions[$0] == nil && !mentionResolutionsInFlight.contains($0)
+        // Skip ids we already resolved, have a request in flight for, or tried
+        // and failed (the retry gate). Everything else gets requested.
+        let toRequest = identifiers.filter {
+            mentionResolutions[$0] == nil
+                && !mentionResolutionsInFlight.contains($0)
+                && !unresolvedMentions.contains($0)
         }
-        guard !unresolved.isEmpty else { return }
-        mentionResolutionsInFlight.formUnion(unresolved)
-        companionLog("Resolving \(unresolved.count) mention(s)")
+        guard !toRequest.isEmpty else { return }
+        mentionResolutionsInFlight.formUnion(toRequest)
+        companionLog("Resolving \(toRequest.count) mention(s)")
         Task {
             do {
                 let client = try await currentClient(label: "Resolve mentions")
-                let resolutions = try await client.resolveMentions(Array(unresolved))
-                for resolution in resolutions {
-                    mentionResolutions[resolution.identifier] = resolution
+                let resolutions = try await client.resolveMentions(Array(toRequest))
+                let byIdentifier = Dictionary(
+                    resolutions.map { ($0.identifier, $0) },
+                    uniquingKeysWith: { _, last in last })
+                for id in toRequest {
+                    // Cache only a real hit (a live name). A miss (nil
+                    // displayName, or no entry returned at all) goes to the
+                    // retry gate so a later trigger can ask again, rather than
+                    // caching an unresolved id and rendering a raw @UUID forever.
+                    if let resolution = byIdentifier[id], resolution.displayName != nil {
+                        mentionResolutions[id] = resolution
+                    } else {
+                        unresolvedMentions.insert(id)
+                    }
                 }
             } catch {
-                // Leave them unresolved; the raw identifiers stay readable and
-                // the next delivery retries.
+                // The whole batch failed (Mac unreachable). Gate them so we
+                // don't fire a fresh request on every delivery; a reconnect or
+                // chat open clears the gate and retries.
                 companionLog("Mention resolution failed: \(String(describing: error))")
+                unresolvedMentions.formUnion(toRequest)
             }
-            mentionResolutionsInFlight.subtract(unresolved)
+            mentionResolutionsInFlight.subtract(toRequest)
         }
+    }
+
+    /// Reopen the retry gate so mentions that failed to resolve earlier (Mac was
+    /// down, or a session was still launching) get another attempt. The re-scan
+    /// itself is done by the caller's own noteMentions pass that follows.
+    private func retryUnresolvedMentions() {
+        unresolvedMentions.removeAll()
     }
 
     /// A chat-list snippet, ready to display: inline markdown rendered (so
@@ -1823,16 +3208,44 @@ final class AppModel {
     private func handle(event: CompanionHostMessage) {
         switch event {
         case .delivery(let message, let chatID, _):
-            guard chatID == openChatID, !message.hiddenFromClient else { return }
-            apply(message)
+            if !message.hiddenFromClient {
+                if chatID == openChatID {
+                    apply(message)
+                } else if transcriptCache[chatID] != nil {
+                    // A co-mounted-but-hidden chat that was previously OPEN (so its
+                    // cache is a full snapshot): merge the delivery so a switch-back
+                    // shows this reply. Only merge into an EXISTING entry - seeding a
+                    // fresh 1-message entry for a mounted-but-never-opened chat would
+                    // be served by conversationDidAppear as the WHOLE conversation
+                    // (missing all history). Such a chat instead refetches full
+                    // history on switch-to, and the delivery still fires its watch
+                    // notification. removeValue detaches so the in-place append is
+                    // amortized O(1) (no COW deep copy per streamed delta).
+                    var cached = transcriptCache.removeValue(forKey: chatID) ?? []
+                    apply(message, into: &cached, chatID: chatID)
+                    transcriptCache[chatID] = cached
+                }
+            }
+            // The live session view may be watching a chat (its own or the one
+            // an @-mention came from). Accumulate the agent's reply text; the
+            // notification fires when the turn completes (typingStatus below).
+            noteWatchedSessionDelivery(message, chatID: chatID)
         case .typingStatus(let isTyping, let participant, let chatID):
-            if chatID == openChatID, participant == .agent {
-                isAgentTyping = isTyping
+            if participant == .agent {
+                // Track per-chat so re-selecting a co-mounted chat mid-turn (a tab
+                // switch, which doesn't re-deliver this edge-triggered status) still
+                // shows the indicator. isAgentTyping is derived from this set.
+                if isTyping { agentTypingChats.insert(chatID) } else { agentTypingChats.remove(chatID) }
+                noteWatchedTypingStatus(isTyping: isTyping, chatID: chatID)
             }
         case .chatListChanged(let entries):
             // The Mac pushes a fresh list whenever a chat is renamed, gets
             // its icon, or is created/deleted/reordered.
             chats = entries
+            // Evict cached transcripts for chats deleted on the Mac, so a later
+            // delivery can't merge into a stale snapshot (deleteChat evicts the
+            // local-delete path; this covers the remote-delete path).
+            pruneStateForLiveChats(Set(entries.map { $0.chat.id }))
             noteMentions(inTexts: entries.compactMap { $0.snippet })
             checkOpenChatStillExists()
         case .requestNotificationPermission(let requestID):
@@ -1857,6 +3270,12 @@ final class AppModel {
                     let isInitialConfig = activeStreamGeneration == 0
                     activeStreamGeneration = config.generationId
                     historyTileCache.removeAll()
+                    // A reflow renumbers absolute lines, so every queued/in-flight tile
+                    // request is now stale. Neutralize the throttle (drop the queue,
+                    // cancel in-flight fetches, nudge a re-drive) so we do not send up to
+                    // maxHistoryTilesPending doomed requests to the relay; applyLayout
+                    // re-requests fresh tiles for the new generation.
+                    flushHistoryTileThrottle()
                     // Snap the live top to the new extent so a stale (pre-reflow)
                     // value does not inflate the canvas until the next media frame.
                     activeStreamLiveTop = config.firstAbsLine + Int64(max(0, config.totalLines - config.rows))
@@ -1890,7 +3309,10 @@ final class AppModel {
             }
         case .streamEnded(let streamID, let reason):
             if streamID == activeStreamID {
-                activeStreamID = nil
+                // A host-side end is a stream transition like the others: neutralize the
+                // throttle (releasing slots, cancelling fetches) before dropping the id so
+                // a late reply cannot be cached against the next stream.
+                neutralizeDeadStream()
                 activeStreamGeometry = nil
                 activeSelectionRange = nil
                 // A host-side end is terminal: drop the intent so it does not
@@ -1929,6 +3351,10 @@ final class AppModel {
                           onEnded: @escaping (CompanionStreamEndReason) -> Void) {
         liveWatchGuid = guid
         liveStreamPaused = false
+        // A session switch reuses the same live connection, so any in-flight or queued
+        // tile requests belong to the previous session; neutralize the throttle before
+        // the new stream starts issuing requests.
+        flushHistoryTileThrottle()
         // Drop the previous session's geometry/extent so the canvas waits for the
         // new config before laying out (streamExtent can arrive first); otherwise it
         // would briefly fetch tiles against stale geometry.
@@ -1951,6 +3377,7 @@ final class AppModel {
     /// Drop the live-watch intent and stop any running stream (on leaving the view).
     func stopWatchingSessionLive() {
         liveWatchGuid = nil
+        flushHistoryTileThrottle()
         stopActiveStream()
         clearStreamHandlers()
     }
@@ -1959,6 +3386,7 @@ final class AppModel {
     /// encoding while the phone can't display anything.
     func pauseLiveStream() {
         liveStreamPaused = true
+        flushHistoryTileThrottle()
         stopActiveStream()
     }
 
@@ -2017,8 +3445,9 @@ final class AppModel {
 
     /// Called after a (re)connect completes so an open live view resumes.
     private func restartLiveStreamAfterReconnect() {
-        // A new connection means the old stream id is dead.
-        activeStreamID = nil
+        // A new connection means the old stream id is dead; neutralize the throttle
+        // (its in-flight/queued requests are stale) and drop the id.
+        neutralizeDeadStream()
         // The new stream's generations restart at 1; treat its first config as
         // initial (not a mid-stream reflow). Otherwise a stale generation from the
         // old stream could wipe the selection the mac couriers on subscribe, and a
@@ -2157,34 +3586,125 @@ final class AppModel {
     /// grown more lines).
     func invalidateHistoryTile(firstAbsLine: Int64) { historyTileCache[firstAbsLine] = nil }
 
-    /// Fetch a scrollback tile; `completion` ALWAYS runs on the main actor (with the
-    /// image, or nil on failure / no stream / empty-evicted range) so the caller can
-    /// clear its in-flight state. De-duplication and staleness are the caller's job
-    /// (the canvas keys requests by tile and ignores out-of-date completions); doing
-    /// it here by absolute line silently dropped re-requests after an invalidation,
-    /// leaving tiles stuck loading or showing a stale highlight.
-    func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (UIImage?) -> Void) {
+    /// The result of a scrollback tile fetch. `.throttled` is distinct from `.failed`
+    /// so the caller can keep any currently-shown image and re-request, rather than
+    /// destroying a valid tile with a "couldn't load" state: a throttle drop, a
+    /// stream transition, or a mid-stream reflow superseding a request are all
+    /// transient and recoverable, unlike a host-reported miss or a network error.
+    enum HistoryTileOutcome {
+        case image(UIImage)
+        case failed
+        case throttled
+    }
+
+    /// Fetch a scrollback tile; `completion` ALWAYS runs on the main actor so the
+    /// caller can clear its in-flight state. De-duplication and staleness are the
+    /// caller's job (the canvas keys requests by tile and ignores out-of-date
+    /// completions); doing it here by absolute line silently dropped re-requests after
+    /// an invalidation, leaving tiles stuck loading or showing a stale highlight.
+    func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (HistoryTileOutcome) -> Void) {
         if let image = historyTileCache[firstAbsLine] {
-            completion(image)
+            completion(.image(image))
             return
         }
-        guard let client, let streamID = activeStreamID else {
+        guard client != nil, activeStreamID != nil else {
             companionLog("historyTile no stream firstAbs=\(firstAbsLine)")
-            completion(nil)
+            if liveWatchGuid != nil {
+                // Transient between-stream window (right after stopActiveStream, or during
+                // a reconnect): a stream is still intended, so report .throttled and keep
+                // any current image; the canvas re-drives (growthTick / slot signal) once
+                // it is live. Matches the drain path's no-stream handling.
+                reportThrottled(completion)
+            } else {
+                // No live-watch intent (the host ended the stream): it will not come back,
+                // so report a real failure rather than an eternal spinner.
+                reportFailed(completion)
+            }
+            return
+        }
+        let epoch = historyTileEpoch
+        guard historyTileTasks.count < maxHistoryTilesInFlight else {
+            guard historyTilePending.count < maxHistoryTilesPending else {
+                // Backlog full: reject THIS request rather than evicting a still-valid
+                // queued tile. Evicting the oldest churned the whole pending set every
+                // pass on a static wide viewport (each pass re-requested the evicted
+                // tiles, which re-evicted others). Rejecting the incoming instead lets
+                // the pipeline drain in order; onHistoryTileSlotAvailable then nudges the
+                // canvas to re-request what it still wants, paced by replies.
+                historyTileOverflowed = true
+                companionLog("historyTile reject (backlog full) firstAbs=\(firstAbsLine)")
+                reportThrottled(completion)
+                return
+            }
+            historyTilePending.append((firstAbsLine, lineCount, epoch, completion))
+            return
+        }
+        sendHistoryTile(firstAbsLine: firstAbsLine, lineCount: lineCount, epoch: epoch, completion: completion)
+    }
+
+    /// Drop still-queued tile requests the caller no longer wants (e.g. tiles the user
+    /// flung past). Only the pending queue is pruned; an already-issued fetch is left to
+    /// complete (it warms the cache). This keeps a fling from spending in-flight slots
+    /// and relay frame budget on viewports that have already scrolled away. Takes a set
+    /// so the fling hot path prunes the queue in one pass, not one scan per tile.
+    func cancelPendingHistoryTiles(firstAbsLines: Set<Int64>) {
+        guard !firstAbsLines.isEmpty else { return }
+        historyTilePending.removeAll { entry in
+            let match = firstAbsLines.contains(entry.firstAbsLine)
+            if match {
+                reportThrottled(entry.completion)
+            }
+            return match
+        }
+    }
+
+    /// Issue one tile request against the current window and, when it settles, pull
+    /// the next queued request into the freed slot. Callers gate on the in-flight
+    /// window before calling this; see requestHistoryTile. `epoch` ties the request to
+    /// the stream it was made for so a transition can neutralize it.
+    private func sendHistoryTile(firstAbsLine: Int64, lineCount: Int, epoch: Int, completion: @escaping (HistoryTileOutcome) -> Void) {
+        guard let client, let streamID = activeStreamID else {
+            // The stream vanished after this request was queued. Report it as throttled
+            // (transient) without touching the in-flight count; the drain loop keeps
+            // pulling the backlog.
+            companionLog("historyTile no stream firstAbs=\(firstAbsLine)")
+            reportThrottled(completion)
             return
         }
         let generation = activeStreamGeneration
-        companionLog("historyTile req firstAbs=\(firstAbsLine) lineCount=\(lineCount) stream=\(streamID) gen=\(generation)")
-        Task { @MainActor in
+        let taskID = historyTileTaskCounter
+        historyTileTaskCounter += 1
+        companionLog("historyTile req firstAbs=\(firstAbsLine) lineCount=\(lineCount) stream=\(streamID) gen=\(generation) epoch=\(epoch)")
+        let task = Task { @MainActor in
+            defer {
+                // historyTileTasks IS the in-flight set (the gate is its count), so
+                // removing self frees the slot. A stale task (epoch bumped mid-await, its
+                // entry already cleared by flush) removes a no-op key and must not drive
+                // the queue for the new stream, so gate the drain on the current epoch.
+                historyTileTasks[taskID] = nil
+                if epoch == historyTileEpoch {
+                    drainHistoryTileQueue()
+                }
+            }
             do {
-                let tile = try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
-                                                        lineCount: lineCount, generationId: generation)
-                // A reflow/resize (or reconnect) between request and reply bumps the
-                // generation and re-renders every tile, so a reply for the old
-                // generation must not be cached or shown as current.
+                let tile = try await withTimeout(historyTileTimeout, "History tile") {
+                    try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
+                                                 lineCount: lineCount, generationId: generation)
+                }
+                // A stream transition (session switch / reconnect) since the request
+                // started makes this reply belong to a dead stream; it must not be
+                // cached (its absolute-line key would collide in the new stream).
+                guard epoch == historyTileEpoch else {
+                    companionLog("historyTile stale epoch firstAbs=\(firstAbsLine) reqEpoch=\(epoch) now=\(historyTileEpoch)")
+                    completion(.throttled)
+                    return
+                }
+                // A reflow/resize between request and reply bumps the generation and
+                // re-renders every tile, so a reply for the old generation must not be
+                // cached or shown as current.
                 guard generation == activeStreamGeneration else {
                     companionLog("historyTile stale gen firstAbs=\(firstAbsLine) reqGen=\(generation) now=\(activeStreamGeneration)")
-                    completion(nil)
+                    completion(.throttled)
                     return
                 }
                 // The host clamps to the available window and reports the range it
@@ -2193,22 +3713,108 @@ final class AppModel {
                 // it as a miss rather than poisoning the cache with misplaced content.
                 guard tile.firstAbsLine == firstAbsLine else {
                     companionLog("historyTile origin drift req=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount)")
-                    completion(nil)
+                    completion(.failed)
                     return
                 }
                 guard tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
                     companionLog("historyTile reply firstAbs=\(firstAbsLine) lineCount=\(tile.lineCount) bytes=\(tile.pngData.count) -> \(tile.lineCount == 0 ? "evicted" : "undecodable")")
-                    completion(nil)
+                    completion(.failed)
                     return
                 }
                 historyTileCache[firstAbsLine] = image
                 companionLog("historyTile ok firstAbs=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount) bytes=\(tile.pngData.count)")
-                completion(image)
+                completion(.image(image))
+            } catch is CancellationError {
+                // Cancelled by flushHistoryTileThrottle on a stream transition: transient,
+                // so keep any current image rather than flashing a failure.
+                companionLog("historyTile cancelled firstAbs=\(firstAbsLine)")
+                completion(.throttled)
             } catch {
                 companionLog("historyTile FAIL firstAbs=\(firstAbsLine): \(error)")
-                completion(nil)
+                completion(.failed)
             }
         }
+        historyTileTasks[taskID] = task
+    }
+
+    /// Pull queued tile requests into freed in-flight slots. A queued request from a
+    /// superseded epoch is neutralized (reported .throttled) rather than sent against
+    /// the current stream, since its line ranges belong to a different session.
+    private func drainHistoryTileQueue() {
+        while historyTileTasks.count < maxHistoryTilesInFlight, !historyTilePending.isEmpty {
+            let next = historyTilePending.removeFirst()
+            guard next.epoch == historyTileEpoch else {
+                companionLog("historyTile drop (stale epoch queued) firstAbs=\(next.firstAbsLine) reqEpoch=\(next.epoch) now=\(historyTileEpoch)")
+                reportThrottled(next.completion)
+                continue
+            }
+            sendHistoryTile(firstAbsLine: next.firstAbsLine, lineCount: next.lineCount,
+                            epoch: next.epoch, completion: next.completion)
+        }
+        // Spare capacity opened up after we had rejected requests: nudge the canvas to
+        // re-request what it still wants. Gated on the overflow flag so ordinary
+        // scrolling (which never overflows) does not fire this on every completion.
+        if historyTileOverflowed, historyTileTasks.count < maxHistoryTilesInFlight, historyTilePending.isEmpty {
+            historyTileOverflowed = false
+            onHistoryTileSlotAvailable?()
+        }
+    }
+
+    /// Neutralize the tile throttle on a stream transition: bump the epoch (so any
+    /// straddling request from the old stream becomes a no-op), cancel the prior
+    /// stream's in-flight fetches (so they stop occupying the wire and cannot push real
+    /// concurrency past the cap across rapid switches; clearing the task set also resets
+    /// the in-flight count, which IS that set's size), and report every queued request
+    /// as throttled so the canvas keeps its images and re-requests against the new stream.
+    /// A dead stream must neutralize the tile throttle before its id is dropped, so
+    /// stale in-flight/queued requests do not hit the relay or poison the next stream.
+    /// One helper keeps that pairing in a single place across the transition sites.
+    private func neutralizeDeadStream() {
+        flushHistoryTileThrottle()
+        activeStreamID = nil
+    }
+
+    private func flushHistoryTileThrottle() {
+        historyTileEpoch &+= 1
+        // Cancel a snapshot: a cancelled fetch's defer removes itself (a no-op on the
+        // cleared set) and, being from the now-stale epoch, will not drive the queue.
+        let tasks = historyTileTasks
+        historyTileTasks = [:]
+        for task in tasks.values {
+            task.cancel()
+        }
+        historyTileOverflowed = false
+        let dropped = historyTilePending
+        historyTilePending = []
+        // Batch into a single deferred turn (rather than one Task per entry) while
+        // preserving the non-re-entrant "fresh main-actor turn" contract.
+        Task { @MainActor in
+            for entry in dropped {
+                entry.completion(.throttled)
+            }
+        }
+        // A flush turns some on-screen tiles into spinners (cancelled/queued requests
+        // report .throttled, which keeps the loading state). Nudge the canvas to
+        // re-request once, so a transition that leaves geometry unchanged (reconnect,
+        // resume, streamEnded) still recovers instead of spinning forever. Coalesced and
+        // stream-gated on the view side, so it cannot busy-loop; if no stream is live yet
+        // (reconnect in progress) the view's applyLayout re-drives once it is.
+        onHistoryTileSlotAvailable?()
+    }
+
+    /// Deliver a `.throttled` outcome asynchronously. Callers report throttled drops
+    /// from inside their own loops (requestHistoryTile/drainHistoryTileQueue); the
+    /// SessionView completion mutates tile state and can re-drive refreshTiles, so it
+    /// must not run re-entrantly. Deferring to a fresh main-actor turn preserves the
+    /// "completions are async except a cache hit" contract.
+    private func reportThrottled(_ completion: @escaping (HistoryTileOutcome) -> Void) {
+        Task { @MainActor in completion(.throttled) }
+    }
+
+    /// Deliver a `.failed` outcome asynchronously, preserving the same non-re-entrant
+    /// contract as reportThrottled (the caller may be mid-loop in refreshTiles).
+    private func reportFailed(_ completion: @escaping (HistoryTileOutcome) -> Void) {
+        Task { @MainActor in completion(.failed) }
     }
 
     /// The view-space rect the video occupies (excluding letterbox bars), or the
@@ -2267,35 +3873,29 @@ final class AppModel {
         let oldClient = client
         client = nil
         Task { await oldClient?.close() }
-        chats = []
-        sessions = []
-        sessionTree = nil
-        sessionTreeError = nil
-        messages = []
-        mentionResolutions = [:]
-        openChatID = nil
-        isAgentTyping = false
-        isLoadingConversation = false
-        navigationPath = []
-        sessionsPath = []
-        selectedTab = .chats
-        pairingError = nil
-        phase = .scanning
+        clearPairedMacData()
     }
 
     /// Apply one delivered message: streaming deltas mutate the targeted bubble
     /// in place (using the same Message.append logic the Mac uses); everything
     /// else upserts by uniqueID.
     private func apply(_ message: Message) {
+        apply(message, into: &messages, chatID: openChatID ?? "")
+    }
+
+    /// Apply one delivered message into `transcript` (the live open transcript, or
+    /// a co-mounted hidden chat's cached snapshot). `chatID` names the target chat
+    /// so a stream delta that starts a fresh bubble stamps the right chat.
+    private func apply(_ message: Message, into transcript: inout [Message], chatID: String) {
         switch message.content {
         case .append(let string, let uuid):
-            applyStreamDelta(to: uuid, fallbackDate: message.sentDate) { target in
+            applyStreamDelta(to: uuid, in: &transcript, chatID: chatID, fallbackDate: message.sentDate) { target in
                 target.append(string, useMarkdownIfAmbiguous: true)
             } orStartWith: {
                 .markdown(string)
             }
         case .appendAttachment(let attachment, let uuid):
-            applyStreamDelta(to: uuid, fallbackDate: message.sentDate) { target in
+            applyStreamDelta(to: uuid, in: &transcript, chatID: chatID, fallbackDate: message.sentDate) { target in
                 target.append(attachment, vectorStoreID: nil)
             } orStartWith: {
                 .multipart([.attachment(attachment)], vectorStoreID: nil)
@@ -2303,10 +3903,10 @@ final class AppModel {
         case .commit:
             break
         default:
-            if let index = messages.firstIndex(where: { $0.uniqueID == message.uniqueID }) {
-                messages[index] = message
+            if let index = transcript.firstIndex(where: { $0.uniqueID == message.uniqueID }) {
+                transcript[index] = message
             } else {
-                messages.append(message)
+                transcript.append(message)
             }
         }
         // Resolve any mentions the change introduced. Streaming deltas target
@@ -2318,7 +3918,7 @@ final class AppModel {
         default:
             affectedID = message.uniqueID
         }
-        if let affected = messages.first(where: { $0.uniqueID == affectedID }) {
+        if let affected = transcript.first(where: { $0.uniqueID == affectedID }) {
             noteMentions(in: [affected])
         }
     }
@@ -2327,22 +3927,24 @@ final class AppModel {
     /// with `orStartWith` if no message with that id exists yet. Message.append
     /// traps on non-text content, so only text-bearing targets are mutated.
     private func applyStreamDelta(to messageID: UUID,
+                                  in transcript: inout [Message],
+                                  chatID: String,
                                   fallbackDate: Date,
                                   mutate: (inout Message) -> Void,
                                   orStartWith makeContent: () -> Message.Content) {
-        if let index = messages.firstIndex(where: { $0.uniqueID == messageID }) {
-            switch messages[index].content {
+        if let index = transcript.firstIndex(where: { $0.uniqueID == messageID }) {
+            switch transcript[index].content {
             case .plainText, .markdown, .multipart:
-                mutate(&messages[index])
+                mutate(&transcript[index])
             default:
                 break
             }
         } else {
-            messages.append(Message(chatID: openChatID ?? "",
-                                    author: .agent,
-                                    content: makeContent(),
-                                    sentDate: fallbackDate,
-                                    uniqueID: messageID))
+            transcript.append(Message(chatID: chatID,
+                                      author: .agent,
+                                      content: makeContent(),
+                                      sentDate: fallbackDate,
+                                      uniqueID: messageID))
         }
     }
 
@@ -2393,3 +3995,54 @@ final class AppModel {
         return String(cString: cString).lowercased()
     }
 }
+
+private extension Message.Content {
+    /// The preview text AND whether it is a rendered attachment LABEL ("📄 name")
+    /// vs real text, computed in ONE reversed subpart walk (mirroring snippetText's
+    /// multipart mapping) so the text and its label flag can never drift - they
+    /// previously came from two separate walks that agreed only by coincidence.
+    /// isLabel drives replace-vs-append in the streaming accumulator, so a .code
+    /// attachment (real text) reports false like the whole-message path. Returns
+    /// nil when there is nothing to preview.
+    func previewAndLabel(maxLength: Int) -> (text: String, isLabel: Bool)? {
+        guard case .multipart(let subparts, _) = self else {
+            // Non-multipart reply content renders as text, never an attachment label.
+            return snippetText(maxLength: maxLength).map { ($0, false) }
+        }
+        // The last SUBSTANTIVE subpart, via the shared Subpart.previewAndLabel
+        // mapping (so text + label can't drift). Skip substance-free subparts here
+        // (the phone's policy: an empty/whitespace subpart is not a notifiable
+        // preview) and return nil when there is none - NOT the display placeholder
+        // "Empty message", which a caller would otherwise fire as a notification.
+        for subpart in subparts.reversed() where subpart.hasDisplayableSubstance {
+            if let preview = subpart.previewAndLabel(maxLength: maxLength) {
+                return preview
+            }
+        }
+        return nil
+    }
+}
+
+#if DEBUG
+// Test accessors: an extension in the SAME file can read `private` state, and
+// @testable import exposes these internal members to the app unit-test target.
+// Used to unit-test the recurring session-watch claim/restore/depart logic and
+// the derived typing indicator.
+extension AppModel {
+    var testActiveWatchToken: UUID? { watchState.activeToken }
+    var testWatchedChatID: String? { watchState.watchedChatID }
+    var testAgentTypingChats: Set<String> { agentTypingChats }
+    func testSetAgentTyping(_ chatID: String, _ typing: Bool) {
+        if typing { agentTypingChats.insert(chatID) } else { agentTypingChats.remove(chatID) }
+    }
+    var testRefreshFailureChats: Set<String> { Set(refreshFailuresByChat.keys) }
+    func testSetRefreshFailure(_ chatID: String, _ count: Int) {
+        refreshFailuresByChat[chatID] = count
+    }
+    /// Install a watch directly (bypassing the async subscribe) so the synchronous
+    /// deletion-teardown logic can be tested without a live connection.
+    func testInstallWatch(chatID: String, token: UUID) {
+        watchState.install(chatID: chatID, subscribedHere: false, token: token)
+    }
+}
+#endif

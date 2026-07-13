@@ -233,6 +233,9 @@ class PTYSessionPeerPort: NSObject {
             }
             delegate.sessionActivate(replacement, amongPeers: self, moveToolbar: true)
             recordSwapOutcome(identifier: identifier, replacement: replacement)
+            // The peer's view is now swapped into the tab (visible only if
+            // that tab is the foreground one; the hook self-checks).
+            didSwapInPeer(replacement)
         }.catchError { [weak self] error in
             // A deferred peer's spawn can REJECT (makeWorkgroupPeer:
             // session terminated mid-spawn, missing profile or view).
@@ -320,6 +323,13 @@ class PTYSessionPeerPort: NSObject {
         }
         lastSwappedActiveIdentifier = identifier
     }
+
+    // Invoked immediately after a peer's view is swapped into the tab
+    // (visible iff that tab is the foreground one). Base does nothing;
+    // iTermWorkgroupPeerPort overrides it to give a .diff peer's deferred
+    // launch a chance to fire, which it does only once the peer is
+    // actually shown.
+    func didSwapInPeer(_ session: PTYSession) {}
 
     // Restores the last identifier whose view actually occupied the
     // tab after a committed activation that can never complete (spawn

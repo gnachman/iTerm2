@@ -14,9 +14,12 @@
 import Foundation
 
 struct AISafetyClassifierBackend: AutoModeClassifier.Backend {
-    // The single-command safety checker has no conversation history to show
-    // the classifier, so this is empty. Richer transcript wiring (feeding the
-    // live ChatAgent conversation) is a future enhancement.
+    // Recent conversation history shown to the classifier so it can tell a risky
+    // command the user actually asked for from one it didn't. Seeded by
+    // CommandSafetyChecker.makeClassifier(transcript:) from SafetyTranscript for
+    // the driving chat; empty only when a caller checks a command with no chat
+    // context. Do NOT assume this is always empty -- the transcript plumbing is
+    // load-bearing for the safety verdict.
     var entries: [TranscriptEntry]
 
     func sideQuery(system: String, user: String, maxTokens: Int) async throws -> String {

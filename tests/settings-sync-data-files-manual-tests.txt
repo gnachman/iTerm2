@@ -1,0 +1,174 @@
+Manual tests for data-file settings sync (snippets / global notes / session icon customizations)
+==================================================================================================
+
+These cover paths that have no automated unit seam (real Application Support, a real custom folder,
+cloud/network mounts, and the quit path). Enable "Load settings from a custom folder" and grant the
+data-file sync consent prompt before running them.
+
+
+1. Quit does not hang when the custom folder is on a disconnected/slow mount (R13-3)
+------------------------------------------------------------------------------------
+Background: at quit, for a consented sync user, applicationWillTerminate hashes the local data files
+(reads the whole notes.rtfd + both graphic JSONs) and, in the save/discard branches, reads the REMOTE
+<folder>/Data subtree. The FIRST remote read on the reconcile/push/discard paths is now bounded (about
+5 seconds) and a timeout is treated as "defer to next launch", so an offline mount should degrade to
+"sync later" rather than hang. The local hash is on local disk (fast). This test confirms the bound
+holds and there is no residual multi-minute hang.
+
+Steps:
+  a. Point the custom settings folder at a path on a network share (SMB/NFS) or a cloud folder.
+  b. Make a small change to a snippet (so the quit path has something to consider saving).
+  c. Disconnect the network / take the share offline (or pull the cable / turn off Wi-Fi).
+  d. Quit iTerm2.
+
+Expected: iTerm2 terminates within a few seconds. A brief beachball is acceptable; a multi-minute hang
+until the mount times out is the regression to watch for. If it hangs, capture a sample of the hung
+process (the stack should show remoteContentSignature / writeDataFilesToRemoteFolder / a FileManager
+read) and note the mount type and timeout.
+
+
+2. Large global note reaches disk and syncs (large-note debounce)
+-----------------------------------------------------------------
+Steps:
+  a. Open the Notes toolbelt in Global mode. Type or paste a note larger than 100 KB (e.g. paste a big
+     block of text, or a large image attachment).
+  b. Wait ~3 seconds, then confirm <folder>/Data/notes.rtfd updated (mtime/size changed).
+  c. Switch the Notes toolbelt to Session mode immediately after a large edit (within ~2s): confirm the
+     large edit still reached disk (no data loss on the mode switch).
+
+Expected: the large note is persisted (debounced) and synced; switching modes or quitting mid-debounce
+does not lose it.
+
+
+3. Typed draft over an undownloaded placeholder is recoverable (no silent loss)
+-------------------------------------------------------------------------------
+Steps:
+  a. On a machine where notes.rtfd is a dataless iCloud/Dropbox placeholder (evict its contents so it is
+     "not downloaded"), launch iTerm2 and open Global Notes. The pane will be empty.
+  b. Type a draft.
+  c. Let the placeholder finish downloading (or a sync import land), so the on-disk note is adopted over
+     your draft; OR quit / switch to Session mode while it is still downloading.
+
+Expected: the draft is not silently lost. A recovery copy is written under
+<Application Support>/iTerm2/Settings Sync Backups/<timestamp .. uuid>/discarded-notes.rtfd (flattened
+RTFD, recoverable via an app that reads RTFD).
+
+Variant 3b (deletion instead of adopt): same setup (placeholder present-but-unreadable, type a draft),
+but on another machine DELETE notes.rtfd and let the deletion sync to this machine. When the deletion
+lands, the draft is discarded to honor it. Expected: a discarded-notes.rtfd recovery copy is still
+written (the deletion path backs up the draft first, same as the adopt path).
+
+
+4. Cross-machine deletion of a synced file sticks (no resurrection)
+-------------------------------------------------------------------
+Steps:
+  a. On machine A, delete all snippets (or delete graphic_colors.json) and let it sync.
+  b. On machine B, relaunch iTerm2. Confirm the deletion is reflected (snippets gone / colors reverted).
+  c. On machine B, add one snippet, quit, relaunch A.
+
+Expected: the deletion is not undone; B does not republish the deleted item.
+
+
+5. Global-note edits sync live, without quitting (no quit-only asymmetry)
+------------------------------------------------------------------------
+Steps:
+  a. On machines A and B, enable data-file sync against the same custom folder and agree to sync data
+     files. Leave both apps running (do NOT quit A).
+  b. On machine A, open Global Notes and type an edit. Do not touch prefs or snippets, and do not quit.
+  c. Wait a couple of seconds.
+
+Expected: the note reaches the custom folder within ~1s of the edit settling (ToolNotes posts
+iTermToolNotesDidSaveGlobalNotesNotification after it writes notes.rtfd, which arms the debounced
+data-file push). On machine B, relaunching (or its next load-time reconcile) shows A's edit. Before the
+fix, A's note reached the folder only when some unrelated pref change fired the autosave or when A quit,
+so a long-running A never propagated the note.
+
+
+6. A genuinely corrupt notes.rtfd self-heals instead of wedging global-note saving forever
+------------------------------------------------------------------------------------------
+Background: a placeholder that is present-but-unreadable is deferred (never overwritten). A genuinely
+CORRUPT notes.rtfd (readable bytes that don't parse as RTFD) must be distinguished from a placeholder
+so it can be overwritten, otherwise every save re-reads, fails, and defers forever (the corrupt file is
+never fixed and no note can be saved). The two are told apart by whether the bytes are materialized.
+
+Steps:
+  a. Quit iTerm2. Replace <Application Support>/iTerm2/notes.rtfd with garbage: e.g. remove it and
+     create a regular file (not a package) named notes.rtfd containing "not an rtfd", OR truncate the
+     package's TXT.rtf to a few random bytes. (This simulates a bad copy synced from another Mac.)
+  b. Launch iTerm2, open Global Notes. The pane is empty (the corrupt file could not be read).
+  c. Type a few characters.
+
+Expected: within a keystroke the note is written to disk (notes.rtfd becomes a valid package holding
+your text), and the corrupt original is backed up under
+<Application Support>/iTerm2/Settings Sync Backups/<timestamp .. uuid>/notes.rtfd. Relaunching shows
+your text. BEFORE the fix, the corrupt file was treated as an undownloaded placeholder: the write
+deferred on every keystroke, nothing was ever saved, and the corruption persisted across relaunches.
+Regression guard: a still-downloading dataless placeholder must STILL defer (test 3 must keep passing) -
+only a file whose bytes ARE readable but don't parse is overwritten.
+
+
+7. Closing the Notes toolbelt on an UNEDITED global note does not push a byte-variant
+-------------------------------------------------------------------------------------
+Background: RTFD serialization has no canonical fixed point across AppKit versions / default fonts, so
+re-serializing an unchanged note yields different bytes. Closing a window used to unconditionally
+re-write notes.rtfd and post the DidSave notification, arming a push of that byte-variant - which
+ping-pongs across a fleet and can overwrite a note a still-running peer authored.
+
+Steps:
+  a. With data-file sync enabled and consented, ensure notes.rtfd exists in the folder and locally.
+  b. Open the Notes toolbelt (Global mode) so the note loads. Do NOT edit it.
+  c. Close the toolbelt / that window (triggering ToolNotes dealloc), or toggle the toolbelt off.
+  d. Inspect <folder>/Data/notes.rtfd mtime and whether a data-file push was armed (DLog).
+
+Expected: notes.rtfd is NOT rewritten and NO iTermToolNotesDidSaveGlobalNotesNotification is posted for
+an unedited note, so no push is armed. Editing the note and then closing SHOULD still write + push
+(confirm the positive case too). BEFORE the fix, every open+close of an unedited note churned a push.
+
+
+8. A conflict/consent modal does not peg the CPU while open (deferred-reconcile busy-spin)
+------------------------------------------------------------------------------------------
+Background: while a data-file reconcile/consent/conflict modal is open, a synced-owner change that
+reaches armDataFileSyncPushForLocalOwnerChange with consent undecided or the baseline uninitialized
+defers a reconcile. That deferral must re-arm on a 0.5s delay (coalesced), not re-dispatch with zero
+delay - otherwise the modal's runloop runs the re-dispatch immediately, sees the depth still raised,
+and re-dispatches in a tight loop, pegging the main thread.
+
+Steps:
+  a. Arrange for a data-file conflict prompt to appear and LEAVE IT OPEN (e.g. diverge the local and
+     remote notes/snippets so the load-time or arm-time reconcile shows "which copy would you like to
+     keep?").
+  b. While the prompt is open, cause a synced-owner change (type in Global Notes past the large-note
+     debounce so iTermToolNotesDidSaveGlobalNotesNotification fires, or make a snippet change).
+  c. Watch CPU (Activity Monitor / top) for the iTerm2 process while the prompt sits open.
+
+Expected: CPU stays low; the modal UI stays responsive. BEFORE the fix, step (b) started a zero-delay
+re-arm loop that pegged one core at ~100% until the prompt was answered.
+
+
+9. "Save Now" surfaces a data-file conflict (and doubles as a sync)
+------------------------------------------------------------------
+Background: "Save Now" (General > the custom-folder "Save Now" button, pushToCustomFolder:) is the only
+interactive entry point for data files. It must run the full three-way reconcile so a genuine both-sides
+conflict actually prompts. BEFORE the fix, an established-folder Save Now skipped the reconcile and fell
+into the silent push path, which DEFERS on any remote divergence - so a real conflict produced no push
+and no prompt, just a silent no-op until the next launch (the reported bug).
+
+Prereq: data-file sync enabled and consented against a local custom folder, already initialized
+(baseline established), automatic saving OFF (manual) so "Save Now" is the trigger.
+
+  a. Both sides changed (the reported case): edit the global note (or a snippet) locally, and out of band
+     edit <folder>/Data/notes.rtfd (or snippets.plist) to something different. Click Save Now.
+     Expected: the "the data files on this Mac and in the folder both changed ... keep this Mac's / the
+     folder's?" conflict prompt appears. Keep this Mac's -> local is pushed (folder's copy backed up
+     first). Keep the folder's -> the folder's copy is pulled and the live view/model refreshes (local
+     backed up first). BEFORE the fix: nothing happened.
+
+  b. Only local changed: edit only locally, click Save Now.
+     Expected: local is pushed to the folder, no prompt (unchanged behavior).
+
+  c. Only remote changed: leave local untouched, edit <folder>/Data out of band, click Save Now.
+     Expected: the newer folder copy is PULLED and the live view/model refreshes (Save Now doubles as a
+     sync; George chose this over a silent no-op). Non-destructive: the pre-pull local copy is backed up.
+
+  d. In agreement: nothing changed on either side, click Save Now.
+     Expected: no prompt, no churn (a no-op reconcile + no-op push).

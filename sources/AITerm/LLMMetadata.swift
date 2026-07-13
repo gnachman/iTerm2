@@ -20,6 +20,8 @@ class LLMMetadata: NSObject {
         static let functionCalling = "functionCalling"
         static let streaming = "streaming"
         static let vectorStore = "vectorStore"
+        static let supportsTemperature = "supportsTemperature"
+        static let configurableThinking = "configurableThinking"
     }
 
     @objc(openAIModelIsLegacy:)
@@ -226,7 +228,7 @@ class LLMMetadata: NSObject {
         if bool(configuration, key: ManualModelKey.hostedCodeInterpreter) {
             features.insert(.hostedCodeInterpreter)
         }
-        return AIMetadata.Model(
+        var model = AIMetadata.Model(
             name: name,
             contextWindowTokens: integer(configuration,
                                          key: ManualModelKey.contextWindowTokens,
@@ -241,16 +243,49 @@ class LLMMetadata: NSObject {
                                                        key: ManualModelKey.vectorStore,
                                                        fallback: AIMetadata.Model.VectorStoreConfig.disabled.rawValue)) ?? .disabled,
             vendor: manualVendor(api: api, url: url, modelName: name))
+        // A manual model that shares a built-in's name is almost always that
+        // built-in behind a custom endpoint (proxy/gateway). Inherit the
+        // catalog fields the manual config cannot express so a preset clone
+        // keeps the built-in's behavior instead of silently reverting to
+        // defaults:
+        //   - supportsTemperature: an explicitly stored value wins; else the
+        //     twin's value (heals an Opus 4.7+ clone that predates the field, so
+        //     it stops sending a temperature the API 400s on), else true.
+        //   - configurableThinking: driven by its own checkbox; when the config
+        //     omits it (older entries) fall back to the twin so an existing
+        //     clone of a reasoning model keeps its thinking toggle.
+        //   - reasoning effort / service tier options: these have no UI in the
+        //     manual editor, so without this a clone of a reasoning model
+        //     (gpt-5.x, o-series, DeepSeek v4) loses its effort/tier pickers.
+        let catalogTwin = AIMetadata.instance.models.first { $0.name == name }
+        model.supportsTemperature = bool(configuration,
+                                         key: ManualModelKey.supportsTemperature,
+                                         fallback: catalogTwin?.supportsTemperature ?? true)
+        let thinkingFallback = catalogTwin?.features.contains(.configurableThinking) ?? false
+        if bool(configuration, key: ManualModelKey.configurableThinking, fallback: thinkingFallback) {
+            model.features.insert(.configurableThinking)
+        }
+        if let catalogTwin {
+            model.reasoningEfforts = catalogTwin.reasoningEfforts
+            model.serviceTiers = catalogTwin.serviceTiers
+            model.thinkingOffEffort = catalogTwin.thinkingOffEffort
+            model.thinkingOnEffort = catalogTwin.thinkingOnEffort
+        }
+        return model
     }
 
     private static func bool(_ dictionary: [String: Any], key: String) -> Bool {
+        return bool(dictionary, key: key, fallback: false)
+    }
+
+    private static func bool(_ dictionary: [String: Any], key: String, fallback: Bool) -> Bool {
         if let value = dictionary[key] as? Bool {
             return value
         }
         if let value = dictionary[key] as? NSNumber {
             return value.boolValue
         }
-        return false
+        return fallback
     }
 
     private static func integer(_ dictionary: [String: Any], key: String, fallback: Int) -> Int {

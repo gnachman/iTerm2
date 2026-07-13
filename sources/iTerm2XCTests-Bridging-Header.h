@@ -6,3 +6,4 @@
 //
 
 #import "LineBuffer.h"
+#import "iTermSnippetsModel.h"

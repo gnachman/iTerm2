@@ -1,0 +1,26 @@
+
+2026-07-05 09:12:01 INFO  starting server on :8080
+2026-07-05 09:12:01 INFO  connected to db
+2026-07-05 09:12:44 WARN  slow query (1.8s): SELECT * FROM events
+2026-07-05 09:13:10 ERROR unhandled: connection reset by peer
+2026-07-05 09:13:10 INFO  retrying in 2s
+2026-07-05 09:13:12 INFO  recovered
+server.log (END)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

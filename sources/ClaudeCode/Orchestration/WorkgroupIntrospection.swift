@@ -48,6 +48,17 @@ enum WorkgroupIntrospection {
     // read by the nonisolated chat renderer (ChatViewController) too.
     nonisolated static let spawnWorkgroupID = "spawn"
 
+    // Sentinel workgroupID used by the per-command safety-approval prompt
+    // (OrchestratorDispatcher.promptForCommandApproval). Like spawnWorkgroupID
+    // it is not a real workgroup_id: it rides the same workgroupPermissionRequest
+    // content type but the chat renderer keys off this exact string to show the
+    // "Run this command?" bubble copy instead of a workgroup/session-control
+    // prompt. Two sites must agree on the literal: the dispatcher emits it, the
+    // renderer (ChatViewController) consumes it.
+    // nonisolated: an immutable sentinel string with no main-thread state,
+    // read by the nonisolated chat renderer (ChatViewController) too.
+    nonisolated static let commandApprovalWorkgroupID = "command-approval"
+
     // MARK: - Listing
 
     // Returns every workgroup the orchestrator knows about. Real workgroups
@@ -425,6 +436,77 @@ enum WorkgroupIntrospection {
         return .other
     }
 
+    // There is deliberately NO coding-agent exemption from the safety gate. An
+    // earlier version skipped classification entirely when the foreground job
+    // basename was claude/codex, but a job name is a low-integrity signal the
+    // agent can spoof (e.g. `exec -a claude bash`, or `cp /bin/bash /tmp/claude`),
+    // which turned send_text into a fully unclassified channel. Coding-agent
+    // sessions run on the alternate screen, so they route through the
+    // screen-aware classifier like any full-screen app: prompting an agent
+    // classifies as safe there, and a spoofed shell does not (its screen shows a
+    // shell prompt, not the agent UI). The perf win of skipping the LLM
+    // round-trip for agent prompts was not worth a name-keyed bypass.
+
+    // Lowercased, login-shell leading "-" stripped, basename only.
+    nonisolated static func normalizedJobBasename(_ raw: String) -> String {
+        var name = raw.lowercased()
+        if name.hasPrefix("-") { name.removeFirst() }
+        if let slash = name.lastIndex(of: "/") {
+            name = String(name[name.index(after: slash)...])
+        }
+        return name
+    }
+
+    // The FOREGROUND (deepest) job's name for a session, lowercased -- the
+    // argv[0] of the process actually reading input. Distinct from
+    // GlobalJobMonitor's ancestor-chain match (which always contains the login
+    // shell): to tell a shell prompt from a REPL running under it we need the
+    // deepest job, which is the session's `jobName` variable.
+    static func foregroundJobName(_ session: PTYSession) -> String? {
+        (session.genericScope.value(forVariableName: "jobName") as? String)?.lowercased()
+    }
+
+    // Recognized interactive shells. Used to decide whether a primary-screen
+    // send should be judged as a shell command line. This is deliberately an
+    // allowlist of SHELLS, not of interpreters: anything whose foreground is
+    // NOT a recognized shell (a REPL such as psql/duckdb/iex/ghci, an unknown
+    // program, or a session with no job info) routes to the screen-aware
+    // classifier instead. That fail-safe direction means an unlisted REPL can't
+    // be mis-judged under shell rules ("DROP TABLE users;" is inert as a shell
+    // command but destructive in a SQL REPL).
+    //
+    // The job name comes from the process table (argv[0]/p_comm), not from
+    // screen content, so on-screen text can't spoof it. It CAN be spoofed by the
+    // process table itself: an agent could rename a REPL to look like a shell
+    // (`cp $(which psql) /tmp/zsh && /tmp/zsh`) to route destructive REPL input
+    // through the weaker shell classifier. That requires a setup command which
+    // is itself classified, so it's a hurdle rather than a free bypass; fully
+    // closing it would mean dropping the shell fast-path (classifying every
+    // shell command against the screen), a perf tradeoff not taken here.
+    static let shellJobNames: Set<String> = [
+        "bash", "zsh", "sh", "fish", "dash", "ash", "ksh", "mksh", "pdksh",
+        "tcsh", "csh", "xonsh", "nu", "nushell", "elvish", "pwsh", "powershell",
+    ]
+
+    // Pure name test: lowercased, login-shell leading "-" stripped, basename
+    // only (so "-zsh" and "/bin/bash" both match).
+    nonisolated static func isShellJobName(_ raw: String) -> Bool {
+        return shellJobNames.contains(normalizedJobBasename(raw))
+    }
+
+    static func foregroundIsShell(_ session: PTYSession) -> Bool {
+        guard let job = foregroundJobName(session), !job.isEmpty else {
+            return false  // unknown foreground -> not a shell -> screen-aware (fail-safe)
+        }
+        return isShellJobName(job)
+        // jobName comes from iTermProcessCache (refreshed at ~0.5s intervals),
+        // so in principle a REPL launched microseconds ago could still read as
+        // the shell. In this gate's use that window doesn't bite: the
+        // orchestrator's sends are serialized one per LLM round-trip (seconds
+        // apart), so a session that just launched psql reports jobName=psql long
+        // before the next send arrives to be classified.
+    }
+
     // Status reflects whether the role's *program* is doing anything.
     // Primary signal is tabStatus.statusText, which the cc-status
     // hook (and triggers using `set_status`) write as explicit
@@ -466,6 +548,25 @@ enum WorkgroupIntrospection {
         // is the best we can do for sessions without a status source.
         if status.hasIndicator { return .working }
         return .idle
+    }
+
+    // Like state(forTabStatus:) but returns .unknown when there is no
+    // explicit recognized statusText, instead of falling back to .idle. Used
+    // by the workgroup's idle-driven auto behaviors (auto-send clippings /
+    // auto-request review), whose working -> idle edge must reflect a program
+    // that actually finished. A session restart CLEARS the tab status, and
+    // the fallback .idle above would otherwise read as a spurious "finished"
+    // edge right after the restart and drive an infinite request/send loop.
+    static func reportedState(forTabStatus status: iTermSessionTabStatus) -> SessionState {
+        guard let text = status.statusText?.lowercased(), !text.isEmpty else {
+            return .unknown
+        }
+        switch text {
+        case "idle": return .idle
+        case "working": return .working
+        case "waiting": return .waiting
+        default: return .unknown
+        }
     }
 
     // Whether the session exposes a machine-readable status source we

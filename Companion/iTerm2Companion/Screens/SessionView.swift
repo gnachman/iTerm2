@@ -22,10 +22,85 @@ struct SessionView: View {
     @Environment(AppModel.self) private var model
     let guid: String
     let title: String
+    /// The chat the user tapped an @-mention in to reach this view, if any. The
+    /// compose overlay sends into it (rather than a session-bound chat) and a
+    /// reply notification pops back to it. Nil when reached from the session
+    /// list or a workgroup.
+    var originatingChatID: String? = nil
     /// When false, the "chat about this session" toolbar button is hidden. The
     /// mention picker shows this view only to preview a session, where starting
     /// a chat would push onto the stack behind the picker sheet.
     var allowsChat: Bool = true
+
+    /// Whether the compose overlay (text field + dictation + send) is up.
+    @State private var showComposer = false
+    /// The chat this visit's compose overlay sends into. Resolved on the first
+    /// send (the originating chat, or the session's recent/new session-bound
+    /// chat) and reused for the rest of the visit.
+    @State private var composeChatID: String?
+    /// Set once the @-mention's originating chat is found deleted, so later sends
+    /// stop preferring the (dead) originatingChatID and fall through to creating a
+    /// fresh session-bound chat - otherwise recovery is impossible for this visit.
+    @State private var originatingChatIsDead = false
+    /// Identifies THIS session view's watch, so a different session view leaving
+    /// (or a stale send) can't tear down or steal this view's reply watch.
+    @State private var watchToken = UUID()
+    /// A send failure for THIS view's compose overlay (scoped locally so it can't
+    /// surface on a different SessionView via shared state).
+    @State private var sendError: String?
+    /// Whether the compose overlay's draft is empty; a scrim tap only dismisses
+    /// (discarding the draft) when it is.
+    @State private var composeIsEmpty = true
+    /// Text to seed the overlay with, used to restore a draft whose send failed.
+    @State private var composeInitialText = ""
+    /// Bumped on the failed-send restore path to re-seed composeInitialText into
+    /// the composer. Edge-triggered so the restore works even when SwiftUI reuses
+    /// the same composer instance (e.g. a restore that lands inside the exit
+    /// animation window, where showComposer false->true just reverses the
+    /// transition) - no view-identity churn needed.
+    @State private var composerSeedGeneration = 0
+
+    private static let messageAgentLabel = "Message the agent"
+
+    /// The originating @-mention chat this overlay targets, or nil once it's dead
+    /// (recovery: sends create a fresh session-bound chat) or for a plain session
+    /// view. Sends and the label/disable logic all key off this.
+    private var effectiveOriginatingChatID: String? {
+        originatingChatIsDead ? nil : originatingChatID
+    }
+
+    /// Whether the RESOLVED send target is a chat the Mac deleted, independent of
+    /// openChatID (a tab round-trip repoints it). Reactive dead-detection flips
+    /// effectiveOriginatingChatID to nil, so this only stays true in the brief
+    /// window before recovery kicks in (or for an already-resolved, since-deleted
+    /// composeChatID).
+    private var composerTargetIsDeleted: Bool {
+        guard let target = composeChatID ?? effectiveOriginatingChatID else { return false }
+        return !model.chatExists(target)
+    }
+
+    /// Whether the originating @-mention chat is present in the chat list, for
+    /// reactive dead-detection.
+    private var originatingChatPresent: Bool {
+        guard let originatingChatID else { return true }
+        return model.chatExists(originatingChatID)
+    }
+
+    /// Whether the resolved send chat is present in the chat list, for reactive
+    /// dead-detection (a session-list send resolves composeChatID, which has no
+    /// @-mention recovery path of its own).
+    private var composeChatPresent: Bool {
+        guard let composeChatID else { return true }
+        return model.chatExists(composeChatID)
+    }
+
+    /// Run `recover` when a tracked target chat (`id`) has left an AUTHORITATIVE
+    /// list. Shared guard for the two reactive dead-detection handlers: only when
+    /// the id was actually set, it is now absent, AND `chats` is non-empty (an empty
+    /// list is "not synced yet", not "deleted", so it must not trigger recovery).
+    private func recoverIfChatDeleted(id: String?, present: Bool, recover: () -> Void) {
+        if id != nil, !present, !model.chats.isEmpty { recover() }
+    }
 
     /// Lines per fetched tile: large enough to amortize round trips, small
     /// enough that each tile's PNG stays a lightweight frame.
@@ -52,8 +127,65 @@ struct SessionView: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .overlay(alignment: .bottom) {
+            if showComposer {
+                composeOverlay
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: showComposer)
+        .alert("Couldn’t Send Message",
+               isPresented: Binding(get: { sendError != nil },
+                                    set: { if !$0 { sendError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(sendError ?? "")
+        }
+        .onAppear {
+            // This view is alive; un-mark its token as departed (onDisappear fires
+            // on a tab switch/cover while the view stays in the stack, and the
+            // token outlives that).
+            model.watchViewDidAppear(guid: guid, token: watchToken)
+        }
+        .onDisappear {
+            // onDisappear fires on a tab switch/cover too, not just a pop, so this
+            // only ends the watch when the session is genuinely gone from the nav
+            // stack - otherwise switching to the Chats tab to wait for the reply
+            // would kill the very notification the user is waiting for.
+            model.sessionViewDidDisappear(guid: guid, token: watchToken)
+        }
+        .onChange(of: originatingChatPresent) { _, present in
+            // The @-mention's originating chat left an AUTHORITATIVE list (deleted
+            // on the Mac): switch to session-bound recovery so the composer stays
+            // usable (the next send creates a fresh chat) instead of silently
+            // targeting a dead chat and only revealing it on Send.
+            recoverIfChatDeleted(id: originatingChatID, present: present) {
+                originatingChatIsDead = true
+            }
+        }
+        .onChange(of: composeChatPresent) { _, present in
+            // The resolved send chat was deleted on the Mac: drop it so the composer
+            // re-enables and the next send re-resolves (creates a fresh chat),
+            // instead of the whole bar dead-ending disabled with no way to recover.
+            recoverIfChatDeleted(id: composeChatID, present: present) { composeChatID = nil }
+        }
         .toolbar {
             if allowsChat {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        // Only reset emptiness when actually opening; the overlay's
+                        // scrim doesn't cover the nav bar, so re-tapping while a
+                        // draft is up must not mark it empty (a scrim tap would
+                        // then discard it).
+                        if !showComposer {
+                            composeIsEmpty = true
+                            composeInitialText = ""
+                            showComposer = true
+                        }
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .accessibilityLabel(Self.messageAgentLabel)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         model.openOrCreateChat(forSessionGuid: guid)
@@ -79,6 +211,120 @@ struct SessionView: View {
                 await load()
             }
         }
+    }
+
+    // MARK: Compose overlay
+
+    /// A dim scrim plus a bottom-docked message bar. The bar rides above the
+    /// keyboard (default safe-area avoidance); tapping the scrim or the close
+    /// button dismisses it. Sending routes to the originating chat, if any, or a
+    /// session-bound chat, and starts watching that chat for the agent's reply.
+    private var composeOverlay: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                // A scrim tap is an easy accidental target while typing; only
+                // dismiss (destroying the draft) when the field is empty. Use the
+                // close button to abandon a non-empty draft deliberately.
+                .onTapGesture { if composeIsEmpty { dismissComposer() } }
+            VStack(spacing: 0) {
+                HStack {
+                    Text(effectiveOriginatingChatID != nil ? "Message this chat" : Self.messageAgentLabel)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button {
+                        dismissComposer()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Close")
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                AgentComposerBar(placeholder: Self.messageAgentLabel,
+                                 showsMentionButton: false,
+                                 autoFocus: true,
+                                 // Disable only if the RESOLVED target chat is
+                                 // deleted (independent of openChatID, which a tab
+                                 // round-trip can repoint). A dead originating chat
+                                 // switches effectiveOriginatingChatID to nil
+                                 // (recovery), so this stays enabled and the next
+                                 // send creates a fresh session-bound chat.
+                                 isDisabled: composerTargetIsDeleted,
+                                 onEmptyChanged: { composeIsEmpty = $0 },
+                                 initialText: composeInitialText,
+                                 seedGeneration: composerSeedGeneration) { text in
+                    sendComposed(text)
+                }
+            }
+            .background(.regularMaterial)
+        }
+        .transition(.opacity)
+    }
+
+    private func sendComposed(_ text: String) {
+        // This is the single point that rejects empty input: reject BEFORE
+        // claiming the watch, since a claim that isn't followed by a real send
+        // would cancel a concurrent view's valid in-flight watch.
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            dismissComposer()
+            return
+        }
+        // Claim the watch slot synchronously (before the async Task), so if the
+        // view disappears before the Task runs, its onDisappear clears the claim
+        // and the late send installs no leaked watch. Keep the prior claim to
+        // restore it if this send fails.
+        let claim = model.claimSessionWatch(token: watchToken)
+        Task {
+            let outcome = await model.sendFromSessionView(text: text,
+                                                          sessionGuid: guid,
+                                                          resolvedChatID: composeChatID,
+                                                          originatingChatID: effectiveOriginatingChatID,
+                                                          watchToken: watchToken,
+                                                          claimSequence: claim.sequence)
+            switch outcome {
+            case .sent(let chatID):
+                // Only advance on a successful resolution; a failed/empty send
+                // must not clobber an already-resolved id.
+                composeChatID = chatID
+            case .failed(let message):
+                restoreFailedDraft(text, error: message, claim: claim)
+            case .chatDeleted(let message):
+                // Drop BOTH the dead resolved id and (if the dead target was the
+                // @-mention's originating chat) the preference for originatingChatID,
+                // so the NEXT send re-resolves and creates a fresh session-bound
+                // chat instead of re-targeting the deleted chat every time.
+                composeChatID = nil
+                originatingChatIsDead = true
+                restoreFailedDraft(text, error: message, claim: claim)
+            }
+        }
+        dismissComposer()
+    }
+
+    /// Restore a failed send's draft: show the error, undo the watch claim, and
+    /// re-seed the (optimistically cleared) text so the user can retry.
+    private func restoreFailedDraft(_ text: String, error: String,
+                                    claim: AppModel.SessionWatchClaim) {
+        sendError = error
+        model.restoreSessionWatchClaim(claim)
+        // The bar cleared the draft optimistically and the overlay was dismissed;
+        // restore the text. Any optimistic echo (the @-mention case, where the
+        // originating chat is open below) was rolled back on the failed publish, so
+        // the restored draft is the sole representation of the failed send.
+        composeInitialText = text
+        composeIsEmpty = false
+        // Request a re-seed (edge-triggered) so the draft is restored even if the
+        // composer instance is reused mid-exit-animation.
+        composerSeedGeneration += 1
+        showComposer = true
+    }
+
+    private func dismissComposer() {
+        showComposer = false
     }
 
     @ViewBuilder
@@ -694,6 +940,7 @@ private struct LiveCanvas: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView { context.coordinator.makeContainer() }
     func updateUIView(_ uiView: UIView, context: Context) {
         context.coordinator.model = model
+        context.coordinator.installTileSlotCallback()
         context.coordinator.layout = layout
         context.coordinator.applyLayout()
         context.coordinator.repositionHandles()
@@ -744,6 +991,10 @@ private struct LiveCanvas: UIViewRepresentable {
         // History tiles, keyed by tile index (0 = oldest), like the static path.
         private var tileViews: [Int: TileView] = [:]
         private var requestedTiles: Set<Int> = []
+        /// Tiles whose last fetch returned a host-reported failure. The idle 4 Hz
+        /// re-drive skips these (retrying them every pass would strobe spinner/retry-label
+        /// and spam the relay); an explicit scroll/zoom/grow still retries them.
+        private var failedTiles: Set<Int> = []
         /// Line count the cached image for each tile actually covers, so a tile that
         /// has grown is sized to its image (not stretched) until it is refetched.
         private var tileFetchedLines: [Int: Int] = [:]
@@ -761,6 +1012,9 @@ private struct LiveCanvas: UIViewRepresentable {
         private var lastLoggedVisibleRange: (Int, Int)?
         private let linesPerTile = 50
         private var growthTimer: Timer?
+        /// Set while a throttled-tile re-drive is already scheduled, so a viewport full
+        /// of throttled tiles coalesces into a single follow-up refreshTiles.
+        private var tileRefreshScheduled = false
 
         init(holder: LiveVideoHolder, model: AppModel) {
             self.holder = holder
@@ -772,6 +1026,21 @@ private struct LiveCanvas: UIViewRepresentable {
             editMenu?.dismissMenu()
             growthTimer?.invalidate()
             growthTimer = nil
+            // Only clear the shared slot-available callback if we still own it; a
+            // sibling coordinator (e.g. the session-mention preview) may have claimed it.
+            if model.historyTileSlotOwner == ObjectIdentifier(self) {
+                model.onHistoryTileSlotAvailable = nil
+                model.historyTileSlotOwner = nil
+            }
+        }
+
+        /// Claim the shared slot-available callback for this coordinator. Called from
+        /// updateUIView so a reused coordinator reappearing (a TabView switch back) that
+        /// a sibling had overwritten reinstalls its own; makeContainer runs only once and
+        /// so cannot.
+        func installTileSlotCallback() {
+            model.historyTileSlotOwner = ObjectIdentifier(self)
+            model.onHistoryTileSlotAvailable = { [weak self] in self?.scheduleTileRefresh() }
         }
 
         func makeContainer() -> UIView {
@@ -884,6 +1153,7 @@ private struct LiveCanvas: UIViewRepresentable {
                 for view in tileViews.values { view.removeFromSuperview() }
                 tileViews.removeAll()
                 requestedTiles.removeAll()
+                failedTiles.removeAll()
                 tileFetchedLines.removeAll()
                 tileToken.removeAll()
                 // Tile indices are relative to the origin; force selection tiles to
@@ -931,14 +1201,44 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Periodically grow the document as the live top advances, but never while
         /// the user is interacting (it would jolt) or zoomed in.
         private func growthTick() {
+            // Never mutate the canvas mid-interaction.
             guard !scrollView.isDragging, !scrollView.isDecelerating, !scrollView.isZooming,
-                  !selecting, !draggingStart, !draggingEnd, scrollView.zoomScale <= 1.001 else { return }
+                  !selecting, !draggingStart, !draggingEnd else { return }
+            // Recover tiles a flush (reconnect / resume) left as spinners, paced at 4 Hz.
+            // This runs regardless of zoom (the layout-grow path below early-returns while
+            // zoomed) so a zoomed-in scrollback view still recovers, and it self-heals the
+            // race where the flush re-drive runs before the neutralized .throttled
+            // completions clear requestedTiles. skipFailed so it does not retry
+            // host-reported failures every pass (which would strobe / spam the relay).
+            if model.hasActiveStream { refreshTiles(skipFailed: true) }
+            // Grow the document as the live top advances (zoom 1 only; the scroll view
+            // owns contentSize while zoomed and our changes would fight it).
+            guard scrollView.zoomScale <= 1.001 else { return }
             applyLayout()
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { contentView }
         func scrollViewDidScroll(_ scrollView: UIScrollView) { repositionHandles(); refreshTiles() }
         func scrollViewDidZoom(_ scrollView: UIScrollView) { repositionHandles(); refreshTiles() }
+        // A fling can settle with no further scroll event, so re-drive tiles once it
+        // ends to pick up any that were throttle-dropped mid-fling.
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { refreshTiles() }
+        func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+            if !decelerate { refreshTiles() }
+        }
+
+        /// Coalesce a follow-up refreshTiles after throttle-dropped tiles, so the drops
+        /// are re-requested once the in-flight window drains, without scheduling one per
+        /// dropped tile.
+        private func scheduleTileRefresh() {
+            guard !tileRefreshScheduled else { return }
+            tileRefreshScheduled = true
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.tileRefreshScheduled = false
+                self.refreshTiles()
+            }
+        }
 
         // MARK: History tiles
 
@@ -957,7 +1257,11 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Materialize tile views around the visible history (one viewport of
         /// lookahead each way), fetch their bitmaps, refetch any whose line count
         /// grew, and drop far-away ones.
-        private func refreshTiles() {
+        /// - Parameter skipFailed: when true, tiles whose last fetch failed are left
+        ///   alone (used by the idle auto re-drive so it does not retry host failures at
+        ///   4 Hz). Explicit re-drives (scroll/zoom/grow/selection) leave it false so a
+        ///   failed tile back in view still retries.
+        private func refreshTiles(skipFailed: Bool = false) {
             guard let layout, historyLines > 0, pointsPerLine > 0, contentView.bounds.width > 0 else { return }
             let tileHeight = CGFloat(linesPerTile) * pointsPerLine
             guard tileHeight > 0 else { return }
@@ -989,7 +1293,7 @@ private struct LiveCanvas: UIViewRepresentable {
                 let absLine = layout.firstAbsLine + Int64(index * linesPerTile)
                 if tileFetchedLines[index] == expected, let image = model.cachedHistoryTile(firstAbsLine: absLine) {
                     view.show(image: image)
-                } else if !requestedTiles.contains(index) {
+                } else if !requestedTiles.contains(index), !(skipFailed && failedTiles.contains(index)) {
                     // Missing, or grew since last fetch: (re)render for the current
                     // count. Keep the old (correctly-sized) image visible meanwhile
                     // (showLoading is a no-op once a tile already has an image).
@@ -997,32 +1301,63 @@ private struct LiveCanvas: UIViewRepresentable {
                     requestedTiles.insert(index)
                     let token = nextTileToken(index)
                     model.invalidateHistoryTile(firstAbsLine: absLine)
-                    model.requestHistoryTile(firstAbsLine: absLine, lineCount: expected) { [weak self] image in
+                    model.requestHistoryTile(firstAbsLine: absLine, lineCount: expected) { [weak self] outcome in
                         // Ignore a superseded reply (a newer request for this tile ran).
                         guard let self, self.tileToken[index] == token else { return }
                         self.requestedTiles.remove(index)
                         guard let view = self.tileViews[index] else { return }
-                        if let image {
+                        switch outcome {
+                        case .image(let image):
+                            self.failedTiles.remove(index)
                             self.tileFetchedLines[index] = expected
                             view.frame = self.tileFrame(index: index)
                             view.show(image: image)
-                        } else {
-                            view.showFailure()
+                            // A rendered tile may have grown (live tail) since we asked;
+                            // catch up. Gated to .image so a saturated .throttled does not
+                            // trigger a re-request loop, and a .failed is not silently
+                            // re-requested without an explicit retry decision.
+                            if self.expectedLines(index: index) != expected { self.refreshTiles() }
+                        case .throttled:
+                            // Transient: keep any currently-shown image (do not flash a
+                            // failure). Do NOT self-schedule a refresh here: while the
+                            // throttle is saturated that would busy-loop (re-request ->
+                            // reject -> reschedule). The model's onHistoryTileSlotAvailable
+                            // re-drives us when a slot actually frees; a settled fling is
+                            // also covered by scrollViewDidEndDecelerating.
+                            break
+                        case .failed:
+                            if self.expectedLines(index: index) != expected {
+                                // Grew while in flight: this failure is for a stale line
+                                // count. Retry at the new size instead of leaving a stuck
+                                // X the idle pass would skip (do not mark it failed).
+                                self.refreshTiles()
+                            } else {
+                                self.failedTiles.insert(index)
+                                view.showFailure()
+                            }
                         }
-                        // It may have grown again while rendering; catch up.
-                        if self.expectedLines(index: index) != expected { self.refreshTiles() }
                     }
                 }
             }
 
             let discard = visible.insetBy(dx: 0, dy: -3 * visible.height)
+            var discardedAbsLines: Set<Int64> = []
             for (index, view) in tileViews where !view.frame.intersects(discard) {
                 view.removeFromSuperview()
                 tileViews[index] = nil
                 requestedTiles.remove(index)
+                // A re-shown tile should retry from scratch, not stay suppressed.
+                failedTiles.remove(index)
+                // Collect for a single pending-queue prune below (a fling discards many
+                // tiles per pass; scanning the queue once beats once per tile). `layout`
+                // is the non-optional local unwrapped at the top of refreshTiles.
+                discardedAbsLines.insert(layout.firstAbsLine + Int64(index * linesPerTile))
                 // Keep tileFetchedLines so a re-shown tile uses the cache; a cache
                 // miss (e.g. generation change) still triggers a refetch.
             }
+            // Drop still-queued requests for the flung-past tiles so they do not spend
+            // in-flight slots and relay budget (an already-issued fetch warms the cache).
+            model.cancelPendingHistoryTiles(firstAbsLines: discardedAbsLines)
         }
 
         // MARK: Selection-driven tile invalidation

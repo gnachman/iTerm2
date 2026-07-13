@@ -62,7 +62,9 @@ struct MessageBubbleView: View {
             .queryItems?.first { $0.name == "name" }?.value
         switch url.host {
         case "session":
-            model.openSession(guid: identifier, title: name ?? "Session")
+            // The mention lives in the currently open chat; carry that chat so
+            // the session view's compose overlay sends back into it.
+            model.openSession(guid: identifier, title: name ?? "Session", fromChatID: model.openChatID)
             return true
         case "workgroup":
             model.openWorkgroup(id: identifier, title: name ?? "Workgroup")

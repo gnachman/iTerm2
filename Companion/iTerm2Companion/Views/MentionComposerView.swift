@@ -159,6 +159,18 @@ final class MentionComposerController {
         liveNeedsLeadingSpace = false
     }
 
+    /// Replace the field with plain text (no mention tokens), e.g. to restore a
+    /// draft whose send failed. Placed at the end so the caret follows.
+    func setPlainText(_ text: String) {
+        guard let textView else { return }
+        textView.attributedText = NSAttributedString(string: text, attributes: Self.typingAttributes)
+        textView.selectedRange = NSRange(location: (text as NSString).length, length: 0)
+        textView.typingAttributes = Self.typingAttributes
+        textView.delegate?.textViewDidChange?(textView)
+        liveRange = nil
+        liveNeedsLeadingSpace = false
+    }
+
     // MARK: - Live dictation
 
     /// The span of text currently owned by live dictation, so successive partial
@@ -245,6 +257,16 @@ struct MentionComposerView: UIViewRepresentable {
     let isDictating: Bool
     /// Fired on every edit so the caller can refresh its send-button state.
     let onChange: () -> Void
+    /// Text to (re)seed the field with, e.g. to restore a draft whose send
+    /// failed. Applied whenever `seedGeneration` changes, in makeUIView OR
+    /// updateUIView, so a restore doesn't depend on the UIView being recreated
+    /// (churning view identity via `.id()` is timing-dependent and destroys
+    /// first-responder/scroll state).
+    var initialText: String = ""
+    /// Bumped by the caller to request a (re)seed of `initialText`. Edge-
+    /// triggered (not value-triggered) so re-seeding the SAME text still applies,
+    /// and so ordinary typing (which doesn't change this) never re-seeds.
+    var seedGeneration: Int = 0
 
     func makeUIView(context: Context) -> SelfSizingTextView {
         let textView = SelfSizingTextView()
@@ -267,11 +289,40 @@ struct MentionComposerView: UIViewRepresentable {
         textView.placeholderLabel = placeholderLabel
 
         controller.textView = textView
+        seedIfRequested(context.coordinator)
         return textView
+    }
+
+    /// Apply `initialText` if a new `seedGeneration` was requested. Runs from both
+    /// makeUIView and updateUIView so a restore lands whether SwiftUI recreated
+    /// the view or reused it.
+    private func seedIfRequested(_ coordinator: Coordinator) {
+        guard seedGeneration != coordinator.lastSeededGeneration else { return }
+        coordinator.lastSeededGeneration = seedGeneration
+        guard !initialText.isEmpty else { return }
+        // Defer the ENTIRE seed off the current pass, not just the onChange:
+        // seedIfRequested runs during SwiftUI's update (make/updateUIView), and
+        // setPlainText itself fires the text view's delegate -> Coordinator ->
+        // parent.onChange, which writes the parent's @State. Doing that synchronously
+        // is the "Modifying state during view update" hazard (and the write can be
+        // dropped, leaving composeIsEmpty / the send button stale). Running the whole
+        // seed a tick later moves both the delegate fire and the explicit onChange
+        // safely off the update pass.
+        let text = initialText
+        let composer = controller
+        let notify = onChange
+        DispatchQueue.main.async {
+            // Restore only into an EMPTY field: if the user reopened the composer
+            // and typed a new draft before this restore landed, don't clobber it.
+            guard composer.isEmpty else { return }
+            composer.setPlainText(text)
+            notify()
+        }
     }
 
     func updateUIView(_ textView: SelfSizingTextView, context: Context) {
         context.coordinator.parent = self
+        seedIfRequested(context.coordinator)
         // Honor SwiftUI's .disabled, which doesn't reach UIKit views on its
         // own through a representable.
         let enabled = context.environment.isEnabled
@@ -303,6 +354,9 @@ struct MentionComposerView: UIViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, UITextViewDelegate {
         var parent: MentionComposerView
+        /// The last seedGeneration applied, so a seed request fires exactly once.
+        /// Starts below any real generation so an initial non-empty seed applies.
+        var lastSeededGeneration = Int.min
 
         init(parent: MentionComposerView) {
             self.parent = parent

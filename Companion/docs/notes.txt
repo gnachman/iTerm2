@@ -1,5 +1,12 @@
 iTerm2 Buddy (Companion App) Release Notes
 
+Bug Fixes:
+- Fast-scrolling a session's scrollback no longer
+  floods the relay with tile requests, which
+  could trip its rate limit and silently drop
+  the connection to the Mac while the phone still
+  looked connected. Requests are now paced.
+
 New Features:
 - You can now mute a chat so it stops sending
   push notifications to your phone. Swipe right
@@ -10,6 +17,16 @@ New Features:
   off even while your phone is unreachable.
   Requires a Mac new enough to support it; the
   controls are hidden otherwise.
+- Message the agent from the live session view.
+  A compose button opens an overlay with a text
+  field and a voice-dictation mic, so you can send
+  a message without leaving the session. If you
+  reached the view by tapping an @-mention in a
+  chat, your message goes to that chat; otherwise
+  it goes to a session-bound chat. When the agent
+  finishes replying, a notification appears;
+  tapping it opens the chat, and Back returns you
+  to the session view.
 - Live session view. When the paired Mac is new
   enough, tapping a session shows live video that
   updates as the terminal changes, instead of a
@@ -71,6 +88,32 @@ New Features:
   New Chat screen.
 
 Bug Fixes:
+- Dictation no longer occasionally leaves the
+  microphone recording, or wedges the mic button,
+  when quickly switching between composer bars
+  while starting or finishing a dictation.
+- Double-tapping Send while dictating no longer
+  shows a false "dictation was interrupted"
+  message after the message was actually sent.
+- A reply notification no longer occasionally
+  drops a leading character (such as a minus
+  sign) from the continued part of a long reply.
+- A message sent from a session view that fails
+  to send no longer leaves a duplicate, never-
+  delivered bubble behind, even if you switch
+  chats while it is sending. It comes back to
+  the composer so you can retry.
+- Reply notifications on the lock screen now
+  always show session and workgroup names, even
+  when the name appears late in a long reply.
+- After a reconnect, an open chat no longer
+  briefly reverts to an older set of messages,
+  dropping ones that arrived since you last
+  left it.
+- Reply notifications for a session no longer
+  keep firing after you leave it in the case
+  where the same session was open in two
+  places at once.
 - The connection now recovers from brief network
   drops (like switching Wi-Fi or a spotty signal)
   instead of getting stuck on "Reconnecting." The
@@ -79,6 +122,11 @@ Bug Fixes:
 - @-mentions in command-request messages now
   show the friendly session or workgroup name
   instead of the raw identifier.
+- @-mentions in chat messages that could not be
+  resolved (for example while the Mac was briefly
+  unreachable) now show the session name once the
+  connection recovers or you reopen the chat,
+  instead of staying a raw identifier.
 - In the Sessions tab, a split pane that hosts a
   peer workgroup now shows as a container with
   its own icon and is no longer tappable. Only
@@ -89,3 +137,8 @@ Bug Fixes:
   the move shows an update prompt instead of
   pairing into a state that cannot receive
   notifications.
+- When the relay hits its daily data limit,
+  the app now shows a “Daily data limit
+  reached” banner with a Reconnect now
+  button and stops retrying every couple
+  seconds until the limit resets.

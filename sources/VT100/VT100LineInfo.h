@@ -12,9 +12,23 @@
 #import "VT100GridTypes.h"
 #import "iTermMetadata.h"
 
+// Reserves a contiguous block of `count` line-content generations from the global
+// sequence and returns its base, so a caller can hand out `count` distinct,
+// never-reused identities in O(1). Used for the all-dirty grid case.
+int64_t VT100LineInfoAllocateGenerationBlock(int64_t count);
+
+// Enables advancing the per-line grid generation on setDirty:. The bump is off by
+// default because its only consumer is the (default-off) per-row draw cache; the
+// metal glue calls this the first time it renders with the cache enabled. Sticky:
+// once enabled it stays enabled for the process lifetime.
+void VT100LineInfoEnableGenerationTracking(void);
+
 @protocol VT100LineInfoReading<NSObject>
 @property(nonatomic, readonly) iTermImmutableMetadata immutableMetadata;
 
+// Globally-unique identifier of this line's current content. Advances whenever
+// the line is marked dirty. Equal generations imply equal content.
+- (int64_t)generation;
 - (BOOL)isDirtyAtOffset:(int)x;
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;
@@ -30,6 +44,12 @@
 - (instancetype)initWithWidth:(int)width;
 // Does nothing if now=0. This was super-hot when profiling spam.cc so make it direct. Good luck future me.
 - (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestampTo:(NSTimeInterval)now __attribute__((objc_direct));
+// Mirror another line's content generation onto this one (used when copying a
+// line's content between grids so the destination reports the same identity).
+- (void)setGeneration:(int64_t)generation;
+// Advance to a fresh globally-unique generation, for content mutations (e.g.
+// bidi) that don't go through setDirty:.
+- (void)advanceGeneration;
 - (BOOL)isDirtyAtOffset:(int)x;
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;

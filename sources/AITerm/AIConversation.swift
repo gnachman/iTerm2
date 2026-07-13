@@ -411,9 +411,11 @@ struct AIConversation {
             // is only the built-in catalog, so a chat pinned to a manual/custom
             // model would otherwise fall through to the global default and be
             // sent to a different model (and possibly vendor/URL) than the UI
-            // shows.
-            let pinnedModel = AIMetadata.instance.models.first(where: { $0.name == modelName })
-                ?? LLMMetadata.manualModels().first(where: { $0.name == modelName })
+            // shows. A manual model WINS over a built-in that shares its name so
+            // a user proxying a known model (custom url/api under the same name)
+            // reaches their endpoint rather than the public one.
+            let pinnedModel = LLMMetadata.manualModels().first(where: { $0.name == modelName })
+                ?? AIMetadata.instance.models.first(where: { $0.name == modelName })
             controller.providerOverride = pinnedModel.map { LLMProvider(model: $0) }
         } else {
             controller.providerOverride = nil

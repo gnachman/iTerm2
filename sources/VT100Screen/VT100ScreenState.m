@@ -1528,20 +1528,118 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
 #pragma mark - iTermTextDataSource
 
+// Whether the grid's first line begins with a double-width-character right half
+// (or a spacer preceding one), which the last scrollback line is rendered joined
+// with. Consumed by both screenCharArrayForLine: and contentIdentityForLine: so
+// they agree on that boundary row's content and its identity.
+- (BOOL)gridTopIsDWCEligible {
+    const screen_char_t *firstGridLine = [self.currentGrid immutableScreenCharsAtLineNumber:0];
+    const int gridWidth = self.currentGrid.size.width;
+    return (firstGridLine != nil &&
+            gridWidth > 1 &&
+            (ScreenCharIsDWC_RIGHT(firstGridLine[1]) ||
+             (ScreenCharIsDWL_SPACER(firstGridLine[1]) &&
+              gridWidth > 2 &&
+              ScreenCharIsDWC_RIGHT(firstGridLine[2]))));
+}
+
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {
     const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     if (line < numLinesInLineBuffer) {
-        const screen_char_t *firstGridLine = (line == numLinesInLineBuffer - 1) ? [self.currentGrid immutableScreenCharsAtLineNumber:0] : nil;
-        const int gridWidth = self.currentGrid.size.width;
-        const BOOL eligibleForDWC = (firstGridLine != nil &&
-                                     gridWidth > 1 &&
-                                     (ScreenCharIsDWC_RIGHT(firstGridLine[1]) ||
-                                      (ScreenCharIsDWL_SPACER(firstGridLine[1]) &&
-                                       gridWidth > 2 &&
-                                       ScreenCharIsDWC_RIGHT(firstGridLine[2]))));
+        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1) && [self gridTopIsDWCEligible];
         return [self.linebuffer screenCharArrayForLine:line width:self.width paddedTo:self.width eligibleForDWC:eligibleForDWC];
     }
     return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
+}
+
+- (iTermRowContentIdentity)contentIdentityForLine:(int)line {
+    // Use one width for both the range check and the lookup so they can't
+    // disagree and produce a bogus identity.
+    const int width = self.width;
+    const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
+    if (line < numLinesInLineBuffer) {
+        int64_t generation = 0;
+        int64_t mutationCount = 0;
+        int remainder = 0;
+        if (![self.linebuffer getGeneration:&generation mutationCount:&mutationCount remainder:&remainder forLine:line width:width]) {
+            // Should be unreachable given the range check above. Fall back to the
+            // uncacheable sentinel (generation 0) rather than a bogus identity
+            // that could collide with another failed lookup.
+            DLog(@"getGeneration failed for line %@ of %@", @(line), @(numLinesInLineBuffer));
+            return (iTermRowContentIdentity){ .source = iTermRowContentSourceHistory, .generation = 0, .mutationCount = 0, .remainder = 0 };
+        }
+        // The last scrollback row is rendered joined with the grid's leading DWC
+        // (see screenCharArrayForLine:), so its content depends on the grid-top
+        // DWC state even though the block is unchanged. Fold that into its identity.
+        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1) && [self gridTopIsDWCEligible];
+        return (iTermRowContentIdentity){
+            .source = iTermRowContentSourceHistory,
+            .generation = generation,
+            .mutationCount = mutationCount,
+            .remainder = remainder,
+            .width = width,
+            .eligibleForDWC = eligibleForDWC
+        };
+    }
+    return (iTermRowContentIdentity){
+        .source = iTermRowContentSourceGrid,
+        .generation = [self.currentGrid generationForLine:(int)(line - numLinesInLineBuffer)],
+        .mutationCount = 0,
+        .remainder = 0,
+        .width = width
+    };
+}
+
+// Returns the row AND its content identity in a single pass. Equivalent to calling
+// screenCharArrayForLine: and contentIdentityForLine: back to back, but for a
+// scrollback line it resolves the containing block once instead of twice (and
+// computes numLinesWithWidth: and gridTopIsDWCEligible once). Used by the per-row
+// draw cache's row build, which needs both.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                            contentIdentity:(out iTermRowContentIdentity *)identityOut {
+    const int width = self.width;
+    const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
+    if (line < numLinesInLineBuffer) {
+        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1) && [self gridTopIsDWCEligible];
+        int64_t generation = 0;
+        int64_t mutationCount = 0;
+        int remainder = 0;
+        ScreenCharArray *sca = [self.linebuffer screenCharArrayForLine:line
+                                                                 width:width
+                                                              paddedTo:width
+                                                        eligibleForDWC:eligibleForDWC
+                                                            generation:&generation
+                                                         mutationCount:&mutationCount
+                                                             remainder:&remainder];
+        if (identityOut) {
+            if (!sca) {
+                // Matches contentIdentityForLine:'s fallback: uncacheable sentinel
+                // rather than a bogus identity that could collide.
+                *identityOut = (iTermRowContentIdentity){ .source = iTermRowContentSourceHistory, .generation = 0, .mutationCount = 0, .remainder = 0 };
+            } else {
+                *identityOut = (iTermRowContentIdentity){
+                    .source = iTermRowContentSourceHistory,
+                    .generation = generation,
+                    .mutationCount = mutationCount,
+                    .remainder = remainder,
+                    .width = width,
+                    .eligibleForDWC = eligibleForDWC
+                };
+            }
+        }
+        return sca;
+    }
+    const int screenIndex = (int)(line - numLinesInLineBuffer);
+    if (identityOut) {
+        *identityOut = (iTermRowContentIdentity){
+            .source = iTermRowContentSourceGrid,
+            .generation = [self.currentGrid generationForLine:screenIndex],
+            .mutationCount = 0,
+            .remainder = 0,
+            .width = width
+        };
+    }
+    return [self screenCharArrayAtScreenIndex:screenIndex];
 }
 
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {

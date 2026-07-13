@@ -100,6 +100,28 @@ NS_ASSUME_NONNULL_BEGIN
                                       width:(int)width
                                    paddedTo:(int)paddedSize
                              eligibleForDWC:(BOOL)eligibleForDWC;
+
+// Like the above but also returns the containing block's content-identity
+// components from the same block walk, so a caller needing both the row and its
+// identity does not resolve the block twice. Out-params are optional.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                                      width:(int)width
+                                   paddedTo:(int)paddedSize
+                             eligibleForDWC:(BOOL)eligibleForDWC
+                                 generation:(out int64_t *)generation
+                              mutationCount:(out int64_t *)mutationCount
+                                  remainder:(out int *)remainder;
+
+// Returns the generation and mutation counter of the block containing wrapped
+// line |line|, plus the wrapped-line offset within that block. Together they
+// uniquely identify the content of a scrollback line for the per-row draw cache
+// (the mutation counter disambiguates in-place edits that don't bump
+// generation). Returns NO if the line can't be found.
+- (BOOL)getGeneration:(out int64_t *)generation
+        mutationCount:(out int64_t *)mutationCount
+            remainder:(out int *)remainder
+              forLine:(int)line
+                width:(int)width;
 - (void)sanityCheck;
 - (ScreenCharArray *)unwrappedLineAtIndex:(int)i;
 

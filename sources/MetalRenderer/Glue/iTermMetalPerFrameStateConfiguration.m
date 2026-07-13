@@ -11,6 +11,8 @@
 #import "PTYTextView.h"
 #import "VT100Terminal.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermAttributedStringBuilder.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermMetalPerFrameState.h"
@@ -25,6 +27,9 @@ static vector_float4 VectorForColor(NSColor *color) {
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                              textView:(PTYTextView *)textView
                                  glue:(id<iTermMetalPerFrameStateDelegate>)glue {
+    // Zero so the struct's padding is defined for byte-wise fingerprinting.
+    memset(&_renderInputs, 0, sizeof(_renderInputs));
+
     _cellSize = drawingHelper.cellSize;
     _cellSizeWithoutSpacing = drawingHelper.cellSizeWithoutSpacing;
     _scale = textView.window.backingScaleFactor;
@@ -33,28 +38,43 @@ static vector_float4 VectorForColor(NSColor *color) {
                                   textView.dataSource.height);
     _baselineOffset = drawingHelper.baselineOffset;
     _colorMap = [textView.colorMap copy];
+    _renderInputs.colorMapGeneration = _colorMap.generation;
     _fontTable = textView.fontTable;
     _useBoldFont = textView.useBoldFont;
     _useItalicFont = textView.useItalicFont;
-    _useNonAsciiFont = textView.useNonAsciiFont;
-    _reverseVideo = textView.dataSource.terminalReverseVideo;
+    _renderInputs.useNonAsciiFont = textView.useNonAsciiFont;
+    _renderInputs.reverseVideo = textView.dataSource.terminalReverseVideo;
     _softAlternateScreenMode = drawingHelper.softAlternateScreenMode;
-    _useCustomBoldColor = textView.useCustomBoldColor;
-    _brightenBold = textView.brightenBold;
-    _thinStrokes = textView.thinStrokes;
-    _isRetina = drawingHelper.isRetina;
+    _renderInputs.useCustomBoldColor = textView.useCustomBoldColor;
+    _renderInputs.brightenBold = textView.brightenBold;
+    _renderInputs.thinStrokes = textView.thinStrokes;
+    _renderInputs.isRetina = drawingHelper.isRetina;
     _isInKeyWindow = [textView isInKeyWindow];
     _textViewIsActiveSession = [textView.delegate textViewIsActiveSession];
     _textViewIsFirstResponder = drawingHelper.textViewIsFirstResponder;
     _shouldDrawFilledInCursor = ([textView.delegate textViewShouldDrawFilledInCursor] || textView.focusFollowsMouse.haveStolenFocus);
-    _blinkAllowed = textView.blinkAllowed;
+    _renderInputs.blinkAllowed = textView.blinkAllowed;
     _blinkingItemsVisible = drawingHelper.blinkingItemsVisible;
     const BOOL forceAA = (drawingHelper.forceAntialiasingOnRetina && drawingHelper.isRetina);
     _asciiAntialias = drawingHelper.asciiAntiAlias || forceAA;
-    _nonasciiAntialias = (_useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias)  || forceAA;
-    _useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
-    _useSelectedTextColor = drawingHelper.useSelectedTextColor;
-    _ligaturesEnabled = drawingHelper.asciiLigatures || drawingHelper.nonAsciiLigatures;
+    _nonasciiAntialias = (_renderInputs.useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias)  || forceAA;
+    _renderInputs.useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
+    _renderInputs.useSelectedTextColor = drawingHelper.useSelectedTextColor;
+    _renderInputs.ligaturesEnabled = drawingHelper.asciiLigatures || drawingHelper.nonAsciiLigatures;
+    _renderInputs.underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
+
+    // Shaping settings that change the glyph-keys blob. Read from the same
+    // attributed-string builder the metal glue snapshots via copySettingsFrom:,
+    // so the fingerprint matches exactly what the row build uses.
+    iTermAttributedStringBuilder *asb = drawingHelper.attributedStringBuilder;
+    _renderInputs.asciiLigatures = asb.asciiLigatures;
+    _renderInputs.asciiLigaturesAvailable = asb.asciiLigaturesAvailable;
+    _renderInputs.nonAsciiLigatures = asb.nonAsciiLigatures;
+    _renderInputs.zippy = asb.zippy;
+    _renderInputs.preferSpeedToFullLigatureSupport = asb.preferSpeedToFullLigatureSupport;
+    _renderInputs.lowFiCombiningMarks = asb.lowFiCombiningMarks;
+    _renderInputs.boldAllowed = asb.boldAllowed;
+    _renderInputs.italicAllowed = asb.italicAllowed;
     _showBroadcastStripes = drawingHelper.showStripes;
     NSColorSpace *colorSpace = textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace];
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:colorSpace];
@@ -89,11 +109,11 @@ static vector_float4 VectorForColor(NSColor *color) {
         .failure = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper errorMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector
     };
 
-    _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
-    _unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
+    _renderInputs.isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
+    _renderInputs.unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0
                                                                                        towardsGrayLevel:0.5]);
-    _transparencyAlpha = textView.transparencyAlpha;
-    _transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
+    _renderInputs.transparencyAlpha = textView.transparencyAlpha;
+    _renderInputs.transparencyAffectsOnlyDefaultBackgroundColor = drawingHelper.transparencyAffectsOnlyDefaultBackgroundColor;
 
     // Cursor guide
     _cursorGuideEnabled = drawingHelper.highlightCursorLine;
@@ -118,7 +138,7 @@ static vector_float4 VectorForColor(NSColor *color) {
                                                                       cellHeight:_cellSize.height];
     _asciiUnderlineDescriptor.thickness = [drawingHelper underlineThicknessForFont:_fontTable.asciiFont.font];
 
-    if (_useNonAsciiFont) {
+    if (_renderInputs.useNonAsciiFont) {
         _nonAsciiUnderlineDescriptor.color = _asciiUnderlineDescriptor.color;
         _nonAsciiUnderlineDescriptor.offset = [drawingHelper yOriginForUnderlineForFont:_fontTable.defaultNonASCIIFont.font
                                                                                 yOffset:0
@@ -161,6 +181,21 @@ static vector_float4 VectorForColor(NSColor *color) {
     _selectedCommandRegion = drawingHelper.selectedCommandRegion;
     _selectedCommandRegion.location += drawingHelper.totalScrollbackOverflow;
     _totalScrollbackOverflow = drawingHelper.totalScrollbackOverflow;
+
+    // All row-build inputs are populated. Derive a per-textview config
+    // generation by exact comparison against the previous frame (collision-free,
+    // unlike a hash). The color space and font table are compared as objects
+    // since they can't be flattened exactly into the struct.
+    // Pass the SOURCE color map (textView.colorMap), not _colorMap: the latter is
+    // a fresh copy made every frame (line above), so its identity would differ
+    // each frame and bump the generation unconditionally, defeating the cache. The
+    // source object is stable across frames and only changes on an actual map swap
+    // (profile/theme change), which is exactly what the identity check must catch;
+    // in-place palette edits are still caught by _renderInputs.colorMapGeneration.
+    _configGeneration = [glue metalConfigGenerationForRenderInputs:&_renderInputs
+                                                          colorMap:textView.colorMap
+                                                        colorSpace:_colorSpace
+                                                         fontTable:_fontTable];
 }
 
 @end

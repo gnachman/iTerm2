@@ -254,6 +254,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
          asciiLigaturesAvailable:(BOOL)asciiLigaturesAvailable
                   asciiLigatures:(BOOL)asciiLigatures
 preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
+             lowFiCombiningMarks:(BOOL)lowFiCombiningMarks
                         cellSize:(NSSize)cellSize
             blinkingItemsVisible:(BOOL)blinkingItemsVisible
                     blinkAllowed:(BOOL)blinkAllowed
@@ -276,6 +277,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     _asciiLigaturesAvailable = asciiLigaturesAvailable;
     _asciiLigatures = asciiLigatures;
     _preferSpeedToFullLigatureSupport = preferSpeedToFullLigatureSupport;
+    _lowFiCombiningMarks = lowFiCombiningMarks;
     _cellSize = cellSize;
     _blinkingItemsVisible = blinkingItemsVisible;
     _blinkAllowed = blinkAllowed;
@@ -321,7 +323,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         .previousForegroundColor = nil,
     };
     NSDictionary *previousImageAttributes = nil;
-    iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] init];
+    iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] initWithPreferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                                                                    lowFiCombiningMarks:_lowFiCombiningMarks];
     builder.hasBidi = bidiInfo != nil;
     builder.startColumn = indexRange.location;
     builder.zippy = self.zippy;
@@ -527,7 +530,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             if (builtString.length > 0) {
                 [attributedStrings addObject:builtString];
             }
-            builder = [[iTermMutableAttributedStringBuilder alloc] init];
+            builder = [[iTermMutableAttributedStringBuilder alloc] initWithPreferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                                                                    lowFiCombiningMarks:_lowFiCombiningMarks];
             builder.hasBidi = bidiInfo != nil;
             builder.startColumn = i;
             builder.zippy = self.zippy;
@@ -808,16 +812,33 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         paragraphStyle.tabStops = @[];
         paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
     });
-    NSWritingDirection writingDirection;
-    switch (attributes->rtlStatus) {
-        case RTLStatusUnknown:
-        case RTLStatusLTR:
-            writingDirection = NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride;
-            break;
-        case RTLStatusRTL:
-            writingDirection = NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride;
-            break;
+    // The writing-direction attribute has only two possible values, so intern the
+    // two one-element arrays instead of allocating one per run.
+    static NSArray *ltrWritingDirection;
+    static NSArray *rtlWritingDirection;
+    static dispatch_once_t writingDirectionOnce;
+    dispatch_once(&writingDirectionOnce, ^{
+        ltrWritingDirection = @[@(NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride)];
+        rtlWritingDirection = @[@(NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride)];
+    });
+    NSArray *writingDirection = (attributes->rtlStatus == RTLStatusRTL) ? rtlWritingDirection : ltrWritingDirection;
+
+    // The underline-color components array is only read when hasUnderlineColor is
+    // set (see -underlineColorForAttributes:), which is rare. Use a shared
+    // placeholder otherwise so the common case allocates no array.
+    static NSArray *placeholderUnderlineColor;
+    static dispatch_once_t underlineColorOnce;
+    dispatch_once(&underlineColorOnce, ^{
+        placeholderUnderlineColor = @[@0, @0, @0, @0];
+    });
+    NSArray *underlineColor = placeholderUnderlineColor;
+    if (attributes->hasUnderlineColor) {
+        underlineColor = @[ @(attributes->underlineColor.red),
+                            @(attributes->underlineColor.green),
+                            @(attributes->underlineColor.blue),
+                            @(attributes->underlineColor.mode) ];
     }
+
     return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
               (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
               NSFontAttributeName: attributes->font,
@@ -828,14 +849,11 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
               iTermFaintAttribute: @(attributes->faint),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
               iTermHasUnderlineColorAttribute: @(attributes->hasUnderlineColor),
-              iTermUnderlineColorAttribute: @[ @(attributes->underlineColor.red),
-                                               @(attributes->underlineColor.green),
-                                               @(attributes->underlineColor.blue),
-                                               @(attributes->underlineColor.mode) ],
+              iTermUnderlineColorAttribute: underlineColor,
               NSUnderlineStyleAttributeName: @(underlineStyle),
               NSStrikethroughStyleAttributeName: @(strikethroughStyle),
               NSParagraphStyleAttributeName: paragraphStyle,
-              NSWritingDirectionAttributeName: @[@(writingDirection)],
+              NSWritingDirectionAttributeName: writingDirection,
     };
 }
 
@@ -945,6 +963,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     _asciiLigaturesAvailable = other.asciiLigaturesAvailable;
     _asciiLigatures = other.asciiLigatures;
     _preferSpeedToFullLigatureSupport = other.preferSpeedToFullLigatureSupport;
+    _lowFiCombiningMarks = other.lowFiCombiningMarks;
     _cellSize = other.cellSize;
     _blinkingItemsVisible = other.blinkingItemsVisible;
     _blinkAllowed = other.blinkAllowed;

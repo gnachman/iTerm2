@@ -395,21 +395,129 @@ class iTermProcessInfo: NSObject {
     /// Returns lowercased argv0 (or name) values for this process and its ancestors,
     /// ordered from this process (deepest) toward the root. Stops before including
     /// the login shell (argv0 starts with "-") or iTermServer.
+    ///
+    /// Reading a process's name/argv0 can transiently fail for a process that is very
+    /// much alive: `sysctl(KERN_PROC_PID)` can momentarily return an empty `p_comm`
+    /// while the process table is churning (which busy children like `claude` do
+    /// constantly). A missing intermediate ancestor here is indistinguishable from an
+    /// exited one to `GlobalJobMonitor`, which turns the difference into a spurious
+    /// "Job Ended" event (and, for the claude-code workgroup, a whole peer teardown).
+    /// So when a name comes back empty we reuse the last-known title for that pid
+    /// (validated by ppid to guard against pid reuse) instead of dropping it.
+    /// Successfully-read titles are recorded to keep that cache warm.
     @objc var foregroundJobAncestorNames: [String] {
         var result = [String]()
         var current: iTermProcessInfo? = self
         while let info = current {
             let title = info.argv0 ?? info.name
-            guard let title, !title.isEmpty else {
+            if let title, !title.isEmpty {
+                ProcessNameCache.shared.record(pid: info.processID,
+                                               ppid: info.parentProcessID,
+                                               title: title)
+                if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
+                    break
+                }
+                result.append(title.lowercased())
                 current = info.parent
-                continue
+            } else if let cached = ProcessNameCache.shared.lastKnownTitle(pid: info.processID,
+                                                                          ppid: info.parentProcessID) {
+                // The process is still in the tree (we reached it by walking parent
+                // links) but its name read came back empty this cycle. Reuse the
+                // last-known title so a transient process-info failure doesn't
+                // masquerade as the job exiting. Log once per episode (not every
+                // update while it keeps failing).
+                if ProcessNameCache.shared.shouldLogAnomaly(pid: info.processID) {
+                    RLog("foregroundJobAncestorNames: pid \(info.processID) (ppid \(info.parentProcessID)) read an empty name; reusing last-known title \"\(cached)\"")
+                }
+                if cached.hasPrefix("-") || cached.hasPrefix("iTermServer") {
+                    break
+                }
+                result.append(cached.lowercased())
+                current = info.parent
+            } else {
+                // No fresh name and nothing cached. This is the case that can produce
+                // a spurious "Job Ended", so capture precisely why the read failed.
+                // Log (and run the diagnostic sysctl) once per episode, not every
+                // update, so a persistently-nameless process can't spam the log.
+                if ProcessNameCache.shared.shouldLogAnomaly(pid: info.processID) {
+                    RLog("foregroundJobAncestorNames: pid \(info.processID) (ppid \(info.parentProcessID)) has no name and no cached title (\(iTermLSOF.nameFailureDiagnosis(forPid: info.processID))); dropping it from the ancestry")
+                }
+                current = info.parent
             }
-            if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
-                break
-            }
-            result.append(title.lowercased())
-            current = info.parent
         }
         return result
+    }
+}
+
+// Remembers the most recently resolved title (argv0 or comm) for a pid so a single
+// transient failure to read a live process's name doesn't erase it from
+// `iTermProcessInfo.foregroundJobAncestorNames` (see that property for why an erased
+// ancestor is harmful). Entries are keyed by pid and validated against ppid so a
+// reused pid doesn't inherit an unrelated process's name. Only foreground-chain
+// ancestors are ever recorded, so the map is naturally small; it is pruned to the
+// live pid set once per process-cache update (see `-[iTermProcessCache reallyUpdate]`)
+// so it stays bounded over a long-lived session.
+@objc(iTermProcessNameCache)
+class ProcessNameCache: NSObject {
+    @objc static let shared = ProcessNameCache()
+
+    private struct Entry {
+        let ppid: pid_t
+        let title: String
+    }
+    private var entriesByPID = [pid_t: Entry]()
+    // Pids for which a name-read anomaly (empty name) has already been logged, so a
+    // process whose name keeps reading empty across updates is logged once per
+    // episode rather than every cycle. Cleared for a pid as soon as its name reads
+    // normally again (see record) or when it dies (see prune).
+    private var loggedAnomalyPIDs = Set<pid_t>()
+    private let mutex = Mutex()
+
+    // Records a freshly-resolved title for a live process. Overwrites any prior entry
+    // and ends any open anomaly episode for the pid.
+    func record(pid: pid_t, ppid: pid_t, title: String) {
+        mutex.sync {
+            entriesByPID[pid] = Entry(ppid: ppid, title: title)
+            loggedAnomalyPIDs.remove(pid)
+        }
+    }
+
+    // The last-known title for this pid, but only if the ppid still matches. A
+    // different ppid means the pid was reused by an unrelated process, so the cached
+    // name would be wrong; return nil and let the caller fall back.
+    func lastKnownTitle(pid: pid_t, ppid: pid_t) -> String? {
+        mutex.sync {
+            guard let entry = entriesByPID[pid], entry.ppid == ppid else {
+                return nil
+            }
+            return entry.title
+        }
+    }
+
+    // Returns true the first time an anomaly is reported for this pid since its name
+    // last read normally, and false on repeats. Callers gate logging (and any
+    // diagnostic sysctl) on this so a persistently-nameless process can't spam.
+    func shouldLogAnomaly(pid: pid_t) -> Bool {
+        mutex.sync {
+            loggedAnomalyPIDs.insert(pid).inserted
+        }
+    }
+
+    // Drops entries for pids that are no longer alive to bound the maps' size.
+    @objc(pruneToLivePids:)
+    func prune(toLivePids livePids: [NSNumber]) {
+        let live = Set(livePids.map { $0.int32Value })
+        mutex.sync {
+            entriesByPID = entriesByPID.filter { live.contains($0.key) }
+            loggedAnomalyPIDs.formIntersection(live)
+        }
+    }
+
+    // Test hook: forget everything.
+    @objc func removeAll() {
+        mutex.sync {
+            entriesByPID.removeAll()
+            loggedAnomalyPIDs.removeAll()
+        }
     }
 }

@@ -41,6 +41,9 @@ struct ModernBodyRequestBuilder {
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
             messages: messages.compactMap { CompletionsMessage($0) },
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
+            // Omit temperature for models that reject it (e.g. some reasoning
+            // models), matching CompletionsAnthropic. nil drops the key.
+            temperature: provider.model.supportsTemperature ? 0 : nil,
             tools: maybeTools,
             tool_choice: functions.isEmpty ? nil : "auto",
             stream: stream)

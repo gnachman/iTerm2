@@ -78,6 +78,22 @@ extern NSString *iTermSnippetHelpMarkdown;
 - (void)moveSnippetsWithGUIDs:(NSArray<NSString *> *)guids
                       toIndex:(NSInteger)row;
 - (void)setSnippets:(NSArray<iTermSnippet *> *)snippets;
+
+// Re-read snippets.plist from disk, replacing the in-memory snippets, and post a full-replacement
+// notification. Does not write back to disk. Used when the synced copy of snippets.plist changes
+// under us (see iTermRemoteDataFileSync).
+- (void)reloadFromDisk;
+
+// If snippets live only in the user-defaults fallback (after a prior plist-write failure), retry
+// writing snippets.plist so the on-disk state reflects them before the settings-sync layer (which
+// only sees on-disk files) reads it. Call before a data-file reconcile.
+- (void)ensurePersistedToDisk;
+
+// For a "Lose Changes" data-file discard: back up and clear any un-flushed user-defaults fallback so
+// it isn't resurrected by the next ensurePersistedToDisk flush, then reload from the (now
+// discarded/replaced) on-disk state.
+- (void)discardUnflushedFallbackBackingUp;
+
 - (nullable iTermSnippet *)snippetWithGUID:(NSString *)guid;
 - (nullable iTermSnippet *)snippetWithActionKey:(id)actionKey;
 
@@ -86,6 +102,15 @@ extern NSString *iTermSnippetHelpMarkdown;
                                                tagsFound:(out BOOL * _Nullable)tagsFoundPtr;
 + (BOOL)snippet:(iTermSnippet *)snippet matchesQuery:(NSString *)queryString;
 
+@end
+
+@interface iTermSnippetsModel (Testing)
+// Pure classifier behind -init's corrupt-file guard: decides whether the on-disk snippets file is
+// present-but-unparseable given whether a user-defaults fallback shadows it, whether the file exists,
+// and its raw bytes. Exposed for unit tests; see the implementation for the semantics.
++ (BOOL)fileIsPresentButUnparseableWithFallbackPresent:(BOOL)fallbackPresent
+                                            fileExists:(BOOL)fileExists
+                                              fileData:(nullable NSData *)fileData;
 @end
 
 @interface iTermSnippetsDidChangeNotification : iTermBaseNotification

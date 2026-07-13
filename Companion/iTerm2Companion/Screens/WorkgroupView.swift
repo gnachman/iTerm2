@@ -64,7 +64,7 @@ struct WorkgroupView: View {
     @ViewBuilder
     private func memberRow(_ member: CompanionWorkgroupMember) -> some View {
         if let guid = member.sessionGuid {
-            NavigationLink(value: AppModel.Destination.session(guid: guid, title: member.roleName)) {
+            NavigationLink(value: AppModel.Destination.session(guid: guid, title: member.roleName, originatingChatID: nil)) {
                 memberLabel(member)
             }
         } else {

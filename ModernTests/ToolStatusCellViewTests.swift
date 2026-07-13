@@ -250,30 +250,57 @@ final class ToolStatusMergeRepresentativeTests: XCTestCase {
     func test_nonSnoozedMemberWinsRowOverSnoozedMember() {
         // P is not snoozed but older; R is snoozed and fresher.
         let pPrefersOverR = ToolStatus.mergeRepresentativePrefers(
-            candidateSnoozed: false, candidateLastChanged: 100, candidatePriority: 0, candidateSessionID: "P",
-            currentSnoozed: true, currentLastChanged: 200, currentPriority: 0, currentSessionID: "R")
+            candidateVisible: false, candidateSnoozed: false, candidateLastChanged: 100, candidatePriority: 0, candidateSessionID: "P",
+            currentVisible: false, currentSnoozed: true, currentLastChanged: 200, currentPriority: 0, currentSessionID: "R")
         XCTAssertTrue(pPrefersOverR, "A non-snoozed sibling must win the row over a snoozed member, regardless of recency")
 
         let rPrefersOverP = ToolStatus.mergeRepresentativePrefers(
-            candidateSnoozed: true, candidateLastChanged: 200, candidatePriority: 0, candidateSessionID: "R",
-            currentSnoozed: false, currentLastChanged: 100, currentPriority: 0, currentSessionID: "P")
+            candidateVisible: false, candidateSnoozed: true, candidateLastChanged: 200, candidatePriority: 0, candidateSessionID: "R",
+            currentVisible: false, currentSnoozed: false, currentLastChanged: 100, currentPriority: 0, currentSessionID: "P")
         XCTAssertFalse(rPrefersOverP, "A snoozed member must not steal the row from a non-snoozed sibling")
     }
 
-    // With no snooze in play, recency still wins (unchanged behavior).
-    func test_recencyWinsWhenNeitherSnoozed() {
-        let fresherPrefers = ToolStatus.mergeRepresentativePrefers(
-            candidateSnoozed: false, candidateLastChanged: 200, candidatePriority: 5, candidateSessionID: "A",
-            currentSnoozed: false, currentLastChanged: 100, currentPriority: 0, currentSessionID: "B")
-        XCTAssertTrue(fresherPrefers, "Freshest transition should represent the row when neither is snoozed")
+    // The currently visible switcher peer represents the row over a buried
+    // sibling that changed more recently and outranks it on priority. This is
+    // the chat/code-review case: a visible code-review peer holding a stable
+    // "working" status must not lose the row to a chat peer that just flipped
+    // to idle.
+    func test_visiblePeerWinsRowOverFresherHigherPriorityBuriedSibling() {
+        let visiblePrefers = ToolStatus.mergeRepresentativePrefers(
+            candidateVisible: true, candidateSnoozed: false, candidateLastChanged: 100, candidatePriority: 1, candidateSessionID: "review",
+            currentVisible: false, currentSnoozed: false, currentLastChanged: 200, currentPriority: 0, currentSessionID: "chat")
+        XCTAssertTrue(visiblePrefers, "The visible switcher peer must represent the row over a fresher, higher-priority buried sibling")
+
+        let buriedYields = ToolStatus.mergeRepresentativePrefers(
+            candidateVisible: false, candidateSnoozed: false, candidateLastChanged: 200, candidatePriority: 0, candidateSessionID: "chat",
+            currentVisible: true, currentSnoozed: false, currentLastChanged: 100, currentPriority: 1, currentSessionID: "review")
+        XCTAssertFalse(buriedYields, "A buried sibling must not steal the row from the visible switcher peer")
     }
 
-    // Every member snoozed: snooze ties, so the tiebreakers (recency, then
-    // priority, then sessionID) decide and the group still renders snoozed.
+    // Visibility sits *below* snooze: a snoozed visible peer must yield the row
+    // to a non-snoozed buried sibling so snooze can still surface a freshly
+    // active member.
+    func test_snoozedVisiblePeerYieldsToNonSnoozedBuriedSibling() {
+        let nonSnoozedPrefers = ToolStatus.mergeRepresentativePrefers(
+            candidateVisible: false, candidateSnoozed: false, candidateLastChanged: 100, candidatePriority: 2, candidateSessionID: "buried",
+            currentVisible: true, currentSnoozed: true, currentLastChanged: 200, currentPriority: 0, currentSessionID: "visible")
+        XCTAssertTrue(nonSnoozedPrefers, "A non-snoozed buried sibling must win over a snoozed visible peer")
+    }
+
+    // With neither visible nor snoozed, recency still wins (unchanged fallback).
+    func test_recencyWinsWhenNeitherVisibleNorSnoozed() {
+        let fresherPrefers = ToolStatus.mergeRepresentativePrefers(
+            candidateVisible: false, candidateSnoozed: false, candidateLastChanged: 200, candidatePriority: 5, candidateSessionID: "A",
+            currentVisible: false, currentSnoozed: false, currentLastChanged: 100, currentPriority: 0, currentSessionID: "B")
+        XCTAssertTrue(fresherPrefers, "Freshest transition should represent the row when neither is visible or snoozed")
+    }
+
+    // Every member snoozed: snooze ties, so the tiebreakers (visible, recency,
+    // then priority, then sessionID) decide and the group still renders snoozed.
     func test_bothSnoozedFallsBackToRecency() {
         let fresherPrefers = ToolStatus.mergeRepresentativePrefers(
-            candidateSnoozed: true, candidateLastChanged: 200, candidatePriority: 0, candidateSessionID: "A",
-            currentSnoozed: true, currentLastChanged: 100, currentPriority: 0, currentSessionID: "B")
+            candidateVisible: false, candidateSnoozed: true, candidateLastChanged: 200, candidatePriority: 0, candidateSessionID: "A",
+            currentVisible: false, currentSnoozed: true, currentLastChanged: 100, currentPriority: 0, currentSessionID: "B")
         XCTAssertTrue(fresherPrefers)
     }
 }

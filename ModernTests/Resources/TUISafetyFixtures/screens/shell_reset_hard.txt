@@ -1,0 +1,26 @@
+Mac:/var/folders/jk/2nklbh0x5ksc192jsm9nhnhc0000gn/T/tmp.UCQlHvVkF4/proj% git status
+On branch main
+No commands done.
+Next commands to do (3 remaining commands):
+   pick 0198edf tweak tokenizer
+   pick 09b6185 handle empty input
+  (use "git rebase --edit-todo" to view and edit)
+You are currently editing a commit while rebasing branch 'main' on '9eea458'.
+  (use "git commit --amend" to amend the current commit)
+  (use "git rebase --continue" once you are satisfied with your changes)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   parser.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
+Mac:/var/folders/jk/2nklbh0x5ksc192jsm9nhnhc0000gn/T/tmp.UCQlHvVkF4/proj% git reset --hard
+ HEAD~1
+
+
+
+
+
+
+

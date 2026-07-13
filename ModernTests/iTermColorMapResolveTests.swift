@@ -53,6 +53,28 @@ final class iTermColorMapResolveTests: XCTestCase {
         XCTAssertEqual(r.blue, 66)
     }
 
+    // The 24-bit fast path in fastColorForKey:colorSpace: must be bit-identical to
+    // the full colorUsingColorSpace: conversion when the target space is the app's
+    // native 8-bit space, since it skips that conversion.
+    func test24BitFastPathMatchesConversionInNativeSpace() {
+        let map = iTermColorMap()
+        let native: NSColorSpace = iTermAdvancedSettingsModel.p3() ? .displayP3 : .sRGB
+        let red: Int32 = 200, green: Int32 = 100, blue: Int32 = 50
+        let key = iTermColorMap.keyFor8bitRed(red, green: green, blue: blue)
+
+        let fast = map.fastColor(forKey: key, colorSpace: native)
+
+        guard let color = NSColor(red, green: green, blue: blue)
+            .usingColorSpace(native) else {
+            XCTFail("reference conversion failed")
+            return
+        }
+        XCTAssertEqual(fast.x, Float(color.redComponent), accuracy: 1e-5, "red")
+        XCTAssertEqual(fast.y, Float(color.greenComponent), accuracy: 1e-5, "green")
+        XCTAssertEqual(fast.z, Float(color.blueComponent), accuracy: 1e-5, "blue")
+        XCTAssertEqual(fast.w, 1, accuracy: 1e-5, "alpha")
+    }
+
     // The mode field must survive resolution — both light and dark share it.
     func testResolvedColorValuePreservesMode() {
         let map = makeMap(backgroundIsDark: true)

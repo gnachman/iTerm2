@@ -8,24 +8,35 @@
 
 #import <Foundation/Foundation.h>
 
+// The mutable fields are _Atomic so the render thread that writes a stats struct
+// and the display/log thread that reads it never race in an undefined way (no
+// lock is taken on the hot path). Each struct has a single writer (one render
+// pass), so the relaxed load/store used for the double fields cannot lose an
+// update; the integer counters use true atomic add and are correct regardless.
+// `name` and `level` are set once at init before any concurrent use, so they stay
+// plain. All these types are naturally lock-free (8 bytes), so _Atomic does not
+// change the struct size or layout.
 typedef struct {
-    uint64_t start;
-    NSTimeInterval total;
-    NSInteger eventCount;
+    _Atomic(uint64_t) start;
+    _Atomic(NSTimeInterval) total;
+    _Atomic(NSInteger) eventCount;
 } iTermPreciseTimer;
 
 typedef struct {
     char name[20];
     iTermPreciseTimer timer;
-    NSInteger n;
-    NSInteger totalEventCount;
-    double mean;
-    double m2;
-    double min;
-    double max;
+    _Atomic(NSInteger) n;
+    _Atomic(NSInteger) totalEventCount;
+    _Atomic(double) mean;
+    _Atomic(double) m2;
+    _Atomic(double) min;
+    _Atomic(double) max;
     int level;
 } iTermPreciseTimerStats;
 
+// A shared lock token. The precise-timer internals no longer use it (they are
+// lock-free; see iTermPreciseTimer.m), but other subsystems synchronize on it
+// (iTermAttributedStringBuilder, PerformanceCounter), so it is kept.
 @interface iTermPreciseTimersLock : NSObject
 @end
 
@@ -35,7 +46,6 @@ typedef struct {
 
 #if ENABLE_PRECISE_TIMERS
 
-void iTermPreciseTimerSetEnabled(BOOL enabled);
 void iTermPreciseTimerStart(iTermPreciseTimer *timer);
 NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer, NSTimeInterval value);
 NSTimeInterval iTermPreciseTimerMeasureAndAccumulate(iTermPreciseTimer *timer);
@@ -85,7 +95,6 @@ void iTermPreciseTimerClearLogs(void);
 
 #else
 
-void iTermPreciseTimerSetEnabled(BOOL enabled) { }
 static inline void iTermPreciseTimerStart(iTermPreciseTimer *timer) { }
 static inline NSTimeInterval iTermPreciseTimerAccumulate(iTermPreciseTimer *timer) { return 0; }
 static inline NSTimeInterval iTermPreciseTimerMeasureAndAccumulate(iTermPreciseTimer *timer) { return 0; }

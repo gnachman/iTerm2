@@ -109,6 +109,15 @@ Major New Features:
   “[defunct session]” once the target is
   gone instead of leaking a raw GUID.
 
+- In AI chat orchestration mode, pressing Stop
+  now halts the whole pipeline: it cancels the
+  in-flight reply, drops any queued turns, and
+  cancels the chat’s registered watchers, so a
+  session going idle can no longer restart the
+  loop after you asked it to stop. A message you
+  type also jumps ahead of pending status
+  updates instead of waiting behind them.
+
 - A new AI chat created without a session to
   link to now offers to enable orchestration
   mode, mirroring the link offer shown when a
@@ -182,10 +191,37 @@ Major New Features:
   prompt and is passed to Claude Code at
   launch.
 
+- Code Review peers have an Auto-Send
+  Clippings When Idle toolbar toggle. When
+  on, the review session’s clippings are
+  pasted into the workgroup’s main session
+  each time the review finishes. The
+  Claude Code workgroup’s review peer
+  includes it by default; the toggle itself
+  starts off.
+
+- The main session has a companion
+  Auto-Request Review When Idle toolbar
+  toggle. When on, a code review is
+  requested from the workgroup’s sole
+  code-review session each time the main
+  session goes idle. It is disabled unless
+  the workgroup has exactly one code-review
+  session. The Claude Code workgroup’s main
+  session includes it by default; the toggle
+  starts off.
+
 - Switching to a Code Review peer that is
   still showing its prompt overlay now
   focuses the prompt text field so you can
   start typing immediately.
+
+- A Diff session now waits to run its diff
+  until you first switch to it, so the diff
+  reflects your changes at that moment
+  instead of from whenever they first began.
+  It is not re-run when you switch away and
+  back.
 
 - Workgroups now survive a restart. When
   the app relaunches (for example after a
@@ -651,8 +687,46 @@ Settings Improvements:
   runtime now downloads from
   manifest-new.json by default. Older OS
   versions continue to use manifest.json.
+- When you load settings from a custom
+  folder, snippets, global notes, and
+  session icon customizations can now sync
+  along with your other settings. Because
+  notes and snippets can hold sensitive
+  text, iTerm2 asks once before including
+  them. If the same item changed both on
+  this Mac and in the folder, it asks which
+  copy to keep rather than overwriting your
+  changes.
 
 Bug Fixes:
+- Session Status tool: with “Merge workgroup
+  statuses” on, a merged row now shows the status
+  of the peer you’re actually looking at (the
+  visible peer of the switcher) instead of
+  whichever peer changed most recently. A busy
+  code-review peer holding a steady “working”
+  status no longer loses the row to a sibling
+  chat peer the moment it goes idle.
+- Code review and diff workgroup sessions now
+  restore showing their last output instead of
+  launching a stray replacement shell when the
+  original program is gone. The code review prompt
+  panel reappears only if it was open when you
+  quit, and its reload button remembers the prompt
+  you last submitted.
+- Session restoration no longer breaks when iTerm2
+  receives a signal (such as ^C when it was
+  started from a terminal): the background process
+  server is now insulated from signals sent to
+  iTerm2, so your running programs survive to be
+  reattached on the next launch.
+- AI chat: fixed a race where a streamed tool
+  call could be dispatched with empty arguments
+  when the response completed before its argument
+  chunks were consumed. The agent would loop
+  retrying the same call, and the turn could end
+  with an empty message. Finalization now
+  reconciles against the full response body.
 - SSH integration now runs the ssh command
   through your login shell, so dotfiles set up
   your environment first. A custom SSH_AUTH_SOCK
@@ -679,6 +753,14 @@ Bug Fixes:
   or when a notification is sent. The paired
   identity is now read once at launch, while you
   are present, instead of mid-connection.
+- When a companion device is paired, your AI
+  API keys are now loaded at launch, and when a
+  phone pairs, so a query sent from your phone
+  while you are away never has to prompt for
+  keychain access.
+- Opening Settings no longer reads the keychain
+  or prompts for access. The AI API key row no
+  longer shows an “N of 4 configured” count.
 - Restoring a window with an open inline AI chat
   panel now reopens the panel on the chat it was
   showing, instead of widening the terminal.
@@ -1807,6 +1889,28 @@ Bug Fixes:
 - AI Chat can now manage multiple manual
   AI model configurations and select them
   from the chat model picker.
+- A manual AI model now takes precedence
+  over a built-in model with the same
+  name, so you can proxy a known model
+  through a custom URL by reusing its
+  name.
+- Manual AI models now have a “Supports
+  temperature” checkbox, set from the
+  preset, so a manual model cloned from
+  Anthropic Opus 4.7+ no longer sends a
+  temperature the API rejects. Existing
+  manual models inherit this from the
+  matching built-in. The OpenAI and
+  DeepSeek request paths now honor this
+  setting too, not just Anthropic.
+- Manual AI models now have a
+  “Configurable thinking” checkbox, set
+  from the preset, so a manual reasoning
+  model (such as a GPT-5 or DeepSeek model
+  behind a proxy) keeps its thinking
+  toggle. Same-named clones also inherit
+  the built-in’s reasoning-effort and
+  service-tier choices.
 - Manual AI model settings now show saved
   models in a list instead of a pop-up
   menu.
@@ -1821,6 +1925,12 @@ Bug Fixes:
 - AI settings now choose the default
   model for new chats from one selector,
   including saved manual AI models.
+- You can now designate a manual AI model
+  as the “economy” model (leaf toggle in
+  Manual AI Models). It is used for cheap
+  background jobs like command-safety
+  checks and screen-idle detection instead
+  of your main model.
 - Fixed a crash when using Undo after
   closing a split pane that contained a
   command composer.
@@ -1887,3 +1997,41 @@ Bug Fixes:
   to new addresses. If you paired an iPhone
   on an earlier build, iTerm2 now asks you
   to pair it again so it keeps working.
+- AI orchestration: commands the agent runs in
+  a session now go through the same automatic
+  safety check as regular AI chat, instead of
+  running once a session is approved. This
+  covers both execute_command and commands the
+  agent types at a shell prompt and submits.
+  Risky commands are held for your approval
+  rather than run automatically.
+- AI orchestration: keystrokes the agent sends
+  into a full-screen program (vim, less, htop,
+  a coding agent, etc.) are now safety-checked
+  too. The AI reads the current screen and the
+  conversation to judge whether the keystroke
+  is safe given what you asked for, and holds
+  anything dangerous or unrequested for your
+  approval.
+- AI orchestration: the automatic command
+  safety check no longer hard-blocks anything.
+  Refusing a command outright could dead-end a
+  task you asked for (like deleting a directory
+  you had just created). Instead the AI now
+  judges each command against what you asked
+  for, and a scary-but-legitimate one is held
+  for one-tap approval rather than refused.
+  Deleting a subdirectory you requested just
+  runs; only a real root or home wipe, or a
+  suspicious command, stops to ask first.
+- Companion: a paired device that still worked
+  no longer nags you to re-pair on every launch
+  after installing a new version. The re-pair
+  prompt now only appears after a genuine relay
+  move, and a normal reconnect records the
+  current relay so the false alarm stops.
+- Companion: when the relay hits its daily
+  data limit, the Mac now shows “Daily relay
+  data limit reached” in Companion settings
+  and backs off instead of retrying in a
+  tight loop until the limit resets.

@@ -74,6 +74,20 @@ class PTYSessionSwiftState: NSObject {
     // re-launch the same session.
     var pendingDiffLaunch: (() -> Void)?
 
+    // For .codeReview sessions, whether the "auto-send clippings when idle"
+    // toolbar toggle is on. When on, the workgroup peer port sends this
+    // session's clippings to the workgroup's main session each time the
+    // review session transitions from working to idle. Runtime-only and
+    // defaults off: re-entering a workgroup starts with the toggle off.
+    var autoSendClippingsWhenIdle = false
+
+    // For the main (root) session, whether the "auto-request review when
+    // idle" toolbar toggle is on. When on, the workgroup peer port asks
+    // the sole code-review session to run a review each time the main
+    // session transitions from working to idle. Runtime-only and defaults
+    // off, same as autoSendClippingsWhenIdle.
+    var autoRequestReviewWhenIdle = false
+
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 
     // Canonical storage for this session's clippings. Sessions in a peer group
@@ -1737,7 +1751,7 @@ extension PTYSession {
     // Prompt text last submitted from the code-review overlay; used as the
     // default when re-presenting the overlay so prior (possibly hand-edited)
     // input is preserved across reloads. See PTYSession+CodeReviewPrompt.
-    var codeReviewLastUsedPrompt: String? {
+    @objc var codeReviewLastUsedPrompt: String? {
         get { swiftState.codeReviewLastUsedPrompt }
         set { swiftState.codeReviewLastUsedPrompt = newValue }
     }
@@ -1857,6 +1871,46 @@ extension PTYSession {
         // pendingDiffLaunch without firing it, so an accidental
         // Reload click can be undone.
         presentDiffWaitingPromptOverlayForQueuedReload()
+    }
+
+    // Whether the user can currently see this session: it has a live
+    // delegate (a buried peer has none) and its tab is the selected one.
+    // Gates the deferred .diff launch so the diff runs against the tree
+    // as it stands when the session is actually shown, not whenever the
+    // poller first happened to see a change.
+    var isVisibleForDeferredDiff: Bool {
+        return delegate?.sessionBelongsToVisibleTab() ?? false
+    }
+
+    // Called when a .diff session may have become visible (a peer swapped
+    // into its tab, or a tab selected). The initial diff launch is
+    // deferred until the session is actually shown, so if it is now
+    // visible and the poller already reports diffable changes, fire it
+    // rather than making the user wait for the next poll tick. If there's
+    // nothing diffable yet, the "waiting for changes" overlay stays up
+    // and the next poll tick fires it (the session is visible now, so
+    // fireDeferredDiffLaunches' gate passes).
+    //
+    // The isVisibleForDeferredDiff guard is load-bearing: a peer swap can
+    // complete on a background tab (workgroup restoration across tabs, a
+    // programmatic reveal), and firing there would run the diff against
+    // the swap-in-time tree instead of what's on screen when the user
+    // first sees it. A background swap is a no-op here; the tab-select
+    // hook or the next poll tick picks the session up once it truly
+    // reaches the foreground.
+    //
+    // This only ever fires the one deferred launch: firePendingDiffLaunch
+    // clears the closure, so re-showing a diff that already ran does
+    // nothing. Switching between peers never re-runs the diff.
+    @objc
+    func fireDeferredDiffLaunchIfVisibleNow() {
+        guard workgroupSessionMode == .diff,
+              hasPendingDiffLaunch,
+              isVisibleForDeferredDiff,
+              workgroupInstance?.diffLaunchReady == true else {
+            return
+        }
+        firePendingDiffLaunch()
     }
 
     // Build a peer session for a workgroup's configured peer, driven
@@ -2111,6 +2165,22 @@ extension PTYSession {
                 swiftState.clippings = newValue
             }
         }
+    }
+
+    // Runtime toggle backing the code-review "auto-send clippings when idle"
+    // toolbar item. Stored directly on the session (not peer-delegated) since
+    // it controls this one review session's behavior, not shared group state.
+    @objc var autoSendClippingsWhenIdle: Bool {
+        get { swiftState.autoSendClippingsWhenIdle }
+        set { swiftState.autoSendClippingsWhenIdle = newValue }
+    }
+
+    // Runtime toggle backing the main session's "auto-request review when
+    // idle" toolbar item. Stored on the main session; controls its own
+    // idle-driven behavior, not shared group state.
+    @objc var autoRequestReviewWhenIdle: Bool {
+        get { swiftState.autoRequestReviewWhenIdle }
+        set { swiftState.autoRequestReviewWhenIdle = newValue }
     }
 
     // Bypasses peer-port delegation. Used by PTYSessionPeerPort to talk to its

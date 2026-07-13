@@ -202,10 +202,26 @@ final class ScreenWatchPoller {
     // configured model's url/api, so a user's custom base URL (proxy/gateway) is
     // honored and the API key is not leaked to the public vendor host.
     private static func economyModel() -> AIMetadata.Model? {
+        // A user-designated economy model (toggled in Manual AI Models) wins. It
+        // is a full manual model with its own url/api/auth, so it is used
+        // verbatim, honoring a custom base URL and its own vendor's API key.
+        if let designated = userDesignatedEconomyModel() {
+            return designated
+        }
         guard let configured = LLMMetadata.model() else {
             return nil
         }
         return AIMetadata.economyModel(for: configured)
+    }
+
+    // The manual model the user marked as the economy model, if any, resolved to
+    // a full model. nil if unset or no longer present among the manual models.
+    private static func userDesignatedEconomyModel() -> AIMetadata.Model? {
+        guard let name = iTermPreferences.string(forKey: kPreferenceKeyAIEconomyModelName),
+              !name.isEmpty else {
+            return nil
+        }
+        return LLMMetadata.manualModels().first { $0.name == name }
     }
 
     private func evaluate(window: [Capture], kind: SessionKind) async -> Verdict {

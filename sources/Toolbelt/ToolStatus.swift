@@ -699,11 +699,16 @@ private extension ToolStatus {
     /// sorts the representatives by the standard table order. Solo sessions (not
     /// in any workgroup) each remain their own entry.
     private static func mergeByWorkgroup(_ all: [Status]) -> [Status] {
+        // The currently visible peer of a multi-peer switcher represents its
+        // group outright (see mergeRepresentativePrefers). Resolve that set once
+        // up front rather than re-walking each candidate's peer port inside the
+        // pairwise reduce below.
+        let visibleSessionIDs = visiblePeerSessionIDs(among: all)
         var representatives = [GroupKey: Status]()
         for status in all {
             let key = groupKey(forSessionID: status.sessionID)
             if let existing = representatives[key] {
-                if mergePrefers(status, over: existing) {
+                if mergePrefers(status, over: existing, visibleSessionIDs: visibleSessionIDs) {
                     representatives[key] = status
                 }
             } else {
@@ -711,6 +716,30 @@ private extension ToolStatus {
             }
         }
         return representatives.values.sorted()
+    }
+
+    /// The GUIDs that are the currently visible (active) peer of a peer switcher
+    /// holding *more than one* realized peer. Such a session represents its
+    /// merged workgroup row: it's the pane the user is actually looking at, so
+    /// the row should mirror what they see rather than a buried sibling's stale
+    /// status. A single-peer port is not a switcher and is left to the existing
+    /// recency/priority rules.
+    private static func visiblePeerSessionIDs(among all: [Status]) -> Set<String> {
+        guard let controller = iTermController.sharedInstance() else {
+            return []
+        }
+        var result = Set<String>()
+        for status in all {
+            guard let session = controller.anySession(withGUID: status.sessionID),
+                  let port = session.peerPort,
+                  port.realizedPeerSessions.count > 1,
+                  let active = port.activeSession,
+                  active.guid == status.sessionID else {
+                continue
+            }
+            result.insert(status.sessionID)
+        }
+        return result
     }
 
     private static func groupKey(forSessionID sessionID: String) -> GroupKey {
@@ -725,32 +754,39 @@ private extension ToolStatus {
                         peerPortIdentity: peerPortIdentity)
     }
 
-    /// Within a workgroup, the representative is the peer whose status changed
-    /// most recently. Recency, not priority, is the right signal here: inside a
-    /// workgroup an idle peer is often idle *because* a sibling is busy (e.g. a
-    /// chat session waiting for its code-review peer to finish), so the
-    /// freshest transition tracks where the action is. `lastChanged` is a
-    /// reliable proxy for "last genuine transition" because the status pipeline
-    /// only notifies on real changes (screenSetTabStatus bails when
-    /// iTermSessionTabStatus.apply reports no change), so repaint spam never
-    /// bumps it. Ties (e.g. right after a rebuild reset every timestamp to the
-    /// same instant) fall back to priority, then sessionID. Note this is
-    /// independent of the table's overall row ordering, which still sorts the
-    /// chosen representatives by priority.
+    /// Within a workgroup, the representative is chosen in this order:
     ///
-    /// A snoozed member *loses* representation: the merged row should surface
-    /// the group's liveliest non-snoozed member rather than let one snoozed
-    /// peer's stale status hide an active sibling (e.g. a snoozed idle chat
-    /// peer must not bury a code-review peer that just started waiting for
-    /// input). A workgroup therefore only renders as snoozed (dimmed, at the
-    /// bottom) when *every* member is snoozed, leaving a snoozed representative
-    /// as the sole candidate.
-    private static func mergePrefers(_ candidate: Status, over current: Status) -> Bool {
+    /// 1. A non-snoozed member beats a snoozed one, so a snoozed member *loses*
+    ///    representation and the merged row surfaces a live sibling rather than
+    ///    one snoozed peer's stale status. A workgroup renders as snoozed
+    ///    (dimmed, at the bottom) only when *every* member is snoozed.
+    /// 2. Among equally-snoozed members, the currently visible peer of a
+    ///    peer switcher wins: it's the pane the user is looking at, so the row
+    ///    mirrors what they see. This is the reliable signal, unlike recency:
+    ///    a busy code-review peer that's holding a stable status string stops
+    ///    bumping `lastChanged`, so recency would wrongly promote a sibling
+    ///    chat peer the moment it flips to idle even while the review keeps
+    ///    working. (Sitting below snooze keeps a snoozed visible peer from
+    ///    hiding a freshly-active buried sibling.)
+    /// 3. Otherwise (no visible switcher peer, e.g. every member is buried, or
+    ///    the group isn't a multi-peer switcher) fall back to recency, then
+    ///    priority, then sessionID. `lastChanged` is a proxy for "last genuine
+    ///    transition" because the status pipeline only notifies on real changes
+    ///    (screenSetTabStatus bails when iTermSessionTabStatus.apply reports no
+    ///    change), so repaint spam never bumps it.
+    ///
+    /// Note the representative choice is independent of the table's overall row
+    /// ordering, which still sorts the chosen representatives by priority.
+    private static func mergePrefers(_ candidate: Status,
+                                     over current: Status,
+                                     visibleSessionIDs: Set<String>) -> Bool {
         return mergeRepresentativePrefers(
+            candidateVisible: visibleSessionIDs.contains(candidate.sessionID),
             candidateSnoozed: candidate.snoozed,
             candidateLastChanged: candidate.lastChanged,
             candidatePriority: candidate.tabStatus.priority,
             candidateSessionID: candidate.sessionID,
+            currentVisible: visibleSessionIDs.contains(current.sessionID),
             currentSnoozed: current.snoozed,
             currentLastChanged: current.lastChanged,
             currentPriority: current.tabStatus.priority,
@@ -1130,12 +1166,15 @@ extension ToolStatus {
     }
 
     /// Pure representative-preference rule (see `mergePrefers`), separated from
-    /// `Status` so it can be unit-tested. Non-snoozed beats snoozed, then
-    /// recency beats priority beats sessionID.
-    static func mergeRepresentativePrefers(candidateSnoozed: Bool,
+    /// `Status` so it can be unit-tested. Non-snoozed beats snoozed, then the
+    /// visible switcher peer beats a buried sibling, then recency beats priority
+    /// beats sessionID.
+    static func mergeRepresentativePrefers(candidateVisible: Bool,
+                                           candidateSnoozed: Bool,
                                            candidateLastChanged: TimeInterval,
                                            candidatePriority: Int,
                                            candidateSessionID: String,
+                                           currentVisible: Bool,
                                            currentSnoozed: Bool,
                                            currentLastChanged: TimeInterval,
                                            currentPriority: Int,
@@ -1145,6 +1184,13 @@ extension ToolStatus {
             // the liveliest non-snoozed peer; the group only reads as snoozed
             // when every member is.
             return !candidateSnoozed
+        }
+        if candidateVisible != currentVisible {
+            // The pane the user is looking at represents its group. Sits below
+            // snooze (a snoozed visible peer still yields to a non-snoozed
+            // buried sibling) and above recency (a stable-status busy peer must
+            // not lose the row to a sibling that merely changed more recently).
+            return candidateVisible
         }
         if candidateLastChanged != currentLastChanged {
             return candidateLastChanged > currentLastChanged

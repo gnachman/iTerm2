@@ -2890,6 +2890,104 @@ class LineBlockTests: XCTestCase {
         }
     }
 
+    // reloadBidiInfo runs on every commit (commitLastBlock). For a block that
+    // legitimately contains RTL, recomputing when nothing changed used to COW-clone
+    // the whole character buffer and advance the content identity on every commit,
+    // so its wrapped rows never hit the per-row draw cache and an RTL session churns
+    // a full-buffer allocation per frame. A second reload with unchanged content
+    // must be a no-op for the identity.
+    func testReloadBidiInfoIsIdempotentForUnchangedRTLContent() {
+        let block = LineBlock(rawBufferSize: 10, absoluteBlockNumber: 1)
+        let rtlText = "\u{05D0}\u{05D1}\u{05D2}"  // Hebrew Alef-Bet-Gimel
+        let wrapWidth = Int32(rtlText.utf16.count)
+        let lineString = makeLineString(rtlText, eol: EOL_HARD,
+                                        lineStringMetadata: iTermLineStringMetadata(timestamp: 0,
+                                                                                    rtlFound: true))
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth))
+        block.reloadBidiInfo()
+        let counterAfterFirst = block.mutationCounter
+        block.reloadBidiInfo()
+        XCTAssertEqual(block.mutationCounter, counterAfterFirst,
+                       "reloadBidiInfo with unchanged content must not advance the mutation counter")
+    }
+
+    // The idempotence gate above must NOT be a naive "compare the bidi object only"
+    // check: eraseRTLStatusInAllCharacters resets the cells' rtlStatus to Unknown
+    // while leaving the stored bidi object intact, so a subsequent reload must
+    // re-annotate the cells (otherwise restored RTL renders LTR). This is the
+    // correctness case the previous attempt at this optimization regressed.
+    func testReloadBidiInfoReAnnotatesAfterRTLErasure() {
+        let block = LineBlock(rawBufferSize: 10, absoluteBlockNumber: 1)
+        let rtlText = "\u{05D0}\u{05D1}\u{05D2}"
+        let wrapWidth = Int32(rtlText.utf16.count)
+        let lineString = makeLineString(rtlText, eol: EOL_HARD,
+                                        lineStringMetadata: iTermLineStringMetadata(timestamp: 0,
+                                                                                    rtlFound: true))
+        XCTAssertTrue(block.appendLineString(lineString, width: wrapWidth))
+        block.reloadBidiInfo()
+        block.eraseRTLStatusInAllCharacters()
+        let counterAfterErase = block.mutationCounter
+
+        block.reloadBidiInfo()
+
+        let raw = block.screenCharArray(forRawLine: 0)
+        for i in 0..<raw.length {
+            XCTAssertNotEqual(raw.line[Int(i)].rtlStatus, RTLStatus.unknown,
+                              "reloadBidiInfo after erasure must re-annotate cell \(i), not leave it Unknown")
+        }
+        XCTAssertNotEqual(block.mutationCounter, counterAfterErase,
+                          "re-annotating erased RTL status changed the cells, so the identity must advance")
+    }
+
+    // Builds a line whose cells are already resolved to LTR rtlStatus but whose
+    // metadata carries rtlFound=YES (the state content arrives in when the grid
+    // pre-annotated it and didFindRTLInLine flagged rtlFound more broadly than the
+    // bidi algorithm resolves). makeLineString leaves cells Unknown, which would
+    // self-heal on the first reload and hide the stuck-flag case.
+    private func makeLTRAnnotatedLineStringWithRTLFound(_ string: String) -> iTermLineString {
+        var buffer = Array<screen_char_t>(repeating: screen_char_t(), count: string.utf16.count * 3)
+        let content: any iTermString = buffer.withUnsafeMutableBufferPointer { umbp in
+            var len = Int32(umbp.count)
+            StringToScreenChars(string, umbp.baseAddress!, screen_char_t(), screen_char_t(), &len,
+                                false, nil, nil, .none, 9, false, nil)
+            for i in 0..<Int(len) {
+                umbp[i].rtlStatus = .LTR
+            }
+            return iTermLegacyStyleString(chars: umbp.baseAddress!, count: Int(len), eaIndex: nil)
+        }
+        var continuation = screen_char_t()
+        continuation.code = unichar(EOL_HARD)
+        return iTermLineString(content: content,
+                               eol: EOL_HARD,
+                               continuation: continuation,
+                               metadata: iTermLineStringMetadata(timestamp: 0, rtlFound: true),
+                               bidi: nil,
+                               dirty: false)
+    }
+
+    // reloadBidiInfo used to self-heal a stale rtlFound flag (metadata says RTL but
+    // the bidi algorithm resolves no RTL runs) by unconditionally clearing it. The
+    // idempotence gate must preserve that: if it skipped here, rtlFound would stay
+    // YES forever, so anyLineNeedsBidiReload keeps passing and the gate re-runs its
+    // read-only bidi recompute (allocating a per-line copy) on every commit.
+    func testReloadBidiInfoClearsStaleRTLFoundFlag() {
+        let block = LineBlock(rawBufferSize: 10, absoluteBlockNumber: 1)
+        let width: Int32 = 3
+        let ls = makeLTRAnnotatedLineStringWithRTLFound("abc")
+        XCTAssertTrue(block.appendLineString(ls, width: width))
+        XCTAssertTrue(block.metadata(forLineNumber: 0, width: width).rtlFound.boolValue,
+                      "precondition: rtlFound starts YES")
+
+        block.reloadBidiInfo()
+
+        XCTAssertFalse(block.metadata(forLineNumber: 0, width: width).rtlFound.boolValue,
+                       "reload must clear a stale rtlFound flag the bidi algorithm resolves to no RTL")
+        // Having cleared it, later reloads short-circuit cheaply (no identity bump).
+        let counter = block.mutationCounter
+        block.reloadBidiInfo()
+        XCTAssertEqual(block.mutationCounter, counter)
+    }
+
     // MARK: - Copy-On-Write & progenitor sync
 
     func testDropMirroringProgenitorDropsLeadingLinesToMatchProgenitor() {
@@ -3133,6 +3231,50 @@ class LineBlockTests: XCTestCase {
         XCTAssertEqual(convert(2), Loc(x: 1, y: 1))
         XCTAssertEqual(convert(3), Loc(x: 0, y: 2))
         XCTAssertEqual(convert(4), Loc(x: 1, y: 2))
+    }
+
+    // MARK: - Content mutation counter (per-row draw cache identity)
+
+    func testMutationCounterAdvancesOnAppend() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        let before = block.mutationCounter
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        XCTAssertNotEqual(block.mutationCounter, before)
+    }
+
+    // Erasing RTL status mutates characters in place and does NOT bump
+    // `generation`, so the mutation counter must advance to keep the cache
+    // identity honest.
+    func testMutationCounterAdvancesOnInPlaceRTLErasure() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        let generationBefore = block.generation
+        let mutationBefore = block.mutationCounter
+        block.eraseRTLStatusInAllCharacters()
+        XCTAssertEqual(block.generation, generationBefore) // in-place: generation unchanged
+        XCTAssertNotEqual(block.mutationCounter, mutationBefore)
+    }
+
+    func testMutationCounterSurvivesCopy() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        block.eraseRTLStatusInAllCharacters()
+        let expected = block.mutationCounter
+        let copy = block.copy(withAbsoluteBlockNumber: 2)
+        XCTAssertEqual(copy.mutationCounter, expected)
+    }
+
+    // Two COW siblings that each take a different in-place edit must end up with
+    // distinct mutation counters. A per-block ++ would collide at the same value
+    // for different content; a globally-allocated value keeps them distinct.
+    func testMutationCounterDistinguishesDivergentCowSiblings() {
+        let block = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(block.appendLineString(makeLineString("abc"), width: 5))
+        let sibling = block.cowCopy()
+        XCTAssertEqual(block.mutationCounter, sibling.mutationCounter)
+        block.eraseRTLStatusInAllCharacters()
+        sibling.eraseRTLStatusInAllCharacters()
+        XCTAssertNotEqual(block.mutationCounter, sibling.mutationCounter)
     }
 }
 

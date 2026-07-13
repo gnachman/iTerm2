@@ -168,6 +168,18 @@ class ChatService {
     private func handleUserCommand(_ command: UserCommand, inChat chatID: String) {
         switch command {
         case .stop:
+            // Stop halts the whole pipeline, not just the current reply. Clear
+            // the queued backlog (everything after the in-flight head) so
+            // pending user messages and watcher-event turns don't keep running
+            // after the user asked to stop. Leave index 0 in place: the running
+            // turn owns it and its own finishTurn pops it when the stop below
+            // cancels it. Removing the head here would let a message enqueued
+            // during cancellation become the new head and then be wrongly popped
+            // by the cancelled turn's late finishTurn.
+            if var queue = pendingMessages[chatID], queue.count > 1 {
+                queue.removeSubrange(1...)
+                pendingMessages[chatID] = queue
+            }
             agents[chatID]?.stop()
         case .workgroupPermissionResponse, .revokeOrchestrationPermission:
             // Consumed by the orchestrator dispatcher / client via their
@@ -202,11 +214,41 @@ class ChatService {
 
     private func enqueue(message: Message, inChat chatID: String) {
         var queue = pendingMessages[chatID] ?? []
-        queue.append(message)
+        // A human-typed message jumps ahead of any queued watcher events so the
+        // user can interject without waiting behind a backlog of machine-
+        // generated turns. The in-flight head (index 0) is never displaced; we
+        // only reorder the not-yet-dispatched tail. Watcher events and an empty
+        // queue append normally. See ChatService.queueInsertionIndex.
+        let index = Self.queueInsertionIndex(for: message, in: queue)
+        queue.insert(message, at: index)
         pendingMessages[chatID] = queue
         if queue.count == 1 {
             startNextTurn(forChatID: chatID)
         }
+    }
+
+    // Where a newly-enqueued message belongs in the pending queue.
+    //
+    // Normally messages append (FIFO). The one exception: a human-typed
+    // message pre-empts queued watcher events (the status_update turns iTerm2
+    // injects when a watch fires), so a user can interrupt a long orchestration
+    // loop without their message sitting behind a pile of machine events. The
+    // pre-empting message is inserted just before the first queued watcher
+    // event, but never before index 0 (the in-flight head, owned by the running
+    // turn). Pure and static so it is unit-testable without a live ChatService.
+    nonisolated static func queueInsertionIndex(for message: Message, in queue: [Message]) -> Int {
+        // Watcher events themselves never jump; they keep arrival order.
+        if case .watcherEvent = message.content {
+            return queue.count
+        }
+        // A human message lands just ahead of the earliest queued watcher event
+        // that is not the in-flight head.
+        for i in queue.indices.dropFirst() {
+            if case .watcherEvent = queue[i].content {
+                return i
+            }
+        }
+        return queue.count
     }
 
     private func startNextTurn(forChatID chatID: String) {

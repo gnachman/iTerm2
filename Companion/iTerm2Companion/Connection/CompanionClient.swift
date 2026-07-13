@@ -19,7 +19,7 @@ actor CompanionClient {
     }
 
     func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void,
-               onClose: @escaping @Sendable () -> Void,
+               onClose: @escaping @Sendable (Error?) -> Void,
                onMedia: (@Sendable (CompanionMediaFrame) -> Void)? = nil) async {
         await session.start(onEvent: onEvent, onClose: onClose, onMedia: onMedia)
     }

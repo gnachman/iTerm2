@@ -135,6 +135,8 @@ class AIModel: NSObject {
     @objc var hostedFileSearchFeatureEnabled: Bool { model.features.contains(.hostedFileSearch) }
     @objc var hostedWebSearchFeatureEnabled: Bool { model.features.contains(.hostedWebSearch) }
     @objc var hostedCodeInterpreterFeatureEnabled: Bool { model.features.contains(.hostedCodeInterpreter) }
+    @objc var configurableThinkingFeatureEnabled: Bool { model.features.contains(.configurableThinking) }
+    @objc var supportsTemperature: Bool { model.supportsTemperature }
 
     @objc var vectorStoreConfig: AIMetadata.Model.VectorStoreConfig { model.vectorStoreConfig }
 }
@@ -473,5 +475,22 @@ class AIMetadata: NSObject {
             return false
         }
         return obj.features.contains(.streaming)
+    }
+
+    // Catalog temperature support for a model name, used to seed the manual-model
+    // editor's checkbox so it matches the runtime fallback in
+    // LLMMetadata.manualModel. Unknown names default to true (temperature is the
+    // common case), matching AIMetadata.Model.supportsTemperature's default.
+    @objc(modelSupportsTemperature:)
+    func modelSupportsTemperature(_ model: String) -> Bool {
+        return models.first(where: { $0.name == model })?.supportsTemperature ?? true
+    }
+
+    // Catalog configurable-thinking support for a model name, used to seed the
+    // manual-model editor's checkbox so it matches the runtime fallback in
+    // LLMMetadata.manualModel. Unknown names default to false.
+    @objc(modelSupportsConfigurableThinking:)
+    func modelSupportsConfigurableThinking(_ model: String) -> Bool {
+        return models.first(where: { $0.name == model })?.features.contains(.configurableThinking) ?? false
     }
 }

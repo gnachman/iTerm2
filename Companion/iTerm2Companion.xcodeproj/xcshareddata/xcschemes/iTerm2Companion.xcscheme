@@ -37,6 +37,16 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5810AD94740DC3791E409906"
+               BuildableName = "iTerm2CompanionTests.xctest"
+               BlueprintName = "iTerm2CompanionTests"
+               ReferencedContainer = "container:iTerm2Companion.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
