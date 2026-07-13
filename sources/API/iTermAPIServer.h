@@ -118,7 +118,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
 // client, using a synthetic connection instead of a real websocket. Used by the
 // embedded it2 command tree over SSH integration. Thread-safe. These do NOT apply
 // the API permission gate; the caller is responsible for authorizing the origin.
-- (void)registerInProcessConnection:(id<iTermAPIServerConnection>)connection;
+- (void)registerInProcessConnection:(id<iTermAPIServerConnection>)connection
+                        displayName:(NSString *)displayName;
 - (void)dispatchInProcessRequest:(ITMClientOriginatedMessage *)request
                       connection:(id<iTermAPIServerConnection>)connection;
 - (void)unregisterInProcessConnection:(id<iTermAPIServerConnection>)connection;

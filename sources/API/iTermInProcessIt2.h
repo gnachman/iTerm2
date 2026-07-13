@@ -14,12 +14,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermInProcessIt2 : NSObject
 
-// Parse and run `arguments` (excluding the executable name). `stdoutBlock` and
-// `stderrBlock` receive output lines (called on a background queue). `completion`
-// gets the process-style exit code when the command finishes. The command runs on
-// a background queue (never the main thread) so its blocking API round-trips do
-// not deadlock the dispatch, and the process is never terminated.
+// Parse and run `arguments` (excluding the executable name) on behalf of a remote
+// it2 identified by `originIdentifier` (a stable per-ssh-session id) shown to the
+// user as `originDisplayName` (e.g. "ssh user@host"). The user is prompted once
+// per session to allow API access; a denial fails without running the command.
+// `stdoutBlock`/`stderrBlock` receive output lines (on a background queue).
+// `completion` gets the process-style exit code. The command runs on a background
+// queue (never main) so its blocking API round-trips do not deadlock the
+// dispatch, and the process is never terminated.
 + (void)runWithArguments:(NSArray<NSString *> *)arguments
+        originIdentifier:(NSString *)originIdentifier
+       originDisplayName:(NSString *)originDisplayName
                   stdout:(void (^)(NSString *line))stdoutBlock
                   stderr:(void (^)(NSString *line))stderrBlock
               completion:(void (^)(int32_t exitCode))completion;

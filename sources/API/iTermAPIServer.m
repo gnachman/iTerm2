@@ -139,6 +139,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     BOOL _socketReady;  // main queue
     NSMutableArray<void (^)(void)> *_whenReadyBlocks;  // main queue
     int _lockFd;  // flock held for the lifetime of the listening server; -1 when not held
+    // Live in-process connections per Script Console key (main queue). The console entry
+    // is keyed by `key`, but many it2 connections in one ssh session share a key, so we
+    // ref-count and post Accepted only on the first and Closed only on the last.
+    NSCountedSet *_inProcessConnectionKeys;  // main queue
+    BOOL _stopped;  // _queue: set by queueStop so a concurrent register aborts, not orphans
 }
 
 + (instancetype)sharedInstance {
@@ -168,6 +173,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     if (self) {
         _lockFd = -1;
         _connections = [[NSMutableDictionary alloc] init];
+        _inProcessConnectionKeys = [[NSCountedSet alloc] init];
         _unixSocket = [iTermSocket unixDomainSocket];
         if (!_unixSocket) {
             XLog(@"Failed to create unix socket");
@@ -289,14 +295,53 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 #pragma mark - In-process dispatch
 
-- (void)registerInProcessConnection:(id<iTermAPIServerConnection>)connection {
+- (void)registerInProcessConnection:(id<iTermAPIServerConnection>)connection
+                        displayName:(NSString *)displayName {
+    id key = connection.key;
+    DLog(@"registerInProcessConnection guid=%@ key=%@ displayName=%@", connection.guid, key, displayName);
     dispatch_async(_queue, ^{
+        if (self->_stopped) {
+            // queueStop already ran on this queue, so inserting now would leave a
+            // connection that the abort-all sweep never touched -> its receiver would hang
+            // forever. Abort it here (unblocks the receiver) and create no console entry.
+            DLog(@"registerInProcessConnection: server stopped; aborting %@", connection.guid);
+            [connection abortWithCompletion:^{}];
+            return;
+        }
         self->_connections[connection.guid] = connection;
+        // Make the channel visible in the Script Console (creates its history entry), only
+        // once it is actually registered. Many it2 connections in one ssh session share a
+        // key; only the first creates the entry (see -unregisterInProcessConnection:).
+        dispatch_async(dispatch_get_main_queue(), ^{
+            const BOOL first = [self->_inProcessConnectionKeys countForObject:key] == 0;
+            [self->_inProcessConnectionKeys addObject:key];
+            if (first) {
+                // Include `reason` (as the socket path does) so the Script Console logs the
+                // origin instead of "Connection accepted: (null)".
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
+                                                                    object:key
+                                                                  userInfo:@{ @"reason": displayName ?: @"it2",
+                                                                              @"job": displayName ?: @"it2",
+                                                                              @"pids": @[] }];
+            }
+        });
     });
 }
 
+// KNOWN COUPLING (it2-over-ssh): this funnels the in-process request through the same
+// enqueueOrDispatchRequest path as the Python websocket, which gates on the single server-wide
+// self.transaction. If ANY other API client currently holds an open transaction, this request
+// is parked in that transaction (addRequestToTransaction, no signal) until the transaction
+// ends -- and the it2 client side blocks its background thread in
+// iTermIt2APIChannel.receiveMessageAndReturnError: with no timeout. So a long-lived/wedged
+// foreign transaction hangs a remote `it2 ...` command until it ends (or the remote
+// disconnects / Ctrl-Cs). A proper fix (dispatch in-process requests outside foreign-
+// transaction gating, since they are independently authorized, or move the in-process channel
+// to an event-driven receive) is deferred with the broader synchronous-receive redesign, since
+// bypassing the transaction would change its cross-client exclusivity semantics.
 - (void)dispatchInProcessRequest:(ITMClientOriginatedMessage *)request
                       connection:(id<iTermAPIServerConnection>)connection {
+    DLog(@"dispatchInProcessRequest guid=%@", connection.guid);
     __weak __typeof(self) weakSelf = self;
     dispatch_async(_executionQueue, ^{
         [weakSelf enqueueOrDispatchRequest:request onConnection:connection];
@@ -305,8 +350,30 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 - (void)unregisterInProcessConnection:(id<iTermAPIServerConnection>)connection {
     NSString *guid = connection.guid;
+    id key = connection.key;
+    DLog(@"unregisterInProcessConnection guid=%@ key=%@", guid, key);
     dispatch_async(_queue, ^{
+        // Was this connection registered on THIS server instance? A connection whose
+        // server was stopped (queueStop already cleared _connections and -stop posted its
+        // Closed), or which belongs to an earlier server after the API was re-enabled, is
+        // NOT here -- and must not touch this server's Script Console refcount, or it would
+        // double-post Closed, or prematurely close an unrelated live entry sharing the key.
+        const BOOL wasRegistered = (self->_connections[guid] != nil);
         [self->_connections removeObjectForKey:guid];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self->_delegate apiServerDidCloseConnectionWithKey:guid];
+            if (!wasRegistered) {
+                return;
+            }
+            // Close the Script Console entry only when the last connection sharing this key
+            // goes away, so a quick command does not stop the entry while a long-lived
+            // `it2 monitor --follow` on the same session is still streaming.
+            [self->_inProcessConnectionKeys removeObject:key];
+            if ([self->_inProcessConnectionKeys countForObject:key] == 0) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionClosed
+                                                                    object:key];
+            }
+        });
     });
     dispatch_async(_executionQueue, ^{
         if (self.transaction.connection == connection) {
@@ -314,9 +381,6 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             self.transaction = nil;
             [transaction signal];
         }
-    });
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self->_delegate apiServerDidCloseConnectionWithKey:guid];
     });
 }
 
@@ -337,11 +401,24 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         [self queueStop];
         DLog(@"Private queue: stop - done");
     });
+    // queueStop aborts in-process connections (which wakes their receivers) but does not
+    // go through -unregisterInProcessConnection:, and that unregister no-ops anyway once
+    // the API is being torn down. So close their Script Console entries here, or an
+    // `it2 monitor --follow` streaming when the API is disabled stays "running" forever.
+    // _inProcessConnectionKeys is main-queue-confined.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (id key in [self->_inProcessConnectionKeys copy]) {  // NSCountedSet yields distinct keys
+            [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionClosed
+                                                                object:key];
+        }
+        [self->_inProcessConnectionKeys removeAllObjects];
+    });
 }
 
 // _queue
 - (void)queueStop {
     DLog(@"queueStop");
+    _stopped = YES;  // a register enqueued after this aborts its connection (see below)
     [_connections enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id<iTermAPIServerConnection> _Nonnull conn, BOOL * _Nonnull stop) {
         [conn abortWithCompletion:^{}];
     }];

@@ -30,13 +30,18 @@
 }
 
 - (id)identifierForKey:(NSString *)key {
-    id identifier = _map[key];
-    if (!identifier) {
-        identifier = [@(_nextIdentifier) stringValue];
-        _map[key] = identifier;
-        _nextIdentifier++;
+    // Callers run on several queues (main thread, the API server's private queue, and
+    // the it2-over-ssh background queue), so serialize this read-modify-write; otherwise
+    // concurrent calls can corrupt _map or hand two connections the same identifier.
+    @synchronized (self) {
+        id identifier = _map[key];
+        if (!identifier) {
+            identifier = [@(_nextIdentifier) stringValue];
+            _map[key] = identifier;
+            _nextIdentifier++;
+        }
+        return identifier;
     }
-    return identifier;
 }
 
 @end
