@@ -134,7 +134,7 @@ extension Session {
 // MARK: - session split
 
 extension Session {
-    struct Split: ParsableCommand {
+    struct Split: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "split",
             abstract: "Split current session."
@@ -149,8 +149,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Profile to use for new pane.")
         var profile: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let split = ITMSplitPaneRequest()
@@ -185,7 +185,7 @@ extension Session {
                 throw IT2Error.apiError("Split succeeded but no session ID returned")
             }
 
-            print("Created new pane: \(newSessionId)")
+            ctx.out("Created new pane: \(newSessionId)")
         }
     }
 }
@@ -193,7 +193,7 @@ extension Session {
 // MARK: - session run
 
 extension Session {
-    struct Run: ParsableCommand {
+    struct Run: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "run",
             abstract: "Execute command in session with newline."
@@ -208,8 +208,8 @@ extension Session {
         @Flag(name: .shortAndLong, help: "Run in all sessions.")
         var all = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sendText = ITMSendTextRequest()
@@ -238,7 +238,7 @@ extension Session {
                     }
                 }
                 if count > 1 {
-                    print("Executed command in \(count) sessions")
+                    ctx.out("Executed command in \(count) sessions")
                 }
             }
         }
@@ -248,7 +248,7 @@ extension Session {
 // MARK: - session send
 
 extension Session {
-    struct Send: ParsableCommand {
+    struct Send: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "send",
             abstract: "Send text to session without newline."
@@ -263,8 +263,8 @@ extension Session {
         @Flag(name: .shortAndLong, help: "Send to all sessions.")
         var all = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sendText = ITMSendTextRequest()
@@ -293,7 +293,7 @@ extension Session {
                     }
                 }
                 if count > 1 {
-                    print("Sent text to \(count) sessions")
+                    ctx.out("Sent text to \(count) sessions")
                 }
             }
         }
@@ -303,7 +303,7 @@ extension Session {
 // MARK: - session close
 
 extension Session {
-    struct Close: ParsableCommand {
+    struct Close: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "close",
             abstract: "Close session."
@@ -315,14 +315,14 @@ extension Session {
         @Flag(name: .shortAndLong, help: "Force close without confirmation.")
         var force = false
 
-        func run() throws {
+        func run(_ ctx: IT2Context) throws {
             let sessionId = APIClient.normalizeSessionId(session ?? "active")
 
-            if !force {
-                confirmAction("Close session \(sessionId)?")
+            if !force && !ctx.confirm("Close session \(sessionId)?") {
+                throw IT2Error.cancelled
             }
 
-            let client = try APIClient.connect()
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let closeReq = ITMCloseRequest()
@@ -349,7 +349,7 @@ extension Session {
                 }
             }
 
-            print("Session closed")
+            ctx.out("Session closed")
         }
     }
 }
@@ -357,7 +357,7 @@ extension Session {
 // MARK: - session set-name
 
 extension Session {
-    struct SetName: ParsableCommand {
+    struct SetName: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "set-name",
             abstract: "Set session name."
@@ -369,8 +369,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -396,7 +396,7 @@ extension Session {
                 throw IT2Error.apiError("Set name failed: \(reason)")
             }
 
-            print("Session name set to: \(name)")
+            ctx.out("Session name set to: \(name)")
         }
     }
 }
@@ -404,7 +404,7 @@ extension Session {
 // MARK: - session set-color
 
 extension Session {
-    struct SetColor: ParsableCommand {
+    struct SetColor: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "set-color",
             abstract: "Set session tab color."
@@ -416,10 +416,10 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
+        func run(_ ctx: IT2Context) throws {
             let colorJSON = try colorToJSON(color)
 
-            let client = try APIClient.connect()
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -450,7 +450,7 @@ extension Session {
                 throw IT2Error.apiError("Set color failed with status \(propResp.status.rawValue)")
             }
 
-            print("Tab color set to \(color)")
+            ctx.out("Tab color set to \(color)")
         }
 
     }
@@ -459,7 +459,7 @@ extension Session {
 // MARK: - session restart
 
 extension Session {
-    struct Restart: ParsableCommand {
+    struct Restart: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "restart",
             abstract: "Restart session."
@@ -468,8 +468,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let restartReq = ITMRestartSessionRequest()
@@ -487,7 +487,7 @@ extension Session {
             guard restartResp.status == ITMRestartSessionResponse_Status.ok else {
                 throw IT2Error.apiError("Restart failed with status \(restartResp.status.rawValue)")
             }
-            print("Session restarted")
+            ctx.out("Session restarted")
         }
     }
 }
@@ -495,7 +495,7 @@ extension Session {
 // MARK: - session focus
 
 extension Session {
-    struct Focus: ParsableCommand {
+    struct Focus: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "focus",
             abstract: "Focus a specific session."
@@ -504,8 +504,8 @@ extension Session {
         @Argument(help: "Session ID to focus.")
         var sessionId: String
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let activate = ITMActivateRequest()
@@ -526,7 +526,7 @@ extension Session {
             guard activateResp.status == ITMActivateResponse_Status.ok else {
                 throw IT2Error.targetNotFound("Session '\(sessionId)' not found")
             }
-            print("Focused session: \(sessionId)")
+            ctx.out("Focused session: \(sessionId)")
         }
     }
 }
@@ -534,7 +534,7 @@ extension Session {
 // MARK: - session read
 
 extension Session {
-    struct Read: ParsableCommand {
+    struct Read: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "read",
             abstract: "Display screen contents."
@@ -546,8 +546,8 @@ extension Session {
         @Option(name: [.customShort("n"), .long], help: "Number of lines to read.")
         var lines: Int?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let bufReq = ITMGetBufferRequest()
@@ -577,7 +577,7 @@ extension Session {
                 outputLines = contents
             }
             for line in outputLines {
-                print(line.text ?? "")
+                ctx.out(line.text ?? "")
             }
         }
     }
@@ -586,7 +586,7 @@ extension Session {
 // MARK: - session clear
 
 extension Session {
-    struct Clear: ParsableCommand {
+    struct Clear: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "clear",
             abstract: "Clear screen."
@@ -595,8 +595,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sendText = ITMSendTextRequest()
@@ -615,7 +615,7 @@ extension Session {
 // MARK: - session capture
 
 extension Session {
-    struct Capture: ParsableCommand {
+    struct Capture: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "capture",
             abstract: "Capture screen to file."
@@ -630,8 +630,8 @@ extension Session {
         @Flag(name: .long, help: "Include scrollback history.")
         var history = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let bufReq = ITMGetBufferRequest()
@@ -660,7 +660,7 @@ extension Session {
             guard let contents = bufResp.contentsArray as? [ITMLineContents] else { return }
             let text = contents.map { $0.text ?? "" }.joined(separator: "\n")
             try text.write(toFile: output, atomically: true, encoding: .utf8)
-            print("Screen captured to: \(output)")
+            ctx.out("Screen captured to: \(output)")
         }
     }
 }
@@ -668,7 +668,7 @@ extension Session {
 // MARK: - session copy
 
 extension Session {
-    struct Copy: ParsableCommand {
+    struct Copy: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "copy",
             abstract: "Copy selection to clipboard."
@@ -677,8 +677,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -702,7 +702,7 @@ extension Session {
                   let selection = getResp.selection,
                   selection.subSelectionsArray_Count > 0,
                   let subSelections = selection.subSelectionsArray as? [ITMSubSelection] else {
-                print("No selection")
+                ctx.out("No selection")
                 return
             }
 
@@ -732,7 +732,7 @@ extension Session {
             }
 
             guard !selectedTexts.isEmpty else {
-                print("No text selected")
+                ctx.out("No text selected")
                 return
             }
 
@@ -746,7 +746,7 @@ extension Session {
             pipe.fileHandleForWriting.write(Data(text.utf8))
             pipe.fileHandleForWriting.closeFile()
             process.waitUntilExit()
-            print("Selection copied to clipboard")
+            ctx.out("Selection copied to clipboard")
         }
     }
 }
@@ -754,7 +754,7 @@ extension Session {
 // MARK: - session get-var
 
 extension Session {
-    struct GetVar: ParsableCommand {
+    struct GetVar: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "get-var",
             abstract: "Get session variable value."
@@ -766,8 +766,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let varReq = ITMVariableRequest()
@@ -790,9 +790,9 @@ extension Session {
             if varResp.valuesArray_Count > 0,
                let value = varResp.valuesArray.object(at: 0) as? String,
                value != "null" {
-                print(value)
+                ctx.out(value)
             } else {
-                print("Variable '\(variable)' not set")
+                ctx.out("Variable '\(variable)' not set")
             }
         }
     }
@@ -801,7 +801,7 @@ extension Session {
 // MARK: - session add-clipping
 
 extension Session {
-    struct AddClipping: ParsableCommand {
+    struct AddClipping: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "add-clipping",
             abstract: "Add a clipping to a session (e.g., a code review comment)."
@@ -819,8 +819,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -860,7 +860,7 @@ extension Session {
 // MARK: - session archive-clippings
 
 extension Session {
-    struct ArchiveClippings: ParsableCommand {
+    struct ArchiveClippings: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "archive-clippings",
             abstract: "Archive a session's clippings, clearing the live list and adding a history entry."
@@ -869,8 +869,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -902,7 +902,7 @@ extension Session {
 // MARK: - session set-var
 
 extension Session {
-    struct SetVar: ParsableCommand {
+    struct SetVar: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "set-var",
             abstract: "Set session variable value."
@@ -917,8 +917,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let varReq = ITMVariableRequest()
@@ -941,7 +941,7 @@ extension Session {
             guard varResp.status == ITMVariableResponse_Status.ok else {
                 throw IT2Error.apiError("Set variable failed with status \(varResp.status.rawValue)")
             }
-            print("Set \(variable) = \(value)")
+            ctx.out("Set \(variable) = \(value)")
         }
     }
 }
@@ -949,7 +949,7 @@ extension Session {
 // MARK: - session set-status
 
 extension Session {
-    struct SetStatus: ParsableCommand {
+    struct SetStatus: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "set-status",
             abstract: "Set session status indicator."
@@ -973,8 +973,8 @@ extension Session {
         @Option(name: .long, help: "Number of background tasks still running (stored in memory for later get-background-tasks queries).")
         var backgroundTasks: Int?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let invoke = ITMInvokeFunctionRequest()
@@ -1016,7 +1016,7 @@ extension Session {
                 throw IT2Error.apiError("Set status failed: \(reason)")
             }
 
-            print("Session status updated.")
+            ctx.out("Session status updated.")
         }
     }
 }
@@ -1024,7 +1024,7 @@ extension Session {
 // MARK: - session get-background-tasks
 
 extension Session {
-    struct GetBackgroundTasks: ParsableCommand {
+    struct GetBackgroundTasks: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "get-background-tasks",
             abstract: "Print the background-task count last stored via set-status --background-tasks."
@@ -1033,8 +1033,8 @@ extension Session {
         @Option(name: .shortAndLong, help: "Target session ID.")
         var session: String
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let invoke = ITMInvokeFunctionRequest()
@@ -1058,7 +1058,7 @@ extension Session {
                 throw IT2Error.apiError("Get background tasks failed: \(reason)")
             }
 
-            print(invokeResp.success?.jsonResult ?? "0")
+            ctx.out(invokeResp.success?.jsonResult ?? "0")
         }
     }
 }

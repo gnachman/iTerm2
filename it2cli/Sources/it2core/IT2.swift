@@ -67,7 +67,7 @@ public func it2CLIMain() {
             try command.run()
         }
     } catch let error as IT2Error {
-        context.err("Error: \(error.description)")
+        context.err(error.displayMessage)
         Foundation.exit(error.exitCode)
     } catch {
         IT2.exit(withError: error)

@@ -5,6 +5,8 @@ enum IT2Error: Error, CustomStringConvertible {
     case apiError(String)
     case targetNotFound(String)
     case invalidArgument(String)
+    /// The user declined an interactive confirmation prompt.
+    case cancelled
 
     var exitCode: Int32 {
         switch self {
@@ -12,6 +14,7 @@ enum IT2Error: Error, CustomStringConvertible {
         case .apiError: return 1
         case .targetNotFound: return 3
         case .invalidArgument: return 4
+        case .cancelled: return 1
         }
     }
 
@@ -22,6 +25,19 @@ enum IT2Error: Error, CustomStringConvertible {
              .targetNotFound(let msg),
              .invalidArgument(let msg):
             return msg
+        case .cancelled:
+            return "Aborted!"
+        }
+    }
+
+    /// How to render this error to stderr. `.cancelled` is shown verbatim (it is
+    /// a user action, not a failure); everything else is prefixed with "Error: ".
+    var displayMessage: String {
+        switch self {
+        case .cancelled:
+            return description
+        default:
+            return "Error: \(description)"
         }
     }
 }

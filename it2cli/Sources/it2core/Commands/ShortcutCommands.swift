@@ -4,7 +4,7 @@ import ProtobufRuntime
 
 // Top-level shortcuts that mirror the Python it2's convenience commands.
 
-struct SendShortcut: ParsableCommand {
+struct SendShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "send",
         abstract: "Shortcut for 'it2 session send'."
@@ -19,16 +19,16 @@ struct SendShortcut: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Send to all sessions.")
     var all = false
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args = [text]
         if let s = session { args += ["-s", s] }
         if all { args += ["-a"] }
-        let cmd = try Session.Send.parse(args)
-        try cmd.run()
+        var cmd = try Session.Send.parse(args)
+        try cmd.run(ctx)
     }
 }
 
-struct RunShortcut: ParsableCommand {
+struct RunShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "run",
         abstract: "Shortcut for 'it2 session run'."
@@ -43,16 +43,16 @@ struct RunShortcut: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Run in all sessions.")
     var all = false
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args = [command]
         if let s = session { args += ["-s", s] }
         if all { args += ["-a"] }
-        let cmd = try Session.Run.parse(args)
-        try cmd.run()
+        var cmd = try Session.Run.parse(args)
+        try cmd.run(ctx)
     }
 }
 
-struct SplitShortcut: ParsableCommand {
+struct SplitShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "split",
         abstract: "Shortcut for 'it2 session split'."
@@ -67,17 +67,17 @@ struct SplitShortcut: ParsableCommand {
     @Option(name: .shortAndLong, help: "Profile to use for new pane.")
     var profile: String?
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args: [String] = []
         if vertical { args.append("-v") }
         if let s = session { args += ["-s", s] }
         if let p = profile { args += ["-p", p] }
-        let cmd = try Session.Split.parse(args)
-        try cmd.run()
+        var cmd = try Session.Split.parse(args)
+        try cmd.run(ctx)
     }
 }
 
-struct VSplitShortcut: ParsableCommand {
+struct VSplitShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "vsplit",
         abstract: "Shortcut for 'it2 session split --vertical'."
@@ -89,16 +89,16 @@ struct VSplitShortcut: ParsableCommand {
     @Option(name: .shortAndLong, help: "Profile to use for new pane.")
     var profile: String?
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args = ["-v"]
         if let s = session { args += ["-s", s] }
         if let p = profile { args += ["-p", p] }
-        let cmd = try Session.Split.parse(args)
-        try cmd.run()
+        var cmd = try Session.Split.parse(args)
+        try cmd.run(ctx)
     }
 }
 
-struct ClearShortcut: ParsableCommand {
+struct ClearShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "clear",
         abstract: "Shortcut for 'it2 session clear'."
@@ -107,11 +107,11 @@ struct ClearShortcut: ParsableCommand {
     @Option(name: .shortAndLong, help: "Target session ID (default: active).")
     var session: String?
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args: [String] = []
         if let s = session { args += ["-s", s] }
-        let cmd = try Session.Clear.parse(args)
-        try cmd.run()
+        var cmd = try Session.Clear.parse(args)
+        try cmd.run(ctx)
     }
 }
 
@@ -178,7 +178,7 @@ struct NewTabShortcut: ParsableCommand {
     }
 }
 
-struct SetStatusShortcut: ParsableCommand {
+struct SetStatusShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "set-status",
         abstract: "Shortcut for 'it2 session set-status'."
@@ -202,14 +202,14 @@ struct SetStatusShortcut: ParsableCommand {
     @Option(name: .long, help: "Number of background tasks still running (stored in memory for later get-background-tasks queries).")
     var backgroundTasks: Int?
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args: [String] = ["-s", session]
         if let st = status { args += ["--status", st] }
         if let dc = dotColor { args += ["--dot-color", dc] }
         if let tc = textColor { args += ["--text-color", tc] }
         if let d = detail { args += ["--detail", d] }
         if let bt = backgroundTasks { args += ["--background-tasks", String(bt)] }
-        let cmd = try Session.SetStatus.parse(args)
-        try cmd.run()
+        var cmd = try Session.SetStatus.parse(args)
+        try cmd.run(ctx)
     }
 }
