@@ -23,7 +23,7 @@ struct SendShortcut: ParsableCommand, IT2Runnable {
         var args = [text]
         if let s = session { args += ["-s", s] }
         if all { args += ["-a"] }
-        var cmd = try Session.Send.parse(args)
+        let cmd = try Session.Send.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -47,7 +47,7 @@ struct RunShortcut: ParsableCommand, IT2Runnable {
         var args = [command]
         if let s = session { args += ["-s", s] }
         if all { args += ["-a"] }
-        var cmd = try Session.Run.parse(args)
+        let cmd = try Session.Run.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -72,7 +72,7 @@ struct SplitShortcut: ParsableCommand, IT2Runnable {
         if vertical { args.append("-v") }
         if let s = session { args += ["-s", s] }
         if let p = profile { args += ["-p", p] }
-        var cmd = try Session.Split.parse(args)
+        let cmd = try Session.Split.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -93,7 +93,7 @@ struct VSplitShortcut: ParsableCommand, IT2Runnable {
         var args = ["-v"]
         if let s = session { args += ["-s", s] }
         if let p = profile { args += ["-p", p] }
-        var cmd = try Session.Split.parse(args)
+        let cmd = try Session.Split.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -110,7 +110,7 @@ struct ClearShortcut: ParsableCommand, IT2Runnable {
     func run(_ ctx: IT2Context) throws {
         var args: [String] = []
         if let s = session { args += ["-s", s] }
-        var cmd = try Session.Clear.parse(args)
+        let cmd = try Session.Clear.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -127,7 +127,7 @@ struct LsShortcut: ParsableCommand, IT2Runnable {
     func run(_ ctx: IT2Context) throws {
         var args: [String] = []
         if json { args.append("--json") }
-        var cmd = try Session.List.parse(args)
+        let cmd = try Session.List.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -148,7 +148,7 @@ struct NewShortcut: ParsableCommand, IT2Runnable {
         var args: [String] = []
         if let p = profile { args += ["-p", p] }
         if let c = command { args += ["-c", c] }
-        var cmd = try Window.New.parse(args)
+        let cmd = try Window.New.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -173,7 +173,7 @@ struct NewTabShortcut: ParsableCommand, IT2Runnable {
         if let p = profile { args += ["-p", p] }
         if let w = window { args += ["-w", w] }
         if let c = command { args += ["-c", c] }
-        var cmd = try Tab.New.parse(args)
+        let cmd = try Tab.New.parse(args)
         try cmd.run(ctx)
     }
 }
@@ -209,7 +209,7 @@ struct SetStatusShortcut: ParsableCommand, IT2Runnable {
         if let tc = textColor { args += ["--text-color", tc] }
         if let d = detail { args += ["--detail", d] }
         if let bt = backgroundTasks { args += ["--background-tasks", String(bt)] }
-        var cmd = try Session.SetStatus.parse(args)
+        let cmd = try Session.SetStatus.parse(args)
         try cmd.run(ctx)
     }
 }
