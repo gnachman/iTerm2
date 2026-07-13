@@ -1,6 +1,8 @@
 import ArgumentParser
 import Foundation
-import ProtobufRuntime
+#if canImport(ProtobufRuntime)
+import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
+#endif
 
 struct Tab: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -144,10 +146,7 @@ extension Tab {
             }
 
             if json {
-                if let data = try? JSONSerialization.data(withJSONObject: tabsData, options: .prettyPrinted),
-                   let str = String(data: data, encoding: .utf8) {
-                    ctx.out(str)
-                }
+                ctx.printJSON(tabsData)
             } else {
                 for t in tabsData {
                     let active = (t["is_active"] as? Bool == true) ? "\t✓" : ""
@@ -183,9 +182,7 @@ extension Tab {
 
             let id = try tabId ?? resolveCurrentTabId(client: client)
 
-            if !force && !ctx.confirm("Close tab \(id)?") {
-                throw IT2Error.cancelled
-            }
+            try ctx.confirmOrThrow("Close tab \(id)?", force: force)
 
             let closeReq = ITMCloseRequest()
             let closeTabs = ITMCloseRequest_CloseTabs()

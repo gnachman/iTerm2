@@ -1,6 +1,8 @@
 import ArgumentParser
 import Foundation
-import ProtobufRuntime
+#if canImport(ProtobufRuntime)
+import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
+#endif
 
 struct Window: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -136,10 +138,7 @@ extension Window {
                     }
                     windowsData.append(data)
                 }
-                if let jsonData = try? JSONSerialization.data(withJSONObject: windowsData, options: .prettyPrinted),
-                   let str = String(data: jsonData, encoding: .utf8) {
-                    ctx.out(str)
-                }
+                ctx.printJSON(windowsData)
             } else {
                 for window in windows {
                     let wid = window.windowId ?? ""
@@ -179,9 +178,7 @@ extension Window {
 
             let id = try windowId ?? resolveCurrentWindowId(client: client)
 
-            if !force && !ctx.confirm("Close window \(id)?") {
-                throw IT2Error.cancelled
-            }
+            try ctx.confirmOrThrow("Close window \(id)?", force: force)
 
             let closeReq = ITMCloseRequest()
             let closeWindows = ITMCloseRequest_CloseWindows()

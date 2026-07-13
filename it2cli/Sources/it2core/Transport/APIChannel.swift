@@ -1,5 +1,7 @@
 import Foundation
-import ProtobufRuntime
+#if canImport(ProtobufRuntime)
+import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
+#endif
 
 /// A bidirectional channel that carries API messages between the CLI and iTerm2.
 ///

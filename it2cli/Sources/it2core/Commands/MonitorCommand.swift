@@ -1,6 +1,8 @@
 import ArgumentParser
 import Foundation
-import ProtobufRuntime
+#if canImport(ProtobufRuntime)
+import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
+#endif
 
 // Standalone-only: monitor commands stream until the user presses Ctrl+C, which
 // exits the process. When these run embedded in iTerm2 (over SSH integration),

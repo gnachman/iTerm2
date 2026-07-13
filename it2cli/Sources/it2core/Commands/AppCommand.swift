@@ -1,6 +1,8 @@
 import ArgumentParser
 import Foundation
-import ProtobufRuntime
+#if canImport(ProtobufRuntime)
+import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
+#endif
 
 struct App: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -84,9 +86,7 @@ extension App {
         var force = false
 
         func run(_ ctx: IT2Context) throws {
-            if !force && !ctx.confirm("Quit iTerm2?") {
-                throw IT2Error.cancelled
-            }
+            try ctx.confirmOrThrow("Quit iTerm2?", force: force)
 
             let client = try ctx.makeClient()
             defer { client.disconnect() }

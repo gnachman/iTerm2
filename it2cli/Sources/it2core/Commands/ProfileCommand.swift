@@ -1,6 +1,8 @@
 import ArgumentParser
 import Foundation
-import ProtobufRuntime
+#if canImport(ProtobufRuntime)
+import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
+#endif
 
 struct Profile: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -76,10 +78,7 @@ extension Profile {
             }
 
             if json {
-                if let data = try? JSONSerialization.data(withJSONObject: profilesData, options: .prettyPrinted),
-                   let str = String(data: data, encoding: .utf8) {
-                    ctx.out(str)
-                }
+                ctx.printJSON(profilesData)
             } else {
                 for p in profilesData {
                     ctx.out("\(p["guid"] ?? "")\t\(p["name"] ?? "")")
