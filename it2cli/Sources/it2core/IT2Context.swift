@@ -50,3 +50,22 @@ extension IT2Context {
 protocol IT2Runnable {
     mutating func run(_ context: IT2Context) throws
 }
+
+/// Signals that a command wants to terminate with a specific process exit code,
+/// carrying no message. Realized at the boundary: the standalone binary calls
+/// Foundation.exit(code); the embedded host sends the code back to the remote
+/// it2 over the ssh channel. Thrown by `IT2Context.exit(_:)`.
+struct IT2Exit: Error {
+    let code: Int32
+}
+
+extension IT2Context {
+    /// Terminate the current command with `code`, analogous to exit(2). It
+    /// unwinds via a thrown `IT2Exit` instead of killing the process, so it is
+    /// safe when the command runs embedded in iTerm2 (a direct Foundation.exit
+    /// would take down the whole app). Print any message via `err` first; this
+    /// carries none. `defer` blocks on the way out still run.
+    func exit(_ code: Int32) throws -> Never {
+        throw IT2Exit(code: code)
+    }
+}

@@ -62,6 +62,8 @@ public func it2CLIMain() {
     do {
         let command = try IT2.parseAsRoot()
         try runParsedCommand(command, context)
+    } catch let exit as IT2Exit {
+        Foundation.exit(exit.code)
     } catch let error as IT2Error {
         context.err(error.displayMessage)
         Foundation.exit(error.exitCode)

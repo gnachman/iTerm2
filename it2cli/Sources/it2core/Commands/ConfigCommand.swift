@@ -217,7 +217,7 @@ struct AliasCommand: ParsableCommand, IT2Runnable {
                     ctx.err("  \(name): \(cmd)")
                 }
             }
-            throw IT2Error.targetNotFound("Alias '\(aliasName)' not found")
+            try ctx.exit(3)
         }
 
         ctx.out("Running alias '\(aliasName)': \(aliasCmd)")
