@@ -52,30 +52,6 @@ func colorToJSON(_ hex: String) throws -> String {
     return "{\"Red Component\": \(r), \"Green Component\": \(g), \"Blue Component\": \(b), \"Color Space\": \"sRGB\"}"
 }
 
-// MARK: - Confirmation Prompt
-
-/// Show a confirmation prompt on stderr. Returns true if user confirms.
-/// On decline, prints "Aborted!" to stderr and exits with code 1.
-@discardableResult
-func confirmAction(_ prompt: String) -> Bool {
-    FileHandle.standardError.write(Data("\(prompt) [y/N] ".utf8))
-    if let line = Swift.readLine(), line.lowercased().hasPrefix("y") {
-        return true
-    }
-    FileHandle.standardError.write(Data("Aborted!\n".utf8))
-    Foundation.exit(1)
-}
-
-// MARK: - JSON Output
-
-/// Serialize to pretty-printed JSON and print to stdout.
-func printJSON(_ object: Any) {
-    if let data = try? JSONSerialization.data(withJSONObject: object, options: .prettyPrinted),
-       let str = String(data: data, encoding: .utf8) {
-        print(str)
-    }
-}
-
 // MARK: - JSON String Helpers
 
 /// Trim surrounding quote characters from a JSON-encoded string value.

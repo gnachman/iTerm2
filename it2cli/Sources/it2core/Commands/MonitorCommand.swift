@@ -2,6 +2,11 @@ import ArgumentParser
 import Foundation
 import ProtobufRuntime
 
+// Standalone-only: monitor commands stream until the user presses Ctrl+C, which
+// exits the process. When these run embedded in iTerm2 (over SSH integration),
+// this SIGINT/exit and the polling Thread.sleep will be replaced by a
+// cancellation token on IT2Context so a remote Ctrl+C tears down the
+// subscription without killing the app.
 private func installSigintHandler() {
     signal(SIGINT) { _ in
         Foundation.exit(0)
@@ -25,7 +30,7 @@ struct Monitor: ParsableCommand {
 // MARK: - monitor output
 
 extension Monitor {
-    struct Output: ParsableCommand {
+    struct Output: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "output",
             abstract: "Monitor session output."
@@ -40,8 +45,8 @@ extension Monitor {
         @Option(name: .shortAndLong, help: "Filter output by regex pattern.")
         var pattern: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -74,7 +79,7 @@ extension Monitor {
                     throw IT2Error.apiError("Failed to subscribe to screen updates")
                 }
 
-                FileHandle.standardError.write(Data("Monitoring output from session \(sessionId)...\nPress Ctrl+C to stop\n".utf8))
+                ctx.err("Monitoring output from session \(sessionId)...\nPress Ctrl+C to stop")
                 installSigintHandler()
 
                 // Loop receiving notifications.
@@ -105,13 +110,13 @@ extension Monitor {
                                 for line in lines {
                                     let range = NSRange(line.startIndex..., in: line)
                                     if regex.firstMatch(in: line, range: range) != nil {
-                                        print(line)
+                                        ctx.out(line)
                                     }
                                 }
                             } else {
                                 let text = lines.joined(separator: "\n")
                                 if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    print(text)
+                                    ctx.out(text)
                                 }
                             }
                         }
@@ -149,11 +154,11 @@ extension Monitor {
                     for line in lines {
                         let range = NSRange(line.startIndex..., in: line)
                         if regex.firstMatch(in: line, range: range) != nil {
-                            print(line)
+                            ctx.out(line)
                         }
                     }
                 } else {
-                    print(lines.joined(separator: "\n"))
+                    ctx.out(lines.joined(separator: "\n"))
                 }
             }
         }
@@ -163,7 +168,7 @@ extension Monitor {
 // MARK: - monitor keystroke
 
 extension Monitor {
-    struct Keystroke: ParsableCommand {
+    struct Keystroke: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "keystroke",
             abstract: "Monitor keystrokes."
@@ -175,8 +180,8 @@ extension Monitor {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -208,7 +213,7 @@ extension Monitor {
                 throw IT2Error.apiError("Failed to subscribe to keystrokes")
             }
 
-            FileHandle.standardError.write(Data("Monitoring keystrokes in session \(sessionId)...\nPress Ctrl+C to stop\n".utf8))
+            ctx.err("Monitoring keystrokes in session \(sessionId)...\nPress Ctrl+C to stop")
             installSigintHandler()
 
             while true {
@@ -222,10 +227,10 @@ extension Monitor {
                     if let regex = regex {
                         let range = NSRange(chars.startIndex..., in: chars)
                         if regex.firstMatch(in: chars, range: range) != nil {
-                            print("Keystroke: \(chars)")
+                            ctx.out("Keystroke: \(chars)")
                         }
                     } else {
-                        print("Keystroke: \(chars)")
+                        ctx.out("Keystroke: \(chars)")
                     }
                 }
             }
@@ -236,7 +241,7 @@ extension Monitor {
 // MARK: - monitor variable
 
 extension Monitor {
-    struct Variable: ParsableCommand {
+    struct Variable: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "variable",
             abstract: "Monitor variable changes."
@@ -251,8 +256,8 @@ extension Monitor {
         @Flag(name: .long, help: "Monitor app-level variable.")
         var appLevel = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let notifReq = ITMNotificationRequest()
@@ -281,7 +286,7 @@ extension Monitor {
             }
 
             let scopeLabel = appLevel ? "app" : "session"
-            FileHandle.standardError.write(Data("Monitoring \(scopeLabel) variable '\(variableName)'...\n".utf8))
+            ctx.err("Monitoring \(scopeLabel) variable '\(variableName)'...")
 
             // Display initial value.
             let varReq = ITMVariableRequest()
@@ -298,10 +303,10 @@ extension Monitor {
                let vr = initResp.variableResponse,
                vr.valuesArray_Count > 0,
                let val = vr.valuesArray.object(at: 0) as? String {
-                print("Current value: \(val)")
+                ctx.out("Current value: \(val)")
             }
 
-            FileHandle.standardError.write(Data("Press Ctrl+C to stop\n".utf8))
+            ctx.err("Press Ctrl+C to stop")
             installSigintHandler()
 
             while true {
@@ -311,7 +316,7 @@ extension Monitor {
                    let notif = response.notification,
                    notif.hasVariableChangedNotification,
                    let varNotif = notif.variableChangedNotification {
-                    print("Changed to: \(varNotif.jsonNewValue ?? "null")")
+                    ctx.out("Changed to: \(varNotif.jsonNewValue ?? "null")")
                 }
             }
         }
@@ -321,7 +326,7 @@ extension Monitor {
 // MARK: - monitor prompt
 
 extension Monitor {
-    struct Prompt: ParsableCommand {
+    struct Prompt: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "prompt",
             abstract: "Monitor shell prompts (requires shell integration)."
@@ -330,8 +335,8 @@ extension Monitor {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let sessionId = try client.resolveSessionId(session)
@@ -351,7 +356,7 @@ extension Monitor {
                 shellIntegrationInstalled = (val != "null" && val != "false" && val != "0" && !val.isEmpty)
             }
             if !shellIntegrationInstalled {
-                FileHandle.standardError.write(Data("Warning: Shell integration may not be installed.\nInstall it from: iTerm2 > Install Shell Integration\n".utf8))
+                ctx.err("Warning: Shell integration may not be installed.\nInstall it from: iTerm2 > Install Shell Integration")
             }
 
             let notifReq = ITMNotificationRequest()
@@ -375,7 +380,7 @@ extension Monitor {
                 throw IT2Error.apiError("Failed to subscribe to prompt notifications")
             }
 
-            FileHandle.standardError.write(Data("Monitoring prompts in session \(sessionId)...\nPress Ctrl+C to stop\n".utf8))
+            ctx.err("Monitoring prompts in session \(sessionId)...\nPress Ctrl+C to stop")
             installSigintHandler()
 
             while true {
@@ -387,14 +392,14 @@ extension Monitor {
                    let promptNotif = notif.promptNotification {
                     switch promptNotif.eventOneOfCase {
                     case .prompt:
-                        print("New prompt detected")
+                        ctx.out("New prompt detected")
                     case .commandStart:
                         if let cmd = promptNotif.commandStart {
-                            print("Command started: \(cmd.command ?? "")")
+                            ctx.out("Command started: \(cmd.command ?? "")")
                         }
                     case .commandEnd:
                         if let end = promptNotif.commandEnd {
-                            print("Command finished (exit status: \(end.status))")
+                            ctx.out("Command finished (exit status: \(end.status))")
                         }
                     default:
                         break
@@ -408,7 +413,7 @@ extension Monitor {
 // MARK: - monitor activity
 
 extension Monitor {
-    struct Activity: ParsableCommand {
+    struct Activity: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "activity",
             abstract: "Monitor session activity."
@@ -417,16 +422,16 @@ extension Monitor {
         @Flag(name: .shortAndLong, help: "Monitor all sessions.")
         var all = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             if all {
-                FileHandle.standardError.write(Data("Monitoring activity in all sessions...\n".utf8))
+                ctx.err("Monitoring activity in all sessions...")
             } else {
-                FileHandle.standardError.write(Data("Monitoring activity in current session...\n".utf8))
+                ctx.err("Monitoring activity in current session...")
             }
-            FileHandle.standardError.write(Data("Press Ctrl+C to stop\n".utf8))
+            ctx.err("Press Ctrl+C to stop")
             installSigintHandler()
 
             let currentSessionId: String? = all ? nil : (try? client.resolveSessionId(nil))
@@ -488,9 +493,9 @@ extension Monitor {
                         }
 
                         if isActive {
-                            print("Session active: \(displayName)")
+                            ctx.out("Session active: \(displayName)")
                         } else {
-                            print("Session idle: \(displayName)")
+                            ctx.out("Session idle: \(displayName)")
                         }
                     }
                 }
