@@ -21,14 +21,14 @@ struct App: ParsableCommand {
 // MARK: - app activate
 
 extension App {
-    struct Activate: ParsableCommand {
+    struct Activate: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "activate",
             abstract: "Activate iTerm2 (bring to front)."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let activate = ITMActivateRequest()
@@ -40,7 +40,7 @@ extension App {
             request.activateRequest = activate
 
             let _ = try client.send(request)
-            print("iTerm2 activated")
+            ctx.out("iTerm2 activated")
         }
     }
 }
@@ -48,14 +48,14 @@ extension App {
 // MARK: - app hide
 
 extension App {
-    struct Hide: ParsableCommand {
+    struct Hide: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "hide",
             abstract: "Hide iTerm2."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let menuReq = ITMMenuItemRequest()
@@ -66,7 +66,7 @@ extension App {
             request.menuItemRequest = menuReq
 
             let _ = try client.send(request)
-            print("iTerm2 hidden")
+            ctx.out("iTerm2 hidden")
         }
     }
 }
@@ -74,7 +74,7 @@ extension App {
 // MARK: - app quit
 
 extension App {
-    struct Quit: ParsableCommand {
+    struct Quit: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "quit",
             abstract: "Quit iTerm2."
@@ -83,12 +83,12 @@ extension App {
         @Flag(name: .shortAndLong, help: "Force quit without confirmation.")
         var force = false
 
-        func run() throws {
-            if !force {
-                confirmAction("Quit iTerm2?")
+        func run(_ ctx: IT2Context) throws {
+            if !force && !ctx.confirm("Quit iTerm2?") {
+                throw IT2Error.cancelled
             }
 
-            let client = try APIClient.connect()
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let menuReq = ITMMenuItemRequest()
@@ -99,7 +99,7 @@ extension App {
             request.menuItemRequest = menuReq
 
             let _ = try client.send(request)
-            print("iTerm2 quit command sent")
+            ctx.out("iTerm2 quit command sent")
         }
     }
 }
@@ -107,14 +107,14 @@ extension App {
 // MARK: - app version
 
 extension App {
-    struct Version: ParsableCommand {
+    struct Version: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "version",
             abstract: "Show iTerm2 version."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let prefReq = ITMPreferencesRequest()
@@ -139,9 +139,9 @@ extension App {
             if result.resultOneOfCase == .getPreferenceResult,
                let getResult = result.getPreferenceResult {
                 let version = getResult.jsonValue?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) ?? "unknown"
-                print("iTerm2 version: \(version)")
+                ctx.out("iTerm2 version: \(version)")
             } else {
-                print("iTerm2 version: unknown")
+                ctx.out("iTerm2 version: unknown")
             }
         }
     }
@@ -150,7 +150,7 @@ extension App {
 // MARK: - app theme
 
 extension App {
-    struct Theme: ParsableCommand {
+    struct Theme: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "theme",
             abstract: "Show or set iTerm2 theme."
@@ -159,8 +159,8 @@ extension App {
         @Argument(help: "Theme value (light, dark, light-hc, dark-hc, automatic, minimal). Omit to show current.")
         var value: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let themeNames = ["light", "dark", "light-hc", "dark-hc", "automatic", "minimal"]
@@ -183,7 +183,7 @@ extension App {
                 request.preferencesRequest = prefReq
 
                 let _ = try client.send(request)
-                print("Theme set to: \(value)")
+                ctx.out("Theme set to: \(value)")
             } else {
                 // Query the current theme via focus/activate - theme isn't directly queryable
                 // as a single preference easily, so just report the TabStyle value.
@@ -205,7 +205,7 @@ extension App {
                 }
 
                 let attributes = trimJSONQuotes(val)
-                print("Current theme: \(attributes)")
+                ctx.out("Current theme: \(attributes)")
             }
         }
     }
@@ -214,14 +214,14 @@ extension App {
 // MARK: - app get-focus
 
 extension App {
-    struct GetFocus: ParsableCommand {
+    struct GetFocus: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "get-focus",
             abstract: "Get information about the currently focused element."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let focusReq = ITMClientOriginatedMessage()
@@ -257,17 +257,17 @@ extension App {
             }
 
             if let windowId = keyWindowId {
-                print("Current window: \(windowId)")
+                ctx.out("Current window: \(windowId)")
             } else {
-                print("No current window")
+                ctx.out("No current window")
             }
             if let tabId = selectedTabs.last {
-                print("Current tab: \(tabId)")
+                ctx.out("Current tab: \(tabId)")
             } else {
-                print("No current tab")
+                ctx.out("No current tab")
             }
             if let sessionId = sessions.last {
-                print("Current session: \(sessionId)")
+                ctx.out("Current session: \(sessionId)")
 
                 // Fetch session name.
                 let varReq = ITMVariableRequest()
@@ -282,10 +282,10 @@ extension App {
                    vr.valuesArray_Count > 0,
                    let name = vr.valuesArray.object(at: 0) as? String,
                    name != "null" {
-                    print("Session name: \(name.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))")
+                    ctx.out("Session name: \(name.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))")
                 }
             } else {
-                print("No current session")
+                ctx.out("No current session")
             }
         }
     }
@@ -308,14 +308,14 @@ extension App {
 }
 
 extension App.Broadcast {
-    struct On: ParsableCommand {
+    struct On: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "on",
             abstract: "Enable broadcasting for current tab."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             // Find the current session, then find which tab it belongs to,
@@ -362,19 +362,19 @@ extension App.Broadcast {
 
             let response = try client.send(request)
             try checkBroadcastResponse(response)
-            print("Broadcasting enabled for current tab")
+            ctx.out("Broadcasting enabled for current tab")
         }
 
     }
 
-    struct Off: ParsableCommand {
+    struct Off: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "off",
             abstract: "Disable broadcasting."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let setReq = ITMSetBroadcastDomainsRequest()
@@ -386,11 +386,11 @@ extension App.Broadcast {
 
             let response = try client.send(request)
             try checkBroadcastResponse(response)
-            print("Broadcasting disabled")
+            ctx.out("Broadcasting disabled")
         }
     }
 
-    struct Add: ParsableCommand {
+    struct Add: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "add",
             abstract: "Create broadcast group with specified sessions."
@@ -399,8 +399,8 @@ extension App.Broadcast {
         @Argument(parsing: .remaining, help: "Session IDs to broadcast to.")
         var sessionIds: [String]
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             // Pre-validate: check all sessions exist.
@@ -436,7 +436,7 @@ extension App.Broadcast {
 
             let response = try client.send(request)
             try checkBroadcastResponse(response)
-            print("Created broadcast group with \(sessionIds.count) sessions")
+            ctx.out("Created broadcast group with \(sessionIds.count) sessions")
         }
     }
 }
