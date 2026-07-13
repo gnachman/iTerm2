@@ -440,7 +440,7 @@ class iTermProcessInfo: NSObject {
                 // Log (and run the diagnostic sysctl) once per episode, not every
                 // update, so a persistently-nameless process can't spam the log.
                 if ProcessNameCache.shared.shouldLogAnomaly(pid: info.processID) {
-                    RLog("foregroundJobAncestorNames: pid \(info.processID) (ppid \(info.parentProcessID)) has no name and no cached title (\(iTermLSOF.nameFailureDiagnosis(forPid: info.processID))); dropping it from the ancestry")
+                    RLog("foregroundJobAncestorNames: pid \(info.processID) (ppid \(info.parentProcessID)) has no name and no cached title (\(iTermLSOF.nameFailureDiagnosis(forPid: info.processID) ?? "unknown")); dropping it from the ancestry")
                 }
                 current = info.parent
             }

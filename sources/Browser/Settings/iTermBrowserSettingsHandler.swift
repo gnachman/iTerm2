@@ -45,19 +45,25 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     func generateSettingsHTML() -> String {
         let isDevNull = (user == .devNull)
         
-        // Check if extensions should be shown
-        var showExtensions = false
+        // Whether to show the extensions row. Only wired up in debug builds; in
+        // release builds it is always hidden. Computing the style per config
+        // (rather than a ternary on an always-false flag) avoids a
+        // "will never be executed" warning on the dead branch in release builds.
 #if ITERM_DEBUG
+        var showExtensions = false
         if #available(macOS 14, *) {
             showExtensions = true
         }
+        let showExtensionsStyle = showExtensions ? "" : "display: none;"
+#else
+        let showExtensionsStyle = "display: none;"
 #endif
         
         let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.webKitAdblockEnabled() ? "checked" : "",
                              "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;"),
                              "SECRET": secret,
                              "DEV_NULL_NOTE": isDevNull ? "" : "display: none;",
-                             "SHOW_EXTENSIONS": showExtensions ? "" : "display: none;"]
+                             "SHOW_EXTENSIONS": showExtensionsStyle]
         
         return iTermBrowserTemplateLoader.loadTemplate(named: "settings-page",
                                                        type: "html",

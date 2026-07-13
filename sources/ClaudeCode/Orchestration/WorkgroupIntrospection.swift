@@ -483,7 +483,7 @@ enum WorkgroupIntrospection {
     // is itself classified, so it's a hurdle rather than a free bypass; fully
     // closing it would mean dropping the shell fast-path (classifying every
     // shell command against the screen), a perf tradeoff not taken here.
-    static let shellJobNames: Set<String> = [
+    nonisolated static let shellJobNames: Set<String> = [
         "bash", "zsh", "sh", "fish", "dash", "ash", "ksh", "mksh", "pdksh",
         "tcsh", "csh", "xonsh", "nu", "nushell", "elvish", "pwsh", "powershell",
     ]

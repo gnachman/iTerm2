@@ -833,7 +833,9 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             if (_leader) {
                 [self makeCursorSparkles];
             }
+#if DEBUG
             const NSEventModifierFlags originalFlags = event.modifierFlags;
+#endif
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
 #if DEBUG

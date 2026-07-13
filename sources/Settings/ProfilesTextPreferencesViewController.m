@@ -25,7 +25,7 @@
 #import "PTYFontInfo.h"
 #import <BetterFontPicker/BetterFontPicker-Swift.h>
 
-@interface ProfilesTextPreferencesViewController ()<BFPCompositeViewDelegate, BFPSizePickerViewDelegate>
+@interface ProfilesTextPreferencesViewController ()<BFPCompositeViewDelegate, BFPSizePickerViewDelegate, NSMenuItemValidation>
 @property(nonatomic, strong) NSFont *normalFont;
 @property(nonatomic, strong) NSFont *nonAsciiFont;
 @end

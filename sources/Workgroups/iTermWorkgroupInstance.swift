@@ -1377,7 +1377,7 @@ extension iTermWorkgroupInstance {
             let owningPort = ([peerPort] + nestedPeerPorts)
                 .first { $0.ownsIdentifier(cfg.uniqueIdentifier) }
             if let owningPort {
-                owningPort.activate(identifier: cfg.uniqueIdentifier)
+                _ = owningPort.activate(identifier: cfg.uniqueIdentifier)
                 return true
             }
         }
