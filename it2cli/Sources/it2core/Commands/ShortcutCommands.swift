@@ -132,7 +132,7 @@ struct LsShortcut: ParsableCommand, IT2Runnable {
     }
 }
 
-struct NewShortcut: ParsableCommand {
+struct NewShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "new",
         abstract: "Shortcut for 'it2 window new'."
@@ -144,12 +144,12 @@ struct NewShortcut: ParsableCommand {
     @Option(name: .shortAndLong, help: "Command to run in new window.")
     var command: String?
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args: [String] = []
         if let p = profile { args += ["-p", p] }
         if let c = command { args += ["-c", c] }
-        let cmd = try Window.New.parse(args)
-        try cmd.run()
+        var cmd = try Window.New.parse(args)
+        try cmd.run(ctx)
     }
 }
 

@@ -22,7 +22,7 @@ struct Window: ParsableCommand {
 // MARK: - window new
 
 extension Window {
-    struct New: ParsableCommand {
+    struct New: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "new",
             abstract: "Create new window."
@@ -34,8 +34,8 @@ extension Window {
         @Option(name: .shortAndLong, help: "Command to run.")
         var command: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let createTab = ITMCreateTabRequest()
@@ -60,7 +60,7 @@ extension Window {
                 throw IT2Error.apiError("Failed to create window: status \(tabResp.status.rawValue)")
             }
 
-            print("Created new window: \(tabResp.windowId ?? "")")
+            ctx.out("Created new window: \(tabResp.windowId ?? "")")
         }
     }
 }
@@ -68,7 +68,7 @@ extension Window {
 // MARK: - window list
 
 extension Window {
-    struct List: ParsableCommand {
+    struct List: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "list",
             abstract: "List all windows."
@@ -77,8 +77,8 @@ extension Window {
         @Flag(name: .long, help: "Output as JSON.")
         var json = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let request = ITMClientOriginatedMessage()
@@ -138,7 +138,7 @@ extension Window {
                 }
                 if let jsonData = try? JSONSerialization.data(withJSONObject: windowsData, options: .prettyPrinted),
                    let str = String(data: jsonData, encoding: .utf8) {
-                    print(str)
+                    ctx.out(str)
                 }
             } else {
                 for window in windows {
@@ -151,7 +151,7 @@ extension Window {
                         line += "\t(\(Int(origin.x)), \(Int(origin.y)))\t\(Int(size.width))x\(Int(size.height))"
                     }
                     line += fs
-                    print(line)
+                    ctx.out(line)
                 }
             }
         }
@@ -161,7 +161,7 @@ extension Window {
 // MARK: - window close
 
 extension Window {
-    struct Close: ParsableCommand {
+    struct Close: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "close",
             abstract: "Close window."
@@ -173,14 +173,14 @@ extension Window {
         @Flag(name: .shortAndLong, help: "Force close without confirmation.")
         var force = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let id = try windowId ?? resolveCurrentWindowId(client: client)
 
-            if !force {
-                confirmAction("Close window \(id)?")
+            if !force && !ctx.confirm("Close window \(id)?") {
+                throw IT2Error.cancelled
             }
 
             let closeReq = ITMCloseRequest()
@@ -196,7 +196,7 @@ extension Window {
             guard response.submessageOneOfCase == .closeResponse else {
                 throw IT2Error.apiError("No close response")
             }
-            print("Window closed")
+            ctx.out("Window closed")
         }
     }
 }
@@ -204,7 +204,7 @@ extension Window {
 // MARK: - window focus
 
 extension Window {
-    struct Focus: ParsableCommand {
+    struct Focus: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "focus",
             abstract: "Focus a specific window."
@@ -213,8 +213,8 @@ extension Window {
         @Argument(help: "Window ID.")
         var windowId: String
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let activate = ITMActivateRequest()
@@ -233,7 +233,7 @@ extension Window {
             guard activateResp.status == ITMActivateResponse_Status.ok else {
                 throw IT2Error.targetNotFound("Window '\(windowId)' not found")
             }
-            print("Focused window: \(windowId)")
+            ctx.out("Focused window: \(windowId)")
         }
     }
 }
@@ -241,7 +241,7 @@ extension Window {
 // MARK: - window move
 
 extension Window {
-    struct Move: ParsableCommand {
+    struct Move: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "move",
             abstract: "Move window to position."
@@ -256,8 +256,8 @@ extension Window {
         @Argument(help: "Window ID (default: current).")
         var windowId: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let id = try windowId ?? resolveCurrentWindowId(client: client)
@@ -300,7 +300,7 @@ extension Window {
                   setPropResp.status == ITMSetPropertyResponse_Status.ok else {
                 throw IT2Error.apiError("Failed to move window")
             }
-            print("Moved window to (\(x), \(y))")
+            ctx.out("Moved window to (\(x), \(y))")
         }
     }
 }
@@ -308,7 +308,7 @@ extension Window {
 // MARK: - window resize
 
 extension Window {
-    struct Resize: ParsableCommand {
+    struct Resize: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "resize",
             abstract: "Resize window."
@@ -323,8 +323,8 @@ extension Window {
         @Argument(help: "Window ID (default: current).")
         var windowId: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let id = try windowId ?? resolveCurrentWindowId(client: client)
@@ -365,7 +365,7 @@ extension Window {
                   setPropResp.status == ITMSetPropertyResponse_Status.ok else {
                 throw IT2Error.apiError("Failed to resize window")
             }
-            print("Resized window to \(width)x\(height)")
+            ctx.out("Resized window to \(width)x\(height)")
         }
     }
 }
@@ -373,7 +373,7 @@ extension Window {
 // MARK: - window fullscreen
 
 extension Window {
-    struct Fullscreen: ParsableCommand {
+    struct Fullscreen: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "fullscreen",
             abstract: "Toggle fullscreen mode."
@@ -389,8 +389,8 @@ extension Window {
         @Argument(help: "Window ID (default: current).")
         var windowId: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let id = try windowId ?? resolveCurrentWindowId(client: client)
@@ -420,7 +420,7 @@ extension Window {
             }
 
             guard newState != isFullscreen else {
-                print("Fullscreen already \(isFullscreen ? "enabled" : "disabled")")
+                ctx.out("Fullscreen already \(isFullscreen ? "enabled" : "disabled")")
                 return
             }
 
@@ -434,7 +434,7 @@ extension Window {
             setMsg.setPropertyRequest = setReq
 
             let _ = try client.send(setMsg)
-            print("Fullscreen \(newState ? "enabled" : "disabled")")
+            ctx.out("Fullscreen \(newState ? "enabled" : "disabled")")
         }
     }
 }
@@ -456,7 +456,7 @@ extension Window {
 }
 
 extension Window.Arrange {
-    struct Save: ParsableCommand {
+    struct Save: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "save",
             abstract: "Save current window arrangement."
@@ -465,8 +465,8 @@ extension Window.Arrange {
         @Argument(help: "Arrangement name.")
         var name: String
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let arrReq = ITMSavedArrangementRequest()
@@ -485,11 +485,11 @@ extension Window.Arrange {
             guard arrResp.status == ITMSavedArrangementResponse_Status.ok else {
                 throw IT2Error.apiError("Save arrangement failed with status \(arrResp.status.rawValue)")
             }
-            print("Saved arrangement: \(name)")
+            ctx.out("Saved arrangement: \(name)")
         }
     }
 
-    struct Restore: ParsableCommand {
+    struct Restore: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "restore",
             abstract: "Restore window arrangement."
@@ -498,8 +498,8 @@ extension Window.Arrange {
         @Argument(help: "Arrangement name.")
         var name: String
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let arrReq = ITMSavedArrangementRequest()
@@ -521,18 +521,18 @@ extension Window.Arrange {
                 }
                 throw IT2Error.apiError("Restore arrangement failed with status \(arrResp.status.rawValue)")
             }
-            print("Restored arrangement: \(name)")
+            ctx.out("Restored arrangement: \(name)")
         }
     }
 
-    struct List: ParsableCommand {
+    struct List: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "list",
             abstract: "List saved window arrangements."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let arrReq = ITMSavedArrangementRequest()
@@ -549,12 +549,12 @@ extension Window.Arrange {
             }
 
             if arrResp.namesArray_Count == 0 {
-                print("No saved arrangements")
+                ctx.out("No saved arrangements")
             } else {
-                print("Saved arrangements:")
+                ctx.out("Saved arrangements:")
                 for i in 0..<Int(arrResp.namesArray_Count) {
                     if let name = arrResp.namesArray.object(at: i) as? String {
-                        print("  - \(name)")
+                        ctx.out("  - \(name)")
                     }
                 }
             }
