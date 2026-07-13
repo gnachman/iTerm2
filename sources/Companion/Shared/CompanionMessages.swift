@@ -280,10 +280,17 @@ struct CompanionStreamConfig: Codable, Equatable {
     var firstAbsLine: Int64 = 0
     /// Total available lines (scrollback + screen) at config time.
     var totalLines: Int = 0
+    /// Whether the session's window can currently be resized to an arbitrary grid,
+    /// so the phone can disable its resize control when a resize would be ignored
+    /// (full screen, maximized, edge-attached, or width-locked). Optional: a host
+    /// predating the resize feature omits it and decodes as nil (the phone gates the
+    /// control on the mac's protocol revision anyway).
+    var canResize: Bool? = nil
 
     init(streamID: UInt32, generationId: UInt32, codecExtradata: Data,
          pixelWidth: Int, pixelHeight: Int, scale: Double, columns: Int, rows: Int,
-         cellGeometry: CompanionCellGeometry? = nil, firstAbsLine: Int64 = 0, totalLines: Int = 0) {
+         cellGeometry: CompanionCellGeometry? = nil, firstAbsLine: Int64 = 0, totalLines: Int = 0,
+         canResize: Bool? = nil) {
         self.streamID = streamID
         self.generationId = generationId
         self.codecExtradata = codecExtradata
@@ -295,6 +302,7 @@ struct CompanionStreamConfig: Codable, Equatable {
         self.cellGeometry = cellGeometry
         self.firstAbsLine = firstAbsLine
         self.totalLines = totalLines
+        self.canResize = canResize
     }
 
     // Custom decode: synthesized Decodable ignores the property defaults and throws
@@ -315,6 +323,7 @@ struct CompanionStreamConfig: Codable, Equatable {
         cellGeometry = try c.decodeIfPresent(CompanionCellGeometry.self, forKey: .cellGeometry)
         firstAbsLine = try c.decodeIfPresent(Int64.self, forKey: .firstAbsLine) ?? 0
         totalLines = try c.decodeIfPresent(Int.self, forKey: .totalLines) ?? 0
+        canResize = try c.decodeIfPresent(Bool.self, forKey: .canResize)
     }
 }
 
@@ -554,6 +563,12 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// clipboard). No reply.
     case pasteText(sessionGuid: String, text: String)
 
+    /// Resize the session's terminal grid to `columns` x `rows`, computed by the
+    /// phone for legibility on its screen (drives `-[PTYSession reallySetCellSize:]`,
+    /// so it honors the same window-fitting logic as a terminal-initiated resize).
+    /// No reply.
+    case resizeSession(sessionGuid: String, columns: Int, rows: Int)
+
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
@@ -568,7 +583,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "startSessionStream", "stopSessionStream", "requestKeyframe",
         "updateStreamParams", "streamAck",
         "selectionGesture", "clearSelection", "copySelection",
-        "selectAllInStream", "pasteText",
+        "selectAllInStream", "pasteText", "resizeSession",
     ]
 }
 

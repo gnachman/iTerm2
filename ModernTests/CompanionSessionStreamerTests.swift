@@ -18,6 +18,7 @@ private final class FakeFrameSource: CompanionFrameSource {
     let scale: Double
     var cellGeometry = CompanionCellGeometry(cellWidth: 8, cellHeight: 16, leftMargin: 0, topMargin: 0)
     var liveTop: Int64 = 0
+    var canResize = true
     private let pixelWidth: Int
     private let pixelHeight: Int
     private var image: CGImage
@@ -88,6 +89,7 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(config.columns, 80)
         XCTAssertEqual(config.rows, 25)
         XCTAssertEqual(config.scale, 2)
+        XCTAssertEqual(config.canResize, true)
         XCTAssertGreaterThanOrEqual(try CompanionHEVCFraming.decodeParameterSets(config.codecExtradata).count, 2)
 
         XCTAssertEqual(out.medias.count, 1)
@@ -139,6 +141,61 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(second.sequence, 1)
         XCTAssertFalse(second.flags.contains(.keyframe))
         XCTAssertFalse(second.flags.contains(.configChanged))
+    }
+
+    func testCanResizeChangeResendsConfigUnderSameGeneration() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)   // keyframe + config, canResize true
+        streamer.flush()
+        XCTAssertEqual(out.configs.first?.canResize, true)
+
+        // The window becomes non-resizable (e.g. maximized). Detected when the next
+        // frame is captured, which forces a keyframe on the following tick; the config
+        // is re-sent with the new flag but under the SAME generation (geometry is
+        // unchanged, so the phone must not drop its history tiles).
+        source.canResize = false
+        source.setFill(0x90)
+        streamer.screenDidChange()
+        streamer.tick(nowMilliseconds: 1000)  // captures the change, requests a keyframe
+        streamer.flush()
+        streamer.tick(nowMilliseconds: 2000)  // emits the forced keyframe + resent config
+        streamer.flush()
+
+        let last = try XCTUnwrap(out.configs.last)
+        XCTAssertEqual(last.canResize, false)
+        XCTAssertEqual(last.generationId, 1, "a resizability change must not bump the generation")
+    }
+
+    func testCanResizeFlipOnIdleScreenResendsConfig() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)   // keyframe + config, canResize true
+        streamer.flush()
+        XCTAssertEqual(out.configs.count, 1)
+        XCTAssertEqual(out.configs.first?.canResize, true)
+
+        // Flip resizability with NO pixel change and NO screenDidChange (e.g. toggling
+        // the width lock on an idle session). Detection lives in the pre-dedup block,
+        // so the change still forces a config resend + keyframe THIS tick, under the
+        // same generation, even though nothing on screen moved.
+        source.canResize = false
+        streamer.tick(nowMilliseconds: 1000)
+        streamer.flush()
+
+        XCTAssertEqual(out.configs.count, 2, "an idle-screen resizability flip must still resend the config")
+        XCTAssertEqual(out.configs.last?.canResize, false)
+        XCTAssertEqual(out.configs.last?.generationId, 1, "a resizability change must not bump the generation")
     }
 
     func testKeyframeResendReusesGenerationEndToEnd() throws {

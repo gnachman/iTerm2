@@ -14,6 +14,11 @@ Bug Fixes:
   looked connected. Requests are now paced.
 
 New Features:
+- A resize button in the live session view fits
+  the terminal grid to your phone for readable
+  text: 40 columns in portrait, 80 in landscape,
+  and as many rows as fill the screen. The Mac
+  resizes the real session to match.
 - You can now mute a chat so it stops sending
   push notifications to your phone. Swipe right
   on a chat in the list, or use the bell button

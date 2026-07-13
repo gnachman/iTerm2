@@ -14888,6 +14888,54 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_delegate sessionInitiatedResize:self width:columns height:rows];
 }
 
+- (BOOL)companionSessionCanResizeWindow {
+    id<WindowControllerInterface> window = [_delegate parentWindow];
+    if (!window) {
+        return NO;
+    }
+    // A resize request is ignored in full screen (see sessionInitiatedResize:).
+    if ([window anyFullScreen]) {
+        return NO;
+    }
+    // A width-locked session (e.g. the "lock" affordance) refuses column changes.
+    if (_view.preferredWidth != nil) {
+        return NO;
+    }
+    // Freely-resizable and edge-attached window styles can be resized. Normal
+    // styles resize to an arbitrary grid; edge-attached styles (by percentage or
+    // by cells) lock the attached dimension but are already manually resizable in
+    // the free dimension, so the phone may resize them too and the window
+    // controller clamps the locked dimension exactly as it does for a manual drag.
+    // Maximized styles are fixed to the screen and full-screen styles do not
+    // resize at all.
+    // windowType lives on the iTermWindowController sub-protocol; parentWindow is
+    // declared as the narrower WindowControllerInterface but is always a real
+    // window controller, so downcast to read it.
+    switch (iTermThemedWindowType([(id<iTermWindowController>)window windowType])) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            return YES;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+    }
+    return NO;
+}
+
 - (VT100GridSize)windowSizeInCells {
     VT100GridSize result;
     const NSRect screenFrame = [self screenWindowScreenFrame];

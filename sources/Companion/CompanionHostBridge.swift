@@ -475,7 +475,33 @@ final class CompanionHostBridge {
             handleSelectAll(streamID: streamID)
         case .pasteText(let sessionGuid, let text):
             iTermController.sharedInstance().anySession(withGUID: sessionGuid)?.paste(text, flags: [])
+        case .resizeSession(let sessionGuid, let columns, let rows):
+            handleResizeSession(guid: sessionGuid, columns: columns, rows: rows)
         }
+    }
+
+    /// Resize a session's grid on behalf of the phone. The phone computes a
+    /// legible column count for its screen and how many rows fill it; we clamp to
+    /// sane bounds so a stale or hostile peer cannot request an absurd grid, then
+    /// drive the same terminal-initiated resize path the escape sequence uses.
+    private func handleResizeSession(guid: String, columns: Int, rows: Int) {
+        guard let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+            return
+        }
+        // Re-validate server-side rather than trusting the phone's (advisory, and
+        // possibly stale) UI gate: reallySetCellSize: applies none of the guards
+        // screenSetSize: does, and the delegate only re-checks full screen -- not the
+        // width lock. This single check covers full screen, width-locked, and
+        // non-resizable window types authoritatively, so a width-locked session
+        // cannot be resized from the phone even if its button was left enabled.
+        guard session.companionSessionCanResizeWindow() else {
+            return
+        }
+        let clampedColumns = Int32(min(max(columns, 1), 4096))
+        let clampedRows = Int32(min(max(rows, 1), 4096))
+        // reallySetCellSize: reads proposedSize.width as the row count and
+        // proposedSize.height as the column count (see PTYSession.h).
+        session.reallySetCellSize(VT100GridSize(width: clampedRows, height: clampedColumns))
     }
 
     // MARK: Live streaming

@@ -164,6 +164,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .copySelection(sessionGuid: "g"),
         .selectAllInStream(streamID: 1),
         .pasteText(sessionGuid: "g", text: "x"),
+        .resizeSession(sessionGuid: "g", columns: 80, rows: 24),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -206,6 +207,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .copySelection: return "copySelection"
         case .selectAllInStream: return "selectAllInStream"
         case .pasteText: return "pasteText"
+        case .resizeSession: return "resizeSession"
         }
     }
 

@@ -50,6 +50,9 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
     var firstAbsLine: Int64 { session.screen.totalScrollbackOverflow() }
     var totalLines: Int { Int(session.screen.numberOfLines()) }
 
+    /// Whether the session's window can be resized to an arbitrary grid right now.
+    var canResize: Bool { session.companionSessionCanResizeWindow() }
+
     func renderCurrentScreen() -> CGImage? {
         guard let textview = session.textview, textview.frame.width > 0 else {
             return nil

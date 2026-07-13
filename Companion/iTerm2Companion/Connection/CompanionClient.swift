@@ -289,6 +289,12 @@ actor CompanionClient {
         try await session.send(.pasteText(sessionGuid: sessionGuid, text: text))
     }
 
+    /// Resize the session's grid to `columns` x `rows` (computed by the phone for
+    /// legibility on its screen).
+    func resizeSession(sessionGuid: String, columns: Int, rows: Int) async throws {
+        try await session.send(.resizeSession(sessionGuid: sessionGuid, columns: columns, rows: rows))
+    }
+
     /// Copy the session's current selection; returns the selected text ("" if none).
     func copySelection(sessionGuid: String) async throws -> String {
         let reply = try await session.request(.copySelection(sessionGuid: sessionGuid))

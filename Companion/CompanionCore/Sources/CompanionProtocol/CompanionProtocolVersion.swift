@@ -51,7 +51,14 @@ public enum CompanionProtocolVersion {
     /// the old relay is retired, even connect. This is a HARD incompatibility, not
     /// a gracefully-degradable feature, so minimumPeer is raised to 5 to refuse
     /// any peer that predates the move.
-    public static let current = 5
+    ///
+    /// Revision 6 adds phone-driven session resize (the resizeSession message,
+    /// which the mac drives into -[PTYSession reallySetCellSize:]). It is additive
+    /// and backward-compatible: an older mac decodes the unknown message as
+    /// `.unsupported` and ignores it, so minimumPeer stays at 5 and the phone
+    /// offers the resize control only when the mac advertises at least
+    /// `sessionResizeRevision`.
+    public static let current = 6
 
     /// The oldest peer revision this build accepts. Raised to 5 (lockstep with
     /// `current`) for the relay move: peers older than revision 5 have the old
@@ -79,6 +86,12 @@ public enum CompanionProtocolVersion {
     /// the muted flag on chat-list entries). The phone offers the mute UI only when
     /// the mac advertises at least this revision.
     public static let chatMuteRevision = 5
+
+    /// The first revision whose mac can resize a session on the phone's behalf
+    /// (the resizeSession message). The phone offers the resize control only when
+    /// the mac advertises at least this revision; an older mac would silently
+    /// ignore the message.
+    public static let sessionResizeRevision = 6
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

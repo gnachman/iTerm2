@@ -711,6 +711,13 @@ private struct LiveSessionView: View {
     @State private var holder = LiveVideoHolder()
     @State private var resolution: String?
     @State private var endedReason: CompanionStreamEndReason?
+    /// The live canvas area in points, used to compute a legible grid size for the
+    /// resize button. Captured from a background GeometryReader so reading it does
+    /// not disturb the canvas layout.
+    @State private var viewportSize: CGSize = .zero
+    /// Diagnostics: log only the first media frame received per view, so a working
+    /// (or stalled) stream is visible in the log without spamming per frame.
+    @State private var didLogFirstMedia = false
 
     var body: some View {
         ZStack {
@@ -750,7 +757,42 @@ private struct LiveSessionView: View {
                 SwipeBackDisabler()
             }
         }
+        // Track the canvas size (and re-track on rotation) without perturbing the
+        // layout, so the resize button knows the viewport it should fit the grid to.
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { viewportSize = proxy.size }
+                    .onChange(of: proxy.size) { _, size in viewportSize = size }
+            }
+        }
+        .toolbar {
+            // Only offer the resize control when the mac is new enough to honor it;
+            // an older mac would silently ignore the resizeSession message.
+            if model.sessionResizeSupported {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        model.resizeActiveSessionForLegibility(viewSize: viewportSize)
+                    } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    }
+                    .accessibilityLabel("Resize for This Screen")
+                    // Disabled when the mac reports the session's window cannot be
+                    // resized (full screen, maximized, edge-attached, or width-locked).
+                    .disabled(endedReason != nil || viewportSize == .zero || !model.activeStreamCanResize)
+                }
+            }
+        }
         .task(id: guid) { start() }
+        .onAppear {
+            companionLog("LiveSessionView appeared for \(guid): macSupportsStreaming=\(model.macSupportsStreaming) macRevision=\(model.macRevision) sessionResizeSupported=\(model.sessionResizeSupported) (need >= \(CompanionProtocolVersion.sessionResizeRevision)) -> resize button \(model.sessionResizeSupported ? "SHOWN" : "HIDDEN"); activeStreamCanResize=\(model.activeStreamCanResize) viewportSize=\(Int(viewportSize.width))x\(Int(viewportSize.height))")
+        }
+        .onChange(of: model.sessionResizeSupported) { _, supported in
+            companionLog("LiveSessionView: sessionResizeSupported changed to \(supported) (macRevision=\(model.macRevision)) -> resize button \(supported ? "SHOWN" : "HIDDEN")")
+        }
+        .onChange(of: model.activeStreamCanResize) { _, canResize in
+            companionLog("LiveSessionView: activeStreamCanResize changed to \(canResize) -> resize button \(canResize ? "enabled" : "disabled")")
+        }
         .onDisappear { model.stopWatchingSessionLive() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {

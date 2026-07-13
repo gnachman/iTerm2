@@ -533,6 +533,9 @@ final class AppModel {
     /// History extent from the latest config, for laying out the scrollback canvas.
     private(set) var activeStreamFirstAbsLine: Int64 = 0
     private(set) var activeStreamTotalLines = 0
+    /// Whether the mac reports the session's window can currently be resized, from
+    /// the latest config; the resize control is disabled otherwise.
+    private(set) var activeStreamCanResize = true
     private var activeStreamGeneration: UInt32 = 0
     /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
     /// fetches in flight so scroll events do not duplicate them.
@@ -1807,6 +1810,13 @@ final class AppModel {
     /// offered only then (an older mac would silently ignore the toggle).
     var macSupportsChatMuting: Bool {
         macRevision >= CompanionProtocolVersion.chatMuteRevision
+    }
+
+    /// Whether the connected Mac can resize a session on the phone's behalf; the
+    /// resize control is offered only then (an older mac would silently ignore the
+    /// resizeSession message).
+    var sessionResizeSupported: Bool {
+        macRevision >= CompanionProtocolVersion.sessionResizeRevision
     }
 
     /// Whether the chat is muted, as of the last list refresh (or an optimistic
@@ -3260,6 +3270,9 @@ final class AppModel {
                 activeStreamRows = config.rows
                 activeStreamFirstAbsLine = config.firstAbsLine
                 activeStreamTotalLines = config.totalLines
+                // Absent (older mac) means unknown; default to allowing resize since
+                // the resize control is gated on the mac's revision anyway.
+                activeStreamCanResize = config.canResize ?? true
                 // A new generation re-renders everything; stale tiles must not show.
                 if config.generationId != activeStreamGeneration {
                     // Not the first config for this stream = a mid-stream geometry
@@ -3366,6 +3379,7 @@ final class AppModel {
         activeStreamLiveTop = 0
         activeStreamFirstAbsLine = 0
         activeStreamTotalLines = 0
+        activeStreamCanResize = true
         activeStreamGeneration = 0
         activeSelectionRange = nil
         onStreamConfig = onConfig
@@ -3861,6 +3875,44 @@ final class AppModel {
     func pasteIntoActiveSession() {
         guard let client, let guid = liveWatchGuid, let text = UIPasteboard.general.string, !text.isEmpty else { return }
         Task { try? await client.pasteText(sessionGuid: guid, text: text) }
+    }
+
+    /// Resize the live session's grid so terminal text is legible on this phone:
+    /// 40 columns in portrait, 80 in landscape, and however many rows of that font
+    /// fill the viewport vertically. `viewSize` is the live canvas area in points.
+    /// No-op without an active stream, reported geometry, or a real viewport.
+    func resizeActiveSessionForLegibility(viewSize: CGSize) {
+        guard let client, let guid = liveWatchGuid, let layout = liveCanvasLayout,
+              viewSize.width > 0, viewSize.height > 0 else {
+            return
+        }
+        // Font-independent cell aspect (width/height) in encoded pixels: prefer the
+        // reported cell geometry, else derive it from the frame pixels over the grid.
+        let cellWidthPx: CGFloat
+        let cellHeightPx: CGFloat
+        if let geometry = layout.cellGeometry, geometry.cellWidth > 0, geometry.cellHeight > 0 {
+            cellWidthPx = geometry.cellWidth
+            cellHeightPx = geometry.cellHeight
+        } else if layout.columns > 0, layout.rows > 0,
+                  layout.imageSize.width > 0, layout.imageSize.height > 0 {
+            cellWidthPx = layout.imageSize.width / CGFloat(layout.columns)
+            cellHeightPx = layout.imageSize.height / CGFloat(layout.rows)
+        } else {
+            return
+        }
+        guard cellWidthPx > 0, cellHeightPx > 0 else { return }
+
+        let columns = viewSize.width > viewSize.height ? 80 : 40
+        // Pick a font so `columns` cells span the width, then count how many rows of
+        // that same font fill the height.
+        let cellPointWidth = viewSize.width / CGFloat(columns)
+        let cellPointHeight = cellPointWidth * cellHeightPx / cellWidthPx
+        guard cellPointHeight > 0 else { return }
+        let rows = Int((viewSize.height / cellPointHeight).rounded(.down))
+        guard rows > 0 else { return }
+
+        companionLog("Resize session \(guid) for legibility: \(columns)x\(rows) (viewport \(Int(viewSize.width))x\(Int(viewSize.height)))")
+        Task { try? await client.resizeSession(sessionGuid: guid, columns: columns, rows: rows) }
     }
 
     /// The mac kicked this device: forget the pairing and go back to the scan

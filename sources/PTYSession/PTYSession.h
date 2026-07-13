@@ -957,6 +957,19 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Change the size of the session and its tty.
 - (void)setSize:(VT100GridSize)size;
 
+// Resize the grid the way a terminal-initiated resize does, honoring the same
+// window-fitting logic. Note the unusual argument convention: proposedSize.width
+// is the desired row count and proposedSize.height is the desired column count
+// (a value of -1 means "keep the current dimension" and 0 means "as many as the
+// window allows").
+- (void)reallySetCellSize:(VT100GridSize)proposedSize;
+
+// Whether a terminal/content-initiated resize (reallySetCellSize:) would actually
+// take effect right now: YES only for a freely-resizable, non-fullscreen window
+// whose width is not locked. NO for maximized, edge-attached (fixed by percentage
+// or cells), and full-screen windows.
+- (BOOL)companionSessionCanResizeWindow;
+
 // Returns the number of pixels over or under the an ideal size.
 // Will never exceed +/- cell size/2.
 // If vertically is true, proposedSize is a height, else it's a width.
