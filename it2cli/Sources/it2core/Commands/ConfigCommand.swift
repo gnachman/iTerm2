@@ -47,7 +47,7 @@ struct IT2Config {
 
 // MARK: - Top-level config commands registered on IT2
 
-struct LoadCommand: ParsableCommand {
+struct LoadCommand: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "load",
         abstract: "Load a custom profile from config file."
@@ -56,16 +56,16 @@ struct LoadCommand: ParsableCommand {
     @Argument(help: "Profile name from ~/.it2rc.yaml.")
     var profileName: String
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         let config = IT2Config.load()
         guard let steps = config.profiles[profileName] else {
             throw IT2Error.targetNotFound("Profile '\(profileName)' not found in config")
         }
 
-        let client = try APIClient.connect()
+        let client = try ctx.makeClient()
         defer { client.disconnect() }
 
-        print("Loading profile: \(profileName)")
+        ctx.out("Loading profile: \(profileName)")
 
         let sessionId = try client.resolveSessionId(nil)
         var createdSessions: [String] = [sessionId]
@@ -80,7 +80,7 @@ struct LoadCommand: ParsableCommand {
                 request.id_p = client.nextId()
                 request.sendTextRequest = sendText
                 let _ = try client.send(request)
-                print("  Running: \(command)")
+                ctx.out("  Running: \(command)")
             }
 
             if let splitType = step["split"] {
@@ -90,9 +90,9 @@ struct LoadCommand: ParsableCommand {
                     if let id = newId {
                         createdSessions.append(id)
                     } else {
-                        FileHandle.standardError.write(Data("  Warning: Split failed\n".utf8))
+                        ctx.err("  Warning: Split failed")
                     }
-                    print("  Split: \(splitType)")
+                    ctx.out("  Split: \(splitType)")
                 } else if splitType == "2x2" {
                     // Special case matching Python: split original vertically,
                     // then split each half horizontally.
@@ -101,7 +101,7 @@ struct LoadCommand: ParsableCommand {
                         let _ = try splitSession(client: client, sessionId: s1, vertical: false)
                         createdSessions.append(s1)
                     }
-                    print("  Split: \(splitType)")
+                    ctx.out("  Split: \(splitType)")
                 } else if let (cols, rows) = parseGrid(splitType), cols > 0, rows > 0 {
                     // NxM grid: create columns first, then rows in each column.
                     var columnSessions = [sessionId]
@@ -124,9 +124,9 @@ struct LoadCommand: ParsableCommand {
                             }
                         }
                     }
-                    print("  Split: \(splitType)")
+                    ctx.out("  Split: \(splitType)")
                 } else {
-                    FileHandle.standardError.write(Data("  Warning: Invalid split format '\(splitType)'\n".utf8))
+                    ctx.err("  Warning: Invalid split format '\(splitType)'")
                 }
             }
 
@@ -155,13 +155,13 @@ struct LoadCommand: ParsableCommand {
                         let request = ITMClientOriginatedMessage()
                         request.sendTextRequest = sendText
                         let _ = try client.send(request)
-                        print("  Pane \(i): \(paneCmd)")
+                        ctx.out("  Pane \(i): \(paneCmd)")
                     }
                 }
             }
         }
 
-        print("Profile '\(profileName)' loaded successfully")
+        ctx.out("Profile '\(profileName)' loaded successfully")
     }
 
     private func splitSession(client: APIClient, sessionId: String, vertical: Bool) throws -> String? {
@@ -196,7 +196,7 @@ struct LoadCommand: ParsableCommand {
     }
 }
 
-struct AliasCommand: ParsableCommand {
+struct AliasCommand: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "alias",
         abstract: "Execute an alias from config file."
@@ -205,66 +205,66 @@ struct AliasCommand: ParsableCommand {
     @Argument(help: "Alias name from ~/.it2rc.yaml.")
     var aliasName: String
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         let config = IT2Config.load()
 
         guard let aliasCmd = config.aliases[aliasName] else {
             if config.aliases.isEmpty {
-                FileHandle.standardError.write(Data("No aliases defined in config file\n".utf8))
+                ctx.err("No aliases defined in config file")
             } else {
-                FileHandle.standardError.write(Data("Available aliases:\n".utf8))
+                ctx.err("Available aliases:")
                 for (name, cmd) in config.aliases.sorted(by: { $0.key < $1.key }) {
-                    FileHandle.standardError.write(Data("  \(name): \(cmd)\n".utf8))
+                    ctx.err("  \(name): \(cmd)")
                 }
             }
-            Foundation.exit(3)
+            throw IT2Error.targetNotFound("Alias '\(aliasName)' not found")
         }
 
-        print("Running alias '\(aliasName)': \(aliasCmd)")
+        ctx.out("Running alias '\(aliasName)': \(aliasCmd)")
 
         // Parse the alias command with shell-style quoting (like shlex.split).
         var args = shellSplit(aliasCmd)
         // Remove leading "it2" if present.
         if args.first == "it2" { args.removeFirst() }
 
-        var cmd = try IT2.parseAsRoot(args)
-        try cmd.run()
+        let cmd = try IT2.parseAsRoot(args)
+        try runParsedCommand(cmd, ctx)
     }
 }
 
-struct ConfigPath: ParsableCommand {
+struct ConfigPath: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "config-path",
         abstract: "Show configuration file path."
     )
 
-    func run() {
+    func run(_ ctx: IT2Context) {
         let path = IT2Config.configPath()
-        print("Configuration file: \(path)")
+        ctx.out("Configuration file: \(path)")
         if FileManager.default.fileExists(atPath: path) {
-            print("Status: File exists")
+            ctx.out("Status: File exists")
         } else {
-            print("Status: File not found")
-            print("Create it with: touch \(path)")
+            ctx.out("Status: File not found")
+            ctx.out("Create it with: touch \(path)")
         }
     }
 }
 
-struct ConfigReload: ParsableCommand {
+struct ConfigReload: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "config-reload",
         abstract: "Reload configuration file."
     )
 
-    func run() {
+    func run(_ ctx: IT2Context) {
         let config = IT2Config.load()
-        print("Configuration reloaded")
+        ctx.out("Configuration reloaded")
 
         if !config.profiles.isEmpty {
-            print("Loaded \(config.profiles.count) profiles: \(config.profiles.keys.sorted().joined(separator: ", "))")
+            ctx.out("Loaded \(config.profiles.count) profiles: \(config.profiles.keys.sorted().joined(separator: ", "))")
         }
         if !config.aliases.isEmpty {
-            print("Loaded \(config.aliases.count) aliases: \(config.aliases.keys.sorted().joined(separator: ", "))")
+            ctx.out("Loaded \(config.aliases.count) aliases: \(config.aliases.keys.sorted().joined(separator: ", "))")
         }
     }
 }

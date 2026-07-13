@@ -60,16 +60,25 @@ struct IT2: ParsableCommand {
 public func it2CLIMain() {
     let context = IT2Context.standalone
     do {
-        var command = try IT2.parseAsRoot()
-        if var runnable = command as? IT2Runnable {
-            try runnable.run(context)
-        } else {
-            try command.run()
-        }
+        let command = try IT2.parseAsRoot()
+        try runParsedCommand(command, context)
     } catch let error as IT2Error {
         context.err(error.displayMessage)
         Foundation.exit(error.exitCode)
     } catch {
         IT2.exit(withError: error)
+    }
+}
+
+/// Run an already-parsed command with the given context: prefer the
+/// explicit-context path (`IT2Runnable`) and fall back to `ParsableCommand.run()`
+/// for commands not yet migrated. Used by the top-level driver and by commands
+/// that delegate to another command (shortcuts, `alias`).
+func runParsedCommand(_ command: ParsableCommand, _ context: IT2Context) throws {
+    if var runnable = command as? IT2Runnable {
+        try runnable.run(context)
+    } else {
+        var mutable = command
+        try mutable.run()
     }
 }
