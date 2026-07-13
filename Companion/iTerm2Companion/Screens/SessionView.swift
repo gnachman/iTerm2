@@ -59,6 +59,12 @@ struct SessionView: View {
     /// animation window, where showComposer false->true just reverses the
     /// transition) - no view-identity churn needed.
     @State private var composerSeedGeneration = 0
+    /// The view's current width, tracked so the principal nav-bar title can be
+    /// rebuilt on rotation. The system caches the title view's width at first layout
+    /// and does not re-measure it when the bar widens/narrows on rotation, so a title
+    /// laid out in portrait stays narrow in landscape (and vice versa). Keying the
+    /// title on this width forces a fresh measurement whenever it changes.
+    @State private var barWidth: CGFloat = 0
 
     private static let messageAgentLabel = "Message the agent"
 
@@ -125,8 +131,24 @@ struct SessionView: View {
                 tileContent
             }
         }
+        .background {
+            // Track the view width without disturbing layout, so the principal title
+            // can be rebuilt when the bar widens/narrows on rotation.
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { barWidth = proxy.size.width }
+                    .onChange(of: proxy.size.width) { _, width in barWidth = width }
+            }
+        }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        // The live path fills behind the (translucent) nav bar with black, so the
+        // default label-colored title and buttons render dark-on-dark and are
+        // invisible in light mode (only a colored emoji in the title showed through,
+        // which read as "the title is truncated to the emoji"). Force the bar's
+        // content light there. The tile path keeps the system background, so leave its
+        // bar automatic.
+        .toolbarColorScheme(model.macSupportsStreaming ? .dark : nil, for: .navigationBar)
         .overlay(alignment: .bottom) {
             if showComposer {
                 composeOverlay
@@ -170,6 +192,24 @@ struct SessionView: View {
             recoverIfChatDeleted(id: composeChatID, present: present) { composeChatID = nil }
         }
         .toolbar {
+            // A principal title claims the space BETWEEN the leading and trailing
+            // groups (not the system title's symmetric reservation), so it uses the
+            // full width. maxWidth:.infinity is what makes it expand rather than size
+            // to its (truncated) intrinsic width. Colored explicitly since a principal
+            // item does not pick up the bar's title color: white over the black live
+            // canvas, primary over the tile path's system background.
+            ToolbarItem(placement: .principal) {
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundStyle(model.macSupportsStreaming ? Color.white : Color.primary)
+                    // The system caches the title view's width; re-key on the current
+                    // width so a rotation re-measures it instead of keeping the old
+                    // orientation's (too-narrow-in-landscape) width.
+                    .id(barWidth)
+            }
             if allowsChat {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
