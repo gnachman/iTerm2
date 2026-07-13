@@ -9,7 +9,7 @@ import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via t
 /// A future in-process implementation will hand messages straight to
 /// iTermAPIServer when the command tree is embedded inside the app (so `it2`
 /// can work over SSH integration).
-protocol APIChannel {
+public protocol APIChannel {
     /// Send a request. The caller assigns `id_p`; the channel only transports.
     func send(_ request: ITMClientOriginatedMessage) throws
     /// Block until the next server message is available and return it.
