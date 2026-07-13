@@ -2,27 +2,7 @@ import XCTest
 import ProtobufRuntime
 @testable import it2core
 
-/// An in-memory APIChannel for testing APIClient without a running iTerm2.
-private final class FakeChannel: APIChannel {
-    private(set) var sent: [ITMClientOriginatedMessage] = []
-    var responses: [ITMServerOriginatedMessage] = []
-    private(set) var disconnected = false
-
-    func send(_ request: ITMClientOriginatedMessage) throws {
-        sent.append(request)
-    }
-
-    func receiveMessage() throws -> ITMServerOriginatedMessage {
-        guard !responses.isEmpty else {
-            throw IT2Error.apiError("FakeChannel ran out of responses")
-        }
-        return responses.removeFirst()
-    }
-
-    func disconnect() {
-        disconnected = true
-    }
-}
+// FakeChannel lives in TestSupport.swift (shared across test files).
 
 private func listSessionsRequest() -> ITMClientOriginatedMessage {
     let request = ITMClientOriginatedMessage()

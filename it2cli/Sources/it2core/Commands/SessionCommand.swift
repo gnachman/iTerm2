@@ -33,7 +33,7 @@ struct Session: ParsableCommand {
 // MARK: - session list
 
 extension Session {
-    struct List: ParsableCommand {
+    struct List: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "list",
             abstract: "List all sessions."
@@ -42,8 +42,8 @@ extension Session {
         @Flag(name: .long, help: "Output as JSON.")
         var json = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let request = ITMClientOriginatedMessage()
@@ -87,7 +87,7 @@ extension Session {
             if json {
                 if let data = try? JSONSerialization.data(withJSONObject: sessionsData, options: .prettyPrinted),
                    let str = String(data: data, encoding: .utf8) {
-                    print(str)
+                    ctx.out(str)
                 }
             } else {
                 for s in sessionsData {
@@ -96,7 +96,7 @@ extension Session {
                     let title = s["title"] as? String ?? ""
                     let size = "\(s["cols"] ?? 0)x\(s["rows"] ?? 0)"
                     let tty = s["tty"] as? String ?? ""
-                    print("\(id)\t\(name)\t\(title)\t\(size)\t\(tty)")
+                    ctx.out("\(id)\t\(name)\t\(title)\t\(size)\t\(tty)")
                 }
             }
         }

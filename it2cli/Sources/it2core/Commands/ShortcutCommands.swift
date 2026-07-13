@@ -115,7 +115,7 @@ struct ClearShortcut: ParsableCommand {
     }
 }
 
-struct LsShortcut: ParsableCommand {
+struct LsShortcut: ParsableCommand, IT2Runnable {
     static let configuration = CommandConfiguration(
         commandName: "ls",
         abstract: "Shortcut for 'it2 session list'."
@@ -124,11 +124,11 @@ struct LsShortcut: ParsableCommand {
     @Flag(name: [.customShort("j"), .long], help: "Output as JSON.")
     var json = false
 
-    func run() throws {
+    func run(_ ctx: IT2Context) throws {
         var args: [String] = []
         if json { args.append("--json") }
-        let cmd = try Session.List.parse(args)
-        try cmd.run()
+        var cmd = try Session.List.parse(args)
+        try cmd.run(ctx)
     }
 }
 

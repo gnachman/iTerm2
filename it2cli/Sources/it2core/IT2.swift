@@ -52,14 +52,22 @@ struct IT2: ParsableCommand {
 }
 
 /// Entry point for the standalone `it2` binary: parses `CommandLine.arguments`,
-/// runs the selected command, and exits the process on error. Behavior is
-/// identical to the previous top-level driver in main.swift.
+/// runs the selected command, and exits the process on error.
+///
+/// Commands that have adopted the explicit-context model (`IT2Runnable`) are
+/// run with the standalone context; the rest fall back to `ParsableCommand.run()`
+/// until they are migrated.
 public func it2CLIMain() {
+    let context = IT2Context.standalone
     do {
         var command = try IT2.parseAsRoot()
-        try command.run()
+        if var runnable = command as? IT2Runnable {
+            try runnable.run(context)
+        } else {
+            try command.run()
+        }
     } catch let error as IT2Error {
-        FileHandle.standardError.write(Data("Error: \(error.description)\n".utf8))
+        context.err("Error: \(error.description)")
         Foundation.exit(error.exitCode)
     } catch {
         IT2.exit(withError: error)
