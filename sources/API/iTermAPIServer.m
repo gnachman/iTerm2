@@ -52,7 +52,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 @end
 
 @interface iTermAPIRequest : NSObject
-@property (nonatomic, weak) iTermWebSocketConnection *connection;
+@property (nonatomic, weak) id<iTermAPIServerConnection> connection;
 @property (nonatomic) ITMClientOriginatedMessage *request;
 @end
 
@@ -60,7 +60,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 @end
 
 @interface iTermAPITransaction : NSObject
-@property (nonatomic, weak) iTermWebSocketConnection *connection;
+@property (nonatomic, weak) id<iTermAPIServerConnection> connection;
 
 - (void)wait;
 - (void)signal;
@@ -133,7 +133,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 @implementation iTermAPIServer {
     iTermSocket *_unixSocket;
-    NSMutableDictionary<id, iTermWebSocketConnection *> *_connections;  // _queue
+    NSMutableDictionary<id, id<iTermAPIServerConnection>> *_connections;  // _queue
     dispatch_queue_t _executionQueue;
     NSMutableArray<iTermHTTPConnection *> *_pendingConnections;  // _queue
     BOOL _socketReady;  // main queue
@@ -275,7 +275,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {
     dispatch_async(_queue, ^{
         DLog(@"Private queue: posting API notification - begin");
-        iTermWebSocketConnection *webSocketConnection = self->_connections[connectionKey];
+        id<iTermAPIServerConnection> webSocketConnection = self->_connections[connectionKey];
         if (webSocketConnection) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
             response.notification = notification;
@@ -309,7 +309,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 // _queue
 - (void)queueStop {
     DLog(@"queueStop");
-    [_connections enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, iTermWebSocketConnection * _Nonnull conn, BOOL * _Nonnull stop) {
+    [_connections enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id<iTermAPIServerConnection> _Nonnull conn, BOOL * _Nonnull stop) {
         [conn abortWithCompletion:^{}];
     }];
     [_connections removeAllObjects];
@@ -503,7 +503,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 }
 
 // queue
-- (void)sendResponse:(ITMServerOriginatedMessage *)response onConnection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)sendResponse:(ITMServerOriginatedMessage *)response onConnection:(id<iTermAPIServerConnection>)webSocketConnection {
     DLog(@"Sending response %@", response);
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerWillSendMessage
@@ -517,7 +517,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 // Runs on execution queue
 - (void)dispatchRequestWhileNotInTransaction:(ITMClientOriginatedMessage *)request
-                                  connection:(iTermWebSocketConnection *)webSocketConnection {
+                                  connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITAssertWithMessage(!self.transaction, @"Already in a transaction");
 
     __weak __typeof(self) weakSelf = self;
@@ -607,7 +607,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 #pragma mark - Handle incoming RPCs
 
 - (void)finishHandlingRequestWithResponse:(ITMServerOriginatedMessage *)response
-                             onConnection:(iTermWebSocketConnection *)webSocketConnection {
+                             onConnection:(id<iTermAPIServerConnection>)webSocketConnection {
     dispatch_async(self.queue, ^{
         [self sendResponse:response onConnection:webSocketConnection];
     });
@@ -619,14 +619,14 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     return response;
 }
 
-- (void)handleTransactionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleTransactionRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
     response.transactionResponse = [[ITMTransactionResponse alloc] init];
     response.transactionResponse.status = ITMTransactionResponse_Status_AlreadyInTransaction;
     [self finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
 }
 
-- (void)handleGetBufferRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleGetBufferRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -640,7 +640,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                           }];
 }
 
-- (void)handleGetPromptRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleGetPromptRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -653,7 +653,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleListPromptsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleListPromptsRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -666,7 +666,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleScreenshotRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleScreenshotRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -679,7 +679,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleNotificationRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleNotificationRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -694,7 +694,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                              }];
 }
 
-- (void)handleRegisterToolRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleRegisterToolRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -708,7 +708,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                              }];
 }
 
-- (void)handleSetProfilePropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSetProfilePropertyRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -722,7 +722,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                    }];
 }
 
-- (void)handleGetProfilePropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleGetProfilePropertyRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -736,7 +736,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                    }];
 }
 
-- (void)handleListSessionsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleListSessionsRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -750,7 +750,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                              }];
 }
 
-- (void)handleSendTextRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSendTextRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -763,7 +763,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleCreateTabRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleCreateTabRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -776,7 +776,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleSplitPaneRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSplitPaneRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -789,7 +789,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleSetPropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSetPropertyRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -802,7 +802,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleGetPropertyRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleGetPropertyRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -815,7 +815,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleInjectRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleInjectRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -828,7 +828,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleActivateRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleActivateRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -841,7 +841,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleVariableRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleVariableRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -854,7 +854,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleSavedArrangementRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSavedArrangementRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -867,7 +867,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleFocusRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleFocusRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -880,7 +880,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleListProfilesRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleListProfilesRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -893,7 +893,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleServerOriginatedRpcResultRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleServerOriginatedRpcResultRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -911,7 +911,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 // Runs on execution queue
 - (BOOL)tryHandleResponse:(ITMClientOriginatedMessage *)request
             toBlockingRPC:(iTermBlockingRPC *)blockingRPC
-               connection:(iTermWebSocketConnection *)webSocketConnection {
+               connection:(id<iTermAPIServerConnection>)webSocketConnection {
     if (!blockingRPC) {
         return NO;
     }
@@ -929,19 +929,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     return YES;
 }
 
-- (void)handleMalformedRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleMalformedRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
     response.error = @"Invalid request. Upgrade iTerm2 to a newer version.";
     [self finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
 }
 
-- (void)handleUnhandleableRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleUnhandleableRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
     response.error = @"Not ready. This is a bug! Please report it at https://iterm2.com/bugs";
     [self finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
 }
 
-- (void)handleRestartSessionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleRestartSessionRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -954,7 +954,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleMenuItemRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleMenuItemRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -967,7 +967,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleSetTabLayoutRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSetTabLayoutRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -980,7 +980,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleGetBroadcastDomainsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleGetBroadcastDomainsRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -993,7 +993,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleTmuxRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleTmuxRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1006,7 +1006,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleReorderTabsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleReorderTabsRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
     
     __block BOOL handled = NO;
@@ -1019,7 +1019,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handlePreferencesRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handlePreferencesRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1032,7 +1032,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleColorPresetRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleColorPresetRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1045,7 +1045,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleSelectionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSelectionRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1058,7 +1058,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleStatusBarComponentRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleStatusBarComponentRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1071,7 +1071,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleSetBroadcastDomainsRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleSetBroadcastDomainsRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1084,7 +1084,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleCloseRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleCloseRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1097,7 +1097,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
-- (void)handleInvokeFunctionRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)handleInvokeFunctionRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
     __block BOOL handled = NO;
@@ -1112,7 +1112,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 
 // Runs on main queue, either in or not in a transaction.
-- (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)dispatchRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     DLog(@"Got request %@", request);
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerDidReceiveMessage
                                                         object:webSocketConnection.key
@@ -1284,7 +1284,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 }
 
 // Runs on execution queue
-- (void)enqueueOrDispatchRequest:(ITMClientOriginatedMessage *)request onConnection:(iTermWebSocketConnection *)webSocketConnection {
+- (void)enqueueOrDispatchRequest:(ITMClientOriginatedMessage *)request onConnection:(id<iTermAPIServerConnection>)webSocketConnection {
     if (self.transaction) {
         iTermAPIRequest *apiRequest = [[iTermAPIRequest alloc] init];
         apiRequest.connection = webSocketConnection;
