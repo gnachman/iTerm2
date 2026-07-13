@@ -458,6 +458,93 @@ class iTermProcessInfo: NSObject {
         }
         return result
     }
+
+    // Diagnostics helper for the logForegroundJobAncestryDiagnostics advanced setting.
+    // The pids of the nodes whose titles `foregroundJobAncestorNames` returns, in the
+    // same order (index i here is the pid that produced name i there). Lets the process
+    // cache remember which concrete pid held each ancestor name, so when a name later
+    // drops out of the chain it can report exactly what became of that pid (still in
+    // the collection? still alive?). Mirrors the walk in foregroundJobAncestorNames
+    // closely enough for that shrink diagnostic.
+    @objc var foregroundJobAncestorChainPids: [NSNumber] {
+        var result = [NSNumber]()
+        var current: iTermProcessInfo? = self
+        while let info = current {
+            let title = info.argv0 ?? info.name
+            guard let title, !title.isEmpty else {
+                current = info.parent
+                continue
+            }
+            if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
+                break
+            }
+            result.append(NSNumber(value: info.processID))
+            current = info.parent
+        }
+        return result
+    }
+
+    // Diagnostics helper for the logForegroundJobAncestryDiagnostics advanced setting.
+    // Verbose trace of the upward foreground-job ancestry walk starting at this node
+    // (the deepest foreground job). For each node it records the state that decides
+    // whether the node stays in the ancestry, cross-checks the `parent` pointer against
+    // the collection's own lookup of the recorded ppid, and probes liveness of the ppid
+    // with kill(_,0). Explains a spurious ancestry shrink (an intermediate ancestor
+    // like the claude CLI dropping out for a single process-cache update, which fires a
+    // bogus job-ended event and tears down the claudeCode workgroup even though the
+    // process never exited). Deliberately does more work than the normal walk; the
+    // process cache only calls it on the anomaly, and only while the setting is on.
+    @objc func foregroundJobAncestryDiagnostic() -> String {
+        var lines = [String]()
+        var current: iTermProcessInfo? = self
+        var depth = 0
+        var visited = Set<pid_t>()
+        while let info = current {
+            if visited.contains(info.processID) {
+                lines.append("  [\(depth)] pid=\(info.processID): CYCLE; stopping")
+                break
+            }
+            visited.insert(info.processID)
+
+            let title = info.argv0 ?? info.name
+            let parentPtr = info.parent
+            let ppidInCollection = info.collection?.info(forProcessID: info.parentProcessID)
+            let ppidAlive = (kill(info.parentProcessID, 0) == 0)
+            let startDesc = info.startTime.map { String($0.timeIntervalSince1970) } ?? "nil"
+
+            let parentPtrDesc = parentPtr.map { "pid=\($0.processID) name=\($0.name.debugDescriptionOrNil)" } ?? "nil"
+            let ppidLookupDesc: String
+            if let c = ppidInCollection {
+                ppidLookupDesc = "present(pid=\(c.processID) name=\(c.name.debugDescriptionOrNil) ppid=\(c.parentProcessID))"
+            } else {
+                ppidLookupDesc = "ABSENT"
+            }
+
+            lines.append("  [\(depth)] pid=\(info.processID) ppid=\(info.parentProcessID) name=\(info.name.debugDescriptionOrNil) argv0=\(info.argv0.debugDescriptionOrNil) fg=\(info.isForegroundJob) start=\(startDesc) title=\(title.debugDescriptionOrNil)")
+            lines.append("         parentPtr=\(parentPtrDesc) | collection[ppid \(info.parentProcessID)]=\(ppidLookupDesc) | ppidAliveNow=\(ppidAlive)")
+
+            guard let title, !title.isEmpty else {
+                lines.append("         -> title empty; skipping this node (walk would drop it from the ancestry)")
+                current = info.parent
+                depth += 1
+                continue
+            }
+            if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
+                lines.append("         -> STOP: login/server boundary (title starts with '-' or 'iTermServer')")
+                break
+            }
+            current = info.parent
+            if current == nil {
+                lines.append("         -> STOP: parent pointer nil, ran off the top with NO login/server boundary  <-- BROKEN CHAIN (ppid \(info.parentProcessID) \(ppidInCollection == nil ? "absent from collection" : "present in collection but not linked as parent"), aliveNow=\(ppidAlive))")
+            }
+            depth += 1
+            if depth > 64 {
+                lines.append("  -> aborted at depth cap")
+                break
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
 }
 
 // Remembers the most recently resolved title (argv0 or comm) for a pid so a single

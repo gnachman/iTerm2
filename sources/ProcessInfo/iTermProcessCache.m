@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
 #import "iTermProcessMonitor.h"
@@ -55,6 +56,11 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
     // tracked root pid. Used to diff and emit
     // iTermProcessCacheForegroundJobAncestorsDidChangeNotification. _lockQueue
     NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *_lastAncestorsByPidLQ;
+    // Diagnostics (gated by the logForegroundJobAncestryDiagnostics advanced
+    // setting). Parallel to _lastAncestorsByPidLQ: the concrete pid that held each
+    // ancestor name last cycle, so an ancestry shrink can report what became of the
+    // vanished process. Only populated while the setting is on. _lockQueue
+    NSMutableDictionary<NSNumber *, NSArray<NSNumber *> *> *_lastChainPidsByPidLQ;
 }
 
 + (instancetype)sharedInstance {
@@ -74,6 +80,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         _trackedPidsLQ = [NSMutableDictionary dictionary];
         _dirtyPIDsLQ = [NSMutableIndexSet indexSet];
         _lastAncestorsByPidLQ = [NSMutableDictionary dictionary];
+        _lastChainPidsByPidLQ = [NSMutableDictionary dictionary];  // ancestry diagnostics
         _ttyRdevByPidWQ = [NSMutableDictionary dictionary];
         _blocksLQ = [NSMutableArray array];
 
@@ -314,6 +321,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         // on a rescan because unregister + reap can race the rescan.
         NSArray<NSString *> *oldAncestors = self->_lastAncestorsByPidLQ[@(pid)];
         [self->_lastAncestorsByPidLQ removeObjectForKey:@(pid)];
+        [self->_lastChainPidsByPidLQ removeObjectForKey:@(pid)];  // ancestry diagnostics
         if (oldAncestors.count > 0) {
             [self postForegroundJobAncestorChanges:@{ @(pid): @[] }];
         }
@@ -462,9 +470,67 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                 // waiting for the consumer's title poll.
                 NSArray<NSString *> *newAncestors = cachedDeepestForegroundJob[key].foregroundJobAncestorNames ?: @[];
                 NSArray<NSString *> *oldAncestors = self->_lastAncestorsByPidLQ[key] ?: @[];
+                // Optional deep diagnostics for a foreground-job ancestry that shrinks
+                // (an intermediate ancestor like the claude CLI vanishing for a single
+                // update). Gated behind the logForegroundJobAncestryDiagnostics advanced
+                // setting and off by default, so there is no per-cycle cost in normal
+                // use. The chain pids let a shrink name the concrete pid that held each
+                // vanished ancestor; they are only captured while the setting is on.
+                const BOOL logAncestryDiag = [iTermAdvancedSettingsModel logForegroundJobAncestryDiagnostics];
+                NSArray<NSNumber *> *newChainPids = logAncestryDiag ? (cachedDeepestForegroundJob[key].foregroundJobAncestorChainPids ?: @[]) : @[];
+                NSArray<NSNumber *> *oldChainPids = logAncestryDiag ? (self->_lastChainPidsByPidLQ[key] ?: @[]) : @[];
                 if (![newAncestors isEqualToArray:oldAncestors]) {
+                    if (logAncestryDiag) {
+                        // When a name present last cycle vanishes this cycle we may be
+                        // about to fire a bogus job-ended / claudeCode-workgroup teardown
+                        // for a process that never exited. Dump the exact tree state that
+                        // produced the short ancestry so a repro explains itself (see
+                        // foregroundJobAncestryDiagnostic). Only fires on a real shrink,
+                        // so it is naturally rate-limited to the anomaly.
+                        NSMutableArray<NSString *> *removedNames = [oldAncestors mutableCopy];
+                        [removedNames removeObjectsInArray:newAncestors];
+                        if (removedNames.count > 0) {
+                            iTermProcessInfo *deepest = cachedDeepestForegroundJob[key];
+                            RLog(@"[ANCESTRYDIAG] tracked pid %@: ancestry shrank %@ -> %@ (removed %@); deepest fg job pid=%@",
+                                 key, oldAncestors, newAncestors, removedNames,
+                                 deepest ? @(deepest.processID) : @"nil");
+                            // For each vanished ancestor, report what became of the pid
+                            // that held it last cycle. "ABSENT from collection but
+                            // aliveNow=YES" is the fingerprint of the allPids/ppid TOCTOU
+                            // in newProcessCollection (a live process dropped because its
+                            // ppid read failed after the pid snapshot).
+                            for (NSString *removedName in removedNames) {
+                                const NSUInteger idx = [oldAncestors indexOfObject:removedName];
+                                if (idx == NSNotFound || idx >= oldChainPids.count) {
+                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\": no pid recorded for it last cycle", removedName);
+                                    continue;
+                                }
+                                const pid_t droppedPid = oldChainPids[idx].intValue;
+                                iTermProcessInfo *stillHere = [collection infoForProcessID:droppedPid];
+                                const BOOL aliveNow = (kill(droppedPid, 0) == 0);
+                                if (stillHere) {
+                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\" was pid %@: STILL in this cycle's collection (name=%@ ppid=%@ parentPtr=%@ fg=%@) aliveNow=%@ -- it left the parent chain without leaving the process table",
+                                         removedName, @(droppedPid), stillHere.name ?: @"(nil)", @(stillHere.parentProcessID),
+                                         stillHere.parent ? @(stillHere.parent.processID) : @"nil",
+                                         @(stillHere.isForegroundJob), @(aliveNow));
+                                } else {
+                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\" was pid %@: ABSENT from this cycle's collection; aliveNow=%@ -- if YES, we dropped a live process (allPids/ppid TOCTOU in newProcessCollection)",
+                                         removedName, @(droppedPid), @(aliveNow));
+                                }
+                            }
+                            if (deepest) {
+                                RLog(@"[ANCESTRYDIAG] upward walk from deepest fg job pid=%@:\n%@",
+                                     @(deepest.processID), [deepest foregroundJobAncestryDiagnostic]);
+                            } else {
+                                RLog(@"[ANCESTRYDIAG] no deepest fg job this cycle (whole chain gone)");
+                            }
+                        }
+                    }
                     self->_lastAncestorsByPidLQ[key] = newAncestors;
                     ancestorChanges[key] = newAncestors;
+                }
+                if (logAncestryDiag) {
+                    self->_lastChainPidsByPidLQ[key] = newChainPids;
                 }
             }];
         });
