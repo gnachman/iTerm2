@@ -35,7 +35,7 @@ private enum PropertyType {
 // MARK: - profile list
 
 extension Profile {
-    struct List: ParsableCommand {
+    struct List: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "list",
             abstract: "List all profiles."
@@ -44,8 +44,8 @@ extension Profile {
         @Flag(name: .long, help: "Output as JSON.")
         var json = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let listReq = ITMListProfilesRequest()
@@ -78,11 +78,11 @@ extension Profile {
             if json {
                 if let data = try? JSONSerialization.data(withJSONObject: profilesData, options: .prettyPrinted),
                    let str = String(data: data, encoding: .utf8) {
-                    print(str)
+                    ctx.out(str)
                 }
             } else {
                 for p in profilesData {
-                    print("\(p["guid"] ?? "")\t\(p["name"] ?? "")")
+                    ctx.out("\(p["guid"] ?? "")\t\(p["name"] ?? "")")
                 }
             }
         }
@@ -92,7 +92,7 @@ extension Profile {
 // MARK: - profile show
 
 extension Profile {
-    struct Show: ParsableCommand {
+    struct Show: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "show",
             abstract: "Show profile details."
@@ -104,8 +104,8 @@ extension Profile {
         @Flag(name: .long, help: "Output as JSON.")
         var json = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let guid = try findProfileGuid(client: client, name: name)
@@ -156,28 +156,28 @@ extension Profile {
                 if !badgeText.isEmpty {
                     curatedData["badge_text"] = badgeText
                 }
-                printJSON(curatedData)
+                ctx.printJSON(curatedData)
             } else {
                 let profileName = trimJSONQuotes(propDict["Name"]).isEmpty ? name : trimJSONQuotes(propDict["Name"])
-                print("Profile: \(profileName)")
-                print("GUID: \(guid)")
+                ctx.out("Profile: \(profileName)")
+                ctx.out("GUID: \(guid)")
                 let font = trimJSONQuotes(propDict["Normal Font"])
                 let fontParts = font.split(separator: " ")
                 if fontParts.count >= 2, let size = Double(fontParts.last!) {
                     let family = fontParts.dropLast().joined(separator: " ")
-                    print("Font: \(family) \(size)pt")
+                    ctx.out("Font: \(family) \(size)pt")
                 } else {
-                    print("Font: \(font)")
+                    ctx.out("Font: \(font)")
                 }
-                print("Background: \(formatColor(propDict["Background Color"]))")
-                print("Foreground: \(formatColor(propDict["Foreground Color"]))")
-                print("Transparency: \(propDict["Transparency"] ?? "0")")
-                print("Blur: \(propDict["Blur"] ?? "false")")
-                print("Cursor Color: \(formatColor(propDict["Cursor Color"]))")
-                print("Selection Color: \(formatColor(propDict["Selection Color"]))")
+                ctx.out("Background: \(formatColor(propDict["Background Color"]))")
+                ctx.out("Foreground: \(formatColor(propDict["Foreground Color"]))")
+                ctx.out("Transparency: \(propDict["Transparency"] ?? "0")")
+                ctx.out("Blur: \(propDict["Blur"] ?? "false")")
+                ctx.out("Cursor Color: \(formatColor(propDict["Cursor Color"]))")
+                ctx.out("Selection Color: \(formatColor(propDict["Selection Color"]))")
                 let badge = trimJSONQuotes(propDict["Badge Text"])
                 if !badge.isEmpty {
-                    print("Badge Text: \(badge)")
+                    ctx.out("Badge Text: \(badge)")
                 }
             }
         }
@@ -187,7 +187,7 @@ extension Profile {
 // MARK: - profile apply
 
 extension Profile {
-    struct Apply: ParsableCommand {
+    struct Apply: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "apply",
             abstract: "Apply profile to session."
@@ -199,8 +199,8 @@ extension Profile {
         @Option(name: .shortAndLong, help: "Target session ID (default: active).")
         var session: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let guid = try findProfileGuid(client: client, name: name)
@@ -243,7 +243,7 @@ extension Profile {
             guard propResp.status == ITMSetProfilePropertyResponse_Status.ok else {
                 throw IT2Error.apiError("Apply profile failed with status \(propResp.status.rawValue)")
             }
-            print("Applied profile '\(name)' to session")
+            ctx.out("Applied profile '\(name)' to session")
         }
     }
 }
@@ -251,7 +251,7 @@ extension Profile {
 // MARK: - profile set
 
 extension Profile {
-    struct Set: ParsableCommand {
+    struct Set: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "set",
             abstract: "Set profile property.",
@@ -278,8 +278,8 @@ extension Profile {
         @Argument(help: "Property value.")
         var value: String
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let guid = try findProfileGuid(client: client, name: name)
@@ -340,7 +340,7 @@ extension Profile {
             guard propResp.status == ITMSetProfilePropertyResponse_Status.ok else {
                 throw IT2Error.apiError("Set property failed with status \(propResp.status.rawValue)")
             }
-            print("Set \(propertyName) = \(value) for profile '\(name)'")
+            ctx.out("Set \(propertyName) = \(value) for profile '\(name)'")
         }
 
         private func getCurrentFont(client: APIClient, guid: String) throws -> String {
