@@ -828,6 +828,19 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     [_apiServer postAPINotification:notification toConnectionKey:connectionKey];
 }
 
+- (void)registerInProcessAPIConnection:(id<iTermAPIServerConnection>)connection {
+    [_apiServer registerInProcessConnection:connection];
+}
+
+- (void)dispatchInProcessAPIRequest:(ITMClientOriginatedMessage *)request
+                         connection:(id<iTermAPIServerConnection>)connection {
+    [_apiServer dispatchInProcessRequest:request connection:connection];
+}
+
+- (void)unregisterInProcessAPIConnection:(id<iTermAPIServerConnection>)connection {
+    [_apiServer unregisterInProcessConnection:connection];
+}
+
 - (void)didCreateTerminalWindow:(NSNotification *)notification {
     PseudoTerminal *term = notification.object;
     for (iTermAllObjectsSubscription *sub in _allWindowsSubscriptions) {

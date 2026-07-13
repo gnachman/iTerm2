@@ -704,6 +704,7 @@
 		2AB0AC886DE3F1F616F92D2F /* CharacterAtomIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02CF16386D8605E6BC44ED81 /* CharacterAtomIterator.swift */; };
 		2AB4919B57C2A4A033E8492C /* FocusOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F19F8B951B272A53398CE6B /* FocusOrder.swift */; };
 		2B9C06D0CD49A450A73FA6BF /* APIChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2423D133EA9874246E972978 /* APIChannel.swift */; };
+		2BC74A744CA71657630D2C15 /* iTermInProcessAPIConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 047ECAD2519474D103A60FEC /* iTermInProcessAPIConnection.m */; };
 		2E1AADF79D2B83BA91BA1236 /* iTermGitFileStatus+Diffable.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3AD5633442A7E32AF367B3 /* iTermGitFileStatus+Diffable.swift */; };
 		2E7E803BDBC6637DCA13222A /* AILiveAttachmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F790CA240B9BA05F26567E86 /* AILiveAttachmentTests.swift */; };
 		2F838DA1B7A01C369B4D8DBD /* OrchestratorSafetyGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7314A7A2A6834D29C14852 /* OrchestratorSafetyGate.swift */; };
@@ -5824,6 +5825,7 @@
 		02CF16386D8605E6BC44ED81 /* CharacterAtomIterator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CharacterAtomIterator.swift; sourceTree = "<group>"; };
 		02E18F7ADCCB078E0E6143DE /* ScreenWatchPoller.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScreenWatchPoller.swift; sourceTree = "<group>"; };
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		047ECAD2519474D103A60FEC /* iTermInProcessAPIConnection.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermInProcessAPIConnection.m; sourceTree = "<group>"; };
 		06CD1E12A99FD69B6B9B93ED /* ProfileCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProfileCommand.swift; path = it2cli/Sources/it2core/Commands/ProfileCommand.swift; sourceTree = "<group>"; };
 		06E0C88C1DF9695400AA061B /* iTermServiceProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermServiceProvider.h; sourceTree = "<group>"; };
 		06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermServiceProvider.m; sourceTree = "<group>"; };
@@ -11591,6 +11593,7 @@
 				A62A783A2F987D5B007CAA0B /* iTermWebSocketFrameBuilder.m */,
 				53FF980E209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h */,
 				53FF980F209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m */,
+				047ECAD2519474D103A60FEC /* iTermInProcessAPIConnection.m */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -22041,6 +22044,7 @@
 				8FE3D19DEFFBE43EF22CE2AA /* WorkgroupAutoRequestReviewToolbarItem.swift in Sources */,
 				85D0A2D91A48462806E331C8 /* CompanionWakeupCoordinator.swift in Sources */,
 				D364886B87EB8B81EB2FCEA3 /* StableSessionID.swift in Sources */,
+				2BC74A744CA71657630D2C15 /* iTermInProcessAPIConnection.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

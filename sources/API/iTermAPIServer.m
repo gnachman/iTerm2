@@ -287,6 +287,39 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     });
 }
 
+#pragma mark - In-process dispatch
+
+- (void)registerInProcessConnection:(id<iTermAPIServerConnection>)connection {
+    dispatch_async(_queue, ^{
+        self->_connections[connection.guid] = connection;
+    });
+}
+
+- (void)dispatchInProcessRequest:(ITMClientOriginatedMessage *)request
+                      connection:(id<iTermAPIServerConnection>)connection {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(_executionQueue, ^{
+        [weakSelf enqueueOrDispatchRequest:request onConnection:connection];
+    });
+}
+
+- (void)unregisterInProcessConnection:(id<iTermAPIServerConnection>)connection {
+    NSString *guid = connection.guid;
+    dispatch_async(_queue, ^{
+        [self->_connections removeObjectForKey:guid];
+    });
+    dispatch_async(_executionQueue, ^{
+        if (self.transaction.connection == connection) {
+            iTermAPITransaction *transaction = self.transaction;
+            self.transaction = nil;
+            [transaction signal];
+        }
+    });
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self->_delegate apiServerDidCloseConnectionWithKey:guid];
+    });
+}
+
 - (void)stop {
     self.delegate = nil;
     [_unixSocket close];

@@ -16,6 +16,8 @@ extern NSString *const iTermAPIServerConnectionRejected;
 extern NSString *const iTermAPIServerConnectionAccepted;
 extern NSString *const iTermAPIServerConnectionClosed;
 
+@protocol iTermAPIServerConnection;
+
 @protocol iTermAPIServerDelegate<NSObject>
 - (BOOL)apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids
                       preauthorized:(BOOL)preauthorized
@@ -109,5 +111,16 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)whenReadyRunBlock:(void (^)(void))block;
 
 - (void)stop;
+
+#pragma mark - In-process dispatch
+
+// Run requests through the same handlers and subscription machinery as a socket
+// client, using a synthetic connection instead of a real websocket. Used by the
+// embedded it2 command tree over SSH integration. Thread-safe. These do NOT apply
+// the API permission gate; the caller is responsible for authorizing the origin.
+- (void)registerInProcessConnection:(id<iTermAPIServerConnection>)connection;
+- (void)dispatchInProcessRequest:(ITMClientOriginatedMessage *)request
+                      connection:(id<iTermAPIServerConnection>)connection;
+- (void)unregisterInProcessConnection:(id<iTermAPIServerConnection>)connection;
 
 @end
