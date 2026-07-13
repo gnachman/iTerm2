@@ -12,7 +12,11 @@ struct Auth: ParsableCommand {
 }
 
 extension Auth {
-    struct Cookie: ParsableCommand {
+    // RemoteForbiddenCommand: minting/printing a reusable ITERM2_COOKIE/ITERM2_KEY hands a
+    // durable, off-device local API credential to whoever reads stdout. That must never
+    // happen over SSH integration, where stdout streams to the remote host and would escape
+    // the per-session, revocable grant. Refused centrally in runParsedCommand when isRemote.
+    struct Cookie: ParsableCommand, IT2Runnable, RemoteForbiddenCommand {
         static let configuration = CommandConfiguration(
             commandName: "cookie",
             abstract: "Request a cookie and key from iTerm2.",
@@ -30,7 +34,7 @@ extension Auth {
         @Flag(help: "Request a single-use cookie instead of a reusable one.")
         var singleUse = false
 
-        func run() throws {
+        func run(_ ctx: IT2Context) throws {
             let (cookie, key): (String?, String?)
             if singleUse {
                 (cookie, key) = CookieAuth.requestCookie()
@@ -41,7 +45,7 @@ extension Auth {
                 throw IT2Error.connectionError(
                     "Failed to get cookie from iTerm2. Ensure iTerm2 is running and Python API is enabled.")
             }
-            print("ITERM2_COOKIE=\(cookie) ITERM2_KEY=\(key)")
+            ctx.out("ITERM2_COOKIE=\(cookie) ITERM2_KEY=\(key)")
         }
     }
 }

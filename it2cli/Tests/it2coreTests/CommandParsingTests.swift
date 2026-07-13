@@ -26,6 +26,16 @@ final class CommandParsingTests: XCTestCase {
         XCTAssertTrue(command is LsShortcut, "expected LsShortcut, got \(type(of: command))")
     }
 
+    func testParsesAuthCookie() throws {
+        let command = try IT2.parseAsRoot(["auth", "cookie"])
+        XCTAssertTrue(command is Auth.Cookie, "expected Auth.Cookie, got \(type(of: command))")
+    }
+
+    func testParsesAuthCookieSingleUse() throws {
+        let command = try IT2.parseAsRoot(["auth", "cookie", "--single-use"])
+        XCTAssertTrue(command is Auth.Cookie, "expected Auth.Cookie, got \(type(of: command))")
+    }
+
     func testUnknownSubcommandThrows() {
         XCTAssertThrowsError(try IT2.parseAsRoot(["definitely-not-a-real-command"]))
     }
