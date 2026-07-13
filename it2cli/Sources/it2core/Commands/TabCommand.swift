@@ -22,7 +22,7 @@ struct Tab: ParsableCommand {
 // MARK: - tab new
 
 extension Tab {
-    struct New: ParsableCommand {
+    struct New: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "new",
             abstract: "Create new tab."
@@ -37,8 +37,8 @@ extension Tab {
         @Option(name: .shortAndLong, help: "Command to run.")
         var command: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let createTab = ITMCreateTabRequest()
@@ -64,7 +64,7 @@ extension Tab {
                 throw IT2Error.apiError("Failed to create tab: status \(tabResp.status.rawValue)")
             }
 
-            print("Created new tab: \(tabResp.tabId)")
+            ctx.out("Created new tab: \(tabResp.tabId)")
 
             if let command = command, let sessionId = tabResp.sessionId {
                 let sendText = ITMSendTextRequest()
@@ -82,7 +82,7 @@ extension Tab {
 // MARK: - tab list
 
 extension Tab {
-    struct List: ParsableCommand {
+    struct List: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "list",
             abstract: "List all tabs."
@@ -94,8 +94,8 @@ extension Tab {
         @Option(name: .shortAndLong, help: "Window ID to list tabs from.")
         var window: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             // Get the selected tab per window from focus info.
@@ -146,12 +146,12 @@ extension Tab {
             if json {
                 if let data = try? JSONSerialization.data(withJSONObject: tabsData, options: .prettyPrinted),
                    let str = String(data: data, encoding: .utf8) {
-                    print(str)
+                    ctx.out(str)
                 }
             } else {
                 for t in tabsData {
                     let active = (t["is_active"] as? Bool == true) ? "\t✓" : ""
-                    print("\(t["id"] ?? "")\twindow=\(t["window_id"] ?? "")\tindex=\(t["index"] ?? "")\tsessions=\(t["sessions"] ?? "")\(active)")
+                    ctx.out("\(t["id"] ?? "")\twindow=\(t["window_id"] ?? "")\tindex=\(t["index"] ?? "")\tsessions=\(t["sessions"] ?? "")\(active)")
                 }
             }
         }
@@ -165,7 +165,7 @@ extension Tab {
 // MARK: - tab close
 
 extension Tab {
-    struct Close: ParsableCommand {
+    struct Close: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "close",
             abstract: "Close tab."
@@ -177,14 +177,14 @@ extension Tab {
         @Flag(name: .shortAndLong, help: "Force close without confirmation.")
         var force = false
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let id = try tabId ?? resolveCurrentTabId(client: client)
 
-            if !force {
-                confirmAction("Close tab \(id)?")
+            if !force && !ctx.confirm("Close tab \(id)?") {
+                throw IT2Error.cancelled
             }
 
             let closeReq = ITMCloseRequest()
@@ -200,7 +200,7 @@ extension Tab {
             guard response.submessageOneOfCase == .closeResponse else {
                 throw IT2Error.apiError("No close response")
             }
-            print("Tab closed")
+            ctx.out("Tab closed")
         }
     }
 }
@@ -208,7 +208,7 @@ extension Tab {
 // MARK: - tab select
 
 extension Tab {
-    struct Select: ParsableCommand {
+    struct Select: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "select",
             abstract: "Select tab by ID or index."
@@ -220,8 +220,8 @@ extension Tab {
         @Option(name: .shortAndLong, help: "Window ID (for index-based selection).")
         var window: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let resolvedTabId: String
@@ -257,9 +257,9 @@ extension Tab {
                 throw IT2Error.targetNotFound("Tab '\(tabIdOrIndex)' not found")
             }
             if isIndex {
-                print("Selected tab at index \(tabIdOrIndex)")
+                ctx.out("Selected tab at index \(tabIdOrIndex)")
             } else {
-                print("Selected tab: \(tabIdOrIndex)")
+                ctx.out("Selected tab: \(tabIdOrIndex)")
             }
         }
     }
@@ -268,7 +268,7 @@ extension Tab {
 // MARK: - tab move
 
 extension Tab {
-    struct Move: ParsableCommand {
+    struct Move: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "move",
             abstract: "Move tab to its own new window."
@@ -277,8 +277,8 @@ extension Tab {
         @Argument(help: "Tab ID (default: current).")
         var tabId: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let id = try tabId ?? resolveCurrentTabId(client: client)
@@ -304,7 +304,7 @@ extension Tab {
                 throw IT2Error.apiError("Move tab failed: \(reason)")
             }
 
-            print("Moved tab to new window")
+            ctx.out("Moved tab to new window")
         }
     }
 }
@@ -312,14 +312,14 @@ extension Tab {
 // MARK: - tab next
 
 extension Tab {
-    struct Next: ParsableCommand {
+    struct Next: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "next",
             abstract: "Switch to next tab."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let (tabs, currentIdx, _) = try getTabsAndCurrentIndex(client: client)
@@ -339,7 +339,7 @@ extension Tab {
                   activateResp.status == ITMActivateResponse_Status.ok else {
                 throw IT2Error.apiError("Failed to switch tab")
             }
-            print("Switched to tab \(nextIdx)")
+            ctx.out("Switched to tab \(nextIdx)")
         }
     }
 }
@@ -347,14 +347,14 @@ extension Tab {
 // MARK: - tab prev
 
 extension Tab {
-    struct Prev: ParsableCommand {
+    struct Prev: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "prev",
             abstract: "Switch to previous tab."
         )
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let (tabs, currentIdx, _) = try getTabsAndCurrentIndex(client: client)
@@ -374,7 +374,7 @@ extension Tab {
                   activateResp.status == ITMActivateResponse_Status.ok else {
                 throw IT2Error.apiError("Failed to switch tab")
             }
-            print("Switched to tab \(prevIdx)")
+            ctx.out("Switched to tab \(prevIdx)")
         }
     }
 }
@@ -382,7 +382,7 @@ extension Tab {
 // MARK: - tab goto
 
 extension Tab {
-    struct Goto: ParsableCommand {
+    struct Goto: ParsableCommand, IT2Runnable {
         static let configuration = CommandConfiguration(
             commandName: "goto",
             abstract: "Go to tab by index."
@@ -394,8 +394,8 @@ extension Tab {
         @Option(name: .shortAndLong, help: "Window ID (default: current).")
         var window: String?
 
-        func run() throws {
-            let client = try APIClient.connect()
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
             defer { client.disconnect() }
 
             let windowId = try window ?? resolveCurrentWindowId(client: client)
@@ -419,7 +419,7 @@ extension Tab {
                   activateResp.status == ITMActivateResponse_Status.ok else {
                 throw IT2Error.apiError("Failed to switch tab")
             }
-            print("Switched to tab \(index)")
+            ctx.out("Switched to tab \(index)")
         }
     }
 }
