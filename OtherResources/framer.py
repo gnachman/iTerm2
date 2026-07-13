@@ -48,6 +48,15 @@ READSTATE=0
 BASEID=str(random.randint(0, 1048576)) + str(os.getpid()) + str(int(time.time() * 1000000))
 IDCOUNT=0
 SEARCH_TASK = None
+# it2-over-ssh: the unix-socket server the remote `it2` connects to, and the
+# accepted connections (connid -> asyncio StreamWriter). Dormant until iTerm2
+# sends the "it2listen" command.
+IT2_SERVER = None
+IT2_CONNS = {}
+# Upper bound on how long a single it2send may block the shared command loop
+# waiting for the remote client to drain the socket. A stalled client is
+# dropped rather than head-of-line-blocking every other framer command.
+IT2_DRAIN_TIMEOUT = 30
 
 def squash(i):
     a = list(map(chr, list(range(48,58))+list(range(65,91))+list(range(97,123))))
@@ -1563,6 +1572,109 @@ def on_sigwinch(_sig, _stack):
         READSTATE = 2
     asyncio.run_coroutine_threadsafe(update_pty_size(), RUNLOOP)
 
+# it2-over-ssh: proxy a remote unix socket to iTerm2. iTerm2's embedded it2 runs
+# the command; framer.py is a dumb byte pipe. Frames up: "%it2 <connid> open",
+# "%it2 <connid> data <base64>", "%it2 <connid> close". Commands down: "it2send
+# <connid> <base64>", "it2close <connid>".
+async def handle_it2listen(identifier, args):
+    q = begin(identifier)
+    global IT2_SERVER
+    if IT2_SERVER is not None:
+        end(q, identifier, 0)
+        return
+    if not args:
+        end(q, identifier, 1)
+        return
+    path = args[0]
+    try:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        # Bind under an owner-only umask so the socket is created as 0700 with no
+        # window during which another local user could connect; the chmod then
+        # narrows it to 0600 as belt-and-suspenders. umask only ever makes files
+        # more restrictive, so leaking it to a concurrent task is harmless.
+        old_umask = os.umask(0o077)
+        try:
+            IT2_SERVER = await asyncio.start_unix_server(handle_it2_connection, path=path)
+        finally:
+            os.umask(old_umask)
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+        end(q, identifier, 0)
+    except Exception as e:
+        log(f'handle_it2listen failed: {e}')
+        # Do not leave a live, possibly non-owner-restricted socket behind after
+        # reporting failure: tear down whatever start_unix_server created and
+        # reset the global so a later it2listen can retry instead of no-opping.
+        if IT2_SERVER is not None:
+            with contextlib.suppress(Exception):
+                IT2_SERVER.close()
+            IT2_SERVER = None
+        with contextlib.suppress(OSError):
+            os.unlink(path)
+        end(q, identifier, 1)
+
+async def handle_it2_connection(reader, writer):
+    connid = makeid()
+    IT2_CONNS[connid] = writer
+    q = lock()
+    send_esc(q, f'%it2 {connid} open')
+    unlock(q)
+    try:
+        while True:
+            data = await reader.read(65536)
+            if not data:
+                break
+            q = lock()
+            send_esc(q, f'%it2 {connid} data {base64.b64encode(data).decode("ascii")}')
+            unlock(q)
+    except Exception as e:
+        log(f'it2 connection {connid}: {e}')
+    finally:
+        IT2_CONNS.pop(connid, None)
+        q = lock()
+        send_esc(q, f'%it2 {connid} close')
+        unlock(q)
+        with contextlib.suppress(Exception):
+            writer.close()
+
+async def handle_it2send(identifier, args):
+    q = begin(identifier)
+    if len(args) < 2 or args[0] not in IT2_CONNS:
+        end(q, identifier, 1)
+        return
+    try:
+        writer = IT2_CONNS[args[0]]
+        writer.write(base64.b64decode(args[1]))
+        # drain() runs on framer's single serial command loop. A stalled client
+        # (slow/flow-controlled terminal, a pager, SIGSTOP) fills the socket send
+        # buffer and would block drain() indefinitely, freezing every other
+        # framer command for this host. Bound the wait and drop the wedged
+        # connection instead of head-of-line-blocking the loop.
+        try:
+            await asyncio.wait_for(writer.drain(), timeout=IT2_DRAIN_TIMEOUT)
+        except asyncio.TimeoutError:
+            log(f'handle_it2send: drain timed out for {args[0]}; dropping connection')
+            IT2_CONNS.pop(args[0], None)
+            with contextlib.suppress(Exception):
+                writer.close()
+            end(q, identifier, 1)
+            return
+        end(q, identifier, 0)
+    except Exception as e:
+        log(f'handle_it2send: {e}')
+        end(q, identifier, 1)
+
+async def handle_it2close(identifier, args):
+    q = begin(identifier)
+    writer = IT2_CONNS.pop(args[0], None) if args else None
+    if writer is not None:
+        with contextlib.suppress(Exception):
+            writer.close()
+    end(q, identifier, 0)
+
+
 HANDLERS = {
     "run": handle_run,
     "login": handle_login,
@@ -1580,7 +1692,10 @@ HANDLERS = {
     "file": handle_file,
     "eval": handle_eval,
     "getenv": handle_getenv,
-    "runpy": handle_runpy
+    "runpy": handle_runpy,
+    "it2listen": handle_it2listen,
+    "it2send": handle_it2send,
+    "it2close": handle_it2close
 }
 
 def _silence_shutdown_unraisable(unraisable):
