@@ -15,7 +15,18 @@ class iTermProcessInfo: NSObject {
     @objc let dataSource: ProcessDataSource
     private var childProcessIDs = IndexSet()
     private var buildingTreeString = false
-    @objc weak var parent: iTermProcessInfo?
+    // Strong (not weak) on purpose: callers hold a deepest-job iTermProcessInfo past
+    // the lifetime of the ProcessCollection that built it (PTYSession keeps one in
+    // _lastProcessInfo, and the process cache swaps in a fresh collection on its work
+    // queue). The ancestor infos are owned only by that collection, so a weak parent
+    // would dangle to nil once the collection is freed and foregroundJobAncestorNames
+    // would collapse to just the deepest job. To GlobalJobMonitor that looks like the
+    // intermediate ancestors (e.g. "claude") exited, firing a spurious job-ended that
+    // tears down the claudeCode workgroup. A strong parent keeps a retained leaf's
+    // ancestor spine alive. There is no retain cycle: a parent references its children
+    // only as pids (childProcessIDs), resolved through the weak `collection`, so there
+    // is no parent -> child strong edge.
+    @objc var parent: iTermProcessInfo?
 
     @objc(initWithPid:ppid:collection:dataSource:)
     init(processID: pid_t,

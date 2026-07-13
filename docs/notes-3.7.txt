@@ -720,6 +720,10 @@ Bug Fixes:
   server is now insulated from signals sent to
   iTerm2, so your running programs survive to be
   reattached on the next launch.
+- Fixed a rare case where a Claude Code workgroup
+  was torn down even though its claude process was
+  still running, due to a momentary misread of the
+  foreground job ancestor list.
 - AI chat: fixed a race where a streamed tool
   call could be dispatched with empty arguments
   when the response completed before its argument
