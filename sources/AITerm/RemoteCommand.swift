@@ -193,16 +193,36 @@ struct RemoteCommand: Codable {
         enum PermissionCategory: String, Codable, CaseIterable {
             case checkTerminalState = "Check Terminal State"
             case runCommands = "Run Commands"
-            case viewHistory = "View History"
+            case viewContents = "View Contents"
             case writeToClipboard = "Write to the Clipboard"
             case typeForYou = "Type for You"
             case viewManpages = "View Manpages"
             case writeToFilesystem = "Write to the File System"
             case actInWebBrowser = "Act in Web Browser"
 
+            // Persisted per-chat permissions encode the category by rawValue, and the
+            // whole [Key: Permission] blob fails to decode if any single category is
+            // unknown (losing every category's grant for that chat). "View History"
+            // was renamed to "View Contents"; accept the legacy string so existing
+            // grants survive the rename.
+            init(from decoder: Decoder) throws {
+                let container = try decoder.singleValueContainer()
+                let raw = try container.decode(String.self)
+                if raw == "View History" {
+                    self = .viewContents
+                    return
+                }
+                guard let value = PermissionCategory(rawValue: raw) else {
+                    throw DecodingError.dataCorruptedError(
+                        in: container,
+                        debugDescription: "Unknown permission category \(raw)")
+                }
+                self = value
+            }
+
             var isBrowserSpecific: Bool {
                 switch self {
-                case .checkTerminalState, .runCommands, .viewHistory, .writeToClipboard,
+                case .checkTerminalState, .runCommands, .viewContents, .writeToClipboard,
                         .typeForYou, .viewManpages, .writeToFilesystem:
                     false
                 case .actInWebBrowser:
@@ -214,7 +234,9 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState:
                     "Provide Terminal State Automatically"
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                case .viewContents:
+                    "Provide Screen Contents Automatically"
+                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -224,7 +246,9 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState:
                     "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                case .viewContents:
+                    "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat."
+                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -236,9 +260,9 @@ struct RemoteCommand: Codable {
 
             var autopopulatedWhenAlways: Bool {
                 switch self {
-                case .checkTerminalState:
+                case .checkTerminalState, .viewContents:
                     true
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     false
                 }
@@ -254,7 +278,7 @@ struct RemoteCommand: Codable {
                     .runCommands
             case .getCommandHistory, .getLastCommand, .getCommandBeforeCursor,
                     .searchCommandHistory, .getCommandOutput:
-                    .viewHistory
+                    .viewContents
             case .setClipboard:
                     .writeToClipboard
             case .insertTextAtCursor, .deleteCurrentLine:

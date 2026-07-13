@@ -101,7 +101,7 @@ extension RemoteCommand.Content.PermissionCategory {
         switch self {
         case .checkTerminalState: kPreferenceKeyAIPermissionCheckTerminalState
         case .runCommands: kPreferenceKeyAIPermissionRunCommands
-        case .viewHistory: kPreferenceKeyAIPermissionViewHistory
+        case .viewContents: kPreferenceKeyAIPermissionViewHistory
         case .writeToClipboard: kPreferenceKeyAIPermissionWriteToClipboard
         case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
         case .viewManpages: kPreferenceKeyAIPermissionViewManpages

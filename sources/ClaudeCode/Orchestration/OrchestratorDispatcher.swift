@@ -1109,7 +1109,7 @@ final class OrchestratorDispatcher {
         case .runCommands, .writeToClipboard, .typeForYou,
                 .writeToFilesystem, .actInWebBrowser:
             return true
-        case .checkTerminalState, .viewHistory, .viewManpages:
+        case .checkTerminalState, .viewContents, .viewManpages:
             return false
         }
     }
