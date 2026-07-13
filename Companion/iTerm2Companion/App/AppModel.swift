@@ -1474,6 +1474,7 @@ final class AppModel {
         }
         macSupportsStreaming = handshake.supportsStreaming
         macRevision = handshake.peerRevision
+        companionLog("Version handshake: macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
         // The mac says the user opted into phone alerts: ask iOS for notification
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
@@ -1552,7 +1553,11 @@ final class AppModel {
     /// than after a first doomed attempt.
     private func connectionLost(dueTo error: Error? = nil) {
         guard !isReconnecting else { return }
-        companionLog("Connection lost")
+        if let error {
+            companionLog("Connection lost dueTo: \(String(describing: error))")
+        } else {
+            companionLog("Connection lost (no transport error; e.g. the foreground connection-check ping failed)")
+        }
         client = nil
         // The stream id belongs to the dead connection; drop it (neutralizing the tile
         // throttle first) but keep the live-watch intent so it restarts after reconnect.
@@ -1601,7 +1606,8 @@ final class AppModel {
                         do {
                             let handshake = try await client.handshakeVersion()
                             macSupportsStreaming = handshake.supportsStreaming
-        macRevision = handshake.peerRevision
+                            macRevision = handshake.peerRevision
+                            companionLog("Version handshake (reconnect): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
                             if handshake.wantsNotificationPermission {
                                 ensureNotificationPermission(replyTo: nil)
                             }
@@ -1743,7 +1749,9 @@ final class AppModel {
                 try await withTimeout(5, "Connection check") {
                     try await client.ping()
                 }
+                companionLog("Foreground connection check: ping ok")
             } catch {
+                companionLog("Foreground connection check: ping FAILED (\(String(describing: error))) -> treating connection as lost and reconnecting")
                 connectionLost()
             }
         }

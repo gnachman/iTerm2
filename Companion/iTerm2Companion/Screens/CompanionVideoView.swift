@@ -37,6 +37,13 @@ final class CompanionVideoView: UIView {
     private var _latestPixelBuffer: CVPixelBuffer?
     private var lastDisplayedPTSSeconds = -Double.greatestFiniteMagnitude
 
+    // Diagnostics: dedupe repeated failures so a keyframe-request loop (a frame
+    // arriving with no usable decoder) does not spam the log every frame, and mark
+    // the first successfully displayed frame so a working stream is obvious.
+    private var loggedMissingDecoder = false
+    private var loggedDecodeFailure = false
+    private var didLogFirstFrame = false
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .black
@@ -57,10 +64,13 @@ final class CompanionVideoView: UIView {
     /// streamConfig.codecExtradata). Rebuilds the decoder; discards any prior format.
     func configure(parameterSets: [Data]) {
         formatDescription = try? CompanionHEVCSampleBuilder.makeFormatDescription(parameterSets: parameterSets)
-        guard formatDescription != nil else {
+        guard let formatDescription else {
+            companionLog("CompanionVideoView.configure: FAILED to build formatDescription from \(parameterSets.count) parameter set(s) -> requesting keyframe")
             onNeedsKeyframe?()
             return
         }
+        let dims = CMVideoFormatDescriptionGetDimensions(formatDescription)
+        companionLog("CompanionVideoView.configure: formatDescription built \(dims.width)x\(dims.height) from \(parameterSets.count) parameter set(s)")
         makeDecompressionSession()
     }
 
@@ -70,6 +80,7 @@ final class CompanionVideoView: UIView {
         }
         decompressionSession = nil
         guard let formatDescription else { return }
+        let dims = CMVideoFormatDescriptionGetDimensions(formatDescription)
         var session: VTDecompressionSession?
         let status = VTDecompressionSessionCreate(allocator: kCFAllocatorDefault,
                                                   formatDescription: formatDescription,
@@ -77,7 +88,15 @@ final class CompanionVideoView: UIView {
                                                   imageBufferAttributes: nil,
                                                   outputCallback: nil,
                                                   decompressionSessionOut: &session)
-        if status == noErr { decompressionSession = session }
+        if status == noErr {
+            decompressionSession = session
+            companionLog("CompanionVideoView: VTDecompressionSession created for \(dims.width)x\(dims.height)")
+        } else {
+            // A create failure here (e.g. dimensions beyond the hardware decoder's
+            // limits) leaves no session, so every access unit is dropped and the view
+            // just requests keyframes forever with nothing ever decoding/displaying.
+            companionLog("CompanionVideoView: VTDecompressionSessionCreate FAILED status=\(status) for \(dims.width)x\(dims.height) -> no decoder; video cannot appear")
+        }
     }
 
     /// Decode one access unit and display it.
@@ -85,6 +104,10 @@ final class CompanionVideoView: UIView {
         guard let formatDescription, let session = decompressionSession else {
             // A frame arrived before (or without) a usable config/decoder: ask for
             // a keyframe, which the host always precedes with a fresh config.
+            if !loggedMissingDecoder {
+                loggedMissingDecoder = true
+                companionLog("CompanionVideoView.enqueue: \(accessUnit.count)-byte access unit but no decoder (formatDescription=\(formatDescription != nil), session=\(decompressionSession != nil)) -> requesting keyframe (further drops suppressed)")
+            }
             onNeedsKeyframe?()
             return
         }
@@ -93,6 +116,7 @@ final class CompanionVideoView: UIView {
             format: formatDescription,
             ptsMilliseconds: ptsMilliseconds,
             displayImmediately: true) else {
+            companionLog("CompanionVideoView.enqueue: failed to build sample buffer for \(accessUnit.count)-byte access unit")
             return
         }
         let status = VTDecompressionSessionDecodeFrame(
@@ -105,12 +129,19 @@ final class CompanionVideoView: UIView {
                     // A decode error usually means a lost reference frame; recover
                     // with a fresh keyframe. This callback runs on a VideoToolbox
                     // thread and the handler touches main-actor state, so hop.
-                    DispatchQueue.main.async { self.onNeedsKeyframe?() }
+                    DispatchQueue.main.async {
+                        if !self.loggedDecodeFailure {
+                            self.loggedDecodeFailure = true
+                            companionLog("CompanionVideoView: decode callback FAILED status=\(status) -> requesting keyframe (further decode failures suppressed)")
+                        }
+                        self.onNeedsKeyframe?()
+                    }
                     return
                 }
                 self.present(imageBuffer, ptsSeconds: pts.seconds)
             }
         if status != noErr {
+            companionLog("CompanionVideoView: VTDecompressionSessionDecodeFrame returned status=\(status) -> requesting keyframe")
             onNeedsKeyframe?()
         }
     }
@@ -132,6 +163,10 @@ final class CompanionVideoView: UIView {
             guard let self, pts >= self.lastDisplayedPTSSeconds else { return }
             self.lastDisplayedPTSSeconds = pts
             self.layer.contents = cgImage
+            if !self.didLogFirstFrame {
+                self.didLogFirstFrame = true
+                companionLog("CompanionVideoView: first frame displayed (\(cgImage.width)x\(cgImage.height)) - video is live")
+            }
         }
     }
 
@@ -145,5 +180,8 @@ final class CompanionVideoView: UIView {
         frameLock.lock(); _latestPixelBuffer = nil; frameLock.unlock()
         lastDisplayedPTSSeconds = -Double.greatestFiniteMagnitude
         layer.contents = nil
+        loggedMissingDecoder = false
+        loggedDecodeFailure = false
+        didLogFirstFrame = false
     }
 }

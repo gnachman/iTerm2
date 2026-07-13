@@ -40,6 +40,7 @@ public protocol RelayWebSocketFactory: Sendable {
 /// inline behavior.
 final class URLSessionRelayWebSocket: RelayWebSocket {
     private let task: URLSessionWebSocketTask
+    private let lifecycle = RelaySocketLifecycle()
 
     init(_ task: URLSessionWebSocketTask) {
         self.task = task
@@ -53,6 +54,7 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             case .text(let s): try await task.send(.string(s))
             case .data(let d): try await task.send(.data(d))
             }
+            lifecycle.noteData()
         } catch {
             logFailure("send", error)
             throw mapQuotaClose(error)
@@ -67,6 +69,7 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             logFailure("receive", error)
             throw mapQuotaClose(error)
         }
+        lifecycle.noteData()
         switch message {
         case .string(let s): return .text(s)
         case .data(let d): return .data(d)
@@ -85,7 +88,7 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             .map { $0.isEmpty ? "-" : $0 } ?? "-"
         let ns = error as NSError
         CompanionLog.log("Relay WS \(op) failed: closeCode=\(code) reason=\(reason) "
-            + "error=\(ns.domain)#\(ns.code) \(ns.localizedDescription)")
+            + "error=\(ns.domain)#\(ns.code) \(ns.localizedDescription) \(lifecycle.summary())")
     }
 
     /// The relay closes the room with WebSocket 1008 + "daily quota exceeded" when
@@ -102,7 +105,16 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             : fallback
     }
 
-    func sendPing() async -> Bool { await task.sendPingAsync() }
+    func sendPing() async -> Bool {
+        let start = DispatchTime.now().uptimeNanoseconds
+        let ok = await task.sendPingAsync()
+        if ok {
+            lifecycle.notePingOk()
+            let rttMs = (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
+            CompanionLog.log("Relay WS ping ok rtt=\(rttMs)ms \(lifecycle.summary())")
+        }
+        return ok
+    }
 
     func cancel() {
         // cancel() closes with goingAway (WS close code 1001). Logging it

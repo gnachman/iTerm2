@@ -145,6 +145,7 @@ struct SessionView: View {
             // on a tab switch/cover while the view stays in the stack, and the
             // token outlives that).
             model.watchViewDidAppear(guid: guid, token: watchToken)
+            companionLog("SessionView appeared for \(guid): macSupportsStreaming=\(model.macSupportsStreaming) -> using \(model.macSupportsStreaming ? "LIVE (has resize button)" : "TILE (no resize button)") path; macRevision=\(model.macRevision) sessionResizeSupported=\(model.sessionResizeSupported)")
         }
         .onDisappear {
             // onDisappear fires on a tab switch/cover too, not just a pop, so this
@@ -829,10 +830,17 @@ private struct LiveSessionView: View {
             onConfig: { config in
                 resolution = "\(config.pixelWidth)×\(config.pixelHeight)"
                 if let parameterSets = try? CompanionHEVCFraming.decodeParameterSets(config.codecExtradata) {
+                    companionLog("LiveSessionView onConfig: stream=\(config.streamID) gen=\(config.generationId) \(config.pixelWidth)x\(config.pixelHeight) grid=\(config.columns)x\(config.rows) -> configuring decoder")
                     holder.view.configure(parameterSets: parameterSets)
+                } else {
+                    companionLog("LiveSessionView onConfig: stream=\(config.streamID) \(config.pixelWidth)x\(config.pixelHeight) but FAILED to decode parameter sets from \(config.codecExtradata.count)-byte extradata")
                 }
             },
             onMedia: { [weak model] frame in
+                if !didLogFirstMedia {
+                    didLogFirstMedia = true
+                    companionLog("LiveSessionView onMedia: first frame received (\(frame.payload.count) bytes, pts=\(frame.ptsMilliseconds)) -> decoding")
+                }
                 holder.view.enqueue(accessUnit: frame.payload, ptsMilliseconds: frame.ptsMilliseconds)
                 model?.sendActiveStreamAck(lastPTSMilliseconds: frame.ptsMilliseconds, queueDepth: 0)
             },

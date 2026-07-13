@@ -37,10 +37,10 @@ private func relayKeepalive(for ws: RelayWebSocket,
     RelayKeepalive(intervalNanos: intervalNanos) { [weak ws] in
         guard let ws else { return false }
         if await ws.sendPing() {
-            // Confirms the WS-to-edge link is alive. If this keeps logging
-            // while the relay reports "mac offline", the splice/park died but the
-            // socket did not -- the half-open-at-the-app-layer wedge.
-            CompanionLog.log("relay keepalive ping ok")
+            // sendPing() logs the richer "Relay WS ping ok rtt=… (parked …)" line
+            // (with the data-idle timing needed to attribute a drop). If that keeps
+            // logging while the relay reports "mac offline", the splice/park died but
+            // the socket did not -- the half-open-at-the-app-layer wedge.
             return true
         }
         // Ping failed -> the socket is dead. Tear it down so the parked
