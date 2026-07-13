@@ -991,6 +991,7 @@
 		5A70B4826716B6F27711CADF /* WorkgroupToolbarBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7C79A0745E993B91C40235 /* WorkgroupToolbarBuilder.swift */; };
 		5A9B38999DE20ABF75B37873 /* WorkgroupNavigationToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CB4B106AA1AA4EFB180EB7 /* WorkgroupNavigationToolbarItem.swift */; };
 		5DAE3C891517F3EA4E28183E /* ChatTitleStyling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39113C8B0BCDC7700DE18F8F /* ChatTitleStyling.swift */; };
+		5E817771008D304332DC6155 /* iTermInProcessIt2.m in Sources */ = {isa = PBXBuildFile; fileRef = 9ED6D5D4322AFD690059C29F /* iTermInProcessIt2.m */; };
 		5E82F967B87E7F7A76A492E1 /* ChatSessionMentionAttachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D1CA9FEA656247ADC53ADF /* ChatSessionMentionAttachment.swift */; };
 		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
 		5EEA7C6C9BEA8194F891E3F1 /* CCGitBaseSelectorItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 551CEFF56A53034E3FC7598A /* CCGitBaseSelectorItem.swift */; };
@@ -5667,6 +5668,13 @@
 			remoteGlobalIDString = A66717851DCE36C3000CE608;
 			remoteInfo = iTerm2SharedARC;
 		};
+		C95C58DC83111B5C860E26B0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 65CD5998B31C26DC8FE4FF68;
+			remoteInfo = it2core;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -6745,6 +6753,7 @@
 		9DB3D6EE176CCABE0071CCF8 /* PrefsArrangements.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = PrefsArrangements.png; path = images/PrefsArrangements.png; sourceTree = "<group>"; };
 		9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "PrefsArrangements@2x.png"; path = "images/PrefsArrangements@2x.png"; sourceTree = "<group>"; };
 		9DD8FF2B2AC39B0DDA9E1724 /* WorkgroupIntrospection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupIntrospection.swift; sourceTree = "<group>"; };
+		9ED6D5D4322AFD690059C29F /* iTermInProcessIt2.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermInProcessIt2.m; sourceTree = "<group>"; };
 		9FB54728D976B5A56B887ED5 /* OrchestrationMentionRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestrationMentionRenderer.swift; sourceTree = "<group>"; };
 		A004AF3FD82E9DE92D43DF5E /* SearchResultSoftBoundaryExtender.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchResultSoftBoundaryExtender.swift; sourceTree = "<group>"; };
 		A07263500827075018158DEC /* iTermWorkgroupToolbarItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupToolbarItem.swift; sourceTree = "<group>"; };
@@ -11594,6 +11603,7 @@
 				53FF980E209247E2008688D7 /* iTermScriptTemplatePickerWindowController.h */,
 				53FF980F209247E2008688D7 /* iTermScriptTemplatePickerWindowController.m */,
 				047ECAD2519474D103A60FEC /* iTermInProcessAPIConnection.m */,
+				9ED6D5D4322AFD690059C29F /* iTermInProcessIt2.m */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -17816,6 +17826,7 @@
 			);
 			dependencies = (
 				A6EC804E281BBBE100493544 /* PBXTargetDependency */,
+				72C2CC5C310C06D75087E2A6 /* PBXTargetDependency */,
 			);
 			name = iTerm2SharedARC;
 			productName = SSKeychain;
@@ -22045,6 +22056,7 @@
 				85D0A2D91A48462806E331C8 /* CompanionWakeupCoordinator.swift in Sources */,
 				D364886B87EB8B81EB2FCEA3 /* StableSessionID.swift in Sources */,
 				2BC74A744CA71657630D2C15 /* iTermInProcessAPIConnection.m in Sources */,
+				5E817771008D304332DC6155 /* iTermInProcessIt2.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22392,6 +22404,12 @@
 			isa = PBXTargetDependency;
 			target = 1DFA7C661923E83500DF1410 /* SSKeychain */;
 			targetProxy = 69021A922344313A00FDA6CA /* PBXContainerItemProxy */;
+		};
+		72C2CC5C310C06D75087E2A6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = it2core;
+			target = 65CD5998B31C26DC8FE4FF68 /* it2core */;
+			targetProxy = C95C58DC83111B5C860E26B0 /* PBXContainerItemProxy */;
 		};
 		7577E2802593B77F00905402 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -24452,6 +24470,7 @@
 				HEADER_SEARCH_PATHS = (
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(CONFIGURATION_TEMP_DIR)/it2core.build/DerivedSources",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -24795,6 +24814,7 @@
 				HEADER_SEARCH_PATHS = (
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(CONFIGURATION_TEMP_DIR)/it2core.build/DerivedSources",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -24883,6 +24903,7 @@
 				HEADER_SEARCH_PATHS = (
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(CONFIGURATION_TEMP_DIR)/it2core.build/DerivedSources",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -24962,6 +24983,7 @@
 				HEADER_SEARCH_PATHS = (
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(CONFIGURATION_TEMP_DIR)/it2core.build/DerivedSources",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
