@@ -109,6 +109,12 @@ class ChatAgent {
     struct PendingRemoteCommand {
         var completion: (Result<String, Error>) throws -> ()
         var responseID: String?
+        // True iff parking this command cleared the agent's typing status because it
+        // blocks on the user's approval. handleRemoteCommandResponse restores typing
+        // only in that case: re-emitting typing(true) for an auto-executed mid-turn
+        // tool call would make the phone read the resume as a new-turn boundary and
+        // reset the turn's accumulated reply text before it can be notified.
+        var clearedTyping = false
     }
 
     private var permissions: Set<RemoteCommand.Content.PermissionCategory>!
@@ -185,6 +191,13 @@ class ChatAgent {
                 chatID: chatID,
                 content: .clientLocal(
                     .init(action: .enableOrchestrationRequest(requestID: requestID))))
+            // The turn is now parked waiting for the user's Enable/Not Now, so the
+            // agent has stopped working. Without this, typingStatus stays true (the
+            // agentWorking completion only fires when the whole turn ends), leaving
+            // the phone's typing indicator stuck AND its session-reply notification
+            // (which fires on typing false) never firing - the reply and this request
+            // look like no response at all.
+            broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
         } catch {
             RLog("Failed to publish enable-orchestration request: \(error)")
             pendingOrchestrationRequests.removeValue(forKey: requestID)
@@ -202,6 +215,10 @@ class ChatAgent {
         guard let completion = pendingOrchestrationRequests.removeValue(forKey: requestID) else {
             return
         }
+        // Resuming the parked turn: the agent is working again, so republish
+        // typingStatus true (parkOrchestrationRequest cleared it). A fresh turn
+        // boundary also lets the post-response continuation notify on its own.
+        broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
         if approved {
             do {
                 try ChatListModel.instance?.setOrchestrationEnabled(true, forChatID: chatID)
@@ -761,6 +778,13 @@ class ChatAgent {
         if let pending = pendingRemoteCommands[messageID] {
             NSLog("Agent handling remote command response to message \(messageID)")
             pendingRemoteCommands.removeValue(forKey: messageID)
+            // Restore typing only if parking this command cleared it (an approval
+            // park). Re-emitting typing(true) for an auto-executed tool call would
+            // make the phone treat the resume as a new turn and reset the turn's
+            // accumulated reply text before it can be notified.
+            if pending.clearedTyping {
+                broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
+            }
             try? pending.completion(Result(result))
             return true
         }
@@ -1227,8 +1251,16 @@ extension ChatAgent {
                                   safe: Bool?,
                                   completion: @escaping (Result<String, Error>) throws -> ()) throws {
         let requestID = UUID()
+        // If this command blocks on the user's approval (its category permission is
+        // "ask"), the agent is now waiting, not working: clear typing so the phone's
+        // indicator isn't stuck and the reply notification (which fires on typing
+        // false) fires. Auto-approved (.always) / auto-denied (.never) commands
+        // resolve without the user mid-turn, so leave typing alone - re-emitting it
+        // would make the phone read the resume as a new turn and drop the reply text.
+        let needsApproval = remoteCommandNeedsUserApproval(remoteCommand)
         pendingRemoteCommands[requestID] = .init(completion: completion,
-                                                 responseID: responseID)
+                                                 responseID: responseID,
+                                                 clearedTyping: needsApproval)
         try broker.publish(message: .init(chatID: chatID,
                                           author: .agent,
                                           content: .remoteCommandRequest(.classic(remoteCommand), safe: safe),
@@ -1236,6 +1268,21 @@ extension ChatAgent {
                                           uniqueID: requestID),
                            toChatID: chatID,
                            partial: false)
+        if needsApproval {
+            broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
+        }
+    }
+
+    private func remoteCommandNeedsUserApproval(_ remoteCommand: RemoteCommand) -> Bool {
+        guard let guid = ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid else {
+            // No linked session to resolve a stored permission against: assume it will
+            // prompt (fail safe toward surfacing it) rather than silently swallow it.
+            return true
+        }
+        return RemoteCommandExecutor.instance.permission(
+            chatID: chatID,
+            inSessionGuid: guid,
+            category: remoteCommand.content.permissionCategory) == .ask
     }
 }
 
