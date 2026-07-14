@@ -51,6 +51,7 @@ SHARED_MAC_SOURCES = %w[
   sources/AITerm/AIReasoningTypes.swift
   sources/Categories/Result+iTerm.swift
   sources/Categories/NSDictionaryCodableBox.swift
+  sources/Categories/Data+BigEndian.swift
   sources/ClaudeCode/Orchestration/MentionParser.swift
   sources/ClaudeCode/Orchestration/StableSessionID.swift
   sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift
