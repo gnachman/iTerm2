@@ -165,6 +165,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .selectAllInStream(streamID: 1),
         .pasteText(sessionGuid: "g", text: "x"),
         .resizeSession(sessionGuid: "g", columns: 80, rows: 24),
+        .fetchAutoProvideConsent(sessionGuid: "g"),
+        .grantAutoProvideConsent(chatID: "c"),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -208,6 +210,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .selectAllInStream: return "selectAllInStream"
         case .pasteText: return "pasteText"
         case .resizeSession: return "resizeSession"
+        case .fetchAutoProvideConsent: return "fetchAutoProvideConsent"
+        case .grantAutoProvideConsent: return "grantAutoProvideConsent"
         }
     }
 
@@ -245,6 +249,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .selectionRange(streamID: 1, range: CompanionSelectionRange(
             start: CompanionSelectionPoint(absLine: 0, column: 0),
             end: CompanionSelectionPoint(absLine: 1, column: 2))),
+        .autoProvideConsent(satisfied: true),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -286,6 +291,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .streamEnded: return "streamEnded"
         case .selectionText: return "selectionText"
         case .selectionRange: return "selectionRange"
+        case .autoProvideConsent: return "autoProvideConsent"
         }
     }
 

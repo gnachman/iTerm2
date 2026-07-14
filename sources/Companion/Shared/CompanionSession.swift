@@ -169,6 +169,7 @@ actor CompanionSession {
         case .streamExtent: "streamExtent"
         case .selectionText: "selectionText"
         case .selectionRange: "selectionRange"
+        case .autoProvideConsent: "autoProvideConsent"
         }
     }
 

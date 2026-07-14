@@ -569,6 +569,18 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// No reply.
     case resizeSession(sessionGuid: String, columns: Int, rows: Int)
 
+    /// Ask whether auto-providing this session's terminal state and visible screen to
+    /// the AI is already consented for the chat the phone would send to (a per-chat
+    /// "provided automatically", or the global default). Lets the phone decide whether
+    /// to prompt before sending. Replied to with `.autoProvideConsent`.
+    case fetchAutoProvideConsent(sessionGuid: String)
+
+    /// Grant "provided automatically" for both Check Terminal State and View Contents
+    /// on the given (already-resolved) session-bound chat, so its turns carry the
+    /// terminal state and visible screen. Sent after the user approves the phone's
+    /// consent modal, before the message that should include them. No reply.
+    case grantAutoProvideConsent(chatID: String)
+
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
@@ -584,6 +596,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "updateStreamParams", "streamAck",
         "selectionGesture", "clearSelection", "copySelection",
         "selectAllInStream", "pasteText", "resizeSession",
+        "fetchAutoProvideConsent", "grantAutoProvideConsent",
     ]
 }
 
@@ -719,6 +732,11 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// there is no selection.
     case selectionRange(streamID: UInt32, range: CompanionSelectionRange?)
 
+    /// Reply to `.fetchAutoProvideConsent`: whether auto-providing terminal state and
+    /// the visible screen is already consented for the session's chat, so the phone
+    /// can skip its consent modal.
+    case autoProvideConsent(satisfied: Bool)
+
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
@@ -727,7 +745,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
         "unpaired", "messagesSince", "syncSince", "error",
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
-        "selectionRange", "historyTile", "streamExtent",
+        "selectionRange", "historyTile", "streamExtent", "autoProvideConsent",
     ]
 }
 

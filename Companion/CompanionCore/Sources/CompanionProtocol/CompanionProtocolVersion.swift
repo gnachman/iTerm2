@@ -58,7 +58,14 @@ public enum CompanionProtocolVersion {
     /// `.unsupported` and ignores it, so minimumPeer stays at 5 and the phone
     /// offers the resize control only when the mac advertises at least
     /// `sessionResizeRevision`.
-    public static let current = 6
+    ///
+    /// Revision 7 adds the auto-provide consent flow (fetchAutoProvideConsent /
+    /// grantAutoProvideConsent and the autoProvideConsent reply) so the phone can ask,
+    /// before sending, to include a session's terminal state and visible screen with
+    /// AI messages. Additive: an older mac ignores the unknown messages, so the phone
+    /// offers the consent prompt only when the mac advertises at least
+    /// `autoProvideConsentRevision`.
+    public static let current = 7
 
     /// The oldest peer revision this build accepts. Raised to 5 (lockstep with
     /// `current`) for the relay move: peers older than revision 5 have the old
@@ -92,6 +99,11 @@ public enum CompanionProtocolVersion {
     /// the mac advertises at least this revision; an older mac would silently
     /// ignore the message.
     public static let sessionResizeRevision = 6
+
+    /// The first revision whose mac supports the auto-provide consent flow
+    /// (fetchAutoProvideConsent / grantAutoProvideConsent). The phone offers the
+    /// consent prompt only when the mac advertises at least this revision.
+    public static let autoProvideConsentRevision = 7
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

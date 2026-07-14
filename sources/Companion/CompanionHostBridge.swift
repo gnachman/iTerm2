@@ -477,7 +477,41 @@ final class CompanionHostBridge {
             iTermController.sharedInstance().anySession(withGUID: sessionGuid)?.paste(text, flags: [])
         case .resizeSession(let sessionGuid, let columns, let rows):
             handleResizeSession(guid: sessionGuid, columns: columns, rows: rows)
+        case .fetchAutoProvideConsent(let sessionGuid):
+            send(.autoProvideConsent(satisfied: Self.autoProvideConsentSatisfied(sessionGuid: sessionGuid)),
+                 requestID: requestID)
+        case .grantAutoProvideConsent(let chatID):
+            handleGrantAutoProvideConsent(chatID: chatID)
         }
+    }
+
+    /// Whether auto-providing terminal state + the visible screen is already in
+    /// effect for the chat the phone would send to for this session: the session's
+    /// most recent session-bound chat if one exists, else a new chat (whose
+    /// permissions start at the global default). Both Check Terminal State and View
+    /// Contents must be "provided automatically" (.always).
+    static func autoProvideConsentSatisfied(sessionGuid: String) -> Bool {
+        let rce = RemoteCommandExecutor.instance
+        // An empty chatID has no per-chat override, so permission() falls back to the
+        // global default - exactly what a not-yet-created chat would inherit.
+        let chatID = ChatListModel.instance?.mostRecentChat(forGuid: sessionGuid)?.id ?? ""
+        return rce.permission(chatID: chatID, inSessionGuid: sessionGuid, category: .checkTerminalState) == .always
+            && rce.permission(chatID: chatID, inSessionGuid: sessionGuid, category: .viewContents) == .always
+    }
+
+    /// Grant "provided automatically" for Check Terminal State and View Contents on an
+    /// already-resolved session-bound chat, so its turns carry the terminal state and
+    /// visible screen. The phone sends this after the user approves its consent modal.
+    private func handleGrantAutoProvideConsent(chatID: String) {
+        guard let listModel = ChatListModel.instance,
+              let guid = listModel.chat(id: chatID)?.terminalSessionGuid else {
+            RLog("grantAutoProvideConsent: chat \(chatID) has no linked session; ignoring")
+            return
+        }
+        for category in [RemoteCommand.Content.PermissionCategory.checkTerminalState, .viewContents] {
+            try? listModel.setPermission(chat: chatID, permission: .always, guid: guid, category: category)
+        }
+        RLog("grantAutoProvideConsent: granted provided-automatically for chat \(chatID) session \(guid)")
     }
 
     /// Resize a session's grid on behalf of the phone. The phone computes a
