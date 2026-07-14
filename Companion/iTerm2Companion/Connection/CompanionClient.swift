@@ -295,6 +295,26 @@ actor CompanionClient {
         try await session.send(.resizeSession(sessionGuid: sessionGuid, columns: columns, rows: rows))
     }
 
+    /// Whether auto-providing this session's terminal state and visible screen to the
+    /// AI is already consented for the chat the phone would send to.
+    func fetchAutoProvideConsent(sessionGuid: String) async throws -> Bool {
+        let reply = try await session.request(.fetchAutoProvideConsent(sessionGuid: sessionGuid))
+        switch reply {
+        case .autoProvideConsent(let satisfied):
+            return satisfied
+        case .error(let error):
+            throw error
+        default:
+            throw CompanionError(code: .badRequest, message: "Unexpected reply to fetchAutoProvideConsent")
+        }
+    }
+
+    /// Grant "provided automatically" for the given session-bound chat, so its AI
+    /// turns include the terminal state and visible screen.
+    func grantAutoProvideConsent(chatID: String) async throws {
+        try await session.send(.grantAutoProvideConsent(chatID: chatID))
+    }
+
     /// Copy the session's current selection; returns the selected text ("" if none).
     func copySelection(sessionGuid: String) async throws -> String {
         let reply = try await session.request(.copySelection(sessionGuid: sessionGuid))

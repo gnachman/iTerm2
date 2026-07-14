@@ -59,6 +59,10 @@ struct SessionView: View {
     /// animation window, where showComposer false->true just reverses the
     /// transition) - no view-identity churn needed.
     @State private var composerSeedGeneration = 0
+    /// A send held while the auto-provide consent modal is up; its buttons resume it.
+    @State private var pendingConsentText: String?
+    /// Drives the auto-provide consent modal (include terminal state + screen with AI).
+    @State private var showAutoProvideConsentAlert = false
     /// The view's current width, tracked so the principal nav-bar title can be
     /// rebuilt on rotation. The system caches the title view's width at first layout
     /// and does not re-measure it when the bar widens/narrows on rotation, so a title
@@ -161,6 +165,19 @@ struct SessionView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(sendError ?? "")
+        }
+        .alert("Share This Session with the AI?", isPresented: $showAutoProvideConsentAlert) {
+            Button("Allow") {
+                if let text = pendingConsentText { performSend(text, grantAutoProvideConsent: true) }
+                pendingConsentText = nil
+            }
+            Button("Not Now", role: .cancel) {
+                model.declineAutoProvideConsent(sessionGuid: guid)
+                if let text = pendingConsentText { performSend(text, grantAutoProvideConsent: false) }
+                pendingConsentText = nil
+            }
+        } message: {
+            Text("Include this session’s terminal state and current screen with your messages so the AI can see what’s happening. You can change this later in the chat’s permissions.")
         }
         .onAppear {
             // This view is alive; un-mark its token as departed (onDisappear fires
@@ -307,23 +324,36 @@ struct SessionView: View {
     }
 
     private func sendComposed(_ text: String) {
-        // This is the single point that rejects empty input: reject BEFORE
-        // claiming the watch, since a claim that isn't followed by a real send
-        // would cancel a concurrent view's valid in-flight watch.
+        // Single point that rejects empty input, BEFORE any watch claim, since a
+        // claim not followed by a real send would cancel a concurrent view's watch.
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             dismissComposer()
             return
         }
-        // Claim the watch slot synchronously (before the async Task), so if the
-        // view disappears before the Task runs, its onDisappear clears the claim
-        // and the late send installs no leaked watch. Keep the prior claim to
-        // restore it if this send fails.
+        dismissComposer()
+        // Before the first consented send, ask whether to include the session's
+        // terminal state + visible screen with AI messages. If needed, block on the
+        // modal (its buttons call performSend); otherwise send straight through.
+        Task {
+            if await model.shouldPromptAutoProvideConsent(sessionGuid: guid) {
+                pendingConsentText = text
+                showAutoProvideConsentAlert = true
+            } else {
+                performSend(text, grantAutoProvideConsent: false)
+            }
+        }
+    }
+
+    private func performSend(_ text: String, grantAutoProvideConsent: Bool) {
+        // Claim the watch slot right before the send Task so the view's onDisappear
+        // clears it if the view leaves, and keep the prior claim to restore on failure.
         let claim = model.claimSessionWatch(token: watchToken)
         Task {
             let outcome = await model.sendFromSessionView(text: text,
                                                           sessionGuid: guid,
                                                           resolvedChatID: composeChatID,
                                                           originatingChatID: effectiveOriginatingChatID,
+                                                          grantAutoProvideConsent: grantAutoProvideConsent,
                                                           watchToken: watchToken,
                                                           claimSequence: claim.sequence)
             switch outcome {
@@ -343,7 +373,6 @@ struct SessionView: View {
                 restoreFailedDraft(text, error: message, claim: claim)
             }
         }
-        dismissComposer()
     }
 
     /// Restore a failed send's draft: show the error, undo the watch claim, and

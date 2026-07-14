@@ -1827,6 +1827,34 @@ final class AppModel {
         macRevision >= CompanionProtocolVersion.sessionResizeRevision
     }
 
+    /// Whether the mac supports the auto-provide consent flow (asking to include a
+    /// session's terminal state + visible screen with AI messages).
+    var autoProvideConsentSupported: Bool {
+        macRevision >= CompanionProtocolVersion.autoProvideConsentRevision
+    }
+
+    /// Sessions the user chose "Not Now" for this app run, so a decline isn't re-asked
+    /// on every message (a grant persists on the mac and reads back as satisfied).
+    @ObservationIgnored private var declinedAutoProvideSessions = Set<String>()
+
+    /// Whether to block a send with the auto-provide consent modal: the mac supports
+    /// it, the user hasn't declined this session, and consent is not already in effect
+    /// for the chat the send would target. Fails closed (no prompt) on any error.
+    func shouldPromptAutoProvideConsent(sessionGuid: String) async -> Bool {
+        guard autoProvideConsentSupported,
+              !declinedAutoProvideSessions.contains(sessionGuid),
+              let client else {
+            return false
+        }
+        let satisfied = (try? await client.fetchAutoProvideConsent(sessionGuid: sessionGuid)) ?? true
+        return !satisfied
+    }
+
+    /// Remember a "Not Now" so the modal isn't shown again for this session this run.
+    func declineAutoProvideConsent(sessionGuid: String) {
+        declinedAutoProvideSessions.insert(sessionGuid)
+    }
+
     /// Whether the chat is muted, as of the last list refresh (or an optimistic
     /// local toggle awaiting the next refresh).
     func isChatMuted(chatID: String) -> Bool {
@@ -2298,6 +2326,7 @@ final class AppModel {
                              sessionGuid: String,
                              resolvedChatID: String?,
                              originatingChatID: String?,
+                             grantAutoProvideConsent: Bool = false,
                              watchToken: UUID,
                              claimSequence: Int) async -> SessionSendOutcome {
         // The caller (sendComposed) is the single point that rejects empty input,
@@ -2319,6 +2348,13 @@ final class AppModel {
                 chatID = originatingChatID
             } else {
                 chatID = try await resolveSessionBoundChat(forSessionGuid: sessionGuid)
+            }
+            // The user approved the consent modal: grant "provided automatically" on
+            // the now-resolved chat BEFORE publishing, so this first message already
+            // carries the terminal state + visible screen. Best-effort: a grant
+            // failure must not block the send.
+            if grantAutoProvideConsent {
+                try? await currentClient(label: "Grant auto-provide").grantAutoProvideConsent(chatID: chatID)
             }
             // Don't publish into a chat the Mac deleted. Check the RESOLVED target
             // against the chat list, not `chatID == openChatID && openChatWasDeleted`:
