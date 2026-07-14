@@ -2167,25 +2167,19 @@ extension ChatViewController: ChatInputViewDelegate {
             setCurrentChatModelIfNeeded(modelIdentifier)
         }
 
-        // Auto-populate terminal state. This must stay in sync with autopopulatedWhenAlways.
-        let context: String? = if shouldShareTerminalStateAutomatically, let session {
-            "<terminal-state>\n<description>This section provides information about the current state of the user’s terminal session.</description>\n" + session.aiState + "\n</terminal-state>"
-        } else {
-            nil
-        }
+        // Terminal state / visible screen auto-population moved server-side to
+        // ChatAgent (autoProvidedContext) so phone- and desktop-originated turns are
+        // handled uniformly and are not doubled; nothing is attached here.
         var message = {
             if attachments.isEmpty {
                 return Message(chatID: chatID,
                                author: .user,
-                               content: .plainText(trimmed, context: context),
+                               content: .plainText(trimmed, context: nil),
                                sentDate: Date(),
                                uniqueID: UUID(),
                                configuration: configuration)
             } else {
-                var parts = [.plainText(trimmed)] + attachments
-                if let context {
-                    parts.append(.context(context))
-                }
+                let parts = [.plainText(trimmed)] + attachments
                 return Message(chatID: chatID,
                                author: .user,
                                content: .multipart(parts,

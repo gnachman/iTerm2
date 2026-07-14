@@ -92,6 +92,9 @@ class ChatAgent {
     private let prepPipeline: MessagePrepPipeline
     private var lastSystemMessage: String?
     private var toolProviders: [ToolProvider] = []
+    // The visible screen last auto-provided to the model for this chat, so an
+    // unchanged screen is sent as a short marker instead of resending the grid.
+    private var lastAutoProvidedScreen: String?
 
     // Optional developer-only console trace of chat-agent traffic.
     // Gated on the advanced setting "aiChatVerboseConsoleLogging";
@@ -577,7 +580,47 @@ class ChatAgent {
         return conversation.supportsStreaming
     }
 
+    /// The auto-provided context for a session-bound chat, or nil if this chat is
+    /// not session-bound, has no linked session, or has granted neither "provided
+    /// automatically" permission. Read at request time so it is fresh; an unchanged
+    /// visible screen collapses to a short marker rather than resending the grid.
+    private func autoProvidedContext() -> String? {
+        guard mode == .sessionBound,
+              let guid = ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid,
+              let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+            return nil
+        }
+        let rce = RemoteCommandExecutor.instance
+        var blocks = [String]()
+        if rce.permission(chatID: chatID, inSessionGuid: guid, category: .checkTerminalState) == .always {
+            blocks.append("<terminal-state>\n" + session.aiState + "\n</terminal-state>")
+        }
+        if rce.permission(chatID: chatID, inSessionGuid: guid, category: .viewContents) == .always {
+            let screen = WorkgroupIntrospection.screenContents(
+                forSession: session,
+                requestedLines: Int(session.screen.height())).text
+            if screen == lastAutoProvidedScreen {
+                blocks.append("<visible-screen unchanged=\"true\"/>")
+            } else {
+                lastAutoProvidedScreen = screen
+                blocks.append("<visible-screen>\n" + screen + "\n</visible-screen>")
+            }
+        }
+        return blocks.isEmpty ? nil : blocks.joined(separator: "\n")
+    }
 
+    /// Append an auto-provided context block to the outgoing user body, matching how
+    /// the orchestration provider prepends its snapshot.
+    private static func appending(context: String, to body: LLM.Message.Body) -> LLM.Message.Body {
+        switch body {
+        case .text(let text):
+            return .text(text + "\n" + context)
+        case .multipart(let parts):
+            return .multipart(parts + [.text(context)])
+        case .uninitialized, .functionCall, .functionOutput, .attachment:
+            return body
+        }
+    }
 
     func fetchCompletion(userMessage: Message,
                          history: [Message],
@@ -789,6 +832,14 @@ class ChatAgent {
         var transformedBody = baseUserAIMessage.body
         for provider in toolProviders {
             transformedBody = provider.transform(outgoingUserBody: transformedBody)
+        }
+        // Auto-provide the linked session's terminal state and/or visible screen when
+        // the user has granted the matching "provided automatically" permission for
+        // this chat (Check Terminal State -> state, View Contents -> visible screen).
+        // Done here (server-side) so phone- and desktop-originated turns both get it;
+        // the desktop compose path no longer injects it.
+        if let autoContext = autoProvidedContext() {
+            transformedBody = Self.appending(context: autoContext, to: transformedBody)
         }
         let userAIMessage = AITermController.Message(
             responseID: baseUserAIMessage.responseID,
