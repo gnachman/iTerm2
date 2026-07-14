@@ -84,4 +84,29 @@ final class VT100ConductorIT2ParserTests: XCTestCase {
         XCTAssertEqual(it2.count, 1)
         XCTAssertEqual(it2.first?.string, payload)
     }
+
+    func testNestedIT2FrameGetsChildDepth() {
+        // A %it2 frame from a nested ssh (B) arrives wrapped in the outer (A)
+        // conductor's %output. The SSH_OUTPUT re-parse must still yield one intact
+        // SSH_IT2 token AND tag it with the child depth, so Conductor.handleIT2
+        // routes it to the conductor at the right nesting level.
+        let parser = makeHookedParser()  // outer conductor, depth 0
+        // The %output body is the inner conductor's own byte stream: its DCS hook,
+        // its init line, then a %it2 frame.
+        var inner = Array("\u{1b}P2000p0 boolargs -\n".utf8)
+        inner += osc134("%it2 conn5 open")
+        var stream = osc134("%output out1 100 -1 0")  // identifier pid channel depth
+        stream += inner
+        stream += osc134("%end out1")
+        let tokens = parse(stream, parser: parser)
+
+        let it2 = tokens.filter { $0.type == SSH_IT2 }
+        XCTAssertEqual(it2.count, 1, "one SSH_IT2 out of the nested stream: \(tokens.map { $0.type })")
+        XCTAssertEqual(it2.first?.string, "conn5 open")
+        // SSHInfo's depth/valid are C bitfields (not visible to Swift as fields), so
+        // read them through the inline description helper.
+        let info = SSHInfoDescription(it2.first!.sshInfo)
+        XCTAssertFalse(info.contains("invalid"), "nested token must carry valid ssh info: \(info)")
+        XCTAssertTrue(info.contains("depth=1"), "nested token must be at child depth 1: \(info)")
+    }
 }

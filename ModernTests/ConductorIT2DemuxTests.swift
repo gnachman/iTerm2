@@ -243,4 +243,90 @@ final class ConductorIT2DemuxTests: XCTestCase {
         h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["x"])))
         XCTAssertEqual(h.runs.count, 0)
     }
+
+    func testTwoConnectionsRunIndependently() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle("c2 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["a"])))
+        h.demux.handle(dataEvent("c2", Self.helloBytes(nonce: kNonce, argv: ["b"])))
+        XCTAssertEqual(h.runs.count, 2)
+        XCTAssertEqual(h.runs[0].argv, ["a"])
+        XCTAssertEqual(h.runs[1].argv, ["b"])
+
+        // Output routes to the connection that produced it.
+        h.runs[0].stdout("from-c1")
+        h.runs[1].stdout("from-c2")
+        XCTAssertEqual(h.downFrames("c1").first?.1, Data("from-c1\n".utf8))
+        XCTAssertEqual(h.downFrames("c2").first?.1, Data("from-c2\n".utf8))
+
+        // Closing one connection cancels only its command; the other is unaffected.
+        h.demux.handle("c1 close")
+        XCTAssertEqual(h.runs[0].cancellable.cancelCount, 1)
+        XCTAssertEqual(h.runs[1].cancellable.cancelCount, 0)
+        h.runs[1].completion(0)
+        XCTAssertEqual(h.downFrames("c2").last?.0, UInt8(ascii: "X"))
+    }
+
+    func testCancelBeforeHelloIsTolerated() {
+        // A CANCEL with no command running must be a no-op, not a crash.
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.upFrame(UInt8(ascii: "C"), Data())))
+        XCTAssertEqual(h.runs.count, 0)
+        XCTAssertTrue(h.sent.isEmpty)
+    }
+
+    func testMalformedHelloRejectedWithExit2() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.upFrame(UInt8(ascii: "H"), Data("not json".utf8))))
+        XCTAssertEqual(h.runs.count, 0)
+        let frames = h.downFrames("c1")
+        XCTAssertEqual(frames.first?.0, UInt8(ascii: "E"))
+        XCTAssertEqual(frames.last?.0, UInt8(ascii: "X"))
+        let exit = try? JSONSerialization.jsonObject(with: frames.last!.1) as? [String: Any]
+        XCTAssertEqual(exit?["code"] as? Int, 2)
+    }
+
+    func testMultipleWireFramesInOneDataEvent() {
+        // A HELLO immediately followed by a CANCEL in a single data chunk: both must
+        // be parsed out of the buffer, not just the first.
+        let h = Harness()
+        h.demux.handle("c1 open")
+        var payload = Self.helloBytes(nonce: kNonce, argv: ["monitor", "output"])
+        payload.append(Self.upFrame(UInt8(ascii: "C"), Data()))
+        h.demux.handle(dataEvent("c1", payload))
+        XCTAssertEqual(h.runs.count, 1, "HELLO parsed")
+        XCTAssertEqual(h.runs[0].cancellable.cancelCount, 1, "CANCEL in the same chunk also applied")
+    }
+
+    // MARK: - IT2RunCancel (the async cancel-block bridge)
+
+    func testRunCancelFiresWhenCancelledAfterReady() {
+        var fired = 0
+        let rc = IT2RunCancel()
+        rc.setCancelBlock { fired += 1 }
+        rc.cancel()
+        XCTAssertEqual(fired, 1)
+    }
+
+    func testRunCancelFiresWhenCancelledBeforeReady() {
+        // A fast remote Ctrl-C can cancel before the runner hands back its block;
+        // the request must be remembered and fired when the block arrives.
+        var fired = 0
+        let rc = IT2RunCancel()
+        rc.cancel()
+        rc.setCancelBlock { fired += 1 }
+        XCTAssertEqual(fired, 1)
+    }
+
+    func testRunCancelIsIdempotent() {
+        var fired = 0
+        let rc = IT2RunCancel()
+        rc.setCancelBlock { fired += 1 }
+        rc.cancel()
+        rc.cancel()
+        XCTAssertEqual(fired, 1, "second cancel is a no-op")
+    }
 }
