@@ -24,6 +24,7 @@
     NSCondition *_condition;
     NSMutableArray<ITMServerOriginatedMessage *> *_responses;  // @synchronized via _condition
     BOOL _disconnected;
+    BOOL _didUnregister;  // guards double-unregister (cancel then normal cleanup)
 }
 
 - (instancetype)initWithKey:(id)key displayName:(NSString *)displayName {
@@ -94,11 +95,17 @@
 }
 
 - (void)disconnect {
-    [[iTermAPIHelper sharedInstance] unregisterInProcessAPIConnection:_connection];
+    // Idempotent: -cancel and the normal post-run cleanup can both call this. Only
+    // the first unregisters (which posts a single Script Console "closed" event).
     [_condition lock];
+    const BOOL alreadyUnregistered = _didUnregister;
+    _didUnregister = YES;
     _disconnected = YES;
     [_condition broadcast];
     [_condition unlock];
+    if (!alreadyUnregistered) {
+        [[iTermAPIHelper sharedInstance] unregisterInProcessAPIConnection:_connection];
+    }
 }
 
 @end
@@ -108,8 +115,9 @@
 + (void)runWithArguments:(NSArray<NSString *> *)arguments
         originIdentifier:(NSString *)originIdentifier
        originDisplayName:(NSString *)originDisplayName
-                  stdout:(void (^)(NSString *))stdoutBlock
-                  stderr:(void (^)(NSString *))stderrBlock
+           stdoutHandler:(void (^)(NSString *))stdoutBlock
+           stderrHandler:(void (^)(NSString *))stderrBlock
+     cancellationHandler:(void (^)(dispatch_block_t))cancellationHandler
               completion:(void (^)(int32_t))completion {
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
         if (![iTermAPIHelper isEnabled]) {
@@ -132,6 +140,11 @@
 
         id key = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:originIdentifier];
         iTermIt2APIChannel *channel = [[iTermIt2APIChannel alloc] initWithKey:key displayName:originDisplayName];
+        // Hand the caller a cancel hook before we block running the command:
+        // disconnecting the channel unblocks a waiting receive so the command unwinds.
+        if (cancellationHandler) {
+            cancellationHandler(^{ [channel disconnect]; });
+        }
         const int32_t exitCode = [IT2Runner runArguments:arguments
                                                   stdout:stdoutBlock
                                                   stderr:stderrBlock

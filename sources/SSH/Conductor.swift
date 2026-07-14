@@ -336,6 +336,11 @@ class Conductor: NSObject, SSHIdentityProvider {
     @objc var autopollEnabled = true
     var _queueWrites = true
     var autopoll = ""
+    // it2 CLI proxy (see Conductor+IT2). The demux is created lazily on the first
+    // %it2 frame; it2Nonce is the per-session secret injected into the remote env
+    // at startup, used to authorize incoming HELLOs.
+    var it2Demux: ConductorIT2Demux?
+    var it2Nonce: String?
     // Jumps that children must do.
     var subsequentJumps: [SSHReconnectionInfo] = []
     // If non-nil, a jump that I haven't done yet.
@@ -494,6 +499,9 @@ class Conductor: NSObject, SSHIdentityProvider {
     }
 
     deinit {
+        // Stop any it2 command still looping on a background queue; nothing else
+        // references this conductor at deinit, so there is no concurrent access.
+        it2Demux?.cancelAll()
         let uniqueID = guid
         let sshid = restorableState.parsedSSHArguments.identity
         Task { @MainActor in
@@ -833,6 +841,12 @@ extension Conductor {
         case framerGetenv(String)
         case framerExecPythonStatements(String)
 
+        // it2 CLI proxy: bind/accept a unix socket on the remote, relay bytes back
+        // to an accepted connection, and close it. See framer.py handle_it2*.
+        case framerIT2Listen(path: String)
+        case framerIT2Send(connid: String, data: Data)
+        case framerIT2Close(connid: String)
+
         var isFramer: Bool {
             switch self {
             case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_), .pythonversion,
@@ -841,7 +855,8 @@ extension Conductor {
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
-                    .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements:
+                    .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements,
+                    .framerIT2Listen, .framerIT2Send, .framerIT2Close:
                 return true
             }
         }
@@ -904,6 +919,12 @@ extension Conductor {
                 return (["save"] + kvps).joined(separator: "\n")
             case .framerFile(let subcommand):
                 return "file\n" + subcommand.stringValue
+            case .framerIT2Listen(path: let path):
+                return ["it2listen", path].joined(separator: "\n")
+            case .framerIT2Send(connid: let connid, data: let data):
+                return ["it2send", connid, data.base64EncodedString()].joined(separator: "\n")
+            case .framerIT2Close(connid: let connid):
+                return ["it2close", connid].joined(separator: "\n")
             }
         }
 
@@ -963,6 +984,12 @@ extension Conductor {
                 return "autopoll"
             case .framerFile(let subcommand):
                 return "file \(subcommand.operationDescription)"
+            case .framerIT2Listen(path: let path):
+                return "it2listen \(path)"
+            case .framerIT2Send(connid: let connid, data: let data):
+                return "it2send \(connid) \(data.semiVerboseDescription)"
+            case .framerIT2Close(connid: let connid):
+                return "it2close \(connid)"
             }
         }
     }
@@ -1233,7 +1260,7 @@ extension Conductor {
         // It's particularly important for keystrokes to reduce latency when typing quickly.
         var supportsPipelining: Bool {
             switch self.command {
-            case .framerSend:
+            case .framerSend, .framerIT2Send:
                 return true
             case .framerFile(let sub):
                 switch sub {
@@ -1249,7 +1276,7 @@ extension Conductor {
         var size: Int {
             precondition(supportsPipelining)
             switch self.command {
-            case .framerSend:
+            case .framerSend, .framerIT2Send:
                 // This only needs to be a rough approximation of the size (for example it doesn't
                 // include line breaks or try to account for UTF-8 encoding)
                 return command.stringValue.count * 4 / 3
@@ -1819,6 +1846,21 @@ extension Conductor {
         send(.framerSend(data, pid: pid), .fireAndForget)
     }
 
+    // it2 CLI proxy senders. The demux (see Conductor+IT2) drives these to open a
+    // listening socket on the remote, push bytes back to an accepted it2.py
+    // connection, and tear it down.
+    func it2Listen(path: String) {
+        send(.framerIT2Listen(path: path), .fireAndForget)
+    }
+
+    func it2Send(connid: String, data: Data) {
+        send(.framerIT2Send(connid: connid, data: data), .fireAndForget)
+    }
+
+    func it2Close(connid: String) {
+        send(.framerIT2Close(connid: connid), .fireAndForget)
+    }
+
     private func framerKill(pid: Int) {
         send(.framerKill(pid: pid), .fireAndForget)
     }
@@ -2252,6 +2294,10 @@ extension Conductor {
             queue.removeFirst()
             try? update(executionContext: pending, result: .abort)
         }
+        // Cancel any in-flight it2 commands so a streaming command (monitor
+        // --follow) does not keep looping on a background queue holding an
+        // in-process API connection after the conductor is gone.
+        it2Demux?.cancelAll()
         state = .unhooked
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
@@ -2358,6 +2404,22 @@ extension Conductor {
                 }
             }
         }
+    }
+
+    // Remote it2 CLI RPC. Framer emits "%it2 <connid> <event> [<base64>]" frames
+    // that arrive here whole (see SSH_IT2 / VT100ConductorParser). Route by depth
+    // so a frame is handled by the conductor that owns its nesting level, then hand
+    // it to the per-connid demux (Conductor+IT2) which reconstructs the it2.py wire
+    // protocol and dispatches through the in-process API server.
+    @objc(handleIT2:depth:)
+    func handleIT2(_ string: String, depth: Int32) {
+        if depth != self.depth {
+            DLog("Pass it2 frame with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            parent?.handleIT2(string, depth: depth)
+            return
+        }
+        DLog("handleIT2 \(string.semiVerboseDescription) depth=\(depth)")
+        it2DemuxForHandling().handle(string)
     }
 
     @objc(handleSideChannelOutput:pid:channel:depth:)

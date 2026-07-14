@@ -106,6 +106,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenConvertAbsoluteRange(_ range: VT100GridAbsCoordRange, toTextDocumentOfType type: String?, filename: String?, forceWide: Bool) {}
     func screenDidHookSSHConductor(withToken token: String, uniqueID: String, boolArgs: String, sshargs: String, dcsID: String, savedState: [AnyHashable : Any]) {}
     func screenDidReadSSHConductorLine(_ string: String, depth: Int32) {}
+    func screenHandleIT2(_ string: String?, depth: Int32) {}
     func screenDidUnhookSSHConductor() {}
     func screenDidBeginSSHConductorCommand(withIdentifier identifier: String, depth: Int32) {}
     func screenDidEndSSHConductorCommand(withIdentifier identifier: String, type: String, status: UInt8, depth: Int32) {}

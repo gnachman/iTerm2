@@ -19095,6 +19095,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_conductor handleTerminatePID:pid withCode:code depth:depth];
 }
 
+- (void)screenHandleIT2:(NSString *)string depth:(int)depth {
+    if (!string) {
+        return;
+    }
+    [_conductor handleIT2:string depth:depth];
+}
+
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
     DLog(@"%@", uniqueID);
     _connectingSSH = NO;

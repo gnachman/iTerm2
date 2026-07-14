@@ -1842,8 +1842,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                    token->type != SSH_BEGIN &&
                    token->type != SSH_END &&
                    token->type != SSH_LINE &&
-                   token->type != SSH_OUTPUT) {
-            DLog(@"Unexpected field receipt end");
+                   !VT100TokenTypeIsSSHAsyncStream(token->type)) {
+            // The async SSH streams (%output, %it2) ride independent multiplexed channels and
+            // can legitimately interleave between a download's body tokens, so they must not
+            // abort it. (SSH_IT2 was the token that made a shared predicate worthwhile.)
+            RLog(@"Unexpected field receipt end");
             [_delegate terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
         }
@@ -1867,11 +1870,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             _copyMode = VT100TerminalCopyModeNone;
             return;
         } else if (_copyMode != VT100TerminalCopyModeSegmented &&
-                   token->type != SSH_OUTPUT) {
+                   !VT100TokenTypeIsSSHAsyncStream(token->type)) {
             // In segmented mode we allow unexpected tokens. This is to work around tmux's
-            // redrawing between passthroughs. SSH_OUTPUT tokens are also allowed since they
-            // are wrappers that contain the actual multitoken body. Otherwise something went
-            // wrong (ssh died?) and it's best to exit copy mode.
+            // redrawing between passthroughs. The async SSH streams (%output wrappers and %it2
+            // RPC frames) arrive interleaved on independent channels, so they are allowed too.
+            // Otherwise something went wrong (ssh died?) and it's best to exit copy mode.
             [_delegate terminalPasteboardReceiptEndedUnexpectedly];
             _copyMode = VT100TerminalCopyModeNone;
         }
@@ -3077,6 +3080,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self.delegate terminalHandleSSHTerminatePID:token.csi->p[0]
                                                 withCode:token.csi->p[1]
                                                    depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
+            break;
+
+        case SSH_IT2:
+            [self.delegate terminalHandleIT2:token.string
+                                       depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case DCS_BEGIN_SYNCHRONIZED_UPDATE:

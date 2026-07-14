@@ -22,11 +22,18 @@ NS_ASSUME_NONNULL_BEGIN
 // `completion` gets the process-style exit code. The command runs on a background
 // queue (never main) so its blocking API round-trips do not deadlock the
 // dispatch, and the process is never terminated.
+//
+// `cancellationHandler`, if non-nil, is invoked once the command is about to run
+// and handed a `cancel` block. Calling `cancel` (from any thread) unblocks a
+// command that is waiting on the API server (e.g. `monitor --follow`) so it
+// unwinds and returns promptly; harmless to call after completion. This is how a
+// remote Ctrl-C tears down a streaming command.
 + (void)runWithArguments:(NSArray<NSString *> *)arguments
         originIdentifier:(NSString *)originIdentifier
        originDisplayName:(NSString *)originDisplayName
-                  stdout:(void (^)(NSString *line))stdoutBlock
-                  stderr:(void (^)(NSString *line))stderrBlock
+           stdoutHandler:(void (^)(NSString *line))stdoutBlock
+           stderrHandler:(void (^)(NSString *line))stderrBlock
+     cancellationHandler:(void (^ _Nullable)(dispatch_block_t cancel))cancellationHandler
               completion:(void (^)(int32_t exitCode))completion;
 
 @end

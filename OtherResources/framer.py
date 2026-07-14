@@ -57,6 +57,13 @@ IT2_CONNS = {}
 # waiting for the remote client to drain the socket. A stalled client is
 # dropped rather than head-of-line-blocking every other framer command.
 IT2_DRAIN_TIMEOUT = 30
+# framer emits one OSC 134 "%it2 <connid> data <b64>" frame per socket read (via
+# send_esc), and iTerm2's conductor OSC parser accumulates a frame's payload one
+# char at a time (O(n^2) in its length). Normal up-traffic is only tiny
+# HELLO/CANCEL, so this cap is inert in practice; it just stops a misbehaving or
+# hostile client on the socket from feeding one giant frame to that parser. The
+# demux reassembles the it2.py wire frames across chunks.
+IT2_READ_CHUNK = 1024
 
 def squash(i):
     a = list(map(chr, list(range(48,58))+list(range(65,91))+list(range(97,123))))
@@ -1623,7 +1630,7 @@ async def handle_it2_connection(reader, writer):
     unlock(q)
     try:
         while True:
-            data = await reader.read(65536)
+            data = await reader.read(IT2_READ_CHUNK)
             if not data:
                 break
             q = lock()

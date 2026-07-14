@@ -127,6 +127,50 @@ async def test_happy_path():
     return ok
 
 
+async def test_large_client_output_is_chunked_and_reassembles():
+    """A client write larger than IT2_READ_CHUNK must be emitted as several %it2
+    data frames (so iTerm2's O(n^2) OSC parser is never handed one huge frame),
+    and their concatenation must equal the original bytes."""
+    print("test_large_client_output_is_chunked_and_reassembles")
+    ok = True
+
+    def check(cond, msg):
+        nonlocal ok
+        if not cond:
+            ok = False
+            print("  FAIL:", msg)
+
+    _frames.clear()
+    _reset_server()
+
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "it2.sock")
+    await framer.handle_it2listen("id-listen3", [path])
+    reader, writer = await asyncio.open_unix_connection(path)
+    await wait_for(lambda: frames_of_kind("open"))
+
+    payload = bytes((i * 7) & 0xff for i in range(5000))  # > IT2_READ_CHUNK (1024)
+    writer.write(payload)
+    await writer.drain()
+
+    await wait_for(lambda: sum(len(base64.b64decode(f.split()[3]))
+                               for f in frames_of_kind("data")) >= len(payload))
+    datas = frames_of_kind("data")
+    check(len(datas) >= 2, "large output split into multiple frames: got %d" % len(datas))
+    for f in datas:
+        chunk = base64.b64decode(f.split()[3])
+        check(len(chunk) <= framer.IT2_READ_CHUNK, "each frame within IT2_READ_CHUNK: %d" % len(chunk))
+    reassembled = b"".join(base64.b64decode(f.split()[3]) for f in datas)
+    check(reassembled == payload, "chunks reassemble to the original bytes")
+
+    writer.close()
+    _reset_server()
+    with contextlib.suppress(OSError):
+        os.unlink(path)
+    print("  PASS" if ok else "  FAILED")
+    return ok
+
+
 async def test_chmod_failure_tears_down_and_recovers():
     """If chmod fails after the socket is bound, the server must be torn down and
     the global reset so the socket is not left live/exposed and re-listen works."""
@@ -247,6 +291,7 @@ async def run():
     results = []
     for test in (
         test_happy_path,
+        test_large_client_output_is_chunked_and_reassembles,
         test_chmod_failure_tears_down_and_recovers,
         test_send_drain_timeout_does_not_block_loop,
     ):
