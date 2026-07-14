@@ -163,6 +163,13 @@ final class CompanionPairingController: NSObject {
                   self.relayConfigurationChanged else {
                 return
             }
+            // Don't stack two re-pair modals at launch: if the pairing is also
+            // incomplete (missing/denied keychain credentials),
+            // promptToRepairIfPairingIncompleteIfNeeded already asks the user to
+            // re-pair, and re-pairing subsumes the relay-move fix. Yield to it.
+            if case .incomplete = self.pairingCompleteness() {
+                return
+            }
             let alert = NSAlert()
             alert.messageText = "Re-pair Your Companion Device"
             alert.informativeText =
