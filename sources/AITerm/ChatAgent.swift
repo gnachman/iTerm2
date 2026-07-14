@@ -585,17 +585,23 @@ class ChatAgent {
     /// automatically" permission. Read at request time so it is fresh; an unchanged
     /// visible screen collapses to a short marker rather than resending the grid.
     private func autoProvidedContext() -> String? {
-        guard mode == .sessionBound,
-              let guid = ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid,
+        guard mode == .sessionBound else {
+            return nil
+        }
+        guard let guid = ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid,
               let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+            RLog("autoProvidedContext: chat \(chatID) is session-bound but has no linked session (guid=\(ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid ?? "nil")); not auto-providing")
             return nil
         }
         let rce = RemoteCommandExecutor.instance
+        let stateP = rce.permission(chatID: chatID, inSessionGuid: guid, category: .checkTerminalState)
+        let contentsP = rce.permission(chatID: chatID, inSessionGuid: guid, category: .viewContents)
+        RLog("autoProvidedContext: chat \(chatID) session \(guid): Check Terminal State=\(stateP), View Contents=\(contentsP) (inject when .always)")
         var blocks = [String]()
-        if rce.permission(chatID: chatID, inSessionGuid: guid, category: .checkTerminalState) == .always {
+        if stateP == .always {
             blocks.append("<terminal-state>\n" + session.aiState + "\n</terminal-state>")
         }
-        if rce.permission(chatID: chatID, inSessionGuid: guid, category: .viewContents) == .always {
+        if contentsP == .always {
             let screen = WorkgroupIntrospection.screenContents(
                 forSession: session,
                 requestedLines: Int(session.screen.height())).text
