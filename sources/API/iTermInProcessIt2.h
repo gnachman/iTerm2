@@ -16,8 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Parse and run `arguments` (excluding the executable name) on behalf of a remote
 // it2 identified by `originIdentifier` (a stable per-ssh-session id) shown to the
-// user as `originDisplayName` (e.g. "ssh user@host"). The user is prompted once
-// per session to allow API access; a denial fails without running the command.
+// user as `originDisplayName` (e.g. "ssh user@host"), used here only for Script
+// Console attribution. The caller is responsible for checking that the API is
+// enabled and that this origin has been authorized before calling; this method
+// unconditionally runs the command.
 // `stdoutBlock`/`stderrBlock` receive output lines (on a background queue).
 // `completion` gets the process-style exit code. The command runs on a background
 // queue (never main) so its blocking API round-trips do not deadlock the

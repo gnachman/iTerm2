@@ -27,7 +27,15 @@ public final class IT2Runner: NSObject {
     /// to the blocks and dispatching API messages through `channel`. Returns the
     /// process-style exit code. Never touches real process stdio and never
     /// terminates the process, which is what makes it safe to call inside iTerm2.
-    @objc(runArguments:stdout:stderr:channel:)
+    // The ObjC selector deliberately uses stdoutHandler:/stderrHandler: rather than
+    // stdout:/stderr:. In an Objective-C translation unit <stdio.h> #defines
+    // stdout -> __stdoutp and stderr -> __stderrp, so an ObjC call site written as
+    // `[IT2Runner runArguments:... stdout:... stderr:...]` is preprocessed into the
+    // selector runArguments:__stdoutp:__stderrp:channel:. Swift's @objc(...) string is
+    // NOT preprocessed, so a stdout:/stderr: selector here would never match the
+    // preprocessed ObjC call site and would crash with an unrecognized selector at
+    // runtime. Keep the Swift parameter labels as stdout/stderr for natural Swift use.
+    @objc(runArguments:stdoutHandler:stderrHandler:channel:)
     public static func run(_ arguments: [String],
                            stdout: @escaping (String) -> Void,
                            stderr: @escaping (String) -> Void,
