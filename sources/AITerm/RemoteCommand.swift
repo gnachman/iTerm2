@@ -597,7 +597,11 @@ extension RemoteCommand.Content {
         case .isAtPrompt(_):
             "Returns true if the terminal is at the command prompt, allowing safe command injection."
         case .executeCommand(_):
-            "Runs a shell command and returns its output."
+            "Runs a shell command and returns its output once the command finishes. "
+            + "Do NOT use it for interactive or full-screen (TUI) programs (for example "
+            + "vim, less, top, an ssh session, a REPL, or claude): it blocks until the "
+            + "command exits, so an interactive or long-running program never returns. To "
+            + "launch or drive a TUI from the command line, use insert_text_at_cursor instead."
         case .getLastExitStatus(_):
             "Retrieves the exit status of the last executed command."
         case .getCommandHistory(_):
@@ -625,7 +629,12 @@ extension RemoteCommand.Content {
         case .setClipboard(_):
             "Copies text to the clipboard."
         case .insertTextAtCursor(_):
-            "Inserts text into the terminal input at the cursor position."
+            "Inserts text into the terminal input at the cursor position, as if typed; "
+            + "end with a newline to submit it. Use this to launch and interact with "
+            + "interactive or full-screen (TUI) programs - start one from the command "
+            + "prompt (type the command plus a newline), choose a menu option, or send "
+            + "keystrokes to a running app - since unlike execute_command it does not wait "
+            + "for the program to finish."
         case .deleteCurrentLine(_):
             "Clears the current command line input (only at the prompt)."
         case .getManPage(_):
