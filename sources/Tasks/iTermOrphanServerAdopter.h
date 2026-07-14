@@ -38,7 +38,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy) NSSet<NSNumber *> * _Nullable (^claimedChildPIDsProvider)(void);
 
 + (instancetype)sharedInstance;
-- (void)openWindowWithOrphansWithCompletion:(void (^)(void))completion;
+// Pre-existing declaration (not Window Projects work); marked _Nullable
+// because iTermApplicationDelegate.m has pre-existing call sites passing nil.
+// TODO revert if upstream annotates this itself.
+- (void)openWindowWithOrphansWithCompletion:(void (^ _Nullable)(void))completion;
 - (void)removePath:(NSString *)path;
 - (void)adoptPartialAttachments:(NSArray<id<iTermPartialAttachment>> *)partialAttachments;
 
