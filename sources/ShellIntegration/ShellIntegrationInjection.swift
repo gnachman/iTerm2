@@ -132,9 +132,13 @@ import Foundation
                                       env: [String: String],
                                       shell: String,
                                       argv: [String]) -> ([String: String], [String]) {
+        // allowSystemBash: true because a remote /bin/bash is a normal injectable shell (unlike the
+        // local Darwin host's 3.2.57). Conductor.shellSupportsInjection has already excluded macOS's
+        // bash by version string before we get here.
         guard let injector = ShellIntegrationInjectionFactory().createInjector(
             shellIntegrationDir: shellIntegrationDir,
-            path: shell) else {
+            path: shell,
+            allowSystemBash: true) else {
             return (env, argv)
         }
         // Keep injector from getting dealloced
@@ -180,9 +184,13 @@ fileprivate class ShellIntegrationInjectionFactory {
         case xonsh = "xonsh"
         case zsh = "zsh"
 
-        init?(path: String) {
-            if path == "/bin/bash" {
+        init?(path: String, allowSystemBash: Bool) {
+            if !allowSystemBash && path == "/bin/bash" {
                 // Refuse to work with macOS’s bash. See note in ProfilesGeneralPreferencesViewController.
+                // This guard is path-based and only correct for the local Darwin host, where
+                // /bin/bash is the un-injectable 3.2.57. On a remote host /bin/bash is typically a
+                // modern injectable bash, so the SSH path passes allowSystemBash: true after
+                // Conductor.shellSupportsInjection has already vetted the version string.
                 return nil
             }
             let name = path.lastPathComponent.lowercased().removing(prefix: "-")
@@ -193,17 +201,21 @@ fileprivate class ShellIntegrationInjectionFactory {
         }
     }
 
-    func createInjector(shellIntegrationDir: String, path: String) -> ShellIntegrationInjecting? {
+    func createInjector(shellIntegrationDir: String,
+                        path: String,
+                        allowSystemBash: Bool = false) -> ShellIntegrationInjecting? {
         let login = "login"
         if path == login {
             DLog("Want to create injector for `login`")
             if let shell = iTermOpenDirectory.userShell(), shell != login {
                 DLog("User shell is\(shell)")
-                return createInjector(shellIntegrationDir: shellIntegrationDir, path: shell)
+                return createInjector(shellIntegrationDir: shellIntegrationDir,
+                                      path: shell,
+                                      allowSystemBash: allowSystemBash)
             }
             return nil
         }
-        switch Shell(path: path) {
+        switch Shell(path: path, allowSystemBash: allowSystemBash) {
         case .none:
             RLog("Don't know what shell \(path) is")
             return nil
