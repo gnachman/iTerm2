@@ -267,6 +267,22 @@ struct RemoteCommand: Codable {
                     false
                 }
             }
+
+            // Whether "Provided automatically" also hides the on-request tools. Check
+            // Terminal State does: its autopopulated state fully replaces the state
+            // queries. View Contents does NOT: the autopopulated visible screen only
+            // covers the current grid, while the history tools reach off-screen
+            // content (command history, an earlier command's full output, the
+            // partially-typed command), so they stay available on request.
+            var suppressesOnRequestToolsWhenAlways: Bool {
+                switch self {
+                case .checkTerminalState:
+                    true
+                case .viewContents, .runCommands, .writeToClipboard, .typeForYou,
+                        .viewManpages, .writeToFilesystem, .actInWebBrowser:
+                    false
+                }
+            }
         }
 
         var permissionCategory: PermissionCategory {

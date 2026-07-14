@@ -67,7 +67,11 @@ class RemoteCommandExecutor {
                                    permission: Permission) -> Bool {
         switch permission {
         case .always:
-            return !category.autopopulatedWhenAlways
+            // Autopopulated categories may still expose their on-request tools:
+            // Check Terminal State suppresses them (redundant with the autopopulated
+            // state), View Contents does not (its tools reach off-screen content the
+            // autopopulated visible screen does not cover).
+            return !category.suppressesOnRequestToolsWhenAlways
         case .ask:
             return true
         case .never:
