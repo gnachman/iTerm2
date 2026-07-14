@@ -43,4 +43,40 @@ final class ConductorIT2CommandTests: XCTestCase {
         XCTAssertEqual(cmd.stringValue, "it2close\nc5")
         XCTAssertTrue(cmd.isFramer)
     }
+
+    // The it2 auth nonce + socket path must survive conductor state restoration, or
+    // it2-over-ssh would silently stop working after a restore. (The separate SSH
+    // recovery path re-reads them from the framer env; see didResynchronize.)
+    func testIT2NonceAndSocketPersistAcrossRestorableStateCoding() throws {
+        let state = Conductor.RestorableState(
+            sshargs: "localhost",
+            varsToSend: [:],
+            clientVars: [:],
+            payloads: [],
+            initialDirectory: nil,
+            shouldInjectShellIntegration: true,
+            parsedSSHArguments: ParsedSSHArguments("localhost", booleanArgs: "",
+                                                   hostnameFinder: iTermHostnameFinder()),
+            depth: 0,
+            parentState: nil,
+            framedPID: nil,
+            state: .ground,
+            queue: [],
+            boolArgs: "",
+            dcsID: "dcs",
+            clientUniqueID: "cid",
+            modifiedVars: nil,
+            modifiedCommandArgs: nil,
+            homeDirectory: "/home/u",
+            shell: "/bin/zsh",
+            uname: nil,
+            _terminalConfiguration: nil,
+            discoveredHostname: nil,
+            it2Nonce: "the-nonce",
+            it2SocketPath: "/home/u/.iterm2/it2/abc.sock")
+        let data = try JSONEncoder().encode(state)
+        let decoded = try JSONDecoder().decode(Conductor.RestorableState.self, from: data)
+        XCTAssertEqual(decoded.it2Nonce, "the-nonce")
+        XCTAssertEqual(decoded.it2SocketPath, "/home/u/.iterm2/it2/abc.sock")
+    }
 }

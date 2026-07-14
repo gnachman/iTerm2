@@ -102,6 +102,15 @@ final class ConductorIT2DemuxTests: XCTestCase {
         return "\(connid) data \(bytes.base64EncodedString())"
     }
 
+    // Let the demux's coalescing joiner (a DispatchQueue.main.async) flush pending output. The
+    // flush block was enqueued on the first setNeedsUpdate, before this one, so FIFO ordering on
+    // the main queue guarantees it runs before we return.
+    private func pumpMainQueue() {
+        let exp = expectation(description: "pump main queue")
+        DispatchQueue.main.async { exp.fulfill() }
+        wait(for: [exp], timeout: 2)
+    }
+
     // MARK: - Tests
 
     func testHappyPathStreamsAndExits() {
@@ -129,6 +138,28 @@ final class ConductorIT2DemuxTests: XCTestCase {
         let exit = try? JSONSerialization.jsonObject(with: frames[2].1) as? [String: Any]
         XCTAssertEqual(exit?["code"] as? Int, 0)
         XCTAssertEqual(h.closed, ["c1"])
+    }
+
+    // Consecutive same-type output lines coalesce into ONE frame (the point of #8), while a
+    // type change flushes the current batch. finish() drains synchronously, so no pump needed.
+    func testConsecutiveSameTypeLinesCoalesceIntoOneFrame() {
+        let h = Harness()
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["session", "list"])))
+        h.runs[0].stdout("one")
+        h.runs[0].stdout("two")
+        h.runs[0].stdout("three")
+        h.runs[0].stderr("err")   // type change -> flushes the O batch, starts an E batch
+        h.runs[0].completion(0)
+
+        let frames = h.downFrames("c1")
+        XCTAssertEqual(frames.count, 3, "one coalesced O frame, one E frame, one X frame")
+        XCTAssertEqual(frames[0].0, UInt8(ascii: "O"))
+        XCTAssertEqual(frames[0].1, Data("one\ntwo\nthree\n".utf8),
+                       "three stdout lines merged into a single frame payload")
+        XCTAssertEqual(frames[1].0, UInt8(ascii: "E"))
+        XCTAssertEqual(frames[1].1, Data("err\n".utf8))
+        XCTAssertEqual(frames[2].0, UInt8(ascii: "X"))
     }
 
     func testHelloSplitAcrossDataFramesReassembles() {
@@ -165,6 +196,24 @@ final class ConductorIT2DemuxTests: XCTestCase {
 
         h.demux.handle(dataEvent("c4", Self.upFrame(UInt8(ascii: "C"), Data())))
         XCTAssertEqual(h.runs[0].cancellable.cancelCount, 1)
+    }
+
+    func testUndecodableDataFrameDropsConnection() {
+        let h = Harness()
+        h.demux.handle("c5 open")
+        h.demux.handle(dataEvent("c5", Self.helloBytes(nonce: kNonce, argv: ["session", "list"])))
+        XCTAssertEqual(h.runs.count, 1)
+        XCTAssertEqual(h.closed, [], "still open after a valid HELLO")
+
+        // A chunk that is not valid base64 desyncs the length-prefixed reassembly, so the
+        // connection must be torn down rather than left to misparse a following chunk.
+        h.demux.handle("c5 data @@@")
+        XCTAssertEqual(h.closed, ["c5"], "connection dropped on undecodable chunk")
+        XCTAssertEqual(h.runs[0].cancellable.cancelCount, 1, "in-flight command cancelled")
+
+        // A subsequent well-formed chunk for the dropped connid must not resurrect it.
+        h.demux.handle(dataEvent("c5", Data([0x00])))
+        XCTAssertEqual(h.runs.count, 1, "no new run after the connection was dropped")
     }
 
     func testCloseEventCancelsRunningCommand() {
@@ -214,6 +263,28 @@ final class ConductorIT2DemuxTests: XCTestCase {
         XCTAssertEqual(h.runs.first?.argv, ["session", "list"])
     }
 
+    func testNonceSurvivesRecoveryBlip() {
+        // After an SSH recovery the conductor briefly loses it2Nonce, then re-reads
+        // it from the surviving framer env. Because the demux reads the nonce lazily
+        // per HELLO, authorization resumes once the value is restored (regression: a
+        // snapshotted nonce would have pinned the connection to nil forever).
+        let h = Harness(nonce: kNonce)
+        h.demux.handle("c1 open")
+        h.demux.handle(dataEvent("c1", Self.helloBytes(nonce: kNonce, argv: ["a"])))
+        XCTAssertEqual(h.runs.count, 1)
+
+        h.currentNonce = nil  // recovery: nonce transiently unavailable
+        h.demux.handle("c2 open")
+        h.demux.handle(dataEvent("c2", Self.helloBytes(nonce: kNonce, argv: ["b"])))
+        XCTAssertEqual(h.runs.count, 1, "no nonce during recovery -> reject")
+
+        h.currentNonce = kNonce  // framerGetenv restored it
+        h.demux.handle("c3 open")
+        h.demux.handle(dataEvent("c3", Self.helloBytes(nonce: kNonce, argv: ["c"])))
+        XCTAssertEqual(h.runs.count, 2, "nonce restored -> authorize again")
+        XCTAssertEqual(h.runs.last?.argv, ["c"])
+    }
+
     func testCancelAllCancelsInFlightCommands() {
         // Conductor unhook/deinit must stop a streaming command so its it2core
         // thread and in-process API connection do not leak.
@@ -254,9 +325,11 @@ final class ConductorIT2DemuxTests: XCTestCase {
         XCTAssertEqual(h.runs[0].argv, ["a"])
         XCTAssertEqual(h.runs[1].argv, ["b"])
 
-        // Output routes to the connection that produced it.
+        // Output routes to the connection that produced it. It is coalesced and flushed on the
+        // next main-loop turn, so pump before asserting (there is no completion here to drain).
         h.runs[0].stdout("from-c1")
         h.runs[1].stdout("from-c2")
+        pumpMainQueue()
         XCTAssertEqual(h.downFrames("c1").first?.1, Data("from-c1\n".utf8))
         XCTAssertEqual(h.downFrames("c2").first?.1, Data("from-c2\n".utf8))
 

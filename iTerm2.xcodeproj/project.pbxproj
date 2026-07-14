@@ -736,6 +736,7 @@
 		46385B41497E6F98C6486BFB /* CompanionWireVectors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F544D6F2B98C16911CCFCC2 /* CompanionWireVectors.swift */; };
 		4705C05130977E2C81FD75E8 /* iTermUnicodeNormalization.h in Sources */ = {isa = PBXBuildFile; fileRef = 3335AD96138BA74CC79D25A8 /* iTermUnicodeNormalization.h */; };
 		4887C7B3CAB5465296225860 /* MenuTips.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 904AE312A0E0489899D9ECB8 /* MenuTips.xcassets */; };
+		4986566FDE150EB232C2BAEE /* it2.py in Resources */ = {isa = PBXBuildFile; fileRef = F5195CCB08613B92CE54659F /* it2.py */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		4B25D583F3931EC4D3DF19FC /* cloak-page-world.js in Resources */ = {isa = PBXBuildFile; fileRef = ED1DEABF73F84ABCF9B2FDC8 /* cloak-page-world.js */; };
 		4BAE1603D66D8CBD7BFE6351 /* CompanionChatMuteRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F9C3B6CCF4E64C392DA6F3 /* CompanionChatMuteRegistry.swift */; };
@@ -5440,6 +5441,7 @@
 		B947C485FA069D07B72E94CC /* iTermWorkgroupToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07263500827075018158DEC /* iTermWorkgroupToolbarItem.swift */; };
 		B9B050C66BE98825D6AFEE47 /* cloak-page-world.js in Resources */ = {isa = PBXBuildFile; fileRef = ED1DEABF73F84ABCF9B2FDC8 /* cloak-page-world.js */; };
 		BB4ECCB6C145CDE401FE7EE7 /* CompanionPluginTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16244DB19048FCA0614235A6 /* CompanionPluginTransport.swift */; };
+		BCBEE241248164D34301D7D9 /* it2.py in Resources */ = {isa = PBXBuildFile; fileRef = F5195CCB08613B92CE54659F /* it2.py */; };
 		BD4D313E427B806663EB3D47 /* AILiveAttachmentFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11BE1CE0F1EF4E86C53D1E0 /* AILiveAttachmentFixtures.swift */; };
 		BEEFCAFEDEADC0DE00000001 /* iTermSwiftPackages.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A69FEEBA2E123B8700AFF7A8 /* iTermSwiftPackages.framework */; };
 		BEEFCAFEDEADC0DE00000002 /* librailroad_dsl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A68BE93E2DE3BA3D002DD513 /* librailroad_dsl.dylib */; };
@@ -9831,6 +9833,7 @@
 		F38C0DAB55C8520927EB4FB0 /* iTermNotifyOnStatusChangeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermNotifyOnStatusChangeController.swift; sourceTree = "<group>"; };
 		F3F259C5F8B721015754BAE2 /* iTermRowOutputCache.mm */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermRowOutputCache.mm; sourceTree = "<group>"; };
 		F5145BCC5773DB25978071C5 /* iTermScreenshotLineRangeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScreenshotLineRangeView.swift; sourceTree = "<group>"; };
+		F5195CCB08613B92CE54659F /* it2.py */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.python; name = it2.py; path = OtherResources/it2.py; sourceTree = "<group>"; };
 		F52ED8DD037F0A7D01A8A066 /* PTYSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYSession.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F56B230B03A1B36701A8A066 /* PTYWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYWindow.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F5E533B403B2959201A8A066 /* PTYTabView.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTabView.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -10447,6 +10450,7 @@
 				A6EEAED2283072CA0039E850 /* framer.py */,
 				A65DF4A42849C11D00AA29AB /* bash-si-loader */,
 				DF18C01510605DB0C639038F /* ai-models.json */,
+				F5195CCB08613B92CE54659F /* it2.py */,
 			);
 			name = "Other Assets";
 			sourceTree = "<group>";
@@ -19241,6 +19245,7 @@
 				857E7AC2AF587CEAC46001BE /* cloak-page-world.js in Resources */,
 				8442E3770F2B54D3419663DB /* challenge-frame-detection.js in Resources */,
 				70FDC6E6ECC46F2A33AD733D /* ai-models.json in Resources */,
+				BCBEE241248164D34301D7D9 /* it2.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -19938,6 +19943,7 @@
 				4B25D583F3931EC4D3DF19FC /* cloak-page-world.js in Resources */,
 				AA9D88347B84F8285654354D /* challenge-frame-detection.js in Resources */,
 				FF762198E91EE94A792CFEC8 /* ai-models.json in Resources */,
+				4986566FDE150EB232C2BAEE /* it2.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -68,6 +68,11 @@ class Conductor: NSObject, SSHIdentityProvider {
         var uname: String?
         var _terminalConfiguration: CodableNSDictionary?
         var discoveredHostname: String?
+        // it2 CLI proxy: the per-session auth nonce and remote socket path. Persisted
+        // so it2-over-ssh survives state restoration; on SSH recovery (init(recovery:))
+        // these start nil and are re-read from the surviving framer env on resync.
+        var it2Nonce: String?
+        var it2SocketPath: String?
 
         init(sshargs: String,
              varsToSend: [String: String],
@@ -90,7 +95,9 @@ class Conductor: NSObject, SSHIdentityProvider {
              shell: String?,
              uname: String?,
              _terminalConfiguration: CodableNSDictionary?,
-             discoveredHostname: String?) {
+             discoveredHostname: String?,
+             it2Nonce: String? = nil,
+             it2SocketPath: String? = nil) {
             self.sshargs = sshargs
             self.varsToSend = varsToSend
             self.clientVars = clientVars
@@ -113,6 +120,8 @@ class Conductor: NSObject, SSHIdentityProvider {
             self.uname = uname
             self._terminalConfiguration = _terminalConfiguration
             self.discoveredHostname = discoveredHostname
+            self.it2Nonce = it2Nonce
+            self.it2SocketPath = it2SocketPath
         }
 
         private enum CodingKeys: CodingKey {
@@ -121,7 +130,7 @@ class Conductor: NSObject, SSHIdentityProvider {
                framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
                modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
                homeDirectory, shell, pythonversion, uname, terminalConfiguration,
-               discoveredHostname
+               discoveredHostname, it2Nonce, it2SocketPath
         }
 
         required init(from decoder: Decoder) throws {
@@ -150,6 +159,8 @@ class Conductor: NSObject, SSHIdentityProvider {
                 _terminalConfiguration = try? container.decode(CodableNSDictionary?.self,
                                                                forKey: .terminalConfiguration)
                 discoveredHostname = try? container.decode(String?.self, forKey: .discoveredHostname)
+                it2Nonce = try? container.decode(String?.self, forKey: .it2Nonce)
+                it2SocketPath = try? container.decode(String?.self, forKey: .it2SocketPath)
             } catch {
                 DLogMain("Failed to restore conductor: \(error)")
                 throw error
@@ -180,6 +191,8 @@ class Conductor: NSObject, SSHIdentityProvider {
             try container.encode(uname, forKey: .uname)
             try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
             try container.encode(discoveredHostname, forKey: .discoveredHostname)
+            try container.encode(it2Nonce, forKey: .it2Nonce)
+            try container.encode(it2SocketPath, forKey: .it2SocketPath)
         }
     }
     let guid = UUID().uuidString
@@ -338,9 +351,19 @@ class Conductor: NSObject, SSHIdentityProvider {
     var autopoll = ""
     // it2 CLI proxy (see Conductor+IT2). The demux is created lazily on the first
     // %it2 frame; it2Nonce is the per-session secret injected into the remote env
-    // at startup, used to authorize incoming HELLOs.
+    // at startup, used to authorize incoming HELLOs; it2SocketPath is the remote
+    // unix socket framer binds (via it2Listen) and it2.py connects to (IT2_SOCK).
+    // Both are stored in RestorableState so they survive state restoration and can
+    // be re-read from the framer env on SSH recovery.
     var it2Demux: ConductorIT2Demux?
-    var it2Nonce: String?
+    var it2Nonce: String? {
+        get { restorableState.it2Nonce }
+        set { restorableState.it2Nonce = newValue }
+    }
+    var it2SocketPath: String? {
+        get { restorableState.it2SocketPath }
+        set { restorableState.it2SocketPath = newValue }
+    }
     // Jumps that children must do.
     var subsequentJumps: [SSHReconnectionInfo] = []
     // If non-nil, a jump that I haven't done yet.
@@ -1690,6 +1713,11 @@ extension Conductor {
         forceReturnToGroundState()
         resetTransitively()
         exfiltrateUsefulFramerInfo()
+        // The surviving framer + login shell still export the it2 auth nonce and
+        // socket path; re-read them so it2-over-ssh keeps working after recovery
+        // (init(recovery:) starts with a fresh RestorableState where these are nil).
+        framerGetenv("IT2_NONCE")
+        framerGetenv("IT2_SOCK")
         DLog(self.debugDescription)
     }
 
@@ -1779,6 +1807,11 @@ extension Conductor {
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
                     "clientUniqueID": clientUniqueID])
+        // Bind the it2 proxy socket now that framer is running. The path/nonce were
+        // minted and injected into the shell env during the shell-integration setup.
+        if let path = it2SocketPath {
+            it2Listen(path: path)
+        }
         runRemoteCommand(iTermAdvancedSettingsModel.unameCommand()) { [weak self] data, status in
             if status == 0 {
                 self?.uname = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -2093,6 +2126,13 @@ extension Conductor {
             case .end:
                 if let line = lines.strings.first {
                     environmentVariables[name] = line
+                    // Recover the it2 proxy state from the surviving framer env after
+                    // an SSH recovery (see didResynchronize).
+                    switch name {
+                    case "IT2_NONCE": it2Nonce = line.isEmpty ? nil : line
+                    case "IT2_SOCK": it2SocketPath = line.isEmpty ? nil : line
+                    default: break
+                    }
                 }
             }
         case .writeOnSuccess(let code):
@@ -2209,6 +2249,10 @@ extension Conductor {
                     for (local, remote) in dict {
                         payloads.append(Payload(path: local.path,
                                                 destination: remote.path))
+                    }
+                    if var vars = modifiedVars {
+                        activateIT2Proxy(home: home, env: &vars)
+                        modifiedVars = vars
                     }
                 }
                 self.shell = shell

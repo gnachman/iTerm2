@@ -14,6 +14,7 @@
 //
 
 import Foundation
+import Security  // SecRandomCopyBytes for the it2 auth nonce
 
 // it2.py <-> demux frames: [1 byte type][4 byte big-endian length][payload].
 private enum IT2FrameType {
@@ -320,5 +321,41 @@ extension Conductor {
             logger: { [weak self] message in self?.DLog(message) })
         it2Demux = demux
         return demux
+    }
+
+    // Activate the it2 CLI proxy for this session: mint the auth nonce + a remote
+    // socket path, inject IT2_SOCK/IT2_NONCE into the login shell's environment (so
+    // the remote it2.py can find and authenticate to the socket), and ship it2.py.
+    // framer only binds the socket once framing starts (see it2Listen in doFraming).
+    // Called from the shell-integration path, which implies we will frame.
+    //
+    // The socket lives in a dedicated directory under the user's home (framer
+    // creates it 0700 before binding), not in a shared world-writable place: the
+    // socket is chmod 0600, but an owner-only parent directory is the portable
+    // guarantee that no other local user can reach it. `home` is the remote $HOME
+    // resolved from getshell.
+    func activateIT2Proxy(home: String, env: inout [String: String]) {
+        let nonce = Self.it2RandomHex(byteCount: 16)
+        let socketPath = "\(home)/.iterm2/it2/\(Self.it2RandomHex(byteCount: 8)).sock"
+        it2Nonce = nonce
+        it2SocketPath = socketPath
+        env["IT2_SOCK"] = socketPath
+        env["IT2_NONCE"] = nonce
+        if let it2py = Bundle(for: Self.self).path(forResource: "it2", ofType: "py") {
+            payloads.append(Payload(path: it2py,
+                                    destination: "/$HOME/.iterm2/shell-integration/it2.py"))
+        } else {
+            DLog("it2.py missing from bundle; it2 over ssh will be unavailable")
+        }
+    }
+
+    private static func it2RandomHex(byteCount: Int) -> String {
+        var bytes = [Int8](repeating: 0, count: byteCount)
+        if SecRandomCopyBytes(kSecRandomDefault, byteCount, &bytes) == errSecSuccess {
+            return (Data(bytes: bytes, count: byteCount) as NSData).it_hexEncoded()
+        }
+        // SecRandomCopyBytes effectively never fails; a UUID keeps us unpredictable
+        // rather than crashing if it somehow does.
+        return UUID().uuidString.replacingOccurrences(of: "-", with: "")
     }
 }
