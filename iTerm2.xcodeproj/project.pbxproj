@@ -10280,22 +10280,6 @@
 				B92F80C10022DEB4FD02A6F7 /* SessionProvenanceRegistry.swift */,
 				5E7314A7A2A6834D29C14852 /* OrchestratorSafetyGate.swift */,
 			);
-			name = Services;
-			sourceTree = "<group>";
-		};
-		17E422BA95C161BE34CAF68C /* ModernTests */ = {
-			isa = PBXGroup;
-			children = (
-				98E9463133DCF8311E0E5B6E /* iTermFindOnPageHelperTests.swift */,
-				F6601DD02DFE3C2480DFDC73 /* IntervalTreeCoordinateClampingTests.swift */,
-				5F139DFA4255DC27A1E3E0FF /* AccessibilityDeletionDetectionTests.swift */,
-				F78529322C819CAD15A19251 /* IntervalTreeGraphEncodingTests.swift */,
-				86F85D24451C27760B7C75BC /* PrivateIPCheckerTests.swift */,
-				E188B891EEA2947C8B12466D /* iTermCharacterSourceTests.swift */,
-				D78783C5E320CF711E81627F /* NSStringQuotedStringForPasteTests.swift */,
-				978D530853712C6B0C6EDE31 /* iTermWindowProjectsTests.swift */,
-			);
-			path = ModernTests;
 			path = Orchestration;
 			sourceTree = "<group>";
 		};
