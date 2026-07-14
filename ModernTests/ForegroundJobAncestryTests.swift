@@ -154,4 +154,47 @@ final class ForegroundJobAncestryTests: XCTestCase {
                      "with claude dropped, clangd is orphaned and no deepest fg job is reachable from login")
         withExtendedLifetime(collection) {}
     }
+
+    // foregroundJobAncestorNames and foregroundJobAncestorChainPids must stay
+    // index-aligned even when an intermediate ancestor's fresh name reads empty and
+    // survives only via the last-known-title cache (the transient-name-failure path
+    // the diagnostics exist to investigate). Before both accessors shared one walk,
+    // chainPids dropped the cache-recovered node, so its pid was missing and the
+    // diagnostic misattributed the vanished ancestor to a live sibling.
+    func testChainPidsStayAlignedWhenAncestorSurvivesViaNameCache() {
+        ProcessNameCache.shared.removeAll()
+
+        // Cycle 1: every name reads fresh. Walking clangd records claude's title in
+        // the name cache and returns the full ancestry.
+        autoreleasepool {
+            let collection = makeCollection(dataSource: makeDataSource())
+            let clangd = collection.info(forProcessID: Self.clangdPID)
+            XCTAssertEqual(clangd?.foregroundJobAncestorNames, ["clangd", "claude"],
+                           "precondition: cycle 1 warms the name cache")
+            withExtendedLifetime(collection) {}
+        }
+
+        // Cycle 2: a brand-new collection (fresh info objects, so names are re-read)
+        // in which claude's fresh name comes back empty, as if sysctl momentarily
+        // returned an empty p_comm. claude must survive via the cached title.
+        let ds2 = FakeProcessDataSource()
+        ds2.entries = [
+            Self.loginPID: .init(name: "login", argv0: "-bash", foreground: false),
+            Self.claudePID: .init(name: "", argv0: nil, foreground: false),  // transient empty read
+            Self.clangdPID: .init(name: "clangd", argv0: nil, foreground: true),
+        ]
+        let collection2 = makeCollection(dataSource: ds2)
+        let clangd2 = collection2.info(forProcessID: Self.clangdPID)!
+
+        let names = clangd2.foregroundJobAncestorNames
+        let pids = clangd2.foregroundJobAncestorChainPids
+
+        // claude survived in `names` via the cache...
+        XCTAssertEqual(names, ["clangd", "claude"])
+        // ...and its pid is aligned at the same index (the bug produced [clangd]).
+        XCTAssertEqual(pids, [NSNumber(value: Self.clangdPID), NSNumber(value: Self.claudePID)],
+                       "chain pids must include the cache-recovered ancestor at the same index as its name")
+        XCTAssertEqual(names.count, pids.count, "names and chain pids must stay index-aligned")
+        withExtendedLifetime(collection2) {}
+    }
 }

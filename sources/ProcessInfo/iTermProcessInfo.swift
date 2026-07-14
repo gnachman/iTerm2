@@ -403,9 +403,15 @@ class iTermProcessInfo: NSObject {
         return _testValueForForegroundJob ?? expensiveValues.isForegroundJob
     }
 
-    /// Returns lowercased argv0 (or name) values for this process and its ancestors,
-    /// ordered from this process (deepest) toward the root. Stops before including
-    /// the login shell (argv0 starts with "-") or iTermServer.
+    /// One canonical walk of the foreground-job ancestry, deepest first, stopping
+    /// before the login shell (title starts with "-") or iTermServer. Returns each
+    /// surviving ancestor as its pid paired with its lowercased title.
+    /// `foregroundJobAncestorNames` and `foregroundJobAncestorChainPids` both derive
+    /// from this single traversal, so a title and its pid are emitted together and
+    /// stay aligned by construction. The diagnostics depend on that alignment to
+    /// attribute a vanished ancestor name to the right pid, and it must hold even for
+    /// an ancestor that survives via the last-known-title cache below (branch 2) or
+    /// that stops the walk at a cached login/server boundary.
     ///
     /// Reading a process's name/argv0 can transiently fail for a process that is very
     /// much alive: `sysctl(KERN_PROC_PID)` can momentarily return an empty `p_comm`
@@ -416,8 +422,8 @@ class iTermProcessInfo: NSObject {
     /// So when a name comes back empty we reuse the last-known title for that pid
     /// (validated by ppid to guard against pid reuse) instead of dropping it.
     /// Successfully-read titles are recorded to keep that cache warm.
-    @objc var foregroundJobAncestorNames: [String] {
-        var result = [String]()
+    private func foregroundJobAncestorChain() -> [(pid: pid_t, name: String)] {
+        var result = [(pid: pid_t, name: String)]()
         var current: iTermProcessInfo? = self
         while let info = current {
             let title = info.argv0 ?? info.name
@@ -428,7 +434,7 @@ class iTermProcessInfo: NSObject {
                 if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
                     break
                 }
-                result.append(title.lowercased())
+                result.append((pid: info.processID, name: title.lowercased()))
                 current = info.parent
             } else if let cached = ProcessNameCache.shared.lastKnownTitle(pid: info.processID,
                                                                           ppid: info.parentProcessID) {
@@ -443,7 +449,7 @@ class iTermProcessInfo: NSObject {
                 if cached.hasPrefix("-") || cached.hasPrefix("iTermServer") {
                     break
                 }
-                result.append(cached.lowercased())
+                result.append((pid: info.processID, name: cached.lowercased()))
                 current = info.parent
             } else {
                 // No fresh name and nothing cached. This is the case that can produce
@@ -459,29 +465,22 @@ class iTermProcessInfo: NSObject {
         return result
     }
 
+    /// Lowercased argv0 (or name) values for this process and its ancestors, ordered
+    /// from this process (deepest) toward the root, stopping before the login shell
+    /// (argv0 starts with "-") or iTermServer. See `foregroundJobAncestorChain()` for
+    /// the transient-name-failure handling.
+    @objc var foregroundJobAncestorNames: [String] {
+        return foregroundJobAncestorChain().map { $0.name }
+    }
+
     // Diagnostics helper for the logForegroundJobAncestryDiagnostics advanced setting.
     // The pids of the nodes whose titles `foregroundJobAncestorNames` returns, in the
-    // same order (index i here is the pid that produced name i there). Lets the process
-    // cache remember which concrete pid held each ancestor name, so when a name later
-    // drops out of the chain it can report exactly what became of that pid (still in
-    // the collection? still alive?). Mirrors the walk in foregroundJobAncestorNames
-    // closely enough for that shrink diagnostic.
+    // same order: index i here is the pid that produced name i there. Both derive from
+    // the same `foregroundJobAncestorChain()` traversal, so that invariant holds even
+    // for an ancestor that survived via the last-known-title cache. Lets the process
+    // cache report exactly what became of the pid behind a vanished ancestor name.
     @objc var foregroundJobAncestorChainPids: [NSNumber] {
-        var result = [NSNumber]()
-        var current: iTermProcessInfo? = self
-        while let info = current {
-            let title = info.argv0 ?? info.name
-            guard let title, !title.isEmpty else {
-                current = info.parent
-                continue
-            }
-            if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
-                break
-            }
-            result.append(NSNumber(value: info.processID))
-            current = info.parent
-        }
-        return result
+        return foregroundJobAncestorChain().map { NSNumber(value: $0.pid) }
     }
 
     // Diagnostics helper for the logForegroundJobAncestryDiagnostics advanced setting.
