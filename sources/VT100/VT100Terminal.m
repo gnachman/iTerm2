@@ -315,7 +315,7 @@ static const int kMaxScreenRows = 4096;
         _vtLevel = iTermEmulationLevel500;
     }
     _output.emulationLevel = _vtLevel;
-    DLog(@"Set emulation level to %@ based on termtype %@", @(_vtLevel), termtype);
+    RLog(@"Set emulation level to %@ based on termtype %@", @(_vtLevel), termtype);
     self.isAnsi = [_termType rangeOfString:@"ANSI"
                                    options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
     [_delegate terminalTypeDidChange];
@@ -822,7 +822,7 @@ static const int kMaxScreenRows = 4096;
                 if (_vtLevel >= iTermEmulationLevel400) {
                     [_delegate terminalSetUseColumnScrollRegion:mode];
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -835,7 +835,7 @@ static const int kMaxScreenRows = 4096;
                 if (_vtLevel >= iTermEmulationLevel500) {
                     self.preserveScreenOnDECCOLM = mode;
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
             case 1000:
@@ -1280,7 +1280,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel200) {
                     [_delegate terminalSendReport:[self.output reportDECDSR:13]];  // "No printer" since printing is unsupported.
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -1288,7 +1288,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel200) {
                     [_delegate terminalSendReport:[self.output reportDECDSR:20]];  //  Locking is unsupported so report unlocked.
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -1299,7 +1299,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel300) {
                     [_delegate terminalSendReport:[self.output reportDECDSR:50]];  // Locator unavailable becuase DEC locator support unimplemented.
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -1307,7 +1307,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel300) {
                     [_delegate terminalSendReport:[self.output reportDECDSR:57 :0]];  // No locator support
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -1315,7 +1315,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
                     [_delegate terminalSendReport:[self.output reportMacroSpace:0]];  // Macros are unsupported so report 0 space
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -1323,7 +1323,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
                     [_delegate terminalSendReport:[self.output reportMemoryChecksum:0 id:token.csi->p[1]]];  // Memory checksum
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -1331,7 +1331,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
                     [_delegate terminalSendReport:[self.output reportDECDSR:70]];
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -1339,7 +1339,7 @@ static const int kMaxScreenRows = 4096;
                 if (withQuestion && _vtLevel >= iTermEmulationLevel400) {
                     [_delegate terminalSendReport:[self.output reportDECDSR:83]];
                 } else {
-                    DLog(@"vtlevel %@ denied", @(_vtLevel));
+                    RLog(@"vtlevel %@ denied", @(_vtLevel));
                 }
                 break;
 
@@ -2012,7 +2012,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel < iTermEmulationLevel400) {
                 break;
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             if ([_delegate terminalShouldSendReport:NO]) {
                 [_delegate terminalSendReport:[self.output reportTertiaryDeviceAttribute]];
@@ -2100,7 +2100,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                          defaultRectangle:[self defaultRectangle]]];
                 }
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
         }
@@ -2171,7 +2171,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                                   startingAtIndex:0
                                                                  defaultRectangle:[self defaultRectangle]]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2206,14 +2206,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     [_delegate terminalSendReport:[_output reportDisplayedExtentOfSize:_delegate.terminalSizeInCells]];
                 }
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
         case VT100CSI_DECSCL:
             if (_vtLevel >= iTermEmulationLevel200) {
                 [self executeSetConformanceLevel:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2401,7 +2401,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self executeDECCARA:token];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2409,7 +2409,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self executeDECRARA:token];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2417,7 +2417,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self executeDECSACE:token];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2425,7 +2425,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self executeDECCRA:token];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2433,7 +2433,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self executeDECFRA:token];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2441,7 +2441,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self executeDECERA:token];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2476,7 +2476,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     [_delegate terminalSetTabStops:stops];
                 }
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2484,7 +2484,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel300) {
                 [self executeDECRQPSR:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2492,7 +2492,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self forwardIndex];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2500,7 +2500,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self backIndex];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2545,7 +2545,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel300) {
                 [self executeDECRequestMode:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2553,7 +2553,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel300) {
                 [self executeANSIRequestMode:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2697,7 +2697,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     if (token.sshInfo.valid) {
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:token.sshInfo.depth];
                     } else {
-                        DLog(@"Invalid SSH info for framer wrapper. Begin recovery. Token is %@", token);
+                        RLog(@"Invalid SSH info for framer wrapper. Begin recovery. Token is %@", token);
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:-1];
                     }
                     break;
@@ -2957,7 +2957,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel300) {
                 [self executeDECSCPP:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2965,7 +2965,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [self executeDECSNLS:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2973,7 +2973,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [_delegate terminalInsertColumns:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -2981,7 +2981,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel400) {
                 [_delegate terminalDeleteColumns:token.csi->p[0]];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -3039,16 +3039,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
             
         case SSH_END: {
-            RLog(@"Executing SSH_END: %@", token);
+            DLog(@"Executing SSH_END: %@", token);
             NSString *s = token.string;
             NSArray<NSString *> *parts = [s componentsSeparatedByString:@" "];
             if (parts.count < 3) {
-                DLog(@"Not enough parts");
+                RLog(@"Not enough parts");
                 break;
             }
             NSUInteger status = [parts[1] iterm_unsignedIntegerValue];
             if (status > 255) {
-                DLog(@"Status too big");
+                RLog(@"Status too big");
                 break;
             }
             NSString *type = parts[2];
@@ -3095,7 +3095,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel200) {
                 [_delegate terminalAppendSixelData:token.savedData];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -3112,7 +3112,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel300) {
                 [self executeDECRSPS_DECCIR:token.string];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -3120,7 +3120,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (_vtLevel >= iTermEmulationLevel300) {
                 [self executeDECRSPS_DECTABSR:token.string];
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -3457,11 +3457,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 ok = NO;
                 NSError *error = option.maybeSecond;
                 value = error.userInfo[@"code"];
-                DLog(@"Error: %@", value);
+                RLog(@"Error: %@", value);
             }
             if (!value) {
                 // Shouldn't happen
-                DLog(@"BUG - neither success nor error in %@", option);
+                RLog(@"BUG - neither success nor error in %@", option);
                 value = @"";
             }
             [self finishRequestTermcapTerminfoWithValues:@[ value ] ok:ok];
@@ -3581,7 +3581,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if (_vtLevel >= iTermEmulationLevel200) {
             return [iTermPromise promiseValue:[self decrqssDECSCL]];
         } else {
-            DLog(@"vtlevel %@ denied", @(_vtLevel));
+            RLog(@"vtlevel %@ denied", @(_vtLevel));
         }
     }
     if ([pt isEqualToString:@" q"]) {
@@ -3597,7 +3597,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if (_vtLevel >= iTermEmulationLevel400) {
             return [iTermPromise promiseValue:[self decrqssDECSLRM]]; 
         } else {
-            DLog(@"vtlevel %@ denied", @(_vtLevel));
+            RLog(@"vtlevel %@ denied", @(_vtLevel));
         }
     }
     if ([pt isEqualToString:@"t"]) {
@@ -4240,7 +4240,7 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
         [_delegate terminalDidFinishReceivingFile];
         receivingFile_ = NO;
     } else if ([key isEqualToString:@"Copy"]) {
-        RLog(@"Handling Copy key with value=%@", value);
+        RLog(@"Handling Copy key with value of length %@", @(value.length));
         if ([_delegate terminalIsTrusted]) {
             NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
             int mode;
@@ -5554,7 +5554,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
             if (_vtLevel >= iTermEmulationLevel400) {
                 return VT100TerminalPromiseOfDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
 
@@ -5562,13 +5562,13 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
             if (_vtLevel >= iTermEmulationLevel300) {
                 return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.sixelDisplayMode);
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
         case 95:  // DECNCSM
             if (_vtLevel >= iTermEmulationLevel500) {
                 return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.preserveScreenOnDECCOLM);
             } else {
-                DLog(@"vtlevel %@ denied", @(_vtLevel));
+                RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
             break;
         case 1000:
