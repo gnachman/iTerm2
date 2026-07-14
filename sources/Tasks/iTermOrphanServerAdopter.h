@@ -9,6 +9,11 @@
 #import <Foundation/Foundation.h>
 #import "PTYTask.h"
 
+// NS_ASSUME_NONNULL added by Window Projects work so claimedChildPIDsProvider's
+// _Nullable below doesn't trigger a partial-nullability-audit error on every
+// other pointer in this file.
+NS_ASSUME_NONNULL_BEGIN
+
 @class PTYSession;
 
 @protocol iTermOrphanServerAdopterDelegate<NSObject>
@@ -38,3 +43,5 @@
 - (void)adoptPartialAttachments:(NSArray<id<iTermPartialAttachment>> *)partialAttachments;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -178,8 +178,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (void)killRestorableSessions;
 
-- (nullable NSArray<PTYSession *> *)allSessions;
-- (nullable NSArray<PseudoTerminal *> *)terminals;
+- (NSArray<PTYSession *> *)allSessions;
+- (NSArray<PseudoTerminal *> *)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 - (PTYSession *)sessionWithGUID:(NSString *)identifier;
 

@@ -673,13 +673,13 @@ final class iTermWindowProject: NSObject, Codable {
     /// the pre-fix failure mode stays reproducible (set ITERM_WP_PARK=0).
     static func parkSessionsForReattachment(_ terminal: PseudoTerminal) {
         let park = (ProcessInfo.processInfo.environment["ITERM_WP_PARK"] ?? "1") != "0"
-        guard let sessions = terminal.allSessions() as? [PTYSession] else { return }
+        guard let sessions = terminal.allSessions() else { return }
         guard park else {
             Self.wpLog("FREEZE park: DISABLED (ITERM_WP_PARK=0). Process kept running but NOT parked — thaw is expected to fall back to a fresh shell.")
             return
         }
         for session in sessions {
-            guard let task = session.shell else { continue }
+            let task = session.shell
             let pid = task.parkChildForReattachment()
             Self.wpLog("FREEZE park: session=\(session.guid) parkedPid=\(pid) tty=\(task.tty ?? "nil")")
         }
@@ -781,7 +781,7 @@ final class iTermWindowProject: NSObject, Codable {
         let callback = thread.newCallback { (_: Any?, value: Any?) in
             if let result = value as? iTermResult<iTermMultiServerConnection> {
                 result.handleObject({ connection in
-                    let kids = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                    let kids = connection.unattachedChildren
                     total = kids.count
                     present = kids.contains { $0.pid == childPid }
                 }, error: { _ in })
@@ -805,11 +805,11 @@ final class iTermWindowProject: NSObject, Codable {
     /// shell (pid differs). This is the ground-truth success signal.
     static func logRestoredAttachment(_ term: PseudoTerminal, expectedFrom arrangement: [AnyHashable: Any], phase: String) {
         guard let (socket, childPid) = serverDict(in: arrangement) else { return }
-        guard let session = term.allSessions()?.first as? PTYSession, let task = session.shell else {
+        guard let session = term.allSessions()?.first as? PTYSession else {
             wpLog("\(phase): restored window has no session/shell")
             return
         }
-        let actualPid = task.pid
+        let actualPid = session.shell.pid
         let reattached = (actualPid == childPid)
         wpLog("\(phase): socket=\(socket) expectedChildPid=\(childPid) restoredShellPid=\(actualPid) reattached=\(reattached)")
     }
@@ -944,7 +944,7 @@ final class iTermWindowProject: NSObject, Codable {
             let callback = thread.newCallback { (_: Any?, value: Any?) in
                 if let result = value as? iTermResult<iTermMultiServerConnection> {
                     result.handleObject({ connection in
-                        let kids = (connection.unattachedChildren as? [iTermFileDescriptorMultiClientChild]) ?? []
+                        let kids = connection.unattachedChildren
                         let pids = kids.map { "\($0.pid)(fd \($0.fd))" }.joined(separator: ", ")
                         summary = "socket \(socketNumber): serverPid=\(connection.pid) unattachedChildren=[\(pids)]"
                     }, error: { _ in })
@@ -968,7 +968,7 @@ final class iTermWindowProject: NSObject, Codable {
 
     @objc public class func tryManualAdoption(on session: PTYSession) -> String {
         var log = "--- Pathfinder: multiserver connection state ---\n"
-        log += "Target session TTY: \(session.tty ?? "nil"), shell pid: \(session.shell?.pid ?? -1)\n\n"
+        log += "Target session TTY: \(session.tty ?? "nil"), shell pid: \(session.shell.pid)\n\n"
         log += dumpConnectionState()
         try? log.write(toFile: "/tmp/iterm_wp_pathfinder.log", atomically: true, encoding: .utf8)
         return log
@@ -977,7 +977,7 @@ final class iTermWindowProject: NSObject, Codable {
     @objc public class func runDiagnostics(on terminal: PseudoTerminal) -> String {
         var log = "--- Pathfinder: multiserver connection state ---\n"
         if let session = terminal.currentSession() {
-            log += "Current session TTY: \(session.tty ?? "nil"), shell pid: \(session.shell?.pid ?? -1)\n\n"
+            log += "Current session TTY: \(session.tty ?? "nil"), shell pid: \(session.shell.pid)\n\n"
         }
         log += dumpConnectionState()
         try? log.write(toFile: "/tmp/iterm_wp_pathfinder.log", atomically: true, encoding: .utf8)
