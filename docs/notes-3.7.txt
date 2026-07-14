@@ -2087,3 +2087,10 @@ Bug Fixes:
   needs and plays a sound instead of a silent
   placeholder, while the agent’s own automatic
   tool calls stay quiet.
+- The it2 command-line tool now works on hosts
+  you reach through SSH integration. Its API
+  requests are routed back to your local iTerm2
+  over the conductor and run there, gated by a
+  per-session permission prompt naming the host.
+  it2 is installed automatically wherever shell
+  integration loads.

@@ -200,6 +200,8 @@ _setup-main:
 	@PATH="$(ORIG_PATH)" brew list pkg-config >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install pkg-config
 	@PATH="$(ORIG_PATH)" brew list automake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install automake
 	@PATH="$(ORIG_PATH)" command -v perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
+	@# gettext provides envsubst, used by tools/copy_shell_integration.sh to embed it2.py.
+	@PATH="$(ORIG_PATH)" brew list gettext >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install gettext
 	@if ! test -x "$(HOMEBREW_PREFIX)/bin/python3"; then \
 		PATH="$(ORIG_PATH)" brew install python3; \
 		if ! PATH="$(ORIG_PATH)" brew link python@3 2>/dev/null; then \

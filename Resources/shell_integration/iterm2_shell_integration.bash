@@ -318,13 +318,7 @@ __bp_precmd_invoke_cmd() {
     # prompt command" by another precmd execution loop. This avoids infinite
     # recursion.
     if (( __bp_inside_precmd > 0 )); then
-        # Preserve $? and $_ across the early return: without this, the
-        # bare `return` propagates the exit status of the `(( ... ))` test
-        # (always 0 when the condition is true), clobbering the value the
-        # user code is about to inspect in PROMPT_COMMAND-time prompt
-        # substitutions.
-        __bp_set_ret_value "$__bp_last_ret_value" "$__bp_last_argument_prev_command"
-        return
+        return "$__bp_last_ret_value"
     fi
 
     # Check and adjust PROMPT_COMMAND to make sure that PROMPT_COMMAND has the
@@ -337,13 +331,7 @@ __bp_precmd_invoke_cmd() {
             # (e.g., starship). In this case, we do not need to invoke precmd
             # because it is supposed to be already processed by the top-level
             # __bp_precmd_invoke_cmd.
-            #
-            # Preserve $? and $_ instead of forcing them to 0 — same reasoning
-            # as the early-return branch above; the top-level call will run
-            # the user's precmd_functions, and they expect to see the real
-            # last-command exit status.
-            __bp_set_ret_value "$__bp_last_ret_value" "$__bp_last_argument_prev_command"
-            return
+            return "$__bp_last_ret_value"
         fi
     fi
 
@@ -933,3 +921,18 @@ fi
 # -- END ITERM2 CUSTOMIZATIONS --
 
 
+
+# it2 CLI over iTerm2 SSH integration: unless it2 already exists, define it as a
+# function that materializes the embedded copy on first use (named by content hash,
+# so a shipped update replaces a stale one). Needs python3; it2.py reads
+# IT2_SOCK/IT2_NONCE from the environment set by SSH integration.
+if ! command -v it2 > /dev/null 2>&1; then
+  it2() {
+    command -v python3 > /dev/null 2>&1 || { printf 'it2: python3 is required\n' >&2; return 1; }
+    if [ ! -f "${HOME}/.iterm2/it2.e86e52cd6f0ff62a.py" ]; then
+      python3 -c 'import base64,glob,gzip,os,sys,tempfile; d=os.path.expanduser("~/.iterm2"); os.makedirs(d,exist_ok=True); data=gzip.decompress(base64.b64decode(sys.argv[1])); fd,tmp=tempfile.mkstemp(dir=d); os.write(fd,data); os.close(fd); os.replace(tmp,sys.argv[2]); [os.remove(f) for f in glob.glob(os.path.join(d,"it2*.py")) if f!=sys.argv[2]]' "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" "${HOME}/.iterm2/it2.e86e52cd6f0ff62a.py" || return 1
+    fi
+    command python3 "${HOME}/.iterm2/it2.e86e52cd6f0ff62a.py" "$@"
+  }
+  export -f it2 2> /dev/null
+fi

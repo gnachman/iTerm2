@@ -324,10 +324,11 @@ extension Conductor {
     }
 
     // Activate the it2 CLI proxy for this session: mint the auth nonce + a remote
-    // socket path, inject IT2_SOCK/IT2_NONCE into the login shell's environment (so
-    // the remote it2.py can find and authenticate to the socket), and ship it2.py.
-    // framer only binds the socket once framing starts (see it2Listen in doFraming).
-    // Called from the shell-integration path, which implies we will frame.
+    // socket path and inject IT2_SOCK/IT2_NONCE into the login shell's environment,
+    // so the remote it2 (materialized by the shell-integration scripts) can find and
+    // authenticate to the socket. framer binds the socket once framing starts (see
+    // it2Listen in doFraming). Called from the shell-integration path, which is what
+    // provides `it2` on the remote and implies we will frame.
     //
     // The socket lives in a dedicated directory under the user's home (framer
     // creates it 0700 before binding), not in a shared world-writable place: the
@@ -341,12 +342,6 @@ extension Conductor {
         it2SocketPath = socketPath
         env["IT2_SOCK"] = socketPath
         env["IT2_NONCE"] = nonce
-        if let it2py = Bundle(for: Self.self).path(forResource: "it2", ofType: "py") {
-            payloads.append(Payload(path: it2py,
-                                    destination: "/$HOME/.iterm2/shell-integration/it2.py"))
-        } else {
-            DLog("it2.py missing from bundle; it2 over ssh will be unavailable")
-        }
     }
 
     private static func it2RandomHex(byteCount: Int) -> String {

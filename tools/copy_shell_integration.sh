@@ -14,6 +14,12 @@ branch() {
 
 set -x
 
+# The shell_integration Makefile uses envsubst (from gettext) to embed it2.py into
+# each script. Homebrew installs gettext keg-only, so put its bin on PATH.
+GETTEXT_BIN=$(brew --prefix gettext 2>/dev/null)/bin
+test -d "$GETTEXT_BIN" && PATH="$GETTEXT_BIN:$PATH"
+command -v envsubst >/dev/null || die "envsubst not found; run 'make setup' (installs gettext)"
+
 SUBMODULE=$PWD/submodules/iTerm2-shell-integration
 test -d $SUBMODULE || die No $SUBMODULE directory
 pushd $SUBMODULE
@@ -34,6 +40,9 @@ cp $SUBMODULE/shell_integration/fish  Resources/shell_integration/iterm2_shell_i
 cp $SUBMODULE/shell_integration/tcsh  Resources/shell_integration/iterm2_shell_integration.tcsh
 cp $SUBMODULE/shell_integration/xonsh Resources/shell_integration/iterm2_shell_integration.xonsh
 cp $SUBMODULE/shell_integration/zsh   Resources/shell_integration/iterm2_shell_integration.zsh
+# it2.py is owned by the shell-integration repo (it is embedded into the scripts
+# above and materialized on the remote). Copy it back for the app/tests.
+cp $SUBMODULE/shell_integration/it2.py OtherResources/it2.py
 DEST=$PWD/Resources/utilities
 ALLDEST=$PWD/OtherResources/utilities
 
