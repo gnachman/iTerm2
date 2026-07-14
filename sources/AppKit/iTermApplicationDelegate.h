@@ -94,5 +94,6 @@ void TurnOnDebugLoggingAutomatically(void);
 - (void)showPrefWindow:(id)sender;
 - (IBAction)openDashboard:(id)sender;
 - (IBAction)pairCompanionDevice:(id)sender;
+- (IBAction)makeScreenshot:(id)sender;
 
 @end

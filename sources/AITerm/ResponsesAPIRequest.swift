@@ -1886,7 +1886,7 @@ struct ResponsesBodyRequestBuilder {
         let effectiveMessages = (previousResponseID != nil && !messages.isEmpty)
             ? Array(messages.suffix(1))
             : messages
-        var itemList = effectiveMessages.flatMap { transform(message: $0) }
+        let itemList = effectiveMessages.flatMap { transform(message: $0) }
         let tools = functions.map { transform(function: $0) } + transformedHostedTools
         var body = ResponsesRequestBody(
             input: .itemList(itemList),

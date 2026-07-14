@@ -925,13 +925,35 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         return NO;
     }
 
+    // Capture locals so the handler block doesn't retain self (the source is owned by
+    // `state`), and so we have context to log with.
+    const pid_t serverPID = forkState.pid;
+    NSString *socketPath = [_socketPath copy];
     state.daemonProcessSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_PROC,
-                                                       forkState.pid,
+                                                       serverPID,
                                                        DISPATCH_PROC_EXIT,
                                                        state.queue);
     dispatch_source_set_event_handler(state.daemonProcessSource, ^{
-        int statLoc;
-        waitpid(forkState.pid, &statLoc, WNOHANG);
+        // iTerm2 is the server's parent (single fork, deliberately not daemonized; see the
+        // "Don't daemonize iTermServer" comment in iTermFileDescriptorMultiClient+MRR.m), so it
+        // must reap the zombie here. Log the exit status with RLog: a server death takes down
+        // every session on this connection, and this is the only place that learns why it died.
+        int statLoc = 0;
+        const pid_t reaped = waitpid(serverPID, &statLoc, WNOHANG);
+        if (reaped != serverPID) {
+            RLog(@"Server %@ (pid %d) exited but waitpid returned %d, errno %d (%s)",
+                 socketPath, serverPID, reaped, errno, strerror(errno));
+        } else if (WIFSIGNALED(statLoc)) {
+            RLog(@"Server %@ (pid %d) was killed by signal %d%@",
+                 socketPath, serverPID, WTERMSIG(statLoc),
+                 WCOREDUMP(statLoc) ? @" (core dumped)" : @"");
+        } else if (WIFEXITED(statLoc)) {
+            RLog(@"Server %@ (pid %d) exited with status %d",
+                 socketPath, serverPID, WEXITSTATUS(statLoc));
+        } else {
+            RLog(@"Server %@ (pid %d) terminated with wait status 0x%x",
+                 socketPath, serverPID, statLoc);
+        }
     });
     dispatch_resume(state.daemonProcessSource);
 

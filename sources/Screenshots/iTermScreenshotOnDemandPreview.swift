@@ -134,7 +134,7 @@ class iTermScreenshotOnDemandPreview: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        guard let textView = textView, lineRange.length > 0 else {
+        guard textView != nil, lineRange.length > 0 else {
             drawBackground(dirtyRect)
             return
         }

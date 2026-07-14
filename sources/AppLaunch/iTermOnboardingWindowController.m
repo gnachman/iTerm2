@@ -14,6 +14,7 @@
 #import "SessionView.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplicationDelegate.h"
 #import "iTermClickableTextField.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"

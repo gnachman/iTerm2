@@ -279,6 +279,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)llmPlatform;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;
++ (BOOL)logForegroundJobAncestryDiagnostics;
 + (NSString *)logTimestampFormat;
 + (BOOL)logTimestampsWithPlainText;
 + (BOOL)logToSyslog;

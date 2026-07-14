@@ -1,6 +1,12 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 Bug Fixes:
+- Picking a session for a new session-bound chat
+  now shows the same window > tab > pane list as
+  the Sessions tab and the @-mention picker,
+  instead of a flat, unorganized roster. Each row
+  has an eye button to preview the session before
+  committing to it, like the @-mention picker.
 - Fast-scrolling a session's scrollback no longer
   floods the relay with tile requests, which
   could trip its rate limit and silently drop

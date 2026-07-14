@@ -285,7 +285,10 @@ class iTermScreenshotPanel: NSPanel {
         let checkerboardClipView = iTermCheckerboardClipView()
         checkerboardClipView.checkerboardColor = Self.checkerboardBackgroundColor
         checkerboardClipView.drawsBackground = false
-        checkerboardClipView.copiesOnScroll = false
+        // Nothing to configure for scroll repaint here: the clip view is opaque
+        // (see isOpaque) and repaints the checkerboard in draw(). copiesOnScroll,
+        // the pre-11.0 knob for forcing a full redraw on scroll, is a deprecated
+        // no-op on macOS 11+ (our deployment target is 12), so it is not set.
         previewScrollView.contentView = checkerboardClipView
         previewScrollView.contentView.postsBoundsChangedNotifications = false
         contentView.addSubview(previewScrollView)
