@@ -707,6 +707,14 @@ Bug Fixes:
   code-review peer holding a steady “working”
   status no longer loses the row to a sibling
   chat peer the moment it goes idle.
+- Tab subtitle: when a tab is split into
+  multiple panes, the status of the pane you’re
+  focused on now drives the subtitle instead of a
+  background pane winning on status priority. For
+  example, an idle pane no longer overrides the
+  working pane you’re looking at. A focused pane
+  with no status falls back to the highest
+  priority sibling pane.
 - Code review and diff workgroup sessions now
   restore showing their last output instead of
   launching a stray replacement shell when the
