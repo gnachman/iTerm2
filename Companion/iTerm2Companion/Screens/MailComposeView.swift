@@ -23,10 +23,25 @@ struct MailComposeView: UIViewControllerRepresentable {
         vc.setToRecipients(to)
         vc.setSubject(subject)
         vc.setMessageBody(body, isHTML: false)
+        var attachedCount = 0
         for url in attachments {
-            if let data = try? Data(contentsOf: url) {
-                vc.addAttachmentData(data, mimeType: "text/plain", fileName: url.lastPathComponent)
+            guard let data = try? Data(contentsOf: url) else {
+                companionLog("Could not read log attachment \(url.lastPathComponent); it will be missing from the email.")
+                continue
             }
+            let mimeType = url.pathExtension.lowercased() == "zip" ? "application/zip" : "text/plain"
+            vc.addAttachmentData(data, mimeType: mimeType, fileName: url.lastPathComponent)
+            attachedCount += 1
+        }
+        // With the single-zip design, a failed read here would otherwise open
+        // a composer with no attachment and no error, so the user sends an
+        // empty diagnostic email believing the logs went out. We can't abort
+        // the already-presenting composer from here, but record it so the
+        // failure is diagnosable. The caller should verify the archive is
+        // readable before presenting this (see SettingsView's
+        // archivePrepFailed path).
+        if !attachments.isEmpty && attachedCount == 0 {
+            companionLog("None of the \(attachments.count) log attachment(s) could be read; presenting an email with no logs attached.")
         }
         return vc
     }

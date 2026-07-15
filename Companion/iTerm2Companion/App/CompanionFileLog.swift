@@ -93,6 +93,37 @@ final class CompanionFileLog: @unchecked Sendable {
         return urls.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
+    /// The outcome of building the emailable log archive.
+    enum LogArchiveResult: Sendable {
+        /// A ready-to-attach .zip at this URL.
+        case archive(URL)
+        /// There were no log files to archive (nothing to email).
+        case empty
+        /// Building the archive failed; the underlying error was logged.
+        case failed
+    }
+
+    /// Flush pending lines and bundle every log file into a single .zip in a
+    /// temp directory. One compressed archive gets through the mail composer
+    /// where a handful of multi-megabyte text attachments do not. Safe to call
+    /// off the main thread (the copy + zip can be slow for a large history) and
+    /// distinguishes "no logs" from a real failure so the caller can tell the
+    /// user which happened; a real failure is logged before returning.
+    func makeLogArchive() -> LogArchiveResult {
+        flushNow()
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iTerm2-Buddy-logs.zip")
+        do {
+            try CompanionLogArchive.write(files: logFileURLs(), to: destination)
+            return .archive(destination)
+        } catch CompanionLogArchive.ArchiveError.nothingToArchive {
+            return .empty
+        } catch {
+            companionLog("Email Logs: could not build the log archive: \(error)")
+            return .failed
+        }
+    }
+
     // MARK: - queue-only
 
     private func openIfNeeded() {

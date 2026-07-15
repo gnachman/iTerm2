@@ -1,6 +1,11 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 Bug Fixes:
+- Emailing your diagnostic logs now attaches a
+  single compressed .zip instead of one
+  attachment per log file, so large logs actually
+  send instead of exceeding the mail composer's
+  limits.
 - Picking a session for a new session-bound chat
   now shows the same window > tab > pane list as
   the Sessions tab and the @-mention picker,

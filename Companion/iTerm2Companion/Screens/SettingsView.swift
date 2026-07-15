@@ -16,6 +16,10 @@ struct SettingsView: View {
     @State private var confirmingDisableLogs = false
     @State private var showingMail = false
     @State private var mailUnavailable = false
+    @State private var noLogsToEmail = false
+    @State private var archivePrepFailed = false
+    @State private var preparingArchive = false
+    @State private var logArchiveURL: URL?
     #if DEBUG
     @State private var airdropURL: URL?
     @State private var noLogsToAirdrop = false
@@ -67,14 +71,43 @@ struct SettingsView: View {
                     } message: {
                         Text("This deletes the saved log files on this device.")
                     }
-                Button("Email Logs") {
+                Button {
                     guard MFMailComposeViewController.canSendMail() else {
                         mailUnavailable = true
                         return
                     }
-                    CompanionFileLog.shared.flushNow()
-                    showingMail = true
+                    // Zip the files into one archive: many multi-megabyte text
+                    // attachments exceed the mail composer's limits, but a single
+                    // compressed archive gets through. Copying and compressing a
+                    // large history can take a moment, so do it off the main
+                    // thread and keep the UI responsive.
+                    preparingArchive = true
+                    Task {
+                        let result = await Task.detached(priority: .userInitiated) {
+                            CompanionFileLog.shared.makeLogArchive()
+                        }.value
+                        preparingArchive = false
+                        switch result {
+                        case .archive(let url):
+                            logArchiveURL = url
+                            showingMail = true
+                        case .empty:
+                            noLogsToEmail = true
+                        case .failed:
+                            archivePrepFailed = true
+                        }
+                    }
+                } label: {
+                    if preparingArchive {
+                        HStack {
+                            ProgressView()
+                            Text("Preparing Logs…")
+                        }
+                    } else {
+                        Text("Email Logs")
+                    }
                 }
+                .disabled(preparingArchive)
                 #if DEBUG
                 Button("AirDrop Latest Log") {
                     CompanionFileLog.shared.flushNow()
@@ -126,7 +159,7 @@ struct SettingsView: View {
             MailComposeView(to: ["gnachman@gmail.com"],
                             subject: "iTerm2 Buddy logs",
                             body: "Diagnostic logs attached.",
-                            attachments: CompanionFileLog.shared.logFileURLs()) {
+                            attachments: [logArchiveURL].compactMap { $0 }) {
                 showingMail = false
             }
             .ignoresSafeArea()
@@ -135,6 +168,16 @@ struct SettingsView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Set up the Mail app on this device to email your logs.")
+        }
+        .alert("No Logs", isPresented: $noLogsToEmail) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("There are no log files to email yet.")
+        }
+        .alert("Could Not Prepare Logs", isPresented: $archivePrepFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Something went wrong while preparing your logs to email. Please try again.")
         }
         #if DEBUG
         .sheet(isPresented: Binding(
