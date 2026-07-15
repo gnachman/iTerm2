@@ -18,7 +18,15 @@ class ObjCChatDatabase: NSObject {
         guard let instance = ChatDatabase.instanceIfExists else {
             return []
         }
-        return instance.terminalSessionToChatMap[guid] ?? Set()
+        // A chat is indexed under whichever reference it stored (stableID or
+        // legacy guid); union both keys so the lookup finds it either way.
+        var result = Set<String>()
+        for key in iTermSessionReferenceKeys(forGuid: guid) {
+            if let ids = instance.terminalSessionToChatMap[key] {
+                result.formUnion(ids)
+            }
+        }
+        return result
     }
 
     @objc(unlinkSessionGuid:)
@@ -28,9 +36,10 @@ class ObjCChatDatabase: NSObject {
             let chats = instance.chats else {
                 return
             }
+            let keys = iTermSessionReferenceKeys(forGuid: sessionGuid)
             for i in 0..<chats.count {
                 let chat = chats[i]
-                if chat.isLinked(toSessionGuid: sessionGuid) {
+                if chat.isLinked(toReferenceIn: keys) {
                     var temp = chats[i]
                     let wasTerminal = temp.terminalSessionGuid != nil
                     temp.terminalSessionGuid = nil
@@ -50,7 +59,8 @@ class ObjCChatDatabase: NSObject {
 
     @objc(firstChatIDForSessionGuid:)
     static func firstChatID(forSessionGuid sessionGuid: String) -> String? {
-        return ChatDatabase.instance?.chats?.first { $0.terminalSessionGuid == sessionGuid }?.id
+        let keys = iTermSessionReferenceKeys(forGuid: sessionGuid)
+        return ChatDatabase.instance?.chats?.first { $0.isLinked(toReferenceIn: keys) }?.id
     }
 }
 

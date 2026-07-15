@@ -129,7 +129,7 @@ class ChatClient {
             model.chat(id: chatID)?.terminalSessionGuid
         }
         guard let guid = maybeGuid,
-              let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+              let session = iTermController.sharedInstance().anySession(forReference: guid) else {
             return Message(chatID: chatID,
                            author: .agent,
                            content: .selectSessionRequest(message, terminal: !request.content.permissionCategory.isBrowserSpecific),

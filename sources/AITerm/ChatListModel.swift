@@ -358,8 +358,9 @@ class ChatListModel: ChatListDataSource {
     // MARK: - Session-binding helpers (session-bound chats)
 
     func firstIndex(forGuid guid: String) -> Int? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.firstIndex { chat in
-            chat.isLinked(toSessionGuid: guid)
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -388,8 +389,9 @@ class ChatListModel: ChatListDataSource {
     }
 
     func lastChat(guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.last { chat in
-            chat.isLinked(toSessionGuid: guid)
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -397,8 +399,9 @@ class ChatListModel: ChatListDataSource {
     // bump/rename re-prepends), so the first match is the chat with the
     // most recent activity for the given session guid.
     func mostRecentChat(forGuid guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.first { chat in
-            chat.isLinked(toSessionGuid: guid)
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
