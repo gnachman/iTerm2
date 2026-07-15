@@ -791,14 +791,17 @@ final class OrchestratorDispatcher {
         }
     }
 
-    private func sessionByGUID(_ guid: String) -> PTYSession? {
-        // anySession(withGUID:) enumerates ALL sessions including peer-port
-        // sessions (Code Review, Diff, any side-pane peer). allSessions()
-        // only returns tab/split sessions and silently drops peers, which
-        // would mark every Code Review watcher as "dropped after restart"
-        // in reconcilePersistedWatchers and would silently skip peer roles
-        // in seedState (firing every idle watcher on first tabStatus).
-        return iTermController.sharedInstance()?.anySession(withGUID: guid)
+    private func sessionByGUID(_ reference: String) -> PTYSession? {
+        // Accepts a session reference (a stableID, or a legacy guid) and
+        // dispatches on its form. anySession(forReference:) enumerates ALL
+        // sessions including peer-port sessions (Code Review, Diff, any side-pane
+        // peer). allSessions() only returns tab/split sessions and silently drops
+        // peers, which would mark every Code Review watcher as "dropped after
+        // restart" in reconcilePersistedWatchers and would silently skip peer
+        // roles in seedState (firing every idle watcher on first tabStatus).
+        // Because watchers persist the model-provided reference (a stableID),
+        // resolving by reference is what lets a watcher survive a shell reload.
+        return iTermController.sharedInstance()?.anySession(forReference: reference)
     }
 
     private static let iso8601: ISO8601DateFormatter = {
@@ -931,7 +934,7 @@ final class OrchestratorDispatcher {
             return Data("Error decoding arguments: \(error.localizedDescription)".utf8)
         }
 
-        guard let session = iTermController.sharedInstance()?.anySession(withGUID: sessionGuid) else {
+        guard let session = iTermController.sharedInstance()?.anySession(forReference: sessionGuid) else {
             return Data("Error: no session with GUID \(sessionGuid)".utf8)
         }
 
