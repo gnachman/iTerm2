@@ -223,6 +223,12 @@ Major New Features:
   It is not re-run when you switch away and
   back.
 
+- Switching to a Diff peer for the first
+  time now keeps the terminal focused once
+  its command starts. Previously keystrokes
+  went nowhere (and beeped) until you
+  clicked the terminal.
+
 - Workgroups now survive a restart. When
   the app relaunches (for example after a
   Sparkle upgrade), an active workgroup is

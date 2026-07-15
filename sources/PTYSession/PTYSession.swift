@@ -1777,8 +1777,37 @@ extension PTYSession {
     func firePendingDiffLaunch() {
         let closure = swiftState.pendingDiffLaunch
         swiftState.pendingDiffLaunch = nil
+        // While the diff-waiting overlay is up, -mainResponder routes to
+        // its Run Anyway button, so the peer swap that revealed this
+        // session parked the window's first responder on that button.
+        // Dismissing the overlay removes that button; without reassigning,
+        // the window is left with a dead first responder and typing beeps
+        // (the first-visit "command runs but the terminal isn't first
+        // responder" bug). If the overlay owns focus right now, hand it
+        // back to the terminal once the overlay is gone and the deferred
+        // command has launched — mainResponder then resolves to the
+        // freshly-running text view.
+        let overlayOwnedFocus = diffWaitingOverlayOwnsFirstResponder
         view?.dismissDiffWaitingPromptOverlay()
         closure?()
+        if overlayOwnedFocus {
+            view?.window?.makeFirstResponder(mainResponder)
+        }
+    }
+
+    // True when the diff-waiting overlay (or one of its subviews, e.g.
+    // its Run Anyway button — see -mainResponder) currently holds the
+    // window's first responder. firePendingDiffLaunch consults this
+    // before tearing the overlay down so it only restores focus to the
+    // terminal when the overlay actually owned it, and leaves first
+    // responder alone when a poller-driven launch fires while the user's
+    // focus is elsewhere.
+    private var diffWaitingOverlayOwnsFirstResponder: Bool {
+        guard let overlay = view?.diffWaitingPromptOverlay,
+              let responder = overlay.window?.firstResponder as? NSView else {
+            return false
+        }
+        return responder.isDescendant(of: overlay)
     }
 
     // Drop the initial-spawn waiting overlay onto the session view.
