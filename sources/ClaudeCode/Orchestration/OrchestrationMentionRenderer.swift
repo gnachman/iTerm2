@@ -29,9 +29,9 @@ enum OrchestrationMentionRenderer {
     // Resolved identity of a mention plus the guid to reveal on click.
     struct Resolved {
         let displayName: String
-        // The session guid to reveal when the link is clicked. For a
-        // workgroup this is its leader session, so clicking surfaces the
-        // workgroup's main session.
+        // The session reference (a stableID) to reveal when the link is clicked.
+        // For a workgroup this is its leader session, so clicking surfaces the
+        // workgroup's main session. Resolve it via anySession(forReference:).
         let revealGuid: String
         // The workgroup instance id when the mention names a real workgroup.
         // The Mac click handler doesn't need it (it reveals the leader), but
@@ -40,10 +40,11 @@ enum OrchestrationMentionRenderer {
     }
 
     // Maps a parsed mention to a live entity, or nil when it no longer
-    // resolves. `prefix` is "session:" / "wg-" / nil (a bare guid);
-    // `uuid` is the captured UUID. Injected so tests can drive the
-    // string/attribute transformation without standing up real sessions.
-    typealias Resolver = (_ prefix: String?, _ uuid: String) -> Resolved?
+    // resolves. `prefix` is "session:" / "wg-" / nil (a bare reference);
+    // `token` is the captured id (a stableID or a legacy guid). Injected so
+    // tests can drive the string/attribute transformation without standing up
+    // real sessions.
+    typealias Resolver = (_ prefix: String?, _ token: String) -> Resolved?
 
     // Replaces every @-prefixed session/workgroup mention in `input`
     // with a link to the live entity's name, or "[defunct session]"
@@ -76,7 +77,7 @@ enum OrchestrationMentionRenderer {
             // text.
             let baseAttributes = input.attributes(at: whole.location, effectiveRange: nil)
 
-            if let resolved = resolve(mention.prefix, mention.uuid) {
+            if let resolved = resolve(mention.prefix, mention.token) {
                 result.append(linkString(for: resolved,
                                          baseAttributes: baseAttributes,
                                          linkColor: linkColor))
@@ -101,9 +102,9 @@ enum OrchestrationMentionRenderer {
         attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue
         attributes[.underlineColor] = linkColor
         attributes[.cursor] = NSCursor.pointingHand
-        let guid = resolved.revealGuid
+        let reference = resolved.revealGuid
         let action: (NSPoint) -> () = { _ in
-            iTermController.sharedInstance()?.anySession(withGUID: guid)?.reveal()
+            iTermController.sharedInstance()?.anySession(forReference: reference)?.reveal()
         }
         attributes[clickableAttribute] = action
 
@@ -176,35 +177,36 @@ enum OrchestrationMentionRenderer {
     /// entity. Used by the Companion bridge so the phone shows the same names
     /// and reveal targets the Mac renders.
     static func resolve(identifier: String) -> Resolved? {
-        guard let (prefix, uuid) = MentionParser.split(identifier: identifier) else {
+        guard let (prefix, token) = MentionParser.split(identifier: identifier) else {
             return nil
         }
-        return liveResolve(prefix: prefix, uuid: uuid)
+        return liveResolve(prefix: prefix, token: token)
     }
 
     // Live resolver: looks the identifier up in the running app.
-    private static func liveResolve(prefix: String?, uuid: String) -> Resolved? {
+    private static func liveResolve(prefix: String?, token: String) -> Resolved? {
         switch prefix {
         case "wg-":
-            return resolveWorkgroup(instanceID: "wg-" + uuid)
+            return resolveWorkgroup(instanceID: "wg-" + token)
         case "session:":
-            return resolveSession(guid: uuid)
+            return resolveSession(reference: token)
         default:
-            // A bare UUID is almost always a session_guid; fall back to
-            // treating it as a workgroup instance id whose "wg-" prefix
-            // the model dropped.
-            return resolveSession(guid: uuid) ?? resolveWorkgroup(instanceID: "wg-" + uuid)
+            // A bare reference is almost always a session; fall back to treating
+            // it as a workgroup instance id whose "wg-" prefix the model dropped.
+            return resolveSession(reference: token) ?? resolveWorkgroup(instanceID: "wg-" + token)
         }
     }
 
-    private static func resolveSession(guid: String) -> Resolved? {
-        guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
+    private static func resolveSession(reference: String) -> Resolved? {
+        guard let session = iTermController.sharedInstance()?.anySession(forReference: reference) else {
             return nil
         }
         // Use the shared mention naming so message bubbles match the picker and
         // the inserted token (workgroup role prefix, colon omitted when the
-        // session has no title yet).
-        return Resolved(displayName: ChatMentionDisplay.displayName(for: session), revealGuid: guid)
+        // session has no title yet). Reveal by the session's stableID so a click
+        // resolves even after a shell reload rotated its guid.
+        return Resolved(displayName: ChatMentionDisplay.displayName(for: session),
+                        revealGuid: session.stableID)
     }
 
     private static func resolveWorkgroup(instanceID: String) -> Resolved? {
@@ -216,7 +218,7 @@ enum OrchestrationMentionRenderer {
         let raw = instance.workgroup.name
         let name = raw.isEmpty ? "Untitled workgroup" : raw
         return Resolved(displayName: name,
-                        revealGuid: leader.guid,
+                        revealGuid: leader.stableID,
                         workgroupID: instanceID)
     }
 }

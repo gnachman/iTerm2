@@ -1422,8 +1422,8 @@ final class OrchestratorDispatcher {
             // "session:<uuid>" / "wg-<uuid>" are already claim scopes.
             return mention.identifier
         }
-        // Bare session guid: resolve to the scope its claim lives under.
-        return WorkgroupIntrospection.claimScope(forSessionGuid: mention.uuid)
+        // Bare session reference: resolve to the scope its claim lives under.
+        return WorkgroupIntrospection.claimScope(forSessionGuid: mention.token)
     }
 
     @MainActor

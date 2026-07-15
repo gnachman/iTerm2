@@ -185,7 +185,9 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         }
         let choose = onChoose
         hide()
-        choose?(session.guid, ChatMentionDisplay.displayName(for: session))
+        // Insert the reload-durable stableID so the user's @mention keeps
+        // resolving after a shell reload rotates the session's guid.
+        choose?(session.stableID, ChatMentionDisplay.displayName(for: session))
     }
 
     private func moveSelection(by delta: Int) {
