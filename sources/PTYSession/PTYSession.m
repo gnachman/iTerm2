@@ -282,6 +282,7 @@ static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DE
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_WINDOW_TITLE_DEPRECATED = @"Session Window Title";  // server-set window name
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_NAME_DEPRECATED = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
+static NSString *const SESSION_ARRANGEMENT_STABLE_ID = @"Session Stable ID";  // Reload/restore-durable identity, see iTermStableSessionID.
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
@@ -825,9 +826,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
-        // Allocate the reload-durable stable identifier. Unlike guid it is not
-        // rotated by replaceTerminatedShellWithNewInstance, so it is a durable
-        // handle on this session across shell restarts.
+        // Allocate the durable stable identifier. Unlike guid it is not rotated
+        // by replaceTerminatedShellWithNewInstance (so it is durable across shell
+        // restarts); when restoring from an arrangement it is replaced by the
+        // saved value (see sessionFromArrangement:), so it is durable across app
+        // restarts too.
         _stableID = [[iTermStableSessionID generate] copy];
 
         _screen = [[VT100Screen alloc] init];
@@ -2231,12 +2234,21 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"The session arrangement has a GUID");
             NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
             aSession->_arrangementGUID = [guid copy];
+            // Adopt the saved stableID only where we adopt the saved guid (so chat/
+            // companion bindings survive an app restart). During a live duplicate,
+            // or any restore of a still-live session's arrangement, none of these
+            // guards hold, so the new session keeps its freshly-minted, unique
+            // stableID instead of colliding with the source.
+            NSString *savedStableID = [PTYSession stableIDInArrangement:arrangement];
             if (guid && gRegisteredSessionContents[guid]) {
                 DLog(@"The GUID is registered");
                 // There was a registered session with this guid. This session was created by
                 // restoring a saved arrangement and there is saved content registered.
                 contents = gRegisteredSessionContents[guid];
                 aSession.guid = guid;
+                if (savedStableID) {
+                    aSession.stableID = savedStableID;
+                }
                 DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
                      guid, aSession);
             } else if ([[iTermController sharedInstance] startingUp] ||
@@ -2246,6 +2258,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If contents are present, then system window restoration is bringing back a
                 // session.
                 aSession.guid = guid;
+                if (savedStableID) {
+                    aSession.stableID = savedStableID;
+                }
                 DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
             }
         }
@@ -6811,6 +6826,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     result[SESSION_ARRANGEMENT_GUID] = _guid;
+    result[SESSION_ARRANGEMENT_STABLE_ID] = _stableID;
     if (_lastActivityOrdinal > 0) {
         result[SESSION_ARRANGEMENT_LAST_ACTIVITY_ORDINAL] = @(_lastActivityOrdinal);
     }
@@ -7016,6 +7032,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     } else {
         return arrangement[SESSION_UNIQUE_ID];
     }
+}
+
++ (NSString *)stableIDInArrangement:(NSDictionary *)arrangement {
+    // castFrom: guards a type-corrupted plist (e.g. a number under this key):
+    // the raw value must be a string before it crosses into canonical()'s
+    // nonnull String parameter, and validation on the way out means a malformed
+    // value falls back to the freshly-minted id rather than being adopted.
+    NSString *raw = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_STABLE_ID]];
+    if (!raw) {
+        return nil;
+    }
+    return [iTermStableSessionID canonical:raw];
 }
 
 + (NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement {

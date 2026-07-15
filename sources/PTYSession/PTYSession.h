@@ -660,8 +660,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // Also used by the websocket API to reference a session.
 @property(nonatomic, readonly) NSString *guid;
 
-// A stable identifier that, unlike guid, survives a shell reload:
-// replaceTerminatedShellWithNewInstance rotates guid but leaves this alone.
+// A stable identifier that, unlike guid, survives a shell reload
+// (replaceTerminatedShellWithNewInstance rotates guid but leaves this alone) and
+// is serialized into the arrangement so it also survives state restoration.
 // Format "ptys_" + Crockford base32 (see iTermStableSessionID). Preferred over
 // guid for binding a chat or a companion reference to a session.
 @property(nonatomic, readonly) NSString *stableID;
@@ -830,6 +831,10 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                          workingDirectory:(NSString *)workingDirectory
                                      size:(VT100GridSize)size;
 + (nullable NSString *)guidInArrangement:(NSDictionary *)arrangement;
+
+// The canonicalized stableID stored in an arrangement, or nil if the
+// arrangement predates the stableID (or carries a malformed one).
++ (nullable NSString *)stableIDInArrangement:(NSDictionary *)arrangement;
 + (nullable NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement;
 
 - (void)textViewFontDidChange;
