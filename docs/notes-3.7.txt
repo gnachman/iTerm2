@@ -705,6 +705,12 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Smart tab-title truncation no longer flickers
+  between head and tail truncation when a tab
+  title begins with an animated status glyph
+  (such as a Claude Code spinner). The glyph is
+  no longer counted when deciding which end of
+  the title to truncate.
 - Session Status tool: with “Merge workgroup
   statuses” on, a merged row now shows the status
   of the peer you’re actually looking at (the
