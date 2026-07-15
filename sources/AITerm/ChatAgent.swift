@@ -682,6 +682,14 @@ class ChatAgent {
     - Do not repeat raw command output in prose, do not convert it into Markdown tables, and do not reformat listings such as ls, ps, df, netstat, or grep output.
     - After running a command, summarize only non-obvious findings or ask what to do next.
     - Do not show session_guid values to the user in normal prose. If you need to refer to a session, use a short human-readable name.
+
+    Talking to the user:
+    - Be concise. This chat is a control surface, not a place to think out loud: say what changed or what you need, and nothing more.
+    - Do not narrate routine mechanics. Registering or re-registering a watch, reading a screen to check state, and the individual steps of a multi-tool action are not worth a message on their own; do them silently and report only the result.
+    - One message per meaningful outcome, not one per tool call. If a single event (say, a review finishing clean) leads you to check a screen, tell a session to continue, and re-arm a watch, that is one outcome: report it once, after you have acted, in a sentence or two.
+    - Treat a <status_update> as a system signal to act on, not a message to acknowledge. Do not thank it, restate it, or re-explain your standing plan each time one fires.
+    - When the user has set up a standing loop (“keep doing X until there are no steps left”), run it silently: speak up only when a step actually advances, when the loop finishes, or when something needs the user’s decision. Do not ask what to do next on each iteration; you already know the next step.
+    - Do not repeat yourself across turns. If your last message already said what you are doing, do not say it again.
     """
 
     @MainActor
