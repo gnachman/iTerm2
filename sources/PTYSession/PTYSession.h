@@ -660,6 +660,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // Also used by the websocket API to reference a session.
 @property(nonatomic, readonly) NSString *guid;
 
+// A stable identifier that, unlike guid, survives a shell reload:
+// replaceTerminatedShellWithNewInstance rotates guid but leaves this alone.
+// Format "ptys_" + Crockford base32 (see iTermStableSessionID). Preferred over
+// guid for binding a chat or a companion reference to a session.
+@property(nonatomic, readonly) NSString *stableID;
+
 // Indicates if this session predates a tmux split pane. Used to figure out which pane is new when
 // layout changes due to a user-initiated pane split.
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;

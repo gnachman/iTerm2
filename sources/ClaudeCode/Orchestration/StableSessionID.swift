@@ -6,9 +6,8 @@
 //  platform-neutral (Foundation only); Mac-only code goes in sibling files.
 //
 //  A stable per-session identifier. Unlike PTYSession.guid it survives a shell
-//  reload (replaceTerminatedShellWithNewInstance rotates the guid but keeps the
-//  same object, and this id with it) and is serialized into the session
-//  arrangement so it also survives state restoration. Format:
+//  reload: replaceTerminatedShellWithNewInstance rotates the guid but keeps the
+//  same object, and this id with it. Format:
 //
 //      ptys_9QK3ZM7WX4VBT
 //

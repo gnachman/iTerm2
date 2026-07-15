@@ -825,6 +825,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
+        // Allocate the reload-durable stable identifier. Unlike guid it is not
+        // rotated by replaceTerminatedShellWithNewInstance, so it is a durable
+        // handle on this session across shell restarts.
+        _stableID = [[iTermStableSessionID generate] copy];
 
         _screen = [[VT100Screen alloc] init];
         NSParameterAssert(_shell != nil && _screen != nil);
@@ -1126,6 +1130,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_bellRate release];
     [iTermCPUUtilization setInstance:nil forSessionID:_guid];
     [_guid release];
+    [_stableID release];
     [_lastCommand release];
     [_substitutions release];
     [_automaticProfileSwitcher release];
