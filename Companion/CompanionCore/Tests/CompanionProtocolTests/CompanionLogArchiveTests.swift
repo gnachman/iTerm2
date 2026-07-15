@@ -88,6 +88,22 @@ final class CompanionLogArchiveTests: XCTestCase {
         XCTAssertTrue(contents.contains(Data("from the nse directory\n".utf8)))
     }
 
+    func testStagedArchiveSurvivesSourceDeletion() throws {
+        // The delete-logs-while-emailing race: once a file is staged (hard
+        // linked), the zip must still contain it even if the original is deleted
+        // immediately after staging.
+        let a = try write("a.log", Data("alpha contents\n".utf8))
+        let staged = try CompanionLogArchive.stage(files: [a], folderName: "logs")
+        try FileManager.default.removeItem(at: a)   // original gone after staging
+
+        let archive = dir.appendingPathComponent("survives.zip")
+        try CompanionLogArchive.zip(stagedDirectory: staged, to: archive)
+
+        let extracted = try unzip(archive)
+        XCTAssertEqual(extracted["a.log"], Data("alpha contents\n".utf8),
+                       "hard-linked staging preserved the file past the source deletion")
+    }
+
     func testUnreadableFilesAreSkipped() throws {
         let good = try write("good.log", Data("kept\n".utf8))
         let missing = dir.appendingPathComponent("does-not-exist.log")
