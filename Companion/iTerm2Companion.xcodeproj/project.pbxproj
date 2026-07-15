@@ -51,6 +51,7 @@
 		93AB42BE20BE164FF24568C4 /* MentionPlainTextRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48938E46A1976F6756001B8E /* MentionPlainTextRenderer.swift */; };
 		A28F8FAE03C27CC1088475B8 /* WorkgroupWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969B8C22B79D7C1929B7DE1A /* WorkgroupWatcher.swift */; };
 		A6F733B22FE4F475008441ED /* PushService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A6F733AB2FE4F475008441ED /* PushService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AD7EE3ADEB33C7238B3AEF66 /* StableSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7381741AF946B73865CFEDC /* StableSessionID.swift */; };
 		AEA57C95A686D516F061CCEE /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F0367E6521567120B3BF05 /* QRScannerView.swift */; };
 		B670983AE703D700B6537995 /* CompanionHistoryWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D1A918875A1CCD767F47E46 /* CompanionHistoryWindow.swift */; };
 		BCAC32E11E927DCC5E74A28A /* RemoteCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2C97B70ADFB001DAAE37592 /* RemoteCommand.swift */; };
@@ -173,6 +174,7 @@
 		E3A21C6D0017626533817E5E /* SessionBrowserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionBrowserView.swift; sourceTree = "<group>"; };
 		E3A2BCDE5F5ACE080E518CA8 /* MentionParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MentionParser.swift; path = sources/ClaudeCode/Orchestration/MentionParser.swift; sourceTree = "<group>"; };
 		E5781E96CAC04116A07415C7 /* NSDictionaryCodableBox.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NSDictionaryCodableBox.swift; path = sources/Categories/NSDictionaryCodableBox.swift; sourceTree = "<group>"; };
+		E7381741AF946B73865CFEDC /* StableSessionID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StableSessionID.swift; path = sources/ClaudeCode/Orchestration/StableSessionID.swift; sourceTree = "<group>"; };
 		F163F73401D3427659D549FA /* CompanionHEVCFraming.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionHEVCFraming.swift; path = sources/Companion/Shared/CompanionHEVCFraming.swift; sourceTree = "<group>"; };
 		F8FA2D649F5A4E95296B9158 /* MessageBubbleView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -349,6 +351,7 @@
 				899C05355E61EEF37D8C265F /* Result+iTerm.swift */,
 				E5781E96CAC04116A07415C7 /* NSDictionaryCodableBox.swift */,
 				E3A2BCDE5F5ACE080E518CA8 /* MentionParser.swift */,
+				E7381741AF946B73865CFEDC /* StableSessionID.swift */,
 				969B8C22B79D7C1929B7DE1A /* WorkgroupWatcher.swift */,
 				8352A86C7CEC1F3B06ED35B4 /* CompanionMessages.swift */,
 				465641AD107D063E7DD2A1C5 /* CompanionPushRelay.swift */,
@@ -602,6 +605,7 @@
 				93AB42BE20BE164FF24568C4 /* MentionPlainTextRenderer.swift in Sources */,
 				C114DE59F81A0FD93FF93184 /* DictationController.swift in Sources */,
 				0BD2BBEA5B84FFCBBA5E8C88 /* SessionWatchState.swift in Sources */,
+				AD7EE3ADEB33C7238B3AEF66 /* StableSessionID.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

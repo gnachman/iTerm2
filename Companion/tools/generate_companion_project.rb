@@ -52,6 +52,7 @@ SHARED_MAC_SOURCES = %w[
   sources/Categories/Result+iTerm.swift
   sources/Categories/NSDictionaryCodableBox.swift
   sources/ClaudeCode/Orchestration/MentionParser.swift
+  sources/ClaudeCode/Orchestration/StableSessionID.swift
   sources/ClaudeCode/Orchestration/WorkgroupWatcher.swift
   sources/Companion/CompanionMessageSubstance.swift
   sources/Companion/MentionPlainTextRenderer.swift
