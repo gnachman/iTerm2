@@ -181,14 +181,27 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         chatViewController.makeMessageInputFieldFirstResponder()
     }
 
+    // True when `binding` (a chat's stored terminal reference, a stableID for
+    // new bindings or a legacy guid otherwise) points at the live session
+    // reachable by `guid`. Mirrors isLinked(toSessionGuid:) for the direct-
+    // comparison sites, so a stableID binding still matches its session's guid.
+    private func terminalBinding(_ binding: String?, matchesSessionGuid guid: String) -> Bool {
+        guard let binding else {
+            return false
+        }
+        return iTermSessionReferenceKeys(forGuid: guid).contains(binding)
+    }
+
     @objc(isStreamingToGuid:)
     func isStreaming(to guid: String) -> Bool {
-        return chatViewController.streaming && chatViewController.terminalSessionGuid == guid
+        return chatViewController.streaming &&
+            terminalBinding(chatViewController.terminalSessionGuid, matchesSessionGuid: guid)
     }
 
     @objc(stopStreamingSession:)
     func stopStreaming(guid: String) {
-        if chatViewController.terminalSessionGuid == guid && chatViewController.streaming {
+        if terminalBinding(chatViewController.terminalSessionGuid, matchesSessionGuid: guid) &&
+            chatViewController.streaming {
             chatViewController.stopStreaming()
         }
     }
@@ -529,7 +542,7 @@ extension ChatWindowController: NSToolbarDelegate {
 
     @objc(setSelectionText:forSession:)
     func setSelectedText(_ text: String, forSession guid: String) {
-        if currentChat?.terminalSessionGuid == guid {
+        if terminalBinding(currentChat?.terminalSessionGuid, matchesSessionGuid: guid) {
             chatViewController.offerSelectedText(text)
         }
     }
