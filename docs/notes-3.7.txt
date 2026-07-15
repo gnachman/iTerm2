@@ -105,9 +105,25 @@ Major New Features:
   a raw identifier. Clicking the link
   reveals that session. The tool-call
   activity lines (e.g. “Reading screen of
-  …”) now use these same links, and show
-  “[defunct session]” once the target is
-  gone instead of leaking a raw GUID.
+  …”) now use these same links, and show a
+  grayed-out, non-clickable “[defunct
+  session]” link once the target is gone
+  instead of leaking a raw GUID.
+
+- AI chat orchestration is now much less
+  chatty. While it runs a loop (for example,
+  waiting for a Code Review to finish and
+  then telling a session to continue), it
+  acts on each event and reports one line per
+  real outcome instead of narrating every
+  step and asking what to do next each time.
+
+- A screen-watched condition in orchestration
+  mode now checks less often the longer it
+  runs, and no longer interrupts the chat with
+  a “watch timed out” note every few minutes.
+  The watch keeps running on its own and only
+  gives up after several hours.
 
 - In AI chat orchestration mode, pressing Stop
   now halts the whole pipeline: it cancels the
