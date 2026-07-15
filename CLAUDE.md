@@ -3,6 +3,7 @@
 - Avoid writing javascript, html, or CSS that's more than one line long in Swift. Create a new file and use the existing template mechanism to load it.
 - After creating a new file, `git add` it immediately
 - To add a file to the Xcode project, use `tools/add_file_to_xcodeproj.rb <file_path> <target_name>` (e.g., `tools/add_file_to_xcodeproj.rb sources/Example.swift iTerm2SharedARC`)
+- The Companion app's Xcode project (`Companion/iTerm2Companion.xcodeproj`) is generated from scratch by `Companion/tools/generate_companion_project.rb`, which is the source of truth. That script does NOT use `add_file_to_xcodeproj.rb`. After adding, removing, or renaming a Companion source file, re-run the generator and commit its output. Crucially, any structural change made in Xcode (a new target, a Swift package dependency, entitlements, or a build setting) MUST be mirrored back into the generator in the same commit, because the next regeneration overwrites the project wholesale and would otherwise silently drop it. If the two drift, regenerating produces a broken build.
 - In Swift, use it_fatalError and it_assert instead of fatalError and assert, which do not create useful crash logs. In ObjC, assert is ok although ITAssertWithMessage is preferable. Asserts are enabled in release builds.
 - Don't write more than one line of inline javascript, html, or css. Instead create a new file and load it using iTermBrowserTemplateLoader.swift
 - Don't create dependency cycles. Use delegates or closures instead.
