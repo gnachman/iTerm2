@@ -480,8 +480,8 @@ final class OrchestratorDispatcher {
             sessionStateHistory[guid] = Self.seedState(for: session)
         }
         // Screen-poll watchers have no persisted running loop; restart one
-        // per surviving watcher. Its 5-minute cap restarts from now, which
-        // is the intended behavior after a relaunch.
+        // per surviving watcher. Its watch deadline (ScreenWatchPoller.deadline)
+        // restarts from now, which is the intended behavior after a relaunch.
         for watcher in watchers where watcher.effectiveMode == .screenPoll {
             startScreenPoll(for: watcher)
         }
@@ -752,8 +752,9 @@ final class OrchestratorDispatcher {
                 reason: .watchTimedOut,
                 stateReached: "",
                 detail: "Watch timed out: \(watcher.roleName) in \(watcher.workgroupName) "
-                    + "did not reach \(watcher.goalDescription) within 5 minutes. It was "
-                    + "watched by reading its screen. Check it with get_screen_contents, "
+                    + "did not reach \(watcher.goalDescription) after "
+                    + "\(ScreenWatchPoller.deadlineDescription) of watching its screen. "
+                    + "Check it with get_screen_contents, "
                     + "or register_watch again to keep waiting.")
         } else if let condition = watcher.condition {
             publishStatusUpdate(
