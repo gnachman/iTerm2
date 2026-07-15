@@ -9,8 +9,10 @@
 //  at a specific session or workgroup; this is the rendering half of
 //  that contract. A raw id means nothing to the user, so each
 //  reference is replaced with the live name (clickable, reveals the
-//  session) or the literal "[defunct session]" when it no longer
-//  resolves to anything live.
+//  session) or a grayed, non-clickable "[defunct session]" mention (styled
+//  like a live one so it still reads as a session reference, but with the
+//  same bracketed wording the phone shows) when it no longer resolves to
+//  anything live.
 //
 
 import AppKit
@@ -82,8 +84,7 @@ enum OrchestrationMentionRenderer {
                                          baseAttributes: baseAttributes,
                                          linkColor: linkColor))
             } else {
-                result.append(NSAttributedString(string: "[defunct session]",
-                                                 attributes: baseAttributes))
+                result.append(defunctString(baseAttributes: baseAttributes))
             }
             cursor = whole.location + whole.length
         }
@@ -114,7 +115,7 @@ enum OrchestrationMentionRenderer {
         // link's click action, so the whole thing is one target.
         let result = NSMutableAttributedString()
         if let icon = iconString(font: baseAttributes[.font] as? NSFont,
-                                 linkColor: linkColor,
+                                 tint: linkColor,
                                  action: action) {
             result.append(icon)
             result.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
@@ -123,20 +124,55 @@ enum OrchestrationMentionRenderer {
         return result
     }
 
+    // Renders a mention that no longer resolves. Mirrors linkString's shape
+    // (leading terminal glyph, thin space, label) so it still reads as a
+    // session reference, but tinted with a de-emphasized gray and carrying
+    // no click action, cursor, or underline: the user can see it pointed at
+    // a session that is now gone, and that it isn't clickable.
+    private static func defunctString(
+        baseAttributes: [NSAttributedString.Key: Any]) -> NSAttributedString {
+        let gray = NSColor.secondaryLabelColor
+        var attributes = baseAttributes
+        attributes[.foregroundColor] = gray
+        // Drop any link styling the base run might carry so nothing hints
+        // at a live link. `.link` matters most: if the model wrote the
+        // mention inside a markdown link, ClickableTextView would otherwise
+        // fall through to the .link branch (pointing-hand cursor, opens the
+        // URL on click) because this run has no clickableAttribute to win.
+        attributes[.underlineStyle] = nil
+        attributes[.underlineColor] = nil
+        attributes[.cursor] = nil
+        attributes[.link] = nil
+        attributes[clickableAttribute] = nil
+
+        let result = NSMutableAttributedString()
+        if let icon = iconString(font: baseAttributes[.font] as? NSFont,
+                                 tint: gray,
+                                 action: nil) {
+            result.append(icon)
+            result.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
+        }
+        // Keep the bracketed wording the phone renderers use so the same
+        // mention reads consistently across Mac and phone; only the styling
+        // (glyph, gray, non-clickable) is Mac-specific.
+        result.append(NSAttributedString(string: "[defunct session]", attributes: attributes))
+        return result
+    }
+
     // Builds an inline, link-tinted terminal glyph sized to the run's
     // font. Uses the same DynamicImage / .dynamicAttachment machinery as
     // the chat's code-copy buttons so ClickableTextView re-tints it when
     // the appearance flips. Returns nil if the SF Symbol is unavailable.
     private static func iconString(font: NSFont?,
-                                   linkColor: NSColor,
-                                   action: @escaping (NSPoint) -> ()) -> NSAttributedString? {
+                                   tint: NSColor,
+                                   action: ((NSPoint) -> ())?) -> NSAttributedString? {
         guard let symbol = NSImage(systemSymbolName: "terminal",
                                    accessibilityDescription: "iTerm2 session") else {
             return nil
         }
         let dynamicImage = DynamicImage(image: symbol,
-                                        dark: resolvedColor(linkColor, darkMode: true),
-                                        light: resolvedColor(linkColor, darkMode: false))
+                                        dark: resolvedColor(tint, darkMode: true),
+                                        light: resolvedColor(tint, darkMode: false))
         let attachment = NSTextAttachment()
         attachment.image = dynamicImage.tinted(forDarkMode: NSApp.effectiveAppearance.it_isDark)
 
@@ -154,9 +190,14 @@ enum OrchestrationMentionRenderer {
 
         let string = NSMutableAttributedString(attachment: attachment)
         let range = NSRange(location: 0, length: string.length)
-        string.addAttribute(clickableAttribute, value: action, range: range)
+        // The dynamic attachment re-tints on appearance changes whether or
+        // not the glyph is clickable; the click action and pointing-hand
+        // cursor are added only for a live (clickable) mention.
         string.addAttribute(.dynamicAttachment, value: dynamicImage, range: range)
-        string.addAttribute(.cursor, value: NSCursor.pointingHand, range: range)
+        if let action {
+            string.addAttribute(clickableAttribute, value: action, range: range)
+            string.addAttribute(.cursor, value: NSCursor.pointingHand, range: range)
+        }
         return string
     }
 
