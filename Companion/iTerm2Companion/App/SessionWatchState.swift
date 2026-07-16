@@ -71,7 +71,15 @@ struct SessionWatchState {
     mutating func claim(token: UUID, tab: AppModel.AppTab) -> Claim {
         let prior = activeToken
         let priorTab = activeTab
-        activeToken = token
+        // A send Task can outlive a genuine pop (sendComposed defers the claim past
+        // an async consent check), so this claim may run AFTER the view departed. If
+        // so, do NOT make the gone view the active owner: leaving activeToken unset
+        // makes beginWatchingSessionChat's recordIntent guard bail, so no watch or
+        // Mac subscription (and no reply notification) installs for a departed view.
+        // The message itself still publishes; only the reply-watch is skipped. Read
+        // this BEFORE the removeAll below erases the departure.
+        let claimingTokenDeparted = departed.contains(token)
+        activeToken = claimingTokenDeparted ? nil : token
         activeTab = tab
         activeChatID = nil
         sequence += 1
