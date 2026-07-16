@@ -128,6 +128,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)companionStreamMaxLeadMilliseconds;
 + (int)companionStreamMaxQueueDepth;
 + (double)companionStreamBitrateMultiplier;
++ (double)companionWakeupCoalesceInterval;
 + (int)bufferDepth;
 + (BOOL)chaseAnchoredScreen;
 + (BOOL)channelsEnabled;
