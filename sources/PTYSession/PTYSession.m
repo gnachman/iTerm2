@@ -13459,11 +13459,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewSessionIsLinkedToAIChat {
-    return [iTermChatDatabase chatIDsForSession:_guid].count > 0;
+    // Pass both ids so the lookup is a plain map hit, not a session-tree walk
+    // (this runs on the draw path via configureIndicatorsHelperWithRightMargin).
+    return [iTermChatDatabase chatIDsForSessionGuid:_guid stableID:self.stableID].count > 0;
 }
 
 - (BOOL)textViewSessionIsStreamingToAIChat {
-    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid];
+    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid
+                                                                  stableID:self.stableID];
 }
 
 - (BOOL)textViewSessionHasChannelParent {

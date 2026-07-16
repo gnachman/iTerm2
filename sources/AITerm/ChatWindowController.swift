@@ -182,20 +182,27 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
     }
 
     // True when `binding` (a chat's stored terminal reference, a stableID for
-    // new bindings or a legacy guid otherwise) points at the live session
-    // reachable by `guid`. Mirrors isLinked(toSessionGuid:) for the direct-
-    // comparison sites, so a stableID binding still matches its session's guid.
-    private func terminalBinding(_ binding: String?, matchesSessionGuid guid: String) -> Bool {
+    // new bindings or a legacy guid otherwise) is one of `keys` (a session's
+    // {guid, stableID} pair). Matches a binding stored in either form.
+    private func terminalBinding(_ binding: String?, matchesReferenceKeys keys: Set<String>) -> Bool {
         guard let binding else {
             return false
         }
-        return iTermSessionReferenceKeys(forGuid: guid).contains(binding)
+        return keys.contains(binding)
     }
 
-    @objc(isStreamingToGuid:)
-    func isStreaming(to guid: String) -> Bool {
+    // Resolving convenience for the non-hot callers that only hold a guid.
+    private func terminalBinding(_ binding: String?, matchesSessionGuid guid: String) -> Bool {
+        return terminalBinding(binding, matchesReferenceKeys: iTermSessionReferenceKeys(forGuid: guid))
+    }
+
+    // Called from the draw path (textViewSessionIsStreamingToAIChat), so the
+    // caller passes the session's stableID to avoid a session-tree walk here.
+    @objc(isStreamingToGuid:stableID:)
+    func isStreaming(toGuid guid: String, stableID: String) -> Bool {
         return chatViewController.streaming &&
-            terminalBinding(chatViewController.terminalSessionGuid, matchesSessionGuid: guid)
+            terminalBinding(chatViewController.terminalSessionGuid,
+                            matchesReferenceKeys: [guid, stableID])
     }
 
     @objc(stopStreamingSession:)

@@ -13,15 +13,17 @@ enum ChatDatabaseQueryError: Error {
 class ObjCChatDatabase: NSObject {
     @objc static let redrawTerminalsNotification = Notification.Name("iTermChatDatabaseRedrawTerminals")
 
-    @objc(chatIDsForSession:)
-    static func chatIDsForSession(withGUID guid: String) -> Set<String> {
+    @objc(chatIDsForSessionGuid:stableID:)
+    static func chatIDsForSession(guid: String, stableID: String?) -> Set<String> {
         guard let instance = ChatDatabase.instanceIfExists else {
             return []
         }
         // A chat is indexed under whichever reference it stored (stableID or
-        // legacy guid); union both keys so the lookup finds it either way.
+        // legacy guid). The caller passes the session's own {guid, stableID}
+        // pair, so this stays a plain map lookup on the draw hot path instead of
+        // re-resolving the guid through the whole session tree.
         var result = Set<String>()
-        for key in iTermSessionReferenceKeys(forGuid: guid) {
+        for key in [guid, stableID].compactMap({ $0 }) {
             if let ids = instance.terminalSessionToChatMap[key] {
                 result.formUnion(ids)
             }
