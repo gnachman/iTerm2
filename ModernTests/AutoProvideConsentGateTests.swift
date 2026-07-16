@@ -35,4 +35,24 @@ final class AutoProvideConsentGateTests: XCTestCase {
         XCTAssertFalse(ChatAgent.shouldSuppressAutoProvide(wantsAutoSend: false, consent: .unknown))
         XCTAssertFalse(ChatAgent.shouldSuppressAutoProvide(wantsAutoSend: false, consent: .granted))
     }
+
+    // The one-time prompt fires only when consent has never been decided (Unknown)
+    // and it has not already been shown this launch (it is re-evaluated every turn).
+
+    func testAsksOnlyWhenUnknownAndNotYetAsked() {
+        XCTAssertTrue(ChatAgent.shouldAskAutoProvideConsent(consent: .unknown, alreadyAskedThisSession: false))
+    }
+
+    func testDoesNotReaskAfterAskedThisSession() {
+        XCTAssertFalse(ChatAgent.shouldAskAutoProvideConsent(consent: .unknown, alreadyAskedThisSession: true))
+    }
+
+    func testDoesNotAskWhenAlreadyGranted() {
+        XCTAssertFalse(ChatAgent.shouldAskAutoProvideConsent(consent: .granted, alreadyAskedThisSession: false))
+    }
+
+    func testDoesNotAskWhenDenied() {
+        // Denied is an explicit "no": never nag again, even in a fresh session.
+        XCTAssertFalse(ChatAgent.shouldAskAutoProvideConsent(consent: .denied, alreadyAskedThisSession: false))
+    }
 }

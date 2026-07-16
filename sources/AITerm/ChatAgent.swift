@@ -771,6 +771,7 @@ class ChatAgent {
         if Self.shouldSuppressAutoProvide(wantsAutoSend: wantsAutoSend,
                                           consent: iTermUserDefaults.autoProvideConsent) {
             RLog("autoProvidedContext: chat \(chatID) wants auto-send but consent is not granted (\(iTermUserDefaults.autoProvideConsent.rawValue)); suppressing")
+            requestAutoProvideConsentIfNeeded()
             return nil
         }
         var blocks = [String]()
@@ -791,6 +792,38 @@ class ChatAgent {
         return blocks.isEmpty ? nil : blocks.joined(separator: "\n")
     }
 
+    // Set once the one-time auto-provide consent prompt has been shown this launch so
+    // it can't stack: autoProvidedContext re-evaluates every turn across all chats.
+    // Static (shared by every agent) so the user is asked at most once per launch. A
+    // persisted Granted/Denied ends it across launches.
+    private static var didAskAutoProvideConsentThisSession = false
+
+    /// Show the one-time consent prompt (non-blocking) when a turn wanted to auto-send
+    /// but the user has never decided. This turn already suppressed auto-send; once
+    /// the user grants, the next turn includes the screen. Shown asynchronously so the
+    /// in-flight turn is not held on a modal.
+    private func requestAutoProvideConsentIfNeeded() {
+        guard Self.shouldAskAutoProvideConsent(consent: iTermUserDefaults.autoProvideConsent,
+                                               alreadyAskedThisSession: Self.didAskAutoProvideConsentThisSession) else {
+            return
+        }
+        Self.didAskAutoProvideConsentThisSession = true
+        DispatchQueue.main.async {
+            // Re-check: a concurrent chat's prompt (or a per-chat opt-in) may have
+            // resolved consent while this was queued.
+            guard iTermUserDefaults.autoProvideConsent == .unknown else { return }
+            let selection = iTermWarning.show(
+                withTitle: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.",
+                actions: ["Turn On", "Not Now"],
+                accessory: nil,
+                identifier: nil,
+                silenceable: .kiTermWarningTypePersistent,
+                heading: "Share Terminal Contents Automatically?",
+                window: nil)
+            iTermUserDefaults.autoProvideConsent = (selection == .kiTermWarningSelection0) ? .granted : .denied
+        }
+    }
+
     /// Defang our control-tag delimiters in untrusted terminal content so it cannot
     /// break out of the <visible-screen> / <terminal-state> wrappers and inject
     /// trusted top-level context (prompt injection): terminal output that contains a
@@ -806,6 +839,16 @@ class ChatAgent {
     nonisolated static func shouldSuppressAutoProvide(wantsAutoSend: Bool,
                                                       consent: iTermAutoProvideConsent) -> Bool {
         return wantsAutoSend && consent != .granted
+    }
+
+    /// Whether to show the one-time auto-provide consent prompt: only when the user
+    /// has never decided (Unknown) and it has not already been shown this launch
+    /// (autoProvidedContext re-evaluates every turn, so the modal must not stack).
+    /// A persisted Granted/Denied ends it across launches. Denied is an explicit
+    /// "no" - never nag again.
+    nonisolated static func shouldAskAutoProvideConsent(consent: iTermAutoProvideConsent,
+                                                        alreadyAskedThisSession: Bool) -> Bool {
+        return consent == .unknown && !alreadyAskedThisSession
     }
 
     nonisolated static func neutralizeContextDelimiters(_ s: String) -> String {
