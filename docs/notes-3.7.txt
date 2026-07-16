@@ -123,6 +123,12 @@ Major New Features:
   mode, mirroring the link offer shown when a
   session is available.
 
+- AI chat now asks before it starts including
+  your terminal’s visible screen and state with
+  messages automatically. A permission left at
+  “Always” from an earlier version no longer
+  shares your screen until you confirm once.
+
 - AI chat history entries can now be deleted
   from the chat list.
 
