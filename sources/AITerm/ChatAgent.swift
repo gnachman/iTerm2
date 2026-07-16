@@ -760,6 +760,19 @@ class ChatAgent {
         let stateP = rce.permission(chatID: chatID, inSessionGuid: guid, category: .checkTerminalState)
         let contentsP = rce.permission(chatID: chatID, inSessionGuid: guid, category: .viewContents)
         RLog("autoProvidedContext: chat \(chatID) session \(guid): Check Terminal State=\(stateP), View Contents=\(contentsP) (inject when .always)")
+        // Auto-send requires an explicit, informed global consent, not merely a
+        // per-chat .always permission: a legacy "Always" grant (e.g. an old
+        // "View History = Always" carried across the rename to "View Contents")
+        // reaches .always WITHOUT ever passing the per-chat "Send Automatically"
+        // confirmation, so gating on the permission alone would silently start
+        // sending the screen. Suppress until the user has granted consent (the
+        // per-chat confirmation grants it; the one-time prompt asks otherwise).
+        let wantsAutoSend = (stateP == .always || contentsP == .always)
+        if Self.shouldSuppressAutoProvide(wantsAutoSend: wantsAutoSend,
+                                          consent: iTermUserDefaults.autoProvideConsent) {
+            RLog("autoProvidedContext: chat \(chatID) wants auto-send but consent is not granted (\(iTermUserDefaults.autoProvideConsent.rawValue)); suppressing")
+            return nil
+        }
         var blocks = [String]()
         if stateP == .always {
             blocks.append("<terminal-state>\n" + Self.neutralizeContextDelimiters(session.aiState) + "\n</terminal-state>")
@@ -786,6 +799,15 @@ class ChatAgent {
     /// instructions. Mirrors the guillemet approach in
     /// AutoModeClassifier.neutralizePromptDelimiters, but deliberately preserves
     /// newlines because the visible screen's row layout is meaningful to the model.
+    /// Whether auto-providing terminal state / visible screen must be suppressed:
+    /// true when a turn would auto-send (a category is at .always) but the user has
+    /// not granted the global auto-provide consent. This is what stops a legacy
+    /// "Always" grant from silently sending the screen before an informed choice.
+    nonisolated static func shouldSuppressAutoProvide(wantsAutoSend: Bool,
+                                                      consent: iTermAutoProvideConsent) -> Bool {
+        return wantsAutoSend && consent != .granted
+    }
+
     nonisolated static func neutralizeContextDelimiters(_ s: String) -> String {
         return s
             .replacingOccurrences(of: "</visible-screen>", with: "\u{2039}/visible-screen\u{203A}")

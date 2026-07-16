@@ -491,6 +491,10 @@ final class CompanionHostBridge {
     /// permissions start at the global default). Both Check Terminal State and View
     /// Contents must be "provided automatically" (.always).
     static func autoProvideConsentSatisfied(sessionGuid: String) -> Bool {
+        // Auto-send is gated on the global consent too (ChatAgent.shouldSuppressAutoProvide),
+        // so "satisfied" must require it; otherwise the phone would skip its
+        // "Share This Session?" modal while the mac still suppresses the auto-send.
+        guard iTermUserDefaults.autoProvideConsent == .granted else { return false }
         let rce = RemoteCommandExecutor.instance
         // An empty chatID has no per-chat override, so permission() falls back to the
         // global default - exactly what a not-yet-created chat would inherit.
@@ -511,6 +515,10 @@ final class CompanionHostBridge {
         for category in [RemoteCommand.Content.PermissionCategory.checkTerminalState, .viewContents] {
             try? listModel.setPermission(chat: chatID, permission: .always, guid: guid, category: category)
         }
+        // The phone showed its own "Share This Session?" consent modal, so this is an
+        // explicit informed consent: record it globally so the mac's auto-send gate
+        // (ChatAgent.shouldSuppressAutoProvide) lets it through.
+        iTermUserDefaults.autoProvideConsent = .granted
         RLog("grantAutoProvideConsent: granted provided-automatically for chat \(chatID) session \(guid)")
     }
 

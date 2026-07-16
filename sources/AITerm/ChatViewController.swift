@@ -1097,6 +1097,11 @@ extension ChatViewController {
             switch sel {
             case .kiTermWarningSelection0:
                 newPermission = .always
+                // Explicitly choosing "Send Automatically" here IS the informed
+                // consent, so record it globally: this user is never asked again by
+                // the one-time auto-provide prompt, and auto-send takes effect (the
+                // gate in ChatAgent.autoProvidedContext requires .granted).
+                iTermUserDefaults.autoProvideConsent = .granted
             case .kiTermWarningSelection1:
                 newPermission = .ask
             case .kiTermWarningSelection2:

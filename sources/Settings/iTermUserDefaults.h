@@ -116,6 +116,22 @@ typedef NS_ENUM(NSInteger, iTermAIModelCatalogUpdateConsent) {
 };
 @property (class, nonatomic) iTermAIModelCatalogUpdateConsent aiModelCatalogUpdateConsent;
 
+// Tri-state consent for automatically including a session's terminal state +
+// visible screen with every AI chat message (the "Provide ... Automatically"
+// escalation of the View Contents / Check Terminal State permissions when set to
+// Always). Defaults to Unknown; auto-send is suppressed until Granted, so a legacy
+// "Always" grant (e.g. an old "View History = Always" carried across the rename)
+// cannot silently start sending the screen without an explicit, informed choice.
+// The per-chat "Send Automatically" confirmation also sets Granted, so an explicit
+// per-chat opt-in is never asked again. NoSync: a privacy decision that should not
+// travel through synced prefs to other machines.
+typedef NS_ENUM(NSInteger, iTermAutoProvideConsent) {
+    iTermAutoProvideConsentUnknown = 0,
+    iTermAutoProvideConsentGranted = 1,
+    iTermAutoProvideConsentDenied = 2
+};
+@property (class, nonatomic) iTermAutoProvideConsent autoProvideConsent;
+
 // Returns whether the previous process exited cleanly. The value is latched on
 // first access: the on-disk flag is read then immediately reset so that if this
 // process crashes before +markShutdownAsClean is called, the next launch will
