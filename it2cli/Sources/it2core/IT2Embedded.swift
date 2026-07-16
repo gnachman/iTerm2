@@ -30,7 +30,9 @@ public enum IT2Embedded {
             out: io.stdout,
             err: io.stderr,
             confirm: io.confirm,
-            makeClient: { APIClient(channel: channel) }
+            makeClient: { APIClient(channel: channel) },
+            installsSignalHandlers: false,
+            isRemote: true
         )
         return runToExitCode(arguments, context)
     }

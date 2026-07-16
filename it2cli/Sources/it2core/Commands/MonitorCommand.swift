@@ -9,7 +9,14 @@ import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via t
 // this SIGINT/exit and the polling Thread.sleep will be replaced by a
 // cancellation token on IT2Context so a remote Ctrl+C tears down the
 // subscription without killing the app.
-private func installSigintHandler() {
+private func installSigintHandler(_ ctx: IT2Context) {
+    // Only the standalone binary owns the process and may exit on Ctrl+C. When embedded
+    // in iTerm2, a remote Ctrl+C arrives as a channel disconnect that makes
+    // receiveMessage() throw and unwinds the loop; a process-global SIGINT->exit(0)
+    // here would take down the whole app (IT2Runner promises never to terminate it).
+    guard ctx.installsSignalHandlers else {
+        return
+    }
     signal(SIGINT) { _ in
         Foundation.exit(0)
     }
@@ -82,7 +89,7 @@ extension Monitor {
                 }
 
                 ctx.err("Monitoring output from session \(sessionId)...\nPress Ctrl+C to stop")
-                installSigintHandler()
+                installSigintHandler(ctx)
 
                 // Loop receiving notifications.
                 while true {
@@ -216,7 +223,7 @@ extension Monitor {
             }
 
             ctx.err("Monitoring keystrokes in session \(sessionId)...\nPress Ctrl+C to stop")
-            installSigintHandler()
+            installSigintHandler(ctx)
 
             while true {
                 let response = try client.receiveMessage()
@@ -309,7 +316,7 @@ extension Monitor {
             }
 
             ctx.err("Press Ctrl+C to stop")
-            installSigintHandler()
+            installSigintHandler(ctx)
 
             while true {
                 let response = try client.receiveMessage()
@@ -383,7 +390,7 @@ extension Monitor {
             }
 
             ctx.err("Monitoring prompts in session \(sessionId)...\nPress Ctrl+C to stop")
-            installSigintHandler()
+            installSigintHandler(ctx)
 
             while true {
                 let response = try client.receiveMessage()
@@ -434,7 +441,7 @@ extension Monitor {
                 ctx.err("Monitoring activity in current session...")
             }
             ctx.err("Press Ctrl+C to stop")
-            installSigintHandler()
+            installSigintHandler(ctx)
 
             let currentSessionId: String? = all ? nil : (try? client.resolveSessionId(nil))
             var sessionActivity: [String: Bool] = [:]

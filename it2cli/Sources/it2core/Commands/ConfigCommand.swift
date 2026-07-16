@@ -11,7 +11,11 @@ struct IT2Config {
     var profiles: [String: [[String: String]]] = [:]
     var aliases: [String: String] = [:]
 
-    static func load() -> IT2Config {
+    // `err` receives parse-warning lines (a trailing newline is added by the sink). It is
+    // injected rather than written to FileHandle.standardError so that when the command
+    // runs embedded in iTerm2 over SSH integration the warning reaches the remote user via
+    // the ssh channel instead of the GUI app's real stderr, which the user never sees.
+    static func load(err: (String) -> Void) -> IT2Config {
         let path = configPath()
         guard FileManager.default.fileExists(atPath: path),
               let data = FileManager.default.contents(atPath: path),
@@ -21,7 +25,7 @@ struct IT2Config {
 
         do {
             guard let dict = try Yams.load(yaml: yaml) as? [String: Any] else {
-                FileHandle.standardError.write(Data("Warning: Could not parse config file at \(path)\n".utf8))
+                err("Warning: Could not parse config file at \(path)")
                 return IT2Config()
             }
 
@@ -34,7 +38,7 @@ struct IT2Config {
             }
             return config
         } catch {
-            FileHandle.standardError.write(Data("Warning: Error parsing config file at \(path): \(error.localizedDescription)\n".utf8))
+            err("Warning: Error parsing config file at \(path): \(error.localizedDescription)")
             return IT2Config()
         }
     }
@@ -59,7 +63,7 @@ struct LoadCommand: ParsableCommand, IT2Runnable {
     var profileName: String
 
     func run(_ ctx: IT2Context) throws {
-        let config = IT2Config.load()
+        let config = IT2Config.load(err: ctx.err)
         guard let steps = config.profiles[profileName] else {
             throw IT2Error.targetNotFound("Profile '\(profileName)' not found in config")
         }
@@ -208,7 +212,7 @@ struct AliasCommand: ParsableCommand, IT2Runnable {
     var aliasName: String
 
     func run(_ ctx: IT2Context) throws {
-        let config = IT2Config.load()
+        let config = IT2Config.load(err: ctx.err)
 
         guard let aliasCmd = config.aliases[aliasName] else {
             if config.aliases.isEmpty {
@@ -259,7 +263,7 @@ struct ConfigReload: ParsableCommand, IT2Runnable {
     )
 
     func run(_ ctx: IT2Context) {
-        let config = IT2Config.load()
+        let config = IT2Config.load(err: ctx.err)
         ctx.out("Configuration reloaded")
 
         if !config.profiles.isEmpty {

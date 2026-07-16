@@ -87,10 +87,7 @@ extension Session {
             }
 
             if json {
-                if let data = try? JSONSerialization.data(withJSONObject: sessionsData, options: .prettyPrinted),
-                   let str = String(data: data, encoding: .utf8) {
-                    ctx.out(str)
-                }
+                ctx.printJSON(sessionsData)
             } else {
                 for s in sessionsData {
                     let id = s["id"] as? String ?? ""
@@ -320,9 +317,7 @@ extension Session {
         func run(_ ctx: IT2Context) throws {
             let sessionId = APIClient.normalizeSessionId(session ?? "active")
 
-            if !force && !ctx.confirm("Close session \(sessionId)?") {
-                throw IT2Error.cancelled
-            }
+            try ctx.confirmOrThrow("Close session \(sessionId)?", force: force)
 
             let client = try ctx.makeClient()
             defer { client.disconnect() }
@@ -549,6 +544,14 @@ extension Session {
         var lines: Int?
 
         func run(_ ctx: IT2Context) throws {
+            // Reject a negative count up front: Collection.suffix(_:) traps on a negative
+            // length (the `--lines=-5` form parses a negative straight into the Int?
+            // option), and embedded over SSH that trap would take down the whole iTerm2
+            // process -- a remote user must never be able to reach it.
+            if let n = lines, n < 0 {
+                throw IT2Error.invalidArgument("--lines must be non-negative")
+            }
+
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
@@ -573,7 +576,7 @@ extension Session {
 
             guard let contents = bufResp.contentsArray as? [ITMLineContents] else { return }
             let outputLines: [ITMLineContents]
-            if let n = lines, n < contents.count {
+            if let n = lines, n < contents.count {  // n >= 0 (validated above), so suffix is safe
                 outputLines = Array(contents.suffix(n))
             } else {
                 outputLines = contents

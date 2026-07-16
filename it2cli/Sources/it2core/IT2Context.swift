@@ -17,6 +17,18 @@ struct IT2Context {
     let confirm: (String) -> Bool
     /// Obtain an API client for this invocation.
     let makeClient: () throws -> APIClient
+    /// True only for the standalone `it2` binary, where a `monitor` command may install
+    /// a process-global SIGINT handler that exits the process on Ctrl+C. False when the
+    /// command tree is embedded in iTerm2: a remote Ctrl+C arrives as a channel
+    /// disconnect that makes `receiveMessage()` throw and unwinds the streaming loop, so
+    /// installing a process-global SIGINT->exit(0) would take the whole app down.
+    let installsSignalHandlers: Bool
+    /// True when the command tree runs embedded in iTerm2 on behalf of a REMOTE it2 over SSH
+    /// integration (its stdout streams back to the remote host). Commands that mint or export
+    /// durable local credentials, or otherwise escape the per-session, revocable API grant the
+    /// ssh authorization prompt implies, are refused in this mode (see runParsedCommand and
+    /// RemoteForbiddenCommand). False for the standalone binary running locally on the Mac.
+    let isRemote: Bool
 }
 
 extension IT2Context {
@@ -25,6 +37,15 @@ extension IT2Context {
         if let data = try? JSONSerialization.data(withJSONObject: object, options: .prettyPrinted),
            let str = String(data: data, encoding: .utf8) {
             out(str)
+        }
+    }
+
+    /// Confirm a destructive action, throwing `IT2Error.cancelled` when the user declines
+    /// (unless `force` bypasses the prompt entirely). Centralizes the decline contract shared
+    /// by the quit/close commands so it cannot drift between them.
+    func confirmOrThrow(_ prompt: String, force: Bool) throws {
+        if !force && !confirm(prompt) {
+            throw IT2Error.cancelled
         }
     }
 
@@ -40,7 +61,9 @@ extension IT2Context {
             }
             return false
         },
-        makeClient: { try APIClient.connect() }
+        makeClient: { try APIClient.connect() },
+        installsSignalHandlers: true,
+        isRemote: false
     )
 }
 
