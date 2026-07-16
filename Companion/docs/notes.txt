@@ -111,6 +111,11 @@ New Features:
   New Chat screen.
 
 Bug Fixes:
+- A session you linked to a chat or opened from
+  an @-mention keeps working after its shell
+  restarts on the Mac (common with the Claude
+  Code integration), instead of going dead and
+  showing “That session no longer exists.”
 - Dictation no longer occasionally leaves the
   microphone recording, or wedges the mic button,
   when quickly switching between composer bars
