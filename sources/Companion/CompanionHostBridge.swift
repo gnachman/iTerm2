@@ -1471,12 +1471,16 @@ final class CompanionHostBridge {
     private func performLinkSession(chatID: String, guid: String, terminal: Bool) {
         guard let listModel = ChatListModel.instance else { return }
         do {
+            // Store the reload-durable stableID (mirroring ChatViewController.link)
+            // so a phone-linked chat survives a shell reload that rotates the guid.
+            let session = iTermController.sharedInstance().anySession(forReference: guid)
+            let reference = session?.stableID ?? guid
             if terminal {
-                try listModel.setTerminalGuid(for: chatID, to: guid)
+                try listModel.setTerminalGuid(for: chatID, to: reference)
             } else {
-                try listModel.setBrowserGuid(for: chatID, to: guid)
+                try listModel.setBrowserGuid(for: chatID, to: reference)
             }
-            let name = iTermController.sharedInstance().anySession(forReference: guid)?.name ?? guid
+            let name = session?.name ?? guid
             try ChatClient.instance?.publishNotice(
                 chatID: chatID,
                 notice: "This chat has been linked to \(terminal ? "terminal" : "browser") session “\(name)”.")
