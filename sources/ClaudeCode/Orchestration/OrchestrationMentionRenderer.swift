@@ -7,7 +7,7 @@
 //  orchestration system prompt tells the model to write a session_guid
 //  or workgroup_id prefixed with "@" whenever it wants to point the user
 //  at a specific session or workgroup; this is the rendering half of
-//  that contract. A raw UUID means nothing to the user, so each
+//  that contract. A raw id means nothing to the user, so each
 //  reference is replaced with the live name (clickable, reveals the
 //  session) or the literal "[defunct session]" when it no longer
 //  resolves to anything live.

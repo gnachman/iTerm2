@@ -80,7 +80,7 @@ private let emptyObjectSchema: [String: Any] = [
 // Every session-acting tool addresses its target with this one field.
 // The agent copies a session_guid verbatim from the <workgroups>
 // snapshot (each role carries a session_guid); the app resolves it to
-// the owning workgroup and role. A GUID is globally unique, so no
+// the owning workgroup and role. The id is globally unique, so no
 // separate role/workgroup disambiguation is needed.
 private let sessionGuidSchema: [String: Any] =
     string("The session_guid of the target session, copied verbatim from a role in the <workgroups> snapshot (its session_guid field).")
