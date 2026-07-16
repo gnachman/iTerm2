@@ -474,7 +474,7 @@ final class CompanionHostBridge {
         case .selectAllInStream(let streamID):
             handleSelectAll(streamID: streamID)
         case .pasteText(let sessionGuid, let text):
-            iTermController.sharedInstance().anySession(withGUID: sessionGuid)?.paste(text, flags: [])
+            iTermController.sharedInstance().anySession(forReference: sessionGuid)?.paste(text, flags: [])
         case .resizeSession(let sessionGuid, let columns, let rows):
             handleResizeSession(guid: sessionGuid, columns: columns, rows: rows)
         case .fetchAutoProvideConsent(let sessionGuid):
@@ -548,7 +548,7 @@ final class CompanionHostBridge {
                                         mode: CompanionSelectionMode,
                                         point: CompanionSelectionPoint) {
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             return
         }
@@ -646,7 +646,7 @@ final class CompanionHostBridge {
 
     private func handleSelectAll(streamID: UInt32) {
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             return
         }
@@ -661,7 +661,7 @@ final class CompanionHostBridge {
 
     private func handleClearSelection(streamID: UInt32) {
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             return
         }
@@ -816,7 +816,7 @@ final class CompanionHostBridge {
     }
 
     private func handleCopySelection(guid: String, requestID: UInt64?) {
-        let text = iTermController.sharedInstance().anySession(withGUID: guid)?.textview?.selectedText
+        let text = iTermController.sharedInstance().anySession(forReference: guid)?.textview?.selectedText
         send(.selectionText(text: text ?? ""), requestID: requestID)
     }
 
@@ -905,7 +905,7 @@ final class CompanionHostBridge {
 
     private func driveStream(_ streamID: UInt32) {
         guard let context = streams[streamID] else { return }
-        guard let session = iTermController.sharedInstance().anySession(withGUID: context.guid) else {
+        guard let session = iTermController.sharedInstance().anySession(forReference: context.guid) else {
             endStream(streamID, reason: .sessionClosed)
             return
         }
@@ -1476,7 +1476,7 @@ final class CompanionHostBridge {
             } else {
                 try listModel.setBrowserGuid(for: chatID, to: guid)
             }
-            let name = iTermController.sharedInstance().anySession(withGUID: guid)?.name ?? guid
+            let name = iTermController.sharedInstance().anySession(forReference: guid)?.name ?? guid
             try ChatClient.instance?.publishNotice(
                 chatID: chatID,
                 notice: "This chat has been linked to \(terminal ? "terminal" : "browser") session “\(name)”.")
@@ -1556,7 +1556,7 @@ final class CompanionHostBridge {
                                  text: "The user declined to allow this function call to execute.")
         case .allowOnce, .allowAlways:
             guard let guid,
-                  let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+                  let session = iTermController.sharedInstance().anySession(forReference: guid) else {
                 try? client.publishNotice(chatID: chatID,
                                           notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
                 declineRemoteCommand(chatID: chatID,
@@ -1598,7 +1598,7 @@ final class CompanionHostBridge {
     /// or cannot render yet (a workgroup member whose session has not
     /// launched has a zero-size textview, which renders nothing).
     private func contentSession(guid: String, requestID: UInt64?) -> PTYSession? {
-        guard let session = iTermController.sharedInstance().anySession(withGUID: guid),
+        guard let session = iTermController.sharedInstance().anySession(forReference: guid),
               let textview = session.textview else {
             send(.error(CompanionError(code: .unknownSession,
                                        message: "That session no longer exists. It may have been closed.")),
@@ -1707,7 +1707,7 @@ final class CompanionHostBridge {
                                         requestID: UInt64?) {
         RLog("Companion historyTile req stream=\(streamID) firstAbs=\(firstAbsLine) lineCount=\(lineCount) gen=\(generationId)")
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             RLog("Companion historyTile FAIL: no such stream \(streamID)")
             send(.error(CompanionError(code: .badRequest, message: "No such stream.")), requestID: requestID)
