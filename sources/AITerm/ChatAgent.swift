@@ -824,14 +824,6 @@ class ChatAgent {
         }
     }
 
-    /// Defang our control-tag delimiters in untrusted terminal content so it cannot
-    /// break out of the <visible-screen> / <terminal-state> wrappers and inject
-    /// trusted top-level context (prompt injection): terminal output that contains a
-    /// literal closing tag (a file the user cats, a hostile log line) would otherwise
-    /// close the block early and make everything after it read as top-level model
-    /// instructions. Mirrors the guillemet approach in
-    /// AutoModeClassifier.neutralizePromptDelimiters, but deliberately preserves
-    /// newlines because the visible screen's row layout is meaningful to the model.
     /// Whether auto-providing terminal state / visible screen must be suppressed:
     /// true when a turn would auto-send (a category is at .always) but the user has
     /// not granted the global auto-provide consent. This is what stops a legacy
@@ -851,6 +843,14 @@ class ChatAgent {
         return consent == .unknown && !alreadyAskedThisSession
     }
 
+    /// Defang our control-tag delimiters in untrusted terminal content so it cannot
+    /// break out of the <visible-screen> / <terminal-state> wrappers and inject
+    /// trusted top-level context (prompt injection): terminal output that contains a
+    /// literal closing tag (a file the user cats, a hostile log line) would otherwise
+    /// close the block early and make everything after it read as top-level model
+    /// instructions. Mirrors the guillemet approach in
+    /// AutoModeClassifier.neutralizePromptDelimiters, but deliberately preserves
+    /// newlines because the visible screen's row layout is meaningful to the model.
     nonisolated static func neutralizeContextDelimiters(_ s: String) -> String {
         return s
             .replacingOccurrences(of: "</visible-screen>", with: "\u{2039}/visible-screen\u{203A}")
