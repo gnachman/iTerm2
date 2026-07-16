@@ -2178,6 +2178,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                         [terminal.parser cancelConductorRecoveryMode];
                     }];
+                    [aSession->_conductor resolveIT2AuthorizationFailClosed];
                     [aSession removeChannelClientsForConductor:aSession->_conductor];
                     aSession->_conductor.delegate = nil;
                     [aSession->_conductor release];
@@ -3642,6 +3643,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_naggingController willRecycleSession];
 
     if (_conductor) {
+        // Dismiss any pending it2 auth prompt while the delegate is still live; deinit
+        // fulfills the seal but (being nonisolated) cannot dismiss the announcement.
+        [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         _conductor.delegate = nil;
         [_conductor release];
@@ -19045,6 +19049,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_screen restoreSavedState:config];
     }
     if (_conductor) {
+        // Dismiss any pending it2 auth prompt while the delegate is still live (covers
+        // conductorQuit / conductorAbortWithReason and the root-recovery unhook loop);
+        // otherwise the announcement lingers pointing at a released conductor. Idempotent
+        // and a no-op when no prompt is pending.
+        [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         _conductor.delegate = nil;
         [_conductor autorelease];
@@ -19157,6 +19166,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenBeginFramerRecovery:(int)parentDepth {
+    // Preserve the it2 proxy state (nonce/socket/authorization) of the conductor being
+    // recovered so it carries into the shim below. For a root single-hop recovery the
+    // old conductor is unhooked (and released) before the shim exists, so retain it
+    // across that teardown; for nested recovery it becomes the shim's parent.
+    iTermConductor *recovering = [_conductor retain];
+    // Dismiss any it2 auth prompt for the retiring conductor WHILE its delegate is still
+    // live. unhookSSHConductor does resolve the prompt too, but it nils the delegate on
+    // the way, and it only runs on the root (parentDepth < 0) path's loop -- the nested
+    // path keeps the old conductor as parent and never unhooks it. So resolve here,
+    // before the loop, to cover the nested path and to run before the delegate is cleared.
+    // persist:false, so this does not touch it2Authorized and is safe before adopt (which
+    // carries any decided grant); an undecided prompt re-appears on the next command.
+    [recovering resolveIT2AuthorizationFailClosed];
     if (parentDepth < 0) {
         while (_conductor) {
             [self unhookSSHConductor];
@@ -19172,6 +19194,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                              initialDirectory:nil
                  shouldInjectShellIntegration:NO
                                        parent:previousConductor];
+    [_conductor adoptIT2RecoveryStateFrom:recovering];
+    [recovering release];
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
@@ -19183,6 +19207,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (!recovery) {
         return nil;
     }
+    // Dismiss any pending it2 auth prompt while the delegate is still live (deinit fulfills
+    // the seal but cannot dismiss the announcement). The recovery shim usually has no
+    // prompt, but close the gap so a released conductor never leaves a live announcement.
+    [_conductor resolveIT2AuthorizationFailClosed];
     _conductor.delegate = nil;
     [_conductor autorelease];
     _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
@@ -24232,6 +24260,47 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)conductorWriteString:(NSString *)string {
     DLog(@"Conductor write: %@", string);
     [self writeTaskNoBroadcast:string];
+}
+
+// Identifier used to queue and later dismiss the it2 authorization announcement. Keyed
+// on the conductor's guid (not the display name) so two conductors sharing an ssh
+// identity in one session get distinct announcements and queueAnnouncement's
+// dismiss-same-identifier cannot cross-cancel a different conductor's live prompt.
+static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
+    return [NSString stringWithFormat:@"IT2Authorization-%@", guid];
+}
+
++ (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid {
+    return IT2AuthorizationAnnouncementIdentifier(guid);
+}
+
+- (void)conductorRequestIT2AuthorizationWithGUID:(NSString *)guid
+                                     displayName:(NSString *)displayName
+                                      completion:(void (^)(BOOL granted, BOOL remember))completion {
+    NSString *who = displayName.length ? displayName : @"A remote session";
+    NSString *title =
+        [NSString stringWithFormat:
+         @"%@ wants to control iTerm2 using the API over SSH integration. The API can "
+         @"view and modify iTerm2’s contents. Allow it for this session?", who];
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Allow", @"Deny" ]
+                                                    completion:^(int selection) {
+            // 0 = Allow, 1 = Deny: explicit choices we remember for the connection.
+            // Closing (-1) or dismissing (-2) is not a choice, so deny just this request
+            // without remembering; the next it2 command prompts again. There is no
+            // default action, so a stray Return in the pane cannot grant access.
+            const BOOL granted = (selection == 0);
+            const BOOL remember = (selection == 0 || selection == 1);
+            completion(granted, remember);
+        }];
+    [self queueAnnouncement:announcement
+                 identifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+}
+
+- (void)conductorDismissIT2AuthorizationPromptWithGUID:(NSString *)guid {
+    [self dismissAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
 }
 
 - (void)conductorSendInitialText {

@@ -769,6 +769,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 + (void)registerBuiltInFunctions;
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap;
 
+// The it2 authorization announcement identifier, keyed on the conductor's guid so
+// distinct conductors (even sharing an ssh display name) get distinct announcements and
+// cannot cross-cancel each other's prompt. Exposed for testing.
++ (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid;
+
 // Register the contents in the arrangement so that if the session is later
 // restored from an arrangement with the same guid as |arrangement|, the
 // contents will be copied over.
