@@ -441,8 +441,105 @@ class ChatAgent {
     // auto-approved responses whose request was never persisted) so every
     // vendor accepts the rebuilt prompt.
     private func translate(messages: [Message]) -> [AITermController.Message] {
-        AIChatToolCallRepair.repairingOrphanedToolPairs(
+        let replayed = AIChatToolCallRepair.repairingOrphanedToolPairs(
             Self.aiMessagesForStructuredReplay(messages, stateMachine: &messageToPrompt))
+        // Rewrite session guids the model wrote in prose (@-mentions) into the
+        // reload-durable stableID, so a chat that predates stableIDs shows the
+        // model references consistent with the stableIDs the <workgroups>
+        // snapshot now emits, without migrating any stored data. Only free text
+        // is rewritten: structured tool-call arguments carry vendor
+        // signatures/ids that must replay verbatim, and tool output stays a
+        // faithful copy of the terminal.
+        let resolve: (String) -> String? = { guid in
+            iTermController.sharedInstance()?.anySession(withGUID: guid)?.stableID
+        }
+        return replayed.map { message in
+            var message = message
+            message.body = Self.stabilizeSessionReferences(in: message.body, resolve: resolve)
+            return message
+        }
+    }
+
+    private static let sessionGuidRegex = try! NSRegularExpression(
+        pattern: "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}")
+
+    // Rewrites each guid in `text` that `resolve` maps to a live session's
+    // stableID into that stableID, as a proper @-mention: if the guid was not
+    // already written as a mention (preceded by "@", "@session:", or "@wg-"),
+    // an "@" is prepended. That repairs a pre-stableID chat where the model
+    // wrote a bare session id without the sigil, turning it into a clickable
+    // link. A guid that does not resolve (a workgroup id, a dead session, a bare
+    // uuid in output) is left verbatim. Each distinct guid is resolved once.
+    static func stabilizeSessionGuids(in text: String, resolve: (String) -> String?) -> String {
+        let ns = text as NSString
+        let matches = sessionGuidRegex.matches(in: text,
+                                               range: NSRange(location: 0, length: ns.length))
+        guard !matches.isEmpty else {
+            return text
+        }
+        let result = NSMutableString()
+        var cursor = 0
+        var cache = [String: String?]()
+        for match in matches {
+            let range = match.range
+            if range.location > cursor {
+                result.append(ns.substring(with: NSRange(location: cursor,
+                                                         length: range.location - cursor)))
+            }
+            let guid = ns.substring(with: range)
+            let stableID: String?
+            if let cached = cache[guid] {
+                stableID = cached
+            } else {
+                stableID = resolve(guid)
+                cache[guid] = stableID
+            }
+            if let stableID {
+                if !Self.guidIsAlreadyMention(ns: ns, guidRange: range) {
+                    result.append("@")
+                }
+                result.append(stableID)
+            } else {
+                result.append(guid)
+            }
+            cursor = range.location + range.length
+        }
+        if cursor < ns.length {
+            result.append(ns.substring(from: cursor))
+        }
+        return result as String
+    }
+
+    // True when the guid at `guidRange` was already written as an @-mention:
+    // directly after "@" (a bare-id mention) or after "@session:" / "@wg-".
+    private static func guidIsAlreadyMention(ns: NSString, guidRange: NSRange) -> Bool {
+        let loc = guidRange.location
+        guard loc > 0 else {
+            return false
+        }
+        if ns.substring(with: NSRange(location: loc - 1, length: 1)) == "@" {
+            return true
+        }
+        for prefix in ["@session:", "@wg-"] {
+            let plen = (prefix as NSString).length
+            if loc >= plen,
+               ns.substring(with: NSRange(location: loc - plen, length: plen)).lowercased() == prefix {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func stabilizeSessionReferences(in body: LLM.Message.Body,
+                                                   resolve: (String) -> String?) -> LLM.Message.Body {
+        switch body {
+        case .text(let text):
+            return .text(stabilizeSessionGuids(in: text, resolve: resolve))
+        case .multipart(let bodies):
+            return .multipart(bodies.map { stabilizeSessionReferences(in: $0, resolve: resolve) })
+        case .uninitialized, .functionCall, .functionOutput, .attachment:
+            return body
+        }
     }
 
     private static func aiMessagesForStructuredReplay(_ messages: [Message],
