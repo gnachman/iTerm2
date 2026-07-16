@@ -888,6 +888,14 @@ extension ChatViewController {
                             self.showTypingIndicator = typing
                             shouldScroll = typing
                         }
+                    case .turnLifecycle:
+                        // Turn-lifecycle boundaries drive the phone's reply
+                        // notification, not the Mac UI (whose spinner is driven by
+                        // typingStatus above). Suppress the default scroll so a turn
+                        // boundary never yanks a scrolled-up reader to the bottom -
+                        // and, at turn end, does not undo the no-scroll intent that
+                        // typingStatus(false) just set.
+                        shouldScroll = false
                     }
                     if shouldScroll {
                         DLog("Schedule scroll to bottom")

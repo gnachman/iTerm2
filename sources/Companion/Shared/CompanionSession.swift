@@ -149,6 +149,7 @@ actor CompanionSession {
         case .history: "history"
         case .delivery: "delivery"
         case .typingStatus: "typingStatus"
+        case .turnLifecycle: "turnLifecycle"
         case .mentionsResolved: "mentionsResolved"
         case .sessionScreenInfo: "sessionScreenInfo"
         case .sessionContent: "sessionContent"

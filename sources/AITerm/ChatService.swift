@@ -83,6 +83,8 @@ class ChatService {
         switch update {
         case .typingStatus:
             break
+        case .turnLifecycle:
+            break
         case let .delivery(message, chatID, _):
             switch message.author {
             case .agent:
@@ -286,6 +288,12 @@ class ChatService {
         if let reply {
             try? broker.publish(message: reply, toChatID: chatID, partial: false)
         }
+        // The genuine turn-end boundary, emitted AFTER the reply so a
+        // turnLifecycleRevision phone has the reply text accumulated before it
+        // decides to fire. finishTurn runs only at real completion (a mid-turn
+        // park suspends the completion and never reaches here), so this never
+        // fires for a parked turn.
+        broker.publish(turnEvent: .ended, toChatID: chatID)
         var queue = pendingMessages[chatID] ?? []
         if !queue.isEmpty {
             queue.removeFirst()
@@ -439,6 +447,11 @@ class ChatService {
     }
 
     func agentWorking(chatID: String, closure: (@escaping () -> ()) -> ()) {
+        // The genuine turn-start boundary. Emitted once per turn here (parked/
+        // resumed turns bypass agentWorking, so they do not re-emit it). This is
+        // the signal a turnLifecycleRevision phone uses for its reply notification;
+        // typing status below is now only the spinner hint.
+        broker.publish(turnEvent: .started, toChatID: chatID)
         broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
         closure() {
             self.broker.publish(typingStatus: false, of: .agent, toChatID: chatID)

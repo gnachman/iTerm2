@@ -413,6 +413,12 @@ Triggers Improvements:
 
 
 AI Improvements:
+- The AI chat “View History” permission is now
+  “View Contents”. When it is set to provide
+  contents automatically, a session-bound chat
+  includes the terminal’s visible screen with
+  each message, not just on-request history
+  tools.
 - Chats in the AI chat list now get an icon
   drawn by your AI model from the chat
   title. Chats without one show a default

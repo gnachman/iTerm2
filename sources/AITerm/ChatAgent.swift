@@ -64,6 +64,33 @@ extension Message {
     }
 }
 
+// Ref-counts outstanding turn-parks that cleared the typing spinner (a turn parked
+// on the user's approval / Enable-Not-Now). The spinner is turned OFF on the first
+// park and back ON only when the LAST park resolves, so approving one of two
+// concurrent approval parks doesn't restore the spinner while another is still
+// parked. Pure value type so the ref-counting is unit-testable.
+struct ParkedTypingCounter {
+    private var count = 0
+    /// Register a park that clears typing. Returns true iff the spinner should be
+    /// turned OFF now (this is the first outstanding cleared-typing park).
+    mutating func park() -> Bool {
+        defer { count += 1 }
+        return count == 0
+    }
+    /// Register the resume of a cleared-typing park. Returns true iff the spinner
+    /// should be turned back ON now (this was the last outstanding one).
+    mutating func resume() -> Bool {
+        guard count > 0 else { return false }
+        count -= 1
+        return count == 0
+    }
+    /// Forget all outstanding parks (a turn teardown/cancel resolves them abnormally
+    /// without a matching resume; the ending turn's stopTyping handles the spinner).
+    mutating func reset() {
+        count = 0
+    }
+}
+
 @MainActor
 class ChatAgent {
     // Which tool surface this agent drives. Determined at init from
@@ -105,6 +132,11 @@ class ChatAgent {
     // LLM-framework completion is parked until the user clicks
     // Enable or Not Now (or the chat tears down).
     private var pendingOrchestrationRequests: [String: (Result<String, Error>) throws -> ()] = [:]
+
+    // Ref-count of outstanding turn-parks that cleared the typing spinner (remote-
+    // command approval and orchestration-enable parks). See typingParkOnUser /
+    // typingResumeFromPark.
+    private var parkedTyping = ParkedTypingCounter()
 
     struct PendingRemoteCommand {
         var completion: (Result<String, Error>) throws -> ()
@@ -177,6 +209,24 @@ class ChatAgent {
 
     // MARK: - request_orchestration_enable
 
+    // The single park/resume typing bracket, shared by every site where a turn
+    // parks on the user (remote-command approval, orchestration-enable). Clearing
+    // typing on park keeps the phone's spinner from sticking and, on a
+    // pre-turnLifecycle phone, lets the reply notification (which fires on typing
+    // false) fire. Ref-counted so concurrent approval parks turn the spinner off
+    // once and back on once, and so a new park site gets correct behavior for free
+    // instead of re-deriving the false-on-park / restore-on-resume dance.
+    private func typingParkOnUser() {
+        if parkedTyping.park() {
+            broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
+        }
+    }
+    private func typingResumeFromPark() {
+        if parkedTyping.resume() {
+            broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
+        }
+    }
+
     // Park the LLM-framework completion and publish the request bubble.
     // The chat UI renders Enable / Not Now buttons; clicking one
     // publishes a UserCommand.enableOrchestrationResponse which the
@@ -192,12 +242,11 @@ class ChatAgent {
                 content: .clientLocal(
                     .init(action: .enableOrchestrationRequest(requestID: requestID))))
             // The turn is now parked waiting for the user's Enable/Not Now, so the
-            // agent has stopped working. Without this, typingStatus stays true (the
-            // agentWorking completion only fires when the whole turn ends), leaving
-            // the phone's typing indicator stuck AND its session-reply notification
-            // (which fires on typing false) never firing - the reply and this request
-            // look like no response at all.
-            broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
+            // agent has stopped working. Clear the spinner (see typingParkOnUser):
+            // without this, typingStatus stays true (agentWorking only completes when
+            // the whole turn ends), leaving the phone's indicator stuck AND its
+            // session-reply notification (which fires on typing false) never firing.
+            typingParkOnUser()
         } catch {
             RLog("Failed to publish enable-orchestration request: \(error)")
             pendingOrchestrationRequests.removeValue(forKey: requestID)
@@ -215,10 +264,10 @@ class ChatAgent {
         guard let completion = pendingOrchestrationRequests.removeValue(forKey: requestID) else {
             return
         }
-        // Resuming the parked turn: the agent is working again, so republish
-        // typingStatus true (parkOrchestrationRequest cleared it). A fresh turn
-        // boundary also lets the post-response continuation notify on its own.
-        broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
+        // Resuming the parked turn: the agent is working again, so restore the
+        // spinner that parkOrchestrationRequest cleared (see typingResumeFromPark;
+        // ref-counted so a concurrent park keeps it off until the last resolves).
+        typingResumeFromPark()
         if approved {
             do {
                 try ChatListModel.instance?.setOrchestrationEnabled(true, forChatID: chatID)
@@ -670,12 +719,38 @@ class ChatAgent {
                 }
             }
         }
+        // This is the ONE choke point that abnormally resolves every parked
+        // completion (both drains above); none of them runs typingResumeFromPark, so
+        // forget the outstanding cleared-typing parks here. A leftover count would
+        // make the next turn's first park fail to clear the spinner (and, on a
+        // pre-turnLifecycle phone, its reply notification never fire). Resetting here
+        // covers ALL callers - stop(), transitionToOrchestration(), and
+        // fetchCompletionForRegularMessage() - not just stop().
+        parkedTyping.reset()
     }
 
     func stop() {
-        cancelPendingCommands()
+        cancelPendingCommands()   // resolves parked completions and resets parkedTyping
         drainPendingOrchestrationRequests(reason: "Cancelled.")
         conversation.cancelOutstandingOperation()
+        // Safety-net clear of TurnStatusModel. In the normal case the cancel walks
+        // back through fetchCompletion's completion to ChatService.finishTurn (see
+        // the handleUserCommand(.stop) and dropAgent comments; cancelPendingCommands
+        // resumes a parked continuation, which lets the conversation.complete
+        // callback fire the same way deliverToolResult's success path does), and
+        // finishTurn emits turnEvent(.ended) which clears the model - so this is
+        // then a redundant no-op. It bites only if a resumed/failed completion never
+        // reaches finishTurn, so an abandoned turn can't leave the chat permanently
+        // marked in-flight for the subscribe seed to read.
+        //
+        // This does NOT suppress finishTurn's turnEvent(.ended) fan-out on a Stop. A
+        // turnLifecycleRevision phone treats that .ended like the typing(false) it
+        // already receives today on a Stop (same content, same timing relative to
+        // the reply), and a parked request that surfaced via userActionRequest has
+        // already marked its preamble notified, so .ended fires nothing new. A
+        // stricter "never notify for an explicitly Stopped turn" rule would suppress
+        // the fan-out in finishTurn on the cancel path - a separate, deliberate change.
+        TurnStatusModel.instance.set(inProgress: false, chatID: chatID)
     }
 
     // Resume any parked request_orchestration_enable tool callbacks so
@@ -729,6 +804,14 @@ class ChatAgent {
                 .terminalCommand:
             break
         case .renameChat, .append:
+            // These content types drive no LLM round-trip. They are normally
+            // agent-authored deliveries (not routed here), but a user-authored one
+            // still reaches here as a turn: close it via completion(nil) rather than
+            // returning bare, so agentWorking's typing(true)/turnEvent(.started) is
+            // balanced by finishTurn (stopTyping + turnEvent(.ended)) and the queue
+            // head is popped. A bare return would strand typing, leave TurnStatusModel
+            // in-flight, and wedge the queue.
+            completion(nil)
             return
         case .remoteCommandResponse(let result, let messageID, _, _):
             if handleRemoteCommandResponse(messageID: messageID,
@@ -783,7 +866,7 @@ class ChatAgent {
             // make the phone treat the resume as a new turn and reset the turn's
             // accumulated reply text before it can be notified.
             if pending.clearedTyping {
-                broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
+                typingResumeFromPark()
             }
             try? pending.completion(Result(result))
             return true
@@ -1251,13 +1334,16 @@ extension ChatAgent {
                                   safe: Bool?,
                                   completion: @escaping (Result<String, Error>) throws -> ()) throws {
         let requestID = UUID()
-        // If this command blocks on the user's approval (its category permission is
-        // "ask"), the agent is now waiting, not working: clear typing so the phone's
-        // indicator isn't stuck and the reply notification (which fires on typing
-        // false) fires. Auto-approved (.always) / auto-denied (.never) commands
-        // resolve without the user mid-turn, so leave typing alone - re-emitting it
-        // would make the phone read the resume as a new turn and drop the reply text.
-        let needsApproval = remoteCommandNeedsUserApproval(remoteCommand)
+        // If this command blocks on the user's approval, the agent is now waiting,
+        // not working: clear typing so the phone's spinner isn't stuck and (on a
+        // pre-turnLifecycle phone) the reply notification, which fires on typing
+        // false, still fires. The park condition mirrors
+        // ChatClient.processRemoteCommandRequest exactly (ask, or always+unsafe, or
+        // no resolvable session) via the shared Permission.parksOnApproval
+        // predicate. Auto-run (.always+safe) / auto-deny (.never) commands resolve
+        // without the user mid-turn, so leave typing alone - re-emitting it would
+        // make the phone read the resume as a new turn and drop the reply text.
+        let needsApproval = remoteCommandParksOnUser(remoteCommand, safe: safe)
         pendingRemoteCommands[requestID] = .init(completion: completion,
                                                  responseID: responseID,
                                                  clearedTyping: needsApproval)
@@ -1269,20 +1355,31 @@ extension ChatAgent {
                            toChatID: chatID,
                            partial: false)
         if needsApproval {
-            broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
+            typingParkOnUser()
         }
     }
 
-    private func remoteCommandNeedsUserApproval(_ remoteCommand: RemoteCommand) -> Bool {
-        guard let guid = ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid else {
-            // No linked session to resolve a stored permission against: assume it will
-            // prompt (fail safe toward surfacing it) rather than silently swallow it.
+    // Predict whether this command will PARK on the user's approval, matching
+    // ChatClient.processRemoteCommandRequest exactly: guid selection by category
+    // (browser categories resolve browserSessionGuid, else terminalSessionGuid);
+    // no resolvable session -> a selectSessionRequest, which parks; otherwise the
+    // shared Permission.parksOnApproval mapping (ask, or always+unsafe). Kept in
+    // lockstep with the real gate via that shared predicate so a safe .ask command
+    // (which still parks) or a browser-category command (its own guid) can't
+    // mispredict and strand the phone's typing / reply-notification state.
+    private func remoteCommandParksOnUser(_ remoteCommand: RemoteCommand, safe: Bool?) -> Bool {
+        let category = remoteCommand.content.permissionCategory
+        let guid = category.isBrowserSpecific
+            ? ChatListModel.instance?.chat(id: chatID)?.browserSessionGuid
+            : ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid
+        guard let guid,
+              iTermController.sharedInstance().anySession(withGUID: guid) != nil else {
             return true
         }
-        return RemoteCommandExecutor.instance.permission(
-            chatID: chatID,
-            inSessionGuid: guid,
-            category: remoteCommand.content.permissionCategory) == .ask
+        let permission = RemoteCommandExecutor.instance.permission(chatID: chatID,
+                                                                   inSessionGuid: guid,
+                                                                   category: category)
+        return permission.parksOnApproval(safe: safe)
     }
 }
 

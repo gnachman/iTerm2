@@ -59,6 +59,27 @@ enum Participant: String, Codable, Hashable {
     case agent
 }
 
+// The explicit agent-turn-lifecycle signal on the Companion wire, decoupled from
+// the typing-status spinner hint: .started brackets the beginning of an agent
+// turn, .ended its genuine completion (not a mid-turn park). The phone drives its
+// reply notification off these instead of inferring turn boundaries from typing
+// edges. .unknownFuture is the forward-compat sink for a value a newer peer might
+// send (see the custom decoder below).
+enum TurnEvent: String, Codable, Hashable {
+    case started
+    case ended
+    case unknownFuture
+
+    init(from decoder: Decoder) throws {
+        // Degrade an unrecognized value to .unknownFuture instead of throwing. The
+        // wire envelope masks unknown message DISCRIMINATORS to .unsupported, but a
+        // known discriminator (turnLifecycle) carrying a raw value a newer peer
+        // added would otherwise throw and break the whole frame for this peer.
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = TurnEvent(rawValue: raw) ?? .unknownFuture
+    }
+}
+
 // Carried by Message.Content.watcherEvent. Synthesized by iTerm2
 // (currently: the orchestrator's watcher subsystem) and delivered
 // into the chat as a user-side message so the agent can react. The

@@ -131,12 +131,7 @@ class ChatBroker {
             }
         }
         try listModel.append(message: processed, toChatID: chatID)
-        let snapshot = subs
-        for sub in snapshot {
-            if sub.chatID == chatID || sub.chatID == nil {
-                sub.closure?(.delivery(processed, chatID, partial: partial))
-            }
-        }
+        fanOut(.delivery(processed, chatID, partial: partial), toChatID: chatID)
     }
 
     func publish(typingStatus: Bool,
@@ -145,11 +140,21 @@ class ChatBroker {
         TypingStatusModel.instance.set(isTyping: typingStatus,
                                        participant: participant,
                                        chatID: chatID)
+        fanOut(.typingStatus(typingStatus, participant), toChatID: chatID)
+    }
+
+    func publish(turnEvent: TurnEvent, toChatID chatID: String) {
+        TurnStatusModel.instance.set(inProgress: turnEvent == .started, chatID: chatID)
+        fanOut(.turnLifecycle(turnEvent), toChatID: chatID)
+    }
+
+    // Deliver an update to every subscriber of `chatID` (and wildcard subscribers).
+    // Snapshots `subs` first so a subscriber that unsubscribes in its own closure
+    // doesn't mutate the collection mid-iteration.
+    private func fanOut(_ update: Update, toChatID chatID: String) {
         let snapshot = subs
-        for sub in snapshot {
-            if sub.chatID == chatID || sub.chatID == nil {
-                sub.closure?(.typingStatus(typingStatus, participant))
-            }
+        for sub in snapshot where sub.chatID == chatID || sub.chatID == nil {
+            sub.closure?(update)
         }
     }
 
@@ -200,6 +205,7 @@ class ChatBroker {
             switch self {
             case let .typingStatus(typing, participant): "\(participant) typing=\(typing)"
             case let .delivery(message, chat, partial): "Message in \(chat) (partial=\(partial)) - \(message.snippetText ?? "[empty]")"
+            case let .turnLifecycle(event): "turn \(event)"
             }
         }
         case typingStatus(Bool, Participant)
@@ -208,6 +214,11 @@ class ChatBroker {
         // final message. Subscribers that must distinguish a streamed turn's
         // start from a non-streamed final (e.g. the push notifier) need it.
         case delivery(Message, String, partial: Bool)
+        // An explicit agent-turn boundary (started / ended), decoupled from the
+        // typing-status spinner hint. The bridge forwards it to a phone that
+        // understands the turnLifecycle wire message; a mid-turn park does NOT
+        // produce one (the turn is still in flight).
+        case turnLifecycle(TurnEvent)
     }
 
     func subscribe(chatID: String?,

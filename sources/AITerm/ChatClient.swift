@@ -136,9 +136,10 @@ class ChatClient {
                            sentDate: Date(),
                            uniqueID: UUID())
         }
-        switch RemoteCommandExecutor.instance.permission(chatID: chatID,
-                                                         inSessionGuid: guid,
-                                                         category: request.content.permissionCategory) {
+        let permission = RemoteCommandExecutor.instance.permission(chatID: chatID,
+                                                                   inSessionGuid: guid,
+                                                                   category: request.content.permissionCategory)
+        switch permission {
         case .never:
             // Persist the tool request before its (denial) response so the
             // rebuilt history has a matching tool_use for every tool_result.
@@ -155,21 +156,22 @@ class ChatClient {
                 functionCallID: message.functionCallID,
                 userNotice: "AI will not execute this command.")
             return nil
-        case .always:
-            if safe == false {
+        case .always, .ask:
+            // Park on the user's Allow/Deny when the shared predicate says so (ask
+            // always; always only when the safety check flagged it). Returning the
+            // message surfaces it in the UI.
+            if permission.parksOnApproval(safe: safe) {
                 return message
             }
-            // See .never above: persist the request (so the next turn's
-            // history is complete) then run the tool. Returning nil keeps it
-            // out of the live UI; the resolved request is hidden on reload.
+            // Auto-run (.always + safe). See .never above: persist the request (so
+            // the next turn's history is complete) then run the tool. Returning nil
+            // keeps it out of the live UI; the resolved request is hidden on reload.
             try? model.append(message: message, toChatID: chatID)
             try? performRemoteCommand(request,
                                       in: session,
                                       chatID: chatID,
                                       messageUniqueID: message.uniqueID)
             return nil
-        case .ask:
-            return message
         }
     }
 

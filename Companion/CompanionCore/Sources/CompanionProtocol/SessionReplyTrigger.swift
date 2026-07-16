@@ -7,14 +7,13 @@
 //  be unit-tested: the app maps each delivery / typing-status change to a
 //  normalized Event and posts a notification whenever handle() returns .fire.
 //
-//  The subtlety it encodes: the Mac publishes typingStatus:false BEFORE the
-//  final reply for a non-streaming model (ChatService stops typing, then
-//  finishTurn publishes the reply), and streams growing whole-message snapshots
-//  (all delivered non-partial) for others, so no single delivery means "the
-//  reply is done". A normal turn therefore fires once we have BOTH a completed
-//  turn (typing false) and reply text, whichever arrives second. A user-action
-//  request (the agent blocking on the user) fires immediately, since no
-//  typing-false follows it.
+//  The subtlety it encodes: no single delivery means "the reply is done". The
+//  turn-ended boundary can arrive BEFORE the final reply (a non-streaming model:
+//  the turn ends, then the reply lands) or AFTER it (streaming, or a producer
+//  that emits turnEnded right after publishing the reply). A normal turn
+//  therefore fires once we have BOTH a completed turn (turnEnded) and reply text,
+//  whichever arrives second. A user-action request (the agent blocking on the
+//  user) fires immediately, since no turnEnded follows it.
 //
 
 import Foundation
@@ -36,8 +35,16 @@ public struct SessionReplyTrigger {
         /// fire, while a re-delivery of the same request doesn't double-fire.
         /// `fallback` describes the request, used only when no reply text preceded.
         case userActionRequest(id: String, fallback: String)
-        /// Agent typing status changed.
-        case typing(Bool)
+        /// An explicit agent-turn boundary. `.turnStarted` brackets the start of a
+        /// turn (and resets prior-turn state); `.turnEnded` its genuine completion.
+        /// These replace the old typing-edge inference: the app feeds them from the
+        /// wire turnLifecycle event (a mac at turnLifecycleRevision) or, for an
+        /// older mac, by translating typing edges. Typing status itself is now only
+        /// a spinner hint and no longer drives this decision - so a mid-turn park,
+        /// which toggles typing for the spinner, can no longer be misread as a turn
+        /// boundary.
+        case turnStarted
+        case turnEnded
     }
 
     public enum Outcome: Equatable {
@@ -60,18 +67,18 @@ public struct SessionReplyTrigger {
     /// still fires its new suffix ("Done, removed 12 files") instead of being
     /// dropped because its id was wholesale-latched.
     private var notifiedTextByID: [String: String] = [:]
-    /// Whether a turn START (typing(true)) has been observed. The watch may
+    /// Whether a turn START (a turnStarted event) has been observed. The watch may
     /// subscribe to a chat that already has an unrelated turn in flight (a reused
-    /// chat, or activity from another paired device); its trailing typing(false)
-    /// must NOT be taken as "our turn ended", or the next delivery would fire a
+    /// chat, or activity from another paired device); its trailing turnEnded must
+    /// NOT be taken as "our turn ended", or the next delivery would fire a
     /// notification falsely attributed to the message the user just sent.
     private var turnStarted = false
     private var turnComplete = false
     /// Per-turn latch for a completed-turn text fire: fireIfReady fires at most
     /// one text notification per turn (so two growing whole-message snapshots
-    /// after typing(false) don't double-fire). A userActionRequest does NOT set
-    /// this, so a genuinely-new final answer after an approved remote command can
-    /// still fire once.
+    /// after turnEnded don't double-fire). A userActionRequest does NOT set this,
+    /// so a genuinely-new final answer after an approved remote command can still
+    /// fire once.
     private var firedTextThisTurn = false
     /// Request message ids already fired this turn. A block-on-user request is a
     /// distinct actionable state, deduped on IDENTITY (not on body text, which
@@ -91,16 +98,15 @@ public struct SessionReplyTrigger {
     public mutating func handle(_ event: Event,
                                 shouldFire: (String) -> Bool = { _ in true }) -> Outcome {
         switch event {
-        case .typing(true):
+        case .turnStarted:
             // A new turn started; forget the previous turn entirely. Turn
-            // boundaries come from typing(true), which the Mac emits before any
-            // of a turn's deliveries (ChatService.agentWorking), so a completed
-            // but text-less turn's state is always cleared before the next turn's
-            // text can arrive.
+            // boundaries are explicit (turnStarted/turnEnded), emitted around a
+            // turn's deliveries, so a completed but text-less turn's state is
+            // always cleared before the next turn's text can arrive.
             reset()
             turnStarted = true
             return .none
-        case .typing(false):
+        case .turnEnded:
             guard turnStarted else { return .none }
             turnComplete = true
             return fireIfReady(shouldFire)
@@ -118,7 +124,7 @@ public struct SessionReplyTrigger {
             }
             return fireIfReady(shouldFire)
         case .userActionRequest(let id, let fallback):
-            // Fire even WITHOUT a preceding typing(true): a block-on-user request is
+            // Fire even WITHOUT a preceding turnStarted: a block-on-user request is
             // self-evidently actionable and demands user input, so (unlike a plain
             // text delivery) it can't be misattributed to the user's own send. This
             // is exactly the mid-turn-subscribe / reconnect case - when a stranded

@@ -88,6 +88,22 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         }
     }
 
+    func testFramedTurnLifecycleWithUnknownEventPreservesFrame() throws {
+        // A turnLifecycle whose event value a newer peer added must decode into the
+        // REAL case with event .unknownFuture - not throw (which, for a KNOWN
+        // discriminator, propagates a DecodingError and drops the whole frame per
+        // testMalformedBodyOfKnownCaseThrowsRatherThanUnsupported) and not collapse
+        // to .unsupported. Guards TurnEvent.init(from:) staying lenient at the wire
+        // level: reverting it to throw-on-unknown fails HERE.
+        let json = #"{"payload":{"turnLifecycle":{"event":"pausedInFuture","chatID":"c"}}}"#.data(using: .utf8)!
+        let env = try decoder().decode(HostEnvelope.self, from: json)
+        guard case let .turnLifecycle(event, chatID) = env.payload else {
+            return XCTFail("expected .turnLifecycle, got \(env.payload)")
+        }
+        XCTAssertEqual(event, .unknownFuture)
+        XCTAssertEqual(chatID, "c")
+    }
+
     // MARK: knownPayloadKeys exhaustiveness
     //
     // The envelope decoder maps any discriminator NOT in knownPayloadKeys to
@@ -250,6 +266,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
             start: CompanionSelectionPoint(absLine: 0, column: 0),
             end: CompanionSelectionPoint(absLine: 1, column: 2))),
         .autoProvideConsent(satisfied: true),
+        .turnLifecycle(event: .started, chatID: "c"),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -292,6 +309,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .selectionText: return "selectionText"
         case .selectionRange: return "selectionRange"
         case .autoProvideConsent: return "autoProvideConsent"
+        case .turnLifecycle: return "turnLifecycle"
         }
     }
 

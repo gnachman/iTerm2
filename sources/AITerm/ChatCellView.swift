@@ -129,6 +129,10 @@ class ChatCellView: NSTableCellView {
             if !typing, let snippet = message.snippetText {
                 self.snippet = snippet
             }
+        case .turnLifecycle:
+            // Chat-list snippet reacts to typing + deliveries, not turn-lifecycle
+            // boundaries (those drive the phone's reply notification).
+            break
         }
     }
 

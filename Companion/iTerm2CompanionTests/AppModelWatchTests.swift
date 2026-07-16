@@ -11,6 +11,7 @@
 //
 
 import XCTest
+import CompanionProtocol
 @testable import iTerm2Companion
 
 @MainActor
@@ -201,5 +202,111 @@ final class AppModelWatchTests: XCTestCase {
         // returned !agentTypingChats.isEmpty would still show true here).
         model.openChatID = nil
         XCTAssertFalse(model.isAgentTyping)
+    }
+
+    // MARK: Reply-notification turn-boundary routing (the trigger is fed boundaries
+    // from exactly ONE source, keyed on macRevision: typing edges on a legacy mac,
+    // the explicit turnLifecycle event on a turnLifecycleRevision mac).
+
+    private func agentText(_ text: String) -> Message {
+        Message(chatID: "c", author: .agent, content: .markdown(text),
+                sentDate: Date(), uniqueID: UUID())
+    }
+
+    private func agentMessage(_ content: Message.Content) -> Message {
+        Message(chatID: "c", author: .agent, content: content, sentDate: Date(), uniqueID: UUID())
+    }
+
+    // MARK: Approval parks fire a userActionRequest (without a preceding turnStarted)
+
+    func test_safeClassicRemoteCommandRequest_firesApprovalNotification() {
+        // A .classic remoteCommandRequest with safe: nil (a .ask command the safety
+        // heuristic judged safe) reaches the phone only because it PARKED - the mac
+        // squelches auto-run/deny. It must notify even though the reply trigger never
+        // saw a turnStarted (userActionRequest bypasses that guard).
+        let model = AppModel()
+        let chatID = "watched"
+        model.testInstallWatch(chatID: chatID, token: UUID())
+        let cmd = RemoteCommand(llmMessage: LLM.Message(content: "echo hi"),
+                                content: .executeCommand(.init(command: "echo hi")))
+        model.testNoteDelivery(agentMessage(.remoteCommandRequest(.classic(cmd), safe: nil)),
+                               chatID: chatID)
+        XCTAssertNotNil(model.testLastReplyFireBody,
+                        "a parked .ask command judged safe (safe: nil) must still notify")
+    }
+
+    func test_orchestrationEnableRequest_firesApprovalNotification() {
+        let model = AppModel()
+        let chatID = "watched"
+        model.testInstallWatch(chatID: chatID, token: UUID())
+        model.testNoteDelivery(
+            agentMessage(.clientLocal(.init(action: .enableOrchestrationRequest(requestID: "r")))),
+            chatID: chatID)
+        XCTAssertEqual(model.testLastReplyFireBody, "Enable orchestration for this chat?")
+    }
+
+    func test_turnLifecycleMac_turnLifecycleDrivesReply_typingIsSpinnerOnly() {
+        let model = AppModel()
+        let chatID = "watched"
+        model.testInstallWatch(chatID: chatID, token: UUID())
+        // BOTH ends at turnLifecycleRevision (the phone's own revision is simulated,
+        // since `current` is still below it in this build).
+        model.testSetMacRevision(CompanionProtocolVersion.turnLifecycleRevision)
+        model.testLocalRevisionOverride = CompanionProtocolVersion.turnLifecycleRevision
+
+        // Typing edges are spinner-only when both ends are at turnLifecycleRevision:
+        // they must NOT drive the reply notification (a park toggles typing).
+        model.testNoteTyping(isTyping: true, chatID: chatID)
+        model.testNoteDelivery(agentText("stray"), chatID: chatID)
+        model.testNoteTyping(isTyping: false, chatID: chatID)
+        XCTAssertNil(model.testLastReplyFireBody,
+                     "typing edges must not fire the reply when both ends use turnLifecycle")
+        model.testResetLastReplyFireBody()
+
+        // The explicit turn-lifecycle boundaries drive it.
+        model.testNoteTurnLifecycle(.started, chatID: chatID)
+        model.testNoteDelivery(agentText("The answer"), chatID: chatID)
+        model.testNoteTurnLifecycle(.ended, chatID: chatID)
+        XCTAssertEqual(model.testLastReplyFireBody, "The answer")
+    }
+
+    func test_legacyMac_typingEdgesDriveReply() {
+        let model = AppModel()
+        let chatID = "watched"
+        model.testInstallWatch(chatID: chatID, token: UUID())
+        model.testSetMacRevision(CompanionProtocolVersion.turnLifecycleRevision - 1)
+
+        model.testNoteTyping(isTyping: true, chatID: chatID)
+        model.testNoteDelivery(agentText("Legacy answer"), chatID: chatID)
+        model.testNoteTyping(isTyping: false, chatID: chatID)
+        XCTAssertEqual(model.testLastReplyFireBody, "Legacy answer",
+                       "on a pre-turnLifecycle mac the typing edge IS the turn boundary")
+    }
+
+    func test_macNewerButPhoneOlder_stillDrivesReplyFromTypingEdges() {
+        // Forward-compat: this rev-7 phone build already has the turnLifecycle
+        // consumer, but a future rev-8 mac gates its turnLifecycle SEND on the
+        // phone's revision (still 7), so it never sends it. The phone must keep
+        // using typing edges (min(macRevision, localRevision) < turnLifecycleRevision)
+        // or replies go silent. A turnLifecycle event, if received, must be ignored.
+        let model = AppModel()
+        let chatID = "watched"
+        model.testInstallWatch(chatID: chatID, token: UUID())
+        model.testSetMacRevision(CompanionProtocolVersion.turnLifecycleRevision)          // mac is new (8)
+        model.testLocalRevisionOverride = CompanionProtocolVersion.turnLifecycleRevision - 1  // phone is old (7)
+
+        // A stray turnLifecycle event must NOT drive the trigger here.
+        model.testNoteTurnLifecycle(.started, chatID: chatID)
+        model.testNoteDelivery(agentText("Should fire via typing"), chatID: chatID)
+        model.testNoteTurnLifecycle(.ended, chatID: chatID)
+        XCTAssertNil(model.testLastReplyFireBody,
+                     "turnLifecycle must be ignored when the phone's own revision is below threshold")
+        model.testResetLastReplyFireBody()
+
+        // Typing edges still drive it.
+        model.testNoteTyping(isTyping: true, chatID: chatID)
+        model.testNoteDelivery(agentText("Real answer"), chatID: chatID)
+        model.testNoteTyping(isTyping: false, chatID: chatID)
+        XCTAssertEqual(model.testLastReplyFireBody, "Real answer")
     }
 }

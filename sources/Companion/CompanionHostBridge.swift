@@ -739,6 +739,60 @@ final class CompanionHostBridge {
         return (lo, VT100GridAbsCoordMake(hi.x &+ 1, hi.y))
     }
 
+    /// The unsolicited state snapshots to send to a phone that has just
+    /// subscribed, in addition to `.history`, so a turn already in flight is
+    /// reflected on the phone. Pure so it is unit-testable without a live bridge.
+    /// `agentTyping` is TypingStatusModel's current value for the chat.
+    ///
+    /// Both snapshots are sent ONLY when BOTH ends are at turnLifecycleRevision
+    /// (gated on the min of this mac's own `current` and the peer's revision). Such
+    /// a phone treats typing as a spinner-only hint and drives its reply
+    /// notification off the explicit turnLifecycle boundary. Both ends matter: the
+    /// phone keys that behavior on the MAC's revision (it must see macRevision >=
+    /// turnLifecycleRevision, i.e. our `current`), and a legacy phone lacks the gate
+    /// entirely - it would mis-arm its reply trigger from a typing(true) snapshot,
+    /// reintroducing the "false fires from replayed-but-incomplete state" the
+    /// reconnect handler's resetWatchedReplyState() deliberately prevents. So a
+    /// legacy pairing gets nothing. At current < turnLifecycleRevision the min is <
+    /// the threshold, so this is dormant until the version bump.
+    ///
+    /// - `agentTyping` (TypingStatusModel): re-seeds the spinner. False during a
+    ///   park (a park clears typing), which is correct - no spinner while waiting.
+    /// - `turnInProgress` (TurnStatusModel): seeds turnLifecycle(.started) so the
+    ///   phone's reply trigger is armed for a turn it joined mid-flight. Stays true
+    ///   ACROSS a park (that is why TurnStatusModel exists), so a phone subscribing
+    ///   during a park still fires when the turn eventually ends, rather than
+    ///   dropping the reply on the trigger's turnStarted guard.
+    /// Whether a peer consumes the explicit turnLifecycle event: BOTH ends must be
+    /// at turnLifecycleRevision. The phone keys its "typing is spinner-only, drive
+    /// boundaries off turnLifecycle" behavior on the MAC's revision, and a legacy
+    /// phone lacks the gate entirely. The ONE predicate every turnLifecycle SEND
+    /// site routes through - the subscribe seed (turnLifecycle(.started)) and the
+    /// live-forward boundary (turnLifecycle(.ended)) - so they can't diverge: a
+    /// phone seeded .started must be the same phone that later receives the live
+    /// .ended, or the reply never fires.
+    nonisolated static func peerConsumesTurnLifecycle(localRevision: Int, peerRevision: Int) -> Bool {
+        min(localRevision, peerRevision) >= CompanionProtocolVersion.turnLifecycleRevision
+    }
+
+    nonisolated static func subscribeSnapshotMessages(chatID: String,
+                                                      agentTyping: Bool,
+                                                      turnInProgress: Bool,
+                                                      localRevision: Int,
+                                                      peerRevision: Int) -> [CompanionHostMessage] {
+        guard peerConsumesTurnLifecycle(localRevision: localRevision, peerRevision: peerRevision) else {
+            return []
+        }
+        var messages: [CompanionHostMessage] = []
+        if agentTyping {
+            messages.append(.typingStatus(isTyping: true, participant: .agent, chatID: chatID))
+        }
+        if turnInProgress {
+            messages.append(.turnLifecycle(event: .started, chatID: chatID))
+        }
+        return messages
+    }
+
     private func currentSelectionRange(_ textview: PTYTextView) -> CompanionSelectionRange? {
         guard let selection = textview.selection, selection.hasSelection else { return nil }
         let span = selection.spanningAbsRange
@@ -972,6 +1026,21 @@ final class CompanionHostBridge {
         let maxSeq = ChatDatabase.instance?.maxSeq(chatID: chatID) ?? 0
         send(.history(chatID: chatID, messages: history(chatID: chatID), maxSeq: maxSeq),
              requestID: requestID)
+        // Snapshot current live state (unsolicited), so a turn already in flight
+        // when the phone subscribes is reflected there. Sent after history in the
+        // same synchronous main-actor block, so it strictly precedes any live
+        // delivery from the subscription above. Gated on the peer's revision (see
+        // subscribeSnapshotMessages) so a legacy phone can't mis-arm its reply
+        // trigger from the snapshot.
+        let agentTyping = TypingStatusModel.instance.isTyping(participant: .agent, chatID: chatID)
+        let turnInProgress = TurnStatusModel.instance.inProgress(chatID: chatID)
+        for message in Self.subscribeSnapshotMessages(chatID: chatID,
+                                                       agentTyping: agentTyping,
+                                                       turnInProgress: turnInProgress,
+                                                       localRevision: CompanionProtocolVersion.current,
+                                                       peerRevision: CompanionPushRegistry.peerRevision) {
+            send(message, requestID: nil)
+        }
     }
 
     /// Relay-push: resolve the opaque per-chat collapse token back to a chat,
@@ -1374,6 +1443,17 @@ final class CompanionHostBridge {
         case .typingStatus(let isTyping, let participant):
             send(.typingStatus(isTyping: isTyping, participant: participant, chatID: chatID),
                  requestID: nil)
+        case .turnLifecycle(let event):
+            // Forward only to a peer that CONSUMES turnLifecycle - the SAME predicate
+            // the subscribe seed uses (peerConsumesTurnLifecycle), so the .started
+            // seed and this live .ended can never diverge. Others infer boundaries
+            // from the typing edges we still emit. Dormant until `current` reaches
+            // turnLifecycleRevision (then min(current, peer) reduces to peer).
+            guard Self.peerConsumesTurnLifecycle(localRevision: CompanionProtocolVersion.current,
+                                                 peerRevision: CompanionPushRegistry.peerRevision) else {
+                return
+            }
+            send(.turnLifecycle(event: event, chatID: chatID), requestID: nil)
         }
     }
 

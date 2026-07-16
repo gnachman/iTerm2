@@ -346,6 +346,12 @@ final class AppModel {
     /// trigger now also owns the per-id reply-text accumulation (one id->text
     /// surface, so there is no separate accumulator to keep keyed in lockstep).
     private var replyTrigger = SessionReplyTrigger()
+
+    #if DEBUG
+    /// The body of the last reply notification the trigger fired, for tests to
+    /// observe reply firing without the UNUserNotification side effect.
+    private(set) var testLastReplyFireBody: String?
+    #endif
     /// De-dupes concurrent session-bound chat resolution by session guid, so two
     /// quick sends before the first resolves don't each create a new chat.
     private var pendingChatResolution: [String: Task<String, Error>] = [:]
@@ -607,6 +613,31 @@ final class AppModel {
     private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).
     private(set) var macRevision = 0
+
+    #if DEBUG
+    /// Test override for this phone build's own revision, so a test can simulate a
+    /// future (turnLifecycleRevision) build while `current` is still below it.
+    var testLocalRevisionOverride: Int?
+    #endif
+    /// This phone build's own protocol revision.
+    private var localRevision: Int {
+        #if DEBUG
+        return testLocalRevisionOverride ?? CompanionProtocolVersion.current
+        #else
+        return CompanionProtocolVersion.current
+        #endif
+    }
+    /// Whether the reply trigger's turn boundaries come from the explicit
+    /// turnLifecycle event rather than typing edges. Requires BOTH ends at
+    /// turnLifecycleRevision: this phone stops driving the trigger from typing only
+    /// when the mac ALSO sends turnLifecycle (and the mac gates that send on OUR
+    /// revision), so the two gates are exact complements and the trigger is fed by
+    /// exactly one source in every version pairing. Keying on macRevision alone
+    /// would, against a future rev-8 mac, drop typing edges here while the mac
+    /// (seeing our revision < 8) never sends turnLifecycle - silencing replies.
+    private func usesTurnLifecycleBoundaries() -> Bool {
+        min(macRevision, localRevision) >= CompanionProtocolVersion.turnLifecycleRevision
+    }
     var sessionSelectionSupported: Bool {
         macRevision >= CompanionProtocolVersion.selectionGeometryRevision && activeStreamGeometry != nil
     }
@@ -2649,13 +2680,26 @@ final class AppModel {
             // attachment label as text when an empty .markdown("") is present.
             let preview = Self.replyPreview(for: message)
             event = .reply(chunk: .begin(id: id, preview: preview.text, isLabel: preview.isLabel))
-        case .remoteCommandRequest(_, safe: .some(false)), .selectSessionRequest:
-            // A block-on-user request that needs the user: a remote command
-            // needing approval (safe == false) or a select-session. Auto-executed
-            // commands (safe == true / nil) are mid-turn tool calls that DON'T
-            // match here and fall to default, so the turn's final text reply still
-            // fires on typing(false) rather than being pre-empted by the tool call.
+        case .remoteCommandRequest(.classic, _), .selectSessionRequest:
+            // A block-on-user request the phone received. The mac's broker processor
+            // (ChatClient.processRemoteCommandRequest) SQUELCHES auto-run (.always +
+            // safe) and auto-deny (.never) classic requests before fan-out, so a
+            // .classic remoteCommandRequest that reaches us here has ALWAYS parked on
+            // the user's approval - regardless of the content-safety `safe` flag (a
+            // .ask command judged safe still parks). Surface any of them (and a
+            // select-session) as a userActionRequest, which fires without a preceding
+            // turnStarted - so the pending approval is notified even on a
+            // turnLifecycleRevision mac (where a park emits no turnEnded) and isn't
+            // mis-framed as a finished reply on a legacy mac. External (orchestration)
+            // requests are auto-dispatched and not squelched, so they fall to default.
             event = .userActionRequest(id: id, fallback: Self.requestDescription(for: message.content))
+        case .clientLocal(let clientLocal):
+            // The orchestration-enable request parks the turn on the user's
+            // Enable/Not-Now; like an approval park it emits no turnEnded on a
+            // turnLifecycleRevision mac, so surface it as a userActionRequest too.
+            // Other client-local notices/bookkeeping don't park.
+            guard case .enableOrchestrationRequest = clientLocal.action else { return }
+            event = .userActionRequest(id: id, fallback: "Enable orchestration for this chat?")
         default:
             // Tool calls, local notices, commits, bookkeeping: not the preview.
             return
@@ -2717,12 +2761,41 @@ final class AppModel {
         content.snippetText(maxLength: untruncatedPreviewLength) ?? content.shortDescription
     }
 
-    /// Agent typing changed for the watched chat. A turn starting resets the
-    /// accumulation; a turn finishing (typing false) may fire (see the trigger).
+    /// Agent typing changed for the watched chat. On a mac BELOW
+    /// turnLifecycleRevision (which sends no explicit turn-lifecycle event) the
+    /// typing edge IS the turn boundary, so translate it: turnStarted resets the
+    /// accumulation, turnEnded may fire. On a turnLifecycleRevision mac, boundaries
+    /// come from the turnLifecycle message (noteWatchedTurnLifecycle) and typing is
+    /// only the spinner - so it must NOT drive the trigger here, or a mid-turn park
+    /// (which toggles typing for the spinner) would be misread as a turn boundary.
+    /// The trigger is fed turn boundaries from exactly ONE source, keyed on
+    /// macRevision.
     private func noteWatchedTypingStatus(isTyping: Bool, chatID: String) {
+        guard !usesTurnLifecycleBoundaries() else { return }
         guard let watched = watchState.watch, chatID == watched.chatID else { return }
-        // typing(true) resets the trigger (and its accumulator) for the new turn.
-        applyReplyTrigger(.typing(isTyping), watched: watched)
+        applyReplyTrigger(isTyping ? .turnStarted : .turnEnded, watched: watched)
+    }
+
+    /// Accept an explicit turn-lifecycle boundary from the wire. Gated so it drives
+    /// the trigger ONLY when both ends use turnLifecycle - the exact complement of
+    /// the typing gate in noteWatchedTypingStatus, so the trigger is fed by one
+    /// source, never both. Shared by the wire handler (handle(.turnLifecycle)) and
+    /// the test hook so tests exercise THIS production gate, not a copy of it.
+    private func acceptTurnLifecycle(_ event: TurnEvent, chatID: String) {
+        guard usesTurnLifecycleBoundaries() else { return }
+        noteWatchedTurnLifecycle(event, chatID: chatID)
+    }
+
+    /// An explicit agent-turn boundary arrived (a turnLifecycleRevision mac). This
+    /// is the authoritative turn-start/-end signal that replaces typing-edge
+    /// inference; feed it straight to the trigger.
+    private func noteWatchedTurnLifecycle(_ event: TurnEvent, chatID: String) {
+        guard let watched = watchState.watch, chatID == watched.chatID else { return }
+        switch event {
+        case .started: applyReplyTrigger(.turnStarted, watched: watched)
+        case .ended: applyReplyTrigger(.turnEnded, watched: watched)
+        case .unknownFuture: break
+        }
     }
 
     private func applyReplyTrigger(_ event: SessionReplyTrigger.Event, watched: SessionWatchState.Watch) {
@@ -2747,6 +2820,9 @@ final class AppModel {
             return !suppress
         }
         if case .fire(let body) = replyTrigger.handle(event, shouldFire: shouldFire) {
+            #if DEBUG
+            testLastReplyFireBody = body
+            #endif
             postReplyNotification(watched: watched, body: body)
         }
     }
@@ -3282,16 +3358,25 @@ final class AppModel {
             }
             // The live session view may be watching a chat (its own or the one
             // an @-mention came from). Accumulate the agent's reply text; the
-            // notification fires when the turn completes (typingStatus below).
+            // notification fires when the turn completes - on a turnLifecycleRevision
+            // mac from the explicit .turnLifecycle(.ended) boundary, on an older mac
+            // from the typing(false) edge (noteWatchedTypingStatus translates it).
+            // Typing is spinner-only on a turnLifecycleRevision mac, so do NOT
+            // re-route the fire back through typing edges.
             noteWatchedSessionDelivery(message, chatID: chatID)
         case .typingStatus(let isTyping, let participant, let chatID):
             if participant == .agent {
                 // Track per-chat so re-selecting a co-mounted chat mid-turn (a tab
                 // switch, which doesn't re-deliver this edge-triggered status) still
-                // shows the indicator. isAgentTyping is derived from this set.
+                // shows the indicator. isAgentTyping is derived from this set. This
+                // is the spinner hint; the reply-notification turn boundary comes
+                // from typing only on a pre-turnLifecycle mac (noteWatchedTypingStatus
+                // gates on macRevision), else from .turnLifecycle below.
                 if isTyping { agentTypingChats.insert(chatID) } else { agentTypingChats.remove(chatID) }
                 noteWatchedTypingStatus(isTyping: isTyping, chatID: chatID)
             }
+        case .turnLifecycle(let event, let chatID):
+            acceptTurnLifecycle(event, chatID: chatID)
         case .chatListChanged(let entries):
             // The Mac pushes a fresh list whenever a chat is renamed, gets
             // its icon, or is created/deleted/reordered.
@@ -4139,6 +4224,19 @@ extension AppModel {
     /// deletion-teardown logic can be tested without a live connection.
     func testInstallWatch(chatID: String, token: UUID) {
         watchState.install(chatID: chatID, subscribedHere: false, token: token)
+    }
+    func testSetMacRevision(_ revision: Int) { macRevision = revision }
+    func testNoteTyping(isTyping: Bool, chatID: String) {
+        noteWatchedTypingStatus(isTyping: isTyping, chatID: chatID)
+    }
+    func testNoteTurnLifecycle(_ event: TurnEvent, chatID: String) {
+        // Route through the SAME helper the wire handler uses, so tests exercise the
+        // production acceptance gate rather than a re-implemented copy.
+        acceptTurnLifecycle(event, chatID: chatID)
+    }
+    func testResetLastReplyFireBody() { testLastReplyFireBody = nil }
+    func testNoteDelivery(_ message: Message, chatID: String) {
+        noteWatchedSessionDelivery(message, chatID: chatID)
     }
 }
 #endif

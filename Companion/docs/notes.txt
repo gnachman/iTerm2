@@ -12,6 +12,13 @@ Bug Fixes:
   could trip its rate limit and silently drop
   the connection to the Mac while the phone still
   looked connected. Requests are now paced.
+- Reply and approval notifications are more
+  reliable. A turn that pauses for your approval
+  no longer leaves the typing indicator spinning,
+  a command awaiting your Allow/Deny now shows as
+  an action you need to take, and a chat you
+  reconnect to mid-reply still notifies you when
+  the reply arrives.
 
 New Features:
 - A resize button in the live session view fits
@@ -38,6 +45,11 @@ New Features:
   finishes replying, a notification appears;
   tapping it opens the chat, and Back returns you
   to the session view.
+- Before your first send from a live session,
+  iTerm2 Buddy can ask “Share This Session with
+  the AI?” so the terminal's state and visible
+  screen are included with your messages only
+  after you allow it.
 - Live session view. When the paired Mac is new
   enough, tapping a session shows live video that
   updates as the terminal changes, instead of a

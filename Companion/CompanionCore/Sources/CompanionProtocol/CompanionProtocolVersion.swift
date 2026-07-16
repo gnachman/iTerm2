@@ -65,7 +65,16 @@ public enum CompanionProtocolVersion {
     /// AI messages. Additive: an older mac ignores the unknown messages, so the phone
     /// offers the consent prompt only when the mac advertises at least
     /// `autoProvideConsentRevision`.
-    public static let current = 7
+    ///
+    /// Revision 8 adds the explicit turn-lifecycle event (turnLifecycle: started /
+    /// ended), so the phone drives its reply notification off explicit turn
+    /// boundaries instead of inferring them from typing-status edges (a mid-turn
+    /// park toggles typing and would otherwise corrupt the notification). Additive:
+    /// an older peer decodes the unknown message as `.unsupported` and ignores it,
+    /// so minimumPeer stays 5; the mac keeps emitting typing edges so a pre-8 phone
+    /// infers boundaries exactly as before, and only a peer at `turnLifecycleRevision`
+    /// consumes turnLifecycle (see peerConsumesTurnLifecycle).
+    public static let current = 8
 
     /// The oldest peer revision this build accepts. Raised to 5 (lockstep with
     /// `current`) for the relay move: peers older than revision 5 have the old
@@ -104,6 +113,16 @@ public enum CompanionProtocolVersion {
     /// (fetchAutoProvideConsent / grantAutoProvideConsent). The phone offers the
     /// consent prompt only when the mac advertises at least this revision.
     public static let autoProvideConsentRevision = 7
+
+    /// The revision that carries the explicit turn-lifecycle event (turnLifecycle:
+    /// started / ended), decoupling turn boundaries from the typing-status spinner
+    /// hint so a mid-turn park can no longer corrupt the phone's reply
+    /// notification. A peer at this revision drives its reply notification off these
+    /// boundaries; below it, both sides fall back to typing-edge inference, and the
+    /// mac emits typing edges regardless so older phones keep working. Additive
+    /// either way (an unknown message decodes to `.unsupported`), so minimumPeer
+    /// stays 5.
+    public static let turnLifecycleRevision = 8
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

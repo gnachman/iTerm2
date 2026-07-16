@@ -640,6 +640,14 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// ChatBroker.Update.typingStatus(Bool, Participant).
     case typingStatus(isTyping: Bool, participant: Participant, chatID: String)
 
+    /// Unsolicited: an agent turn-lifecycle boundary (started / ended). Mirrors
+    /// ChatBroker.Update.turnLifecycle(TurnEvent). Distinct from typingStatus (a
+    /// pure spinner hint): a phone at turnLifecycleRevision or newer drives its
+    /// reply notification off these explicit boundaries instead of inferring them
+    /// from typing edges, which a mid-turn park corrupts. The mac emits this only to
+    /// a peer that advertises turnLifecycleRevision.
+    case turnLifecycle(event: TurnEvent, chatID: String)
+
     /// Reply to `.resolveMentions`, one entry per requested identifier.
     case mentionsResolved([CompanionMentionResolution])
 
@@ -746,6 +754,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "unpaired", "messagesSince", "syncSince", "error",
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
         "selectionRange", "historyTile", "streamExtent", "autoProvideConsent",
+        "turnLifecycle",
     ]
 }
 
