@@ -752,7 +752,7 @@ class ChatAgent {
             return nil
         }
         guard let guid = ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid,
-              let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+              let session = iTermController.sharedInstance().anySession(forReference: guid) else {
             RLog("autoProvidedContext: chat \(chatID) is session-bound but has no linked session (guid=\(ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid ?? "nil")); not auto-providing")
             return nil
         }
@@ -1470,7 +1470,7 @@ extension ChatAgent {
             ? ChatListModel.instance?.chat(id: chatID)?.browserSessionGuid
             : ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid
         guard let guid,
-              iTermController.sharedInstance().anySession(withGUID: guid) != nil else {
+              iTermController.sharedInstance().anySession(forReference: guid) != nil else {
             return true
         }
         let permission = RemoteCommandExecutor.instance.permission(chatID: chatID,

@@ -519,7 +519,7 @@ final class CompanionHostBridge {
     /// sane bounds so a stale or hostile peer cannot request an absurd grid, then
     /// drive the same terminal-initiated resize path the escape sequence uses.
     private func handleResizeSession(guid: String, columns: Int, rows: Int) {
-        guard let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+        guard let session = iTermController.sharedInstance().anySession(forReference: guid) else {
             return
         }
         // Re-validate server-side rather than trusting the phone's (advisory, and
