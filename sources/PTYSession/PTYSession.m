@@ -9929,6 +9929,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_conductor quit];
 }
 
+- (BOOL)textViewRemoteHostCanControlIterm2:(out BOOL *)available {
+    const BOOL isAvailable = (_conductor != nil && _conductor.it2ProxyActive);
+    if (available) {
+        *available = isAvailable;
+    }
+    return isAvailable && _conductor.it2AuthorizedByUser;
+}
+
+- (void)textViewToggleRemoteHostCanControlIterm2 {
+    if (!_conductor.it2ProxyActive) {
+        return;
+    }
+    [_conductor setIT2AuthorizationFromMenu:!_conductor.it2AuthorizedByUser];
+}
+
 
 - (void)highlightMarkOrNote:(id<IntervalTreeImmutableObject>)obj {
     if ([obj isKindOfClass:[iTermMark class]]) {

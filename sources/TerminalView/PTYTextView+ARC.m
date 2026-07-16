@@ -149,6 +149,11 @@ iTermCommandInfoViewControllerDelegate>
             item.title = @"Disconnect";
         }
     }
+    if (item.action == @selector(toggleRemoteHostCanControlIterm2:)) {
+        BOOL available = NO;
+        item.state = [self.delegate textViewRemoteHostCanControlIterm2:&available] ? NSControlStateValueOn : NSControlStateValueOff;
+        return available;
+    }
     if (item.action == @selector(performNaturalLanguageQuery:)) {
         return [iTermAdvancedSettingsModel generativeAIAllowed];
     }
@@ -222,6 +227,10 @@ iTermCommandInfoViewControllerDelegate>
 
 - (IBAction)sshDisconnect:(id)sender {
     [self.delegate textViewDisconnectSSH];
+}
+
+- (IBAction)toggleRemoteHostCanControlIterm2:(id)sender {
+    [self.delegate textViewToggleRemoteHostCanControlIterm2];
 }
 
 - (IBAction)performNaturalLanguageQuery:(id)sender {

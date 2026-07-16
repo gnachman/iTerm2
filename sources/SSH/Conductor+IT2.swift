@@ -15,6 +15,26 @@
 
 import Foundation
 
+// Compare two strings' UTF-8 bytes for equality without a byte-position-dependent early exit,
+// for security tokens (the it2 HELLO nonce). The actual comparison uses timingsafe_bcmp -- the
+// platform's maintained constant-time primitive -- rather than a hand-rolled loop, whose data
+// independence a high-level optimizer gives no guarantee of preserving. (The Array(utf8)
+// conversion is not itself constant-time, but the per-byte comparison an attacker would time
+// is.) The length is not secret -- the nonce is a fixed-width hex string -- so an early length
+// check is fine, and timingsafe_bcmp requires equal-length buffers anyway.
+func it2ConstantTimeEqual(_ a: String, _ b: String) -> Bool {
+    let ab = Array(a.utf8)
+    let bb = Array(b.utf8)
+    guard ab.count == bb.count, !ab.isEmpty else {
+        return ab.isEmpty && bb.isEmpty
+    }
+    return ab.withUnsafeBytes { ap in
+        bb.withUnsafeBytes { bp in
+            timingsafe_bcmp(ap.baseAddress, bp.baseAddress, ap.count) == 0
+        }
+    }
+}
+
 // The it2-over-ssh proxy state that must travel together across an SSH recovery. Grouped
 // into one value so a reconnect copies a single value (one adopt assignment, one
 // ConductorRecovery field, one init(recovery:) assignment) and a future field touches
@@ -22,10 +42,51 @@ import Foundation
 // silently reverts the field to nil after recovery (a lost grant or a nonce that fails
 // every HELLO). `nonce` authenticates incoming it2.py HELLOs; `socketPath` is the remote
 // unix socket; `authorized` is the user's per-connection API grant.
-struct IT2ProxyState: Codable, Equatable {
-    var nonce: String?
-    var socketPath: String?
-    var authorized: Bool?
+struct IT2ProxyState: Equatable {
+    // The persisted core. Synthesized Codable, so whether a field is saved is answered by the
+    // TYPE (add a persistent field here and it is encoded/decoded automatically) rather than by
+    // remembering to edit a CodingKeys allowlist. On-disk shape is {nonce, socketPath,
+    // authorized}, unchanged from before this split (see IT2ProxyState's Codable below, which
+    // just delegates to this core).
+    struct Persisted: Codable, Equatable {
+        var nonce: String?
+        var socketPath: String?
+        var authorized: Bool?
+    }
+    var persisted: Persisted
+
+    // Whether framer's most recent it2Listen actually bound the socket. Gates it2ProxyActive
+    // (the "Remote host can control iTerm2" menu). A TRANSIENT runtime flag: it lives OUTSIDE
+    // `persisted`, so it is carried by value across an in-process SSH recovery (adopt ->
+    // ConductorRecovery -> init(recovery:)) but is never written to disk. On state restoration
+    // the framer is relaunched and it2Listen re-runs, re-establishing it from that status
+    // rather than restoring it stale. That it is not persisted is now structural (this field
+    // is simply not part of `persisted`), not a CodingKeys allowlist to keep in sync.
+    var listenSucceeded: Bool
+
+    init(nonce: String? = nil, socketPath: String? = nil, authorized: Bool? = nil,
+         listenSucceeded: Bool = false) {
+        self.persisted = Persisted(nonce: nonce, socketPath: socketPath, authorized: authorized)
+        self.listenSucceeded = listenSucceeded
+    }
+
+    // Flat accessors so call sites read/write it2Proxy.nonce/socketPath/authorized as before.
+    var nonce: String? { get { persisted.nonce } set { persisted.nonce = newValue } }
+    var socketPath: String? { get { persisted.socketPath } set { persisted.socketPath = newValue } }
+    var authorized: Bool? { get { persisted.authorized } set { persisted.authorized = newValue } }
+}
+
+extension IT2ProxyState: Codable {
+    // Persist only the core; `listenSucceeded` is transient and resets to its default on
+    // decode. Delegating to Persisted (not a manual key list) keeps "what is saved" defined by
+    // the Persisted type.
+    init(from decoder: Decoder) throws {
+        persisted = try Persisted(from: decoder)
+        listenSucceeded = false
+    }
+    func encode(to encoder: Encoder) throws {
+        try persisted.encode(to: encoder)
+    }
 }
 
 // it2.py <-> demux frames: [1 byte type][4 byte big-endian length][payload].
@@ -54,10 +115,14 @@ protocol IT2Cancellable: AnyObject {
     func cancel()
 }
 
-// Reconstructs and dispatches it2 RPC connections. All methods must be called on
-// the main thread; the injected `run` closure may deliver its stdout/stderr/
-// completion on any thread, so the production adapter marshals those to main
-// before they reach this class.
+// Reconstructs and dispatches it2 RPC connections. Threading contract: everything that touches
+// `connections` -- handle(), startCommand(), finish(), drainSinkQueue() -- is MAIN-thread only.
+// The one exception is sendLine(): the injected `run` closure's stdout/stderr sinks call it
+// directly on the runner's background queue (only `completion` is marshalled to main), so it
+// must stay off-main-safe -- it only appends to the thread-safe sinkQueue and pokes the
+// sinkFlusher, never touching `connections`. The flusher hops the actual emission to main.
+// Do NOT add main-only work (e.g. reading `connections`) to sendLine or the off-main race this
+// coalescing refactor removed comes back.
 final class ConductorIT2Demux {
     // Runs argv and streams results. Returns a handle to cancel the run.
     typealias RunFunction = (_ argv: [String],
@@ -69,10 +134,15 @@ final class ConductorIT2Demux {
     // Only tiny HELLO/CANCEL frames ever flow up; reject anything absurd so a
     // client on the (0600, same-user) socket cannot make us buffer unboundedly on
     // the main thread by declaring a huge length and trickling bytes.
-    private static let maxFrameLength = 1 << 20  // 1 MiB
+    // The only up-direction frame that carries a large payload is the HELLO, whose JSON holds
+    // the full argv/cwd/term. macOS ARG_MAX is ~1 MiB for argv, and JSON escaping can inflate
+    // that several-fold, so a 1 MiB cap rejected commands that succeed locally. 16 MiB gives
+    // comfortable headroom over a fully-escaped ARG_MAX argv while still bounding a
+    // never-completing partial frame. (Down-frames are NOT bounded by this; see sendFrame.)
+    private static let maxFrameLength = 16 << 20  // 16 MiB
     // Bound concurrent connections so a same-user process that opens many sockets (each
     // able to pin up to maxFrameLength of never-completing partial frame) cannot grow
-    // our main-thread heap without limit. Worst case buffered ~ maxConnections * 1 MiB.
+    // our main-thread heap without limit. Worst case buffered ~ maxConnections * maxFrameLength.
     private static let maxConnections = 32
 
     // Read lazily at HELLO time, not captured at construction: the demux is built
@@ -91,6 +161,20 @@ final class ConductorIT2Demux {
     }
     private var connections = [String: Connection]()
 
+    // Coalesced down-output. sendLine enqueues (thread-safe, from whatever thread the runner
+    // delivers a line on); the joiner batches a whole burst into ONE main-thread drainSinkQueue,
+    // which merges consecutive same-(connid,type) lines into a single frame. That cuts the
+    // per-line main-thread hop + base64 + framer-command overhead under a firehose (a large
+    // `session read`, a busy `monitor --follow`). Ordering is preserved: the queue is FIFO and
+    // finish() drains it before emitting the exit frame.
+    private struct SinkEvent {
+        let connid: String
+        let type: UInt8
+        let bytes: Data
+    }
+    private let sinkQueue = ProducerConsumerQueue<SinkEvent>()
+    private let sinkFlusher: IdempotentOperationJoiner
+
     init(nonce: @escaping () -> String?,
          send: @escaping (String, Data) -> Void,
          close: @escaping (String) -> Void,
@@ -101,6 +185,7 @@ final class ConductorIT2Demux {
         self.closeConnection = close
         self.run = run
         self.logger = logger
+        self.sinkFlusher = IdempotentOperationJoiner.asyncJoiner(.main)
     }
 
     // Entry point: the payload after "%it2 ", i.e. "<connid> open" /
@@ -203,7 +288,8 @@ final class ConductorIT2Demux {
                     // length is known up front without buffering the payload; once a
                     // command has started we drop silently (above) to avoid racing its
                     // output down the same channel.
-                    sendLine(connid, IT2FrameType.stderr, "it2: request too large")
+                    sendLine(connid, IT2FrameType.stderr,
+                             "it2: request too large (over \(Self.maxFrameLength / (1 << 20)) MiB over SSH integration); run it locally instead")
                     finish(connid, code: 2)
                 }
                 return
@@ -252,7 +338,10 @@ final class ConductorIT2Demux {
         }
         let expected = nonce() ?? ""
         let helloNonce = object["nonce"] as? String ?? ""
-        guard !expected.isEmpty, helloNonce == expected else {
+        // Constant-time compare: this token authenticates remote control of the local API, so
+        // do not use `==`, which short-circuits on the first differing byte and could let a
+        // same-user process timing many connections recover the nonce byte by byte.
+        guard !expected.isEmpty, it2ConstantTimeEqual(helloNonce, expected) else {
             logger("it2 HELLO nonce mismatch for \(connid)")
             sendLine(connid, IT2FrameType.stderr, "it2: authorization failed")
             finish(connid, code: 1)
@@ -277,13 +366,47 @@ final class ConductorIT2Demux {
     // newline stripped (the standalone binary's sink re-adds it), so re-add "\n"
     // to reproduce byte-for-byte what a local it2 would print.
     private func sendLine(_ connid: String, _ type: UInt8, _ line: String) {
-        guard connections[connid] != nil else {
-            return  // connection closed underneath us; drop
+        // Enqueue only (thread-safe): this may be called off the main thread by the runner, so
+        // it must NOT touch `connections` (main-only). The connection check and the actual
+        // frame emission happen in drainSinkQueue on the main thread. Build the newline-
+        // terminated bytes without the intermediate `line + "\n"` String allocation.
+        var bytes = Data(line.utf8)
+        bytes.append(0x0a)
+        sinkQueue.produce(SinkEvent(connid: connid, type: type, bytes: bytes))
+        sinkFlusher.setNeedsUpdate { [weak self] in self?.drainSinkQueue() }
+    }
+
+    // Main thread only. Drains buffered output, coalescing consecutive same-(connid,type) lines
+    // into one frame. Called by the joiner (async, once per burst) and synchronously by finish()
+    // (so a command's output always precedes its exit frame).
+    private func drainSinkQueue() {
+        var batchConnid: String?
+        var batchType: UInt8 = 0
+        var batchBytes = Data()
+        func flushBatch() {
+            if let connid = batchConnid, !batchBytes.isEmpty, connections[connid] != nil {
+                sendFrame(connid, type: batchType, payload: batchBytes)
+            }
+            batchConnid = nil
+            batchBytes = Data()
         }
-        sendFrame(connid, type: type, payload: Data((line + "\n").utf8))
+        while let event = sinkQueue.tryConsume() {
+            if batchConnid == event.connid && batchType == event.type {
+                batchBytes.append(event.bytes)
+            } else {
+                flushBatch()
+                batchConnid = event.connid
+                batchType = event.type
+                batchBytes = event.bytes
+            }
+        }
+        flushBatch()
     }
 
     private func finish(_ connid: String, code: Int32) {
+        // Flush any buffered output first (all connections) so this command's stdout/stderr
+        // always precedes its exit frame on the wire, regardless of the joiner's timing.
+        drainSinkQueue()
         // Removal from `connections` is the single guard against a double finish
         // (same as close()): a second call finds nothing and no-ops.
         guard connections[connid] != nil else {
@@ -373,6 +496,15 @@ extension Conductor {
             return
         }
         it2Proxy = other.it2Proxy
+        // Tear down the retiring conductor's in-flight it2 commands as part of the hand-off.
+        // On a ROOT recovery it unhooks and cancels these itself, but on a NESTED recovery it
+        // is retained as this conductor's parent and never unhooks or deinits -- so without
+        // this, a streaming command (e.g. `monitor --follow`) on it would leak its it2Demux, a
+        // background it2core thread blocked in receiveMessage, and a registered in-process API
+        // connection for the life of the session, relying on a depth-routed close frame that
+        // is not guaranteed to reach the old demux. cancelAll() is idempotent, so the redundant
+        // root-path call is a no-op; the fresh conductor builds its own demux on the next frame.
+        other.it2Demux?.cancelAll()
     }
 
     // Lazily builds the demux, wiring it to the framer senders and the in-process
@@ -389,6 +521,12 @@ extension Conductor {
             nonce: { [weak self] in self?.it2Nonce },
             send: { [weak self] connid, data in self?.it2Send(connid: connid, data: data) },
             close: { [weak self] connid in self?.it2Close(connid: connid) },
+            // The 2nd parameter is the IT2ClientContext (cwd/term/isatty/cols/rows) the demux
+            // parses from HELLO and the demux tests assert is delivered here. It is
+            // intentionally dropped ('_') for now: iTermInProcessIt2.run below forwards only
+            // argv. THIS is the one place to wire it when remote sizing/cwd/TERM lands -- pass
+            // it into iTermInProcessIt2.run and honor it there; the wire (it2.py) and the demux
+            // delivery are already in place.
             run: { [weak self] argv, _, stdoutSink, stderrSink, completionSink in
                 let cancel = IT2RunCancel()
                 // The demux requires stderr/completion on the main thread. The guard/deny
@@ -421,11 +559,15 @@ extension Conductor {
                         finish(1)
                         return
                     }
+                    // stdout/stderr sinks call sendLine, which only enqueues (thread-safe) and
+                    // lets the demux's joiner coalesce+flush on main -- so no per-line main hop
+                    // here. completion must still marshal to main: finish() drains the queue and
+                    // touches `connections` (main-only).
                     iTermInProcessIt2.run(withArguments: argv,
                                           originIdentifier: identifier,
                                           originDisplayName: displayName,
-                                          stdoutHandler: { line in DispatchQueue.main.async { stdoutSink(line) } },
-                                          stderrHandler: { line in DispatchQueue.main.async { stderrSink(line) } },
+                                          stdoutHandler: { line in stdoutSink(line) },
+                                          stderrHandler: { line in stderrSink(line) },
                                           cancellationHandler: { cancelBlock in cancel.setCancelBlock(cancelBlock) },
                                           completion: { code in DispatchQueue.main.async { completionSink(code) } })
                 }
@@ -511,6 +653,39 @@ extension Conductor {
     // adoptIT2RecoveryState) and re-prompts on the next command if still undecided.
     @objc func resolveIT2AuthorizationFailClosed() {
         resolveIT2Authorization(false, persist: false)
+    }
+
+    // MARK: - Shell > SSH > "Remote host can control iTerm2" menu item
+
+    // Whether the it2-over-ssh proxy is actually live on this connection: the framer is
+    // framing, activateIT2Proxy injected the socket/nonce, AND framer's it2Listen reported a
+    // successful bind. Gates the menu item's enabled state so it is disabled for a plain
+    // (non-it2-capable) ssh session, a broken/unframed one, or one where the socket bind
+    // failed (so the menu never looks enabled while the remote it2 silently cannot connect).
+    @objc var it2ProxyActive: Bool {
+        return framing && it2Nonce != nil && it2ListenSucceeded
+    }
+
+    // Checkmark state for the menu item: whether this connection currently has an explicit
+    // grant (from the announcement or a previous menu toggle). A nil/denied decision is
+    // unchecked. Kept distinct from it2Authorized (an optional tri-state) so the ObjC menu
+    // code deals in a plain BOOL.
+    @objc var it2AuthorizedByUser: Bool {
+        return it2Authorized == true
+    }
+
+    // Toggle handler for the menu item. Grants or revokes it2-over-ssh access for THIS
+    // connection and persists the decision to restorable state, exactly as answering the
+    // in-session announcement would. If an announcement is currently pending (a blocked it2
+    // command is waiting on an answer), this also resolves it now so the command proceeds or
+    // aborts immediately rather than waiting for a click. In-flight commands that already
+    // passed the gate (e.g. a running `monitor --follow`) are unaffected by a revoke; only
+    // subsequent commands see the new decision. Must be called on the main thread.
+    @objc func setIT2AuthorizationFromMenu(_ granted: Bool) {
+        it2Authorized = granted
+        // No-op when no prompt is pending; otherwise dismisses the on-screen announcement and
+        // fulfills the shared promise so every concurrent it2 command unblocks with `granted`.
+        resolveIT2Authorization(granted, persist: true)
     }
 
     // Activate the it2 CLI proxy for this session: mint the auth nonce + a remote

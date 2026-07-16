@@ -2093,4 +2093,7 @@ Bug Fixes:
   over the conductor and run there, gated by a
   per-session permission prompt naming the host.
   it2 is installed automatically wherever shell
-  integration loads.
+  integration loads. Shell > SSH > “Remote host
+  can control iTerm2” toggles this permission for
+  the current connection and shows a checkmark
+  while it is granted.
