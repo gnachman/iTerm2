@@ -203,12 +203,17 @@ final class CompanionPairingController: NSObject {
     func pairingCompleteness() -> PairingCompleteness {
         guard hasPairedDevice else { return .unpaired }
         var missing: [String] = []
-        if !CompanionMacIdentity.hasKeyPair() { missing.append("the Mac identity key") }
-        if CompanionMacIdentity.pairedPhoneStaticPublicKey() == nil { missing.append("the paired phone key") }
-        // The room secret signs the relay park; a local-network-only pairing needs none.
-        if Self.configuredRelayOrigin() != nil, CompanionMacIdentity.pairedRoomSecret() == nil {
-            missing.append("the relay room secret")
-        }
+        // Only a GENUINE absence (errSecItemNotFound) counts as missing. A transient
+        // keychain read failure (a denied access prompt at launch, a locked keychain,
+        // a code-signature mismatch after a rebuild) must not, or the pairing would
+        // look permanently incomplete: resume would skip parking forever and the
+        // re-pair modal would spam on every launch. See CompanionMacIdentity.KeychainRead.
+        if CompanionMacIdentity.isGenuinelyAbsent(.identityKey) { missing.append("the Mac identity key") }
+        if CompanionMacIdentity.isGenuinelyAbsent(.pairedPhoneKey) { missing.append("the paired phone key") }
+        // The relay room secret is intentionally NOT part of this decision: the phone
+        // re-couriers it over the Noise channel on every connect, so a missing or
+        // unreadable one self-heals. Blocking resume on it (or prompting re-pair)
+        // would be wrong; the mac still parks and the re-courier restores it.
         return missing.isEmpty ? .complete : .incomplete(missing: missing)
     }
 

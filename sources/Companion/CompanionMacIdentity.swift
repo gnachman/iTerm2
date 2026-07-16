@@ -29,7 +29,7 @@ final class CompanionMacIdentity: NSObject {
     /// in-memory cache (primed at launch) so a reconnect never touches the
     /// keychain; only first-use generation writes.
     static func keyPair() throws -> NoiseKeyPair {
-        if let privateKey = load(account: account) {
+        if let privateKey = loadedData(account: account) {
             return try NoiseKeyPair.from(privateKey: privateKey)
         }
         let generated = try NoiseKeyPair.generate()
@@ -41,7 +41,7 @@ final class CompanionMacIdentity: NSObject {
     /// keyPair(), which mints and stores one on a miss). For a pairing-completeness
     /// check that must not create new key material for an unpaired / half-paired mac.
     static func hasKeyPair() -> Bool {
-        load(account: account) != nil
+        loadedData(account: account) != nil
     }
 
     /// Destroy the stored identity (used when unpairing); the next pairing
@@ -52,7 +52,7 @@ final class CompanionMacIdentity: NSObject {
 
     /// The paired phone's pinned static public key, or nil if none is pinned.
     static func pairedPhoneStaticPublicKey() -> Data? {
-        load(account: pairedPhoneAccount)
+        loadedData(account: pairedPhoneAccount)
     }
 
     static func storePairedPhoneStaticPublicKey(_ key: Data) throws {
@@ -65,7 +65,7 @@ final class CompanionMacIdentity: NSObject {
 
     /// The room secret couriered from the phone (nil if none stored yet).
     static func pairedRoomSecret() -> Data? {
-        load(account: roomSecretAccount)
+        loadedData(account: roomSecretAccount)
     }
 
     static func storePairedRoomSecret(_ secret: Data) throws {
@@ -81,7 +81,7 @@ final class CompanionMacIdentity: NSObject {
     private static let pushSecretAccount = "paired-push-relay-secret"
 
     static func pairedPushSecret() -> Data? {
-        load(account: pushSecretAccount)
+        loadedData(account: pushSecretAccount)
     }
 
     static func storePairedPushSecret(_ secret: Data) throws {
@@ -115,25 +115,72 @@ final class CompanionMacIdentity: NSObject {
         _ = load(account: pushSecretAccount)
     }
 
-    private static func load(account: String) -> Data? {
+    private static func load(account: String) -> KeychainRead {
         cacheLock.lock()
         if let cached = cache[account] {
             cacheLock.unlock()
-            return cached
+            return cached.map { KeychainRead.found($0) } ?? .absent
         }
         cacheLock.unlock()
         // The keychain read runs unlocked so a confirmation prompt can't block
         // other accounts behind the lock. A concurrent store/delete may therefore
         // populate the cache while this read is in flight; that value is fresher,
         // so on writeback only fill a still-absent entry rather than clobbering it.
-        let value = keychainLoad(account: account)
+        let result = keychainLoad(account: account)
         cacheLock.lock()
         defer { cacheLock.unlock() }
         if let cached = cache[account] {
-            return cached
+            return cached.map { KeychainRead.found($0) } ?? .absent
         }
-        cache.updateValue(value, forKey: account)
-        return value
+        switch result {
+        case .found(let data):
+            cache.updateValue(data, forKey: account)
+        case .absent:
+            cache.updateValue(nil, forKey: account)
+        case .unreadable:
+            // Do NOT cache a transient failure. The cache persists for the process
+            // lifetime, so caching one denied/locked read would make the item look
+            // absent for good, wedging resume and spamming the re-pair prompt. Leave
+            // it uncached so the next call re-reads once the keychain is available.
+            break
+        }
+        return result
+    }
+
+    /// The item's bytes if present and valid, else nil (absent OR unreadable). Hot
+    /// paths that only need the data use this: a transient failure reads as nil
+    /// exactly as before, so signing / connect behavior is unchanged. Only the
+    /// pairing-completeness check needs the finer absent-vs-unreadable distinction.
+    private static func loadedData(account: String) -> Data? {
+        if case .found(let data) = load(account: account) {
+            return data
+        }
+        return nil
+    }
+
+    /// A pairing item whose GENUINE absence should mark the pairing incomplete. The
+    /// room secret is deliberately absent from this enum: the phone re-couriers it
+    /// on every connect, so a missing/unreadable one self-heals and must not block
+    /// resume or trigger a re-pair prompt.
+    enum RequiredPairingItem {
+        case identityKey
+        case pairedPhoneKey
+    }
+
+    /// True only when the item is genuinely absent (errSecItemNotFound). A present
+    /// item, or one merely unreadable right now (a transient access failure),
+    /// returns false, so a rebuilt or locked keychain does not report the pairing
+    /// permanently incomplete.
+    static func isGenuinelyAbsent(_ item: RequiredPairingItem) -> Bool {
+        let acct: String
+        switch item {
+        case .identityKey: acct = account
+        case .pairedPhoneKey: acct = pairedPhoneAccount
+        }
+        if case .absent = load(account: acct) {
+            return true
+        }
+        return false
     }
 
     private static func store(_ key: Data, account: String) throws {
@@ -162,7 +209,36 @@ final class CompanionMacIdentity: NSObject {
         return "\(account).\(suite)"
     }
 
-    private static func keychainLoad(account: String) -> Data? {
+    /// Tri-state keychain read. `.found` carries the valid 32-byte item; `.absent`
+    /// is a genuine errSecItemNotFound; `.unreadable` is anything else (a real
+    /// access error, or a success-but-malformed item) where the item likely EXISTS
+    /// but cannot be used right now. The distinction is what P5 turns on: only a
+    /// genuine `.absent` may mark the pairing incomplete; a transient `.unreadable`
+    /// (a denied keychain confirmation prompt at launch, a locked keychain) must
+    /// not, or the pairing looks permanently broken and spams the re-pair modal.
+    enum KeychainRead: Equatable {
+        case found(Data)
+        case absent
+        case unreadable(OSStatus)
+    }
+
+    /// Pure interpretation of a SecItemCopyMatching result, split out so the
+    /// absent-vs-unreadable distinction is unit-testable without a live keychain.
+    static func interpretKeychainStatus(_ status: OSStatus, data: Data?) -> KeychainRead {
+        if status == errSecSuccess {
+            if let data, data.count == 32 {
+                return .found(data)
+            }
+            // Present but malformed: the item exists yet is unusable. Not absent.
+            return .unreadable(status)
+        }
+        if status == errSecItemNotFound {
+            return .absent
+        }
+        return .unreadable(status)
+    }
+
+    private static func keychainLoad(account: String) -> KeychainRead {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -172,10 +248,11 @@ final class CompanionMacIdentity: NSObject {
         ]
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
-        if status == errSecSuccess, let data = item as? Data, data.count == 32 {
-            return data
-        }
-        if status == errSecItemNotFound {
+        let result = interpretKeychainStatus(status, data: item as? Data)
+        switch result {
+        case .found:
+            break
+        case .absent:
             // Genuinely absent (never stored under this account, or deleted). Normal
             // for an unpaired item; for the room secret it means the mac parks
             // open-mode and the relay refuses. RLog (not DLog) so the absent-vs-denied
@@ -184,19 +261,19 @@ final class CompanionMacIdentity: NSObject {
             // stored by a differently-suited (or released) build lives under a
             // different account and reads as not-found here.
             RLog("Companion keychain: '\(suitedAccount(account))' not found (absent, not access-denied)")
-        } else if status == errSecSuccess {
+        case .unreadable(let osStatus) where osStatus == errSecSuccess:
             RLog("Companion keychain: '\(suitedAccount(account))' present but malformed (\((item as? Data)?.count ?? -1) bytes)")
-        } else {
+        case .unreadable(let osStatus):
             // A real error (errSecAuthFailed / errSecInteractionNotAllowed / a denied
             // confirmation prompt): the item likely EXISTS but this binary's code
             // signature differs from the writer's, so the login keychain refuses it.
             // For the relay room secret this makes the mac park unsigned and the relay
             // refuse admission ("signature required"). Re-pair (or grant the keychain
             // prompt) to recover. RLog so it is captured without debug logging on.
-            let message = (SecCopyErrorMessageString(status, nil) as String?) ?? "unknown"
-            RLog("Companion keychain: FAILED to read '\(suitedAccount(account))': OSStatus \(status) (\(message)). A code-signature mismatch (e.g. a rebuilt app) denies access; this breaks relay park signing.")
+            let message = (SecCopyErrorMessageString(osStatus, nil) as String?) ?? "unknown"
+            RLog("Companion keychain: FAILED to read '\(suitedAccount(account))': OSStatus \(osStatus) (\(message)). A code-signature mismatch (e.g. a rebuilt app) denies access; this breaks relay park signing.")
         }
-        return nil
+        return result
     }
 
     private static func keychainStore(_ key: Data, account: String) throws {
