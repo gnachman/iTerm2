@@ -28,6 +28,40 @@ final class MessagesSinceResponderTests: XCTestCase {
         XCTAssertFalse(r.truncated)
     }
 
+    func testSummarize_rendersClassicPermissionRequestFromPermissionDescription() {
+        let request = msg(.remoteCommandRequest(
+            .classic(RemoteCommand(llmMessage: LLM.Message(role: .assistant, content: nil),
+                                   content: .executeCommand(.init(command: "git push")))),
+            safe: nil))
+        let r = MessagesSinceResponder.summarize(fetched: [request], limit: 10, bodyMaxLength: 200)
+        XCTAssertEqual(r.previews.count, 1, "a .classic permission request is shown to the user")
+        XCTAssertEqual(r.previews.first?.body, "The AI Agent would like to execute `git push`")
+    }
+
+    func testSummarize_dropsExternalOrchestrationCommand() {
+        let ext = msg(.remoteCommandRequest(
+            .external(ExternalRemoteCommand(llmMessage: LLM.Message(role: .assistant, content: nil),
+                                            name: "scroll_wheel", argsJSON: "{}",
+                                            markdownDescription: "scrolling")),
+            safe: nil))
+        let r = MessagesSinceResponder.summarize(fetched: [ext], limit: 10, bodyMaxLength: 200)
+        XCTAssertTrue(r.previews.isEmpty, "an .external orchestration call is informational only, not shown")
+    }
+
+    func testSummarize_dropsAnsweredClassicRequest() {
+        // An auto-run .classic request that already has its response is resolved
+        // bookkeeping, not a live prompt, so it must not surface on the phone.
+        let reqID = UUID()
+        let request = msg(.remoteCommandRequest(
+            .classic(RemoteCommand(llmMessage: LLM.Message(role: .assistant, content: nil),
+                                   content: .executeCommand(.init(command: "ls")))),
+            safe: nil), id: reqID)
+        let response = msg(.remoteCommandResponse(.success("ok"), reqID, "executeCommand", nil),
+                           author: .user)
+        let r = MessagesSinceResponder.summarize(fetched: [response, request], limit: 10, bodyMaxLength: 200)
+        XCTAssertTrue(r.previews.isEmpty, "an answered .classic request is resolved, not shown")
+    }
+
     func testSummarize_truncatesLongBody() {
         let long = String(repeating: "x", count: 500)
         let r = MessagesSinceResponder.summarize(fetched: [msg(.markdown(long))],
