@@ -153,8 +153,9 @@ class ChatViewController: NSViewController {
                         if let self,
                            self.streaming,
                            let userInfo = notif.userInfo,
-                           let guid = self.model?.terminalSessionGuid,
-                           notif.object as? String == guid {
+                           let binding = self.model?.terminalSessionGuid,
+                           let liveGuid = notif.object as? String,
+                           iTermSessionReferenceKeys(forGuid: liveGuid).contains(binding) {
                             self.streamLastCommand(userInfo)
                     }
                 }

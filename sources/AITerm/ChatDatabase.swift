@@ -61,8 +61,14 @@ class ObjCChatDatabase: NSObject {
 
     @objc(firstChatIDForSessionGuid:)
     static func firstChatID(forSessionGuid sessionGuid: String) -> String? {
+        // Terminal-only: the sole caller (the "reveal AI chat for session" deep
+        // link) passes a terminal session guid, so match only the terminal
+        // binding (isLinked(toReferenceIn:) would also match browser bindings).
         let keys = iTermSessionReferenceKeys(forGuid: sessionGuid)
-        return ChatDatabase.instance?.chats?.first { $0.isLinked(toReferenceIn: keys) }?.id
+        return ChatDatabase.instance?.chats?.first {
+            guard let terminal = $0.terminalSessionGuid else { return false }
+            return keys.contains(terminal)
+        }?.id
     }
 }
 
