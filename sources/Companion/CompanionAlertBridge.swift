@@ -57,8 +57,9 @@ final class CompanionAlertBridge: NSObject {
     }
 
     /// Persist a terminal alert and nudge the phone. `threadKey` groups a session's
-    /// alerts on the phone (today the session guid). A no-op when no eligible phone
-    /// is paired.
+    /// alerts on the phone; callers pass the session's reload-durable stableID, so
+    /// a session's alerts stay in one thread across shell reloads. A no-op when no
+    /// eligible phone is paired.
     @objc static func postTerminalAlert(title: String, body: String, threadKey: String) {
         guard CompanionPushRegistry.canSendAlertsToPhone else {
             return

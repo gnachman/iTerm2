@@ -15733,7 +15733,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
             [iTermCompanionAlertBridge postTerminalAlertWithTitle:@"Mark Set"
                                                              body:markDescription
-                                                        threadKey:self.guid];
+                                                        threadKey:self.stableID];
         }
         completion();
         return;
@@ -24014,7 +24014,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
         [iTermCompanionAlertBridge postTerminalAlertWithTitle:message
                                                          body:triggerDescription
-                                                    threadKey:self.guid];
+                                                    threadKey:self.stableID];
     }
 }
 
