@@ -1780,7 +1780,7 @@ final class CompanionHostBridge {
             }
             let status = session.tabStatus
             return CompanionWorkgroupMember(roleName: roleName,
-                                            sessionGuid: session.guid,
+                                            sessionGuid: session.stableID,
                                             sessionName: session.name,
                                             statusText: status?.statusText?.nilIfEmpty,
                                             detailText: status?.detailText?.nilIfEmpty,

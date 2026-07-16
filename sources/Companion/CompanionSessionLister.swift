@@ -3,8 +3,9 @@
 //  iTerm2
 //
 //  Enumerates terminal sessions for the companion's Create screen, projecting
-//  each PTYSession down to the wire-level CompanionSessionSummary (guid +
-//  display text). Must run on the main thread, like all iTermController access.
+//  each PTYSession down to the wire-level CompanionSessionSummary (a session
+//  reference + display text). Must run on the main thread, like all
+//  iTermController access.
 //
 
 import Foundation
@@ -20,7 +21,11 @@ enum CompanionSessionLister {
     }
 
     private static func summary(of session: PTYSession) -> CompanionSessionSummary {
-        CompanionSessionSummary(guid: session.guid,
+        // Project the reload-durable stableID (the wire field is named `guid`
+        // but the phone treats it opaquely and sends it back through
+        // anySession(forReference:)), so a picked/linked session survives a
+        // shell reload that rotates the guid.
+        CompanionSessionSummary(guid: session.stableID,
                                 name: session.name,
                                 subtitle: session.subtitle ?? "")
     }
