@@ -762,7 +762,7 @@ class ChatAgent {
         RLog("autoProvidedContext: chat \(chatID) session \(guid): Check Terminal State=\(stateP), View Contents=\(contentsP) (inject when .always)")
         var blocks = [String]()
         if stateP == .always {
-            blocks.append("<terminal-state>\n" + session.aiState + "\n</terminal-state>")
+            blocks.append("<terminal-state>\n" + Self.neutralizeContextDelimiters(session.aiState) + "\n</terminal-state>")
         }
         if contentsP == .always {
             let screen = WorkgroupIntrospection.screenContents(
@@ -772,10 +772,26 @@ class ChatAgent {
                 blocks.append("<visible-screen unchanged=\"true\"/>")
             } else {
                 lastAutoProvidedScreen = screen
-                blocks.append("<visible-screen>\n" + screen + "\n</visible-screen>")
+                blocks.append("<visible-screen>\n" + Self.neutralizeContextDelimiters(screen) + "\n</visible-screen>")
             }
         }
         return blocks.isEmpty ? nil : blocks.joined(separator: "\n")
+    }
+
+    /// Defang our control-tag delimiters in untrusted terminal content so it cannot
+    /// break out of the <visible-screen> / <terminal-state> wrappers and inject
+    /// trusted top-level context (prompt injection): terminal output that contains a
+    /// literal closing tag (a file the user cats, a hostile log line) would otherwise
+    /// close the block early and make everything after it read as top-level model
+    /// instructions. Mirrors the guillemet approach in
+    /// AutoModeClassifier.neutralizePromptDelimiters, but deliberately preserves
+    /// newlines because the visible screen's row layout is meaningful to the model.
+    nonisolated static func neutralizeContextDelimiters(_ s: String) -> String {
+        return s
+            .replacingOccurrences(of: "</visible-screen>", with: "\u{2039}/visible-screen\u{203A}")
+            .replacingOccurrences(of: "<visible-screen", with: "\u{2039}visible-screen")
+            .replacingOccurrences(of: "</terminal-state>", with: "\u{2039}/terminal-state\u{203A}")
+            .replacingOccurrences(of: "<terminal-state", with: "\u{2039}terminal-state")
     }
 
     /// Append an auto-provided context block to the outgoing user body, matching how
