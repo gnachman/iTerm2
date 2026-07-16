@@ -19,13 +19,6 @@ import Foundation
 @MainActor
 @objc(iTermCompanionAlertBridge)
 final class CompanionAlertBridge: NSObject {
-    /// Coalesce a burst of alerts (e.g. several triggers firing at once) into few
-    /// wakeups: the wakeup is content-free and the NSE fetches EVERY new alert, so
-    /// one trailing wakeup after a burst covers them all.
-    private static let coalesceInterval: TimeInterval = 2
-    private static var cooldownActive = false
-    private static var pendingTrailing = false
-
     /// Whether the "send to phone" checkbox should be enabled: a revision-2 phone
     /// is paired. Notification permission is NOT required - enabling it requests it.
     @objc static var canEnableAlertsToPhone: Bool {
@@ -80,36 +73,15 @@ final class CompanionAlertBridge: NSObject {
                                           title: title,
                                           body: body,
                                           createdDate: Date())
-        guard db.insertAlert(record) != nil else {
+        guard let seq = db.insertAlert(record) else {
             RLog("Companion alert: failed to persist alert")
             return
         }
-        RLog("Companion alert: stored alert for thread \(threadKey.prefix(8)); scheduling wakeup")
-        scheduleWakeup()
-    }
-
-    /// Fire a wakeup immediately when idle; if more alerts arrive during the
-    /// cooldown, fire exactly one trailing wakeup afterward (which fetches all of
-    /// them), repeating while the burst continues.
-    private static func scheduleWakeup() {
-        if cooldownActive {
-            pendingTrailing = true
-            return
-        }
-        cooldownActive = true
-        CompanionPushSender.dispatchPush(chatID: nil)
-        armCooldown()
-    }
-
-    private static func armCooldown() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + coalesceInterval) {
-            if pendingTrailing {
-                pendingTrailing = false
-                CompanionPushSender.dispatchPush(chatID: nil)
-                armCooldown()
-            } else {
-                cooldownActive = false
-            }
-        }
+        RLog("Companion alert: stored alert seq \(seq) for thread \(threadKey.prefix(8)); notifying wakeup coordinator")
+        // An alert IS renderable content (it shows on the lock screen), so it goes
+        // through the coordinator's content path: the global rate-limit coalesces it
+        // with agent-message activity, and the render check sees it above the alert
+        // floor. (Replaces this bridge's former alert-only cooldown.)
+        CompanionWakeupCoordinator.shared.noteContentActivity(chatID: "alert:" + threadKey)
     }
 }

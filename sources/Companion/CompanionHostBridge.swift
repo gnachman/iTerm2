@@ -1278,6 +1278,13 @@ final class CompanionHostBridge {
                         alertReset: alertReset,
                         truncated: truncated),
              requestID: requestID)
+        // Advance the global wakeup coordinator's record of how far the NSE has now
+        // fetched, so its stateless render check reasons about the phone's real floor
+        // and a trailing wakeup fires only if renderable content remains above it.
+        CompanionWakeupCoordinator.shared.noteNSEFetch(messageFloor: messageFloorTarget,
+                                                       alertFloor: alertFloorTarget,
+                                                       messageReset: messageReset,
+                                                       alertReset: alertReset)
     }
 
     private func handlePublish(message: Message, toChatID chatID: String) {
