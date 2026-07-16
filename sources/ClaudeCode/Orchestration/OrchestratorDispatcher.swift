@@ -939,7 +939,11 @@ final class OrchestratorDispatcher {
         }
 
         if Self.requiresSessionClaim(content) {
-            if !(await ensureSessionClaim(sessionGuid: sessionGuid)) {
+            // Key the claim on the resolved session's canonical stableID, not the
+            // raw model-supplied id: grants are recorded canonically, so a
+            // non-canonical (lowercased/legacy) reference would otherwise miss a
+            // standing grant and re-prompt.
+            if !(await ensureSessionClaim(sessionGuid: session.stableID)) {
                 return Data("The user declined to allow this chat to control session \(sessionGuid).".utf8)
             }
         }
