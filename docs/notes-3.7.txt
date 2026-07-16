@@ -2059,3 +2059,13 @@ Bug Fixes:
   data limit reached” in Companion settings
   and backs off instead of retrying in a
   tight loop until the limit resets.
+- Companion: push notifications to a paired
+  iPhone are now coalesced and more accurate.
+  A burst of agent activity no longer sends a
+  wakeup for each step, and the generic “Your
+  agent has an update.” placeholder is gone
+  for ordinary replies. A permission request
+  that blocks the agent now shows what it
+  needs and plays a sound instead of a silent
+  placeholder, while the agent’s own automatic
+  tool calls stay quiet.
