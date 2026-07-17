@@ -345,18 +345,6 @@ final class OrchestratorDispatcher {
     // any matches. A firing watcher is removed from the list and
     // published as a Message.Content.watcherEvent so the chat
     // service kicks off an agent turn.
-    // Match watchers directly off the notification's tabStatus. Earlier
-    // revisions of this handler routed status.sessionID through
-    // iTermController.sharedInstance().allSessions() to recover a PTYSession,
-    // but workgroup peer-port sessions (Code Review, Diff, any side-pane
-    // peer) aren't enumerated through that path — the controller only knows
-    // about top-level windowed sessions — so the lookup returned nil for the
-    // very roles the orchestrator cares about and every watcher fire was
-    // silently dropped. status.sessionID is itself the session's GUID
-    // (PTYSession.tabStatus is created with sessionID: self.guid), so we
-    // can match watchers directly and read the new state from the tabStatus
-    // we already have without ever touching a PTYSession reference.
-    //
     // Fire only on TRANSITIONS to target. Empty/cleared tabStatus computes
     // to .idle by fallback in state(forTabStatus:), so a clearTabStatus
     // call mid-program-launch would otherwise match a target=idle watcher
@@ -365,30 +353,43 @@ final class OrchestratorDispatcher {
     // the previous one (notification fired because some other tabStatus
     // field like detailText changed, but our SessionState didn't), we
     // skip. Always update history regardless of whether anything fired.
+    //
+    // status.sessionID is the session's rotating guid. We resolve it to the
+    // session so we can match watchers (and key history) by the reload-durable
+    // stableID: on an in-place shell reload the notification arrives under the
+    // NEW guid, and only by recovering the stableID does the watch fire for
+    // the reloaded session instead of being stranded on the old guid.
+    // anySession(forReference:) covers peer-port sessions (Code Review, Diff);
+    // an earlier revision avoided resolving because allSessions() missed those
+    // roles and dropped every peer watch, but forReference does not.
     @MainActor
     private func handle(tabStatusNotification notification: Notification) {
         if tornDown { return }
         guard let status = notification.object as? iTermSessionTabStatus else {
             return
         }
-        let guid = status.sessionID
         // The notification fires for every session in the app (object: nil),
-        // not just sessions we have watchers on. Without this gate,
-        // sessionStateHistory would grow once per (chat, every session ever
-        // observed) and stay there until the session terminated. Only sessions
-        // we have a watcher for need their history tracked. doRegisterWatch
-        // and doStartCodeReview seed history themselves before appending a
-        // watcher, so a watcher's first matching notification always finds a
-        // non-nil previousState.
-        guard watchers.contains(where: { $0.sessionGUID == guid }) else {
+        // not just sessions we watch; with no watchers there is nothing to do.
+        guard !watchers.isEmpty else { return }
+        let guid = status.sessionID
+        let session = iTermController.sharedInstance()?.anySession(forReference: guid)
+        let stableID = session?.stableID
+        // Key history by the session's stableID (fall back to the raw guid only
+        // when the session can't be resolved) so transition detection also
+        // survives a reload. Gating on a match below keeps history from growing
+        // once per (chat, every session ever observed); doRegisterWatch and
+        // doStartCodeReview seed history before appending a watcher, so a
+        // watcher's first matching notification always finds a non-nil previous.
+        let historyKey = stableID ?? guid
+        guard watchers.contains(where: { $0.targets(stableID: stableID, guid: guid) }) else {
             return
         }
         let newState = WorkgroupIntrospection.state(forTabStatus: status)
-        let previousState = sessionStateHistory[guid]
-        sessionStateHistory[guid] = newState
+        let previousState = sessionStateHistory[historyKey]
+        sessionStateHistory[historyKey] = newState
         guard previousState != newState else { return }
         let matches = watchers.filter {
-            $0.sessionGUID == guid && $0.targetState == newState
+            $0.targets(stableID: stableID, guid: guid) && $0.targetState == newState
                 && $0.effectiveMode == .tabStatus
         }
         guard !matches.isEmpty else { return }
@@ -419,15 +420,17 @@ final class OrchestratorDispatcher {
         if tornDown { return }
         guard let session = notification.object as? PTYSession else { return }
         let guid = session.guid
-        // Drop the per-session history entry alongside the watchers.
-        // Without this, history grows unbounded over the app's lifetime
-        // and a future session that happens to reuse this GUID would
-        // see a stale "previous state" from the prior session's last
-        // tabStatus event.
+        // Drop the per-session history entry alongside the watchers. History is
+        // keyed by stableID now; clear that (and the guid, defensively) so it
+        // doesn't grow unbounded or leave a stale "previous state" behind.
+        sessionStateHistory.removeValue(forKey: session.stableID)
         sessionStateHistory.removeValue(forKey: guid)
         typedInput.pending.removeValue(forKey: guid)
         typedInput.contaminated.remove(guid)
-        let dropped = watchers.filter { $0.sessionGUID == guid }
+        // A shell reload posts PTYSessionTerminated (not this notification) and
+        // keeps the stableID, so this fires only on a genuine teardown. Drop
+        // watchers on the gone session, matched by stableID or legacy guid.
+        let dropped = watchers.filter { $0.targets(stableID: session.stableID, guid: guid) }
         guard !dropped.isEmpty else { return }
         let droppedIDs = Set(dropped.map { $0.watcherID })
         watchers.removeAll { droppedIDs.contains($0.watcherID) }
@@ -474,10 +477,13 @@ final class OrchestratorDispatcher {
         // same normalization the notification handler uses (nil tabStatus
         // would compute .unknown, but the handler's fallback is .idle —
         // matching that prevents a spurious .unknown → .idle transition).
-        let survivingGUIDs = Set(watchers.map { $0.sessionGUID })
-        for guid in survivingGUIDs where sessionStateHistory[guid] == nil {
-            guard let session = sessionByGUID(guid) else { continue }
-            sessionStateHistory[guid] = Self.seedState(for: session)
+        // Seed history keyed by each surviving watcher's session stableID (the
+        // same key the tab-status handler uses), skipping already-seeded ones.
+        for watcher in watchers {
+            guard let session = sessionByGUID(watcher.sessionGUID) else { continue }
+            if sessionStateHistory[session.stableID] == nil {
+                sessionStateHistory[session.stableID] = Self.seedState(for: session)
+            }
         }
         // Screen-poll watchers have no persisted running loop; restart one
         // per surviving watcher. Its watch deadline (ScreenWatchPoller.deadline)
@@ -800,9 +806,20 @@ final class OrchestratorDispatcher {
         // peers, which would mark every Code Review watcher as "dropped after
         // restart" in reconcilePersistedWatchers and would silently skip peer
         // roles in seedState (firing every idle watcher on first tabStatus).
-        // Because watchers persist the model-provided reference (a stableID),
+        // Because watchers persist the session's stableID (see watcherKey),
         // resolving by reference is what lets a watcher survive a shell reload.
         return iTermController.sharedInstance()?.anySession(forReference: reference)
+    }
+
+    // The reload-durable key a watcher is registered under: the session's
+    // stableID, NOT its rotating guid. replaceTerminatedShellWithNewInstance
+    // rotates the guid on an in-place shell reload (e.g. a Code Review peer
+    // restarting) but keeps the stableID, and sessionByGUID resolves a watcher
+    // by reference, so a stableID-keyed watcher follows the reload instead of
+    // dying silently once its stored guid goes stale. Store side of the same
+    // contract sessionByGUID reads. Not private so a test can pin it.
+    static func watcherKey(for session: PTYSession) -> String {
+        return session.stableID
     }
 
     private static let iso8601: ISO8601DateFormatter = {
@@ -1677,9 +1694,13 @@ final class OrchestratorDispatcher {
         }
         let resolved = try resolveSessionOrThrow(args.sessionGuid)
         let session = resolved.session
-        let guid = session.guid
+        // Key on the reload-durable stableID, not session.guid (see watcherKey);
+        // `guid` below is really that stableID and flows into sessionGUID +
+        // sessionStateHistory so both survive a shell reload.
+        let guid = Self.watcherKey(for: session)
         if let existing = watchers.first(where: {
-            $0.sessionGUID == guid && $0.targetState == args.targetState
+            $0.targets(stableID: session.stableID, guid: session.guid)
+                && $0.targetState == args.targetState
                 && $0.condition == condition
         }) {
             return .watcherRegistered(Self.description(of: existing))
@@ -2456,7 +2477,8 @@ final class OrchestratorDispatcher {
         // normalizes .unknown (nil tabStatus, e.g. a session whose program
         // hasn't launched yet) to .idle so the first tabStatus event
         // doesn't register as a spurious .unknown → .idle transition.
-        let guid = resolved.session.guid
+        // Key on the reload-durable stableID, not session.guid (see watcherKey).
+        let guid = Self.watcherKey(for: resolved.session)
         sessionStateHistory[guid] = Self.seedState(for: resolved.session)
 
         if let overlay {
@@ -2486,7 +2508,8 @@ final class OrchestratorDispatcher {
         // doesn't leak duplicate watchers.
         let watcher: WorkgroupWatcher
         if let existing = watchers.first(where: {
-            $0.sessionGUID == guid && $0.targetState == .idle
+            $0.targets(stableID: resolved.session.stableID, guid: resolved.session.guid)
+                && $0.targetState == .idle
         }) {
             watcher = existing
         } else {
