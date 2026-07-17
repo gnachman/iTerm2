@@ -53,6 +53,26 @@ final class NotificationService: UNNotificationServiceExtension {
     private static let appGroup = CompanionSharedIdentifiers.appGroup
     private static let deadline: Duration = .seconds(12)
 
+    /// A build stamp so a device log confirms exactly which build is running.
+    /// The app and this extension are separate binaries that install
+    /// independently, so a stale extension is easy to miss. The bundle's
+    /// Info.plist is rewritten on every build, so its modification date changes
+    /// each build even when the version/build numbers are not bumped.
+    static let buildStamp: String = {
+        let bundle = Bundle(for: NotificationService.self)
+        let info = bundle.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        var built = "unknown"
+        if let plist = bundle.url(forResource: "Info", withExtension: "plist"),
+           let date = (try? FileManager.default.attributesOfItem(atPath: plist.path))?[.modificationDate] as? Date {
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime]
+            built = f.string(from: date)
+        }
+        return "v\(version) (\(build)) built \(built)"
+    }()
+
     private let lock = NSLock()
     private var contentHandler: ((UNNotificationContent) -> Void)?
     private var fallbackContent: UNNotificationContent?
@@ -64,6 +84,7 @@ final class NotificationService: UNNotificationServiceExtension {
 
     override func didReceive(_ request: UNNotificationRequest,
                              withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+        NSELog.log("NSE \(Self.buildStamp)")
         lock.lock()
         self.contentHandler = contentHandler
         // Always have something to deliver: a mutable copy if available, else
@@ -390,23 +411,31 @@ final class NotificationService: UNNotificationServiceExtension {
             return false
         }
         task?.cancel()
-        // Deliver every item via add() with its unique id; await all completions and
-        // track whether any failed (a failed add() means that item wasn't shown, so
-        // we must not let the floor advance past it).
-        // The sound + "+ more" hint go to the newest REAL (non-placeholder) item.
-        // The placeholder is always silent: it is a standing prompt the host resends
-        // every sync, so alerting on each resend would nag the user repeatedly.
-        let soundIndex = specs.lastIndex { !$0.isPlaceholder }
+        // The wakeup push must produce ONE notification of its own (the
+        // contentHandler). Rather than waste it on the generic
+        // "Your agent has an update." fallback even when we fetched real
+        // messages, route the NEWEST real (non-placeholder) item through it and
+        // add() the rest as their own notifications. Only when there is nothing
+        // real to show does the generic stand (silent). A content-bearing wakeup
+        // used to leave a redundant standing "Your agent has an update." banner
+        // beside the real messages; this removes it.
+        //
+        // The push's own notification carries the fixed wakeup collapse-id, so
+        // this "newest message" slot collapses across wakeups (it always shows
+        // the latest). Older messages keep their own unique-id notifications, so
+        // no message loses its place in the shade; only the newest banner is
+        // transient. The sound + "+ more" hint ride the newest item.
+        let handlerIndex = specs.lastIndex { !$0.isPlaceholder }
+        let added = specs.enumerated().filter { $0.offset != handlerIndex }.map { $0.element }
         let allAccepted: Bool = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             let group = DispatchGroup()
             let lock = NSLock()
             var ok = true
-            for (index, spec) in specs.enumerated() {
-                let carriesSound = (index == soundIndex)
+            for spec in added {
                 let content = UNMutableNotificationContent()
                 content.title = spec.title
-                content.body = (carriesSound && truncated) ? spec.body + " (+ more)" : spec.body
-                content.sound = carriesSound ? .default : nil
+                content.body = spec.body
+                content.sound = nil   // the handler item below carries the sound
                 content.threadIdentifier = spec.threadID
                 let request = UNNotificationRequest(identifier: spec.id, content: content, trigger: nil)
                 group.enter()
@@ -417,10 +446,21 @@ final class NotificationService: UNNotificationServiceExtension {
             }
             group.notify(queue: .main) { continuation.resume(returning: ok) }
         }
-        // Satisfy the push itself with a SILENT generic. threadID is nil on the
-        // wakeup path, so finish() adds no stale thread; we strip the sound (the
-        // newest add() above carries it) so this placeholder is unobtrusive.
-        finish(claimed) { content in content.sound = nil }
+        if let i = handlerIndex {
+            // Satisfy the push with the newest real message, not the generic.
+            let spec = specs[i]
+            NSELog.log("deliverSyncContent: added \(added.count) item(s); satisfied the push with the newest message (no generic placeholder)")
+            finish(claimed) { content in
+                content.title = spec.title
+                content.body = truncated ? spec.body + " (+ more)" : spec.body
+                content.sound = .default
+                content.threadIdentifier = spec.threadID
+            }
+        } else {
+            // Nothing real to show (all placeholders): the generic stands, silent.
+            NSELog.log("deliverSyncContent: no real item to show; satisfied the push with the silent generic placeholder")
+            finish(claimed) { content in content.sound = nil }
+        }
         return allAccepted
     }
 
