@@ -109,13 +109,22 @@ struct SettingsView: View {
                 }
                 .disabled(preparingArchive)
                 #if DEBUG
-                Button("AirDrop Latest Log") {
-                    CompanionFileLog.shared.flushNow()
-                    guard let latest = CompanionFileLog.shared.logFileURLs().last else {
-                        noLogsToAirdrop = true
-                        return
+                Button("AirDrop All Logs") {
+                    // Zip every log (app + NSE) into one archive and AirDrop that,
+                    // rather than only the newest file.
+                    Task {
+                        let result = await Task.detached(priority: .userInitiated) {
+                            CompanionFileLog.shared.makeLogArchive()
+                        }.value
+                        switch result {
+                        case .archive(let url):
+                            airdropURL = url
+                        case .empty:
+                            noLogsToAirdrop = true
+                        case .failed:
+                            archivePrepFailed = true
+                        }
                     }
-                    airdropURL = latest
                 }
                 #endif
             } header: {
@@ -185,6 +194,9 @@ struct SettingsView: View {
             set: { if !$0 { airdropURL = nil } })) {
             if let airdropURL {
                 ActivityView(items: [airdropURL]) {
+                    // airdropURL is now a temp zip (a full diagnostic dump), so
+                    // remove it once the share sheet closes.
+                    try? FileManager.default.removeItem(at: airdropURL)
                     self.airdropURL = nil
                 }
                 .ignoresSafeArea()
