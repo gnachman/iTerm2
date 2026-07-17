@@ -650,6 +650,48 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 #pragma mark -
 #pragma mark Functionality
 
+// Returns the leading `length` characters of `title` for the smart-truncation
+// heuristic, but first skips a leading run of decoration (whitespace, symbols,
+// and punctuation). Some tab titles begin with an animated status glyph, most
+// notably a Claude Code spinner such as “⠐ ”, “⠂ ”, or “✳ ” that ticks about
+// once a second at an independent phase in each tab. Those glyphs are Unicode
+// symbols, so if they were part of the prefix the count of unique prefixes
+// would jitter as the spinners drift in and out of phase, flipping the whole
+// tab bar between head and tail truncation. Keying off the stable text after
+// the decoration keeps the direction steady. Enumerates by composed character
+// sequence so a multi-scalar glyph (for example an emoji spinner) is treated as
+// a unit rather than half-stripped. Falls back to the raw prefix when the title
+// is entirely decoration.
+static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
+    static NSCharacterSet *content;  // the complement of the decoration set
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *decoration = [[NSMutableCharacterSet alloc] init];
+        [decoration formUnionWithCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        [decoration formUnionWithCharacterSet:[NSCharacterSet symbolCharacterSet]];
+        [decoration formUnionWithCharacterSet:[NSCharacterSet punctuationCharacterSet]];
+        content = [[decoration invertedSet] retain];
+        [decoration release];
+    });
+    __block NSUInteger start = 0;
+    [title enumerateSubstringsInRange:NSMakeRange(0, title.length)
+                              options:NSStringEnumerationByComposedCharacterSequences
+                           usingBlock:^(NSString *substring, NSRange substringRange, NSRange enclosingRange, BOOL *stop) {
+        if ([substring rangeOfCharacterFromSet:content].location != NSNotFound) {
+            *stop = YES;
+            return;
+        }
+        start = NSMaxRange(substringRange);
+    }];
+    const NSUInteger remaining = title.length - start;
+    if (remaining == 0) {
+        // Nothing but decoration; there is no stable text to key on so fall back
+        // to the raw prefix.
+        return [title substringToIndex:(NSUInteger)length];
+    }
+    return [title substringWithRange:NSMakeRange(start, MIN((NSUInteger)length, remaining))];
+}
+
 - (NSLineBreakMode)truncationStyle {
     if (_cells.count <= 1 || !self.smartTruncation) {
         return NSLineBreakByTruncatingTail;
@@ -665,7 +707,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
             continue;
         }
         [uniqueTitles addObject:title];
-        NSString *prefix = [title substringToIndex:kPrefixOrSuffixLength];
+        NSString *prefix = PSMSmartTruncationPrefix(title, kPrefixOrSuffixLength);
         NSString *suffix = [title substringFromIndex:(NSInteger)title.length - kPrefixOrSuffixLength];
         
         [prefixCounts addObject:prefix];

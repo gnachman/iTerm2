@@ -7,10 +7,12 @@
 //  orchestration system prompt tells the model to write a session_guid
 //  or workgroup_id prefixed with "@" whenever it wants to point the user
 //  at a specific session or workgroup; this is the rendering half of
-//  that contract. A raw UUID means nothing to the user, so each
+//  that contract. A raw id means nothing to the user, so each
 //  reference is replaced with the live name (clickable, reveals the
-//  session) or the literal "[defunct session]" when it no longer
-//  resolves to anything live.
+//  session) or a grayed, non-clickable "[defunct session]" mention (styled
+//  like a live one so it still reads as a session reference, but with the
+//  same bracketed wording the phone shows) when it no longer resolves to
+//  anything live.
 //
 
 import AppKit
@@ -29,9 +31,9 @@ enum OrchestrationMentionRenderer {
     // Resolved identity of a mention plus the guid to reveal on click.
     struct Resolved {
         let displayName: String
-        // The session guid to reveal when the link is clicked. For a
-        // workgroup this is its leader session, so clicking surfaces the
-        // workgroup's main session.
+        // The session reference (a stableID) to reveal when the link is clicked.
+        // For a workgroup this is its leader session, so clicking surfaces the
+        // workgroup's main session. Resolve it via anySession(forReference:).
         let revealGuid: String
         // The workgroup instance id when the mention names a real workgroup.
         // The Mac click handler doesn't need it (it reveals the leader), but
@@ -40,10 +42,11 @@ enum OrchestrationMentionRenderer {
     }
 
     // Maps a parsed mention to a live entity, or nil when it no longer
-    // resolves. `prefix` is "session:" / "wg-" / nil (a bare guid);
-    // `uuid` is the captured UUID. Injected so tests can drive the
-    // string/attribute transformation without standing up real sessions.
-    typealias Resolver = (_ prefix: String?, _ uuid: String) -> Resolved?
+    // resolves. `prefix` is "session:" / "wg-" / nil (a bare reference);
+    // `token` is the captured id (a stableID or a legacy guid). Injected so
+    // tests can drive the string/attribute transformation without standing up
+    // real sessions.
+    typealias Resolver = (_ prefix: String?, _ token: String) -> Resolved?
 
     // Replaces every @-prefixed session/workgroup mention in `input`
     // with a link to the live entity's name, or "[defunct session]"
@@ -76,13 +79,12 @@ enum OrchestrationMentionRenderer {
             // text.
             let baseAttributes = input.attributes(at: whole.location, effectiveRange: nil)
 
-            if let resolved = resolve(mention.prefix, mention.uuid) {
+            if let resolved = resolve(mention.prefix, mention.token) {
                 result.append(linkString(for: resolved,
                                          baseAttributes: baseAttributes,
                                          linkColor: linkColor))
             } else {
-                result.append(NSAttributedString(string: "[defunct session]",
-                                                 attributes: baseAttributes))
+                result.append(defunctString(baseAttributes: baseAttributes))
             }
             cursor = whole.location + whole.length
         }
@@ -101,9 +103,9 @@ enum OrchestrationMentionRenderer {
         attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue
         attributes[.underlineColor] = linkColor
         attributes[.cursor] = NSCursor.pointingHand
-        let guid = resolved.revealGuid
+        let reference = resolved.revealGuid
         let action: (NSPoint) -> () = { _ in
-            iTermController.sharedInstance()?.anySession(withGUID: guid)?.reveal()
+            iTermController.sharedInstance()?.anySession(forReference: reference)?.reveal()
         }
         attributes[clickableAttribute] = action
 
@@ -113,7 +115,7 @@ enum OrchestrationMentionRenderer {
         // link's click action, so the whole thing is one target.
         let result = NSMutableAttributedString()
         if let icon = iconString(font: baseAttributes[.font] as? NSFont,
-                                 linkColor: linkColor,
+                                 tint: linkColor,
                                  action: action) {
             result.append(icon)
             result.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
@@ -122,20 +124,55 @@ enum OrchestrationMentionRenderer {
         return result
     }
 
+    // Renders a mention that no longer resolves. Mirrors linkString's shape
+    // (leading terminal glyph, thin space, label) so it still reads as a
+    // session reference, but tinted with a de-emphasized gray and carrying
+    // no click action, cursor, or underline: the user can see it pointed at
+    // a session that is now gone, and that it isn't clickable.
+    private static func defunctString(
+        baseAttributes: [NSAttributedString.Key: Any]) -> NSAttributedString {
+        let gray = NSColor.secondaryLabelColor
+        var attributes = baseAttributes
+        attributes[.foregroundColor] = gray
+        // Drop any link styling the base run might carry so nothing hints
+        // at a live link. `.link` matters most: if the model wrote the
+        // mention inside a markdown link, ClickableTextView would otherwise
+        // fall through to the .link branch (pointing-hand cursor, opens the
+        // URL on click) because this run has no clickableAttribute to win.
+        attributes[.underlineStyle] = nil
+        attributes[.underlineColor] = nil
+        attributes[.cursor] = nil
+        attributes[.link] = nil
+        attributes[clickableAttribute] = nil
+
+        let result = NSMutableAttributedString()
+        if let icon = iconString(font: baseAttributes[.font] as? NSFont,
+                                 tint: gray,
+                                 action: nil) {
+            result.append(icon)
+            result.append(NSAttributedString(string: "\u{2009}", attributes: attributes))
+        }
+        // Keep the bracketed wording the phone renderers use so the same
+        // mention reads consistently across Mac and phone; only the styling
+        // (glyph, gray, non-clickable) is Mac-specific.
+        result.append(NSAttributedString(string: "[defunct session]", attributes: attributes))
+        return result
+    }
+
     // Builds an inline, link-tinted terminal glyph sized to the run's
     // font. Uses the same DynamicImage / .dynamicAttachment machinery as
     // the chat's code-copy buttons so ClickableTextView re-tints it when
     // the appearance flips. Returns nil if the SF Symbol is unavailable.
     private static func iconString(font: NSFont?,
-                                   linkColor: NSColor,
-                                   action: @escaping (NSPoint) -> ()) -> NSAttributedString? {
+                                   tint: NSColor,
+                                   action: ((NSPoint) -> ())?) -> NSAttributedString? {
         guard let symbol = NSImage(systemSymbolName: "terminal",
                                    accessibilityDescription: "iTerm2 session") else {
             return nil
         }
         let dynamicImage = DynamicImage(image: symbol,
-                                        dark: resolvedColor(linkColor, darkMode: true),
-                                        light: resolvedColor(linkColor, darkMode: false))
+                                        dark: resolvedColor(tint, darkMode: true),
+                                        light: resolvedColor(tint, darkMode: false))
         let attachment = NSTextAttachment()
         attachment.image = dynamicImage.tinted(forDarkMode: NSApp.effectiveAppearance.it_isDark)
 
@@ -153,9 +190,14 @@ enum OrchestrationMentionRenderer {
 
         let string = NSMutableAttributedString(attachment: attachment)
         let range = NSRange(location: 0, length: string.length)
-        string.addAttribute(clickableAttribute, value: action, range: range)
+        // The dynamic attachment re-tints on appearance changes whether or
+        // not the glyph is clickable; the click action and pointing-hand
+        // cursor are added only for a live (clickable) mention.
         string.addAttribute(.dynamicAttachment, value: dynamicImage, range: range)
-        string.addAttribute(.cursor, value: NSCursor.pointingHand, range: range)
+        if let action {
+            string.addAttribute(clickableAttribute, value: action, range: range)
+            string.addAttribute(.cursor, value: NSCursor.pointingHand, range: range)
+        }
         return string
     }
 
@@ -176,35 +218,36 @@ enum OrchestrationMentionRenderer {
     /// entity. Used by the Companion bridge so the phone shows the same names
     /// and reveal targets the Mac renders.
     static func resolve(identifier: String) -> Resolved? {
-        guard let (prefix, uuid) = MentionParser.split(identifier: identifier) else {
+        guard let (prefix, token) = MentionParser.split(identifier: identifier) else {
             return nil
         }
-        return liveResolve(prefix: prefix, uuid: uuid)
+        return liveResolve(prefix: prefix, token: token)
     }
 
     // Live resolver: looks the identifier up in the running app.
-    private static func liveResolve(prefix: String?, uuid: String) -> Resolved? {
+    private static func liveResolve(prefix: String?, token: String) -> Resolved? {
         switch prefix {
         case "wg-":
-            return resolveWorkgroup(instanceID: "wg-" + uuid)
+            return resolveWorkgroup(instanceID: "wg-" + token)
         case "session:":
-            return resolveSession(guid: uuid)
+            return resolveSession(reference: token)
         default:
-            // A bare UUID is almost always a session_guid; fall back to
-            // treating it as a workgroup instance id whose "wg-" prefix
-            // the model dropped.
-            return resolveSession(guid: uuid) ?? resolveWorkgroup(instanceID: "wg-" + uuid)
+            // A bare reference is almost always a session; fall back to treating
+            // it as a workgroup instance id whose "wg-" prefix the model dropped.
+            return resolveSession(reference: token) ?? resolveWorkgroup(instanceID: "wg-" + token)
         }
     }
 
-    private static func resolveSession(guid: String) -> Resolved? {
-        guard let session = iTermController.sharedInstance()?.anySession(withGUID: guid) else {
+    private static func resolveSession(reference: String) -> Resolved? {
+        guard let session = iTermController.sharedInstance()?.anySession(forReference: reference) else {
             return nil
         }
         // Use the shared mention naming so message bubbles match the picker and
         // the inserted token (workgroup role prefix, colon omitted when the
-        // session has no title yet).
-        return Resolved(displayName: ChatMentionDisplay.displayName(for: session), revealGuid: guid)
+        // session has no title yet). Reveal by the session's stableID so a click
+        // resolves even after a shell reload rotated its guid.
+        return Resolved(displayName: ChatMentionDisplay.displayName(for: session),
+                        revealGuid: session.stableID)
     }
 
     private static func resolveWorkgroup(instanceID: String) -> Resolved? {
@@ -216,7 +259,7 @@ enum OrchestrationMentionRenderer {
         let raw = instance.workgroup.name
         let name = raw.isEmpty ? "Untitled workgroup" : raw
         return Resolved(displayName: name,
-                        revealGuid: leader.guid,
+                        revealGuid: leader.stableID,
                         workgroupID: instanceID)
     }
 }

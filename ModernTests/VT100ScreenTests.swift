@@ -1584,7 +1584,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenDidTerminateSSHProcess(_ pid: Int32, code: Int32, depth: Int32) {
 
     }
-    
+
+    func screenHandleIT2(_ string: String?, depth: Int32) {
+
+    }
+
     func screenWillBeginSSHIntegration() {
 
     }

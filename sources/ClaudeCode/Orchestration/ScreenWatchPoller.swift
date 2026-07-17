@@ -44,19 +44,60 @@ final class ScreenWatchPoller {
     // the run loop is awaiting.
     private var inflight: AIConversation?
 
-    // Stop and notify after this much wall-clock time without reaching the
-    // target. The session reports no status, so we can't wait forever on a
-    // signal that may never come; the agent gets a watchTimedOut update and
-    // decides what to do.
-    private static let deadline: TimeInterval = 300  // 5 minutes
+    // Give up and hand back to the orchestrator after this much wall-clock
+    // time without reaching the target. The old 5-minute cap woke the
+    // orchestrator (a full, user-visible model turn) for every watch that
+    // outran it, and a code review routinely runs longer, so that produced a
+    // stream of "watch timed out, re-registering" chatter for no user
+    // benefit. The poller now keeps watching on its own for hours, polling
+    // less and less often (see backoff), and only surfaces watchTimedOut as a
+    // rare backstop for a condition that may simply never come true.
+    static let deadline: TimeInterval = 6 * 3600  // 6 hours
 
-    // Quadratic backoff between polls: delay(n) = 3 + n*n seconds, with n
-    // the number of polls already completed. Tight at first (responsive on
-    // short tasks: 3, 4, 7, 12…), widening as a task drags on so a
-    // long-running job isn't billed a model round-trip every few seconds.
-    // The cumulative sum crosses the 5-minute cap at ~9 polls.
-    private static func backoff(pollIndex n: Int) -> TimeInterval {
-        return TimeInterval(3 + n * n)
+    /// A human-readable form of `deadline`, so the dispatcher's watchTimedOut
+    /// message can name the wait without a separate literal that drifts when
+    /// `deadline` changes.
+    static var deadlineDescription: String {
+        // Below an hour, name it in minutes: rounding hours would emit
+        // "0 hours" for any sub-30-minute deadline (e.g. the former 5-minute
+        // value), which reads as broken in the model-visible timeout message.
+        guard deadline >= 3600 else {
+            let minutes = max(1, Int((deadline / 60).rounded()))
+            return minutes == 1 ? "1 minute" : "\(minutes) minutes"
+        }
+        let hours = Int((deadline / 3600).rounded())
+        return hours == 1 ? "1 hour" : "\(hours) hours"
+    }
+
+    // Poll cadence widens the longer a watch runs, to bound token cost on a
+    // long wait (each poll is an economy-model round-trip):
+    //   * first 5 minutes: quadratic backoff 3 + n*n (responsive on short
+    //     tasks: 3, 4, 7, 12, 19, 28…), unchanged.
+    //   * after 5 minutes: no tighter than every 2 minutes.
+    //   * after 1 hour: no tighter than every 10 minutes.
+    // A 10-minute ceiling also caps how stale the reading can get once a
+    // watch is old, so a late completion is still noticed within ten minutes.
+    private static let slowAfter: TimeInterval = 300      // 5 minutes
+    private static let slowerAfter: TimeInterval = 3600   // 1 hour
+    private static let slowInterval: TimeInterval = 120   // >= 2 min after slowAfter
+    private static let slowerInterval: TimeInterval = 600 // >= 10 min after slowerAfter
+    private static let maxInterval: TimeInterval = 600    // never slower than 10 min
+
+    // Delay before the next poll, given how many polls have run (n) and how
+    // long the watch has been active. The quadratic keeps early detection
+    // tight; the elapsed-based floors slow it down in tiers so a multi-hour
+    // watch is not billed a model round-trip every minute or two.
+    private static func backoff(pollIndex n: Int, elapsed: TimeInterval) -> TimeInterval {
+        let quadratic = TimeInterval(3 + n * n)
+        let floor: TimeInterval
+        if elapsed >= slowerAfter {
+            floor = slowerInterval
+        } else if elapsed >= slowAfter {
+            floor = slowInterval
+        } else {
+            floor = 0
+        }
+        return min(max(quadratic, floor), maxInterval)
     }
 
     init(watcher: WorkgroupWatcher,
@@ -164,7 +205,7 @@ final class ScreenWatchPoller {
             // notYet or unknown: keep polling until the target shows up or
             // the time cap fires.
             previous = capture
-            let delay = Self.backoff(pollIndex: pollIndex)
+            let delay = Self.backoff(pollIndex: pollIndex, elapsed: elapsed)
             pollIndex += 1
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
         }

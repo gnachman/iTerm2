@@ -193,16 +193,36 @@ struct RemoteCommand: Codable {
         enum PermissionCategory: String, Codable, CaseIterable {
             case checkTerminalState = "Check Terminal State"
             case runCommands = "Run Commands"
-            case viewHistory = "View History"
+            case viewContents = "View Contents"
             case writeToClipboard = "Write to the Clipboard"
             case typeForYou = "Type for You"
             case viewManpages = "View Manpages"
             case writeToFilesystem = "Write to the File System"
             case actInWebBrowser = "Act in Web Browser"
 
+            // Persisted per-chat permissions encode the category by rawValue, and the
+            // whole [Key: Permission] blob fails to decode if any single category is
+            // unknown (losing every category's grant for that chat). "View History"
+            // was renamed to "View Contents"; accept the legacy string so existing
+            // grants survive the rename.
+            init(from decoder: Decoder) throws {
+                let container = try decoder.singleValueContainer()
+                let raw = try container.decode(String.self)
+                if raw == "View History" {
+                    self = .viewContents
+                    return
+                }
+                guard let value = PermissionCategory(rawValue: raw) else {
+                    throw DecodingError.dataCorruptedError(
+                        in: container,
+                        debugDescription: "Unknown permission category \(raw)")
+                }
+                self = value
+            }
+
             var isBrowserSpecific: Bool {
                 switch self {
-                case .checkTerminalState, .runCommands, .viewHistory, .writeToClipboard,
+                case .checkTerminalState, .runCommands, .viewContents, .writeToClipboard,
                         .typeForYou, .viewManpages, .writeToFilesystem:
                     false
                 case .actInWebBrowser:
@@ -214,7 +234,9 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState:
                     "Provide Terminal State Automatically"
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                case .viewContents:
+                    "Provide Screen Contents Automatically"
+                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -224,7 +246,9 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState:
                     "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                case .viewContents:
+                    "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat."
+                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -236,10 +260,26 @@ struct RemoteCommand: Codable {
 
             var autopopulatedWhenAlways: Bool {
                 switch self {
+                case .checkTerminalState, .viewContents:
+                    true
+                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    false
+                }
+            }
+
+            // Whether "Provided automatically" also hides the on-request tools. Check
+            // Terminal State does: its autopopulated state fully replaces the state
+            // queries. View Contents does NOT: the autopopulated visible screen only
+            // covers the current grid, while the history tools reach off-screen
+            // content (command history, an earlier command's full output, the
+            // partially-typed command), so they stay available on request.
+            var suppressesOnRequestToolsWhenAlways: Bool {
+                switch self {
                 case .checkTerminalState:
                     true
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
-                        .writeToFilesystem, .actInWebBrowser:
+                case .viewContents, .runCommands, .writeToClipboard, .typeForYou,
+                        .viewManpages, .writeToFilesystem, .actInWebBrowser:
                     false
                 }
             }
@@ -254,7 +294,7 @@ struct RemoteCommand: Codable {
                     .runCommands
             case .getCommandHistory, .getLastCommand, .getCommandBeforeCursor,
                     .searchCommandHistory, .getCommandOutput:
-                    .viewHistory
+                    .viewContents
             case .setClipboard:
                     .writeToClipboard
             case .insertTextAtCursor, .deleteCurrentLine:
@@ -557,7 +597,11 @@ extension RemoteCommand.Content {
         case .isAtPrompt(_):
             "Returns true if the terminal is at the command prompt, allowing safe command injection."
         case .executeCommand(_):
-            "Runs a shell command and returns its output."
+            "Runs a shell command and returns its output once the command finishes. "
+            + "Do NOT use it for interactive or full-screen (TUI) programs (for example "
+            + "vim, less, top, an ssh session, a REPL, or claude): it blocks until the "
+            + "command exits, so an interactive or long-running program never returns. To "
+            + "launch or drive a TUI from the command line, use insert_text_at_cursor instead."
         case .getLastExitStatus(_):
             "Retrieves the exit status of the last executed command."
         case .getCommandHistory(_):
@@ -585,7 +629,12 @@ extension RemoteCommand.Content {
         case .setClipboard(_):
             "Copies text to the clipboard."
         case .insertTextAtCursor(_):
-            "Inserts text into the terminal input at the cursor position."
+            "Inserts text into the terminal input at the cursor position, as if typed; "
+            + "end with a newline to submit it. Use this to launch and interact with "
+            + "interactive or full-screen (TUI) programs - start one from the command "
+            + "prompt (type the command plus a newline), choose a menu option, or send "
+            + "keystrokes to a running app - since unlike execute_command it does not wait "
+            + "for the program to finish."
         case .deleteCurrentLine(_):
             "Clears the current command line input (only at the prompt)."
         case .getManPage(_):

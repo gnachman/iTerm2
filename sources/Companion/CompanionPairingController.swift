@@ -125,15 +125,25 @@ final class CompanionPairingController: NSObject {
 
     /// A device is paired but the relays it was established against no longer
     /// match where this build points (the push relay it registered with, or the
-    /// main relay it paired over). Includes the "never recorded" case: a device
-    /// paired before the mac tracked the origins, i.e. before the relays moved.
-    /// The phone is pinned to the old relays until the user pairs again.
+    /// main relay it paired over): the phone is pinned to the old relays until
+    /// the user pairs again. Only a POSITIVELY recorded origin that differs
+    /// counts as a move. A never-recorded origin (nil) is NOT a move: it just
+    /// means this pairing predates the mac tracking these hosts. The main relay is
+    /// backfilled on the next successful reconnect (see recordCurrentMainRelay);
+    /// the push relay stays nil until a re-pair, since a reconnect cannot evidence
+    /// it. Either way, treating nil as "moved" here would nag a perfectly working
+    /// pairing on every launch.
     private var relayConfigurationChanged: Bool {
         guard hasPairedDevice else { return false }
-        if CompanionPushRegistry.registeredPushRelayURL != CompanionPushRelay.baseURL.absoluteString {
+        if let recorded = CompanionPushRegistry.registeredPushRelayURL,
+           recorded != CompanionPushRelay.baseURL.absoluteString {
             return true
         }
-        return CompanionPushRegistry.registeredMainRelayOrigin != Self.configuredRelayOrigin()
+        if let recorded = CompanionPushRegistry.registeredMainRelayOrigin,
+           recorded != Self.configuredRelayOrigin() {
+            return true
+        }
+        return false
     }
 
     /// Called once at app launch. If a device is paired, the feature is enabled,
@@ -153,6 +163,13 @@ final class CompanionPairingController: NSObject {
                   self.relayConfigurationChanged else {
                 return
             }
+            // Don't stack two re-pair modals at launch: if the pairing is also
+            // incomplete (missing/denied keychain credentials),
+            // promptToRepairIfPairingIncompleteIfNeeded already asks the user to
+            // re-pair, and re-pairing subsumes the relay-move fix. Yield to it.
+            if case .incomplete = self.pairingCompleteness() {
+                return
+            }
             let alert = NSAlert()
             alert.messageText = "Re-pair Your Companion Device"
             alert.informativeText =
@@ -161,6 +178,77 @@ final class CompanionPairingController: NSObject {
                 + "server will go away soon. You should re-pair to avoid "
                 + "problems when that happens."
             alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: "Later")
+            if alert.runModal() == .alertFirstButtonReturn {
+                CompanionOnboardingRouter.openSettingsOrWizard()
+            }
+        }
+    }
+
+    /// Whether the persisted pairing has everything a reconnect actually needs.
+    /// `pairedPID` (UserDefaults) only says "a device is paired" and is what makes
+    /// the mac try to park. The credentials that authenticate the reconnect live in
+    /// the keychain and can be lost INDEPENDENTLY of the pid: a code-signature change
+    /// after rebuilding/reinstalling denies the login-keychain items, a `-suite`
+    /// mismatch reads a different account, or a pairing committed the pid but not
+    /// (yet) every keychain write. In that half-paired state the relay refuses the
+    /// park forever ("signature required"), so we detect it and tell the user to
+    /// re-pair rather than spin.
+    enum PairingCompleteness: Equatable {
+        case unpaired
+        case complete
+        case incomplete(missing: [String])
+    }
+
+    func pairingCompleteness() -> PairingCompleteness {
+        guard hasPairedDevice else { return .unpaired }
+        var missing: [String] = []
+        // Only a GENUINE absence (errSecItemNotFound) counts as missing. A transient
+        // keychain read failure (a denied access prompt at launch, a locked keychain,
+        // a code-signature mismatch after a rebuild) must not, or the pairing would
+        // look permanently incomplete: resume would skip parking forever and the
+        // re-pair modal would spam on every launch. See CompanionMacIdentity.KeychainRead.
+        if CompanionMacIdentity.isGenuinelyAbsent(.identityKey) { missing.append("the Mac identity key") }
+        if CompanionMacIdentity.isGenuinelyAbsent(.pairedPhoneKey) { missing.append("the paired phone key") }
+        // The relay room secret is intentionally NOT part of this decision: the phone
+        // re-couriers it over the Noise channel on every connect, so a missing or
+        // unreadable one self-heals. Blocking resume on it (or prompting re-pair)
+        // would be wrong; the mac still parks and the re-courier restores it.
+        return missing.isEmpty ? .complete : .incomplete(missing: missing)
+    }
+
+    /// Log exactly which pairing pieces are present vs absent, so a half-paired
+    /// state is diagnosable at a glance (pid in UserDefaults; the rest in keychain).
+    func logPairingState(context: String) {
+        RLog("Companion pairing state (\(context)): pairedPID=\(pairedPID ?? "nil") "
+            + "identityKey=\(CompanionMacIdentity.hasKeyPair()) "
+            + "phoneStatic=\(CompanionMacIdentity.pairedPhoneStaticPublicKey() != nil) "
+            + "roomSecret=\(CompanionMacIdentity.pairedRoomSecret() != nil) "
+            + "pushSecret=\(CompanionMacIdentity.pairedPushSecret() != nil) "
+            + "relayConfigured=\(Self.configuredRelayOrigin() != nil)")
+    }
+
+    /// Called once at app launch (alongside promptToRepairAfterRelayMoveIfNeeded).
+    /// If the device is marked paired but the credentials a reconnect needs are
+    /// missing, the pairing can never authenticate: tell the user to re-pair (and
+    /// open settings/wizard on accept) instead of silently failing every park.
+    @objc func promptToRepairIfPairingIncompleteIfNeeded() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.logPairingState(context: "launch")
+            guard Self.gate() == .allowed,
+                  case .incomplete(let missing) = self.pairingCompleteness() else {
+                return
+            }
+            RLog("Companion pairing incomplete at launch (missing: \(missing.joined(separator: ", "))); prompting to re-pair")
+            let alert = NSAlert()
+            alert.messageText = "Re-pair Your Companion Device"
+            alert.informativeText =
+                "Your paired iPhone can’t connect because some pairing information "
+                + "stored on this Mac is missing (\(missing.joined(separator: ", "))). "
+                + "This can happen after reinstalling or rebuilding iTerm2, or after a "
+                + "keychain reset. Re-pair to fix it."
+            alert.addButton(withTitle: "Re-pair…")
             alert.addButton(withTitle: "Later")
             if alert.runModal() == .alertFirstButtonReturn {
                 CompanionOnboardingRouter.openSettingsOrWizard()
@@ -275,16 +363,28 @@ final class CompanionPairingController: NSObject {
     /// When the mac last ATTEMPTED to (re)establish its relay park. Drives the
     /// "last try…" timer while not connected.
     private(set) var lastRelayAttempt: Date?
+    /// Set when the relay tore the room down for hitting its daily data quota;
+    /// holds the time the mac will next attempt to reconnect. While in the future
+    /// the mac deliberately stays backed off (re-parking sooner only trips the same
+    /// limit), and the settings UI shows the quota state instead of "reconnecting".
+    /// Cleared once the mac parks successfully again.
+    private(set) var relayQuotaBackoffUntil: Date?
 
     /// The mac's relay status for the settings UI.
     enum RelayStatus: Equatable {
         case idle                          // not paired: nothing to show
         case connected(since: Date)        // parked / phone-bridged: reachable
         case reconnecting(lastAttempt: Date?)  // not connected; retrying
+        case quotaExceeded(retryAt: Date)  // relay daily data limit hit; backing off
     }
     var relayStatus: RelayStatus {
         guard hasPairedDevice else { return .idle }
         if let since = relayConnectedSince { return .connected(since: since) }
+        // A quota teardown outranks the generic "reconnecting" while the backoff
+        // window is still in the future, so the user learns WHY it is not connected.
+        if let until = relayQuotaBackoffUntil, until > Date() {
+            return .quotaExceeded(retryAt: until)
+        }
         return .reconnecting(lastAttempt: lastRelayAttempt)
     }
 
@@ -437,6 +537,17 @@ final class CompanionPairingController: NSObject {
                      + "hasPID=\(desiredListeningPID != nil))")
             return
         }
+        // A persisted pid whose keychain credentials are missing can never
+        // authenticate a reconnect: the relay just refuses the park forever
+        // ("signature required"). Don't spin - the launch prompt (and settings) tell
+        // the user to re-pair. Fresh pairing is exempt (it legitimately parks
+        // open-mode before any credential exists; pairedPID is still nil then, so
+        // pairingCompleteness would report .unpaired anyway - the flag is belt and
+        // suspenders for a re-pair over an existing pairing).
+        if !freshPairingActive, case .incomplete(let missing) = pairingCompleteness() {
+            relayLog("resume: SKIP - pairing incomplete (missing: \(missing.joined(separator: ", "))); re-pair required, not parking")
+            return
+        }
         do {
             relayLog("resume: starting listening for pid \(pid)")
             try startListening(pairingID: pid)
@@ -462,6 +573,12 @@ final class CompanionPairingController: NSObject {
     /// instance exits.
     private static let displacedListenerRetryNanos: UInt64 = 60_000_000_000
 
+    /// After a relay daily-quota teardown, wait this long before re-parking:
+    /// reconnecting sooner just trips the same limit and hammers an already
+    /// exhausted quota. Fixed (the relay reports no reset time), so this is a
+    /// gentle poll that recovers once the relay's 24h window rolls over.
+    private static let quotaListenerRetryNanos: UInt64 = 30 * 60 * 1_000_000_000
+
     /// Failure-driven fresh-pairing regeneration uses the same backoff: a dead
     /// QR park is re-advertised under a NEW pid, and doing that instantly for a
     /// connection that fails in milliseconds would mint pids, redraw the QR, and
@@ -479,6 +596,22 @@ final class CompanionPairingController: NSObject {
         pairedListenerRetry.schedule(overrideNanos: overrideNanos) { [weak self] in
             self?.resumePairedListeningIfNeeded()
         }
+    }
+
+    /// Enter the relay daily-quota backoff: record when we will next try (for the
+    /// settings UI) and schedule the re-park far enough out that we do not hammer
+    /// the exhausted quota. Called from both the live-bridge close and a parked
+    /// socket close, since either can carry the quota teardown.
+    private func enterRelayQuotaBackoff(reason: String) {
+        let minutes = Self.quotaListenerRetryNanos / 1_000_000_000 / 60
+        relayQuotaBackoffUntil = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        relayLog("relay daily quota exceeded (\(reason)); backing off \(minutes)m before re-parking")
+        // Drop any pending routine (5s) retry so the long quota backoff wins;
+        // otherwise a re-park fires in seconds and trips the same limit again.
+        pairedListenerRetry.cancel()
+        // Schedules the re-park AND clears relayConnectedSince + notifies presence,
+        // so relayStatus flips to .quotaExceeded for the settings UI.
+        scheduleListenerRetry(after: Self.quotaListenerRetryNanos)
     }
 
     /// Require the device owner to authenticate before showing a fresh pairing
@@ -813,6 +946,16 @@ final class CompanionPairingController: NSObject {
         let roomName = relayOrigin == nil ? "n/a"
             : RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
         relayLog("startListening pid=\(pairingID) relayOrigin=\(relayOrigin ?? "nil") room=\(roomName)")
+        if relayOrigin != nil {
+            // The park is signed only if we can read the couriered room secret from
+            // the keychain. A rebuilt app whose code signature differs from the writer
+            // is denied that item (see keychainLoad logging), so the secret reads as
+            // nil and we park open-mode -- which the relay refuses with "signature
+            // required" once the room's mac verifier is registered. Re-pair (or grant
+            // the keychain prompt) to recover.
+            let hasSecret = CompanionMacIdentity.pairedRoomSecret() != nil
+            relayLog("startListening park proof: room secret \(hasSecret ? "present -> SIGNED park" : "MISSING -> open-mode park (relay will refuse \"signature required\" if the verifier is registered; re-pair or grant the keychain prompt)")")
+        }
         // Record the attempt for the settings "last try…" timer.
         lastRelayAttempt = Date()
         notifyPresenceChanged()
@@ -843,6 +986,9 @@ final class CompanionPairingController: NSObject {
                     // paper over a connection error surfaced while re-parking.
                     self.pairedListenerRetry.noteSuccess()
                     self.freshPairingRegen.noteSuccess()
+                    // The park succeeded, so any prior quota teardown is behind us:
+                    // clear the backoff marker so the UI leaves the quota state.
+                    self.relayQuotaBackoffUntil = nil
                     self.onStatus?("Waiting for your iPhone…")
                     guard self.relayConnectedSince == nil else { return }
                     self.relayConnectedSince = Date()
@@ -954,6 +1100,14 @@ final class CompanionPairingController: NSObject {
                     scheduleListenerRetry(after: Self.displacedListenerRetryNanos)
                     return
                 }
+                // The relay hit its daily data quota and tore the room down. Re-parking
+                // on the routine 5s timer just trips the same limit again all day, so
+                // back off long and let the settings UI explain the wait. Not a
+                // user-facing FAULT (no onFailed); the quota status carries it.
+                if (error as? TransportError) == .quotaExceeded {
+                    enterRelayQuotaBackoff(reason: "park closed")
+                    return
+                }
                 // A genuine park loss while a device is still paired. Re-park so
                 // the phone can reconnect; without this the mac goes silently
                 // dark. A closed park is routine churn, so retry quietly and
@@ -1034,7 +1188,7 @@ final class CompanionPairingController: NSObject {
                 relayLog("acceptLoop: handshake COMPLETE; creating bridge")
 
                 let newBridge = CompanionHostBridge(transport: channel)
-                newBridge.onClose = { [weak self, weak newBridge] in
+                newBridge.onClose = { [weak self, weak newBridge] error in
                     guard let self, let newBridge, self.bridge === newBridge else {
                         // A stale bridge must not tear down its replacement.
                         DLog("Companion: stale bridge closed; ignoring")
@@ -1045,6 +1199,13 @@ final class CompanionPairingController: NSObject {
                     self.relayLog("bridge.onClose: LIVE bridge closed; nil-ing bridge + resuming")
                     self.bridge = nil
                     self.onDisconnect?()
+                    // The relay tore the live connection down for its daily quota:
+                    // re-parking now just trips the same limit, so back off long and
+                    // let the settings UI explain it instead of the routine re-park.
+                    if (error as? TransportError) == .quotaExceeded {
+                        self.enterRelayQuotaBackoff(reason: "live bridge closed")
+                        return
+                    }
                     self.resumePairedListeningIfNeeded()
                 }
                 newBridge.onPeerUnpaired = { [weak self] in
@@ -1089,6 +1250,14 @@ final class CompanionPairingController: NSObject {
                 }
                 pairedPID = code.pairingID
                 if isFreshPairing {
+                    // Fresh pairing: as part of pairing the phone registers its APNs
+                    // token against its (current) push relay, and this connection was
+                    // carried over the main relay, so BOTH origins are evidenced.
+                    // Record them so a later host move can prompt a re-pair (see
+                    // relayConfigurationChanged).
+                    CompanionPushRegistry.recordCurrentRelays(
+                        pushRelayURL: CompanionPushRelay.baseURL.absoluteString,
+                        mainRelayOrigin: Self.configuredRelayOrigin())
                     // A brand-new device just paired while the user is present
                     // (they just confirmed the SAS code): warm the AI key cache
                     // now so a query later driven from the away phone serves its
@@ -1096,15 +1265,19 @@ final class CompanionPairingController: NSObject {
                     // covers devices already paired at startup; this covers a
                     // pairing that happens while the app is already running.
                     AITermControllerObjC.prewarmAPIKeyCache()
-                    // Record the relays this pairing belongs to (the push relay
-                    // the phone registers with, and the main relay this pairing
-                    // was carried over), so a later host move can prompt the user
-                    // to re-pair. Only on a fresh pairing: a reconnect re-uses the
-                    // stored origins and proves nothing about where the phone is
-                    // registered.
-                    CompanionPushRegistry.recordCurrentRelays(
-                        pushRelayURL: CompanionPushRelay.baseURL.absoluteString,
-                        mainRelayOrigin: Self.configuredRelayOrigin())
+                } else {
+                    // Reconnect: refresh ONLY the main relay. This connection is
+                    // carried over the main relay, so it proves the phone still
+                    // reaches us there (and backfills a pairing older than this
+                    // tracking so a later main-relay move is detectable). It proves
+                    // NOTHING about the push relay: the phone registers against its
+                    // OWN build's CompanionPushRelay URL, which after a mac-only
+                    // upgrade differs from ours until the phone app is itself updated
+                    // and APNs re-registers. Stamping our push URL here would make
+                    // relayConfigurationChanged see recorded == current and suppress a
+                    // legitimate re-pair prompt while the phone still cannot receive
+                    // pushes. So leave the recorded push relay untouched.
+                    CompanionPushRegistry.recordCurrentMainRelay(Self.configuredRelayOrigin())
                 }
                 // Now established: reconnect is keyed on pairedPID, so the
                 // fresh-pairing intent is done.

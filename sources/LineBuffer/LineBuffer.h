@@ -108,9 +108,9 @@ NS_ASSUME_NONNULL_BEGIN
                                       width:(int)width
                                    paddedTo:(int)paddedSize
                              eligibleForDWC:(BOOL)eligibleForDWC
-                                 generation:(out int64_t *)generation
-                              mutationCount:(out int64_t *)mutationCount
-                                  remainder:(out int *)remainder;
+                                 generation:(out int64_t * _Nullable)generation
+                              mutationCount:(out int64_t * _Nullable)mutationCount
+                                  remainder:(out int * _Nullable)remainder;
 
 // Returns the generation and mutation counter of the block containing wrapped
 // line |line|, plus the wrapped-line offset within that block. Together they

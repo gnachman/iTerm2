@@ -27,6 +27,7 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
     private let headers: [String: String]
     private let lock = UnfairLock()
     private var openTask: Task<String, Error>?
+    private let lifecycle = RelaySocketLifecycle()
 
     init(client: CompanionPluginClient, url: URL, headers: [String: String]) {
         self.client = client
@@ -55,6 +56,7 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
         case .text(let s): client.wsSend(id, isBinary: false, data: s)
         case .data(let d): client.wsSend(id, isBinary: true, data: d.base64EncodedString())
         }
+        lifecycle.noteData()
     }
 
     func receive() async throws -> RelayWebSocketMessage {
@@ -66,18 +68,18 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
             // The plugin RPC itself failed (JS bridge gone, promise rejected): not a
             // clean WebSocket close, so there's no close code to report.
             let ns = error as NSError
-            CompanionLog.log("Relay WS (plugin) recv error: \(ns.domain)#\(ns.code) \(ns.localizedDescription)")
+            CompanionLog.log("Relay WS (plugin) recv error: \(ns.domain)#\(ns.code) \(ns.localizedDescription) \(lifecycle.summary())")
             throw error
         }
         switch incoming {
-        case .text(let s): return .text(s)
-        case .data(let d): return .data(d)
+        case .text(let s): lifecycle.noteData(); return .text(s)
+        case .data(let d): lifecycle.noteData(); return .data(d)
         case .closed(let code, let reason):
             // The relay (or an edge proxy) closed the socket. Surface the close code
             // and reason so a short-lived park can be diagnosed: a clean relay close
             // (1000/1001 with a reason) vs an abnormal drop with no close frame
             // (1006, set by the plugin on a transport error).
-            CompanionLog.log("Relay WS (plugin) closed: closeCode=\(code) reason=\(reason.isEmpty ? "-" : reason)")
+            CompanionLog.log("Relay WS (plugin) closed: closeCode=\(code) reason=\(reason.isEmpty ? "-" : reason) \(lifecycle.summary())")
             // "displaced": the relay handed the room's single mac slot to a newer
             // mac-role connection. Distinguish it from routine churn so the park loop
             // can back off long instead of immediately re-grabbing the slot (an
@@ -85,13 +87,29 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
             if reason.localizedCaseInsensitiveContains("displaced") {
                 throw RelayDisplacedError()
             }
+            // "daily quota exceeded" (WS 1008): the relay tore the room down for the
+            // day. NOT transient churn, so surface it distinctly and let the accept
+            // loop back off long instead of re-parking on the routine 5s timer only
+            // to be closed again. Match the reason text, not the bare code: 1008 is
+            // also "frame rate exceeded" (a transient per-second limiter) and "bad
+            // hello".
+            if reason.localizedCaseInsensitiveContains("daily quota") {
+                throw TransportError.quotaExceeded
+            }
             throw TransportError.closed
         }
     }
 
     func sendPing() async -> Bool {
         guard let id = try? await connectionID() else { return false }
-        return await client.wsPing(id)
+        let start = DispatchTime.now().uptimeNanoseconds
+        let ok = await client.wsPing(id)
+        if ok {
+            lifecycle.notePingOk()
+            let rttMs = (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
+            CompanionLog.log("Relay WS (plugin) ping ok rtt=\(rttMs)ms \(lifecycle.summary())")
+        }
+        return ok
     }
 
     func cancel() {

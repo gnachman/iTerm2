@@ -652,8 +652,11 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                     return nil;
                 }
             }
-            _apiServer = [[iTermAPIServer alloc] init];
-            _apiServer.delegate = self;
+            iTermAPIServer *server = [[iTermAPIServer alloc] init];
+            server.delegate = self;
+            @synchronized (self) {
+                _apiServer = server;  // paired with the locked reads in the in-process path
+            }
         }
 
         _serverOriginatedRPCCompletionBlocks = [NSMutableDictionary dictionary];
@@ -797,9 +800,16 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 }
 
 - (void)stop {
-    [_apiServer stop];
-    _apiServer.delegate = nil;
-    _apiServer = nil;
+    // _apiServer is read on the it2 background (QOS_UTILITY) queue in the in-process
+    // register/dispatch/unregister methods; capture-and-nil under a lock so that path
+    // never observes a half-freed server, and holds its own strong ref while using it.
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+        _apiServer = nil;
+    }
+    [server stop];
+    server.delegate = nil;
     [_newSessionSubscriptions removeAllObjects];
     [_terminateSessionSubscriptions removeAllObjects];
     [_layoutChangeSubscriptions removeAllObjects];
@@ -826,6 +836,47 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {
     [_apiServer postAPINotification:notification toConnectionKey:connectionKey];
+}
+
+- (BOOL)registerInProcessAPIConnection:(id<iTermAPIServerConnection>)connection
+                           displayName:(NSString *)displayName {
+    // Runs on the it2 background queue; snapshot _apiServer under the lock into a strong
+    // local so a concurrent -stop (which nils it on the main thread) cannot free it out
+    // from under us or make the guard and the use observe different values.
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+    }
+    if (!server) {
+        // The API was disabled (stop niled _apiServer) before we got here. Report failure
+        // so the caller fails fast instead of blocking forever on a receive nothing will
+        // ever signal. (If stop races AFTER this point, the server's own stop-flag aborts
+        // the connection so the receiver still unblocks -- see registerInProcessConnection.)
+        DLog(@"registerInProcessAPIConnection: API server is nil; refusing %@", connection);
+        return NO;
+    }
+    DLog(@"registerInProcessAPIConnection: %@ displayName=%@", connection, displayName);
+    [server registerInProcessConnection:connection displayName:displayName];
+    return YES;
+}
+
+- (void)dispatchInProcessAPIRequest:(ITMClientOriginatedMessage *)request
+                         connection:(id<iTermAPIServerConnection>)connection {
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+    }
+    DLog(@"dispatchInProcessAPIRequest on %@ (server=%@)", connection, server);
+    [server dispatchInProcessRequest:request connection:connection];
+}
+
+- (void)unregisterInProcessAPIConnection:(id<iTermAPIServerConnection>)connection {
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+    }
+    DLog(@"unregisterInProcessAPIConnection: %@ (server=%@)", connection, server);
+    [server unregisterInProcessConnection:connection];
 }
 
 - (void)didCreateTerminalWindow:(NSNotification *)notification {

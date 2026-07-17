@@ -3,8 +3,8 @@
 //  CompanionCore
 //
 //  Covers the reply-notification decision across the delivery orderings the Mac
-//  actually produces: streaming (text before typing-false), non-streaming (the
-//  reply arrives AFTER typing-false), user-action requests (no typing-false at
+//  actually produces: streaming (text before turn-ended), non-streaming (the
+//  reply arrives AFTER turn-ended), user-action requests (no turn-ended at
 //  all), and empty / tool-only turns.
 //
 
@@ -40,52 +40,52 @@ final class SessionReplyTriggerTests: XCTestCase {
         .userActionRequest(id: id, fallback: fallback)
     }
 
-    // MARK: Streaming (text accumulates BEFORE typing-false)
+    // MARK: Streaming (text accumulates BEFORE turn-ended)
 
-    func test_streaming_firesOnTypingFalse_withLatestText() {
+    func test_streaming_firesOnTurnEnded_withLatestText() {
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("I"),
             text("I don't"),
             text("I don't have a reliable way"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["I don't have a reliable way"])
     }
 
-    func test_streaming_committedMessageAfterTypingFalse_doesNotDoubleFire() {
-        // finishTurn publishes a final non-partial message AFTER stopTyping; it
+    func test_streaming_committedMessageAfterTurnEnded_doesNotDoubleFire() {
+        // finishTurn publishes a final non-partial message AFTER the turn-ended boundary; it
         // must not produce a second notification.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("partial answer"),
-            .typing(false),
+            .turnEnded,
             text("partial answer"), // the committed echo (same id)
         ])
         XCTAssertEqual(fires(outcomes), ["partial answer"])
     }
 
-    // MARK: Non-streaming (the ONLY reply arrives AFTER typing-false)
+    // MARK: Non-streaming (the ONLY reply arrives AFTER turn-ended)
 
-    func test_nonStreaming_firesOnDeliveryAfterTypingFalse() {
+    func test_nonStreaming_firesOnDeliveryAfterTurnEnded() {
         let outcomes = run([
-            .typing(true),
-            .typing(false),           // reply not here yet
+            .turnStarted,
+            .turnEnded,           // reply not here yet
             text("The whole answer"),
         ])
         XCTAssertEqual(fires(outcomes), ["The whole answer"])
     }
 
-    func test_nonStreaming_typingFalseAlone_doesNotFire() {
-        let outcomes = run([.typing(true), .typing(false)])
+    func test_nonStreaming_turnEndedAlone_doesNotFire() {
+        let outcomes = run([.turnStarted, .turnEnded])
         XCTAssertEqual(fires(outcomes), [])
     }
 
-    // MARK: User-action request (no typing-false follows)
+    // MARK: User-action request (no turn-ended follows)
 
     func test_userActionRequest_firesImmediately_withPrecedingText() {
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("Let me take a look at your terminal"),
             request("Run remote command: ls"),
         ])
@@ -94,7 +94,7 @@ final class SessionReplyTriggerTests: XCTestCase {
 
     func test_userActionRequest_firesWithFallback_whenNoText() {
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             request("Run remote command: ls"),
         ])
         XCTAssertEqual(fires(outcomes), ["Run remote command: ls"])
@@ -103,7 +103,7 @@ final class SessionReplyTriggerTests: XCTestCase {
     // MARK: Empty / whitespace turns don't notify
 
     func test_emptyTextTurn_doesNotFire() {
-        let outcomes = run([.typing(true), text("   "), .typing(false)])
+        let outcomes = run([.turnStarted, text("   "), .turnEnded])
         XCTAssertEqual(fires(outcomes), [])
     }
 
@@ -111,8 +111,8 @@ final class SessionReplyTriggerTests: XCTestCase {
 
     func test_secondTurn_firesAgain() {
         let outcomes = run([
-            .typing(true), text("first"), .typing(false),
-            .typing(true), text("second"), .typing(false),
+            .turnStarted, text("first"), .turnEnded,
+            .turnStarted, text("second"), .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["first", "second"])
     }
@@ -121,24 +121,24 @@ final class SessionReplyTriggerTests: XCTestCase {
 
     func test_textLessTurn_thenRealTurn_firesOnlyRealAnswer() {
         // A turn whose only deliveries were filtered (tool calls) forwards no
-        // text; typing(true) for the next turn must clear the completed-but-empty
+        // text; turnStarted for the next turn must clear the completed-but-empty
         // state so the next turn's partial can't fire prematurely.
         let outcomes = run([
-            .typing(true), .typing(false),        // text-less completed turn
-            .typing(true),                        // next turn starts
+            .turnStarted, .turnEnded,        // text-less completed turn
+            .turnStarted,                        // next turn starts
             text("Sur"),                          // a partial, mid-turn
             text("Sure, here's the answer"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["Sure, here's the answer"])
     }
 
-    func test_twoTextDeliveriesAfterSingleTypingFalse_firesExactlyOnce() {
+    func test_twoTextDeliveriesAfterSingleTurnEnded_firesExactlyOnce() {
         // Fire-once per turn: the first text after completion fires; a second
         // text-bearing delivery in the same turn does not double-fire.
         let outcomes = run([
-            .typing(true),
-            .typing(false),
+            .turnStarted,
+            .turnEnded,
             text("first message", id: "R1"),
             text("second message", id: "R2"),
         ])
@@ -147,11 +147,11 @@ final class SessionReplyTriggerTests: XCTestCase {
 
     // MARK: A turn we never saw start must not fire (reused chat, other device)
 
-    func test_typingFalseWithoutStart_doesNotFire() {
-        // Subscribed mid-turn: the trailing typing(false) + reply of an unrelated
+    func test_turnEndedWithoutStart_doesNotFire() {
+        // Subscribed mid-turn: the trailing turnEnded + reply of an unrelated
         // in-flight turn must not be attributed to the user's send.
         let outcomes = run([
-            .typing(false),
+            .turnEnded,
             text("someone else's reply"),
         ])
         XCTAssertEqual(fires(outcomes), [])
@@ -159,11 +159,11 @@ final class SessionReplyTriggerTests: XCTestCase {
 
     func test_inFlightTurnIgnored_thenRealTurnFires() {
         let outcomes = run([
-            .typing(false),                       // unrelated in-flight turn ends
+            .turnEnded,                       // unrelated in-flight turn ends
             text("unrelated reply", id: "R0"),
-            .typing(true),                        // the user's turn starts
+            .turnStarted,                        // the user's turn starts
             text("Your actual answer", id: "R1"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["Your actual answer"])
     }
@@ -172,23 +172,23 @@ final class SessionReplyTriggerTests: XCTestCase {
 
     func test_userActionRequest_firesAfterTextReplyInSameTurn() {
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("Here's what I found"),
-            .typing(false),                       // text reply fires
+            .turnEnded,                       // text reply fires
             request("Run remote command: rm x"),
         ])
         XCTAssertEqual(fires(outcomes), ["Here's what I found", "Run remote command: rm x"])
     }
 
-    func test_userActionRequestThenTypingFalse_doesNotDuplicateReplyText() {
-        // Preamble text then a remote command mid-turn, then typing(false) with no
+    func test_userActionRequestThenTurnEnded_doesNotDuplicateReplyText() {
+        // Preamble text then a remote command mid-turn, then turnEnded with no
         // further text: the request fires with the preamble; the trailing
-        // typing(false) must NOT re-fire the same text.
+        // turnEnded must NOT re-fire the same text.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("Running ls"),
             request("Run remote command: ls"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["Running ls"])
     }
@@ -198,35 +198,35 @@ final class SessionReplyTriggerTests: XCTestCase {
         // (streamed reply) must be recorded once non-empty - the deferred-scan
         // optimization only skips the re-scan AFTER a non-empty snapshot is stored.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("", id: "R"),
             text("The answer", id: "R"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["The answer"])
     }
 
     func test_emptyAgentTextAfterRealReply_doesNotWipeIt() {
         // A trailing reasoning/status delivery arrives as an empty snapshot under
-        // its OWN message id; it must not clobber the real answer before typing(false).
+        // its OWN message id; it must not clobber the real answer before turnEnded.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("The real answer", id: "R"),
             text("   ", id: "S"),       // reasoning-only preview, stripped to empty
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["The real answer"])
     }
 
     func test_trailingSecondMessage_doesNotClobberTheAnswer() {
-        // Two substantive messages under DIFFERENT ids in one typing span: the
+        // Two substantive messages under DIFFERENT ids in one turn: the
         // real answer (R) then a short trailing note (S). The notification must
         // keep the answer, not show S alone (the finding-3 regression).
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("The full detailed answer is 42", id: "R"),
             text("Let me know if that helps", id: "S"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes),
                        ["The full detailed answer is 42\n\nLet me know if that helps"])
@@ -238,11 +238,11 @@ final class SessionReplyTriggerTests: XCTestCase {
         // allocating a new id. The post-approval suffix must still fire, not be
         // dropped because the id was latched as notified.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("I'll delete the temp files", id: "R"),
             request("Run remote command: rm -rf tmp"),
             text("I'll delete the temp files\n\nDone, removed 12 files", id: "R"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["I'll delete the temp files", "Done, removed 12 files"])
     }
@@ -252,11 +252,11 @@ final class SessionReplyTriggerTests: XCTestCase {
         // after a period (not a "\n\n" boundary). The follow-up notification must
         // read "Done, removed 12 files", not ". Done, removed 12 files".
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("The answer is 6", id: "R"),
             request("Run remote command: rm -rf tmp"),
             text("The answer is 6. Done, removed 12 files", id: "R"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["The answer is 6", "Done, removed 12 files"])
     }
@@ -265,11 +265,11 @@ final class SessionReplyTriggerTests: XCTestCase {
         // The separator strip must NOT eat content punctuation: a suffix beginning
         // with a negative sign must keep it (" -5" -> "-5", not "5" - a sign flip).
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("Balance:", id: "R"),
             request("Run remote command: check"),
             text("Balance: -5", id: "R"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["Balance:", "-5"])
     }
@@ -278,11 +278,11 @@ final class SessionReplyTriggerTests: XCTestCase {
         // A markdown bullet is content, not a separator: "\n- item one" -> "- item
         // one" (strip the leading newline, keep the bullet).
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("Here's the list:", id: "R"),
             request("Run remote command: list"),
             text("Here's the list:\n- item one", id: "R"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["Here's the list:", "- item one"])
     }
@@ -295,11 +295,11 @@ final class SessionReplyTriggerTests: XCTestCase {
         var visible = true
         let should: (String) -> Bool = { _ in !visible }
 
-        _ = trigger.handle(.typing(true), shouldFire: should)
+        _ = trigger.handle(.turnStarted, shouldFire: should)
         _ = trigger.handle(.reply(chunk: .begin(id: "R", preview: "Seen live", isLabel: false)),
                            shouldFire: should)
         // Turn completes while visible -> the fire is suppressed and NOT latched.
-        let suppressed = trigger.handle(.typing(false), shouldFire: should)
+        let suppressed = trigger.handle(.turnEnded, shouldFire: should)
         XCTAssertEqual(suppressed, .none)
 
         // User navigates away; a new-id message lands in the same turn. It fires,
@@ -310,9 +310,9 @@ final class SessionReplyTriggerTests: XCTestCase {
         XCTAssertEqual(fired, .fire(body: "Seen live\n\nNow off-screen"))
     }
 
-    func test_requestWithoutPrecedingTypingTrue_stillFires() {
+    func test_requestWithoutPrecedingTurnStarted_stillFires() {
         // Mid-turn subscribe / reconnect: a block-on-user request arrives with no
-        // preceding typing(true). It must still fire (the user needs to act), unlike
+        // preceding turnStarted. It must still fire (the user needs to act), unlike
         // a plain text delivery which is gated on turnStarted.
         let outcomes = run([
             request("Run remote command: rm x"),
@@ -325,15 +325,15 @@ final class SessionReplyTriggerTests: XCTestCase {
         // attributed to the user's send); only requests bypass it.
         let outcomes = run([
             text("someone else's reply"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), [])
     }
 
     func test_twoApprovalRequestsInOneTurn_bothFire() {
-        // Two safe==false commands in one typing span: BOTH need the user.
+        // Two safe==false commands in one turn: BOTH need the user.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("I'll do two things"),
             request("Run remote command: rm a", id: "a"),
             request("Run remote command: rm b", id: "b"),
@@ -346,7 +346,7 @@ final class SessionReplyTriggerTests: XCTestCase {
         // messages, same description). The retry still needs the user, so it must
         // fire again - deduping on body text would silently drop it.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             request("Run remote command: ls", id: "req1"),
             request("Run remote command: ls", id: "req2"),
         ])
@@ -356,13 +356,13 @@ final class SessionReplyTriggerTests: XCTestCase {
 
     func test_requestWhoseDescriptionEqualsFiredReply_stillFires() {
         // Preamble text literally equal to the command it then requests. The text
-        // fires on typing(false); the block-on-user request is a distinct state
+        // fires on turnEnded; the block-on-user request is a distinct state
         // and must still fire (the user must know approval is now needed), even
         // though its body equals the just-fired reply.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("Run remote command: ls"),
-            .typing(false),
+            .turnEnded,
             request("Run remote command: ls"),
         ])
         XCTAssertEqual(fires(outcomes),
@@ -374,28 +374,28 @@ final class SessionReplyTriggerTests: XCTestCase {
         // already fired) must not mark the reply text notified, or the turn's real
         // final answer gets swallowed.
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("Working on it", id: "R"),
             request("Run cmd A", id: "a"),                                  // fires "Working on it"
             text("Working on it\n\nHere's my finding: 42", id: "R"),        // R grows
             request("Run cmd B", id: "b"),                                  // fires "Run cmd B" (fallback)
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes),
                        ["Working on it", "Run cmd B", "Here's my finding: 42"])
     }
 
     func test_finalAnswerAfterApprovedCommand_stillNotifies() {
-        // The whole approve-and-continue turn shares one typing(true..false) span:
+        // The whole approve-and-continue turn shares one turnStarted..turnEnded span:
         // preamble -> block-on-user request (fires preamble) -> the agent runs the
-        // command -> the NEW final answer -> typing(false). The final answer must
+        // command -> the NEW final answer -> turnEnded. The final answer must
         // fire with only the NEW text (the preamble was already notified).
         let outcomes = run([
-            .typing(true),
+            .turnStarted,
             text("I'll delete the temp files", id: "R"),
             request("Run remote command: rm -rf tmp"),
             text("Done, removed 12 files", id: "R2"),
-            .typing(false),
+            .turnEnded,
         ])
         XCTAssertEqual(fires(outcomes), ["I'll delete the temp files", "Done, removed 12 files"])
     }

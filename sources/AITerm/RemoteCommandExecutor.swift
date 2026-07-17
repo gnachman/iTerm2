@@ -31,6 +31,21 @@ class RemoteCommandExecutor {
                 self = .ask
             }
         }
+
+        /// Whether a remote command with this category permission PARKS waiting on
+        /// the user's Allow/Deny, given the content-safety verdict `safe` (nil =
+        /// unchecked, true/false = checked). Ask always parks; Always parks only
+        /// when the safety check flagged it (safe == false); Never auto-denies (no
+        /// park). The ONE mapping shared by ChatClient.processRemoteCommandRequest
+        /// (the real gate) and ChatAgent's park PREDICTION (which decides whether to
+        /// clear typing on the park), so the two can't drift on this axis.
+        func parksOnApproval(safe: Bool?) -> Bool {
+            switch self {
+            case .ask: return true
+            case .always: return safe == false
+            case .never: return false
+            }
+        }
     }
 
     private func defaultPermission(for category: RemoteCommand.Content.PermissionCategory) -> Permission {
@@ -67,7 +82,11 @@ class RemoteCommandExecutor {
                                    permission: Permission) -> Bool {
         switch permission {
         case .always:
-            return !category.autopopulatedWhenAlways
+            // Autopopulated categories may still expose their on-request tools:
+            // Check Terminal State suppresses them (redundant with the autopopulated
+            // state), View Contents does not (its tools reach off-screen content the
+            // autopopulated visible screen does not cover).
+            return !category.suppressesOnRequestToolsWhenAlways
         case .ask:
             return true
         case .never:

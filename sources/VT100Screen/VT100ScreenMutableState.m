@@ -7747,20 +7747,18 @@ launchCoprocessWithCommand:(NSString *)command
     }
     if (!highPriority && !_isTmuxGateway && _hasMuteCoprocess) {
         DLog(@"%@ (is ssh output=%@, csi.p[0]=%@, csi.p[1]=%@)", token, @(token.type == SSH_OUTPUT), @(token.csi->p[0]), @(token.csi->p[1]));
-        switch (token.type) {
-            case SSH_INIT:
-            case SSH_LINE:
-            case SSH_UNHOOK:
-            case SSH_BEGIN:
-            case SSH_END:
-            case SSH_OUTPUT:
-            case SSH_TERMINATE:
-            case SSH_RECOVERY_BOUNDARY:
-                DLog(@"not discarding token!");
-                return NO;
-            default:
-                return YES;
+        // SSH conductor meta tokens must be processed even while muting a coprocess (they
+        // drive the ssh protocol, not terminal output). Single source of truth for the set
+        // in VT100Token.h so a new meta token (like SSH_IT2 was) is never dropped here.
+        // Deliberate behavior note: the canonical set adds SSH_SIDE_CHANNEL, which the prior
+        // hand-written switch here discarded. Preserving it is intended -- a mute coprocess
+        // must not break the conductor's side channel -- not an accidental byproduct of the
+        // consolidation.
+        if (VT100TokenTypeIsSSHMeta(token.type)) {
+            DLog(@"not discarding token!");
+            return NO;
         }
+        return YES;
     }
     if (_suppressAllOutput) {
         return YES;

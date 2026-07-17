@@ -2,11 +2,12 @@
 //  CompanionAgentActivityNotifierTests.swift
 //  iTerm2 ModernTests
 //
-//  The Mac-side detector that decides when an away phone gets a push: completed
-//  agent turns (streamed via .commit, or non-streamed visible replies, debounced
-//  per chat) and permission / session-selection requests (which bypass the
-//  debounce). Driven entirely through injected clock/gate/resolve/send, so no
-//  broker, ChatListModel, or network is involved.
+//  The Mac-side detector that classifies a broker delivery into content (a completed
+//  agent turn, streamed via .commit or a non-streamed visible reply), a nudge (a
+//  genuine .classic permission / session request), or nothing (streaming deltas, user
+//  messages, and .external orchestration tool calls). Coalescing is the global
+//  coordinator's job, so there is no per-chat debounce here. Driven entirely through
+//  injected gate/muted/resolve/send, so no broker, ChatListModel, or network.
 //
 
 import XCTest
@@ -14,20 +15,17 @@ import XCTest
 
 @MainActor
 final class CompanionAgentActivityNotifierTests: XCTestCase {
-    private var now = Date(timeIntervalSince1970: 1_000)
     private var gateOpen = true
     private var mutedChatIDs: Set<String> = []
     private var resolveResult: Message?
     private var sends: [String] = []
 
-    private func makeNotifier(debounce: TimeInterval = 30) -> CompanionAgentActivityNotifier {
+    private func makeNotifier() -> CompanionAgentActivityNotifier {
         CompanionAgentActivityNotifier(
-            debounceInterval: debounce,
-            clock: { self.now },
             gate: { self.gateOpen },
             muted: { self.mutedChatIDs.contains($0) },
             resolve: { _, _ in self.resolveResult },
-            send: { self.sends.append($0) })
+            send: { _, chatID in self.sends.append(chatID) })
     }
 
     private func msg(_ content: Message.Content, author: Participant = .agent) -> Message {
@@ -126,31 +124,37 @@ final class CompanionAgentActivityNotifierTests: XCTestCase {
         makeNotifier().handle(message: msg(.selectSessionRequest(inner, terminal: true)),
                               chatID: "c", partial: false)
         XCTAssertEqual(sends, ["c"])
-        // .remoteCommandRequest takes the identical switch arm.
     }
 
-    // MARK: Debounce
+    // MARK: Remote command payloads (.classic nudges, .external is ignored)
 
-    func testTurnCompleteDebouncedPerChat() {
-        let n = makeNotifier(debounce: 30)
-        n.handle(message: msg(.markdown("a")), chatID: "c", partial: false)
-        XCTAssertEqual(sends, ["c"])
-        now = now.addingTimeInterval(10)   // within the window
-        n.handle(message: msg(.markdown("b")), chatID: "c", partial: false)
-        XCTAssertEqual(sends, ["c"], "second turn within debounce is suppressed")
-        now = now.addingTimeInterval(25)   // now 35s past the first
-        n.handle(message: msg(.markdown("c")), chatID: "c", partial: false)
-        XCTAssertEqual(sends, ["c", "c"], "after the window it fires again")
+    private func classicCommand() -> Message.Content {
+        .remoteCommandRequest(
+            .classic(RemoteCommand(llmMessage: LLM.Message(role: .assistant, content: nil),
+                                   content: .executeCommand(.init(command: "ls -la")))),
+            safe: nil)
     }
 
-    func testUserActionRequiredBypassesDebounce() {
-        let n = makeNotifier(debounce: 30)
-        n.handle(message: msg(.markdown("done")), chatID: "c", partial: false)
+    private func externalCommand() -> Message.Content {
+        .remoteCommandRequest(
+            .external(ExternalRemoteCommand(llmMessage: LLM.Message(role: .assistant, content: nil),
+                                            name: "scroll_wheel",
+                                            argsJSON: "{}",
+                                            markdownDescription: "scrolling")),
+            safe: nil)
+    }
+
+    func testClassicCommandFiresNudge() {
+        // A .classic request has Allow/Deny and genuinely blocks on the user.
+        makeNotifier().handle(message: msg(classicCommand()), chatID: "c", partial: false)
         XCTAssertEqual(sends, ["c"])
-        // Same chat, well within the debounce: a permission request must still fire.
-        let inner = msg(.markdown("approve?"))
-        n.handle(message: msg(.selectSessionRequest(inner, terminal: true)), chatID: "c", partial: false)
-        XCTAssertEqual(sends, ["c", "c"])
+    }
+
+    func testExternalCommandIsIgnored() {
+        // An .external orchestration tool call is auto-executed, not a user block, so
+        // it must not nudge (this was the source of the push flood + silent placeholders).
+        makeNotifier().handle(message: msg(externalCommand()), chatID: "c", partial: false)
+        XCTAssertTrue(sends.isEmpty)
     }
 
     // MARK: Gating
@@ -174,7 +178,7 @@ final class CompanionAgentActivityNotifierTests: XCTestCase {
         resolveResult = msg(.markdown("done"))
         n.handle(message: msg(.commit(UUID())), chatID: "c", partial: false)
         n.handle(message: msg(.markdown("done")), chatID: "c", partial: false)
-        // Even a permission request (which bypasses the debounce) stays silent.
+        // Even a permission request stays silent in a muted chat.
         let inner = msg(.markdown("approve?"))
         n.handle(message: msg(.selectSessionRequest(inner, terminal: true)), chatID: "c", partial: false)
         XCTAssertTrue(sends.isEmpty)
@@ -186,18 +190,5 @@ final class CompanionAgentActivityNotifierTests: XCTestCase {
         n.handle(message: msg(.markdown("a")), chatID: "muted", partial: false)
         n.handle(message: msg(.markdown("b")), chatID: "other", partial: false)
         XCTAssertEqual(sends, ["other"])
-    }
-
-    func testMuteDoesNotConsumeDebounce() {
-        // A suppressed muted turn must not stamp the debounce: unmuting and
-        // completing a turn right after should fire immediately.
-        mutedChatIDs = ["c"]
-        let n = makeNotifier(debounce: 30)
-        n.handle(message: msg(.markdown("while muted")), chatID: "c", partial: false)
-        XCTAssertTrue(sends.isEmpty)
-        mutedChatIDs = []
-        now = now.addingTimeInterval(1)
-        n.handle(message: msg(.markdown("after unmute")), chatID: "c", partial: false)
-        XCTAssertEqual(sends, ["c"])
     }
 }

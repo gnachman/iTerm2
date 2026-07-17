@@ -11,10 +11,38 @@
 import AppKit
 
 extension Chat {
-    // True when this chat is bound to the given terminal/browser session.
-    func isLinked(toSessionGuid guid: String) -> Bool {
-        return terminalSessionGuid == guid || browserSessionGuid == guid
+    // True when this chat's stored terminal/browser reference is one of `keys`.
+    // The stored reference is a stableID (new or backfilled bindings) or a legacy
+    // guid, so callers pass a session's full key set via
+    // iTermSessionReferenceKeys(forGuid:) rather than a bare guid.
+    func isLinked(toReferenceIn keys: Set<String>) -> Bool {
+        if let terminalSessionGuid, keys.contains(terminalSessionGuid) {
+            return true
+        }
+        if let browserSessionGuid, keys.contains(browserSessionGuid) {
+            return true
+        }
+        return false
     }
+
+    // True when this chat is bound to the live session reachable by `guid`.
+    // Resolves the guid to its stableID so a chat linked by either form matches.
+    func isLinked(toSessionGuid guid: String) -> Bool {
+        return isLinked(toReferenceIn: iTermSessionReferenceKeys(forGuid: guid))
+    }
+}
+
+// The references a chat could store for the live session currently reachable by
+// `guid`: the guid itself (legacy bindings) plus the session's stableID (new or
+// backfilled bindings). A chat stores exactly one of these; checking both keeps
+// every session-to-chat lookup robust across the guid<->stableID migration and
+// across shell reloads (which rotate the guid but not the stableID).
+func iTermSessionReferenceKeys(forGuid guid: String) -> Set<String> {
+    var keys: Set<String> = [guid]
+    if let stableID = iTermController.sharedInstance()?.anySession(withGUID: guid)?.stableID {
+        keys.insert(stableID)
+    }
+    return keys
 }
 
 enum ChatTitleStyling {

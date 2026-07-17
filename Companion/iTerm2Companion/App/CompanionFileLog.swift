@@ -93,6 +93,69 @@ final class CompanionFileLog: @unchecked Sendable {
         return urls.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
+    /// The outcome of building the emailable log archive.
+    enum LogArchiveResult: Sendable {
+        /// A ready-to-attach .zip at this URL.
+        case archive(URL)
+        /// There were no log files to archive (nothing to email).
+        case empty
+        /// Building the archive failed; the underlying error was logged.
+        case failed
+    }
+
+    /// Flush pending lines and bundle every log file into a single .zip in a
+    /// temp directory. One compressed archive gets through the mail composer
+    /// where a handful of multi-megabyte text attachments do not. Safe to call
+    /// off the main thread (the zip can be slow for a large history) and
+    /// distinguishes "no logs" from a real failure so the caller can tell the
+    /// user which happened; a real failure is logged before returning.
+    func makeLogArchive() -> LogArchiveResult {
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iTerm2-Buddy-logs.zip")
+        // Clear any prior archive regardless of outcome, so an "empty"/"failed"
+        // build can never leave a stale zip that a later tap would attach.
+        try? FileManager.default.removeItem(at: destination)
+
+        // Snapshot the files on the log queue, serialized against a concurrent
+        // delete-all (toggling logging off does close()+deleteAll() on this same
+        // queue). Flushing and hard-link staging both happen here, so a delete
+        // either runs fully before the snapshot (nothing to archive) or fully
+        // after (the hard links keep the data alive) - never interleaved with a
+        // half-copied set. The slow zip then runs off-queue below.
+        let staged: URL
+        do {
+            staged = try queue.sync {
+                self.flush()
+                return try CompanionLogArchive.stage(files: self.logFileURLs(),
+                                                     folderName: "iTerm2-Buddy-logs")
+            }
+        } catch CompanionLogArchive.ArchiveError.nothingToArchive {
+            return .empty
+        } catch {
+            companionLog("Email Logs: could not stage the log files: \(error)")
+            return .failed
+        }
+
+        do {
+            try CompanionLogArchive.zip(stagedDirectory: staged, to: destination)
+        } catch {
+            companionLog("Email Logs: could not build the log archive: \(error)")
+            return .failed
+        }
+
+        // The mail composer reads the file with Data(contentsOf:); confirm it is
+        // actually readable and non-empty before handing it over, so we never
+        // present a composer with "Diagnostic logs attached" and nothing on it.
+        let fm = FileManager.default
+        let attributes = try? fm.attributesOfItem(atPath: destination.path)
+        let size = (attributes?[.size] as? Int) ?? 0
+        guard fm.isReadableFile(atPath: destination.path), size > 0 else {
+            companionLog("Email Logs: archive is unreadable or empty after build")
+            return .failed
+        }
+        return .archive(destination)
+    }
+
     // MARK: - queue-only
 
     private func openIfNeeded() {

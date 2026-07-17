@@ -1,0 +1,200 @@
+Version 3.7.0beta7 was built on July 15, 2026.
+
+Note: if you are beta testing the iPhone companion
+app iTerm2 Buddy, you'll need to update it after
+upgrading iTerm2 to this version.
+
+Changes since 3.7.0beta6:
+
+New Features:
+- Added support for multiple AI providers at
+  once.
+- AI orchestration now safety-checks everything
+  the agent does in a session, not just once
+  when you first approve the session. Commands
+  it runs, commands it types at a shell prompt
+  and submits, and keystrokes it sends into a
+  full-screen program (vim, less, a coding
+  agent, and so on) are each judged against
+  what you asked for. The check no longer hard-
+  blocks anything: a scary-but-legitimate
+  action, such as deleting a directory you just
+  created, is held for one-tap approval instead
+  of being refused, while a real root or home
+  wipe, or an unrequested dangerous command,
+  stops to ask first.
+- Code Review sessions in a Claude Code
+  integration workgroup have an Auto-Send
+  Clippings When Idle toolbar toggle. When on, the
+  review session’s clippings are pasted into the
+  workgroup’s main session each time the review
+  finishes. The Claude Code workgroup’s review
+  peer includes it by default; the toggle
+  itself starts off.
+- The main session in a Claude Code integration
+  workgroup has a companion Auto-Request
+  Review When Idle toolbar toggle. When on, a
+  code review is requested from the workgroup’s
+  sole code-review session each time the main
+  session goes idle. It is disabled unless the
+  workgroup has exactly one code-review
+  session. The Claude Code workgroup’s main
+  session includes it by default; the toggle
+  starts off.
+- Chats can now be muted from the iTerm2 Buddy
+  app. A muted chat sends no push notifications
+  to the phone, even for permission requests,
+  until it is unmuted. The muted set is
+  remembered on the Mac so it applies even
+  while the phone is unreachable.
+- When you load settings from a custom folder,
+  snippets, global notes, and session icon
+  customizations can now sync along with your
+  other settings. Because notes and snippets
+  can hold sensitive text, iTerm2 asks once
+  before including them. If the same item
+  changed both on this Mac and in the folder,
+  it asks which copy to keep rather than
+  overwriting your changes.
+
+Improvements:
+- The built-in AI model list is now data-driven
+  and refreshes in the background, so new
+  models appear without updating iTerm2.
+- AI chat messages have a cleaner layout:
+  proposed commands, command output, and
+  terminal-command transcripts now render as
+  rounded Markdown code blocks, and
+  orchestration tool calls show as command
+  blocks instead of raw session GUIDs and JSON.
+  The chat list can be hidden and shown without
+  reopening the window, and history entries can
+  be selected in groups and deleted, or renamed
+  in place.
+- The Companion app’s live video feed now
+  scales its bitrate to the window’s
+  resolution, so large windows stay sharp
+  instead of being pinned to a fixed low rate.
+  Very large windows trade frame rate for
+  sharpness so bandwidth stays reasonable.
+  Advanced settings can tune the bitrate
+  multiplier and the flow-control thresholds.
+- A Diff workgroup session now waits to run its
+  diff until you first switch to it, so the
+  diff reflects your changes at that moment
+  instead of from whenever they first began. It
+  is not re-run when you switch away and back.
+
+Bug Fixes:
+- Smart tab-title truncation no longer flickers
+  between head and tail truncation when a tab
+  title begins with an animated status glyph
+  (such as a Claude Code spinner). The glyph is
+  no longer counted when deciding which end of
+  the title to truncate.
+- Session Status tool: with “Merge workgroup
+  statuses” on, a merged row now shows the
+  status of the peer you’re actually looking at
+  (the visible peer of the switcher) instead of
+  whichever peer changed most recently. A busy
+  code-review peer holding a steady “working”
+  status no longer loses the row to a sibling
+  chat peer the moment it goes idle.
+- Tab subtitle: when a tab is split into
+  multiple panes, the status of the pane you’re
+  focused on now drives the subtitle instead of
+  a background pane winning on status priority.
+  A focused pane with no status falls back to
+  the highest-priority sibling pane.
+- Code review and diff workgroup sessions now
+  restore showing their last output instead of
+  launching a stray replacement shell when the
+  original program is gone. The code review
+  prompt panel reappears only if it was open
+  when you quit, and its reload button
+  remembers the prompt you last submitted.
+- Session restoration no longer breaks when
+  iTerm2 receives a signal (such as ^C when it
+  was started from a terminal): the background
+  process server is now insulated from signals
+  sent to iTerm2, so your running programs
+  survive to be reattached on the next launch.
+- Fixed a rare case where a Claude Code
+  workgroup was torn down even though its
+  claude process was still running, due to a
+  momentary misread of the foreground job
+  ancestor list.
+- The Claude Code integration’s session status
+  now stays “working” while background agents
+  or tasks are still running, so AI chat
+  watchers no longer fire during the idle lulls
+  between subagent phases. Requires Claude Code
+  2.1.198 or later.
+- AI chat: fixed a race where a streamed tool
+  call could be dispatched with empty arguments
+  when the response completed before its
+  argument chunks were consumed. The agent
+  would loop retrying the same call, and the
+  turn could end with an empty message.
+  Finalization now reconciles against the full
+  response body.
+- AI chats reopened after a restart now replay
+  their tool-call history to the model
+  faithfully. Reasoning state (OpenAI encrypted
+  reasoning, Gemini thought signatures) is
+  saved with the chat and replayed, so
+  reasoning models no longer reject reopened
+  chats or invent fake tool results. A chat is
+  also locked to the provider it started with,
+  and messages sent from the iTerm2 Buddy app
+  run on the chat’s own model instead of the
+  global default.
+- The AI chat wire log now redacts API keys in
+  request headers, URLs, and bodies, keeping
+  only a short fingerprint.
+- In AI orchestration, pressing Stop now halts
+  the whole pipeline: it cancels the in-flight
+  reply, drops any queued turns, and cancels
+  the chat’s registered watchers, so a session
+  going idle can no longer restart the loop
+  after you asked it to stop. A message you
+  type also jumps ahead of pending status
+  updates instead of waiting behind them.
+- Closing the inline AI chat panel now returns
+  keyboard focus to the terminal.
+- Switching to a Diff peer for the first time
+  now keeps the terminal focused once its
+  command starts. Previously keystrokes went
+  nowhere (and beeped) until you clicked the
+  terminal.
+- Companion pairing now retries with capped
+  backoff instead of reconnecting (and, during
+  pairing, regenerating the QR code) many times
+  per second when the relay is unreachable, for
+  example because of a bad TLS certificate.
+  Connection failures during pairing now report
+  the underlying error instead of an unhelpful
+  generic message.
+- The iTerm2 companion relay servers moved to
+  new addresses. If you paired an iPhone on an
+  earlier build, iTerm2 now asks you to pair it
+  again so it keeps working.
+- Companion: when the relay hits its daily data
+  limit, the Mac now shows “Daily relay data
+  limit reached” in Companion settings and
+  backs off instead of retrying in a tight loop
+  until the limit resets.
+- When a companion device is paired, your AI
+  API keys are now loaded at launch, and when a
+  phone pairs, so a query sent from your phone
+  while you are away never has to prompt for
+  keychain access. Opening Settings no longer
+  reads the keychain or prompts for access.
+- SSH integration now loads shell integration
+  for a remote login shell running bash or zsh.
+  A remote /bin/bash is injected (only macOS’s
+  own un-injectable /bin/bash stays excluded),
+  and a remote zsh login shell no longer starts
+  with its integration skipped because of a
+  double shell wrapper.
+- Fixed various crashes.

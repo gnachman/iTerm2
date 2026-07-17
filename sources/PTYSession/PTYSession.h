@@ -660,6 +660,13 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // Also used by the websocket API to reference a session.
 @property(nonatomic, readonly) NSString *guid;
 
+// A stable identifier that, unlike guid, survives a shell reload
+// (replaceTerminatedShellWithNewInstance rotates guid but leaves this alone) and
+// is serialized into the arrangement so it also survives state restoration.
+// Format "ptys_" + Crockford base32 (see iTermStableSessionID). Preferred over
+// guid for binding a chat or a companion reference to a session.
+@property(nonatomic, readonly) NSString *stableID;
+
 // Indicates if this session predates a tmux split pane. Used to figure out which pane is new when
 // layout changes due to a user-initiated pane split.
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
@@ -762,6 +769,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 + (void)registerBuiltInFunctions;
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap;
 
+// The it2 authorization announcement identifier, keyed on the conductor's guid so
+// distinct conductors (even sharing an ssh display name) get distinct announcements and
+// cannot cross-cancel each other's prompt. Exposed for testing.
++ (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid;
+
 // Register the contents in the arrangement so that if the session is later
 // restored from an arrangement with the same guid as |arrangement|, the
 // contents will be copied over.
@@ -824,6 +836,10 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                          workingDirectory:(NSString *)workingDirectory
                                      size:(VT100GridSize)size;
 + (nullable NSString *)guidInArrangement:(NSDictionary *)arrangement;
+
+// The canonicalized stableID stored in an arrangement, or nil if the
+// arrangement predates the stableID (or carries a malformed one).
++ (nullable NSString *)stableIDInArrangement:(NSDictionary *)arrangement;
 + (nullable NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement;
 
 - (void)textViewFontDidChange;
@@ -956,6 +972,19 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Change the size of the session and its tty.
 - (void)setSize:(VT100GridSize)size;
+
+// Resize the grid the way a terminal-initiated resize does, honoring the same
+// window-fitting logic. Note the unusual argument convention: proposedSize.width
+// is the desired row count and proposedSize.height is the desired column count
+// (a value of -1 means "keep the current dimension" and 0 means "as many as the
+// window allows").
+- (void)reallySetCellSize:(VT100GridSize)proposedSize;
+
+// Whether a terminal/content-initiated resize (reallySetCellSize:) would actually
+// take effect right now: YES only for a freely-resizable, non-fullscreen window
+// whose width is not locked. NO for maximized, edge-attached (fixed by percentage
+// or cells), and full-screen windows.
+- (BOOL)companionSessionCanResizeWindow;
 
 // Returns the number of pixels over or under the an ideal size.
 // Will never exceed +/- cell size/2.

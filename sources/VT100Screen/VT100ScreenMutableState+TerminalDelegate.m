@@ -3693,6 +3693,16 @@ typedef struct {
     } name:@"terminate pid"];
 }
 
+- (void)terminalHandleIT2:(NSString *)string depth:(int)depth {
+    if (!string) {
+        return;
+    }
+    DLog(@"terminalHandleIT2:%@ depth:%@", string, @(depth));
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenHandleIT2:string depth:depth];
+    } name:@"handle it2"];
+}
+
 - (void)terminalBeginSSHIntegeration:(NSString *)args {
     RLog(@"begin %@", args);
     if (args) {

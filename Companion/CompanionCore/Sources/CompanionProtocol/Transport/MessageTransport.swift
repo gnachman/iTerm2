@@ -39,6 +39,12 @@ public enum TransportError: Error, Equatable, LocalizedError {
     case malformedFrame
     /// The transport-specific connection attempt failed.
     case connectionFailed(String)
+    /// The relay closed the room because it hit its daily data quota (WebSocket
+    /// close 1008 with reason "daily quota exceeded"). Distinct from `.closed`
+    /// because it is NOT transient churn: reconnecting immediately just trips the
+    /// same limit, so the caller must back off long and tell the user, rather
+    /// than spinning the routine fast-retry path.
+    case quotaExceeded
 
     public var errorDescription: String? {
         switch self {
@@ -50,6 +56,8 @@ public enum TransportError: Error, Equatable, LocalizedError {
             return "Received a malformed frame"
         case .connectionFailed(let reason):
             return reason
+        case .quotaExceeded:
+            return "The relay's daily data limit was reached"
         }
     }
 }

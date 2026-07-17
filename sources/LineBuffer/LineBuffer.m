@@ -970,9 +970,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                       width:(int)width
                                    paddedTo:(int)paddedSize
                              eligibleForDWC:(BOOL)eligibleForDWC
-                                 generation:(out int64_t *)generation
-                              mutationCount:(out int64_t *)mutationCount
-                                  remainder:(out int *)remainderOut {
+                                 generation:(out int64_t * _Nullable)generation
+                              mutationCount:(out int64_t * _Nullable)mutationCount
+                                  remainder:(out int * _Nullable)remainderOut {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:line width:width remainder:&remainder];
     if (!block) {

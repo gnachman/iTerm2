@@ -1592,6 +1592,39 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     return result;
 }
 
+- (PTYSession *)anySessionWithStableID:(NSString *)stableID {
+    if (!stableID) {
+        return nil;
+    }
+    NSString *canonical = [iTermStableSessionID canonical:stableID];
+    if (!canonical) {
+        return nil;
+    }
+    __block PTYSession *result = nil;
+    [self enumerateSessionLookupLocations:^(PTYSession *session,
+                                            iTermSessionLookupLocation location,
+                                            BOOL *stop) {
+        if ([session.stableID isEqualToString:canonical]) {
+            result = session;
+            *stop = YES;
+        }
+    }];
+    return result;
+}
+
+- (PTYSession *)anySessionForReference:(NSString *)reference {
+    if (!reference) {
+        return nil;
+    }
+    // A stableID is self-describing (canonical() validates prefix + checksum) and
+    // a legacy guid is a UUID that never starts with the stable prefix, so
+    // dispatching on canonical() is unambiguous.
+    if ([iTermStableSessionID canonical:reference]) {
+        return [self anySessionWithStableID:reference];
+    }
+    return [self anySessionWithGUID:reference];
+}
+
 - (void)enumerateSessionLookupLocations:(void (^NS_NOESCAPE)(PTYSession *session,
                                                              iTermSessionLookupLocation location,
                                                              BOOL *stop))block {

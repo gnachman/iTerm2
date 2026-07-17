@@ -156,14 +156,17 @@ final class CompanionStreamMessagesTests: XCTestCase {
         XCTAssertEqual(config.firstAbsLine, 0)
         XCTAssertEqual(config.totalLines, 0)
         XCTAssertNil(config.cellGeometry)
+        // A host predating the resize feature omits canResize; it decodes as nil.
+        XCTAssertNil(config.canResize)
     }
 
     func testStreamConfigRoundTripsHistoryExtent() throws {
         let original = CompanionStreamConfig(streamID: 7, generationId: 3, codecExtradata: Data([1, 2]),
                                              pixelWidth: 800, pixelHeight: 500, scale: 2, columns: 80, rows: 25,
-                                             firstAbsLine: 1234, totalLines: 5678)
+                                             firstAbsLine: 1234, totalLines: 5678, canResize: false)
         let data = try encoder().encode(original)
         let decoded = try decoder().decode(CompanionStreamConfig.self, from: data)
         XCTAssertEqual(decoded, original)
+        XCTAssertEqual(decoded.canResize, false)
     }
 }

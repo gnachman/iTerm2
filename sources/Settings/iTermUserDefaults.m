@@ -51,6 +51,7 @@ static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBa
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled = @"NoSyncClaudeCodeAutoSendClippingsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled = @"NoSyncClaudeCodeAutoRequestReviewBackfilled";
 static NSString *const iTermUserDefaultsKeyAIModelCatalogUpdateConsent = @"NoSyncAIModelCatalogUpdateConsent";
+static NSString *const iTermUserDefaultsKeyAutoProvideConsent = @"NoSyncAutoProvideConsent";
 
 @implementation iTermUserDefaults
 
@@ -413,6 +414,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setAiModelCatalogUpdateConsent:(iTermAIModelCatalogUpdateConsent)value {
     [self.userDefaults setInteger:value
                            forKey:iTermUserDefaultsKeyAIModelCatalogUpdateConsent];
+}
+
++ (iTermAutoProvideConsent)autoProvideConsent {
+    return [self.userDefaults integerForKey:iTermUserDefaultsKeyAutoProvideConsent];
+}
+
++ (void)setAutoProvideConsent:(iTermAutoProvideConsent)value {
+    [self.userDefaults setInteger:value
+                           forKey:iTermUserDefaultsKeyAutoProvideConsent];
 }
 
 + (BOOL)lastShutdownWasClean {

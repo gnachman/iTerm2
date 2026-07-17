@@ -358,8 +358,9 @@ class ChatListModel: ChatListDataSource {
     // MARK: - Session-binding helpers (session-bound chats)
 
     func firstIndex(forGuid guid: String) -> Int? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.firstIndex { chat in
-            chat.isLinked(toSessionGuid: guid)
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -388,8 +389,9 @@ class ChatListModel: ChatListDataSource {
     }
 
     func lastChat(guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.last { chat in
-            chat.isLinked(toSessionGuid: guid)
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -397,8 +399,9 @@ class ChatListModel: ChatListDataSource {
     // bump/rename re-prepends), so the first match is the chat with the
     // most recent activity for the given session guid.
     func mostRecentChat(forGuid guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.first { chat in
-            chat.isLinked(toSessionGuid: guid)
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -503,6 +506,7 @@ struct PersonChat: Hashable {
     var chatID: String
 }
 
+@MainActor
 class TypingStatusModel {
     static let instance = TypingStatusModel()
 
@@ -520,5 +524,33 @@ class TypingStatusModel {
     func isTyping(participant: Participant, chatID: String) -> Bool {
         let pc = PersonChat(participant: participant, chatID: chatID)
         return typing.contains(pc)
+    }
+}
+
+/// Per-chat "is an agent turn in flight" state. Set at turn start / cleared at
+/// turn end, so (unlike TypingStatusModel, which goes false during a mid-turn
+/// park) it stays true across parks: the accurate source for seeding a phone's
+/// turn-lifecycle state when it (re)subscribes mid-turn. Main-actor isolated to
+/// codify that all callers already run on the main actor.
+///
+/// Set by ChatService at turn start/end (via ChatBroker.publish(turnEvent:)). The
+/// consuming read - the subscribe snapshot that seeds a reconnecting phone's turn
+/// state from this - lands in a later step.
+@MainActor
+class TurnStatusModel {
+    static let instance = TurnStatusModel()
+
+    private var inFlight = Set<String>()
+
+    func set(inProgress: Bool, chatID: String) {
+        if inProgress {
+            inFlight.insert(chatID)
+        } else {
+            inFlight.remove(chatID)
+        }
+    }
+
+    func inProgress(chatID: String) -> Bool {
+        return inFlight.contains(chatID)
     }
 }

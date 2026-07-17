@@ -30,16 +30,62 @@ extension Message.Content {
             return subparts.contains { $0.hasDisplayableSubstance }
         case .terminalCommand, .watcherEvent:
             return true
-        // Control / bookkeeping / request content is never a "real reply"
-        // (permission and session requests are handled separately, as
-        // userActionRequired, before this is consulted). `.unsupported` is a
-        // forward-compat placeholder for content this build can't render, so it
-        // has nothing displayable either.
-        case .remoteCommandRequest, .selectSessionRequest, .remoteCommandResponse,
-                .explanationRequest, .clientLocal, .renameChat, .append, .appendAttachment,
-                .commit, .userCommand, .setPermissions, .vectorStoreCreated, .unsupported:
+        // A .classic remote command BLOCKS on the user (Allow/Deny) and a session pick
+        // likewise blocks; both are shown, rendered from their request text. A
+        // .external orchestration command auto-executes with no per-call user decision,
+        // so it is informational only and never notified.
+        case .remoteCommandRequest(let payload, safe: _):
+            switch payload {
+            case .classic: return true
+            case .external: return false
+            }
+        case .selectSessionRequest:
+            return true
+        // Control / bookkeeping content is never a "real reply". `.unsupported` is a
+        // forward-compat placeholder for content this build can't render.
+        case .remoteCommandResponse, .explanationRequest, .clientLocal, .renameChat,
+                .append, .appendAttachment, .commit, .userCommand, .setPermissions,
+                .vectorStoreCreated, .unsupported:
             return false
         }
+    }
+}
+
+extension Message {
+    /// The ONE predicate for "the NSE would render this as a notification item",
+    /// shared by the syncSince responder (what to show) and the wakeup coordinator's
+    /// stateless outstanding check (whether to push). Keeping a single definition is
+    /// what stops the coordinator from pushing for content the responder then drops
+    /// (the empty-placeholder class of bug). Mute is applied separately by the caller
+    /// (it is per-chat, not a property of the message).
+    var isCompanionRenderable: Bool {
+        !hiddenFromClient && author == .agent && content.hasDisplayableSubstance
+    }
+
+    /// A .classic permission request is a LIVE prompt only while unanswered. Once it
+    /// has a response - it auto-ran (permission .always), auto-denied (.never), or the
+    /// user acted - it is resolved bookkeeping the phone must not surface. The
+    /// ChatClient broker processor squelches auto/denied requests from LIVE delivery
+    /// but still PERSISTS them for history, so the DB-reading companion paths (which
+    /// bypass that processor) need this check. `answeredRequestIDs` is the set of
+    /// request IDs that already have a remoteCommandResponse in the same window.
+    func isResolvedClassicRequest(answeredRequestIDs: Set<UUID>) -> Bool {
+        if case .remoteCommandRequest(.classic, safe: _) = content {
+            return answeredRequestIDs.contains(uniqueID)
+        }
+        return false
+    }
+
+    /// The request IDs answered by a remoteCommandResponse in `messages` (the response
+    /// carries its request's uniqueID). See isResolvedClassicRequest.
+    static func answeredRequestIDs(in messages: some Sequence<Message>) -> Set<UUID> {
+        var ids = Set<UUID>()
+        for message in messages {
+            if case .remoteCommandResponse(_, let answeredID, _, _) = message.content {
+                ids.insert(answeredID)
+            }
+        }
+        return ids
     }
 }
 

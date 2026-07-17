@@ -51,7 +51,30 @@ public enum CompanionProtocolVersion {
     /// the old relay is retired, even connect. This is a HARD incompatibility, not
     /// a gracefully-degradable feature, so minimumPeer is raised to 5 to refuse
     /// any peer that predates the move.
-    public static let current = 5
+    ///
+    /// Revision 6 adds phone-driven session resize (the resizeSession message,
+    /// which the mac drives into -[PTYSession reallySetCellSize:]). It is additive
+    /// and backward-compatible: an older mac decodes the unknown message as
+    /// `.unsupported` and ignores it, so minimumPeer stays at 5 and the phone
+    /// offers the resize control only when the mac advertises at least
+    /// `sessionResizeRevision`.
+    ///
+    /// Revision 7 adds the auto-provide consent flow (fetchAutoProvideConsent /
+    /// grantAutoProvideConsent and the autoProvideConsent reply) so the phone can ask,
+    /// before sending, to include a session's terminal state and visible screen with
+    /// AI messages. Additive: an older mac ignores the unknown messages, so the phone
+    /// offers the consent prompt only when the mac advertises at least
+    /// `autoProvideConsentRevision`.
+    ///
+    /// Revision 8 adds the explicit turn-lifecycle event (turnLifecycle: started /
+    /// ended), so the phone drives its reply notification off explicit turn
+    /// boundaries instead of inferring them from typing-status edges (a mid-turn
+    /// park toggles typing and would otherwise corrupt the notification). Additive:
+    /// an older peer decodes the unknown message as `.unsupported` and ignores it,
+    /// so minimumPeer stays 5; the mac keeps emitting typing edges so a pre-8 phone
+    /// infers boundaries exactly as before, and only a peer at `turnLifecycleRevision`
+    /// consumes turnLifecycle (see peerConsumesTurnLifecycle).
+    public static let current = 8
 
     /// The oldest peer revision this build accepts. Raised to 5 (lockstep with
     /// `current`) for the relay move: peers older than revision 5 have the old
@@ -79,6 +102,27 @@ public enum CompanionProtocolVersion {
     /// the muted flag on chat-list entries). The phone offers the mute UI only when
     /// the mac advertises at least this revision.
     public static let chatMuteRevision = 5
+
+    /// The first revision whose mac can resize a session on the phone's behalf
+    /// (the resizeSession message). The phone offers the resize control only when
+    /// the mac advertises at least this revision; an older mac would silently
+    /// ignore the message.
+    public static let sessionResizeRevision = 6
+
+    /// The first revision whose mac supports the auto-provide consent flow
+    /// (fetchAutoProvideConsent / grantAutoProvideConsent). The phone offers the
+    /// consent prompt only when the mac advertises at least this revision.
+    public static let autoProvideConsentRevision = 7
+
+    /// The revision that carries the explicit turn-lifecycle event (turnLifecycle:
+    /// started / ended), decoupling turn boundaries from the typing-status spinner
+    /// hint so a mid-turn park can no longer corrupt the phone's reply
+    /// notification. A peer at this revision drives its reply notification off these
+    /// boundaries; below it, both sides fall back to typing-edge inference, and the
+    /// mac emits typing edges regardless so older phones keep working. Additive
+    /// either way (an unknown message decodes to `.unsupported`), so minimumPeer
+    /// stays 5.
+    public static let turnLifecycleRevision = 8
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

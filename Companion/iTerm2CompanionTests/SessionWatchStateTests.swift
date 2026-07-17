@@ -58,6 +58,36 @@ final class SessionWatchStateTests: XCTestCase {
         XCTAssertLessThanOrEqual(s.departedCount, 1)
     }
 
+    // A send Task can outlive a genuine pop: sendComposed kicks off an async
+    // consent check and the claim only happens after it, so claim() may run AFTER
+    // the view departed. If claim() blindly set activeToken and cleared `departed`,
+    // beginWatchingSessionChat's isActiveOwner guard would pass and install a watch
+    // + Mac subscription (and a reply notification) for a view that is gone. The
+    // claim must instead honor an already-recorded departure of its own token.
+    func test_claim_forAlreadyDepartedToken_doesNotBecomeActiveOwner() {
+        var s = SessionWatchState()
+        let a = UUID()
+        _ = s.claim(token: a, tab: .chats)
+        _ = s.depart(token: a)                     // the view popped before the deferred claim
+        _ = s.claim(token: a, tab: .chats)         // the send Task's claim, post-pop
+        XCTAssertNil(s.activeToken,
+                     "a claim for an already-departed view must not make it the active owner")
+        // So recordIntent bails and no watch installs for the gone view (the message
+        // itself still publishes; only the reply-watch is skipped).
+        XCTAssertFalse(s.recordIntent(chatID: "C", token: a))
+    }
+
+    func test_claim_afterDepartThenReappear_becomesActiveOwner() {
+        var s = SessionWatchState()
+        let a = UUID()
+        _ = s.claim(token: a, tab: .chats)
+        _ = s.depart(token: a)
+        s.viewDidAppear(token: a)                  // a tab switch, not a pop: the view is back
+        _ = s.claim(token: a, tab: .chats)
+        XCTAssertEqual(s.activeToken, a,
+                       "a reappeared view is live again, so its claim proceeds normally")
+    }
+
     // MARK: Reuse / install / teardown
 
     func test_reuseIfSameChat_transfersOwnershipNoInstall() {

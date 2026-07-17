@@ -441,7 +441,7 @@ final class WorkgroupAutoSendClippingsTests: XCTestCase {
     func test_decision_restartClearIsNotAWorkingToIdleEdge() {
         XCTAssertNil(iTermWorkgroupPeerPort.clippingsToAutoSend(
             previousState: .working, newState: .unknown,
-            mode: .codeReview, toggleOn: true, clippings: oneClipping))
+            mode: .codeReview, toggleOn: true, mainSessionState: .idle, clippings: oneClipping))
         XCTAssertFalse(iTermWorkgroupPeerPort.shouldAutoRequestReview(
             previousState: .working, newState: .unknown,
             isMainSession: true, toggleOn: true, reviewCount: 1))

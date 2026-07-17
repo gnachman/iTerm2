@@ -39,6 +39,10 @@ protocol CompanionFrameSource: AnyObject {
     /// config time.
     var firstAbsLine: Int64 { get }
     var totalLines: Int { get }
+    /// Whether the session's window can be resized to an arbitrary grid right now
+    /// (not full screen, maximized, edge-attached, or width-locked), so the phone
+    /// can disable its resize control when a resize would be ignored.
+    var canResize: Bool { get }
     /// Render the current visible screen, or nil if it cannot be produced now.
     /// The encoder and pool size themselves to the returned image's dimensions.
     func renderCurrentScreen() -> CGImage?
@@ -48,6 +52,8 @@ extension CompanionFrameSource {
     // Defaults so test fakes need not supply history extent.
     var firstAbsLine: Int64 { 0 }
     var totalLines: Int { 0 }
+    // A fake with no window is treated as resizable.
+    var canResize: Bool { true }
 }
 
 final class CompanionSessionStreamer: @unchecked Sendable {
@@ -147,6 +153,11 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     private var lastRows = 0
     private var lastFirstAbsLine: Int64 = 0
     private var lastTotalLines = 0
+    /// Whether the session's window can currently be resized. Rides the stream
+    /// config so the phone can disable its resize control; a change forces a config
+    /// resend (and keyframe) without bumping the generation, since it does not alter
+    /// the geometry the phone renders against.
+    private var lastCanResize = true
     /// When the last frame was emitted and whether it was a keyframe, to drive the
     /// insurance keyframe (below).
     private var lastEmitAt: TimeInterval = 0
@@ -293,7 +304,20 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         }
         lastSeenFirstAbsLine = currentFirstAbs
         lastSeenTotalLines = currentTotal
+        // Fire resizability changes here too, before any emit guard: toggling the
+        // session's width lock (or fullscreen/window type) flips canResize WITHOUT
+        // changing pixels, so on an idle screen the pacer/dedup guards below would
+        // otherwise return first and the phone's resize control would stay stale
+        // indefinitely. A change forces a config resend + keyframe (evaluated below,
+        // so it goes out THIS tick) but not a generation bump (geometry is unchanged,
+        // so the phone must not drop its history tiles).
+        let currentCanResize = source.canResize
         lock.lock()
+        if currentCanResize != lastCanResize {
+            lastCanResize = currentCanResize
+            mustResendConfig = true
+            pacer.requestKeyframe()
+        }
         let exhausted = budget.isExhausted(now: nowSeconds)
         // A pending keyframe (subscribe/resume) must go even if the receiver is
         // behind; otherwise the limiter coalesces to the latest screen. Checking
@@ -361,6 +385,8 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         lastScale = scale
         lastColumns = columns
         lastRows = rows
+        // lastCanResize is maintained in tick() (pre-dedup) so a resizability flip on
+        // an idle screen still propagates; the config emit below reads it.
         lastFirstAbsLine = currentFirstAbs
         lastTotalLines = currentTotal
         lastEmitAt = nowSeconds
@@ -503,7 +529,8 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                     rows: lastRows,
                     cellGeometry: lastCellGeometry,
                     firstAbsLine: lastFirstAbsLine,
-                    totalLines: lastTotalLines))
+                    totalLines: lastTotalLines,
+                    canResize: lastCanResize))
                 flags.insert(.configChanged)
             }
         }

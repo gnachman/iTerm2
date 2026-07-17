@@ -124,6 +124,7 @@
 #import "iTermSignatureVerifier.h"
 #import "SIGIdentity.h"
 #import "iTermSSHHelpers.h"
+#import "iTermInProcessIt2.h"
 #import "iTermScriptExporter.h"
 #import "iTermScriptFunctionCall.h"
 #import "iTermScriptHistory.h"

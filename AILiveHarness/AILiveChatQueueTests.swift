@@ -156,12 +156,14 @@ extension AILiveHarness {
 
         // 6) Expectations driven by the recorder's transition log.
         //    These are sequenced strictly: tool request, then A's turn
-        //    end (typing=false after tool response), then B's turn end
-        //    (second typing=false). The recorder's onEntry hook
-        //    fulfills them as it observes matching events.
+        //    end (turnLifecycle .ended after the tool round-trip), then
+        //    B's turn end (second .ended). The recorder's onEntry hook
+        //    fulfills them as it observes matching events. Turn boundaries
+        //    are read from turnLifecycle, not typing edges, because typing
+        //    now toggles false mid-turn when A parks for the tool result.
         let sawToolRequest = expectation(description: "agent dispatched .remoteCommandRequest")
-        let sawATurnEnd    = expectation(description: "first agent typing=false after tool round-trip (A's turn finished)")
-        let sawBTurnEnd    = expectation(description: "second agent typing=false (B's turn finished)")
+        let sawATurnEnd    = expectation(description: "first agent turnLifecycle .ended after tool round-trip (A's turn finished)")
+        let sawBTurnEnd    = expectation(description: "second agent turnLifecycle .ended (B's turn finished)")
         let userMessageABody = "Use the execute_command tool to run any command. The exact command does not matter."
         let userMessageBBody = "Reply with the single digit answer to 1+1, nothing else."
 
@@ -178,8 +180,11 @@ extension AILiveHarness {
                     toolRequestSeen = true
                     sawToolRequest.fulfill()
                 }
-            case .typing(let isTyping, let participant):
-                guard !isTyping, participant == .agent else { return }
+            case .typing:
+                // Spinner hint only; not a turn boundary (fires false on a park).
+                return
+            case .turnLifecycle(let event):
+                guard event == .ended else { return }
                 agentTurnEndCount += 1
                 if agentTurnEndCount == 1 {
                     sawATurnEnd.fulfill()
@@ -198,18 +203,18 @@ extension AILiveHarness {
 
         // 8) Tool request is in the air; FakeToolResponder will publish
         //    a response after `toolDelay` seconds. Publish B right
-        //    now. The queue must hold it — no typing=true for B fires
-        //    until A's typing=false fires first.
+        //    now. The queue must hold it — B's turn does not start
+        //    until A's turn ends first.
         try broker.publish(message: userText(chatID: chatID, body: userMessageBBody),
                            toChatID: chatID, partial: false)
 
-        // 9) Wait for A's turn to fully finish (typing=false). This
-        //    can only happen after the fake responder publishes the
+        // 9) Wait for A's turn to fully finish (turnLifecycle .ended).
+        //    This can only happen after the fake responder publishes the
         //    tool response AND the post-tool LLM call completes.
         wait(for: [sawATurnEnd], timeout: 120)
 
-        // 10) Wait for B's turn to finish (second typing=false). If
-        //     queue discipline holds, this fires AFTER A's typing=false.
+        // 10) Wait for B's turn to finish (second .ended). If queue
+        //     discipline holds, this fires AFTER A's turn ends.
         wait(for: [sawBTurnEnd], timeout: 120)
 
         // 11) Walk the recorder log and assert the strict event order.
@@ -323,7 +328,7 @@ extension AILiveHarness {
         // delivery; signals A's turn is actively streaming and stop will
         // intercept mid-flight rather than after completion).
         let sawAgentStreaming = expectation(description: "agent emitted first streaming chunk")
-        let sawBTurnEnd = expectation(description: "B's turn ends (typing=false)")
+        let sawBTurnEnd = expectation(description: "B's turn ends (turnLifecycle .ended)")
         var sawStream = false
         var bTurnStarted = false
         var bTurnEnded = false
@@ -339,13 +344,20 @@ extension AILiveHarness {
                         return
                     }
                 }
-            case .typing(let isTyping, let participant):
-                guard participant == .agent else { return }
-                if isTyping {
+            case .typing:
+                // Spinner hint only; not a turn boundary.
+                return
+            case .turnLifecycle(let event):
+                switch event {
+                case .started:
                     if sawStream { bTurnStarted = true }
-                } else if bTurnStarted, !bTurnEnded {
-                    bTurnEnded = true
-                    sawBTurnEnd.fulfill()
+                case .ended:
+                    if bTurnStarted, !bTurnEnded {
+                        bTurnEnded = true
+                        sawBTurnEnd.fulfill()
+                    }
+                case .unknownFuture:
+                    return
                 }
             }
         }
@@ -411,7 +423,7 @@ extension AILiveHarness {
     ///   4. Publish msg B.
     ///   5. The fake responder publishes the tool response AFTER B
     ///      has started, so the response is orphan.
-    ///   6. Assert: B's turn ends (typing=false fires for B).
+    ///   6. Assert: B's turn ends (turnLifecycle .ended fires for B).
     ///
     /// FAILS on current main; PASSES once ChatAgent.fetchCompletion
     /// drops orphan .remoteCommandResponse messages instead of
@@ -467,7 +479,7 @@ extension AILiveHarness {
         defer { responder.shutdown() }
 
         let sawToolRequest = expectation(description: "tool request seen")
-        let sawBTurnEnd    = expectation(description: "B's turn ends (typing=false)")
+        let sawBTurnEnd    = expectation(description: "B's turn ends (turnLifecycle .ended)")
         var turnEndsAfterStop = 0
         var pressedStop = false
         var toolRequestSeen = false
@@ -482,10 +494,13 @@ extension AILiveHarness {
                     toolRequestSeen = true
                     sawToolRequest.fulfill()
                 }
-            case .typing(let isTyping, let participant):
-                guard participant == .agent, !isTyping else { return }
+            case .typing:
+                // Spinner hint only; not a turn boundary (fires false on a park).
+                return
+            case .turnLifecycle(let event):
+                guard event == .ended else { return }
                 if pressedStop {
-                    // First typing=false after stop = A's turn ending
+                    // First turn-end after stop = A's turn ending
                     // (stop drained A). Second = B's turn ending.
                     turnEndsAfterStop += 1
                     if turnEndsAfterStop == 2 {
@@ -616,11 +631,10 @@ extension AILiveHarness {
         // Send a brand-new user turn. Rebuilding history for it walks the
         // seeded transcript and (with the bug) ships the orphan call far
         // from its synthesized output.
-        let sawTurnEnd = expectation(description: "agent turn ends (typing=false)")
+        let sawTurnEnd = expectation(description: "agent turn ends (turnLifecycle .ended)")
         var turnEnded = false
         recorder.onEntry = { entry, _ in
-            if case .typing(let isTyping, let participant) = entry,
-               !isTyping, participant == .agent, !turnEnded {
+            if case .turnLifecycle(.ended) = entry, !turnEnded {
                 turnEnded = true
                 sawTurnEnd.fulfill()
             }
@@ -780,6 +794,7 @@ private final class BrokerEventRecorder {
     enum Entry {
         case delivery(Message, String)
         case typing(Bool, Participant)
+        case turnLifecycle(TurnEvent)
     }
 
     private(set) var entries: [Entry] = []
@@ -793,6 +808,11 @@ private final class BrokerEventRecorder {
             entry = .delivery(message, chatID)
         case .typingStatus(let isTyping, let participant):
             entry = .typing(isTyping, participant)
+        case .turnLifecycle(let event):
+            // The authoritative turn boundary. Turn-end detection keys on this
+            // (not on typing edges) because typing is now a pure spinner hint
+            // that toggles false mid-turn on a park.
+            entry = .turnLifecycle(event)
         }
         entries.append(entry)
         timestamps.append(Date())
@@ -807,6 +827,8 @@ private final class BrokerEventRecorder {
                 lines.append("  [\(idx)] \(message.author.rawValue):\(formatContent(message.content))")
             case let .typing(isTyping, participant):
                 lines.append("  [\(idx)] typing:\(participant.rawValue)=\(isTyping)")
+            case let .turnLifecycle(event):
+                lines.append("  [\(idx)] turn:\(event.rawValue)")
             }
         }
         return lines.joined(separator: "\n")
@@ -823,11 +845,12 @@ private final class BrokerEventRecorder {
         return nil
     }
 
-    /// Index of the first agent typing=false transition at or after `from`.
+    /// Index of the first agent turn-end (turnLifecycle .ended) at or after `at`.
+    /// This is the authoritative turn boundary now that typing is a pure spinner
+    /// hint that can toggle false mid-turn on a park.
     func firstAgentTurnEnd(at: Int = 0) -> Int? {
         for i in at..<entries.count {
-            if case let .typing(isTyping, participant) = entries[i],
-               !isTyping, participant == .agent {
+            if case .turnLifecycle(.ended) = entries[i] {
                 return i
             }
         }

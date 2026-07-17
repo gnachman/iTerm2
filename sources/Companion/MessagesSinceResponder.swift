@@ -63,20 +63,21 @@ enum MessagesSinceResponder {
         // Only agent messages: never notify the user about their own messages
         // (or user-authored watcher events) that messagesSince swept up along
         // with the agent reply that triggered the push.
-        // Same predicate the push TRIGGER uses (hasDisplayableSubstance), so the
-        // fetched preview set matches what was deemed worth notifying: a
-        // status-only / reasoning agent message (not hiddenFromClient, but no real
-        // content) is dropped here rather than leaking its status text onto the
-        // lock screen.
+        // The ONE render predicate (Message.isCompanionRenderable), plus: a .classic
+        // permission request that is already ANSWERED (auto-ran, auto-denied, or acted
+        // on) is resolved bookkeeping, not a live prompt, so it is dropped too. Same
+        // definition the wakeup coordinator's outstanding check uses, so the fetched
+        // preview set matches what was deemed worth pushing.
+        let answered = Message.answeredRequestIDs(in: fetched)
         let visible = fetched.filter {
-            !$0.hiddenFromClient && $0.author == .agent && $0.content.hasDisplayableSubstance
+            $0.isCompanionRenderable && !$0.isResolvedClassicRequest(answeredRequestIDs: answered)
         }
         // Keep the NEWEST `cap` (visible is newest-first), then emit them
         // CHRONOLOGICALLY (oldest first) per the wire contract.
         let shown = visible.prefix(cap).reversed()
         let snippetLimit = max(bodyMaxLength, 0) + mentionHeadroom
         let previews = shown.map { message -> CompanionMessagePreview in
-            let raw = message.content.snippetText(maxLength: snippetLimit) ?? ""
+            let raw = Self.previewBody(for: message, maxLength: snippetLimit)
             // Render @-mentions to "🖥 name" before truncating, so the lock
             // screen shows the session name instead of a raw guid.
             let rendered = MentionPlainTextRenderer.render(raw, resolve: resolveMention)
@@ -86,5 +87,20 @@ enum MessagesSinceResponder {
                 body: rendered.truncatedWithTrailingEllipsis(to: bodyMaxLength))
         }
         return Result(previews: Array(previews), truncated: visible.count > cap)
+    }
+
+    /// The notification body for one renderable message. A .classic permission request
+    /// and a session pick are shown from their own request text - a permission prompt
+    /// reads "The AI Agent would like to ..." - so the phone says what decision is
+    /// blocked; everything else uses the standard snippet.
+    private static func previewBody(for message: Message, maxLength: Int) -> String {
+        switch message.content {
+        case .remoteCommandRequest(.classic(let command), safe: _):
+            return command.permissionDescription
+        case .selectSessionRequest:
+            return "The agent needs you to choose a session."
+        default:
+            return message.content.snippetText(maxLength: maxLength) ?? ""
+        }
     }
 }

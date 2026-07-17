@@ -346,6 +346,12 @@ final class AppModel {
     /// trigger now also owns the per-id reply-text accumulation (one id->text
     /// surface, so there is no separate accumulator to keep keyed in lockstep).
     private var replyTrigger = SessionReplyTrigger()
+
+    #if DEBUG
+    /// The body of the last reply notification the trigger fired, for tests to
+    /// observe reply firing without the UNUserNotification side effect.
+    private(set) var testLastReplyFireBody: String?
+    #endif
     /// De-dupes concurrent session-bound chat resolution by session guid, so two
     /// quick sends before the first resolves don't each create a new chat.
     private var pendingChatResolution: [String: Task<String, Error>] = [:]
@@ -381,6 +387,16 @@ final class AppModel {
     /// True while transparently re-establishing a dropped connection (shown
     /// as a banner; the user keeps their place in the UI).
     var isReconnecting = false
+
+    /// Non-nil while the relay is refusing us for hitting its daily data limit
+    /// (WS 1008 "daily quota exceeded"); holds the time we will next retry.
+    /// Reconnecting sooner just trips the same limit, so the reconnect loop waits
+    /// this out instead of the routine ~2s retry, and the UI shows a distinct
+    /// "daily limit reached" banner (with a Reconnect now override) rather than
+    /// the plain reconnecting banner. Cleared once a connection succeeds.
+    var quotaBackoffUntil: Date?
+    /// Set by the banner's "Reconnect now" button to end the quota backoff early.
+    private var manualQuotaRetry = false
 
     /// True when the open conversation's chat was deleted on the Mac. The
     /// conversation stays on screen (yanking it away would be disruptive)
@@ -505,6 +521,9 @@ final class AppModel {
     /// The live stream the session view is currently watching, and the handlers
     /// it registered. Only one session is streamed at a time.
     private var activeStreamID: UInt32?
+    /// Whether a live stream is currently running (the canvas uses this to decide
+    /// whether an unchanged-geometry layout pass should still re-drive tiles).
+    var hasActiveStream: Bool { activeStreamID != nil }
     private var onStreamConfig: ((CompanionStreamConfig) -> Void)?
     private var onStreamMedia: ((CompanionMediaFrame) -> Void)?
     private var onStreamEnded: ((CompanionStreamEndReason) -> Void)?
@@ -520,6 +539,9 @@ final class AppModel {
     /// History extent from the latest config, for laying out the scrollback canvas.
     private(set) var activeStreamFirstAbsLine: Int64 = 0
     private(set) var activeStreamTotalLines = 0
+    /// Whether the mac reports the session's window can currently be resized, from
+    /// the latest config; the resize control is disabled otherwise.
+    private(set) var activeStreamCanResize = true
     private var activeStreamGeneration: UInt32 = 0
     /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
     /// fetches in flight so scroll events do not duplicate them.
@@ -529,10 +551,93 @@ final class AppModel {
     // the LRU evicts the least-recently-used tile past the cap and supports the
     // key-range pruning below (unlike NSCache).
     @ObservationIgnored private let historyTileCache = CompanionLRUCache<Int64, UIImage>(capacity: 256)
+
+    // History-tile request throttle. A fast fling scroll can walk through dozens of
+    // viewports in under a second, and each viewport wants ~17 tiles; issuing them
+    // all at once floods the relay and trips its per-connection frame-rate limit,
+    // which closes the bridge (closeCode 1008 "frame rate exceeded"). Cap the number
+    // of tile requests in flight and queue the rest. This bounds the burst; it reduces
+    // (does not eliminate) the risk of tripping the relay's sustained rate limit,
+    // which is why the relay also tears down both legs on a frame-rate close.
+    @ObservationIgnored private var historyTilePending: [(firstAbsLine: Int64, lineCount: Int, epoch: Int, completion: (HistoryTileOutcome) -> Void)] = []
+    // In-flight fetch Tasks, keyed by a monotonic id so each can remove itself on
+    // completion and flushHistoryTileThrottle can cancel the prior stream's fetches.
+    // This set IS the in-flight count: the throttle gate is its size, so there is no
+    // separate counter to keep in sync (and no way to drive one negative). Without
+    // cancellation, a transition that cleared the count while old fetches kept running
+    // would let rapid session switches over one connection push real concurrency past
+    // maxHistoryTilesInFlight and trip the relay's frame-rate limit.
+    @ObservationIgnored private var historyTileTasks: [Int: Task<Void, Never>] = [:]
+    @ObservationIgnored private var historyTileTaskCounter = 0
+    // Per-stream epoch for the throttle. Generations restart at 1 for every stream
+    // (see restartLiveStreamAfterReconnect), and a session switch reuses the same live
+    // connection, so generation alone cannot tell one stream's tiles from another's.
+    // The epoch bumps on every stream transition (watch/stop/pause/reconnect/ended/lost);
+    // an in-flight request or a queued entry from a prior epoch is stale and must not
+    // decrement the (reset) in-flight count, be cached, or be re-sent against the new
+    // stream. See flushHistoryTileThrottle.
+    @ObservationIgnored private var historyTileEpoch = 0
+    // Set to true when a request is rejected because the backlog is full, and cleared
+    // when the pipeline next drains to spare capacity. It gates the slot-available
+    // signal so the canvas re-drives paced by network replies (when a slot actually
+    // frees) instead of busy-looping a self-scheduled refresh while still saturated.
+    @ObservationIgnored private var historyTileOverflowed = false
+    /// Called on the main actor when the throttle drains to spare capacity after having
+    /// rejected requests (and once per flush), so the canvas can re-request whatever it
+    /// still wants. Two LiveCanvas coordinators can share this one AppModel (the Sessions
+    /// tab and the session-mention preview), so the live coordinator claims ownership via
+    /// historyTileSlotOwner and only the owner clears it; otherwise a dismissed preview
+    /// would nil out the still-live tab's callback. See SessionView.
+    ///
+    /// This is a latency optimization, not a correctness dependency: the canvas also
+    /// recovers rejected/spinner tiles from its 4 Hz growthTick pass (which runs on every
+    /// live coordinator regardless of zoom), so a briefly-stranded or clobbered callback
+    /// self-heals within ~250 ms and is reclaimed on the owner's next updateUIView.
+    @ObservationIgnored var onHistoryTileSlotAvailable: (() -> Void)?
+    @ObservationIgnored var historyTileSlotOwner: ObjectIdentifier?
+    /// Most tile requests in flight at once.
+    private let maxHistoryTilesInFlight = 6
+    /// Deadline for a single tile fetch. CompanionSession.request has no timeout of its
+    /// own: a lost or never-produced reply that does not close the socket would await
+    /// forever and pin an in-flight slot, wedging the whole pipeline once all slots are
+    /// stuck. Bounding the fetch frees the slot as .failed so the throttle recovers.
+    private let historyTileTimeout: TimeInterval = 20
+    /// Most tile requests waiting behind the in-flight window. A fling scroll enqueues
+    /// far more than can matter by the time they run; cap the backlog and drop the
+    /// oldest (furthest from where the user has since scrolled) so it cannot grow
+    /// without bound. A dropped request reports .throttled so the caller keeps any
+    /// current image and re-requests from its current position if still visible.
+    private let maxHistoryTilesPending = 24
+
     /// The current selection span reported by the mac, for drawing handles.
     private(set) var activeSelectionRange: CompanionSelectionRange?
     /// The mac's advertised protocol revision (0 until the handshake).
     private(set) var macRevision = 0
+
+    #if DEBUG
+    /// Test override for this phone build's own revision, so a test can simulate a
+    /// future (turnLifecycleRevision) build while `current` is still below it.
+    var testLocalRevisionOverride: Int?
+    #endif
+    /// This phone build's own protocol revision.
+    private var localRevision: Int {
+        #if DEBUG
+        return testLocalRevisionOverride ?? CompanionProtocolVersion.current
+        #else
+        return CompanionProtocolVersion.current
+        #endif
+    }
+    /// Whether the reply trigger's turn boundaries come from the explicit
+    /// turnLifecycle event rather than typing edges. Requires BOTH ends at
+    /// turnLifecycleRevision: this phone stops driving the trigger from typing only
+    /// when the mac ALSO sends turnLifecycle (and the mac gates that send on OUR
+    /// revision), so the two gates are exact complements and the trigger is fed by
+    /// exactly one source in every version pairing. Keying on macRevision alone
+    /// would, against a future rev-8 mac, drop typing edges here while the mac
+    /// (seeing our revision < 8) never sends turnLifecycle - silencing replies.
+    private func usesTurnLifecycleBoundaries() -> Bool {
+        min(macRevision, localRevision) >= CompanionProtocolVersion.turnLifecycleRevision
+    }
     var sessionSelectionSupported: Bool {
         macRevision >= CompanionProtocolVersion.selectionGeometryRevision && activeStreamGeometry != nil
     }
@@ -845,6 +950,7 @@ final class AppModel {
         wipeAllKeyMaterial()
         activePairingCode = nil
         isReconnecting = false
+        quotaBackoffUntil = nil
         pairingStartedAt = nil
         clearPairedMacData()
     }
@@ -1055,6 +1161,11 @@ final class AppModel {
     /// cadence until one lands on a ready mac. Kept short so a mac that just
     /// finished relaunching is picked up quickly.
     private static let reconnectRetryDelayNanos: UInt64 = 2_000_000_000
+    /// How long to back off after the relay reports its daily data limit is
+    /// exhausted. Fixed (the relay reports no reset time), long enough not to
+    /// hammer the limit, short enough to recover within a day once the relay's
+    /// 24h window rolls over. The user can override it with "Reconnect now".
+    private static let quotaBackoffSeconds: TimeInterval = 30 * 60
 
     /// How long the phone waits for the user to type the SAS code on the Mac.
     /// Generous: a human is walking to a keyboard.
@@ -1154,9 +1265,9 @@ final class AppModel {
             Task { @MainActor in
                 self?.handle(event: event)
             }
-        }, onClose: { [weak self] in
+        }, onClose: { [weak self] error in
             Task { @MainActor in
-                self?.connectionLost()
+                self?.connectionLost(dueTo: error)
             }
         }, onMedia: { [weak self] frame in
             Task { @MainActor in
@@ -1394,6 +1505,7 @@ final class AppModel {
         }
         macSupportsStreaming = handshake.supportsStreaming
         macRevision = handshake.peerRevision
+        companionLog("Version handshake: macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
         // The mac says the user opted into phone alerts: ask iOS for notification
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
@@ -1467,28 +1579,52 @@ final class AppModel {
 
     /// The session's receive loop died: the mac quit, restarted, or the
     /// network dropped. Reconnect with the stored pairing, keeping the user's
-    /// place in the UI.
-    private func connectionLost() {
+    /// place in the UI. `error` is the terminating transport error when known, so
+    /// a relay daily-quota teardown enters the long backoff immediately rather
+    /// than after a first doomed attempt.
+    private func connectionLost(dueTo error: Error? = nil) {
         guard !isReconnecting else { return }
-        companionLog("Connection lost")
+        if let error {
+            companionLog("Connection lost dueTo: \(String(describing: error))")
+        } else {
+            companionLog("Connection lost (no transport error; e.g. the foreground connection-check ping failed)")
+        }
         client = nil
-        // The stream id belongs to the dead connection; drop it but keep the
-        // live-watch intent so the stream restarts after reconnect.
-        activeStreamID = nil
+        // The stream id belongs to the dead connection; drop it (neutralizing the tile
+        // throttle first) but keep the live-watch intent so it restarts after reconnect.
+        neutralizeDeadStream()
         guard phase == .home else { return }
         guard let code = storedPairingCode else {
             phase = .scanning
             return
         }
+        // A relay quota teardown is not transient: show the "daily limit reached"
+        // banner up front and make the loop wait out the backoff before its first
+        // attempt, instead of hammering the exhausted quota.
+        if (error as? TransportError) == .quotaExceeded {
+            companionLog("Connection lost: relay daily data limit reached")
+            quotaBackoffUntil = Date().addingTimeInterval(Self.quotaBackoffSeconds)
+            manualQuotaRetry = false
+        }
         isReconnecting = true
         reconnectTask = Task {
             var attempt = 0
             while true {
+                // Wait out a relay quota backoff (or a manual "Reconnect now")
+                // before attempting, so we don't re-trip an exhausted daily limit.
+                // quotaBackoffUntil stays set through the attempt (banner stays up);
+                // it is cleared only on success or a non-quota exit below.
+                if quotaBackoffUntil != nil {
+                    await waitOutQuotaBackoff()
+                    if Task.isCancelled { break }
+                }
                 attempt += 1
                 do {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
+                    // Reachable again: leave any quota state so the banner clears.
+                    quotaBackoffUntil = nil
                     // The Mac is reachable again: reopen the retry gate so the
                     // list-snippet and conversation re-scans below re-resolve any
                     // mention that failed while we were disconnected.
@@ -1501,7 +1637,8 @@ final class AppModel {
                         do {
                             let handshake = try await client.handshakeVersion()
                             macSupportsStreaming = handshake.supportsStreaming
-        macRevision = handshake.peerRevision
+                            macRevision = handshake.peerRevision
+                            companionLog("Version handshake (reconnect): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
                             if handshake.wantsNotificationPermission {
                                 ensureNotificationPermission(replyTo: nil)
                             }
@@ -1582,6 +1719,20 @@ final class AppModel {
                 } catch is CancellationError {
                     // App-driven teardown; nothing to report.
                 } catch {
+                    // The relay hit its daily data limit: back off long (the loop
+                    // top waits it out) and show the limit banner instead of the
+                    // ~2s poll, which would only keep tripping the same limit.
+                    if (error as? TransportError) == .quotaExceeded {
+                        companionLog("Reconnect attempt \(attempt): relay daily data limit reached; backing off")
+                        quotaBackoffUntil = Date().addingTimeInterval(Self.quotaBackoffSeconds)
+                        manualQuotaRetry = false
+                        continue
+                    }
+                    // A non-quota failure means the relay is no longer quota-blocking
+                    // us (we reached admission, or it is a plain network error): drop
+                    // any lingering backoff so the banner reverts from the limit
+                    // message to the ordinary "reconnecting" pill.
+                    quotaBackoffUntil = nil
                     // Keep the user's place and keep trying; transient network
                     // trouble must not dump them on the pairing screen.
                     companionLog("Reconnect attempt \(attempt) failed: \(String(describing: error))")
@@ -1595,7 +1746,29 @@ final class AppModel {
                 break
             }
             isReconnecting = false
+            quotaBackoffUntil = nil
+            manualQuotaRetry = false
         }
+    }
+
+    /// Poll-wait out the relay quota backoff, returning when the deadline passes,
+    /// the user taps "Reconnect now", or the reconnect task is torn down. The 1s
+    /// tick keeps the banner countdown live and lets a manual retry engage
+    /// promptly; quotaBackoffUntil is left set so the banner stays up through the
+    /// following attempt (cleared only on success or a non-quota exit).
+    private func waitOutQuotaBackoff() async {
+        while let until = quotaBackoffUntil, until > Date(), !manualQuotaRetry, !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+    }
+
+    /// The quota banner's "Reconnect now" button: end the backoff early so the
+    /// reconnect loop attempts immediately (e.g. after the user freed up quota or
+    /// just wants to check).
+    func reconnectNowAfterQuota() {
+        guard quotaBackoffUntil != nil else { return }
+        companionLog("Quota backoff: manual reconnect requested")
+        manualQuotaRetry = true
     }
 
     /// Called when the app returns to the foreground: sockets often die
@@ -1607,7 +1780,9 @@ final class AppModel {
                 try await withTimeout(5, "Connection check") {
                     try await client.ping()
                 }
+                companionLog("Foreground connection check: ping ok")
             } catch {
+                companionLog("Foreground connection check: ping FAILED (\(String(describing: error))) -> treating connection as lost and reconnecting")
                 connectionLost()
             }
         }
@@ -1674,6 +1849,41 @@ final class AppModel {
     /// offered only then (an older mac would silently ignore the toggle).
     var macSupportsChatMuting: Bool {
         macRevision >= CompanionProtocolVersion.chatMuteRevision
+    }
+
+    /// Whether the connected Mac can resize a session on the phone's behalf; the
+    /// resize control is offered only then (an older mac would silently ignore the
+    /// resizeSession message).
+    var sessionResizeSupported: Bool {
+        macRevision >= CompanionProtocolVersion.sessionResizeRevision
+    }
+
+    /// Whether the mac supports the auto-provide consent flow (asking to include a
+    /// session's terminal state + visible screen with AI messages).
+    var autoProvideConsentSupported: Bool {
+        macRevision >= CompanionProtocolVersion.autoProvideConsentRevision
+    }
+
+    /// Sessions the user chose "Not Now" for this app run, so a decline isn't re-asked
+    /// on every message (a grant persists on the mac and reads back as satisfied).
+    @ObservationIgnored private var declinedAutoProvideSessions = Set<String>()
+
+    /// Whether to block a send with the auto-provide consent modal: the mac supports
+    /// it, the user hasn't declined this session, and consent is not already in effect
+    /// for the chat the send would target. Fails closed (no prompt) on any error.
+    func shouldPromptAutoProvideConsent(sessionGuid: String) async -> Bool {
+        guard autoProvideConsentSupported,
+              !declinedAutoProvideSessions.contains(sessionGuid),
+              let client else {
+            return false
+        }
+        let satisfied = (try? await client.fetchAutoProvideConsent(sessionGuid: sessionGuid)) ?? true
+        return !satisfied
+    }
+
+    /// Remember a "Not Now" so the modal isn't shown again for this session this run.
+    func declineAutoProvideConsent(sessionGuid: String) {
+        declinedAutoProvideSessions.insert(sessionGuid)
     }
 
     /// Whether the chat is muted, as of the last list refresh (or an optimistic
@@ -2147,6 +2357,7 @@ final class AppModel {
                              sessionGuid: String,
                              resolvedChatID: String?,
                              originatingChatID: String?,
+                             grantAutoProvideConsent: Bool = false,
                              watchToken: UUID,
                              claimSequence: Int) async -> SessionSendOutcome {
         // The caller (sendComposed) is the single point that rejects empty input,
@@ -2168,6 +2379,13 @@ final class AppModel {
                 chatID = originatingChatID
             } else {
                 chatID = try await resolveSessionBoundChat(forSessionGuid: sessionGuid)
+            }
+            // The user approved the consent modal: grant "provided automatically" on
+            // the now-resolved chat BEFORE publishing, so this first message already
+            // carries the terminal state + visible screen. Best-effort: a grant
+            // failure must not block the send.
+            if grantAutoProvideConsent {
+                try? await currentClient(label: "Grant auto-provide").grantAutoProvideConsent(chatID: chatID)
             }
             // Don't publish into a chat the Mac deleted. Check the RESOLVED target
             // against the chat list, not `chatID == openChatID && openChatWasDeleted`:
@@ -2462,13 +2680,26 @@ final class AppModel {
             // attachment label as text when an empty .markdown("") is present.
             let preview = Self.replyPreview(for: message)
             event = .reply(chunk: .begin(id: id, preview: preview.text, isLabel: preview.isLabel))
-        case .remoteCommandRequest(_, safe: .some(false)), .selectSessionRequest:
-            // A block-on-user request that needs the user: a remote command
-            // needing approval (safe == false) or a select-session. Auto-executed
-            // commands (safe == true / nil) are mid-turn tool calls that DON'T
-            // match here and fall to default, so the turn's final text reply still
-            // fires on typing(false) rather than being pre-empted by the tool call.
+        case .remoteCommandRequest(.classic, _), .selectSessionRequest:
+            // A block-on-user request the phone received. The mac's broker processor
+            // (ChatClient.processRemoteCommandRequest) SQUELCHES auto-run (.always +
+            // safe) and auto-deny (.never) classic requests before fan-out, so a
+            // .classic remoteCommandRequest that reaches us here has ALWAYS parked on
+            // the user's approval - regardless of the content-safety `safe` flag (a
+            // .ask command judged safe still parks). Surface any of them (and a
+            // select-session) as a userActionRequest, which fires without a preceding
+            // turnStarted - so the pending approval is notified even on a
+            // turnLifecycleRevision mac (where a park emits no turnEnded) and isn't
+            // mis-framed as a finished reply on a legacy mac. External (orchestration)
+            // requests are auto-dispatched and not squelched, so they fall to default.
             event = .userActionRequest(id: id, fallback: Self.requestDescription(for: message.content))
+        case .clientLocal(let clientLocal):
+            // The orchestration-enable request parks the turn on the user's
+            // Enable/Not-Now; like an approval park it emits no turnEnded on a
+            // turnLifecycleRevision mac, so surface it as a userActionRequest too.
+            // Other client-local notices/bookkeeping don't park.
+            guard case .enableOrchestrationRequest = clientLocal.action else { return }
+            event = .userActionRequest(id: id, fallback: "Enable orchestration for this chat?")
         default:
             // Tool calls, local notices, commits, bookkeeping: not the preview.
             return
@@ -2530,12 +2761,41 @@ final class AppModel {
         content.snippetText(maxLength: untruncatedPreviewLength) ?? content.shortDescription
     }
 
-    /// Agent typing changed for the watched chat. A turn starting resets the
-    /// accumulation; a turn finishing (typing false) may fire (see the trigger).
+    /// Agent typing changed for the watched chat. On a mac BELOW
+    /// turnLifecycleRevision (which sends no explicit turn-lifecycle event) the
+    /// typing edge IS the turn boundary, so translate it: turnStarted resets the
+    /// accumulation, turnEnded may fire. On a turnLifecycleRevision mac, boundaries
+    /// come from the turnLifecycle message (noteWatchedTurnLifecycle) and typing is
+    /// only the spinner - so it must NOT drive the trigger here, or a mid-turn park
+    /// (which toggles typing for the spinner) would be misread as a turn boundary.
+    /// The trigger is fed turn boundaries from exactly ONE source, keyed on
+    /// macRevision.
     private func noteWatchedTypingStatus(isTyping: Bool, chatID: String) {
+        guard !usesTurnLifecycleBoundaries() else { return }
         guard let watched = watchState.watch, chatID == watched.chatID else { return }
-        // typing(true) resets the trigger (and its accumulator) for the new turn.
-        applyReplyTrigger(.typing(isTyping), watched: watched)
+        applyReplyTrigger(isTyping ? .turnStarted : .turnEnded, watched: watched)
+    }
+
+    /// Accept an explicit turn-lifecycle boundary from the wire. Gated so it drives
+    /// the trigger ONLY when both ends use turnLifecycle - the exact complement of
+    /// the typing gate in noteWatchedTypingStatus, so the trigger is fed by one
+    /// source, never both. Shared by the wire handler (handle(.turnLifecycle)) and
+    /// the test hook so tests exercise THIS production gate, not a copy of it.
+    private func acceptTurnLifecycle(_ event: TurnEvent, chatID: String) {
+        guard usesTurnLifecycleBoundaries() else { return }
+        noteWatchedTurnLifecycle(event, chatID: chatID)
+    }
+
+    /// An explicit agent-turn boundary arrived (a turnLifecycleRevision mac). This
+    /// is the authoritative turn-start/-end signal that replaces typing-edge
+    /// inference; feed it straight to the trigger.
+    private func noteWatchedTurnLifecycle(_ event: TurnEvent, chatID: String) {
+        guard let watched = watchState.watch, chatID == watched.chatID else { return }
+        switch event {
+        case .started: applyReplyTrigger(.turnStarted, watched: watched)
+        case .ended: applyReplyTrigger(.turnEnded, watched: watched)
+        case .unknownFuture: break
+        }
     }
 
     private func applyReplyTrigger(_ event: SessionReplyTrigger.Event, watched: SessionWatchState.Watch) {
@@ -2560,6 +2820,9 @@ final class AppModel {
             return !suppress
         }
         if case .fire(let body) = replyTrigger.handle(event, shouldFire: shouldFire) {
+            #if DEBUG
+            testLastReplyFireBody = body
+            #endif
             postReplyNotification(watched: watched, body: body)
         }
     }
@@ -3095,16 +3358,25 @@ final class AppModel {
             }
             // The live session view may be watching a chat (its own or the one
             // an @-mention came from). Accumulate the agent's reply text; the
-            // notification fires when the turn completes (typingStatus below).
+            // notification fires when the turn completes - on a turnLifecycleRevision
+            // mac from the explicit .turnLifecycle(.ended) boundary, on an older mac
+            // from the typing(false) edge (noteWatchedTypingStatus translates it).
+            // Typing is spinner-only on a turnLifecycleRevision mac, so do NOT
+            // re-route the fire back through typing edges.
             noteWatchedSessionDelivery(message, chatID: chatID)
         case .typingStatus(let isTyping, let participant, let chatID):
             if participant == .agent {
                 // Track per-chat so re-selecting a co-mounted chat mid-turn (a tab
                 // switch, which doesn't re-deliver this edge-triggered status) still
-                // shows the indicator. isAgentTyping is derived from this set.
+                // shows the indicator. isAgentTyping is derived from this set. This
+                // is the spinner hint; the reply-notification turn boundary comes
+                // from typing only on a pre-turnLifecycle mac (noteWatchedTypingStatus
+                // gates on macRevision), else from .turnLifecycle below.
                 if isTyping { agentTypingChats.insert(chatID) } else { agentTypingChats.remove(chatID) }
                 noteWatchedTypingStatus(isTyping: isTyping, chatID: chatID)
             }
+        case .turnLifecycle(let event, let chatID):
+            acceptTurnLifecycle(event, chatID: chatID)
         case .chatListChanged(let entries):
             // The Mac pushes a fresh list whenever a chat is renamed, gets
             // its icon, or is created/deleted/reordered.
@@ -3127,6 +3399,9 @@ final class AppModel {
                 activeStreamRows = config.rows
                 activeStreamFirstAbsLine = config.firstAbsLine
                 activeStreamTotalLines = config.totalLines
+                // Absent (older mac) means unknown; default to allowing resize since
+                // the resize control is gated on the mac's revision anyway.
+                activeStreamCanResize = config.canResize ?? true
                 // A new generation re-renders everything; stale tiles must not show.
                 if config.generationId != activeStreamGeneration {
                     // Not the first config for this stream = a mid-stream geometry
@@ -3137,6 +3412,12 @@ final class AppModel {
                     let isInitialConfig = activeStreamGeneration == 0
                     activeStreamGeneration = config.generationId
                     historyTileCache.removeAll()
+                    // A reflow renumbers absolute lines, so every queued/in-flight tile
+                    // request is now stale. Neutralize the throttle (drop the queue,
+                    // cancel in-flight fetches, nudge a re-drive) so we do not send up to
+                    // maxHistoryTilesPending doomed requests to the relay; applyLayout
+                    // re-requests fresh tiles for the new generation.
+                    flushHistoryTileThrottle()
                     // Snap the live top to the new extent so a stale (pre-reflow)
                     // value does not inflate the canvas until the next media frame.
                     activeStreamLiveTop = config.firstAbsLine + Int64(max(0, config.totalLines - config.rows))
@@ -3170,7 +3451,10 @@ final class AppModel {
             }
         case .streamEnded(let streamID, let reason):
             if streamID == activeStreamID {
-                activeStreamID = nil
+                // A host-side end is a stream transition like the others: neutralize the
+                // throttle (releasing slots, cancelling fetches) before dropping the id so
+                // a late reply cannot be cached against the next stream.
+                neutralizeDeadStream()
                 activeStreamGeometry = nil
                 activeSelectionRange = nil
                 // A host-side end is terminal: drop the intent so it does not
@@ -3209,6 +3493,10 @@ final class AppModel {
                           onEnded: @escaping (CompanionStreamEndReason) -> Void) {
         liveWatchGuid = guid
         liveStreamPaused = false
+        // A session switch reuses the same live connection, so any in-flight or queued
+        // tile requests belong to the previous session; neutralize the throttle before
+        // the new stream starts issuing requests.
+        flushHistoryTileThrottle()
         // Drop the previous session's geometry/extent so the canvas waits for the
         // new config before laying out (streamExtent can arrive first); otherwise it
         // would briefly fetch tiles against stale geometry.
@@ -3220,6 +3508,7 @@ final class AppModel {
         activeStreamLiveTop = 0
         activeStreamFirstAbsLine = 0
         activeStreamTotalLines = 0
+        activeStreamCanResize = true
         activeStreamGeneration = 0
         activeSelectionRange = nil
         onStreamConfig = onConfig
@@ -3231,6 +3520,7 @@ final class AppModel {
     /// Drop the live-watch intent and stop any running stream (on leaving the view).
     func stopWatchingSessionLive() {
         liveWatchGuid = nil
+        flushHistoryTileThrottle()
         stopActiveStream()
         clearStreamHandlers()
     }
@@ -3239,6 +3529,7 @@ final class AppModel {
     /// encoding while the phone can't display anything.
     func pauseLiveStream() {
         liveStreamPaused = true
+        flushHistoryTileThrottle()
         stopActiveStream()
     }
 
@@ -3297,8 +3588,9 @@ final class AppModel {
 
     /// Called after a (re)connect completes so an open live view resumes.
     private func restartLiveStreamAfterReconnect() {
-        // A new connection means the old stream id is dead.
-        activeStreamID = nil
+        // A new connection means the old stream id is dead; neutralize the throttle
+        // (its in-flight/queued requests are stale) and drop the id.
+        neutralizeDeadStream()
         // The new stream's generations restart at 1; treat its first config as
         // initial (not a mid-stream reflow). Otherwise a stale generation from the
         // old stream could wipe the selection the mac couriers on subscribe, and a
@@ -3437,34 +3729,125 @@ final class AppModel {
     /// grown more lines).
     func invalidateHistoryTile(firstAbsLine: Int64) { historyTileCache[firstAbsLine] = nil }
 
-    /// Fetch a scrollback tile; `completion` ALWAYS runs on the main actor (with the
-    /// image, or nil on failure / no stream / empty-evicted range) so the caller can
-    /// clear its in-flight state. De-duplication and staleness are the caller's job
-    /// (the canvas keys requests by tile and ignores out-of-date completions); doing
-    /// it here by absolute line silently dropped re-requests after an invalidation,
-    /// leaving tiles stuck loading or showing a stale highlight.
-    func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (UIImage?) -> Void) {
+    /// The result of a scrollback tile fetch. `.throttled` is distinct from `.failed`
+    /// so the caller can keep any currently-shown image and re-request, rather than
+    /// destroying a valid tile with a "couldn't load" state: a throttle drop, a
+    /// stream transition, or a mid-stream reflow superseding a request are all
+    /// transient and recoverable, unlike a host-reported miss or a network error.
+    enum HistoryTileOutcome {
+        case image(UIImage)
+        case failed
+        case throttled
+    }
+
+    /// Fetch a scrollback tile; `completion` ALWAYS runs on the main actor so the
+    /// caller can clear its in-flight state. De-duplication and staleness are the
+    /// caller's job (the canvas keys requests by tile and ignores out-of-date
+    /// completions); doing it here by absolute line silently dropped re-requests after
+    /// an invalidation, leaving tiles stuck loading or showing a stale highlight.
+    func requestHistoryTile(firstAbsLine: Int64, lineCount: Int, completion: @escaping (HistoryTileOutcome) -> Void) {
         if let image = historyTileCache[firstAbsLine] {
-            completion(image)
+            completion(.image(image))
             return
         }
-        guard let client, let streamID = activeStreamID else {
+        guard client != nil, activeStreamID != nil else {
             companionLog("historyTile no stream firstAbs=\(firstAbsLine)")
-            completion(nil)
+            if liveWatchGuid != nil {
+                // Transient between-stream window (right after stopActiveStream, or during
+                // a reconnect): a stream is still intended, so report .throttled and keep
+                // any current image; the canvas re-drives (growthTick / slot signal) once
+                // it is live. Matches the drain path's no-stream handling.
+                reportThrottled(completion)
+            } else {
+                // No live-watch intent (the host ended the stream): it will not come back,
+                // so report a real failure rather than an eternal spinner.
+                reportFailed(completion)
+            }
+            return
+        }
+        let epoch = historyTileEpoch
+        guard historyTileTasks.count < maxHistoryTilesInFlight else {
+            guard historyTilePending.count < maxHistoryTilesPending else {
+                // Backlog full: reject THIS request rather than evicting a still-valid
+                // queued tile. Evicting the oldest churned the whole pending set every
+                // pass on a static wide viewport (each pass re-requested the evicted
+                // tiles, which re-evicted others). Rejecting the incoming instead lets
+                // the pipeline drain in order; onHistoryTileSlotAvailable then nudges the
+                // canvas to re-request what it still wants, paced by replies.
+                historyTileOverflowed = true
+                companionLog("historyTile reject (backlog full) firstAbs=\(firstAbsLine)")
+                reportThrottled(completion)
+                return
+            }
+            historyTilePending.append((firstAbsLine, lineCount, epoch, completion))
+            return
+        }
+        sendHistoryTile(firstAbsLine: firstAbsLine, lineCount: lineCount, epoch: epoch, completion: completion)
+    }
+
+    /// Drop still-queued tile requests the caller no longer wants (e.g. tiles the user
+    /// flung past). Only the pending queue is pruned; an already-issued fetch is left to
+    /// complete (it warms the cache). This keeps a fling from spending in-flight slots
+    /// and relay frame budget on viewports that have already scrolled away. Takes a set
+    /// so the fling hot path prunes the queue in one pass, not one scan per tile.
+    func cancelPendingHistoryTiles(firstAbsLines: Set<Int64>) {
+        guard !firstAbsLines.isEmpty else { return }
+        historyTilePending.removeAll { entry in
+            let match = firstAbsLines.contains(entry.firstAbsLine)
+            if match {
+                reportThrottled(entry.completion)
+            }
+            return match
+        }
+    }
+
+    /// Issue one tile request against the current window and, when it settles, pull
+    /// the next queued request into the freed slot. Callers gate on the in-flight
+    /// window before calling this; see requestHistoryTile. `epoch` ties the request to
+    /// the stream it was made for so a transition can neutralize it.
+    private func sendHistoryTile(firstAbsLine: Int64, lineCount: Int, epoch: Int, completion: @escaping (HistoryTileOutcome) -> Void) {
+        guard let client, let streamID = activeStreamID else {
+            // The stream vanished after this request was queued. Report it as throttled
+            // (transient) without touching the in-flight count; the drain loop keeps
+            // pulling the backlog.
+            companionLog("historyTile no stream firstAbs=\(firstAbsLine)")
+            reportThrottled(completion)
             return
         }
         let generation = activeStreamGeneration
-        companionLog("historyTile req firstAbs=\(firstAbsLine) lineCount=\(lineCount) stream=\(streamID) gen=\(generation)")
-        Task { @MainActor in
+        let taskID = historyTileTaskCounter
+        historyTileTaskCounter += 1
+        companionLog("historyTile req firstAbs=\(firstAbsLine) lineCount=\(lineCount) stream=\(streamID) gen=\(generation) epoch=\(epoch)")
+        let task = Task { @MainActor in
+            defer {
+                // historyTileTasks IS the in-flight set (the gate is its count), so
+                // removing self frees the slot. A stale task (epoch bumped mid-await, its
+                // entry already cleared by flush) removes a no-op key and must not drive
+                // the queue for the new stream, so gate the drain on the current epoch.
+                historyTileTasks[taskID] = nil
+                if epoch == historyTileEpoch {
+                    drainHistoryTileQueue()
+                }
+            }
             do {
-                let tile = try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
-                                                        lineCount: lineCount, generationId: generation)
-                // A reflow/resize (or reconnect) between request and reply bumps the
-                // generation and re-renders every tile, so a reply for the old
-                // generation must not be cached or shown as current.
+                let tile = try await withTimeout(historyTileTimeout, "History tile") {
+                    try await client.historyTile(streamID: streamID, firstAbsLine: firstAbsLine,
+                                                 lineCount: lineCount, generationId: generation)
+                }
+                // A stream transition (session switch / reconnect) since the request
+                // started makes this reply belong to a dead stream; it must not be
+                // cached (its absolute-line key would collide in the new stream).
+                guard epoch == historyTileEpoch else {
+                    companionLog("historyTile stale epoch firstAbs=\(firstAbsLine) reqEpoch=\(epoch) now=\(historyTileEpoch)")
+                    completion(.throttled)
+                    return
+                }
+                // A reflow/resize between request and reply bumps the generation and
+                // re-renders every tile, so a reply for the old generation must not be
+                // cached or shown as current.
                 guard generation == activeStreamGeneration else {
                     companionLog("historyTile stale gen firstAbs=\(firstAbsLine) reqGen=\(generation) now=\(activeStreamGeneration)")
-                    completion(nil)
+                    completion(.throttled)
                     return
                 }
                 // The host clamps to the available window and reports the range it
@@ -3473,22 +3856,108 @@ final class AppModel {
                 // it as a miss rather than poisoning the cache with misplaced content.
                 guard tile.firstAbsLine == firstAbsLine else {
                     companionLog("historyTile origin drift req=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount)")
-                    completion(nil)
+                    completion(.failed)
                     return
                 }
                 guard tile.lineCount > 0, let image = UIImage(data: tile.pngData) else {
                     companionLog("historyTile reply firstAbs=\(firstAbsLine) lineCount=\(tile.lineCount) bytes=\(tile.pngData.count) -> \(tile.lineCount == 0 ? "evicted" : "undecodable")")
-                    completion(nil)
+                    completion(.failed)
                     return
                 }
                 historyTileCache[firstAbsLine] = image
                 companionLog("historyTile ok firstAbs=\(firstAbsLine) covered=\(tile.firstAbsLine)+\(tile.lineCount) bytes=\(tile.pngData.count)")
-                completion(image)
+                completion(.image(image))
+            } catch is CancellationError {
+                // Cancelled by flushHistoryTileThrottle on a stream transition: transient,
+                // so keep any current image rather than flashing a failure.
+                companionLog("historyTile cancelled firstAbs=\(firstAbsLine)")
+                completion(.throttled)
             } catch {
                 companionLog("historyTile FAIL firstAbs=\(firstAbsLine): \(error)")
-                completion(nil)
+                completion(.failed)
             }
         }
+        historyTileTasks[taskID] = task
+    }
+
+    /// Pull queued tile requests into freed in-flight slots. A queued request from a
+    /// superseded epoch is neutralized (reported .throttled) rather than sent against
+    /// the current stream, since its line ranges belong to a different session.
+    private func drainHistoryTileQueue() {
+        while historyTileTasks.count < maxHistoryTilesInFlight, !historyTilePending.isEmpty {
+            let next = historyTilePending.removeFirst()
+            guard next.epoch == historyTileEpoch else {
+                companionLog("historyTile drop (stale epoch queued) firstAbs=\(next.firstAbsLine) reqEpoch=\(next.epoch) now=\(historyTileEpoch)")
+                reportThrottled(next.completion)
+                continue
+            }
+            sendHistoryTile(firstAbsLine: next.firstAbsLine, lineCount: next.lineCount,
+                            epoch: next.epoch, completion: next.completion)
+        }
+        // Spare capacity opened up after we had rejected requests: nudge the canvas to
+        // re-request what it still wants. Gated on the overflow flag so ordinary
+        // scrolling (which never overflows) does not fire this on every completion.
+        if historyTileOverflowed, historyTileTasks.count < maxHistoryTilesInFlight, historyTilePending.isEmpty {
+            historyTileOverflowed = false
+            onHistoryTileSlotAvailable?()
+        }
+    }
+
+    /// Neutralize the tile throttle on a stream transition: bump the epoch (so any
+    /// straddling request from the old stream becomes a no-op), cancel the prior
+    /// stream's in-flight fetches (so they stop occupying the wire and cannot push real
+    /// concurrency past the cap across rapid switches; clearing the task set also resets
+    /// the in-flight count, which IS that set's size), and report every queued request
+    /// as throttled so the canvas keeps its images and re-requests against the new stream.
+    /// A dead stream must neutralize the tile throttle before its id is dropped, so
+    /// stale in-flight/queued requests do not hit the relay or poison the next stream.
+    /// One helper keeps that pairing in a single place across the transition sites.
+    private func neutralizeDeadStream() {
+        flushHistoryTileThrottle()
+        activeStreamID = nil
+    }
+
+    private func flushHistoryTileThrottle() {
+        historyTileEpoch &+= 1
+        // Cancel a snapshot: a cancelled fetch's defer removes itself (a no-op on the
+        // cleared set) and, being from the now-stale epoch, will not drive the queue.
+        let tasks = historyTileTasks
+        historyTileTasks = [:]
+        for task in tasks.values {
+            task.cancel()
+        }
+        historyTileOverflowed = false
+        let dropped = historyTilePending
+        historyTilePending = []
+        // Batch into a single deferred turn (rather than one Task per entry) while
+        // preserving the non-re-entrant "fresh main-actor turn" contract.
+        Task { @MainActor in
+            for entry in dropped {
+                entry.completion(.throttled)
+            }
+        }
+        // A flush turns some on-screen tiles into spinners (cancelled/queued requests
+        // report .throttled, which keeps the loading state). Nudge the canvas to
+        // re-request once, so a transition that leaves geometry unchanged (reconnect,
+        // resume, streamEnded) still recovers instead of spinning forever. Coalesced and
+        // stream-gated on the view side, so it cannot busy-loop; if no stream is live yet
+        // (reconnect in progress) the view's applyLayout re-drives once it is.
+        onHistoryTileSlotAvailable?()
+    }
+
+    /// Deliver a `.throttled` outcome asynchronously. Callers report throttled drops
+    /// from inside their own loops (requestHistoryTile/drainHistoryTileQueue); the
+    /// SessionView completion mutates tile state and can re-drive refreshTiles, so it
+    /// must not run re-entrantly. Deferring to a fresh main-actor turn preserves the
+    /// "completions are async except a cache hit" contract.
+    private func reportThrottled(_ completion: @escaping (HistoryTileOutcome) -> Void) {
+        Task { @MainActor in completion(.throttled) }
+    }
+
+    /// Deliver a `.failed` outcome asynchronously, preserving the same non-re-entrant
+    /// contract as reportThrottled (the caller may be mid-loop in refreshTiles).
+    private func reportFailed(_ completion: @escaping (HistoryTileOutcome) -> Void) {
+        Task { @MainActor in completion(.failed) }
     }
 
     /// The view-space rect the video occupies (excluding letterbox bars), or the
@@ -3535,6 +4004,44 @@ final class AppModel {
     func pasteIntoActiveSession() {
         guard let client, let guid = liveWatchGuid, let text = UIPasteboard.general.string, !text.isEmpty else { return }
         Task { try? await client.pasteText(sessionGuid: guid, text: text) }
+    }
+
+    /// Resize the live session's grid so terminal text is legible on this phone:
+    /// 40 columns in portrait, 80 in landscape, and however many rows of that font
+    /// fill the viewport vertically. `viewSize` is the live canvas area in points.
+    /// No-op without an active stream, reported geometry, or a real viewport.
+    func resizeActiveSessionForLegibility(viewSize: CGSize) {
+        guard let client, let guid = liveWatchGuid, let layout = liveCanvasLayout,
+              viewSize.width > 0, viewSize.height > 0 else {
+            return
+        }
+        // Font-independent cell aspect (width/height) in encoded pixels: prefer the
+        // reported cell geometry, else derive it from the frame pixels over the grid.
+        let cellWidthPx: CGFloat
+        let cellHeightPx: CGFloat
+        if let geometry = layout.cellGeometry, geometry.cellWidth > 0, geometry.cellHeight > 0 {
+            cellWidthPx = geometry.cellWidth
+            cellHeightPx = geometry.cellHeight
+        } else if layout.columns > 0, layout.rows > 0,
+                  layout.imageSize.width > 0, layout.imageSize.height > 0 {
+            cellWidthPx = layout.imageSize.width / CGFloat(layout.columns)
+            cellHeightPx = layout.imageSize.height / CGFloat(layout.rows)
+        } else {
+            return
+        }
+        guard cellWidthPx > 0, cellHeightPx > 0 else { return }
+
+        let columns = viewSize.width > viewSize.height ? 80 : 40
+        // Pick a font so `columns` cells span the width, then count how many rows of
+        // that same font fill the height.
+        let cellPointWidth = viewSize.width / CGFloat(columns)
+        let cellPointHeight = cellPointWidth * cellHeightPx / cellWidthPx
+        guard cellPointHeight > 0 else { return }
+        let rows = Int((viewSize.height / cellPointHeight).rounded(.down))
+        guard rows > 0 else { return }
+
+        companionLog("Resize session \(guid) for legibility: \(columns)x\(rows) (viewport \(Int(viewSize.width))x\(Int(viewSize.height)))")
+        Task { try? await client.resizeSession(sessionGuid: guid, columns: columns, rows: rows) }
     }
 
     /// The mac kicked this device: forget the pairing and go back to the scan
@@ -3717,6 +4224,19 @@ extension AppModel {
     /// deletion-teardown logic can be tested without a live connection.
     func testInstallWatch(chatID: String, token: UUID) {
         watchState.install(chatID: chatID, subscribedHere: false, token: token)
+    }
+    func testSetMacRevision(_ revision: Int) { macRevision = revision }
+    func testNoteTyping(isTyping: Bool, chatID: String) {
+        noteWatchedTypingStatus(isTyping: isTyping, chatID: chatID)
+    }
+    func testNoteTurnLifecycle(_ event: TurnEvent, chatID: String) {
+        // Route through the SAME helper the wire handler uses, so tests exercise the
+        // production acceptance gate rather than a re-implemented copy.
+        acceptTurnLifecycle(event, chatID: chatID)
+    }
+    func testResetLastReplyFireBody() { testLastReplyFireBody = nil }
+    func testNoteDelivery(_ message: Message, chatID: String) {
+        noteWatchedSessionDelivery(message, chatID: chatID)
     }
 }
 #endif

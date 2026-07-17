@@ -75,8 +75,10 @@ final class CompanionHostBridge {
     private var nextHostRequestID: UInt64 = 1
 
     /// Called once the transport closes remotely, so the owner can drop this
-    /// bridge. A user-initiated stop() does not fire it.
-    var onClose: (@MainActor () -> Void)?
+    /// bridge. A user-initiated stop() does not fire it. Carries the terminating
+    /// transport error (e.g. `.quotaExceeded`) so the owner can distinguish a relay
+    /// quota teardown from ordinary loss and back off; nil when unavailable.
+    var onClose: (@MainActor (Error?) -> Void)?
 
     /// Called when the phone announces it is unpairing.
     var onPeerUnpaired: (@MainActor () -> Void)?
@@ -296,12 +298,14 @@ final class CompanionHostBridge {
         // can block forever -- we'd see "started" but never "receive FAILED" or
         // "exited", confirming the wedge (no teardown, no re-park).
         RLog("bridge receiveLoop started")
+        var dropError: Error?
         while true {
             let frame: Data
             do {
                 frame = try await transport.receive()
             } catch {
                 RLog("bridge receiveLoop receive() FAILED (drop detected): \(error)")
+                dropError = error
                 break
             }
             guard let envelope = try? WireCoding.decode(ClientEnvelope.self, from: frame) else {
@@ -312,7 +316,7 @@ final class CompanionHostBridge {
         }
         RLog("bridge receiveLoop exited -> teardownStreams + onClose (will re-park)")
         teardownStreams()
-        onClose?()
+        onClose?(dropError)
     }
 
     private func handle(_ envelope: ClientEnvelope) {
@@ -470,8 +474,76 @@ final class CompanionHostBridge {
         case .selectAllInStream(let streamID):
             handleSelectAll(streamID: streamID)
         case .pasteText(let sessionGuid, let text):
-            iTermController.sharedInstance().anySession(withGUID: sessionGuid)?.paste(text, flags: [])
+            iTermController.sharedInstance().anySession(forReference: sessionGuid)?.paste(text, flags: [])
+        case .resizeSession(let sessionGuid, let columns, let rows):
+            handleResizeSession(guid: sessionGuid, columns: columns, rows: rows)
+        case .fetchAutoProvideConsent(let sessionGuid):
+            send(.autoProvideConsent(satisfied: Self.autoProvideConsentSatisfied(sessionGuid: sessionGuid)),
+                 requestID: requestID)
+        case .grantAutoProvideConsent(let chatID):
+            handleGrantAutoProvideConsent(chatID: chatID)
         }
+    }
+
+    /// Whether auto-providing terminal state + the visible screen is already in
+    /// effect for the chat the phone would send to for this session: the session's
+    /// most recent session-bound chat if one exists, else a new chat (whose
+    /// permissions start at the global default). Both Check Terminal State and View
+    /// Contents must be "provided automatically" (.always).
+    static func autoProvideConsentSatisfied(sessionGuid: String) -> Bool {
+        // Auto-send is gated on the global consent too (ChatAgent.shouldSuppressAutoProvide),
+        // so "satisfied" must require it; otherwise the phone would skip its
+        // "Share This Session?" modal while the mac still suppresses the auto-send.
+        guard iTermUserDefaults.autoProvideConsent == .granted else { return false }
+        let rce = RemoteCommandExecutor.instance
+        // An empty chatID has no per-chat override, so permission() falls back to the
+        // global default - exactly what a not-yet-created chat would inherit.
+        let chatID = ChatListModel.instance?.mostRecentChat(forGuid: sessionGuid)?.id ?? ""
+        return rce.permission(chatID: chatID, inSessionGuid: sessionGuid, category: .checkTerminalState) == .always
+            && rce.permission(chatID: chatID, inSessionGuid: sessionGuid, category: .viewContents) == .always
+    }
+
+    /// Grant "provided automatically" for Check Terminal State and View Contents on an
+    /// already-resolved session-bound chat, so its turns carry the terminal state and
+    /// visible screen. The phone sends this after the user approves its consent modal.
+    private func handleGrantAutoProvideConsent(chatID: String) {
+        guard let listModel = ChatListModel.instance,
+              let guid = listModel.chat(id: chatID)?.terminalSessionGuid else {
+            RLog("grantAutoProvideConsent: chat \(chatID) has no linked session; ignoring")
+            return
+        }
+        for category in [RemoteCommand.Content.PermissionCategory.checkTerminalState, .viewContents] {
+            try? listModel.setPermission(chat: chatID, permission: .always, guid: guid, category: category)
+        }
+        // The phone showed its own "Share This Session?" consent modal, so this is an
+        // explicit informed consent: record it globally so the mac's auto-send gate
+        // (ChatAgent.shouldSuppressAutoProvide) lets it through.
+        iTermUserDefaults.autoProvideConsent = .granted
+        RLog("grantAutoProvideConsent: granted provided-automatically for chat \(chatID) session \(guid)")
+    }
+
+    /// Resize a session's grid on behalf of the phone. The phone computes a
+    /// legible column count for its screen and how many rows fill it; we clamp to
+    /// sane bounds so a stale or hostile peer cannot request an absurd grid, then
+    /// drive the same terminal-initiated resize path the escape sequence uses.
+    private func handleResizeSession(guid: String, columns: Int, rows: Int) {
+        guard let session = iTermController.sharedInstance().anySession(forReference: guid) else {
+            return
+        }
+        // Re-validate server-side rather than trusting the phone's (advisory, and
+        // possibly stale) UI gate: reallySetCellSize: applies none of the guards
+        // screenSetSize: does, and the delegate only re-checks full screen -- not the
+        // width lock. This single check covers full screen, width-locked, and
+        // non-resizable window types authoritatively, so a width-locked session
+        // cannot be resized from the phone even if its button was left enabled.
+        guard session.companionSessionCanResizeWindow() else {
+            return
+        }
+        let clampedColumns = Int32(min(max(columns, 1), 4096))
+        let clampedRows = Int32(min(max(rows, 1), 4096))
+        // reallySetCellSize: reads proposedSize.width as the row count and
+        // proposedSize.height as the column count (see PTYSession.h).
+        session.reallySetCellSize(VT100GridSize(width: clampedRows, height: clampedColumns))
     }
 
     // MARK: Live streaming
@@ -484,7 +556,7 @@ final class CompanionHostBridge {
                                         mode: CompanionSelectionMode,
                                         point: CompanionSelectionPoint) {
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             return
         }
@@ -582,7 +654,7 @@ final class CompanionHostBridge {
 
     private func handleSelectAll(streamID: UInt32) {
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             return
         }
@@ -597,7 +669,7 @@ final class CompanionHostBridge {
 
     private func handleClearSelection(streamID: UInt32) {
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             return
         }
@@ -675,6 +747,60 @@ final class CompanionHostBridge {
         return (lo, VT100GridAbsCoordMake(hi.x &+ 1, hi.y))
     }
 
+    /// The unsolicited state snapshots to send to a phone that has just
+    /// subscribed, in addition to `.history`, so a turn already in flight is
+    /// reflected on the phone. Pure so it is unit-testable without a live bridge.
+    /// `agentTyping` is TypingStatusModel's current value for the chat.
+    ///
+    /// Both snapshots are sent ONLY when BOTH ends are at turnLifecycleRevision
+    /// (gated on the min of this mac's own `current` and the peer's revision). Such
+    /// a phone treats typing as a spinner-only hint and drives its reply
+    /// notification off the explicit turnLifecycle boundary. Both ends matter: the
+    /// phone keys that behavior on the MAC's revision (it must see macRevision >=
+    /// turnLifecycleRevision, i.e. our `current`), and a legacy phone lacks the gate
+    /// entirely - it would mis-arm its reply trigger from a typing(true) snapshot,
+    /// reintroducing the "false fires from replayed-but-incomplete state" the
+    /// reconnect handler's resetWatchedReplyState() deliberately prevents. So a
+    /// legacy pairing gets nothing. At current < turnLifecycleRevision the min is <
+    /// the threshold, so this is dormant until the version bump.
+    ///
+    /// - `agentTyping` (TypingStatusModel): re-seeds the spinner. False during a
+    ///   park (a park clears typing), which is correct - no spinner while waiting.
+    /// - `turnInProgress` (TurnStatusModel): seeds turnLifecycle(.started) so the
+    ///   phone's reply trigger is armed for a turn it joined mid-flight. Stays true
+    ///   ACROSS a park (that is why TurnStatusModel exists), so a phone subscribing
+    ///   during a park still fires when the turn eventually ends, rather than
+    ///   dropping the reply on the trigger's turnStarted guard.
+    /// Whether a peer consumes the explicit turnLifecycle event: BOTH ends must be
+    /// at turnLifecycleRevision. The phone keys its "typing is spinner-only, drive
+    /// boundaries off turnLifecycle" behavior on the MAC's revision, and a legacy
+    /// phone lacks the gate entirely. The ONE predicate every turnLifecycle SEND
+    /// site routes through - the subscribe seed (turnLifecycle(.started)) and the
+    /// live-forward boundary (turnLifecycle(.ended)) - so they can't diverge: a
+    /// phone seeded .started must be the same phone that later receives the live
+    /// .ended, or the reply never fires.
+    nonisolated static func peerConsumesTurnLifecycle(localRevision: Int, peerRevision: Int) -> Bool {
+        min(localRevision, peerRevision) >= CompanionProtocolVersion.turnLifecycleRevision
+    }
+
+    nonisolated static func subscribeSnapshotMessages(chatID: String,
+                                                      agentTyping: Bool,
+                                                      turnInProgress: Bool,
+                                                      localRevision: Int,
+                                                      peerRevision: Int) -> [CompanionHostMessage] {
+        guard peerConsumesTurnLifecycle(localRevision: localRevision, peerRevision: peerRevision) else {
+            return []
+        }
+        var messages: [CompanionHostMessage] = []
+        if agentTyping {
+            messages.append(.typingStatus(isTyping: true, participant: .agent, chatID: chatID))
+        }
+        if turnInProgress {
+            messages.append(.turnLifecycle(event: .started, chatID: chatID))
+        }
+        return messages
+    }
+
     private func currentSelectionRange(_ textview: PTYTextView) -> CompanionSelectionRange? {
         guard let selection = textview.selection, selection.hasSelection else { return nil }
         let span = selection.spanningAbsRange
@@ -698,7 +824,7 @@ final class CompanionHostBridge {
     }
 
     private func handleCopySelection(guid: String, requestID: UInt64?) {
-        let text = iTermController.sharedInstance().anySession(withGUID: guid)?.textview?.selectedText
+        let text = iTermController.sharedInstance().anySession(forReference: guid)?.textview?.selectedText
         send(.selectionText(text: text ?? ""), requestID: requestID)
     }
 
@@ -787,7 +913,7 @@ final class CompanionHostBridge {
 
     private func driveStream(_ streamID: UInt32) {
         guard let context = streams[streamID] else { return }
-        guard let session = iTermController.sharedInstance().anySession(withGUID: context.guid) else {
+        guard let session = iTermController.sharedInstance().anySession(forReference: context.guid) else {
             endStream(streamID, reason: .sessionClosed)
             return
         }
@@ -908,6 +1034,21 @@ final class CompanionHostBridge {
         let maxSeq = ChatDatabase.instance?.maxSeq(chatID: chatID) ?? 0
         send(.history(chatID: chatID, messages: history(chatID: chatID), maxSeq: maxSeq),
              requestID: requestID)
+        // Snapshot current live state (unsolicited), so a turn already in flight
+        // when the phone subscribes is reflected there. Sent after history in the
+        // same synchronous main-actor block, so it strictly precedes any live
+        // delivery from the subscription above. Gated on the peer's revision (see
+        // subscribeSnapshotMessages) so a legacy phone can't mis-arm its reply
+        // trigger from the snapshot.
+        let agentTyping = TypingStatusModel.instance.isTyping(participant: .agent, chatID: chatID)
+        let turnInProgress = TurnStatusModel.instance.inProgress(chatID: chatID)
+        for message in Self.subscribeSnapshotMessages(chatID: chatID,
+                                                       agentTyping: agentTyping,
+                                                       turnInProgress: turnInProgress,
+                                                       localRevision: CompanionProtocolVersion.current,
+                                                       peerRevision: CompanionPushRegistry.peerRevision) {
+            send(message, requestID: nil)
+        }
     }
 
     /// Relay-push: resolve the opaque per-chat collapse token back to a chat,
@@ -1274,6 +1415,13 @@ final class CompanionHostBridge {
                         alertReset: alertReset,
                         truncated: truncated),
              requestID: requestID)
+        // Advance the global wakeup coordinator's record of how far the NSE has now
+        // fetched, so its stateless render check reasons about the phone's real floor
+        // and a trailing wakeup fires only if renderable content remains above it.
+        CompanionWakeupCoordinator.shared.noteNSEFetch(messageFloor: messageFloorTarget,
+                                                       alertFloor: alertFloorTarget,
+                                                       messageReset: messageReset,
+                                                       alertReset: alertReset)
     }
 
     private func handlePublish(message: Message, toChatID chatID: String) {
@@ -1303,6 +1451,17 @@ final class CompanionHostBridge {
         case .typingStatus(let isTyping, let participant):
             send(.typingStatus(isTyping: isTyping, participant: participant, chatID: chatID),
                  requestID: nil)
+        case .turnLifecycle(let event):
+            // Forward only to a peer that CONSUMES turnLifecycle - the SAME predicate
+            // the subscribe seed uses (peerConsumesTurnLifecycle), so the .started
+            // seed and this live .ended can never diverge. Others infer boundaries
+            // from the typing edges we still emit. Dormant until `current` reaches
+            // turnLifecycleRevision (then min(current, peer) reduces to peer).
+            guard Self.peerConsumesTurnLifecycle(localRevision: CompanionProtocolVersion.current,
+                                                 peerRevision: CompanionPushRegistry.peerRevision) else {
+                return
+            }
+            send(.turnLifecycle(event: event, chatID: chatID), requestID: nil)
         }
     }
 
@@ -1320,12 +1479,16 @@ final class CompanionHostBridge {
     private func performLinkSession(chatID: String, guid: String, terminal: Bool) {
         guard let listModel = ChatListModel.instance else { return }
         do {
+            // Store the reload-durable stableID (mirroring ChatViewController.link)
+            // so a phone-linked chat survives a shell reload that rotates the guid.
+            let session = iTermController.sharedInstance().anySession(forReference: guid)
+            let reference = session?.stableID ?? guid
             if terminal {
-                try listModel.setTerminalGuid(for: chatID, to: guid)
+                try listModel.setTerminalGuid(for: chatID, to: reference)
             } else {
-                try listModel.setBrowserGuid(for: chatID, to: guid)
+                try listModel.setBrowserGuid(for: chatID, to: reference)
             }
-            let name = iTermController.sharedInstance().anySession(withGUID: guid)?.name ?? guid
+            let name = session?.name ?? guid
             try ChatClient.instance?.publishNotice(
                 chatID: chatID,
                 notice: "This chat has been linked to \(terminal ? "terminal" : "browser") session “\(name)”.")
@@ -1405,7 +1568,7 @@ final class CompanionHostBridge {
                                  text: "The user declined to allow this function call to execute.")
         case .allowOnce, .allowAlways:
             guard let guid,
-                  let session = iTermController.sharedInstance().anySession(withGUID: guid) else {
+                  let session = iTermController.sharedInstance().anySession(forReference: guid) else {
                 try? client.publishNotice(chatID: chatID,
                                           notice: "This chat is not linked to any \(browser ? "web browser" : "terminal") session.")
                 declineRemoteCommand(chatID: chatID,
@@ -1447,7 +1610,7 @@ final class CompanionHostBridge {
     /// or cannot render yet (a workgroup member whose session has not
     /// launched has a zero-size textview, which renders nothing).
     private func contentSession(guid: String, requestID: UInt64?) -> PTYSession? {
-        guard let session = iTermController.sharedInstance().anySession(withGUID: guid),
+        guard let session = iTermController.sharedInstance().anySession(forReference: guid),
               let textview = session.textview else {
             send(.error(CompanionError(code: .unknownSession,
                                        message: "That session no longer exists. It may have been closed.")),
@@ -1556,7 +1719,7 @@ final class CompanionHostBridge {
                                         requestID: UInt64?) {
         RLog("Companion historyTile req stream=\(streamID) firstAbs=\(firstAbsLine) lineCount=\(lineCount) gen=\(generationId)")
         guard let context = streams[streamID],
-              let session = iTermController.sharedInstance().anySession(withGUID: context.guid),
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid),
               let textview = session.textview else {
             RLog("Companion historyTile FAIL: no such stream \(streamID)")
             send(.error(CompanionError(code: .badRequest, message: "No such stream.")), requestID: requestID)
@@ -1625,7 +1788,7 @@ final class CompanionHostBridge {
             }
             let status = session.tabStatus
             return CompanionWorkgroupMember(roleName: roleName,
-                                            sessionGuid: session.guid,
+                                            sessionGuid: session.stableID,
                                             sessionName: session.name,
                                             statusText: status?.statusText?.nilIfEmpty,
                                             detailText: status?.detailText?.nilIfEmpty,

@@ -35,6 +35,13 @@ enum WatchMode: String, Codable {
 // condition absent.
 struct WorkgroupWatcher: Codable, Equatable {
     var watcherID: String
+    // The session this watcher targets, identified by a reload-durable
+    // reference: the session's stableID for watchers registered under
+    // reference keying, or a raw guid for watchers persisted before it.
+    // Match through `targets(stableID:guid:)`, never a bare `==`: a
+    // stableID-keyed watcher must follow an in-place shell reload (which
+    // rotates the guid but keeps the stableID), while a legacy guid-keyed
+    // watcher still matches its original session. The field name is historical.
     var sessionGUID: String
     var workgroupID: String
     var workgroupName: String
@@ -63,6 +70,19 @@ struct WorkgroupWatcher: Codable, Equatable {
             return "condition '\(condition)'"
         }
         return "state '\(targetState?.rawValue ?? "unknown")'"
+    }
+
+    // Whether this watcher targets the session identified by `stableID` (its
+    // reload-durable id, nil when the session can't be resolved) and `guid`
+    // (its current, rotating id). A watcher keyed on the stableID follows a
+    // shell reload; a legacy watcher keyed on a guid matches only its original
+    // (unrotated) session. Comparing against both covers both keyings and is
+    // the single chokepoint through which every watcher/session match runs.
+    func targets(stableID: String?, guid: String) -> Bool {
+        if let stableID, sessionGUID == stableID {
+            return true
+        }
+        return sessionGUID == guid
     }
 }
 

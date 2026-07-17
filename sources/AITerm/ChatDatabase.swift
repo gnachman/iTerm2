@@ -13,12 +13,22 @@ enum ChatDatabaseQueryError: Error {
 class ObjCChatDatabase: NSObject {
     @objc static let redrawTerminalsNotification = Notification.Name("iTermChatDatabaseRedrawTerminals")
 
-    @objc(chatIDsForSession:)
-    static func chatIDsForSession(withGUID guid: String) -> Set<String> {
+    @objc(chatIDsForSessionGuid:stableID:)
+    static func chatIDsForSession(guid: String, stableID: String?) -> Set<String> {
         guard let instance = ChatDatabase.instanceIfExists else {
             return []
         }
-        return instance.terminalSessionToChatMap[guid] ?? Set()
+        // A chat is indexed under whichever reference it stored (stableID or
+        // legacy guid). The caller passes the session's own {guid, stableID}
+        // pair, so this stays a plain map lookup on the draw hot path instead of
+        // re-resolving the guid through the whole session tree.
+        var result = Set<String>()
+        for key in [guid, stableID].compactMap({ $0 }) {
+            if let ids = instance.terminalSessionToChatMap[key] {
+                result.formUnion(ids)
+            }
+        }
+        return result
     }
 
     @objc(unlinkSessionGuid:)
@@ -28,9 +38,10 @@ class ObjCChatDatabase: NSObject {
             let chats = instance.chats else {
                 return
             }
+            let keys = iTermSessionReferenceKeys(forGuid: sessionGuid)
             for i in 0..<chats.count {
                 let chat = chats[i]
-                if chat.isLinked(toSessionGuid: sessionGuid) {
+                if chat.isLinked(toReferenceIn: keys) {
                     var temp = chats[i]
                     let wasTerminal = temp.terminalSessionGuid != nil
                     temp.terminalSessionGuid = nil
@@ -50,7 +61,14 @@ class ObjCChatDatabase: NSObject {
 
     @objc(firstChatIDForSessionGuid:)
     static func firstChatID(forSessionGuid sessionGuid: String) -> String? {
-        return ChatDatabase.instance?.chats?.first { $0.terminalSessionGuid == sessionGuid }?.id
+        // Terminal-only: the sole caller (the "reveal AI chat for session" deep
+        // link) passes a terminal session guid, so match only the terminal
+        // binding (isLinked(toReferenceIn:) would also match browser bindings).
+        let keys = iTermSessionReferenceKeys(forGuid: sessionGuid)
+        return ChatDatabase.instance?.chats?.first {
+            guard let terminal = $0.terminalSessionGuid else { return false }
+            return keys.contains(terminal)
+        }?.id
     }
 }
 
@@ -273,7 +291,7 @@ class ChatDatabase {
         return (messages, maxSeqValue)
     }
 
-    /// The chat's current max seq (0 if it has no messages).
+    /// The chat's current max seq (0 if it has no messages or on a read error).
     func maxSeq(chatID: String) -> Int64 {
         let (sql, args) = Message.maxSeqQuery(chatID: chatID)
         do {
@@ -289,6 +307,38 @@ class ChatDatabase {
     }
 
     // MARK: Contentless-wakeup (syncSince) reads
+
+    /// Stateless "would the next syncSince return anything the NSE renders?" check,
+    /// used by the wakeup coordinator INSTEAD of a drifting mac-side high-water mark.
+    /// Reuses the ONE render predicate (Message.isCompanionRenderable) plus the
+    /// caller's muted-chat set, and scans the SAME oldest-first window the responder
+    /// drains, so "outstanding" here agrees with "the fetch shows something". Bounded
+    /// by `windowLimit`: if more than that many non-renderable rows sit above the
+    /// message floor before any renderable one, it under-reports (a later check or the
+    /// next fetch catches it) - the same boundedness the responder's own window has.
+    /// A failed/empty read is reported as "nothing" (no push; self-heals next time).
+    func hasRenderableContentSince(messageSeq: Int64,
+                                   alertSeq: Int64,
+                                   mutedChatIDs: Set<String>,
+                                   windowLimit: Int = 400) -> Bool {
+        if let probe = messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
+                                           windowLimit: windowLimit,
+                                           ascending: true) {
+            let answered = Message.answeredRequestIDs(in: probe.rows.lazy.map { $0.message })
+            for row in probe.rows where !mutedChatIDs.contains(row.message.chatID) {
+                if row.message.isCompanionRenderable
+                    && !row.message.isResolvedClassicRequest(answeredRequestIDs: answered) {
+                    return true
+                }
+            }
+        }
+        // Any alert above the alert floor renders (alerts have no per-chat mute).
+        if let alertProbe = alertsSince(sinceSeq: max(alertSeq, 0), limit: 1),
+           !alertProbe.alerts.isEmpty {
+            return true
+        }
+        return false
+    }
 
     /// For the unified syncSince responder: a newest-first window of rows ACROSS
     /// ALL CHATS with seq greater than `sinceSeq`, each paired with its seq (the

@@ -26,25 +26,18 @@ final class CompanionAgentActivityNotifier {
         case userActionRequired  // permission / session pick: bypasses the debounce
     }
 
-    private let debounceInterval: TimeInterval
-    private let clock: () -> Date
     private let gate: () -> Bool
     private let muted: (_ chatID: String) -> Bool
     private let resolve: (_ streamID: UUID, _ chatID: String) -> Message?
-    private let send: (_ chatID: String) -> Void
-    private var lastFire: [String: Date] = [:]
+    private let send: (_ trigger: Trigger, _ chatID: String) -> Void
     private var subscription: ChatBroker.Subscription?
 
     private static var shared: CompanionAgentActivityNotifier?
 
-    init(debounceInterval: TimeInterval = 30,
-         clock: @escaping () -> Date = { Date() },
-         gate: @escaping () -> Bool,
+    init(gate: @escaping () -> Bool,
          muted: @escaping (String) -> Bool = { _ in false },
          resolve: @escaping (UUID, String) -> Message?,
-         send: @escaping (String) -> Void) {
-        self.debounceInterval = debounceInterval
-        self.clock = clock
+         send: @escaping (Trigger, String) -> Void) {
         self.gate = gate
         self.muted = muted
         self.resolve = resolve
@@ -68,9 +61,19 @@ final class CompanionAgentActivityNotifier {
                 return nil
             }
             return .turnComplete
-        case .remoteCommandRequest, .selectSessionRequest:
-            // The agent is blocked waiting on the user; always worth a nudge,
-            // turn boundary or not.
+        case .remoteCommandRequest(let payload, safe: _):
+            // A .classic request has Allow/Deny and genuinely BLOCKS on the user, so
+            // it is worth a nudge. A .external request is an orchestration tool call,
+            // auto-executed with no per-call user decision (its permission gate is the
+            // workgroup claim, not the command) - the agent is not blocked, so ignore
+            // it. Firing for .external was the source of the push flood + the silent
+            // placeholders: those requests never render, so their wakeups drained empty.
+            switch payload {
+            case .classic: return .userActionRequired
+            case .external: return nil
+            }
+        case .selectSessionRequest:
+            // The agent is blocked waiting for the user to pick a session.
             return .userActionRequired
         default:
             // Non-streamed final reply: committed (partial:false), visible,
@@ -88,38 +91,51 @@ final class CompanionAgentActivityNotifier {
 
     // MARK: Handle (unit-tested)
 
-    /// Apply gating + per-chat debounce and fire send(chatID) when warranted.
+    /// Apply gating and fire send(trigger, chatID) when warranted. Coalescing /
+    /// rate-limiting is the global coordinator's job, so there is no per-chat debounce
+    /// here (the old one was stamped by the userActionRequired stream and starved real
+    /// replies).
     func handle(message: Message, chatID: String, partial: Bool) {
         // Flow logging only; never the message content.
         guard let trigger = trigger(for: message, partial: partial, chatID: chatID) else {
-            DLog("CompanionAgentActivityNotifier: no trigger for delivery in \(chatID) (partial=\(partial), author=\(message.author))")
+            // Make the noisy "why didn't this notify" case field-visible without a DB
+            // query: an ignored orchestration tool call. Other ignorable deltas
+            // (streaming, user messages, hidden bookkeeping) stay at DLog.
+            if case .remoteCommandRequest(.external, _) = message.content {
+                RLog("CompanionAgentActivityNotifier: ignoring .external command in \(chatID) "
+                     + "(orchestration, auto-executed; not a nudge)")
+            } else {
+                DLog("CompanionAgentActivityNotifier: no trigger for delivery in \(chatID) "
+                     + "(partial=\(partial), author=\(message.author), kind=\(Self.kind(of: message.content)))")
+            }
             return
         }
-        // Gate last: don't even consult the debounce when we wouldn't send.
         guard gate() else {
             DLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) gated off (not paired, phone connected, or notifications off)")
             return
         }
-        // A muted chat gets no push at all, not even userActionRequired; the
-        // debounce is left untouched so unmuting doesn't inherit a stale stamp.
-        // RLog (not DLog): rare (at most once per completed turn) and exactly
-        // what a field debug log needs to show when muting misbehaves.
+        // A muted chat gets no push at all, not even a nudge. RLog (not DLog): rare and
+        // exactly what a field log needs when muting misbehaves.
         guard !muted(chatID) else {
             RLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) suppressed (chat is muted)")
             return
         }
-        let now = clock()
-        if trigger == .turnComplete,
-           let last = lastFire[chatID],
-           now.timeIntervalSince(last) < debounceInterval {
-            DLog("CompanionAgentActivityNotifier: turnComplete in \(chatID) debounced (\(Int(now.timeIntervalSince(last)))s < \(Int(debounceInterval))s)")
-            return
+        RLog("CompanionAgentActivityNotifier: firing \(trigger) for \(chatID) "
+             + "(kind=\(Self.kind(of: message.content)))")
+        send(trigger, chatID)
+    }
+
+    /// A coarse, content-free label for the delivery kind, for field logging.
+    private static func kind(of content: Message.Content) -> String {
+        switch content {
+        case .remoteCommandRequest(.classic, _): return "remoteCommandRequest(.classic)"
+        case .remoteCommandRequest(.external, _): return "remoteCommandRequest(.external)"
+        case .selectSessionRequest: return "selectSessionRequest"
+        case .markdown: return "markdown"
+        case .multipart: return "multipart"
+        case .commit: return "commit"
+        default: return "other"
         }
-        // userActionRequired bypasses the debounce but still updates it, so an
-        // immediately-following turn-complete in the same chat doesn't double-fire.
-        lastFire[chatID] = now
-        RLog("CompanionAgentActivityNotifier: firing \(trigger) push for \(chatID)")
-        send(chatID)
     }
 
     /// Whether a message has real content worth a notification. Uses the SAME
@@ -159,12 +175,18 @@ final class CompanionAgentActivityNotifier {
                 }
                 return messages[index]
             },
-            send: { chatID in
-                // A content-free push the NSE fetches over Noise. The format
-                // (contentless wakeup for revision >= 2, else legacy per-chat
-                // collapse) and the one-time nonce bookkeeping live in
-                // CompanionPushSender.dispatchPush, shared with the alert bridge.
-                CompanionPushSender.dispatchPush(chatID: chatID)
+            send: { _, chatID in
+                // Wakeup-capable phones (revision >= 2) route through the global
+                // coordinator; legacy revision-1 phones keep the immediate per-chat
+                // collapse push. Both a completed turn and a .classic permission /
+                // session request are renderable content now, so both are content
+                // activity - the coordinator pushes only if the responder would render
+                // something above the phone's floor.
+                if CompanionPushRegistry.supportsContentlessWakeup {
+                    CompanionWakeupCoordinator.shared.noteContentActivity(chatID: chatID)
+                } else {
+                    CompanionPushSender.dispatchPush(chatID: chatID)
+                }
             })
         shared = notifier
         notifier.subscription = ChatClient.instance?.subscribe(chatID: nil,

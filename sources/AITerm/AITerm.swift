@@ -841,6 +841,16 @@ class AITermController {
                 // If the completion raced ahead of the streamed text deltas,
                 // the UI bubble is missing the tail (in the worst case it is
                 // empty). Surface whatever text was not yet streamed live.
+                //
+                // KNOWN BUG: dropFirst(streamedText.count) assumes streamedText
+                // is a character-count PREFIX of fullText. That holds for the
+                // common race, but when the incremental stream and the reparsed
+                // body diverge (ordering, whitespace, or across multiple text
+                // content-blocks) this splices an overlapping fragment onto the
+                // end of the bubble, garbling/duplicating the finalized message.
+                // AIStreamingTailSpliceTests pins both behaviors. A fix to
+                // reconcile against the authoritative body (rather than blindly
+                // appending a count-based tail) is being handled separately.
                 if let fullText = authoritative?.body.maybeContent, fullText.count > streamedText.count {
                     let tail = String(fullText.dropFirst(streamedText.count))
                     if !tail.isEmpty {

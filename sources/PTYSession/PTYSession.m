@@ -282,6 +282,7 @@ static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DE
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_WINDOW_TITLE_DEPRECATED = @"Session Window Title";  // server-set window name
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_NAME_DEPRECATED = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
+static NSString *const SESSION_ARRANGEMENT_STABLE_ID = @"Session Stable ID";  // Reload/restore-durable identity, see iTermStableSessionID.
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
@@ -825,6 +826,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
+        // Allocate the durable stable identifier. Unlike guid it is not rotated
+        // by replaceTerminatedShellWithNewInstance (so it is durable across shell
+        // restarts); when restoring from an arrangement it is replaced by the
+        // saved value (see sessionFromArrangement:), so it is durable across app
+        // restarts too.
+        _stableID = [[iTermStableSessionID generate] copy];
 
         _screen = [[VT100Screen alloc] init];
         NSParameterAssert(_shell != nil && _screen != nil);
@@ -1126,6 +1133,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_bellRate release];
     [iTermCPUUtilization setInstance:nil forSessionID:_guid];
     [_guid release];
+    [_stableID release];
     [_lastCommand release];
     [_substitutions release];
     [_automaticProfileSwitcher release];
@@ -2170,6 +2178,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                         [terminal.parser cancelConductorRecoveryMode];
                     }];
+                    [aSession->_conductor resolveIT2AuthorizationFailClosed];
                     [aSession removeChannelClientsForConductor:aSession->_conductor];
                     aSession->_conductor.delegate = nil;
                     [aSession->_conductor release];
@@ -2226,12 +2235,21 @@ ITERM_WEAKLY_REFERENCEABLE
             DLog(@"The session arrangement has a GUID");
             NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
             aSession->_arrangementGUID = [guid copy];
+            // Adopt the saved stableID only where we adopt the saved guid (so chat/
+            // companion bindings survive an app restart). During a live duplicate,
+            // or any restore of a still-live session's arrangement, none of these
+            // guards hold, so the new session keeps its freshly-minted, unique
+            // stableID instead of colliding with the source.
+            NSString *savedStableID = [PTYSession stableIDInArrangement:arrangement];
             if (guid && gRegisteredSessionContents[guid]) {
                 DLog(@"The GUID is registered");
                 // There was a registered session with this guid. This session was created by
                 // restoring a saved arrangement and there is saved content registered.
                 contents = gRegisteredSessionContents[guid];
                 aSession.guid = guid;
+                if (savedStableID) {
+                    aSession.stableID = savedStableID;
+                }
                 DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
                      guid, aSession);
             } else if ([[iTermController sharedInstance] startingUp] ||
@@ -2241,6 +2259,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If contents are present, then system window restoration is bringing back a
                 // session.
                 aSession.guid = guid;
+                if (savedStableID) {
+                    aSession.stableID = savedStableID;
+                }
                 DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
             }
         }
@@ -3622,6 +3643,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_naggingController willRecycleSession];
 
     if (_conductor) {
+        // Dismiss any pending it2 auth prompt while the delegate is still live; deinit
+        // fulfills the seal but (being nonisolated) cannot dismiss the announcement.
+        [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         _conductor.delegate = nil;
         [_conductor release];
@@ -6806,6 +6830,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     result[SESSION_ARRANGEMENT_GUID] = _guid;
+    result[SESSION_ARRANGEMENT_STABLE_ID] = _stableID;
     if (_lastActivityOrdinal > 0) {
         result[SESSION_ARRANGEMENT_LAST_ACTIVITY_ORDINAL] = @(_lastActivityOrdinal);
     }
@@ -7011,6 +7036,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     } else {
         return arrangement[SESSION_UNIQUE_ID];
     }
+}
+
++ (NSString *)stableIDInArrangement:(NSDictionary *)arrangement {
+    // castFrom: guards a type-corrupted plist (e.g. a number under this key):
+    // the raw value must be a string before it crosses into canonical()'s
+    // nonnull String parameter, and validation on the way out means a malformed
+    // value falls back to the freshly-minted id rather than being adopted.
+    NSString *raw = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_STABLE_ID]];
+    if (!raw) {
+        return nil;
+    }
+    return [iTermStableSessionID canonical:raw];
 }
 
 + (NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement {
@@ -9890,6 +9927,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     [_conductor quit];
+}
+
+- (BOOL)textViewRemoteHostCanControlIterm2:(out BOOL *)available {
+    const BOOL isAvailable = (_conductor != nil && _conductor.it2ProxyActive);
+    if (available) {
+        *available = isAvailable;
+    }
+    return isAvailable && _conductor.it2AuthorizedByUser;
+}
+
+- (void)textViewToggleRemoteHostCanControlIterm2 {
+    if (!_conductor.it2ProxyActive) {
+        return;
+    }
+    [_conductor setIT2AuthorizationFromMenu:!_conductor.it2AuthorizedByUser];
 }
 
 
@@ -13426,11 +13478,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewSessionIsLinkedToAIChat {
-    return [iTermChatDatabase chatIDsForSession:_guid].count > 0;
+    // Pass both ids so the lookup is a plain map hit, not a session-tree walk
+    // (this runs on the draw path via configureIndicatorsHelperWithRightMargin).
+    return [iTermChatDatabase chatIDsForSessionGuid:_guid stableID:self.stableID].count > 0;
 }
 
 - (BOOL)textViewSessionIsStreamingToAIChat {
-    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid];
+    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid
+                                                                  stableID:self.stableID];
 }
 
 - (BOOL)textViewSessionHasChannelParent {
@@ -14888,6 +14943,54 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_delegate sessionInitiatedResize:self width:columns height:rows];
 }
 
+- (BOOL)companionSessionCanResizeWindow {
+    id<WindowControllerInterface> window = [_delegate parentWindow];
+    if (!window) {
+        return NO;
+    }
+    // A resize request is ignored in full screen (see sessionInitiatedResize:).
+    if ([window anyFullScreen]) {
+        return NO;
+    }
+    // A width-locked session (e.g. the "lock" affordance) refuses column changes.
+    if (_view.preferredWidth != nil) {
+        return NO;
+    }
+    // Freely-resizable and edge-attached window styles can be resized. Normal
+    // styles resize to an arbitrary grid; edge-attached styles (by percentage or
+    // by cells) lock the attached dimension but are already manually resizable in
+    // the free dimension, so the phone may resize them too and the window
+    // controller clamps the locked dimension exactly as it does for a manual drag.
+    // Maximized styles are fixed to the screen and full-screen styles do not
+    // resize at all.
+    // windowType lives on the iTermWindowController sub-protocol; parentWindow is
+    // declared as the narrower WindowControllerInterface but is always a real
+    // window controller, so downcast to read it.
+    switch (iTermThemedWindowType([(id<iTermWindowController>)window windowType])) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            return YES;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+    }
+    return NO;
+}
+
 - (VT100GridSize)windowSizeInCells {
     VT100GridSize result;
     const NSRect screenFrame = [self screenWindowScreenFrame];
@@ -15649,7 +15752,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
             [iTermCompanionAlertBridge postTerminalAlertWithTitle:@"Mark Set"
                                                              body:markDescription
-                                                        threadKey:self.guid];
+                                                        threadKey:self.stableID];
         }
         completion();
         return;
@@ -18961,6 +19064,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_screen restoreSavedState:config];
     }
     if (_conductor) {
+        // Dismiss any pending it2 auth prompt while the delegate is still live (covers
+        // conductorQuit / conductorAbortWithReason and the root-recovery unhook loop);
+        // otherwise the announcement lingers pointing at a released conductor. Idempotent
+        // and a no-op when no prompt is pending.
+        [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         _conductor.delegate = nil;
         [_conductor autorelease];
@@ -19009,6 +19117,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth {
     [_conductor handleTerminatePID:pid withCode:code depth:depth];
+}
+
+- (void)screenHandleIT2:(NSString *)string depth:(int)depth {
+    if (!string) {
+        return;
+    }
+    [_conductor handleIT2:string depth:depth];
 }
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
@@ -19066,6 +19181,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenBeginFramerRecovery:(int)parentDepth {
+    // Preserve the it2 proxy state (nonce/socket/authorization) of the conductor being
+    // recovered so it carries into the shim below. For a root single-hop recovery the
+    // old conductor is unhooked (and released) before the shim exists, so retain it
+    // across that teardown; for nested recovery it becomes the shim's parent.
+    iTermConductor *recovering = [_conductor retain];
+    // Dismiss any it2 auth prompt for the retiring conductor WHILE its delegate is still
+    // live. unhookSSHConductor does resolve the prompt too, but it nils the delegate on
+    // the way, and it only runs on the root (parentDepth < 0) path's loop -- the nested
+    // path keeps the old conductor as parent and never unhooks it. So resolve here,
+    // before the loop, to cover the nested path and to run before the delegate is cleared.
+    // persist:false, so this does not touch it2Authorized and is safe before adopt (which
+    // carries any decided grant); an undecided prompt re-appears on the next command.
+    [recovering resolveIT2AuthorizationFailClosed];
     if (parentDepth < 0) {
         while (_conductor) {
             [self unhookSSHConductor];
@@ -19081,6 +19209,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                              initialDirectory:nil
                  shouldInjectShellIntegration:NO
                                        parent:previousConductor];
+    [_conductor adoptIT2RecoveryStateFrom:recovering];
+    [recovering release];
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
@@ -19092,6 +19222,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (!recovery) {
         return nil;
     }
+    // Dismiss any pending it2 auth prompt while the delegate is still live (deinit fulfills
+    // the seal but cannot dismiss the announcement). The recovery shim usually has no
+    // prompt, but close the gap so a released conductor never leaves a live announcement.
+    [_conductor resolveIT2AuthorizationFailClosed];
     _conductor.delegate = nil;
     [_conductor autorelease];
     _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
@@ -23930,7 +24064,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
         [iTermCompanionAlertBridge postTerminalAlertWithTitle:message
                                                          body:triggerDescription
-                                                    threadKey:self.guid];
+                                                    threadKey:self.stableID];
     }
 }
 
@@ -24141,6 +24275,47 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)conductorWriteString:(NSString *)string {
     DLog(@"Conductor write: %@", string);
     [self writeTaskNoBroadcast:string];
+}
+
+// Identifier used to queue and later dismiss the it2 authorization announcement. Keyed
+// on the conductor's guid (not the display name) so two conductors sharing an ssh
+// identity in one session get distinct announcements and queueAnnouncement's
+// dismiss-same-identifier cannot cross-cancel a different conductor's live prompt.
+static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
+    return [NSString stringWithFormat:@"IT2Authorization-%@", guid];
+}
+
++ (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid {
+    return IT2AuthorizationAnnouncementIdentifier(guid);
+}
+
+- (void)conductorRequestIT2AuthorizationWithGUID:(NSString *)guid
+                                     displayName:(NSString *)displayName
+                                      completion:(void (^)(BOOL granted, BOOL remember))completion {
+    NSString *who = displayName.length ? displayName : @"A remote session";
+    NSString *title =
+        [NSString stringWithFormat:
+         @"%@ wants to control iTerm2 using the API over SSH integration. The API can "
+         @"view and modify iTerm2’s contents. Allow it for this session?", who];
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Allow", @"Deny" ]
+                                                    completion:^(int selection) {
+            // 0 = Allow, 1 = Deny: explicit choices we remember for the connection.
+            // Closing (-1) or dismissing (-2) is not a choice, so deny just this request
+            // without remembering; the next it2 command prompts again. There is no
+            // default action, so a stray Return in the pane cannot grant access.
+            const BOOL granted = (selection == 0);
+            const BOOL remember = (selection == 0 || selection == 1);
+            completion(granted, remember);
+        }];
+    [self queueAnnouncement:announcement
+                 identifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+}
+
+- (void)conductorDismissIT2AuthorizationPromptWithGUID:(NSString *)guid {
+    [self dismissAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
 }
 
 - (void)conductorSendInitialText {

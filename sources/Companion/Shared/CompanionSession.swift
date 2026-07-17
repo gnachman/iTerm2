@@ -22,7 +22,7 @@ actor CompanionSession {
     private var receiveLoop: Task<Void, Never>?
     private var eventHandler: (@Sendable (CompanionHostMessage) -> Void)?
     private var mediaHandler: (@Sendable (CompanionMediaFrame) -> Void)?
-    private var closedHandler: (@Sendable () -> Void)?
+    private var closedHandler: (@Sendable (Error?) -> Void)?
     private var closed = false
 
     init(transport: MessageTransport) {
@@ -31,9 +31,12 @@ actor CompanionSession {
 
     /// Start the receive loop. `onEvent` is called for every unsolicited host
     /// message (one with no requestID); `onClose` fires once if the connection
-    /// dies remotely (a locally requested close() does not fire it).
+    /// dies remotely (a locally requested close() does not fire it). It carries
+    /// the terminating transport error (e.g. `.quotaExceeded`) so the caller can
+    /// distinguish a relay quota teardown from ordinary loss and back off; nil
+    /// when the reason is unavailable.
     func start(onEvent: @escaping @Sendable (CompanionHostMessage) -> Void,
-               onClose: @escaping @Sendable () -> Void,
+               onClose: @escaping @Sendable (Error?) -> Void,
                onMedia: (@Sendable (CompanionMediaFrame) -> Void)? = nil) {
         guard receiveLoop == nil else { return }
         eventHandler = onEvent
@@ -103,7 +106,7 @@ actor CompanionSession {
                 failAllWaiters(with: error)
                 if !closed {
                     CompanionLog.log("CompanionSession: connection lost (\(error))")
-                    closedHandler?()
+                    closedHandler?(error)
                 }
                 return
             }
@@ -146,6 +149,7 @@ actor CompanionSession {
         case .history: "history"
         case .delivery: "delivery"
         case .typingStatus: "typingStatus"
+        case .turnLifecycle: "turnLifecycle"
         case .mentionsResolved: "mentionsResolved"
         case .sessionScreenInfo: "sessionScreenInfo"
         case .sessionContent: "sessionContent"
@@ -166,6 +170,7 @@ actor CompanionSession {
         case .streamExtent: "streamExtent"
         case .selectionText: "selectionText"
         case .selectionRange: "selectionRange"
+        case .autoProvideConsent: "autoProvideConsent"
         }
     }
 

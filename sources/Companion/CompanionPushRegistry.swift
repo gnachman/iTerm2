@@ -187,29 +187,49 @@ enum CompanionPushRegistry {
     }
 
     /// The push relay origin the current pairing registered its phone against,
-    /// recorded when the pairing completed. nil for a device paired before the
-    /// mac tracked this - which is to say, before the relays moved. The pairing
-    /// controller treats nil as an old host (see relayConfigurationChanged).
+    /// recorded ONLY when the pairing completed: that is the one moment we know
+    /// the phone registered its APNs token against this same push relay. A
+    /// reconnect does NOT refresh it (it proves nothing about push registration,
+    /// see recordCurrentMainRelay). nil for a device paired before the mac tracked
+    /// this; relayConfigurationChanged treats nil as "unknown, not moved", NOT as
+    /// an old host.
     static var registeredPushRelayURL: String? {
         iTermUserDefaults.userDefaults().string(forKey: pushRelayURLKey)
     }
 
     /// The main (pairing/transport) relay origin this pairing was established
-    /// against, recorded when the pairing completed. nil for a device paired
-    /// before the mac tracked this, or for a pairing made with the relay
-    /// disabled.
+    /// against, recorded when the pairing completed AND refreshed on each
+    /// successful reconnect (see recordCurrentMainRelay). nil for a device paired
+    /// before the mac tracked this and not reconnected since, or for a pairing
+    /// made with the relay disabled.
     static var registeredMainRelayOrigin: String? {
         iTermUserDefaults.userDefaults().string(forKey: mainRelayOriginKey)
     }
 
-    /// Stamp the relays this pairing belongs to. Called when a fresh pairing
-    /// completes: the phone registers its APNs token with the push relay, and the
-    /// pairing itself was carried over the main relay, both keyed to whatever
-    /// hosts this build points at. Recording them makes a later host move (see
-    /// CompanionPushRelay and the CompanionRelayOrigin setting) detectable.
+    /// Stamp both relays this pairing is reachable through. Called ONLY when a
+    /// fresh pairing completes: pairing is the one point where the phone both
+    /// registers its APNs token against the current push relay AND carries this
+    /// connection over the current main relay, so both origins are evidenced.
+    /// Recording them makes a later host move (see CompanionPushRelay and the
+    /// CompanionRelayOrigin setting) detectable. A reconnect refreshes only the
+    /// main relay (see recordCurrentMainRelay); it must not touch the push relay,
+    /// which a reconnect does not evidence.
     static func recordCurrentRelays(pushRelayURL: String, mainRelayOrigin: String?) {
+        iTermUserDefaults.userDefaults().set(pushRelayURL, forKey: pushRelayURLKey)
+        recordCurrentMainRelay(mainRelayOrigin)
+    }
+
+    /// Refresh ONLY the recorded main relay origin, leaving the push relay alone.
+    /// Called on each successful reconnect: the connection is carried over the main
+    /// relay, so it proves the phone still reaches us there and backfills a pairing
+    /// older than this tracking (nil) so a later main-relay move is detectable. It
+    /// does NOT prove which push relay the phone's APNs token is registered against
+    /// (the phone registers against its own build's push-relay URL, which after a
+    /// mac-only upgrade differs from ours until the phone app is updated), so
+    /// stamping the push URL on a reconnect would falsely satisfy
+    /// relayConfigurationChanged and suppress a legitimate re-pair prompt.
+    static func recordCurrentMainRelay(_ mainRelayOrigin: String?) {
         let defaults = iTermUserDefaults.userDefaults()
-        defaults.set(pushRelayURL, forKey: pushRelayURLKey)
         if let mainRelayOrigin {
             defaults.set(mainRelayOrigin, forKey: mainRelayOriginKey)
         } else {

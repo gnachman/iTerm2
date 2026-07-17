@@ -308,6 +308,11 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidAddOrRemovePorthole;
 - (NSString *)textViewCurrentSSHSessionName;
 - (void)textViewDisconnectSSH;
+// Returns whether the remote host currently has an it2-over-ssh grant (menu checkmark), and
+// sets *available to whether the menu item should be enabled at all (an it2-capable ssh
+// session). *available is always written.
+- (BOOL)textViewRemoteHostCanControlIterm2:(out BOOL *)available;
+- (void)textViewToggleRemoteHostCanControlIterm2;
 - (void)textViewShowFindIndicator:(VT100GridWindowedRange)range;
 - (void)textViewOpen:(NSString *)string
     workingDirectory:(NSString *)folder

@@ -181,14 +181,34 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         chatViewController.makeMessageInputFieldFirstResponder()
     }
 
-    @objc(isStreamingToGuid:)
-    func isStreaming(to guid: String) -> Bool {
-        return chatViewController.streaming && chatViewController.terminalSessionGuid == guid
+    // True when `binding` (a chat's stored terminal reference, a stableID for
+    // new bindings or a legacy guid otherwise) is one of `keys` (a session's
+    // {guid, stableID} pair). Matches a binding stored in either form.
+    private func terminalBinding(_ binding: String?, matchesReferenceKeys keys: Set<String>) -> Bool {
+        guard let binding else {
+            return false
+        }
+        return keys.contains(binding)
+    }
+
+    // Resolving convenience for the non-hot callers that only hold a guid.
+    private func terminalBinding(_ binding: String?, matchesSessionGuid guid: String) -> Bool {
+        return terminalBinding(binding, matchesReferenceKeys: iTermSessionReferenceKeys(forGuid: guid))
+    }
+
+    // Called from the draw path (textViewSessionIsStreamingToAIChat), so the
+    // caller passes the session's stableID to avoid a session-tree walk here.
+    @objc(isStreamingToGuid:stableID:)
+    func isStreaming(toGuid guid: String, stableID: String) -> Bool {
+        return chatViewController.streaming &&
+            terminalBinding(chatViewController.terminalSessionGuid,
+                            matchesReferenceKeys: [guid, stableID])
     }
 
     @objc(stopStreamingSession:)
     func stopStreaming(guid: String) {
-        if chatViewController.terminalSessionGuid == guid && chatViewController.streaming {
+        if terminalBinding(chatViewController.terminalSessionGuid, matchesSessionGuid: guid) &&
+            chatViewController.streaming {
             chatViewController.stopStreaming()
         }
     }
@@ -336,7 +356,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
                 chatViewController.enableOrchestration()
                 return
             }
-            if let guid, let session = iTermController.sharedInstance().anySession(withGUID: guid) {
+            if let guid, let session = iTermController.sharedInstance().anySession(forReference: guid) {
                 let terminal = !session.isBrowserSession()
                 let name = session.name
                 chatViewController.offerLink(to: guid, terminal: terminal, name: name)
@@ -529,7 +549,7 @@ extension ChatWindowController: NSToolbarDelegate {
 
     @objc(setSelectionText:forSession:)
     func setSelectedText(_ text: String, forSession guid: String) {
-        if currentChat?.terminalSessionGuid == guid {
+        if terminalBinding(currentChat?.terminalSessionGuid, matchesSessionGuid: guid) {
             chatViewController.offerSelectedText(text)
         }
     }
@@ -719,7 +739,7 @@ extension ChatWindowController: ChatSearchResultsViewControllerDelegate {
 
 extension ChatWindowController: ChatViewControllerDelegate {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool {
-        if let session = iTermController.sharedInstance().anySession(withGUID: guid) {
+        if let session = iTermController.sharedInstance().anySession(forReference: guid) {
             session.reveal()
             return true
         }

@@ -7406,22 +7406,29 @@ backgroundColor:(NSColor *)backgroundColor {
     // Lower priority value = higher priority. NSIntegerMax = no status.
     NSInteger winnerPriority = NSIntegerMax;
 
-    for (PTYSession *session in [self sessions]) {
-        if (!session.tabStatus.hasActiveStatus) {
-            continue;
+    // The focused (visible) pane takes precedence: whenever it has a status it
+    // drives the tab subtitle, even if a sibling split pane holds a
+    // higher-priority status. This keeps the subtitle in sync with the pane the
+    // user is looking at instead of letting a background idle/waiting pane
+    // override it on rank. Only when the focused pane has no status do we fall
+    // back to the highest-priority status among the other panes so the subtitle
+    // isn't empty. Peers that time-share a pane are not in -sessions (only the
+    // swapped-in peer is), so a buried peer never competes here regardless.
+    PTYSession *active = self.activeSession;
+    if (active.tabStatus.hasActiveStatus) {
+        winner = active;
+        winnerPriority = [settings priorityFor:active.tabStatus.statusText];
+    } else {
+        for (PTYSession *session in [self sessions]) {
+            if (!session.tabStatus.hasActiveStatus) {
+                continue;
+            }
+            NSInteger priority = [settings priorityFor:session.tabStatus.statusText];
+            if (priority < winnerPriority) {
+                winner = session;
+                winnerPriority = priority;
+            }
         }
-        NSInteger priority = [settings priorityFor:session.tabStatus.statusText];
-        if (priority < winnerPriority ||
-            (priority == winnerPriority && session == self.activeSession)) {
-            winner = session;
-            winnerPriority = priority;
-        }
-    }
-
-    // If all sessions have unmatched priority, prefer the active session.
-    if (winnerPriority >= settings.unmatchedPriority &&
-        self.activeSession.tabStatus.hasActiveStatus) {
-        winner = self.activeSession;
     }
 
     NSInteger oldPriority = NSIntegerMax;

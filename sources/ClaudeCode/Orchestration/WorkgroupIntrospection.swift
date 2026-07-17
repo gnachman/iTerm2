@@ -98,7 +98,7 @@ enum WorkgroupIntrospection {
     static func displayName(forWorkgroupID workgroupID: String) -> String {
         if workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
             let guid = String(workgroupID.dropFirst(syntheticWorkgroupIDPrefix.count))
-            if let session = session(forGUID: guid) {
+            if let session = session(forReference: guid) {
                 return sessionDisplayName(session)
             }
             return workgroupID
@@ -158,7 +158,7 @@ enum WorkgroupIntrospection {
     // role are derived via context(for:) rather than supplied by the
     // caller. Returns nil only when no live session has that GUID.
     static func resolve(sessionGuid: String) -> ResolvedTarget? {
-        guard let session = session(forGUID: sessionGuid),
+        guard let session = session(forReference: sessionGuid),
               let ctx = context(for: session) else {
             return nil
         }
@@ -178,7 +178,7 @@ enum WorkgroupIntrospection {
     // OrchestratorCommand). Returns nil when no live session has that
     // GUID, in which case the caller surfaces an unknown_session error.
     static func claimScope(forSessionGuid guid: String) -> String? {
-        guard let session = session(forGUID: guid),
+        guard let session = session(forReference: guid),
               let ctx = context(for: session) else {
             return nil
         }
@@ -246,7 +246,9 @@ enum WorkgroupIntrospection {
         return SessionSummary(
             roleID: roleID,
             roleName: roleName,
-            sessionGuid: session.guid,
+            // The model copies this verbatim into tool calls; emit the reload-
+            // durable stableID so a copied reference survives a shell reload.
+            sessionGuid: session.stableID,
             kind: kind(for: session),
             status: state(for: session),
             statusSource: statusSource(for: session),
@@ -358,7 +360,7 @@ enum WorkgroupIntrospection {
         let clippings: [PTYSessionClipping]
         if workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
             let guid = String(workgroupID.dropFirst(syntheticWorkgroupIDPrefix.count))
-            guard let session = session(forGUID: guid) else { return nil }
+            guard let session = session(forReference: guid) else { return nil }
             clippings = session.clippings
         } else {
             guard let instance = workgroupInstance(byID: workgroupID),
@@ -385,12 +387,14 @@ enum WorkgroupIntrospection {
             .first { $0.instanceUniqueIdentifier == id }
     }
 
-    private static func session(forGUID guid: String) -> PTYSession? {
-        // anySession(withGUID:) covers peer-port sessions (Code Review, Diff,
-        // side-pane peers) which allSessions() does not enumerate. allSessions()
-        // remains the right source for enumeration paths that explicitly walk
-        // standalone tab/split sessions only.
-        return iTermController.sharedInstance()?.anySession(withGUID: guid)
+    // Resolves a session reference (a stableID from the current snapshot, or a
+    // legacy guid the model echoed from an older transcript) to a live session.
+    // anySession(forReference:) covers peer-port sessions (Code Review, Diff,
+    // side-pane peers) which allSessions() does not enumerate, and dispatches on
+    // the reference form. allSessions() remains the right source for enumeration
+    // paths that explicitly walk standalone tab/split sessions only.
+    private static func session(forReference reference: String) -> PTYSession? {
+        return iTermController.sharedInstance()?.anySession(forReference: reference)
     }
 
     private static func allSessions() -> [PTYSession] {
@@ -398,7 +402,9 @@ enum WorkgroupIntrospection {
     }
 
     private static func syntheticWorkgroupID(for session: PTYSession) -> String {
-        return syntheticWorkgroupIDPrefix + session.guid
+        // Use the reload-durable stableID so a granted claim scope
+        // ("session:<stableID>") survives a shell reload that rotates the guid.
+        return syntheticWorkgroupIDPrefix + session.stableID
     }
 
     private static func workgroupName(for instance: iTermWorkgroupInstance) -> String {
@@ -483,7 +489,7 @@ enum WorkgroupIntrospection {
     // is itself classified, so it's a hurdle rather than a free bypass; fully
     // closing it would mean dropping the shell fast-path (classifying every
     // shell command against the screen), a perf tradeoff not taken here.
-    static let shellJobNames: Set<String> = [
+    nonisolated static let shellJobNames: Set<String> = [
         "bash", "zsh", "sh", "fish", "dash", "ash", "ksh", "mksh", "pdksh",
         "tcsh", "csh", "xonsh", "nu", "nushell", "elvish", "pwsh", "powershell",
     ]

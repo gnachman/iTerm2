@@ -59,6 +59,16 @@ struct SessionView: View {
     /// animation window, where showComposer false->true just reverses the
     /// transition) - no view-identity churn needed.
     @State private var composerSeedGeneration = 0
+    /// A send held while the auto-provide consent modal is up; its buttons resume it.
+    @State private var pendingConsentText: String?
+    /// Drives the auto-provide consent modal (include terminal state + screen with AI).
+    @State private var showAutoProvideConsentAlert = false
+    /// The view's current width, tracked so the principal nav-bar title can be
+    /// rebuilt on rotation. The system caches the title view's width at first layout
+    /// and does not re-measure it when the bar widens/narrows on rotation, so a title
+    /// laid out in portrait stays narrow in landscape (and vice versa). Keying the
+    /// title on this width forces a fresh measurement whenever it changes.
+    @State private var barWidth: CGFloat = 0
 
     private static let messageAgentLabel = "Message the agent"
 
@@ -125,8 +135,24 @@ struct SessionView: View {
                 tileContent
             }
         }
+        .background {
+            // Track the view width without disturbing layout, so the principal title
+            // can be rebuilt when the bar widens/narrows on rotation.
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { barWidth = proxy.size.width }
+                    .onChange(of: proxy.size.width) { _, width in barWidth = width }
+            }
+        }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        // The live path fills behind the (translucent) nav bar with black, so the
+        // default label-colored title and buttons render dark-on-dark and are
+        // invisible in light mode (only a colored emoji in the title showed through,
+        // which read as "the title is truncated to the emoji"). Force the bar's
+        // content light there. The tile path keeps the system background, so leave its
+        // bar automatic.
+        .toolbarColorScheme(model.macSupportsStreaming ? .dark : nil, for: .navigationBar)
         .overlay(alignment: .bottom) {
             if showComposer {
                 composeOverlay
@@ -140,11 +166,25 @@ struct SessionView: View {
         } message: {
             Text(sendError ?? "")
         }
+        .alert("Share This Session with the AI?", isPresented: $showAutoProvideConsentAlert) {
+            Button("Allow") {
+                if let text = pendingConsentText { performSend(text, grantAutoProvideConsent: true) }
+                pendingConsentText = nil
+            }
+            Button("Not Now", role: .cancel) {
+                model.declineAutoProvideConsent(sessionGuid: guid)
+                if let text = pendingConsentText { performSend(text, grantAutoProvideConsent: false) }
+                pendingConsentText = nil
+            }
+        } message: {
+            Text("Include this session’s terminal state and current screen with your messages so the AI can see what’s happening. You can change this later in the chat’s permissions.")
+        }
         .onAppear {
             // This view is alive; un-mark its token as departed (onDisappear fires
             // on a tab switch/cover while the view stays in the stack, and the
             // token outlives that).
             model.watchViewDidAppear(guid: guid, token: watchToken)
+            companionLog("SessionView appeared for \(guid): macSupportsStreaming=\(model.macSupportsStreaming) -> using \(model.macSupportsStreaming ? "LIVE (has resize button)" : "TILE (no resize button)") path; macRevision=\(model.macRevision) sessionResizeSupported=\(model.sessionResizeSupported)")
         }
         .onDisappear {
             // onDisappear fires on a tab switch/cover too, not just a pop, so this
@@ -169,6 +209,24 @@ struct SessionView: View {
             recoverIfChatDeleted(id: composeChatID, present: present) { composeChatID = nil }
         }
         .toolbar {
+            // A principal title claims the space BETWEEN the leading and trailing
+            // groups (not the system title's symmetric reservation), so it uses the
+            // full width. maxWidth:.infinity is what makes it expand rather than size
+            // to its (truncated) intrinsic width. Colored explicitly since a principal
+            // item does not pick up the bar's title color: white over the black live
+            // canvas, primary over the tile path's system background.
+            ToolbarItem(placement: .principal) {
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundStyle(model.macSupportsStreaming ? Color.white : Color.primary)
+                    // The system caches the title view's width; re-key on the current
+                    // width so a rotation re-measures it instead of keeping the old
+                    // orientation's (too-narrow-in-landscape) width.
+                    .id(barWidth)
+            }
             if allowsChat {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -266,23 +324,36 @@ struct SessionView: View {
     }
 
     private func sendComposed(_ text: String) {
-        // This is the single point that rejects empty input: reject BEFORE
-        // claiming the watch, since a claim that isn't followed by a real send
-        // would cancel a concurrent view's valid in-flight watch.
+        // Single point that rejects empty input, BEFORE any watch claim, since a
+        // claim not followed by a real send would cancel a concurrent view's watch.
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             dismissComposer()
             return
         }
-        // Claim the watch slot synchronously (before the async Task), so if the
-        // view disappears before the Task runs, its onDisappear clears the claim
-        // and the late send installs no leaked watch. Keep the prior claim to
-        // restore it if this send fails.
+        dismissComposer()
+        // Before the first consented send, ask whether to include the session's
+        // terminal state + visible screen with AI messages. If needed, block on the
+        // modal (its buttons call performSend); otherwise send straight through.
+        Task {
+            if await model.shouldPromptAutoProvideConsent(sessionGuid: guid) {
+                pendingConsentText = text
+                showAutoProvideConsentAlert = true
+            } else {
+                performSend(text, grantAutoProvideConsent: false)
+            }
+        }
+    }
+
+    private func performSend(_ text: String, grantAutoProvideConsent: Bool) {
+        // Claim the watch slot right before the send Task so the view's onDisappear
+        // clears it if the view leaves, and keep the prior claim to restore on failure.
         let claim = model.claimSessionWatch(token: watchToken)
         Task {
             let outcome = await model.sendFromSessionView(text: text,
                                                           sessionGuid: guid,
                                                           resolvedChatID: composeChatID,
                                                           originatingChatID: effectiveOriginatingChatID,
+                                                          grantAutoProvideConsent: grantAutoProvideConsent,
                                                           watchToken: watchToken,
                                                           claimSequence: claim.sequence)
             switch outcome {
@@ -302,7 +373,6 @@ struct SessionView: View {
                 restoreFailedDraft(text, error: message, claim: claim)
             }
         }
-        dismissComposer()
     }
 
     /// Restore a failed send's draft: show the error, undo the watch claim, and
@@ -711,6 +781,13 @@ private struct LiveSessionView: View {
     @State private var holder = LiveVideoHolder()
     @State private var resolution: String?
     @State private var endedReason: CompanionStreamEndReason?
+    /// The live canvas area in points, used to compute a legible grid size for the
+    /// resize button. Captured from a background GeometryReader so reading it does
+    /// not disturb the canvas layout.
+    @State private var viewportSize: CGSize = .zero
+    /// Diagnostics: log only the first media frame received per view, so a working
+    /// (or stalled) stream is visible in the log without spamming per frame.
+    @State private var didLogFirstMedia = false
 
     var body: some View {
         ZStack {
@@ -750,7 +827,42 @@ private struct LiveSessionView: View {
                 SwipeBackDisabler()
             }
         }
+        // Track the canvas size (and re-track on rotation) without perturbing the
+        // layout, so the resize button knows the viewport it should fit the grid to.
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { viewportSize = proxy.size }
+                    .onChange(of: proxy.size) { _, size in viewportSize = size }
+            }
+        }
+        .toolbar {
+            // Only offer the resize control when the mac is new enough to honor it;
+            // an older mac would silently ignore the resizeSession message.
+            if model.sessionResizeSupported {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        model.resizeActiveSessionForLegibility(viewSize: viewportSize)
+                    } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    }
+                    .accessibilityLabel("Resize for This Screen")
+                    // Disabled when the mac reports the session's window cannot be
+                    // resized (full screen, maximized, edge-attached, or width-locked).
+                    .disabled(endedReason != nil || viewportSize == .zero || !model.activeStreamCanResize)
+                }
+            }
+        }
         .task(id: guid) { start() }
+        .onAppear {
+            companionLog("LiveSessionView appeared for \(guid): macSupportsStreaming=\(model.macSupportsStreaming) macRevision=\(model.macRevision) sessionResizeSupported=\(model.sessionResizeSupported) (need >= \(CompanionProtocolVersion.sessionResizeRevision)) -> resize button \(model.sessionResizeSupported ? "SHOWN" : "HIDDEN"); activeStreamCanResize=\(model.activeStreamCanResize) viewportSize=\(Int(viewportSize.width))x\(Int(viewportSize.height))")
+        }
+        .onChange(of: model.sessionResizeSupported) { _, supported in
+            companionLog("LiveSessionView: sessionResizeSupported changed to \(supported) (macRevision=\(model.macRevision)) -> resize button \(supported ? "SHOWN" : "HIDDEN")")
+        }
+        .onChange(of: model.activeStreamCanResize) { _, canResize in
+            companionLog("LiveSessionView: activeStreamCanResize changed to \(canResize) -> resize button \(canResize ? "enabled" : "disabled")")
+        }
         .onDisappear { model.stopWatchingSessionLive() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
@@ -787,10 +899,17 @@ private struct LiveSessionView: View {
             onConfig: { config in
                 resolution = "\(config.pixelWidth)×\(config.pixelHeight)"
                 if let parameterSets = try? CompanionHEVCFraming.decodeParameterSets(config.codecExtradata) {
+                    companionLog("LiveSessionView onConfig: stream=\(config.streamID) gen=\(config.generationId) \(config.pixelWidth)x\(config.pixelHeight) grid=\(config.columns)x\(config.rows) -> configuring decoder")
                     holder.view.configure(parameterSets: parameterSets)
+                } else {
+                    companionLog("LiveSessionView onConfig: stream=\(config.streamID) \(config.pixelWidth)x\(config.pixelHeight) but FAILED to decode parameter sets from \(config.codecExtradata.count)-byte extradata")
                 }
             },
             onMedia: { [weak model] frame in
+                if !didLogFirstMedia {
+                    didLogFirstMedia = true
+                    companionLog("LiveSessionView onMedia: first frame received (\(frame.payload.count) bytes, pts=\(frame.ptsMilliseconds)) -> decoding")
+                }
                 holder.view.enqueue(accessUnit: frame.payload, ptsMilliseconds: frame.ptsMilliseconds)
                 model?.sendActiveStreamAck(lastPTSMilliseconds: frame.ptsMilliseconds, queueDepth: 0)
             },
@@ -940,6 +1059,7 @@ private struct LiveCanvas: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView { context.coordinator.makeContainer() }
     func updateUIView(_ uiView: UIView, context: Context) {
         context.coordinator.model = model
+        context.coordinator.installTileSlotCallback()
         context.coordinator.layout = layout
         context.coordinator.applyLayout()
         context.coordinator.repositionHandles()
@@ -990,6 +1110,10 @@ private struct LiveCanvas: UIViewRepresentable {
         // History tiles, keyed by tile index (0 = oldest), like the static path.
         private var tileViews: [Int: TileView] = [:]
         private var requestedTiles: Set<Int> = []
+        /// Tiles whose last fetch returned a host-reported failure. The idle 4 Hz
+        /// re-drive skips these (retrying them every pass would strobe spinner/retry-label
+        /// and spam the relay); an explicit scroll/zoom/grow still retries them.
+        private var failedTiles: Set<Int> = []
         /// Line count the cached image for each tile actually covers, so a tile that
         /// has grown is sized to its image (not stretched) until it is refetched.
         private var tileFetchedLines: [Int: Int] = [:]
@@ -1007,6 +1131,9 @@ private struct LiveCanvas: UIViewRepresentable {
         private var lastLoggedVisibleRange: (Int, Int)?
         private let linesPerTile = 50
         private var growthTimer: Timer?
+        /// Set while a throttled-tile re-drive is already scheduled, so a viewport full
+        /// of throttled tiles coalesces into a single follow-up refreshTiles.
+        private var tileRefreshScheduled = false
 
         init(holder: LiveVideoHolder, model: AppModel) {
             self.holder = holder
@@ -1018,6 +1145,21 @@ private struct LiveCanvas: UIViewRepresentable {
             editMenu?.dismissMenu()
             growthTimer?.invalidate()
             growthTimer = nil
+            // Only clear the shared slot-available callback if we still own it; a
+            // sibling coordinator (e.g. the session-mention preview) may have claimed it.
+            if model.historyTileSlotOwner == ObjectIdentifier(self) {
+                model.onHistoryTileSlotAvailable = nil
+                model.historyTileSlotOwner = nil
+            }
+        }
+
+        /// Claim the shared slot-available callback for this coordinator. Called from
+        /// updateUIView so a reused coordinator reappearing (a TabView switch back) that
+        /// a sibling had overwritten reinstalls its own; makeContainer runs only once and
+        /// so cannot.
+        func installTileSlotCallback() {
+            model.historyTileSlotOwner = ObjectIdentifier(self)
+            model.onHistoryTileSlotAvailable = { [weak self] in self?.scheduleTileRefresh() }
         }
 
         func makeContainer() -> UIView {
@@ -1130,6 +1272,7 @@ private struct LiveCanvas: UIViewRepresentable {
                 for view in tileViews.values { view.removeFromSuperview() }
                 tileViews.removeAll()
                 requestedTiles.removeAll()
+                failedTiles.removeAll()
                 tileFetchedLines.removeAll()
                 tileToken.removeAll()
                 // Tile indices are relative to the origin; force selection tiles to
@@ -1177,14 +1320,44 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Periodically grow the document as the live top advances, but never while
         /// the user is interacting (it would jolt) or zoomed in.
         private func growthTick() {
+            // Never mutate the canvas mid-interaction.
             guard !scrollView.isDragging, !scrollView.isDecelerating, !scrollView.isZooming,
-                  !selecting, !draggingStart, !draggingEnd, scrollView.zoomScale <= 1.001 else { return }
+                  !selecting, !draggingStart, !draggingEnd else { return }
+            // Recover tiles a flush (reconnect / resume) left as spinners, paced at 4 Hz.
+            // This runs regardless of zoom (the layout-grow path below early-returns while
+            // zoomed) so a zoomed-in scrollback view still recovers, and it self-heals the
+            // race where the flush re-drive runs before the neutralized .throttled
+            // completions clear requestedTiles. skipFailed so it does not retry
+            // host-reported failures every pass (which would strobe / spam the relay).
+            if model.hasActiveStream { refreshTiles(skipFailed: true) }
+            // Grow the document as the live top advances (zoom 1 only; the scroll view
+            // owns contentSize while zoomed and our changes would fight it).
+            guard scrollView.zoomScale <= 1.001 else { return }
             applyLayout()
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { contentView }
         func scrollViewDidScroll(_ scrollView: UIScrollView) { repositionHandles(); refreshTiles() }
         func scrollViewDidZoom(_ scrollView: UIScrollView) { repositionHandles(); refreshTiles() }
+        // A fling can settle with no further scroll event, so re-drive tiles once it
+        // ends to pick up any that were throttle-dropped mid-fling.
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { refreshTiles() }
+        func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+            if !decelerate { refreshTiles() }
+        }
+
+        /// Coalesce a follow-up refreshTiles after throttle-dropped tiles, so the drops
+        /// are re-requested once the in-flight window drains, without scheduling one per
+        /// dropped tile.
+        private func scheduleTileRefresh() {
+            guard !tileRefreshScheduled else { return }
+            tileRefreshScheduled = true
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.tileRefreshScheduled = false
+                self.refreshTiles()
+            }
+        }
 
         // MARK: History tiles
 
@@ -1203,7 +1376,11 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Materialize tile views around the visible history (one viewport of
         /// lookahead each way), fetch their bitmaps, refetch any whose line count
         /// grew, and drop far-away ones.
-        private func refreshTiles() {
+        /// - Parameter skipFailed: when true, tiles whose last fetch failed are left
+        ///   alone (used by the idle auto re-drive so it does not retry host failures at
+        ///   4 Hz). Explicit re-drives (scroll/zoom/grow/selection) leave it false so a
+        ///   failed tile back in view still retries.
+        private func refreshTiles(skipFailed: Bool = false) {
             guard let layout, historyLines > 0, pointsPerLine > 0, contentView.bounds.width > 0 else { return }
             let tileHeight = CGFloat(linesPerTile) * pointsPerLine
             guard tileHeight > 0 else { return }
@@ -1235,7 +1412,7 @@ private struct LiveCanvas: UIViewRepresentable {
                 let absLine = layout.firstAbsLine + Int64(index * linesPerTile)
                 if tileFetchedLines[index] == expected, let image = model.cachedHistoryTile(firstAbsLine: absLine) {
                     view.show(image: image)
-                } else if !requestedTiles.contains(index) {
+                } else if !requestedTiles.contains(index), !(skipFailed && failedTiles.contains(index)) {
                     // Missing, or grew since last fetch: (re)render for the current
                     // count. Keep the old (correctly-sized) image visible meanwhile
                     // (showLoading is a no-op once a tile already has an image).
@@ -1243,32 +1420,63 @@ private struct LiveCanvas: UIViewRepresentable {
                     requestedTiles.insert(index)
                     let token = nextTileToken(index)
                     model.invalidateHistoryTile(firstAbsLine: absLine)
-                    model.requestHistoryTile(firstAbsLine: absLine, lineCount: expected) { [weak self] image in
+                    model.requestHistoryTile(firstAbsLine: absLine, lineCount: expected) { [weak self] outcome in
                         // Ignore a superseded reply (a newer request for this tile ran).
                         guard let self, self.tileToken[index] == token else { return }
                         self.requestedTiles.remove(index)
                         guard let view = self.tileViews[index] else { return }
-                        if let image {
+                        switch outcome {
+                        case .image(let image):
+                            self.failedTiles.remove(index)
                             self.tileFetchedLines[index] = expected
                             view.frame = self.tileFrame(index: index)
                             view.show(image: image)
-                        } else {
-                            view.showFailure()
+                            // A rendered tile may have grown (live tail) since we asked;
+                            // catch up. Gated to .image so a saturated .throttled does not
+                            // trigger a re-request loop, and a .failed is not silently
+                            // re-requested without an explicit retry decision.
+                            if self.expectedLines(index: index) != expected { self.refreshTiles() }
+                        case .throttled:
+                            // Transient: keep any currently-shown image (do not flash a
+                            // failure). Do NOT self-schedule a refresh here: while the
+                            // throttle is saturated that would busy-loop (re-request ->
+                            // reject -> reschedule). The model's onHistoryTileSlotAvailable
+                            // re-drives us when a slot actually frees; a settled fling is
+                            // also covered by scrollViewDidEndDecelerating.
+                            break
+                        case .failed:
+                            if self.expectedLines(index: index) != expected {
+                                // Grew while in flight: this failure is for a stale line
+                                // count. Retry at the new size instead of leaving a stuck
+                                // X the idle pass would skip (do not mark it failed).
+                                self.refreshTiles()
+                            } else {
+                                self.failedTiles.insert(index)
+                                view.showFailure()
+                            }
                         }
-                        // It may have grown again while rendering; catch up.
-                        if self.expectedLines(index: index) != expected { self.refreshTiles() }
                     }
                 }
             }
 
             let discard = visible.insetBy(dx: 0, dy: -3 * visible.height)
+            var discardedAbsLines: Set<Int64> = []
             for (index, view) in tileViews where !view.frame.intersects(discard) {
                 view.removeFromSuperview()
                 tileViews[index] = nil
                 requestedTiles.remove(index)
+                // A re-shown tile should retry from scratch, not stay suppressed.
+                failedTiles.remove(index)
+                // Collect for a single pending-queue prune below (a fling discards many
+                // tiles per pass; scanning the queue once beats once per tile). `layout`
+                // is the non-optional local unwrapped at the top of refreshTiles.
+                discardedAbsLines.insert(layout.firstAbsLine + Int64(index * linesPerTile))
                 // Keep tileFetchedLines so a re-shown tile uses the cache; a cache
                 // miss (e.g. generation change) still triggers a refetch.
             }
+            // Drop still-queued requests for the flung-past tiles so they do not spend
+            // in-flight slots and relay budget (an already-issued fetch warms the cache).
+            model.cancelPendingHistoryTiles(firstAbsLines: discardedAbsLines)
         }
 
         // MARK: Selection-driven tile invalidation

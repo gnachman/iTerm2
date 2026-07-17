@@ -31,6 +31,16 @@ final class OrchestrationMentionRendererTests: XCTestCase {
 
     private let resolveNone: OrchestrationMentionRenderer.Resolver = { _, _ in nil }
 
+    // The visible text with the inline terminal glyph (U+FFFC object
+    // replacement char) and its trailing thin space (U+2009) removed, so an
+    // exact-string assert covers ordering and accidental duplication despite
+    // the icon runs each mention adds.
+    private func visibleText(_ attributed: NSAttributedString) -> String {
+        return attributed.string
+            .replacingOccurrences(of: "\u{FFFC}", with: "")
+            .replacingOccurrences(of: "\u{2009}", with: "")
+    }
+
     // MARK: - Matching
 
     func test_noMentions_returnsInputUnchanged() {
@@ -120,17 +130,29 @@ final class OrchestrationMentionRendererTests: XCTestCase {
         XCTAssertNotNil(attrs[clickable] as? ((NSPoint) -> ()))
     }
 
-    func test_unresolvedMention_replacedWithDefunctPlaceholder() {
+    func test_unresolvedMention_renderedAsGrayedNonClickableMention() {
         let input = attr("See @\(guid) now.")
         let out = OrchestrationMentionRenderer.link(input, linkColor: .blue, resolve: resolveNone)
-        XCTAssertEqual(out.string, "See [defunct session] now.")
 
+        // The raw id is gone, replaced with the "[defunct session]" label
+        // (same bracketed wording the phone renderers use). Assert the whole
+        // visible text so ordering and any accidental duplication are covered,
+        // not just presence.
+        XCTAssertFalse(out.string.contains(guid))
+        XCTAssertEqual(visibleText(out), "See [defunct session] now.")
+
+        // The label is grayed and carries no link styling or click target.
         let range = (out.string as NSString).range(of: "defunct")
         let attrs = out.attributes(at: range.location, effectiveRange: nil)
-        // The placeholder is plain text: no link styling, no click target.
+        XCTAssertEqual(attrs[.foregroundColor] as? NSColor, .secondaryLabelColor)
         XCTAssertNil(attrs[clickable])
         XCTAssertNil(attrs[.underlineStyle])
-        XCTAssertEqual(attrs[.foregroundColor] as? NSColor, .black)
+
+        // Like a live mention it gets a leading terminal glyph (the char
+        // right after "See "), but that glyph is not a click target either.
+        let iconAttrs = out.attributes(at: 4, effectiveRange: nil)
+        XCTAssertNotNil(iconAttrs[.attachment] as? NSTextAttachment)
+        XCTAssertNil(iconAttrs[clickable])
     }
 
     func test_mentionAsEntireString() {
@@ -150,10 +172,11 @@ final class OrchestrationMentionRendererTests: XCTestCase {
         }
         let input = attr("x @\(guid) y @\(other) z")
         let out = OrchestrationMentionRenderer.link(input, linkColor: .blue, resolve: resolver)
-        // Resolved mention becomes a name (with icon); defunct one is the
-        // plain placeholder; surrounding text is preserved in order.
-        XCTAssertTrue(out.string.contains("x "))
-        XCTAssertTrue(out.string.contains("Alpha y [defunct session] z"))
+        // Resolved mention becomes a name (with icon); defunct one becomes the
+        // grayed "[defunct session]" mention; surrounding text is preserved in
+        // order. Strip the glyphs/thin spaces and assert the whole visible
+        // text so ordering and duplication stay covered.
+        XCTAssertEqual(visibleText(out), "x Alpha y [defunct session] z")
         XCTAssertFalse(out.string.contains(guid))
         XCTAssertFalse(out.string.contains(other))
     }

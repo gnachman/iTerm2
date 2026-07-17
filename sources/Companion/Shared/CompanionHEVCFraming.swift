@@ -94,25 +94,4 @@ enum CompanionHEVCFraming {
     }
 }
 
-private extension Data {
-    mutating func appendBigEndian(_ value: UInt16) {
-        append(UInt8(truncatingIfNeeded: value >> 8))
-        append(UInt8(truncatingIfNeeded: value))
-    }
-    mutating func appendBigEndian(_ value: UInt32) {
-        append(UInt8(truncatingIfNeeded: value >> 24))
-        append(UInt8(truncatingIfNeeded: value >> 16))
-        append(UInt8(truncatingIfNeeded: value >> 8))
-        append(UInt8(truncatingIfNeeded: value))
-    }
-    func readBigEndianUInt16(at index: Index) -> UInt16 {
-        (UInt16(self[index]) << 8) | UInt16(self[index + 1])
-    }
-    func readBigEndianUInt32(at index: Index) -> UInt32 {
-        var result: UInt32 = 0
-        for offset in 0..<4 {
-            result = (result << 8) | UInt32(self[index + offset])
-        }
-        return result
-    }
-}
+// Big-endian integer framing helpers live in Data+BigEndian.swift (shared).

@@ -88,6 +88,22 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         }
     }
 
+    func testFramedTurnLifecycleWithUnknownEventPreservesFrame() throws {
+        // A turnLifecycle whose event value a newer peer added must decode into the
+        // REAL case with event .unknownFuture - not throw (which, for a KNOWN
+        // discriminator, propagates a DecodingError and drops the whole frame per
+        // testMalformedBodyOfKnownCaseThrowsRatherThanUnsupported) and not collapse
+        // to .unsupported. Guards TurnEvent.init(from:) staying lenient at the wire
+        // level: reverting it to throw-on-unknown fails HERE.
+        let json = #"{"payload":{"turnLifecycle":{"event":"pausedInFuture","chatID":"c"}}}"#.data(using: .utf8)!
+        let env = try decoder().decode(HostEnvelope.self, from: json)
+        guard case let .turnLifecycle(event, chatID) = env.payload else {
+            return XCTFail("expected .turnLifecycle, got \(env.payload)")
+        }
+        XCTAssertEqual(event, .unknownFuture)
+        XCTAssertEqual(chatID, "c")
+    }
+
     // MARK: knownPayloadKeys exhaustiveness
     //
     // The envelope decoder maps any discriminator NOT in knownPayloadKeys to
@@ -164,6 +180,9 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .copySelection(sessionGuid: "g"),
         .selectAllInStream(streamID: 1),
         .pasteText(sessionGuid: "g", text: "x"),
+        .resizeSession(sessionGuid: "g", columns: 80, rows: 24),
+        .fetchAutoProvideConsent(sessionGuid: "g"),
+        .grantAutoProvideConsent(chatID: "c"),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -206,6 +225,9 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .copySelection: return "copySelection"
         case .selectAllInStream: return "selectAllInStream"
         case .pasteText: return "pasteText"
+        case .resizeSession: return "resizeSession"
+        case .fetchAutoProvideConsent: return "fetchAutoProvideConsent"
+        case .grantAutoProvideConsent: return "grantAutoProvideConsent"
         }
     }
 
@@ -243,6 +265,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .selectionRange(streamID: 1, range: CompanionSelectionRange(
             start: CompanionSelectionPoint(absLine: 0, column: 0),
             end: CompanionSelectionPoint(absLine: 1, column: 2))),
+        .autoProvideConsent(satisfied: true),
+        .turnLifecycle(event: .started, chatID: "c"),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -284,6 +308,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .streamEnded: return "streamEnded"
         case .selectionText: return "selectionText"
         case .selectionRange: return "selectionRange"
+        case .autoProvideConsent: return "autoProvideConsent"
+        case .turnLifecycle: return "turnLifecycle"
         }
     }
 

@@ -15,7 +15,18 @@ class iTermProcessInfo: NSObject {
     @objc let dataSource: ProcessDataSource
     private var childProcessIDs = IndexSet()
     private var buildingTreeString = false
-    @objc weak var parent: iTermProcessInfo?
+    // Strong (not weak) on purpose: callers hold a deepest-job iTermProcessInfo past
+    // the lifetime of the ProcessCollection that built it (PTYSession keeps one in
+    // _lastProcessInfo, and the process cache swaps in a fresh collection on its work
+    // queue). The ancestor infos are owned only by that collection, so a weak parent
+    // would dangle to nil once the collection is freed and foregroundJobAncestorNames
+    // would collapse to just the deepest job. To GlobalJobMonitor that looks like the
+    // intermediate ancestors (e.g. "claude") exited, firing a spurious job-ended that
+    // tears down the claudeCode workgroup. A strong parent keeps a retained leaf's
+    // ancestor spine alive. There is no retain cycle: a parent references its children
+    // only as pids (childProcessIDs), resolved through the weak `collection`, so there
+    // is no parent -> child strong edge.
+    @objc var parent: iTermProcessInfo?
 
     @objc(initWithPid:ppid:collection:dataSource:)
     init(processID: pid_t,
@@ -392,9 +403,15 @@ class iTermProcessInfo: NSObject {
         return _testValueForForegroundJob ?? expensiveValues.isForegroundJob
     }
 
-    /// Returns lowercased argv0 (or name) values for this process and its ancestors,
-    /// ordered from this process (deepest) toward the root. Stops before including
-    /// the login shell (argv0 starts with "-") or iTermServer.
+    /// One canonical walk of the foreground-job ancestry, deepest first, stopping
+    /// before the login shell (title starts with "-") or iTermServer. Returns each
+    /// surviving ancestor as its pid paired with its lowercased title.
+    /// `foregroundJobAncestorNames` and `foregroundJobAncestorChainPids` both derive
+    /// from this single traversal, so a title and its pid are emitted together and
+    /// stay aligned by construction. The diagnostics depend on that alignment to
+    /// attribute a vanished ancestor name to the right pid, and it must hold even for
+    /// an ancestor that survives via the last-known-title cache below (branch 2) or
+    /// that stops the walk at a cached login/server boundary.
     ///
     /// Reading a process's name/argv0 can transiently fail for a process that is very
     /// much alive: `sysctl(KERN_PROC_PID)` can momentarily return an empty `p_comm`
@@ -405,8 +422,8 @@ class iTermProcessInfo: NSObject {
     /// So when a name comes back empty we reuse the last-known title for that pid
     /// (validated by ppid to guard against pid reuse) instead of dropping it.
     /// Successfully-read titles are recorded to keep that cache warm.
-    @objc var foregroundJobAncestorNames: [String] {
-        var result = [String]()
+    private func foregroundJobAncestorChain() -> [(pid: pid_t, name: String)] {
+        var result = [(pid: pid_t, name: String)]()
         var current: iTermProcessInfo? = self
         while let info = current {
             let title = info.argv0 ?? info.name
@@ -417,7 +434,7 @@ class iTermProcessInfo: NSObject {
                 if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
                     break
                 }
-                result.append(title.lowercased())
+                result.append((pid: info.processID, name: title.lowercased()))
                 current = info.parent
             } else if let cached = ProcessNameCache.shared.lastKnownTitle(pid: info.processID,
                                                                           ppid: info.parentProcessID) {
@@ -432,7 +449,7 @@ class iTermProcessInfo: NSObject {
                 if cached.hasPrefix("-") || cached.hasPrefix("iTermServer") {
                     break
                 }
-                result.append(cached.lowercased())
+                result.append((pid: info.processID, name: cached.lowercased()))
                 current = info.parent
             } else {
                 // No fresh name and nothing cached. This is the case that can produce
@@ -440,12 +457,92 @@ class iTermProcessInfo: NSObject {
                 // Log (and run the diagnostic sysctl) once per episode, not every
                 // update, so a persistently-nameless process can't spam the log.
                 if ProcessNameCache.shared.shouldLogAnomaly(pid: info.processID) {
-                    RLog("foregroundJobAncestorNames: pid \(info.processID) (ppid \(info.parentProcessID)) has no name and no cached title (\(iTermLSOF.nameFailureDiagnosis(forPid: info.processID))); dropping it from the ancestry")
+                    RLog("foregroundJobAncestorNames: pid \(info.processID) (ppid \(info.parentProcessID)) has no name and no cached title (\(iTermLSOF.nameFailureDiagnosis(forPid: info.processID) ?? "unknown")); dropping it from the ancestry")
                 }
                 current = info.parent
             }
         }
         return result
+    }
+
+    /// Lowercased argv0 (or name) values for this process and its ancestors, ordered
+    /// from this process (deepest) toward the root, stopping before the login shell
+    /// (argv0 starts with "-") or iTermServer. See `foregroundJobAncestorChain()` for
+    /// the transient-name-failure handling.
+    @objc var foregroundJobAncestorNames: [String] {
+        return foregroundJobAncestorChain().map { $0.name }
+    }
+
+    // Diagnostics helper for the logForegroundJobAncestryDiagnostics advanced setting.
+    // The pids of the nodes whose titles `foregroundJobAncestorNames` returns, in the
+    // same order: index i here is the pid that produced name i there. Both derive from
+    // the same `foregroundJobAncestorChain()` traversal, so that invariant holds even
+    // for an ancestor that survived via the last-known-title cache. Lets the process
+    // cache report exactly what became of the pid behind a vanished ancestor name.
+    @objc var foregroundJobAncestorChainPids: [NSNumber] {
+        return foregroundJobAncestorChain().map { NSNumber(value: $0.pid) }
+    }
+
+    // Diagnostics helper for the logForegroundJobAncestryDiagnostics advanced setting.
+    // Verbose trace of the upward foreground-job ancestry walk starting at this node
+    // (the deepest foreground job). For each node it records the state that decides
+    // whether the node stays in the ancestry, cross-checks the `parent` pointer against
+    // the collection's own lookup of the recorded ppid, and probes liveness of the ppid
+    // with kill(_,0). Explains a spurious ancestry shrink (an intermediate ancestor
+    // like the claude CLI dropping out for a single process-cache update, which fires a
+    // bogus job-ended event and tears down the claudeCode workgroup even though the
+    // process never exited). Deliberately does more work than the normal walk; the
+    // process cache only calls it on the anomaly, and only while the setting is on.
+    @objc func foregroundJobAncestryDiagnostic() -> String {
+        var lines = [String]()
+        var current: iTermProcessInfo? = self
+        var depth = 0
+        var visited = Set<pid_t>()
+        while let info = current {
+            if visited.contains(info.processID) {
+                lines.append("  [\(depth)] pid=\(info.processID): CYCLE; stopping")
+                break
+            }
+            visited.insert(info.processID)
+
+            let title = info.argv0 ?? info.name
+            let parentPtr = info.parent
+            let ppidInCollection = info.collection?.info(forProcessID: info.parentProcessID)
+            let ppidAlive = (kill(info.parentProcessID, 0) == 0)
+            let startDesc = info.startTime.map { String($0.timeIntervalSince1970) } ?? "nil"
+
+            let parentPtrDesc = parentPtr.map { "pid=\($0.processID) name=\($0.name.debugDescriptionOrNil)" } ?? "nil"
+            let ppidLookupDesc: String
+            if let c = ppidInCollection {
+                ppidLookupDesc = "present(pid=\(c.processID) name=\(c.name.debugDescriptionOrNil) ppid=\(c.parentProcessID))"
+            } else {
+                ppidLookupDesc = "ABSENT"
+            }
+
+            lines.append("  [\(depth)] pid=\(info.processID) ppid=\(info.parentProcessID) name=\(info.name.debugDescriptionOrNil) argv0=\(info.argv0.debugDescriptionOrNil) fg=\(info.isForegroundJob) start=\(startDesc) title=\(title.debugDescriptionOrNil)")
+            lines.append("         parentPtr=\(parentPtrDesc) | collection[ppid \(info.parentProcessID)]=\(ppidLookupDesc) | ppidAliveNow=\(ppidAlive)")
+
+            guard let title, !title.isEmpty else {
+                lines.append("         -> title empty; skipping this node (walk would drop it from the ancestry)")
+                current = info.parent
+                depth += 1
+                continue
+            }
+            if title.hasPrefix("-") || title.hasPrefix("iTermServer") {
+                lines.append("         -> STOP: login/server boundary (title starts with '-' or 'iTermServer')")
+                break
+            }
+            current = info.parent
+            if current == nil {
+                lines.append("         -> STOP: parent pointer nil, ran off the top with NO login/server boundary  <-- BROKEN CHAIN (ppid \(info.parentProcessID) \(ppidInCollection == nil ? "absent from collection" : "present in collection but not linked as parent"), aliveNow=\(ppidAlive))")
+            }
+            depth += 1
+            if depth > 64 {
+                lines.append("  -> aborted at depth cap")
+                break
+            }
+        }
+        return lines.joined(separator: "\n")
     }
 }
 
