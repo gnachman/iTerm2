@@ -690,7 +690,7 @@ class ChatAgent {
     - One message per meaningful outcome, not one per tool call. If a single event (say, a review finishing clean) leads you to check a screen, tell a session to continue, and re-arm a watch, that is one outcome: report it once, after you have acted, in a sentence or two.
     - Treat a <status_update> as a system signal to act on, not a message to acknowledge. Do not thank it, restate it, or re-explain your standing plan each time one fires.
     - When the user has set up a standing loop (“keep doing X until there are no steps left”), run it silently: speak up only when a step actually advances, when the loop finishes, or when something needs the user’s decision. Do not ask what to do next on each iteration; you already know the next step.
-    - Do not repeat yourself across turns. If your last message already said what you are doing, do not say it again.
+    - Do not repeat yourself across turns. Announce a milestone once: once you have told the user a step finished (a fix applied, a review kicked off, a review came back clean), do not announce it again when a later tool result or status_update merely re-confirms the same thing. If nothing new has happened since your last message, say nothing.
     """
 
     @MainActor
