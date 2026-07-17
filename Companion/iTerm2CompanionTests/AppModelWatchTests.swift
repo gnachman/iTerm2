@@ -283,6 +283,62 @@ final class AppModelWatchTests: XCTestCase {
                        "on a pre-turnLifecycle mac the typing edge IS the turn boundary")
     }
 
+    // MARK: The session view's chat button preserves the origin stack, so Back
+    // returns to the session view (and doesn't flip tabs), instead of replacing
+    // the stack and dropping the user on the Chats-tab home.
+
+    private func recentChat(guid: String) -> CompanionChatListEntry {
+        var chat = Chat(title: "About \(guid)", permissions: "")
+        chat.terminalSessionGuid = guid
+        chat.lastModifiedDate = Date()   // within the 24h reuse window
+        return CompanionChatListEntry(chat: chat)
+    }
+
+    func test_chatButton_recentChat_pushesAboveSessionOnSameTab_sessionsTab() {
+        let model = AppModel()
+        // Reached the session view from the Sessions-tab browser.
+        model.selectedTab = .sessions
+        model.sessionsPath = [.session(guid: "g1", title: "S", originatingChatID: nil)]
+        let entry = recentChat(guid: "g1")
+        model.chats = [entry]
+
+        model.openOrCreateChat(forSessionGuid: "g1")
+
+        // Conversation is pushed ABOVE the session on the SAME tab: Back returns
+        // to the session view, and the tab does not flip to Chats.
+        XCTAssertEqual(model.selectedTab, .sessions)
+        XCTAssertEqual(model.sessionsPath, [
+            .session(guid: "g1", title: "S", originatingChatID: nil),
+            .conversation(chatID: entry.chat.id),
+        ])
+        XCTAssertTrue(model.navigationPath.isEmpty,
+                      "the Chats-tab stack must be left untouched")
+    }
+
+    func test_chatButton_recentChat_dedupesOriginatingConversation_chatsTab() {
+        let model = AppModel()
+        // Reached the session view via an @-mention inside conversation g1's chat,
+        // which sits at the root below the session.
+        let entry = recentChat(guid: "g1")
+        let chatID = entry.chat.id
+        model.selectedTab = .chats
+        model.navigationPath = [
+            .conversation(chatID: chatID),
+            .session(guid: "g1", title: "S", originatingChatID: chatID),
+        ]
+        model.chats = [entry]
+
+        model.openOrCreateChat(forSessionGuid: "g1")
+
+        // The chat ends up on top exactly once with the session still below it (no
+        // duplicate root copy). Back returns to the session view.
+        XCTAssertEqual(model.selectedTab, .chats)
+        XCTAssertEqual(model.navigationPath, [
+            .session(guid: "g1", title: "S", originatingChatID: chatID),
+            .conversation(chatID: chatID),
+        ])
+    }
+
     func test_macNewerButPhoneOlder_stillDrivesReplyFromTypingEdges() {
         // Forward-compat: this rev-7 phone build already has the turnLifecycle
         // consumer, but a future rev-8 mac gates its turnLifecycle SEND on the

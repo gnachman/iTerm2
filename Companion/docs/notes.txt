@@ -1,6 +1,11 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 Bug Fixes:
+- The chat button at the top of a session view
+  now keeps the session view underneath the
+  conversation it opens, so Back returns you to
+  the session (on the same tab) instead of
+  jumping to the Chats home screen.
 - Emailing your diagnostic logs now attaches a
   single compressed .zip instead of one
   attachment per log file, so large logs actually

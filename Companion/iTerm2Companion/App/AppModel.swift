@@ -1800,7 +1800,11 @@ final class AppModel {
 
     // MARK: Create
 
-    func createChat(mode: CompanionNewChatMode) {
+    /// - preservingStackOnTab: when non-nil, push the new conversation ABOVE the
+    ///   existing stack on that tab (the session view's chat button, so Back
+    ///   returns to the session). When nil, replace the stack so Back returns to
+    ///   Home (the New Chat / Create flow, which is presented over Home).
+    func createChat(mode: CompanionNewChatMode, preservingStackOnTab tab: AppTab? = nil) {
         Task {
             do {
                 let client = try await currentClient(label: "Create chat")
@@ -1809,7 +1813,11 @@ final class AppModel {
                 if !chatExists(entry.chat.id) {
                     chats.insert(entry, at: 0)
                 }
-                openConversation(chatID: entry.chat.id, replacingPath: true)
+                if let tab {
+                    pushConversationPreservingStack(chatID: entry.chat.id, onTab: tab)
+                } else {
+                    openConversation(chatID: entry.chat.id, replacingPath: true)
+                }
             } catch {
                 pairingError = userMessage(for: error)
             }
@@ -1913,15 +1921,21 @@ final class AppModel {
 
     /// The Session view's chat button: continue the session's most recently
     /// active chat if it was touched in the last 24 hours, otherwise start a
-    /// fresh one. Conversations live on the Chats tab, so either way this
-    /// switches there.
+    /// fresh one. Either way the conversation opens ABOVE the session view on the
+    /// tab it was reached from, so Back returns to the session.
     func openOrCreateChat(forSessionGuid guid: String) {
+        // Push the conversation ABOVE the session view on whichever tab the user
+        // reached it from, so Back returns to the session view (and the tab
+        // doesn't flip), rather than replacing the stack and stranding them on
+        // the Chats-tab home. Capture the tab now: createChat is async and the
+        // conversation must land on the stack the session view was pushed onto.
+        let tab = selectedTab
         if let attached = recentAttachedChat(forSessionGuid: guid) {
             companionLog("Continuing chat \(attached.chat.id) for session \(guid)")
-            openConversation(chatID: attached.chat.id, replacingPath: true)
+            pushConversationPreservingStack(chatID: attached.chat.id, onTab: tab)
         } else {
             companionLog("Creating a new chat for session \(guid)")
-            createChat(mode: .session(guid: guid))
+            createChat(mode: .session(guid: guid), preservingStackOnTab: tab)
         }
     }
 
@@ -2898,6 +2912,14 @@ final class AppModel {
             companionLog("Ignoring reply-notification tap for missing chat \(chatID)")
             return
         }
+        pushConversationPreservingStack(chatID: chatID, onTab: tab)
+    }
+
+    /// Open a conversation on `tab`'s stack, keeping any session view below it so
+    /// Back returns to the session view rather than the home screen. Shared by
+    /// the reply-notification tap and the session view's chat button, which both
+    /// want "chat, then Back to where I was" rather than a stack-replacing open.
+    private func pushConversationPreservingStack(chatID: String, onTab tab: AppTab) {
         handOffWatchedChatIfOpening(chatID)
         // Bind the target stack once so the read and the write can't drift to
         // different stacks.
