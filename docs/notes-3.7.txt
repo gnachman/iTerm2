@@ -125,6 +125,13 @@ Major New Features:
   The watch keeps running on its own and only
   gives up after several hours.
 
+- An orchestration watch now follows a Code
+  Review (or any peer) that restarts in place.
+  A reload gives the session a new internal id;
+  the watch used to lose track of it and stall
+  silently, but it now tracks the session across
+  the reload and keeps going.
+
 - In AI chat orchestration mode, pressing Stop
   now halts the whole pipeline: it cancels the
   in-flight reply, drops any queued turns, and
