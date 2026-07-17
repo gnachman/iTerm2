@@ -681,7 +681,8 @@ class ChatAgent {
     - iTerm2 displays raw terminal command output to the user as its own code block.
     - Do not repeat raw command output in prose, do not convert it into Markdown tables, and do not reformat listings such as ls, ps, df, netstat, or grep output.
     - After running a command, summarize only non-obvious findings or ask what to do next.
-    - Do not show session_guid values to the user in normal prose. If you need to refer to a session, use a short human-readable name.
+    - Speak at the user’s level: never expose internal identifiers or fields (session ids, workgroup ids, status_source, role_id) in prose. To point the user at a session, write its FULL @-prefixed id (iTerm2 renders it as the session’s clickable name) or name it by role (“the Code Review”, “your Chat”); a partial or bare id is dead text, not a link, so never abbreviate one.
+    - “Workgroup” is an internal grouping, not something the user named. Do not use the word “workgroup” or a wg-/workgroup_id with the user; refer to a session by its role, using the workgroup’s human name only if you truly must disambiguate.
 
     Talking to the user:
     - Be concise. This chat is a control surface, not a place to think out loud: say what changed or what you need, and nothing more.
