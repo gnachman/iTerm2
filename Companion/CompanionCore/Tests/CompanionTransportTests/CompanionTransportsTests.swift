@@ -11,6 +11,13 @@ import XCTest
 import CompanionProtocol
 @testable import CompanionTransport
 
+/// A resolver that returns a fixed origin, so a v2 connector can be built without
+/// the phone-only URLSession fallback (which asserts on the macOS test host).
+private struct StubShardResolver: ShardHostResolving {
+    let origin: String
+    func relayOrigin(for code: PairingCode) async throws -> String { origin }
+}
+
 final class CompanionTransportsTests: XCTestCase {
     private func makeCode(relayOrigin: String?) -> PairingCode {
         PairingCode(responderStaticPublicKey: Data(repeating: 7, count: 32),
@@ -27,11 +34,14 @@ final class CompanionTransportsTests: XCTestCase {
 
     func test_connector_isResolved_whenResolverURLPresent() {
         // A v2 code (resolver, no relay origin) uses the resolving connector, which
-        // picks the host from the shard map at connect time.
+        // picks the host from the shard map at connect time. Pass a resolver (as
+        // both apps do) so this test does not exercise the phone-only URLSession
+        // fallback, which asserts on the macOS test host.
         let code = PairingCode(responderStaticPublicKey: Data(repeating: 7, count: 32),
                                pairingID: "abcd1234",
                                resolverURL: "https://resolver.example.com/")
-        let connector = CompanionTransports.connector(for: code)
+        let connector = CompanionTransports.connector(
+            for: code, shardResolver: StubShardResolver(origin: "https://relay1.iterm2.com"))
         XCTAssertEqual(connector.transportName, "relay-resolved")
     }
 

@@ -98,11 +98,22 @@ public enum CompanionTransports {
         // Resolved mode (v2): resolve the owning origin from the shard map at
         // connect time, then join it the same way.
         if let resolverURL = code.resolverURL {
-            // The phone fetches the shard map over URLSession directly (it has no
-            // consent plugin; that is a Mac-only egress chokepoint). The Mac never
-            // reaches this factory, so no plugin-gated egress is bypassed here.
-            let resolver = shardResolver
-                ?? ShardHostResolver(resolverURL: resolverURL, fetcher: URLSessionShardMapFetcher())
+            let resolver: ShardHostResolving
+            if let shardResolver {
+                resolver = shardResolver
+            } else {
+                // Constructing a URLSession fetcher here means the phone (which has
+                // no consent plugin; the plugin is a Mac-only egress chokepoint).
+                // The Mac never reaches this factory (it parks via listener(),
+                // routing all egress through the plugin), so assert we are on iOS:
+                // reaching this on the Mac would fetch the shard map off the
+                // sanctioned egress path. On iOS this branch is the normal path.
+                #if !os(iOS)
+                assertionFailure("CompanionTransports.connector's URLSession shard-map fetch is phone-only; the Mac must route it through the consent plugin (pass a plugin-backed shardResolver, or use listener())")
+                #endif
+                resolver = ShardHostResolver(resolverURL: resolverURL,
+                                             fetcher: URLSessionShardMapFetcher())
+            }
             return ResolvingTransportConnector(code: code,
                                                resolver: resolver,
                                                webSocketFactory: webSocketFactory,
