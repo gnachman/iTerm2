@@ -746,6 +746,12 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Global search no longer shows blank snippets
+  for results found on the main screen while an
+  alternate-screen app (such as a full-screen TUI)
+  is running. Snippets are now extracted from the
+  same snapshot the search ran against instead of
+  a freshly captured one that could drift.
 - Smart tab-title truncation no longer flickers
   between head and tail truncation when a tab
   title begins with an animated status glyph

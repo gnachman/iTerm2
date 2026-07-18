@@ -1180,6 +1180,17 @@ class iTermSearchEngine: NSObject, Pausable {
     var query: String? {
         impl?.operation?.request.query
     }
+
+    // The immutable snapshot the current search is running against. Clients that
+    // extract snippets for results must use THIS snapshot (not a freshly taken
+    // one) so the result coordinates and the data source they index into are
+    // consistent. Taking a new snapshot can drift out from under the results,
+    // e.g. a main-screen search whose primary grid has since been emptied,
+    // which yields out-of-bounds coordinates and blank snippets.
+    @objc
+    var searchedSnapshot: TerminalContentSnapshot? {
+        impl?.snapshot
+    }
     
     @objc
     var hasRequest: Bool {

@@ -157,17 +157,16 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
                                                        rangeOut:&range
                                                    absLineRange:NSMakeRange(0, 0)
                                                   rangeSearched:NULL];
-    iTermTextExtractor *extractor;
-    switch (self.pass) {
-        case iTermGlobalSearchEngineCursorPassCurrentScreen:
-            extractor = [[iTermTextExtractor alloc] initWithDataSource:self.session.screen];
-            break;
-        case iTermGlobalSearchEngineCursorPassMainScreen: {
-            iTermTerminalContentSnapshot *snapshot = [self.session.screen snapshotWithPrimaryGrid];
-            extractor = [[iTermTextExtractor alloc] initWithDataSource:snapshot];
-            break;
-        }
-    }
+    // Extract snippets from the exact snapshot the search engine ran against, not
+    // a freshly taken one. The results index into coordinates recorded when the
+    // search began; re-snapshotting can drift out from under them (e.g. a
+    // main-screen search whose primary grid has since been emptied), producing
+    // out-of-bounds coordinates and blank snippets. Fall back to the live screen
+    // only if the engine has no snapshot (no active search), which shouldn't
+    // happen while there are results to render.
+    iTermTerminalContentSnapshot *snapshot = self.searchEngine.searchedSnapshot;
+    iTermTextExtractor *extractor =
+        [[iTermTextExtractor alloc] initWithDataSource:snapshot ?: (id<iTermTextDataSource>)self.session.screen];
     id<ExternalSearchResultsController> esrc = self.session.externalSearchResultsController;
     NSArray<iTermExternalSearchResult *> *externals =
         [esrc externalSearchResultsForQuery:query
