@@ -618,22 +618,25 @@ class ChatAgent {
         self.permissions = permissions
         var parts = [String]()
 
-        let key = if AITermController.provider?.functionsSupported != true || permissions.isEmpty {
+        // A session-bound chat can be linked to a terminal, a browser, both, or
+        // neither (the Link/Unlink Terminal and Web Browser menu items are
+        // independent). The permission set reflects what's actually linked:
+        // browser-specific categories appear only when a browser is linked, the
+        // rest only when a terminal is linked. Pick the prompt that matches the
+        // real combination so a browser-only chat isn't told it has a terminal.
+        let hasBrowser = permissions.contains(.actInWebBrowser)
+        let hasTerminal = permissions.contains { !$0.isBrowserSpecific }
+        let readWrite = permissions.contains(.runCommands) || permissions.contains(.typeForYou)
+        let key = if AITermController.provider?.functionsSupported != true || (!hasTerminal && !hasBrowser) {
             kPreferenceKeyAIPromptAIChat
+        } else if hasBrowser && !hasTerminal {
+            kPreferenceKeyAIPromptAIChatBrowser
+        } else if hasBrowser {
+            readWrite ? kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser
+                      : kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser
         } else {
-            if permissions.contains(.actInWebBrowser) {
-                if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
-                    kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser
-                } else {
-                    kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser
-                }
-            } else {
-                if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
-                    kPreferenceKeyAIPromptAIChatReadWriteTerminal
-                } else {
-                    kPreferenceKeyAIPromptAIChatReadOnlyTerminal
-                }
-            }
+            readWrite ? kPreferenceKeyAIPromptAIChatReadWriteTerminal
+                      : kPreferenceKeyAIPromptAIChatReadOnlyTerminal
         }
         parts.append(iTermPreferences.string(forKey: key))
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")

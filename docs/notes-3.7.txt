@@ -2120,3 +2120,13 @@ Bug Fixes:
   can control iTerm2” toggles this permission for
   the current connection and shows a checkmark
   while it is granted.
+- Session-bound AI chats can now read the
+  visible screen on request with the same
+  get_screen_contents tool the orchestrator
+  uses, gated by the “View Contents”
+  permission. In a full-screen app it returns
+  just the current screen, with no scrollback.
+- AI chats linked to only a web browser now
+  use a browser-appropriate system prompt
+  instead of one that described a terminal
+  they were not attached to.

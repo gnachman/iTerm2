@@ -923,6 +923,12 @@ final class OrchestratorDispatcher {
         switch content {
         case .insertTextAtCursor, .deleteCurrentLine:
             return Data("Error: \(name) is not available in orchestration mode; use send_text (which is safety-checked).".utf8)
+        case .getScreenContents:
+            // Not registered as a session_* tool (see
+            // OrchestrationToolProvider.registerSessionTools); the workgroup-level
+            // get_screen_contents covers it. Reject here in case a future change
+            // re-adds it.
+            return Data("Error: \(name) is not available; use the workgroup-level get_screen_contents.".utf8)
         default:
             break
         }
@@ -1081,6 +1087,8 @@ final class OrchestratorDispatcher {
             updated = .searchCommandHistory(try decoder.decode(RemoteCommand.SearchCommandHistory.self, from: prototypeJSON))
         case .getCommandOutput:
             updated = .getCommandOutput(try decoder.decode(RemoteCommand.GetCommandOutput.self, from: prototypeJSON))
+        case .getScreenContents:
+            updated = .getScreenContents(try decoder.decode(RemoteCommand.GetScreenContents.self, from: prototypeJSON))
         case .getTerminalSize:
             updated = .getTerminalSize(try decoder.decode(RemoteCommand.GetTerminalSize.self, from: prototypeJSON))
         case .getShellType:

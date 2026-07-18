@@ -201,6 +201,7 @@ final class OrchestratorSessionToolDecodeTests: XCTestCase {
         case .getCommandBeforeCursor(let p):  return try encoder.encode(p)
         case .searchCommandHistory(let p):    return try encoder.encode(p)
         case .getCommandOutput(let p):        return try encoder.encode(p)
+        case .getScreenContents(let p):       return try encoder.encode(p)
         case .getTerminalSize(let p):         return try encoder.encode(p)
         case .getShellType(let p):            return try encoder.encode(p)
         case .detectSSHSession(let p):        return try encoder.encode(p)

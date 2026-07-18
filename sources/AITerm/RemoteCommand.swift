@@ -111,6 +111,7 @@ struct RemoteCommand: Codable {
     struct GetCommandBeforeCursor: Codable {}
     struct SearchCommandHistory: Codable { var query: String = "" }
     struct GetCommandOutput: Codable { var id: String = "" }
+    struct GetScreenContents: Codable { var lines: Int = 0 }
 
     struct GetTerminalSize: Codable {}
     struct GetShellType: Codable {}
@@ -145,6 +146,7 @@ struct RemoteCommand: Codable {
                     .getCommandBeforeCursor(GetCommandBeforeCursor()),
                     .searchCommandHistory(SearchCommandHistory()),
                     .getCommandOutput(GetCommandOutput()),
+                    .getScreenContents(GetScreenContents()),
                     .getTerminalSize(GetTerminalSize()),
                     .getShellType(GetShellType()),
                     .detectSSHSession(DetectSSHSession()),
@@ -172,6 +174,7 @@ struct RemoteCommand: Codable {
         case getCommandBeforeCursor(GetCommandBeforeCursor)
         case searchCommandHistory(SearchCommandHistory)
         case getCommandOutput(GetCommandOutput)
+        case getScreenContents(GetScreenContents)
         case getTerminalSize(GetTerminalSize)
         case getShellType(GetShellType)
         case detectSSHSession(DetectSSHSession)
@@ -293,7 +296,7 @@ struct RemoteCommand: Codable {
             case .executeCommand:
                     .runCommands
             case .getCommandHistory, .getLastCommand, .getCommandBeforeCursor,
-                    .searchCommandHistory, .getCommandOutput:
+                    .searchCommandHistory, .getCommandOutput, .getScreenContents:
                     .viewContents
             case .setClipboard:
                     .writeToClipboard
@@ -318,6 +321,7 @@ struct RemoteCommand: Codable {
             case .getCommandBeforeCursor(let args): args
             case .searchCommandHistory(let args): args
             case .getCommandOutput(let args): args
+            case .getScreenContents(let args): args
             case .getTerminalSize(let args): args
             case .getShellType(let args): args
             case .detectSSHSession(let args): args
@@ -352,6 +356,7 @@ struct RemoteCommand: Codable {
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getScreenContents,
                 .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
                 .getUserIdentity, .getCurrentDirectory, .setClipboard,
                 .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
@@ -380,6 +385,8 @@ struct RemoteCommand: Codable {
             "Searching the history of commands you have run in this session"
         case .getCommandOutput:
             "Fetching the output of a previously run command"
+        case .getScreenContents:
+            "Reading the visible screen"
         case .getTerminalSize:
             "Querying the size of your terminal window"
         case .getShellType:
@@ -433,6 +440,8 @@ struct RemoteCommand: Codable {
             "The AI Agent would like to search the history of commands you have run in this session"
         case .getCommandOutput:
             "The AI Agent would like to fetch the output of a previously run command"
+        case .getScreenContents:
+            "The AI Agent would like to read the visible screen of your terminal session"
         case .getTerminalSize:
             "The AI Agent would like to query the size of your terminal window"
         case .getShellType:
@@ -473,7 +482,8 @@ struct RemoteCommand: Codable {
         case .executeCommand:
             false
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
-                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput, .getTerminalSize,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getScreenContents, .getTerminalSize,
                 .getShellType, .detectSSHSession, .getRemoteHostname, .getUserIdentity,
                 .getCurrentDirectory, .setClipboard, .insertTextAtCursor, .deleteCurrentLine,
                 .getManPage, .createFile, .searchBrowser, .loadURL,
@@ -502,6 +512,8 @@ extension RemoteCommand.Content {
             "search_command_history"
         case .getCommandOutput:
             "get_command_output"
+        case .getScreenContents:
+            "get_screen_contents"
         case .getTerminalSize:
             "get_terminal_size"
         case .getShellType:
@@ -555,6 +567,8 @@ extension RemoteCommand.Content {
             ["query": "Search query for filtering command history."]
         case .getCommandOutput(_):
             ["id": "Unique identifier of the command whose output is requested."]
+        case .getScreenContents(_):
+            ["lines": "Number of trailing lines to return when the visible screen is a normal shell (the primary screen). Use 0 for the default of 100. Ignored for a full-screen application, where only the current screen is available."]
         case .getTerminalSize(_):
             [:]
         case .getShellType(_):
@@ -614,6 +628,8 @@ extension RemoteCommand.Content {
             "Searches history for commands matching a query."
         case .getCommandOutput(_):
             "Returns the output of a previous command by its unique identifier."
+        case .getScreenContents(_):
+            "Returns the visible contents of this terminal session. For a normal shell the text is linear scrollback (real history; ask for more `lines` to see further back). For a full-screen application (vim, less, htop, a REPL, etc.) the text is only the current rendered screen: there is no scrollback or history beyond what is displayed. The result reports a `kind` field and an `is_snapshot` flag (true means do not assume any history is present) alongside the raw `text`. The text uses a few markup tokens (the angle brackets are U+27E8/U+27E9 and effectively never occur in real terminal output): \u{27E8}dim\u{27E9}\u{2026}\u{27E8}/dim\u{27E9} wraps faint/dimmed text (how shells and TUIs render inline suggestions and ghost completions); \u{27E8}cursor\u{27E9} marks the text cursor's position; \u{27E8}image\u{27E9} stands in for an inline image. These tokens are inserted by iTerm2 and are not literally present on the screen."
         case .getTerminalSize(_):
             "Returns (columns, rows) of the terminal window."
         case .getShellType(_):
@@ -664,6 +680,7 @@ extension RemoteCommand.Content {
         case .getCommandBeforeCursor: .getCommandBeforeCursor(value as! RemoteCommand.GetCommandBeforeCursor)
         case .searchCommandHistory: .searchCommandHistory(value as! RemoteCommand.SearchCommandHistory)
         case .getCommandOutput: .getCommandOutput(value as! RemoteCommand.GetCommandOutput)
+        case .getScreenContents: .getScreenContents(value as! RemoteCommand.GetScreenContents)
         case .getTerminalSize: .getTerminalSize(value as! RemoteCommand.GetTerminalSize)
         case .getShellType: .getShellType(value as! RemoteCommand.GetShellType)
         case .detectSSHSession: .detectSSHSession(value as! RemoteCommand.DetectSSHSession)

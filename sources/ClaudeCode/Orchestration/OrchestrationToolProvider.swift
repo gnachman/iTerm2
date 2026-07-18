@@ -203,6 +203,14 @@ final class OrchestrationToolProvider: ToolProvider {
             case .getCommandBeforeCursor(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .searchCommandHistory(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getCommandOutput(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
+            case .getScreenContents:
+                // NOT offered as session_get_screen_contents: the orchestrator
+                // already has a workgroup-level get_screen_contents (which also
+                // pairs with scroll_wheel), so a session_* mirror would be a
+                // redundant duplicate. (handleSessionToolCall also rejects it
+                // defensively.) It exists on RemoteCommand.Content only so the
+                // session-bound surface can offer it.
+                break
             case .getTerminalSize(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getShellType(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .detectSSHSession(let p): registerSessionTool(content: content, prototype: p, on: &conversation)

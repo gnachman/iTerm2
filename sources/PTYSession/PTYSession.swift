@@ -357,6 +357,10 @@ extension PTYSession {
             try ensureIsTerminal()
             try getCommandOutputRemoteCommand(getCommandOutput: getCommandOutput,
                                               completion: completion)
+        case .getScreenContents(let getScreenContents):
+            try ensureIsTerminal()
+            try getScreenContentsRemoteCommand(getScreenContents: getScreenContents,
+                                               completion: completion)
         case .getTerminalSize(let getTerminalSize):
             try ensureIsTerminal()
             try getTerminalSizeRemoteCommand(getTerminalSize: getTerminalSize,
@@ -710,6 +714,22 @@ extension PTYSession {
                                       completion: @escaping (String, String) throws -> ()) rethrows {
         try completion("\(screen.width()) columns wide by \(screen.height()) rows tall",
                    "Session size provided to AI.")
+    }
+
+    // Session-bound counterpart of the orchestrator's get_screen_contents.
+    // Reuses the same WorkgroupIntrospection core and returns the identical
+    // structured result the orchestrator emits, so the two tools behave the
+    // same. On the alternate screen the result is only the current grid with
+    // is_snapshot=true: there is no scrollback to reveal (this chat has no
+    // scroll_wheel tool), so we present it as having no history.
+    func getScreenContentsRemoteCommand(getScreenContents: RemoteCommand.GetScreenContents,
+                                        completion: @escaping (String, String) throws -> ()) throws {
+        let requestedLines = getScreenContents.lines > 0 ? getScreenContents.lines : nil
+        let contents = WorkgroupIntrospection.screenContents(forSession: self,
+                                                             requestedLines: requestedLines)
+        let data = try JSONEncoder().encode(OrchestratorResult.screenContents(contents))
+        let json = String(data: data, encoding: .utf8) ?? "{}"
+        try completion(json, "Screen contents provided to AI.")
     }
 
     func getShellTypeRemoteCommand(getShellType: RemoteCommand.GetShellType,

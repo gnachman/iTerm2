@@ -20,6 +20,7 @@ extension RemoteCommand {
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getScreenContents,
                 .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
                 .getUserIdentity, .getCurrentDirectory, .setClipboard,
                 .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
