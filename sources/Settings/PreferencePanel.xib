@@ -1385,8 +1385,8 @@ CA
                 <outlet property="_tmuxPauseModeAgeLimit" destination="hXw-El-HMF" id="mRQ-0c-gkM"/>
                 <outlet property="_tmuxWarnBeforePausing" destination="QSK-Li-EpK" id="R4e-84-nAB"/>
                 <outlet property="_tripleClickSelectsFullLines" destination="GD3-XJ-mYL" id="3nb-ii-SgM"/>
-                <outlet property="_typeForYouButton" destination="03z-Hc-UG1" id="mnk-OA-cCl"/>
-                <outlet property="_typeForYouLabel" destination="MLB-vf-Zmf" id="liH-lp-qqH"/>
+                <outlet property="_controlTerminalButton" destination="03z-Hc-UG1" id="mnk-OA-cCl"/>
+                <outlet property="_controlTerminalLabel" destination="MLB-vf-Zmf" id="liH-lp-qqH"/>
                 <outlet property="_unpauseTmuxAutomatically" destination="Xpa-up-i7z" id="P3K-mQ-k3Y"/>
                 <outlet property="_useAutoSaveFrames" destination="vhk-ek-NHd" id="NZN-Fd-ngN"/>
                 <outlet property="_useCustomScriptsFolder" destination="dDY-rB-g7q" id="ywW-pn-co0"/>
@@ -7594,7 +7594,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MLB-vf-Zmf">
                                                                             <rect key="frame" x="150" y="143" width="133" height="16"/>
                                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Type for You" id="iQz-CE-sUw">
+                                                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Control Terminal" id="iQz-CE-sUw">
                                                                                 <font key="font" usesAppearanceFont="YES"/>
                                                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

@@ -136,6 +136,7 @@ struct RemoteCommand: Codable {
         var startingLineNumber: Int = 0
         var numberOfLines: Int = 0
     }
+    struct RestartSession: Codable {}
     enum Content: Codable, CaseIterable {
         static var allCases: [RemoteCommand.Content] {
             return [.isAtPrompt(IsAtPrompt()),
@@ -162,7 +163,8 @@ struct RemoteCommand: Codable {
                     .loadURL(LoadURL()),
                     .webSearch(WebSearch()),
                     .getURL(GetURL()),
-                    .readWebPage(ReadWebPage())
+                    .readWebPage(ReadWebPage()),
+                    .restartSession(RestartSession())
             ]
         }
 
@@ -191,6 +193,7 @@ struct RemoteCommand: Codable {
         case webSearch(WebSearch)
         case getURL(GetURL)
         case readWebPage(ReadWebPage)
+        case restartSession(RestartSession)
         // When adding a new command be sure to update allCases.
 
         enum PermissionCategory: String, Codable, CaseIterable {
@@ -198,7 +201,7 @@ struct RemoteCommand: Codable {
             case runCommands = "Run Commands"
             case viewContents = "View Contents"
             case writeToClipboard = "Write to the Clipboard"
-            case typeForYou = "Type for You"
+            case controlTerminal = "Control Terminal"
             case viewManpages = "View Manpages"
             case writeToFilesystem = "Write to the File System"
             case actInWebBrowser = "Act in Web Browser"
@@ -215,6 +218,12 @@ struct RemoteCommand: Codable {
                     self = .viewContents
                     return
                 }
+                // "Type for You" was renamed to "Control Terminal"; accept the
+                // legacy string so existing per-chat grants survive the rename.
+                if raw == "Type for You" {
+                    self = .controlTerminal
+                    return
+                }
                 guard let value = PermissionCategory(rawValue: raw) else {
                     throw DecodingError.dataCorruptedError(
                         in: container,
@@ -226,7 +235,7 @@ struct RemoteCommand: Codable {
             var isBrowserSpecific: Bool {
                 switch self {
                 case .checkTerminalState, .runCommands, .viewContents, .writeToClipboard,
-                        .typeForYou, .viewManpages, .writeToFilesystem:
+                        .controlTerminal, .viewManpages, .writeToFilesystem:
                     false
                 case .actInWebBrowser:
                     true
@@ -239,7 +248,7 @@ struct RemoteCommand: Codable {
                     "Provide Terminal State Automatically"
                 case .viewContents:
                     "Provide Screen Contents Automatically"
-                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
+                case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -251,7 +260,7 @@ struct RemoteCommand: Codable {
                     "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
                 case .viewContents:
                     "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat."
-                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
+                case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -265,7 +274,7 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState, .viewContents:
                     true
-                case .runCommands, .writeToClipboard, .typeForYou, .viewManpages,
+                case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     false
                 }
@@ -281,7 +290,7 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState:
                     true
-                case .viewContents, .runCommands, .writeToClipboard, .typeForYou,
+                case .viewContents, .runCommands, .writeToClipboard, .controlTerminal,
                         .viewManpages, .writeToFilesystem, .actInWebBrowser:
                     false
                 }
@@ -300,8 +309,8 @@ struct RemoteCommand: Codable {
                     .viewContents
             case .setClipboard:
                     .writeToClipboard
-            case .insertTextAtCursor, .deleteCurrentLine:
-                    .typeForYou
+            case .insertTextAtCursor, .deleteCurrentLine, .restartSession:
+                    .controlTerminal
             case .getManPage:
                     .viewManpages
             case .createFile:
@@ -338,6 +347,7 @@ struct RemoteCommand: Codable {
             case .webSearch(let args): args
             case .getURL(let args): args
             case .readWebPage(let args): args
+            case .restartSession(let args): args
             }
         }
     }
@@ -360,7 +370,8 @@ struct RemoteCommand: Codable {
                 .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
                 .getUserIdentity, .getCurrentDirectory, .setClipboard,
                 .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
-                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor,
+                .restartSession:
             return false
         case .executeCommand:
             return true
@@ -419,6 +430,8 @@ struct RemoteCommand: Codable {
             "Get the current URL"
         case .readWebPage:
             "View the current web page"
+        case .restartSession:
+            "Restarting this session"
         }
     }
 
@@ -474,6 +487,8 @@ struct RemoteCommand: Codable {
             "The AI agent would like to write to get the current URL"
         case .readWebPage:
             "The AI agent would like to write to view the current web page"
+        case .restartSession:
+            "The AI Agent would like to restart this session, which kills any running jobs"
         }
     }
 
@@ -487,7 +502,7 @@ struct RemoteCommand: Codable {
                 .getShellType, .detectSSHSession, .getRemoteHostname, .getUserIdentity,
                 .getCurrentDirectory, .setClipboard, .insertTextAtCursor, .deleteCurrentLine,
                 .getManPage, .createFile, .searchBrowser, .loadURL,
-                .webSearch, .getURL, .readWebPage:
+                .webSearch, .getURL, .readWebPage, .restartSession:
             true
         }
     }
@@ -546,6 +561,8 @@ extension RemoteCommand.Content {
             "get_current_url"
         case .readWebPage:
             "read_web_page_section"
+        case .restartSession:
+            "restart_session"
         }
     }
 
@@ -603,6 +620,8 @@ extension RemoteCommand.Content {
         case .readWebPage(_):
             ["startingLineNumber": "The line number to start reading at.",
              "numberOfLines": "The number of lines to return."]
+        case .restartSession(_):
+            [:]
         }
     }
 
@@ -667,6 +686,8 @@ extension RemoteCommand.Content {
             "Returns some of the content (in markdown format) of the page visible in the associated web browser."
         case .searchBrowser(_):
             "Searches the current web page in the associated web browser (after converting to markdown format) for a substring."
+        case .restartSession(_):
+            "Restarts this terminal session: terminates any running jobs and relaunches the session’s command, equivalent to the Session > Restart Session menu item. Use this to recover a hung or misconfigured session. This is disruptive - every running process in the session is killed - so only use it when the user has asked to restart or when the session is unusable."
         }
     }
 
@@ -697,6 +718,7 @@ extension RemoteCommand.Content {
         case .webSearch: .webSearch(value as! RemoteCommand.WebSearch)
         case .getURL: .getURL(value as! RemoteCommand.GetURL)
         case .readWebPage: .readWebPage(value as! RemoteCommand.ReadWebPage)
+        case .restartSession: .restartSession(value as! RemoteCommand.RestartSession)
         }
     }
 }

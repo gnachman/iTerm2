@@ -8,7 +8,7 @@ import Foundation
 // The tool surface the chat-orchestration mode presents to the LLM.
 // Mirrors AITerm's RemoteCommand in role but with a fundamentally
 // different domain: instead of a single session's actions
-// (.runCommand / .typeForYou / .actInWebBrowser), the orchestrator
+// (.runCommand / .controlTerminal / .actInWebBrowser), the orchestrator
 // drives many workgroups, addresses sessions by their GUID, and
 // supports multiplexed waits over a monitored set.
 //

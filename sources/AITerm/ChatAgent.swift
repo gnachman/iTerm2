@@ -626,7 +626,7 @@ class ChatAgent {
         // real combination so a browser-only chat isn't told it has a terminal.
         let hasBrowser = permissions.contains(.actInWebBrowser)
         let hasTerminal = permissions.contains { !$0.isBrowserSpecific }
-        let readWrite = permissions.contains(.runCommands) || permissions.contains(.typeForYou)
+        let readWrite = permissions.contains(.runCommands) || permissions.contains(.controlTerminal)
         let key = if AITermController.provider?.functionsSupported != true || (!hasTerminal && !hasBrowser) {
             kPreferenceKeyAIPromptAIChat
         } else if hasBrowser && !hasTerminal {

@@ -1003,8 +1003,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSPopUpButton *_viewHistoryButton;
     IBOutlet NSTextField *_writeToClipboardLabel; // Write to the Clipboard
     IBOutlet NSPopUpButton *_writeToClipboardButton;
-    IBOutlet NSTextField *_typeForYouLabel; // Type for You
-    IBOutlet NSPopUpButton *_typeForYouButton;
+    IBOutlet NSTextField *_controlTerminalLabel; // Control Terminal
+    IBOutlet NSPopUpButton *_controlTerminalButton;
     IBOutlet NSTextField *_viewManpagesLabel; // View Manpages
     IBOutlet NSPopUpButton *_viewManpagesButton;
     IBOutlet NSTextField *_writeToFilesystemLabel; // View Manpages
@@ -1648,9 +1648,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                    relatedView:_writeToClipboardLabel
                           type:kPreferenceInfoTypeUnsignedIntegerPopup];
 
-    info = [self defineControl:_typeForYouButton
-                           key:kPreferenceKeyAIPermissionTypeForYou
-                   relatedView:_typeForYouLabel
+    info = [self defineControl:_controlTerminalButton
+                           key:kPreferenceKeyAIPermissionControlTerminal
+                   relatedView:_controlTerminalLabel
                           type:kPreferenceInfoTypeUnsignedIntegerPopup];
 
     info = [self defineControl:_viewManpagesButton

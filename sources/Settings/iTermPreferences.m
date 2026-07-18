@@ -272,7 +272,9 @@ NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionChe
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
 NSString *const kPreferenceKeyAIPermissionViewHistory = @"AIPermissionViewHistory";
 NSString *const kPreferenceKeyAIPermissionWriteToClipboard = @"AIPermissionWriteToClipboard";
-NSString *const kPreferenceKeyAIPermissionTypeForYou = @"AIPermissionTypeForYou";
+// Renamed from kPreferenceKeyAIPermissionTypeForYou; the persisted key string
+// stays "AIPermissionTypeForYou" so existing user settings survive the rename.
+NSString *const kPreferenceKeyAIPermissionControlTerminal = @"AIPermissionTypeForYou";
 NSString *const kPreferenceKeyAIPermissionViewManpages = @"AIPermissionViewManpages";
 NSString *const kPreferenceKeyAIPermissionWriteToFilesystem = @"AIPermissionWriteToFilesystem";
 NSString *const kPreferenceKeyAIPermissionActInWebBrowser = @"AIPermissionActInWebBrowser";
@@ -770,7 +772,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionViewHistory: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionWriteToClipboard: @(iTermAIPermissionAsk),
-                  kPreferenceKeyAIPermissionTypeForYou: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionControlTerminal: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionViewManpages: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionWriteToFilesystem: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionActInWebBrowser: @(iTermAIPermissionAsk),

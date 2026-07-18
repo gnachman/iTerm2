@@ -24,7 +24,8 @@ extension RemoteCommand {
                 .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
                 .getUserIdentity, .getCurrentDirectory, .setClipboard,
                 .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
-                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor,
+                .restartSession:
             return true
         case .executeCommand(let command):
             // The safety check uses the configured conversation model, so it is
@@ -104,7 +105,7 @@ extension RemoteCommand.Content.PermissionCategory {
         case .runCommands: kPreferenceKeyAIPermissionRunCommands
         case .viewContents: kPreferenceKeyAIPermissionViewHistory
         case .writeToClipboard: kPreferenceKeyAIPermissionWriteToClipboard
-        case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
+        case .controlTerminal: kPreferenceKeyAIPermissionControlTerminal
         case .viewManpages: kPreferenceKeyAIPermissionViewManpages
         case .writeToFilesystem: kPreferenceKeyAIPermissionWriteToFilesystem
         case .actInWebBrowser: kPreferenceKeyAIPermissionActInWebBrowser

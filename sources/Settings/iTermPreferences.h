@@ -250,7 +250,7 @@ extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;
 extern NSString *const kPreferenceKeyAIPermissionViewHistory;
 extern NSString *const kPreferenceKeyAIPermissionWriteToClipboard;
-extern NSString *const kPreferenceKeyAIPermissionTypeForYou;
+extern NSString *const kPreferenceKeyAIPermissionControlTerminal;
 extern NSString *const kPreferenceKeyAIPermissionViewManpages;
 extern NSString *const kPreferenceKeyAIPermissionWriteToFilesystem;
 extern NSString *const kPreferenceKeyAIPermissionActInWebBrowser;

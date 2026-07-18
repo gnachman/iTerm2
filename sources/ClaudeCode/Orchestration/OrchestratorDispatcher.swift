@@ -915,7 +915,7 @@ final class OrchestratorDispatcher {
             where: { $0.functionName == rawName }) else {
             return Data("Error: unknown session tool \(name)".utf8)
         }
-        // Defense in depth: these .typeForYou tools write to the PTY without
+        // Defense in depth: these .controlTerminal tools write to the PTY without
         // classification and can submit an arbitrary command (a CR in the text,
         // or Ctrl-U), so they must never run in orchestration mode. They are
         // not registered (see OrchestrationToolProvider.registerSessionTools);
@@ -1121,6 +1121,8 @@ final class OrchestratorDispatcher {
             updated = .getURL(try decoder.decode(RemoteCommand.GetURL.self, from: prototypeJSON))
         case .readWebPage:
             updated = .readWebPage(try decoder.decode(RemoteCommand.ReadWebPage.self, from: prototypeJSON))
+        case .restartSession:
+            updated = .restartSession(try decoder.decode(RemoteCommand.RestartSession.self, from: prototypeJSON))
         }
         return RemoteCommand(llmMessage: llmMessage, content: updated)
     }
@@ -1139,7 +1141,7 @@ final class OrchestratorDispatcher {
     // arms here would otherwise silently drop into one of them.
     static func requiresSessionClaim(_ content: RemoteCommand.Content) -> Bool {
         switch content.permissionCategory {
-        case .runCommands, .writeToClipboard, .typeForYou,
+        case .runCommands, .writeToClipboard, .controlTerminal,
                 .writeToFilesystem, .actInWebBrowser:
             return true
         case .checkTerminalState, .viewContents, .viewManpages:

@@ -219,7 +219,7 @@ final class OrchestrationToolProvider: ToolProvider {
             case .getCurrentDirectory(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .setClipboard(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .insertTextAtCursor, .deleteCurrentLine:
-                // NOT offered in orchestration mode. These .typeForYou tools
+                // NOT offered in orchestration mode. These .controlTerminal tools
                 // write straight to the PTY with no classification (unlike the
                 // gated send_text and execute_command paths), and their payload
                 // can submit an arbitrary command (insert_text_at_cursor with a
@@ -236,6 +236,7 @@ final class OrchestrationToolProvider: ToolProvider {
             case .webSearch(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getURL(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .readWebPage(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
+            case .restartSession(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             }
         }
     }

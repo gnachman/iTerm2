@@ -16,7 +16,7 @@ An AI chat may be linked with a terminal session and a web browser session, prov
 
 If you set the `Act in Web Browser` chat permission to `Never Allow` then the prompts that include `Browser Access` will not be used.
 
-If both `Run Commands` and `Type for You` are set to `Never` then the prompts that include `Full Terminal` will not be used.
+If both `Run Commands` and `Control Terminal` are set to `Never` then the prompts that include `Full Terminal` will not be used.
 
 If all the terminal-related permissions are set to `Never` then neither `Full Terminal` nor `Read-Only Terminal` prompts will be used.
 

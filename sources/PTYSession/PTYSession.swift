@@ -420,6 +420,10 @@ extension PTYSession {
         case .readWebPage(let args):
             try ensureIsBrowser()
             try readWebPage(args: args, completion: completion)
+        case .restartSession(let restartSession):
+            try ensureIsTerminal()
+            try restartSessionRemoteCommand(restartSession: restartSession,
+                                            completion: completion)
         }
     }
 }
@@ -787,6 +791,25 @@ extension PTYSession {
                                         completion: @escaping (String, String) throws -> ()) rethrows {
         writeTaskNoBroadcast("\u{15}")
         try completion("Done", "Current line deleted by AI.")
+    }
+
+    func restartSessionRemoteCommand(restartSession: RemoteCommand.RestartSession,
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
+        // isRestartable() guards -restartSession, which asserts on entry. A
+        // session with no restartable program (e.g. a live tmux or SSH session)
+        // has nothing to relaunch, so report that back rather than aborting.
+        guard isRestartable() else {
+            try completion("This session cannot be restarted.",
+                           "AI tried to restart the session but it is not restartable.")
+            return
+        }
+        // restart() is the Swift-refined name for ObjC -restartSession. This
+        // kills any running jobs and relaunches the session's command, exactly
+        // like the Session > Restart Session menu (but without its confirmation
+        // warning, since the AI permission prompt already gated this).
+        restart()
+        try completion("The session is being restarted.",
+                       "Session restarted by AI.")
     }
 
     func getManPageRemoteCommand(getManPage: RemoteCommand.GetManPage,

@@ -89,6 +89,8 @@ final class RemoteCommandToolProvider: ToolProvider {
                 define(in: &conversation, content: content, prototype: prototype)
             case .readWebPage(let prototype):
                 define(in: &conversation, content: content, prototype: prototype)
+            case .restartSession(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
             }
         }
     }

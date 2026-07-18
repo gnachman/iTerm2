@@ -50,6 +50,10 @@ Major New Features:
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.
 
+- AI chat can now restart a session for you.
+  The “Type for You” permission was renamed
+  “Control Terminal” and now also gates this.
+
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which
