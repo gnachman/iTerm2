@@ -67,27 +67,47 @@ public enum CompanionTransports {
     /// - pairingTicket: the single-use App Attest admission ticket the phone
     ///   earned (RelayAttestationClient) for a fresh pairing under attestation;
     ///   nil for open mode or for reconnects (which sign with roomSecret).
+    /// - shardResolver: for resolved (v2) codes, the resolver that maps the
+    ///   code's resolver URL + room to an owning relay origin. Pass a shared,
+    ///   long-lived one (per pairing) so its monotonic floor and cached map
+    ///   survive reconnects; when nil a transient resolver is created from the
+    ///   code's resolver URL (functional, but re-fetches and keeps no floor
+    ///   across attempts). Ignored for direct (v1) codes.
     public static func connector(for code: PairingCode,
                                  webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                                  roomSecret: (@Sendable () -> Data?)? = nil,
                                  pairingTicket: String? = nil,
-                                 nonDisplacing: Bool = false) -> TransportConnector {
-        guard let relayOrigin = code.relayOrigin else {
-            return UnavailableTransportConnector()
+                                 nonDisplacing: Bool = false,
+                                 shardResolver: ShardHostResolving? = nil) -> TransportConnector {
+        // Direct mode (v1): connect straight to the relay origin in the code.
+        if let relayOrigin = code.relayOrigin {
+            let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) =
+                { @Sendable challenge, roomName in
+                    try admissionProof(role: .phone, challenge: challenge, roomName: roomName,
+                                       origin: relayOrigin, roomSecret: roomSecret?(),
+                                       pairingTicket: pairingTicket)
+                }
+            // nonDisplacing is set only by the NSE, so a background fetch yields to
+            // a foreground app holding the phone slot rather than displacing it.
+            return RelayTransportConnector(relayOrigin: relayOrigin,
+                                           responderStaticKey: code.responderStaticPublicKey,
+                                           joinProof: proof,
+                                           nonDisplacing: nonDisplacing,
+                                           webSocketFactory: webSocketFactory)
         }
-        let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) =
-            { @Sendable challenge, roomName in
-                try admissionProof(role: .phone, challenge: challenge, roomName: roomName,
-                                   origin: relayOrigin, roomSecret: roomSecret?(),
-                                   pairingTicket: pairingTicket)
-            }
-        // nonDisplacing is set only by the NSE, so a background fetch yields to a
-        // foreground app holding the phone slot rather than displacing it.
-        return RelayTransportConnector(relayOrigin: relayOrigin,
-                                       responderStaticKey: code.responderStaticPublicKey,
-                                       joinProof: proof,
-                                       nonDisplacing: nonDisplacing,
-                                       webSocketFactory: webSocketFactory)
+        // Resolved mode (v2): resolve the owning origin from the shard map at
+        // connect time, then join it the same way.
+        if let resolverURL = code.resolverURL {
+            let resolver = shardResolver ?? ShardHostResolver(resolverURL: resolverURL)
+            return ResolvingTransportConnector(code: code,
+                                               resolver: resolver,
+                                               webSocketFactory: webSocketFactory,
+                                               roomSecret: roomSecret,
+                                               pairingTicket: pairingTicket,
+                                               nonDisplacing: nonDisplacing)
+        }
+        // Neither: no transport.
+        return UnavailableTransportConnector()
     }
 
     /// Mac side: the listener for a pairing. Parks in the relay room when a

@@ -25,6 +25,16 @@ final class CompanionTransportsTests: XCTestCase {
         XCTAssertEqual(connector.transportName, "relay")
     }
 
+    func test_connector_isResolved_whenResolverURLPresent() {
+        // A v2 code (resolver, no relay origin) uses the resolving connector, which
+        // picks the host from the shard map at connect time.
+        let code = PairingCode(responderStaticPublicKey: Data(repeating: 7, count: 32),
+                               pairingID: "abcd1234",
+                               resolverURL: "https://resolver.example.com/")
+        let connector = CompanionTransports.connector(for: code)
+        XCTAssertEqual(connector.transportName, "relay-resolved")
+    }
+
     func test_signedProof_isEmptyWithoutRoomSecret() throws {
         let challenge = RelayAdmission.Challenge(nonce: Data(repeating: 9, count: 32))
         let proof = try CompanionTransports.signedProof(
