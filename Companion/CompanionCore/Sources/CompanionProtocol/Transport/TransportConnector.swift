@@ -22,7 +22,7 @@ public struct PairingRendezvous: Sendable, Equatable {
     public let pairingID: String
     public let version: Int
 
-    public init(pairingID: String, version: Int = PairingCode.supportedVersion) {
+    public init(pairingID: String, version: Int = PairingCode.directVersion) {
         self.pairingID = pairingID
         self.version = version
     }

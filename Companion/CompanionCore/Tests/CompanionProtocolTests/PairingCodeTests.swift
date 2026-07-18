@@ -27,9 +27,11 @@ final class PairingCodeTests: XCTestCase {
     }
 
     func testRejectsWrongVersion() {
-        XCTAssertThrowsError(try PairingCode.parse(url(v: "2"))) { error in
+        // v1 (direct) and v2 (resolved) are supported; a higher version means the
+        // code came from a newer app and must steer the user to update.
+        XCTAssertThrowsError(try PairingCode.parse(url(v: "3"))) { error in
             XCTAssertEqual(error as? PairingCode.ParseError,
-                           .unsupportedVersion(found: "2"))
+                           .unsupportedVersion(found: "3"))
         }
     }
 

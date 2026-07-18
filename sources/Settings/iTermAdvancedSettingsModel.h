@@ -251,6 +251,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)generativeAIAllowed;
 + (BOOL)companionPairingAllowed;
 + (NSString *)companionRelayOrigin;
++ (NSString *)companionResolverURL;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (void)setGitTimeout:(double)value;

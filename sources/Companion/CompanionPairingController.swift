@@ -658,9 +658,22 @@ final class CompanionPairingController: NSObject {
         stopAdvertising()
         let keyPair = try CompanionMacIdentity.keyPair()
         let pairingID = Self.makePairingID()
-        let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
+        // The two modes are exclusive (design docs/companion-relay-design.md):
+        // when a resolver is configured (the default) the QR is resolved mode
+        // (v2, resolver=, no relay=); with an empty resolver setting it falls
+        // back to direct mode (v1, relay=). The mac still parks at its own relay
+        // origin either way (startListening); the resolver only tells the phone
+        // how to find the owning shard.
+        let code: PairingCode
+        if let resolverURL = Self.configuredResolverURL() {
+            code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
+                               pairingID: pairingID,
+                               resolverURL: resolverURL)
+        } else {
+            code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                pairingID: pairingID,
                                relayOrigin: Self.configuredRelayOrigin())
+        }
         pairingCode = code
         // A live QR is up: keep its park retried until the phone pairs or the
         // window is torn down (stopAdvertising clears this).
@@ -1028,6 +1041,27 @@ final class CompanionPairingController: NSObject {
             return nil
         }
         return origin
+    }
+
+    /// The resolver URL embedded in the pairing QR: the control-plane endpoint
+    /// the client asks which relay shard serves its room. Configurable via the
+    /// CompanionResolverURL advanced setting, which defaults to the project
+    /// resolver. Setting it to the empty string omits it from the QR, so the
+    /// client falls back to connecting the relay origin directly (direct mode).
+    /// Validated as an https URL with the same rule the phone applies to the QR,
+    /// so an invalid value is ignored (logged) rather than producing a QR the
+    /// phone rejects.
+    private static func configuredResolverURL() -> String? {
+        let raw = iTermAdvancedSettingsModel.companionResolverURL() ?? ""
+        guard !raw.isEmpty else {
+            // Explicitly disabled: fall back to direct mode.
+            return nil
+        }
+        guard let url = try? PairingCode.canonicalResolverURL(raw) else {
+            DLog("Companion: ignoring CompanionResolverURL=\(raw); must be an https URL")
+            return nil
+        }
+        return url
     }
 
     private func acceptLoop(listener: TransportListener,
