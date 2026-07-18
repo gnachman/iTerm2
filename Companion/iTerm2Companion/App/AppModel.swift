@@ -101,6 +101,13 @@ struct CompanionLiveCanvasLayout: Equatable {
     /// the columns. nil for a host too old to report geometry (falls back to
     /// margin-free mapping).
     var cellGeometry: CompanionCellGeometry?
+    /// Whether a full-screen app is up. When true the canvas hides scrollback (shows
+    /// only the live band == the mutable section).
+    var altScreen: Bool
+    /// Whether the session reports mouse-wheel events. With altScreen, a scroll
+    /// gesture past the content edge is sent to the terminal as wheel input instead
+    /// of browsing scrollback.
+    var scrollWheelReporting: Bool
 }
 
 @MainActor
@@ -542,6 +549,13 @@ final class AppModel {
     /// Whether the mac reports the session's window can currently be resized, from
     /// the latest config; the resize control is disabled otherwise.
     private(set) var activeStreamCanResize = true
+    /// Whether the session is on its alternate screen buffer (a full-screen app is
+    /// up), from the latest config. When true the phone hides scrollback and shows
+    /// only the mutable section.
+    private(set) var activeStreamAltScreen = false
+    /// Whether the session reports mouse-wheel events, from the latest config. With
+    /// altScreen, the phone translates scroll gestures into reportScrollWheel.
+    private(set) var activeStreamScrollWheelReporting = false
     private var activeStreamGeneration: UInt32 = 0
     /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
     /// fetches in flight so scroll events do not duplicate them.
@@ -1800,7 +1814,11 @@ final class AppModel {
 
     // MARK: Create
 
-    func createChat(mode: CompanionNewChatMode) {
+    /// - preservingStackOnTab: when non-nil, push the new conversation ABOVE the
+    ///   existing stack on that tab (the session view's chat button, so Back
+    ///   returns to the session). When nil, replace the stack so Back returns to
+    ///   Home (the New Chat / Create flow, which is presented over Home).
+    func createChat(mode: CompanionNewChatMode, preservingStackOnTab tab: AppTab? = nil) {
         Task {
             do {
                 let client = try await currentClient(label: "Create chat")
@@ -1809,7 +1827,11 @@ final class AppModel {
                 if !chatExists(entry.chat.id) {
                     chats.insert(entry, at: 0)
                 }
-                openConversation(chatID: entry.chat.id, replacingPath: true)
+                if let tab {
+                    pushConversationPreservingStack(chatID: entry.chat.id, onTab: tab)
+                } else {
+                    openConversation(chatID: entry.chat.id, replacingPath: true)
+                }
             } catch {
                 pairingError = userMessage(for: error)
             }
@@ -1913,15 +1935,21 @@ final class AppModel {
 
     /// The Session view's chat button: continue the session's most recently
     /// active chat if it was touched in the last 24 hours, otherwise start a
-    /// fresh one. Conversations live on the Chats tab, so either way this
-    /// switches there.
+    /// fresh one. Either way the conversation opens ABOVE the session view on the
+    /// tab it was reached from, so Back returns to the session.
     func openOrCreateChat(forSessionGuid guid: String) {
+        // Push the conversation ABOVE the session view on whichever tab the user
+        // reached it from, so Back returns to the session view (and the tab
+        // doesn't flip), rather than replacing the stack and stranding them on
+        // the Chats-tab home. Capture the tab now: createChat is async and the
+        // conversation must land on the stack the session view was pushed onto.
+        let tab = selectedTab
         if let attached = recentAttachedChat(forSessionGuid: guid) {
             companionLog("Continuing chat \(attached.chat.id) for session \(guid)")
-            openConversation(chatID: attached.chat.id, replacingPath: true)
+            pushConversationPreservingStack(chatID: attached.chat.id, onTab: tab)
         } else {
             companionLog("Creating a new chat for session \(guid)")
-            createChat(mode: .session(guid: guid))
+            createChat(mode: .session(guid: guid), preservingStackOnTab: tab)
         }
     }
 
@@ -2898,6 +2926,14 @@ final class AppModel {
             companionLog("Ignoring reply-notification tap for missing chat \(chatID)")
             return
         }
+        pushConversationPreservingStack(chatID: chatID, onTab: tab)
+    }
+
+    /// Open a conversation on `tab`'s stack, keeping any session view below it so
+    /// Back returns to the session view rather than the home screen. Shared by
+    /// the reply-notification tap and the session view's chat button, which both
+    /// want "chat, then Back to where I was" rather than a stack-replacing open.
+    private func pushConversationPreservingStack(chatID: String, onTab tab: AppTab) {
         handOffWatchedChatIfOpening(chatID)
         // Bind the target stack once so the read and the write can't drift to
         // different stacks.
@@ -3402,6 +3438,10 @@ final class AppModel {
                 // Absent (older mac) means unknown; default to allowing resize since
                 // the resize control is gated on the mac's revision anyway.
                 activeStreamCanResize = config.canResize ?? true
+                // Absent (older mac) decodes as false: scrollback shown and no
+                // scroll-to-wheel, exactly as before this feature.
+                activeStreamAltScreen = config.altScreen
+                activeStreamScrollWheelReporting = config.scrollWheelReporting
                 // A new generation re-renders everything; stale tiles must not show.
                 if config.generationId != activeStreamGeneration {
                     // Not the first config for this stream = a mid-stream geometry
@@ -3509,6 +3549,8 @@ final class AppModel {
         activeStreamFirstAbsLine = 0
         activeStreamTotalLines = 0
         activeStreamCanResize = true
+        activeStreamAltScreen = false
+        activeStreamScrollWheelReporting = false
         activeStreamGeneration = 0
         activeSelectionRange = nil
         onStreamConfig = onConfig
@@ -3605,6 +3647,14 @@ final class AppModel {
     func requestActiveStreamKeyframe() {
         guard let client, let streamID = activeStreamID else { return }
         Task { try? await client.requestStreamKeyframe(streamID: streamID) }
+    }
+
+    /// Translate a scroll gesture on the live view into terminal mouse-wheel reports
+    /// (used only when the stream is on the alt screen with mouse reporting on).
+    /// `up` reveals older content; `lines` is the notch count.
+    func sendScrollWheel(up: Bool, lines: Int) {
+        guard lines > 0, let client, let streamID = activeStreamID else { return }
+        Task { try? await client.reportScrollWheel(streamID: streamID, up: up, lines: lines) }
     }
 
     /// Report flow-control feedback for the active stream.
@@ -3719,7 +3769,9 @@ final class AppModel {
                                          firstAbsLine: activeStreamFirstAbsLine,
                                          totalLines: activeStreamTotalLines,
                                          generationId: activeStreamGeneration,
-                                         cellGeometry: activeStreamGeometry)
+                                         cellGeometry: activeStreamGeometry,
+                                         altScreen: activeStreamAltScreen,
+                                         scrollWheelReporting: activeStreamScrollWheelReporting)
     }
 
     /// A cached scrollback tile, if already fetched.

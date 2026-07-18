@@ -1061,6 +1061,7 @@ private struct LiveCanvas: UIViewRepresentable {
         context.coordinator.model = model
         context.coordinator.installTileSlotCallback()
         context.coordinator.layout = layout
+        context.coordinator.applyWheelMode()
         context.coordinator.applyLayout()
         context.coordinator.repositionHandles()
         context.coordinator.updateSelectionTiles()
@@ -1068,7 +1069,7 @@ private struct LiveCanvas: UIViewRepresentable {
     static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) { coordinator.tearDown() }
 
     @MainActor
-    final class Coordinator: NSObject, UIScrollViewDelegate, UIEditMenuInteractionDelegate {
+    final class Coordinator: NSObject, UIScrollViewDelegate, UIEditMenuInteractionDelegate, UIGestureRecognizerDelegate {
         let holder: LiveVideoHolder
         var model: AppModel
         private let container = UIView()
@@ -1135,6 +1136,21 @@ private struct LiveCanvas: UIViewRepresentable {
         /// of throttled tiles coalesces into a single follow-up refreshTiles.
         private var tileRefreshScheduled = false
 
+        // Scroll-to-wheel (alt screen + mouse reporting). A single-finger pan tracked
+        // alongside the scroll view: normal panning of a zoomed band scrolls, and only
+        // motion pushing PAST the top/bottom edge is converted to wheel notches and
+        // sent to the terminal. At zoom 1 the band already fits, so every drag wheels.
+        private var wheelPan: UIPanGestureRecognizer?
+        private var lastWheelTranslationY: CGFloat = 0
+        /// Past-edge motion not yet turned into whole notches (points). Positive =
+        /// reveal older (up), negative = reveal newer (down).
+        private var wheelAccumulator: CGFloat = 0
+        /// True when the mac reports the session is on the alt screen with mouse-wheel
+        /// reporting on: scroll gestures become wheel input instead of scrollback.
+        private var wheelScrollMode: Bool {
+            layout?.altScreen == true && layout?.scrollWheelReporting == true
+        }
+
         init(holder: LiveVideoHolder, model: AppModel) {
             self.holder = holder
             self.model = model
@@ -1196,6 +1212,18 @@ private struct LiveCanvas: UIViewRepresentable {
             let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
             contentView.addGestureRecognizer(tap)
 
+            // Single-finger pan for scroll-to-wheel, enabled only in wheel mode. It
+            // recognizes simultaneously with the scroll view's own pan (so a zoomed
+            // band still scrolls) and reads the raw finger translation, which keeps
+            // growing past the hard edge. maximumNumberOfTouches = 1 leaves two-finger
+            // pinch zoom to the scroll view.
+            let wheelPan = UIPanGestureRecognizer(target: self, action: #selector(handleWheelPan(_:)))
+            wheelPan.delegate = self
+            wheelPan.maximumNumberOfTouches = 1
+            wheelPan.isEnabled = false
+            scrollView.addGestureRecognizer(wheelPan)
+            self.wheelPan = wheelPan
+
             loupe.isUserInteractionEnabled = false
             loupe.backgroundColor = .black
             loupe.layer.masksToBounds = true
@@ -1254,7 +1282,12 @@ private struct LiveCanvas: UIViewRepresentable {
             let derivedTotal = model.activeStreamLiveTop > layout.firstAbsLine
                 ? Int(model.activeStreamLiveTop - layout.firstAbsLine) + layout.rows
                 : layout.totalLines
-            let totalLines = max(layout.totalLines, derivedTotal)
+            // Alt screen: hide scrollback and show only the mutable section. Clamping
+            // totalLines to rows makes historyLines 0, the document exactly the video
+            // band, and requests no history tiles. The shrink detection below tears
+            // down any cached tiles from the primary buffer; on exit the extent grows
+            // back and scrollback reappears.
+            let totalLines = layout.altScreen ? layout.rows : max(layout.totalLines, derivedTotal)
 
             let key = "\(Int(size.width))x\(Int(size.height))|\(layout)|\(totalLines)"
             guard key != appliedKey else { return }
@@ -1344,6 +1377,73 @@ private struct LiveCanvas: UIViewRepresentable {
         func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) { refreshTiles() }
         func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
             if !decelerate { refreshTiles() }
+        }
+
+        // MARK: Scroll-to-wheel (alt screen + mouse reporting)
+
+        /// Enable the wheel pan and disable rubber-band bounce while in wheel mode, so
+        /// the top/bottom edge is a crisp hard stop the past-edge translation maps to
+        /// wheel notches; restore normal scrolling otherwise.
+        func applyWheelMode() {
+            let on = wheelScrollMode
+            wheelPan?.isEnabled = on
+            scrollView.bounces = !on
+        }
+
+        /// Let the wheel pan run alongside the scroll view's own pan (so a zoomed band
+        /// still scrolls while we observe the finger) and its pinch (kept for zoom).
+        func gestureRecognizer(_ g: UIGestureRecognizer,
+                               shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+            return g === wheelPan || other === wheelPan
+        }
+
+        @objc private func handleWheelPan(_ g: UIPanGestureRecognizer) {
+            // A hold-then-drag selects; never wheel while selecting or dragging handles.
+            guard wheelScrollMode, !selecting, !draggingStart, !draggingEnd else { return }
+            switch g.state {
+            case .began:
+                lastWheelTranslationY = 0
+                wheelAccumulator = 0
+            case .changed:
+                let translationY = g.translation(in: scrollView).y
+                let delta = translationY - lastWheelTranslationY
+                lastWheelTranslationY = translationY
+                accrueWheel(delta: delta)
+            case .ended, .cancelled, .failed:
+                lastWheelTranslationY = 0
+                wheelAccumulator = 0
+            default:
+                break
+            }
+        }
+
+        /// Convert past-edge finger motion into wheel notches. In-range panning (when
+        /// zoomed and not at an edge) is left to the scroll view and accrues nothing.
+        private func accrueWheel(delta: CGFloat) {
+            guard delta != 0 else { return }
+            let offsetY = scrollView.contentOffset.y
+            let minY = -scrollView.adjustedContentInset.top
+            let maxY = max(minY, scrollView.contentSize.height - scrollView.bounds.height
+                                 + scrollView.adjustedContentInset.bottom)
+            let atTop = offsetY <= minY + 0.5
+            let atBottom = offsetY >= maxY - 0.5
+            // Finger moving down (delta > 0) at the top reveals older content (up);
+            // finger moving up (delta < 0) at the bottom reveals newer content (down).
+            // At zoom 1 the band fits, so both edges are true and either direction wheels.
+            if delta > 0 && atTop {
+                wheelAccumulator += delta
+            } else if delta < 0 && atBottom {
+                wheelAccumulator += delta
+            } else {
+                return
+            }
+            // One notch per line of past-edge travel (fall back to a fixed step before
+            // any layout has set pointsPerLine).
+            let step = pointsPerLine > 0.5 ? pointsPerLine : 24
+            let notches = Int(wheelAccumulator / step)
+            guard notches != 0 else { return }
+            wheelAccumulator -= CGFloat(notches) * step
+            model.sendScrollWheel(up: notches > 0, lines: abs(notches))
         }
 
         /// Coalesce a follow-up refreshTiles after throttle-dropped tiles, so the drops

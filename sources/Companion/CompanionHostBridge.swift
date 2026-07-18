@@ -465,6 +465,8 @@ final class CompanionHostBridge {
             streams[streamID]?.streamer.updateFrameRateCap(params.maxFrameRate)
         case .streamAck(let streamID, let lastPTSMilliseconds, let queueDepth):
             streams[streamID]?.streamer.noteAck(ptsMilliseconds: lastPTSMilliseconds, queueDepth: queueDepth)
+        case .reportScrollWheel(let streamID, let up, let lines):
+            handleReportScrollWheel(streamID: streamID, up: up, lines: lines)
         case .selectionGesture(let streamID, let phase, let mode, let point):
             handleSelectionGesture(streamID: streamID, phase: phase, mode: mode, point: point)
         case .clearSelection(let streamID):
@@ -826,6 +828,19 @@ final class CompanionHostBridge {
     private func handleCopySelection(guid: String, requestID: UInt64?) {
         let text = iTermController.sharedInstance().anySession(forReference: guid)?.textview?.selectedText
         send(.selectionText(text: text ?? ""), requestID: requestID)
+    }
+
+    /// Translate a phone scroll gesture (over an alt-screen app with mouse reporting)
+    /// into terminal mouse-wheel reports. Resolves the session from the stream and
+    /// drives the existing PTYSession primitive, which re-checks that reporting is
+    /// enabled and caps the notch count, so a stale peer cannot inject bytes when the
+    /// user has reporting off.
+    private func handleReportScrollWheel(streamID: UInt32, up: Bool, lines: Int) {
+        guard let context = streams[streamID],
+              let session = iTermController.sharedInstance().anySession(forReference: context.guid) else {
+            return
+        }
+        _ = session.reportScrollWheelForOrchestrator(up: up, lines: lines)
     }
 
     private func handleStartSessionStream(guid: String,

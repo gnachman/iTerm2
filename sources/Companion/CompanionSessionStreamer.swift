@@ -43,6 +43,13 @@ protocol CompanionFrameSource: AnyObject {
     /// (not full screen, maximized, edge-attached, or width-locked), so the phone
     /// can disable its resize control when a resize would be ignored.
     var canResize: Bool { get }
+    /// Whether the session is currently on its alternate screen buffer, so the phone
+    /// can hide scrollback and show only the mutable section. Changes without changing
+    /// pixels, so it is re-read every tick before the emit guards (like canResize).
+    var isAlternateScreen: Bool { get }
+    /// Whether the session reports mouse-wheel events to the program right now, so the
+    /// phone can translate scroll gestures into wheel reports while on the alt screen.
+    var scrollWheelReporting: Bool { get }
     /// Render the current visible screen, or nil if it cannot be produced now.
     /// The encoder and pool size themselves to the returned image's dimensions.
     func renderCurrentScreen() -> CGImage?
@@ -54,6 +61,9 @@ extension CompanionFrameSource {
     var totalLines: Int { 0 }
     // A fake with no window is treated as resizable.
     var canResize: Bool { true }
+    // A fake defaults to the primary screen with no mouse reporting.
+    var isAlternateScreen: Bool { false }
+    var scrollWheelReporting: Bool { false }
 }
 
 final class CompanionSessionStreamer: @unchecked Sendable {
@@ -158,6 +168,12 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     /// resend (and keyframe) without bumping the generation, since it does not alter
     /// the geometry the phone renders against.
     private var lastCanResize = true
+    /// Whether the session is on the alternate screen, and whether it reports mouse
+    /// wheel events. Both ride the stream config exactly like lastCanResize: a change
+    /// forces a config resend + keyframe (so an idle screen still propagates it)
+    /// without bumping the generation (the geometry the phone renders is unchanged).
+    private var lastAltScreen = false
+    private var lastScrollWheel = false
     /// When the last frame was emitted and whether it was a keyframe, to drive the
     /// insurance keyframe (below).
     private var lastEmitAt: TimeInterval = 0
@@ -312,9 +328,20 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         // so it goes out THIS tick) but not a generation bump (geometry is unchanged,
         // so the phone must not drop its history tiles).
         let currentCanResize = source.canResize
+        // Alt-screen and mouse-wheel-reporting flips also change no pixels, so read
+        // them here (on the main thread, alongside canResize) and force a config
+        // resend + keyframe on a change so an idle screen still propagates it.
+        let currentAltScreen = source.isAlternateScreen
+        let currentScrollWheel = source.scrollWheelReporting
         lock.lock()
         if currentCanResize != lastCanResize {
             lastCanResize = currentCanResize
+            mustResendConfig = true
+            pacer.requestKeyframe()
+        }
+        if currentAltScreen != lastAltScreen || currentScrollWheel != lastScrollWheel {
+            lastAltScreen = currentAltScreen
+            lastScrollWheel = currentScrollWheel
             mustResendConfig = true
             pacer.requestKeyframe()
         }
@@ -530,7 +557,9 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                     cellGeometry: lastCellGeometry,
                     firstAbsLine: lastFirstAbsLine,
                     totalLines: lastTotalLines,
-                    canResize: lastCanResize))
+                    canResize: lastCanResize,
+                    altScreen: lastAltScreen,
+                    scrollWheelReporting: lastScrollWheel))
                 flags.insert(.configChanged)
             }
         }

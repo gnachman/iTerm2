@@ -74,7 +74,17 @@ public enum CompanionProtocolVersion {
     /// so minimumPeer stays 5; the mac keeps emitting typing edges so a pre-8 phone
     /// infers boundaries exactly as before, and only a peer at `turnLifecycleRevision`
     /// consumes turnLifecycle (see peerConsumesTurnLifecycle).
-    public static let current = 8
+    ///
+    /// Revision 9 adds alternate-screen awareness to the live view: streamConfig
+    /// carries altScreen + scrollWheelReporting, so the phone hides scrollback while
+    /// a full-screen app is up and translates scroll gestures into the new
+    /// reportScrollWheel message when the app has mouse reporting on. Additive: the
+    /// config fields are optional (older mac -> decode false -> unchanged behavior)
+    /// and reportScrollWheel decodes as `.unsupported` on an older mac, which never
+    /// advertises scrollWheelReporting so the phone never sends it. minimumPeer stays
+    /// 5; the two config booleans self-gate the feature, so no dedicated revision
+    /// constant is needed.
+    public static let current = 9
 
     /// The oldest peer revision this build accepts. Raised to 5 (lockstep with
     /// `current`) for the relay move: peers older than revision 5 have the old

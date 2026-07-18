@@ -279,6 +279,13 @@ actor CompanionClient {
         try await session.send(.clearSelection(streamID: streamID))
     }
 
+    /// Translate a live-view scroll gesture into terminal mouse-wheel reports (only
+    /// when the stream advertised altScreen + scrollWheelReporting). `up` reveals
+    /// older content; `lines` is the notch count.
+    func reportScrollWheel(streamID: UInt32, up: Bool, lines: Int) async throws {
+        try await session.send(.reportScrollWheel(streamID: streamID, up: up, lines: lines))
+    }
+
     /// Select the entire terminal content.
     func selectAll(streamID: UInt32) async throws {
         try await session.send(.selectAllInStream(streamID: streamID))

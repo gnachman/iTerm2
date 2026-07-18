@@ -1122,8 +1122,13 @@ const NSInteger kLongMaximumWordLength = 100000;
                                            matchAttributes:(NSDictionary *)matchAttributes
                                        maximumPrefixLength:(NSUInteger)maximumPrefixLength
                                        maximumSuffixLength:(NSUInteger)maximumSuffixLength {
+    const long long overflow = self.dataSource.totalScrollbackOverflow;
     const VT100GridCoordRange relativeRange =
-        VT100GridCoordRangeFromAbsCoordRange(range, self.dataSource.totalScrollbackOverflow);
+        VT100GridCoordRangeFromAbsCoordRange(range, overflow);
+    // A range that should yield at least one cell of match text. endX was passed
+    // as internalEndX + 1 by the caller, so a single-cell match has start < end.
+    const BOOL nonDegenerate = (range.start.y < range.end.y ||
+                                (range.start.y == range.end.y && range.start.x < range.end.x));
     const NSInteger maxMatchLength = 1024;
     NSString *match = [self contentInRange:VT100GridWindowedRangeMake(relativeRange, _logicalWindow.location, _logicalWindow.length)
                          attributeProvider:nil
@@ -1138,6 +1143,25 @@ const NSInteger kLongMaximumWordLength = 100000;
                          deduplicateDECDHL:YES];
     NSAttributedString *matchString = [[NSAttributedString alloc] initWithString:match
                                                                       attributes:matchAttributes];
+    if (match.length == 0 && nonDegenerate) {
+        // The match range spans at least one cell but the extractor pulled no
+        // text. This is the empty-global-search-snippet bug: the coordinates
+        // recorded when the (unsynchronized) search located the match no longer
+        // point at drawable cells by the time the snippet is extracted, e.g. the
+        // grid was repainted or scrolled on a live session (a Claude Code TUI).
+        // Dump what the buffer ACTUALLY holds at the match line now so we can
+        // tell a scrolled-off line (rel.y out of bounds) from a repainted-blank
+        // line (rel.y in bounds but the cells no longer contain the match).
+        DLog(@"EMPTY SNIPPET MATCH: match=%@ abs=%@ rel=%@ overflow=%@ dsWidth=%@ dsLines=%@ logicalWindow=(%d,%d) actualLine=%@",
+             match == nil ? @"(nil)" : @"(empty)",
+             VT100GridAbsCoordRangeDescription(range),
+             VT100GridCoordRangeDescription(relativeRange),
+             @(overflow),
+             @(self.dataSource.width),
+             @(self.dataSource.numberOfLines),
+             _logicalWindow.location, _logicalWindow.length,
+             [self debugLineDumpForRelativeY:relativeRange.start.y]);
+    }
     if (match.length == maxMatchLength) {
         return matchString;
     }
@@ -1164,7 +1188,37 @@ const NSInteger kLongMaximumWordLength = 100000;
     [result appendAttributedString:attributedPrefix];
     [result appendAttributedString:matchString];
     [result appendAttributedString:attributedSuffix];
+    if (result.length == 0 && nonDegenerate) {
+        DLog(@"EMPTY SNIPPET RESULT: abs=%@ rel=%@ overflow=%@ matchLen=%@ prefixLen=%@ suffixLen=%@ dsWidth=%@ dsLines=%@ actualStartLine=%@ actualEndLine=%@",
+             VT100GridAbsCoordRangeDescription(range),
+             VT100GridCoordRangeDescription(relativeRange),
+             @(overflow),
+             @(match.length), @(prefix.length), @(suffix.length),
+             @(self.dataSource.width),
+             @(self.dataSource.numberOfLines),
+             [self debugLineDumpForRelativeY:relativeRange.start.y],
+             [self debugLineDumpForRelativeY:relativeRange.end.y]);
+    }
     return result;
+}
+
+// Diagnostics only: a printable dump of the buffer line at a relative Y, or an
+// out-of-bounds marker. Used to explain empty global-search snippets.
+- (NSString *)debugLineDumpForRelativeY:(int)y {
+    const int numberOfLines = self.dataSource.numberOfLines;
+    if (y < 0 || y >= numberOfLines) {
+        return [NSString stringWithFormat:@"<out-of-bounds y=%d lines=%d>", y, numberOfLines];
+    }
+    ScreenCharArray *sca = [self.dataSource screenCharArrayForLine:y];
+    if (!sca) {
+        return @"<nil sca>";
+    }
+    NSString *value = sca.stringValue ?: @"";
+    if (value.length > 120) {
+        value = [[value substringToIndex:120] stringByAppendingString:@"…"];
+    }
+    return [NSString stringWithFormat:@"len=%@ eol=%d \"%@\"",
+            @(sca.length), sca.eol, value];
 }
 
 - (NSString *)contentInRange:(VT100GridWindowedRange)windowedRange

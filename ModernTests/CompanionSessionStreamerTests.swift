@@ -19,6 +19,8 @@ private final class FakeFrameSource: CompanionFrameSource {
     var cellGeometry = CompanionCellGeometry(cellWidth: 8, cellHeight: 16, leftMargin: 0, topMargin: 0)
     var liveTop: Int64 = 0
     var canResize = true
+    var isAlternateScreen = false
+    var scrollWheelReporting = false
     private let pixelWidth: Int
     private let pixelHeight: Int
     private var image: CGImage
@@ -196,6 +198,35 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(out.configs.count, 2, "an idle-screen resizability flip must still resend the config")
         XCTAssertEqual(out.configs.last?.canResize, false)
         XCTAssertEqual(out.configs.last?.generationId, 1, "a resizability change must not bump the generation")
+    }
+
+    func testAltScreenAndScrollWheelFlipOnIdleScreenResendsConfig() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 80, rows: 25, scale: 2)
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)   // keyframe + config, primary screen, no reporting
+        streamer.flush()
+        XCTAssertEqual(out.configs.count, 1)
+        XCTAssertEqual(out.configs.first?.altScreen, false)
+        XCTAssertEqual(out.configs.first?.scrollWheelReporting, false)
+
+        // A full-screen app comes up and turns on mouse reporting, with NO pixel change
+        // and NO screenDidChange. Like canResize, detection is pre-dedup, so the flip
+        // resends the config + keyframe THIS tick, under the same generation (the
+        // geometry the phone renders against is unchanged, so it keeps its history).
+        source.isAlternateScreen = true
+        source.scrollWheelReporting = true
+        streamer.tick(nowMilliseconds: 1000)
+        streamer.flush()
+
+        XCTAssertEqual(out.configs.count, 2, "an idle-screen alt/mouse flip must still resend the config")
+        XCTAssertEqual(out.configs.last?.altScreen, true)
+        XCTAssertEqual(out.configs.last?.scrollWheelReporting, true)
+        XCTAssertEqual(out.configs.last?.generationId, 1, "an alt-screen change must not bump the generation")
     }
 
     func testKeyframeResendReusesGenerationEndToEnd() throws {

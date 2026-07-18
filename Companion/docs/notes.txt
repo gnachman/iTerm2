@@ -1,6 +1,11 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 Bug Fixes:
+- The chat button at the top of a session view
+  now keeps the session view underneath the
+  conversation it opens, so Back returns you to
+  the session (on the same tab) instead of
+  jumping to the Chats home screen.
 - Emailing your diagnostic logs now attaches a
   single compressed .zip instead of one
   attachment per log file, so large logs actually
@@ -26,6 +31,17 @@ Bug Fixes:
   the reply arrives.
 
 New Features:
+- Full-screen apps (vim, less, htop, and other
+  programs that take over the screen) now look
+  right in the live session view: the phone hides
+  the scrollback behind them and shows only the
+  app's own screen. When such an app has mouse
+  reporting on, a scroll gesture pages the app
+  instead of scrolling nowhere. While zoomed in,
+  a drag pans the view and only starts sending
+  scroll to the app once you reach the top or
+  bottom edge. Requires a Mac new enough to
+  support it.
 - A resize button in the live session view fits
   the terminal grid to your phone for readable
   text: 40 columns in portrait, 80 in landscape,
