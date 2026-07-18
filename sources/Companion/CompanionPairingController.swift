@@ -949,13 +949,74 @@ final class CompanionPairingController: NSObject {
 
     private func startListening(pairingID: String) throws {
         let keyPair = try CompanionMacIdentity.keyPair()
-        // The relay origin comes from local config, not the stored pairing, so
-        // it applies to background reconnect listening too (where there is no
-        // fresh QR). nil => local-network only, the default.
-        let relayOrigin = Self.configuredRelayOrigin()
+        // Record the attempt for the settings "last try…" timer.
+        lastRelayAttempt = Date()
+        notifyPresenceChanged()
+        // Route relay egress (and, in resolved mode, the shard-map fetch) through
+        // the consent plugin, the feature's only outbound path. startListening is
+        // only reached when the gate is allowed, so the plugin is installed and
+        // verified; fall back defensively just in case.
+        let webSocketFactory: RelayWebSocketFactory
+        let shardFetcher: ShardMapFetching
+        if case .success(let plugin) = CompanionPlugin.instance() {
+            webSocketFactory = plugin.webSocketFactory()
+            shardFetcher = plugin.shardMapFetcher()
+        } else {
+            webSocketFactory = URLSessionRelayWebSocketFactory()
+            shardFetcher = URLSessionShardMapFetcher()
+        }
+        // acceptLoop only needs the pid (and the pid-derived handshake prologue);
+        // the park origin is resolved in parkAndAccept, which may require an async
+        // shard-map lookup (resolved mode).
         let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
-                               pairingID: pairingID,
-                               relayOrigin: relayOrigin)
+                               pairingID: pairingID)
+        acceptTask = Task { [weak self] in
+            await self?.parkAndAccept(pairingID: pairingID,
+                                      keyPair: keyPair,
+                                      code: code,
+                                      webSocketFactory: webSocketFactory,
+                                      shardFetcher: shardFetcher)
+        }
+    }
+
+    /// Resolve the origin the mac should park at, build the relay listener, and
+    /// run the accept loop. Split off from startListening because resolved (v2)
+    /// mode needs an async shard-map lookup before the origin is known, while
+    /// direct (v1) mode uses the statically configured origin. Runs on acceptTask.
+    private func parkAndAccept(pairingID: String,
+                               keyPair: NoiseKeyPair,
+                               code: PairingCode,
+                               webSocketFactory: RelayWebSocketFactory,
+                               shardFetcher: ShardMapFetching) async {
+        let relayOrigin: String?
+        if let resolverURL = Self.configuredResolverURL() {
+            // Resolved mode: look the owning host up in the shard map, exactly as
+            // the phone does, so both land on the same box. A resolve failure (a
+            // CDN blip, or a map that names no host) is a transient park failure:
+            // retry, don't surface a hard error. A reshard drops the park later,
+            // and that retry re-enters here and re-resolves onto the new owner.
+            do {
+                let resolver = shardResolver(for: resolverURL, fetcher: shardFetcher)
+                let resolveCode = PairingCode(responderStaticPublicKey: keyPair.publicKey,
+                                              pairingID: pairingID,
+                                              resolverURL: resolverURL)
+                relayOrigin = try await resolver.relayOrigin(for: resolveCode)
+            } catch {
+                relayLog("startListening: shard resolve failed: \(error); scheduling retry")
+                acceptTask = nil
+                scheduleListenerRetry()
+                return
+            }
+        } else {
+            // Direct mode: the statically configured relay origin from local config
+            // (not the stored pairing), so it applies to background reconnect
+            // listening too. nil => local-network only, the default.
+            relayOrigin = Self.configuredRelayOrigin()
+        }
+        // stopAdvertising cancels acceptTask and nils it; if that raced the resolve
+        // above, bail without parking.
+        if Task.isCancelled { return }
+
         let roomName = relayOrigin == nil ? "n/a"
             : RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pairingID)
         relayLog("startListening pid=\(pairingID) relayOrigin=\(relayOrigin ?? "nil") room=\(roomName)")
@@ -969,52 +1030,66 @@ final class CompanionPairingController: NSObject {
             let hasSecret = CompanionMacIdentity.pairedRoomSecret() != nil
             relayLog("startListening park proof: room secret \(hasSecret ? "present -> SIGNED park" : "MISSING -> open-mode park (relay will refuse \"signature required\" if the verifier is registered; re-pair or grant the keychain prompt)")")
         }
-        // Record the attempt for the settings "last try…" timer.
-        lastRelayAttempt = Date()
-        notifyPresenceChanged()
-        // Route relay egress through the consent plugin (the only outbound path).
-        // startListening is only reached when the gate is allowed, so the plugin
-        // is installed and verified; fall back defensively just in case.
-        let webSocketFactory: RelayWebSocketFactory
-        if case .success(let plugin) = CompanionPlugin.instance() {
-            webSocketFactory = plugin.webSocketFactory()
-        } else {
-            webSocketFactory = URLSessionRelayWebSocketFactory()
+
+        let listener: TransportListener
+        do {
+            listener = try CompanionTransports.listener(
+                pairingID: pairingID,
+                responderStaticPublicKey: keyPair.publicKey,
+                relayOrigin: relayOrigin,
+                webSocketFactory: webSocketFactory,
+                // Parked = admitted to the relay room = reachable. Start the
+                // connected timer (if a bridge hasn't already), for the settings UI.
+                // onParked fires on the background accept task, so hop to the main
+                // actor this controller is isolated to.
+                onParked: { [weak self] in
+                    Task { @MainActor in
+                        guard let self else { return }
+                        // A successful park proves the relay reachable: the failure
+                        // backoffs start over, and the waiting status becomes true.
+                        // Emitted here rather than at accept-loop start so it cannot
+                        // paper over a connection error surfaced while re-parking.
+                        self.pairedListenerRetry.noteSuccess()
+                        self.freshPairingRegen.noteSuccess()
+                        // The park succeeded, so any prior quota teardown is behind us:
+                        // clear the backoff marker so the UI leaves the quota state.
+                        self.relayQuotaBackoffUntil = nil
+                        self.onStatus?("Waiting for your iPhone…")
+                        guard self.relayConnectedSince == nil else { return }
+                        self.relayConnectedSince = Date()
+                        self.notifyPresenceChanged()
+                    }
+                },
+                // Sign the mac's park once the phone has couriered the room secret
+                // and the room is established; nil keeps an open-mode park.
+                roomSecret: { CompanionMacIdentity.pairedRoomSecret() })
+        } catch {
+            relayLog("startListening: listener build failed: \(error); scheduling retry")
+            acceptTask = nil
+            scheduleListenerRetry()
+            return
         }
-        let listener = try CompanionTransports.listener(
-            pairingID: pairingID,
-            responderStaticPublicKey: keyPair.publicKey,
-            relayOrigin: relayOrigin,
-            webSocketFactory: webSocketFactory,
-            // Parked = admitted to the relay room = reachable. Start the
-            // connected timer (if a bridge hasn't already), for the settings UI.
-            // onParked fires on the background accept task, so hop to the main
-            // actor this controller is isolated to.
-            onParked: { [weak self] in
-                Task { @MainActor in
-                    guard let self else { return }
-                    // A successful park proves the relay reachable: the failure
-                    // backoffs start over, and the waiting status becomes true.
-                    // Emitted here rather than at accept-loop start so it cannot
-                    // paper over a connection error surfaced while re-parking.
-                    self.pairedListenerRetry.noteSuccess()
-                    self.freshPairingRegen.noteSuccess()
-                    // The park succeeded, so any prior quota teardown is behind us:
-                    // clear the backoff marker so the UI leaves the quota state.
-                    self.relayQuotaBackoffUntil = nil
-                    self.onStatus?("Waiting for your iPhone…")
-                    guard self.relayConnectedSince == nil else { return }
-                    self.relayConnectedSince = Date()
-                    self.notifyPresenceChanged()
-                }
-            },
-            // Sign the mac's park once the phone has couriered the room secret
-            // and the room is established; nil keeps an open-mode park.
-            roomSecret: { CompanionMacIdentity.pairedRoomSecret() })
+        if Task.isCancelled {
+            listener.stop()
+            return
+        }
         self.listener = listener
-        acceptTask = Task { [weak self] in
-            await self?.acceptLoop(listener: listener, keyPair: keyPair, code: code)
+        await acceptLoop(listener: listener, keyPair: keyPair, code: code)
+    }
+
+    /// One shard resolver per resolver URL, reused across re-parks so the shard
+    /// map's monotonic version floor and cached map survive reconnects within a
+    /// session. A relaunch starts fresh (durable floor persistence is a TODO).
+    private var cachedShardResolver: (resolverURL: String, resolver: ShardHostResolver)?
+
+    private func shardResolver(for resolverURL: String,
+                               fetcher: ShardMapFetching) -> ShardHostResolver {
+        if let cached = cachedShardResolver, cached.resolverURL == resolverURL {
+            return cached.resolver
         }
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
+        cachedShardResolver = (resolverURL, resolver)
+        return resolver
     }
 
     /// The relay origin the pairing uses for connectivity. The relay is the

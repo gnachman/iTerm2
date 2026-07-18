@@ -12,6 +12,7 @@
 
 import CryptoKit
 import JavaScriptCore
+import CompanionProtocol
 import CompanionTransport
 
 struct CompanionPlugin {
@@ -92,6 +93,12 @@ struct CompanionPlugin {
     /// that routes through this plugin, the feature's only outbound path.
     func httpClient(origin: String) -> RelayHTTPClient {
         PluginRelayHTTPClient(client: client, origin: origin)
+    }
+
+    /// A shard-map fetcher (resolved mode) that routes the CDN GET through this
+    /// plugin, the feature's only outbound path.
+    func shardMapFetcher() -> ShardMapFetching {
+        PluginShardMapFetcher(client: client)
     }
 
     func version() async throws -> Decimal {

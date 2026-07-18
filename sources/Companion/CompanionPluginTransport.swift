@@ -19,6 +19,26 @@ import CompanionTransport
 /// instance in the same room) and back off long rather than re-grab the slot.
 struct RelayDisplacedError: Error {}
 
+/// Routes the resolved-mode shard-map fetch through the plugin, so the Mac's CDN
+/// GET takes the same consent egress as its relay traffic (the feature's only
+/// outbound path). The plugin returns the body as a string and collapses a non-2xx
+/// into an "HTTP <status>" error, which this maps back to the loader's errors.
+struct PluginShardMapFetcher: ShardMapFetching {
+    let client: CompanionPluginClient
+
+    func data(from url: URL) async throws -> Data {
+        let response = try await client.request(
+            method: "GET", url: url.absoluteString, headers: [:], body: "")
+        if response.error.isEmpty {
+            return Data(response.data.utf8)
+        }
+        if response.error.hasPrefix("HTTP "), let code = Int(response.error.dropFirst(5)) {
+            throw ShardMapLoaderError.httpStatus(code)
+        }
+        throw ShardMapLoaderError.badResponse
+    }
+}
+
 /// One plugin-backed relay socket. The connection is opened lazily on resume()
 /// (mirroring an un-resumed URLSessionWebSocketTask); send/receive await it.
 final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
