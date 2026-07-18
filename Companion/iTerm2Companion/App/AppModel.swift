@@ -298,6 +298,15 @@ final class AppModel {
     func chatExists(_ chatID: String) -> Bool { chats.contains { $0.chat.id == chatID } }
     func chat(for chatID: String) -> CompanionChatListEntry? { chats.first { $0.chat.id == chatID } }
     var sessions: [CompanionSessionSummary] = []
+    /// Liveness of a session-bound chat's bound terminal session, keyed by chatID
+    /// and probed when the conversation opens (see probeBoundSessionLiveness).
+    /// nil = not probed yet / indeterminate; true = the Mac confirmed the session
+    /// exists; false = the Mac reported it gone. Drives the conversation view's
+    /// "go to session" button, which appears only for a confirmed-live session.
+    /// The flat `sessions` list can't answer this: it omits buried and peer /
+    /// workgroup-member sessions, which are valid session-bound targets, so a
+    /// resolver-backed probe is the only reliable signal.
+    private(set) var boundSessionLive: [String: Bool] = [:]
     /// The Sessions tab's window/tab/pane/peer hierarchy.
     var sessionTree: CompanionSessionTree?
     /// Why the tree could not be loaded; only meaningful while sessionTree is
@@ -3355,6 +3364,28 @@ final class AppModel {
         }
     }
 
+    /// Probe whether a session-bound chat's bound session still exists, so the
+    /// conversation view can show or hide its "go to session" button. Uses the
+    /// screen-info request because it resolves the guid through the Mac's full
+    /// session lookup (tabs, buried, and peer / workgroup members) and reports a
+    /// typed `.unknownSession` error when the session is truly gone, which the
+    /// flat `sessions` list cannot distinguish. A transient failure leaves the
+    /// prior verdict untouched rather than hiding the button on a network blip.
+    func probeBoundSessionLiveness(chatID: String) async {
+        guard let guid = chat(for: chatID)?.chat.terminalSessionGuid else {
+            boundSessionLive[chatID] = nil
+            return
+        }
+        do {
+            _ = try await sessionScreenInfo(guid: guid)
+            boundSessionLive[chatID] = true
+        } catch let error as CompanionError where error.code == .unknownSession {
+            boundSessionLive[chatID] = false
+        } catch {
+            companionLog("Bound-session liveness probe for \(chatID) was inconclusive: \(String(describing: error))")
+        }
+    }
+
     func sessionContent(guid: String, firstLine: Int, lineCount: Int) async throws -> CompanionSessionContent {
         let client = try await currentClient(label: "Session content")
         return try await withTimeout(20, "Loading session content") {
@@ -3603,6 +3634,17 @@ final class AppModel {
                     companionLog("phone stream STARTED id=\(started.streamID) guid=\(guid)")
                 } else {
                     try? await client.stopSessionStream(streamID: started.streamID)
+                }
+            } catch let error as CompanionError where error.code == .unknownSession {
+                // The session is gone: terminal, not transient. Drop the intent so
+                // it doesn't retry forever and surface a session-closed end, so the
+                // live view shows an error instead of a perpetual black screen
+                // waiting for frames that will never come. Guard against a race
+                // where the view already switched to another session.
+                companionLog("startSessionStream: session \(guid) no longer exists; ending live view")
+                if liveWatchGuid == guid {
+                    liveWatchGuid = nil
+                    onStreamEnded?(.sessionClosed)
                 }
             } catch {
                 companionLog("startSessionStream failed (will retry on reconnect/resume): \(String(describing: error))")

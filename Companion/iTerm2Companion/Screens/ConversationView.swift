@@ -17,6 +17,26 @@ struct ConversationView: View {
         model.chat(for: chatID)?.chat.title ?? "Chat"
     }
 
+    /// The terminal session this chat is bound to, or nil for unbound and
+    /// orchestrator chats. `terminalSessionGuid` is mutually exclusive with
+    /// orchestration (see Chat), so a non-nil value means the chat is
+    /// session-bound; orchestrator/unbound chats leave it out.
+    private var boundSessionGuid: String? {
+        model.chat(for: chatID)?.chat.terminalSessionGuid
+    }
+
+    /// The bound session's guid, but only once the Mac has confirmed it still
+    /// exists. Gating the "go to session" button on this hides it for unbound and
+    /// orchestrator chats (no binding) and for a session that has since
+    /// terminated (probed live on appear), while a not-yet-probed or transiently
+    /// unreachable session keeps the button hidden until confirmed.
+    private var liveSessionGuid: String? {
+        guard let guid = boundSessionGuid, model.boundSessionLive[chatID] == true else {
+            return nil
+        }
+        return guid
+    }
+
     var body: some View {
         @Bindable var model = model
         VStack(spacing: 0) {
@@ -33,6 +53,24 @@ struct ConversationView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // Only session-bound chats whose session is still alive can jump to
+            // it; unbound/orchestrator chats have no session, and a terminated
+            // one would strand you on an error screen.
+            if let guid = liveSessionGuid {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        // Prefer the session's live name for the pushed view's
+                        // title; fall back to the chat title if it isn't in the
+                        // current session list. Carry this chat so the session
+                        // view's compose overlay sends back into it.
+                        let sessionTitle = model.sessions.first { $0.guid == guid }?.name ?? title
+                        model.openSession(guid: guid, title: sessionTitle, fromChatID: chatID)
+                    } label: {
+                        Label("Go to Session", systemImage: "terminal")
+                    }
+                    .accessibilityLabel("Go to session")
+                }
+            }
             // Mute needs a mac that persists the muted set; hide the toggle
             // rather than offer one that does nothing on an older mac.
             if model.macSupportsChatMuting {
@@ -52,6 +90,12 @@ struct ConversationView: View {
             // A real navigation to this chat (vs the internal tab-sync/reconnect
             // callers), so its load failures can escalate the refresh banner.
             model.conversationDidAppear(chatID: chatID, userInitiated: true)
+        }
+        .task(id: chatID) {
+            // Confirm the bound session still exists before offering the "go to
+            // session" button. Keyed on chatID so switching chats re-probes; a
+            // no-op for unbound/orchestrator chats.
+            await model.probeBoundSessionLiveness(chatID: chatID)
         }
         .sheet(item: $model.sessionPicker) { request in
             SessionPickerSheet(request: request)

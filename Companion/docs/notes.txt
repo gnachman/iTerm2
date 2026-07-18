@@ -1,6 +1,10 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 Bug Fixes:
+- Opening a session that has already closed now
+  shows a “Stream Ended” message explaining the
+  session is gone, instead of a blank black
+  screen that never loaded.
 - The chat button at the top of a session view
   now keeps the session view underneath the
   conversation it opens, so Back returns you to
@@ -37,6 +41,11 @@ New Features:
   Content still rests within the safe area, and
   you can scroll any line or column out from
   behind them.
+- A session-bound chat now has a button in the
+  toolbar that jumps to its session view. The
+  button appears only while the bound session is
+  still open; unbound and orchestrator chats never
+  show it.
 - Full-screen apps (vim, less, htop, and other
   programs that take over the screen) now look
   right in the live session view: the phone hides

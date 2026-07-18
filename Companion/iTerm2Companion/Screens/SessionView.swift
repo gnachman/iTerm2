@@ -814,6 +814,12 @@ private struct LiveSessionView: View {
                 } description: {
                     Text(endedMessage(endedReason))
                 }
+                // The canvas fills black regardless of the device appearance, so
+                // the default label-colored title/icon/description render dark-on-
+                // black and are nearly invisible in light mode. Force dark scheme
+                // here (mirroring the nav bar's .toolbarColorScheme) so they stay
+                // light on the black background.
+                .environment(\.colorScheme, .dark)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
