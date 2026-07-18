@@ -28,6 +28,7 @@ struct ResolvingTransportConnector: TransportConnector {
     func connect(to rendezvous: PairingRendezvous,
                  timeout: TimeInterval) async throws -> MessageTransport {
         let relayOrigin = try await resolver.relayOrigin(for: code)
+        CompanionLog.log("resolved connect: joining \(relayOrigin)")
         let proof: @Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof =
             { challenge, roomName in
                 try CompanionTransports.admissionProof(role: .phone, challenge: challenge,

@@ -994,6 +994,7 @@ final class CompanionPairingController: NSObject {
             // CDN blip, or a map that names no host) is a transient park failure:
             // retry, don't surface a hard error. A reshard drops the park later,
             // and that retry re-enters here and re-resolves onto the new owner.
+            relayLog("parkAndAccept: resolved mode, resolver=\(resolverURL)")
             do {
                 let resolver = shardResolver(for: resolverURL, fetcher: shardFetcher)
                 let resolveCode = PairingCode(responderStaticPublicKey: keyPair.publicKey,
@@ -1011,6 +1012,7 @@ final class CompanionPairingController: NSObject {
             // (not the stored pairing), so it applies to background reconnect
             // listening too. nil => local-network only, the default.
             relayOrigin = Self.configuredRelayOrigin()
+            relayLog("parkAndAccept: direct mode, relayOrigin=\(relayOrigin ?? "nil")")
         }
         // stopAdvertising cancels acceptTask and nils it; if that raced the resolve
         // above, bail without parking.

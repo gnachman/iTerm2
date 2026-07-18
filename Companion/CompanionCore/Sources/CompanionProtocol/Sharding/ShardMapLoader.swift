@@ -103,14 +103,24 @@ public actor ShardMapLoader {
         //    regression the persisted floor exists to prevent (§6.4).
         if let highestVersion {
             if current == nil {
-                if map.version < highestVersion { return current }
+                if map.version < highestVersion {
+                    CompanionLog.log("shardmap: fetched v\(map.version) below floor \(highestVersion) on bootstrap; ignoring (stale edge)")
+                    return current
+                }
             } else if map.version <= highestVersion {
+                CompanionLog.log("shardmap: fetched v\(map.version) not newer than current v\(highestVersion); keeping current")
                 return current
             }
         }
-        try map.validate()
+        do {
+            try map.validate()
+        } catch {
+            CompanionLog.log("shardmap: v\(map.version) failed validation: \(error); not adopting")
+            throw error
+        }
         current = map
         highestVersion = map.version
+        CompanionLog.log("shardmap: adopted v\(map.version) (\(map.ranges.count) ranges)")
         return map
     }
 
@@ -123,8 +133,16 @@ public actor ShardMapLoader {
     // MARK: - Fetching
 
     private func fetchMap() async throws -> ShardMap {
-        let data = try await fetcher.data(from: try mapURL())
+        let url = try mapURL()
+        let data: Data
+        do {
+            data = try await fetcher.data(from: url)
+        } catch {
+            CompanionLog.log("shardmap: GET \(url.absoluteString) failed: \(error)")
+            throw error
+        }
         guard let map = try? JSONDecoder().decode(ShardMap.self, from: data) else {
+            CompanionLog.log("shardmap: GET \(url.absoluteString) returned an undecodable body (\(data.count) bytes)")
             throw ShardMapLoaderError.malformedMap
         }
         return map

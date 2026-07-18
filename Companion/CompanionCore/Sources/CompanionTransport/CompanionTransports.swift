@@ -98,7 +98,11 @@ public enum CompanionTransports {
         // Resolved mode (v2): resolve the owning origin from the shard map at
         // connect time, then join it the same way.
         if let resolverURL = code.resolverURL {
-            let resolver = shardResolver ?? ShardHostResolver(resolverURL: resolverURL)
+            // The phone fetches the shard map over URLSession directly (it has no
+            // consent plugin; that is a Mac-only egress chokepoint). The Mac never
+            // reaches this factory, so no plugin-gated egress is bypassed here.
+            let resolver = shardResolver
+                ?? ShardHostResolver(resolverURL: resolverURL, fetcher: URLSessionShardMapFetcher())
             return ResolvingTransportConnector(code: code,
                                                resolver: resolver,
                                                webSocketFactory: webSocketFactory,

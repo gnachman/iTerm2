@@ -30,8 +30,13 @@ public protocol ShardHostResolving: Sendable {
 public struct ShardHostResolver: ShardHostResolving {
     private let loader: ShardMapLoader
 
+    /// - fetcher: the egress used to GET the shard map. Deliberately has NO
+    ///   default: the Mac must pass a plugin-backed fetcher (its only sanctioned
+    ///   outbound path), and a `URLSessionShardMapFetcher()` default would let a
+    ///   Mac call site bypass the consent plugin without noticing. The phone
+    ///   passes URLSession explicitly (it has no plugin).
     public init(resolverURL: String,
-                fetcher: ShardMapFetching = URLSessionShardMapFetcher(),
+                fetcher: ShardMapFetching,
                 initialHighestVersion: Int? = nil) {
         self.loader = ShardMapLoader(resolverURL: resolverURL,
                                      fetcher: fetcher,
@@ -44,13 +49,16 @@ public struct ShardHostResolver: ShardHostResolving {
         }
         let bucket = RelayRoom.bucket(responderStaticPublicKey: code.responderStaticPublicKey,
                                       pairingID: code.pairingID)
+        CompanionLog.log("shardresolve: pid \(code.pairingID) -> bucket \(bucket); refreshing map")
         // Re-resolve on every call: a reconnect after a reshard must pick up the
         // new owner. The loader ignores anything not newer than what it holds, so
         // this is cheap when nothing changed.
         _ = try await loader.refresh()
         guard let host = await loader.currentHost(forBucket: bucket) else {
+            CompanionLog.log("shardresolve: no host owns bucket \(bucket) (no map adopted)")
             throw TransportError.connectionFailed("shard map assigns no host to bucket \(bucket)")
         }
+        CompanionLog.log("shardresolve: bucket \(bucket) -> https://\(host)")
         return "https://\(host)"
     }
 }
