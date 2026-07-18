@@ -4059,7 +4059,7 @@ final class AppModel {
     }
 
     /// Resize the live session's grid so terminal text is legible on this phone:
-    /// 40 columns in portrait, 80 in landscape, and however many rows of that font
+    /// 60 columns in portrait, 120 in landscape, and however many rows of that font
     /// fill the viewport vertically. `viewSize` is the live canvas area in points.
     /// No-op without an active stream, reported geometry, or a real viewport.
     func resizeActiveSessionForLegibility(viewSize: CGSize) {
@@ -4083,7 +4083,7 @@ final class AppModel {
         }
         guard cellWidthPx > 0, cellHeightPx > 0 else { return }
 
-        let columns = viewSize.width > viewSize.height ? 80 : 40
+        let columns = viewSize.width > viewSize.height ? 120 : 60
         // Pick a font so `columns` cells span the width, then count how many rows of
         // that same font fill the height.
         let cellPointWidth = viewSize.width / CGFloat(columns)

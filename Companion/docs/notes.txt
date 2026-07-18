@@ -191,3 +191,7 @@ Bug Fixes:
   reached” banner with a Reconnect now
   button and stops retrying every couple
   seconds until the limit resets.
+- The zoom button in the session view now
+  switches to 60 columns in portrait and 120
+  in landscape, instead of 40 and 80, for a
+  more useful amount of content.
