@@ -2396,14 +2396,16 @@ final class OrchestratorDispatcher {
 
     // Bundles the Code Review entry sequence into one call so the
     // agent doesn't have to choreograph send_text → register_watch:
-    //   1. Resolve the target. Must be a role whose session has the
-    //      Code Review prompt overlay up (else the workflow doesn't
-    //      apply — return an error that tells the agent why).
+    //   1. Resolve the target. Must be the Code Review role's session,
+    //      either with its prompt overlay up (initial deferred launch)
+    //      or already idle after a prior review (reload path).
     //   2. Pick the prompt text from (in order):
     //        - args.promptName (look up in CodeReviewPromptStore)
     //        - args.customPrompt (use as literal)
     //        - default (CodeReviewPromptStore.defaultPromptText)
-    //   3. Populate the overlay, fire onStart — the program launches.
+    //   3. Ensure the overlay is present (re-present it in restart mode
+    //      when the review already ran), populate it, fire onStart — the
+    //      program launches, reloading the session if it was running.
     //   4. Auto-register a watcher for target → .idle. The agent
     //      receives a status_update when the review completes.
     @MainActor
@@ -2412,15 +2414,16 @@ final class OrchestratorDispatcher {
         if resolved.session.exited {
             throw OrchestratorError.targetNoLongerExists(sessionGuid: args.sessionGuid)
         }
-        // Three accepted launch states for the Code Review role:
+        // Two accepted launch states for the Code Review role:
         //   1. Pre-launch overlay is up — populate the overlay's text and
         //      fire its Start handler (this is what spawns the Claude Code
         //      process).
-        //   2. No overlay, but the Code Review role's Claude Code TUI is
-        //      already idle at its chat prompt — type the review prompt in
-        //      and let it run as a new review on the existing session.
-        //   3. Anything else (wrong role, or the role's program is busy or
-        //      in an unknown state) — error.
+        //   2. No overlay: the review already ran once. Re-present the
+        //      overlay in restart mode and fire it so the session is
+        //      killed and relaunched with a fresh review — we never type
+        //      the prompt into the already-running TUI.
+        //   Anything else (wrong role, the role's program is busy, or the
+        //   session can't be reloaded) — error.
         //
         // The role-id check guards against driving a non-review role: this
         // tool is for Code Review specifically, not a generic "send a long
@@ -2429,14 +2432,17 @@ final class OrchestratorDispatcher {
         let isReviewRole = (resolved.roleID == ClaudeCodeWorkgroupTemplate.ID.review)
         let sessionState = WorkgroupIntrospection.state(for: resolved.session)
         if overlay == nil {
-            guard isReviewRole && sessionState == .idle else {
-                let reason: String
-                if !isReviewRole {
-                    reason = "Target \(resolved.roleName) in \(resolved.workgroupName) is not the Code Review role. start_code_review only targets the Code Review role; use send_text if you want to type text into another role."
-                } else {
-                    reason = "Target \(resolved.roleName) in \(resolved.workgroupName) is busy (status: \(sessionState.rawValue)). Wait until it returns to idle before starting a review."
-                }
-                throw OrchestratorError.unsupported(reason: reason)
+            guard isReviewRole else {
+                throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) is not the Code Review role. start_code_review only targets the Code Review role; use send_text if you want to type text into another role.")
+            }
+            guard sessionState == .idle else {
+                throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) is busy (status: \(sessionState.rawValue)). Wait until it returns to idle before starting a review.")
+            }
+            // Reloading kills+relaunches the session, which requires a
+            // restartable session and the cached review command template.
+            guard resolved.session.isRestartable(),
+                  resolved.session.codeReviewRawCommand != nil else {
+                throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) can't be reloaded to start a fresh review.")
             }
         }
 
@@ -2481,26 +2487,24 @@ final class OrchestratorDispatcher {
         let guid = Self.watcherKey(for: resolved.session)
         sessionStateHistory[guid] = Self.seedState(for: resolved.session)
 
-        if let overlay {
-            overlay.text = promptText
-            overlay.onStart?(promptText)
-        } else {
-            // Idle Claude Code TUI fallback: type the (possibly agent-supplied,
-            // via custom_prompt) prompt straight into the session. This branch
-            // is entered on a stale-ish idle tabStatus, so the "Claude Code TUI"
-            // may actually have exited to a bare shell (the cc-status hook does
-            // not reliably emit a transition when the child exits). So it must go
-            // through the same safety chokepoint as send_text -- otherwise an
-            // agent-controlled multi-line prompt would be typed + Entered into a
-            // shell un-classified. gateTypedText throws safetyBlocked on a
-            // non-allow verdict, which surfaces to the LLM as the tool error.
-            try await gateTypedText(promptText, appendNewline: true, session: resolved.session)
-            // typeIntoPTY handles bracketed paste + the deferred-Enter dance so
-            // multi-line prompts submit reliably.
-            await Self.typeIntoPTY(session: resolved.session,
-                                   text: promptText,
-                                   appendNewline: true)
+        if overlay == nil {
+            // The review already ran and the overlay is gone. Re-present it
+            // in restart mode (its onStart kills+relaunches the session with
+            // the resolved command) so a fresh review runs rather than typing
+            // the prompt into the already-running TUI. Guarded above on
+            // isRestartable() + codeReviewRawCommand.
+            resolved.session.reloadCodeReviewPromptOverlay()
         }
+        guard let liveOverlay = resolved.session.view?.codeReviewPromptOverlay else {
+            throw OrchestratorError.unsupported(reason: "Code Review overlay unavailable on \(resolved.roleName) in \(resolved.workgroupName).")
+        }
+        // Fire the overlay's Start handler with the resolved prompt. Whether
+        // this is the initial deferred launch or a reload, onStart runs the
+        // configured review command (prompt passed as a shell-escaped arg),
+        // never typing agent text into an unclassified program — so no
+        // send_text-style safety gate is needed here.
+        liveOverlay.text = promptText
+        liveOverlay.onStart?(promptText)
 
         // Auto-register the completion watcher unless one already
         // exists for this (session, .idle). Mirrors doRegisterWatch's
