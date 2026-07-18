@@ -1226,7 +1226,46 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
                  completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        completionHandler(.performDefaultHandling, nil)
+        let protectionSpace = challenge.protectionSpace
+        switch protectionSpace.authenticationMethod {
+        case NSURLAuthenticationMethodHTTPBasic,
+             NSURLAuthenticationMethodHTTPDigest,
+             NSURLAuthenticationMethodNTLM:
+            promptForCredential(challenge: challenge, completionHandler: completionHandler)
+        default:
+            // Server trust and everything else falls back to system handling.
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+
+    private func promptForCredential(
+        challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        // If we already offered a credential and it was rejected, cancel rather
+        // than looping forever on the same bad credential.
+        let protectionSpace = challenge.protectionSpace
+        let host = protectionSpace.host
+        let realm = protectionSpace.realm
+        let promptText: String
+        if let realm, !realm.isEmpty {
+            promptText = "The website “\(host)” requires a user name and password for “\(realm)”."
+        } else {
+            promptText = "The website “\(host)” requires a user name and password."
+        }
+
+        let alert = ModalPasswordAlert(promptText)
+        // A non-nil username makes ModalPasswordAlert show a user name field.
+        alert.username = challenge.proposedCredential?.user ?? ""
+        alert.runAsync(window: webView.window) { password in
+            guard let password else {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+            let credential = URLCredential(user: alert.username ?? "",
+                                           password: password,
+                                           persistence: .forSession)
+            completionHandler(.useCredential, credential)
+        }
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {

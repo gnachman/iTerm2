@@ -2138,3 +2138,7 @@ Bug Fixes:
   Files”, reload would rerun the old per-file
   diff, find nothing, and exit immediately,
   closing the session.
+- The built-in web browser now prompts for a
+  user name and password when a site returns
+  an HTTP authentication challenge (Basic,
+  Digest, or NTLM) instead of failing to load.
