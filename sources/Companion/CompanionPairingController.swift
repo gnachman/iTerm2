@@ -952,19 +952,18 @@ final class CompanionPairingController: NSObject {
         // Record the attempt for the settings "last try…" timer.
         lastRelayAttempt = Date()
         notifyPresenceChanged()
-        // Route relay egress (and, in resolved mode, the shard-map fetch) through
-        // the consent plugin, the feature's only outbound path. startListening is
-        // only reached when the gate is allowed, so the plugin is installed and
-        // verified; fall back defensively just in case.
-        let webSocketFactory: RelayWebSocketFactory
-        let shardFetcher: ShardMapFetching
-        if case .success(let plugin) = CompanionPlugin.instance() {
-            webSocketFactory = plugin.webSocketFactory()
-            shardFetcher = plugin.shardMapFetcher()
-        } else {
-            webSocketFactory = URLSessionRelayWebSocketFactory()
-            shardFetcher = URLSessionShardMapFetcher()
+        // All egress (relay traffic and, in resolved mode, the shard-map fetch)
+        // MUST go through the consent plugin, the feature's only sanctioned
+        // outbound path. startListening is only reached when the gate is allowed,
+        // which already requires the plugin, so this is defensive: if the plugin
+        // is somehow unavailable, fail CLOSED (do not park) rather than fall back
+        // to a raw URLSession that would carry traffic around the consent gate.
+        guard case .success(let plugin) = CompanionPlugin.instance() else {
+            relayLog("startListening: consent plugin unavailable; not parking (fail closed)")
+            throw TransportError.connectionFailed("companion consent plugin unavailable")
         }
+        let webSocketFactory = plugin.webSocketFactory()
+        let shardFetcher = plugin.shardMapFetcher()
         // acceptLoop only needs the pid (and the pid-derived handshake prologue);
         // the park origin is resolved in parkAndAccept, which may require an async
         // shard-map lookup (resolved mode).
