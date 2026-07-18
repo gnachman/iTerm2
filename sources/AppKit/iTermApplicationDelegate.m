@@ -1493,16 +1493,23 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
-    // If a companion device is paired, quietly listen so it can reconnect.
-    [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
-    // If the pairing predates the push relay host move, ask the user to re-pair.
-    [[iTermCompanionPairingController shared] promptToRepairAfterRelayMoveIfNeeded];
-    // If the pairing is half-present (pid persisted but keychain credentials
-    // missing, e.g. after a rebuild/reinstall), tell the user to re-pair instead
-    // of failing every relay park silently.
-    [[iTermCompanionPairingController shared] promptToRepairIfPairingIncompleteIfNeeded];
-    // Surface paired-device presence (menu bar status item + connect toast).
-    [[iTermCompanionPresenceController shared] start];
+    // Skip the Companion launch hooks under unit tests. They read
+    // keychain-backed pairing material at launch, and a locked login keychain
+    // turns that read into a modal unlock prompt that hangs an unattended test
+    // run ("test runner hung before establishing connection"). A test host has
+    // no paired device, so none of this is needed there.
+    if (![NSApp isRunningUnitTests]) {
+        // If a companion device is paired, quietly listen so it can reconnect.
+        [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
+        // If the pairing predates the push relay host move, ask the user to re-pair.
+        [[iTermCompanionPairingController shared] promptToRepairAfterRelayMoveIfNeeded];
+        // If the pairing is half-present (pid persisted but keychain credentials
+        // missing, e.g. after a rebuild/reinstall), tell the user to re-pair instead
+        // of failing every relay park silently.
+        [[iTermCompanionPairingController shared] promptToRepairIfPairingIncompleteIfNeeded];
+        // Surface paired-device presence (menu bar status item + connect toast).
+        [[iTermCompanionPresenceController shared] start];
+    }
     // Give the Companion Device Settings menu item its glyph and hide it when
     // the feature is disabled; keep it in sync if the setting changes.
     [self updateCompanionMenuItem];
