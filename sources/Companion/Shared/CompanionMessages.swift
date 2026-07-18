@@ -286,11 +286,22 @@ struct CompanionStreamConfig: Codable, Equatable {
     /// predating the resize feature omits it and decodes as nil (the phone gates the
     /// control on the mac's protocol revision anyway).
     var canResize: Bool? = nil
+    /// Whether the session is currently on its alternate screen buffer (a full-screen
+    /// app like vim/less/htop is up). The phone hides the primary buffer's scrollback
+    /// while this is true, showing only the mutable section (the alt grid == the live
+    /// viewport). Rides the config so a change propagates even on an idle screen; older
+    /// hosts omit it and decode as false (scrollback shown as before).
+    var altScreen: Bool = false
+    /// Whether the session currently reports mouse-wheel events to the program
+    /// (mirrors -[PTYSession scrollWheelReportingEnabled]). Combined with altScreen,
+    /// the phone translates a scroll gesture into a `reportScrollWheel` message instead
+    /// of browsing scrollback. Older hosts omit it and decode as false.
+    var scrollWheelReporting: Bool = false
 
     init(streamID: UInt32, generationId: UInt32, codecExtradata: Data,
          pixelWidth: Int, pixelHeight: Int, scale: Double, columns: Int, rows: Int,
          cellGeometry: CompanionCellGeometry? = nil, firstAbsLine: Int64 = 0, totalLines: Int = 0,
-         canResize: Bool? = nil) {
+         canResize: Bool? = nil, altScreen: Bool = false, scrollWheelReporting: Bool = false) {
         self.streamID = streamID
         self.generationId = generationId
         self.codecExtradata = codecExtradata
@@ -303,6 +314,8 @@ struct CompanionStreamConfig: Codable, Equatable {
         self.firstAbsLine = firstAbsLine
         self.totalLines = totalLines
         self.canResize = canResize
+        self.altScreen = altScreen
+        self.scrollWheelReporting = scrollWheelReporting
     }
 
     // Custom decode: synthesized Decodable ignores the property defaults and throws
@@ -324,6 +337,8 @@ struct CompanionStreamConfig: Codable, Equatable {
         firstAbsLine = try c.decodeIfPresent(Int64.self, forKey: .firstAbsLine) ?? 0
         totalLines = try c.decodeIfPresent(Int.self, forKey: .totalLines) ?? 0
         canResize = try c.decodeIfPresent(Bool.self, forKey: .canResize)
+        altScreen = try c.decodeIfPresent(Bool.self, forKey: .altScreen) ?? false
+        scrollWheelReporting = try c.decodeIfPresent(Bool.self, forKey: .scrollWheelReporting) ?? false
     }
 }
 
@@ -541,6 +556,15 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// pace end-to-end (the relay hides TCP-level signals). No reply.
     case streamAck(streamID: UInt32, lastPTSMilliseconds: UInt64, queueDepth: Int)
 
+    /// Translate a scroll gesture on the live view into terminal mouse-wheel
+    /// reports. Sent only when the stream config advertised both altScreen and
+    /// scrollWheelReporting (a full-screen app with mouse reporting on), so the
+    /// phone's scroll pages the app's own viewport instead of browsing scrollback.
+    /// `up` means reveal older content (scroll back); `lines` is the notch count.
+    /// The mac drives -[PTYSession reportScrollWheelForOrchestratorUp:lines:], which
+    /// re-checks reporting is enabled and caps the count. No reply.
+    case reportScrollWheel(streamID: UInt32, up: Bool, lines: Int)
+
     /// Live-view text selection driven from the phone. `.begin` starts a live
     /// selection at `point` (snapped per `mode`), `.move` extends its end, `.end`
     /// finalizes it; the resulting highlight is rendered into the streamed frames.
@@ -593,7 +617,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "fetchSessionTree", "pushStatus", "notificationPermissionResponse", "ping",
         "relayRoomSecret", "messagesSince", "syncSince", "unpairing",
         "startSessionStream", "stopSessionStream", "requestKeyframe",
-        "updateStreamParams", "streamAck",
+        "updateStreamParams", "streamAck", "reportScrollWheel",
         "selectionGesture", "clearSelection", "copySelection",
         "selectAllInStream", "pasteText", "resizeSession",
         "fetchAutoProvideConsent", "grantAutoProvideConsent",

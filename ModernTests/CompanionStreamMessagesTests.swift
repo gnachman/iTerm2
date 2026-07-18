@@ -158,6 +158,10 @@ final class CompanionStreamMessagesTests: XCTestCase {
         XCTAssertNil(config.cellGeometry)
         // A host predating the resize feature omits canResize; it decodes as nil.
         XCTAssertNil(config.canResize)
+        // A host predating alt-screen awareness omits these; they decode as false, so
+        // the phone shows scrollback and never sends wheel input, exactly as before.
+        XCTAssertFalse(config.altScreen)
+        XCTAssertFalse(config.scrollWheelReporting)
     }
 
     func testStreamConfigRoundTripsHistoryExtent() throws {

@@ -53,6 +53,15 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
     /// Whether the session's window can be resized to an arbitrary grid right now.
     var canResize: Bool { session.companionSessionCanResizeWindow() }
 
+    /// Whether a full-screen app is up (the alternate screen buffer). Uses the same
+    /// soft-alternate-screen signal the orchestrator reports as screen "alternate"
+    /// (WorkgroupIntrospection.screenSurface), so the two stay consistent.
+    var isAlternateScreen: Bool { session.screen.terminalSoftAlternateScreenMode }
+
+    /// Whether the session reports mouse-wheel events to the program right now
+    /// (profile enable-mouse-reporting + allow-mouse-wheel + a wheel-reporting mode).
+    var scrollWheelReporting: Bool { session.scrollWheelReportingEnabled }
+
     func renderCurrentScreen() -> CGImage? {
         guard let textview = session.textview, textview.frame.width > 0 else {
             return nil

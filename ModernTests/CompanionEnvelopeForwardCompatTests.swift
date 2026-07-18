@@ -174,6 +174,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
                                                           maxFrameRate: 60,
                                                           maxBitrate: nil)),
         .streamAck(streamID: 1, lastPTSMilliseconds: 0, queueDepth: 0),
+        .reportScrollWheel(streamID: 1, up: true, lines: 3),
         .selectionGesture(streamID: 1, phase: .begin, mode: .character,
                           point: CompanionSelectionPoint(absLine: 0, column: 0)),
         .clearSelection(streamID: 1),
@@ -220,6 +221,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .requestKeyframe: return "requestKeyframe"
         case .updateStreamParams: return "updateStreamParams"
         case .streamAck: return "streamAck"
+        case .reportScrollWheel: return "reportScrollWheel"
         case .selectionGesture: return "selectionGesture"
         case .clearSelection: return "clearSelection"
         case .copySelection: return "copySelection"

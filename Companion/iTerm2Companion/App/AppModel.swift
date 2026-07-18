@@ -101,6 +101,13 @@ struct CompanionLiveCanvasLayout: Equatable {
     /// the columns. nil for a host too old to report geometry (falls back to
     /// margin-free mapping).
     var cellGeometry: CompanionCellGeometry?
+    /// Whether a full-screen app is up. When true the canvas hides scrollback (shows
+    /// only the live band == the mutable section).
+    var altScreen: Bool
+    /// Whether the session reports mouse-wheel events. With altScreen, a scroll
+    /// gesture past the content edge is sent to the terminal as wheel input instead
+    /// of browsing scrollback.
+    var scrollWheelReporting: Bool
 }
 
 @MainActor
@@ -542,6 +549,13 @@ final class AppModel {
     /// Whether the mac reports the session's window can currently be resized, from
     /// the latest config; the resize control is disabled otherwise.
     private(set) var activeStreamCanResize = true
+    /// Whether the session is on its alternate screen buffer (a full-screen app is
+    /// up), from the latest config. When true the phone hides scrollback and shows
+    /// only the mutable section.
+    private(set) var activeStreamAltScreen = false
+    /// Whether the session reports mouse-wheel events, from the latest config. With
+    /// altScreen, the phone translates scroll gestures into reportScrollWheel.
+    private(set) var activeStreamScrollWheelReporting = false
     private var activeStreamGeneration: UInt32 = 0
     /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
     /// fetches in flight so scroll events do not duplicate them.
@@ -3424,6 +3438,10 @@ final class AppModel {
                 // Absent (older mac) means unknown; default to allowing resize since
                 // the resize control is gated on the mac's revision anyway.
                 activeStreamCanResize = config.canResize ?? true
+                // Absent (older mac) decodes as false: scrollback shown and no
+                // scroll-to-wheel, exactly as before this feature.
+                activeStreamAltScreen = config.altScreen
+                activeStreamScrollWheelReporting = config.scrollWheelReporting
                 // A new generation re-renders everything; stale tiles must not show.
                 if config.generationId != activeStreamGeneration {
                     // Not the first config for this stream = a mid-stream geometry
@@ -3531,6 +3549,8 @@ final class AppModel {
         activeStreamFirstAbsLine = 0
         activeStreamTotalLines = 0
         activeStreamCanResize = true
+        activeStreamAltScreen = false
+        activeStreamScrollWheelReporting = false
         activeStreamGeneration = 0
         activeSelectionRange = nil
         onStreamConfig = onConfig
@@ -3627,6 +3647,14 @@ final class AppModel {
     func requestActiveStreamKeyframe() {
         guard let client, let streamID = activeStreamID else { return }
         Task { try? await client.requestStreamKeyframe(streamID: streamID) }
+    }
+
+    /// Translate a scroll gesture on the live view into terminal mouse-wheel reports
+    /// (used only when the stream is on the alt screen with mouse reporting on).
+    /// `up` reveals older content; `lines` is the notch count.
+    func sendScrollWheel(up: Bool, lines: Int) {
+        guard lines > 0, let client, let streamID = activeStreamID else { return }
+        Task { try? await client.reportScrollWheel(streamID: streamID, up: up, lines: lines) }
     }
 
     /// Report flow-control feedback for the active stream.
@@ -3741,7 +3769,9 @@ final class AppModel {
                                          firstAbsLine: activeStreamFirstAbsLine,
                                          totalLines: activeStreamTotalLines,
                                          generationId: activeStreamGeneration,
-                                         cellGeometry: activeStreamGeometry)
+                                         cellGeometry: activeStreamGeometry,
+                                         altScreen: activeStreamAltScreen,
+                                         scrollWheelReporting: activeStreamScrollWheelReporting)
     }
 
     /// A cached scrollback tile, if already fetched.
