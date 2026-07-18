@@ -668,6 +668,32 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             session.restart(withCommand: wrapped)
         }
     }
+
+    // The login-shell-wrapped diff command matching the peer's diff
+    // popup CURRENT selection: the per-file command when a file is
+    // picked, the All Files command otherwise. Reload runs this rather
+    // than replaying the session's stale _program so a popup that
+    // silently reset to All Files (because its picked file went clean)
+    // reloads the all-files diff instead of a now-empty per-file diff.
+    // nil when there's no config or the resolved command is empty; the
+    // session then falls back to a plain restart.
+    private func resolvedDiffReloadCommand(forPeerID peerID: String) -> String? {
+        guard let cfg = peerConfigs.first(where: {
+            $0.uniqueIdentifier == peerID
+        }) else {
+            return nil
+        }
+        let picked = diffSelector(forPeerID: peerID)?.currentlySelectedFilename
+        let resolved: String
+        if let picked, !cfg.perFileCommand.isEmpty {
+            resolved = cfg.resolvedPerFileCommand(filename: picked,
+                                                  gitBase: currentGitBase)
+        } else {
+            resolved = cfg.resolvedCommand(gitBase: currentGitBase)
+        }
+        guard !resolved.isEmpty else { return nil }
+        return ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+    }
 }
 
 // MARK: - Navigation delegate
@@ -692,7 +718,10 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
         // meaningful (poll-check + fire if ready). See
         // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
         if session.workgroupSessionMode == .diff {
-            session.reloadDiffWithDeferralIfNeeded()
+            session.reloadDiffWithDeferralIfNeeded(
+                resolveCommand: { [weak self] in
+                    self?.resolvedDiffReloadCommand(forPeerID: ownerPeerID)
+                })
             return
         }
         guard session.isRestartable() else { return }

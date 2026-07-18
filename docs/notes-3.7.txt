@@ -2130,3 +2130,11 @@ Bug Fixes:
   use a browser-appropriate system prompt
   instead of one that described a terminal
   they were not attached to.
+- Workgroups: reloading a diff session now
+  re-runs the command matching the file
+  picker’s current selection. Previously, if
+  the file you were viewing stopped having
+  changes and the picker snapped back to “All
+  Files”, reload would rerun the old per-file
+  diff, find nothing, and exit immediately,
+  closing the session.

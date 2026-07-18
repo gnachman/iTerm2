@@ -1892,8 +1892,26 @@ extension PTYSession {
     // (split/tab) .diff session lands here. Both call sites bypass
     // the global isRestartable() guard for .diff because State A is a
     // legitimately reloadable state even though _program is nil.
-    @objc
-    func reloadDiffWithDeferralIfNeeded() {
+    //
+    // `resolveCommand` yields the login-shell-wrapped diff command
+    // matching the file picker's selection AT THE MOMENT IT RUNS
+    // (per-file when a file is picked, All Files otherwise). It is
+    // evaluated as late as possible: immediately for the ready path,
+    // or inside the deferred pendingDiffLaunch closure at fire time
+    // (the next poll tick or Run Anyway), so a picker pick or gitBase
+    // change between the reload click and the actual relaunch is
+    // reflected. Reload must run this rather than the session's
+    // last-launched _program, because the two can silently diverge:
+    // when the file the popup was on stops being a diffable change, a
+    // git poll resets the popup back to "All Files" in
+    // CCDiffSelectorItem.set(fileStatuses:) without restarting the
+    // session, leaving _program pointed at a now-clean per-file diff.
+    // Replaying that _program runs `git difftool` on a file with no
+    // changes, which prints nothing and exits 0, ending the session
+    // instead of re-diffing. A nil resolver (or one that yields nil)
+    // falls back to a plain restart() for callers (e.g. arrangement
+    // restoration) that have no selector selection to resolve.
+    func reloadDiffWithDeferralIfNeeded(resolveCommand: (() -> String?)? = nil) {
         let ready = workgroupInstance?.diffLaunchReady ?? false
         if hasPendingDiffLaunch {
             if ready {
@@ -1902,19 +1920,24 @@ extension PTYSession {
             return
         }
         guard isRestartable() else { return }
-        if ready {
-            restart()
-            return
-        }
         // No inner isRestartable() re-check inside the closure: under
         // current invariants -isRestartable becomes true once _program
         // is assigned and never flips back (no code path clears
         // _program; browser-ness is fixed at session creation). The
         // outer guard is enough, so the closure only needs the weak
         // self check.
-        pendingDiffLaunch = { [weak self] in
-            self?.restart()
+        let restartWithCurrentSelection: () -> Void = { [weak self] in
+            if let command = resolveCommand?() {
+                self?.restart(withCommand: command)
+            } else {
+                self?.restart()
+            }
         }
+        if ready {
+            restartWithCurrentSelection()
+            return
+        }
+        pendingDiffLaunch = restartWithCurrentSelection
         // Queued-reload variant of the overlay: the previous diff
         // output is still on screen behind the panel. Cancel clears
         // pendingDiffLaunch without firing it, so an accidental

@@ -1071,7 +1071,10 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
         // meaningful (poll-check + fire if ready). See
         // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
         if session.workgroupSessionMode == .diff {
-            session.reloadDiffWithDeferralIfNeeded()
+            session.reloadDiffWithDeferralIfNeeded(
+                resolveCommand: { [weak self] in
+                    self?.resolvedDiffReloadCommand(forConfigID: configID)
+                })
             return
         }
         guard session.isRestartable() else { return }
@@ -1093,6 +1096,28 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
             .items
             .compactMap { $0 as? CCDiffSelectorItem }
             .first
+    }
+
+    // The login-shell-wrapped diff command matching the non-peer host's
+    // diff popup CURRENT selection: the per-file command when a file is
+    // picked, the All Files command otherwise. Reload runs this rather
+    // than replaying the session's stale _program so a popup that
+    // silently reset to All Files (because its picked file went clean)
+    // reloads the all-files diff instead of a now-empty per-file diff.
+    // nil when there's no config or the resolved command is empty; the
+    // session then falls back to a plain restart.
+    private func resolvedDiffReloadCommand(forConfigID configID: String) -> String? {
+        guard let cfg = config(forConfigID: configID) else { return nil }
+        let picked = diffSelector(forNonPeerConfigID: configID)?.currentlySelectedFilename
+        let resolved: String
+        if let picked, !cfg.perFileCommand.isEmpty {
+            resolved = cfg.resolvedPerFileCommand(filename: picked,
+                                                  gitBase: currentGitBase)
+        } else {
+            resolved = cfg.resolvedCommand(gitBase: currentGitBase)
+        }
+        guard !resolved.isEmpty else { return nil }
+        return ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
     }
 
     // The navigation cluster for a non-peer host's toolbar, used to
