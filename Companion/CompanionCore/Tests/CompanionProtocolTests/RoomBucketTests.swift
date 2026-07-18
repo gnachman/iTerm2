@@ -63,9 +63,20 @@ final class RoomBucketTests: XCTestCase {
                        ShardMap.expectedBuckets - 1)   // 65535
     }
 
-    func test_bucketFromRoomName_acceptsUppercaseHex() {
-        XCTAssertEqual(RelayRoom.bucket(forRoomName: String(repeating: "0", count: 60) + "ABCD"),
-                       0xABCD)
+    func test_bucketFromRoomName_rejectsUppercaseHex() {
+        // A canonical room name is lowercase (name() emits lowercase); uppercase
+        // is not a valid room name even though it is "hex".
+        XCTAssertNil(RelayRoom.bucket(forRoomName: String(repeating: "0", count: 60) + "ABCD"))
+    }
+
+    func test_bucketFromRoomName_rejectsFullwidthHex() {
+        // Character.isHexDigit follows Unicode Hex_Digit, which admits fullwidth
+        // forms (U+FF10...); those are not canonical room names, so 60 fullwidth
+        // digits + 4 ASCII hex must be rejected, not silently bucketed.
+        let fullwidthZero = "\u{FF10}"   // fullwidth digit zero
+        let name = String(repeating: fullwidthZero, count: 60) + "abcd"
+        XCTAssertEqual(name.count, 64)
+        XCTAssertNil(RelayRoom.bucket(forRoomName: name))
     }
 
     func test_bucketFromRoomName_rejectsWrongLength() {

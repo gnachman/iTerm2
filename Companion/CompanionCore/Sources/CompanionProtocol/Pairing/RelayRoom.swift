@@ -47,10 +47,18 @@ public enum RelayRoom {
     /// The shard bucket from an already-computed room name (the 64-char lowercase
     /// hex `x-relay-room` header): the numeric value of its last four hex
     /// characters, which are exactly digest bytes 30 and 31 big-endian. Returns
-    /// nil if the string is not 64 hex characters. Lets a holder of the header
-    /// (e.g. the relay) derive the bucket without the rs/pid or re-hashing.
+    /// nil unless the string is exactly 64 lowercase-ASCII hex characters, i.e.
+    /// the canonical form `name()` emits. (The check is a literal `[0-9a-f]`
+    /// range rather than `Character.isHexDigit`, which follows Unicode
+    /// `Hex_Digit` and would also admit uppercase and fullwidth forms like U+FF10
+    /// that are not canonical room names and do not correspond to any digest.)
+    /// Lets a holder of the header (e.g. the relay) derive the bucket without the
+    /// rs/pid or re-hashing.
     public static func bucket(forRoomName roomName: String) -> Int? {
-        guard roomName.count == 64, roomName.allSatisfy(\.isHexDigit) else { return nil }
+        guard roomName.count == 64,
+              roomName.allSatisfy({ ("0"..."9").contains($0) || ("a"..."f").contains($0) }) else {
+            return nil
+        }
         return Int(roomName.suffix(4), radix: 16)
     }
 }

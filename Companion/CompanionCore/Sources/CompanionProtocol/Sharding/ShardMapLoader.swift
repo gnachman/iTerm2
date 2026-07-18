@@ -90,12 +90,23 @@ public actor ShardMapLoader {
     @discardableResult
     public func refresh() async throws -> ShardMap? {
         let map = try await fetchMap()
-        // Monotonic: a lagging CDN edge can serve an older map than one already
-        // adopted, and roll-forward means a lower version is never authoritative.
-        // Ignore anything at or below the highest seen (validate only what we
-        // adopt).
-        if let highestVersion, map.version <= highestVersion {
-            return current
+        // Monotonicity, but bootstrap-aware. Only the highest-seen VERSION is
+        // persisted, not the map, so after a relaunch `current` is nil while
+        // `highestVersion` may be a seeded floor.
+        //  - With a map already loaded, adopt only a STRICTLY newer version; an
+        //    equal or older one (e.g. a lagging CDN edge, or roll-forward meaning
+        //    a lower version is never authoritative) is ignored.
+        //  - With no map yet (fresh start / after restart), adopt a version EQUAL
+        //    to the floor too, so a relaunch against an unchanged publisher picks
+        //    a host instead of staying empty until the next version bump. Still
+        //    reject a version strictly BELOW the floor: that is the stale-edge
+        //    regression the persisted floor exists to prevent (§6.4).
+        if let highestVersion {
+            if current == nil {
+                if map.version < highestVersion { return current }
+            } else if map.version <= highestVersion {
+                return current
+            }
         }
         try map.validate()
         current = map

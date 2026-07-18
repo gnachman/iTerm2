@@ -118,14 +118,33 @@ final class ShardMapLoaderTests: XCTestCase {
         XCTAssertEqual(host0, "relay1.iterm2.com")
     }
 
-    func testInitialHighestVersionSuppressesOlderOrEqual() async throws {
+    func testRestartSeededWithVersionAdoptsEqualVersion() async throws {
+        // After a relaunch only the version was persisted, so `current` is nil and
+        // `highestVersion` is the seeded floor. If the publisher is still serving
+        // that same version, it MUST be adopted (bootstrap), or resolved mode can
+        // never pick a host after a restart.
         let stub = StubFetcher()
         stub.responses[mapURL] = .success(mapJSON(40))
         let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub,
                                     initialHighestVersion: 40)
         let map = try await loader.refresh()
 
-        XCTAssertNil(map)                               // nothing adopted (40 <= 40)
+        XCTAssertEqual(map?.version, 40)
+        let host0 = await loader.currentHost(forBucket: 0)
+        XCTAssertEqual(host0, "relay1.iterm2.com")
+    }
+
+    func testRestartSeededWithVersionRejectsOlderFromStaleEdge() async throws {
+        // On restart, a lagging edge serving a version BELOW the persisted floor
+        // must NOT be adopted (the regression the floor exists to prevent). Nothing
+        // is loaded until an edge catches up to the floor or beyond.
+        let stub = StubFetcher()
+        stub.responses[mapURL] = .success(mapJSON(39))
+        let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub,
+                                    initialHighestVersion: 40)
+        let map = try await loader.refresh()
+
+        XCTAssertNil(map)
         let current = await loader.current
         XCTAssertNil(current)
     }
