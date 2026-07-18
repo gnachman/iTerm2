@@ -707,6 +707,13 @@ private final class LayoutObservingScrollView: UIScrollView {
         super.layoutSubviews()
         onLayout?()
     }
+
+    override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        // A safe-area change (rotation, bar show/hide) must re-flow the content insets;
+        // schedule a layout pass so the coordinator's applyLayout re-reads them.
+        setNeedsLayout()
+    }
 }
 
 /// One slice of the canvas: the fetched bitmap when available, otherwise a
@@ -791,18 +798,8 @@ private struct LiveSessionView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-            // Zoomable/scrollable canvas hosting the live video, with long-press
-            // selection (Safari model). History tiles and draggable handles are
-            // added in later M5 steps.
-            // Passing the selection range (read here) makes SwiftUI re-run
-            // updateUIView when it changes, so the canvas repositions its handles.
-            // Respect the bottom safe area so the canvas sits above the tab bar
-            // (the black background still fills under it); a content inset adds a
-            // margin so the last line stays legible. The top stays under the nav bar.
-            LiveCanvas(holder: holder, model: model,
-                       layout: model.liveCanvasLayout,
-                       selectionRange: model.activeSelectionRange)
+            // Overlays pinned within the safe area, so the nav bar and tab bar never
+            // hide them even though the canvas below fills edge to edge.
             VStack {
                 HStack {
                     liveBadge
@@ -818,6 +815,28 @@ private struct LiveSessionView: View {
                     Text(endedMessage(endedReason))
                 }
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            // Fill the screen edge to edge, behind the translucent nav bar and tab bar,
+            // so the video can scroll into those regions. The canvas is kept full-bleed
+            // here - a background stack that ignores the safe area - rather than by
+            // putting .ignoresSafeArea() on the representable directly, which does not
+            // reliably expand a UIViewRepresentable. Because this fills the whole screen,
+            // the scroll view's own safeAreaInsets are the real bar insets, which
+            // applyLayout turns into content insets: at rest the terminal sits within the
+            // safe area and only reaches behind the bars (and only then wheels) when
+            // pushed there. See LiveCanvas.Coordinator.applyLayout.
+            //
+            // Passing the selection range (read here) makes SwiftUI re-run updateUIView
+            // when it changes, so the canvas repositions its handles.
+            ZStack {
+                Color.black
+                LiveCanvas(holder: holder, model: model,
+                           layout: model.liveCanvasLayout,
+                           selectionRange: model.activeSelectionRange)
+            }
+            .ignoresSafeArea()
         }
         // A left-edge drag would otherwise trigger the swipe-back gesture instead
         // of starting a selection there. Disable swipe-back while selection is
@@ -1088,7 +1107,8 @@ private struct LiveCanvas: UIViewRepresentable {
         private var lastDragLivePoint: CompanionSelectionPoint?
         private var menuAnchor: CGPoint = .zero
         private let loupeDiameter: CGFloat = 120
-        /// Empty space kept below the content so the last line clears the tab bar.
+        /// Extra breathing room added below the safe-area bottom inset, so the last
+        /// line sits a little above the tab bar rather than flush against it.
         static let bottomMargin: CGFloat = 16
 
         // History canvas layout (set from updateUIView).
@@ -1188,11 +1208,12 @@ private struct LiveCanvas: UIViewRepresentable {
             scrollView.backgroundColor = .black
             scrollView.showsVerticalScrollIndicator = false
             scrollView.showsHorizontalScrollIndicator = false
+            // We manage content insets ourselves in applyLayout (from the safe area),
+            // so keep UIKit's automatic adjustment off. With .never, adjustedContentInset
+            // equals our contentInset exactly, which the scroll limits, the initial
+            // bottom-pin, and the wheel-mode edge detection all rely on.
             scrollView.contentInsetAdjustmentBehavior = .never
             scrollView.bouncesZoom = true
-            // Empty space below the content so the bottom line clears the tab bar.
-            scrollView.contentInset.bottom = Self.bottomMargin
-            scrollView.verticalScrollIndicatorInsets.bottom = Self.bottomMargin
             container.addSubview(scrollView)
 
             // The video is positioned explicitly (a band at the document bottom) by
@@ -1254,6 +1275,30 @@ private struct LiveCanvas: UIViewRepresentable {
             return container
         }
 
+        /// Content insets that hold the content within the safe area at rest while the
+        /// scroll view itself fills the screen edge to edge: the safe area on every side
+        /// (the nav bar on top, the tab bar plus a small margin on the bottom, and the
+        /// dynamic island / home indicator on the sides in landscape). Because the scroll
+        /// view uses .never adjustment, these ARE the adjustedContentInset, so the scroll
+        /// limits, the initial pin, and the wheel-mode edge detection all account for
+        /// them: the content only reaches behind the bars/island - and only then wheels -
+        /// once it is scrolled past the inset. The horizontal insets are what let you
+        /// scroll the edge columns out from under the island (at zoom 1 the video already
+        /// fills the full width, so without them those columns can never be cleared).
+        private func desiredContentInsets() -> UIEdgeInsets {
+            let safe = scrollView.safeAreaInsets
+            return UIEdgeInsets(top: safe.top, left: safe.left,
+                                bottom: safe.bottom + Self.bottomMargin, right: safe.right)
+        }
+
+        /// Apply new content insets only when they change, so a no-op layout pass does
+        /// not perturb the scroll offset.
+        private func applyContentInsets(_ insets: UIEdgeInsets) {
+            guard scrollView.contentInset != insets else { return }
+            scrollView.contentInset = insets
+            scrollView.verticalScrollIndicatorInsets.bottom = insets.bottom
+        }
+
         /// Lay out the scrollable document: history fills the top, the live video is
         /// a band at the bottom (the last `rows` lines). The document grows as the
         /// live top advances (new output scrolls into history); if the view was
@@ -1262,8 +1307,10 @@ private struct LiveCanvas: UIViewRepresentable {
         func applyLayout() {
             let size = scrollView.bounds.size
             guard size.width > 0, size.height > 0 else { return }
+            let desiredInset = desiredContentInsets()
             // No geometry yet: fall back to the video filling the viewport.
             guard let layout, layout.imageSize.width > 0, layout.rows > 0, layout.totalLines > 0 else {
+                applyContentInsets(desiredInset)
                 contentView.frame = CGRect(origin: .zero, size: size)
                 scrollView.contentSize = size
                 holder.view.frame = contentView.bounds
@@ -1289,10 +1336,13 @@ private struct LiveCanvas: UIViewRepresentable {
             // back and scrollback reappears.
             let totalLines = layout.altScreen ? layout.rows : max(layout.totalLines, derivedTotal)
 
-            let key = "\(Int(size.width))x\(Int(size.height))|\(layout)|\(totalLines)"
+            let key = "\(Int(size.width))x\(Int(size.height))|\(layout)|\(totalLines)|\(Int(desiredInset.top)),\(Int(desiredInset.bottom)),\(Int(desiredInset.left)),\(Int(desiredInset.right))"
             guard key != appliedKey else { return }
+            // Measure the pinned state against the OLD inset before switching to the new
+            // one, so a safe-area change (rotation) re-pins to the bottom correctly.
             let wasAtBottom = isPinnedToBottom
             appliedKey = key
+            applyContentInsets(desiredInset)
 
             // Drop every tile view when the content they show is no longer valid:
             // the history origin advanced (scrollback trimmed), the document shrank
@@ -1331,11 +1381,18 @@ private struct LiveCanvas: UIViewRepresentable {
             scrollView.maximumZoomScale = max(1, 4 * layout.imageSize.width / (size.width * displayScale))
 
             for (index, view) in tileViews { view.frame = tileFrame(index: index) }
-            if !didScrollToBottom || wasAtBottom {
+            if !didScrollToBottom {
+                // First layout: pin to the bottom and place the left edge just clear of
+                // the left safe-area inset (the dynamic island in landscape), so the
+                // start of each line is readable without scrolling.
                 didScrollToBottom = true
-                scrollToBottom()
+                scrollToBottom(resetHorizontal: true)
+            } else if wasAtBottom {
+                // Following live output: keep any horizontal scroll the user set (e.g.
+                // to read the right columns) and only re-pin the vertical position.
+                scrollToBottom(resetHorizontal: false)
             }
-            companionLog("canvas layout size=\(Int(size.width))x\(Int(size.height)) firstAbs=\(layout.firstAbsLine) total=\(totalLines) hist=\(historyLines) ppl=\(String(format: "%.2f", pointsPerLine)) videoTop=\(Int(videoRect.minY)) docH=\(Int(documentHeight)) offsetY=\(Int(scrollView.contentOffset.y)) wasAtBottom=\(wasAtBottom)")
+            companionLog("canvas layout size=\(Int(size.width))x\(Int(size.height)) inset=\(Int(desiredInset.top))/\(Int(desiredInset.bottom))/\(Int(desiredInset.left))/\(Int(desiredInset.right)) firstAbs=\(layout.firstAbsLine) total=\(totalLines) hist=\(historyLines) ppl=\(String(format: "%.2f", pointsPerLine)) videoTop=\(Int(videoRect.minY)) docH=\(Int(documentHeight)) offset=\(Int(scrollView.contentOffset.x)),\(Int(scrollView.contentOffset.y)) wasAtBottom=\(wasAtBottom)")
             refreshTiles()
         }
 
@@ -1344,10 +1401,14 @@ private struct LiveCanvas: UIViewRepresentable {
             return scrollView.contentOffset.y >= maxY - 1
         }
 
-        private func scrollToBottom() {
+        /// Pin the vertical offset to the bottom (last line just above the tab-bar inset).
+        /// When `resetHorizontal` is true, also move the left edge just clear of the left
+        /// safe-area inset; otherwise keep the current horizontal scroll.
+        private func scrollToBottom(resetHorizontal: Bool = true) {
             let maxY = max(-scrollView.adjustedContentInset.top,
                            scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom)
-            scrollView.contentOffset = CGPoint(x: 0, y: maxY)
+            let x = resetHorizontal ? -scrollView.adjustedContentInset.left : scrollView.contentOffset.x
+            scrollView.contentOffset = CGPoint(x: x, y: maxY)
         }
 
         /// Periodically grow the document as the live top advances, but never while

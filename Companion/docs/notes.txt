@@ -31,6 +31,12 @@ Bug Fixes:
   the reply arrives.
 
 New Features:
+- The live session view now fills the screen edge
+  to edge, behind the translucent nav bar, tab
+  bar, and the dynamic island in landscape.
+  Content still rests within the safe area, and
+  you can scroll any line or column out from
+  behind them.
 - Full-screen apps (vim, less, htop, and other
   programs that take over the screen) now look
   right in the live session view: the phone hides
