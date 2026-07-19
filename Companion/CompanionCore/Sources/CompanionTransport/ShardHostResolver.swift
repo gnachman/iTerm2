@@ -20,8 +20,17 @@ import CompanionProtocol
 public protocol ShardHostResolving: Sendable {
     /// The relay origin (`https://host`) the shard map currently assigns to
     /// `code`'s room. Throws if the code is not resolved mode, the map cannot be
-    /// loaded, or no host owns the bucket.
-    func relayOrigin(for code: PairingCode) async throws -> String
+    /// loaded, or no host owns the bucket. `forceFresh` skips the cached host and
+    /// blocks on a fresh map fetch, for a re-resolve after an HTTP 421 / WS 4421
+    /// (§6.9), where the cached map is known stale.
+    func relayOrigin(for code: PairingCode, forceFresh: Bool) async throws -> String
+}
+
+public extension ShardHostResolving {
+    /// Steady-state resolve: cached host immediately, refresh in the background.
+    func relayOrigin(for code: PairingCode) async throws -> String {
+        try await relayOrigin(for: code, forceFresh: false)
+    }
 }
 
 /// Default resolver: one ShardMapLoader bound to a resolver URL, reused across
@@ -59,7 +68,13 @@ public struct ShardHostResolver: ShardHostResolving {
         return code.relayOrigin ?? directOrigin
     }
 
-    public func relayOrigin(for code: PairingCode) async throws -> String {
+    /// - forceFresh: skip the cached host and block on a fresh map fetch. Set this
+    ///   on a re-resolve after an HTTP 421 / WS 4421 (§6.9): the cached map is known
+    ///   stale (it named the host that just rejected/evicted us), so returning it
+    ///   again would bounce straight back. On a lagging CDN edge the fetch may still
+    ///   yield the same host (the newer map has not propagated), which is correct:
+    ///   the caller backs off and re-resolves until the edge catches up (§6.4).
+    public func relayOrigin(for code: PairingCode, forceFresh: Bool) async throws -> String {
         guard code.resolverURL != nil else {
             throw TransportError.connectionFailed("pairing code is not resolved mode (no resolver URL)")
         }
@@ -71,15 +86,16 @@ public struct ShardHostResolver: ShardHostResolving {
         // fetch: a transient CDN blip must not fail a reconnect that a cached map
         // can serve (§8), and there is no steady-state dependence on the control
         // plane (§6.6). The next connect picks up any reshard; a reshard evicts the
-        // room at the relay, forcing that reconnect.
-        if let host = await loader.currentHost(forBucket: bucket) {
+        // room at the relay, forcing that reconnect. Skipped on forceFresh.
+        if !forceFresh, let host = await loader.currentHost(forBucket: bucket) {
             await loader.refreshInBackground()
             CompanionLog.log("shardresolve: bucket \(bucket) -> https://\(host) (cached; refreshing in background)")
             return "https://\(host)"
         }
-        // First resolve of the session: no map yet, so block on the initial fetch.
-        // A failure here has no cached fallback, so it propagates (connect retries).
-        CompanionLog.log("shardresolve: pid \(code.pairingID) -> bucket \(bucket); no map yet, fetching")
+        // A forced re-resolve, or the first resolve of the session (no map yet):
+        // block on a fresh fetch. A failure here has no cached fallback, so it
+        // propagates (connect retries).
+        CompanionLog.log("shardresolve: pid \(code.pairingID) -> bucket \(bucket); \(forceFresh ? "forced re-resolve" : "no map yet"), fetching")
         _ = try await loader.refresh()
         guard let host = await loader.currentHost(forBucket: bucket) else {
             CompanionLog.log("shardresolve: no host owns bucket \(bucket) (no map adopted)")

@@ -15,7 +15,7 @@ import CompanionProtocol
 /// the phone-only URLSession fallback (which asserts on the macOS test host).
 private struct StubShardResolver: ShardHostResolving {
     let origin: String
-    func relayOrigin(for code: PairingCode) async throws -> String { origin }
+    func relayOrigin(for code: PairingCode, forceFresh: Bool) async throws -> String { origin }
 }
 
 final class CompanionTransportsTests: XCTestCase {

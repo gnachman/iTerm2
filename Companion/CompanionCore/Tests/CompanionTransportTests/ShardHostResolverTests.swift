@@ -95,6 +95,36 @@ final class ShardHostResolverTests: XCTestCase {
         await XCTAssertThrowsErrorAsync(try await r2.relayOrigin(for: code(resolverURL: resolverURL)))
     }
 
+    func test_forceFresh_picksUpTheNewOwnerAfterAReshard() async throws {
+        // Simulate a re-resolve after a 421/4421: a map already names host A, a
+        // reshard publishes v2 naming host B, and a forced re-resolve must return B
+        // (block on the fresh fetch), not the stale cached A.
+        let fetcher = StubShardFetcher()
+        fetcher.responses[mapURL] = .success(wholeRingMap(1, host: "relay-a.iterm2.com"))
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
+        let first = try await resolver.relayOrigin(for: code(resolverURL: resolverURL))
+        XCTAssertEqual(first, "https://relay-a.iterm2.com")
+
+        fetcher.responses[mapURL] = .success(wholeRingMap(2, host: "relay-b.iterm2.com"))
+        let reResolved = try await resolver.relayOrigin(for: code(resolverURL: resolverURL),
+                                                        forceFresh: true)
+        XCTAssertEqual(reResolved, "https://relay-b.iterm2.com")
+    }
+
+    func test_cachedResolve_returnsStaleHostWithoutBlocking() async throws {
+        // The steady-state (non-forced) resolve returns the cached host immediately
+        // even after a newer map is published; the update is picked up by the
+        // background refresh, not this call. (Contrast with forceFresh above.)
+        let fetcher = StubShardFetcher()
+        fetcher.responses[mapURL] = .success(wholeRingMap(1, host: "relay-a.iterm2.com"))
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
+        _ = try await resolver.relayOrigin(for: code(resolverURL: resolverURL))
+
+        fetcher.responses[mapURL] = .success(wholeRingMap(2, host: "relay-b.iterm2.com"))
+        let cached = try await resolver.relayOrigin(for: code(resolverURL: resolverURL))
+        XCTAssertEqual(cached, "https://relay-a.iterm2.com")
+    }
+
     func test_throwsWhenCodeIsNotResolvedMode() async {
         let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: StubShardFetcher())
         await XCTAssertThrowsErrorAsync(try await resolver.relayOrigin(for: code(resolverURL: nil)))
