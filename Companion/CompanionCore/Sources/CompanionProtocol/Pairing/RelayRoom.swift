@@ -28,9 +28,10 @@ public enum RelayRoom {
     /// rs/pid. Passed to the relay in a request header (never the URL path, to
     /// keep the pseudonym out of edge logs).
     public static func name(responderStaticPublicKey rs: Data, pairingID: String) -> String {
-        digest(responderStaticPublicKey: rs, pairingID: pairingID)
-            .map { String(format: "%02x", $0) }
-            .joined()
+        // One canonical lowercase-hex encoder (DataHex): roomName is a
+        // cross-language wire value matched against the Node relay, so it must not
+        // drift from the module's other hex sites.
+        Data(digest(responderStaticPublicKey: rs, pairingID: pairingID)).hexEncodedString()
     }
 
     /// The shard bucket for a pairing: the last two bytes of the room-name digest

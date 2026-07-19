@@ -39,16 +39,27 @@ public enum ShardMapLoaderError: Error, Equatable {
 /// URLSession-backed fetcher: GET the URL, require a 2xx, return the body.
 public struct URLSessionShardMapFetcher: ShardMapFetching {
     private let session: URLSession
+    private let timeout: TimeInterval
 
-    public init(session: URLSession = .shared) {
+    /// - session: pass a no-redirect session (CompanionURLSession.shared) so a
+    ///   compromised CDN edge cannot 3xx-redirect the shard-map GET to a rogue
+    ///   host. The default is URLSession.shared because this type lives below the
+    ///   CompanionURLSession layer; every real call site injects the no-redirect
+    ///   one.
+    /// - timeout: bound the GET so a stalled fetch cannot blow a caller's budget
+    ///   (e.g. the NSE, which resolves before its connect timeout applies).
+    public init(session: URLSession = .shared, timeout: TimeInterval = 15) {
         self.session = session
+        self.timeout = timeout
     }
 
     public func data(from url: URL) async throws -> Data {
-        let (data, response) = try await session.data(from: url)
+        let (data, response) = try await session.data(for: URLRequest(url: url, timeoutInterval: timeout))
         guard let http = response as? HTTPURLResponse else {
             throw ShardMapLoaderError.badResponse
         }
+        // A refused redirect surfaces here as a non-2xx (CompanionURLSession does
+        // not follow 3xx), so it is thrown rather than followed to the rogue host.
         guard (200..<300).contains(http.statusCode) else {
             throw ShardMapLoaderError.httpStatus(http.statusCode)
         }
@@ -122,6 +133,22 @@ public actor ShardMapLoader {
         highestVersion = map.version
         CompanionLog.log("shardmap: adopted v\(map.version) (\(map.ranges.count) ranges)")
         return map
+    }
+
+    private var backgroundRefreshInFlight = false
+
+    /// Kick off a refresh without blocking the caller, deduped so rapid callers
+    /// (e.g. a reconnect storm) do not pile up concurrent fetches. Failures are
+    /// swallowed: the caller already holds a usable adopted map, and the next call
+    /// retries. Used by the resolver to keep the map fresh without ever blocking a
+    /// connect on a control-plane fetch in steady state (§6.6, §8).
+    public func refreshInBackground() {
+        guard !backgroundRefreshInFlight else { return }
+        backgroundRefreshInFlight = true
+        Task {
+            _ = try? await refresh()
+            backgroundRefreshInFlight = false
+        }
     }
 
     /// Convenience: the host owning `bucket` per the currently adopted map, or

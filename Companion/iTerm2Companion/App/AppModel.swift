@@ -866,7 +866,7 @@ final class AppModel {
             let origin: String?
             if let resolverURL = code.resolverURL {
                 let resolver = ShardHostResolver(resolverURL: resolverURL,
-                                                 fetcher: URLSessionShardMapFetcher())
+                                                 fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
                 origin = try? await resolver.relayOrigin(for: code)
             } else {
                 origin = code.relayOrigin
@@ -1266,7 +1266,7 @@ final class AppModel {
             return cached.resolver
         }
         let resolver = ShardHostResolver(resolverURL: resolverURL,
-                                         fetcher: URLSessionShardMapFetcher())
+                                         fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
         cachedShardResolver = (resolverURL, resolver)
         return resolver
     }

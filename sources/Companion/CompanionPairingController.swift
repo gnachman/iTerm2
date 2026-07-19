@@ -670,9 +670,11 @@ final class CompanionPairingController: NSObject {
         // The two modes are exclusive (design docs/companion-relay-design.md):
         // when a resolver is configured (the default) the QR is resolved mode
         // (v2, resolver=, no relay=); with an empty resolver setting it falls
-        // back to direct mode (v1, relay=). The mac still parks at its own relay
-        // origin either way (startListening); the resolver only tells the phone
-        // how to find the owning shard.
+        // back to direct mode (v1, relay=). In resolved mode BOTH endpoints
+        // resolve the owning shard host from the map and rendezvous there (the mac
+        // in parkAndAccept, the phone in ResolvingTransportConnector); they must
+        // resolve identically or rendezvous fails (§6.4). In direct mode the mac
+        // parks at its configured relay origin.
         let code: PairingCode
         if let resolverURL = Self.configuredResolverURL() {
             code = PairingCode(responderStaticPublicKey: keyPair.publicKey,

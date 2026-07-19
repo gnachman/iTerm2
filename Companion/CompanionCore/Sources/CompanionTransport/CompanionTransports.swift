@@ -112,7 +112,7 @@ public enum CompanionTransports {
                 assertionFailure("CompanionTransports.connector's URLSession shard-map fetch is phone-only; the Mac must route it through the consent plugin (pass a plugin-backed shardResolver, or use listener())")
                 #endif
                 resolver = ShardHostResolver(resolverURL: resolverURL,
-                                             fetcher: URLSessionShardMapFetcher())
+                                             fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
             }
             return ResolvingTransportConnector(code: code,
                                                resolver: resolver,

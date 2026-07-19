@@ -49,10 +49,21 @@ public struct ShardHostResolver: ShardHostResolving {
         }
         let bucket = RelayRoom.bucket(responderStaticPublicKey: code.responderStaticPublicKey,
                                       pairingID: code.pairingID)
-        CompanionLog.log("shardresolve: pid \(code.pairingID) -> bucket \(bucket); refreshing map")
-        // Re-resolve on every call: a reconnect after a reshard must pick up the
-        // new owner. The loader ignores anything not newer than what it holds, so
-        // this is cheap when nothing changed.
+        // Steady state: a map is already adopted (this resolver is reused across a
+        // session's reconnects). Return its host IMMEDIATELY and refresh in the
+        // background, so a connect never blocks on, or fails from, a control-plane
+        // fetch: a transient CDN blip must not fail a reconnect that a cached map
+        // can serve (§8), and there is no steady-state dependence on the control
+        // plane (§6.6). The next connect picks up any reshard; a reshard evicts the
+        // room at the relay, forcing that reconnect.
+        if let host = await loader.currentHost(forBucket: bucket) {
+            await loader.refreshInBackground()
+            CompanionLog.log("shardresolve: bucket \(bucket) -> https://\(host) (cached; refreshing in background)")
+            return "https://\(host)"
+        }
+        // First resolve of the session: no map yet, so block on the initial fetch.
+        // A failure here has no cached fallback, so it propagates (connect retries).
+        CompanionLog.log("shardresolve: pid \(code.pairingID) -> bucket \(bucket); no map yet, fetching")
         _ = try await loader.refresh()
         guard let host = await loader.currentHost(forBucket: bucket) else {
             CompanionLog.log("shardresolve: no host owns bucket \(bucket) (no map adopted)")

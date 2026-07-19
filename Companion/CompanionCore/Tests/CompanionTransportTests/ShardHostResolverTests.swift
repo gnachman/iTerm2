@@ -45,6 +45,21 @@ final class ShardHostResolverTests: XCTestCase {
         XCTAssertEqual(origin, "https://relay1.iterm2.com")
     }
 
+    func test_cachedHostSurvivesFetchBlip() async throws {
+        // Once a map is adopted, a later resolve must return the cached host even
+        // if the CDN GET now fails: a transient blip must not fail a reconnect a
+        // cached map can serve (design §8).
+        let fetcher = StubShardFetcher()
+        fetcher.responses[mapURL] = .success(wholeRingMap(1, host: "relay1.iterm2.com"))
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
+        let first = try await resolver.relayOrigin(for: code(resolverURL: resolverURL))
+        XCTAssertEqual(first, "https://relay1.iterm2.com")
+
+        fetcher.responses.removeAll()   // every fetch now 404s
+        let second = try await resolver.relayOrigin(for: code(resolverURL: resolverURL))
+        XCTAssertEqual(second, "https://relay1.iterm2.com")
+    }
+
     func test_throwsWhenCodeIsNotResolvedMode() async {
         let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: StubShardFetcher())
         await XCTAssertThrowsErrorAsync(try await resolver.relayOrigin(for: code(resolverURL: nil)))
