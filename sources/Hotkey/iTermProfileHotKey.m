@@ -63,6 +63,10 @@ static NSString *const kArrangement = @"Arrangement";
     BOOL _activationPending;
     iTermHotkeyRollOutStage _rollOutStage;
     void (^_cancelAnimation)(void);
+
+    // macOS 26+: set while we're waiting for iTerm2 to resign active before
+    // ordering out the hotkey window. See -deferOrderOutUntilResignActive.
+    BOOL _orderOutAfterResignActive;
 }
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
@@ -1060,6 +1064,55 @@ static NSString *const kArrangement = @"Arrangement";
     [[iTermPresentationController sharedInstance] update];
 }
 
+// macOS 26+: order out the hotkey window once iTerm2 is no longer the active
+// application, so that ordering it out doesn't briefly promote a background
+// iTerm2 window in front of the app we're switching back to. A short fallback
+// covers the case where we never resign active (e.g., the previous app couldn't
+// be activated), in which case keeping iTerm2 frontmost is the right outcome
+// anyway.
+- (void)deferOrderOutUntilResignActive {
+    DLog(@"Defer order-out until iTerm2 resigns active");
+    // Avoid a duplicate registration if a previous defer is still pending (e.g.,
+    // a rapid hide/show/hide). removeObserver:name:object: is idempotent.
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSApplicationDidResignActiveNotification
+                                                  object:NSApp];
+    _orderOutAfterResignActive = YES;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidResignActive:)
+                                                 name:NSApplicationDidResignActiveNotification
+                                               object:NSApp];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (self->_orderOutAfterResignActive) {
+            DLog(@"Resign-active fallback timer fired");
+        }
+        [self finishDeferredOrderOut];
+    });
+}
+
+- (void)applicationDidResignActive:(NSNotification *)notification {
+    DLog(@"iTerm2 resigned active");
+    [self finishDeferredOrderOut];
+}
+
+- (void)finishDeferredOrderOut {
+    if (!_orderOutAfterResignActive) {
+        // The other path (notification or fallback) already handled it, or the
+        // rollout was cancelled.
+        return;
+    }
+    _orderOutAfterResignActive = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSApplicationDidResignActiveNotification
+                                                  object:NSApp];
+    if (self.rollingOut) {
+        DLog(@"Order out (deferred until resign-active) with secure keyboard entry=%@",
+             @(IsSecureEventInputEnabled()));
+        _rollOutCancelable = NO;
+        [self orderOut];
+    }
+}
+
 - (void)didFinishRollingOut:(BOOL)causedByKeypress {
     DLog(@"didFinishRollingOut");
     _activationPending = NO;
@@ -1067,7 +1120,28 @@ static NSString *const kArrangement = @"Arrangement";
     BOOL activatingOtherApp = [self.delegate willFinishRollingOutProfileHotKey:self
                                                               causedByKeypress:causedByKeypress];
     if (activatingOtherApp) {
-        if (@available(macOS 14, *)) {
+        if (@available(macOS 26, *)) {
+            // On macOS 26 (Tahoe) the previously active app, activated via
+            // activateWithOptions:, becomes frontmost a few runloop turns later than
+            // it did on earlier systems. If we order out the hotkey window while
+            // iTerm2 is still the active app, AppKit promotes a background iTerm2
+            // window to the front until the other app finishes activating, which the
+            // user sees as a flash. Wait until iTerm2 actually resigns active before
+            // ordering out. This keeps issue 11372 fixed (we don't wait a fixed
+            // delay; we order out exactly when the app switch lands) while avoiding
+            // the flash from issue 5313.
+            if (!NSApp.isActive) {
+                // Already yielded; nothing would be promoted, so order out now.
+                if (self.rollingOut) {
+                    DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
+                    _rollOutCancelable = NO;
+                    [self orderOut];
+                }
+            } else {
+                _rollOutStage = iTermHotkeyRollOutStageWaiting;
+                [self deferOrderOutUntilResignActive];
+            }
+        } else if (@available(macOS 14, *)) {
             // I'm no longer able to reproduce the bad behavior mentioned in the else clause.
             // In issue 11372 it's noted that the delay prevents you from typing in the previously
             // active app.

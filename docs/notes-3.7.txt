@@ -756,6 +756,11 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Hiding a hotkey window on macOS 26 no longer
+  briefly flashes background iTerm2 windows to
+  the front. The window now waits for the
+  previously active app to come forward before
+  ordering out.
 - Global search no longer shows blank snippets
   for results found on the main screen while an
   alternate-screen app (such as a full-screen TUI)
