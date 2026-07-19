@@ -1047,9 +1047,8 @@ final class CompanionPairingController: NSObject {
                 // rescheduling, or we would clobber a replacement task and re-park
                 // after an intended teardown.
                 if Task.isCancelled { return }
-                relayLog("startListening: shard resolve failed: \(error); scheduling retry")
                 acceptTask = nil
-                scheduleListenerRetry()
+                parkSetupDidFail(error, what: "shard resolve")
                 return
             }
         } else {
@@ -1113,9 +1112,8 @@ final class CompanionPairingController: NSObject {
             // Same as the resolve catch above: if stopAdvertising cancelled us,
             // it owns the teardown, so bail without touching acceptTask/retry.
             if Task.isCancelled { return }
-            relayLog("startListening: listener build failed: \(error); scheduling retry")
             acceptTask = nil
-            scheduleListenerRetry()
+            parkSetupDidFail(error, what: "listener build")
             return
         }
         if Task.isCancelled {
@@ -1124,6 +1122,25 @@ final class CompanionPairingController: NSObject {
         }
         self.listener = listener
         await acceptLoop(listener: listener, keyPair: keyPair, code: code)
+    }
+
+    /// A resolve or listener build failed before we could park (assumes acceptTask
+    /// was already nil'd). On the fresh-pairing path this surfaces the failure to
+    /// the pairing window and re-mints the pid on the regeneration backoff, exactly
+    /// as acceptLoop's fresh-pairing park-closed branch does for a direct-mode
+    /// park that dies. Without this a resolved (v2) QR whose resolver is
+    /// unreachable (or names no host for the bucket) would sit silent forever: the
+    /// window would show neither an error nor "Waiting for your iPhone…". For an
+    /// established pairing there is usually no window to notify, so it just retries.
+    private func parkSetupDidFail(_ error: Error, what: String) {
+        if freshPairingActive, bridge == nil {
+            relayLog("parkAndAccept: fresh-pairing \(what) failed: \(error); surfacing and regenerating")
+            onFailed?(Self.userFacingDescription(of: error))
+            scheduleFreshPairingRegeneration(reason: "\(what)-failed")
+        } else {
+            relayLog("parkAndAccept: \(what) failed: \(error); scheduling retry")
+            scheduleListenerRetry()
+        }
     }
 
     /// The per-session shard resolver cache (shared value type), keyed by resolver

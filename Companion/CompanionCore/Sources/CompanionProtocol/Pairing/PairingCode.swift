@@ -84,7 +84,8 @@ public struct PairingCode: Equatable, Sendable, Codable {
     }
 
     public enum ParseError: Error, Equatable {
-        /// v != 1. The user should update the iOS app.
+        /// v is not a supported version (currently 1 or 2). The user should
+        /// update the iOS app.
         case unsupportedVersion(found: String?)
         /// proto != supportedProtocol. The user should update the iOS app.
         case unsupportedProtocol(found: String?)
@@ -151,11 +152,11 @@ public struct PairingCode: Equatable, Sendable, Codable {
     /// it rejects non-https schemes, userinfo, query, and fragment, so the client
     /// only ever talks to a trusted host. Unlike the relay origin it PERMITS a
     /// path, so the resolver can be hosted at a subpath (e.g. behind a shared
-    /// CDN). The resolver is the base URL of the static, versioned shard map on
-    /// that CDN: the client reads a short-TTL version pointer and the immutable
-    /// `shardmap-vN.json` from under it (see docs/companion-relay-design.md), so
-    /// the path is preserved verbatim, trailing slash included, as the root the
-    /// client resolves those relative paths against. Public so the mac can
+    /// CDN). The resolver is the base URL of the static shard map on that CDN: the
+    /// client reads a single short-TTL `shardmap.json` from under it (see
+    /// docs/companion-relay-design.md and ShardMapLoader), so the path is preserved
+    /// verbatim, trailing slash included, as the root the client resolves that
+    /// relative path against. Public so the mac can
     /// validate its operator-configured resolver URL with the exact same rule the
     /// phone applies to the QR.
     public static func canonicalResolverURL(_ raw: String) throws -> String {

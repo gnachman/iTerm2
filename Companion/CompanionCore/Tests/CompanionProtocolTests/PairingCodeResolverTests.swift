@@ -54,9 +54,9 @@ final class PairingCodeResolverTests: XCTestCase {
     }
 
     func test_trailingSlashPreserved() throws {
-        // The resolver is the base URL the client resolves the version pointer and
-        // versioned map paths against, so the trailing slash is part of that root
-        // and is preserved. The default value carries one.
+        // The resolver is the base URL the client resolves the shardmap.json path
+        // against, so the trailing slash is part of that root and is preserved. The
+        // default value carries one.
         let code = try PairingCode.parse(url(resolver: "https://resolver.example.com/"))
         XCTAssertEqual(code.resolverURL, "https://resolver.example.com/")
     }

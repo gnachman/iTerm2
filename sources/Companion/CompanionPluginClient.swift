@@ -39,6 +39,12 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
     // both. No companion endpoint legitimately returns a 3xx.
     private lazy var egressSession = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
 
+    /// Per-request timeout for plugin HTTP (not the WebSocket). Bounds a stalled
+    /// endpoint well under the ~60s session default; the shard-map GET on the mac
+    /// park path relies on this, since it cannot set a per-request timeout through
+    /// the signed JS bridge.
+    private static let httpRequestTimeout: TimeInterval = 30
+
     init(code: String) {
         self.code = code
         super.init()
@@ -326,7 +332,12 @@ extension CompanionPluginClient: URLSessionWebSocketDelegate {
     private func performHTTP(method: String, url: String, headers: [String: String], body: Data,
                              completion: @escaping (String?, String?) -> Void) {
         guard let u = URL(string: url) else { completion(nil, "invalid url"); return }
-        var request = URLRequest(url: u)
+        // Bound every plugin HTTP request so a stalled endpoint cannot hang a
+        // caller up to the session default (~60s): the relay REST calls
+        // (attest/register/delete) and the resolved-mode shard-map GET are all
+        // small, quick exchanges. Applies only to HTTP data tasks here, not the
+        // long-lived parked WebSocket (wsOpen builds its own request).
+        var request = URLRequest(url: u, timeoutInterval: Self.httpRequestTimeout)
         request.httpMethod = method
         for (k, v) in headers { request.setValue(v, forHTTPHeaderField: k) }
         request.setValue(CompanionUserAgent.value, forHTTPHeaderField: "User-Agent")
