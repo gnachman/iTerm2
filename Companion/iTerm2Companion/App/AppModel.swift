@@ -1287,12 +1287,17 @@ final class AppModel {
     /// the same host from the same cached map. nil if a v2 resolve fails (the
     /// connect would fail to resolve too), yielding a consistent open-mode/failed
     /// attempt rather than a mismatched origin.
-    private func resolvedOrigin(for code: PairingCode) async -> String? {
+    private func resolvedOrigin(for code: PairingCode, forceFresh: Bool = false) async -> String? {
         if let resolver = shardResolver(for: code) {
-            return try? await resolver.relayOrigin(for: code)
+            return try? await resolver.relayOrigin(for: code, forceFresh: forceFresh)
         }
         return code.relayOrigin
     }
+
+    /// How many times a room-scoped HTTP call re-resolves and retries on a
+    /// stale-map reject (§6.9) before giving up and letting the reconnect path
+    /// take over. Bounded so a lagging CDN edge cannot spin.
+    private static let reResolveMaxAttempts = 3
 
     private func establish(code: PairingCode,
                            handshakeTimeout: TimeInterval = firstPairHandshakeTimeout,
@@ -1418,10 +1423,6 @@ final class AppModel {
     /// returns nil, surfacing as an ordinary admission failure iff the relay
     /// actually required the ticket.
     private func pairingTicketIfNeeded(_ code: PairingCode) async -> String? {
-        guard let relayOrigin = await resolvedOrigin(for: code) else {
-            companionLog("Attestation: no relay origin (or resolve failed); skipping ticket")
-            return nil
-        }
         guard !verifierRegistered(for: code) else {
             companionLog("Attestation: room already established; no ticket needed (reconnect signs)")
             return nil
@@ -1429,21 +1430,42 @@ final class AppModel {
         companionLog("Attestation: fresh pairing, attempting App Attest ticket "
             + "(device supports App Attest: \(appAttestService.isSupported))")
         let roomName = roomName(for: code)
-        let client = RelayAttestationClient(origin: relayOrigin,
-                                            service: appAttestService,
-                                            store: attestKeyStore)
-        do {
-            if let ticket = try await client.obtainTicket(roomName: roomName) {
-                companionLog("Attestation: App Attest ticket obtained for pairing admission")
-                return ticket
+        // Retry on a stale-map reject (§6.9): the ticket's App Attest clientData
+        // binds the origin, so it is only valid at the host it was attested for. If
+        // that host no longer owns the bucket (reshard), re-resolve the new owner
+        // (force-fresh, which also updates the cache the subsequent connect reads)
+        // and re-attest there, so the ticket matches the host the connect reaches.
+        var forceFresh = false
+        for attempt in 1...Self.reResolveMaxAttempts {
+            guard let relayOrigin = await resolvedOrigin(for: code, forceFresh: forceFresh) else {
+                companionLog("Attestation: no relay origin (or resolve failed); skipping ticket")
+                return nil
             }
-            companionLog("Attestation: no ticket (open-mode relay or unsupported device); "
-                + "joining with an empty proof")
-            return nil
-        } catch {
-            companionLog("Attestation: ticket request FAILED: \(String(describing: error))")
-            return nil
+            let client = RelayAttestationClient(origin: relayOrigin,
+                                                service: appAttestService,
+                                                store: attestKeyStore)
+            do {
+                if let ticket = try await client.obtainTicket(roomName: roomName) {
+                    companionLog("Attestation: App Attest ticket obtained for pairing admission")
+                    return ticket
+                }
+                companionLog("Attestation: no ticket (open-mode relay or unsupported device); "
+                    + "joining with an empty proof")
+                return nil
+            } catch {
+                if let te = error as? TransportError, case .reResolve = te {
+                    companionLog("Attestation: stale map (reResolve) on attempt \(attempt); "
+                        + "re-resolving + re-attesting on the new owner")
+                    forceFresh = true
+                    continue
+                }
+                companionLog("Attestation: ticket request FAILED: \(String(describing: error))")
+                return nil
+            }
         }
+        companionLog("Attestation: still stale after \(Self.reResolveMaxAttempts) re-resolves; "
+            + "joining with an empty proof (the reconnect path re-attests)")
+        return nil
     }
 
     /// Courier the room secret to the mac (every connect, idempotent) and, on a
@@ -1536,6 +1558,15 @@ final class AppModel {
             if status == 403, body.contains("already registered") {
                 companionLog("Relay verifier already registered")
                 return true
+            }
+            if status == 421 {
+                // Stale map (§6.9): this host no longer owns the bucket. The
+                // registration token was minted at admission on the OLD host, so it
+                // cannot be replayed at the new owner; retrying the POST is futile.
+                // Return false: the eviction tears the connection, and the reconnect
+                // re-establishes on the new owner and re-registers with a fresh token.
+                companionLog("Relay /register: stale map (421); reconnect will re-establish and re-register on the new owner")
+                return false
             }
             companionLog("Relay verifier registration rejected (\(status)): \(body)")
             return false
