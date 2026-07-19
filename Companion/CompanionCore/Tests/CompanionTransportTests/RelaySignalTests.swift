@@ -42,6 +42,14 @@ final class RelaySignalTests: XCTestCase {
                        .retryHere)
     }
 
+    func test_4421_withNonSentinelReason_yieldsNoOwnerHint() {
+        // When code 4421 short-circuits to re-resolve, the owner extraction must use
+        // the SAME sentinel guard as the classifier: a reason that merely begins with
+        // the letters "reshard" must not be sliced mid-word into a garbage hint.
+        XCTAssertEqual(RelaySignal.forWebSocketClose(code: 4421, reason: "resharding now"),
+                       .reResolve(ownerHint: nil))
+    }
+
     func test_http421_isReResolve_withOwnerFromHeader() {
         XCTAssertEqual(RelaySignal.forHTTPStatus(421, ownerHint: "relay3.iterm2.com"),
                        .reResolve(ownerHint: "relay3.iterm2.com"))

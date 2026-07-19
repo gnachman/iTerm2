@@ -82,9 +82,13 @@ public enum RelaySignal: Equatable, Sendable {
 
     /// The owner named after the `reshard` sentinel in a 4421 reason, or nil for
     /// the bare sentinel. Only a hint; callers log it, they do not connect to it.
+    /// Uses the SAME sentinel guard as the classifier above (exactly `reshard` or a
+    /// `reshard ` prefix), so a 4421 whose reason merely begins with the letters
+    /// `reshard` (e.g. `resharding now`) yields no hint rather than a mid-word slice.
     static func ownerAfterReshardSentinel(_ reason: String) -> String? {
         let trimmed = reason.trimmingCharacters(in: .whitespaces)
-        guard trimmed.lowercased().hasPrefix("reshard") else { return nil }
+        let lower = trimmed.lowercased()
+        guard lower == "reshard" || lower.hasPrefix("reshard ") else { return nil }
         let rest = trimmed.dropFirst("reshard".count).trimmingCharacters(in: .whitespaces)
         return rest.isEmpty ? nil : rest
     }
