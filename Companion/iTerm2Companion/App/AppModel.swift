@@ -859,19 +859,12 @@ final class AppModel {
               let secret = PhoneIdentity.existingRoomSecret() else { return nil }
         guard code.relayOrigin != nil || code.resolverURL != nil else { return nil }
         let room = roomName(for: code)
+        let fetcher = URLSessionShardMapFetcher(session: CompanionURLSession.shared)
         return {
-            // In resolved (v2) mode the room lives on a specific shard host, so
-            // resolve it to delete the right room; fall back to the relay origin in
-            // v1. Best effort: on any miss the relay's idle TTL reclaims the room.
-            let origin: String?
-            if let resolverURL = code.resolverURL {
-                let resolver = ShardHostResolver(resolverURL: resolverURL,
-                                                 fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
-                origin = try? await resolver.relayOrigin(for: code)
-            } else {
-                origin = code.relayOrigin
-            }
-            guard let origin else {
+            // Resolved (v2) mode resolves the owning shard host; v1 uses the relay
+            // origin. Shared helper so the phone and mac delete the same way.
+            guard let origin = await ShardHostResolver.resolveDeleteOrigin(
+                    code: code, fetcher: fetcher, directOrigin: nil) else {
                 companionLog("Relay delete-room skipped (could not resolve owning host); idle TTL will reclaim")
                 return
             }
@@ -1255,20 +1248,17 @@ final class AppModel {
             shardResolver: shardResolver(for: code))
     }
 
-    /// One shard resolver per resolver URL, reused across reconnect attempts so the
-    /// map cache and floor survive within a session; rebuilt when the resolver URL
-    /// changes. nil for a direct (v1) code. Phone egress is URLSession (no consent
-    /// plugin; that is a Mac-only chokepoint).
-    private var cachedShardResolver: (resolverURL: String, resolver: ShardHostResolver)?
+    /// The per-session shard resolver cache (shared value type), reused across
+    /// reconnect attempts so the map cache and monotonic floor survive within a
+    /// session. nil token: the phone has no consent plugin (a Mac-only egress
+    /// chokepoint), so its egress never rotates. nil resolver for a direct (v1)
+    /// code. Phone egress is the no-redirect URLSession.
+    private var shardResolverCache = ShardResolverCache()
     private func shardResolver(for code: PairingCode) -> ShardHostResolving? {
         guard let resolverURL = code.resolverURL else { return nil }
-        if let cached = cachedShardResolver, cached.resolverURL == resolverURL {
-            return cached.resolver
-        }
-        let resolver = ShardHostResolver(resolverURL: resolverURL,
-                                         fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
-        cachedShardResolver = (resolverURL, resolver)
-        return resolver
+        return shardResolverCache.resolver(
+            resolverURL: resolverURL, token: nil,
+            fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
     }
 
     private func establish(code: PairingCode,

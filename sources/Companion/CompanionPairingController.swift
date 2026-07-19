@@ -839,22 +839,16 @@ final class CompanionPairingController: NSObject {
         guard resolverURL != nil || directOrigin != nil else { return nil }
         let rs = keyPair.publicKey
         let roomName = RelayRoom.name(responderStaticPublicKey: rs, pairingID: pid)
+        // Resolved (v2) mode resolves the owning shard host through the plugin
+        // egress; v1 uses the direct origin. Shared helper so the mac and phone
+        // delete the same way.
+        let deleteCode = PairingCode(responderStaticPublicKey: rs, pairingID: pid,
+                                     resolverURL: resolverURL)
         let shardFetcher = plugin.shardMapFetcher()
         let makeHTTP: @Sendable (String) -> RelayHTTPClient = { plugin.httpClient(origin: $0) }
         return {
-            // In resolved (v2) mode the room lives on a specific shard host, not
-            // the direct origin, so resolve it (through the plugin's egress) to
-            // delete the right room; fall back to the direct origin in v1.
-            let origin: String?
-            if let resolverURL {
-                let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: shardFetcher)
-                let code = PairingCode(responderStaticPublicKey: rs, pairingID: pid,
-                                       resolverURL: resolverURL)
-                origin = try? await resolver.relayOrigin(for: code)
-            } else {
-                origin = directOrigin
-            }
-            guard let origin else {
+            guard let origin = await ShardHostResolver.resolveDeleteOrigin(
+                    code: deleteCode, fetcher: shardFetcher, directOrigin: directOrigin) else {
                 DLog("Companion: relay delete-room skipped (could not resolve owning host); idle TTL will reclaim")
                 return
             }
@@ -1036,8 +1030,12 @@ final class CompanionPairingController: NSObject {
             // and that retry re-enters here and re-resolves onto the new owner.
             relayLog("parkAndAccept: resolved mode, resolver=\(resolverURL)")
             do {
-                let resolver = shardResolver(for: resolverURL, fetcher: shardFetcher,
-                                             clientID: shardClientID)
+                // Keyed on the plugin client identity so a plugin reload rebuilds
+                // against the new egress rather than pinning the shard fetch to a
+                // torn-down client.
+                let resolver = shardResolverCache.resolver(resolverURL: resolverURL,
+                                                           token: shardClientID,
+                                                           fetcher: shardFetcher)
                 let resolveCode = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                               pairingID: pairingID,
                                               resolverURL: resolverURL)
@@ -1128,31 +1126,10 @@ final class CompanionPairingController: NSObject {
         await acceptLoop(listener: listener, keyPair: keyPair, code: code)
     }
 
-    /// The cached shard resolver, keyed by (resolver URL, plugin client identity).
-    private var cachedShardResolver: (resolverURL: String,
-                                      clientID: ObjectIdentifier,
-                                      resolver: ShardHostResolver)?
-
-    /// One shard resolver per (resolver URL, plugin client), reused across re-parks
-    /// so the shard map's monotonic version floor and cached map survive reconnects
-    /// within a session. Keyed on the plugin client identity too, so a plugin reload
-    /// (which mints a new client) rebuilds the resolver against the new egress
-    /// instead of pinning the shard fetch to the old, torn-down client; that reload
-    /// starts the map cache fresh, as does a relaunch (durable floor persistence is
-    /// a TODO). On a cache hit the passed-in `fetcher` is intentionally the same one
-    /// the cached resolver already holds (same client identity), so nothing is lost.
-    private func shardResolver(for resolverURL: String,
-                               fetcher: ShardMapFetching,
-                               clientID: ObjectIdentifier) -> ShardHostResolver {
-        if let cached = cachedShardResolver,
-           cached.resolverURL == resolverURL,
-           cached.clientID == clientID {
-            return cached.resolver
-        }
-        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
-        cachedShardResolver = (resolverURL, clientID, resolver)
-        return resolver
-    }
+    /// The per-session shard resolver cache (shared value type), keyed by resolver
+    /// URL + plugin client identity so a plugin reload rebuilds against the new
+    /// egress. A relaunch starts fresh (durable floor persistence is a TODO).
+    private var shardResolverCache = ShardResolverCache()
 
     /// The relay origin the pairing uses for connectivity. The relay is the
     /// only transport (Bonjour is currently disabled), so this must be set for

@@ -20,9 +20,14 @@ private final class StubShardFetcher: ShardMapFetching, @unchecked Sendable {
     }
 }
 
+private final class Token {}
+
 final class ShardHostResolverTests: XCTestCase {
     private let resolverURL = "https://resolver.example.com/"
     private var mapURL: String { resolverURL + "shardmap.json" }
+    // Kept alive for the test so their ObjectIdentifiers stay distinct/stable.
+    private let tokenA = Token()
+    private let tokenB = Token()
 
     private func code(resolverURL: String?) -> PairingCode {
         PairingCode(responderStaticPublicKey: Data(repeating: 7, count: 32),
@@ -58,6 +63,36 @@ final class ShardHostResolverTests: XCTestCase {
         fetcher.responses.removeAll()   // every fetch now 404s
         let second = try await resolver.relayOrigin(for: code(resolverURL: resolverURL))
         XCTAssertEqual(second, "https://relay1.iterm2.com")
+    }
+
+    func test_cache_reusesResolverForSameKey() async throws {
+        // Same (resolver URL, token) returns the cached resolver, which shares the
+        // loader (and its adopted map) so a later resolve survives a fetch blip.
+        var cache = ShardResolverCache()
+        let fetcher = StubShardFetcher()
+        fetcher.responses[mapURL] = .success(wholeRingMap(1, host: "relay1.iterm2.com"))
+        let token = ObjectIdentifier(tokenA)
+        let r1 = cache.resolver(resolverURL: resolverURL, token: token, fetcher: fetcher)
+        _ = try await r1.relayOrigin(for: code(resolverURL: resolverURL))
+
+        fetcher.responses.removeAll()   // blip
+        let r2 = cache.resolver(resolverURL: resolverURL, token: token, fetcher: fetcher)
+        let host = try await r2.relayOrigin(for: code(resolverURL: resolverURL))
+        XCTAssertEqual(host, "https://relay1.iterm2.com")
+    }
+
+    func test_cache_rebuildsForDifferentToken() async throws {
+        // A different token (e.g. after a plugin reload) rebuilds the resolver
+        // against a fresh loader, so it has no cached map and a blip is not masked.
+        var cache = ShardResolverCache()
+        let fetcher = StubShardFetcher()
+        fetcher.responses[mapURL] = .success(wholeRingMap(1, host: "relay1.iterm2.com"))
+        let r1 = cache.resolver(resolverURL: resolverURL, token: ObjectIdentifier(tokenA), fetcher: fetcher)
+        _ = try await r1.relayOrigin(for: code(resolverURL: resolverURL))
+
+        fetcher.responses.removeAll()   // blip
+        let r2 = cache.resolver(resolverURL: resolverURL, token: ObjectIdentifier(tokenB), fetcher: fetcher)
+        await XCTAssertThrowsErrorAsync(try await r2.relayOrigin(for: code(resolverURL: resolverURL)))
     }
 
     func test_throwsWhenCodeIsNotResolvedMode() async {

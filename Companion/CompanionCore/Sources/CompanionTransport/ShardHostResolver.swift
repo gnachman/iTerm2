@@ -43,6 +43,22 @@ public struct ShardHostResolver: ShardHostResolving {
                                      initialHighestVersion: initialHighestVersion)
     }
 
+    /// Resolve the relay origin to delete a room against at unpair: the owning
+    /// shard host in resolved mode (looked up through `fetcher`), else the direct
+    /// origin (`code.relayOrigin`, or `directOrigin` when the code carries none, as
+    /// the mac's does), else nil. Best effort: on any miss the relay's idle TTL
+    /// reclaims the room. Shared so the mac and phone unpair paths delete the same
+    /// way. See docs/companion-relay-design.md.
+    public static func resolveDeleteOrigin(code: PairingCode,
+                                           fetcher: ShardMapFetching,
+                                           directOrigin: String?) async -> String? {
+        if code.resolverURL != nil {
+            return try? await ShardHostResolver(resolverURL: code.resolverURL!, fetcher: fetcher)
+                .relayOrigin(for: code)
+        }
+        return code.relayOrigin ?? directOrigin
+    }
+
     public func relayOrigin(for code: PairingCode) async throws -> String {
         guard code.resolverURL != nil else {
             throw TransportError.connectionFailed("pairing code is not resolved mode (no resolver URL)")
@@ -71,5 +87,31 @@ public struct ShardHostResolver: ShardHostResolving {
         }
         CompanionLog.log("shardresolve: bucket \(bucket) -> https://\(host)")
         return "https://\(host)"
+    }
+}
+
+/// A per-session cache of one ShardHostResolver, keyed by (resolver URL, egress
+/// token). Reused across a pairing's reconnects so the shard map's cache and
+/// monotonic version floor survive within a session; rebuilt when either key
+/// changes. The token lets a caller invalidate when its egress changes: the Mac
+/// passes the plugin client's identity so a plugin reload rebuilds the resolver
+/// against the new egress, while the phone (no plugin) passes a stable token
+/// (nil). Both the Mac park path and the phone connect path use this, so the
+/// floor-survives-reconnect invariant is encoded once (§6.4 "both endpoints run
+/// the same resolution").
+public struct ShardResolverCache {
+    private var cached: (resolverURL: String, token: ObjectIdentifier?, resolver: ShardHostResolver)?
+
+    public init() {}
+
+    public mutating func resolver(resolverURL: String,
+                                  token: ObjectIdentifier?,
+                                  fetcher: ShardMapFetching) -> ShardHostResolver {
+        if let cached, cached.resolverURL == resolverURL, cached.token == token {
+            return cached.resolver
+        }
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
+        cached = (resolverURL, token, resolver)
+        return resolver
     }
 }
