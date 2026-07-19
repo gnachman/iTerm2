@@ -964,6 +964,11 @@ final class CompanionPairingController: NSObject {
         }
         let webSocketFactory = plugin.webSocketFactory()
         let shardFetcher = plugin.shardMapFetcher()
+        // Identity of the plugin's client, so the shard-resolver cache can rebuild
+        // after a plugin reload (which mints a new client): the shard fetch must
+        // follow the current plugin like the relay socket does, not stay pinned to
+        // a torn-down client.
+        let shardClientID = ObjectIdentifier(plugin.client)
         // acceptLoop only needs the pid (and the pid-derived handshake prologue);
         // the park origin is resolved in parkAndAccept, which may require an async
         // shard-map lookup (resolved mode).
@@ -974,7 +979,8 @@ final class CompanionPairingController: NSObject {
                                       keyPair: keyPair,
                                       code: code,
                                       webSocketFactory: webSocketFactory,
-                                      shardFetcher: shardFetcher)
+                                      shardFetcher: shardFetcher,
+                                      shardClientID: shardClientID)
         }
     }
 
@@ -986,7 +992,8 @@ final class CompanionPairingController: NSObject {
                                keyPair: NoiseKeyPair,
                                code: PairingCode,
                                webSocketFactory: RelayWebSocketFactory,
-                               shardFetcher: ShardMapFetching) async {
+                               shardFetcher: ShardMapFetching,
+                               shardClientID: ObjectIdentifier) async {
         let relayOrigin: String?
         if let resolverURL = Self.configuredResolverURL() {
             // Resolved mode: look the owning host up in the shard map, exactly as
@@ -996,12 +1003,19 @@ final class CompanionPairingController: NSObject {
             // and that retry re-enters here and re-resolves onto the new owner.
             relayLog("parkAndAccept: resolved mode, resolver=\(resolverURL)")
             do {
-                let resolver = shardResolver(for: resolverURL, fetcher: shardFetcher)
+                let resolver = shardResolver(for: resolverURL, fetcher: shardFetcher,
+                                             clientID: shardClientID)
                 let resolveCode = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                               pairingID: pairingID,
                                               resolverURL: resolverURL)
                 relayOrigin = try await resolver.relayOrigin(for: resolveCode)
             } catch {
+                // If stopAdvertising cancelled us mid-resolve, it already owns the
+                // teardown (it nilled acceptTask and cancelled the retry). Matching
+                // the success-path check below, bail WITHOUT touching acceptTask or
+                // rescheduling, or we would clobber a replacement task and re-park
+                // after an intended teardown.
+                if Task.isCancelled { return }
                 relayLog("startListening: shard resolve failed: \(error); scheduling retry")
                 acceptTask = nil
                 scheduleListenerRetry()
@@ -1065,6 +1079,9 @@ final class CompanionPairingController: NSObject {
                 // and the room is established; nil keeps an open-mode park.
                 roomSecret: { CompanionMacIdentity.pairedRoomSecret() })
         } catch {
+            // Same as the resolve catch above: if stopAdvertising cancelled us,
+            // it owns the teardown, so bail without touching acceptTask/retry.
+            if Task.isCancelled { return }
             relayLog("startListening: listener build failed: \(error); scheduling retry")
             acceptTask = nil
             scheduleListenerRetry()
@@ -1078,18 +1095,29 @@ final class CompanionPairingController: NSObject {
         await acceptLoop(listener: listener, keyPair: keyPair, code: code)
     }
 
-    /// One shard resolver per resolver URL, reused across re-parks so the shard
-    /// map's monotonic version floor and cached map survive reconnects within a
-    /// session. A relaunch starts fresh (durable floor persistence is a TODO).
-    private var cachedShardResolver: (resolverURL: String, resolver: ShardHostResolver)?
+    /// The cached shard resolver, keyed by (resolver URL, plugin client identity).
+    private var cachedShardResolver: (resolverURL: String,
+                                      clientID: ObjectIdentifier,
+                                      resolver: ShardHostResolver)?
 
+    /// One shard resolver per (resolver URL, plugin client), reused across re-parks
+    /// so the shard map's monotonic version floor and cached map survive reconnects
+    /// within a session. Keyed on the plugin client identity too, so a plugin reload
+    /// (which mints a new client) rebuilds the resolver against the new egress
+    /// instead of pinning the shard fetch to the old, torn-down client; that reload
+    /// starts the map cache fresh, as does a relaunch (durable floor persistence is
+    /// a TODO). On a cache hit the passed-in `fetcher` is intentionally the same one
+    /// the cached resolver already holds (same client identity), so nothing is lost.
     private func shardResolver(for resolverURL: String,
-                               fetcher: ShardMapFetching) -> ShardHostResolver {
-        if let cached = cachedShardResolver, cached.resolverURL == resolverURL {
+                               fetcher: ShardMapFetching,
+                               clientID: ObjectIdentifier) -> ShardHostResolver {
+        if let cached = cachedShardResolver,
+           cached.resolverURL == resolverURL,
+           cached.clientID == clientID {
             return cached.resolver
         }
         let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
-        cachedShardResolver = (resolverURL, resolver)
+        cachedShardResolver = (resolverURL, clientID, resolver)
         return resolver
     }
 
