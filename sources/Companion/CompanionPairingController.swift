@@ -1195,6 +1195,29 @@ final class CompanionPairingController: NSObject {
         return url
     }
 
+    /// Full-jitter delay for a re-park after a reshard evict (§7.3 / Appendix C),
+    /// so a whole-fleet reshard does not have every mac re-park in lockstep.
+    private let reconnectBackoff = RelayReconnectBackoff()
+    private func jitteredReparkNanos() -> UInt64 {
+        UInt64(reconnectBackoff.delay(consecutiveFailures: 1) * 1_000_000_000)
+    }
+
+    /// A stale-map reject/evict (§6.9): force the shared shard resolver to fetch a
+    /// fresh map so the next park resolves the new owner instead of the cached
+    /// (rejecting) host. Uses the same cached resolver (keyed on the plugin client)
+    /// parkAndAccept reads, so the refresh is what the re-park picks up. No-op in
+    /// direct mode or if the plugin is unavailable.
+    private func forceReResolveCurrentPairing(keyPair: NoiseKeyPair, pairingID: String) async {
+        guard let resolverURL = Self.configuredResolverURL(),
+              case .success(let plugin) = CompanionPlugin.instance() else { return }
+        let resolver = shardResolverCache.resolver(resolverURL: resolverURL,
+                                                   token: ObjectIdentifier(plugin.client),
+                                                   fetcher: plugin.shardMapFetcher())
+        let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
+                               pairingID: pairingID, resolverURL: resolverURL)
+        _ = try? await resolver.relayOrigin(for: code, forceFresh: true)
+    }
+
     private func acceptLoop(listener: TransportListener,
                             keyPair: NoiseKeyPair,
                             code: PairingCode) async {
@@ -1271,6 +1294,18 @@ final class CompanionPairingController: NSObject {
                 // user-facing FAULT (no onFailed); the quota status carries it.
                 if (error as? TransportError) == .quotaExceeded {
                     enterRelayQuotaBackoff(reason: "park closed")
+                    return
+                }
+                // A stale-map reject/evict (§6.9, WS 4421 / HTTP 421): a reshard
+                // moved this pairing's bucket to another host. Force a fresh map
+                // fetch so the re-park resolves the new owner (not the cached,
+                // rejecting host), then re-park promptly on a jittered delay that
+                // flattens a whole-fleet reshard storm. Not a user-facing fault, so
+                // no onFailed; symmetric with the phone reconnect loop.
+                if case .reResolve(let owner)? = (error as? TransportError) {
+                    relayLog("acceptLoop: park evicted by reshard (reResolve\(owner.map { ", owner hint \($0)" } ?? "")); re-resolving + re-parking")
+                    await forceReResolveCurrentPairing(keyPair: keyPair, pairingID: code.pairingID)
+                    scheduleListenerRetry(after: jitteredReparkNanos())
                     return
                 }
                 // A genuine park loss while a device is still paired. Re-park so
