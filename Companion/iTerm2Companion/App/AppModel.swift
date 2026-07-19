@@ -755,6 +755,14 @@ final class AppModel {
         try? PhoneIdentity.storeRegisteredRoomName(roomName(for: code))
     }
 
+    /// Forget that this room's verifier is registered, so the next connect treats
+    /// it as unestablished (attest + re-register). Used by the §6.7 self-heal when
+    /// a fresh host reports it has no verifier for a room we thought established.
+    private func clearVerifierRegistered() {
+        PhoneIdentity.deleteRegisteredRoomName()
+        UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
+    }
+
     /// The pairing from the last successful handshake. The responder key is
     /// public and the pid is not a secret, so UserDefaults is fine. The relay
     /// origin is persisted too so an off-LAN reconnect after relaunch can still
@@ -1217,6 +1225,16 @@ final class AppModel {
         return message.range(of: "signature required", options: .caseInsensitive) != nil
     }
 
+    /// True when admission failed because the relay wanted an App Attest TICKET
+    /// (pairing mode, no verifier registered). On an established join this means
+    /// the host has no verifier for this room - a fresh box after a reshard,
+    /// restart, or death lost the soft verifier state (§6.7) - so the phone must
+    /// re-attest and re-register rather than keep signing forever.
+    private static func admissionNeedsTicket(_ error: Error) -> Bool {
+        guard case let TransportError.connectionFailed(message) = error else { return false }
+        return message.range(of: "ticket required", options: .caseInsensitive) != nil
+    }
+
     /// The connector for a code: a test-injected one when present, else the
     /// production connector.
     private func makeConnector(for code: PairingCode,
@@ -1318,6 +1336,20 @@ final class AppModel {
             markVerifierRegistered(for: code)
             let signingConnector = makeConnector(for: code, pairingTicket: nil, established: true)
             transport = try await signingConnector.connect(to: rendezvous, timeout: 30)
+        } catch let error where established && Self.admissionNeedsTicket(error) {
+            // Reverse self-heal (§6.7): we signed an established join, but the host
+            // has no verifier for this room and demands a ticket - a fresh box after
+            // a reshard, restart, or death lost the soft verifier state. Forget the
+            // established marker, re-attest to earn a ticket, and reconnect; the
+            // post-connect lockRelayRoom re-registers the identical HKDF(roomSecret)
+            // verifier, restoring the room on the new host with no QR/SAS re-pair.
+            // If re-attestation fails here the error propagates and the reconnect
+            // loop retries as a fresh pairing (the marker is already cleared).
+            companionLog("Admission rejected (ticket required) on a signed join; host lost the verifier - re-attesting (self-heal)")
+            clearVerifierRegistered()
+            let ticket = await pairingTicketIfNeeded(code)
+            let attestConnector = makeConnector(for: code, pairingTicket: ticket, established: false)
+            transport = try await attestConnector.connect(to: rendezvous, timeout: 30)
         }
         // The relay mints this for the phone at admission; present it to
         // /register. Captured before the handshake wraps the transport.
