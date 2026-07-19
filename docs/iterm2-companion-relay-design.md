@@ -201,7 +201,7 @@ Each host keeps three kinds of per-room state. Classify them by whether they mus
 
 - **Ephemeral** (single-use tickets, registration tokens, App Attest challenges, live sockets, in-memory rate windows). These do not survive a hibernation or restart today; on a bucket move they are simply gone and the client retries. Nothing to move.
 - **Cost** (the per-room daily byte quota, §5.3). Host-local; it resets when the bucket moves or the host restarts. Safe, because a bucket move is an operator-initiated event an attacker cannot trigger, so a reset is not an abuse lever. Worst case a room slightly exceeds its daily budget across a reshard.
-- **Reconnect-auth** (`verifier`, `registrantKeyId`, assertion counter). The only durable-looking state, and it is **soft state**. The join verifier is deterministic: `verifier = HKDF(roomSecret)` (`RelayJoin`), and `roomSecret` is persisted on **both** devices (the phone mints it and keeps it; it is couriered to the Mac over the Noise channel and kept there). Both roles sign their joins with that one shared key, and the relay stores only the public verifier. So a host that lacks the verifier just treats the room as unestablished, and the phone re-registers the identical value.
+- **Reconnect-auth** (`verifier`, `registrantKeyId`, assertion counter). The only durable-looking state, and it is **soft state**. The join verifier is deterministic: `verifier = HKDF(roomSecret)` (`RelayJoin`), and `roomSecret` is persisted on **both** devices (the phone mints it and keeps it; it is couriered to the Mac over the Noise channel and kept there). Both roles sign their joins with that one shared key (over the `(role, nonce, roomName, origin)` transcript of §6.10, not `roomName` alone), and the relay stores only the public verifier. So a host that lacks the verifier just treats the room as unestablished, and the phone re-registers the identical value.
 
 **Self-healing flow.** When a bucket lands on a host that has no verifier for it (a fresh box after a move, restart, or death):
 
@@ -223,7 +223,7 @@ Relays learn of a new map the same way clients do, by **periodic polling of the 
 - **Poll cadence.** Each relay re-fetches the short-TTL `shardmap.json` every `SHARDMAP_POLL_INTERVAL` (a few seconds to a minute, operator's choice); when the fetched map's `version` exceeds the one it holds, it applies the §6.5 diff (an equal-or-older version, e.g. from a lagging edge, is ignored).
 - **Monotonic + integrity, same as clients (§6.6, §9).** A relay polling a multi-edge CDN can read an older version from a lagging edge, so it ignores any version older than the newest it has seen. It fetches over HTTPS from our domain and, if the map is signed, verifies the signature before adopting it, since it enforces ownership from this file.
 - **Reload latency bounds reshard convergence.** A relay that has not yet polled keeps accepting for buckets it lost and has not begun draining relinquished ones. Correctness holds (reject-on-doubt + monotonic + bounded split, §6.6), but the reshard has not *taken effect* on that host until it reloads. So `SHARDMAP_POLL_INTERVAL` is the knob for how fast a reshard lands (traded against poll traffic), and it is also what sets the drain-start defer of §7.4.
-- **Config, not QR.** Relays get the map base URL and poll interval from their provisioning config; clients get the resolver URL from the QR.
+- **Config, not QR.** Relays get the map base URL and poll interval from their provisioning config; clients get the resolver URL from the QR. A managed relay is also provisioned with its own hostname, the single string that is its TLS-cert name, its map identity (the `host` entries it owns), and the base of its proof origin (§6.10).
 - **Optional push is trigger-only.** If lower latency is ever wanted, a push may tell relays "a newer version exists, go fetch," but it must never carry map contents (the CDN stays the single source of truth), and polling stays the floor so a missed push cannot strand a host.
 
 ### 6.9 Re-resolution wire codes
@@ -266,6 +266,30 @@ The hint is advisory. A client that cannot read it, or that receives a bare 421 
 **Fatal (do not blind-retry).** HTTP 403 (entry-gate reject) and 413 (payload too large) are client or configuration errors, not transient. Surface them instead of looping.
 
 The rule that ties this together: a re-resolve code (421 or 4421) is the only thing that moves a client to a different host; every other code keeps it on the one it has. That single invariant is what lets cached-host optimism (§6.4) and reject-on-doubt (§6.6) compose, and it is why the retire path needs no code of its own.
+
+### 6.10 Host identity and the proof origin
+
+Three of the relay's checks bind an **origin** into the bytes they verify, and the design has so far been silent on it:
+
+- The **admission (join) transcript** both roles sign is over `(role, nonce, roomName, origin)` (`RelayJoin`), not `roomName` alone.
+- The **App Attest clientData** the phone attests and asserts over is `SHA256(challenge ‖ origin)`.
+- The **delete-room transcript** that authorizes an unpair is over `(challenge, roomName, origin)`.
+
+In each case the client signs or attests over the origin and the relay recomputes it and verifies. If the two strings differ by a single byte, every signature and attestation fails, and the symptom is not a connection error (the socket connects fine) but "bad signature" on every join. The origin is therefore a correctness-critical shared constant that both sides must derive identically. It is invisible at the level §6.7 and §9 describe the join crypto ("both roles sign their joins"), so a fleet built from that description alone would ship with every signed join failing, which is why it is called out here.
+
+**One provisioned hostname, three uses.** A managed box is provisioned with exactly one hostname (for example `relay1.iterm2.com`), and that single string is the source of truth for three things that must never disagree:
+
+1. Its **TLS certificate**: the cert SAN is that hostname (the on-box proxy of §5.1 obtains a certificate for exactly that name).
+2. Its **map identity**: the box owns the buckets of every shard-map range whose `host` field equals this hostname. This is the answer to "which line of the map is mine" (§6.5).
+3. Its **proof origin**: `origin = "https://" + hostname`.
+
+Because all three derive from the one provisioned value, they cannot drift on a correctly configured box: the name the client reached over TLS, the name that assigned it the bucket, and the name in the signed transcript are the same name.
+
+**The origin is server-side, never the `Host` header.** The relay takes its origin from provisioning config, not from the incoming request's `Host` header. A client-supplied header must not be able to move the signed bytes, and the on-box proxy may rewrite `Host` anyway. The client does not need to send the name for the relay to agree on it: the client connected to `https://hostname` and TLS validated the certificate whose SAN is that hostname, so the certificate is the shared anchor that pins both ends to the same string with no trusted header in the loop.
+
+**The client's construction rule.** In resolved mode the client forms `origin = "https://" + host`, with the shard-map `host` field taken verbatim and no normalization (`ShardHostResolver`). So the published map `host`, the box's provisioned hostname, and the origin the relay verifies must be byte-identical. To keep them so, the token stays in one canonical form everywhere: lowercase ASCII (punycode a-labels for an IDN), no trailing dot, and no port unless the box serves on a non-443 port, in which case the `host:port` authority is the token in all three places. In direct mode the origin instead comes from the QR's `relay=` value, canonicalized identically on both devices (`PairingCode.canonicalRelayOrigin`), and the self-hosted box is configured to match; no map is involved.
+
+So publishing a box into the map is not only a routing edit. The `host` string written into a range is simultaneously the name that box's certificate must cover and the origin its clients will sign against, so it must equal the box's provisioned identity exactly. A mismatch does not fail at connect time; it silently breaks every proof for that box's buckets.
 
 ---
 
@@ -367,6 +391,7 @@ Each step moves the theoretical minimum (~`1/K` onto a newcomer is exactly what 
 - **E2EE bounds the blast radius** of a bad/tampered map to misrouting/DoS: per the Noise point above, a rogue host cannot join a pairing without the Mac's static key, so it cannot compromise content — only availability.
 - The **pairing ID (`pid`) is effectively a bearer credential** for routing/pairing; give it sufficient entropy. (It does not gate content, which is protected by Noise/E2EE.)
 - **The join verifier is soft state, not a secret the relay must protect.** It equals `HKDF(roomSecret)`, both devices re-derive it, and the relay stores only the public value, so it can be lost (host move, restart, death) with no loss of confidentiality. This is what §6.7's self-healing rests on.
+- **The signed transcripts bind the relay origin.** The join and delete transcripts and the App Attest clientData all include `origin = "https://" + host` (§6.10), so a proof made for one relay host cannot be replayed against another, and a box cannot be steered to verify against an origin a client supplied (the origin is server-side, anchored to the box's TLS cert). Client and relay derive the string from the same provisioned hostname (the map `host` in resolved mode, the QR `relay=` value in direct mode); a byte mismatch fails every proof, so it is a configuration invariant, not a runtime negotiation.
 - **Self-healing reopens an App-Attest-gated registration race** on each verifier loss. An attacker who knows the `roomName` and can pass App Attest could register a bogus verifier in the window before the phone re-registers, blocking reconnect. It is availability-only (Noise still authenticates the Mac and protects content), doubly gated (roomName secrecy plus App Attest), and recoverable by re-pairing. §11 lists a binding that would close it.
 
 ---
@@ -403,6 +428,8 @@ Each step moves the theoretical minimum (~`1/K` onto a newcomer is exactly what 
 4. **Old owner relinquishes before new owner accepts** (break-before-make) — or accept a brief self-healing split with single-write publish. Never make-before-break.
 5. **The relay holds no durable per-pairing state that must survive a host change.** The join verifier is soft state (`verifier = HKDF(roomSecret)`, re-derivable by both endpoints and re-registered on demand; see §6.7); the assertion counter and per-room byte quota are host-local and reset safely on a move. This is what makes a host's home reassignable at will and a dead host's rooms recoverable with nothing to migrate.
 6. **Map edits preserve existing boundaries; re-equalization is a deliberate event.** The bucket space is a ring; a host owns one or more contiguous arcs (§6.3). Adding a host carves its arc out of existing ones and removing a host merges its arc into a neighbor, so a membership change moves only ~`1/K` of buckets (§7.5). Only a planned, higher-churn rebalance may move boundaries wholesale to even out drift.
+
+7. **A managed box's provisioned hostname is one string used three ways, and all three must be byte-identical: its TLS certificate SAN, its shard-map `host` entries (which buckets it owns), and its proof origin (`"https://" + hostname`).** The admission and delete transcripts and the App Attest clientData all bind that origin (§6.10). A mismatched byte does not fail the connection; it silently fails every signed join for that box. The client derives the same origin as `"https://" + host` from the map verbatim (resolved mode) or from the QR `relay=` value (direct mode), so the map `host` must stay in one canonical form (lowercase ASCII, no trailing dot, port only if non-443).
 
 ---
 
