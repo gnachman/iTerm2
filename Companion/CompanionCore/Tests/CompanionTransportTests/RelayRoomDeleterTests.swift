@@ -104,6 +104,29 @@ final class RelayRoomDeleterTests: XCTestCase {
         XCTAssertFalse(relay.deleted)
     }
 
+    func test_staleMapRejection_throwsReResolve() async {
+        // A 421 on a room-scoped call means the host no longer owns the bucket, so
+        // the deleter surfaces reResolve (§6.9) rather than a generic HTTP error;
+        // the caller re-resolves the owner and retries there.
+        let stub = FixedStatusRelay(status: 421)
+        let deleter = RelayRoomDeleter(origin: origin, http: stub)
+        do {
+            _ = try await deleter.deleteRoom(roomName: roomName, roomSecret: roomSecret)
+            XCTFail("expected reResolve")
+        } catch let error as TransportError {
+            XCTAssertEqual(error, .reResolve(ownerHint: nil))
+        } catch {
+            XCTFail("expected TransportError.reResolve, got \(error)")
+        }
+    }
+
+    private struct FixedStatusRelay: RelayHTTPClient {
+        let status: Int
+        func post(path: String, roomName: String, json: [String: String]?) async throws -> (status: Int, body: Data) {
+            (status, Data("{}".utf8))
+        }
+    }
+
     func test_wrongRoomSecretIsRejectedByTheRelay() async throws {
         // The relay registered the real pairing's verifier; a deleter holding a
         // different secret signs with the wrong key and must be refused.
