@@ -1261,6 +1261,22 @@ final class AppModel {
             fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
     }
 
+    /// The relay origin the phone uses for a code's attestation, verifier
+    /// registration, and /register POST: the resolved shard host in resolved (v2)
+    /// mode, the relay origin in direct (v1) mode. It MUST match the origin the
+    /// connect signs its join with, since the relay verifies every attestation and
+    /// signature against its configured RELAY_ORIGIN (not the request host). Both
+    /// go through the same session resolver (shardResolverCache), so they resolve
+    /// the same host from the same cached map. nil if a v2 resolve fails (the
+    /// connect would fail to resolve too), yielding a consistent open-mode/failed
+    /// attempt rather than a mismatched origin.
+    private func resolvedOrigin(for code: PairingCode) async -> String? {
+        if let resolver = shardResolver(for: code) {
+            return try? await resolver.relayOrigin(for: code)
+        }
+        return code.relayOrigin
+    }
+
     private func establish(code: PairingCode,
                            handshakeTimeout: TimeInterval = firstPairHandshakeTimeout,
                            requireConfirmation: Bool = false) async throws {
@@ -1371,8 +1387,8 @@ final class AppModel {
     /// returns nil, surfacing as an ordinary admission failure iff the relay
     /// actually required the ticket.
     private func pairingTicketIfNeeded(_ code: PairingCode) async -> String? {
-        guard let relayOrigin = code.relayOrigin else {
-            companionLog("Attestation: no relay origin in code; skipping ticket")
+        guard let relayOrigin = await resolvedOrigin(for: code) else {
+            companionLog("Attestation: no relay origin (or resolve failed); skipping ticket")
             return nil
         }
         guard !verifierRegistered(for: code) else {
@@ -1407,7 +1423,7 @@ final class AppModel {
     private func lockRelayRoom(client: CompanionClient,
                                code: PairingCode,
                                registrationToken: String?) async {
-        guard let relayOrigin = code.relayOrigin else { return }
+        guard let relayOrigin = await resolvedOrigin(for: code) else { return }
         do {
             let secret = try PhoneIdentity.roomSecret()
             // Ack-before-register: wait until the mac has stored the secret (and
