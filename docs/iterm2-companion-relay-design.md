@@ -164,7 +164,7 @@ Both the phone (which joins) and the Mac (which parks and waits) run the same re
 2. **Connect immediately to the last-known host** for this pairing (a cached `bucket → host` *hint* — epoch-free; the client does not reason about ownership).
 3. **In parallel, fetch the shard map** (`shardmap.json`) from the QR's `resolver=` URL. If it names a different host for the bucket, **tear down the old connection and reconnect to the new host.**
 4. **Ignore any map older than the newest version already seen** (monotonicity — see §6.6).
-5. If a host **rejects** the connection (it doesn't own the bucket), or the connect fails, **re-fetch the map and retry** after a short jittered delay.
+5. If a host **rejects** the connection (it doesn't own the bucket), or the connect fails, **re-fetch the map and retry** after a short jittered delay. A re-resolve signal is specifically an **HTTP 421** on connect or a **WS 4421** close on a live socket (§6.9); the other status and close codes listed there mean retry the same host, not re-resolve.
 
 A brand-new pairing has no cached host, so step 2 is a cache miss and it just uses the freshly fetched map.
 
@@ -177,10 +177,10 @@ A brand-new pairing has no cached host, so step 2 is a cache miss and it just us
 A host is **resharding-aware**: it holds its current owned-set, and on every map reload it diffs the new owned-set against the old one to derive what it just *acquired* and what it just *relinquished*, then treats the two asymmetrically.
 
 - On boot, **fetch the map before accepting connections** (so it knows which buckets it owns).
-- **Newly admit a connection only if the host's own copy of the map says it owns that bucket; otherwise reject** ("reject-on-doubt"), signaling the client to re-resolve. If the host knows the current owner, it may *redirect* (à la Redis Cluster `MOVED`) to save the client a round-trip.
+- **Newly admit a connection only if the host's own copy of the map says it owns that bucket; otherwise reject** ("reject-on-doubt"), signaling the client to re-resolve with **HTTP 421** (§6.9). If the host knows the current owner, it may *redirect* (à la Redis Cluster `MOVED`) by adding an `x-relay-owner` header, to save the client a round-trip.
 - **Reload on version bump** (periodic re-fetch of the map, §6.8), then apply the diff:
   - **Newly acquired buckets are usable immediately.** Begin accepting for them at once; there is nothing to ramp, since a client reaches this host only because the map already named it the owner. An established room whose verifier this host lacks simply self-heals on first contact (§6.7).
-  - **Relinquished buckets are evicted gradually, and only after a delay.** New joins for a relinquished bucket reject immediately (reject-on-doubt, so the split never grows), but existing spliced rooms keep running untouched for `RESHARD_DRAIN_DELAY` (default **2x the poll interval**, §7.4), by which point the gaining host has almost certainly also polled and is already accepting. Only then does the host begin closing those rooms, at a configured rate of **X rooms/second**, each close prompting its clients to re-resolve to the new owner.
+  - **Relinquished buckets are evicted gradually, and only after a delay.** New joins for a relinquished bucket reject immediately (reject-on-doubt, so the split never grows), but existing spliced rooms keep running untouched for `RESHARD_DRAIN_DELAY` (default **2x the poll interval**, §7.4), by which point the gaining host has almost certainly also polled and is already accepting. Only then does the host begin closing those rooms, at a configured rate of **X rooms/second**, each close using the **WS 4421** re-resolve code (§6.9) to prompt its clients to re-resolve to the new owner.
 - **A successfully fetched map that assigns this host zero buckets is a valid state, not an error.** It means "drain to empty" (a decommission): acquire nothing, evict everything gradually, then sit idle while still polling. This must be distinguished from a fetch failure below: a published empty assignment *drains*; an unreachable map does *not*.
 - **On fetch failure, keep last-known-good** — never fail-open (accept everything) or fail-closed (reject everything) on a CDN blip, and never confuse "couldn't fetch" (hold) with "fetched, own nothing" (drain).
 
@@ -226,6 +226,47 @@ Relays learn of a new map the same way clients do, by **periodic polling of the 
 - **Config, not QR.** Relays get the map base URL and poll interval from their provisioning config; clients get the resolver URL from the QR.
 - **Optional push is trigger-only.** If lower latency is ever wanted, a push may tell relays "a newer version exists, go fetch," but it must never carry map contents (the CDN stays the single source of truth), and polling stays the floor so a missed push cannot strand a host.
 
+### 6.9 Re-resolution wire codes
+
+Sharding adds one new instruction the relay must be able to give a client: not here, go re-resolve. Every item in the client and relay work lists depends on these numbers being fixed, so they are pinned here rather than left to each implementation to invent. There are two re-resolve codes, because the signal originates from two different places, and every pre-existing code keeps its "retry the same host" meaning.
+
+**Re-resolve (leave this host).** The client must not retry the same host. It uses the owner hint if one is present, otherwise refetches the shard map, then connects to the owner.
+
+| Origin | Code | Cause |
+|---|---|---|
+| A WebSocket upgrade, or an HTTP data-plane request (`/attest`, `/register`, `/delete`) | **HTTP 421 (Misdirected Request)** | The host does not own this bucket (reject-on-doubt, §6.5), or the bucket currently has no owner (two-phase drain, §7.2). |
+| A live, already-spliced WebSocket | **WS close 4421** | The room was evicted by a reshard; its bucket moved (§7.4). |
+
+421 is chosen because RFC 7540's "misdirected request", a request that reached a server unable to produce the response, is precisely reject-on-doubt. 4421 lives in the WebSocket private-use range (4000 to 4999) and deliberately echoes 421, so both re-resolve signals carry the same number across the two code spaces. They remain distinct codes with distinct handling: 421 is returned before or without an open socket (admission time), while 4421 closes a socket that is already spliced (eviction time). A client cannot confuse the two, and neither belongs to the retry-here set below.
+
+Because some client WebSocket stacks (for example `URLSessionWebSocketTask`) expose only a fixed enum of close codes and cannot surface an arbitrary 4xxx number, the 4421 close also carries a machine-readable **reason** that begins with the ASCII sentinel `reshard`. A client detects re-resolve as `closeCode == 4421` OR `reason` begins with `reshard`. This mirrors the existing daily-quota close, already matched on both its `1008` code and a `quota` reason substring (`host/server.js`), so the belt-and-suspenders pattern is not new.
+
+**Owner hint (optional, MOVED-style).** When the rejecting or evicting host knows the current owner from its own map, it may name it so the client can skip the map-refetch round-trip:
+
+- On HTTP 421: an `x-relay-owner: <hostname>` response header.
+- On WS 4421: the reason is `reshard <hostname>` (the owner follows the sentinel and a single space).
+
+The hint is advisory. A client that cannot read it, or that receives a bare 421 with no header (or a reason of just `reshard`), must fall back to refetching the map, which resolved mode already does in parallel (§6.4). A host in the two-phase "no owner" state has no owner to name and always sends the bare form. A client that follows a hint still updates its cached `bucket -> host` hint and confirms it against the map it fetches regardless, so a stale hint self-corrects on the next version.
+
+**Retry here (transient; keep the cached host).** Unchanged by sharding, and explicitly not a re-resolve. Back off with jitter and reconnect to the same host.
+
+| Code | Cause | Client action |
+|---|---|---|
+| WS close 1001 | Host going away (graceful restart or shutdown, §7.1) | Reconnect to the same cached host after a short delay. If the box was actually decommissioned, the map has already moved the bucket and this reconnect earns a 421, which then re-resolves. This is exactly why 1001 stays retry-here: the 421-on-reconnect covers the retire case, so no dedicated retire code is needed. |
+| WS close 1011 or 1006 | Internal error or abnormal close | Same host, jittered backoff. |
+| HTTP 429 or 503 | Rate limited or at capacity | Same host, jittered backoff. |
+| HTTP 500 | Transient internal error | Same host, jittered backoff. |
+
+**Long backoff (host-local exhaustion).**
+
+| Code | Cause | Client action |
+|---|---|---|
+| WS close 1008 | Daily byte quota exhausted (§5.3) | Same host, but do not hammer: the quota is host-local and resets on the next day or on a bucket move. Back off long. |
+
+**Fatal (do not blind-retry).** HTTP 403 (entry-gate reject) and 413 (payload too large) are client or configuration errors, not transient. Surface them instead of looping.
+
+The rule that ties this together: a re-resolve code (421 or 4421) is the only thing that moves a client to a different host; every other code keeps it on the one it has. That single invariant is what lets cached-host optimism (§6.4) and reject-on-doubt (§6.6) compose, and it is why the retire path needs no code of its own.
+
 ---
 
 ## 7. Resharding and operations
@@ -243,7 +284,7 @@ To make any sharding change: **update the shard map file, bump the version.** Ho
 When a bucket moves from `H_old` to `H_new`, there is a propagation window bounded by the max staleness of any host's view (map TTL + host poll interval; shrink further with CDN purge-on-publish).
 
 - **Single-write publish (simplest):** brief, self-healing **split** possible — if a client reads the new map before `H_old` has evicted its copy of the room (§7.4), one endpoint can be on `H_old` and the other on `H_new` until `H_old` evicts that room and kicks the straggler. Gradual eviction paces these per room at the drain rate rather than dropping them all at once. For real-time video each is a few-second reconnect glitch during an operator-initiated reshard. Recommended default.
-- **Two-phase publish (zero split):** publish the bucket as "draining / no owner" (both hosts reject it → clients retry), wait one reload interval, then publish the new owner. This is break-before-make: brief **unavailability** for that bucket instead of a brief split, and never two accepting owners. Reach for it only if a split-glitch ever proves unacceptable.
+- **Two-phase publish (zero split):** publish the bucket as "draining / no owner" (both hosts reject it with a bare **HTTP 421**, §6.9, so clients re-resolve and retry), wait one reload interval, then publish the new owner. This is break-before-make: brief **unavailability** for that bucket instead of a brief split, and never two accepting owners. Reach for it only if a split-glitch ever proves unacceptable.
 
 Do **not** do make-before-break (assign the new owner before the old relinquishes) — that's the one ordering that permits two simultaneous accepting owners.
 
@@ -267,7 +308,7 @@ Mechanics:
 - **Defer the start of the drain.** With periodic polling (§6.8), the host that *gained* a range and the host that *lost* it see the new map at different times, up to one poll interval apart. If the loser began evicting the instant it reloaded, it could kick rooms toward a gainer that has not polled yet and would reject them (reject-on-doubt), bouncing those clients until the gainer catches up. So the loser waits `RESHARD_DRAIN_DELAY` (default **2x `SHARDMAP_POLL_INTERVAL`**) after it observes the relinquishment before starting to drain: one interval covers the worst-case poll-phase skew between two hosts reacting to the same publish, and the second is margin for map TTL, CDN edge propagation, and poll jitter. Newly *acquired* buckets are still accepted immediately, there is no downside to accepting early, only to evicting early. Worked example, 1-minute poll: a host that at reload sees it lost buckets 0-1000 and gained 2000-3000 accepts 2000-3000 at once, leaves the 0-1000 rooms running, and only at the 2-minute mark begins draining 0-1000 at X rooms/second. If a newer map arrives during the delay, recompute the deadline from that latest change (or cancel the drain entirely if the bucket is re-acquired, below).
 - **Evict per room, atomically.** The unit is a room (both its endpoints), not a socket. Close the Mac and phone sockets for a room together so they re-resolve and re-land on the new owner together; closing one but not the other would strand the peer until it drifts.
 - **New joins for a relinquished bucket reject immediately, even during the defer window.** Only *existing* spliced rooms drain slowly; the host never *newly* admits a bucket it no longer owns. The motivation is to avoid the worst outcome, the Mac and the phone ending up on *different* servers. An existing room is already whole on this host (both endpoints were spliced here), so it stays consistent until drained atomically; but if the host accepted a *latecomer* for a relinquished bucket, that endpoint would land here while its peer resolves via the fresh map to the new owner, splitting the pairing across two servers. Worse, that wrongly-placed client would not be corrected until the drain reaches it, which is up to `RESHARD_DRAIN_DELAY` plus its position in the eviction queue later, a long time to sit split. Rejecting immediately instead bounces the newcomer to the new owner at once, so both endpoints converge there together, and keeps reject-on-doubt intact, bounding the split (§6.6) to rooms that were already live at publish time.
-- **Signal re-resolve on the close.** Evict with a distinct close reason (a dedicated WebSocket close code) so the client skips its cached-host optimism and refetches the map, landing on the new owner in one step.
+- **Signal re-resolve on the close.** Evict with the dedicated **WS close code 4421**, whose reason begins with the sentinel `reshard` and may carry the new owner (§6.9), so the client skips its cached-host optimism and refetches the map (or jumps straight to the named owner), landing on the new owner in one step.
 - **Cancel eviction on re-acquire.** If a later map returns a still-draining bucket to this host, drop it from the eviction queue: it is ours again, and its live rooms never needed to move.
 - **The rate is the fleet knob.** X bounds the reconnect/handshake load a drain imposes, and that load lands on the new owners, so size X to what a single target host absorbs in handshakes per second. If a drained host's ranges fan out to several new owners the per-target rate is lower still, and jittered client backoff (§7.3) spreads it further.
 
@@ -311,9 +352,9 @@ Each step moves the theoretical minimum (~`1/K` onto a newcomer is exactly what 
 | Attacker grabs the verifier slot during the re-register window | Legit signed joins fail to verify; reconnect blocked. DoS only; content stays safe via Noise. | Gated by roomName secrecy plus App Attest; prompt jittered phone reconnect shrinks the window; recover by re-pairing (§9, §11). |
 | Shard map (CDN) briefly unavailable | Steady-state reconnects still work off cached host + host-side ownership check. Only new pairings and reshards need the map. | CDN availability; last-known-good on hosts; monotonic client cache. |
 | CDN version skew across edges | Clients could read an older map after a newer one. | **Monotonic versioning** — ignore older-than-seen. |
-| Bucket-move window | Brief split (single-write) or brief unavailability (two-phase). | Bound the window (short TTL + purge); pick the publish strategy in §7.2. |
+| Bucket-move window | Brief split (single-write) or brief unavailability (two-phase). | Bound the window (short TTL + purge); pick the publish strategy in §7.2. A single-write split ends when H_old evicts the room with **WS 4421** (§6.9, §7.4). |
 | Reconnect/handshake storm on reshard | Spike of TLS handshakes on target hosts. | Gradual reshard + jittered reconnect backoff. |
-| Stale client cache after a move | Client reconnects to old host. | Host rejects buckets it no longer owns → client re-resolves. |
+| Stale client cache after a move | Client reconnects to old host. | Host rejects buckets it no longer owns (**HTTP 421**, §6.9) → client re-resolves. |
 | Fetch error on a host | — | Keep last-known-good; never fail-open/closed. |
 
 ---
