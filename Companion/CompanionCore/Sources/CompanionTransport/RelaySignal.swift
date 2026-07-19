@@ -16,6 +16,7 @@
 //
 
 import Foundation
+import CompanionProtocol
 
 public enum RelaySignal: Equatable, Sendable {
     /// Leave this host: refetch the shard map and connect to whatever host it
@@ -77,6 +78,22 @@ public enum RelaySignal: Equatable, Sendable {
             return .fatal                // other client errors: do not loop
         default:
             return .retryHere
+        }
+    }
+
+    /// The transport error a WebSocket read/write (or a failed upgrade) should
+    /// throw for this signal, or nil to keep the original error. Bridges RelaySignal
+    /// (transport layer) to TransportError (protocol layer). Returns nil for the
+    /// transient/retry-here cases and for `displaced`, which the mac park loop
+    /// surfaces separately as RelayDisplacedError (its own long backoff).
+    public func transportError() -> TransportError? {
+        switch self {
+        case .reResolve(let ownerHint):
+            return .reResolve(ownerHint: ownerHint)
+        case .longBackoff(.dailyQuota):
+            return .quotaExceeded
+        case .longBackoff(.displaced), .retryHere, .fatal:
+            return nil
         }
     }
 

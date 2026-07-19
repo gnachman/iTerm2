@@ -57,7 +57,7 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             lifecycle.noteData()
         } catch {
             logFailure("send", error)
-            throw mapQuotaClose(error)
+            throw mapCloseSignal(error)
         }
     }
 
@@ -67,7 +67,7 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             message = try await task.receive()
         } catch {
             logFailure("receive", error)
-            throw mapQuotaClose(error)
+            throw mapCloseSignal(error)
         }
         lifecycle.noteData()
         switch message {
@@ -91,18 +91,26 @@ final class URLSessionRelayWebSocket: RelayWebSocket {
             + "error=\(ns.domain)#\(ns.code) \(ns.localizedDescription) \(lifecycle.summary())")
     }
 
-    /// The relay closes the room with WebSocket 1008 + "daily quota exceeded" when
-    /// it hits the daily byte quota. Surface that as a distinct, non-transient
-    /// error so the reconnect logic backs off instead of hammering an exhausted
-    /// quota. A bare 1008 is NOT enough to match: the relay also uses 1008 for the
-    /// transient "frame rate exceeded" per-second limiter and for "bad hello", so
-    /// key off the reason text. Any other close falls through to the original error.
-    private func mapQuotaClose(_ fallback: Error) -> Error {
-        guard task.closeCode.rawValue == 1008 else { return fallback }
+    /// Map a socket failure to a distinct transport error per the re-resolution
+    /// wire codes (§6.9), via the shared RelaySignal classifier: a WS 4421 /
+    /// "reshard" close, or a 421-rejected upgrade, becomes `.reResolve`; a 1008
+    /// "daily quota" close becomes `.quotaExceeded`; every other close keeps the
+    /// original error. URLSessionWebSocketTask cannot surface an arbitrary 4xxx
+    /// close code (it collapses to `.invalid`), so the `reshard` reason sentinel is
+    /// the fallback the classifier matches on, the same belt-and-suspenders the
+    /// quota close already relied on.
+    private func mapCloseSignal(_ fallback: Error) -> Error {
+        // Reject-on-doubt on the WS UPGRADE returns an HTTP status before any socket
+        // opens (no close code); it surfaces here on task.response.
+        if let http = task.response as? HTTPURLResponse, http.statusCode >= 400,
+           let mapped = RelaySignal.forHTTPStatus(
+                http.statusCode,
+                ownerHint: http.value(forHTTPHeaderField: "x-relay-owner")).transportError() {
+            return mapped
+        }
         let reason = task.closeReason.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-        return reason.range(of: "daily quota", options: .caseInsensitive) != nil
-            ? TransportError.quotaExceeded
-            : fallback
+        return RelaySignal.forWebSocketClose(code: task.closeCode.rawValue, reason: reason)
+            .transportError() ?? fallback
     }
 
     func sendPing() async -> Bool {

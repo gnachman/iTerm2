@@ -45,6 +45,12 @@ public enum TransportError: Error, Equatable, LocalizedError {
     /// same limit, so the caller must back off long and tell the user, rather
     /// than spinning the routine fast-retry path.
     case quotaExceeded
+    /// The host does not own this pairing's bucket (HTTP 421 / WS 4421, §6.9): the
+    /// client's shard map is stale, so it must re-resolve and connect to the host
+    /// the map now names, NOT retry this one. `ownerHint` is the relay's
+    /// diagnostic-only naming of the current owner (logged, never dialed; the map
+    /// is the sole authority).
+    case reResolve(ownerHint: String?)
 
     public var errorDescription: String? {
         switch self {
@@ -58,6 +64,8 @@ public enum TransportError: Error, Equatable, LocalizedError {
             return reason
         case .quotaExceeded:
             return "The relay's daily data limit was reached"
+        case .reResolve:
+            return "This relay no longer serves the pairing; re-resolving to the current host"
         }
     }
 }

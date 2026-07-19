@@ -8,6 +8,7 @@
 //
 
 import XCTest
+import CompanionProtocol
 @testable import CompanionTransport
 
 final class RelaySignalTests: XCTestCase {
@@ -106,6 +107,35 @@ final class RelaySignalTests: XCTestCase {
         XCTAssertEqual(RelaySignal.forHTTPStatus(413), .fatal)
         // Another 4xx client error defaults to fatal, not an endless loop.
         XCTAssertEqual(RelaySignal.forHTTPStatus(404), .fatal)
+    }
+
+    // MARK: Bridge to TransportError
+
+    func test_transportError_bridge() {
+        XCTAssertEqual(RelaySignal.reResolve(ownerHint: "relay7").transportError(),
+                       .reResolve(ownerHint: "relay7"))
+        XCTAssertEqual(RelaySignal.reResolve(ownerHint: nil).transportError(),
+                       .reResolve(ownerHint: nil))
+        XCTAssertEqual(RelaySignal.longBackoff(.dailyQuota).transportError(), .quotaExceeded)
+        // Displaced is surfaced separately by the mac (RelayDisplacedError), and
+        // transient/fatal keep the original error, so all map to nil here.
+        XCTAssertNil(RelaySignal.longBackoff(.displaced).transportError())
+        XCTAssertNil(RelaySignal.retryHere.transportError())
+        XCTAssertNil(RelaySignal.fatal.transportError())
+    }
+
+    func test_transportError_endToEnd_fromCloseAndStatus() {
+        XCTAssertEqual(RelaySignal.forWebSocketClose(code: 4421, reason: "reshard relay7.iterm2.com")
+                        .transportError(),
+                       .reResolve(ownerHint: "relay7.iterm2.com"))
+        XCTAssertEqual(RelaySignal.forWebSocketClose(code: 1008, reason: "daily quota exceeded")
+                        .transportError(),
+                       .quotaExceeded)
+        XCTAssertNil(RelaySignal.forWebSocketClose(code: 1000, reason: "displaced").transportError())
+        XCTAssertNil(RelaySignal.forWebSocketClose(code: 1001, reason: "").transportError())
+        XCTAssertEqual(RelaySignal.forHTTPStatus(421, ownerHint: "relay3.iterm2.com").transportError(),
+                       .reResolve(ownerHint: "relay3.iterm2.com"))
+        XCTAssertNil(RelaySignal.forHTTPStatus(403).transportError())
     }
 
     // MARK: The load-bearing invariant

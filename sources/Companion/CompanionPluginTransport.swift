@@ -103,18 +103,17 @@ final class PluginRelayWebSocket: RelayWebSocket, @unchecked Sendable {
             // "displaced": the relay handed the room's single mac slot to a newer
             // mac-role connection. Distinguish it from routine churn so the park loop
             // can back off long instead of immediately re-grabbing the slot (an
-            // eviction storm between two instances in the same room).
+            // eviction storm between two instances in the same room). Mac-specific,
+            // surfaced separately from the shared RelaySignal classifier below.
             if reason.localizedCaseInsensitiveContains("displaced") {
                 throw RelayDisplacedError()
             }
-            // "daily quota exceeded" (WS 1008): the relay tore the room down for the
-            // day. NOT transient churn, so surface it distinctly and let the accept
-            // loop back off long instead of re-parking on the routine 5s timer only
-            // to be closed again. Match the reason text, not the bare code: 1008 is
-            // also "frame rate exceeded" (a transient per-second limiter) and "bad
-            // hello".
-            if reason.localizedCaseInsensitiveContains("daily quota") {
-                throw TransportError.quotaExceeded
+            // Re-resolve (WS 4421 / "reshard", §6.9) and daily-quota (1008) via the
+            // shared classifier. The plugin surfaces the true close code, so a 4421
+            // matches directly; the reason still disambiguates 1008 (also "frame rate
+            // exceeded", "bad hello", etc.) so only "daily quota" backs off long.
+            if let mapped = RelaySignal.forWebSocketClose(code: code, reason: reason).transportError() {
+                throw mapped
             }
             throw TransportError.closed
         }
