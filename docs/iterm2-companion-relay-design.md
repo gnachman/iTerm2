@@ -240,7 +240,7 @@ Relays learn of a new map the same way clients do, by **periodic polling of the 
 
 Sharding adds one new instruction the relay must be able to give a client: not here, go re-resolve. Every item in the client and relay work lists depends on these numbers being fixed, so they are pinned here rather than left to each implementation to invent. There are two re-resolve codes, because the signal originates from two different places, and every pre-existing code keeps its "retry the same host" meaning.
 
-**Re-resolve (leave this host).** The client must not retry the same host. It uses the owner hint if one is present, otherwise refetches the shard map, then connects to the owner.
+**Re-resolve (leave this host).** The client must not retry the same host. It refetches the shard map and connects to whatever host the map names (the owner hint, if any, is diagnostic only, below).
 
 | Origin | Code | Cause |
 |---|---|---|
@@ -249,7 +249,7 @@ Sharding adds one new instruction the relay must be able to give a client: not h
 
 421 is chosen because RFC 7540's "misdirected request", a request that reached a server unable to produce the response, is precisely reject-on-doubt. 4421 lives in the WebSocket private-use range (4000 to 4999) and deliberately echoes 421, so both re-resolve signals carry the same number across the two code spaces. They remain distinct codes with distinct handling: 421 is returned before or without an open socket (admission time), while 4421 closes a socket that is already spliced (eviction time). A client cannot confuse the two, and neither belongs to the retry-here set below.
 
-Because some client WebSocket stacks (for example `URLSessionWebSocketTask`) expose only a fixed enum of close codes and cannot surface an arbitrary 4xxx number, the 4421 close also carries a machine-readable **reason** that begins with the ASCII sentinel `reshard`. A client detects re-resolve as `closeCode == 4421` OR `reason` begins with `reshard`. This mirrors the existing daily-quota close, already matched on both its `1008` code and a `quota` reason substring (`host/server.js`), so the belt-and-suspenders pattern is not new.
+Because some client WebSocket stacks (for example `URLSessionWebSocketTask`) expose only a fixed enum of close codes and cannot surface an arbitrary 4xxx number, the 4421 close also carries a machine-readable **reason** that begins with the ASCII sentinel `reshard`. A client detects re-resolve as `closeCode == 4421` OR `reason` begins with `reshard`. This mirrors the existing daily-quota close, already matched on the client by both its `1008` code and a `daily quota` reason substring (`RelayWebSocket.swift`), so the belt-and-suspenders pattern is not new.
 
 **Owner hint (optional, diagnostic only).** A rejecting or evicting host that knows the current owner from its own map may name it, to aid logging and debugging (not to redirect the client):
 
@@ -262,16 +262,19 @@ Because some client WebSocket stacks (for example `URLSessionWebSocketTask`) exp
 
 | Code | Cause | Client action |
 |---|---|---|
-| WS close 1001 | Host going away (graceful restart or shutdown, §7.1) | Reconnect to the same cached host after a short delay. If the box was actually decommissioned, the map has already moved the bucket and this reconnect earns a 421, which then re-resolves. This is exactly why 1001 stays retry-here: the 421-on-reconnect covers the retire case, so no dedicated retire code is needed. |
+| WS close 1001 | Host going away (graceful restart or shutdown, §7.1) | Reconnect to the same cached host after a short delay. If the box was decommissioned but is still up (draining), the map has already moved the bucket and this reconnect earns a 421, which then re-resolves; if the box is fully down, the reconnect is a connect failure instead, handled by §6.4's connect-failure class (re-fetch the map, land on the new owner). Either way 1001 needs no dedicated retire code. |
 | WS close 1011 or 1006 | Internal error or abnormal close | Same host, jittered backoff. |
 | HTTP 429 or 503 | Rate limited or at capacity | Same host, jittered backoff. |
 | HTTP 500 | Transient internal error | Same host, jittered backoff. |
 
-**Long backoff (host-local exhaustion).**
+**Long backoff (same host, deliberately long delay).** Matched by close **code plus reason**, exactly the sentinel pattern above. These are same-host (not a re-resolve), but must not use the ordinary short jittered backoff.
 
-| Code | Cause | Client action |
+| Code + reason | Cause | Client action |
 |---|---|---|
-| WS close 1008 | Daily byte quota exhausted (§5.3) | Same host, but do not hammer: the quota is host-local and resets on the next day or on a bucket move. Back off long. |
+| WS **1008** + reason `daily quota exceeded` | Daily byte quota exhausted (§5.3). Host-local; resets on the next day or on a bucket move. | Same host, long backoff (30-minute cadence, `RelayWebSocket.swift` → `CompanionPairingController.quotaListenerRetryNanos`), so a client does not hammer an exhausted quota. |
+| WS **1000** + reason `displaced` | A newer connection for the same role took the room's single mac (or phone) slot. Both duplicate instances of the pairing resolve to the *same* host, so this is emphatically not a re-resolve. | Same host, long backoff (**60 s**, `RelayDisplacedError` → `displacedListenerRetryNanos`), so two duplicate instances do not ping-pong evicting each other. |
+
+**These are reason-disambiguated; do not key off the bare number.** The relay reuses `1008` for several *transient* conditions too (`frame rate exceeded`, `bad hello`, `too many pending`, `admission timeout`, and generic errors) and `1000` for an ordinary normal-closure, so only the two reasons above take the long backoff; any other `1008` or `1000` is a transient retry-here (short jittered backoff, same host), which the client decides from the reason text (`RelayWebSocket.swift`). Implementing the retry-here rule by code alone ("every non-421/4421 code → short jittered retry") would give a `displaced` Mac a 3-second retry and reintroduce the very eviction storm the 60-second backoff exists to prevent.
 
 **Fatal (do not blind-retry).** HTTP 403 (entry-gate reject) and 413 (payload too large) are client or configuration errors, not transient. Surface them instead of looping.
 
