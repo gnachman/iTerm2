@@ -1151,12 +1151,17 @@ final class AppModel {
                     companionLog("Pairing attempt \(attempt) failed: \(String(describing: error))")
                     if isReconnect {
                         // Transient network trouble must never dead-end into
-                        // re-pairing; keep trying until the user cancels. Retry
-                        // quickly: the mac may still be relaunching, and each
-                        // attempt re-sends a fresh handshake until it lands.
+                        // re-pairing; keep trying until the user cancels. On a
+                        // stale-map reject/evict (§6.9), force a fresh map fetch so
+                        // the next attempt targets the new owner. Retry on the shared
+                        // jittered backoff (the mac may still be relaunching, and
+                        // each attempt re-sends a fresh handshake until it lands).
+                        if case .reResolve? = (error as? TransportError) {
+                            await forceReResolve(code)
+                        }
                         pairingStatus = "Mac not found yet; retrying (attempt \(attempt + 1))"
                         do {
-                            try await Task.sleep(nanoseconds: Self.reconnectRetryDelayNanos)
+                            try await Task.sleep(nanoseconds: reconnectDelayNanos(consecutiveFailures: attempt))
                             continue
                         } catch {
                             companionLog("Pairing retry loop cancelled")
@@ -1201,12 +1206,6 @@ final class AppModel {
     // evaluated in a nonisolated context. An immutable Sendable constant.
     nonisolated private static let firstPairHandshakeTimeout: TimeInterval = 15
     private static let reconnectHandshakeTimeout: TimeInterval = 6
-    /// Delay between reconnect attempts. The relay does not notify the phone
-    /// when the mac (re)appears and drops a handshake sent before the mac is
-    /// parked, so reconnect is a poll: keep re-sending a fresh handshake on this
-    /// cadence until one lands on a ready mac. Kept short so a mac that just
-    /// finished relaunching is picked up quickly.
-    private static let reconnectRetryDelayNanos: UInt64 = 2_000_000_000
     /// How long to back off after the relay reports its daily data limit is
     /// exhausted. Fixed (the relay reports no reset time), long enough not to
     /// hammer the limit, short enough to recover within a day once the relay's
@@ -1714,6 +1713,25 @@ final class AppModel {
     /// place in the UI. `error` is the terminating transport error when known, so
     /// a relay daily-quota teardown enters the long backoff immediately rather
     /// than after a first doomed attempt.
+    /// The shared full-jitter reconnect backoff (§7.3 / Appendix C), driven by the
+    /// per-episode consecutive-failure count so a whole-host reconnect storm (a
+    /// reshard drain, or a host death) flattens instead of arriving in lockstep.
+    private let reconnectBackoff = RelayReconnectBackoff()
+
+    private func reconnectDelayNanos(consecutiveFailures n: Int) -> UInt64 {
+        UInt64(reconnectBackoff.delay(consecutiveFailures: max(1, n)) * 1_000_000_000)
+    }
+
+    /// Handle a stale-map reject/evict (HTTP 421 / WS 4421, §6.9): force the shared
+    /// shard resolver to fetch a fresh map, so the NEXT connect resolves the current
+    /// owner instead of the cached (rejecting) host. No-op for a direct (v1) code,
+    /// which has no resolver. Uses the same cached resolver the connector reads, so
+    /// the refresh it performs is what the next connect picks up.
+    private func forceReResolve(_ code: PairingCode) async {
+        guard let resolver = shardResolver(for: code) else { return }
+        _ = try? await resolver.relayOrigin(for: code, forceFresh: true)
+    }
+
     private func connectionLost(dueTo error: Error? = nil) {
         guard !isReconnecting else { return }
         if let error {
@@ -1865,11 +1883,20 @@ final class AppModel {
                     // any lingering backoff so the banner reverts from the limit
                     // message to the ordinary "reconnecting" pill.
                     quotaBackoffUntil = nil
-                    // Keep the user's place and keep trying; transient network
-                    // trouble must not dump them on the pairing screen.
-                    companionLog("Reconnect attempt \(attempt) failed: \(String(describing: error))")
+                    // A stale-map reject/evict (§6.9): the host no longer owns the
+                    // bucket. Force a fresh map fetch so the next attempt resolves the
+                    // new owner instead of the cached (rejecting) host; the retry then
+                    // rides the shared jittered backoff, which flattens the drain storm.
+                    if case .reResolve(let owner)? = (error as? TransportError) {
+                        companionLog("Reconnect attempt \(attempt): stale map (reResolve\(owner.map { ", owner hint \($0)" } ?? "")); re-resolving to the new owner")
+                        await forceReResolve(code)
+                    } else {
+                        // Keep the user's place and keep trying; transient network
+                        // trouble must not dump them on the pairing screen.
+                        companionLog("Reconnect attempt \(attempt) failed: \(String(describing: error))")
+                    }
                     do {
-                        try await Task.sleep(nanoseconds: Self.reconnectRetryDelayNanos)
+                        try await Task.sleep(nanoseconds: reconnectDelayNanos(consecutiveFailures: attempt))
                         continue
                     } catch {
                         companionLog("Reconnect loop cancelled")
