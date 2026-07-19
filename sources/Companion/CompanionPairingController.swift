@@ -1035,7 +1035,8 @@ final class CompanionPairingController: NSObject {
                 // torn-down client.
                 let resolver = shardResolverCache.resolver(resolverURL: resolverURL,
                                                            token: shardClientID,
-                                                           fetcher: shardFetcher)
+                                                           fetcher: shardFetcher,
+                                                           floorStore: shardMapFloorStore)
                 let resolveCode = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                               pairingID: pairingID,
                                               resolverURL: resolverURL)
@@ -1145,8 +1146,17 @@ final class CompanionPairingController: NSObject {
 
     /// The per-session shard resolver cache (shared value type), keyed by resolver
     /// URL + plugin client identity so a plugin reload rebuilds against the new
-    /// egress. A relaunch starts fresh (durable floor persistence is a TODO).
+    /// egress.
     private var shardResolverCache = ShardResolverCache()
+
+    /// Durable per-resolver version floor (§6.4), so the highest shard-map version
+    /// this mac has adopted survives a relaunch: a freshly launched mac must not
+    /// adopt a map older than one it already trusted from a lagging CDN edge, or it
+    /// would park a bucket on a host that no longer owns it. NoSync: local device
+    /// state, not a synced setting, and stored in the iTermUserDefaults suite.
+    private let shardMapFloorStore = UserDefaultsShardMapVersionFloorStore(
+        defaults: iTermUserDefaults.userDefaults(),
+        keyPrefix: "NoSyncCompanionShardMapFloor.")
 
     /// The relay origin the pairing uses for connectivity. The relay is the
     /// only transport (Bonjour is currently disabled), so this must be set for
@@ -1212,7 +1222,8 @@ final class CompanionPairingController: NSObject {
               case .success(let plugin) = CompanionPlugin.instance() else { return }
         let resolver = shardResolverCache.resolver(resolverURL: resolverURL,
                                                    token: ObjectIdentifier(plugin.client),
-                                                   fetcher: plugin.shardMapFetcher())
+                                                   fetcher: plugin.shardMapFetcher(),
+                                                   floorStore: shardMapFloorStore)
         let code = PairingCode(responderStaticPublicKey: keyPair.publicKey,
                                pairingID: pairingID, resolverURL: resolverURL)
         _ = try? await resolver.relayOrigin(for: code, forceFresh: true)

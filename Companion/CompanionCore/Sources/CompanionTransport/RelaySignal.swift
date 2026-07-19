@@ -83,16 +83,20 @@ public enum RelaySignal: Equatable, Sendable {
 
     /// The transport error a WebSocket read/write (or a failed upgrade) should
     /// throw for this signal, or nil to keep the original error. Bridges RelaySignal
-    /// (transport layer) to TransportError (protocol layer). Returns nil for the
-    /// transient/retry-here cases and for `displaced`, which the mac park loop
-    /// surfaces separately as RelayDisplacedError (its own long backoff).
+    /// (transport layer) to TransportError (protocol layer). Returns nil only for the
+    /// transient/retry-here cases. `displaced` maps to `.displaced` so the phone's
+    /// URLSession transport applies the long backoff too; the mac never reaches this
+    /// for a displaced close (its plugin transport short-circuits to
+    /// RelayDisplacedError first), so the mac's own 60 s park backoff is unchanged.
     public func transportError() -> TransportError? {
         switch self {
         case .reResolve(let ownerHint):
             return .reResolve(ownerHint: ownerHint)
         case .longBackoff(.dailyQuota):
             return .quotaExceeded
-        case .longBackoff(.displaced), .retryHere, .fatal:
+        case .longBackoff(.displaced):
+            return .displaced
+        case .retryHere, .fatal:
             return nil
         }
     }

@@ -72,6 +72,12 @@ public struct ShardMap: Equatable, Sendable, Codable {
         case emptyRanges
         /// A range with an empty host string.
         case emptyHost
+        /// A range whose host is not a bare authority (has a scheme/path/
+        /// userinfo/query/fragment/whitespace, is not lowercase, or has a
+        /// trailing dot). The same string is the connect target, the cert SAN,
+        /// and the proof origin, so a malformed entry silently breaks every proof
+        /// for that host's buckets (§6.3/§6.10).
+        case invalidHost(String)
         /// A range with low > high, or endpoints outside
         /// `[0, expectedBuckets - 1]`.
         case invalidRange(low: Int, high: Int)
@@ -80,16 +86,32 @@ public struct ShardMap: Equatable, Sendable, Codable {
         case gapOrOverlap
     }
 
+    /// A bare authority (§6.3/§6.10): no scheme/path/userinfo/query/fragment, no
+    /// whitespace, lowercase, and no trailing dot. Accepts a DNS name, an IPv4
+    /// literal, or a bracketed IPv6 authority with an optional `:port`.
+    /// Deliberately permissive on the character set otherwise (the map is
+    /// operator-authored); this only closes the "https://relay1" / uppercase /
+    /// trailing-dot traps. Mirrors the Node `isBareAuthority` check byte-for-byte.
+    static func isBareAuthority(_ host: String) -> Bool {
+        if host.isEmpty || host.hasSuffix(".") { return false }
+        for ch in host {
+            if ch == "/" || ch == "@" || ch == "?" || ch == "#" { return false }
+            if ch.isWhitespace || ch.isUppercase { return false }
+        }
+        return true
+    }
+
     /// Throw unless this map is well formed: at least one range, every range
-    /// in-bounds with a non-empty host, and the ranges exactly partitioning
-    /// `[0, expectedBuckets - 1]`. A wrap arc written as two ranges sharing a
-    /// host still tiles the space, so it validates; host grouping is irrelevant
-    /// to coverage.
+    /// in-bounds with a non-empty bare-authority host, and the ranges exactly
+    /// partitioning `[0, expectedBuckets - 1]`. A wrap arc written as two ranges
+    /// sharing a host still tiles the space, so it validates; host grouping is
+    /// irrelevant to coverage.
     public func validate() throws {
         guard version >= 0 else { throw ValidationError.negativeVersion }
         guard !ranges.isEmpty else { throw ValidationError.emptyRanges }
         for range in ranges {
             guard !range.host.isEmpty else { throw ValidationError.emptyHost }
+            guard Self.isBareAuthority(range.host) else { throw ValidationError.invalidHost(range.host) }
             guard range.low >= 0, range.high < Self.expectedBuckets, range.low <= range.high else {
                 throw ValidationError.invalidRange(low: range.low, high: range.high)
             }

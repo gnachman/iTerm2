@@ -111,6 +111,23 @@ final class ShardHostResolverTests: XCTestCase {
         XCTAssertEqual(reResolved, "https://relay-b.iterm2.com")
     }
 
+    func test_forceFresh_afterConnectFailure_dropsADecommissionedHost() async throws {
+        // §6.4 connect-failure class: the phone's cached map names host A, but A was
+        // decommissioned and a new map (only host B) was published. A fully-down A
+        // answers nothing, so a bare connect failure forces a fresh fetch; the next
+        // resolve must land on B, not keep dialing the removed host.
+        let fetcher = StubShardFetcher()
+        fetcher.responses[mapURL] = .success(wholeRingMap(1, host: "relay-a.iterm2.com"))
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
+        let firstHost = try await resolver.relayOrigin(for: code(resolverURL: resolverURL))
+        XCTAssertEqual(firstHost, "https://relay-a.iterm2.com")
+
+        fetcher.responses[mapURL] = .success(wholeRingMap(2, host: "relay-b.iterm2.com"))
+        let afterFailure = try await resolver.relayOrigin(for: code(resolverURL: resolverURL),
+                                                          forceFresh: true)
+        XCTAssertEqual(afterFailure, "https://relay-b.iterm2.com")
+    }
+
     func test_cachedResolve_returnsStaleHostWithoutBlocking() async throws {
         // The steady-state (non-forced) resolve returns the cached host immediately
         // even after a newer map is published; the update is picked up by the

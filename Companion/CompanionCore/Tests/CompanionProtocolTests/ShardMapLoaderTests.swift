@@ -26,6 +26,17 @@ private final class StubFetcher: ShardMapFetching, @unchecked Sendable {
     }
 }
 
+/// In-memory floor store: records the highest version per resolver, monotonic.
+/// Single-threaded test use, hence @unchecked Sendable.
+private final class InMemoryFloorStore: ShardMapVersionFloorStore, @unchecked Sendable {
+    private var floors: [String: Int] = [:]
+    func floor(forResolverURL resolverURL: String) -> Int? { floors[resolverURL] }
+    func setFloor(_ version: Int, forResolverURL resolverURL: String) {
+        if let existing = floors[resolverURL], existing >= version { return }
+        floors[resolverURL] = version
+    }
+}
+
 final class ShardMapLoaderTests: XCTestCase {
     private let resolver = "https://resolver.example.com/"
     private var mapURL: String { resolver + "shardmap.json" }
@@ -147,6 +158,76 @@ final class ShardMapLoaderTests: XCTestCase {
         XCTAssertNil(map)
         let current = await loader.current
         XCTAssertNil(current)
+    }
+
+    // MARK: Durable floor persistence (§6.4)
+
+    func testAdoptingAMapPersistsTheFloorToTheStore() async throws {
+        // Every adopted version is written through to the store so it survives a
+        // relaunch (the within-session highestVersion alone does not).
+        let store = InMemoryFloorStore()
+        let stub = StubFetcher()
+        stub.responses[mapURL] = .success(mapJSON(41))
+        let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub, floorStore: store)
+        _ = try await loader.refresh()
+        XCTAssertEqual(store.floor(forResolverURL: resolver), 41)
+
+        // A newer map advances the persisted floor too.
+        stub.responses[mapURL] = .success(mapJSON(42))
+        _ = try await loader.refresh()
+        XCTAssertEqual(store.floor(forResolverURL: resolver), 42)
+    }
+
+    func testFreshLoaderSeedsFloorFromStoreAndRejectsStaleEdge() async throws {
+        // Simulate a relaunch: the store already holds a floor of 41 from a prior
+        // process, so a brand-new loader (current == nil) is seeded from it. A
+        // lagging edge now serving v40 must NOT be adopted, the exact §6.4
+        // regression the persisted floor exists to prevent; nothing loads until an
+        // edge reaches the floor or beyond.
+        let store = InMemoryFloorStore()
+        store.setFloor(41, forResolverURL: resolver)
+        let stub = StubFetcher()
+        stub.responses[mapURL] = .success(mapJSON(40))
+        let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub, floorStore: store)
+
+        let seeded = await loader.highestVersion
+        XCTAssertEqual(seeded, 41)   // seeded from the store, not the served map
+        let map = try await loader.refresh()
+        XCTAssertNil(map)
+        let current = await loader.current
+        XCTAssertNil(current)
+    }
+
+    func testFreshLoaderSeededFromStoreAdoptsEqualFloor() async throws {
+        // Same relaunch, but the publisher still serves the floor version: it MUST
+        // be adopted (bootstrap), or resolved mode could never pick a host after a
+        // restart against an unchanged publisher.
+        let store = InMemoryFloorStore()
+        store.setFloor(41, forResolverURL: resolver)
+        let stub = StubFetcher()
+        stub.responses[mapURL] = .success(mapJSON(41))
+        let loader = ShardMapLoader(resolverURL: resolver, fetcher: stub, floorStore: store)
+
+        let map = try await loader.refresh()
+        XCTAssertEqual(map?.version, 41)
+        XCTAssertEqual(store.floor(forResolverURL: resolver), 41)
+    }
+
+    func testExplicitSeedAndStoreFloorTakeTheHigher() async {
+        // If a caller passes both an explicit seed and there is a persisted floor,
+        // the higher wins (both are only a starting floor for monotonicity).
+        let store = InMemoryFloorStore()
+        store.setFloor(50, forResolverURL: resolver)
+        let loaderHigherStore = ShardMapLoader(resolverURL: resolver, fetcher: StubFetcher(),
+                                               initialHighestVersion: 30, floorStore: store)
+        let a = await loaderHigherStore.highestVersion
+        XCTAssertEqual(a, 50)
+
+        store.setFloor(10, forResolverURL: resolver + "x")   // untouched: different key
+        let loaderHigherSeed = ShardMapLoader(resolverURL: resolver, fetcher: StubFetcher(),
+                                              initialHighestVersion: 99, floorStore: store)
+        let b = await loaderHigherSeed.highestVersion
+        XCTAssertEqual(b, 99)
     }
 
     // MARK: Failures leave state untouched

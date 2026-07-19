@@ -46,10 +46,12 @@ public struct ShardHostResolver: ShardHostResolving {
     ///   passes URLSession explicitly (it has no plugin).
     public init(resolverURL: String,
                 fetcher: ShardMapFetching,
-                initialHighestVersion: Int? = nil) {
+                initialHighestVersion: Int? = nil,
+                floorStore: ShardMapVersionFloorStore? = nil) {
         self.loader = ShardMapLoader(resolverURL: resolverURL,
                                      fetcher: fetcher,
-                                     initialHighestVersion: initialHighestVersion)
+                                     initialHighestVersion: initialHighestVersion,
+                                     floorStore: floorStore)
     }
 
     /// Resolve the relay origin to delete a room against at unpair: the owning
@@ -120,13 +122,18 @@ public struct ShardResolverCache {
 
     public init() {}
 
+    /// - floorStore: the durable version floor (§6.4). A stable per-app singleton,
+    ///   so it is NOT part of the cache key; it is applied when a resolver is built.
+    ///   Seeds the loader's floor from persisted state and receives every adopted
+    ///   version, so the highest-seen version survives a relaunch.
     public mutating func resolver(resolverURL: String,
                                   token: ObjectIdentifier?,
-                                  fetcher: ShardMapFetching) -> ShardHostResolver {
+                                  fetcher: ShardMapFetching,
+                                  floorStore: ShardMapVersionFloorStore? = nil) -> ShardHostResolver {
         if let cached, cached.resolverURL == resolverURL, cached.token == token {
             return cached.resolver
         }
-        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher)
+        let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: fetcher, floorStore: floorStore)
         cached = (resolverURL, token, resolver)
         return resolver
     }

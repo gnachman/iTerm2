@@ -1150,15 +1150,29 @@ final class AppModel {
                 } catch {
                     companionLog("Pairing attempt \(attempt) failed: \(String(describing: error))")
                     if isReconnect {
-                        // Transient network trouble must never dead-end into
-                        // re-pairing; keep trying until the user cancels. On a
-                        // stale-map reject/evict (§6.9), force a fresh map fetch so
-                        // the next attempt targets the new owner. Retry on the shared
-                        // jittered backoff (the mac may still be relaunching, and
-                        // each attempt re-sends a fresh handshake until it lands).
-                        if case .reResolve? = (error as? TransportError) {
-                            await forceReResolve(code)
+                        // A "displaced" eviction (§6.9): a duplicate phone took the
+                        // slot. Back off long so the two do not ping-pong, then retry.
+                        if (error as? TransportError) == .displaced {
+                            companionLog("Pairing attempt \(attempt): displaced by another phone; backing off \(Int(Self.displacedBackoffSeconds))s")
+                            pairingStatus = "Another device is connected; retrying shortly"
+                            do {
+                                try await Task.sleep(nanoseconds: UInt64(Self.displacedBackoffSeconds) * 1_000_000_000)
+                                continue
+                            } catch {
+                                companionLog("Pairing retry loop cancelled")
+                                break
+                            }
                         }
+                        // Transient network trouble must never dead-end into
+                        // re-pairing; keep trying until the user cancels. Force a fresh
+                        // map fetch before the next attempt: on a stale-map reject/evict
+                        // (§6.9) it targets the new owner, and on a bare connect failure
+                        // for a resolved pairing it re-checks whether a fully-down host
+                        // was removed (§6.4 connect-failure class). No-op for a v1 code;
+                        // a fetch blip keeps the cached map. Retry on the shared jittered
+                        // backoff (the mac may still be relaunching, and each attempt
+                        // re-sends a fresh handshake until it lands).
+                        await forceReResolve(code)
                         pairingStatus = "Mac not found yet; retrying (attempt \(attempt + 1))"
                         do {
                             try await Task.sleep(nanoseconds: reconnectDelayNanos(consecutiveFailures: attempt))
@@ -1211,6 +1225,15 @@ final class AppModel {
     /// hammer the limit, short enough to recover within a day once the relay's
     /// 24h window rolls over. The user can override it with "Reconnect now".
     private static let quotaBackoffSeconds: TimeInterval = 30 * 60
+
+    /// How long to back off after a "displaced" eviction: a duplicate same-role
+    /// (phone) connection took the room's single slot (§6.9). Reconnecting on the
+    /// ordinary short jittered backoff would immediately evict the other instance,
+    /// which re-grabs and evicts us, an eviction storm. Match the mac park loop's
+    /// 60 s displaced backoff so two phones settle instead of ping-ponging. Rare (a
+    /// user seldom runs two phones), but the spec's stated case must hold on both
+    /// endpoints, not just the mac.
+    private static let displacedBackoffSeconds: TimeInterval = 60
 
     /// How long the phone waits for the user to type the SAS code on the Mac.
     /// Generous: a human is walking to a keyboard.
@@ -1271,11 +1294,18 @@ final class AppModel {
     /// chokepoint), so its egress never rotates. nil resolver for a direct (v1)
     /// code. Phone egress is the no-redirect URLSession.
     private var shardResolverCache = ShardResolverCache()
+    /// Durable per-resolver version floor (§6.4), so the highest shard-map version
+    /// the phone has adopted survives an app relaunch: a freshly launched phone must
+    /// not adopt a map older than one it already trusted from a lagging CDN edge.
+    /// The phone does not sync defaults, so a plain key (no NoSync prefix) suffices.
+    private let shardMapFloorStore = UserDefaultsShardMapVersionFloorStore(
+        defaults: .standard, keyPrefix: "ShardMapVersionFloor.")
     private func shardResolver(for code: PairingCode) -> ShardHostResolving? {
         guard let resolverURL = code.resolverURL else { return nil }
         return shardResolverCache.resolver(
             resolverURL: resolverURL, token: nil,
-            fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
+            fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared),
+            floorStore: shardMapFloorStore)
     }
 
     /// The relay origin the phone uses for a code's attestation, verifier
@@ -1753,11 +1783,15 @@ final class AppModel {
         UInt64(reconnectBackoff.delay(consecutiveFailures: max(1, n)) * 1_000_000_000)
     }
 
-    /// Handle a stale-map reject/evict (HTTP 421 / WS 4421, §6.9): force the shared
-    /// shard resolver to fetch a fresh map, so the NEXT connect resolves the current
-    /// owner instead of the cached (rejecting) host. No-op for a direct (v1) code,
-    /// which has no resolver. Uses the same cached resolver the connector reads, so
-    /// the refresh it performs is what the next connect picks up.
+    /// Force the shared shard resolver to fetch a fresh map, so the NEXT connect
+    /// resolves the current owner instead of the cached host. Called on two paths:
+    /// a stale-map reject/evict (HTTP 421 / WS 4421, §6.9), and a bare connect
+    /// failure for a resolved pairing (§6.4 connect-failure class, where a fully
+    /// down host answers nothing and the cached map may still name it). No-op for a
+    /// direct (v1) code, which has no resolver. A fetch blip is swallowed (the
+    /// resolver keeps its cached map), so this never fails a reconnect. Uses the
+    /// same cached resolver the connector reads, so the refresh it performs is what
+    /// the next connect picks up.
     private func forceReResolve(_ code: PairingCode) async {
         guard let resolver = shardResolver(for: code) else { return }
         _ = try? await resolver.relayOrigin(for: code, forceFresh: true)
@@ -1914,6 +1948,20 @@ final class AppModel {
                     // any lingering backoff so the banner reverts from the limit
                     // message to the ordinary "reconnecting" pill.
                     quotaBackoffUntil = nil
+                    // A "displaced" eviction (§6.9): a duplicate phone took the slot.
+                    // Back off long (not the short jittered cadence) so the two do not
+                    // ping-pong evicting each other; then retry to reclaim if the other
+                    // instance goes away.
+                    if (error as? TransportError) == .displaced {
+                        companionLog("Reconnect attempt \(attempt): displaced by another phone; backing off \(Int(Self.displacedBackoffSeconds))s")
+                        do {
+                            try await Task.sleep(nanoseconds: UInt64(Self.displacedBackoffSeconds) * 1_000_000_000)
+                            continue
+                        } catch {
+                            companionLog("Reconnect loop cancelled")
+                            break
+                        }
+                    }
                     // A stale-map reject/evict (§6.9): the host no longer owns the
                     // bucket. Force a fresh map fetch so the next attempt resolves the
                     // new owner instead of the cached (rejecting) host; the retry then
@@ -1923,8 +1971,17 @@ final class AppModel {
                         await forceReResolve(code)
                     } else {
                         // Keep the user's place and keep trying; transient network
-                        // trouble must not dump them on the pairing screen.
+                        // trouble must not dump them on the pairing screen. On a bare
+                        // connect failure for a resolved (v2) pairing, deterministically
+                        // re-fetch the map before the next attempt (§6.4 connect-failure
+                        // class): a host that is fully down answers nothing, so relying
+                        // on the resolver's opportunistic background refresh could retry
+                        // the removed host; a forced fetch picks up its removal. No-op
+                        // for a v1 code (no resolver); swallows a fetch blip (the cached
+                        // map survives), so it never fails a reconnect a cached map can
+                        // still serve.
                         companionLog("Reconnect attempt \(attempt) failed: \(String(describing: error))")
+                        await forceReResolve(code)
                     }
                     do {
                         try await Task.sleep(nanoseconds: reconnectDelayNanos(consecutiveFailures: attempt))

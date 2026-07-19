@@ -117,9 +117,11 @@ final class RelaySignalTests: XCTestCase {
         XCTAssertEqual(RelaySignal.reResolve(ownerHint: nil).transportError(),
                        .reResolve(ownerHint: nil))
         XCTAssertEqual(RelaySignal.longBackoff(.dailyQuota).transportError(), .quotaExceeded)
-        // Displaced is surfaced separately by the mac (RelayDisplacedError), and
-        // transient/fatal keep the original error, so all map to nil here.
-        XCTAssertNil(RelaySignal.longBackoff(.displaced).transportError())
+        // Displaced maps to .displaced so the phone's URLSession transport applies
+        // its own long backoff (the mac short-circuits to RelayDisplacedError before
+        // reaching this bridge, so its 60 s park backoff is unaffected).
+        XCTAssertEqual(RelaySignal.longBackoff(.displaced).transportError(), .displaced)
+        // Transient/fatal keep the original error, so they map to nil here.
         XCTAssertNil(RelaySignal.retryHere.transportError())
         XCTAssertNil(RelaySignal.fatal.transportError())
     }
@@ -131,7 +133,8 @@ final class RelaySignalTests: XCTestCase {
         XCTAssertEqual(RelaySignal.forWebSocketClose(code: 1008, reason: "daily quota exceeded")
                         .transportError(),
                        .quotaExceeded)
-        XCTAssertNil(RelaySignal.forWebSocketClose(code: 1000, reason: "displaced").transportError())
+        XCTAssertEqual(RelaySignal.forWebSocketClose(code: 1000, reason: "displaced").transportError(),
+                       .displaced)
         XCTAssertNil(RelaySignal.forWebSocketClose(code: 1001, reason: "").transportError())
         XCTAssertEqual(RelaySignal.forHTTPStatus(421, ownerHint: "relay3.iterm2.com").transportError(),
                        .reResolve(ownerHint: "relay3.iterm2.com"))

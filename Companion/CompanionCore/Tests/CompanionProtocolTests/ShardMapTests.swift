@@ -106,6 +106,34 @@ final class ShardMapTests: XCTestCase {
         }
     }
 
+    // MARK: Validation - host must be a bare authority (§6.3/§6.10)
+
+    func testAcceptsBareAuthorityHosts() {
+        for host in ["relay1.iterm2.com", "relay1", "203.0.113.7",
+                     "relay1.iterm2.com:8443", "[2001:db8::1]:8443"] {
+            let map = ShardMap(version: 1, ranges: [.init(low: 0, high: N - 1, host: host)])
+            XCTAssertNoThrow(try map.validate(), host)
+        }
+    }
+
+    func testRejectsSchemePathUserinfoQueryFragmentWhitespaceHost() {
+        for host in ["https://relay1", "relay1/x", "user@relay1", "relay1?x", "relay1#x", "relay1 x"] {
+            let map = ShardMap(version: 1, ranges: [.init(low: 0, high: N - 1, host: host)])
+            XCTAssertThrowsError(try map.validate(), host) {
+                XCTAssertEqual($0 as? ShardMap.ValidationError, .invalidHost(host))
+            }
+        }
+    }
+
+    func testRejectsUppercaseAndTrailingDotHost() {
+        for host in ["Relay1.iterm2.com", "relay1.iterm2.com."] {
+            let map = ShardMap(version: 1, ranges: [.init(low: 0, high: N - 1, host: host)])
+            XCTAssertThrowsError(try map.validate(), host) {
+                XCTAssertEqual($0 as? ShardMap.ValidationError, .invalidHost(host))
+            }
+        }
+    }
+
     func testRejectsLowGreaterThanHigh() {
         let map = ShardMap(version: 1, ranges: [
             .init(low: 100, high: 50, host: "relay1.iterm2.com"),

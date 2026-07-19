@@ -76,6 +76,12 @@ public actor ShardMapLoader {
     private let resolverURL: String
     private let fetcher: ShardMapFetching
 
+    /// Durable floor across relaunches (§6.4). Seeds `highestVersion` at init and
+    /// is written every time a newer map is adopted, so a fresh process cannot
+    /// adopt a map older than one already trusted. Optional: tests and the delete
+    /// path pass none and get within-session monotonicity only.
+    private let floorStore: ShardMapVersionFloorStore?
+
     /// The highest map version adopted so far, or nil if none. Monotonicity
     /// (§6.6) rests on this: a version at or below it is ignored. Exposed so the
     /// caller can persist it across launches and seed a fresh loader with it.
@@ -86,10 +92,21 @@ public actor ShardMapLoader {
 
     public init(resolverURL: String,
                 fetcher: ShardMapFetching = URLSessionShardMapFetcher(),
-                initialHighestVersion: Int? = nil) {
+                initialHighestVersion: Int? = nil,
+                floorStore: ShardMapVersionFloorStore? = nil) {
         self.resolverURL = resolverURL
         self.fetcher = fetcher
-        self.highestVersion = initialHighestVersion
+        self.floorStore = floorStore
+        // An explicit seed wins; otherwise read the persisted floor. Both are just
+        // a starting floor for monotonicity, so the higher of the two is the safe
+        // choice if a caller passes both.
+        let persisted = floorStore?.floor(forResolverURL: resolverURL)
+        switch (initialHighestVersion, persisted) {
+        case let (seed?, stored?): self.highestVersion = max(seed, stored)
+        case let (seed?, nil): self.highestVersion = seed
+        case let (nil, stored?): self.highestVersion = stored
+        case (nil, nil): self.highestVersion = nil
+        }
     }
 
     /// Fetch the latest map and, if its version is strictly newer than the
@@ -131,6 +148,9 @@ public actor ShardMapLoader {
         }
         current = map
         highestVersion = map.version
+        // Persist the new floor so a relaunch cannot adopt an older map from a
+        // lagging edge (§6.4). Best-effort and monotonic in the store itself.
+        floorStore?.setFloor(map.version, forResolverURL: resolverURL)
         CompanionLog.log("shardmap: adopted v\(map.version) (\(map.ranges.count) ranges)")
         return map
     }

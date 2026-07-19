@@ -51,6 +51,12 @@ public enum TransportError: Error, Equatable, LocalizedError {
     /// diagnostic-only naming of the current owner (logged, never dialed; the map
     /// is the sole authority).
     case reResolve(ownerHint: String?)
+    /// A duplicate same-role connection took the room's single slot, so the relay
+    /// evicted this one (WebSocket close 1000 with reason "displaced"). Same host
+    /// (NOT a re-resolve, §6.9): reconnecting immediately just evicts the other
+    /// instance, which re-grabs the slot and evicts us, an eviction storm. The
+    /// caller must back off LONG before reclaiming, so the two instances settle.
+    case displaced
 
     public var errorDescription: String? {
         switch self {
@@ -66,6 +72,8 @@ public enum TransportError: Error, Equatable, LocalizedError {
             return "The relay's daily data limit was reached"
         case .reResolve:
             return "This relay no longer serves the pairing; re-resolving to the current host"
+        case .displaced:
+            return "Another connection took over this pairing's slot"
         }
     }
 }
