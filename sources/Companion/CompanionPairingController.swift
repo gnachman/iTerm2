@@ -139,7 +139,16 @@ final class CompanionPairingController: NSObject {
            recorded != CompanionPushRelay.baseURL.absoluteString {
             return true
         }
-        if let recorded = CompanionPushRegistry.registeredMainRelayOrigin,
+        // The main-relay-origin move check is a DIRECT-mode (v1) concept: it
+        // exists because a v1 QR bakes in a specific relay host. In resolved (v2)
+        // mode the pairing is anchored to the resolver URL instead, and the owning
+        // host moves freely via the shard map (no re-pair), so this comparison is
+        // meaningless here. Skip it when a resolver is configured, or a change to
+        // the (v2-irrelevant) CompanionRelayOrigin setting would raise a spurious
+        // "server moved" prompt. A resolver-URL move is a DNS concern (the URL is a
+        // stable name), so there is nothing to detect for v2.
+        if Self.configuredResolverURL() == nil,
+           let recorded = CompanionPushRegistry.registeredMainRelayOrigin,
            recorded != Self.configuredRelayOrigin() {
             return true
         }
@@ -818,14 +827,36 @@ final class CompanionPairingController: NSObject {
     /// material immediately without racing the network call. Best effort: a
     /// failure leaves the relay's idle TTL to reclaim the room.
     private func relayDeleteWork() -> (@Sendable () async -> Void)? {
-        guard let origin = Self.configuredRelayOrigin(),
-              let pid = pairedPID,
+        guard let pid = pairedPID,
               let secret = CompanionMacIdentity.pairedRoomSecret(),
               let keyPair = try? CompanionMacIdentity.keyPair(),
               case .success(let plugin) = CompanionPlugin.instance() else { return nil }
-        let roomName = RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pid)
-        let deleter = RelayRoomDeleter(origin: origin, http: plugin.httpClient(origin: origin))
+        let resolverURL = Self.configuredResolverURL()
+        let directOrigin = Self.configuredRelayOrigin()
+        // Nothing to delete against if neither transport is configured.
+        guard resolverURL != nil || directOrigin != nil else { return nil }
+        let rs = keyPair.publicKey
+        let roomName = RelayRoom.name(responderStaticPublicKey: rs, pairingID: pid)
+        let shardFetcher = plugin.shardMapFetcher()
+        let makeHTTP: @Sendable (String) -> RelayHTTPClient = { plugin.httpClient(origin: $0) }
         return {
+            // In resolved (v2) mode the room lives on a specific shard host, not
+            // the direct origin, so resolve it (through the plugin's egress) to
+            // delete the right room; fall back to the direct origin in v1.
+            let origin: String?
+            if let resolverURL {
+                let resolver = ShardHostResolver(resolverURL: resolverURL, fetcher: shardFetcher)
+                let code = PairingCode(responderStaticPublicKey: rs, pairingID: pid,
+                                       resolverURL: resolverURL)
+                origin = try? await resolver.relayOrigin(for: code)
+            } else {
+                origin = directOrigin
+            }
+            guard let origin else {
+                DLog("Companion: relay delete-room skipped (could not resolve owning host); idle TTL will reclaim")
+                return
+            }
+            let deleter = RelayRoomDeleter(origin: origin, http: makeHTTP(origin))
             do {
                 try await deleter.deleteRoom(roomName: roomName, roomSecret: secret)
                 DLog("Companion: relay room deleted at unpair")

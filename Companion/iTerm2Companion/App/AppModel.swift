@@ -678,7 +678,11 @@ final class AppModel {
     // when the code carries a relay origin (off-LAN reach), else a connector that
     // fails fast. Injectable for tests; production uses
     // CompanionTransports.connector(for:).
-    private let connectorForCode: (PairingCode, _ pairingTicket: String?, _ established: Bool) -> TransportConnector
+    // Injected by tests to supply a fake connector; nil in production, where
+    // makeConnector falls back to productionConnector (which owns the shared shard
+    // resolver). Optional rather than a self-capturing default so init does not
+    // reference self before it is fully initialized.
+    private let injectedConnectorForCode: (@MainActor (PairingCode, _ pairingTicket: String?, _ established: Bool) -> TransportConnector)?
 
     /// App Attest primitives for the relay attestation client. Off-device these
     /// are inert (isSupported == false), so attestation degrades to open mode.
@@ -687,20 +691,10 @@ final class AppModel {
 
     init(appAttestService: AppAttestService = DeviceCheckAppAttestService(),
          attestKeyStore: AttestKeyStore = UserDefaultsAttestKeyStore(),
-         connectorForCode: @escaping (PairingCode, String?, Bool) -> TransportConnector = { code, ticket, established in
-        // Sign the relay join only once THIS room is established (its verifier
-        // is registered). Before that a fresh pairing must present the App
-        // Attest ticket (or an empty proof in open mode), not a signature from
-        // the device's global room secret, since the room has no verifier yet
-        // and the relay would reject a signature under attestation.
-        CompanionTransports.connector(
-            for: code,
-            roomSecret: { established ? PhoneIdentity.existingRoomSecret() : nil },
-            pairingTicket: ticket)
-    }) {
+         connectorForCode: (@MainActor (PairingCode, String?, Bool) -> TransportConnector)? = nil) {
         self.appAttestService = appAttestService
         self.attestKeyStore = attestKeyStore
-        self.connectorForCode = connectorForCode
+        self.injectedConnectorForCode = connectorForCode
         self.dictation = DictationController(whisper: whisperManager)
         // Route the transport/crypto layers' diagnostics into the unified log
         // (visible in Console.app and `log stream`).
@@ -724,6 +718,7 @@ final class AppModel {
     /// shown in punycode at confirmation time so a homograph host cannot
     /// masquerade as the real one.
     static let defaultRelayHost = "relay.iterm2.com"
+    static let defaultResolverHost = "resolver.iterm2.com"
     // The relay room name whose verifier this device has registered. Per ROOM,
     // not a global flag: pairing to a different Mac (a new pid, e.g. after the
     // user re-scans a QR) is a different room and must register (and, under
@@ -861,10 +856,25 @@ final class AppModel {
     /// effort: a failure just leaves the relay's idle TTL to reclaim the room.
     private func relayDeleteWork() -> (@Sendable () async -> Void)? {
         guard let code = storedPairingCode,
-              let origin = code.relayOrigin,
               let secret = PhoneIdentity.existingRoomSecret() else { return nil }
+        guard code.relayOrigin != nil || code.resolverURL != nil else { return nil }
         let room = roomName(for: code)
         return {
+            // In resolved (v2) mode the room lives on a specific shard host, so
+            // resolve it to delete the right room; fall back to the relay origin in
+            // v1. Best effort: on any miss the relay's idle TTL reclaims the room.
+            let origin: String?
+            if let resolverURL = code.resolverURL {
+                let resolver = ShardHostResolver(resolverURL: resolverURL,
+                                                 fetcher: URLSessionShardMapFetcher())
+                origin = try? await resolver.relayOrigin(for: code)
+            } else {
+                origin = code.relayOrigin
+            }
+            guard let origin else {
+                companionLog("Relay delete-room skipped (could not resolve owning host); idle TTL will reclaim")
+                return
+            }
             do {
                 try await RelayRoomDeleter(origin: origin).deleteRoom(roomName: room, roomSecret: secret)
                 companionLog("Relay room deleted at unpair")
@@ -1042,28 +1052,40 @@ final class AppModel {
         pendingExternalPairing = code
     }
 
-    /// The relay host to show in the confirmation: as-is when it is the known
+    /// The server host to show in the confirmation: as-is when it is the known
     /// default, otherwise in punycode so a Unicode lookalike is visible.
     var pendingPairingRelayDisplay: String {
-        Self.relayHostDisplay(for: pendingExternalPairing?.relayOrigin)
+        Self.serverHostDisplay(for: pendingExternalPairing)
     }
 
-    /// The relay host to surface on the pairing confirmation (SAS) screen when
-    /// the active pairing uses a NON-default relay, in punycode; nil for the
+    /// The server host to surface on the pairing confirmation (SAS) screen when
+    /// the active pairing uses a NON-default server, in punycode; nil for the
     /// official default (nothing to disclose). This covers both entry points: a
     /// tapped iterm2:// link (which also discloses up front) and a scanned QR
     /// (which otherwise went straight into pairing without showing the host).
     var activePairingRelayHostToShow: String? {
-        RelayHost.hostToDisclose(relayOrigin: activePairingCode?.relayOrigin,
-                                 default: Self.defaultRelayHost)
+        RelayHost.hostToDisclose(originURL: Self.serverOrigin(for: activePairingCode),
+                                 default: Self.defaultServerHost(for: activePairingCode))
     }
 
-    static func relayHostDisplay(for relayOrigin: String?) -> String {
-        guard let relayOrigin,
-              let host = URLComponents(string: relayOrigin)?.host, !host.isEmpty else {
+    /// The server URL a pairing points at: the resolver (v2) or the relay origin
+    /// (v1). Both are hosts worth disclosing when they are not the official one.
+    private static func serverOrigin(for code: PairingCode?) -> String? {
+        code?.resolverURL ?? code?.relayOrigin
+    }
+
+    /// The official default host for a pairing's mode, so only a NON-official
+    /// server is disclosed.
+    private static func defaultServerHost(for code: PairingCode?) -> String {
+        code?.resolverURL != nil ? defaultResolverHost : defaultRelayHost
+    }
+
+    static func serverHostDisplay(for code: PairingCode?) -> String {
+        guard let origin = serverOrigin(for: code),
+              let host = URLComponents(string: origin)?.host, !host.isEmpty else {
             return "an unspecified relay"
         }
-        return host == defaultRelayHost ? host : Punycode.encodedHost(host)
+        return host == defaultServerHost(for: code) ? host : Punycode.encodedHost(host)
     }
 
     func confirmExternalPairing() {
@@ -1202,6 +1224,53 @@ final class AppModel {
         return message.range(of: "signature required", options: .caseInsensitive) != nil
     }
 
+    /// The connector for a code: a test-injected one when present, else the
+    /// production connector.
+    private func makeConnector(for code: PairingCode,
+                               pairingTicket: String?,
+                               established: Bool) -> TransportConnector {
+        if let injectedConnectorForCode {
+            return injectedConnectorForCode(code, pairingTicket, established)
+        }
+        return productionConnector(for: code, pairingTicket: pairingTicket, established: established)
+    }
+
+    /// The production connector for a code. Passes a shared, session-lived shard
+    /// resolver so a resolved (v2) pairing's map cache and monotonic version floor
+    /// survive across reconnect attempts, reducing host flapping while a reshard
+    /// propagates. Not durable: a relaunch starts fresh (see the design's decision
+    /// against persisting the floor).
+    private func productionConnector(for code: PairingCode,
+                                     pairingTicket: String?,
+                                     established: Bool) -> TransportConnector {
+        // Sign the relay join only once THIS room is established (its verifier is
+        // registered). Before that a fresh pairing must present the App Attest
+        // ticket (or an empty proof in open mode), not a signature from the
+        // device's global room secret, since the room has no verifier yet and the
+        // relay would reject a signature under attestation.
+        CompanionTransports.connector(
+            for: code,
+            roomSecret: { established ? PhoneIdentity.existingRoomSecret() : nil },
+            pairingTicket: pairingTicket,
+            shardResolver: shardResolver(for: code))
+    }
+
+    /// One shard resolver per resolver URL, reused across reconnect attempts so the
+    /// map cache and floor survive within a session; rebuilt when the resolver URL
+    /// changes. nil for a direct (v1) code. Phone egress is URLSession (no consent
+    /// plugin; that is a Mac-only chokepoint).
+    private var cachedShardResolver: (resolverURL: String, resolver: ShardHostResolver)?
+    private func shardResolver(for code: PairingCode) -> ShardHostResolving? {
+        guard let resolverURL = code.resolverURL else { return nil }
+        if let cached = cachedShardResolver, cached.resolverURL == resolverURL {
+            return cached.resolver
+        }
+        let resolver = ShardHostResolver(resolverURL: resolverURL,
+                                         fetcher: URLSessionShardMapFetcher())
+        cachedShardResolver = (resolverURL, resolver)
+        return resolver
+    }
+
     private func establish(code: PairingCode,
                            handshakeTimeout: TimeInterval = firstPairHandshakeTimeout,
                            requireConfirmation: Bool = false) async throws {
@@ -1215,10 +1284,12 @@ final class AppModel {
 
         let identity = try PhoneIdentity.keyPair()
         let established = verifierRegistered(for: code)
-        companionLog("Connecting (discovery + TCP\(code.relayOrigin != nil ? " + relay" : ""))… "
+        let transportNote = code.relayOrigin != nil ? " + relay"
+            : (code.resolverURL != nil ? " + relay (resolved)" : "")
+        companionLog("Connecting (discovery + TCP\(transportNote))… "
             + "room \(established ? "established (will sign join)" : "fresh (will attest/empty proof)")")
         let pairingTicket = await pairingTicketIfNeeded(code)
-        let connector = connectorForCode(code, pairingTicket, established)
+        let connector = makeConnector(for: code, pairingTicket: pairingTicket, established: established)
         companionLog("Admission proof: "
             + (pairingTicket != nil ? "App Attest ticket"
                : established ? "join signature" : "empty (open mode)"))
@@ -1239,7 +1310,7 @@ final class AppModel {
             // manual re-pair still recover.)
             companionLog("Admission rejected (signature required) after attesting; retrying signed")
             markVerifierRegistered(for: code)
-            let signingConnector = connectorForCode(code, nil, true)
+            let signingConnector = makeConnector(for: code, pairingTicket: nil, established: true)
             transport = try await signingConnector.connect(to: rendezvous, timeout: 30)
         }
         // The relay mints this for the phone at admission; present it to
