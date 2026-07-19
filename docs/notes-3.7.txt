@@ -102,6 +102,12 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- Fixed a bug where auto-sending code review
+  results to the main session sometimes failed to
+  submit because the Return arrived too soon after
+  the paste. The Return now waits a moment (see
+  the workgroupAutoSendSubmitDelay advanced
+  setting).
 - In AI chat orchestration mode, references
   to a session or workgroup now appear as a
   clickable link, marked with a terminal

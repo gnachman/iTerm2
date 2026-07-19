@@ -590,6 +590,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)webUserAgent;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
++ (double)workgroupAutoSendSubmitDelay;
 + (int)xtermVersion;
 + (CGFloat)verticalBarCursorWidth;
 + (NSString *)viewManPageCommand;

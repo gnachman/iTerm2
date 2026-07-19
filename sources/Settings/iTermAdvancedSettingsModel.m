@@ -799,6 +799,9 @@ DEFINE_INT(pasteHistoryMaxOptions, 20, SECTION_PASTEBOARD @"Number of entries to
 DEFINE_STRING(clippingSeparator, @"\\n--\\n",
               SECTION_PASTEBOARD @"Separator inserted between multiple clippings when sending or copying them.\n"
               @"The value should use Vim syntax, such as \\n for newline and \\e for escape.");
+DEFINE_FLOAT(workgroupAutoSendSubmitDelay, 0.501,
+             SECTION_PASTEBOARD @"Delay in seconds before the Return that submits an auto-sent code review.\n"
+             @"When the code-review workgroup toolbar auto-sends review results to the main session, it pastes the results and then sends a Return to submit them. This is how long it waits, after the pasted results finish, before sending that Return. A paste-debouncing TUI (such as Claude Code) processes a paste and a Return that arrive together as one batch, so the Return can be swallowed and the review never submits; the delay makes the Return land in a later read so it submits. The default matches Claude Code’s 500 ms paste-settling window. Set to 0 to send it immediately.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, SECTION_PASTEBOARD @"Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, SECTION_PASTEBOARD @"Pressing a key will remove the selection.");
 DEFINE_BOOL(pastingClearsSelection, YES, SECTION_PASTEBOARD @"Pasting text will remove the selection.");

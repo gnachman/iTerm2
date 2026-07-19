@@ -12339,6 +12339,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
+// See -[iTermPasteHelper pasteLiteralString:afterDelay:].
+- (void)pasteLiteralString:(NSString *)string afterDelay:(NSTimeInterval)delay {
+    [_pasteHelper pasteLiteralString:string afterDelay:delay];
+}
+
 - (void)paste:(id)sender {
     DLog(@"PTYSession paste:");
 

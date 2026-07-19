@@ -954,6 +954,11 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)pageDown:(nullable id)sender;
 - (void)paste:(nullable id)sender;
 - (void)pasteString:(NSString *)str flags:(PTYSessionPasteFlags)flags;
+// Paste `string` literally (no bracketing, no warnings), waiting `delay` seconds
+// after any in-progress paste drains before writing it. Used to submit a
+// preceding bracketed paste with a Return without the Return being absorbed into
+// the paste. See -[iTermPasteHelper pasteLiteralString:afterDelay:].
+- (void)pasteLiteralString:(NSString *)string afterDelay:(NSTimeInterval)delay;
 - (void)deleteBackward:(nullable id)sender;
 - (void)deleteForward:(nullable id)sender;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;

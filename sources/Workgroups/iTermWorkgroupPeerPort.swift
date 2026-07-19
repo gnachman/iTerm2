@@ -305,16 +305,28 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         }
         RLog("iTermWorkgroupPeerPort: auto-sending \(clippings.count) clipping(s) from code-review peer \(session.guid) to main session \(mainSession.guid)")
         // Paste the content (bracketed, so the coding agent treats it as pasted
-        // input), then submit with a Return sent as its OWN paste with bracketing
-        // disabled. Paste events serialize through the paste helper's queue, so
-        // the \r is written only AFTER the last content chunk drains, regardless
-        // of payload size, and lands OUTSIDE the bracketed region so it actually
-        // submits. A fixed timer raced the chunked paste for large reviews
-        // (>~9 KB): the \r landed mid-stream, became a literal newline inside the
-        // bracket, and never submitted. \r is the Enter key at the TTY (\n would
-        // leave the line unsubmitted).
+        // input), then submit with a Return sent as its OWN literal paste with
+        // bracketing disabled. Paste events serialize through the paste helper's
+        // queue, so the \r is written only AFTER the last content chunk drains,
+        // regardless of payload size, and lands OUTSIDE the bracketed region so
+        // it actually submits. A fixed timer raced the chunked paste for large
+        // reviews (>~9 KB): the \r landed mid-stream, became a literal newline
+        // inside the bracket, and never submitted. \r is the Enter key at the TTY
+        // (\n would leave the line unsubmitted).
+        //
+        // The Return also waits a beat after the content drains before it's
+        // written. Ordering alone isn't enough: Claude Code applies every key
+        // parsed from one stdin read in a single batched render, so a paste and
+        // a Return that arrive together run as one batch and the Return's submit
+        // sees the pre-paste (empty) input and no-ops, leaving the review
+        // unsent. Delaying the Return lands it in a later read, after the paste
+        // has committed, so it submits. The delay is measured from when the
+        // content finishes (not a fixed timer from paste start) and defaults to
+        // Claude Code's 500 ms paste-settling window. See
+        // pasteLiteralString(_:afterDelay:).
         mainSession.paste(text, flags: [])
-        mainSession.paste("\r", flags: .bracketingDisabled)
+        mainSession.pasteLiteralString("\r",
+                                       afterDelay: iTermAdvancedSettingsModel.workgroupAutoSendSubmitDelay())
         // Archive the sent clippings (snapshot into history, clear the live
         // list) so the next review's idle doesn't resend the same ones. This is
         // also what breaks the auto-request/auto-send loop: once sent, the live

@@ -378,6 +378,22 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     [self tryToPasteEvent:event];
 }
 
+- (void)pasteLiteralString:(NSString *)string afterDelay:(NSTimeInterval)delay {
+    PasteEvent *event = [self pasteEventWithString:string
+                                            slowly:NO
+                                  escapeShellChars:NO
+                                          isUpload:NO
+                                   allowBracketing:NO
+                                      tabTransform:kTabTransformNone
+                                      spacesPerTab:0
+                                          progress:nil];
+    // Never interrupt an unattended submit key with a multi-line paste warning.
+    event.flags |= kPasteFlagsDisableWarnings;
+    event.initialDelay = delay;
+    RLog(@"pasteLiteralString length=%@ afterDelay=%@", @(string.length), @(delay));
+    [self tryToPasteEvent:event];
+}
+
 // this needs to take the delay, chunk size, key names, and the exact flags it wants
 - (void)tryToPasteEvent:(PasteEvent *)pasteEvent {
     DLog(@"-[iTermPasteHelper pasteString:flags:");
@@ -619,6 +635,22 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     if (_pasteContext.blockAtNewline && [_delegate pasteHelperShouldWaitForPrompt]) {
         RLog(@"Not at shell prompt at start of paste.");
         _pasteContext.isBlocked = YES;
+        return;
+    }
+
+    if (pasteEvent.initialDelay > 0) {
+        // Wait initialDelay before writing the first byte. Keep _timer set so
+        // isPasting stays true during the wait: nothing else can jump the queue,
+        // and the delay is honored whether this event ran immediately or was
+        // dequeued after a prior paste drained.
+        RLog(@"Paste has initial delay of %@ before writing %@ byte(s)",
+             @(pasteEvent.initialDelay), @(_buffer.length));
+        [_timer invalidate];
+        _timer = [self scheduledTimerWithTimeInterval:pasteEvent.initialDelay
+                                               target:self
+                                             selector:@selector(pasteNextChunkAndScheduleTimer)
+                                             userInfo:nil
+                                              repeats:NO];
         return;
     }
 

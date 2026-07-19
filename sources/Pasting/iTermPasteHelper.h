@@ -86,6 +86,16 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
        spacesPerTab:(int)spacesPerTab
            progress:(void (^)(NSInteger))progress;
 
+// Queue up `string` to paste literally: no bracketing, no multi-line warning,
+// no tab transform. Like the other paste methods it serializes behind any
+// in-progress paste, but once it reaches the head of the queue it waits `delay`
+// seconds before writing its first byte (so the delay is measured from when the
+// prior paste drains, not from now). Intended for sending a submit key (a
+// Return) a beat after a bracketed paste, so a TUI that debounces bracketed
+// paste (e.g. Claude Code) has time to leave paste mode and treats the Return
+// as a submit rather than absorbing it into the paste.
+- (void)pasteLiteralString:(NSString *)string afterDelay:(NSTimeInterval)delay;
+
 // The string comes from the paste special view controller.
 - (void)pasteString:(NSString *)theString stringConfig:(NSString *)jsonConfig;
 
