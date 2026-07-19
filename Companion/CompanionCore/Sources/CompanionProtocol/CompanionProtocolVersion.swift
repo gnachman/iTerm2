@@ -84,7 +84,16 @@ public enum CompanionProtocolVersion {
     /// advertises scrollWheelReporting so the phone never sends it. minimumPeer stays
     /// 5; the two config booleans self-gate the feature, so no dedicated revision
     /// constant is needed.
-    public static let current = 9
+    ///
+    /// Revision 10 adds phone-driven keyboard input (the sendKey message, which the
+    /// mac runs through the target session's own key mapper before writeTask:, so
+    /// control/option encodings honor the profile and special keys honor the
+    /// terminal's cursor/keypad/key-reporting modes). Additive and
+    /// backward-compatible: an older mac decodes the unknown message as
+    /// `.unsupported` and ignores it, so minimumPeer stays at 5 and the phone shows
+    /// its on-screen keyboard only when the mac advertises at least
+    /// `keyInputRevision`.
+    public static let current = 10
 
     /// The oldest peer revision this build accepts. Raised to 5 (lockstep with
     /// `current`) for the relay move: peers older than revision 5 have the old
@@ -133,6 +142,12 @@ public enum CompanionProtocolVersion {
     /// either way (an unknown message decodes to `.unsupported`), so minimumPeer
     /// stays 5.
     public static let turnLifecycleRevision = 8
+
+    /// The first revision whose mac can inject phone-driven keyboard input (the
+    /// sendKey message). The phone shows its on-screen keyboard for a session only
+    /// when the mac advertises at least this revision; an older mac would silently
+    /// ignore the message, leaving dead keys.
+    public static let keyInputRevision = 10
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

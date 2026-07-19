@@ -1895,6 +1895,28 @@ final class AppModel {
         macRevision >= CompanionProtocolVersion.autoProvideConsentRevision
     }
 
+    /// Whether the connected Mac can inject phone-driven keyboard input (the sendKey
+    /// message). The on-screen keyboard is offered only then, so an older mac cannot
+    /// leave the keys silently dead.
+    var keyInputSupported: Bool {
+        macRevision >= CompanionProtocolVersion.keyInputRevision
+    }
+
+    private static let revealedSessionKeyboardKey = "NoSyncRevealedSessionKeyboard"
+
+    /// Whether the user has ever opened a live session's on-screen keyboard (by
+    /// tapping the terminal). Drives a one-time discoverability tip; persisted so it
+    /// stays dismissed across launches.
+    private(set) var didRevealSessionKeyboard =
+        UserDefaults.standard.bool(forKey: AppModel.revealedSessionKeyboardKey)
+
+    /// Record that the user opened the on-screen keyboard, hiding the tip for good.
+    func markSessionKeyboardRevealed() {
+        guard !didRevealSessionKeyboard else { return }
+        didRevealSessionKeyboard = true
+        UserDefaults.standard.set(true, forKey: Self.revealedSessionKeyboardKey)
+    }
+
     /// Sessions the user chose "Not Now" for this app run, so a decline isn't re-asked
     /// on every message (a grant persists on the mac and reads back as satisfied).
     @ObservationIgnored private var declinedAutoProvideSessions = Set<String>()
@@ -4136,6 +4158,42 @@ final class AppModel {
 
         companionLog("Resize session \(guid) for legibility: \(columns)x\(rows) (viewport \(Int(viewSize.width))x\(Int(viewSize.height)))")
         Task { try? await client.resizeSession(sessionGuid: guid, columns: columns, rows: rows) }
+    }
+
+    /// A single ordered chain for key sends. Two independently-created Tasks are NOT
+    /// guaranteed to enter the CompanionClient actor (and hit the socket) in creation
+    /// order, but a terminal is a strictly-ordered byte stream, so out-of-order keys
+    /// corrupt input (most visibly when sendText splits an armed one-shot modifier into
+    /// two back-to-back sends). Each send awaits the previous one, so ordering is
+    /// preserved. Runs on the main actor (this class is @MainActor), so appending to
+    /// the chain is itself serialized.
+    @ObservationIgnored private var keySendChain = Task<Void, Never> { }
+
+    /// Inject one on-screen-keyboard key press into a session. Best-effort (a dropped
+    /// keystroke is a lost keystroke, not a correctness bug) but strictly ordered, so
+    /// bytes reach the session in the order the user typed them. No-ops when the mac is
+    /// too old to understand sendKey.
+    func sendKey(_ event: CompanionKeyEvent, toSessionGuid guid: String) {
+        guard let client, keyInputSupported else {
+            companionLog("sendKey dropped for \(guid): client=\(client != nil) keyInputSupported=\(keyInputSupported) (macRevision=\(macRevision), need >= \(CompanionProtocolVersion.keyInputRevision))")
+            return
+        }
+        let previous = keySendChain
+        keySendChain = Task {
+            await previous.value
+            // Bound head-of-line blocking: strict ordering means a stalled send would
+            // freeze all later typing until the socket's ~15s keepalive fails. Cap each
+            // send so a wedged write gives up (and the chain advances) after a couple
+            // seconds instead. The websocket send is cancellable, so a truly stuck write
+            // is aborted; a merely slow-but-working send usually completes first.
+            let send = Task { try? await client.sendKey(sessionGuid: guid, event: event) }
+            let timeout = Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                send.cancel()
+            }
+            await send.value
+            timeout.cancel()
+        }
     }
 
     /// The mac kicked this device: forget the pairing and go back to the scan

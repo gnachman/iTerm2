@@ -227,6 +227,16 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
                                showCursor:(BOOL)showCursor
                          includeSelection:(BOOL)includeSelection;
 
+// As above, but cursorFocused:YES forces the cursor to draw filled-in (focused)
+// rather than as a hollow outline. A live stream the phone types into wants this,
+// since the rendered session usually isn't the mac's key-window first responder.
+- (NSImage * _Nullable)renderImageWithLines:(NSRange)lineRange
+                           includeMargins:(BOOL)includeMargins
+                          backgroundColor:(NSColor * _Nullable)backgroundColor
+                               showCursor:(BOOL)showCursor
+                         includeSelection:(BOOL)includeSelection
+                            cursorFocused:(BOOL)cursorFocused;
+
 // Renders lines in batches to avoid blocking the main thread.
 // Each batch is rendered, then control returns to the run loop before the next batch.
 // Progress callback is called after each batch with (completed lines, total lines).

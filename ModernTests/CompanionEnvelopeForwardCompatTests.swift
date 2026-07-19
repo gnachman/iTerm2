@@ -181,6 +181,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .copySelection(sessionGuid: "g"),
         .selectAllInStream(streamID: 1),
         .pasteText(sessionGuid: "g", text: "x"),
+        .sendKey(sessionGuid: "g", event: CompanionKeyEvent(key: .text("x"))),
         .resizeSession(sessionGuid: "g", columns: 80, rows: 24),
         .fetchAutoProvideConsent(sessionGuid: "g"),
         .grantAutoProvideConsent(chatID: "c"),
@@ -227,6 +228,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .copySelection: return "copySelection"
         case .selectAllInStream: return "selectAllInStream"
         case .pasteText: return "pasteText"
+        case .sendKey: return "sendKey"
         case .resizeSession: return "resizeSession"
         case .fetchAutoProvideConsent: return "fetchAutoProvideConsent"
         case .grantAutoProvideConsent: return "grantAutoProvideConsent"

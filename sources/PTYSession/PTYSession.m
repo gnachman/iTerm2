@@ -607,6 +607,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     iTermSessionModeHandler *_modeHandler;
 
+    // Set while injecting a synthesized key event (companion on-screen keyboard) so
+    // the shared keyDown/keyUp path suppresses broadcast to other split panes: the
+    // phone targets one specific session.
+    BOOL _injectingSynthesizedKey;
+
+    // Set by -regularKeyDown: when it actually emits mapper bytes for an injected key,
+    // so injection only synthesizes the matching key-up when there was a real press
+    // (a keyDown consumed by a binding/handler/copy-mode must not emit an orphan
+    // release under Kitty report-all-event-types).
+    BOOL _injectedKeyEmittedPress;
+
     // Absolute line number where touchbar status changed.
     long long _statusChangedAbsLine;
 
@@ -3919,8 +3930,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [mutableState appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
         }];
     }
-    // check if we want to send this input to all the sessions
-    if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
+    // check if we want to send this input to all the sessions. Suppressed while
+    // injecting a synthesized key (companion keyboard): the phone targets one specific
+    // session, so its keys must not fan out to the split's other panes. Only the
+    // broadcast decision is gated - local echo (above), bell-silence, and
+    // scroll-to-bottom (below) still behave as they do for a real keypress.
+    if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
         // Ask the parent window to write to the other tasks.
         DLog(@"Passing input to window to broadcast it. Won't send in this call.");
         [[_delegate realParentWindow] sendInputToAllSessions:string
@@ -4156,7 +4171,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
         [self setBell:NO];
-        if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
+        if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
@@ -11236,7 +11251,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (!action) {
         return;
     }
-    for (PTYSession *session in [PTYSession sessionsForActionApplyMode:action.applyMode focused:self]) {
+    // While injecting a synthesized key (companion keyboard) the phone targets one
+    // session, so don't let an action's apply-mode (all sessions / all-in-tab /
+    // broadcasting) fan the injected key out to other sessions - restrict to self.
+    NSArray<PTYSession *> *sessions =
+        _injectingSynthesizedKey ? @[ self ]
+                                 : [PTYSession sessionsForActionApplyMode:action.applyMode focused:self];
+    for (PTYSession *session in sessions) {
         [session reallyPerformKeyBindingAction:action event:event];
     }
 }
@@ -11597,7 +11618,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             PTYSession *session = self;
             for (iTermKeyBindingAction *subaction in [action.parameter keyBindingActionsFromSequenceParameter]) {
                 [session performKeyBindingAction:subaction event:event];
-                session = [[[iTermController sharedInstance] currentTerminal] currentSession] ?: self;
+                // Normally a sequence follows the focused session (a subaction may
+                // switch panes, and the next should type into the new one). But while
+                // injecting, the phone targets exactly one session: keep the whole
+                // sequence on it, or later subactions would run on the mac's focused
+                // session - the wrong target, and one where _injectingSynthesizedKey is
+                // clear so writes could broadcast.
+                if (!_injectingSynthesizedKey) {
+                    session = [[[iTermController sharedInstance] currentTerminal] currentSession] ?: self;
+                }
             }
             break;
         case KEY_ACTION_SWAP_WITH_NEXT_PANE:
@@ -11910,7 +11939,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     DLog(@"PTYSession keyDown not short-circuted by special handler");
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
 
-    if (!_screen.terminalSoftAlternateScreenMode &&
+    // The "movement keys scroll outside interactive apps" shortcut is meaningless for
+    // an injected (companion) key: a remote typist wants PageUp/Home/etc. delivered to
+    // the program, not consumed to scroll the mac's local text view. It also reads the
+    // mac's LIVE physical modifier state, which would be cross-talk between the phone's
+    // key and whatever the mac user is holding, so skip it entirely while injecting.
+    if (!_injectingSynthesizedKey &&
+        !_screen.terminalSoftAlternateScreenMode &&
         ([[iTermApplication sharedApplication] it_modifierFlags] & mask) == 0 &&
         [iTermProfilePreferences boolForKey:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS inProfile:self.profile]) {
         switch (event.keyCode) {
@@ -11964,6 +11999,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
     DLog(@"dataToSend=%@", dataToSend);
     if (dataToSend) {
+        if (_injectingSynthesizedKey) {
+            // Record that this injected keyDown produced a real press, so injection
+            // knows whether a matching key-up is warranted.
+            _injectedKeyEmittedPress = YES;
+        }
+        // Broadcast suppression during injection is enforced centrally in
+        // -writeTask:encoding:forceEncoding:canBroadcast:reporting:.
         [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
     }
 }
@@ -12010,6 +12052,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (_screen.terminalReportKeyUp || _keyMapper.keyMapperWantsKeyUp) {
         NSData *const dataToSend = [_keyMapper keyMapperDataForKeyUp:event];
         if (dataToSend) {
+            // Broadcast suppression during injection is enforced centrally in
+            // -writeTask:encoding:forceEncoding:canBroadcast:reporting:.
             [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
         }
     }
@@ -13192,6 +13236,94 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             return NO;
     }
     return NO;
+}
+
+- (void)injectSynthesizedKeyEvent:(NSEvent *)event literalText:(NSString *)literalText {
+    if (_exited) {
+        DLog(@"injectSynthesizedKeyEvent: session already dead");
+        return;
+    }
+    if (!event) {
+        return;
+    }
+    // A browser session has no PTY. The mapped path would hit regularKeyDown's browser
+    // guard and drop the key, but the literal path would write raw bytes into the
+    // browser view, so guard here uniformly so the two paths can't diverge if a browser
+    // session ever becomes an injection target.
+    if (_view.isBrowser) {
+        DLog(@"injectSynthesizedKeyEvent: browser session, ignoring");
+        return;
+    }
+    // Gate exactly like a physical keystroke, via the same entry point the real key
+    // path uses (textViewShouldAcceptKeyDownEvent:): keystroke monitors, copy/session
+    // mode, tmux unpause, paste-abort, PLUS the responsive-keystroke cadence boost and
+    // selected-command-range clearing. If the gate consumes the event (it drove copy
+    // mode, unpaused tmux, was filtered by a monitor, etc.), don't also send it to the
+    // shell. Both the mapped and the literal path go through this gate so ASCII and
+    // non-ASCII phone input behave identically.
+    //
+    // Known tradeoff: this gate consults Mac-LOCAL state. If the Mac operator has a
+    // selection up with copy-mode-on-selection enabled, an injected key can auto-enter
+    // copy mode and be swallowed with no signal to the remote typist. That is the price
+    // of "gate exactly like a physical key"; treated as acceptable for now.
+    if (![self textViewShouldAcceptKeyDownEvent:event]) {
+        return;
+    }
+    // The flag suppresses broadcast to other split panes for the duration, since the
+    // phone targets one specific session. Save/restore in @finally rather than a bare
+    // assignment so a bound action that raises an exception can't leak the flag YES
+    // (which would silently disable broadcast for real keys in this pane afterward);
+    // save/restore (not clear-to-NO) also keeps a re-entrant injection correct.
+    const BOOL previouslyInjecting = _injectingSynthesizedKey;
+    const BOOL previouslyEmittedPress = _injectedKeyEmittedPress;
+    _injectingSynthesizedKey = YES;
+    _injectedKeyEmittedPress = NO;
+    @try {
+        if (literalText.length > 0) {
+            // A character with no single-keystroke mapping on the mac's layout (accented
+            // letter, emoji, dead-key result). Its fallback key code would be mis-encoded
+            // by the CSI-u key mapper, so write the correct character literally - but
+            // through the same broadcast-suppressed, already-gated path as the mapped keys.
+            [self writeTaskNoBroadcast:literalText];
+        } else {
+            // Route through the real key-down path so profile key bindings (e.g. Delete
+            // sends ^H, remapped keys), the browser guard, and the session's key mapper
+            // all apply exactly as for a physical press.
+            //
+            // Known tradeoff: broadcast suppression relies on _injectingSynthesizedKey
+            // being YES for the SYNCHRONOUS duration here. A bound paste-style action
+            // (KEY_ACTION_PASTE_*, SEND_SNIPPET routed through the paste helper) delivers
+            // its bytes in later runloop chunks, after the flag is restored, so those
+            // chunks are not broadcast-suppressed. Rare (injected key must be bound to a
+            // paste action AND broadcast-input on); a dedicated no-broadcast paste path
+            // would be needed to fully close it.
+            [self keyDown:event];
+            // A phone tap is a discrete press-and-release. When the program asked to see
+            // key releases (the Kitty "report all event types" enhancement, or DECSET
+            // key-up reporting), deliver the matching key-up - but ONLY if the keyDown
+            // actually produced a press. A keyDown consumed by a binding/handler/copy
+            // mode emitted no press, so a key-up here would be an orphan release. Modifier
+            // dead-keys ride on the key event's flags rather than as separate modifier
+            // press/release events, which the phone cannot produce.
+            if (_injectedKeyEmittedPress &&
+                (_keyMapper.keyMapperWantsKeyUp || _screen.terminalReportKeyUp)) {
+                NSEvent *keyUp = [NSEvent keyEventWithType:NSEventTypeKeyUp
+                                                  location:event.locationInWindow
+                                             modifierFlags:event.modifierFlags
+                                                 timestamp:event.timestamp
+                                              windowNumber:event.windowNumber
+                                                   context:nil
+                                                characters:event.characters
+                               charactersIgnoringModifiers:event.charactersIgnoringModifiers
+                                                 isARepeat:NO
+                                                   keyCode:event.keyCode];
+                [self keyUp:keyUp];
+            }
+        }
+    } @finally {
+        _injectingSynthesizedKey = previouslyInjecting;
+        _injectedKeyEmittedPress = previouslyEmittedPress;
+    }
 }
 
 - (BOOL)reportScrollWheelForOrchestratorUp:(BOOL)up lines:(NSInteger)lines {

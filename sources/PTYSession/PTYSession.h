@@ -907,6 +907,22 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 - (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast reporting:(BOOL)reporting;
 
+// Inject a synthesized key event into the session as if the user typed it at the
+// keyboard. Runs it through the SAME path a physical key takes - the accept/gating
+// check (keystroke monitors, copy mode, tmux unpause), profile key bindings (e.g.
+// Delete sends ^H), the browser guard, and the session's key mapper - so behavior
+// matches a real press, then (for a discrete tap) delivers the matching key-up when
+// the program wants key-ups. Broadcast to split panes is suppressed. Used by the
+// companion app's on-screen keyboard.
+//
+// If literalText is non-nil/non-empty, the character has no single-keystroke mapping
+// on the mac's layout (accented letter, emoji, dead-key result) and its synthesized
+// key code would be mis-encoded by the CSI-u mapper; the text is then written
+// literally instead of mapped, but still behind the same accept-gate and broadcast
+// suppression.
+- (void)injectSynthesizedKeyEvent:(NSEvent *)event literalText:(nullable NSString *)literalText
+    NS_SWIFT_NAME(injectSynthesizedKeyEvent(_:literalText:));
+
 // Inject a mouse scroll-wheel report into the session as if the user
 // scrolled the wheel `lines` notches over the middle of the screen.
 // up=YES scrolls toward older content (MOUSE_BUTTON_SCROLLUP), up=NO

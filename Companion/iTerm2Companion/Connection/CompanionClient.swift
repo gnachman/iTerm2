@@ -296,6 +296,13 @@ actor CompanionClient {
         try await session.send(.pasteText(sessionGuid: sessionGuid, text: text))
     }
 
+    /// Inject one key press into the session (from the phone's on-screen keyboard).
+    /// The mac runs it through the session's own key mapper before writing to the
+    /// task, so control/option encodings honor the profile.
+    func sendKey(sessionGuid: String, event: CompanionKeyEvent) async throws {
+        try await session.send(.sendKey(sessionGuid: sessionGuid, event: event))
+    }
+
     /// Resize the session's grid to `columns` x `rows` (computed by the phone for
     /// legibility on its screen).
     func resizeSession(sessionGuid: String, columns: Int, rows: Int) async throws {

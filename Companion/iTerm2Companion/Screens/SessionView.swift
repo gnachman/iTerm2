@@ -796,6 +796,13 @@ private struct LiveSessionView: View {
     /// (or stalled) stream is visible in the log without spamming per frame.
     @State private var didLogFirstMedia = false
 
+    /// The one-time discoverability tip: shown until the user first opens the on-screen
+    /// keyboard (persisted in AppModel), and only when the mac accepts input and the
+    /// stream is live. Reactive via AppModel observation - no timer, no manual state.
+    private var showKeyboardTip: Bool {
+        model.keyInputSupported && !model.didRevealSessionKeyboard && endedReason == nil
+    }
+
     var body: some View {
         ZStack {
             // Overlays pinned within the safe area, so the nav bar and tab bar never
@@ -821,6 +828,23 @@ private struct LiveSessionView: View {
                 // light on the black background.
                 .environment(\.colorScheme, .dark)
             }
+            if showKeyboardTip {
+                VStack {
+                    Spacer()
+                    Label("Tap on terminal contents to open keyboard", systemImage: "keyboard")
+                        .font(.footnote.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .foregroundStyle(.white)
+                        .shadow(radius: 8)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 28)
+                }
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
@@ -838,12 +862,14 @@ private struct LiveSessionView: View {
             // when it changes, so the canvas repositions its handles.
             ZStack {
                 Color.black
-                LiveCanvas(holder: holder, model: model,
+                LiveCanvas(holder: holder, model: model, guid: guid,
+                           isLive: endedReason == nil,
                            layout: model.liveCanvasLayout,
                            selectionRange: model.activeSelectionRange)
             }
             .ignoresSafeArea()
         }
+        .animation(.easeInOut(duration: 0.25), value: showKeyboardTip)
         // A left-edge drag would otherwise trigger the swipe-back gesture instead
         // of starting a selection there. Disable swipe-back while selection is
         // available; the back button still works.
@@ -1075,15 +1101,26 @@ private final class LoupeUIView: UIView {
 private struct LiveCanvas: UIViewRepresentable {
     let holder: LiveVideoHolder
     let model: AppModel
+    /// The session the on-screen keyboard types into.
+    let guid: String
+    /// Whether the session is still live. When it has ended, a tap must not raise the
+    /// keyboard (typed keys would be silently dropped on the mac).
+    let isLive: Bool
     /// Drives a relayout (history extent / geometry) when it changes.
     let layout: CompanionLiveCanvasLayout?
     /// Drives handle repositioning: a change re-runs updateUIView.
     let selectionRange: CompanionSelectionRange?
 
-    func makeCoordinator() -> Coordinator { Coordinator(holder: holder, model: model) }
+    func makeCoordinator() -> Coordinator { Coordinator(holder: holder, model: model, guid: guid) }
     func makeUIView(context: Context) -> UIView { context.coordinator.makeContainer() }
     func updateUIView(_ uiView: UIView, context: Context) {
         context.coordinator.model = model
+        context.coordinator.setLive(isLive)
+        // guid can change in place when SwiftUI reuses this representable for a
+        // different session (the same reason .task(id: guid) restarts the stream);
+        // the keyboard send closure reads it at call time, so refreshing it here keeps
+        // keystrokes routed to the visible session, and clears leftover modifier state.
+        context.coordinator.setGuid(guid)
         context.coordinator.installTileSlotCallback()
         context.coordinator.layout = layout
         context.coordinator.applyWheelMode()
@@ -1097,7 +1134,17 @@ private struct LiveCanvas: UIViewRepresentable {
     final class Coordinator: NSObject, UIScrollViewDelegate, UIEditMenuInteractionDelegate, UIGestureRecognizerDelegate {
         let holder: LiveVideoHolder
         var model: AppModel
-        private let container = UIView()
+        /// The session the on-screen keyboard types into. A `var` (not `let`) because a
+        /// reused coordinator can be handed a new guid via updateUIView; the keyboard
+        /// send closure reads it at call time.
+        var guid: String
+        /// Whether the session is still live (refreshed from updateUIView). A tap only
+        /// raises the keyboard while live, so keys can't be typed into an ended session.
+        var isLive = true
+        /// The canvas root, a UIKeyInput first responder so a tap raises the keyboard.
+        private let container = CompanionKeyboardInputView()
+        /// Drives the on-screen keyboard: routes typed + accessory keys to the session.
+        private let keyboardController = SessionKeyboardController()
         private let scrollView = LayoutObservingScrollView()
         private let contentView = UIView()
         private let loupe = LoupeUIView()
@@ -1177,13 +1224,38 @@ private struct LiveCanvas: UIViewRepresentable {
             layout?.altScreen == true && layout?.scrollWheelReporting == true
         }
 
-        init(holder: LiveVideoHolder, model: AppModel) {
+        init(holder: LiveVideoHolder, model: AppModel, guid: String) {
             self.holder = holder
             self.model = model
+            self.guid = guid
             super.init()
         }
 
+        /// Adopt a new session guid when SwiftUI reuses this coordinator in place. Any
+        /// armed/locked keyboard modifier or open tray belongs to the previous session,
+        /// so clear it - otherwise the next keystroke into the new session could carry a
+        /// modifier the user never armed for it.
+        func setGuid(_ newGuid: String) {
+            guard newGuid != guid else {
+                return
+            }
+            guid = newGuid
+            keyboardController.reset()
+        }
+
+        /// Track whether the session is still live. When it ends (or the canvas is
+        /// reused for an already-ended session), dismiss the on-screen keyboard: keys
+        /// typed into a dead session are silently dropped on the mac, so leaving the
+        /// keyboard up would make typing vanish with no feedback.
+        func setLive(_ live: Bool) {
+            isLive = live
+            if !live {
+                container.resignFirstResponder()
+            }
+        }
+
         func tearDown() {
+            container.resignFirstResponder()
             editMenu?.dismissMenu()
             growthTimer?.invalidate()
             growthTimer = nil
@@ -1206,6 +1278,18 @@ private struct LiveCanvas: UIViewRepresentable {
 
         func makeContainer() -> UIView {
             container.backgroundColor = .black
+            // On-screen keyboard: route typed characters and accessory-bar keys to
+            // this session, and let the accessory dismiss the keyboard. Installing the
+            // accessory is harmless when the mac is too old; handleTap gates whether a
+            // tap actually raises the keyboard on model.keyInputSupported.
+            keyboardController.send = { [weak self] event in
+                guard let self else { return }
+                self.model.sendKey(event, toSessionGuid: self.guid)
+            }
+            keyboardController.dismiss = { [weak self] in
+                self?.container.resignFirstResponder()
+            }
+            container.installAccessory(controller: keyboardController)
             scrollView.frame = container.bounds
             scrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             scrollView.minimumZoomScale = 1
@@ -1912,7 +1996,27 @@ private struct LiveCanvas: UIViewRepresentable {
 
         @objc private func handleTap() {
             editMenu.dismissMenu()
-            model.clearActiveSelection()
+            // A tap with a selection up only clears it (a single tap should not both
+            // dismiss the selection and pop the keyboard).
+            if model.activeSelectionRange != nil {
+                model.clearActiveSelection()
+                return
+            }
+            // Otherwise the tap means "type here": raise the on-screen keyboard, but
+            // only when the session is still live (an ended session drops every key on
+            // the mac) and the mac can accept injected input (an older mac never
+            // advertises support, so its keys would be dead). Only mark the tip
+            // dismissed if the keyboard actually came up.
+            //
+            // isLive is the value from the last updateUIView. In the brief window
+            // between the session ending on the mac and SwiftUI re-running updateUIView
+            // (which calls setLive(false) -> resignFirstResponder), a tap could still
+            // read isLive == true and raise the keyboard; the very next updateUIView
+            // brings it back down. Self-correcting, so we don't re-read a per-guid ended
+            // source of truth here.
+            if isLive && model.keyInputSupported && container.becomeFirstResponder() {
+                model.markSessionKeyboardRevealed()
+            }
         }
 
         private func showLoupe(at contentPoint: CGPoint) {

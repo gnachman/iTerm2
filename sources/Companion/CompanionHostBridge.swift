@@ -477,6 +477,8 @@ final class CompanionHostBridge {
             handleSelectAll(streamID: streamID)
         case .pasteText(let sessionGuid, let text):
             iTermController.sharedInstance().anySession(forReference: sessionGuid)?.paste(text, flags: [])
+        case .sendKey(let sessionGuid, let event):
+            handleSendKey(guid: sessionGuid, event: event)
         case .resizeSession(let sessionGuid, let columns, let rows):
             handleResizeSession(guid: sessionGuid, columns: columns, rows: rows)
         case .fetchAutoProvideConsent(let sessionGuid):
@@ -546,6 +548,33 @@ final class CompanionHostBridge {
         // reallySetCellSize: reads proposedSize.width as the row count and
         // proposedSize.height as the column count (see PTYSession.h).
         session.reallySetCellSize(VT100GridSize(width: clampedRows, height: clampedColumns))
+    }
+
+    /// Inject one key press from the phone's on-screen keyboard. Ordinary typed text
+    /// (no modifier) is written as literal input; a single modified character or a
+    /// named special key is synthesized into a key event and run through the
+    /// session's own key mapper so control/option encodings honor the profile and
+    /// special keys honor the terminal's cursor/keypad/key-reporting modes.
+    private func handleSendKey(guid: String, event: CompanionKeyEvent) {
+        guard let session = iTermController.sharedInstance().anySession(forReference: guid) else {
+            DLog("sendKey: no session for guid \(guid); dropping key \(event.key)")
+            return
+        }
+        // Route every key - including ordinary typed text, one event per character -
+        // through the session's key mapper rather than writing text literally. The
+        // mapper is the only thing that knows the current key-reporting mode, so a
+        // full-screen app that turned on a CSI-u mode (report all keys as escape
+        // codes, disambiguate escape, ...) sees correctly-encoded keys.
+        //
+        // Exception: a character with no single-keystroke mapping on the mac's layout
+        // (accented letter, emoji, dead-key result) synthesizes to a key code the CSI-u
+        // mapper would mis-derive; those are passed as literalText so the mac writes the
+        // correct character verbatim - but still behind the same accept-gate and
+        // broadcast suppression as the mapped keys (see CompanionKeyEvent.literalFallback).
+        for keyEvent in event.makeKeyDownEvents() {
+            session.injectSynthesizedKeyEvent(keyEvent,
+                                              literalText: CompanionKeyEvent.literalFallback(for: keyEvent))
+        }
     }
 
     // MARK: Live streaming

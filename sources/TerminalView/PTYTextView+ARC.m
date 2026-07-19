@@ -2465,6 +2465,20 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                   backgroundColor:(NSColor *)backgroundColor
                        showCursor:(BOOL)showCursor
                  includeSelection:(BOOL)includeSelection {
+    return [self renderImageWithLines:lineRange
+                       includeMargins:includeMargins
+                      backgroundColor:backgroundColor
+                           showCursor:showCursor
+                     includeSelection:includeSelection
+                        cursorFocused:NO];
+}
+
+- (NSImage *)renderImageWithLines:(NSRange)lineRange
+                   includeMargins:(BOOL)includeMargins
+                  backgroundColor:(NSColor *)backgroundColor
+                       showCursor:(BOOL)showCursor
+                 includeSelection:(BOOL)includeSelection
+                    cursorFocused:(BOOL)cursorFocused {
     id<iTermTextDataSource> dataSource = self.dataSource;
     if (!dataSource) {
         return nil;
@@ -2541,6 +2555,10 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         helper.cursorType = self.drawingHelper.cursorType;
         helper.cursorCoord = VT100GridCoordMake(self.dataSource.cursorX - 1,
                                                  self.dataSource.cursorY - 1);
+        // The offscreen helper leaves the focus flags off, so the cursor would draw
+        // as a hollow outline. When the caller (e.g. a companion live stream the
+        // phone is typing into) wants a focused cursor, force the filled form.
+        helper.shouldDrawFilledInCursor = cursorFocused;
     }
     if (includeSelection) {
         // newDrawingHelperForOffscreenRendering clears the selection (snapshots

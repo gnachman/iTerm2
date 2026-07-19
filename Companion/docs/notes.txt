@@ -35,6 +35,17 @@ Bug Fixes:
   the reply arrives.
 
 New Features:
+- You can now type into a live session. Tap the
+  terminal to bring up the keyboard. An accessory
+  bar adds Esc, Control-C, Tab, and arrow keys,
+  and expands to sticky Control and left/right
+  Option dead-keys, function keys, and Home / End
+  / Page Up / Page Down / Delete. Left and right
+  Option follow how the session's profile is
+  configured to treat each Option key. When a
+  selection is showing, a single tap clears it
+  instead of opening the keyboard. Requires an
+  up-to-date Mac.
 - The live session view now fills the screen edge
   to edge, behind the translucent nav bar, tab
   bar, and the dynamic island in landscape.

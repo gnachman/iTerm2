@@ -255,6 +255,62 @@ enum CompanionSelectionMode: String, Codable, Equatable {
     case smart
 }
 
+/// Modifiers held while a companion key event is delivered. leftOption and
+/// rightOption are kept distinct (rather than a single "option" flag) so the mac
+/// can apply the profile's per-side Option behavior (Normal / Meta / Esc+);
+/// control and shift map to the usual terminal encodings. Modeled as explicit
+/// booleans so the wire form is self-describing and Codable is trivial.
+struct CompanionKeyModifiers: Codable, Equatable {
+    var control = false
+    var shift = false
+    var leftOption = false
+    var rightOption = false
+
+    static let none = CompanionKeyModifiers()
+
+    var isEmpty: Bool { !control && !shift && !leftOption && !rightOption }
+}
+
+/// A non-text key the phone can inject: keys that have no literal character (or
+/// whose bytes depend on terminal mode) and so cannot ride the `.text` path. The
+/// mac maps each to the same bytes a hardware press would produce, honoring the
+/// session's cursor/keypad/key-reporting modes.
+///
+/// FORWARD-COMPAT: this is a string-raw-value enum nested inside a `sendKey`. The
+/// envelope's unknown-message fallback (`decodeForwardCompatible` -> `.unsupported`)
+/// only covers unknown TOP-LEVEL discriminators, so a NEW special key sent from a
+/// future phone to a current mac fails to decode the whole `sendKey` and the host
+/// drops it (no per-key gating below `keyInputRevision`). Before adding any case here,
+/// bump `keyInputRevision` (or add a decode fallback) so the new phone can gate on it.
+enum CompanionSpecialKey: String, Codable, Equatable {
+    case escape
+    case tab
+    case backspace        // ^? / ^H per profile (the keyboard's delete-left)
+    case forwardDelete    // the "del" / forward-delete key
+    case up, down, left, right
+    case home, end, pageUp, pageDown, insert
+    case f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12
+}
+
+/// One key press to inject into a session, either a run of literal characters
+/// (ordinary typing, sent as real keystrokes rather than a bracketed paste) or a
+/// single named special key. `modifiers` applies to the whole event; for a `.text`
+/// run it is normally empty (the soft keyboard already delivers shifted/composed
+/// characters) and carries a modifier only for an armed dead-key.
+struct CompanionKeyEvent: Codable, Equatable {
+    enum Key: Codable, Equatable {
+        case text(String)
+        case special(CompanionSpecialKey)
+    }
+    var key: Key
+    var modifiers: CompanionKeyModifiers
+
+    init(key: Key, modifiers: CompanionKeyModifiers = .none) {
+        self.key = key
+        self.modifiers = modifiers
+    }
+}
+
 /// Decoder configuration for a live stream: the codec parameter sets plus the
 /// pixel geometry of the encoded frames. Re-sent with a fresh generationId
 /// whenever the geometry changes.
@@ -587,6 +643,15 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// clipboard). No reply.
     case pasteText(sessionGuid: String, text: String)
 
+    /// Inject one key press into the session as if typed at the keyboard. The mac
+    /// builds the equivalent key event and runs it through the session's own key
+    /// mapper, so control/option encodings honor the profile (per-side Option
+    /// behavior) and special keys honor the terminal's cursor/keypad/key-reporting
+    /// modes. No reply. Requires a mac at `keyInputRevision` or newer; an older mac
+    /// decodes this as `.unsupported` and ignores it, so the phone offers the
+    /// on-screen keyboard only when the mac advertises support.
+    case sendKey(sessionGuid: String, event: CompanionKeyEvent)
+
     /// Resize the session's terminal grid to `columns` x `rows`, computed by the
     /// phone for legibility on its screen (drives `-[PTYSession reallySetCellSize:]`,
     /// so it honors the same window-fitting logic as a terminal-initiated resize).
@@ -619,7 +684,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "startSessionStream", "stopSessionStream", "requestKeyframe",
         "updateStreamParams", "streamAck", "reportScrollWheel",
         "selectionGesture", "clearSelection", "copySelection",
-        "selectAllInStream", "pasteText", "resizeSession",
+        "selectAllInStream", "pasteText", "sendKey", "resizeSession",
         "fetchAutoProvideConsent", "grantAutoProvideConsent",
     ]
 }

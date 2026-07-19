@@ -141,6 +141,36 @@ final class CompanionStreamMessagesTests: XCTestCase {
         XCTAssertEqual(text, "hello “world”")
     }
 
+    func testSendKeyTextRoundTrip() throws {
+        let event = CompanionKeyEvent(key: .text("ls -la\n"))
+        guard case let .sendKey(guid, decoded) =
+                try roundTripClient(.sendKey(sessionGuid: "S-1", event: event)) else {
+            return XCTFail("expected .sendKey")
+        }
+        XCTAssertEqual(guid, "S-1")
+        XCTAssertEqual(decoded, event)
+        XCTAssertEqual(decoded.key, .text("ls -la\n"))
+        XCTAssertTrue(decoded.modifiers.isEmpty)
+    }
+
+    func testSendKeySpecialWithModifiersRoundTrip() throws {
+        let event = CompanionKeyEvent(key: .special(.left),
+                                      modifiers: CompanionKeyModifiers(control: false,
+                                                                       shift: true,
+                                                                       leftOption: false,
+                                                                       rightOption: true))
+        guard case let .sendKey(guid, decoded) =
+                try roundTripClient(.sendKey(sessionGuid: "S-2", event: event)) else {
+            return XCTFail("expected .sendKey")
+        }
+        XCTAssertEqual(guid, "S-2")
+        XCTAssertEqual(decoded.key, .special(.left))
+        XCTAssertTrue(decoded.modifiers.rightOption)
+        XCTAssertTrue(decoded.modifiers.shift)
+        XCTAssertFalse(decoded.modifiers.control)
+        XCTAssertFalse(decoded.modifiers.leftOption)
+    }
+
     // A host predating firstAbsLine/totalLines omits those keys. Synthesized
     // Decodable would throw keyNotFound (dropping the config -> black view); the
     // custom decoder must fall back to 0 so the stream still configures.
