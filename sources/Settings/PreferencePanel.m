@@ -260,6 +260,13 @@ static PreferencePanel *gSessionsPreferencePanel;
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     [super drawWithFrame:cellFrame inView:controlView];
 
+    // On macOS 26+ (Tahoe), the system draws its own accent ring around the
+    // search field when it is first responder. A second custom ring would
+    // extend below the capsule and leave corner artifacts — skip it.
+    if (@available(macOS 26, *)) {
+        return;
+    }
+
     // Draw custom focus ring that extends beyond cell bounds
     if ([controlView respondsToSelector:@selector(currentEditor)] &&
         [(NSControl *)controlView currentEditor] != nil) {

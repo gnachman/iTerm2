@@ -2163,3 +2163,6 @@ Bug Fixes:
   user name and password when a site returns
   an HTTP authentication challenge (Basic,
   Digest, or NTLM) instead of failing to load.
+- Settings search field no longer draws a
+  custom focus ring on macOS 26+ that left
+  corner artifacts under the capsule.
