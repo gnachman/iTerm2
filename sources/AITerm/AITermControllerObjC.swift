@@ -209,6 +209,20 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         var hardError: Bool
     }
 
+    // Namespace the keychain account by the -suite name when the app runs against a
+    // custom settings suite (a side-by-side dev build, e.g. `make run` / `run-keychain`
+    // launch with -suite), so a dev build gets its OWN isolated API keys and never reads,
+    // migrates, reaps, or clobbers the user's REAL (bare-account) keys. Without -suite
+    // (every shipping build) this returns the bare name, so production is unaffected.
+    // Mirrors CompanionMacIdentity.suitedAccount. Applied at the keychain I/O boundary,
+    // so every account (per-vendor and the legacy shared account) is suited uniformly.
+    private static func suitedAccount(_ account: String) -> String {
+        guard let suite = iTermUserDefaults.customSuiteName() as String?, !suite.isEmpty else {
+            return account
+        }
+        return "\(account).\(suite)"
+    }
+
     private static func readKeychainPassword(account: String) -> KeychainReadResult {
         // Read from the data-protection keychain (entitlement-gated, so upgrades no
         // longer pop a confirmation prompt), transparently migrating a value that a
@@ -220,7 +234,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         // key, while not widening when the plaintext key is readable.
         let (status, data) = iTermUpgradeSafeKeychain.copyGenericPassword(
             service: keychainService,
-            account: account,
+            account: suitedAccount(account),
             accessible: kSecAttrAccessibleWhenUnlocked)
         switch status {
         case errSecSuccess:
@@ -241,13 +255,14 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     // resurrect via migration. Absent and "" are already equivalent to keyIsEmpty.
     private static func persistAPIKey(_ value: String?, account: String) {
         guard let value, !keyIsEmpty(value) else {
-            iTermUpgradeSafeKeychain.deleteGenericPassword(service: keychainService, account: account)
+            iTermUpgradeSafeKeychain.deleteGenericPassword(service: keychainService,
+                                                           account: suitedAccount(account))
             return
         }
         let status = iTermUpgradeSafeKeychain.setGenericPassword(
             Data(value.utf8),
             service: keychainService,
-            account: account,
+            account: suitedAccount(account),
             accessible: kSecAttrAccessibleWhenUnlocked)
         if status != errSecSuccess {
             // The value is cached in memory for this session, but persistence failed,
