@@ -2175,3 +2175,11 @@ Bug Fixes:
   in hex, so you can match it against the
   phone and the relay logs when reporting a
   problem.
+- Companion pairing moved to the new sharded
+  relay resolver. A Mac still using the old
+  direct relay is switched over
+  automatically, and a one-time notice
+  reminds you to update iTerm2 Buddy on your
+  iPhone so the two keep connecting. Older
+  iPhone apps can no longer pair and are
+  told to update.

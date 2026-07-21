@@ -504,11 +504,64 @@ final class CompanionPairingController: NSObject {
         unpair()
     }
 
+    /// Set once the revision-10 relay migration has run, so it does not repeat.
+    /// NoSync: local device state, not a setting.
+    private static let relayResolverMigrationDoneKey = "NoSyncCompanionRelayResolverMigrationDone"
+
+    /// Revision-10 migration (CompanionRelayMigration): move a mac that is parking
+    /// on the legacy direct main relay onto the default resolver, and tell the user
+    /// their iPhone must also update. Runs once (NoSync flag) and only for a paired
+    /// mac, so the advanced-setting change is disclosed by the notice we show, never
+    /// silently. Writing CompanionResolverURL + reloading makes the park that
+    /// follows resolve through the shard map. A mac already on a resolver (the
+    /// default) or a custom relay origin is left untouched and shows no notice: if
+    /// its peer is too old, the version handshake's existing upgrade wall covers
+    /// that at connect time, so a proactive notice here would be a false alarm.
+    private func migrateDirectRelayToResolverIfNeeded() {
+        let defaults = iTermUserDefaults.userDefaults()
+        guard !defaults.bool(forKey: Self.relayResolverMigrationDoneKey) else { return }
+        guard hasPairedDevice else { return }
+        // Set the flag FIRST: writing the advanced setting below posts
+        // iTermAdvancedSettingsDidChange, which reentrantly calls this via
+        // gateMayHaveChanged; the flag makes that reentrant call a no-op.
+        defaults.set(true, forKey: Self.relayResolverMigrationDoneKey)
+
+        let inDirectMode = (Self.configuredResolverURL() == nil)
+        let onLegacyRelay = (Self.configuredRelayOrigin() == CompanionRelayMigration.legacyDirectRelayOrigin)
+        guard inDirectMode && onLegacyRelay else {
+            relayLog("Relay migration: mac already on a resolver or a custom relay; nothing to convert")
+            return
+        }
+        relayLog("Relay migration: switching this mac from the direct legacy relay to the default resolver")
+        defaults.set(CompanionRelayMigration.defaultResolverURL, forKey: "CompanionResolverURL")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        presentRelayMigrationNotice()
+    }
+
+    /// The one-time modal telling the user their iPhone must update. Deferred to the
+    /// next main-loop turn so it does not run modally in the middle of the launch
+    /// path, and posted at most once (guarded by the migration flag above).
+    private func presentRelayMigrationNotice() {
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = "Update iTerm2 Buddy on your iPhone"
+            alert.informativeText = "iTerm2 has moved to the new relay. For your Mac and iPhone to keep connecting, "
+                + "update the iTerm2 Buddy app on your iPhone to the latest version."
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+
     /// Called at app launch (and after disconnects): if a device is paired,
     /// quietly advertise its pairing id so it can reconnect.
     @objc func resumePairedListeningIfNeeded() {
         installLogHandler()
         relayLog("resumePairedListeningIfNeeded called")
+        // Revision-10 relay migration: move a mac still on the direct legacy relay
+        // onto the resolver BEFORE the park below reads the resolver setting, and
+        // tell the user their iPhone must also update. Once-guarded, so the
+        // reconnect-driven calls skip it.
+        migrateDirectRelayToResolverIfNeeded()
         // First call is at launch (the user is present); read the keychain-backed
         // identity material (Noise keypair, paired phone key, room secret), the
         // push secret, and the outstanding-nonce list into memory now, so later

@@ -901,10 +901,49 @@ final class AppModel {
         // crash-safe), before any reconnect reads them.
         PhoneIdentity.migrateSharedItemsToAppGroup()
         migratePairingCodeToKeychain()
+        // Revision-10 relay migration: rewrite a legacy direct-relay pairing to the
+        // resolver BEFORE the reconnect below reads storedPairingCode, so the first
+        // reconnect already targets the resolver.
+        migrateDirectRelayToResolver()
         guard phase == .launch, pairingTask == nil else { return }
         guard let code = storedPairingCode else { return }
         companionLog("Reconnecting to stored pairing (pid \(code.pairingID))")
         pair(with: code, isReconnect: true)
+    }
+
+    /// True while the one-time "your Mac needs to update" notice should be shown,
+    /// after the revision-10 relay migration ran on a paired phone. RootView binds
+    /// an alert to this; dismissing sets it false.
+    var showRelayMigrationNotice = false
+
+    /// Set once the revision-10 relay migration has run, so it does not repeat on
+    /// every launch. NoSync: local device state, not a setting.
+    private static let relayResolverMigrationDoneKey = "NoSyncCompanionRelayResolverMigrationDone"
+
+    /// Revision-10 migration (CompanionRelayMigration): move a phone that paired in
+    /// direct mode against the legacy main relay onto the default resolver, and
+    /// tell the user their Mac must also update. Runs once (guarded by a NoSync
+    /// flag) and only for an already-paired phone: a fresh pairing after the update
+    /// is already on the new scheme and needs no notice. The rewrite preserves the
+    /// pairing identity (room name/bucket are derived from rs+pid, unchanged), so it
+    /// only swaps the transport endpoint; the peer that has not updated stays on the
+    /// direct relay and is refused by the raised minimumPeer (revision 10).
+    private func migrateDirectRelayToResolver() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Self.relayResolverMigrationDoneKey) else { return }
+        guard let code = storedPairingCode else { return }   // only act if paired
+        defaults.set(true, forKey: Self.relayResolverMigrationDoneKey)
+        // Only an actual conversion warrants the notice. A pairing already on a
+        // resolver (or a custom relay) needs no endpoint change; if ITS peer is too
+        // old, the version handshake's existing upgrade wall covers that at connect
+        // time, so a proactive "update your Mac" notice here would be a false alarm.
+        guard CompanionRelayMigration.isLegacyDirectRelay(code) else {
+            companionLog("Relay migration: pairing already uses a resolver/custom relay; nothing to convert")
+            return
+        }
+        companionLog("Relay migration: rewriting the direct relay pairing to the default resolver")
+        storePairing(CompanionRelayMigration.migrated(code))
+        showRelayMigrationNotice = true
     }
 
     // MARK: Navigation

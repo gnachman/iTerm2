@@ -225,3 +225,10 @@ Bug Fixes:
   room name in hex when paired, so you can
   match it against your Mac and the relay
   logs when reporting a problem.
+- Pairing moved to the new sharded relay
+  resolver. An iPhone still on the old direct
+  relay is moved over automatically, and a
+  one-time notice reminds you to update
+  iTerm2 on your Mac so the two keep
+  connecting. Pairing with an older Mac is
+  refused with a prompt to update it.
