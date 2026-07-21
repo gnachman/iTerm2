@@ -151,14 +151,12 @@ public struct PairingCode: Equatable, Sendable, Codable {
     /// port + optional path), or throw .invalidResolver. Like canonicalRelayOrigin
     /// it rejects non-https schemes, userinfo, query, and fragment, so the client
     /// only ever talks to a trusted host. Unlike the relay origin it PERMITS a
-    /// path, so the resolver can be hosted at a subpath (e.g. behind a shared
-    /// CDN). The resolver is the base URL of the static shard map on that CDN: the
-    /// client reads a single short-TTL `shardmap.json` from under it (see
+    /// path, because the resolver value points directly at the static shard-map
+    /// JSON (e.g. `https://resolver.iterm2.com/shardmap.json`, or a subpath behind a
+    /// shared CDN): the client GETs it verbatim, nothing is appended (see
     /// docs/companion-relay-design.md and ShardMapLoader), so the path is preserved
-    /// verbatim, trailing slash included, as the root the client resolves that
-    /// relative path against. Public so the mac can
-    /// validate its operator-configured resolver URL with the exact same rule the
-    /// phone applies to the QR.
+    /// exactly as given. Public so the mac can validate its operator-configured
+    /// value with the exact same rule the phone applies to the QR.
     public static func canonicalResolverURL(_ raw: String) throws -> String {
         guard let c = URLComponents(string: raw),
               c.scheme?.lowercased() == "https",

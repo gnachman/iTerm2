@@ -47,16 +47,16 @@ final class PairingCodeResolverTests: XCTestCase {
     }
 
     func test_resolverWithPath_keepsPath() throws {
-        // Unlike relay=, the resolver may live at a subpath so an operator can
-        // host the shard map behind a shared CDN. The path is preserved.
-        let code = try PairingCode.parse(url(resolver: "https://cdn.example.com/iterm2/resolve"))
-        XCTAssertEqual(code.resolverURL, "https://cdn.example.com/iterm2/resolve")
+        // Unlike relay=, the resolver value points directly at the shard-map JSON,
+        // which may live at a subpath (e.g. behind a shared CDN). The path is
+        // preserved verbatim, since the client GETs it as-is.
+        let code = try PairingCode.parse(url(resolver: "https://cdn.example.com/iterm2/shardmap.json"))
+        XCTAssertEqual(code.resolverURL, "https://cdn.example.com/iterm2/shardmap.json")
     }
 
     func test_trailingSlashPreserved() throws {
-        // The resolver is the base URL the client resolves the shardmap.json path
-        // against, so the trailing slash is part of that root and is preserved. The
-        // default value carries one.
+        // The value is used verbatim (the client appends nothing), so whatever path
+        // it carries, trailing slash included, is preserved exactly as given.
         let code = try PairingCode.parse(url(resolver: "https://resolver.example.com/"))
         XCTAssertEqual(code.resolverURL, "https://resolver.example.com/")
     }

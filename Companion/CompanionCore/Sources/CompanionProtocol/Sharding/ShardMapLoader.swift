@@ -2,19 +2,17 @@
 //  ShardMapLoader.swift
 //  CompanionCore
 //
-//  Loads the shard map from a resolver base URL and applies monotonic
-//  versioning. The resolver base URL is the `resolver=` value from the pairing
-//  QR (PairingCode.resolverURL); the map is a single file under it,
-//  `shardmap.json`, served with a short TTL and replaced atomically on publish.
-//  A single fetch gets the latest map: the map carries its own `version`, so
-//  there is no separate version-pointer file and no second round-trip. Networking
-//  is behind an injectable `ShardMapFetching`, so the loader is exercised
-//  entirely offline in tests; persistence of the highest-seen version is the
-//  caller's concern (pass `initialHighestVersion`, read `highestVersion`). See
+//  Loads the shard map and applies monotonic versioning. The map URL is the
+//  `resolver=` value from the pairing QR (PairingCode.resolverURL): it points
+//  directly at the static shard-map JSON, served with a short TTL and replaced
+//  atomically on publish, and is fetched verbatim (no path is appended, so the URL
+//  a caller configures is exactly the URL that is GET'd). A single fetch gets the
+//  latest map: the map carries its own `version`, so there is no separate
+//  version-pointer file and no second round-trip. Networking is behind an
+//  injectable `ShardMapFetching`, so the loader is exercised entirely offline in
+//  tests; persistence of the highest-seen version is the caller's concern (pass
+//  `initialHighestVersion`, read `highestVersion`). See
 //  docs/companion-relay-design.md (§6.3, §6.4, §6.8).
-//
-//  NOT wired into the app yet: this is the standalone loader; a later step
-//  computes a room's bucket and calls it to pick a host.
 //
 
 import Foundation
@@ -26,7 +24,7 @@ public protocol ShardMapFetching: Sendable {
 }
 
 public enum ShardMapLoaderError: Error, Equatable {
-    /// The resolver base URL could not be turned into a request URL.
+    /// The configured map URL could not be turned into a request URL.
     case invalidResolverURL(String)
     /// The HTTP response was not an HTTPURLResponse (e.g. a non-HTTP scheme).
     case badResponse
@@ -68,11 +66,6 @@ public struct URLSessionShardMapFetcher: ShardMapFetching {
 }
 
 public actor ShardMapLoader {
-    /// Filename of the map under the resolver base URL. Served with a short TTL
-    /// and replaced atomically on publish, so a single fetch always yields the
-    /// latest map (§6.3).
-    public static let shardMapFilename = "shardmap.json"
-
     private let resolverURL: String
     private let fetcher: ShardMapFetching
 
@@ -195,22 +188,12 @@ public actor ShardMapLoader {
         return map
     }
 
-    /// Build the URL of the map file under the resolver base. The base is treated
-    /// as a directory: the filename is appended to its path (joined by a single
-    /// slash), so a resolver hosted at a subpath (`https://cdn/x/y`) yields
-    /// `.../x/y/shardmap.json` rather than replacing its last path component.
-    /// Uses URLComponents so the host/port/encoding come straight from the parsed
-    /// base rather than from string surgery.
+    /// The configured URL, fetched verbatim: it points directly at the shard-map
+    /// JSON, so nothing is appended and the URL a caller configures is exactly the
+    /// URL that is GET'd (which keeps it trivially pointable at any test fixture or
+    /// self-hosted map).
     private func mapURL() throws -> URL {
-        guard var components = URLComponents(string: resolverURL) else {
-            throw ShardMapLoaderError.invalidResolverURL(resolverURL)
-        }
-        var path = components.percentEncodedPath
-        if !path.hasSuffix("/") {
-            path += "/"
-        }
-        components.percentEncodedPath = path + Self.shardMapFilename
-        guard let url = components.url else {
+        guard let url = URL(string: resolverURL) else {
             throw ShardMapLoaderError.invalidResolverURL(resolverURL)
         }
         return url

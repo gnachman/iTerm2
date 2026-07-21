@@ -23,8 +23,9 @@ private final class StubShardFetcher: ShardMapFetching, @unchecked Sendable {
 private final class Token {}
 
 final class ShardHostResolverTests: XCTestCase {
-    private let resolverURL = "https://resolver.example.com/"
-    private var mapURL: String { resolverURL + "shardmap.json" }
+    // The resolver value points directly at the map JSON and is fetched verbatim.
+    private let resolverURL = "https://resolver.example.com/shardmap.json"
+    private var mapURL: String { resolverURL }
     // Kept alive for the test so their ObjectIdentifiers stay distinct/stable.
     private let tokenA = Token()
     private let tokenB = Token()

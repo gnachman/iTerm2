@@ -2,9 +2,10 @@
 //  ShardMapLoaderTests.swift
 //  CompanionCore
 //
-//  The loader fetches the single latest shard-map file from a resolver base URL,
-//  applies monotonic versioning, and validates before adopting. Networking is
-//  stubbed so these run offline. See docs/companion-relay-design.md (§6.3, §6.4).
+//  The loader fetches the single latest shard-map JSON from its configured URL
+//  (verbatim, nothing appended), applies monotonic versioning, and validates
+//  before adopting. Networking is stubbed so these run offline. See
+//  docs/companion-relay-design.md (§6.3, §6.4).
 //
 
 import XCTest
@@ -38,8 +39,9 @@ private final class InMemoryFloorStore: ShardMapVersionFloorStore, @unchecked Se
 }
 
 final class ShardMapLoaderTests: XCTestCase {
-    private let resolver = "https://resolver.example.com/"
-    private var mapURL: String { resolver + "shardmap.json" }
+    // The configured value points directly at the map JSON and is fetched verbatim.
+    private let resolver = "https://resolver.example.com/shardmap.json"
+    private var mapURL: String { resolver }
 
     /// A valid two-range map at the given version.
     private func mapJSON(_ version: Int,
@@ -272,32 +274,20 @@ final class ShardMapLoaderTests: XCTestCase {
 
     // MARK: URL construction
 
-    func testSubpathResolverAppendsRatherThanReplaces() async throws {
-        // A resolver hosted at a subpath, with NO trailing slash: the filename
-        // must append under it, not replace its last path component.
-        let base = "https://cdn.example.com/iterm2/resolve"
-        let stub = StubFetcher()
-        let expected = "https://cdn.example.com/iterm2/resolve/shardmap.json"
-        stub.responses[expected] = .success(mapJSON(9))
-        let loader = ShardMapLoader(resolverURL: base, fetcher: stub)
+    func testFetchesTheConfiguredURLVerbatim() async throws {
+        // The configured value is the map URL itself: it is GET'd exactly as given,
+        // with nothing appended, whatever path (or lack of one) it carries.
+        for url in ["https://cdn.example.com/iterm2/resolve/map.json",
+                    "https://resolver.example.com/shardmap.json",
+                    "https://resolver.example.com"] {
+            let stub = StubFetcher()
+            stub.responses[url] = .success(mapJSON(9))
+            let loader = ShardMapLoader(resolverURL: url, fetcher: stub)
 
-        let map = try await loader.refresh()
-        XCTAssertEqual(map?.version, 9)
-        XCTAssertEqual(stub.requested, [expected])
-    }
-
-    func testBareOriginResolverBuildsRootFilename() async throws {
-        // A resolver that is a bare origin (no path, no trailing slash) resolves
-        // to /shardmap.json at the root.
-        let base = "https://resolver.example.com"
-        let stub = StubFetcher()
-        let expected = "https://resolver.example.com/shardmap.json"
-        stub.responses[expected] = .success(mapJSON(3))
-        let loader = ShardMapLoader(resolverURL: base, fetcher: stub)
-
-        let map = try await loader.refresh()
-        XCTAssertEqual(map?.version, 3)
-        XCTAssertEqual(stub.requested, [expected])
+            let map = try await loader.refresh()
+            XCTAssertEqual(map?.version, 9, url)
+            XCTAssertEqual(stub.requested, [url], url)
+        }
     }
 }
 
