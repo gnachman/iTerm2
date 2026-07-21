@@ -1491,6 +1491,14 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
     DLog(@"didFinishLaunching");
 
+    // Test-only: if launched with the purge flag, wipe the app's data-protection
+    // keychain items and quit BEFORE any keychain read. Gated to Development builds via
+    // ITERM_DEBUG (defined only in the Development configuration), so the call does not
+    // exist at all in Beta/Nightly/Deployment. See `make purge-keychain-test`.
+#ifdef ITERM_DEBUG
+    [iTermKeychainTestSupport handlePurgeLaunchFlagIfPresent];
+#endif
+
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     // Skip the Companion launch hooks under unit tests. They read

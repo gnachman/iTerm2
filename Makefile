@@ -75,6 +75,8 @@ help:
 	@echo "  make dev          Build Development"
 	@echo "  make prod         Build Deployment"
 	@echo "  make run          Build and launch Development build"
+	@echo "  make run-keychain Signed dev build w/ keychain entitlement (test migration)"
+	@echo "  make purge-keychain-test  Wipe the app's data-protection keychain (test reset)"
 	@echo "  make watch        Build and launch with interactive r=reload q=quit loop"
 	@echo "  make test         Run unit tests"
 	@echo "  make install      Build Deployment and install to /Applications"
@@ -296,6 +298,37 @@ run: Development
 	trap 'kill $$pid 2>/dev/null' INT TERM; \
 	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
 	wait $$pid
+
+# Like `run`, but re-signs the built app with the keychain-access-groups entitlement
+# so the data-protection-keychain migration is actually exercised. Plain `make run`
+# uses iTerm2-Development.entitlements, which omits the entitlement to keep the fast
+# unsigned dev loop free of provisioning.
+#
+# Signing an Xcode BUILD with this entitlement needs a provisioning profile, and the
+# Development config's Apple Development profile is device-bound (a hassle we avoid).
+# Instead we build unsigned (the Development prerequisite) and re-sign the finished
+# .app with codesign. keychain-access-groups is a RESTRICTED entitlement: launchd
+# refuses to spawn the app unless an embedded provisioning profile authorizes it and
+# the signing cert is inside that profile, so tools/codesign_keychain_test.sh finds an
+# installed "iTerm2 Dev ID App Prov Prof" whose cert you hold, embeds it, and signs
+# with that cert. The signed app must be launched via `open` (LaunchServices), not by
+# exec'ing the binary directly (macOS kills a directly-exec'd signed app). `open -W`
+# blocks until it quits, like `run`. Runs with -suite; AI-key accounts are NOT
+# suite-namespaced, so AI-key migration touches your real keychain items. Drop -suite
+# below to test real companion pairing.
+run-keychain: Development
+	tools/codesign_keychain_test.sh "$(BUILD_DIR)/Development/iTerm2.app"
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(notdir $(CURDIR))
+
+# Reset the data-protection keychain between migration tests. Those items are
+# entitlement-gated, so the `security` CLI can't reach them; this signs the app (same as
+# run-keychain) and launches it with a DEBUG-only flag that deletes the app's own
+# data-protection items (scoped to our access group) and quits. Prints the count.
+purge-keychain-test: Development
+	tools/codesign_keychain_test.sh "$(BUILD_DIR)/Development/iTerm2.app"
+	rm -f /tmp/iterm2-keychain-purge-result.txt
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args --iterm2-purge-data-protection-keychain-for-testing
+	@cat /tmp/iterm2-keychain-purge-result.txt 2>/dev/null || echo "no purge result written (build may lack the entitlement)"
 
 runbg: Development
 	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) & \

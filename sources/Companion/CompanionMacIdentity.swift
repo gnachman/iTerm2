@@ -239,16 +239,15 @@ final class CompanionMacIdentity: NSObject {
     }
 
     private static func keychainLoad(account: String) -> KeychainRead {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: suitedAccount(account),
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-        let result = interpretKeychainStatus(status, data: item as? Data)
+        // Read from the data-protection keychain (entitlement-gated, so upgrades
+        // don't re-prompt), transparently migrating any value a pre-migration build
+        // wrote to the login keychain. The item stays this-device-only, matching how
+        // it was written before.
+        let (status, data) = iTermUpgradeSafeKeychain.copyGenericPassword(
+            service: service,
+            account: suitedAccount(account),
+            accessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+        let result = interpretKeychainStatus(status, data: data)
         switch result {
         case .found:
             break
@@ -262,7 +261,7 @@ final class CompanionMacIdentity: NSObject {
             // different account and reads as not-found here.
             RLog("Companion keychain: '\(suitedAccount(account))' not found (absent, not access-denied)")
         case .unreadable(let osStatus) where osStatus == errSecSuccess:
-            RLog("Companion keychain: '\(suitedAccount(account))' present but malformed (\((item as? Data)?.count ?? -1) bytes)")
+            RLog("Companion keychain: '\(suitedAccount(account))' present but malformed (\(data?.count ?? -1) bytes)")
         case .unreadable(let osStatus):
             // A real error (errSecAuthFailed / errSecInteractionNotAllowed / a denied
             // confirmation prompt): the item likely EXISTS but this binary's code
@@ -277,27 +276,19 @@ final class CompanionMacIdentity: NSObject {
     }
 
     private static func keychainStore(_ key: Data, account: String) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: suitedAccount(account),
-            kSecValueData as String: key,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        ]
-        SecItemDelete(query as CFDictionary)
-        let status = SecItemAdd(query as CFDictionary, nil)
+        let status = iTermUpgradeSafeKeychain.setGenericPassword(
+            key,
+            service: service,
+            account: suitedAccount(account),
+            accessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
         guard status == errSecSuccess else {
             throw CompanionMacError.keychain(status)
         }
     }
 
     private static func keychainDelete(account: String) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: suitedAccount(account)
-        ]
-        SecItemDelete(query as CFDictionary)
+        iTermUpgradeSafeKeychain.deleteGenericPassword(service: service,
+                                                       account: suitedAccount(account))
     }
 }
 

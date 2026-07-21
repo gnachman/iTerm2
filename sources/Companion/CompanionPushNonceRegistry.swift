@@ -178,15 +178,12 @@ final class KeychainNonceStore: CompanionNonceStore {
     private let account = "push-nonce-registry"
 
     func load() -> [String] {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        // Data-protection keychain (entitlement-gated, upgrade-silent), migrating a
+        // pre-migration login-keychain copy forward on first read.
+        let (status, item) = iTermUpgradeSafeKeychain.copyGenericPassword(
+            service: service,
+            account: account,
+            accessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
         // errSecItemNotFound is normal (first run / after a reset); anything else
         // is a real failure that silently disables cross-restart nonce
         // suppression, so log it for diagnosis.
@@ -194,7 +191,7 @@ final class KeychainNonceStore: CompanionNonceStore {
             RLog("CompanionPushNonceRegistry: keychain load failed (\(status))")
         }
         guard status == errSecSuccess,
-              let data = item as? Data,
+              let data = item,
               let nonces = try? JSONDecoder().decode([String].self, from: data) else {
             return []
         }
@@ -203,19 +200,11 @@ final class KeychainNonceStore: CompanionNonceStore {
 
     func save(_ nonces: [String]) {
         guard let data = try? JSONEncoder().encode(nonces) else { return }
-        let base: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
-        var add = base
-        add[kSecValueData as String] = data
-        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        let deleteStatus = SecItemDelete(base as CFDictionary)
-        if deleteStatus != errSecSuccess && deleteStatus != errSecItemNotFound {
-            RLog("CompanionPushNonceRegistry: keychain delete failed (\(deleteStatus))")
-        }
-        let addStatus = SecItemAdd(add as CFDictionary, nil)
+        let addStatus = iTermUpgradeSafeKeychain.setGenericPassword(
+            data,
+            service: service,
+            account: account,
+            accessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
         // A persistent add failure means nonces don't survive a restart, so a
         // post-relaunch fetch is misclassified as unsolicited (spurious presence
         // warning) with no other clue; surface it.

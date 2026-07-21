@@ -78,10 +78,13 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         apiKey(for: vendor)
     }
 
-    // Read-only presence check for Settings' status row. Unlike apiKey(for:) it
-    // never performs the legacy->vendor migration write, so merely viewing
-    // Settings cannot mutate the keychain, and a transient read error is not
-    // cached as "no key". Safe to call off the main thread.
+    // Presence check for Settings' status row. Unlike apiKey(for:) it never performs the
+    // legacy->vendor ACCOUNT migration (adopting the shared legacy key for a vendor), so a
+    // status check can't durably adopt the wrong secret. It is NOT fully side-effect-free,
+    // though: reading through iTermUpgradeSafeKeychain transparently copies a pre-migration
+    // login-keychain value into the data-protection keychain (a safe, idempotent storage
+    // migration) and reaps the login copy, so merely viewing Settings can trigger that
+    // migration. A transient read error is not cached as "no key". Safe off the main thread.
     @objc(apiKeyIsConfiguredForVendor:)
     static func objcApiKeyIsConfigured(for vendor: iTermAIVendor) -> Bool {
         return apiKeyQueue.sync {
@@ -169,11 +172,16 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
 
         let account = keychainAccount(for: vendor)
         let stored = readKeychainPassword(account: account)
+        // Only the EFFECTIVE vendor can adopt the shared legacy key (see resolveAPIKey),
+        // so read the legacy account ONLY then - mirroring objcApiKeyIsConfigured. Reading
+        // it for other vendors is wasted work AND a correctness hazard: a hard error on
+        // that throwaway read would (via the guard below) report a vendor whose OWN key is
+        // present and readable as keyless, and leave it uncached.
         let legacy: KeychainReadResult
-        if account == legacyKeychainAccount {
-            legacy = KeychainReadResult(value: nil, hardError: false)
-        } else {
+        if account != legacyKeychainAccount, vendor == LLMMetadata.effectiveVendor {
             legacy = readKeychainPassword(account: legacyKeychainAccount)
+        } else {
+            legacy = KeychainReadResult(value: nil, hardError: false)
         }
         // A transient read failure (e.g. a locked keychain) must not be cached
         // as "no key" - that would durably serve a stale nil for the rest of
@@ -188,9 +196,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             vendorUsesLegacyAccount: account == legacyKeychainAccount,
             vendorIsEffective: vendor == LLMMetadata.effectiveVendor)
         if resolution.migrateLegacyToVendorAccount, let value = resolution.value {
-            _ = SSKeychain.setPassword(value,
-                                       forService: keychainService,
-                                       account: account)
+            persistAPIKey(value, account: account)
         }
         cachedKeys[cacheKey] = CachedKey(valid: true, value: resolution.value)
         return resolution.value
@@ -204,18 +210,49 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     }
 
     private static func readKeychainPassword(account: String) -> KeychainReadResult {
-        do {
-            let value = try SSKeychain.password(forService: keychainService,
-                                                account: account)
-            return KeychainReadResult(value: value, hardError: false)
-        } catch let error as NSError {
-            // errSecItemNotFound means the item simply isn't stored yet - a
-            // legitimate absence, not a failure. Any other status is a real
-            // error we must not confuse with "no key".
-            if error.code == Int(errSecItemNotFound) {
-                return KeychainReadResult(value: nil, hardError: false)
-            }
+        // Read from the data-protection keychain (entitlement-gated, so upgrades no
+        // longer pop a confirmation prompt), transparently migrating a value that a
+        // pre-migration build wrote via SSKeychain into the login keychain. Use
+        // WhenUnlocked to PRESERVE the prior accessibility: iTerm never called
+        // +[SSKeychain setAccessibilityType:], so SSKeychain omitted kSecAttrAccessible
+        // and the item took the OS default, kSecAttrAccessibleWhenUnlocked. WhenUnlocked
+        // is not this-device-only, so a Migration-Assistant transfer still carries the
+        // key, while not widening when the plaintext key is readable.
+        let (status, data) = iTermUpgradeSafeKeychain.copyGenericPassword(
+            service: keychainService,
+            account: account,
+            accessible: kSecAttrAccessibleWhenUnlocked)
+        switch status {
+        case errSecSuccess:
+            return KeychainReadResult(value: data.flatMap { String(data: $0, encoding: .utf8) },
+                                      hardError: false)
+        case errSecItemNotFound:
+            // Not stored yet - a legitimate absence, not a failure.
+            return KeychainReadResult(value: nil, hardError: false)
+        default:
+            // A real error (locked/denied keychain) we must not confuse with "no key".
             return KeychainReadResult(value: nil, hardError: true)
+        }
+    }
+
+    // Persist an API key, or clear it. Clearing DELETES the item from both keychains
+    // rather than storing an empty value: an empty kSecValueData does not round-trip,
+    // and an empty tombstone or a lingering legacy copy would let a cleared key
+    // resurrect via migration. Absent and "" are already equivalent to keyIsEmpty.
+    private static func persistAPIKey(_ value: String?, account: String) {
+        guard let value, !keyIsEmpty(value) else {
+            iTermUpgradeSafeKeychain.deleteGenericPassword(service: keychainService, account: account)
+            return
+        }
+        let status = iTermUpgradeSafeKeychain.setGenericPassword(
+            Data(value.utf8),
+            service: keychainService,
+            account: account,
+            accessible: kSecAttrAccessibleWhenUnlocked)
+        if status != errSecSuccess {
+            // The value is cached in memory for this session, but persistence failed,
+            // so it may not survive a restart. Surface it rather than dropping silently.
+            RLog("AITerm: failed to persist API key for account '\(account)': OSStatus \(status). Cached for this session but may not survive a restart.")
         }
     }
 
@@ -223,13 +260,9 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         let value = key?.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalized = keyIsEmpty(value) ? nil : value
         cachedKeys[cacheKey(for: vendor)] = CachedKey(valid: true, value: normalized)
-        _ = SSKeychain.setPassword(normalized ?? "",
-                                   forService: keychainService,
-                                   account: keychainAccount(for: vendor))
+        persistAPIKey(normalized, account: keychainAccount(for: vendor))
         if vendor == .openAI {
-            _ = SSKeychain.setPassword(normalized ?? "",
-                                       forService: keychainService,
-                                       account: legacyKeychainAccount)
+            persistAPIKey(normalized, account: legacyKeychainAccount)
         }
     }
 

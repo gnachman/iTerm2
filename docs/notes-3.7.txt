@@ -2163,3 +2163,10 @@ Bug Fixes:
   user name and password when a site returns
   an HTTP authentication challenge (Basic,
   Digest, or NTLM) instead of failing to load.
+- The keychain permission prompt that appeared
+  after upgrading, for AI API keys and for a
+  paired companion device, no longer recurs on
+  every update. Those secrets now live in an
+  entitlement-scoped keychain group that stays
+  readable across signed builds. Upgrading to
+  this version prompts once more to move them.

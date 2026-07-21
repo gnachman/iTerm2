@@ -2,13 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!--
+	  Development-only entitlements: identical to iTerm2.entitlements EXCEPT it
+	  omits keychain-access-groups. That entitlement forces Xcode to resolve a
+	  provisioning profile at build time, which breaks the fast unsigned/dev
+	  signing loop (`make run`). The upgrade-safe keychain code degrades cleanly
+	  without it (the data-protection read returns errSecMissingEntitlement and
+	  falls back to the login keychain), so a dev build just behaves like it did
+	  before the migration work. To actually exercise the access-group migration
+	  locally, use `make run-keychain`, which builds signed with iTerm2.entitlements
+	  and -allowProvisioningUpdates. Shipping configs (Beta/Nightly/Deployment) use
+	  iTerm2.entitlements and carry the real entitlement.
+	-->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>$(TeamIdentifierPrefix)iTerm</string>
-	</array>
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(TeamIdentifierPrefix)com.googlecode.iterm2</string>
 	</array>
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
