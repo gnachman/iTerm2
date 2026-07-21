@@ -731,6 +731,14 @@ final class AppModel {
                        pairingID: code.pairingID)
     }
 
+    /// The relay room name (64-char lowercase hex) of the current pairing, or nil
+    /// when not paired. Shown in Settings for support/debugging: it is the
+    /// pseudonym both devices and the relay log a room under, so it lets a user
+    /// match this phone's room against the mac and the relay logs.
+    var pairedRoomNameHex: String? {
+        storedPairingCode.map { roomName(for: $0) }
+    }
+
     /// Whether this pairing's verifier is registered with the relay (the room is
     /// established). Gates the one-time /register POST and the pairing-time
     /// attestation; false until a registration actually succeeds, so a failed

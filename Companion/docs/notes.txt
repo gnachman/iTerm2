@@ -221,3 +221,7 @@ Bug Fixes:
   switches to 60 columns in portrait and 120
   in landscape, instead of 40 and 80, for a
   more useful amount of content.
+- Settings now shows this pairing’s relay
+  room name in hex when paired, so you can
+  match it against your Mac and the relay
+  logs when reporting a problem.

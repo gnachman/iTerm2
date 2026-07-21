@@ -48,6 +48,20 @@ struct SettingsView: View {
                 Text("Disconnecting deletes the pairing keys on this device and on your Mac. Pair again by scanning a new QR code.")
             }
 
+            if let room = model.pairedRoomNameHex {
+                Section {
+                    // Monospaced and selectable so the full 64-char value can be
+                    // read and copied for support; it wraps rather than truncating.
+                    Text(room)
+                        .font(.system(.footnote, design: .monospaced))
+                        .textSelection(.enabled)
+                } header: {
+                    Text("Relay Room")
+                } footer: {
+                    Text("The name your Mac and this phone use to find each other through the relay. Useful when reporting a problem.")
+                }
+            }
+
             Section {
                 // A custom binding so a turn-OFF does not flip the switch until
                 // the user confirms (disabling deletes the files); turning ON

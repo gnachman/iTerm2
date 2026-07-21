@@ -397,6 +397,17 @@ final class CompanionPairingController: NSObject {
         return .reconnecting(lastAttempt: lastRelayAttempt)
     }
 
+    /// The relay room name (64-char lowercase hex) of the currently paired device,
+    /// or nil when not paired (or the mac's key is unavailable). Derived, not
+    /// stored, from the mac's static key and the paired pid the same way the
+    /// transport does, so the settings window can show it for support/debugging (it
+    /// is the pseudonym both devices and the relay log a room under).
+    var pairedRoomName: String? {
+        guard let pid = pairedPID,
+              let keyPair = try? CompanionMacIdentity.keyPair() else { return nil }
+        return RelayRoom.name(responderStaticPublicKey: keyPair.publicKey, pairingID: pid)
+    }
+
     /// The pairing id the mac should currently be parked for: the established
     /// device, or, during a fresh pairing, the QR being shown. Retry uses this
     /// so a dropped park is re-established in BOTH states, waiting for a first

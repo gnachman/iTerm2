@@ -2170,3 +2170,8 @@ Bug Fixes:
   entitlement-scoped keychain group that stays
   readable across signed builds. Upgrading to
   this version prompts once more to move them.
+- The Companion Device Settings window now
+  shows the paired device’s relay room name
+  in hex, so you can match it against the
+  phone and the relay logs when reporting a
+  problem.

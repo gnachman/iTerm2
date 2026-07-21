@@ -40,6 +40,11 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     private let relayStatusLabel = NSTextField(labelWithString: "")
     private var relayStatusTimer: Timer?
     private let unpairButton = NSButton(title: "Unpair", target: nil, action: nil)
+    // Shown in the paired state: a caption and the pairing's relay room name in
+    // lowercase hex, selectable so it can be copied for support. Both hidden
+    // outside the paired state (hideTopContent).
+    private let roomNameCaptionLabel = NSTextField(labelWithString: "Relay room name")
+    private let roomNameLabel = NSTextField(wrappingLabelWithString: "")
     // A remedy for the AI/admin prerequisites (e.g. "Reveal in Settings"). The
     // companion plugin and consent have their own controls in the bottom
     // section, so this is only used for the AI-side gates.
@@ -386,6 +391,8 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         qrImageView.isHidden = true
         checkmarkImageView.isHidden = true
         unpairButton.isHidden = true
+        roomNameCaptionLabel.isHidden = true
+        roomNameLabel.isHidden = true
         sasField.isHidden = true
         sasVerifyButton.isHidden = true
         sasCancelButton.isHidden = true
@@ -547,6 +554,14 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         hideTopContent()
         checkmarkImageView.isHidden = false
         unpairButton.isHidden = false
+        // Show the pairing's relay room name (hidden if it cannot be derived, e.g.
+        // the mac key is momentarily unavailable), so it does not show a stale or
+        // empty value.
+        if let room = controller.pairedRoomName {
+            roomNameLabel.stringValue = room
+            roomNameCaptionLabel.isHidden = false
+            roomNameLabel.isHidden = false
+        }
         updatePairedConnectionText()
         setStatus("To pair a different device, unpair first. Unpairing kicks the device off and deletes the pairing keys.",
                   color: .secondaryLabelColor)
@@ -696,6 +711,27 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         checkmarkImageView.image = checkImage
         checkmarkImageView.isHidden = true
         content.addSubview(checkmarkImageView)
+
+        // Paired-state relay room name: a small caption above the lowercase-hex
+        // value, in the band between the checkmark and the Unpair button. The hex
+        // is monospaced and selectable so it can be copied; it wraps to two lines
+        // (64 chars) by character. Both hidden until showPairedState reveals them.
+        roomNameCaptionLabel.alignment = .center
+        roomNameCaptionLabel.font = .systemFont(ofSize: 9)
+        roomNameCaptionLabel.textColor = .tertiaryLabelColor
+        roomNameCaptionLabel.frame = NSRect(x: 20, y: 262, width: 320, height: 12)
+        roomNameCaptionLabel.isHidden = true
+        content.addSubview(roomNameCaptionLabel)
+
+        roomNameLabel.alignment = .center
+        roomNameLabel.font = .monospacedSystemFont(ofSize: 10.5, weight: .regular)
+        roomNameLabel.textColor = .secondaryLabelColor
+        roomNameLabel.isSelectable = true
+        roomNameLabel.lineBreakMode = .byCharWrapping
+        roomNameLabel.maximumNumberOfLines = 2
+        roomNameLabel.frame = NSRect(x: 16, y: 234, width: 328, height: 26)
+        roomNameLabel.isHidden = true
+        content.addSubview(roomNameLabel)
 
         // Sits low, just above the "To pair a different device…" status text.
         unpairButton.target = self
