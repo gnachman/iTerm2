@@ -2189,3 +2189,8 @@ Bug Fixes:
   regional indicators that make up a flag are
   now shaped together, matching the non-GPU
   renderer.
+- Debug logging now caps memory use at about
+  200MB (discarding the oldest entries when it
+  grows past that) and no longer freezes the
+  app while saving the log when you turn it
+  off.

@@ -176,7 +176,7 @@ extension iTermApplicationDelegate {
             Tip(identifier: "Install Shell Integration",
                 text: "**Shell Integration** consists of shell scripts that run when you log in. They inform iTerm2 of where your shell prompt is. This enables dozens of useful features such as command history, directory history, AI features, and more."),
             Tip(identifier: "Toggle Debug Logging",
-                text: "Debug logs are saved in memory while this setting is enabled and written to `/tmp/debuglog.txt` when you turn it off. They use a circular buffer, so no more than 200MB of memory will ever be used by debug logs."),
+                text: "Debug logs are saved in memory while this setting is enabled and written to `/tmp/debuglog.txt` when you turn it off. Memory use is capped at about 200MB; if the log grows past that, the oldest entries are discarded so the most recent activity is always kept."),
             Tip(identifier: "Broadcast Input.Broadcast Input to All Panes in All Tabs",
                 text: "When enabled, anything you type in this window is sent to all sessions in this window."),
             Tip(identifier: "Broadcast Input.Broadcast Input to All Panes in Current Tab",
