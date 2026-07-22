@@ -175,7 +175,22 @@ final class CompanionPushNonceRegistry {
 /// item (this-device-only), beside the other companion mac keychain items.
 final class KeychainNonceStore: CompanionNonceStore {
     private let service = "com.googlecode.iterm2.companion"
-    private let account = "push-nonce-registry"
+    private let baseAccount = "push-nonce-registry"
+
+    // Namespace the keychain account by the -suite name when the app runs against a
+    // custom settings suite (a side-by-side dev build, e.g. `make run` launches with
+    // -suite), so two differently-suited instances get their OWN outstanding-nonce
+    // lists instead of sharing one item and clobbering each other's on save (a
+    // last-writer-wins overwrite that silently drops the other pairing's nonces, so
+    // its next solicited fetch is misclassified as an intrusion). Without -suite
+    // (every shipping build) this returns the bare name, so production items already
+    // written under it are found unchanged. Mirrors CompanionMacIdentity.suitedAccount.
+    private var account: String {
+        guard let suite = iTermUserDefaults.customSuiteName() as String?, !suite.isEmpty else {
+            return baseAccount
+        }
+        return "\(baseAccount).\(suite)"
+    }
 
     func load() -> [String] {
         // Data-protection keychain (entitlement-gated, upgrade-silent), migrating a
