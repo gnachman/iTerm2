@@ -2201,3 +2201,7 @@ Bug Fixes:
   people who alternate differently-signed
   builds (such as a released build and one
   built from source).
+- A saved status bar layout whose RPC-provided
+  text component is missing its registration
+  request is now dropped instead of showing up
+  as a blank “ghost” cell.

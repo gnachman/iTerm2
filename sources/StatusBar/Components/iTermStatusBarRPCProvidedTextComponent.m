@@ -169,6 +169,13 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
         NSString *b64 = [NSString castFrom:configuration[iTermStatusBarRPCRegistrationRequestV2Key]];
         data = [NSData dataWithBase64EncodedString:b64];
     }
+    if (!data) {
+        // Both registration-request keys are absent or invalid (e.g. a truncated prefs write or a
+        // layout exported by a buggy script). Reject it: -[GPBMessage initWithData:nil error:] would
+        // otherwise return a non-nil but empty message, producing a nameless "ghost" component.
+        RLog(@"Missing registration request data for RPC status bar component");
+        return nil;
+    }
     ITMRPCRegistrationRequest *registrationRequest = [[ITMRPCRegistrationRequest alloc] initWithData:data
                                                                                                error:nil];
     if (!registrationRequest) {
