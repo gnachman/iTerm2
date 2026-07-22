@@ -2,9 +2,9 @@
 //  CompanionRelayMigrationTests.swift
 //  CompanionCore
 //
-//  The revision-10 direct-relay -> resolver rewrite: which pairings migrate, and
+//  The revision-11 direct-relay -> resolver rewrite: which pairings migrate, and
 //  that the rewrite preserves identity while swapping the endpoint. See
-//  CompanionRelayMigration and CompanionProtocolVersion (revision 10).
+//  CompanionRelayMigration and CompanionProtocolVersion (revision 11).
 //
 
 import XCTest

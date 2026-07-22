@@ -504,7 +504,7 @@ final class CompanionPairingController: NSObject {
         unpair()
     }
 
-    /// Set once the revision-10 relay migration has run, so it does not repeat.
+    /// Set once the revision-11 relay migration has run, so it does not repeat.
     /// NoSync: local device state, not a setting.
     private static let relayResolverMigrationDoneKey = "NoSyncCompanionRelayResolverMigrationDone"
 
@@ -521,7 +521,7 @@ final class CompanionPairingController: NSObject {
     private static let migrationNoticeGraceSeconds: TimeInterval = 30
     private var migrationNoticeTimer: Timer?
 
-    /// Revision-10 migration (CompanionRelayMigration): move a mac that is parking
+    /// Revision-11 migration (CompanionRelayMigration): move a mac that is parking
     /// on the legacy direct main relay onto the default resolver, and tell the user
     /// their iPhone must also update. Runs once (NoSync flag) and only for a paired
     /// mac, so the advanced-setting change is disclosed by the notice, never
@@ -546,7 +546,7 @@ final class CompanionPairingController: NSObject {
         // change), so logging the common no-op would churn the RLog ring buffer.
         // The done/pending flags are inspectable via `defaults read` if needed.
         guard !defaults.bool(forKey: Self.relayResolverMigrationDoneKey) else { return }
-        // Only act (and only mark done) once PAIRED. A fresh mac's first rev-10
+        // Only act (and only mark done) once PAIRED. A fresh mac's first rev-11
         // launch is unpaired; marking done there would skip the notice for the
         // pairing it forms later, leaving it silently unable to reach an old iPhone.
         guard hasPairedDevice else {
@@ -670,7 +670,7 @@ final class CompanionPairingController: NSObject {
     @objc func resumePairedListeningIfNeeded() {
         installLogHandler()
         relayLog("resumePairedListeningIfNeeded called")
-        // Revision-10 relay migration: move a mac still on the direct legacy relay
+        // Revision-11 relay migration: move a mac still on the direct legacy relay
         // onto the resolver BEFORE the park below reads the resolver setting. Once-
         // guarded, so the reconnect-driven calls skip it. armMigrationNoticeIfPending
         // then waits out the grace period for a phone before nagging (a phone that
@@ -1678,7 +1678,7 @@ final class CompanionPairingController: NSObject {
                 // fresh-pairing intent is done.
                 freshPairingActive = false
                 onPaired?()
-                // A phone reached us, so the revision-10 migration succeeded: the
+                // A phone reached us, so the revision-11 migration succeeded: the
                 // iPhone is up to date. Cancel any pending "update your iPhone" notice.
                 clearPendingMigrationNotice()
                 // Connected: stop accepting now. The relay room has a single mac

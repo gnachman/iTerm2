@@ -2,7 +2,7 @@
 //  CompanionRelayMigration.swift
 //  CompanionCore
 //
-//  The revision-10 relay migration (CompanionProtocolVersion): move devices off
+//  The revision-11 relay migration (CompanionProtocolVersion): move devices off
 //  the direct main relay onto the sharded resolver. A device that paired in direct
 //  mode points at `https://relay.iterm2.com`; on upgrade it rewrites its pairing to
 //  the default resolver so both endpoints resolve the owning shard host and
@@ -19,7 +19,7 @@ import Foundation
 
 public enum CompanionRelayMigration {
     /// The legacy direct main relay origin. A pairing (phone) or configured mode
-    /// (mac) pointing here is what the revision-10 migration converts.
+    /// (mac) pointing here is what the revision-11 migration converts.
     public static let legacyDirectRelayOrigin = "https://relay.iterm2.com"
 
     /// The default resolver (shard-map JSON) URL a migrated pairing adopts. Kept in

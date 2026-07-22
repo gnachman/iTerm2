@@ -904,7 +904,7 @@ final class AppModel {
         // crash-safe), before any reconnect reads them.
         PhoneIdentity.migrateSharedItemsToAppGroup()
         migratePairingCodeToKeychain()
-        // Revision-10 relay migration: rewrite a legacy direct-relay pairing to the
+        // Revision-11 relay migration: rewrite a legacy direct-relay pairing to the
         // resolver BEFORE the reconnect below reads storedPairingCode, so the first
         // reconnect already targets the resolver.
         migrateDirectRelayToResolver()
@@ -927,11 +927,11 @@ final class AppModel {
     }
 
     /// True while the one-time "your Mac needs to update" notice should be shown.
-    /// Armed only after the revision-10 migration fails to reconnect within a grace
+    /// Armed only after the revision-11 migration fails to reconnect within a grace
     /// period (see scheduleMigrationNoticeTimeout); RootView binds an alert to it.
     var showRelayMigrationNotice = false
 
-    /// Set once the revision-10 relay migration has run, so it does not repeat on
+    /// Set once the revision-11 relay migration has run, so it does not repeat on
     /// every launch. NoSync: local device state, not a setting.
     private static let relayResolverMigrationDoneKey = "NoSyncCompanionRelayResolverMigrationDone"
 
@@ -945,7 +945,7 @@ final class AppModel {
     /// enough that a genuinely un-upgraded Mac is flagged promptly.
     private static let migrationNoticeGraceSeconds: TimeInterval = 20
 
-    /// Revision-10 migration (CompanionRelayMigration). Runs once (NoSync flag). Two
+    /// Revision-11 migration (CompanionRelayMigration). Runs once (NoSync flag). Two
     /// parts, deliberately independent:
     ///   1. ENDPOINT REWRITE, conditional: only a pairing still on the legacy direct
     ///      relay is rewritten to the default resolver. A pairing already on a
@@ -965,7 +965,7 @@ final class AppModel {
     private func migrateDirectRelayToResolver() {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.relayResolverMigrationDoneKey) else { return }
-        // Only act (and only mark done) once PAIRED. A fresh phone's first rev-10
+        // Only act (and only mark done) once PAIRED. A fresh phone's first rev-11
         // launch is unpaired; marking done there would skip the notice for the
         // pairing it forms later, leaving it silently unable to reach an old Mac.
         guard let code = storedPairingCode else { return }
