@@ -77,12 +77,12 @@ enum iTermUpgradeSafeKeychain {
             }
             return (dpStatus, dpData)
         case .consultLegacy:
+            // DLog the miss detail (status + resolved group) so it's available in a debug
+            // log without churning the RLog ring on every unconfigured item. Surface only
+            // errSecMissingEntitlement as RLog: expected on unsigned/dev builds, but on a
+            // SIGNED build it means the entitlement is missing or wrong.
+            DLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection read miss: \(describe(dpStatus)), accessGroup=\(accessGroup ?? "<nil>")")
             if dpStatus == errSecMissingEntitlement {
-                // Expected on an unsigned/ad-hoc build with no usable
-                // keychain-access-group; the data-protection keychain is off limits so
-                // the login keychain stays the real store and upgrade prompts persist.
-                // On a SIGNED build this instead means the keychain-access-groups
-                // entitlement is missing or wrong, which is worth investigating.
                 RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection keychain unavailable (errSecMissingEntitlement); falling back to login keychain. Expected on unsigned/dev builds; on a signed build the entitlement is missing.")
             }
             break
@@ -95,7 +95,7 @@ enum iTermUpgradeSafeKeychain {
                 // tombstone. Nothing meaningful to migrate; reap it and report absent
                 // (callers treat absent and "" identically), so it can't be re-read.
                 RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' present-but-empty in login keychain (tombstone); reaping and reporting absent")
-                reapLegacy(service: service, account: account)
+                reapLegacyReportingStatus(service: service, account: account)
                 return (errSecItemNotFound, nil)
             }
             RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' found in login keychain (\(legacyValue.count) bytes); migrating to data-protection keychain")
@@ -109,9 +109,9 @@ enum iTermUpgradeSafeKeychain {
             return (errSecSuccess, legacyValue)
         case .reportAbsent:
             // Genuinely absent from both stores (an unconfigured item, or one already
-            // cleared). Kept as RLog while the migration path is still being trusted so a
-            // "missing" secret is traceable; demote to DLog once confidence is high.
-            RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' absent from both the data-protection and login keychains")
+            // cleared). DLog: this is the common case for any unconfigured item and would
+            // otherwise churn the RLog ring on every launch.
+            DLog("UpgradeSafeKeychain: '\(service)' / '\(account)' absent from both the data-protection and login keychains")
             return (errSecItemNotFound, nil)
         case .reportLegacyError:
             RLog("UpgradeSafeKeychain: login-keychain read of '\(service)' / '\(account)' failed, cannot migrate: \(describe(legacyStatus))")
@@ -140,10 +140,13 @@ enum iTermUpgradeSafeKeychain {
         case errSecSuccess:
             // Reap any lingering login-keychain copy so a rotate/clear erases the old
             // secret (and a later data-protection read miss can't fall back to a stale
-            // value). DLog, not RLog: this is the success path and fires on every write,
-            // including per-push nonce saves, which would otherwise churn the RLog ring.
-            reapLegacy(service: service, account: account)
-            DLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - wrote to data-protection keychain, reaped login copy")
+            // value). reapLegacyReportingStatus targets the FILE keychain explicitly (see
+            // legacyQuery) so it can't delete the data-protection copy we just wrote.
+            // DLog, not RLog: this fires on every write, including per-push nonce saves,
+            // which would otherwise churn the RLog ring. reapLegacyReportingStatus already
+            // RLogs a genuinely unexpected delete error.
+            let reapStatus = reapLegacyReportingStatus(service: service, account: account)
+            DLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - wrote to data-protection keychain (accessGroup=\(accessGroup ?? "<nil>")); login reap: \(describe(reapStatus))")
             return errSecSuccess
         case errSecMissingEntitlement:
             // This build cannot use the data-protection keychain (no access group).
@@ -366,10 +369,17 @@ enum iTermUpgradeSafeKeychain {
     // MARK: - Legacy (login) keychain I/O
 
     private static func legacyQuery(service: String, account: String) -> [String: Any] {
-        // No kSecUseDataProtectionKeychain: this targets the file-based login
-        // keychain where the pre-migration items were written.
+        // kSecUseDataProtectionKeychain: false is REQUIRED, not optional. On an entitled
+        // app, OMITTING it does not reliably mean "file keychain": SecItemCopyMatching
+        // read the file item, but SecItemDelete/SecItemUpdate resolved to the DATA-
+        // PROTECTION keychain instead, so the reap after a migrate deleted the copy we had
+        // just written (readback-confirmed) rather than the old login copy - items with no
+        // login fallback (the companion identity key, the push nonce) then vanished on the
+        // next launch. Pinning false forces EVERY legacy op (read, delete, upsert) to the
+        // file keychain, so it can never touch the data-protection copy.
         return [
             kSecClass as String: kSecClassGenericPassword,
+            kSecUseDataProtectionKeychain as String: false,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
@@ -461,18 +471,24 @@ enum iTermUpgradeSafeKeychain {
         // reap the code-signature-gated login copy: that delete is what actually stops
         // future upgrade prompts, and it also prevents a data-protection read miss from
         // later falling back to (and re-migrating) a stale value.
-        reapLegacy(service: service, account: account)
-        RLog("UpgradeSafeKeychain: migrated '\(service)' / '\(account)' into the data-protection keychain (group \(accessGroup ?? "<none>"), readback confirmed) and reaped the login copy")
+        let reapStatus = reapLegacyReportingStatus(service: service, account: account)
+        // DIAGNOSTIC (temporary): report the ACTUAL reap status instead of an unconditional
+        // "reaped." errSecItemNotFound = the login-keychain delete matched nothing (so the
+        // login copy is NOT actually removed if the delete is being scoped to the app's
+        // access group while the read searched all groups); -25244 = ownership-locked.
+        RLog("UpgradeSafeKeychain: migrated '\(service)' / '\(account)' into the data-protection keychain (group \(accessGroup ?? "<none>"), readback confirmed); login reap: \(describe(reapStatus))")
     }
 
-    // Delete a login-keychain copy after the data-protection copy is authoritative. A
-    // missing item is success; anything else is logged but non-fatal (a stale copy just
-    // means the upgrade prompt can recur, and a rotate could momentarily read stale).
-    private static func reapLegacy(service: String, account: String) {
+    // Delete a login-keychain copy after the data-protection copy is authoritative. Returns
+    // the delete status. A missing item (errSecItemNotFound) or success is fine; anything
+    // else is logged and non-fatal (a stale copy just means the upgrade prompt can recur).
+    @discardableResult
+    private static func reapLegacyReportingStatus(service: String, account: String) -> OSStatus {
         let status = SecItemDelete(legacyQuery(service: service, account: account) as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound {
             RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - failed to reap login-keychain copy: \(describe(status)). A stale copy may remain and re-prompt.")
         }
+        return status
     }
 
     /// Human-readable rendering of an OSStatus for logs (never includes secret data).
