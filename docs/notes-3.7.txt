@@ -2194,3 +2194,10 @@ Bug Fixes:
   grows past that) and no longer freezes the
   app while saving the log when you turn it
   off.
+- Companion: if you never paired a device,
+  iTerm2 no longer touches the companion
+  keychain items at launch. This stops a
+  spurious keychain permission prompt for
+  people who alternate differently-signed
+  builds (such as a released build and one
+  built from source).

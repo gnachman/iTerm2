@@ -48,6 +48,11 @@ final class CompanionMacIdentity: NSObject {
     /// generates a fresh keypair.
     static func deleteKeyPair() {
         delete(account: account)
+        // The identity keypair is the root of all pairing material: deleting it (at
+        // unpair, or when the peer unpairs) tears the pairing down, so forget the
+        // prime hint immediately. Any sibling item left behind is unusable without
+        // this key, and the next launch's prime would clear the hint regardless.
+        setKeychainMayHaveMaterial(false)
     }
 
     /// The paired phone's pinned static public key, or nil if none is pinned.
@@ -103,16 +108,55 @@ final class CompanionMacIdentity: NSObject {
     private static let cacheLock = NSLock()
     private static var cache = [String: Data?]()
 
+    // A NoSync hint, mirrored from the keychain, recording whether the companion
+    // keychain currently holds pairing material worth priming at launch. The
+    // keychain is the ground truth; this cache lets a never-paired install skip the
+    // launch-time keychain touch (the identity reads AND the push-nonce write)
+    // entirely, so it never plants a keychain item - and the code-signature
+    // confirmation prompt that item causes across differently-signed builds - for a
+    // feature it never enabled. NoSync: local device state, not a setting.
+    private static let hasMaterialKey = "NoSyncCompanionKeychainHasMaterial"
+
+    /// Whether the keychain is believed to hold companion pairing material, used by
+    /// the launch path to decide whether to prime. Deliberately NOT used to gate an
+    /// actual keychain read (those happen on demand regardless), so a stale-false
+    /// value only defers priming; the next read that finds material corrects it.
+    static var keychainMayHaveMaterial: Bool {
+        iTermUserDefaults.userDefaults().bool(forKey: hasMaterialKey)
+    }
+
+    /// Reconcile the hint. Change-guarded so a repeated same-value write does not
+    /// churn a settings write (a non-NoSync store would be re-uploaded).
+    private static func setKeychainMayHaveMaterial(_ value: Bool) {
+        let defaults = iTermUserDefaults.userDefaults()
+        if defaults.bool(forKey: hasMaterialKey) != value {
+            defaults.set(value, forKey: hasMaterialKey)
+        }
+    }
+
     /// Read every keychain-backed item into the cache. Call once at launch, while
     /// the user is at the keyboard, so any keychain confirmation prompt is
     /// answered then rather than mid-connection while the user is away. Idempotent
     /// (cached items are not re-read), and side-effect-free: it does not generate
     /// a Noise keypair, so an unpaired user gets no new key material.
-    static func primeCacheAtLaunch() {
-        _ = load(account: account)
-        _ = load(account: pairedPhoneAccount)
-        _ = load(account: roomSecretAccount)
-        _ = load(account: pushSecretAccount)
+    ///
+    /// Returns whether any account held material, and reconciles the persisted
+    /// hint from this ground-truth read: true if any account is found, false if
+    /// EVERY account reads back a genuine absent. A transient unreadable (a locked
+    /// keychain, a denied confirmation prompt) leaves the hint untouched, so it can
+    /// never wrongly clear a real pairing's hint.
+    @discardableResult
+    static func primeCacheAtLaunch() -> Bool {
+        let reads = [account, pairedPhoneAccount, roomSecretAccount, pushSecretAccount]
+            .map { load(account: $0) }
+        let anyFound = reads.contains { if case .found = $0 { return true } else { return false } }
+        let anyUnreadable = reads.contains { if case .unreadable = $0 { return true } else { return false } }
+        if anyFound {
+            setKeychainMayHaveMaterial(true)
+        } else if !anyUnreadable {
+            setKeychainMayHaveMaterial(false)
+        }
+        return anyFound
     }
 
     private static func load(account: String) -> KeychainRead {
@@ -188,6 +232,9 @@ final class CompanionMacIdentity: NSObject {
         cacheLock.lock()
         cache.updateValue(key, forKey: account)
         cacheLock.unlock()
+        // Material now exists (a keypair, the paired phone key, a room or push
+        // secret), so the next launch should prime rather than skip.
+        setKeychainMayHaveMaterial(true)
     }
 
     private static func delete(account: String) {

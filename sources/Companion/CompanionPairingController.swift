@@ -684,9 +684,24 @@ final class CompanionPairingController: NSObject {
         // keychain prompt while the user is away. (The nonce list is its own
         // keychain item, read lazily on first push without this.) All are
         // idempotent, so reconnect-driven calls are no-ops.
-        CompanionMacIdentity.primeCacheAtLaunch()
-        CompanionPushRegistry.loadSecretAtLaunch()
-        CompanionPushNonceRegistry.shared.primeAtLaunch()
+        //
+        // Gated on evidence companion is or was paired: a live pairing (pairedPID)
+        // or the keychain's own "has material" hint. A never-paired install skips
+        // this whole block, so it never plants or rewrites the push-nonce keychain
+        // item - which pops a code-signature confirmation prompt for anyone who
+        // alternates differently-signed builds (a notarized nightly and an ad-hoc
+        // self-build) - for a feature it never enabled. The hint is ONLY a launch
+        // optimization: the on-demand connect/push reads elsewhere are NOT gated by
+        // it, so a stale-false hint can never prevent a genuinely-needed keychain
+        // read, and primeCacheAtLaunch reconciles the hint from ground truth (true
+        // if it finds material, false if the keychain is genuinely empty).
+        if hasPairedDevice || CompanionMacIdentity.keychainMayHaveMaterial {
+            CompanionMacIdentity.primeCacheAtLaunch()
+            CompanionPushRegistry.loadSecretAtLaunch()
+            CompanionPushNonceRegistry.shared.primeAtLaunch()
+        } else {
+            relayLog("resume: skipping keychain prime (no pairing and no material hint)")
+        }
         // Watch the broker so a completed agent turn (or a permission request)
         // can nudge an away phone. Idempotent; gated so it does nothing unless
         // paired, away, and notifications are authorized.
