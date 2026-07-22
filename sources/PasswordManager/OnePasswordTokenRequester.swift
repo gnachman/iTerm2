@@ -212,7 +212,9 @@ class OnePasswordAccountPicker {
         }
         let decoder = JSONDecoder()
         guard let accounts = try? decoder.decode([Account].self, from: output.stdout) else {
-            RLog("Failed to parse \(output)")
+            // output's debug description dumps stdout/stderr, which here is the 1Password
+            // account list (emails, sign-in URLs). Keep it out of the ring (byte count only).
+            RLog("Failed to parse account list: \(redacted: output, or: "byteCount=\(output.stdout.count)")")
             completion(.failure(OnePasswordDataSource.OPError.unexpectedError))
             return
         }

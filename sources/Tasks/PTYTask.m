@@ -263,8 +263,11 @@ static void HandleSigChld(int n) {
       maybeScaleFactor:(CGFloat)maybeScaleFactor
                 isUTF8:(BOOL)isUTF8
             completion:(void (^)(void))completion {
+    // Keep argv and env out of the always-on ring (argv can carry passwords, env
+    // can carry exported secrets); the opt-in debug log still gets the full values.
     RLog(@"launchWithPath:%@ args:%@ env:%@ grisSize:%@ isUTF8:%@",
-         progpath, args, env, VT100GridSizeDescription(gridSize), @(isUTF8));
+         progpath, RLogRedact(args, @(args.count)), RLogRedact(env, @(env.count)),
+         VT100GridSizeDescription(gridSize), @(isUTF8));
 
     if ([iTermAdvancedSettingsModel runJobsInServers] && ![iTermMultiServerJobManager available]) {
         // We want to run

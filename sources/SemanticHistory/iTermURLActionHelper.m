@@ -264,7 +264,9 @@
    inBackground:(BOOL)background
 workingDirectory:(NSString *)workingDirectory
           style:(iTermOpenStyle)style {
-    RLog(@"openURL:%@ inBackground:%@", url, @(background));
+    // The URL can embed credentials in its userinfo (user:password@host); redact it
+    // for the ring while leaving the opt-in debug log complete.
+    RLog(@"openURL:%@ inBackground:%@", RLogRedact(url, url.it_redactedDescription), @(background));
 
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
     if (profile) {

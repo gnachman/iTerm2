@@ -207,7 +207,9 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     NSMenu *contextMenu = [self menuAtCoord:coord];
 
     id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
-    RLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark firstLineOfCommand]);
+    // The mark's first line is a command line the user ran, and -[mark description]
+    // embeds it too, so redact both the mark and the command argument.
+    RLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, RLogRedact(mark, mark.redactedDescription), RLogRedact([mark firstLineOfCommand], @([mark firstLineOfCommand].length)));
     [self addFoldUnfoldMenuItemForLine:y contextMenu:contextMenu];
     if (mark.name) {
         NSMenuItem *nameItem = [[NSMenuItem alloc] initWithTitle:mark.name action:nil keyEquivalent:@""];
@@ -982,7 +984,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)removeNamedMark:(id)sender {
     id<VT100ScreenMarkReading> mark = [sender representedObject];
-    RLog(@"Remove named mark %@", mark);
+    RLog(@"Remove named mark %@", RLogRedact(mark, mark.redactedDescription));
     if (mark.name) {
         [_delegate contextMenu:self removeNamedMark:mark];
     }
@@ -990,7 +992,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)revealCommandInfo:(id)sender {
     id<VT100ScreenMarkReading> mark = [sender representedObject];
-    RLog(@"Reveal command info %@", mark);
+    RLog(@"Reveal command info %@", RLogRedact(mark, mark.redactedDescription));
     if (!mark || ![mark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
         DLog(@"Bogus");
         return;

@@ -898,7 +898,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
                            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-                RLog(@"ssh login-shell wrapped command=%@, wrappedCommand=%@", command, wrappedCommand);
+                RLog(@"ssh login-shell wrapped command=%@, wrappedCommand=%@", RLogRedact(command, @(command.length)), RLogRedact(wrappedCommand, @(wrappedCommand.length)));
             } else if (custom && [bookmark[KEY_RUN_COMMAND_IN_LOGIN_SHELL] boolValue]) {
                 // Wrap the user's command in their login shell so dotfiles (.zshrc/.bashrc/etc.)
                 // run first and the command sees the user's $PATH and exported environment.
@@ -911,7 +911,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
                            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-                RLog(@"login-shell wrapped command=%@", command);
+                RLog(@"login-shell wrapped command=%@", RLogRedact(command, @(command.length)));
             }
             return command;
         }

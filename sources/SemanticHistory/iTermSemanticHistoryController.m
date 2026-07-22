@@ -776,7 +776,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
           window:(NSWindow *)window
       completion:(void (^)(BOOL))completion {
     RLog(@"openPath:%@ rawFileName:%@ substitutions:%@ lineNumber:%@ columnNumber:%@",
-         cleanedUpPath, rawFileName, substitutions, lineNumber, columnNumber);
+         cleanedUpPath, rawFileName, RLogRedact(substitutions, @(substitutions.count)), lineNumber, columnNumber);
 
     NSString *path;
     BOOL isRawAction = [[self action] isEqualToString:kSemanticHistoryRawCommandAction];

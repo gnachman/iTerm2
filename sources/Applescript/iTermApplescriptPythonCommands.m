@@ -67,7 +67,8 @@
 }
 
 - (void)launchPythonScript:(NSString *)script arguments:(NSArray<NSString *> *)arguments {
-    RLog(@"script=%@ arguments=%@", script, arguments);
+    // arguments are user-supplied and passed to a launched script; keep them out of the ring.
+    RLog(@"script=%@ arguments=%@", script, RLogRedact(arguments, @(arguments.count)));
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         DLog(@"Not homeDirectoryDotDir");
         return;

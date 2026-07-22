@@ -1032,7 +1032,7 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
                                                               title: pageContent.title,
                                                               content: pageContent.content)
             } else {
-                RLog("Shouldn't be possible but no page content for \((browserManager.webView?.url).d)")
+                RLog("Shouldn't be possible but no page content for \(redacted: browserManager.webView?.url?.absoluteString ?? "nil", or: browserManager.webView?.url?.it_redactedDescription ?? "nil")")
             }
         }
     }

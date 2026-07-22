@@ -29,8 +29,10 @@ static NSMutableDictionary *gPinnedMessages;
 // Retrospective log: a single, byte-bounded ring of recent RLog lines
 // retained while debug logging is OFF, so a low-frequency event's lead-up
 // is captured even though nobody enabled logging ahead of time. Guarded by
-// GetDebugLogLock(). Snapshotted into the debug-log header when logging
-// starts (see iTermDebugLogHeaderString).
+// GetDebugLogLock(). Deliberately NOT included in ordinary debug logs: the
+// user never opted into capturing it, and folding it in would surface lines
+// from before they turned logging on. It is surfaced only by the explicit
+// Save Retrospective Debug Logs action (via iTermRetrospectiveLogString).
 static NSMutableArray<NSString *> *gRetrospectiveLog;
 static NSUInteger gRetrospectiveLogBytes;
 static const NSUInteger kRetrospectiveLogMaxBytes = 10 * 1024 * 1024;
@@ -237,6 +239,51 @@ void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
     [GetDebugLogLock() unlock];
 }
 
+// Defense in depth for the always-on ring: even though callers are expected to
+// avoid logging typed characters (see -[NSEvent it_redactedDescription]), a
+// stray RLog(@"…%@", event) would otherwise reintroduce chars="…"/unmodchars="…"
+// into a buffer the user never opted into. Scrub those values on the way in so a
+// future regression cannot silently leak keystrokes. This only runs on the
+// debug-logging-off path; when logging is on the caller opted in and we don't
+// touch the value.
+static NSString *iTermScrubRetrospectiveValue(NSString *value) {
+    if ([value rangeOfString:@"chars=\""].location == NSNotFound) {
+        // Fast path: the vast majority of RLog lines never mention an NSEvent.
+        return value;
+    }
+    static NSRegularExpression *regex;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Matches chars="…" and unmodchars="…" as emitted by -[NSEvent description].
+        regex = [NSRegularExpression regularExpressionWithPattern:@"(unmodchars|chars)=\"[^\"]*\""
+                                                          options:0
+                                                            error:nil];
+    });
+    return [regex stringByReplacingMatchesInString:value
+                                           options:0
+                                             range:NSMakeRange(0, value.length)
+                                      withTemplate:@"$1=\"[redacted]\""];
+}
+
+@interface iTermRedactedLogValue : NSObject
+@property (nonatomic, strong) id full;
+@property (nonatomic, strong) id redacted;
+@end
+
+@implementation iTermRedactedLogValue
+- (NSString *)description {
+    id value = gDebugLogging ? _full : _redacted;
+    return [value description] ?: @"(null)";
+}
+@end
+
+NSObject *RLogRedact(id full, id redacted) {
+    iTermRedactedLogValue *result = [[iTermRedactedLogValue alloc] init];
+    result.full = full;
+    result.redacted = redacted;
+    return result;
+}
+
 void RetrospectiveLogImpl(const char *file, int line, const char *function, NSString *value) {
     // When debug logging is on, behave exactly like DLog: the message lands
     // in the live debug log and we keep nothing extra in the ring.
@@ -244,6 +291,7 @@ void RetrospectiveLogImpl(const char *file, int line, const char *function, NSSt
         DebugLogImpl(file, line, function, value);
         return;
     }
+    value = iTermScrubRetrospectiveValue(value);
 
     struct timeval tv;
     gettimeofday(&tv, NULL);

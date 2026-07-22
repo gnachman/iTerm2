@@ -3318,14 +3318,16 @@ ITERM_WEAKLY_REFERENCEABLE
      fromArrangement:(BOOL)fromArrangement
 webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
           completion:(void (^)(BOOL))completion {
+    // command can be a user-configured command line, environment can carry exported
+    // secrets, and substitutions can carry user values; keep them out of the ring.
     RLog(@"startProgram:%@ ssh:%@ browser:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
-         command,
+         RLogRedact(command, @(command.length)),
          @(ssh),
          @(browser),
-         environment,
+         RLogRedact(environment, environment.allKeys),
          customShell,
          @(isUTF8),
-         substitutions,
+         RLogRedact(substitutions, @(substitutions.count)),
          arrangementName,
          @(fromArrangement),
          self);
@@ -9273,7 +9275,8 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute {
-    RLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
+    // The coprocess command line can carry arguments/credentials; keep it out of the ring.
+    RLog(@"Launch coprocess with command %@. Mute=%@", RLogRedact(command, @(command.length)), @(mute));
     NSDictionary *env = [self environmentForNewJobFromEnvironment:self.environment
                                                     substitutions:self.substitutions
                                                       arrangement:nil
@@ -14585,7 +14588,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
 {
-    RLog(@"uploadFiles:%@ toPath:%@", localFilenames, destinationPath.path);
+    RLog(@"uploadFiles:%@ toPath:%@", RLogRedact(localFilenames, @(localFilenames.count)), RLogRedact(destinationPath.path, @(destinationPath.path.length)));
 
     SCPFile *previous = nil;
     for (NSString *file in localFilenames) {

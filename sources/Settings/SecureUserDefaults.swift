@@ -315,7 +315,9 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     func set(_ newValue: T?) throws {
-        RLog("Set \(key) to \((newValue?.sudString).d)")
+        // Keep the value out of the ring (generic path; guard against a future
+        // secret-valued key); the opt-in debug log still gets it.
+        RLog("Set \(key) to \(redacted: (newValue?.sudString).d, or: "value redacted, length=\((newValue?.sudString).d.count)")")
         cached = nil
         do {
             if let value = newValue {
@@ -582,7 +584,8 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
     }
 
     private static func store<U: SecureUserDefaultStringTranscodable>(_ key: String, value: U) throws {
-        RLog("Store \(value) to \(key)")
+        // Keep the value out of the ring (generic path; guard against a future secret-valued key).
+        RLog("Store \(redacted: value) to \(key)")
         let statement = try writeStatement(key: key, encodedValue: SecureUserDefaultValue<U>(value: value).encodedString)
         try runPrivilegedWrites(statements: [statement],
                                 keys: [key],

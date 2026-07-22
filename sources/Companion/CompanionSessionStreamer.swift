@@ -363,7 +363,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
         if blocked { statPaced += 1 }
         let statsLine = takeFlowStatsLine(now: nowSeconds)
         lock.unlock()
-        if let statsLine { RLog(statsLine) }
+        if let statsLine { RLog("\(statsLine)") }
         if exhausted {
             // Pause before the relay force-closes us for exceeding its quota.
             if !dataLimitHit {

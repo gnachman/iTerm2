@@ -12,7 +12,8 @@ struct LlamaResponseParser: LLMResponseParser {
         let decoder = JSONDecoder()
         let response = try decoder.decode(LlamaResponse<LlamaNonStreamingValue>.self,
                                           from: data)
-        RLog("RESPONSE:\n\(response)")
+        // Model reply (chat content): keep out of the always-on ring.
+        RLog("RESPONSE:\n\(redacted: response)")
         parsedResponse = response
         return response
     }
@@ -187,7 +188,8 @@ struct LlamaBodyRequestBuilder {
             tools: stream ? nil : maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
             stream: stream)
-        RLog("REQUEST:\n\(body)")
+        // Request body carries the user's prompts/messages; keep it out of the ring.
+        RLog("REQUEST:\n\(redacted: body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
         }

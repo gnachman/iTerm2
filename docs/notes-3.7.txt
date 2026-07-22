@@ -108,6 +108,12 @@ Major New Features:
   the paste. The Return now waits a moment (see
   the workgroupAutoSendSubmitDelay advanced
   setting).
+- Security: the retrospective debug log (used by
+  Save Retrospective Debug Logs) no longer retains
+  typed characters, command lines, passwords,
+  tokens, or AI chat content. These could
+  previously accumulate in memory with debug
+  logging off.
 - In AI chat orchestration mode, references
   to a session or workgroup now appear as a
   clickable link, marked with a terminal

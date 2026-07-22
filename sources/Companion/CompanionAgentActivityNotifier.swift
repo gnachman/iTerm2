@@ -102,8 +102,7 @@ final class CompanionAgentActivityNotifier {
             // query: an ignored orchestration tool call. Other ignorable deltas
             // (streaming, user messages, hidden bookkeeping) stay at DLog.
             if case .remoteCommandRequest(.external, _) = message.content {
-                RLog("CompanionAgentActivityNotifier: ignoring .external command in \(chatID) "
-                     + "(orchestration, auto-executed; not a nudge)")
+                RLog("CompanionAgentActivityNotifier: ignoring .external command in \(chatID) (orchestration, auto-executed; not a nudge)")
             } else {
                 DLog("CompanionAgentActivityNotifier: no trigger for delivery in \(chatID) "
                      + "(partial=\(partial), author=\(message.author), kind=\(Self.kind(of: message.content)))")
@@ -120,8 +119,7 @@ final class CompanionAgentActivityNotifier {
             RLog("CompanionAgentActivityNotifier: \(trigger) in \(chatID) suppressed (chat is muted)")
             return
         }
-        RLog("CompanionAgentActivityNotifier: firing \(trigger) for \(chatID) "
-             + "(kind=\(Self.kind(of: message.content)))")
+        RLog("CompanionAgentActivityNotifier: firing \(trigger) for \(chatID) (kind=\(Self.kind(of: message.content)))")
         send(trigger, chatID)
     }
 

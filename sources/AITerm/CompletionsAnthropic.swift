@@ -631,7 +631,8 @@ struct AnthropicResponseParser: LLMResponseParser {
     mutating func parse(data: Data) throws -> LLM.AnyResponse? {
         let decoder = JSONDecoder()
         let response = try decoder.decode(AnthropicResponse.self, from: data)
-        RLog("RESPONSE:\n\(response)")
+        // The response body is the model's reply (chat content); keep it out of the ring.
+        RLog("RESPONSE:\n\(redacted: response)")
         parsedResponse = response
         return response
     }

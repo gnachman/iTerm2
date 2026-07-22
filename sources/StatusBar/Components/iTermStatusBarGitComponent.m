@@ -275,7 +275,7 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
         command = [command substringFromIndex:lastSlash + 1];
     }
     if ([command isEqualToString:@"git"]) {
-        RLog(@"Bump because command %@ looks like git", wholeCommand);
+        RLog(@"Bump because command %@ looks like git", RLogRedact(wholeCommand, @(wholeCommand.length)));
         [self bump];
     }
 }

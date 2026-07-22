@@ -9194,7 +9194,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix
                                 inSession:(PTYSession *)session
                               popIfNeeded:(BOOL)popIfNeeded {
-    RLog(@"ACH prefix=%@ session=%@ popIfNeeded=%@", prefix, session, @(popIfNeeded));
+    // prefix is the partial command line the user is typing; keep it out of the ring.
+    RLog(@"ACH prefix=%@ session=%@ popIfNeeded=%@", RLogRedact(prefix, @(prefix.length)), session, @(popIfNeeded));
     if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:YES];
@@ -9202,7 +9203,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
                                                                                      partialCommand:prefix
                                                                                              expand:NO];
-        RLog(@"ACH commands=%@", commands);
+        // commands are prior shell command lines (with directories); keep them out of the ring.
+        RLog(@"ACH commands=%@", RLogRedact(commands, @(commands.count)));
         if (commands.count) {
             if (popIfNeeded) {
                 RLog(@"ACH Pop");
@@ -9235,7 +9237,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         NSArray<NSString *> *commands = [[history commandHistoryEntriesWithPrefix:prefix onHost:[session currentHost]] mapWithBlock:^id(iTermCommandHistoryEntryMO *anObject) {
             return anObject.command;
         }];
-        RLog(@"ACH Set candidates=%@", commands);
+        // candidates are shell-history command lines; keep them out of the ring.
+        RLog(@"ACH Set candidates=%@", RLogRedact(commands, @(commands.count)));
         [_autocompleteCandidateListItem setCandidates:commands ?: @[]
                                      forSelectedRange:NSMakeRange(0, prefix.length)
                                              inString:prefix];
@@ -9258,7 +9261,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
          session,
          self.currentSession,
          @(self.window.isKeyWindow),
-         session.currentCommand,
+         RLogRedact(session.currentCommand, @(session.currentCommand.length)),
          @(session.eligibleForAutoCommandHistory));
     if ([self currentSession] == session &&
         [[self window] isKeyWindow] &&

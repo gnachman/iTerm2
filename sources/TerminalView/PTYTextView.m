@@ -5088,17 +5088,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             if (filenames.count > 0) {
                 if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
                     // Option key held - upload files
-                    RLog(@"Option key held, uploading files: %@", filenames);
+                    RLog(@"Option key held, uploading files: %@", RLogRedact(filenames, @(filenames.count)));
                     NSPoint windowDropPoint = [sender draggingLocation];
                     return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
                 } else if ([self.delegate textViewIsOnLocalhost]) {
                     // On localhost, just paste the paths directly
-                    RLog(@"On localhost, pasting file paths directly: %@", filenames);
+                    RLog(@"On localhost, pasting file paths directly: %@", RLogRedact(filenames, @(filenames.count)));
                     return [self pasteValuesOnPasteboard:draggingPasteboard
                                            cdToDirectory:(dragOperation == NSDragOperationGeneric)];
                 } else {
                     // On remote host, show paste options dialog
-                    RLog(@"On remote host, showing paste options for dropped files: %@", filenames);
+                    RLog(@"On remote host, showing paste options for dropped files: %@", RLogRedact(filenames, @(filenames.count)));
                     [self.delegate textViewShowPasteOptionsForDroppedFiles:filenames];
                     return YES;
                 }

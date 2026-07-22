@@ -322,7 +322,9 @@ extension PTYSession {
     }
 
     func execute(_ command: RemoteCommand, completion: @escaping (String, String) throws -> ()) throws {
-        RLog("\(command)")
+        // Keep the payload (a shell command string or arbitrary file contents) out of
+        // the ring; the opt-in debug log still gets the whole command.
+        RLog("execute remote command \(redacted: command, or: command.content.functionName)")
         cancelRemoteCommand()
         switch command.content {
         case .isAtPrompt(let isAtPrompt):
@@ -891,7 +893,7 @@ extension PTYSession {
 
         do {
             try process.run()
-            RLog("Session \(self) running \(command)")
+            RLog("Session \(self) running \(redacted: command, or: "len=\(command.count)")")
             pipe.fileHandleForReading.readabilityHandler = { [weak pipe] handle in
                 let data = handle.availableData
                 if data.count == 0 {

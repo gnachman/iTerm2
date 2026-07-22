@@ -267,7 +267,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return nil;
     }
     event = [NSEvent eventWithCGEvent:maybeRemappedCGEvent];
-    RLog(@"Remapped modifiers to %@", event);
+    RLog(@"Remapped modifiers to %@", RLogRedact(event, event.it_redactedDescription));
     return event;
 }
 
@@ -738,7 +738,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (BOOL)handleKeyDownEvent:(NSEvent *)event {
-    RLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
+    RLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", RLogRedact(event, event.it_redactedDescription), [self keyWindow], [[self keyWindow] firstResponder]);
     if ((event.modifierFlags & (NSEventModifierFlags)iTermLeaderModifierFlag)) {
         RLog(@"Leader flag set");
     }
@@ -876,7 +876,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 #if DEBUG
             [iTermKeyEventRecorder.instance record:event];
 #endif
-            RLog(@"Key up: %@", event);
+            RLog(@"Key up: %@", RLogRedact(event, event.it_redactedDescription));
             event.it_functionModifierPressed = _functionPressed;
             event = [self eventByRemappingForSecureInput:event];
             if (_leader) {

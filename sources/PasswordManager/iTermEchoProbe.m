@@ -91,7 +91,9 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
             const iTermEchoProbeState previousState = _state;
             _state = iTermEchoProbeGetNextState(_state, token);
             if (_state != previousState) {
-                RLog(@"%@ went %@->%@ because of token %@", self, @(previousState), @(_state), token);
+                // The token's description embeds its string/ASCII payload, which on
+                // the password-probe path can be the echoed password. Log the type only.
+                RLog(@"%@ went %@->%@ because of token type %@", self, @(previousState), @(_state), @(token.type));
             }
             if (_state == iTermEchoProbeOff || _state == iTermEchoProbeFailed) {
                 break;

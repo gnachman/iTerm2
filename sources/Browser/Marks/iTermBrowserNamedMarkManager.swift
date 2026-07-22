@@ -59,7 +59,9 @@ extension iTermBrowserNamedMarkManager {
         init?(_ url: URL) {
             guard let fragment = url.fragment,
                   fragment.hasPrefix("iterm-mark:") else {
-                RLog("Invalid mark fragment: \(url.fragment ?? "nil")")
+                // A non-iterm fragment can be an OAuth token (#access_token=…); keep it
+                // out of the ring, logging only presence and length there.
+                RLog("Invalid mark fragment: \(redacted: url.fragment ?? "nil", or: "present=\(url.fragment != nil) length=\(url.fragment?.count ?? 0)")")
                 return nil
             }
 
@@ -219,7 +221,7 @@ extension iTermBrowserNamedMarkManager {
             // Set up layout change monitoring
             jsSetupLayoutChangeMonitoring(webView: webView)
         } else {
-            RLog("Navigation failed for \(webView.url.d) with pending mark \((pendingNavigationMark?.guid).d)")
+            RLog("Navigation failed for \(redacted: webView.url?.absoluteString ?? "nil", or: webView.url?.it_redactedDescription ?? "nil") with pending mark \((pendingNavigationMark?.guid).d)")
         }
     }
 
@@ -320,7 +322,7 @@ private extension iTermBrowserNamedMarkManager {
         }
 
         guard let location = Location(mark.url) else {
-            RLog("Invalid URL: \(mark.url)")
+            RLog("Invalid URL: \(redacted: mark.url, or: mark.url.it_redactedDescription)")
             return
         }
 
@@ -540,7 +542,7 @@ private extension iTermBrowserNamedMarkManager {
 
         let guid = UUID().uuidString
         let success = await db.addNamedMark(guid: guid, url: markURL.absoluteString, name: name, text: "")
-        RLog("Database add result: \(success) for mark '\(name)' with URL: \(markURL.absoluteString)")
+        RLog("Database add result: \(success) for mark '\(name)' with URL: \(redacted: markURL.absoluteString, or: markURL.it_redactedDescription)")
 
         if !success {
             throw iTermError("Failed to save named mark to database")

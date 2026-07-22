@@ -375,7 +375,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
      RLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ pythonVersion:%@ explicitUserAction:%@",
           filename,
           fullPath,
-          arguments,
+          RLogRedact(arguments, @(arguments.count)),
           virtualenv,
           pythonVersion,
           @(explicitUserAction));

@@ -593,7 +593,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)launchScriptWithAbsolutePath:(NSString *)fullPath
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
-    RLog(@"launch path=%@ args=%@", fullPath, arguments);
+    RLog(@"launch path=%@ args=%@", fullPath, RLogRedact(arguments, @(arguments.count)));
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath
                                                      checkForMain:YES
                                                     checkForSaved:YES];

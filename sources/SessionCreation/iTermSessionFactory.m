@@ -40,6 +40,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, readonly) NSString *name;
 @property (nullable, nonatomic, readonly) NSString *workingDirectory;
 @property (nullable, nonatomic, readonly) NSString *customWorkingDirectory;
+// Like -description but with secrets/private data omitted, for the always-on ring.
+- (NSString *)redactedDescription;
 @end
 
 @implementation iTermSessionAttachOrLaunchRequest
@@ -119,6 +121,20 @@ NS_ASSUME_NONNULL_BEGIN
             @(self.isUTF8),
             self.substitutions,
             self.windowController];
+}
+
+// -description includes the command line, environment, substitutions, URL, and
+// working directory, all of which can carry secrets or private data. Use this
+// for the always-on retrospective ring (RLog); keep -description for opt-in DLog.
+- (NSString *)redactedDescription {
+    return [NSString stringWithFormat:@"<%@: %p session=%@ canPrompt=%@ objectType=%@ serverConnection=%@ isUTF8=%@ command/env/url/cwd/substitutions=[redacted]>",
+            NSStringFromClass(self.class),
+            self,
+            self.session,
+            @(self.canPrompt),
+            @(self.objectType),
+            self.hasServerConnection ? @(self.xx_serverConnection.type) : @"none",
+            @(self.isUTF8)];
 }
 
 - (void)realizeWithCompletion:(void (^)(BOOL realized))completion {
@@ -363,7 +379,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)attachOrLaunchWithRequest:(iTermSessionAttachOrLaunchRequest *)request {
     request.delegate = self;
-    RLog(@"attachOrLaunchWithRequest:%@", request);
+    RLog(@"attachOrLaunchWithRequest:%@", RLogRedact(request, request.redactedDescription));
     [request realizeWithCompletion:^(BOOL realized) {
         if (!realized) {
             RLog(@"Realization failed");

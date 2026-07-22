@@ -215,7 +215,9 @@ class CommandLinePasswordDataSource: NSObject {
             var _error: Error? = nil
             let group = DispatchGroup()
             group.enter()
-            RLog("Execute: \(command) \(args) with environment keys \(Array(env.keys.map { String($0) }))")
+            // args can carry the account/login username; keep them out of the ring
+            // (subcommand and count only), while the opt-in debug log gets the full args.
+            RLog("Execute: \(command) args=\(redacted: args, or: "[subcommand=\(args.first ?? "") argCount=\(args.count)]") with environment keys \(Array(env.keys.map { String($0) }))")
             execAsync { output, error in
                 _output = output
                 _error = error
@@ -429,7 +431,7 @@ class CommandLinePasswordDataSource: NSObject {
         private func waitInBackground() {
             DispatchQueue.global().async {
                 self.process.waitUntilExit()
-                RLog("\(self.request.command) \(self.request.args) terminated status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
+                RLog("\(self.request.command) args=\(redacted: self.request.args, or: "[subcommand=\(self.request.args.first ?? "") argCount=\(self.request.args.count)]") terminated status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
                 self.log("TERMINATED status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
                 self.queue.enqueue(.terminated(self.process.terminationStatus,
                                                self.process.terminationReason))

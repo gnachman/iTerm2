@@ -3098,7 +3098,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         command = @"";
     }
     RLog(@"FinalTerm: Command <<%@>> ended with range %@",
-         command, VT100GridCoordRangeDescription(range));
+         RLogRedact(command, @(command.length)), VT100GridCoordRangeDescription(range));
 
     if (command) {
         NSString *trimmedCommand =
@@ -3124,7 +3124,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     ? [command substringToIndex:firstNewline.location]
                     : command;
                 RLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
-                     self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
+                     self.lastPromptLine - self.cumulativeScrollbackOverflow,
+                     RLogRedact(mark, mark.redactedDescription),
+                     RLogRedact(command, @(command.length)));
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
                     VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                     mark.firstLineOfCommand = firstLine;
@@ -6595,7 +6597,7 @@ lengthExcludingInBandSignaling:data.length
 
 - (void)markDidBecomeCommandMark:(id<VT100ScreenMarkReading>)mark {
     [self assertOnMutationThread];
-    RLog(@"mark %@ became command mark", mark);
+    RLog(@"mark %@ became command mark", RLogRedact(mark, mark.redactedDescription));
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
         DLog(@"Set last command mark to %@", mark);
         self.lastCommandMark = mark;

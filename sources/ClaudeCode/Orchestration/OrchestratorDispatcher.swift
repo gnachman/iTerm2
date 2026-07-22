@@ -2544,8 +2544,7 @@ final class OrchestratorDispatcher {
         // if it already exists from a prior start_code_review on this role).
         armScreenEscalation(for: watcher)
 
-        RLog("[Orchestrator \(chatID)] Code Review started for \(resolved.roleName) "
-             + "in \(resolved.workgroupName) using \(promptLabel); watcher \(watcher.watcherID)")
+        RLog("[Orchestrator \(chatID)] Code Review started for \(resolved.roleName) in \(resolved.workgroupName) using \(promptLabel); watcher \(watcher.watcherID)")
 
         return .watcherRegistered(Self.description(of: watcher))
     }

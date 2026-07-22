@@ -33,8 +33,62 @@ func DLogMain(_ messageBlock: @autoclosure () -> String, file: String = #file, l
 // plain String, not an @autoclosure: unlike DLog it is always evaluated (that is
 // how it captures retrospectively), so the non-deferred parameter makes the cost
 // explicit. Only use it for low-frequency call sites with cheap arguments.
-func RLog(_ message: String, file: String = #file, line: Int = #line, function: String = #function) {
-    RetrospectiveLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message)
+// The message type accepted by RLog. Ordinary string literals and interpolations
+// work unchanged, but it adds a redacting interpolation:
+//
+//   RLog("open \(redacted: url, or: url.it_redactedDescription)")
+//
+// `redacted:` resolves to the full value when debug logging is on (RLog feeds the
+// opt-in debug log then, which should stay complete) and to the `or:` placeholder
+// when off (the message is bound only for the always-on retrospective ring, which
+// must not accumulate private data). Only the chosen branch is evaluated, so an
+// expensive full value is never stringified on the ring path. This removes the
+// need to pair an RLog breadcrumb with a separate DLog carrying the full value.
+struct RLogMessage: ExpressibleByStringInterpolation {
+    let rendered: String
+
+    init(stringLiteral value: String) {
+        rendered = value
+    }
+
+    init(stringInterpolation: StringInterpolation) {
+        rendered = stringInterpolation.output
+    }
+
+    struct StringInterpolation: StringInterpolationProtocol {
+        var output = ""
+
+        init(literalCapacity: Int, interpolationCount: Int) {
+            output.reserveCapacity(literalCapacity)
+        }
+
+        mutating func appendLiteral(_ literal: String) {
+            output += literal
+        }
+
+        mutating func appendInterpolation<T>(_ value: T) {
+            output += String(describing: value)
+        }
+
+        mutating func appendInterpolation(redacted full: @autoclosure () -> Any,
+                                          or placeholder: @autoclosure () -> Any = "[redacted]") {
+            output += gDebugLogging.boolValue ? "\(full())" : "\(placeholder())"
+        }
+    }
+}
+
+func RLog(_ message: RLogMessage, file: String = #file, line: Int = #line, function: String = #function) {
+    RetrospectiveLogImpl(file.cString(using: .utf8)!, Int32(line), function.cString(using: .utf8)!, message.rendered)
+}
+
+// A returnable redactable, for the case a helper needs to hand back a value that
+// redacts itself when interpolated (the inline `\(redacted:)` form above can't be
+// returned from a function). Same rule: full when debug logging is on, redacted
+// when off. Prefer `\(redacted:)` at the call site; use this only for helpers.
+struct RLogRedacted: CustomStringConvertible {
+    let full: Any
+    let redacted: Any
+    var description: String { gDebugLogging.boolValue ? "\(full)" : "\(redacted)" }
 }
 
 func XLog(_ messageBlock: @autoclosure () -> String, file: String = #file, line: Int = #line, function: String = #function) {

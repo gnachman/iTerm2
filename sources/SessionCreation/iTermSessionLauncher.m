@@ -18,6 +18,7 @@
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSURL+iTerm.h"
 #import "ProfileModel.h"
 #import "PTYSession.h"
 #import "PseudoTerminal.h"
@@ -300,7 +301,8 @@
 - (void)makeSessionByURLWithProfile:(Profile *)profile
                    windowController:(PseudoTerminal *)windowController
                          completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
-    RLog(@"Creating a new session by URL: %@", _url);
+    // _url can be an ssh:// URL embedding user:password@host; redact it for the ring.
+    RLog(@"Creating a new session by URL: %@", RLogRedact(_url, [[NSURL URLWithString:_url] it_redactedDescription] ?: @"(redacted)"));
     PTYSession *session = [windowController.sessionFactory newSessionWithProfile:profile
                                                                           parent:nil];
     session.browserTarget = self.browserTarget;
@@ -558,7 +560,7 @@
 }
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
-    RLog(@"modify profile to ssh to %@", url);
+    RLog(@"modify profile to ssh to %@", RLogRedact(url, url.it_redactedDescription));
     NSMutableString *tempString = [NSMutableString string];
     const BOOL useSSHIntegration = [iTermPreferences boolForKey:kPreferenceKeySshIntegrationForURLs];
     BOOL forceLoginShell = NO;
@@ -622,7 +624,8 @@
             [tempString appendFormat:@" \"cd %@; exec \\$SHELL -l\"", [path stringWithEscapedShellCharactersIncludingNewlines:YES]];
         }
     }
-    RLog(@"Use command line: %@", tempString);
+    // tempString is a constructed ssh command line (host, user, port, remote cd path); redact it.
+    RLog(@"Use command line: %@", RLogRedact(tempString, @(tempString.length)));
     if (useSSHIntegration) {
         return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
                                                            KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue }];

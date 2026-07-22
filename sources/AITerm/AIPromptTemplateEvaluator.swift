@@ -62,7 +62,7 @@ enum AIPromptTemplateEvaluator {
                 // These templates are user-editable in Settings; a syntax
                 // error (e.g. an unclosed interpolation) must be
                 // diagnosable, not silently turn the feature off.
-                RLog("AI prompt template evaluation failed: \(String(describing: evaluator.error)); template: \(template)")
+                RLog("AI prompt template evaluation failed: \(String(describing: evaluator.error)); template: \(redacted: template, or: "len=\(template.count)")")
             }
             withExtendedLifetime(owner) {
                 completion(evaluator.value as? String)

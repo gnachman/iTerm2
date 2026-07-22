@@ -35,7 +35,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
      destination:(NSString *)destination
    callbackQueue:(dispatch_queue_t)callbackQueue
       completion:(void (^)(NSError *))completion {
-    RLog(@"zipURL=%@ arguments=%@ destination=%@", zipURL, arguments, destination);
+    RLog(@"zipURL=%@ arguments=%@ destination=%@", zipURL, RLogRedact(arguments, @(arguments.count)), destination);
     
     NSArray<NSString *> *fullArgs = [arguments arrayByAddingObject:zipURL.path];
     iTermCommandRunner *runner = [[self alloc] initWithCommand:@"/usr/bin/unzip"
@@ -95,7 +95,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         DLog(@"%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
         completion();
     };
-    RLog(@"Running %@ %@", runner.command, [runner.arguments componentsJoinedByString:@" "]);
+    RLog(@"Running %@ %@", runner.command, RLogRedact([runner.arguments componentsJoinedByString:@" "], @(runner.arguments.count)));
     [runner run];
 }
 
@@ -200,7 +200,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         DLog(@"Launched %@", self);
     } @catch (NSException *e) {
         NSLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
-        RLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, _task.arguments);
+        RLog(@"Task failed with %@. launchPath=%@, pwd=%@, args=%@", e, _task.launchPath, _task.currentDirectoryPath, RLogRedact(_task.arguments, @(_task.arguments.count)));
         if (self.completion) {
             dispatch_async(_callbackQueue, ^{
                 self.completion(-1);
@@ -339,7 +339,7 @@ static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
     [[iTermBufferedCommandRunner alloc] initWithCommand:path
                                           withArguments:arguments
                                                    path:[[NSFileManager defaultManager] currentDirectoryPath]];
-    RLog(@"Launch %@ %@ in runner %@", path, arguments, runner);
+    RLog(@"Launch %@ %@ in runner %@", path, RLogRedact(arguments, @(arguments.count)), runner);
     runner.maximumOutputSize = @(1024 * 10);
     __weak __typeof(runner) weakRunner = runner;
     runner.completion = ^(int status) {

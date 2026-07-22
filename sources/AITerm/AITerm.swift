@@ -1199,11 +1199,21 @@ class AITermController {
             // (or otherwise propagate `message.reasoningContent`) from here.
             amended.append(messageForCall)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
-                RLog("Invoke function with arguments \(functionCall.arguments ?? "")")
+                let functionName = functionCall.name ?? "?"
+                // Arguments can carry a shell command or other user data; keep them out
+                // of the ring while the opt-in debug log still gets them.
+                RLog("Invoke function \(functionName) with arguments \(redacted: functionCall.arguments ?? "")")
                 delegate?.aitermController(self, willInvokeFunction: impl)
                 impl.invoke(message: messageForCall,
                             json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
-                    RLog("result of function call is \(result)")
+                    // The result is terminal content fed back to the model; keep it out
+                    // of the ring while the opt-in debug log still gets it.
+                    let outcome: String
+                    switch result {
+                    case .success: outcome = "success"
+                    case .failure: outcome = "failure"
+                    }
+                    RLog("function call \(functionName) completed: \(outcome). Result: \(redacted: result)")
                     guard let self else {
                         DLog("I have been released")
                         return

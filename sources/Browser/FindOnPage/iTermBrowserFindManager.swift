@@ -196,7 +196,8 @@ class iTermBrowserFindManager: NSObject {
             do {
                 let raw = try await webView.safelyCallAsyncJavaScript(script, contentWorld: world)
                 guard let dict = raw as? [String: Double] else {
-                    RLog("Bad result: \(String(describing: raw)) in \(script)")
+                    // `script` embeds the per-session JS bridge secret; keep it out of the ring.
+                    RLog("Bad result: \(String(describing: raw)) in \(redacted: script, or: "script redacted")")
                     throw InvalidResponseError()
                 }
                 guard let x = dict["x"],

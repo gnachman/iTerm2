@@ -118,6 +118,15 @@ void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
     RetrospectiveLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args])
 #endif
 
+// For use as an RLog format argument. Resolves to `full` when debug logging is
+// enabled and `redacted` when it is not. RLog feeds the live debug log when the
+// user has opted into debug logging and the always-on retrospective ring
+// otherwise; this lets a value be complete in the opt-in log but redacted in the
+// ring (which must not accumulate private data). Both arguments are evaluated
+// eagerly, so keep them cheap. Example:
+//   RLog(@"Key up: %@", RLogRedact(event, event.it_redactedDescription));
+NSObject *RLogRedact(id full, id redacted);
+
 #define ITAssert(condition) \
   do { \
     if (!(condition)) { \

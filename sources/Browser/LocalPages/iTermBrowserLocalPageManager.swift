@@ -149,7 +149,7 @@ class iTermBrowserLocalPageManager: NSObject {
         guard currentURL.absoluteString == messageURL,
               let webViewURL = webView.url?.absoluteString,
               webViewURL == messageURL else {
-            RLog("Message from wrong URL: webView=\(webView.url?.absoluteString ?? "nil"), currentURL=\(currentURL.absoluteString), message=\(messageURL)")
+            RLog("Message from wrong URL: webView=\(redacted: webView.url?.absoluteString ?? "nil", or: webView.url?.it_redactedDescription ?? "nil"), currentURL=\(redacted: currentURL.absoluteString, or: currentURL.it_redactedDescription), message=\(messageURL)")
             return false
         }
         

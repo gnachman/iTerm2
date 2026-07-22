@@ -540,6 +540,20 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
             self.isDoppelganger ? @"IsDop" : @"NotDop"];
 }
 
+- (NSString *)redactedDescription {
+    // Like -description but with the command line replaced by its length, so a
+    // mark logged with %@ does not leak the command into the always-on ring.
+    return [NSString stringWithFormat:@"<%@: %p guid=%@ lineStyle=%@ name=%@ command=[redacted len=%@] name=%@ %@>",
+            NSStringFromClass([self class]),
+            self,
+            self.guid,
+            @(_lineStyle),
+            _name,
+            @(_firstLineOfCommand.length),
+            _name,
+            self.isDoppelganger ? @"IsDop" : @"NotDop"];
+}
+
 - (NSInteger)namedMarkSort {
     return self.entry.interval.location;
 }
@@ -659,7 +673,9 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 }
 
 - (void)setFirstLineOfCommand:(NSString *)command {
-    RLog(@"Set firstLineOfCommand of %@ to %@", self.guid, command);
+    // This fires for every command the user runs under shell integration; keep the
+    // command line out of the always-on ring (the opt-in debug log still gets it).
+    RLog(@"Set firstLineOfCommand of %@ to %@", self.guid, RLogRedact(command, @(command.length)));
     if (!_firstLineOfCommand) {
         // Mark just became a command mark; notify exactly once. The
         // fullCommand setter doesn't re-fire because both fields are
@@ -672,7 +688,8 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
 }
 
 - (void)setFullCommand:(NSString *)command {
-    RLog(@"Set fullCommand of %@ to %@", self.guid, command);
+    // Fires for every command under shell integration; keep it out of the ring.
+    RLog(@"Set fullCommand of %@ to %@", self.guid, RLogRedact(command, @(command.length)));
     _fullCommand = [command copy];
 }
 

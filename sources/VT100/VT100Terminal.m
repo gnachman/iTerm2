@@ -2700,7 +2700,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     if (token.sshInfo.valid) {
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:token.sshInfo.depth];
                     } else {
-                        RLog(@"Invalid SSH info for framer wrapper. Begin recovery. Token is %@", token);
+                        // The token description can embed the wrapped conductor payload; log the type only in the ring.
+                        RLog(@"Invalid SSH info for framer wrapper. Begin recovery. Token is %@", RLogRedact(token, @(token.type)));
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:-1];
                     }
                     break;

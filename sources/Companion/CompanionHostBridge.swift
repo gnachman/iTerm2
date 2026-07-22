@@ -1855,8 +1855,7 @@ final class CompanionHostBridge {
     private func chatEntries() -> [CompanionChatListEntry] {
         guard let model = ChatListModel.instance else { return [] }
         let mutedIDs = CompanionChatMuteRegistry.mutedChatIDs
-        RLog("Companion bridge: chat list (\(model.count) chat(s); muted: "
-             + (mutedIDs.isEmpty ? "none" : mutedIDs.sorted().joined(separator: ", ")) + ")")
+        RLog("Companion bridge: chat list (\(model.count) chat(s); muted: \(mutedIDs.isEmpty ? "none" : mutedIDs.sorted().joined(separator: ", ")))")
         var result = [CompanionChatListEntry]()
         for index in 0..<model.count {
             let chat = model.chat(at: index)

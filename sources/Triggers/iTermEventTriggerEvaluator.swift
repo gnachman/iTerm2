@@ -285,7 +285,7 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when a command finishes
     @objc func commandFinished(info: EventCommandFinishedInfo) {
-        RLog("[\(sessionDescription)] Command finished: exitCode=\(info.exitCode) command=\(info.command ?? "(nil)") duration=\(info.duration)")
+        RLog("[\(sessionDescription)] Command finished: exitCode=\(info.exitCode) command=\(redacted: info.command ?? "(nil)", or: "len=\((info.command ?? "").count)") duration=\(info.duration)")
         // Stop all long-running timers since command finished
         for (_, timer) in longRunningTimers {
             timer.invalidate()
@@ -418,7 +418,7 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when a command starts
     @objc func commandStarted(command: String?) {
-        RLog("[\(sessionDescription)] Command started: \(command ?? "(nil)")")
+        RLog("[\(sessionDescription)] Command started: \(redacted: command ?? "(nil)", or: "len=\((command ?? "").count)")")
         commandStartTime = Date()
         currentCommand = command
 
@@ -675,7 +675,7 @@ class EventTriggerEvaluator: NSObject {
 
         let elapsed = commandStartTime.map { -$0.timeIntervalSinceNow } ?? 0
         let command = currentCommand ?? ""
-        RLog("[\(sessionDescription)] Command '\(command)' has been running for \(Int(elapsed))s")
+        RLog("[\(sessionDescription)] Command '\(redacted: command, or: "len=\(command.count)")' has been running for \(Int(elapsed))s")
         fireTrigger(trigger, capturedStrings: [command, "\(Int(elapsed))"])
     }
 

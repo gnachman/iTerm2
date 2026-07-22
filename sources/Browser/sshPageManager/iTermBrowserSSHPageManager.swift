@@ -41,7 +41,7 @@ class iTermBrowserSSHPageManager {
 
     func handleURLSchemeTask(_ urlSchemeTask: WKURLSchemeTask, url: URL) -> Bool {
         let oid = ObjectIdentifier(urlSchemeTask)
-        RLog("\(oid): handleURLSchemeTask called with \(url)")
+        RLog("\(oid): handleURLSchemeTask called with \(redacted: url, or: url.it_redactedDescription)")
         guard url.scheme == iTermBrowserSchemes.ssh else {
             return false
         }

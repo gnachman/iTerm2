@@ -271,4 +271,24 @@ static char iTermEventFunctionPreviouslyPressedAssociatedObjectKey;
     return [[self it_associatedObjectForKey:&iTermEventFunctionPreviouslyPressedAssociatedObjectKey] boolValue];
 }
 
+- (NSString *)it_redactedDescription {
+    switch (self.type) {
+        case NSEventTypeKeyDown:
+        case NSEventTypeKeyUp:
+            // -description would include chars="…" unmodchars="…", i.e. the typed
+            // characters. Emit only the routing-relevant fields.
+            return [NSString stringWithFormat:@"<%@ type=%@ keyCode=%@ modifierFlags=0x%lx isARepeat=%@ winNum=%@ chars=[redacted]>",
+                    NSStringFromClass(self.class), @(self.type), @(self.keyCode),
+                    (unsigned long)self.modifierFlags, @(self.isARepeat), @(self.windowNumber)];
+        case NSEventTypeFlagsChanged:
+            return [NSString stringWithFormat:@"<%@ type=FlagsChanged keyCode=%@ modifierFlags=0x%lx winNum=%@>",
+                    NSStringFromClass(self.class), @(self.keyCode),
+                    (unsigned long)self.modifierFlags, @(self.windowNumber)];
+        default:
+            // Non-keyboard events (mouse, scroll, etc.) do not carry typed
+            // characters, so the default description is safe.
+            return self.description;
+    }
+}
+
 @end

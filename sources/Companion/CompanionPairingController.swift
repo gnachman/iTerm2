@@ -229,12 +229,7 @@ final class CompanionPairingController: NSObject {
     /// Log exactly which pairing pieces are present vs absent, so a half-paired
     /// state is diagnosable at a glance (pid in UserDefaults; the rest in keychain).
     func logPairingState(context: String) {
-        RLog("Companion pairing state (\(context)): pairedPID=\(pairedPID ?? "nil") "
-            + "identityKey=\(CompanionMacIdentity.hasKeyPair()) "
-            + "phoneStatic=\(CompanionMacIdentity.pairedPhoneStaticPublicKey() != nil) "
-            + "roomSecret=\(CompanionMacIdentity.pairedRoomSecret() != nil) "
-            + "pushSecret=\(CompanionMacIdentity.pairedPushSecret() != nil) "
-            + "relayConfigured=\(Self.configuredRelayOrigin() != nil)")
+        RLog("Companion pairing state (\(context)): pairedPID=\(pairedPID ?? "nil") identityKey=\(CompanionMacIdentity.hasKeyPair()) phoneStatic=\(CompanionMacIdentity.pairedPhoneStaticPublicKey() != nil) roomSecret=\(CompanionMacIdentity.pairedRoomSecret() != nil) pushSecret=\(CompanionMacIdentity.pairedPushSecret() != nil) relayConfigured=\(Self.configuredRelayOrigin() != nil)")
     }
 
     /// Called once at app launch (alongside promptToRepairAfterRelayMoveIfNeeded).
@@ -1168,9 +1163,7 @@ final class CompanionPairingController: NSObject {
         // RLog (retrospective): the park / re-park / admission lifecycle stays
         // visible even with debug logging off, which is what we need to catch
         // the intermittent streaming relay wedge.
-        RLog("Companion relay: \(message) "
-             + "[bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) "
-             + "pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]")
+        RLog("Companion relay: \(message) [bridge=\(bridge != nil) acceptTask=\(acceptTask != nil) pairedPID=\(pairedPID ?? "nil") gate=\(Self.gate())]")
     }
 
     private func startListening(pairingID: String) throws {

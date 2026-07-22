@@ -49,6 +49,22 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
 
 @implementation NSURL(iTerm)
 
+- (NSString *)it_redactedDescription {
+    NSURLComponents *components = [NSURLComponents componentsWithURL:self resolvingAgainstBaseURL:NO];
+    if (!components) {
+        // Non-hierarchical or unparseable (mailto:, data:, etc.); reveal only the scheme.
+        return [NSString stringWithFormat:@"<url scheme=%@ (redacted)>", self.scheme ?: @"?"];
+    }
+    // Strip the three places a secret hides: userinfo, query, and fragment.
+    components.user = nil;
+    components.password = nil;
+    components.query = nil;
+    components.fragment = nil;
+    NSString *host = components.host ?: @"";
+    NSString *path = components.path ?: @"";
+    return [NSString stringWithFormat:@"%@://%@%@", components.scheme ?: @"?", host, path];
+}
+
 + (nullable NSURL *)urlByReplacingFormatSpecifier:(NSString *)formatSpecifier
                                          inString:(NSString *)string
                                         withValue:(NSString *)value {

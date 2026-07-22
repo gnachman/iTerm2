@@ -143,9 +143,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
                 // Try to decode as expected response
                 guard let response = try? decoder.decode(Response.self, from: output.stdout) else {
-                    let outputString = String(data: output.stdout, encoding: .utf8) ?? "(non-UTF8)"
                     completion(.failure(AdapterError.badOutput))
-                    RLog("Failed to decode response from adapter. Output: \(outputString)")
+                    // The adapter stdout can contain a login/session token; do not log
+                    // its contents into the always-on ring. Log only the byte count.
+                    RLog("Failed to decode response from adapter. Output byteCount=\(output.stdout.count)")
                     return
                 }
 

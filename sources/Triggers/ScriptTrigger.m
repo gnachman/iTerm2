@@ -74,7 +74,8 @@
 }
 
 - (void)runCommand:(NSString *)command session:(id<iTermTriggerSession>)session {
-    RLog(@"Invoking command %@", command);
+    // command has regex capture groups from terminal output interpolated in; keep it out of the ring.
+    RLog(@"Invoking command %@", RLogRedact(command, @(command.length)));
 
     [session triggerSession:self runCommand:command withRunnerPool:[ScriptTrigger commandRunnerPool]];
 }

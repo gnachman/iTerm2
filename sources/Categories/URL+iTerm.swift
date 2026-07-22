@@ -12,6 +12,21 @@ extension URL {
     enum PathArithmeticException: Error {
         case invalidPrefix
     }
+
+    // A description safe for the always-on retrospective ring (RLog): scheme, host,
+    // and path only. Drops the three places a secret hides in a URL: userinfo
+    // (user:password@), the query string (?token=…), and the fragment
+    // (#access_token=…). See DebugLogging.h.
+    var it_redactedDescription: String {
+        guard var components = URLComponents(url: self, resolvingAgainstBaseURL: false) else {
+            return "<url scheme=\(scheme ?? "?") (redacted)>"
+        }
+        components.user = nil
+        components.password = nil
+        components.query = nil
+        components.fragment = nil
+        return "\(components.scheme ?? "?")://\(components.host ?? "")\(components.path)"
+    }
     func pathByRemovingPrefix(_ prefix: String) throws -> String {
         if !path.hasPrefix(prefix) {
             throw PathArithmeticException.invalidPrefix

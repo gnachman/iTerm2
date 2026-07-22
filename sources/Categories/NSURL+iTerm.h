@@ -30,6 +30,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)saveContentsOfPathToZip:(NSURL *)destination;
 - (nullable NSData *)zippedContents;
 
+// A description safe for the always-on retrospective ring (RLog): scheme, host,
+// and path only. Drops the three places a secret hides in a URL: userinfo
+// (user:password@), the query string (?token=…), and the fragment (#access_token=…).
+// See DebugLogging.h.
+@property (nonatomic, readonly) NSString *it_redactedDescription;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -101,7 +101,7 @@
     DLog(@"%@", data);
     NSData *errorMessage = [[[task standardError] fileHandleForReading] readDataToEndOfFile];
     if (errorMessage.length) {
-        RLog(@"%@ %@: %@", task.launchPath, [task.arguments componentsJoinedByString:@" "], [errorMessage stringWithEncoding:NSUTF8StringEncoding]);
+        RLog(@"%@ %@: %@", task.launchPath, RLogRedact([task.arguments componentsJoinedByString:@" "], @(task.arguments.count)), RLogRedact([errorMessage stringWithEncoding:NSUTF8StringEncoding], @(errorMessage.length)));
     }
     [task waitUntilExit];
     return task.terminationStatus;

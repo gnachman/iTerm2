@@ -113,8 +113,7 @@ final class CompanionWakeupCoordinator {
     private func evaluate(_ trigger: Trigger) {
         guard hasRenderableContent(phoneMessageFloor, phoneAlertFloor) else {
             cancelDeferred()
-            RLog("CompanionWakeupCoordinator: \(trigger) -> no push "
-                 + "(nothing renderable above floor msg=\(phoneMessageFloor)/alert=\(phoneAlertFloor))")
+            RLog("CompanionWakeupCoordinator: \(trigger) -> no push (nothing renderable above floor msg=\(phoneMessageFloor)/alert=\(phoneAlertFloor))")
             return
         }
         let now = clock()
@@ -128,14 +127,11 @@ final class CompanionWakeupCoordinator {
         if intervalElapsed {
             cancelDeferred()
             lastPushAt = now
-            RLog("CompanionWakeupCoordinator: \(trigger) -> SEND wakeup "
-                 + "(floor msg=\(phoneMessageFloor)/alert=\(phoneAlertFloor), "
-                 + "sinceLastPush=\(sincePush.map { String(format: "%.1fs", $0) } ?? "never"))")
+            RLog("CompanionWakeupCoordinator: \(trigger) -> SEND wakeup (floor msg=\(phoneMessageFloor)/alert=\(phoneAlertFloor), sinceLastPush=\(sincePush.map { String(format: "%.1fs", $0) } ?? "never"))")
             send()
         } else {
             let remaining = max(intervalValue - (sincePush ?? intervalValue), 0)
-            RLog("CompanionWakeupCoordinator: \(trigger) -> defer wakeup for "
-                 + String(format: "%.1fs", remaining) + " (too soon since last push)")
+            RLog("CompanionWakeupCoordinator: \(trigger) -> defer wakeup for \(String(format: "%.1fs", remaining)) (too soon since last push)")
             armDeferred(after: remaining)
         }
     }

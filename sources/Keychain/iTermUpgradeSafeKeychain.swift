@@ -48,6 +48,7 @@
 //
 
 import Foundation
+import CryptoKit
 
 enum iTermUpgradeSafeKeychain {
     // MARK: - Public SecItem-shaped surface
@@ -73,7 +74,7 @@ enum iTermUpgradeSafeKeychain {
                 // served nor migrated, and we deliberately do NOT fall through to the
                 // login keychain (that would mask the error as absent). The happy
                 // path (a clean read) is intentionally left unlogged to avoid noise.
-                RLog("UpgradeSafeKeychain: data-protection read of '\(service)' / '\(account)' hard-errored (item not served, not migrated): \(describe(dpStatus))")
+                RLog("UpgradeSafeKeychain: data-protection read of \(redactedItemLabel(service, account)) hard-errored (item not served, not migrated): \(describe(dpStatus))")
             }
             return (dpStatus, dpData)
         case .consultLegacy:
@@ -81,9 +82,9 @@ enum iTermUpgradeSafeKeychain {
             // log without churning the RLog ring on every unconfigured item. Surface only
             // errSecMissingEntitlement as RLog: expected on unsigned/dev builds, but on a
             // SIGNED build it means the entitlement is missing or wrong.
-            DLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection read miss: \(describe(dpStatus)), accessGroup=\(accessGroup ?? "<nil>")")
+            DLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - data-protection read miss: \(describe(dpStatus)), accessGroup=\(accessGroup ?? "<nil>")")
             if dpStatus == errSecMissingEntitlement {
-                RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection keychain unavailable (errSecMissingEntitlement); falling back to login keychain. Expected on unsigned/dev builds; on a signed build the entitlement is missing.")
+                RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - data-protection keychain unavailable (errSecMissingEntitlement); falling back to login keychain. Expected on unsigned/dev builds; on a signed build the entitlement is missing.")
             }
             break
         }
@@ -94,11 +95,11 @@ enum iTermUpgradeSafeKeychain {
                 // A present-but-empty login-keychain item is a pre-migration "cleared"
                 // tombstone. Nothing meaningful to migrate; reap it and report absent
                 // (callers treat absent and "" identically), so it can't be re-read.
-                RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' present-but-empty in login keychain (tombstone); reaping and reporting absent")
+                RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) present-but-empty in login keychain (tombstone); reaping and reporting absent")
                 reapLegacyReportingStatus(service: service, account: account)
                 return (errSecItemNotFound, nil)
             }
-            RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' found in login keychain (\(legacyValue.count) bytes); migrating to data-protection keychain")
+            RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) found in login keychain (\(legacyValue.count) bytes); migrating to data-protection keychain")
             // Best-effort: even if the write half fails, we still hand the caller the
             // value we read from the legacy keychain, so nothing breaks; the migration is
             // retried on the next read.
@@ -111,10 +112,10 @@ enum iTermUpgradeSafeKeychain {
             // Genuinely absent from both stores (an unconfigured item, or one already
             // cleared). DLog: this is the common case for any unconfigured item and would
             // otherwise churn the RLog ring on every launch.
-            DLog("UpgradeSafeKeychain: '\(service)' / '\(account)' absent from both the data-protection and login keychains")
+            DLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) absent from both the data-protection and login keychains")
             return (errSecItemNotFound, nil)
         case .reportLegacyError:
-            RLog("UpgradeSafeKeychain: login-keychain read of '\(service)' / '\(account)' failed, cannot migrate: \(describe(legacyStatus))")
+            RLog("UpgradeSafeKeychain: login-keychain read of \(redactedItemLabel(service, account)) failed, cannot migrate: \(describe(legacyStatus))")
             return (legacyStatus, nil)
         }
     }
@@ -146,13 +147,13 @@ enum iTermUpgradeSafeKeychain {
             // which would otherwise churn the RLog ring. reapLegacyReportingStatus already
             // RLogs a genuinely unexpected delete error.
             let reapStatus = reapLegacyReportingStatus(service: service, account: account)
-            DLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - wrote to data-protection keychain (accessGroup=\(accessGroup ?? "<nil>")); login reap: \(describe(reapStatus))")
+            DLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - wrote to data-protection keychain (accessGroup=\(accessGroup ?? "<nil>")); login reap: \(describe(reapStatus))")
             return errSecSuccess
         case errSecMissingEntitlement:
             // This build cannot use the data-protection keychain (no access group).
             // Persist to the login keychain so the value survives, exactly as before
             // this migration existed. Reads fall back to the login keychain too.
-            RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection write unavailable (errSecMissingEntitlement); writing to the login keychain instead (expected on unsigned/dev builds)")
+            RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - data-protection write unavailable (errSecMissingEntitlement); writing to the login keychain instead (expected on unsigned/dev builds)")
             return legacyUpsert(data, service: service, account: account, accessible: accessible)
         default:
             // A hard data-protection write error (e.g. errSecInteractionNotAllowed /
@@ -168,10 +169,10 @@ enum iTermUpgradeSafeKeychain {
             // session (same as the both-writes-failed case).
             let (existingStatus, _) = dataProtectionCopy(service: service, account: account)
             if existingStatus == errSecItemNotFound {
-                RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection write failed (\(describe(dpStatus))) and no data-protection item exists; falling back to the login keychain")
+                RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - data-protection write failed (\(describe(dpStatus))) and no data-protection item exists; falling back to the login keychain")
                 return legacyUpsert(data, service: service, account: account, accessible: accessible)
             }
-            RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection write failed (\(describe(dpStatus))) while a data-protection item is present (read \(describe(existingStatus))); NOT falling back to login, which would be shadowed by the stale value. The new value survives only in the caller's in-memory cache this session.")
+            RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - data-protection write failed (\(describe(dpStatus))) while a data-protection item is present (read \(describe(existingStatus))); NOT falling back to login, which would be shadowed by the stale value. The new value survives only in the caller's in-memory cache this session.")
             return dpStatus
         }
     }
@@ -197,7 +198,7 @@ enum iTermUpgradeSafeKeychain {
             // code-signature-gated item, ...). Leave the data-protection copy in place so
             // the item keeps reading as present and cannot resurrect via migration; the
             // clear simply did not take and the caller should retry.
-            RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - login-keychain delete FAILED: \(describe(legacyStatus)). Leaving the data-protection copy in place so the secret can't resurrect; clear did not fully take.")
+            RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - login-keychain delete FAILED: \(describe(legacyStatus)). Leaving the data-protection copy in place so the secret can't resurrect; clear did not fully take.")
             return false
         }
         let dpStatus = SecItemDelete(dataProtectionQuery(service: service, account: account) as CFDictionary)
@@ -209,7 +210,7 @@ enum iTermUpgradeSafeKeychain {
                     || dpStatus == errSecItemNotFound
                     || dpStatus == errSecMissingEntitlement)
         if !dpOK {
-            RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - data-protection delete failed: \(describe(dpStatus)). A data-protection copy may survive; the item will still read as present (clear did not fully take).")
+            RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - data-protection delete failed: \(describe(dpStatus)). A data-protection copy may survive; the item will still read as present (clear did not fully take).")
         }
         return dpOK
     }
@@ -455,7 +456,7 @@ enum iTermUpgradeSafeKeychain {
             // Keep the legacy copy: the value is still returned to the caller and the
             // migration retries next launch. This is the ad-hoc/dev-build case where
             // the signature carries no usable access group.
-            RLog("UpgradeSafeKeychain: MIGRATION of '\(service)' / '\(account)' FAILED at the data-protection write: \(describe(writeStatus)). Login-keychain copy kept; will retry next read.")
+            RLog("UpgradeSafeKeychain: MIGRATION of \(redactedItemLabel(service, account)) FAILED at the data-protection write: \(describe(writeStatus)). Login-keychain copy kept; will retry next read.")
             return
         }
         let (readbackStatus, readbackData) = dataProtectionCopy(service: service, account: account)
@@ -463,7 +464,7 @@ enum iTermUpgradeSafeKeychain {
             // Wrote but can't confirm it read back identically: do NOT reap, or we could
             // lose the only good copy. Log byte counts (never the bytes) so a size
             // mismatch is diagnosable.
-            RLog("UpgradeSafeKeychain: MIGRATION of '\(service)' / '\(account)' wrote but readback did not confirm (status \(describe(readbackStatus)); \(readbackData?.count ?? -1) vs \(data.count) bytes). Login-keychain copy kept.")
+            RLog("UpgradeSafeKeychain: MIGRATION of \(redactedItemLabel(service, account)) wrote but readback did not confirm (status \(describe(readbackStatus)); \(readbackData?.count ?? -1) vs \(data.count) bytes). Login-keychain copy kept.")
             return
         }
         // The data-protection copy is written and confirmed readable, and it is pinned to
@@ -476,7 +477,7 @@ enum iTermUpgradeSafeKeychain {
         // "reaped." errSecItemNotFound = the login-keychain delete matched nothing (so the
         // login copy is NOT actually removed if the delete is being scoped to the app's
         // access group while the read searched all groups); -25244 = ownership-locked.
-        RLog("UpgradeSafeKeychain: migrated '\(service)' / '\(account)' into the data-protection keychain (group \(accessGroup ?? "<none>"), readback confirmed); login reap: \(describe(reapStatus))")
+        RLog("UpgradeSafeKeychain: migrated \(redactedItemLabel(service, account)) into the data-protection keychain (group \(accessGroup ?? "<none>"), readback confirmed); login reap: \(describe(reapStatus))")
     }
 
     // Delete a login-keychain copy after the data-protection copy is authoritative. Returns
@@ -486,7 +487,7 @@ enum iTermUpgradeSafeKeychain {
     private static func reapLegacyReportingStatus(service: String, account: String) -> OSStatus {
         let status = SecItemDelete(legacyQuery(service: service, account: account) as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound {
-            RLog("UpgradeSafeKeychain: '\(service)' / '\(account)' - failed to reap login-keychain copy: \(describe(status)). A stale copy may remain and re-prompt.")
+            RLog("UpgradeSafeKeychain: \(redactedItemLabel(service, account)) - failed to reap login-keychain copy: \(describe(status)). A stale copy may remain and re-prompt.")
         }
         return status
     }
@@ -495,5 +496,21 @@ enum iTermUpgradeSafeKeychain {
     private static func describe(_ status: OSStatus) -> String {
         let message = (SecCopyErrorMessageString(status, nil) as String?) ?? "unknown"
         return "OSStatus \(status) (\(message))"
+    }
+
+    // The account (and to a lesser extent the service) identifies which credential
+    // this is: a user@host, an API-key label, a password-manager entry name. That
+    // inventory must not land in the always-on ring, but the opt-in debug log wants
+    // the real identifiers, and even the redacted ring form needs to correlate log
+    // lines for the same item. So: full 'service' / 'account' when debug logging is
+    // on, and the service plus a short non-reversible digest of the account when off.
+    private static func redactedItemLabel(_ service: String, _ account: String) -> RLogRedacted {
+        return RLogRedacted(full: "'\(service)' / '\(account)'",
+                            redacted: "'\(service)' / account#\(accountDigest(account))")
+    }
+
+    private static func accountDigest(_ account: String) -> String {
+        let digest = SHA256.hash(data: Data(account.utf8))
+        return digest.prefix(4).map { String(format: "%02x", $0) }.joined()
     }
 }

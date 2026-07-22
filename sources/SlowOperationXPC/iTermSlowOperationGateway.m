@@ -469,7 +469,9 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                       NSData *stderr,
                                       uint8_t status,
                                       NSTaskTerminationReason reason))completion {
-    RLog(@"executeShellCommand:%@ args:%@ dir:%@ env:%@", command, args, dir, env);
+    // args can carry passwords and env can carry secret variables (tokens, keys);
+    // keep them out of the ring (counts/keys only), while the opt-in debug log is complete.
+    RLog(@"executeShellCommand:%@ args:%@ dir:%@ env:%@", command, RLogRedact(args, @(args.count)), dir, RLogRedact(env, env.allKeys));
     id<pidinfoProtocol> proxy = [_connectionToService remoteObjectProxy];
     [proxy executeShellCommand:command
                           args:args

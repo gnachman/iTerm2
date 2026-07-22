@@ -588,7 +588,9 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)applyAction:(iTermToolSnippetsAction)action toSnippet:(iTermSnippet *)snippet {
-    RLog(@"Create action to send snippet %@", snippet);
+    // The snippet's description includes its value, which is sent verbatim to the
+    // terminal and frequently holds a password or token; log the opaque guid only.
+    RLog(@"Create action to send snippet guid=%@", snippet.guid);
     iTermToolWrapper *wrapper = self.toolWrapper;
     switch (action) {
         case iTermToolSnippetsActionSend: {

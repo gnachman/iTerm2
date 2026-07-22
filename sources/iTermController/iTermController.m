@@ -2020,7 +2020,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                profile:windowProfile];
     [self addTerminalWindow:term];
 
-    RLog(@"Open single-use browser window with url: %@", url);
+    // The URL can carry secrets in its query string; redact it for the ring.
+    RLog(@"Open single-use browser window with url: %@", RLogRedact(url, url.it_redactedDescription));
     PTYSession *(^makeSession)(Profile *, PseudoTerminal *) =
     ^PTYSession *(Profile *profile, PseudoTerminal *term) {
         profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
@@ -2141,7 +2142,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (options & iTermSingleUseWindowOptionsCommandNotSwiftyString) {
         command = [command stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
     }
-    RLog(@"Open single-use window with command: %@", command);
+    // The command line can carry passwords/tokens; keep it out of the ring.
+    RLog(@"Open single-use window with command: %@", RLogRedact(command, @(command.length)));
     void (^makeSession)(Profile *, PseudoTerminal *, void (^)(PTYSession *)) =
     ^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *))  {
         profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];

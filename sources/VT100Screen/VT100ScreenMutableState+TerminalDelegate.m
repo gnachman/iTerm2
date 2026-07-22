@@ -2318,7 +2318,7 @@ typedef struct {
     // close the command's interval so downstream state (Cmd-K's
     // commandStartCoord.x check, prompt-state-machine, etc.) tracks
     // the post-abort world the same way as the aid-less path.
-    RLog(@"closeAidMarkAsAbort: aborting target aid=%@ mark=%@", aid, target);
+    RLog(@"closeAidMarkAsAbort: aborting target aid=%@ mark=%@", aid, RLogRedact(target, target.redactedDescription));
     [self abortSpecificAidMark:target];
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
@@ -2381,7 +2381,7 @@ typedef struct {
              endDate:(NSDate *)endDate
             isTarget:(BOOL)isTarget {
     RLog(@"closeAidMark: mark=%@ aid=%@ code=%@ isTarget=%@",
-         mark, mark.aid, code, @(isTarget));
+         RLogRedact(mark, mark.redactedDescription), mark.aid, code, @(isTarget));
     id<VT100ScreenMarkReading> doppelganger = mark.doppelganger;
     const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
     const iTermIntervalTreeObjectType originalType = iTermIntervalTreeObjectTypeForObject(mark);
@@ -2410,7 +2410,7 @@ typedef struct {
     // (setReturnCodeOfLastCommand:) implicitly stays consistent because
     // it operates on self.lastCommandMark; the aid path may target an
     // arbitrary mark, so we update explicitly.
-    RLog(@"closeAidMark: updating lastCommandMark to %@", mark);
+    RLog(@"closeAidMark: updating lastCommandMark to %@", RLogRedact(mark, mark.redactedDescription));
     self.lastCommandMark = mark;
     const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(mark);
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
@@ -3565,7 +3565,8 @@ typedef struct {
 }
 
 - (NSArray<NSString *> *)parseHookSSHConductorParameter:(NSString *)param {
-    RLog(@"%@", param);
+    // param carries base64 sshargs (ssh target, user, options); keep it out of the ring.
+    RLog(@"%@", RLogRedact(param, @(param.length)));
     NSArray<NSString *> *parts = [param componentsSeparatedByString:@" "];
     if (parts.count < 5) {
         RLog(@"Bad param %@", param);
@@ -3598,7 +3599,8 @@ typedef struct {
 
 - (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
     NSArray<NSString *> *values = [self parseHookSSHConductorParameter:params];
-    RLog(@"%@", values);
+    // values are the decoded conductor params (ssh target/args); log the count in the ring.
+    RLog(@"%@", RLogRedact(values, @(values.count)));
     if (!values) {
         return;
     }
