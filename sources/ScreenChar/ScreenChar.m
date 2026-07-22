@@ -156,6 +156,66 @@ BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code) {
     return [GetComplexCharRegistry() codeIsSpacingCombiningMark:code];
 }
 
+BOOL ComplexCharCodeIsRegionalIndicator(unichar code) {
+    const UTF32Char base = BaseCharacterForComplexChar(code);
+    return base >= 0x1F1E6 && base <= 0x1F1FF;
+}
+
+static BOOL iTermCellIsRegionalIndicator(const screen_char_t *line, int i, int width) {
+    return (i >= 0 &&
+            i < width &&
+            line[i].complexChar &&
+            ComplexCharCodeIsRegionalIndicator(line[i].code));
+}
+
+// DWC_RIGHT and DWL_SPACER cells carry no content of their own; they are transparent to
+// regional-indicator pairing, just as the legacy renderer skips them when building its run.
+static BOOL iTermCellIsRegionalIndicatorSpacer(const screen_char_t *line, int i, int width) {
+    return (i >= 0 &&
+            i < width &&
+            (ScreenCharIsDWC_RIGHT(line[i]) || ScreenCharIsDWL_SPACER(line[i])));
+}
+
+// Index of the next cell after i that is not a transparent spacer (may be == width).
+static int iTermNextNonSpacerCell(const screen_char_t *line, int i, int width) {
+    int k = i + 1;
+    while (k < width && iTermCellIsRegionalIndicatorSpacer(line, k, width)) {
+        k++;
+    }
+    return k;
+}
+
+iTermRegionalIndicatorPairing iTermRegionalIndicatorPairingForCell(const screen_char_t *line,
+                                                                   int i,
+                                                                   int width,
+                                                                   BOOL *pendingOpen) {
+    iTermRegionalIndicatorPairing result = { NO, NO, 0 };
+    if (iTermCellIsRegionalIndicatorSpacer(line, i, width)) {
+        // Transparent: leave the running parity untouched so an opening indicator can still
+        // pair with a following indicator across its double-width spacer.
+        return result;
+    }
+    if (!iTermCellIsRegionalIndicator(line, i, width)) {
+        *pendingOpen = NO;
+        return result;
+    }
+    if (*pendingOpen) {
+        // The previous cell opened a pair; this indicator closes it.
+        result.suppress = YES;
+        *pendingOpen = NO;
+    } else {
+        // This indicator opens a pair. It joins with the next non-spacer cell only if that
+        // cell is also an indicator; otherwise it stands alone (lone or trailing odd one).
+        *pendingOpen = YES;
+        const int next = iTermNextNonSpacerCell(line, i, width);
+        if (iTermCellIsRegionalIndicator(line, next, width)) {
+            result.joinWithNext = YES;
+            result.successorCode = line[next].code;
+        }
+    }
+    return result;
+}
+
 NSString* ScreenCharToKittyPlaceholder(const screen_char_t *const sct) {
     return [GetComplexCharRegistry() charToKittyPlaceholder:*sct];
 }

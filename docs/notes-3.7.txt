@@ -2183,3 +2183,9 @@ Bug Fixes:
   iPhone so the two keep connecting. Older
   iPhone apps can no longer pair and are
   told to update.
+- Fixed a bug where flag emoji (such as a
+  country flag) rendered as blank cells or
+  flickered under the GPU renderer. The two
+  regional indicators that make up a flag are
+  now shaped together, matching the non-GPU
+  renderer.

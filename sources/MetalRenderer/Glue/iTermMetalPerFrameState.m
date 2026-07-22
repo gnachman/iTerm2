@@ -1000,6 +1000,7 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
                                        const screen_char_t *line,
                                        BOOL isBoxDrawingCharacter,
                                        BOOL thinStrokes,
+                                       unichar regionalIndicatorSuccessor,
                                        const int *bidiLUT,
                                        int bidiLUTLength,
                                        iTermLineAttribute lineAttribute) {
@@ -1024,6 +1025,11 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
         ComplexCharCodeIsSpacingCombiningMark(line[logicalIndex + 1].code)) {
         // Next character is a combining spacing mark that will join with this non-ascii character.
         glyphKeys[i].payload.regular.combiningSuccessor = line[logicalIndex + 1].code;
+    } else if (regionalIndicatorSuccessor) {
+        // This is the opening regional indicator of a flag; join it with the closing
+        // indicator (which may be separated by a double-width spacer) so CoreText can shape
+        // the flag glyph. The closing cell is separately suppressed (drawable=NO) by the caller.
+        glyphKeys[i].payload.regular.combiningSuccessor = regionalIndicatorSuccessor;
     } else {
         glyphKeys[i].payload.regular.combiningSuccessor = 0;
     }
@@ -1620,6 +1626,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     int previousImageCode = -1;
     VT100GridCoord previousImageCoord;
     int lastDrawableGlyph = -1;
+    // Set after an opening regional indicator so the next indicator cell is treated as
+    // the closing half of a flag pair. Reset by any non-indicator cell (and naturally at
+    // the start of each row), which greedily pairs indicators left to right within a row.
+    BOOL pendingOpenRegionalIndicator = NO;
 
     iTermKittyUnicodePlaceholderState kittyPlaceholderState;
     iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
@@ -1687,13 +1697,23 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         iTermExternalAttribute *ea = eaIndex[logicalIndex];
         iTermURL *url = ea.url;
         NSString *complexString = line[logicalIndex].complexChar ? ScreenCharToStr(&line[logicalIndex]) : nil;
-        const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[logicalIndex],
+        // Regional-indicator (flag) pairing. A flag is two adjacent regional-indicator
+        // cells (stored one per cell for wcwidth compatibility). Pair them greedily left
+        // to right, matching what CoreText does when the legacy renderer shapes the line
+        // as a single run: the opening cell shapes the flag and absorbs the closing cell,
+        // and the closing cell is suppressed. A trailing unpaired indicator (lone or odd
+        // run) stays drawable and renders its fallback glyph, exactly as in legacy.
+        const iTermRegionalIndicatorPairing regionalIndicator =
+            iTermRegionalIndicatorPairingForCell(line, logicalIndex, width, &pendingOpenRegionalIndicator);
+        const unichar regionalIndicatorSuccessor = regionalIndicator.joinWithNext ? regionalIndicator.successorCode : 0;
+        const BOOL characterIsDrawable = (!regionalIndicator.suppress &&
+                                          iTermTextDrawingHelperIsCharacterDrawable(&line[logicalIndex],
                                                                                    logicalIndex > 0 ? &line[logicalIndex - 1] : NULL,
                                                                                    line[logicalIndex].complexChar && (complexString != nil),
                                                                                    _configuration->_blinkingItemsVisible,
                                                                                    blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
-                                                                                   url != nil);
+                                                                                   url != nil));
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
                                             ((!line[logicalIndex].complexChar &&
                                               line[logicalIndex].code > 127 &&
@@ -1786,6 +1806,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           line,
                                           isBoxDrawingCharacter,
                                           [self useThinStrokesWithAttributes:&attributes[visualX]],
+                                          regionalIndicatorSuccessor,
                                           bidiLUT,
                                           bidiLUTLength,
                                           lineAttribute);
@@ -2343,10 +2364,14 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                       italic:italic];
     NSString *string = CharToStr(glyphKey->payload.regular.code, glyphKey->payload.regular.isComplex);
     if (glyphKey->payload.regular.combiningSuccessor) {
-        if (ComplexCharCodeIsSpacingCombiningMark(glyphKey->payload.regular.combiningSuccessor) &&
-            !(glyphKey->payload.regular.isComplex && ComplexCharCodeIsSpacingCombiningMark(glyphKey->payload.regular.code))) {
-            // Append the successor cell's spacing combining mark, provided it has a predecessor.
-            NSString *successorString = CharToStr(glyphKey->payload.regular.combiningSuccessor, YES);
+        const unichar successor = glyphKey->payload.regular.combiningSuccessor;
+        const BOOL currentIsSpacingMark = (glyphKey->payload.regular.isComplex &&
+                                           ComplexCharCodeIsSpacingCombiningMark(glyphKey->payload.regular.code));
+        if ((ComplexCharCodeIsSpacingCombiningMark(successor) && !currentIsSpacingMark) ||
+            ComplexCharCodeIsRegionalIndicator(successor)) {
+            // Append the successor cell's glyph so CoreText shapes them together: a spacing
+            // combining mark over its base, or the closing regional indicator of a flag.
+            NSString *successorString = CharToStr(successor, YES);
             string = [string stringByAppendingString:successorString];
         }
     }
