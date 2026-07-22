@@ -857,6 +857,9 @@ final class AppModel {
         // and UserDefaults (legacy location).
         PhoneIdentity.deleteRegisteredRoomName()
         UserDefaults.standard.removeObject(forKey: Self.registeredRoomDefault)
+        // Drop any pending migration notice: with no pairing there is no peer to
+        // tell the user to update, so a leaked flag must not nag after unpair.
+        UserDefaults.standard.removeObject(forKey: Self.migrationNoticePendingKey)
         // Drop the per-chat push watermarks (shared with the NSE): they are keyed
         // by the old room secret and meaningless once unpaired. reset() clears by
         // prefix, so it does not need the (possibly already-deleted) room secret.
@@ -905,45 +908,103 @@ final class AppModel {
         // resolver BEFORE the reconnect below reads storedPairingCode, so the first
         // reconnect already targets the resolver.
         migrateDirectRelayToResolver()
+        // If a migration notice is pending (this or a prior launch), give the
+        // reconnect a grace period to succeed before nagging: a Mac that already
+        // updated connects fine and needs no "update your Mac" notice. If the flag
+        // leaked past an unpair (no stored pairing), clear it instead of nagging an
+        // unpaired phone.
+        if UserDefaults.standard.bool(forKey: Self.migrationNoticePendingKey) {
+            if storedPairingCode != nil {
+                scheduleMigrationNoticeTimeout()
+            } else {
+                UserDefaults.standard.set(false, forKey: Self.migrationNoticePendingKey)
+            }
+        }
         guard phase == .launch, pairingTask == nil else { return }
         guard let code = storedPairingCode else { return }
         companionLog("Reconnecting to stored pairing (pid \(code.pairingID))")
         pair(with: code, isReconnect: true)
     }
 
-    /// True while the one-time "your Mac needs to update" notice should be shown,
-    /// after the revision-10 relay migration ran on a paired phone. RootView binds
-    /// an alert to this; dismissing sets it false.
+    /// True while the one-time "your Mac needs to update" notice should be shown.
+    /// Armed only after the revision-10 migration fails to reconnect within a grace
+    /// period (see scheduleMigrationNoticeTimeout); RootView binds an alert to it.
     var showRelayMigrationNotice = false
 
     /// Set once the revision-10 relay migration has run, so it does not repeat on
     /// every launch. NoSync: local device state, not a setting.
     private static let relayResolverMigrationDoneKey = "NoSyncCompanionRelayResolverMigrationDone"
 
-    /// Revision-10 migration (CompanionRelayMigration): move a phone that paired in
-    /// direct mode against the legacy main relay onto the default resolver, and
-    /// tell the user their Mac must also update. Runs once (guarded by a NoSync
-    /// flag) and only for an already-paired phone: a fresh pairing after the update
-    /// is already on the new scheme and needs no notice. The rewrite preserves the
-    /// pairing identity (room name/bucket are derived from rs+pid, unchanged), so it
-    /// only swaps the transport endpoint; the peer that has not updated stays on the
-    /// direct relay and is refused by the raised minimumPeer (revision 10).
+    /// True from when the migration rewrites the pairing until either a reconnect
+    /// succeeds (cleared, notice suppressed) or the grace period lapses without one
+    /// (notice shown). Persisted so a relaunch mid-grace still resolves it.
+    private static let migrationNoticePendingKey = "NoSyncCompanionRelayMigrationNoticePending"
+
+    /// How long to let the post-migration reconnect try before showing the notice.
+    /// Long enough for a healthy connect (a ready Mac lands in a few seconds), short
+    /// enough that a genuinely un-upgraded Mac is flagged promptly.
+    private static let migrationNoticeGraceSeconds: TimeInterval = 20
+
+    /// Revision-10 migration (CompanionRelayMigration). Runs once (NoSync flag). Two
+    /// parts, deliberately independent:
+    ///   1. ENDPOINT REWRITE, conditional: only a pairing still on the legacy direct
+    ///      relay is rewritten to the default resolver. A pairing already on a
+    ///      resolver (or a custom relay) is left as-is. The rewrite preserves the
+    ///      pairing identity (room name/bucket derive from rs+pid), so it only swaps
+    ///      the transport endpoint.
+    ///   2. UPDATE NOTICE, for ANY paired phone: whichever side is upgraded first,
+    ///      the peer that has not updated cannot connect (it stays on the old relay,
+    ///      and the raised minimumPeer refuses it), so it never reaches the version
+    ///      handshake's upgrade wall. We therefore ARM the notice for every paired
+    ///      phone, not only ones that needed a rewrite, and let a successful connect
+    ///      cancel it. Without this, a phone that was already on a resolver but whose
+    ///      Mac is still old would sit "broken" with no explanation.
+    /// The notice is only ARMED here, never shown immediately: scheduleMigrationNotice
+    /// Timeout shows it only if no connection lands within the grace period, and a
+    /// Mac that already updated connects fine and clears the pending flag.
     private func migrateDirectRelayToResolver() {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.relayResolverMigrationDoneKey) else { return }
-        guard let code = storedPairingCode else { return }   // only act if paired
+        // Only act (and only mark done) once PAIRED. A fresh phone's first rev-10
+        // launch is unpaired; marking done there would skip the notice for the
+        // pairing it forms later, leaving it silently unable to reach an old Mac.
+        guard let code = storedPairingCode else { return }
         defaults.set(true, forKey: Self.relayResolverMigrationDoneKey)
-        // Only an actual conversion warrants the notice. A pairing already on a
-        // resolver (or a custom relay) needs no endpoint change; if ITS peer is too
-        // old, the version handshake's existing upgrade wall covers that at connect
-        // time, so a proactive "update your Mac" notice here would be a false alarm.
-        guard CompanionRelayMigration.isLegacyDirectRelay(code) else {
-            companionLog("Relay migration: pairing already uses a resolver/custom relay; nothing to convert")
-            return
+        if CompanionRelayMigration.isLegacyDirectRelay(code) {
+            companionLog("Relay migration: rewriting the direct relay pairing to the default resolver")
+            storePairing(CompanionRelayMigration.migrated(code))
+        } else {
+            companionLog("Relay migration: pairing already uses a resolver/custom relay; no endpoint rewrite")
         }
-        companionLog("Relay migration: rewriting the direct relay pairing to the default resolver")
-        storePairing(CompanionRelayMigration.migrated(code))
-        showRelayMigrationNotice = true
+        companionLog("Relay migration: arming the update-your-Mac notice (cancelled if the reconnect lands)")
+        defaults.set(true, forKey: Self.migrationNoticePendingKey)
+    }
+
+    /// A post-migration reconnect succeeded: the Mac is already up to date, so
+    /// suppress the pending "update your Mac" notice. Idempotent; a no-op when no
+    /// notice is pending.
+    private func clearPendingMigrationNotice() {
+        guard UserDefaults.standard.bool(forKey: Self.migrationNoticePendingKey) else { return }
+        UserDefaults.standard.set(false, forKey: Self.migrationNoticePendingKey)
+        companionLog("Relay migration: connected OK; the Mac is up to date, suppressing the update notice")
+    }
+
+    /// After the grace period, if the post-migration reconnect still has not landed
+    /// (the pending flag survived clearPendingMigrationNotice), show the notice once.
+    private func scheduleMigrationNoticeTimeout() {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(Self.migrationNoticeGraceSeconds * 1_000_000_000))
+            guard UserDefaults.standard.bool(forKey: Self.migrationNoticePendingKey) else { return }
+            UserDefaults.standard.set(false, forKey: Self.migrationNoticePendingKey)
+            // Unpaired during the grace window (e.g. the user disconnected): the
+            // notice is meaningless without a pairing, so drop it.
+            guard storedPairingCode != nil else {
+                companionLog("Relay migration: grace elapsed but no pairing; dropping the update notice")
+                return
+            }
+            companionLog("Relay migration: no connection within the grace period; showing the update-your-Mac notice")
+            showRelayMigrationNotice = true
+        }
     }
 
     // MARK: Navigation
@@ -1192,6 +1253,7 @@ final class AppModel {
                     companionLog("Home loaded")
                     storePairing(code)
                     reportPushStatus()
+                    clearPendingMigrationNotice()
                 } catch is CancellationError {
                     companionLog("Pairing cancelled")
                 } catch {
@@ -1885,6 +1947,7 @@ final class AppModel {
                     try await establish(code: code,
                                         handshakeTimeout: Self.reconnectHandshakeTimeout)
                     companionLog("Reconnected (attempt \(attempt))")
+                    clearPendingMigrationNotice()
                     // Reachable again: leave any quota state so the banner clears.
                     quotaBackoffUntil = nil
                     // The Mac is reachable again: reopen the retry gate so the
