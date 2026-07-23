@@ -265,7 +265,7 @@ static NSString *iTermTimestampDrawHelperGetCachedString(NSTimeInterval roundedT
 }
 
 - (CGFloat)suggestedWidth {
-    return _maximumWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] + iTermTimestampGradientWidth;
+    return _maximumWidth + [iTermPreferences sideMargins] + iTermTimestampGradientWidth;
 }
 
 #pragma mark - Draw Methods
@@ -377,7 +377,7 @@ static NSString *iTermTimestampDrawHelperGetCachedString(NSTimeInterval roundedT
                             height:(CGFloat)height
                               line:(int)line
                               maxX:(CGFloat)maxX {
-    const int w = width + [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const int w = width + [iTermPreferences sideMargins];
     const int x = MAX(0, maxX - w);
     const CGFloat y = line * _rowHeight + self.lineRelativeOffset;
 

@@ -1803,7 +1803,7 @@ ITERM_WEAKLY_REFERENCEABLE
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.shouldUseMinimalStyle) {
         if ([iTermAdvancedSettingsModel minimalSplitPaneDividerProminence] == 0 &&
-            ![iTermPreferences boolForKey:kPreferenceKeyDimOnlyText] &&
+            ![iTermPreferences dimOnlyText] &&
             [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes]) {
             // Use the dimmed background color to keep the divider invisible. Issue 9327.
             PTYSession *currentSession = [self currentSession];
@@ -5480,14 +5480,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                  scrollerStyle:[self scrollerStyle]
                                     rightExtra:self.currentSession.desiredRightExtra];
 
-    int screenWidth = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / charWidth;
-    int screenHeight = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / charHeight;
+    const int hmargins = [iTermPreferences sideMargins] * 2;
+    const int vmargins = [iTermPreferences topBottomMargins] * 2;
+    int screenWidth = (contentSize.width - hmargins) / charWidth;
+    int screenHeight = (contentSize.height - vmargins) / charHeight;
 
     if (snapWidth) {
-      contentSize.width = screenWidth * charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
+      contentSize.width = screenWidth * charWidth + hmargins;
     }
     if (snapHeight) {
-      contentSize.height = screenHeight * charHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
+      contentSize.height = screenHeight * charHeight + vmargins;
     }
     tabSize =
         [PTYScrollView frameSizeForContentSize:contentSize
@@ -6140,7 +6142,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             shouldEnableShadow = NO;
         }
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         self.contentView.backgroundImage.hidden = YES;
     } else {
         [CATransaction begin];
@@ -8102,7 +8104,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (BOOL)anyPaneIsTransparent {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage] || self.currentSession.backgroundImage == nil) {
+    if ([iTermPreferences perPaneBackgroundImage] || self.currentSession.backgroundImage == nil) {
         // Panes can have separate transparency settings
         return [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
             return session.textview.transparencyAlpha < 1;
@@ -8234,13 +8236,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (tabView.window.isKeyWindow) {
         return 0;
     }
-    if (![iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows]) {
+    if (![iTermPreferences dimBackgroundWindows]) {
         return 0;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+    if ([iTermPreferences dimOnlyText]) {
         return 0;
     }
-    CGFloat value = [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
+    CGFloat value = [iTermPreferences splitPaneDimmingAmount];
     CGFloat clamped = MAX(MIN(0.9, value), 0);
     return clamped;
 }
@@ -8249,11 +8251,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (![iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes]) {
         return NO;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows] && !self.window.isKeyWindow) {
+    if ([iTermPreferences dimBackgroundWindows] && !self.window.isKeyWindow) {
         // Trickery isn't needed because this kind of dimming looks fine for the minimal tabbar outline.
         return NO;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+    if ([iTermPreferences dimOnlyText]) {
         return NO;
     }
     // Does a dimmed pane abut the tabbar?
@@ -8295,7 +8297,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     } else if ([option isEqualToString:PSMTabBarControlOptionColoredMinimalOutlineStrength]) {
         const CGFloat alpha = [iTermAdvancedSettingsModel minimalTabStyleOutlineStrength];
         if ([self shouldTweakMinimalTabOutlineAlpha]) {
-            const CGFloat a = [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount] * 0.375;
+            const CGFloat a = [iTermPreferences splitPaneDimmingAmount] * 0.375;
             return @(1 * a + alpha * (1 - a));
         } else {
             return @(alpha);
@@ -9318,8 +9320,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                            verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:theBookmark]];
     NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
                                  MAX(asciiCharSize.height, nonAsciiCharSize.height));
-    NSSize newSessionSize = NSMakeSize(charSize.width * kVT100ScreenMinColumns + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                       charSize.height * kVT100ScreenMinRows + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
+    NSSize newSessionSize = NSMakeSize(charSize.width * kVT100ScreenMinColumns + [iTermPreferences sideMargins] * 2,
+                                       charSize.height * kVT100ScreenMinRows + [iTermPreferences topBottomMargins] * 2);
 
     return [[self currentTab] canSplitVertically:isVertical withSize:newSessionSize];
 }
@@ -13754,7 +13756,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)updateBackgroundImage {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return;
     }
     [self setSharedBackgroundImage:self.currentSession.backgroundImage
@@ -13770,7 +13772,7 @@ backgroundColor:(NSColor *)backgroundColor {
         RLog(@"Inactive tab tried to set the background image. Ignore it.");
         return;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         RLog(@"Using per-pane backbround images. Ignore.");
         return;
     }
@@ -13803,7 +13805,7 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (void)tabActiveSessionDidUpdatePreferencesFromProfile:(PTYTab *)tab {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return;
     }
     if (!tab.activeSession.backgroundImage) {

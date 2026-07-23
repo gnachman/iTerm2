@@ -95,7 +95,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _selectedCommandOutlineColors[1] = scoc[1].vector;
     _shadeColor = drawingHelper.shadeColor.vector;
     _shadeColor.xyz *= _shadeColor.w;
-    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat vmargin = [iTermPreferences topBottomMargins];
     _buttonsBackgroundRects = [drawingHelper.buttonsBackgroundRects shiftedBy:NSMakePoint(0, -textView.visibleRect.origin.y - vmargin)];
 
     if (@available(macOS 11, *)) {

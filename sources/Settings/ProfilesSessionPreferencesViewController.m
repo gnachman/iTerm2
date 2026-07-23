@@ -359,7 +359,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     };
     __weak NSView *heightView = _progressBarHeight;
     _progressBarHeightInfo.didClamp = ^(int oobValue) {
-        if (oobValue > [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]) {
+        if (oobValue > [iTermPreferences topBottomMargins]) {
             [heightView it_showInformativeMessageWithMarkdown:@"The progress bar height cannot exceed the top margin’s height. You can adjust it in **Settings > Appearance > Panes > Top & Bottom Margins**."];
         }
     };
@@ -565,7 +565,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     const BOOL dark = self.view.effectiveAppearance.it_isDark;
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     colorMap.mutingAmount = [iTermProfilePreferences floatForColorKey:KEY_CURSOR_BOOST dark:dark profile:profile];
-    colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    colorMap.dimOnlyText = [iTermPreferences dimOnlyText];
     colorMap.minimumContrast = [iTermProfilePreferences floatForColorKey:KEY_MINIMUM_CONTRAST
                                                                     dark:dark
                                                                  profile:profile];
@@ -856,7 +856,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     if (!_progressBarHeightInfo) {
         return;
     }
-    const NSInteger topBottomMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const NSInteger topBottomMargin = [iTermPreferences topBottomMargins];
     _progressBarHeightInfo.range = NSMakeRange(1, topBottomMargin);
 }
 

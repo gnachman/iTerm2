@@ -471,4 +471,7 @@ extern NSString *const iTermDefaultAIPrompt;
 + (BOOL)dimOnlyText;
 + (int)sideMargins;
 + (int)topBottomMargins;
++ (BOOL)perPaneBackgroundImage;
++ (double)splitPaneDimmingAmount;
++ (BOOL)dimBackgroundWindows;
 @end

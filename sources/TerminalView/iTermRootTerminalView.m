@@ -1689,7 +1689,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth {
     const CGFloat minimumWidth = [self minimumTabBarWidth];
-    const CGFloat maximumWidth = MAX(1, contentWidth - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2 - 10);
+    const CGFloat maximumWidth = MAX(1, contentWidth - [iTermPreferences sideMargins] * 2 - 10);
     return MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
 }
 

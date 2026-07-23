@@ -484,6 +484,13 @@ static NSString *iTermBundledCodeReviewSystemPrompt(void) {
 static NSMutableDictionary *gObservers;
 static NSString *sPreviousVersion;
 
+// Synchronous refresh hook for FastAccessors caches, invoked from
+// +setWithoutSideEffectsObject:forKey: so an in-process write updates the cache
+// immediately (unlike the async KVO-backed update). Registered lazily when a
+// fast accessor is first used via +installFastCacheForKey:refresh:. Defined with
+// the FastAccessors implementation below.
+static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
+
 @implementation iTermPreferences
 
 + (NSString *)appVersionBeforeThisLaunch {
@@ -1010,6 +1017,16 @@ static NSString *sPreviousVersion;
         DLog(@"Delete %@ from NSUserDefaults", key);
         [[iTermUserDefaults userDefaults] removeObjectForKey:key];
     }
+    // Keep any FastAccessors cache for this key coherent with the store
+    // synchronously. This lives here (not only in setObject:forKey:) so that
+    // every write path -- including setWithoutSideEffectsObject: callers like
+    // the syntheticSetter pattern -- updates the cache immediately. The
+    // KVO-backed update in iTermUserDefaultsObserver is delivered
+    // asynchronously (deliberately, to avoid re-entrancy; see its comments), so
+    // without this a synchronous redraw could read a value that lags one step
+    // behind a live change (e.g. dragging the dimming slider). This only
+    // re-reads a scalar and has no observer/notification side effects.
+    iTermPreferencesRefreshFastCachesForKey(key);
 }
 
 + (void)setObject:(id)object forKey:(NSString *)key {
@@ -1026,6 +1043,9 @@ static NSString *sPreviousVersion;
             observers = nil;
         }
     }
+    // Writes the store and synchronously refreshes any FastAccessors cache for
+    // this key (see that method), so the observers and notification below see
+    // an up-to-date cache.
     [self setWithoutSideEffectsObject:object forKey:key];
 
     for (void (^block)(id, id) in observers) {
@@ -1298,6 +1318,12 @@ typedef struct {
     dispatch_once_t onceToken;
 } iTermPreferencesIntCache;
 
+typedef struct {
+    NSString *key;
+    double value;
+    dispatch_once_t onceToken;
+} iTermPreferencesDoubleCache;
+
 #define FAST_BOOL_ACCESSOR(accessorName, userDefaultsKey) \
 + (BOOL)accessorName { \
     static iTermPreferencesBoolCache cache = { \
@@ -1318,13 +1344,93 @@ typedef struct {
     return [self intWithCache:&cache]; \
 }
 
+#define FAST_DOUBLE_ACCESSOR(accessorName, userDefaultsKey) \
++ (double)accessorName { \
+    static iTermPreferencesDoubleCache cache = { \
+        .key = userDefaultsKey, \
+        .value = 0, \
+        .onceToken = 0 \
+    }; \
+    return [self doubleWithCache:&cache]; \
+}
+
+// Serializes FastAccessors cache refreshes so a cache never ends up holding a
+// value staler than the persisted one. A refresh RE-READS the current resolved
+// value (rather than storing the value we wrote), so the cache is a read-through
+// mirror of whatever cfprefsd currently resolves the key to; cross-process
+// last-writer-wins conflicts are resolved by CFPreferences, not here. But two
+// refreshes for the same key can run concurrently (a synchronous in-process
+// write on one thread vs. the async KVO refresh on main). Without serialization
+// a refresh that read an older value could assign it after one that read the
+// newer value -- a lost update. Holding this lock across the read AND the assign
+// makes the last refresher to acquire it read NSUserDefaults at that instant and
+// win, so the cache converges to the current value regardless of thread order.
+// Readers of cache->value do not take the lock (a scalar load is atomic enough);
+// only the refreshers serialize against each other.
+static id iTermPreferencesFastCacheLock(void) {
+    static id lock;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        lock = [[NSObject alloc] init];
+    });
+    return lock;
+}
+
+// Maps a user defaults key to the block that refreshes the FastAccessors cache
+// for that key. Exactly one block per key: every FAST_*_ACCESSOR has its own
+// static cache struct with a unique key, installed once under dispatch_once.
+// (The async twin, -[iTermUserDefaultsObserver observeKey:block:], also keeps
+// only one block per key, so a single-block model is the real invariant.)
+static NSMutableDictionary<NSString *, void (^)(void)> *sFastCacheRefreshBlocks;
+
+static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
+    void (^block)(void);
+    @synchronized (iTermPreferencesFastCacheLock()) {
+        block = sFastCacheRefreshBlocks[key];
+    }
+    // The block re-acquires the lock around its own read+assign, so we don't
+    // hold it across the call.
+    if (block) {
+        block();
+    }
+}
+
 @implementation iTermPreferences (FastAccessors)
+
+// Installs the synchronous registry entry and the async KVO observer for a fast
+// accessor, then performs the initial read. Registration happens BEFORE the
+// initial read on purpose: a write that lands during construction must not be
+// missed. If we read first, a write in the gap would be seen by neither the
+// (not-yet-registered) sync path nor the KVO observer (registered without
+// NSKeyValueObservingOptionInitial, so it never reports a change that predates
+// addObserver:), latching a stale value until the next write. With registration
+// first, the final refresh() re-reads the current value under the lock, and any
+// write after registration triggers the normal refresh paths.
++ (void)installFastCacheForKey:(NSString *)key refresh:(void (^)(void))refresh {
+    // Fast accessors must not be used on computed keys. The refresh block reads
+    // the pref while holding iTermPreferencesFastCacheLock(); if the getter for a
+    // computed key read another fast accessor, that accessor's first-use
+    // dispatch_once could need the same lock on another thread, forming a
+    // dispatch_once <-> lock deadlock. All current fast-accessor keys are plain
+    // (non-computed), and this assert keeps it that way.
+    ITAssertWithMessage([self computedObjectDictionary][key] == nil,
+                        @"Fast accessor installed on computed key %@", key);
+    @synchronized (iTermPreferencesFastCacheLock()) {
+        if (!sFastCacheRefreshBlocks) {
+            sFastCacheRefreshBlocks = [[NSMutableDictionary alloc] init];
+        }
+        sFastCacheRefreshBlocks[key] = [refresh copy];
+    }
+    [[self sharedObserver] observeKey:key block:refresh];
+    refresh();
+}
 
 + (BOOL)boolWithCache:(iTermPreferencesBoolCache *)cache {
     dispatch_once(&cache->onceToken, ^{
-        cache->value = [self boolForKey:cache->key];
-        [[self sharedObserver] observeKey:cache->key block:^{
-            cache->value = [self boolForKey:cache->key];
+        [self installFastCacheForKey:cache->key refresh:^{
+            @synchronized (iTermPreferencesFastCacheLock()) {
+                cache->value = [self boolForKey:cache->key];
+            }
         }];
     });
     return cache->value;
@@ -1332,14 +1438,28 @@ typedef struct {
 
 + (int)intWithCache:(iTermPreferencesIntCache *)cache {
     dispatch_once(&cache->onceToken, ^{
-        cache->value = [self intForKey:cache->key];
-        [[self sharedObserver] observeKey:cache->key block:^{
-            cache->value = [self intForKey:cache->key];
+        [self installFastCacheForKey:cache->key refresh:^{
+            @synchronized (iTermPreferencesFastCacheLock()) {
+                cache->value = [self intForKey:cache->key];
+            }
         }];
     });
     return cache->value;
 }
 
++ (double)doubleWithCache:(iTermPreferencesDoubleCache *)cache {
+    dispatch_once(&cache->onceToken, ^{
+        [self installFastCacheForKey:cache->key refresh:^{
+            @synchronized (iTermPreferencesFastCacheLock()) {
+                cache->value = [self doubleForKey:cache->key];
+            }
+        }];
+    });
+    return cache->value;
+}
+
+// Only plain keys here: fast accessors must not be used on computed keys (see
+// the deadlock note in +installFastCacheForKey:refresh:).
 FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
 FAST_BOOL_ACCESSOR(maximizeThroughput, kPreferenceKeyMaximizeThroughput)
 FAST_BOOL_ACCESSOR(useTmuxProfile, kPreferenceKeyUseTmuxProfile)
@@ -1349,5 +1469,9 @@ FAST_BOOL_ACCESSOR(dimOnlyText, kPreferenceKeyDimOnlyText)
 
 FAST_INT_ACCESSOR(sideMargins, kPreferenceKeySideMargins)
 FAST_INT_ACCESSOR(topBottomMargins, kPreferenceKeyTopBottomMargins)
+
+FAST_BOOL_ACCESSOR(perPaneBackgroundImage, kPreferenceKeyPerPaneBackgroundImage)
+FAST_DOUBLE_ACCESSOR(splitPaneDimmingAmount, kPreferenceKeyDimmingAmount)
+FAST_BOOL_ACCESSOR(dimBackgroundWindows, kPreferenceKeyDimBackgroundWindows)
 
 @end

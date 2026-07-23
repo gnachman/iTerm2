@@ -329,7 +329,7 @@
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.useMinimalStyle) {
         NSColor *color = sessionBackgroundColor;
-        if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+        if (dimOnlyText) {
             if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
                 return [color colorWithAlphaComponent:transparencyAlpha];
             } else {

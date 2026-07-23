@@ -539,7 +539,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [CATransaction setDisableActions:YES];
     _backgroundColorView.transparency = 1 - transparencyAlpha;
     _backgroundColorView.blend = blend;
-    if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if (![iTermPreferences perPaneBackgroundImage]) {
         // This is unfortunate but because I can't use an imageview behind everything when
         // subpixel AA is enabled, I have to draw *something* behind the legacy scrollers.
         // NSImageView is not equipped to do the job.
@@ -1392,7 +1392,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (double)dimmedDimmingAmount {
-    return [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
+    return [iTermPreferences splitPaneDimmingAmount];
 }
 
 - (double)adjustedDimmingAmount {
@@ -1447,7 +1447,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed {
     BOOL orig = _backgroundDimmed;
-    if ([iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows]) {
+    if ([iTermPreferences dimBackgroundWindows]) {
         _backgroundDimmed = backgroundDimmed;
     } else {
         _backgroundDimmed = NO;
@@ -1488,7 +1488,7 @@ typedef struct {
         },
         // This one is because command marks and fold buttons are in the left margin.
         {
-            .rect = NSMakeRect(0, 0, [iTermPreferences floatForKey:kPreferenceKeySideMargins], self.bounds.size.height),
+            .rect = NSMakeRect(0, 0, [iTermPreferences sideMargins], self.bounds.size.height),
             .options = NSTrackingActiveInActiveApp | NSTrackingMouseMoved
         }
     };
@@ -2272,8 +2272,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
          VT100GridSizeDescription(gridSize), NSStringFromSize(cellSize));
 
     NSSize dim = NSMakeSize(gridSize.width, gridSize.height);
-    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                  cellSize.height * dim.height + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
+    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermPreferences sideMargins] * 2,
+                                  cellSize.height * dim.height + [iTermPreferences topBottomMargins] * 2);
     const BOOL hasScrollbar = [[self scrollview] hasVerticalScroller];
     NSSize size =
         [PTYScrollView frameSizeForContentSize:innerSize

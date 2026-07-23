@@ -2444,8 +2444,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSSize size;
     DLog(@"    calculating session size based on %dx%d cells", columns, rows);
     DLog(@"    cell size is %@", NSStringFromSize(NSMakeSize(charWidth, lineHeight)));
-    size.width = columns * charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-    size.height = rows * lineHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
+    size.width = columns * charWidth + [iTermPreferences sideMargins] * 2;
+    size.height = rows * lineHeight + [iTermPreferences topBottomMargins] * 2;
     DLog(@"    size for content is %@", NSStringFromSize(size));
     BOOL hasScrollbar = [term scrollbarShouldBeVisible];
     DLog(@"    term=%@, hasScrollbar=%@, scrollerStyle=%@, NSScroller.preferredScrollerStyle=%@", term, @(hasScrollbar), @([term scrollerStyle]), @([NSScroller preferredScrollerStyle]));
@@ -2484,8 +2484,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (session.isBrowserSession) {
         return NSMakeSize(395, 150);
     }
-    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
+    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + [iTermPreferences sideMargins] * 2;
+    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + [iTermPreferences topBottomMargins] * 2;
 
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
     NSSize scrollViewSize =
@@ -2864,8 +2864,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     DLog(@"Max size is %@", [NSValue valueWithSize:size]);
     const NSSize cellSize = NSMakeSize(MAX(1.0, [[aSession textview] charWidth]),
                                        MAX(1.0, [[aSession textview] lineHeight]));
-    int width = (size.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width;
-    int height = (size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height;
+    int width = (size.width - [iTermPreferences sideMargins] * 2) / cellSize.width;
+    int height = (size.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height;
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
         XLog(@"WARNING: Session has %d width", width);
@@ -4371,8 +4371,8 @@ typedef struct {
                                                           scrollerStyle:session.view.scrollview.scrollerStyle
                                                              rightExtra:session.desiredRightExtra];
 
-            int chars = forHeight ? (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height :
-                                    (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width;
+            int chars = forHeight ? (contentSize.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height :
+                                    (contentSize.width - [iTermPreferences sideMargins] * 2) / cellSize.width;
             [intervalMap incrementNumbersBy:chars
                                     inRange:[IntRange rangeWithMin:minPos size:size]];
         }
@@ -4503,8 +4503,8 @@ typedef struct {
     NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
     NSArray<SessionView *> *allSessionViews = self.isMaximized ? @[ self.activeSession.view ] : [self sessionViews];
 
-    const CGSize margins = NSMakeSize([iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                      [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
+    const CGSize margins = NSMakeSize([iTermPreferences sideMargins] * 2,
+                                      [iTermPreferences topBottomMargins] * 2);
     const CGFloat dividerThickness = root_.dividerThickness;
     DLog(@"Margins are %@, divider thickness is %@, cell size is %@", NSStringFromSize(margins), @(dividerThickness), NSStringFromSize(cellSize));
 
@@ -7180,8 +7180,8 @@ typedef struct {
                                                       scrollerStyle:anySession.view.scrollview.scrollerStyle
                                                          rightExtra:[PTYSession desiredRightExtraForProfile:profile session:anySession]];
         NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
-        return VT100GridSizeMake((contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width,
-                                 (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height);
+        return VT100GridSizeMake((contentSize.width - [iTermPreferences sideMargins] * 2) / cellSize.width,
+                                 (contentSize.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height);
     }
 }
 

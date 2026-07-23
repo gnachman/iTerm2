@@ -250,7 +250,7 @@ class iTermScreenshotRedactionManager: NSObject {
             charWidth = textView.charWidth
             lineHeight = textView.lineHeight
             width = dataSource.width()
-            sideMargins = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
+            sideMargins = Double(iTermPreferences.sideMargins())
             firstLineInRange = Int64(lineRange.location)
             lastLineInRange = Int64(lineRange.location + lineRange.length - 1)
             imageHeight = Double(lineRange.length) * lineHeight

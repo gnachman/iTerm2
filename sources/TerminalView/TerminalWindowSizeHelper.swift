@@ -125,7 +125,7 @@ extension TerminalWindowSizeHelper {
                charWidth: CGFloat,
                decorationWidth: CGFloat,
                fallback: CGFloat) -> CGFloat {
-        let hmargin = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
+        let hmargin = Double(iTermPreferences.sideMargins())
         let desiredPoints = switch desiredColumns {
         case .none:
             fallback
@@ -143,7 +143,7 @@ extension TerminalWindowSizeHelper {
                 lineHeight: CGFloat,
                 decorationHeight: CGFloat,
                 fallback: CGFloat) -> CGFloat {
-        let vmargin = iTermPreferences.double(forKey: kPreferenceKeyTopBottomMargins)
+        let vmargin = Double(iTermPreferences.topBottomMargins())
         let desiredPoints = switch desiredRows {
         case .none:
             fallback
@@ -250,8 +250,8 @@ extension TerminalWindowSizeHelper {
         let sessionSize = Self.preferredGridSize(cellSize: cellSize,
                                                  profile: profile,
                                                  screenSize: screenSize)
-        let hmargin = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
-        let vmargin = iTermPreferences.double(forKey: kPreferenceKeyTopBottomMargins)
+        let hmargin = Double(iTermPreferences.sideMargins())
+        let vmargin = Double(iTermPreferences.topBottomMargins())
 
         return NSSize(
             width: hmargin * 2.0 + CGFloat(sessionSize.width) * cellSize.width + decorationSize.width,
@@ -356,8 +356,8 @@ extension TerminalWindowSizeHelper {
 private extension TerminalWindowSizeHelper {
     static func sessionSize(gridSize: VT100GridSize,
                             cellSize: NSSize) -> NSSize {
-        let hmargin = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
-        let vmargin = iTermPreferences.double(forKey: kPreferenceKeyTopBottomMargins)
+        let hmargin = Double(iTermPreferences.sideMargins())
+        let vmargin = Double(iTermPreferences.topBottomMargins())
         return NSSize(
             width: CGFloat(gridSize.width) * cellSize.width + hmargin * 2,
             height: CGFloat(gridSize.height) * cellSize.height + vmargin * 2)
@@ -436,8 +436,8 @@ private extension TerminalWindowSizeHelper {
 
     static func gridSize(forContentSize contentSize: NSSize,
                          cellSize: NSSize) -> VT100GridSize {
-        let hmargin = iTermPreferences.double(forKey: kPreferenceKeySideMargins)
-        let vmargin = iTermPreferences.double(forKey: kPreferenceKeyTopBottomMargins)
+        let hmargin = Double(iTermPreferences.sideMargins())
+        let vmargin = Double(iTermPreferences.topBottomMargins())
         return VT100GridSize(
             width: Int32(clamping: (contentSize.width - hmargin * 2.0) / cellSize.width),
             height: Int32(clamping: (contentSize.height - vmargin * 2.0) / cellSize.height))

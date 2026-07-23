@@ -134,7 +134,7 @@ extension PTYTextView: ExternalSearchResultsController {
     private func replace(range absRange: VT100GridAbsCoordRange,
                          withPorthole porthole: Porthole) {
         DLog("replace(range:\(VT100GridAbsCoordRangeDescription(absRange)), withPorthole:\(porthole))")
-        let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
+        let hmargin = CGFloat(iTermPreferences.sideMargins())
         let desiredHeight = porthole.fit(toWidth: bounds.width - hmargin * 2)
         let relativeRange = VT100GridCoordRangeFromAbsCoordRange(absRange, dataSource.totalScrollbackOverflow())
         porthole.savedLines = (relativeRange.start.y ... relativeRange.end.y).map { i in
@@ -166,7 +166,7 @@ extension PTYTextView: ExternalSearchResultsController {
         guard let dataSource = dataSource else {
             return
         }
-        let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
+        let hmargin = CGFloat(iTermPreferences.sideMargins())
         let desiredHeight = porthole.fit(toWidth: bounds.width - hmargin * 2)
         dataSource.changeHeight(of: porthole.mark, to: Int32(ceil(desiredHeight / lineHeight)))
     }
@@ -349,8 +349,8 @@ extension PTYTextView: ExternalSearchResultsController {
         }
         let lineRange = gridCoordRange.start.y...gridCoordRange.end.y
         DLog("Update porthole with line range \(lineRange)")
-        let hmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeySideMargins))
-        let vmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeyTopBottomMargins))
+        let hmargin = CGFloat(iTermPreferences.sideMargins())
+        let vmargin = CGFloat(iTermPreferences.topBottomMargins())
         let cellWidth = dataSource.width()
         let innerMargin = porthole.outerMargin
         if lastPortholeWidth == cellWidth && !force {
@@ -547,7 +547,7 @@ extension PTYTextView: ExternalSearchResultsController {
             return nil
         }
         let locationInTextView = convert(windowCoord, from: nil)
-        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) + Int32(PTYTextViewMarginClickGraceWidth) {
+        if Int(clamping: locationInTextView.x) >= iTermPreferences.sideMargins() + Int32(PTYTextViewMarginClickGraceWidth) {
             return nil
         }
         let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
@@ -561,7 +561,7 @@ extension PTYTextView: ExternalSearchResultsController {
     @objc(commandMarkAtWindowCoord:)
     func commandMark(at windowCoord: NSPoint) -> VT100ScreenMarkReading? {
         let locationInTextView = convert(windowCoord, from: nil)
-        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+        if Int(clamping: locationInTextView.x) >= iTermPreferences.sideMargins() {
             return nil
         }
         let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
@@ -576,7 +576,7 @@ extension PTYTextView: ExternalSearchResultsController {
     @objc(pathMarkAtWindowCoord:)
     func pathMark(at windowCoord: NSPoint) -> PathMarkReading? {
         let locationInTextView = convert(windowCoord, from: nil)
-        if Int(clamping: locationInTextView.x) < iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+        if Int(clamping: locationInTextView.x) < iTermPreferences.sideMargins() {
             return nil
         }
         guard let dataSource = dataSource else {

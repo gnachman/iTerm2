@@ -115,7 +115,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event requireMargin:(BOOL)requireMargin {
     NSPoint locationInWindow = [event locationInWindow];
-    if (requireMargin && locationInWindow.x >= [iTermPreferences intForKey:kPreferenceKeySideMargins]) {
+    if (requireMargin && locationInWindow.x >= [iTermPreferences sideMargins]) {
         return nil;
     }
     iTermOffscreenCommandLine *offscreenCommandLine =

@@ -301,7 +301,7 @@ iTermCommandInfoViewControllerDelegate>
     int x, y;
     int width = [self.dataSource width];
 
-    x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] + self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / self.charWidth;
+    x = (locationInTextView.x - [iTermPreferences sideMargins] + self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / self.charWidth;
     if (x < 0) {
         x = 0;
     }
@@ -368,7 +368,7 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (NSPoint)pointForCoord:(VT100GridCoord)coord {
-    return NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + coord.x * self.charWidth,
+    return NSMakePoint([iTermPreferences sideMargins] + coord.x * self.charWidth,
                        coord.y * self.lineHeight);
 }
 
@@ -1501,7 +1501,7 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (NSPoint)urlActionHelper:(iTermURLActionHelper *)helper pointForCoord:(VT100GridCoord)coord {
-    NSRect windowRect = [self convertRect:NSMakeRect(coord.x * self.charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
+    NSRect windowRect = [self convertRect:NSMakeRect(coord.x * self.charWidth + [iTermPreferences sideMargins],
                                                      coord.y * self.lineHeight,
                                                      0,
                                                      0)
@@ -2188,7 +2188,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     NSMutableArray<NSValue *> *selectionRects = [NSMutableArray array];
     const long long overflow = [self.dataSource totalScrollbackOverflow];
     const NSRect visibleRect = [self visibleRect];
-    const double sideMargins = [iTermPreferences doubleForKey:kPreferenceKeySideMargins];
+    const double sideMargins = [iTermPreferences sideMargins];
 
     for (iTermSubSelection *sub in self.selection.allSubSelections) {
         VT100GridAbsCoordRange absRange = sub.absRange.coordRange;
@@ -2760,7 +2760,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         return NO;
     }
     *baselinePtr = self.timestampBaseline;
-    const CGFloat hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const CGFloat hmargin = [iTermPreferences sideMargins];
     const CGFloat timestampsWidth = tdh.maximumWidth + hmargin;
     const CGPoint point = [self convertPoint:locationInWindow
                                     fromView:nil];

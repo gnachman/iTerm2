@@ -2218,3 +2218,9 @@ Bug Fixes:
   streaming. Lazily cached line-wrapping info
   could be written into scrollback storage
   shared with another thread. Issue 12941.
+- Reduced redundant preference reads on hot
+  paths (margins, dimming, and per-pane
+  background image). Idle windows no longer
+  read these settings thousands of times per
+  second, which quiets excessive CoreFoundation
+  logging and saves a little CPU.
