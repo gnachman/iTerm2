@@ -284,17 +284,24 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 - (void)updateHeightWithDefault:(CGFloat)defaultHeight {
+    const CGFloat previousHeight = self.height;
     if (@available(macOS 26, *)) {
         if (self.orientation == PSMTabBarVerticalOrientation) {
             self.style.orientation = self.orientation;
             const CGFloat styleHeight = self.style.tabBarHeight;
             if (styleHeight > 0) {
                 self.height = styleHeight;
+                if (self.height != previousHeight) {
+                    [self update:NO];
+                }
                 return;
             }
         }
     }
     self.height = defaultHeight;
+    if (self.height != previousHeight) {
+        [self update:NO];
+    }
 }
 
 #pragma mark - Private

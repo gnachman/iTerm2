@@ -803,12 +803,15 @@
 
 - (void)drawTabCell:(PSMTabBarCell *)cell highlightAmount:(CGFloat)highlightAmount {
     // TODO: Test hidden control, whose height is less than 2. Maybe it happens while dragging?
+    // Use row-relative first/last (cached on the cell during layout) so the
+    // left/right separators are correct on each physical row in two-row mode, and
+    // unchanged in single-row mode.
     [self drawCellBackgroundAndFrameHorizontallyOriented:(_orientation == PSMTabBarHorizontalOrientation)
                                                   inRect:cell.frame
                                                 selected:([cell state] == NSControlStateValueOn)
                                             withTabColor:[cell tabColor]
-                                                 isFirst:cell == _tabBar.cells.firstObject
-                                                  isLast:cell == _tabBar.cells.lastObject
+                                                 isFirst:cell.isFirstInHorizontalRow
+                                                  isLast:cell.isLastInHorizontalRow
                                          highlightAmount:highlightAmount];
     [self drawInteriorWithTabCell:cell inView:[cell controlView] highlightAmount:highlightAmount];
 }
@@ -1328,7 +1331,10 @@ const void *PSMTabStyleDarkColorKey = "dark";
                     [cell drawWithFrame:[cell frame] inView:bar];
                     if ([self shouldDrawTopLineSelected:(stateToDraw == NSControlStateValueOn) attached:attachedToTitleBar position:bar.tabLocation]) {
                         [topLineColor set];
-                        NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
+                        // In two-row mode the top line belongs at the top of the
+                        // cell's own row, not the top of the whole bar.
+                        const CGFloat topLineY = (bar.horizontalRowCount > 1) ? NSMinY(cell.frame) : 0;
+                        NSRectFill(NSMakeRect(NSMinX(cell.frame), topLineY, NSWidth(cell.frame), 1));
                     }
                     if (stateToDraw == NSControlStateValueOn) {
                         // Can quit early since only one can be selected

@@ -135,7 +135,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     var tabBarHeight: CGFloat {
         if orientation == .horizontalOrientation {
-            return Self.horizontalTabBarHeight
+            let rows = Int(tabBar?.horizontalRowCount() ?? 1)
+            guard rows > 1, let bar = tabBar else {
+                return Self.horizontalTabBarHeight
+            }
+            // The two-row height model is owned by PSMTabBarControl (single source
+            // of truth); pass our single-row height and let it apply the geometry.
+            return bar.twoRowHeight(forSingleRowHeight: Self.horizontalTabBarHeight)
         } else {
             return max(26.0, iTermAdvancedSettingsModel.defaultTabBarHeight())
         }
@@ -588,16 +594,34 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     let containerBottomInset = CGFloat(0)
     
     private func clippingPath(rect: NSRect) -> NSBezierPath {
-        if orientation == .horizontalOrientation {
-            return NSBezierPath(roundedRect: NSRect(x: containerSideInset - 0.5,
-                                                    y: containerTopInset,
-                                                    width: rect.width - containerSideInset * 2 + 1,
-                                                    height: barHeight),
-                                xRadius: barRadius,
-                                yRadius: barRadius)
-        } else {
+        guard orientation == .horizontalOrientation else {
             return NSBezierPath(rect: rect)
         }
+        let x = containerSideInset - 0.5
+        let w = rect.width - containerSideInset * 2 + 1
+        let rows = Int(tabBar?.horizontalRowCount() ?? 1)
+        if rows <= 1 {
+            return NSBezierPath(roundedRect: NSRect(x: x, y: containerTopInset, width: w, height: barHeight),
+                                xRadius: barRadius,
+                                yRadius: barRadius)
+        }
+        // Two-row mode: draw one rounded track per physical row (aligned to the
+        // cell rows) rather than a single tall capsule spanning both. A tall
+        // capsule puts its rounded corners around the edge tabs, which reads as a
+        // double border around the selected tab; per-row tracks make each row look
+        // like a normal single-row bar. This path is both filled as the background
+        // and used to clip the cells, so it must cover every row. The row stride
+        // matches the shared two-row geometry (see PSMTabBarControl), with the track
+        // at each row's top so the selected pill stays inset within it.
+        let rowStride: CGFloat = tabBar?.twoRowStride() ?? CGFloat(barHeight)
+        let path = NSBezierPath()
+        for r in 0..<rows {
+            let y = containerTopInset + CGFloat(r) * rowStride
+            path.append(NSBezierPath(roundedRect: NSRect(x: x, y: y, width: w, height: barHeight),
+                                     xRadius: barRadius,
+                                     yRadius: barRadius))
+        }
+        return path
     }
     
     @objc func drawBackground(in rect: NSRect, color: NSColor?, horizontal: Bool) {
