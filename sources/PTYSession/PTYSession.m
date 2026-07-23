@@ -4166,6 +4166,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
           reporting:reporting];
 }
 
+// Side effects every keystroke sent to a TMUX_CLIENT (or conductor/ssh) pane
+// gets: clear the bell indicator and scroll back to the bottom ("typing scrolls
+// to bottom"). Kept in one place so the delegated send-keys path and the normal
+// write path stay in sync.
+- (void)didSendKeystrokeToTmuxClient {
+    [self setBell:NO];
+    PTYScroller *ptys = (PTYScroller *)[_view.scrollview verticalScroller];
+    [ptys setUserScroll:NO];
+}
+
 - (void)writeTask:(NSString *)string
          encoding:(NSStringEncoding)optionalEncoding
     forceEncoding:(BOOL)forceEncoding
@@ -4173,7 +4183,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
-        [self setBell:NO];
         if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
@@ -4187,8 +4196,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [[_tmuxController gateway] sendKeys:string
                                    toWindowPane:self.tmuxPane];
         }
-        PTYScroller* ptys = (PTYScroller*)[_view.scrollview verticalScroller];
-        [ptys setUserScroll:NO];
+        [self didSendKeystrokeToTmuxClient];
         return;
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         // Use keypresses for tmux gateway commands for development and debugging.
@@ -10884,6 +10892,60 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return accept;
 }
 
+- (BOOL)textViewSendTmuxControlModeKeyEvent:(NSEvent *)event {
+    // The pre-Cocoa hook runs before insertText:'s _exited guard, so drop keys
+    // for a dead pane here too (the gateway can outlive the pane, e.g. after
+    // cleanUpAfterBrokenPipe leaves tmuxMode set).
+    if (_exited) {
+        return NO;
+    }
+    // Only real tmux control-mode panes, and not while a conductor (ssh) owns
+    // keystrokes.
+    if (self.tmuxMode != TMUX_CLIENT || _conductor) {
+        return NO;
+    }
+    // On tmux < 3.2 (no extended-keys) send-keys by name collapses modified keys
+    // via legacy input_key (C-j -> 0x0a), losing the distinction the byte path
+    // preserves; keep the byte path there.
+    if (![[_tmuxController gateway] serverSupportsExtendedKeys]) {
+        return NO;
+    }
+    // Companion-injected keys track their emitted press through the byte path
+    // (_injectedKeyEmittedPress); leave them on it so key-up handling stays
+    // correct.
+    if (_injectingSynthesizedKey) {
+        return NO;
+    }
+    // Preserve broadcast semantics: when this keystroke would be broadcast to
+    // other sessions, fall back to the normal byte path (which handles
+    // broadcasting) rather than sending only to this pane.
+    if ([[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
+        return NO;
+    }
+    // Only the modifyOtherKeys mappers (level 1 and 2) adopt the naming protocol,
+    // and deliberately so: their encoding is a fixed CSI-27 form that can mismatch
+    // the pane's negotiated extended-keys-format (the bug this fixes), so tmux
+    // must re-encode. The other mappers are intentionally left on the byte path
+    // because their bytes are already what the pane wants: iTermModernKeyMapper
+    // emits the kitty flags the app itself enabled, and iTermTermkeyKeyMapper
+    // emits the CSI-u form the profile selected -- injecting those verbatim is
+    // correct. If a new mapper has a format that can diverge from tmux, it should
+    // adopt iTermTmuxControlModeKeyNaming.
+    if (![_keyMapper conformsToProtocol:@protocol(iTermTmuxControlModeKeyNaming)]) {
+        return NO;
+    }
+    NSString *name = [(id<iTermTmuxControlModeKeyNaming>)_keyMapper tmuxControlModeKeyNameForEvent:event];
+    if (!name) {
+        return NO;
+    }
+    DLog(@"tmux -CC: send key event %@ as send-keys name %@ to pane %@", event, name, @(self.tmuxPane));
+    [[_tmuxController gateway] sendKeyName:name toWindowPane:self.tmuxPane];
+    // Match the normal TMUX_CLIENT write path's per-keystroke side effects, which
+    // the delegated send-keys path would otherwise skip.
+    [self didSendKeystrokeToTmuxClient];
+    return YES;
+}
+
 - (BOOL)shouldReportOrFilterKeystrokesForAPI {
     if (self.isTmuxClient && _tmuxPaused) {
         // This ignores the monitor filter and subscriptions because it might be the only way to
@@ -11999,6 +12061,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
     if (_textview.keyboardHandler.performsTextReplacement) {
         [self performTextReplacement];
+    }
+    // In a tmux -CC pane, hand a modifyOtherKeys "other key" to tmux by name so
+    // it re-encodes it in the pane's own extended-keys-format. This post-Cocoa
+    // site backstops keystrokes that never reach the pre-Cocoa hook: option-as-
+    // meta keys (keyMapperShouldBypassPreCocoaForEvent returns YES for them, so
+    // shouldSendEventToController routes them to the controller before the
+    // pre-Cocoa block runs), plus the marked-text and Bypass-Terminal cases where
+    // that block is skipped. Ctrl/Shift "other keys" are consumed at the pre-
+    // Cocoa hook and don't reach here.
+    if ([self textViewSendTmuxControlModeKeyEvent:event]) {
+        return;
     }
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
     DLog(@"dataToSend=%@", dataToSend);

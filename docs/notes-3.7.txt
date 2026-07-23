@@ -2224,3 +2224,10 @@ Bug Fixes:
   read these settings thousands of times per
   second, which quiets excessive CoreFoundation
   logging and saves a little CPU.
+- Fixed modified keys such as Ctrl-J and
+  Shift-Enter not reaching some apps (for
+  example Codex) running under tmux
+  integration (tmux -CC). iTerm2 now hands
+  these keys to tmux by name so tmux encodes
+  them just as it does outside control mode,
+  honoring its extended-keys-format.

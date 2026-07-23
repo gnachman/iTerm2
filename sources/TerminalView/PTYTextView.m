@@ -7200,6 +7200,11 @@ static NSString *iTermStringFromRange(NSRange range) {
     return _drawingHelper.inputMethodMarkedRange;
 }
 
+- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
+    sendTmuxControlModeKeyEvent:(NSEvent *)event {
+    return [self.delegate textViewSendTmuxControlModeKeyEvent:event];
+}
+
 - (void)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
              insertText:(NSString *)aString {
     if ([self hasMarkedText]) {

@@ -133,6 +133,17 @@ typedef enum {
     return text;
 }
 
+- (nullable NSString *)tmuxControlModeKeyNameForEvent:(NSEvent *)originalEvent {
+    NSEvent *event = originalEvent;
+    if ([self shouldModifyOtherKeysForEvent:event modifiedEvent:&event]) {
+        return [_modifyOther tmuxControlModeKeyNameForEvent:event];
+    }
+    // Keys that fall through to the standard mapper have format-independent
+    // encodings that are already correct in a -CC pane, so they keep the byte
+    // path.
+    return nil;
+}
+
 - (iTermModifyOtherKeysMapper1KeyType)keyTypeForEvent:(NSEvent *)event {
     if (event.modifierFlags & NSEventModifierFlagFunction) {
         return iTermModifyOtherKeysMapper1KeyTypeFunction;

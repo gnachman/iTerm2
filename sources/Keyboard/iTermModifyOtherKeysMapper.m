@@ -11,6 +11,7 @@
 #import "NSEvent+iTerm.h"
 #import "NSStringITerm.h"
 #import "VT100Output.h"
+#import "iTermTmuxControlModeKeyName.h"
 
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermKeyboardHandler.h"
@@ -72,6 +73,32 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     }
     const NSEventModifierFlags modifiers = [event it_modifierFlags] & mask;
     return [self stringForCodePoint:codePoint modifiers:modifiers];
+}
+
+- (NSString *)tmuxControlModeKeyNameForEvent:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return nil;
+    }
+    // Multi-character or dead-key input is text, not a modifyOtherKeys other key.
+    if (event.charactersIgnoringModifiers.length != 1) {
+        return nil;
+    }
+    const BOOL optionActsAsMeta = ((event.it_modifierFlags & NSEventModifierFlagOption) &&
+                                   [self optionKeyBehaviorForEvent:event] != OPT_NORMAL);
+    // Match stringForEvent's masking: drop option for keyboards that use it to
+    // type a control code, so we don't emit a spurious M-.
+    NSEventModifierFlags flags = event.it_modifierFlags;
+    if ([self eventIsControlCodeWithOption:event]) {
+        flags &= ~NSEventModifierFlagOption;
+    }
+    // The name function is the single source of truth for whether this keystroke
+    // is delegated (and as what name); it returns nil for keys that must stay on
+    // the byte path (plain shifted printables, application keypad, function/nav
+    // keys, unmodified keys, option composing text).
+    return iTermTmuxControlModeOtherKeyName([self codePointForEvent:event],
+                                            flags,
+                                            optionActsAsMeta,
+                                            [event it_isNumericKeypadKey]);
 }
 
 - (NSString *)stringWhenOptionPressedForEvent:(NSEvent *)event {

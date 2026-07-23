@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "ITAddressBookMgr.h"
 #import "iTermKeyMapper.h"
+#import "iTermTmuxControlModeKeyName.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -31,7 +32,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 NSDictionary *iTermModifyOtherKeysMapperDictionary(iTermModifyOtherKeysMapper *,
                                                    id<iTermModifyOtherKeysMapperDelegate> delegate);
 
-@interface iTermModifyOtherKeysMapper : NSObject<iTermKeyMapper>
+@interface iTermModifyOtherKeysMapper : NSObject<iTermKeyMapper, iTermTmuxControlModeKeyNaming>
 @property (nonatomic, weak) id<iTermModifyOtherKeysMapperDelegate> delegate;
 @end
 

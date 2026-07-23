@@ -226,6 +226,11 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)isRestartable;
 - (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
+
+// For a tmux control-mode (-CC) pane, send this keystroke to tmux by key name
+// so tmux re-encodes it in the pane's own key mode + extended-keys-format.
+// Returns YES if it consumed the event.
+- (BOOL)textViewSendTmuxControlModeKeyEvent:(NSEvent *)event;
 - (void)textViewDidReceiveFlagsChangedEvent:(NSEvent *)event;
 - (void)textViewHaveVisibleBlocksDidChange;
 - (iTermExpect *)textViewExpect;

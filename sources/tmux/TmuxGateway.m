@@ -901,6 +901,39 @@ static NSString *kCommandTimestamp = @"timestamp";
     return encoded;
 }
 
+- (BOOL)serverSupportsExtendedKeys {
+    // extended-keys arrived in tmux 3.2. On older servers send-keys with a name
+    // collapses modified keys via legacy input_key (e.g. C-j -> 0x0a), so the
+    // caller should keep the byte path instead of delegating.
+    return [self versionAtLeastDecimalNumberWithString:@"3.2"];
+}
+
+- (void)sendKeyName:(NSString *)name toWindowPane:(int)windowPane {
+    // Quote the name for tmux's command parser. Single quotes are fully literal
+    // in tmux: no ';' separator, and no '$' (env) or '#' (format) expansion, both
+    // of which DO fire inside double quotes. Backslash is also literal inside
+    // single quotes on tmux >= 3.2 (broken on 3.0/3.0a, fixed in 3.1), and we
+    // only ever delegate on >= 3.2 (see -serverSupportsExtendedKeys), so any base
+    // key is safe single-quoted. The one name that cannot be single-quoted is the
+    // ctrl-apostrophe key; it contains only modifier prefixes plus "'", none of
+    // which expand, so it is safe to double-quote.
+    NSString *quoted;
+    if ([name containsString:@"'"]) {
+        quoted = [NSString stringWithFormat:@"\"%@\"", name];
+    } else {
+        quoted = [NSString stringWithFormat:@"'%@'", name];
+    }
+    NSString *command = [NSString stringWithFormat:@"send -t %%%d %@", windowPane, quoted];
+    NSDictionary *dict = [self dictionaryForCommand:command
+                                     responseTarget:nil
+                                   responseSelector:nil
+                                     responseObject:nil
+                                              flags:kTmuxGatewayCommandShouldTolerateErrors];
+    [delegate_ tmuxSetSecureLogging:YES];
+    [self sendCommandList:@[ dict ]];
+    [delegate_ tmuxSetSecureLogging:NO];
+}
+
 - (void)sendKeys:(NSString *)string toWindowPane:(int)windowPane {
     if ([self serverSupportsUTF8]) {
         // Send the actual code point of each character.
