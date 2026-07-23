@@ -774,6 +774,16 @@ struct AnthropicRequestBuilder {
     var functions = [LLM.AnyFunction]()
     var stream: Bool
 
+    // Volatile per-turn context (the orchestration <workgroups> snapshot) that
+    // must reach the model but must NOT enter the cached prefix. It is
+    // regenerated fresh every turn and never persisted into history, so if it
+    // sat inside a cache-marked message it would invalidate that message's
+    // cached bytes on the next turn. Instead it is appended as an UNMARKED
+    // trailing message, AFTER the rolling history breakpoint, so the whole
+    // frozen prefix stays byte-stable and only this suffix is uncached.
+    // nil for non-orchestration requests. See AIChatTrailingVolatileTests.
+    var trailingVolatileText: String? = nil
+
     private struct Body: Codable {
         var model: String
         var messages: [AnthropicMessage]
@@ -1037,7 +1047,18 @@ struct AnthropicRequestBuilder {
     }
 
     func body() throws -> Data {
-        let anthropicMessages = markLastMessageForCaching(convertMessages(messages))
+        var anthropicMessages = markLastMessageForCaching(convertMessages(messages))
+        // Volatile per-turn context (the orchestration <workgroups> snapshot)
+        // is appended AFTER markLastMessageForCaching, so it lands past the
+        // rolling history breakpoint and never enters the cached prefix. It
+        // carries no cache_control of its own: the whole frozen prefix stays
+        // byte-identical turn over turn (read at 0.1x) and only this ~4KB
+        // suffix is uncached. See AIChatTrailingVolatileTests.
+        if let trailingVolatileText, !trailingVolatileText.isEmpty {
+            anthropicMessages.append(
+                AnthropicMessage(role: .user,
+                                 content: .array([.text(.init(text: trailingVolatileText))])))
+        }
         let systemMessageText = messages.compactMap { message in
             switch message.role {
             case .system:

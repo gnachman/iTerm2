@@ -144,6 +144,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                 thinking: Bool? = nil,
                                 function: AILiveFunctionSpec<T>? = nil,
                                 hostedTools: HostedTools = HostedTools(),
+                                trailingVolatileTextProvider: (() -> String?)? = nil,
                                 scenarioTag: String = "unspec",
                                 timeout: TimeInterval = 120,
                                 test: XCTestCase) throws -> AILiveRunResult {
@@ -157,6 +158,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                        thinking: thinking,
                        function: function,
                        hostedTools: hostedTools,
+                       trailingVolatileTextProvider: trailingVolatileTextProvider,
                        scenarioTag: scenarioTag,
                        timeout: timeout,
                        test: test)
@@ -169,6 +171,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                 thinking: Bool? = nil,
                                 function: AILiveFunctionSpec<T>? = nil,
                                 hostedTools: HostedTools = HostedTools(),
+                                trailingVolatileTextProvider: (() -> String?)? = nil,
                                 scenarioTag: String = "unspec",
                                 timeout: TimeInterval = 120,
                                 test: XCTestCase) throws -> AILiveRunResult {
@@ -188,6 +191,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                    thinking: thinking,
                                    function: function,
                                    hostedTools: hostedTools,
+                                   trailingVolatileTextProvider: trailingVolatileTextProvider,
                                    scenarioTag: scenarioTag,
                                    timeout: timeout,
                                    test: test)
@@ -210,6 +214,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                                             thinking: Bool?,
                                             function: AILiveFunctionSpec<T>?,
                                             hostedTools: HostedTools,
+                                            trailingVolatileTextProvider: (() -> String?)?,
                                             scenarioTag: String,
                                             timeout: TimeInterval,
                                             test: XCTestCase) throws -> AILiveRunResult {
@@ -220,6 +225,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         let controller = AITermController(registration: registration)
         controller.providerOverride = LLMProvider(model: model)
         controller.hostedTools = hostedTools
+        controller.trailingVolatileTextProvider = trailingVolatileTextProvider
         if model.features.contains(.configurableThinking), let thinking {
             controller.shouldThink = thinking
         }
@@ -316,6 +322,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                     streaming: Bool,
                     thinking: Bool? = nil,
                     hostedTools: HostedTools = HostedTools(),
+                    trailingVolatileTextProvider: (() -> String?)? = nil,
                     scenarioTag: String = "unspec",
                     timeout: TimeInterval = 120,
                     test: XCTestCase) throws -> AILiveRunResult {
@@ -327,6 +334,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                        thinking: thinking,
                        function: nilFunction,
                        hostedTools: hostedTools,
+                       trailingVolatileTextProvider: trailingVolatileTextProvider,
                        scenarioTag: scenarioTag,
                        timeout: timeout,
                        test: test)
@@ -338,6 +346,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                     streaming: Bool,
                     thinking: Bool? = nil,
                     hostedTools: HostedTools = HostedTools(),
+                    trailingVolatileTextProvider: (() -> String?)? = nil,
                     scenarioTag: String = "unspec",
                     timeout: TimeInterval = 120,
                     test: XCTestCase) throws -> AILiveRunResult {
@@ -349,6 +358,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                        thinking: thinking,
                        function: nilFunction,
                        hostedTools: hostedTools,
+                       trailingVolatileTextProvider: trailingVolatileTextProvider,
                        scenarioTag: scenarioTag,
                        timeout: timeout,
                        test: test)

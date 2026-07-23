@@ -16,6 +16,26 @@ struct LLMRequestBuilder {
     var shouldThink: Bool?
     var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
     var serviceTier: ResponsesRequestBody.ServiceTier?
+    // Volatile per-turn context that the model must see (the orchestration
+    // <workgroups> snapshot, the session-bound auto-provided terminal/screen
+    // block). Only the PLACEMENT is vendor-specific: Anthropic appends it after
+    // the prompt-cache breakpoint (via AnthropicRequestBuilder.trailingVolatileText)
+    // so it doesn't invalidate the cached history prefix; every other vendor has
+    // no cache-prefix concern and just gets it folded in as a trailing user
+    // message (messagesWithVolatile). Dropping it for non-Anthropic vendors is a
+    // functional regression, since the terminal-state/screen block is gated on a
+    // user permission. See LLMRequestBuilderVolatileContextTests.
+    var trailingVolatileText: String?
+
+    // The message list with the volatile per-turn context folded in as a
+    // trailing user message. Used by every builder EXCEPT Anthropic, which
+    // places it itself so it lands after the cache breakpoint.
+    private var messagesWithVolatile: [LLM.Message] {
+        guard let trailingVolatileText, !trailingVolatileText.isEmpty else {
+            return messages
+        }
+        return messages + [LLM.Message(role: .user, content: trailingVolatileText)]
+    }
 
     var headers: [String: String] {
         var result = LLMAuthorizationProvider(provider: provider, apiKey: apiKey).headers
@@ -32,17 +52,18 @@ struct LLMRequestBuilder {
             try AnthropicRequestBuilder(messages: messages,
                                         provider: provider,
                                         functions: functions,
-                                        stream: stream).body()
+                                        stream: stream,
+                                        trailingVolatileText: trailingVolatileText).body()
         case .completions:
-            try LegacyBodyRequestBuilder(messages: messages,
+            try LegacyBodyRequestBuilder(messages: messagesWithVolatile,
                                          provider: provider).body()
         case .chatCompletions:
-            try ModernBodyRequestBuilder(messages: messages,
+            try ModernBodyRequestBuilder(messages: messagesWithVolatile,
                                          provider: provider,
                                          functions: functions,
                                          stream: stream).body()
         case .responses:
-            try ResponsesBodyRequestBuilder(messages: messages,
+            try ResponsesBodyRequestBuilder(messages: messagesWithVolatile,
                                             provider: provider,
                                             functions: functions,
                                             stream: stream,
@@ -52,22 +73,22 @@ struct LLMRequestBuilder {
                                             reasoningEffort: reasoningEffort,
                                             serviceTier: serviceTier).body()
         case .earlyO1:
-            try O1BodyRequestBuilder(messages: messages,
+            try O1BodyRequestBuilder(messages: messagesWithVolatile,
                                      provider: provider).body()
 
         case .gemini:
-            try GeminiRequestBuilder(messages: messages,
+            try GeminiRequestBuilder(messages: messagesWithVolatile,
                                      functions: functions,
                                      hostedTools: hostedTools,
                                      modelName: provider.model.name).body()
 
         case .llama:
-            try LlamaBodyRequestBuilder(messages: messages,
+            try LlamaBodyRequestBuilder(messages: messagesWithVolatile,
                                         provider: provider,
                                         functions: functions,
                                         stream: stream).body()
         case .deepSeek:
-            try DeepSeekRequestBuilder(messages: messages,
+            try DeepSeekRequestBuilder(messages: messagesWithVolatile,
                                        provider: provider,
                                        functions: functions,
                                        stream: stream,

@@ -187,6 +187,15 @@ struct AIConversation {
         }
     }
 
+    var trailingVolatileTextProvider: (() -> String?)? {
+        get {
+            controller.trailingVolatileTextProvider
+        }
+        set {
+            controller.trailingVolatileTextProvider = newValue
+        }
+    }
+
     var systemMessageDirty = false
 
     var systemMessage: String? {

@@ -2320,3 +2320,10 @@ Bug Fixes:
   kept believing it was connected and never
   reconnected. The ping now times out and
   forces a reconnect.
+- AI chats that control or coordinate your
+  terminal sessions now use far fewer tokens
+  on long conversations. The live snapshot of
+  session state sent each turn is no longer
+  part of the cached prompt prefix, so the
+  conversation history is reused from cache
+  instead of being reprocessed every turn.

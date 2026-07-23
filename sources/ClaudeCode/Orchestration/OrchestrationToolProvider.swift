@@ -109,17 +109,9 @@ final class OrchestrationToolProvider: ToolProvider {
         }
     }
 
-    func transform(outgoingUserBody body: LLM.Message.Body) -> LLM.Message.Body {
-        guard mode == .orchestration else { return body }
-        let prefix = Self.workgroupsSnapshotPrefix()
-        switch body {
-        case .text(let s):
-            return .text(prefix + s)
-        case .multipart(let parts):
-            return .multipart([.text(prefix)] + parts)
-        case .uninitialized, .functionCall, .functionOutput, .attachment:
-            return body
-        }
+    func volatileContext() -> String? {
+        guard mode == .orchestration else { return nil }
+        return Self.workgroupsSnapshot()
     }
 
     // MARK: - request_orchestration_enable (.sessionBound)
@@ -284,10 +276,9 @@ final class OrchestrationToolProvider: ToolProvider {
 
     // MARK: - User-message transform
 
-    // The `<workgroups>` snapshot prefix that wraps every orchestration
-    // turn. Returned without trailing user text so callers can either
-    // prepend it to a text body or insert it as a leading subpart of a
-    // multipart body.
+    // The `<workgroups>` snapshot for the current turn. Emitted as a
+    // standalone trailing volatile block (not merged with the user body),
+    // so it needs no surrounding separators.
     //
     // Scope: by design the orchestrator sees the full app-wide workgroup
     // graph (every window, tab, split, and synthetic single-session
@@ -299,7 +290,7 @@ final class OrchestrationToolProvider: ToolProvider {
     // the whole graph so it can suggest cross-session coordination the
     // user hadn't explicitly surfaced.
     @MainActor
-    private static func workgroupsSnapshotPrefix() -> String {
+    private static func workgroupsSnapshot() -> String {
         let workgroups = WorkgroupIntrospection.allWorkgroups()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
@@ -314,8 +305,6 @@ final class OrchestrationToolProvider: ToolProvider {
         <workgroups>
         \(json)
         </workgroups>
-
-
         """
     }
 

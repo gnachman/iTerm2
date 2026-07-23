@@ -224,6 +224,19 @@ class AITermController {
     var hostedTools = HostedTools()
     var previousResponseID: String?
 
+    // Volatile per-request context (the orchestration <workgroups> snapshot,
+    // the session-bound terminal/screen block) appended after the cache
+    // breakpoint by AnthropicRequestBuilder so it never invalidates the cached
+    // history prefix. This is a PROVIDER, not a fixed string: it is evaluated
+    // fresh for every request (including each tool-loop continuation within a
+    // turn) so mid-turn session changes reach the model. A turn-start snapshot
+    // frozen for the whole tool loop would go stale — e.g. start_code_review
+    // reloads its target session, changing its session_guid, and a stale
+    // snapshot would keep pointing the model at the dead guid (infinite retry
+    // loop). Evaluated on the main thread at request-build time by ChatAgent's
+    // @MainActor closure; nil for non-orchestration turns.
+    var trailingVolatileTextProvider: (() -> String?)?
+
     func define(functions: [LLM.AnyFunction]) {
         if llmProvider?.model.features.contains(.functionCalling) != true {
             return
@@ -527,7 +540,8 @@ class AITermController {
                                         previousResponseID: previousResponseID,
                                         shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil,
                                         reasoningEffort: llmProvider.model.supports(reasoningEffort: reasoningEffort) ? reasoningEffort : nil,
-                                        serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil)
+                                        serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil,
+                                        trailingVolatileText: trailingVolatileTextProvider?())
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))

@@ -936,6 +936,179 @@ final class AILiveHarness: XCTestCase {
         }
     }
 
+    // The orchestration <workgroups> snapshot (and the session-bound
+    // terminal/screen block) rides as trailingVolatileText: the Anthropic
+    // builder appends it as an UNMARKED user message AFTER the rolling cache
+    // breakpoint, so it never invalidates the cached history prefix (the fix
+    // for the cache-churn bug; see AIChatTrailingVolatileTests). That append
+    // produces a shape the offline tests can't fully vet: a second consecutive
+    // user message, and in the tool-loop case one landing right after a
+    // tool_result. This asserts Anthropic actually accepts both — no 400.
+    func test_anthropic_trailingVolatileContext_doesNotProduce400() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        let snapshot = """
+        <workgroups>
+        [ { "role" : "Chat", "session_guid" : "ptys_TESTVOLATILE01" } ]
+        </workgroups>
+        """
+
+        // Case 1: plain user turn + trailing volatile => two consecutive user
+        // messages at the end of the request.
+        do {
+            let messages: [LLM.Message] = [
+                LLM.Message(role: .user,
+                            content: "Reply in one short sentence naming the role shown in the workgroups snapshot."),
+            ]
+            let result = try AILiveDriver.run(
+                modelName: "claude-haiku-4-5",
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                trailingVolatileTextProvider: { snapshot },
+                scenarioTag: "trailingVolatile/plain",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "Anthropic returned empty for a plain turn + trailing volatile user message")
+        }
+
+        // Case 2 (mid-tool-loop shape): the trailing volatile lands as a SECOND
+        // consecutive user message right after a tool_result.
+        do {
+            let toolName = "get_state"
+            let toolID = "toolu_test_trailing_volatile"
+            let decl = ChatGPTFunctionDeclaration(
+                name: toolName,
+                description: "Get the current state of a session. Returns immediately.",
+                parameters: JSONSchema(for: EmptyArgs(), descriptions: [:]))
+            let spec = AILiveFunctionSpec<EmptyArgs>(
+                decl: decl,
+                implementation: { _, _, completion in
+                    try completion(.success("{\"state\":\"idle\"}"))
+                })
+
+            let messages: [LLM.Message] = [
+                LLM.Message(role: .user,
+                            content: "Check the session state, then reply in one short sentence."),
+                LLM.Message(responseID: nil,
+                            role: .assistant,
+                            body: .functionCall(
+                                LLM.FunctionCall(name: toolName, arguments: "{}", id: toolID),
+                                id: .init(callID: toolID, itemID: toolID))),
+                LLM.Message(responseID: nil,
+                            role: .function,
+                            body: .functionOutput(
+                                name: toolName,
+                                output: "{\"state\":\"idle\"}",
+                                id: .init(callID: toolID, itemID: toolID))),
+            ]
+            let result = try AILiveDriver.run(
+                modelName: "claude-haiku-4-5",
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                function: spec,
+                trailingVolatileTextProvider: { snapshot },
+                scenarioTag: "trailingVolatile/afterToolResult",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "Anthropic returned empty for a trailing volatile user message after a tool_result (two consecutive user messages)")
+        }
+    }
+
+    // Regression guard for the code-review retry loop: the volatile snapshot
+    // must be regenerated FRESH for every request, not frozen once per turn.
+    // A frozen turn-start snapshot goes stale mid-turn (start_code_review
+    // reloads its target session and swaps the session_guid) and the model
+    // keeps chasing the dead guid. This drives a real tool loop (two requests)
+    // with a provider that yields a distinct marker each time it is evaluated,
+    // and asserts the captured request bodies carry DIFFERENT markers.
+    func test_anthropic_trailingVolatileContext_regeneratedPerRequest() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+
+        final class Counter { var n = 0 }
+        let counter = Counter()
+        let provider: () -> String? = {
+            counter.n += 1
+            return "<workgroups>VOLATILE_TICK_\(counter.n)</workgroups>"
+        }
+
+        // A tool call forces at least two requests (invoke the tool, then
+        // reply), so the provider is evaluated more than once.
+        let toolName = "get_state"
+        let toolID = "toolu_test_volatile_fresh"
+        let decl = ChatGPTFunctionDeclaration(
+            name: toolName,
+            description: "Get the current state of a session. Returns immediately.",
+            parameters: JSONSchema(for: EmptyArgs(), descriptions: [:]))
+        let spec = AILiveFunctionSpec<EmptyArgs>(
+            decl: decl,
+            implementation: { _, _, completion in
+                try completion(.success("{\"state\":\"idle\"}"))
+            })
+        _ = toolID
+
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user,
+                        content: "Call get_state once, then reply in one short sentence."),
+        ]
+        let result = try AILiveDriver.run(
+            modelName: "claude-haiku-4-5",
+            apiKey: key,
+            messages: messages,
+            streaming: false,
+            function: spec,
+            trailingVolatileTextProvider: provider,
+            scenarioTag: "trailingVolatile/fresh",
+            test: self)
+
+        let ticks: [Int] = result.capturedRequestBodies.compactMap { body in
+            guard let r = body.range(of: "VOLATILE_TICK_") else { return nil }
+            let digits = body[r.upperBound...].prefix(while: { $0.isNumber })
+            return Int(digits)
+        }
+        XCTAssertGreaterThanOrEqual(result.capturedRequestBodies.count, 2,
+                                    "expected a tool loop of at least two requests")
+        XCTAssertGreaterThanOrEqual(Set(ticks).count, 2,
+                                    "volatile snapshot must be regenerated per request; got markers \(ticks)")
+    }
+
+    // The volatile per-turn context is routed through trailingVolatileText, which
+    // for non-Anthropic vendors is folded in as a trailing user message. This
+    // verifies each such vendor actually ACCEPTS that (no 400, non-empty reply) --
+    // the concern being consecutive user messages and, for Gemini, strict role
+    // alternation. Offline coverage (LLMRequestBuilderVolatileContextTests) proves
+    // the content reaches the body; this proves the wire shape is valid.
+    func test_nonAnthropic_trailingVolatileContext_accepted() throws {
+        let keys = Self.loadKeys()
+        let vendors: [(String, String?)] = [
+            ("openai", keys.openAI),
+            ("gemini", keys.gemini),
+            ("deepseek", keys.deepSeek),
+        ]
+        let snapshot = "<workgroups>\n[ { \"role\" : \"Chat\", \"marker\" : \"VOLATILE_LIVE_OK\" } ]\n</workgroups>"
+        var ranAny = false
+        for (vendor, key) in vendors {
+            guard let key, !key.isEmpty else { continue }
+            guard let model = Self.models(forVendor: vendor).first else { continue }
+            throttle(forVendor: vendor)
+            ranAny = true
+            let messages = [LLM.Message(
+                role: .user,
+                content: "In one short sentence, name the role shown in the workgroups snapshot.")]
+            let result = try AILiveDriver.run(
+                modelName: model,
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                trailingVolatileTextProvider: { snapshot },
+                scenarioTag: "trailingVolatile/\(vendor)",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "[\(vendor)/\(model)] rejected or returned empty for a trailing volatile user message")
+        }
+        try XCTSkipIf(!ranAny, "no non-Anthropic keys available")
+    }
+
     // MARK: - Gemini
 
     func test_gemini_smoke_nonStreaming() throws {

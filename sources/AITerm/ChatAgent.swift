@@ -871,17 +871,24 @@ class ChatAgent {
             .replacingOccurrences(of: "<terminal-state", with: "\u{2039}terminal-state")
     }
 
-    /// Append an auto-provided context block to the outgoing user body, matching how
-    /// the orchestration provider prepends its snapshot.
-    private static func appending(context: String, to body: LLM.Message.Body) -> LLM.Message.Body {
-        switch body {
-        case .text(let text):
-            return .text(text + "\n" + context)
-        case .multipart(let parts):
-            return .multipart(parts + [.text(context)])
-        case .uninitialized, .functionCall, .functionOutput, .attachment:
-            return body
-        }
+    /// Combine volatile per-request context sources (the <workgroups> snapshot,
+    /// the auto-provided terminal/screen block) into a single trailing block,
+    /// dropping nils and empties. Returns nil when there is nothing to add, so
+    /// non-orchestration / non-auto-provide turns carry no trailing volatile
+    /// message at all.
+    static func combinedVolatileText(_ parts: [String?]) -> String? {
+        let nonEmpty = parts.compactMap { $0 }.filter { !$0.isEmpty }
+        return nonEmpty.isEmpty ? nil : nonEmpty.joined(separator: "\n")
+    }
+
+    /// The volatile per-request context as of NOW: the orchestration
+    /// <workgroups> snapshot and/or the session-bound auto-provided
+    /// terminal/screen block, recomputed live so mid-turn session changes are
+    /// reflected. Invoked fresh for every request via the controller's
+    /// trailingVolatileTextProvider.
+    private func currentVolatileText() -> String? {
+        let providerContext = toolProviders.lazy.compactMap { $0.volatileContext() }.first
+        return Self.combinedVolatileText([providerContext, autoProvidedContext()])
     }
 
     func fetchCompletion(userMessage: Message,
@@ -1127,29 +1134,28 @@ class ChatAgent {
             conversation.deleteMessages(after: responseID)
         }
 
-        // Build the user-side LLM message and let each tool provider
-        // transform the body (orchestration prepends a <workgroups>
-        // snapshot; session-bound providers leave it alone). The
-        // composition order matches toolProviders.
+        // Build the user-side LLM message. Two per-turn context sources are
+        // VOLATILE: the orchestration <workgroups> snapshot, and the
+        // session-bound auto-provided terminal state / visible screen (added
+        // server-side so phone- and desktop-originated turns both get it).
+        // Both must reach the model but must NOT be baked into the persisted
+        // user body, or they'd sit inside the cached prefix and re-cache the
+        // whole history every turn. Route them to trailingVolatileText, which
+        // the Anthropic builder appends AFTER the rolling cache breakpoint.
+        // The two sources are mutually exclusive by mode (orchestration vs
+        // session-bound); combine defensively. See AIChatTrailingVolatileTests.
         let baseUserAIMessage = aiMessage(from: userMessage)
-        var transformedBody = baseUserAIMessage.body
-        for provider in toolProviders {
-            transformedBody = provider.transform(outgoingUserBody: transformedBody)
+        // Regenerate the volatile context FRESH for every request, not once per
+        // turn: the builder appends it on each tool-loop continuation too, and a
+        // frozen turn-start snapshot goes stale mid-turn (e.g. start_code_review
+        // reloads its target session and swaps the session_guid; a stale snapshot
+        // keeps pointing the model at the dead guid and it retries forever). The
+        // closure is stored on the controller and evaluated on the main thread at
+        // request-build time. See AITermController.trailingVolatileTextProvider.
+        conversation.trailingVolatileTextProvider = { [weak self] in
+            MainActor.assumeIsolated { self?.currentVolatileText() }
         }
-        // Auto-provide the linked session's terminal state and/or visible screen when
-        // the user has granted the matching "provided automatically" permission for
-        // this chat (Check Terminal State -> state, View Contents -> visible screen).
-        // Done here (server-side) so phone- and desktop-originated turns both get it;
-        // the desktop compose path no longer injects it.
-        if let autoContext = autoProvidedContext() {
-            transformedBody = Self.appending(context: autoContext, to: transformedBody)
-        }
-        let userAIMessage = AITermController.Message(
-            responseID: baseUserAIMessage.responseID,
-            role: baseUserAIMessage.role,
-            body: transformedBody,
-            reasoningContent: baseUserAIMessage.reasoningContent)
-        conversation.add(userAIMessage)
+        conversation.add(baseUserAIMessage)
         // The binding's verdict, not the raw configuration: a turn with no
         // configuration runs on the chat's bound model.
         conversation.model = turnModelName
@@ -1160,7 +1166,7 @@ class ChatAgent {
         // Optional console trace (gated on the advanced setting). Not
         // coupled to orchestration mode anymore - any chat agent can
         // emit per-turn entries when the setting is on.
-        consoleLogger.beginTurn(userBody: userAIMessage.body.content)
+        consoleLogger.beginTurn(userBody: baseUserAIMessage.body.content)
 
         var uuid: UUID?
         let streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?
@@ -1637,5 +1643,22 @@ extension ChatAgent {
     static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
         var stateMachine = MessageToPromptStateMachine()
         return aiMessagesForStructuredReplay(messages, stateMachine: &stateMachine)
+    }
+
+    /// Test-only seam: the FULL history-reload transform used on every turn
+    /// (`translate(messages:)`), with the session-guid resolver injected
+    /// instead of read from the live iTermController. `aiMessagesForReloadingTranscript`
+    /// already runs orphan-tool repair; the one step it omits is
+    /// `stabilizeSessionReferences`, which this seam adds (matching
+    /// production `translate`). The production `translate` resolves guids
+    /// against live sessions, so a guid-bearing historical turn's bytes
+    /// depend on which sessions exist at send time.
+    static func translateForTesting(_ messages: [Message],
+                                    resolve: (String) -> String?) -> [AITermController.Message] {
+        aiMessagesForReloadingTranscript(messages).map { message in
+            var message = message
+            message.body = stabilizeSessionReferences(in: message.body, resolve: resolve)
+            return message
+        }
     }
 }
