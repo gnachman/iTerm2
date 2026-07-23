@@ -2211,3 +2211,10 @@ Bug Fixes:
   text component is missing its registration
   request is now dropped instead of showing up
   as a blank “ghost” cell.
+- Fix a memory corruption bug that could crash
+  iTerm2 intermittently, most often when
+  closing a tmux window caused surviving
+  sessions to resize while output was still
+  streaming. Lazily cached line-wrapping info
+  could be written into scrollback storage
+  shared with another thread. Issue 12941.

@@ -1089,6 +1089,10 @@ static int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                                startingOffset:startingOffset
                                                        length:length
                                                         width:width];
+            // GetMutable may have performed a copy-on-write split, so the
+            // populated cache lives in the array's current storage; re-resolve
+            // rather than reading through the pre-split pointer.
+            metadata = iTermLineBlockMetadataProviderGetImmutable(metadataProvider);
         }
         int lines = 0;
         const int i = [metadata->doubleWidthCharacters offsetForWrappedLine:n totalLines:&lines];

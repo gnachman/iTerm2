@@ -77,6 +77,14 @@
     int _firstCheck;
     BOOL _useDWCCache;
     int _capacity;
+    // Bumped by every operation that creates or destroys entries (append,
+    // removeFirst, removeLast, reset, restore-time setEntry). NOT bumped by
+    // in-place modification of an existing entry, by capacity growth, or by
+    // the copy-on-write split (the copy preserves logical structure).
+    // Outstanding iTermLineBlockMetadataProviders capture this and assert it
+    // is unchanged at resolution time, so an index cannot silently alias a
+    // different logical entry after removeLast/append reuses it.
+    int64_t _structuralGeneration;
 }
 
 - (instancetype)copy;
@@ -92,6 +100,9 @@
     copy->_first = _first;
     copy->_useDWCCache = _useDWCCache;
     copy->_capacity = _capacity;
+    // The split preserves logical structure, so providers created before it
+    // remain valid afterwards.
+    copy->_structuralGeneration = _structuralGeneration;
 
     for (int i = 0; i < _numEntries; i++) {
         const LineBlockMetadata *value = &_array[i];
@@ -200,6 +211,7 @@
     ITAssertWithMessage(i == _guts->_numEntries, @"i=%@ != numEntries=%@", @(i), @(_guts->_numEntries));
     ITAssertWithMessage(i < _guts->_capacity, @"i=%@ >= capacity=%@", @(i), @(_guts->_capacity));
     _guts->_numEntries += 1;
+    _guts->_structuralGeneration += 1;
 
     int j = 0;
     _guts->_array[i].continuation.code = [components[j++] unsignedShortValue];
@@ -252,6 +264,7 @@
     ITAssertWithMessage(i <= _guts->_capacity, @"i=%@ > capacity=%@", @(i), @(_guts->_capacity));
 
     _guts->_first = i;
+    _guts->_structuralGeneration += 1;
 }
 
 - (LineBlockMetadataArray *)cowCopy {
@@ -319,6 +332,9 @@
 
 - (void)setEntry:(int)i value:(const LineBlockMetadata *)value {
     [self willMutate];
+    // Replaces the logical entry at i, so outstanding providers for it must
+    // not survive.
+    _guts->_structuralGeneration += 1;
     LineBlockMetadata *destination = (LineBlockMetadata *)&_guts->_array[i];
 
     iTermExternalAttributeIndex *index = iTermMetadataGetExternalAttributesIndex(value->lineMetadata);
@@ -342,6 +358,7 @@
     [self willMutate];
     ITAssertWithMessage(_guts->_capacity > 0, @"capacity=%@ <= 0", @(_guts->_capacity));
     ITAssertWithMessage(_guts->_numEntries < _guts->_capacity, @"numEntries=%@ >= capacity=%@", @(_guts->_numEntries), @(_guts->_capacity));
+    _guts->_structuralGeneration += 1;
 
     iTermMetadataAutorelease(_guts->_array[_guts->_numEntries].lineMetadata);
     _guts->_array[_guts->_numEntries].lineMetadata = iTermImmutableMetadataMutableCopy(lineMetadata);
@@ -388,15 +405,27 @@
 
 - (iTermLineBlockMetadataProvider)metadataProviderAtIndex:(int)i {
     return (iTermLineBlockMetadataProvider){
-        ._metadata = &_guts->_array[i],
-        ._array = self
+        ._array = self,
+        ._index = i,
+        ._generation = _guts->_structuralGeneration
     };
+}
+
+- (LineBlockMetadata *)providerEntryAtIndex:(int)index generation:(int64_t)generation {
+    ITAssertWithMessage(generation == _guts->_structuralGeneration,
+                        @"Metadata provider outlived a structural mutation: generation=%@ current=%@ index=%@",
+                        @(generation), @(_guts->_structuralGeneration), @(index));
+    ITAssertWithMessage(index >= 0 && index < _guts->_numEntries,
+                        @"Metadata provider index %@ out of bounds (numEntries=%@)",
+                        @(index), @(_guts->_numEntries));
+    return &_guts->_array[index];
 }
 
 - (void)removeLast {
     [self willMutate];
     ITAssertWithMessage(_guts->_numEntries > 0, @"numEntries=%@ <= 0", @(_guts->_numEntries));
     _guts->_numEntries -= 1;
+    _guts->_structuralGeneration += 1;
     _guts->_array[_guts->_numEntries].number_of_wrapped_lines = 0;
     if (_guts->_useDWCCache) {
         _guts->_array[_guts->_numEntries].doubleWidthCharacters = nil;
@@ -456,6 +485,9 @@
 
 - (void)removeFirst:(int)n {
     [self willMutate];
+    if (n > 0) {
+        _guts->_structuralGeneration += 1;
+    }
     for (int i = 0; i < n; i++) {
         const int first = _guts->_first;
         ITAssertWithMessage(_guts->_numEntries >= first, @"numEntries=%@ < first=%@", @(_guts->_numEntries), @(first));
@@ -475,6 +507,7 @@
 
 - (void)reset {
     [self willMutate];
+    _guts->_structuralGeneration += 1;
     for (int i = 0; i < _guts->_numEntries; i++) {
         iTermMetadataSetExternalAttributes(&_guts->_array[i].lineMetadata, nil);
         _guts->_array[i].doubleWidthCharacters = nil;
