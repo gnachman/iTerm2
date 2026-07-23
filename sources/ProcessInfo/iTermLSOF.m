@@ -628,14 +628,15 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
                                                                       queue:queue
                                                                  completion:^(NSString *rawDir) {
         DLog(@"getWorkingDirectoyrOfProcessWithID:%@ returned %@", @(pid), rawDir);
-        if (!rawDir) {
-            RLog(@"Failed to get working directory of %@", @(pid));
-        }
         if (!rawDir && canFallBack) {
-            RLog(@"Will attempt fallback");
+            // The root pid is often /usr/bin/login running as root, whose vnode
+            // info we're not allowed to read. That's expected and we recover via
+            // the eldest child below, so log the miss at DLog. Only a real
+            // give-up (no child to fall back to) is worth an RLog.
+            DLog(@"Failed to get working directory of %@; will attempt fallback", @(pid));
             pid_t childPid = [self pidOfFirstChildOf:pid];
             if (childPid <= 0) {
-                RLog(@"Failed to get first child. Giving up.");
+                RLog(@"Failed to get working directory of %@ and it has no child to fall back to. Giving up.", @(pid));
                 block(nil);
                 return;
             }
@@ -648,7 +649,7 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
             return;
         }
         if (!rawDir) {
-            DLog(@"Failing");
+            RLog(@"Failed to get working directory of %@", @(pid));
             block(nil);
             return;
         }
