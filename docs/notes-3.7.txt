@@ -438,6 +438,11 @@ Tabs, Windows, and UI:
   list of open files and network
   connections.
 
+- Improve tab dragging: keep Metal enabled
+  for normal tab drags, switch reorder
+  slots near tab midpoints, and stabilize
+  split-pane target highlights.
+
 
 Triggers Improvements:
 - Event-based triggers can fire on events such as
