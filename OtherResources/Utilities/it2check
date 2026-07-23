@@ -47,7 +47,7 @@ function clean_up() {
 stty -echo -icanon raw min 0 time 0
 
 # Consume all pending input.
-while read none; do :; done
+while read -t 0.1 -n 10000 none; do :; done
 
 # Reset the TTY, so it behaves as expected for the rest of the it2check script.
 clean_up 
