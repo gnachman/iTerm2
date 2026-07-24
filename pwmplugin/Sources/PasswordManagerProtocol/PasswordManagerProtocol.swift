@@ -180,12 +180,20 @@ public enum PasswordManagerProtocol {
         public var userName: String
         public var accountName: String
         public var hasOTP: Bool
+        /// Optional vault/source hint for host display formatting (e.g. "Classic", "Nested").
+        /// Must not be baked into `accountName`, which is a stable identity for matching.
+        public var sourceLabel: String?
 
-        public init(identifier: AccountIdentifier, userName: String, accountName: String, hasOTP: Bool) {
+        public init(identifier: AccountIdentifier,
+                    userName: String,
+                    accountName: String,
+                    hasOTP: Bool,
+                    sourceLabel: String? = nil) {
             self.identifier = identifier
             self.userName = userName
             self.accountName = accountName
             self.hasOTP = hasOTP
+            self.sourceLabel = sourceLabel
         }
     }
 

@@ -295,10 +295,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             pathToExecutable: pathToExecutable,
             mode: browser ? .browser : .terminal)
         if let fields = handshakeInfo?.settingsFields, !fields.isEmpty {
-            let credentialAlreadyAvailable = !(masterPassword?.isEmpty ?? true) || authToken != nil
             var settings = [String: String]()
             for field in fields {
-                if field.persistInKeychain && credentialAlreadyAvailable { continue }
                 if let value = storedSettingsValue(forKey: field.key) {
                     settings[field.key] = value
                 }
@@ -344,23 +342,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         if let persisted = loadPersistedCredentials(),
            !persisted.isEmpty {
             masterPassword = persisted
-            return
         }
-        if let secretFromSettings = persistedSecretSettingsValue(),
-           !secretFromSettings.isEmpty {
-            masterPassword = secretFromSettings
-        }
-    }
-
-    private func persistedSecretSettingsValue() -> String? {
-        guard let fields = handshakeInfo?.settingsFields else { return nil }
-        for field in fields where field.persistInKeychain {
-            if let v = storedSettingsValue(forKey: field.key)?
-                .trimmingCharacters(in: .whitespacesAndNewlines), !v.isEmpty {
-                return v
-            }
-        }
-        return nil
     }
 
     // MARK: - Settings Field Storage
@@ -607,7 +589,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         userName: entry.userName,
                         accountName: entry.accountName,
                         hasOTP: entry.hasOTP,
-                        sendOTP: entry.hasOTP)
+                        sendOTP: entry.hasOTP,
+                        sourceLabel: entry.sourceLabel)
                 }
 
                 completion(.success(accounts))
@@ -728,7 +711,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     completion(error)
                 }
             },
-            outputTransformer: { [weak self] output, completion in
+            outputTransformer: { output, completion in
                 let decoder = JSONDecoder()
 
                 if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
@@ -742,7 +725,6 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
-                self?.invalidateListAccountsCache()
                 completion(.success(()))
             }))
     }
@@ -945,6 +927,18 @@ extension AdapterPasswordDataSource {
         }
     }
 
+    @objc var addAccountToggleDescriptions: [[String: Any]]? {
+        handshakeInfo?.addAccountToggles?.map { toggle in
+            var dict: [String: Any] = [
+                "key": toggle.key,
+                "label": toggle.label,
+                "defaultValue": toggle.defaultValue
+            ]
+            if let note = toggle.note { dict["note"] = note }
+            return dict
+        }
+    }
+
     func add(userName: String,
              accountName: String,
              password: String,
@@ -1040,18 +1034,6 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
         }
     }
 
-    @objc var addAccountToggleDescriptions: [[String: Any]]? {
-        handshakeInfo?.addAccountToggles?.map { toggle in
-            var dict: [String: Any] = [
-                "key": toggle.key,
-                "label": toggle.label,
-                "defaultValue": toggle.defaultValue
-            ]
-            if let note = toggle.note { dict["note"] = note }
-            return dict
-        }
-    }
-
     private static let builtInSubcommands: Set<String> = [
         "handshake", "login", "list-accounts", "get-password",
         "set-password", "add-account", "delete-account"
@@ -1090,13 +1072,9 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
     }
 
     @objc func setSettingsValue(_ value: String, forKey key: String) {
-        let field = handshakeInfo?.settingsFields?.first(where: { $0.key == key })
+        guard handshakeInfo?.settingsFields?.contains(where: { $0.key == key }) == true else { return }
         storeSettingsValue(value, forKey: key)
-        guard field != nil else { return }
+        // Non-secret settings (e.g. service URL) can change reachability; clear the session.
         authToken = nil
-        masterPassword = nil
-        if field?.persistInKeychain == true {
-            deletePersistedCredentials()
-        }
     }
 }

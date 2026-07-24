@@ -237,6 +237,18 @@ server.serve_forever()
         XCTAssertEqual(toggles[0]["defaultValue"] as? Bool, false)
     }
 
+    func testHandshakeDeclaresServiceURLOnlyInSettings() throws {
+        let input = #"{"iTermVersion":"3.5.0","minProtocolVersion":0,"maxProtocolVersion":0}"#
+        let result = try run("handshake", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let fields = try XCTUnwrap(json["settingsFields"] as? [[String: Any]])
+        XCTAssertEqual(fields.count, 1)
+        XCTAssertEqual(fields[0]["key"] as? String, "serviceURL")
+        XCTAssertEqual(json["masterPasswordLabel"] as? String, "API key")
+        XCTAssertEqual(json["requiresMasterPassword"] as? Bool, true)
+    }
+
     func testHandshakeRejectsNegativeProtocol() throws {
         let input = #"{"iTermVersion":"3.5.0","minProtocolVersion":0,"maxProtocolVersion":-1}"#
         let result = try run("handshake", input: input)
@@ -263,18 +275,21 @@ server.serve_forever()
         let json = try decodeJSON(result.output)
         let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
         XCTAssertEqual(accounts.count, 3)
-        XCTAssertEqual(accounts[0]["accountName"] as? String, "Web (Classic)")
+        XCTAssertEqual(accounts[0]["accountName"] as? String, "Web")
+        XCTAssertEqual(accounts[0]["sourceLabel"] as? String, "Classic")
         XCTAssertEqual(accounts[0]["userName"] as? String, "user@example.com")
         XCTAssertEqual((accounts[0]["identifier"] as? [String: Any])?["accountID"] as? String,
-                       "classic:UIDAAAAAAAAAAAAAA")
-        XCTAssertEqual(accounts[1]["accountName"] as? String, "Mysql (Classic)")
+                       "UIDAAAAAAAAAAAAAA")
+        XCTAssertEqual(accounts[1]["accountName"] as? String, "Mysql")
+        XCTAssertEqual(accounts[1]["sourceLabel"] as? String, "Classic")
         XCTAssertEqual(accounts[1]["userName"] as? String, "hborase@keepersecurity.com")
         XCTAssertEqual((accounts[1]["identifier"] as? [String: Any])?["accountID"] as? String,
-                       "classic:UID1234567890123")
-        XCTAssertEqual(accounts[2]["accountName"] as? String, "DemoNsfRecord (Nested)")
+                       "UID1234567890123")
+        XCTAssertEqual(accounts[2]["accountName"] as? String, "DemoNsfRecord")
+        XCTAssertEqual(accounts[2]["sourceLabel"] as? String, "Nested")
         XCTAssertEqual(accounts[2]["userName"] as? String, "")
         XCTAssertEqual((accounts[2]["identifier"] as? [String: Any])?["accountID"] as? String,
-                       "nested:UIDNSF1234567890")
+                       "UIDNSF1234567890")
     }
 
     func testListAccountsExcludesNsfFolders() throws {
@@ -288,7 +303,7 @@ server.serve_forever()
         XCTAssertFalse(accounts.contains { ($0["accountName"] as? String)?.contains("NewDemoFolder") == true })
     }
 
-    func testListAccountsPrefersNsfListForDuplicateUid() throws {
+    func testListAccountsPrefersListForDuplicateUid() throws {
         let server = try MockKeeperServer(scenario: "duplicate_uid")
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
         let result = try run("list-accounts", input: input)
@@ -296,12 +311,10 @@ server.serve_forever()
         let json = try decodeJSON(result.output)
         let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
         let dup = try XCTUnwrap(accounts.first { account in
-            ((account["identifier"] as? [String: Any])?["accountID"] as? String)?
-                .hasSuffix("UIDDUP12345678901") == true
+            ((account["identifier"] as? [String: Any])?["accountID"] as? String) == "UIDDUP12345678901"
         })
-        XCTAssertEqual(dup["accountName"] as? String, "DupShared (Nested)")
-        XCTAssertEqual((dup["identifier"] as? [String: Any])?["accountID"] as? String,
-                       "nested:UIDDUP12345678901")
+        XCTAssertEqual(dup["accountName"] as? String, "DupShared")
+        XCTAssertEqual(dup["sourceLabel"] as? String, "Classic")
     }
 
     func testGetPasswordSuccess() throws {
@@ -327,7 +340,7 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
-        XCTAssertEqual(accountIdentifier["accountID"] as? String, "classic:NEWUID1234567890")
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NEWUID1234567890")
     }
 
     func testAddAccountNestedSharedFoldersUsesNsfRecordAdd() throws {
@@ -337,7 +350,7 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
-        XCTAssertEqual(accountIdentifier["accountID"] as? String, "nested:NSFUID123456789")
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID123456789")
     }
 
     func testAddAccountDefaultsToNestedSharedFolders() throws {
@@ -347,7 +360,7 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
-        XCTAssertEqual(accountIdentifier["accountID"] as? String, "nested:NSFUID123456789")
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID123456789")
     }
 
     func testSetPasswordOnNestedRecordUsesNsfRecordUpdate() throws {
