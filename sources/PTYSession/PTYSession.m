@@ -17542,17 +17542,32 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {
     NSDictionary *cursors = @{
-        @"X_cursor": ^{ return [NSCursor arrowCursor]; },
+        @"X_cursor": ^{ return [NSCursor operationNotAllowedCursor]; },
         @"arrow": ^{ return[NSCursor arrowCursor]; },
         @"based_arrow_down": ^{ return[NSCursor resizeDownCursor]; },
         @"based_arrow_up": ^{ return[NSCursor resizeUpCursor]; },
         @"cross": ^{ return[NSCursor crosshairCursor]; },
         @"cross_reverse": ^{ return[NSCursor crosshairCursor]; },
         @"crosshair": ^{ return[NSCursor crosshairCursor]; },
+        @"fleur": ^{ return[NSCursor openHandCursor]; },
         @"hand1": ^{ return[NSCursor pointingHandCursor]; },
         @"hand2": ^{ return[NSCursor pointingHandCursor]; },
         @"left_ptr": ^{ return[NSCursor arrowCursor]; },
         @"left_side": ^{ return[NSCursor resizeLeftCursor]; },
+        @"minus": ^{
+            if (@available(macOS 15.0, *)) {
+                return [NSCursor zoomOutCursor];
+            } else {
+                return [NSCursor crosshairCursor];
+            }
+        },
+        @"plus": ^{
+            if (@available(macOS 15.0, *)) {
+                return [NSCursor zoomInCursor];
+            } else {
+                return [NSCursor crosshairCursor];
+            }
+        },
         @"right_side": ^{ return[NSCursor resizeRightCursor]; },
         @"sb_h_double_arrow": ^{ return[NSCursor resizeLeftRightCursor]; },
         @"sb_left_arrow": ^{ return[NSCursor resizeLeftCursor]; },
@@ -17560,6 +17575,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         @"sb_up_arrow": ^{ return[NSCursor resizeUpCursor]; },
         @"sb_v_double_arrow": ^{ return[NSCursor resizeUpDownCursor]; },
         @"tcross": ^{ return[NSCursor crosshairCursor]; },
+        @"watch": ^{ return[NSCursor arrowCursor]; },
         @"xterm": ^{ return [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]; },
     };
     NSCursor *(^f)(void) = cursors[pointerShape];
