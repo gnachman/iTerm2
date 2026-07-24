@@ -8791,6 +8791,13 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     PTYSession *newSession = [self syntheticSessionForSession:oldSession];
 
+    // Snapshot the window frame before -setDvrInSession: shrinks it. Replay drops the
+    // live session's chrome (peer-mode toolbar, gutter panels), so fitting the window
+    // to the chrome-less synthetic makes it shorter. -showLiveSession:inPlaceOf:
+    // restores this exact frame on exit. This runs once per replay: -irAdvance: only
+    // calls -replaySession: when the current session has no liveSession yet.
+    newSession.savedWindowFrameForInstantReplay = [NSValue valueWithRect:self.window.frame];
+
     [[self tabForSession:oldSession] setDvrInSession:newSession];
     if (![self inInstantReplay]) {
         [self showHideInstantReplay];
@@ -8928,14 +8935,17 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYTab *theTab = [self tabForSession:syntheticSession];
     [_instantReplayWindowController updateInstantReplayView];
 
-    // When the tab is maximized, the live session's screen size is stale (pre-maximize size).
-    // Don't resize the window to match it. The live session will be resized to fit the
-    // maximized view, and the proper layout will be restored when unmaximizing.
-    if (!theTab.hasMaximizedPane) {
-        [self sessionInitiatedResize:syntheticSession
-                               width:[[liveSession screen] width]
-                              height:[[liveSession screen] height]];
-    }
+    // Instant replay shrank the window on entry because the synthetic session drops the
+    // live session's chrome (peer-mode toolbar, gutter panels), and fitting the window
+    // to the chrome-less synthetic makes it shorter. -replaySession: snapshotted the
+    // pre-replay window frame; restore it after the swap re-adds the chrome so the
+    // window returns exactly to where it was (the tab then re-fits the live session to
+    // it). Only instant replay sets this, so filtering and the other synthetic overlays
+    // leave the window untouched. Skip when the tab is maximized: the live session's
+    // screen size is stale (pre-maximize) and is re-fit to the maximized view, with the
+    // proper layout restored on unmaximize.
+    NSValue *savedWindowFrame = syntheticSession.savedWindowFrameForInstantReplay;
+    const BOOL restoreWindowFrame = (!theTab.hasMaximizedPane && savedWindowFrame != nil);
 
     [syntheticSession retain];
     [theTab showLiveSession:liveSession inPlaceOf:syntheticSession];
@@ -8943,6 +8953,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [syntheticSession softTerminate];
     [syntheticSession release];
     [theTab setParentWindow:self];
+    if (restoreWindowFrame) {
+        [self.window setFrame:savedWindowFrame.rectValue display:YES];
+    }
     [[self window] makeFirstResponder:[[theTab activeSession] mainResponder]];
 }
 

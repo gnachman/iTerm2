@@ -1723,10 +1723,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // NOTE: We set newView.frame to oldView.frame above. If they are equal in
     // size then -resizeSubviewsWithOldSize: does not fire, so the synthetic
-    // session's scrollview frame is NOT re-fit to the new view here. Watch for a
-    // mismatch between the grid (rows) and the scrollview height: if they
-    // disagree, click hit-testing (coordForPoint:) and the userScroll=NO/YES
-    // drawing paths will be off by (rows - scrollviewHeight/lineHeight) lines.
+    // session's scrollview frame is NOT re-fit to the new view here. That leaves a
+    // mismatch between the grid (rows) and the scrollview height: click hit-testing
+    // (coordForPoint:) and the userScroll=NO/YES drawing paths would be off by
+    // (rows - scrollviewHeight/lineHeight) lines, and the uncovered strip renders
+    // black. This is corrected at the end of the method by fitting the session to
+    // its view (session conforms to view; the window is left unchanged).
     RLog(@"IR enter swap: synthetic=%p grid=%dx%d view.frame=%@ scrollview.frame=%@ | live=%p grid=%dx%d",
          newSession, newSession.columns, newSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame),
@@ -1750,6 +1752,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Keep the live session in self.viewToSessionMap so it doesn't get released.
     [self.viewToSessionMap setObject:newSession forKey:newSession.view];
+
+    // The swap above set newView.frame = oldView.frame, so -resizeSubviewsWithOldSize:
+    // did not fire and newSession's grid (copied from the live session, sized for
+    // oldView's content area) was never re-fit to newView. When newView has different
+    // chrome than oldView -- e.g. the live session shows a workgroup peer-mode toolbar
+    // that the synthetic session lacks -- newView's scrollview is taller than the grid,
+    // so the uncovered strip renders black and click hit-testing is off by the row
+    // difference. Fit the session to newView (session conforms to view) so they agree.
+    // This does not resize the window; callers that want the window to conform to the
+    // session instead (e.g. instant replay) do that separately. Every synthetic-swap
+    // caller needs this, so it lives here. -fitSessionToCurrentViewSize: no-ops for tmux.
+    if (!self.isTmuxTab) {
+        [self fitSessionToCurrentViewSize:newSession];
+    }
+    [newView layoutContentsForNewlyActiveSession];
 }
 
 - (int)tabNumberForItermSessionId {
@@ -1776,20 +1793,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PTYSession *oldSession = activeSession_;
     [self replaceActiveSessionWithSyntheticSession:newSession];
 
-    // The synthetic session was created at a default size and swapped in with
-    // newView.frame = oldView.frame, which usually does not fire
-    // -resizeSubviewsWithOldSize:. Its SessionView can have different chrome than
-    // the live session's (e.g. no per-pane status bar), so its grid (copied from
-    // the live session) may not fill its view: the scrollview ends up a few rows
-    // taller than the grid. During instant replay that makes click hit-testing
-    // (-coordForPoint:) select the wrong line. Fit the grid to the view here so
-    // they agree; -setDvr: below then resizes to the recorded frame size (which
-    // adjusts the window so the replayed content fills the view).
-    if (!self.isTmuxTab) {
-        [self fitSessionToCurrentViewSize:newSession];
-    }
-    [newSession.view layoutContentsForNewlyActiveSession];
-
+    // -replaceActiveSessionWithSyntheticSession: has already fit newSession's grid to
+    // its view. -setDvr: below then resizes to the recorded frame size (which adjusts
+    // the window so the replayed content fills the view).
     [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
 }
 

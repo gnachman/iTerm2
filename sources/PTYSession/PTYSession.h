@@ -715,6 +715,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, nullable) PTYSessionZoomState *stateToSaveForZoom;  // current state to restore after exiting zoom in the future
 @property(nonatomic, strong, nullable) PTYSessionZoomState *savedStateForZoom;  // set in synthetic sessions, not in live sessions.
 @property(nonatomic) BOOL inScreenshotMode;  // set for synthetic sessions used for screenshot capture
+// Set on the synthetic session when entering instant replay: the window frame from
+// before replay. Instant replay shrinks the window because the synthetic session drops
+// the live session's chrome (peer-mode toolbar, gutter panels); this lets the exit
+// restore the window exactly instead of leaving it short. nil for non-replay synthetics.
+@property(nonatomic, strong, nullable) NSValue *savedWindowFrameForInstantReplay;
 
 // Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
 @property(nonatomic, copy, nullable) NSDictionary *foundingArrangement;
