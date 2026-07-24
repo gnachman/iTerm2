@@ -14,6 +14,8 @@ protocol PasswordManagerAccount: AnyObject {
     @objc var displayString: String { get }
     @objc var hasOTP: Bool { get }
     @objc var sendOTP: Bool { get }
+    /// Optional vault/source hint (e.g. "Classic", "Nested") for host label formatting.
+    @objc optional var sourceLabel: String? { get }
 
     @objc(fetchPasswordWithContext:completion:)
     func fetchPassword(context: RecipeExecutionContext,
@@ -43,6 +45,19 @@ protocol PasswordManagerDataSource: AnyObject {
              password: String,
              context: RecipeExecutionContext,
              completion: @escaping (PasswordManagerAccount?, Error?) -> ())
+
+    /// Optional Add Account checkboxes declared by the data source. Default is nil.
+    @objc optional var addAccountToggleDescriptions: [[String: Any]]? { get }
+
+    /// Flags-carrying add. Data sources without toggles should forward to the plain add and ignore flags.
+    @objc(addUserName:accountName:password:flags:context:completion:)
+    optional func add(userName: String,
+                      accountName: String,
+                      password: String,
+                      flags: [String: Bool],
+                      context: RecipeExecutionContext,
+                      completion: @escaping (PasswordManagerAccount?, Error?) -> ())
+
     func resetErrors()
     func reload(_ completion: () -> ())
     func consolidateAvailabilityChecks(_ block: () -> ())

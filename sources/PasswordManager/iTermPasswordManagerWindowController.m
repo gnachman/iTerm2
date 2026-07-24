@@ -25,6 +25,37 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 // Looks nice and is unlikely to be used already
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
+static const CGFloat kNewAccountPanelWidth = 330;
+static const CGFloat kNewAccountPanelHeightWithoutToggle = 136;
+static const CGFloat kNewAccountPanelHeightWithToggle = 196;
+
+static void iTermFixViewY(NSView *view, CGFloat y) {
+    if (view == nil) {
+        return;
+    }
+    view.autoresizingMask = NSViewNotSizable;
+    NSRect frame = view.frame;
+    frame.origin.y = y;
+    view.frame = frame;
+}
+
+static void iTermSetNewAccountPanelContentHeight(NSPanel *panel, CGFloat height) {
+    NSRect frame = panel.frame;
+    NSRect contentRect = [panel contentRectForFrameRect:frame];
+    contentRect.size.width = kNewAccountPanelWidth;
+    contentRect.size.height = height;
+    frame = [panel frameRectForContentRect:contentRect];
+    [panel setFrame:frame display:NO];
+    NSView *contentView = panel.contentView;
+    if (contentView != nil) {
+        NSRect cvFrame = contentView.frame;
+        cvFrame.size.width = kNewAccountPanelWidth;
+        cvFrame.size.height = height;
+        cvFrame.origin = NSZeroPoint;
+        contentView.frame = cvFrame;
+        [contentView layoutSubtreeIfNeeded];
+    }
+}
 
 typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     iTermPasswordManagerReloadUnlimited,
@@ -75,6 +106,12 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
     IBOutlet NSTextField *_newAccount;
     IBOutlet NSButton *_newAccountOkButton;
     IBOutlet NSSecureTextField *_newAccountPassword;
+    IBOutlet NSTextField *_newAccountLabel;
+    IBOutlet NSTextField *_newUserNameLabel;
+    IBOutlet NSTextField *_newPasswordLabel;
+    IBOutlet NSButton *_generatePasswordButton;
+    IBOutlet NSButton *_addAccountToggleCheckbox;
+    IBOutlet NSTextField *_addAccountToggleLabel;
     IBOutlet NSView *_scrim;
     IBOutlet NSProgressIndicator *_progressIndicator;
 
@@ -611,10 +648,93 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         _newAccountPassword.stringValue = @"";
         _newAccountPassword.placeholderString = nil;
     }
+    [self configureFirstAddAccountToggle];
     [self.window beginSheet:_newAccountPanel completionHandler:^(NSModalResponse response){
         [NSApp stopModal];
     }];
+    // beginSheet can reset subview frames via autoresizing; apply layout again.
+    [self configureFirstAddAccountToggle];
     [NSApp runModalForWindow:_newAccountPanel];
+}
+
+- (NSDictionary *)firstAddAccountToggleDescription {
+    id<PasswordManagerDataSource> ds = self.currentDataSource;
+    if (![(id)ds respondsToSelector:@selector(addAccountToggleDescriptions)]) {
+        return nil;
+    }
+    NSArray<NSDictionary *> *toggles = ds.addAccountToggleDescriptions;
+    if (toggles.count == 0) {
+        return nil;
+    }
+    if (toggles.count > 1) {
+        DLog(@"Data source declared %@ add-account toggles; only the first is rendered.", @(toggles.count));
+    }
+    return toggles.firstObject;
+}
+
+- (void)configureNewAccountPanelFieldLayoutShowingToggle:(BOOL)showingToggle {
+    const CGFloat fieldHeight = 27;
+    const CGFloat labelOffset = 3;
+    const CGFloat topMargin = 34;
+    const CGFloat toggleGap = 5;
+    const CGFloat panelHeight = showingToggle ? kNewAccountPanelHeightWithToggle
+                                              : kNewAccountPanelHeightWithoutToggle;
+
+    CGFloat y = panelHeight - topMargin;
+    iTermFixViewY(_newAccount, y);
+    iTermFixViewY(_newAccountLabel, y + labelOffset);
+    y -= fieldHeight;
+
+    iTermFixViewY(_newUserName, y);
+    iTermFixViewY(_newUserNameLabel, y + labelOffset);
+    y -= fieldHeight;
+
+    iTermFixViewY(_newAccountPassword, y);
+    iTermFixViewY(_newPasswordLabel, y + labelOffset);
+    iTermFixViewY(_generatePasswordButton, y - labelOffset);
+
+    if (!showingToggle) {
+        return;
+    }
+    y -= fieldHeight + toggleGap;
+    iTermFixViewY(_addAccountToggleCheckbox, y);
+    y -= fieldHeight;
+    iTermFixViewY(_addAccountToggleLabel, y);
+}
+
+- (void)configureFirstAddAccountToggle {
+    NSDictionary *toggle = [self firstAddAccountToggleDescription];
+    const BOOL hidden = (toggle == nil);
+    _addAccountToggleCheckbox.hidden = hidden;
+    _addAccountToggleLabel.hidden = hidden;
+    const CGFloat height = hidden ? kNewAccountPanelHeightWithoutToggle
+                                  : kNewAccountPanelHeightWithToggle;
+    iTermSetNewAccountPanelContentHeight(_newAccountPanel, height);
+    [self configureNewAccountPanelFieldLayoutShowingToggle:!hidden];
+    if (hidden) {
+        return;
+    }
+    NSString *label = toggle[@"label"];
+    NSString *note = toggle[@"note"];
+    NSNumber *defaultValue = toggle[@"defaultValue"];
+    _addAccountToggleCheckbox.title = label.length > 0 ? label : @"";
+    _addAccountToggleLabel.stringValue = note.length > 0 ? note : @"";
+    _addAccountToggleCheckbox.state = (defaultValue.boolValue
+                                       ? NSControlStateValueOn
+                                       : NSControlStateValueOff);
+}
+
+- (NSDictionary<NSString *, NSNumber *> *)collectAddAccountFlags {
+    NSDictionary *toggle = [self firstAddAccountToggleDescription];
+    if (toggle == nil) {
+        return nil;
+    }
+    NSString *key = toggle[@"key"];
+    if (key.length == 0) {
+        return nil;
+    }
+    const BOOL on = (_addAccountToggleCheckbox.state == NSControlStateValueOn);
+    return @{ key: @(on) };
 }
 
 - (IBAction)cancelNewAccount:(id)sender {
@@ -639,16 +759,33 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     }
     __weak __typeof(self) weakSelf = self;
     const NSInteger cancelCount = [self incrBusy];
-    [[self currentDataSource] addUserName:_newUserName.stringValue ?: @""
-                              accountName:_newAccount.stringValue ?: @""
-                                 password:_newPassword.stringValue ?: @""
-                                  context:self.recipeExecutionContext
-                               completion:^(id<PasswordManagerAccount> _Nullable newAccount, NSError * _Nullable error) {
+    NSString *userName = _newUserName.stringValue ?: @"";
+    NSString *accountName = _newAccount.stringValue ?: @"";
+    NSString *password = _newPassword.stringValue ?: @"";
+    void (^onComplete)(id<PasswordManagerAccount>, NSError *) = ^(id<PasswordManagerAccount> _Nullable newAccount,
+                                                                  NSError * _Nullable error) {
         [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
             [weakSelf didAddAccount:newAccount withError:error];
             [weakSelf decrBusy];
         }];
-    }];
+    };
+    id<PasswordManagerDataSource> currentDataSource = self.currentDataSource;
+    NSDictionary *flags = [self collectAddAccountFlags];
+    SEL flagsSel = @selector(addUserName:accountName:password:flags:context:completion:);
+    if (flags != nil && [(id)currentDataSource respondsToSelector:flagsSel]) {
+        [currentDataSource addUserName:userName
+                           accountName:accountName
+                              password:password
+                                 flags:flags
+                               context:self.recipeExecutionContext
+                            completion:onComplete];
+    } else {
+        [currentDataSource addUserName:userName
+                           accountName:accountName
+                              password:password
+                               context:self.recipeExecutionContext
+                            completion:onComplete];
+    }
     _newPassword.stringValue = @"";
     _newUserName.stringValue = @"";
     _newAccount.stringValue = @"";
@@ -1560,7 +1697,35 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     if (rowIndex < 0 || rowIndex >= _entries.count) {
         return nil;
     }
-    return _entries[rowIndex].accountName;
+    id<PasswordManagerAccount> entry = _entries[rowIndex];
+    NSString *name = entry.accountName;
+    NSString *source = nil;
+    if ([(id)entry respondsToSelector:@selector(sourceLabel)]) {
+        source = entry.sourceLabel;
+    }
+    if (source.length > 0) {
+        return [NSString stringWithFormat:@"%@ (%@)", name, source];
+    }
+    return name;
+}
+
+- (NSString *)accountNameByStrippingSourceSuffix:(NSString *)name
+                                    fromAccount:(id<PasswordManagerAccount>)account {
+    if (name.length == 0) {
+        return name;
+    }
+    NSString *source = nil;
+    if ([(id)account respondsToSelector:@selector(sourceLabel)]) {
+        source = account.sourceLabel;
+    }
+    if (source.length == 0) {
+        return name;
+    }
+    NSString *suffix = [NSString stringWithFormat:@" (%@)", source];
+    if ([name hasSuffix:suffix]) {
+        return [name substringToIndex:name.length - suffix.length];
+    }
+    return name;
 }
 
 - (NSString *)userNameForRow:(NSInteger)rowIndex {
@@ -1689,7 +1854,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         NSString *userName = entry.userName;
         NSString *accountName = entry.accountName;
         if (aTableColumn == _accountNameColumn) {
-            accountName = anObject;
+            accountName = [self accountNameByStrippingSourceSuffix:anObject fromAccount:entry];
         } else if (aTableColumn == _userNameColumn) {
             userName = anObject;
         }

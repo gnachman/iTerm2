@@ -20,9 +20,17 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     let userName: String
     let hasOTP: Bool
     let sendOTP: Bool
+    let sourceLabel: String?
 
     var displayString: String {
-        return "\(accountName)\u{2002}—\u{2002}\(userName)"
+        return "\(formattedAccountName)\u{2002}—\u{2002}\(userName)"
+    }
+
+    var formattedAccountName: String {
+        if let source = sourceLabel?.trimmingCharacters(in: .whitespacesAndNewlines), !source.isEmpty {
+            return "\(accountName) (\(source))"
+        }
+        return accountName
     }
 
     func fetchPassword(context: RecipeExecutionContext, _ completion: @escaping (String?, String?, Error?) -> ()) {
@@ -56,7 +64,9 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     }
 
     func matches(filter: String) -> Bool {
-        return accountName.containsCaseInsensitive(filter) || userName.containsCaseInsensitive(filter)
+        return accountName.containsCaseInsensitive(filter)
+            || userName.containsCaseInsensitive(filter)
+            || formattedAccountName.containsCaseInsensitive(filter)
     }
 
     init(identifier: String,
@@ -64,12 +74,14 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
          userName: String,
          hasOTP: Bool,
          sendOTP: Bool,
+         sourceLabel: String? = nil,
          configuration: CommandLinePasswordDataSource.Configuration) {
         self.identifier = identifier
         self.accountName = accountName
         self.userName = userName
         self.hasOTP = hasOTP
-        self.sendOTP = sendOTP;
+        self.sendOTP = sendOTP
+        self.sourceLabel = sourceLabel
         self.configuration = configuration
     }
 }
@@ -905,6 +917,21 @@ class CommandLinePasswordDataSource: NSObject {
         let accountName: String
         let hasOTP: Bool
         let sendOTP: Bool
+        let sourceLabel: String?
+
+        init(identifier: AccountIdentifier,
+             userName: String,
+             accountName: String,
+             hasOTP: Bool,
+             sendOTP: Bool,
+             sourceLabel: String? = nil) {
+            self.identifier = identifier
+            self.userName = userName
+            self.accountName = accountName
+            self.hasOTP = hasOTP
+            self.sendOTP = sendOTP
+            self.sourceLabel = sourceLabel
+        }
     }
 
     struct SetPasswordRequest {
@@ -916,6 +943,17 @@ class CommandLinePasswordDataSource: NSObject {
         let userName: String
         let accountName: String
         let password: String
+        let flags: [String: Bool]
+
+        init(userName: String,
+             accountName: String,
+             password: String,
+             flags: [String: Bool] = [:]) {
+            self.userName = userName
+            self.accountName = accountName
+            self.password = password
+            self.flags = flags
+        }
     }
 
     struct Password {
@@ -946,6 +984,7 @@ class CommandLinePasswordDataSource: NSObject {
                                                userName: account.userName,
                                                hasOTP: account.hasOTP,
                                                sendOTP: account.sendOTP,
+                                               sourceLabel: account.sourceLabel,
                                                configuration: configuration)
                 }
                 completion(accounts, nil)
@@ -956,11 +995,13 @@ class CommandLinePasswordDataSource: NSObject {
                      userName: String,
                      accountName: String,
                      password: String,
+                     flags: [String: Bool] = [:],
                      context: RecipeExecutionContext,
                      completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
         let inputs = AddRequest(userName: userName,
                                 accountName: accountName,
-                                password: password)
+                                password: password,
+                                flags: flags)
         configuration.addAccountRecipe.transformAsync(context: context, inputs: inputs) { accountIdentifier, maybeError in
             configuration.listAccountsRecipe.invalidateRecipe()
             if let error = maybeError {
