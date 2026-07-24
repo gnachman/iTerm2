@@ -637,6 +637,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSwiftyString *_subtitleSwiftyString;
     iTermSwiftyString *_backgroundImageSwiftyString;
 
+    // Retained while this session keeps its video background playing for the
+    // Metal renderer. The layer path (iTermImageView) holds its own interest,
+    // so this is only non-nil when Metal draws the video. Reconciled in
+    // updateVideoBackgroundPlaybackInterest.
+    iTermImageWrapper *_videoBackgroundInterestImage;
+
     iTermSessionTabStatus *_tabStatus;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
@@ -1118,6 +1124,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _nonTextPasteHelper.delegate = nil;
     [_nonTextPasteHelper release];
     [_backgroundImage release];
+    [_videoBackgroundInterestImage releaseVideoPlaybackInterest];
+    [_videoBackgroundInterestImage release];
     [_antiIdleTimer invalidate];
     [_cadenceController release];
     [_originalProfile release];
@@ -6418,6 +6426,22 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_backgroundImage autorelease];
     _backgroundImage = [backgroundImage retain];
     [self updateViewBackgroundImage];
+    [self updateVideoBackgroundPlaybackInterest];
+}
+
+// While the Metal renderer displays a video background, hold a playback
+// interest on the wrapper so its shared player runs. The layer path takes
+// care of itself through iTermImageView's visibility tracking.
+- (void)updateVideoBackgroundPlaybackInterest {
+    iTermImageWrapper *effective = self.effectiveBackgroundImage;
+    iTermImageWrapper *desired = (_useMetal && effective.isVideo) ? effective : nil;
+    if (desired == _videoBackgroundInterestImage) {
+        return;
+    }
+    [_videoBackgroundInterestImage releaseVideoPlaybackInterest];
+    [_videoBackgroundInterestImage release];
+    _videoBackgroundInterestImage = [desired retain];
+    [_videoBackgroundInterestImage retainVideoPlaybackInterest];
 }
 
 - (void)setSmartCursorColor:(BOOL)value {
@@ -7138,9 +7162,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
     const BOOL animationPlaying = _textview.getAndResetDrawingAnimatedImageFlag;
 
+    // A video background needs frames drawn at the display cadence even when
+    // the terminal itself is quiet, just like inline animated GIFs.
+    [self updateVideoBackgroundPlaybackInterest];
+    const BOOL videoBackgroundPlaying = (_videoBackgroundInterestImage != nil);
+    if (videoBackgroundPlaying) {
+        [_view.metalView setNeedsDisplay:YES];
+    }
+
     // Even if "active" isn't changing we need the side effect of setActive: that updates the
     // cadence since we might have just become idle.
-    self.active = (somethingIsBlinking || transientTitle || animationPlaying);
+    self.active = (somethingIsBlinking || transientTitle || animationPlaying || videoBackgroundPlaying);
 
     if (_view.findViewIsHidden) {
         [_tailFindController stopContinuousTailFind];
@@ -8975,6 +9007,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
     [_textview requestDelegateRedraw];
     [_cadenceController changeCadenceIfNeeded];
+    [self updateVideoBackgroundPlaybackInterest];
 
     if (useMetal) {
         [self renderTwoMetalFramesAndShowMetalView];

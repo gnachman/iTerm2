@@ -13,6 +13,7 @@
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermImageWell.h"
 #import "iTermPreferences.h"
+#import "iTermSharedImageStore.h"
 #import "iTermSizeRememberingView.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermSystemVersion.h"
@@ -24,6 +25,7 @@
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PreferencePanel.h"
+#import <AVFoundation/AVFoundation.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 // On macOS 10.13, we see that blur over 26 can turn red (issue 6138).
@@ -818,12 +820,13 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = NO;
     panel.treatsFilePackagesAsDirectories = NO;
-    panel.message = @"Choose an image for the background, or a folder to rotate through its images.";
-    // Image-only filter dims non-image files. Folders stay selectable because
+    panel.message = @"Choose an image or short video for the background, or a folder to rotate through its images.";
+    // Image/video-only filter dims other files. Folders stay selectable because
     // canChooseDirectories=YES treats them as containers, not content.
-    panel.allowedContentTypes = [NSImage.imageTypes mapWithBlock:^id _Nullable(NSString *ext) {
+    NSArray<UTType *> *imageTypes = [NSImage.imageTypes mapWithBlock:^id _Nullable(NSString *ext) {
         return [UTType typeWithIdentifier:ext];
     }];
+    panel.allowedContentTypes = [imageTypes arrayByAddingObjectsFromArray:[iTermImageWrapper videoContentTypes]];
 
     void (^completion)(NSInteger) = ^(NSInteger result) {
         if (result == NSModalResponseOK) {
@@ -871,6 +874,26 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
         [self setUnsignedInteger:iTermBackgroundImageSourceModeFolderRotation
                           forKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE];
         [self updateControlForKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION];
+    } else if ([iTermImageWrapper pathIsVideo:path]) {
+        __weak __typeof(self) weakSelf = self;
+        [self checkVideo:path completion:^(BOOL ok) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            if (!ok) {
+                [strongSelf loadBackgroundImageForCurrentSource];
+                return;
+            }
+            [strongSelf setString:path forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+            [strongSelf setUnsignedInteger:iTermBackgroundImageSourceModeSingleImage
+                                    forKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE];
+            [strongSelf updateControlForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+            [strongSelf synchronizeBackgroundImageEnabledState];
+            [strongSelf loadBackgroundImageForCurrentSource];
+            [strongSelf updateBackgroundImageUI];
+        }];
+        return;
     } else {
         [self checkImage:path];
         [self setString:path forKey:KEY_BACKGROUND_IMAGE_LOCATION];
@@ -938,6 +961,10 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
 // Sets _backgroundImagePreview and _useBackgroundImage.
 - (void)loadBackgroundImageWithFilename:(NSString *)filename {
+    if (filename.length > 0 && [iTermImageWrapper pathIsVideo:filename]) {
+        [self loadBackgroundVideoPreviewWithFilename:filename];
+        return;
+    }
     NSImage *anImage = filename.length > 0 ? [[NSImage alloc] initWithContentsOfFile:[filename stringByExpandingTildeInPath]] : nil;
     if (anImage) {
         [_backgroundImagePreview setImage:anImage];
@@ -949,6 +976,36 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     [self updatePrivateNonDefaultInicators];
 }
 
+// Shows the video’s first frame in _backgroundImagePreview.
+- (void)loadBackgroundVideoPreviewWithFilename:(NSString *)filename {
+    self.backgroundImageFilename = filename;
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[NSURL fileURLWithPath:[filename stringByExpandingTildeInPath]] options:nil];
+    AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+    generator.appliesPreferredTrackTransform = YES;
+    __weak __typeof(self) weakSelf = self;
+    [generator generateCGImagesAsynchronouslyForTimes:@[ [NSValue valueWithCMTime:kCMTimeZero] ]
+                                    completionHandler:^(CMTime requestedTime,
+                                                        CGImageRef _Nullable cgImage,
+                                                        CMTime actualTime,
+                                                        AVAssetImageGeneratorResult result,
+                                                        NSError * _Nullable error) {
+        NSImage *thumbnail = nil;
+        if (result == AVAssetImageGeneratorSucceeded && cgImage) {
+            thumbnail = [[NSImage alloc] initWithCGImage:cgImage
+                                                    size:NSMakeSize(CGImageGetWidth(cgImage),
+                                                                    CGImageGetHeight(cgImage))];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || ![strongSelf.backgroundImageFilename isEqualToString:filename]) {
+                return;
+            }
+            [strongSelf->_backgroundImagePreview setImage:thumbnail];
+            [strongSelf updatePrivateNonDefaultInicators];
+        });
+    }];
+}
+
 - (void)updateNonDefaultIndicators {
     [super updateNonDefaultIndicators];
     [self updatePrivateNonDefaultInicators];
@@ -956,6 +1013,42 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
 - (void)updatePrivateNonDefaultInicators {
     _useBackgroundImage.it_showNonDefaultIndicator = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] && _useBackgroundImage.state == NSControlStateValueOn;
+}
+
+// Calls completion on the main queue with YES if the video is usable as a background.
+- (void)checkVideo:(NSString *)filename completion:(void (^)(BOOL))completion {
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[NSURL fileURLWithPath:filename] options:nil];
+    __weak __typeof(self) weakSelf = self;
+    [asset loadValuesAsynchronouslyForKeys:@[ @"playable" ] completionHandler:^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                completion(NO);
+                return;
+            }
+            NSError *error = nil;
+            const BOOL loaded = [asset statusOfValueForKey:@"playable" error:&error] == AVKeyValueStatusLoaded;
+            if (!loaded || !asset.isPlayable) {
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The video “%@” could not be loaded because it is corrupt or not a supported format.", filename.lastPathComponent]
+                                           actions:@[ @"OK" ]
+                                         accessory:nil
+                                        identifier:@"BackgroundVideoUnreadable"
+                                       silenceable:kiTermWarningTypePersistent
+                                           heading:@"Problem Loading Video"
+                                            window:strongSelf.view.window];
+                completion(NO);
+                return;
+            }
+            [iTermWarning showWarningWithTitle:@"Background videos play continuously while the window is visible. High-resolution or high-frame-rate videos increase energy use, which matters most on battery power."
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"BackgroundVideoEnergyUse"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                       heading:@"Video Backgrounds and Energy"
+                                        window:strongSelf.view.window];
+            completion(YES);
+        });
+    }];
 }
 
 - (BOOL)checkImage:(NSString *)filename {
