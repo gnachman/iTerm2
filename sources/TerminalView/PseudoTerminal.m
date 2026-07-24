@@ -2131,6 +2131,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)close {
+    if (self.orphanJobsOnClose) {
+        for (PTYSession *session in [self allSessions]) {
+            session.orphanOnDealloc = YES;
+        }
+    }
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -3241,6 +3246,16 @@ ITERM_WEAKLY_REFERENCEABLE
 + (BOOL)arrangementIsLionFullScreen:(NSDictionary *)arrangement {
     iTermPercentage dummy = { .width=-1, .height=-1 };
     return [PseudoTerminal _windowTypeForArrangement:arrangement percentage:&dummy] == WINDOW_TYPE_LION_FULL_SCREEN;
+}
+
+static BOOL gUseUnlimitedHistoryForArrangement = NO;
+
++ (BOOL)useUnlimitedHistoryForArrangement {
+    return gUseUnlimitedHistoryForArrangement;
+}
+
++ (void)setUseUnlimitedHistoryForArrangement:(BOOL)use {
+    gUseUnlimitedHistoryForArrangement = use;
 }
 
 + (BOOL)shouldRestoreHotKeyWindowWithGUID:(NSString *)guid {
@@ -4399,6 +4414,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // This counts as an interaction because it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
     iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
     [appDelegate userDidInteractWithASession];
+
+    // Window Projects: an associated window uses its own Save & Detach / Save &
+    // Close / Remove confirmation in place of the generic running-jobs prompt.
+    switch ([[iTermWindowProjectsModel shared] handleUserInitiatedCloseOf:self]) {
+        case iTermWindowProjectCloseHandlingHandled:
+        case iTermWindowProjectCloseHandlingCancelled:
+            // Either Window Projects will close the window itself (after
+            // archiving/detaching/removing) or the user cancelled; AppKit must
+            // not continue the close in either case.
+            return NO;
+        case iTermWindowProjectCloseHandlingNotAssociated:
+            break;
+    }
 
     BOOL needPrompt = NO;
     if ([self promptOnCloseReason].hasReason) {

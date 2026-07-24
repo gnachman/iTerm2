@@ -78,6 +78,7 @@
 #import "VT100Terminal.h"
 #import "VT100Token.h"
 #import "WindowArrangements.h"
+#import "PseudoTerminal.h"
 #import "WindowControllerInterface.h"
 #import "iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -2174,6 +2175,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
                 tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
+                aSession->_isArchive = NO;
+                [aSession->_screen setTerminalEnabled:YES];
             } else {
                 if (isTmuxGateway) {
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -3838,6 +3841,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }];
     [_view release];  // This balances a retain in -terminate.
     [[self retain] autorelease];
+    _shell.orphanOnDealloc = self.orphanOnDealloc;
     [_shell stop];
     _shell.delegate = nil;
     [_textview setDataSource:nil];
@@ -6808,7 +6812,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (includeContents) {
         __block int numberOfLinesDropped = 0;
         if (!self.isBrowserSession) {
-            const BOOL unlimited = [options[PTYSessionArrangementOptionsUnlimitedHistory] boolValue];
+            const BOOL unlimited = [options[PTYSessionArrangementOptionsUnlimitedHistory] boolValue] || [PseudoTerminal useUnlimitedHistoryForArrangement];
             [result encodeDictionaryWithKey:SESSION_ARRANGEMENT_CONTENTS
                                  generation:iTermGenerationAlwaysEncode
                                       block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {

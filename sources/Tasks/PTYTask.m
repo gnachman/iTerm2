@@ -103,7 +103,9 @@ static void HandleSigChld(int n) {
     // pid_t. Are they guaranteed to always be the same for process group
     // leaders? It is not clear from git history why killpg is used here and
     // not in other places. I suspect it's what we ought to use everywhere.
-    [self.jobManager killWithMode:iTermJobManagerKillingModeProcessGroup];
+    if (!self.orphanOnDealloc) {
+        [self.jobManager killWithMode:iTermJobManagerKillingModeProcessGroup];
+    }
     if (_tmuxClientProcessID) {
         [[iTermProcessCache sharedInstance] unregisterTrackedPID:_tmuxClientProcessID.intValue];
     }
@@ -386,11 +388,13 @@ static void HandleSigChld(int n) {
     RLog(@"stop %@", self);
     self.paused = NO;
     [self.loggingHelper stop];
-    [self killWithMode:iTermJobManagerKillingModeRegular];
+    if (!self.orphanOnDealloc) {
+        [self killWithMode:iTermJobManagerKillingModeRegular];
 
-    // Ensure the server is broken out of accept()ing for future connections
-    // in case the child doesn't die right away.
-    [self killWithMode:iTermJobManagerKillingModeBrokenPipe];
+        // Ensure the server is broken out of accept()ing for future connections
+        // in case the child doesn't die right away.
+        [self killWithMode:iTermJobManagerKillingModeBrokenPipe];
+    }
 
     [self closeFileDescriptorAndDeregisterIfPossible];
 }
@@ -910,6 +914,20 @@ static void HandleSigChld(int n) {
         RLog(@"Deregister file descriptor %d for process %@ after closing it", fd, @(self.pid));
         [[TaskNotifier sharedInstance] deregisterTask:self];
     }
+}
+
+- (pid_t)parkChildForReattachment {
+    iTermMultiServerJobManager *multi = [iTermMultiServerJobManager castFrom:self.jobManager];
+    if (!multi) {
+        DLog(@"parkChildForReattachment: job manager %@ is not multiserver; cannot park", self.jobManager);
+        return -1;
+    }
+    // Stop the task notifier from reading this fd, but DO NOT close it — the
+    // child keeps it open so the process can be re-adopted on thaw.
+    [[TaskNotifier sharedInstance] deregisterTask:self];
+    const pid_t pid = [multi parkChildForReattachment];
+    DLog(@"parkChildForReattachment: parked pid %@ for task %@", @(pid), self);
+    return pid;
 }
 
 #pragma mark - iTermLoggingHelper

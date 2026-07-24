@@ -156,7 +156,7 @@ class WindowInitialPositioner: NSObject {
             window.setFrame(frame, display: false)
         }
 
-        let numberOfTerminalWindows = iTermController.sharedInstance()?.terminals().count ?? 0
+        let numberOfTerminalWindows = iTermController.sharedInstance()?.terminals()?.count ?? 0
         let placement = iTermPreferences.unsignedInteger(forKey: kPreferenceKeyWindowPlacement)
         DLog("windowWillShowInitial: numberOfTerminalWindows=\(numberOfTerminalWindows) placement=\(placement)")
 
