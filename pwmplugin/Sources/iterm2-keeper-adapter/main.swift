@@ -83,13 +83,6 @@ private func handleHandshake() {
                     isSecret: false,
                     note: "Note: Append /api/v2 in your API URL",
                     persistInKeychain: false),
-                PasswordManagerProtocol.SettingsField(
-                    key: "apiKey",
-                    label: "API key:",
-                    placeholder: "Enter Keeper Commander API key",
-                    isSecret: true,
-                    note: nil,
-                    persistInKeychain: true),
             ],
             addAccountToggles: [
                 PasswordManagerProtocol.AddAccountToggle(
@@ -112,9 +105,6 @@ private func apiKey(fromHeader header: PasswordManagerProtocol.RequestHeader,
         return key
     }
     if let key = decodeToken(token)?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
-        return key
-    }
-    if let key = header.settings?["apiKey"]?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty {
         return key
     }
     throw KeeperClientError.message("Invalid or missing API key")

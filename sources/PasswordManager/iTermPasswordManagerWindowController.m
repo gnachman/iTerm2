@@ -659,40 +659,47 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
 - (NSDictionary *)firstAddAccountToggleDescription {
     id<PasswordManagerDataSource> ds = self.currentDataSource;
-    if (![(id)ds conformsToProtocol:@protocol(iTermAdapterCapabilities)]) {
+    if (![(id)ds respondsToSelector:@selector(addAccountToggleDescriptions)]) {
         return nil;
     }
-    id<iTermAdapterCapabilities> adapter = (id<iTermAdapterCapabilities>)ds;
-    NSArray<NSDictionary *> *toggles = adapter.addAccountToggleDescriptions;
+    NSArray<NSDictionary *> *toggles = ds.addAccountToggleDescriptions;
     if (toggles.count == 0) {
         return nil;
     }
     if (toggles.count > 1) {
-        DLog(@"Adapter declared %@ add-account toggles; only the first is rendered.", @(toggles.count));
+        DLog(@"Data source declared %@ add-account toggles; only the first is rendered.", @(toggles.count));
     }
     return toggles.firstObject;
 }
 
 - (void)configureNewAccountPanelFieldLayoutShowingToggle:(BOOL)showingToggle {
-    if (showingToggle) {
-        iTermFixViewY(_newAccount, 162);
-        iTermFixViewY(_newAccountLabel, 165);
-        iTermFixViewY(_newUserName, 135);
-        iTermFixViewY(_newUserNameLabel, 138);
-        iTermFixViewY(_newAccountPassword, 108);
-        iTermFixViewY(_newPasswordLabel, 111);
-        iTermFixViewY(_generatePasswordButton, 105);
-        iTermFixViewY(_addAccountToggleCheckbox, 76);
-        iTermFixViewY(_addAccountToggleLabel, 49);
-    } else {
-        iTermFixViewY(_newAccount, 102);
-        iTermFixViewY(_newAccountLabel, 105);
-        iTermFixViewY(_newUserName, 75);
-        iTermFixViewY(_newUserNameLabel, 78);
-        iTermFixViewY(_newAccountPassword, 48);
-        iTermFixViewY(_newPasswordLabel, 51);
-        iTermFixViewY(_generatePasswordButton, 45);
+    const CGFloat fieldHeight = 27;
+    const CGFloat labelOffset = 3;
+    const CGFloat topMargin = 34;
+    const CGFloat toggleGap = 5;
+    const CGFloat panelHeight = showingToggle ? kNewAccountPanelHeightWithToggle
+                                              : kNewAccountPanelHeightWithoutToggle;
+
+    CGFloat y = panelHeight - topMargin;
+    iTermFixViewY(_newAccount, y);
+    iTermFixViewY(_newAccountLabel, y + labelOffset);
+    y -= fieldHeight;
+
+    iTermFixViewY(_newUserName, y);
+    iTermFixViewY(_newUserNameLabel, y + labelOffset);
+    y -= fieldHeight;
+
+    iTermFixViewY(_newAccountPassword, y);
+    iTermFixViewY(_newPasswordLabel, y + labelOffset);
+    iTermFixViewY(_generatePasswordButton, y - labelOffset);
+
+    if (!showingToggle) {
+        return;
     }
+    y -= fieldHeight + toggleGap;
+    iTermFixViewY(_addAccountToggleCheckbox, y);
+    y -= fieldHeight;
+    iTermFixViewY(_addAccountToggleLabel, y);
 }
 
 - (void)configureFirstAddAccountToggle {
@@ -765,16 +772,13 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     id<PasswordManagerDataSource> currentDataSource = self.currentDataSource;
     NSDictionary *flags = [self collectAddAccountFlags];
     SEL flagsSel = @selector(addUserName:accountName:password:flags:context:completion:);
-    if (flags != nil &&
-        [(id)currentDataSource conformsToProtocol:@protocol(iTermAdapterCapabilities)] &&
-        [(id)currentDataSource respondsToSelector:flagsSel]) {
-        id<iTermAdapterCapabilities> caps = (id<iTermAdapterCapabilities>)currentDataSource;
-        [caps addUserName:userName
-              accountName:accountName
-                 password:password
-                    flags:flags
-                  context:self.recipeExecutionContext
-               completion:onComplete];
+    if (flags != nil && [(id)currentDataSource respondsToSelector:flagsSel]) {
+        [currentDataSource addUserName:userName
+                           accountName:accountName
+                              password:password
+                                 flags:flags
+                               context:self.recipeExecutionContext
+                            completion:onComplete];
     } else {
         [currentDataSource addUserName:userName
                            accountName:accountName
@@ -1693,7 +1697,35 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     if (rowIndex < 0 || rowIndex >= _entries.count) {
         return nil;
     }
-    return _entries[rowIndex].accountName;
+    id<PasswordManagerAccount> entry = _entries[rowIndex];
+    NSString *name = entry.accountName;
+    NSString *source = nil;
+    if ([(id)entry respondsToSelector:@selector(sourceLabel)]) {
+        source = entry.sourceLabel;
+    }
+    if (source.length > 0) {
+        return [NSString stringWithFormat:@"%@ (%@)", name, source];
+    }
+    return name;
+}
+
+- (NSString *)accountNameByStrippingSourceSuffix:(NSString *)name
+                                    fromAccount:(id<PasswordManagerAccount>)account {
+    if (name.length == 0) {
+        return name;
+    }
+    NSString *source = nil;
+    if ([(id)account respondsToSelector:@selector(sourceLabel)]) {
+        source = account.sourceLabel;
+    }
+    if (source.length == 0) {
+        return name;
+    }
+    NSString *suffix = [NSString stringWithFormat:@" (%@)", source];
+    if ([name hasSuffix:suffix]) {
+        return [name substringToIndex:name.length - suffix.length];
+    }
+    return name;
 }
 
 - (NSString *)userNameForRow:(NSInteger)rowIndex {
@@ -1822,7 +1854,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         NSString *userName = entry.userName;
         NSString *accountName = entry.accountName;
         if (aTableColumn == _accountNameColumn) {
-            accountName = anObject;
+            accountName = [self accountNameByStrippingSourceSuffix:anObject fromAccount:entry];
         } else if (aTableColumn == _userNameColumn) {
             userName = anObject;
         }
