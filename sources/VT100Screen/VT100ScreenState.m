@@ -1251,8 +1251,21 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 - (id<VT100ScreenMarkReading>)commandMarkAt:(VT100GridCoord)coord
                             mustHaveCommand:(BOOL)mustHaveCommand
                                       range:(out VT100GridWindowedRange *)rangeOut {
+    if (coord.y < 0 || coord.y >= self.numberOfLines) {
+        return nil;
+    }
+
     id<VT100ScreenMarkReading> mark = [self screenMarkOnLine:coord.y];
-    const VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
+    if (!mark) {
+        return nil;
+    }
+
+    IntervalTreeEntry *entry = mark.entry;
+    if (!entry || !entry.interval) {
+        return nil;
+    }
+
+    const VT100GridCoordRange range = [self coordRangeForInterval:entry.interval];
     if (mustHaveCommand && mark.firstLineOfCommand == nil) {
         return nil;
     }

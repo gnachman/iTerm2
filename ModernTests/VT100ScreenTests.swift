@@ -701,6 +701,67 @@ class VT100ScreenTests: XCTestCase {
         })
     }
 
+    func testCommandMarkAtReturnsNilWhenLineIsOutOfBounds() {
+        let screen = self.screen(width: 10, height: 4)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var range = VT100GridWindowedRange()
+            let negative = mutableState.commandMark(at: VT100GridCoordMake(0, -1),
+                                                    mustHaveCommand: false,
+                                                    range: &range)
+            XCTAssertNil(negative)
+
+            let tooLargeY = mutableState.numberOfLines
+            let tooLarge = mutableState.commandMark(at: VT100GridCoordMake(0, tooLargeY),
+                                                    mustHaveCommand: false,
+                                                    range: &range)
+            XCTAssertNil(tooLarge)
+        })
+    }
+
+    func testCommandMarkAtReturnsNilWhenNoMarkOnLine() {
+        let screen = self.screen(width: 10, height: 4)
+
+        appendLinesNoNewline([
+            "https://example.com",
+            "next line"
+        ], screen: screen)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var range = VT100GridWindowedRange()
+            let mark = mutableState.commandMark(at: VT100GridCoordMake(0, 0),
+                                                mustHaveCommand: false,
+                                                range: &range)
+            XCTAssertNil(mark)
+        })
+    }
+
+    func testCommandMarkAtReturnsNilWhenMarkHasNoCommand() {
+        let screen = self.screen(width: 10, height: 4)
+
+        appendLinesNoNewline([
+            "prompt",
+            "next line"
+        ], screen: screen)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let mark = mutableState.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
+            let absLine = mutableState.cumulativeScrollbackOverflow
+            mutableState.mutableIntervalTree().mutate(mark) { obj in
+                let m = obj as! VT100ScreenMark
+                m.promptRange = VT100GridAbsCoordRangeMake(0, absLine, 6, absLine)
+            }
+
+            var range = VT100GridWindowedRange()
+            XCTAssertNotNil(mutableState.commandMark(at: VT100GridCoordMake(0, 0),
+                                                     mustHaveCommand: false,
+                                                     range: &range))
+            XCTAssertNil(mutableState.commandMark(at: VT100GridCoordMake(0, 0),
+                                                  mustHaveCommand: true,
+                                                  range: &range))
+        })
+    }
+
     private func commonNoteResizeRegressionTest(initialRange range1: VT100GridCoordRange,
                                                 intermediateRange range2: VT100GridCoordRange) {
         var screen = self.screen(width: 80, height: 25)
