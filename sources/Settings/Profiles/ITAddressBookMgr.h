@@ -202,6 +202,7 @@
 // Web
 #define KEY_BROWSER_ZOOM           @"Browser Zoom"  // 100 = 100%
 #define KEY_BROWSER_DEV_NULL       @"Dev Null Mode"
+#define KEY_BROWSER_SHOW_TOOLBAR   @"Browser Show Toolbar"  // bool
 #define KEY_BROWSER_EXTENSIONS_ROOT @"Browser Extensions Root"
 #define KEY_BROWSER_EXTENSION_ACTIVE_IDS @"Browser Extension Active IDs"
 #define KEY_INSTANT_REPLAY         @"Instant Replay"
