@@ -525,6 +525,14 @@ class TypingStatusModel {
         let pc = PersonChat(participant: participant, chatID: chatID)
         return typing.contains(pc)
     }
+
+    func chatIDs(forParticipant participant: Participant) -> Set<String> {
+        var result = Set<String>()
+        for pc in typing where pc.participant == participant {
+            result.insert(pc.chatID)
+        }
+        return result
+    }
 }
 
 /// Per-chat "is an agent turn in flight" state. Set at turn start / cleared at
