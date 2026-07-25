@@ -525,6 +525,43 @@ class ChatDatabase {
         }
     }
 
+    /// Number of stored blob rows for a chat (one per captured round), counted in
+    /// SQL WITHOUT decoding payloads: O(1)-ish regardless of history length, and
+    /// robust to rows whose protocol this build can't decode (which `blobs(inChat:)`
+    /// would silently drop). This is the authoritative already-captured-round count
+    /// for incremental capture.
+    func blobCount(inChat chatID: String) -> Int {
+        let (sql, args) = ChatBlob.countQuery(forChatID: chatID)
+        do {
+            guard let rs = try db.executeQuery(sql, withArguments: args) else { return 0 }
+            defer { rs.close() }
+            if rs.next() {
+                return Int(rs.longLongInt(forColumn: "n"))
+            }
+        } catch {
+            RLog("blobCount failed for chat \(chatID): \(error)")
+        }
+        return 0
+    }
+
+    /// The protocol (iTermAIAPI raw value) a chat's blobs were frozen under, or nil
+    /// if it has none. Read without decoding a payload. A blob is only replayable
+    /// under this protocol, so a capture under any other protocol must first
+    /// re-freeze via replaceBlobs.
+    func storedBlobProtocol(inChat chatID: String) -> Int? {
+        let (sql, args) = ChatBlob.protocolQuery(forChatID: chatID)
+        do {
+            guard let rs = try db.executeQuery(sql, withArguments: args) else { return nil }
+            defer { rs.close() }
+            if rs.next() {
+                return Int(rs.longLongInt(forColumn: ChatBlob.Columns.blobProtocol.rawValue))
+            }
+        } catch {
+            RLog("storedBlobProtocol failed for chat \(chatID): \(error)")
+        }
+        return nil
+    }
+
     /// A chat's blobs oldest-first (splice order). Empty on a read error or an
     /// empty/blobless chat; the caller distinguishes "blobless" via
     /// Chat.blobProtocol (nil = legacy, needs migration) rather than an empty read.

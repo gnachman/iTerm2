@@ -124,6 +124,26 @@ struct ChatBlob: iTermDatabaseInitializable {
          [chatID])
     }
 
+    /// Row count for a chat's blobs WITHOUT decoding any payload. This is the
+    /// already-captured-round count used by incremental capture, so it must count
+    /// ROWS (not decoded blobs): it stays O(1)-ish as the chat grows and, unlike
+    /// counting decoded blobs, is not undercounted by a row whose protocol this
+    /// build can't read (a blob written by a newer iTerm2).
+    static func countQuery(forChatID chatID: String) -> (String, [Any?]) {
+        ("select count(*) as n from ChatBlob where \(Columns.chatID.rawValue)=?", [chatID])
+    }
+
+    /// The protocol a chat's blobs were frozen under (they all share one), read
+    /// from the first row's integer column WITHOUT decoding a payload. Nil if the
+    /// chat has no blobs.
+    static func protocolQuery(forChatID chatID: String) -> (String, [Any?]) {
+        ("""
+         select \(Columns.blobProtocol.rawValue) from ChatBlob
+         where \(Columns.chatID.rawValue)=? order by \(Columns.seq.rawValue) asc limit 1
+         """,
+         [chatID])
+    }
+
     /// Delete a chat's blobs (used when a protocol switch forces a re-freeze, and
     /// on chat deletion). Returns the statement; the caller runs it in a
     /// transaction with the re-blob inserts so a switch is atomic.

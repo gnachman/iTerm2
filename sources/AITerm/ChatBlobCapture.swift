@@ -48,6 +48,13 @@ enum ChatBlobCapture {
     ///
     /// On an encode failure it stops rather than skipping a round, so the stored
     /// sequence never gets a hole; the un-captured tail is retried on the next turn.
+    ///
+    /// PRECONDITION: a blob is only replayable under the protocol it was frozen
+    /// for, so on a protocol switch (the chat's bound model/provider changed mid
+    /// conversation) the caller MUST re-freeze the whole history via
+    /// ChatDatabase.replaceBlobs BEFORE calling this. This function defends the
+    /// invariant anyway: if the chat already has blobs under a different protocol
+    /// it refuses (returns 0) rather than append a mixed, unreplayable sequence.
     @discardableResult
     static func captureNewRounds(chatID: String,
                                  allMessages: [LLM.Message],
@@ -55,8 +62,18 @@ enum ChatBlobCapture {
                                  modelName: String?,
                                  hostedTools: HostedTools,
                                  database: ChatDatabase) -> Int {
+        // Row count (not decoded-blob count): O(1)-ish and robust to rows this
+        // build can't decode (a newer protocol), which would otherwise undercount
+        // and re-freeze already-stored rounds.
+        let existing = database.blobCount(inChat: chatID)
+        if existing > 0 {
+            let stored = database.storedBlobProtocol(inChat: chatID)
+            if stored != Int(api.rawValue) {
+                RLog("ChatBlobCapture: protocol mismatch for chat \(chatID): stored=\(String(describing: stored)) new=\(api.rawValue); refusing to append (a protocol switch must go through replaceBlobs)")
+                return 0
+            }
+        }
         let allRounds = rounds(from: allMessages)
-        let existing = database.blobs(inChat: chatID).count
         guard allRounds.count > existing else {
             return 0
         }

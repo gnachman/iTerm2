@@ -130,6 +130,47 @@ final class ChatBlobCaptureTests: XCTestCase {
         XCTAssertTrue(db.blobs(inChat: "A").isEmpty)
     }
 
+    /// A protocol switch mid-chat must NOT append new-protocol rounds on top of
+    /// old-protocol blobs (that yields a mixed, unreplayable sequence). The caller
+    /// must re-freeze via replaceBlobs first; until then, capture refuses.
+    func testCapture_protocolMismatch_refusesToAppend() throws {
+        let db = try makeTempDB()
+        let r1 = [user("q1"), asst("a1")]
+        XCTAssertEqual(ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r1,
+                                                        api: .chatCompletions, modelName: nil,
+                                                        hostedTools: HostedTools(), database: db), 1)
+        // Next turn arrives under a DIFFERENT protocol without a re-freeze.
+        let r2 = r1 + [user("q2"), asst("a2")]
+        let n = ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r2,
+                                                 api: .responses, modelName: nil,
+                                                 hostedTools: HostedTools(), database: db)
+        XCTAssertEqual(n, 0, "must refuse to append under a different protocol")
+        let blobs = db.blobs(inChat: "A")
+        XCTAssertEqual(blobs.count, 1, "sequence must be unchanged (no mixed-protocol corruption)")
+        XCTAssertEqual(blobs.first?.blobProtocol, .chatCompletions)
+    }
+
+    /// Same protocol continues to append (the guard only refuses a real mismatch).
+    func testCapture_sameProtocol_stillAppends() throws {
+        let db = try makeTempDB()
+        let r1 = [user("q1"), asst("a1")]
+        XCTAssertEqual(capture(db, chatID: "A", r1), 1)
+        XCTAssertEqual(capture(db, chatID: "A", r1 + [user("q2"), asst("a2")]), 1)
+        XCTAssertEqual(db.blobCount(inChat: "A"), 2)
+    }
+
+    func testBlobCount_countsRowsWithoutDecoding() throws {
+        let db = try makeTempDB()
+        XCTAssertEqual(db.blobCount(inChat: "A"), 0)
+        for i in 0..<3 {
+            db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .anthropic, role: .user,
+                                   payload: Data("r\(i)".utf8)))
+        }
+        XCTAssertEqual(db.blobCount(inChat: "A"), 3)
+        XCTAssertEqual(db.storedBlobProtocol(inChat: "A"), Int(iTermAIAPI.anthropic.rawValue))
+        XCTAssertNil(db.storedBlobProtocol(inChat: "empty"))
+    }
+
     func testCapture_recordsResponseID_fromRoundTail() throws {
         let db = try makeTempDB()
         // Responses-style: the round's final assistant message carries a responseID.
