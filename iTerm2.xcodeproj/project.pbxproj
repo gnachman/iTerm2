@@ -1007,6 +1007,7 @@
 		616ABD699141533212F458CF /* ToolStatusCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10914CB04BC4D2847EC8EB23 /* ToolStatusCellView.swift */; };
 		626CFB7CD2E04AFC79333160 /* AutoModeTranscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADDE0AA9D613252189BF3C0 /* AutoModeTranscript.swift */; };
 		639530D5AD779882EF35DAE4 /* iTermLargeContentObject.h in Sources */ = {isa = PBXBuildFile; fileRef = 13C5AE44EEA24B945DE0A064 /* iTermLargeContentObject.h */; };
+		63E228527D9C344E2A67AAFC /* ChatBlobCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C59C22641253239F1BF6BB /* ChatBlobCapture.swift */; };
 		64EC42E62879047B5E0EF077 /* CompanionMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE0FD36EF2CD108D533CC26 /* CompanionMessages.swift */; };
 		65EE211B60CDAF7B6FC925B2 /* CompanionPushNonceRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1F7DEDB57FDB370787B646 /* CompanionPushNonceRegistry.swift */; };
 		66ACA31A7AD33D24EE498F7C /* ai-models.json in Resources */ = {isa = PBXBuildFile; fileRef = DF18C01510605DB0C639038F /* ai-models.json */; };
@@ -9845,6 +9846,7 @@
 		ED49EE365D629DAE80503BFD /* iTermNonTextPasteHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = iTermNonTextPasteHelper.swift; path = sources/Pasting/iTermNonTextPasteHelper.swift; sourceTree = SOURCE_ROOT; };
 		EF5FA15853801D38481C3199 /* MessagesSinceResponder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MessagesSinceResponder.swift; sourceTree = "<group>"; };
 		EFF831B875F22773855E32DA /* MoveSessionBuiltInFunctions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MoveSessionBuiltInFunctions.swift; sourceTree = "<group>"; };
+		F0C59C22641253239F1BF6BB /* ChatBlobCapture.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatBlobCapture.swift; sourceTree = "<group>"; };
 		F0CF78DCB35283C048B0B54A /* CockpitWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CockpitWindowController.swift; sourceTree = "<group>"; };
 		F10731A1F54B9BF72FBAC682 /* Box.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Box.swift; sourceTree = "<group>"; };
 		F11BE1CE0F1EF4E86C53D1E0 /* AILiveAttachmentFixtures.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveAttachmentFixtures.swift; sourceTree = "<group>"; };
@@ -11554,6 +11556,7 @@
 				941E5905370297E8D4BD0408 /* TUISafetyPrompt.swift */,
 				231D27420AD78D3C46E931AE /* ChatBlob.swift */,
 				0D0DDA8C6A3EBC8252F44780 /* ChatBlobWireEncoder.swift */,
+				F0C59C22641253239F1BF6BB /* ChatBlobCapture.swift */,
 			);
 			path = AITerm;
 			sourceTree = "<group>";
@@ -22121,6 +22124,7 @@
 				6A01F4220CBCC9D9258D0138 /* iTermAttributedStringBuilderBenchmark.h in Sources */,
 				C28B472089FF9B154E9804AE /* ChatBlob.swift in Sources */,
 				E73353BBF7FFE6A7C16E0BD8 /* ChatBlobWireEncoder.swift in Sources */,
+				63E228527D9C344E2A67AAFC /* ChatBlobCapture.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
