@@ -1645,7 +1645,12 @@ struct ResponsesBodyRequestBuilder {
     var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
     var serviceTier: ResponsesRequestBody.ServiceTier?
 
-    private func transform(message: LLM.Message) -> [ResponsesRequestBody.Input.ItemListEntry] {
+    // Static (depends only on its args, not builder state) so the blob wire-encoder
+    // reuses this EXACT per-message mapping to freeze a round's input items. It
+    // emits the FULL-replay shape (reasoning items ahead of the function call they
+    // produced, keepItemIDs gated on reasoning presence); previousResponseID
+    // stripping happens later in body() on the whole list, not here.
+    static func transform(message: LLM.Message, hostedTools: HostedTools) -> [ResponsesRequestBody.Input.ItemListEntry] {
         switch message.role {
         case .assistant:
             // Parsers collapse a Responses turn into one .assistant message
@@ -1756,7 +1761,7 @@ struct ResponsesBodyRequestBuilder {
 
     /// Reasoning items persisted with a message replay verbatim (id +
     /// encrypted payload), ahead of the message's own entries.
-    private func reasoningEntries(for message: LLM.Message) -> [ResponsesRequestBody.Input.ItemListEntry] {
+    private static func reasoningEntries(for message: LLM.Message) -> [ResponsesRequestBody.Input.ItemListEntry] {
         guard let items = message.reasoningItems else { return [] }
         return items.map { item in
             .item(.reasoning(.init(id: item.id,
@@ -1765,7 +1770,7 @@ struct ResponsesBodyRequestBuilder {
         }
     }
 
-    private func hasReasoningItems(_ message: LLM.Message) -> Bool {
+    private static func hasReasoningItems(_ message: LLM.Message) -> Bool {
         message.reasoningItems?.isEmpty == false
     }
 
@@ -1775,8 +1780,8 @@ struct ResponsesBodyRequestBuilder {
     /// drop the item id so the API treats it as developer-provided context
     /// instead of rejecting it for the missing reasoning item. call_id is
     /// always kept - it pairs the call with its output.
-    private func assistantEntries(for body: LLM.Message.Body,
-                                  keepItemIDs: Bool) -> [ResponsesRequestBody.Input.ItemListEntry] {
+    private static func assistantEntries(for body: LLM.Message.Body,
+                                         keepItemIDs: Bool) -> [ResponsesRequestBody.Input.ItemListEntry] {
         switch body {
         case .text(let text):
             return [.message(.init(content: .text(text), role: .assistant))]
@@ -1825,7 +1830,7 @@ struct ResponsesBodyRequestBuilder {
         }
     }
 
-    private func mimeTypeIsTextual(_ mimeType: String) -> Bool {
+    private static func mimeTypeIsTextual(_ mimeType: String) -> Bool {
         return MIMETypeIsTextual(mimeType)
     }
 
@@ -1886,7 +1891,7 @@ struct ResponsesBodyRequestBuilder {
         let effectiveMessages = (previousResponseID != nil && !messages.isEmpty)
             ? Array(messages.suffix(1))
             : messages
-        let itemList = effectiveMessages.flatMap { transform(message: $0) }
+        let itemList = effectiveMessages.flatMap { Self.transform(message: $0, hostedTools: hostedTools) }
         let tools = functions.map { transform(function: $0) } + transformedHostedTools
         var body = ResponsesRequestBody(
             input: .itemList(itemList),

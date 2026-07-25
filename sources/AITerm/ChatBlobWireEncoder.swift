@@ -111,7 +111,19 @@ enum ChatBlobWireEncoder {
             return try encoder.encode(
                 GeminiRequestBuilder(messages: round, functions: [],
                                      hostedTools: HostedTools(), modelName: modelName).contents)
-        case .completions, .responses, .appleIntelligence:
+        case .responses:
+            // One message maps to MULTIPLE input items (reasoning items precede
+            // the function call they produced; a user turn becomes a message
+            // item). transform is per-message and emits the full-replay shape
+            // independent of previous_response_id (which only strips the list
+            // later, in body()), so freezing a round is flatMap(transform).
+            // hostedTools is envelope (empty here); its only influence is a
+            // code-interpreter fileID branch, a request-level resource ref that
+            // isn't round content.
+            return try encoder.encode(round.flatMap {
+                ResponsesBodyRequestBuilder.transform(message: $0, hostedTools: HostedTools())
+            })
+        case .completions, .appleIntelligence:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)
         @unknown default:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)

@@ -237,6 +237,52 @@ final class ChatBlobWireEncoderTests: XCTestCase {
     }
 
     /// And on a pre-3 model, no fallback is injected (the call stays signature-less).
+    // MARK: - Responses (one message -> many items; reasoning before call)
+
+    /// A round whose tool call carries OpenAI encrypted reasoning items (the
+    /// Responses API requires them replayed, ahead of the function call). Exercises
+    /// reasoningEntries + the keepItemIDs gate + reasoning-before-call ordering.
+    private var responsesReasoningToolRound: [LLM.Message] {
+        [userText("weather in Paris?"),
+         LLM.Message(role: .assistant,
+                     body: .functionCall(LLM.FunctionCall(name: "get_weather",
+                                                          arguments: "{\"location\":\"Paris\"}", id: "call_1"),
+                                         id: LLM.Message.FunctionCallID(callID: "call_1", itemID: "fc_item_1")),
+                     reasoningItems: [LLM.ReasoningItem(id: "rs_1", encryptedContent: "ENC_ABC", summary: nil)]),
+         toolResult(name: "get_weather", output: "Sunny, 20C", callID: "call_1"),
+         assistantText("It's sunny in Paris.")]
+    }
+
+    func test_responses_wireLevelCompositional() throws {
+        try assertWireCompositional(.responses, [plainRound, responsesReasoningToolRound, plainRound])
+    }
+
+    func test_responses_byteFaithful_multiTextPart() throws {
+        try assertByteFaithful(.responses, multiTextRound)
+    }
+
+    func test_responses_byteFaithful_reasoningToolRound() throws {
+        try assertByteFaithful(.responses, responsesReasoningToolRound)
+    }
+
+    /// The reasoning item must be frozen ahead of the function_tool_call it
+    /// produced (the API rejects the reverse), and the call must keep its item id
+    /// when replayed with its reasoning.
+    func test_responses_reasoningItemPrecedesCall_andKeepsItemID() throws {
+        let data = try ChatBlobWireEncoder.encodeRound(responsesReasoningToolRound, api: .responses)
+        let items = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        let types = items.map { $0["type"] as? String }
+        guard let reasoningIdx = types.firstIndex(of: "reasoning"),
+              let callIdx = types.firstIndex(of: "function_call") else {
+            return XCTFail("expected both a reasoning and a function_call item; got \(types)")
+        }
+        XCTAssertLessThan(reasoningIdx, callIdx, "reasoning item must precede its function_call")
+        // Its item id is kept (paired with the reasoning); call_id is always kept.
+        let call = items[callIdx]
+        XCTAssertEqual(call["id"] as? String, "fc_item_1")
+        XCTAssertEqual(call["call_id"] as? String, "call_1")
+    }
+
     func test_gemini_noFallback_onGen2Model() throws {
         let round = [userText("weather?"),
                      assistantToolCall(name: "get_weather", args: "{}", callID: "c1")]
