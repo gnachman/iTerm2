@@ -73,6 +73,47 @@ final class ChatBlobWireEncoderTests: XCTestCase {
         XCTAssertEqual(perRound, whole)
     }
 
+    // MARK: - Generic wire-level compositionality (the STORED payloads concatenate)
+
+    /// The invariant stated on the stored bytes, protocol-agnostically: decoding
+    /// each round's payload elements and concatenating them equals decoding the
+    /// whole conversation's payload. Compared at the JSON level so no per-type
+    /// Equatable is needed; apply to every protocol as its encoder lands.
+    private func assertWireCompositional(_ api: iTermAIAPI, _ rounds: [[LLM.Message]],
+                                         file: StaticString = #filePath, line: UInt = #line) throws {
+        func elems(_ round: [LLM.Message]) throws -> [Any] {
+            let data = try ChatBlobWireEncoder.encodeRound(round, api: api)
+            return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [Any])
+        }
+        let perRound = try rounds.flatMap { try elems($0) }
+        let whole = try elems(rounds.flatMap { $0 })
+        XCTAssertEqual(perRound as NSArray, whole as NSArray,
+                       "stored round payloads must concatenate to the whole-conversation payload for api \(api.rawValue)",
+                       file: file, line: line)
+    }
+
+    func test_anthropic_wireLevelCompositional() throws {
+        try assertWireCompositional(.anthropic, [plainRound, toolRound, plainRound, toolRound])
+    }
+
+    func test_chatCompletions_wireLevelCompositional() throws {
+        try assertWireCompositional(.chatCompletions, [plainRound, toolRound, plainRound, toolRound])
+    }
+
+    /// CompletionsMessage is ENCODE-ONLY (it emits role "tool" for a function
+    /// output but its Role can't decode "tool"), so the stored payload is asserted
+    /// at the JSON level — which is also how the assembler must stitch it (merge
+    /// the JSON arrays; never decode into the typed wire struct).
+    func test_chatCompletions_encodeRound_hasExpectedWireShape() throws {
+        let payload = try ChatBlobWireEncoder.encodeRound(toolRound, api: .chatCompletions)
+        let arr = try XCTUnwrap(JSONSerialization.jsonObject(with: payload) as? [[String: Any]])
+        // Pure map, no coalescing: user, assistant(text), assistant(tool_calls),
+        // tool(result), assistant(final) -> 5 elements.
+        XCTAssertEqual(arr.count, 5)
+        XCTAssertEqual(arr.map { $0["role"] as? String },
+                       ["user", "assistant", "assistant", "tool", "assistant"])
+    }
+
     // MARK: - The cross-message passes are frozen once, at capture
 
     /// Mutator B: a text preamble immediately followed by a tool call must become
