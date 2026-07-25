@@ -63,12 +63,21 @@ enum ChatBlobWireEncoder {
             // adjacency, and assistant coalescing the live request uses; the
             // result is the unmarked message array for this round.
             return try encoder.encode(AnthropicRequestBuilder.convertMessages(round))
-        case .chatCompletions, .llama:
-            // Both builders are a pure per-message map (no cross-message
-            // reshaping), so freezing a round is the same map. Two consecutive
-            // assistant messages (a text preamble then a tool_calls message) are
-            // sent as-is, exactly as the live request does.
+        case .chatCompletions:
+            // The chat-completions builder is a bare per-message map (no
+            // cross-message reshaping), so freezing a round is the same map. Two
+            // consecutive assistant messages (a text preamble then a tool_calls
+            // message) are sent as-is, exactly as the live request does.
             return try encoder.encode(round.compactMap { CompletionsMessage($0) })
+        case .llama:
+            // Same map, but the live llama builder additionally collapses adjacent
+            // text parts within an array-content message (llama rejects multiple
+            // text parts). Reuse the builder's EXACT joinText pass so the frozen
+            // bytes match what llama already accepted; without it a round with
+            // multi-text-part content (e.g. a preamble + a .code attachment) would
+            // replay as multiple text parts and be rejected.
+            return try encoder.encode(
+                round.compactMap { CompletionsMessage($0) }.map { LlamaBodyRequestBuilder.joinText($0) })
         case .earlyO1:
             // Same map, but o1 replaces the system role with user. A round never
             // contains a system message (system is envelope), so this is a no-op

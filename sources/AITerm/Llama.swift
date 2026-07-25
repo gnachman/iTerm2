@@ -139,8 +139,11 @@ struct LlamaBodyRequestBuilder {
     }
 
     // Llama doesn't like multiple text parts.
-    
-    private func joinText(_ message: CompletionsMessage) -> CompletionsMessage {
+    //
+    // Static so the blob wire-encoder can reuse the EXACT same per-message pass:
+    // llama's frozen round bytes must match what this builder actually sends, or a
+    // replayed blob could emit the multiple text parts llama rejects.
+    static func joinText(_ message: CompletionsMessage) -> CompletionsMessage {
         switch message.content {
         case .string, .none:
             return message
@@ -177,7 +180,7 @@ struct LlamaBodyRequestBuilder {
         let llamaMessages = messages.compactMap {
             CompletionsMessage($0)
         }.map {
-            joinText($0)
+            Self.joinText($0)
         }
         // See the note about streaming function calling in Llama in AIMetadata.swift
         // #llama-streaming-functions

@@ -108,6 +108,67 @@ final class ChatBlobWireEncoderTests: XCTestCase {
         try assertWireCompositional(.earlyO1, [plainRound, toolRound, plainRound, toolRound])
     }
 
+    // MARK: - Byte-faithfulness to the live builder (the actual requirement)
+
+    private func baseModel() throws -> AIMetadata.Model {
+        guard let m = AIMetadata.instance.models.first else {
+            throw XCTSkip("empty AIMetadata catalog")
+        }
+        return m
+    }
+
+    /// The messages array the LIVE per-vendor builder puts on the wire for
+    /// `round` (envelope like model/tools/system lives at the top level, not in
+    /// this array). Ground truth for "the bytes the vendor already accepted".
+    private func liveMessagesArray(_ round: [LLM.Message], api: iTermAIAPI) throws -> [Any] {
+        var model = try baseModel()
+        model.api = api
+        let builder = LLMRequestBuilder(
+            provider: LLMProvider(model: model), apiKey: "test-key", messages: round,
+            functions: [], stream: false, hostedTools: HostedTools(), previousResponseID: nil,
+            shouldThink: nil, reasoningEffort: nil, serviceTier: nil, trailingVolatileText: nil)
+        let body = try XCTUnwrap(JSONSerialization.jsonObject(with: builder.body()) as? [String: Any])
+        return try XCTUnwrap(body["messages"] as? [Any], "no messages array in \(api.rawValue) body")
+    }
+
+    private func encoderElements(_ round: [LLM.Message], api: iTermAIAPI) throws -> [Any] {
+        let data = try ChatBlobWireEncoder.encodeRound(round, api: api)
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [Any])
+    }
+
+    /// The frozen blob bytes must equal the live builder's message array. Compared
+    /// as parsed JSON so key order is irrelevant; only content divergence fails.
+    private func assertByteFaithful(_ api: iTermAIAPI, _ round: [LLM.Message],
+                                    file: StaticString = #filePath, line: UInt = #line) throws {
+        XCTAssertEqual(try encoderElements(round, api: api) as NSArray,
+                       try liveMessagesArray(round, api: api) as NSArray,
+                       "frozen blob bytes must equal the live \(api.rawValue) builder's message array",
+                       file: file, line: line)
+    }
+
+    /// A round whose user turn carries multi-text-part array content: a text
+    /// preamble plus a .code attachment map to two ADJACENT text parts
+    /// (CompletionsMessage.init multipart path). This is the shape llama's
+    /// joinText collapses; a .string-only fixture never exercises it.
+    private var multiTextRound: [LLM.Message] {
+        [LLM.Message(role: .user, body: .multipart([
+            .text("Please review this:"),
+            .attachment(LLM.Message.Attachment(inline: false, id: "a1", type: .code("let x = 1")))])),
+         assistantText("Looks fine.")]
+    }
+
+    func test_llama_byteFaithful_multiTextPart() throws {
+        try assertByteFaithful(.llama, multiTextRound)
+    }
+
+    func test_chatCompletions_byteFaithful_multiTextPart() throws {
+        try assertByteFaithful(.chatCompletions, multiTextRound)
+    }
+
+    func test_earlyO1_byteFaithful_multiTextPart() throws {
+        try assertByteFaithful(.earlyO1, multiTextRound)
+    }
+
     /// CompletionsMessage is ENCODE-ONLY (it emits role "tool" for a function
     /// output but its Role can't decode "tool"), so the stored payload is asserted
     /// at the JSON level — which is also how the assembler must stitch it (merge
