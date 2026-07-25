@@ -2274,6 +2274,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     [self invalidateCommandStartCoordWithoutSideEffects];
+    [self terminalKeyReportingFlagsDidChange];
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
@@ -2295,6 +2296,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self reloadMarkCache];
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
+    [self terminalKeyReportingFlagsDidChange];
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
@@ -8050,4 +8052,3 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 @end
-

@@ -83,6 +83,22 @@ class VT100ScreenTests: XCTestCase {
         XCTAssertEqual(range, VT100GridCoordRangeMake(1, 1, 3, 1))
     }
 
+    func testSwitchingScreenBuffersRefreshesKeyReportingFlags() {
+        let screen = screen(width: 80, height: 24)
+
+        session.keyReportingFlagsDidChangeCount = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalShowAltBuffer()
+        })
+        XCTAssertEqual(session.keyReportingFlagsDidChangeCount, 1)
+
+        session.keyReportingFlagsDidChangeCount = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalShowPrimaryBuffer()
+        })
+        XCTAssertEqual(session.keyReportingFlagsDidChangeCount, 1)
+    }
+
     private func screen(width: Int32, height: Int32) -> VT100Screen {
         let screen = VT100Screen()
         session.screen = screen
@@ -1606,6 +1622,7 @@ struct SeededGenerator: RandomNumberGenerator {
 }
 
 class FakeSession: NSObject, VT100ScreenDelegate {
+    var keyReportingFlagsDidChangeCount = 0
     var screen: VT100Screen?
     var configuration = VT100MutableScreenConfiguration()
     var selection = iTermSelection()
@@ -1905,7 +1922,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
     
     func screenKeyReportingFlagsDidChange() {
-
+        keyReportingFlagsDidChangeCount += 1
     }
     
     func screenReportVariableNamed(_ name: String) {
