@@ -61,9 +61,19 @@ enum ChatBlobWireEncoder {
     /// is model-dependent (Gemini injects a thought-signature fallback token only
     /// on models that require signatures); the capture site has it. It is ignored
     /// by model-independent protocols.
+    ///
+    /// `hostedTools` must be the SAME hosted-tools set the live request used, so
+    /// the frozen bytes match it. The Responses builder's user-attachment encoding
+    /// is hostedTools-dependent: a `.fileID` subpart is dropped from content when
+    /// code interpreter is on (the file rides the tools envelope instead) but
+    /// emitted as an `input_file` in content when it is off. Passing an empty set
+    /// here would freeze a fileID as content for a code-interpreter chat, which the
+    /// live request never sent and which can 400 on replay. Ignored by protocols
+    /// whose message encoding doesn't depend on hosted tools.
     static func encodeRound(_ round: [LLM.Message],
                             api: iTermAIAPI,
-                            modelName: String? = nil) throws -> Data {
+                            modelName: String? = nil,
+                            hostedTools: HostedTools = HostedTools()) throws -> Data {
         switch api {
         case .anthropic:
             // convertMessages applies the same per-message mapping, tool-pair
@@ -116,12 +126,13 @@ enum ChatBlobWireEncoder {
             // the function call they produced; a user turn becomes a message
             // item). transform is per-message and emits the full-replay shape
             // independent of previous_response_id (which only strips the list
-            // later, in body()), so freezing a round is flatMap(transform).
-            // hostedTools is envelope (empty here); its only influence is a
-            // code-interpreter fileID branch, a request-level resource ref that
-            // isn't round content.
+            // later, in body()), so freezing a round is flatMap(transform). Pass
+            // the live hostedTools: transform's `.fileID` attachment branch depends
+            // on codeInterpreter (dropped from content when on, emitted as
+            // input_file when off), so the frozen content must match what the live
+            // request actually sent.
             return try encoder.encode(round.flatMap {
-                ResponsesBodyRequestBuilder.transform(message: $0, hostedTools: HostedTools())
+                ResponsesBodyRequestBuilder.transform(message: $0, hostedTools: hostedTools)
             })
         case .completions, .appleIntelligence:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)

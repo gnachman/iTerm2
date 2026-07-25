@@ -134,14 +134,16 @@ final class ChatBlobWireEncoderTests: XCTestCase {
     /// Compared as parsed JSON so key order is irrelevant; only content divergence
     /// fails.
     private func assertByteFaithful(_ api: iTermAIAPI, _ round: [LLM.Message],
+                                    hostedTools: HostedTools = HostedTools(),
                                     file: StaticString = #filePath, line: UInt = #line) throws {
         var model = try baseModel()
         model.api = api
-        let encData = try ChatBlobWireEncoder.encodeRound(round, api: api, modelName: model.name)
+        let encData = try ChatBlobWireEncoder.encodeRound(round, api: api, modelName: model.name,
+                                                          hostedTools: hostedTools)
         let encElems = try XCTUnwrap(JSONSerialization.jsonObject(with: encData) as? [Any])
         let builder = LLMRequestBuilder(
             provider: LLMProvider(model: model), apiKey: "test-key", messages: round,
-            functions: [], stream: false, hostedTools: HostedTools(), previousResponseID: nil,
+            functions: [], stream: false, hostedTools: hostedTools, previousResponseID: nil,
             shouldThink: nil, reasoningEffort: nil, serviceTier: nil, trailingVolatileText: nil)
         let body = try XCTUnwrap(JSONSerialization.jsonObject(with: builder.body()) as? [String: Any])
         let liveElems = try XCTUnwrap(body[wireKey(api)] as? [Any],
@@ -263,6 +265,29 @@ final class ChatBlobWireEncoderTests: XCTestCase {
 
     func test_responses_byteFaithful_reasoningToolRound() throws {
         try assertByteFaithful(.responses, responsesReasoningToolRound)
+    }
+
+    /// A round whose user turn attaches an uploaded file by id. The Responses
+    /// builder encodes a .fileID subpart DIFFERENTLY depending on code interpreter:
+    /// dropped from content when on (it rides the tools envelope), emitted as an
+    /// input_file when off. The encoder must be given the live hostedTools so the
+    /// frozen content matches; freezing an input_file for a code-interpreter chat
+    /// would resurrect content the live request never sent (and can 400).
+    private var fileIDRound: [LLM.Message] {
+        [LLM.Message(role: .user, body: .multipart([
+            .text("Analyze this file:"),
+            .attachment(LLM.Message.Attachment(inline: false, id: "att-1",
+                                               type: .fileID(id: "file_abc123", name: "data.pdf")))])),
+         assistantText("Done.")]
+    }
+
+    func test_responses_byteFaithful_fileID_noCodeInterpreter() throws {
+        try assertByteFaithful(.responses, fileIDRound, hostedTools: HostedTools())
+    }
+
+    func test_responses_byteFaithful_fileID_withCodeInterpreter() throws {
+        try assertByteFaithful(.responses, fileIDRound,
+                               hostedTools: HostedTools(codeInterpreter: true))
     }
 
     /// The reasoning item must be frozen ahead of the function_tool_call it
