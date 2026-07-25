@@ -89,7 +89,12 @@ enum ChatBlobWireEncoder {
                 return temp
             }
             return try encoder.encode(mapped.compactMap { CompletionsMessage($0) })
-        case .completions, .responses, .gemini, .deepSeek, .appleIntelligence:
+        case .deepSeek:
+            // Pure per-message map to DeepSeek's own wire Message (content is a
+            // plain string, tool_calls array, and reasoning_content echoed on
+            // assistant turns). No cross-message reshaping.
+            return try encoder.encode(round.compactMap { DeepSeekRequestBuilder.Message($0) })
+        case .completions, .responses, .gemini, .appleIntelligence:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)
         @unknown default:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)

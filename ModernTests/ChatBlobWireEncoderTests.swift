@@ -169,6 +169,26 @@ final class ChatBlobWireEncoderTests: XCTestCase {
         try assertByteFaithful(.earlyO1, multiTextRound)
     }
 
+    // A round whose agent turn carries DeepSeek-style reasoning content, which
+    // DeepSeek requires echoed back on assistant turns (reasoning_content).
+    private var reasoningRound: [LLM.Message] {
+        [userText("weather in Paris?"),
+         LLM.Message(role: .assistant, content: "It's sunny and 20C.",
+                     reasoningContent: "The user asked for current weather; I'll answer directly.")]
+    }
+
+    func test_deepSeek_wireLevelCompositional() throws {
+        try assertWireCompositional(.deepSeek, [plainRound, toolRound, reasoningRound, toolRound])
+    }
+
+    func test_deepSeek_byteFaithful_multiTextPart() throws {
+        try assertByteFaithful(.deepSeek, multiTextRound)
+    }
+
+    func test_deepSeek_byteFaithful_reasoningRound() throws {
+        try assertByteFaithful(.deepSeek, reasoningRound)
+    }
+
     /// CompletionsMessage is ENCODE-ONLY (it emits role "tool" for a function
     /// output but its Role can't decode "tool"), so the stored payload is asserted
     /// at the JSON level — which is also how the assembler must stitch it (merge
