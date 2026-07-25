@@ -117,32 +117,37 @@ final class ChatBlobWireEncoderTests: XCTestCase {
         return m
     }
 
-    /// The messages array the LIVE per-vendor builder puts on the wire for
-    /// `round` (envelope like model/tools/system lives at the top level, not in
-    /// this array). Ground truth for "the bytes the vendor already accepted".
-    private func liveMessagesArray(_ round: [LLM.Message], api: iTermAIAPI) throws -> [Any] {
+    /// The top-level key holding the per-message wire array in each protocol's
+    /// request body (Gemini uses "contents", the Responses API uses "input").
+    private func wireKey(_ api: iTermAIAPI) -> String {
+        switch api {
+        case .gemini: return "contents"
+        case .responses: return "input"
+        default: return "messages"
+        }
+    }
+
+    /// The frozen blob bytes must equal the LIVE builder's per-message array for
+    /// the same round (envelope like model/tools/system lives at the top level,
+    /// not in this array). The model name is passed to BOTH sides so a
+    /// model-dependent conversion (Gemini's thought-signature fallback) matches.
+    /// Compared as parsed JSON so key order is irrelevant; only content divergence
+    /// fails.
+    private func assertByteFaithful(_ api: iTermAIAPI, _ round: [LLM.Message],
+                                    file: StaticString = #filePath, line: UInt = #line) throws {
         var model = try baseModel()
         model.api = api
+        let encData = try ChatBlobWireEncoder.encodeRound(round, api: api, modelName: model.name)
+        let encElems = try XCTUnwrap(JSONSerialization.jsonObject(with: encData) as? [Any])
         let builder = LLMRequestBuilder(
             provider: LLMProvider(model: model), apiKey: "test-key", messages: round,
             functions: [], stream: false, hostedTools: HostedTools(), previousResponseID: nil,
             shouldThink: nil, reasoningEffort: nil, serviceTier: nil, trailingVolatileText: nil)
         let body = try XCTUnwrap(JSONSerialization.jsonObject(with: builder.body()) as? [String: Any])
-        return try XCTUnwrap(body["messages"] as? [Any], "no messages array in \(api.rawValue) body")
-    }
-
-    private func encoderElements(_ round: [LLM.Message], api: iTermAIAPI) throws -> [Any] {
-        let data = try ChatBlobWireEncoder.encodeRound(round, api: api)
-        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [Any])
-    }
-
-    /// The frozen blob bytes must equal the live builder's message array. Compared
-    /// as parsed JSON so key order is irrelevant; only content divergence fails.
-    private func assertByteFaithful(_ api: iTermAIAPI, _ round: [LLM.Message],
-                                    file: StaticString = #filePath, line: UInt = #line) throws {
-        XCTAssertEqual(try encoderElements(round, api: api) as NSArray,
-                       try liveMessagesArray(round, api: api) as NSArray,
-                       "frozen blob bytes must equal the live \(api.rawValue) builder's message array",
+        let liveElems = try XCTUnwrap(body[wireKey(api)] as? [Any],
+                                      "no \(wireKey(api)) array in \(api.rawValue) body")
+        XCTAssertEqual(encElems as NSArray, liveElems as NSArray,
+                       "frozen blob bytes must equal the live \(api.rawValue) builder's \(wireKey(api)) array",
                        file: file, line: line)
     }
 
@@ -187,6 +192,61 @@ final class ChatBlobWireEncoderTests: XCTestCase {
 
     func test_deepSeek_byteFaithful_reasoningRound() throws {
         try assertByteFaithful(.deepSeek, reasoningRound)
+    }
+
+    // MARK: - Gemini (coalescing + model-dependent thoughtSignature)
+
+    /// A round whose agent turn emits a tool call carrying a real thoughtSignature
+    /// (Gemini 3 requires it echoed back), so byte-faithfulness must preserve it.
+    private var geminiSignedToolRound: [LLM.Message] {
+        [userText("weather in Paris?"),
+         LLM.Message(role: .assistant,
+                     function_call: LLM.FunctionCall(name: "get_weather", arguments: "{\"location\":\"Paris\"}",
+                                                     id: "call_1", thoughtSignature: "SIG_ABC123")),
+         toolResult(name: "get_weather", output: "Sunny, 20C", callID: "call_1"),
+         assistantText("It's sunny in Paris.")]
+    }
+
+    func test_gemini_wireLevelCompositional() throws {
+        try assertWireCompositional(.gemini, [plainRound, geminiSignedToolRound, plainRound])
+    }
+
+    func test_gemini_byteFaithful_multiTextPart() throws {
+        try assertByteFaithful(.gemini, multiTextRound)
+    }
+
+    /// Exercises the coalescing seam (model text + model tool_call merge into one
+    /// Content) and thoughtSignature preservation, against the live builder.
+    func test_gemini_byteFaithful_signedToolRound() throws {
+        try assertByteFaithful(.gemini, geminiSignedToolRound)
+    }
+
+    /// The model-dependent bit: on a generation-3 model a signature-less tool call
+    /// must have the documented fallback token injected, frozen into the blob
+    /// exactly as the live request sent it.
+    func test_gemini_injectsThoughtSignatureFallback_onGen3Model() throws {
+        let round = [userText("weather?"),
+                     assistantToolCall(name: "get_weather", args: "{}", callID: "c1")]
+        let data = try ChatBlobWireEncoder.encodeRound(round, api: .gemini, modelName: "gemini-3-flash")
+        let contents = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        let signatures = contents
+            .flatMap { ($0["parts"] as? [[String: Any]]) ?? [] }
+            .compactMap { $0["thoughtSignature"] as? String }
+        XCTAssertTrue(signatures.contains(GeminiRequestBuilder.missingThoughtSignatureFallback),
+                      "a gen-3 model must inject the fallback thoughtSignature on a signature-less call; got \(signatures)")
+    }
+
+    /// And on a pre-3 model, no fallback is injected (the call stays signature-less).
+    func test_gemini_noFallback_onGen2Model() throws {
+        let round = [userText("weather?"),
+                     assistantToolCall(name: "get_weather", args: "{}", callID: "c1")]
+        let data = try ChatBlobWireEncoder.encodeRound(round, api: .gemini, modelName: "gemini-2.5-flash")
+        let contents = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        let signatures = contents
+            .flatMap { ($0["parts"] as? [[String: Any]]) ?? [] }
+            .compactMap { $0["thoughtSignature"] as? String }
+        XCTAssertFalse(signatures.contains(GeminiRequestBuilder.missingThoughtSignatureFallback),
+                       "a pre-gen-3 model must not inject the fallback token; got \(signatures)")
     }
 
     /// CompletionsMessage is ENCODE-ONLY (it emits role "tool" for a function
@@ -248,11 +308,12 @@ final class ChatBlobWireEncoderTests: XCTestCase {
     }
 
     func test_encodeRound_unsupportedProtocol_throws() {
-        // Non-Anthropic encoders are not built yet; they must fail loudly, not
-        // silently produce an empty or wrong-format payload.
-        XCTAssertThrowsError(try ChatBlobWireEncoder.encodeRound(plainRound, api: .gemini)) { error in
-            guard case ChatBlobWireEncoderError.unsupportedProtocol(.gemini) = error else {
-                return XCTFail("expected unsupportedProtocol(.gemini); got \(error)")
+        // Legacy single-prompt completions has no per-message wire array, so it is
+        // (so far) unsupported and must fail loudly, not silently produce an empty
+        // or wrong-format payload.
+        XCTAssertThrowsError(try ChatBlobWireEncoder.encodeRound(plainRound, api: .completions)) { error in
+            guard case ChatBlobWireEncoderError.unsupportedProtocol(.completions) = error else {
+                return XCTFail("expected unsupportedProtocol(.completions); got \(error)")
             }
         }
     }

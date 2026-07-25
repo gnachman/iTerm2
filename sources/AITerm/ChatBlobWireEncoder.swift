@@ -56,7 +56,14 @@ enum ChatBlobWireEncoder {
     /// array of that protocol's request-shape wire messages. Envelope and cache
     /// markers are excluded (the assembler adds them). Throws
     /// `unsupportedProtocol` for a protocol whose encoder isn't built yet.
-    static func encodeRound(_ round: [LLM.Message], api: iTermAIAPI) throws -> Data {
+    ///
+    /// `modelName` is the chat's bound model, needed by protocols whose wire form
+    /// is model-dependent (Gemini injects a thought-signature fallback token only
+    /// on models that require signatures); the capture site has it. It is ignored
+    /// by model-independent protocols.
+    static func encodeRound(_ round: [LLM.Message],
+                            api: iTermAIAPI,
+                            modelName: String? = nil) throws -> Data {
         switch api {
         case .anthropic:
             // convertMessages applies the same per-message mapping, tool-pair
@@ -94,7 +101,17 @@ enum ChatBlobWireEncoder {
             // plain string, tool_calls array, and reasoning_content echoed on
             // assistant turns). No cross-message reshaping.
             return try encoder.encode(round.compactMap { DeepSeekRequestBuilder.Message($0) })
-        case .completions, .responses, .gemini, .appleIntelligence:
+        case .gemini:
+            // Gemini's conversion (role mapping, thoughtSignature fallback
+            // injection, and coalescingConsecutiveRoles) lives in the builder init
+            // and depends on the model (whether it requires thought signatures),
+            // so construct the real builder for this round and freeze its
+            // contents. The fallback token, when injected, is thus frozen exactly
+            // as the live request sent it.
+            return try encoder.encode(
+                GeminiRequestBuilder(messages: round, functions: [],
+                                     hostedTools: HostedTools(), modelName: modelName).contents)
+        case .completions, .responses, .appleIntelligence:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)
         @unknown default:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)
