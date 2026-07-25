@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "models": [
     {
       "name": "gpt-5.5",
@@ -190,28 +190,6 @@
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
         "none",
-        "low",
-        "medium",
-        "high"
-      ]
-    },
-    {
-      "name": "gpt-5.1-codex",
-      "vendor": "openAI",
-      "api": "responses",
-      "url": "https://api.openai.com/v1/responses",
-      "contextWindowTokens": 400000,
-      "maxResponseTokens": 128000,
-      "features": [
-        "functionCalling",
-        "hostedFileSearch",
-        "hostedWebSearch",
-        "streaming",
-        "hostedCodeInterpreter",
-        "configurableThinking"
-      ],
-      "economyModel": "gpt-5-mini",
-      "reasoningEfforts": [
         "low",
         "medium",
         "high"
@@ -563,45 +541,6 @@
         "functionCalling",
         "streaming",
         "configurableThinking"
-      ],
-      "economyModel": "deepseek-v4-flash"
-    },
-    {
-      "name": "deepseek-chat",
-      "vendor": "deepSeek",
-      "api": "deepSeek",
-      "url": "https://api.deepseek.com/v1/chat/completions",
-      "contextWindowTokens": 128000,
-      "maxResponseTokens": 8000,
-      "features": [
-        "functionCalling",
-        "streaming"
-      ],
-      "economyModel": "deepseek-v4-flash"
-    },
-    {
-      "name": "deepseek-coder",
-      "vendor": "deepSeek",
-      "api": "deepSeek",
-      "url": "https://api.deepseek.com/v1/chat/completions",
-      "contextWindowTokens": 65536,
-      "maxResponseTokens": 8000,
-      "features": [
-        "functionCalling",
-        "streaming"
-      ],
-      "economyModel": "deepseek-v4-flash"
-    },
-    {
-      "name": "deepseek-reasoner",
-      "vendor": "deepSeek",
-      "api": "deepSeek",
-      "url": "https://api.deepseek.com/v1/chat/completions",
-      "contextWindowTokens": 64000,
-      "maxResponseTokens": 8000,
-      "features": [
-        "functionCalling",
-        "streaming"
       ],
       "economyModel": "deepseek-v4-flash"
     },
