@@ -290,6 +290,71 @@ final class ChatBlobWireEncoderTests: XCTestCase {
                                hostedTools: HostedTools(codeInterpreter: true))
     }
 
+    // MARK: - Attachment matrix (per-vendor MIME handling must be frozen faithfully)
+
+    private func attachmentFileRound(mime: String, bytes: Data) -> [LLM.Message] {
+        [LLM.Message(role: .user, body: .multipart([
+            .text("Here is a file:"),
+            .attachment(LLM.Message.Attachment(
+                inline: false, id: "att-1",
+                type: .file(.init(name: "f", content: bytes, mimeType: mime, localPath: nil))))])),
+         assistantText("Got it.")]
+    }
+
+    // A representative spread of MIME classes that hit distinct per-vendor
+    // branches: raster images (base64 image block / inline_data / image_url),
+    // textual-but-image (svg -> text, not a binary image), documents (pdf),
+    // plain/markdown/json text, non-image binary (audio), and unknown binary.
+    private static let attachmentMimes: [(String, Data)] = [
+        ("image/png", Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0xFF, 0x10])),
+        ("image/webp", Data([0x52, 0x49, 0x46, 0x46, 0x00, 0xFF, 0x57, 0x45])),
+        ("image/svg+xml", Data("<svg xmlns=\"http://www.w3.org/2000/svg\"><rect/></svg>".utf8)),
+        ("application/pdf", Data([0x25, 0x50, 0x44, 0x46, 0x2D, 0x00, 0xFF])),
+        ("text/plain", Data("hello world".utf8)),
+        ("text/markdown", Data("# Title\n\nbody".utf8)),
+        ("application/json", Data("{\"k\":1}".utf8)),
+        ("application/xml", Data("<r/>".utf8)),
+        ("audio/mpeg", Data([0xFF, 0xFB, 0x90, 0x00, 0x11])),
+        ("application/octet-stream", Data([0x00, 0x01, 0x02, 0xFF, 0xC3, 0x28])),
+    ]
+
+    /// One matrix cell: the frozen blob's per-message array must equal the live
+    /// builder's for this vendor + MIME. Non-fatal (records and continues) so one
+    /// run surfaces EVERY divergent cell, and each failure names its cell.
+    private func checkAttachmentCell(_ api: iTermAIAPI, mime: String, bytes: Data) {
+        let round = attachmentFileRound(mime: mime, bytes: bytes)
+        do {
+            var model = try baseModel()
+            model.api = api
+            let encData = try ChatBlobWireEncoder.encodeRound(round, api: api, modelName: model.name)
+            let enc = try XCTUnwrap(JSONSerialization.jsonObject(with: encData) as? [Any])
+            let builder = LLMRequestBuilder(
+                provider: LLMProvider(model: model), apiKey: "test-key", messages: round,
+                functions: [], stream: false, hostedTools: HostedTools(), previousResponseID: nil,
+                shouldThink: nil, reasoningEffort: nil, serviceTier: nil, trailingVolatileText: nil)
+            let body = try XCTUnwrap(JSONSerialization.jsonObject(with: builder.body()) as? [String: Any])
+            let live = try XCTUnwrap(body[wireKey(api)] as? [Any], "no \(wireKey(api)) in \(api.rawValue) body")
+            XCTAssertEqual(enc as NSArray, live as NSArray,
+                           "attachment byte divergence for \(api.rawValue)/\(mime)")
+        } catch {
+            XCTFail("attachment cell \(api.rawValue)/\(mime) threw: \(error)")
+        }
+    }
+
+    /// Anthropic is excluded on purpose: its encoder freezes convertMessages
+    /// verbatim (the live body's rolling cache marker on the last message is
+    /// assembly-time envelope), so a live-body comparison would spuriously differ
+    /// and a convertMessages comparison is tautological. Its attachment handling is
+    /// the builder's, exercised by the live attachment matrix.
+    func test_attachments_byteFaithfulMatrix() {
+        let apis: [iTermAIAPI] = [.chatCompletions, .llama, .earlyO1, .deepSeek, .gemini, .responses]
+        for api in apis {
+            for (mime, bytes) in Self.attachmentMimes {
+                checkAttachmentCell(api, mime: mime, bytes: bytes)
+            }
+        }
+    }
+
     /// The reasoning item must be frozen ahead of the function_tool_call it
     /// produced (the API rejects the reverse), and the call must keep its item id
     /// when replayed with its reasoning.
