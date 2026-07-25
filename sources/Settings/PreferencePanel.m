@@ -234,22 +234,20 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 @end
 
-// Workaround for macOS 26 bug where text in NSSearchToolbarItem's search field
-// is not vertically centered. Issue 12708.
+// Workaround for macOS 26 (Tahoe) search field bugs. Issue 12708.
+//
+// 1. Vertical centering: NSSearchToolbarItem draws the text and glyphs off
+//    center. Merely round-tripping the cell through the archiver (see
+//    -bigSurSearchFieldToolbarItem, which decodes into this subclass) fixes it,
+//    so no rect overrides are needed for that.
+// 2. Focus ring: on 26.2 the system focus ring was broken (it hugged the small
+//    internal editor instead of the capsule; FB21919006), so we draw our own.
+//    It was fixed by 26.5.1, where the custom ring instead leaves corner
+//    artifacts, so we skip it there and let the system draw the ring.
 @interface iTermPrefsSearchFieldCell : NSSearchFieldCell
 @end
 
 @implementation iTermPrefsSearchFieldCell
-
-- (NSRect)searchTextRectForBounds:(NSRect)rect {
-    NSRect result = [super searchTextRectForBounds:rect];
-    return result;
-}
-
-- (NSRect)searchButtonRectForBounds:(NSRect)rect {
-    NSRect result = [super searchButtonRectForBounds:rect];
-    return result;
-}
 
 - (NSRect)cancelButtonRectForBounds:(NSRect)rect {
     NSRect result = [super cancelButtonRectForBounds:rect];
@@ -259,6 +257,12 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
     [super drawWithFrame:cellFrame inView:controlView];
+
+    if (@available(macOS 26.5.1, *)) {
+        // The system focus ring works again as of 26.5.1. Drawing our own on top
+        // leaves thin angled fragments below the capsule corners, so skip it.
+        return;
+    }
 
     // Draw custom focus ring that extends beyond cell bounds
     if ([controlView respondsToSelector:@selector(currentEditor)] &&
@@ -986,11 +990,13 @@ andEditComponentWithIdentifier:(NSString *)identifier
         _bigSurSearchFieldToolbarItem.preferredWidthForSearchField = 180;
         _bigSurSearchFieldToolbarItem.searchField.delegate = self;
 
-        // Workaround for macOS 26 bug where text is not vertically centered. Issue 12708.
+        // Workaround for macOS 26 search field bugs. Issue 12708. See
+        // iTermPrefsSearchFieldCell for details.
         if (@available(macOS 27, *)) {
             // Presumably fixed in macOS 27.
         } else if (@available(macOS 26, *)) {
-            // Copy the existing cell and replace it with our subclass that fixes vertical alignment.
+            // Copy the existing cell and replace it with our subclass. The archiver
+            // round-trip alone fixes the vertical centering of the text and glyphs.
             NSSearchFieldCell *originalCell = _bigSurSearchFieldToolbarItem.searchField.cell;
             NSData *archivedCell = [NSKeyedArchiver archivedDataWithRootObject:originalCell
                                                          requiringSecureCoding:NO
@@ -1001,8 +1007,14 @@ andEditComponentWithIdentifier:(NSString *)identifier
             NSSearchFieldCell *newCell = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
             _bigSurSearchFieldToolbarItem.searchField.cell = newCell;
 
-            // Disable system focus ring - we'll draw our own in the cell
-            _bigSurSearchFieldToolbarItem.searchField.focusRingType = NSFocusRingTypeNone;
+            if (@available(macOS 26.5.1, *)) {
+                // The system focus ring works again; let it draw normally.
+            } else {
+                // The system focus ring is broken on 26.2 (FB21919006); suppress it
+                // so the custom ring in -[iTermPrefsSearchFieldCell drawWithFrame:]
+                // is the only one shown.
+                _bigSurSearchFieldToolbarItem.searchField.focusRingType = NSFocusRingTypeNone;
+            }
         }
 
         NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Search Options"];
