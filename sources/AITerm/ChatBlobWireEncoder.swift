@@ -63,14 +63,24 @@ enum ChatBlobWireEncoder {
             // adjacency, and assistant coalescing the live request uses; the
             // result is the unmarked message array for this round.
             return try encoder.encode(AnthropicRequestBuilder.convertMessages(round))
-        case .chatCompletions:
-            // The chat-completions builder is a pure per-message map (no
-            // cross-message reshaping), so freezing a round is the same map. Two
-            // consecutive assistant messages (a text preamble then a tool_calls
-            // message) are sent as-is, exactly as the live request does.
+        case .chatCompletions, .llama:
+            // Both builders are a pure per-message map (no cross-message
+            // reshaping), so freezing a round is the same map. Two consecutive
+            // assistant messages (a text preamble then a tool_calls message) are
+            // sent as-is, exactly as the live request does.
             return try encoder.encode(round.compactMap { CompletionsMessage($0) })
-        case .completions, .responses, .earlyO1, .gemini,
-                .llama, .deepSeek, .appleIntelligence:
+        case .earlyO1:
+            // Same map, but o1 replaces the system role with user. A round never
+            // contains a system message (system is envelope), so this is a no-op
+            // here; applied anyway to stay faithful to the live request.
+            let mapped = round.map { message -> LLM.Message in
+                guard message.role == .system else { return message }
+                var temp = message
+                temp.role = .user
+                return temp
+            }
+            return try encoder.encode(mapped.compactMap { CompletionsMessage($0) })
+        case .completions, .responses, .gemini, .deepSeek, .appleIntelligence:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)
         @unknown default:
             throw ChatBlobWireEncoderError.unsupportedProtocol(api)

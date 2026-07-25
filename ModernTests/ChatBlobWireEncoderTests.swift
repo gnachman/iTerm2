@@ -100,6 +100,14 @@ final class ChatBlobWireEncoderTests: XCTestCase {
         try assertWireCompositional(.chatCompletions, [plainRound, toolRound, plainRound, toolRound])
     }
 
+    func test_llama_wireLevelCompositional() throws {
+        try assertWireCompositional(.llama, [plainRound, toolRound, plainRound, toolRound])
+    }
+
+    func test_earlyO1_wireLevelCompositional() throws {
+        try assertWireCompositional(.earlyO1, [plainRound, toolRound, plainRound, toolRound])
+    }
+
     /// CompletionsMessage is ENCODE-ONLY (it emits role "tool" for a function
     /// output but its Role can't decode "tool"), so the stored payload is asserted
     /// at the JSON level — which is also how the assembler must stitch it (merge
