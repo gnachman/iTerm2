@@ -828,7 +828,13 @@ struct AnthropicRequestBuilder {
     }
 
     // Convert messages ensuring tool_result blocks are properly formatted
-    private func convertMessages(_ messages: [LLM.Message]) -> [AnthropicMessage] {
+    // Static because it depends only on its argument (no builder state): this lets
+    // the blob wire-encoder reuse the EXACT same conversion (per-message mapping +
+    // enforceToolUseAdjacency + coalesceConsecutiveAssistantMessages) to freeze a
+    // completed round's wire form, so a replayed blob is byte-identical to a live
+    // request. It produces the UNMARKED message array; markLastMessageForCaching,
+    // the volatile suffix, system, and tools are all envelope applied in body().
+    static func convertMessages(_ messages: [LLM.Message]) -> [AnthropicMessage] {
         var convertedMessages: [AnthropicMessage] = []
         var pendingToolIds: [String] = []
 
@@ -1047,7 +1053,7 @@ struct AnthropicRequestBuilder {
     }
 
     func body() throws -> Data {
-        var anthropicMessages = markLastMessageForCaching(convertMessages(messages))
+        var anthropicMessages = markLastMessageForCaching(Self.convertMessages(messages))
         // Volatile per-turn context (the orchestration <workgroups> snapshot)
         // is appended AFTER markLastMessageForCaching, so it lands past the
         // rolling history breakpoint and never enters the cached prefix. It
