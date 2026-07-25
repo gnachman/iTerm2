@@ -174,6 +174,15 @@ class ChatDatabase {
             // floor independent of the message floor.
             try db.executeUpdate(CompanionAlertRecord.schema(), withArguments: [])
 
+            // The per-chat wire-fragment blobs (transcript / source of truth for
+            // what gets sent to the model). "create table if not exists" plus its
+            // own AUTOINCREMENT seq; index the per-chat oldest-first splice read.
+            try db.executeUpdate(ChatBlob.schema(), withArguments: [])
+            try db.executeUpdate(
+                "create index if not exists ChatBlob_chatID_seq on ChatBlob "
+                + "(\(ChatBlob.Columns.chatID.rawValue), \(ChatBlob.Columns.seq.rawValue))",
+                withArguments: [])
+
             return true
         } catch {
             DLog("\(error)")
@@ -192,7 +201,7 @@ class ChatDatabase {
         let c = Message.Columns.self
         let copiedColumns = [
             c.uniqueID, c.author, c.chatID, c.content,
-            c.sentDate, c.responseID, c.agentReasoning
+            c.sentDate, c.responseID, c.agentReasoning, c.firstBlobRef
         ].map { $0.rawValue }.joined(separator: ", ")
         // The SELECT coalesces the NOT NULL columns so a single legacy row with a
         // NULL (the old schema also declares these NOT NULL, so this shouldn't
@@ -206,7 +215,8 @@ class ChatDatabase {
             "coalesce(\(c.content.rawValue), '')",
             "coalesce(\(c.sentDate.rawValue), 0)",
             c.responseID.rawValue,
-            c.agentReasoning.rawValue
+            c.agentReasoning.rawValue,
+            c.firstBlobRef.rawValue
         ].joined(separator: ", ")
         // Throwing transaction: begins, runs the closure, commits; any throw
         // from executeUpdate rolls back and rethrows, so a failure leaves the
@@ -222,7 +232,8 @@ class ChatDatabase {
                          \(c.content.rawValue) text not null,
                          \(c.sentDate.rawValue) integer not null,
                          \(c.responseID.rawValue) text,
-                         \(c.agentReasoning.rawValue) text)
+                         \(c.agentReasoning.rawValue) text,
+                         \(c.firstBlobRef.rawValue) text)
                     """, withArguments: [])
                 try db.executeUpdate("""
                     insert into Message_new (\(copiedColumns))
@@ -495,6 +506,63 @@ class ChatDatabase {
         return try? DatabaseBackedArray(db: db,
                                         query: query,
                                         args: args)
+    }
+
+    // MARK: - Wire-fragment blobs
+
+    /// Append one wire-fragment blob and return its engine-assigned seq (nil on
+    /// failure). seq is owned by SQLite (AUTOINCREMENT), so it is delete-immune
+    /// and strictly increasing per the whole table.
+    @discardableResult
+    func appendBlob(_ blob: ChatBlob) -> Int64? {
+        do {
+            let (sql, args) = blob.insertQuery()
+            try db.executeUpdate(sql, withArguments: args)
+            return db.lastInsertRowId()?.int64Value
+        } catch {
+            RLog("appendBlob failed for chat \(blob.chatID): \(error)")
+            return nil
+        }
+    }
+
+    /// A chat's blobs oldest-first (splice order). Empty on a read error or an
+    /// empty/blobless chat; the caller distinguishes "blobless" via
+    /// Chat.blobProtocol (nil = legacy, needs migration) rather than an empty read.
+    func blobs(inChat chatID: String) -> [ChatBlob] {
+        let (sql, args) = ChatBlob.query(forChatID: chatID)
+        do {
+            guard let rs = try db.executeQuery(sql, withArguments: args) else { return [] }
+            defer { rs.close() }
+            var result = [ChatBlob]()
+            while rs.next() {
+                if let blob = ChatBlob(dbResultSet: rs) {
+                    result.append(blob)
+                }
+            }
+            return result
+        } catch {
+            RLog("blobs(inChat:) failed for chat \(chatID): \(error)")
+            return []
+        }
+    }
+
+    /// Replace a chat's entire blob sequence atomically (used when a protocol
+    /// switch forces a re-freeze: reconstruct under the new protocol, then swap).
+    /// Runs the delete + inserts in one transaction so a reader never sees a
+    /// half-swapped history.
+    func replaceBlobs(inChat chatID: String, with blobs: [ChatBlob]) {
+        do {
+            try db.transaction {
+                let (delSQL, delArgs) = ChatBlob.deleteQuery(forChatID: chatID)
+                try db.executeUpdate(delSQL, withArguments: delArgs)
+                for blob in blobs {
+                    let (sql, args) = blob.insertQuery()
+                    try db.executeUpdate(sql, withArguments: args)
+                }
+            }
+        } catch {
+            RLog("replaceBlobs failed for chat \(chatID): \(error)")
+        }
     }
 
     struct QueryIterator<T>: Sequence, IteratorProtocol where T: iTermDatabaseInitializable {

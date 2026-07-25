@@ -521,6 +521,13 @@ struct Message: Codable {
     // history gets nil and behaves as before.
     var agentReasoning: String?
 
+    // The blobID of the first wire-fragment blob this display message maps to,
+    // used only for forking: a fork keeps the blobs strictly before the fork
+    // point's firstBlobRef. nil on legacy pre-migration messages (which fork as a
+    // single indivisible prefix). Optional, so old history decodes it as nil
+    // (JSONDecoder ignores a missing key) and old builds ignore it.
+    var firstBlobRef: String?
+
     // This is only present in user-sent messages.
     struct Configuration: Codable {
         var hostedWebSearchEnabled = false
@@ -698,6 +705,7 @@ extension Message {
     private enum CodingKeys: String, CodingKey {
         case chatID, author, content, sentDate, uniqueID
         case inResponseTo, responseID, agentReasoning, configuration
+        case firstBlobRef
     }
 
     // Custom decode (encode stays synthesized) so an unrecognized `content`
@@ -726,6 +734,7 @@ extension Message {
         responseID = try c.decodeIfPresent(String.self, forKey: .responseID)
         agentReasoning = try c.decodeIfPresent(String.self, forKey: .agentReasoning)
         configuration = try c.decodeIfPresent(Configuration.self, forKey: .configuration)
+        firstBlobRef = try c.decodeIfPresent(String.self, forKey: .firstBlobRef)
     }
 
     private static func decodeContent(from c: KeyedDecodingContainer<CodingKeys>) throws -> Content {
