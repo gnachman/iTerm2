@@ -72,6 +72,7 @@
 #import "iTermAboutWindow.h"
 #import "iTermAdjustFontSizeHelper.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermModalSheetRunner.h"
 #import "iTermAnnouncementView.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -9047,7 +9048,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [coprocessCommand_ addItemsWithObjectValues:mru];
     }
     [coprocessIgnoreErrors_ setState:[Coprocess shouldIgnoreErrorsFromCommand:coprocessCommand_.stringValue] ? NSControlStateValueOn : NSControlStateValueOff];
-    [NSApp runModalForWindow:coprocesssPanel_];
+    iTermRunModalForWindowAbortingIfParentCloses(coprocesssPanel_, self.window);
 
     [self.window endSheet:coprocesssPanel_];
     [coprocesssPanel_ orderOut:self];
