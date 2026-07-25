@@ -7,6 +7,7 @@
 //
 
 #import "iTermPasteSpecialWindowController.h"
+#import "iTermModalSheetRunner.h"
 
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPasteSpecialViewController.h"
@@ -444,10 +445,15 @@
                                                          profileType:profileType];
     NSWindow *window = [controller window];
     [presentingWindow beginSheet:window completionHandler:^(NSModalResponse returnCode) {
-        [NSApp stopModal];
+        // Fires a run-loop turn later, after iTermRunModalForWindowAbortingIfParentCloses
+        // may have aborted our session (parent closed). Only stop if we're still the
+        // current modal, so we don't stop an unrelated modal that is live by then.
+        if (NSApp.modalWindow == window) {
+            [NSApp stopModal];
+        }
     }];
 
-    [NSApp runModalForWindow:window];
+    iTermRunModalForWindowAbortingIfParentCloses(window, presentingWindow);
     [presentingWindow endSheet:window];
     [window orderOut:nil];
     [controller.window close];

@@ -7,6 +7,7 @@
 
 #import "NSAlert+iTerm.h"
 #import "DebugLogging.h"
+#import "iTermModalSheetRunner.h"
 
 @implementation NSAlert (iTerm)
 
@@ -15,37 +16,19 @@
 
     [NSApp activateIgnoringOtherApps:YES];
 
-    // If the parent window is closed before the user dismisses the sheet,
-    // the completion handler will never fire and the modal loop in
-    // runModalForWindow: will run forever, blocking the entire app.
-    // Observe the parent window closing so we can abort the modal.
-    __block BOOL stopped = NO;
-    id observer = [[NSNotificationCenter defaultCenter] addObserverForName:NSWindowWillCloseNotification
-                                                                    object:window
-                                                                     queue:nil
-                                                                usingBlock:^(NSNotification *note) {
-        if (stopped) {
-            return;
-        }
-        stopped = YES;
-        DLog(@"Parent window closed while sheet modal was active; aborting modal");
-        [NSApp abortModal];
-    }];
-
+    // If the parent window is closed before the sheet is dismissed, the completion
+    // handler never fires and runModalForWindow: would block forever (an unrecoverable
+    // app hang). The shared guard observes the parent closing and aborts the modal
+    // (draining any nested modals stacked over the dead parent).
     [self beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
-        if (stopped) {
-            return;
+        // Only stop our own session. If the sheet is being torn down because its parent
+        // closed, iTermRunModalForWindowAbortingIfParentCloses has already aborted us, so
+        // stopping here could hit whatever modal is current now.
+        if (NSApp.modalWindow == self.window) {
+            [NSApp stopModalWithCode:returnCode];
         }
-        stopped = YES;
-        [NSApp stopModalWithCode:returnCode];
     }];
-    const NSModalResponse result = [NSApp runModalForWindow:[self window]];
-    // Remove the observer on every exit path, including when the modal was
-    // unwound by something other than our two blocks (e.g. a third party calling
-    // -[NSApp abortModal] during app termination). Otherwise a stale observer
-    // survives and could later abort an unrelated modal when this window closes.
-    [[NSNotificationCenter defaultCenter] removeObserver:observer];
-    return result;
+    return iTermRunModalForWindowAbortingIfParentCloses(self.window, window);
 }
 
 @end

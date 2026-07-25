@@ -726,6 +726,7 @@
 		398447BD6E0F4CA316672068 /* CompanionPairingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D4F38B871E9DA9C0AA5E10 /* CompanionPairingWindowController.swift */; };
 		3B049F12D648A9AFEEFCA7A1 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		3C8FED766F941C2CB0A070E4 /* iTermCharacterSets.h in Sources */ = {isa = PBXBuildFile; fileRef = 46019892B59C674931043643 /* iTermCharacterSets.h */; };
+		3DF240AC0E869D3C0A076902 /* iTermModalSheetRunner.h in Sources */ = {isa = PBXBuildFile; fileRef = 4F0681FBE76FD9A1D5715D52 /* iTermModalSheetRunner.h */; };
 		41087F6965EAA157F08289C5 /* iTermCursorBlinkFadeCurveIcon.m in Sources */ = {isa = PBXBuildFile; fileRef = 7057439196C1E9D6AFF58395 /* iTermCursorBlinkFadeCurveIcon.m */; };
 		42D424F7D51EB10F0800BB84 /* SessionProvenanceRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92F80C10022DEB4FD02A6F7 /* SessionProvenanceRegistry.swift */; };
 		43640225470B76F4D13E6E86 /* iTermSessionPreviewPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 434641A807C0B3035264BEF2 /* iTermSessionPreviewPanel.m */; };
@@ -5493,6 +5494,7 @@
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DE3AD6D8904090E875D5EFF7 /* AIExplanationResponse+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F06ECF8A1AE910A311E3128 /* AIExplanationResponse+Mac.swift */; };
 		DECF12ECD66573849C34F781 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1B6BE78A6A0C18980A2A46 /* Helpers.swift */; };
+		E2DFAD8D76A3655948CB3F37 /* iTermModalSheetRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */; };
 		E3F691502939DF2E874D7DD1 /* IT2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FC80BA122066E3610BEA16 /* IT2.swift */; };
 		E4BE6F9594BF6756F85076DB /* iTermCursorBlinkFadeCurveIcon.h in Sources */ = {isa = PBXBuildFile; fileRef = 11FDA9247035DE0FCCE7D23D /* iTermCursorBlinkFadeCurveIcon.h */; };
 		E4BF4BC18C3054F2AD6145DC /* iTermWorkgroupSessionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0071478CE7978AC6B38C5DF7 /* iTermWorkgroupSessionMode.swift */; };
@@ -6413,6 +6415,7 @@
 		4C6497326253C17BB616E191 /* iTermBackgroundImageRotationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBackgroundImageRotationManager.swift; sourceTree = "<group>"; };
 		4C811516EBB14A113E1C7B83 /* iTermSplitTreeRebuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSplitTreeRebuilder.swift; sourceTree = "<group>"; };
 		4E5DDCA91496BE450D5BC387 /* CompanionHEVCSampleBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionHEVCSampleBuilder.swift; sourceTree = "<group>"; };
+		4F0681FBE76FD9A1D5715D52 /* iTermModalSheetRunner.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermModalSheetRunner.h; sourceTree = "<group>"; };
 		4F11062666A3520744C1AC2B /* iTermTmuxControlModeKeyName.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermTmuxControlModeKeyName.h; sourceTree = "<group>"; };
 		4FA57CDED6D07ADB36D49D4C /* iTermRightGutterPanelRegistry.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermRightGutterPanelRegistry.m; sourceTree = "<group>"; };
 		4FC9620CA37B0A32A763C48A /* iTermWorkgroupInstance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupInstance.swift; sourceTree = "<group>"; };
@@ -9825,6 +9828,7 @@
 		E8E901A202743CA303A80106 /* NSStringITerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringITerm.m; sourceTree = "<group>"; tabWidth = 4; };
 		E961A126DE6D9EFA0C6CC9AB /* ClaudeCodeOnboarding.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeOnboarding.swift; sourceTree = "<group>"; };
 		E989C0EC904E3E213AA6115A /* CompanionPixelBufferPool.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPixelBufferPool.swift; sourceTree = "<group>"; };
+		E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermModalSheetRunner.m; sourceTree = "<group>"; };
 		E9D218FDCACCEF2DA820B7D4 /* ExitWorkgroupTrigger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExitWorkgroupTrigger.swift; sourceTree = "<group>"; };
 		EB72B02155E98A2D900F57AD /* ClaudeCodeWorkgroupTemplate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeWorkgroupTemplate.swift; sourceTree = "<group>"; };
 		EC017F2B1715E00FD2C9D726 /* CompanionInFlightLimiter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionInFlightLimiter.swift; sourceTree = "<group>"; };
@@ -11354,6 +11358,8 @@
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
 				E8CF757F026DDAD703A80106 /* main.m */,
 				A6D441C62A91306400CA76E9 /* ProfileDocument.swift */,
+				E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */,
+				4F0681FBE76FD9A1D5715D52 /* iTermModalSheetRunner.h */,
 			);
 			path = AppKit;
 			sourceTree = "<group>";
@@ -22077,6 +22083,8 @@
 				60B1143D21817F21D3451F6C /* iTermKeychainTestSupport.swift in Sources */,
 				37CEE9E2B72C0F67F03A9587 /* iTermTmuxControlModeKeyName.m in Sources */,
 				7A0FE23B33980379355635C8 /* iTermTmuxControlModeKeyName.h in Sources */,
+				E2DFAD8D76A3655948CB3F37 /* iTermModalSheetRunner.m in Sources */,
+				3DF240AC0E869D3C0A076902 /* iTermModalSheetRunner.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

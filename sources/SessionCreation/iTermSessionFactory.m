@@ -6,6 +6,7 @@
 //
 
 #import "iTermSessionFactory.h"
+#import "iTermModalSheetRunner.h"
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -479,13 +480,18 @@ NS_ASSUME_NONNULL_BEGIN
 
     [window beginSheet:_parameterPanelWindowController.window completionHandler:nil];
 
-    [NSApp runModalForWindow:_parameterPanelWindowController.window];
+    const NSModalResponse response = iTermRunModalForWindowAbortingIfParentCloses(_parameterPanelWindowController.window, window);
 
     [window endSheet:_parameterPanelWindowController.window];
 
     [_parameterPanelWindowController.window orderOut:self];
 
-    if (_parameterPanelWindowController.canceled) {
+    // -canceled is only set when the user clicks a button (-parameterPanelEnd: calls
+    // -stopModal, which returns NSModalResponseStop). If the parent window closed while
+    // the sheet was up, the guard aborted the modal (NSModalResponseAbort) without that
+    // running, and parameterValue is still the empty default -- treat that as a cancel
+    // rather than launching with an empty substitution.
+    if (_parameterPanelWindowController.canceled || response == NSModalResponseAbort) {
         return nil;
     } else {
         return [_parameterPanelWindowController.parameterValue.stringValue copy];

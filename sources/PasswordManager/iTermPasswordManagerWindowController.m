@@ -7,6 +7,7 @@
 //
 
 #import "iTermPasswordManagerWindowController.h"
+#import "iTermModalSheetRunner.h"
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -611,10 +612,16 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         _newAccountPassword.stringValue = @"";
         _newAccountPassword.placeholderString = nil;
     }
-    [self.window beginSheet:_newAccountPanel completionHandler:^(NSModalResponse response){
-        [NSApp stopModal];
+    NSWindow *newAccountPanel = _newAccountPanel;
+    [self.window beginSheet:newAccountPanel completionHandler:^(NSModalResponse response){
+        // Fires a run-loop turn later, after iTermRunModalForWindowAbortingIfParentCloses
+        // may have aborted our session (parent closed). Only stop if we're still the
+        // current modal, so we don't stop an unrelated modal that is live by then.
+        if (NSApp.modalWindow == newAccountPanel) {
+            [NSApp stopModal];
+        }
     }];
-    [NSApp runModalForWindow:_newAccountPanel];
+    iTermRunModalForWindowAbortingIfParentCloses(newAccountPanel, self.window);
 }
 
 - (IBAction)cancelNewAccount:(id)sender {
