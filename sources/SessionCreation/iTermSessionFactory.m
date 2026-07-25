@@ -6,7 +6,6 @@
 //
 
 #import "iTermSessionFactory.h"
-#import "iTermModalSheetRunner.h"
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -480,7 +479,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     [window beginSheet:_parameterPanelWindowController.window completionHandler:nil];
 
-    iTermRunModalForWindowAbortingIfParentCloses(_parameterPanelWindowController.window, window);
+    [NSApp runModalForWindow:_parameterPanelWindowController.window];
 
     [window endSheet:_parameterPanelWindowController.window];
 

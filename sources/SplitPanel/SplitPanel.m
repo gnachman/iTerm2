@@ -7,7 +7,6 @@
 //
 
 #import "SplitPanel.h"
-#import "iTermModalSheetRunner.h"
 #import "ProfileListView.h"
 
 @interface SplitPanel ()<ProfileListViewDelegate>
@@ -36,7 +35,7 @@
         }];
 
         NSWindow *panel = [splitPanel window];
-        iTermRunModalForWindowAbortingIfParentCloses(panel, parent.window);
+        [NSApp runModalForWindow:panel];
         [parent.window endSheet:splitPanel.window];
         [panel orderOut:nil];
         [splitPanel close];

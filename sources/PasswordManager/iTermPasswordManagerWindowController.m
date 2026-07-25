@@ -7,7 +7,6 @@
 //
 
 #import "iTermPasswordManagerWindowController.h"
-#import "iTermModalSheetRunner.h"
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -615,7 +614,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     [self.window beginSheet:_newAccountPanel completionHandler:^(NSModalResponse response){
         [NSApp stopModal];
     }];
-    iTermRunModalForWindowAbortingIfParentCloses(_newAccountPanel, self.window);
+    [NSApp runModalForWindow:_newAccountPanel];
 }
 
 - (IBAction)cancelNewAccount:(id)sender {

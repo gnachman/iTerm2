@@ -7,7 +7,6 @@
 //
 
 #import "iTermPasteSpecialWindowController.h"
-#import "iTermModalSheetRunner.h"
 
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPasteSpecialViewController.h"
@@ -448,7 +447,7 @@
         [NSApp stopModal];
     }];
 
-    iTermRunModalForWindowAbortingIfParentCloses(window, presentingWindow);
+    [NSApp runModalForWindow:window];
     [presentingWindow endSheet:window];
     [window orderOut:nil];
     [controller.window close];
