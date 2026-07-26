@@ -4589,6 +4589,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.profile.profileIsBrowser) {
         return iTermSessionEndActionClose;
     }
+    // Workgroup-spawned members force the default end action so a profile
+    // sync can't flip them to Close and have them auto-close on program
+    // exit, which would tear the whole workgroup down. See
+    // PTYSession.forceDefaultEndAction.
+    if (self.forceDefaultEndAction) {
+        return iTermSessionEndActionDefault;
+    }
     return _endAction;
 }
 

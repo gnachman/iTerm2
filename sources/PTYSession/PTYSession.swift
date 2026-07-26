@@ -53,6 +53,17 @@ class PTYSessionSwiftState: NSObject {
     // gates the deferred prompt-overlay launch path.
     var workgroupSessionMode: iTermWorkgroupSessionMode = .regular
 
+    // When true, this session's `endAction` always reports .default no
+    // matter what the profile's "Close Sessions On End" (KEY_SESSION_END_ACTION)
+    // is. Set on workgroup-spawned member sessions (peers, splits, tabs)
+    // so a profile sync — which reconciles non-overridden keys back to
+    // the shared profile — can't quietly flip a member to Close and make
+    // it auto-close when its program exits (e.g. a Diff pane whose
+    // difftool finishes), which would tear the whole workgroup down. The
+    // leader/main session is deliberately not marked, so it still honors
+    // its profile.
+    var forceDefaultEndAction = false
+
     // For .codeReview sessions, the raw (unwrapped, swifty-templated)
     // command — e.g. "claude \(codeReviewPrompt)". Cached so any future
     // relaunch (toolbar reload, broken-pipe restart announcement) can
@@ -1785,6 +1796,12 @@ extension PTYSession {
         set { swiftState.workgroupSessionMode = newValue }
     }
 
+    // See SwiftState.forceDefaultEndAction. Read by -[PTYSession endAction].
+    @objc var forceDefaultEndAction: Bool {
+        get { swiftState.forceDefaultEndAction }
+        set { swiftState.forceDefaultEndAction = newValue }
+    }
+
     // Raw (unwrapped, swifty-templated) command for .codeReview sessions.
     // Used by reload paths (toolbar reload, restart-after-exit) to
     // re-present the prompt overlay against the original template.
@@ -2059,6 +2076,12 @@ extension PTYSession {
 
                     let newSession = factory.newSession(withProfile: profile,
                                                         parent: self)
+                    // Durably pin the default end action: the profile
+                    // override above sets the initial value, but a later
+                    // profile sync can revert a non-overridden key to the
+                    // shared profile's Close. This flag can't be reverted,
+                    // so the peer never auto-closes on program exit.
+                    newSession.forceDefaultEndAction = true
                     newSession.setScreenSize(myView.bounds.size,
                                              parent: delegate.realParentWindow())
                     newSession.setSize(screen.size)

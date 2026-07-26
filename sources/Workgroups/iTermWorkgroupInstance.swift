@@ -305,6 +305,11 @@ final class iTermWorkgroupInstance: NSObject {
             NonPeerEntry(session: session, items: items)
         trackedSessionIdentities.insert(ObjectIdentifier(session))
         session.workgroupInstance = self
+        // Pin the default end action so this member can't auto-close on
+        // program exit (fresh spawns are already flagged by the spawner;
+        // this also covers the restore/adopt path). See
+        // PTYSession.forceDefaultEndAction.
+        session.forceDefaultEndAction = true
         // Refresh the new session's toolbar view to pick up its items.
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
     }
@@ -769,6 +774,11 @@ final class iTermWorkgroupInstance: NSObject {
                 // (not persisted on the session arrangement) so reload /
                 // toolbar behavior matches a live workgroup.
                 session.workgroupSessionMode = peer.mode
+                // Re-pin the default end action; like the mode tag it's
+                // not persisted on the arrangement, so a restored peer
+                // would otherwise fall back to its profile's Close and
+                // auto-close on program exit. See PTYSession.forceDefaultEndAction.
+                session.forceDefaultEndAction = true
                 // Restore the raw command template too: reload of a
                 // code-review peer keys off codeReviewRawCommand to
                 // re-present the prompt overlay (see

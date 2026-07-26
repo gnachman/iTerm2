@@ -821,6 +821,13 @@ Bug Fixes:
   was torn down even though its claude process was
   still running, due to a momentary misread of the
   foreground job ancestor list.
+- Fixed a case where a Claude Code workgroup pane
+  (such as Diff or Code Review) could close itself
+  when its command exited and take the whole
+  workgroup down with it. Spawned workgroup panes
+  now pin their end action so the profile’s “Close
+  Sessions On End” setting can no longer flip them
+  to close on their own.
 - AI chat: fixed a race where a streamed tool
   call could be dispatched with empty arguments
   when the response completed before its argument

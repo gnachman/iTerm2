@@ -286,6 +286,10 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
             // KEY_RUN_COMMAND_IN_LOGIN_SHELL wrapping that
             // bookmarkCommandSwiftyString: would normally apply.
             session.workgroupSessionMode = mode
+            // Durably pin the default end action (see the KEY_SESSION_END_ACTION
+            // override above and PTYSession.forceDefaultEndAction): the profile
+            // value can be reverted by a later profile sync, but this flag can't.
+            session.forceDefaultEndAction = true
             let url = urlString.isEmpty ? nil : urlString
             if mode == .codeReview {
                 // Splits/tabs are already installed in the window by
