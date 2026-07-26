@@ -1644,6 +1644,7 @@ struct ResponsesBodyRequestBuilder {
     var shouldThink: Bool?
     var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
     var serviceTier: ResponsesRequestBody.ServiceTier?
+    var frozenHistoryElements: Data? = nil  // blob-native replay; see LLMRequestBuilder
 
     // Static (depends only on its args, not builder state) so the blob wire-encoder
     // reuses this EXACT per-message mapping to freeze a round's input items. It
@@ -1931,7 +1932,12 @@ struct ResponsesBodyRequestBuilder {
         let bodyData = try! bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")
 //        print(bodyData.lossyString)
-        return bodyData
-
+        // Blob-native FULL replay only (previousResponseID == nil): splice the
+        // frozen history into "input" after the system item(s). In delta mode the
+        // server already holds the history, so nothing is spliced.
+        guard previousResponseID == nil else { return bodyData }
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: bodyData, arrayKey: "input",
+            afterCount: messages.filter { $0.role == .system }.count)
     }
 }

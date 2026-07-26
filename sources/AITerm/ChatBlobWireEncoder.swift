@@ -78,8 +78,12 @@ enum ChatBlobWireEncoder {
         case .anthropic:
             // convertMessages applies the same per-message mapping, tool-pair
             // adjacency, and assistant coalescing the live request uses; the
-            // result is the unmarked message array for this round.
-            return try encoder.encode(AnthropicRequestBuilder.convertMessages(round))
+            // result is the unmarked message array for this round. Encode with
+            // .sortedKeys to MATCH AnthropicRequestBuilder.body() (which sorts keys
+            // because Anthropic's prompt cache is a byte-prefix match): otherwise a
+            // turn's frozen bytes would differ from the sorted bytes it was first
+            // sent with, and the replayed prefix would miss the cache.
+            return try sortedKeysEncoder.encode(AnthropicRequestBuilder.convertMessages(round))
         case .chatCompletions:
             // The chat-completions builder is a bare per-message map (no
             // cross-message reshaping), so freezing a round is the same map. Two
@@ -131,7 +135,7 @@ enum ChatBlobWireEncoder {
             // on codeInterpreter (dropped from content when on, emitted as
             // input_file when off), so the frozen content must match what the live
             // request actually sent.
-            return try encoder.encode(round.flatMap {
+            return try sortedKeysEncoder.encode(round.flatMap {
                 ResponsesBodyRequestBuilder.transform(message: $0, hostedTools: hostedTools)
             })
         case .completions, .appleIntelligence:
@@ -146,4 +150,15 @@ enum ChatBlobWireEncoder {
     // bytes turn over turn (the same property the shipped Anthropic cache fix
     // already relies on).
     private static let encoder = JSONEncoder()
+
+    // The Anthropic and Responses builders serialize with .sortedKeys (their
+    // prompt caches are byte-prefix matches and tool/schema dict order is
+    // otherwise random per process), so their blobs must too, or a turn's frozen
+    // bytes would differ from the sorted bytes it was first sent with. Every other
+    // builder uses a plain JSONEncoder, so their blobs use `encoder` above.
+    private static let sortedKeysEncoder: JSONEncoder = {
+        let e = JSONEncoder()
+        e.outputFormatting = [.sortedKeys]
+        return e
+    }()
 }

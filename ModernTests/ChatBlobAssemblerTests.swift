@@ -176,6 +176,54 @@ final class ChatBlobAssemblerTests: XCTestCase {
     func test_sendPath_llama_messagesMatch() throws { try assertSendPathMatches(.llama, key: "messages") }
     func test_sendPath_earlyO1_messagesMatch() throws { try assertSendPathMatches(.earlyO1, key: "messages") }
     func test_sendPath_deepSeek_messagesMatch() throws { try assertSendPathMatches(.deepSeek, key: "messages") }
+    func test_sendPath_anthropic_messagesMatch() throws { try assertSendPathMatches(.anthropic, key: "messages") }
+    func test_sendPath_gemini_contentsMatch() throws { try assertSendPathMatches(.gemini, key: "contents") }
+    func test_sendPath_responses_inputMatch() throws { try assertSendPathMatches(.responses, key: "input") }
+
+    /// The value bytes of the JSON array at `key` (from `[` to its matching `]`),
+    /// depth- and string-aware. For byte-exact comparison of the cache-relevant
+    /// prefix without the surrounding envelope fields (e.g. max_tokens).
+    private func arrayBytes(forKey key: String, in body: Data) -> Data? {
+        let s = String(decoding: body, as: UTF8.self)
+        guard let keyRange = s.range(of: "\"\(key)\":") else { return nil }
+        let after = s[keyRange.upperBound...]
+        guard after.first == "[" else { return nil }
+        var depth = 0, inString = false, escaped = false
+        var idx = after.startIndex
+        while idx < after.endIndex {
+            let c = after[idx]
+            if inString {
+                if escaped { escaped = false } else if c == "\\" { escaped = true } else if c == "\"" { inString = false }
+            } else if c == "\"" { inString = true }
+            else if c == "[" || c == "{" { depth += 1 }
+            else if c == "}" { depth -= 1 }
+            else if c == "]" { depth -= 1; if depth == 0 { return Data(after[after.startIndex...idx].utf8) } }
+            idx = after.index(after: idx)
+        }
+        return nil
+    }
+
+    /// Anthropic's cache is a byte-prefix match over tools -> system -> messages, so
+    /// the blob-native "messages" array must be BYTE-identical (not just parse-equal)
+    /// to the live full-history one. This is what the .sortedKeys blob encoding
+    /// guarantees; max_tokens (a top-level sibling, not in the cached prefix) is
+    /// allowed to differ.
+    func test_sendPath_anthropic_messagesAreByteIdentical() throws {
+        var model = try baseModel()
+        model.api = .anthropic
+        let priorConvo = plainRound + toolRound
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: priorConvo, api: .anthropic,
+                                         modelName: model.name, hostedTools: HostedTools(), database: db)
+        let inner = try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A"))
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let newUser = user("what's next?")
+        let blobNative = try builder(model, messages: [system, newUser], frozen: inner).body()
+        let live = try builder(model, messages: [system] + priorConvo + [newUser], frozen: nil).body()
+        XCTAssertEqual(arrayBytes(forKey: "messages", in: blobNative),
+                       arrayBytes(forKey: "messages", in: live),
+                       "blob-native Anthropic messages array must be byte-identical to the live one")
+    }
 
     // MARK: - Integrity
 

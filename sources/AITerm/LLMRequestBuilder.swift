@@ -61,7 +61,8 @@ struct LLMRequestBuilder {
                                         provider: provider,
                                         functions: functions,
                                         stream: stream,
-                                        trailingVolatileText: trailingVolatileText).body()
+                                        trailingVolatileText: trailingVolatileText,
+                                        frozenHistoryElements: frozenHistoryElements).body()
         case .completions:
             try LegacyBodyRequestBuilder(messages: messagesWithVolatile,
                                          provider: provider).body()
@@ -80,7 +81,8 @@ struct LLMRequestBuilder {
                                             previousResponseID: previousResponseID,
                                             shouldThink: shouldThink,
                                             reasoningEffort: reasoningEffort,
-                                            serviceTier: serviceTier).body()
+                                            serviceTier: serviceTier,
+                                            frozenHistoryElements: frozenHistoryElements).body()
         case .earlyO1:
             try O1BodyRequestBuilder(messages: messagesWithVolatile,
                                      provider: provider,
@@ -90,7 +92,8 @@ struct LLMRequestBuilder {
             try GeminiRequestBuilder(messages: messagesWithVolatile,
                                      functions: functions,
                                      hostedTools: hostedTools,
-                                     modelName: provider.model.name).body()
+                                     modelName: provider.model.name,
+                                     frozenHistoryElements: frozenHistoryElements).body()
 
         case .llama:
             try LlamaBodyRequestBuilder(messages: messagesWithVolatile,

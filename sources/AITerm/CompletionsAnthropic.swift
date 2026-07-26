@@ -783,6 +783,7 @@ struct AnthropicRequestBuilder {
     // frozen prefix stays byte-stable and only this suffix is uncached.
     // nil for non-orchestration requests. See AIChatTrailingVolatileTests.
     var trailingVolatileText: String? = nil
+    var frozenHistoryElements: Data? = nil  // blob-native replay; see LLMRequestBuilder
 
     private struct Body: Codable {
         var model: String
@@ -1156,6 +1157,11 @@ struct AnthropicRequestBuilder {
         bodyEncoder.outputFormatting = [.sortedKeys]
         let bodyData = try bodyEncoder.encode(body)
         DLog("REQUEST:\n\(bodyData.lossyString)")
-        return bodyData
+        // Blob-native replay: system is a separate top-level field, so the frozen
+        // history splices at the start of "messages", before this turn's messages
+        // (whose last carries the rolling cache marker). The history is verbatim
+        // and already .sortedKeys-encoded to match this body.
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: bodyData, arrayKey: "messages", afterCount: 0)
     }
 }
