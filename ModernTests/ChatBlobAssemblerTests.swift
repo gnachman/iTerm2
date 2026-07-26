@@ -119,6 +119,54 @@ final class ChatBlobAssemblerTests: XCTestCase {
         XCTAssertTrue(try ChatBlobAssembler.stitch([]).isEmpty)
     }
 
+    // MARK: - Byte-level stitch (verbatim, for cache byte-stability)
+
+    func test_stitchBytes_singleBlob_isVerbatim() throws {
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: plainRound, api: .chatCompletions,
+                                         modelName: nil, hostedTools: HostedTools(), database: db)
+        let blob = try XCTUnwrap(db.blobs(inChat: "A").first)
+        XCTAssertEqual(try ChatBlobAssembler.stitchBytes([blob]), blob.payload,
+                       "one blob's bytes must be reproduced verbatim")
+    }
+
+    func test_stitchBytes_parsesToSameAsObjectStitch() throws {
+        let db = try makeTempDB()
+        let convo = plainRound + toolRound + plainRound
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: convo, api: .anthropic,
+                                         modelName: nil, hostedTools: HostedTools(), database: db)
+        let blobs = db.blobs(inChat: "A")
+        let parsed = try XCTUnwrap(JSONSerialization.jsonObject(with: try ChatBlobAssembler.stitchBytes(blobs)) as? [Any])
+        XCTAssertEqual(parsed as NSArray, try ChatBlobAssembler.stitch(blobs) as NSArray)
+    }
+
+    /// Each blob's inner bytes must appear UNCHANGED in the concatenation (that is
+    /// the byte-prefix stability Anthropic's cache needs; a JSON round-trip could
+    /// reorder keys and break it).
+    func test_stitchBytes_preservesEachBlobsBytesVerbatim() throws {
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: plainRound + toolRound, api: .anthropic,
+                                         modelName: nil, hostedTools: HostedTools(), database: db)
+        let blobs = db.blobs(inChat: "A")
+        let bytes = try ChatBlobAssembler.stitchBytes(blobs)
+        for blob in blobs {
+            let inner = blob.payload.subdata(in: (blob.payload.startIndex + 1)..<(blob.payload.endIndex - 1))
+            XCTAssertNotNil(bytes.range(of: inner),
+                            "each blob's inner bytes must appear verbatim in the stitched output")
+        }
+    }
+
+    func test_stitchBytes_empty_isEmptyArray() throws {
+        XCTAssertEqual(try ChatBlobAssembler.stitchBytes([]), Data("[]".utf8))
+    }
+
+    func test_stitchBytes_corrupt_throws() throws {
+        let db = try makeTempDB()
+        db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .anthropic, role: .user,
+                               payload: Data("garbage".utf8)))
+        XCTAssertThrowsError(try ChatBlobAssembler.stitchBytes(db.blobs(inChat: "A")))
+    }
+
     // MARK: - The safety gate (stitchedHistoryIfSafe)
 
     func test_safe_noBlobs_returnsNil() throws {

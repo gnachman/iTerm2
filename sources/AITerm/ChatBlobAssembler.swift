@@ -61,6 +61,45 @@ enum ChatBlobAssembler {
         return merged
     }
 
+    /// Byte-level stitch: concatenate the VERBATIM inner bytes of each blob's
+    /// payload array into one JSON array, without parsing and re-serializing the
+    /// message objects. This is what the actual send path uses, because Anthropic's
+    /// prompt cache is a byte-prefix match: the frozen history bytes must be
+    /// identical turn over turn, which a JSONSerialization round-trip (which may
+    /// reorder keys) would not guarantee. Each payload is validated as a JSON array
+    /// first (corrupt -> throw -> caller falls back); only its inner bytes (between
+    /// the outer brackets) are spliced, so the emitted history is exactly the bytes
+    /// that were captured.
+    static func stitchBytes(_ blobs: [ChatBlob]) throws -> Data {
+        var inners: [Data] = []
+        for blob in blobs {
+            guard (try? JSONSerialization.jsonObject(with: blob.payload)) is [Any] else {
+                throw ChatBlobAssemblerError.corruptPayload(blobID: blob.blobID)
+            }
+            let inner = innerBytes(ofJSONArray: blob.payload)
+            if !inner.isEmpty {
+                inners.append(inner)
+            }
+        }
+        var result = Data([0x5B])  // [
+        for (index, inner) in inners.enumerated() {
+            if index > 0 {
+                result.append(0x2C)  // ,
+            }
+            result.append(inner)
+        }
+        result.append(0x5D)  // ]
+        return result
+    }
+
+    /// The bytes of a compact JSON array between its outer `[` and `]` (empty for
+    /// `[]`). The payloads are JSONEncoder output (compact, no surrounding
+    /// whitespace), so the first byte is `[` and the last is `]`; this trims those.
+    private static func innerBytes(ofJSONArray data: Data) -> Data {
+        guard data.count > 2 else { return Data() }  // "[]" or shorter -> empty
+        return data.subdata(in: (data.startIndex + 1)..<(data.endIndex - 1))
+    }
+
     /// The safety gate for blob-native replay. Returns the stitched wire history
     /// for `chatID` ONLY if the blob path is provably safe; otherwise nil, so the
     /// caller falls back to codec reconstruction. Returning nil (rather than
