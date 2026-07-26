@@ -1301,20 +1301,13 @@ class ChatAgent {
         guard let displayMessages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
             return
         }
-        let database = listModel.chatDatabase
         let all = translate(messages: Array(displayMessages))
-        if database.blobCount(inChat: chatID) > 0,
-           database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
-            // Protocol switch: clear so captureNewRounds re-freezes every round
-            // under the new protocol.
-            database.replaceBlobs(inChat: chatID, with: [])
-        }
-        let appended = ChatBlobCapture.captureNewRounds(chatID: chatID,
-                                                        allMessages: all,
-                                                        api: api,
-                                                        modelName: modelName,
-                                                        hostedTools: hostedTools,
-                                                        database: database)
+        let appended = ChatBlobCapture.captureTurn(chatID: chatID,
+                                                   allMessages: all,
+                                                   api: api,
+                                                   modelName: modelName,
+                                                   hostedTools: hostedTools,
+                                                   database: listModel.chatDatabase)
         if appended > 0 {
             try? listModel.setBlobProtocol(Int(api.rawValue), forChatID: chatID)
         }

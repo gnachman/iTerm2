@@ -55,6 +55,27 @@ enum ChatBlobCapture {
     /// ChatDatabase.replaceBlobs BEFORE calling this. This function defends the
     /// invariant anyway: if the chat already has blobs under a different protocol
     /// it refuses (returns 0) rather than append a mixed, unreplayable sequence.
+    /// Capture a completed turn's rounds, handling a protocol switch. Blobs are
+    /// only replayable under the protocol they were frozen for, so if the chat
+    /// already has blobs under a DIFFERENT protocol than `api` (the user switched
+    /// model/provider mid-conversation), clear them first and let captureNewRounds
+    /// re-freeze the whole history under the new protocol. Otherwise this is a
+    /// normal incremental capture. Returns the number of blobs appended.
+    @discardableResult
+    static func captureTurn(chatID: String,
+                            allMessages: [LLM.Message],
+                            api: iTermAIAPI,
+                            modelName: String?,
+                            hostedTools: HostedTools,
+                            database: ChatDatabase) -> Int {
+        if database.blobCount(inChat: chatID) > 0,
+           database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
+            database.replaceBlobs(inChat: chatID, with: [])
+        }
+        return captureNewRounds(chatID: chatID, allMessages: allMessages, api: api,
+                                modelName: modelName, hostedTools: hostedTools, database: database)
+    }
+
     @discardableResult
     static func captureNewRounds(chatID: String,
                                  allMessages: [LLM.Message],

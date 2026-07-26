@@ -171,6 +171,38 @@ final class ChatBlobCaptureTests: XCTestCase {
         XCTAssertNil(db.storedBlobProtocol(inChat: "empty"))
     }
 
+    // MARK: - captureTurn (protocol-switch handling)
+
+    func testCaptureTurn_sameProtocol_isIncremental() throws {
+        let db = try makeTempDB()
+        let r1 = [user("q1"), asst("a1")]
+        XCTAssertEqual(ChatBlobCapture.captureTurn(chatID: "A", allMessages: r1, api: .chatCompletions,
+                                                   modelName: nil, hostedTools: HostedTools(), database: db), 1)
+        XCTAssertEqual(ChatBlobCapture.captureTurn(chatID: "A", allMessages: r1 + [user("q2"), asst("a2")],
+                                                   api: .chatCompletions, modelName: nil,
+                                                   hostedTools: HostedTools(), database: db), 1)
+        XCTAssertEqual(db.blobCount(inChat: "A"), 2)
+        XCTAssertEqual(db.storedBlobProtocol(inChat: "A"), Int(iTermAIAPI.chatCompletions.rawValue))
+    }
+
+    /// A protocol switch clears the old-protocol blobs and re-freezes the WHOLE
+    /// history under the new protocol (so the sequence is never mixed).
+    func testCaptureTurn_protocolSwitch_reFreezesWholeHistory() throws {
+        let db = try makeTempDB()
+        let convo = [user("q1"), asst("a1"), user("q2"), asst("a2")]
+        XCTAssertEqual(ChatBlobCapture.captureTurn(chatID: "A", allMessages: convo, api: .chatCompletions,
+                                                   modelName: nil, hostedTools: HostedTools(), database: db), 2)
+        // Next turn arrives under a different protocol (user switched providers).
+        let after = convo + [user("q3"), asst("a3")]
+        let appended = ChatBlobCapture.captureTurn(chatID: "A", allMessages: after, api: .anthropic,
+                                                   modelName: nil, hostedTools: HostedTools(), database: db)
+        XCTAssertEqual(appended, 3, "the whole history (3 rounds) re-freezes under the new protocol")
+        let blobs = db.blobs(inChat: "A")
+        XCTAssertEqual(blobs.count, 3)
+        XCTAssertTrue(blobs.allSatisfy { $0.blobProtocol == .anthropic },
+                      "every blob is now the new protocol; none of the old chatCompletions blobs remain")
+    }
+
     func testCapture_recordsResponseID_fromRoundTail() throws {
         let db = try makeTempDB()
         // Responses-style: the round's final assistant message carries a responseID.
