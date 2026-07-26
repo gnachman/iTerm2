@@ -9,6 +9,7 @@
 struct O1BodyRequestBuilder {
     var messages: [LLM.Message]
     var provider: LLMProvider
+    var frozenHistoryElements: Data? = nil  // blob-native replay; see LLMRequestBuilder
 
     private struct Body: Codable {
         var model: String?
@@ -35,7 +36,11 @@ struct O1BodyRequestBuilder {
         DLog("REQUEST:\n\(body)")
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
-        return bodyData
+        // o1 converts each system message to a user message but keeps its position,
+        // so the frozen history still splices after that many leading elements.
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: bodyData, arrayKey: "messages",
+            afterCount: messages.filter { $0.role == .system }.count)
 
     }
 }

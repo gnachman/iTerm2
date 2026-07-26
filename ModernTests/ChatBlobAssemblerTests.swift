@@ -153,6 +153,30 @@ final class ChatBlobAssemblerTests: XCTestCase {
         XCTAssertEqual(blobNative as NSArray, live as NSArray)
     }
 
+    /// Blob-native spliced body's message array == the live full-history body's,
+    /// for a protocol whose message array is at `key`.
+    private func assertSendPathMatches(_ api: iTermAIAPI, key: String,
+                                       file: StaticString = #filePath, line: UInt = #line) throws {
+        var model = try baseModel()
+        model.api = api
+        let priorConvo = plainRound + toolRound
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: priorConvo, api: api,
+                                         modelName: model.name, hostedTools: HostedTools(), database: db)
+        let inner = try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A"))
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let newUser = user("what's next?")
+        let blobNative = try messagesArray(builder(model, messages: [system, newUser], frozen: inner), key: key)
+        let live = try messagesArray(builder(model, messages: [system] + priorConvo + [newUser], frozen: nil), key: key)
+        XCTAssertEqual(blobNative as NSArray, live as NSArray,
+                       "blob-native spliced \(key) must equal the live full-history \(key) for \(api.rawValue)",
+                       file: file, line: line)
+    }
+
+    func test_sendPath_llama_messagesMatch() throws { try assertSendPathMatches(.llama, key: "messages") }
+    func test_sendPath_earlyO1_messagesMatch() throws { try assertSendPathMatches(.earlyO1, key: "messages") }
+    func test_sendPath_deepSeek_messagesMatch() throws { try assertSendPathMatches(.deepSeek, key: "messages") }
+
     // MARK: - Integrity
 
     func test_stitch_corruptPayload_throws() throws {

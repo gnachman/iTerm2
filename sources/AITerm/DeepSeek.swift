@@ -11,6 +11,7 @@ struct DeepSeekRequestBuilder {
     var functions = [LLM.AnyFunction]()
     var stream: Bool
     var shouldThink: Bool? = nil
+    var frozenHistoryElements: Data? = nil  // blob-native replay; see LLMRequestBuilder
 
     private struct Body: Codable {
         var model: String?
@@ -221,7 +222,9 @@ struct DeepSeekRequestBuilder {
         }
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
-        return bodyData
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: bodyData, arrayKey: "messages",
+            afterCount: messages.filter { $0.role == .system }.count)
 
     }
 }

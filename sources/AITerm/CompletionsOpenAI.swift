@@ -58,20 +58,12 @@ struct ModernBodyRequestBuilder {
         }
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
-        guard let frozenHistoryElements, !frozenHistoryElements.isEmpty else {
-            return bodyData
-        }
-        // Splice the chat's verbatim frozen history into the messages array, after
-        // the system message(s) and before this turn's new messages. Reuses this
-        // builder's exact envelope; the history bytes are not re-serialized.
-        let systemCount = messages.filter { $0.role == .system }.count
-        guard let spliced = JSONArraySplice.insert(frozenHistoryElements,
-                                                   intoArrayKey: "messages",
-                                                   of: bodyData,
-                                                   afterCount: systemCount) else {
-            throw AIError("Failed to splice frozen chat history into the chat-completions request body")
-        }
-        return spliced
+        // Blob-native replay: splice the chat's verbatim frozen history into the
+        // messages array after the leading system message(s), before this turn's
+        // new messages. Reuses this builder's exact envelope.
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: bodyData, arrayKey: "messages",
+            afterCount: messages.filter { $0.role == .system }.count)
     }
 }
 

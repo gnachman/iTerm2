@@ -83,7 +83,8 @@ struct LLMRequestBuilder {
                                             serviceTier: serviceTier).body()
         case .earlyO1:
             try O1BodyRequestBuilder(messages: messagesWithVolatile,
-                                     provider: provider).body()
+                                     provider: provider,
+                                     frozenHistoryElements: frozenHistoryElements).body()
 
         case .gemini:
             try GeminiRequestBuilder(messages: messagesWithVolatile,
@@ -95,13 +96,15 @@ struct LLMRequestBuilder {
             try LlamaBodyRequestBuilder(messages: messagesWithVolatile,
                                         provider: provider,
                                         functions: functions,
-                                        stream: stream).body()
+                                        stream: stream,
+                                        frozenHistoryElements: frozenHistoryElements).body()
         case .deepSeek:
             try DeepSeekRequestBuilder(messages: messagesWithVolatile,
                                        provider: provider,
                                        functions: functions,
                                        stream: stream,
-                                       shouldThink: shouldThink).body()
+                                       shouldThink: shouldThink,
+                                       frozenHistoryElements: frozenHistoryElements).body()
         case .appleIntelligence:
             // Apple Intelligence runs on-device via FoundationModels and never
             // builds an HTTP request. AITermController intercepts this provider

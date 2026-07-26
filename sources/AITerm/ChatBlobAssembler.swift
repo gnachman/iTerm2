@@ -106,6 +106,25 @@ enum ChatBlobAssembler {
         return data.subdata(in: (data.startIndex + 1)..<(data.endIndex - 1))
     }
 
+    /// Splice a chat's frozen-history inner bytes into a request body a per-vendor
+    /// builder just serialized: insert them at `arrayKey` after `afterCount`
+    /// elements (the builder's own leading system messages, or 0 when the protocol
+    /// carries system separately). Returns the body unchanged when there is no
+    /// frozen history (the normal, non-blob path). Throws if the splice fails (the
+    /// serialized body wasn't shaped as expected) so the caller surfaces it rather
+    /// than silently send a history-less request.
+    static func spliceFrozenHistory(_ frozen: Data?,
+                                    into body: Data,
+                                    arrayKey: String,
+                                    afterCount: Int) throws -> Data {
+        guard let frozen, !frozen.isEmpty else { return body }
+        guard let spliced = JSONArraySplice.insert(frozen, intoArrayKey: arrayKey,
+                                                   of: body, afterCount: afterCount) else {
+            throw AIError("Failed to splice frozen chat history into the \(arrayKey) request body")
+        }
+        return spliced
+    }
+
     /// The safety gate for blob-native replay. Returns the stitched wire history
     /// for `chatID` ONLY if the blob path is provably safe; otherwise nil, so the
     /// caller falls back to codec reconstruction. Returning nil (rather than
