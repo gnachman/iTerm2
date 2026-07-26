@@ -118,4 +118,68 @@ final class ChatBlobAssemblerTests: XCTestCase {
     func test_stitch_empty_isEmpty() throws {
         XCTAssertTrue(try ChatBlobAssembler.stitch([]).isEmpty)
     }
+
+    // MARK: - The safety gate (stitchedHistoryIfSafe)
+
+    func test_safe_noBlobs_returnsNil() throws {
+        let db = try makeTempDB()
+        XCTAssertNil(ChatBlobAssembler.stitchedHistoryIfSafe(chatID: "A", expectedProtocol: .anthropic, database: db),
+                     "a blobless (legacy) chat must fall back to the codec")
+    }
+
+    func test_safe_healthy_returnsStitchedHistory() throws {
+        let db = try makeTempDB()
+        let convo = plainRound + toolRound
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: convo, api: .chatCompletions,
+                                         modelName: nil, hostedTools: HostedTools(), database: db)
+        let safe = try XCTUnwrap(ChatBlobAssembler.stitchedHistoryIfSafe(
+            chatID: "A", expectedProtocol: .chatCompletions, database: db))
+        let direct = try ChatBlobAssembler.stitch(db.blobs(inChat: "A"))
+        XCTAssertEqual(safe as NSArray, direct as NSArray)
+    }
+
+    /// A structurally corrupt row (here: a non-UUID blobID) fails to decode, so
+    /// blobs(inChat:) is SHORTER than the stored row count. Splicing the survivors
+    /// would send a holed conversation, so the count-mismatch guard must refuse.
+    func test_safe_structurallyCorruptRow_refuses() throws {
+        let db = try makeTempDB()
+        db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .chatCompletions, role: .user,
+                               payload: Data("[]".utf8)))
+        try db.db.executeUpdate(
+            "insert into ChatBlob (blobID, chatID, blobProtocol, role, payload) values (?, ?, ?, ?, ?)",
+            withArguments: ["not-a-uuid", "A", 1, "user", Data("[]".utf8)])
+        XCTAssertEqual(db.blobCount(inChat: "A"), 2)
+        XCTAssertEqual(db.blobs(inChat: "A").count, 1, "the corrupt-blobID row is dropped on decode")
+        XCTAssertNil(ChatBlobAssembler.stitchedHistoryIfSafe(chatID: "A", expectedProtocol: .chatCompletions, database: db),
+                     "must refuse rather than splice a holed history")
+    }
+
+    /// An unknown-protocol row (raw 99) DECODES (NS_ENUM accepts any raw), but its
+    /// protocol can't equal the turn's protocol, so the protocol check refuses it
+    /// (a future-iTerm2 blob opened by this build).
+    func test_safe_unknownProtocolRow_refuses() throws {
+        let db = try makeTempDB()
+        db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .chatCompletions, role: .user,
+                               payload: Data("[]".utf8)))
+        try db.db.executeUpdate(
+            "insert into ChatBlob (blobID, chatID, blobProtocol, role, payload) values (?, ?, ?, ?, ?)",
+            withArguments: [UUID().uuidString, "A", 99, "user", Data("[]".utf8)])
+        XCTAssertNil(ChatBlobAssembler.stitchedHistoryIfSafe(chatID: "A", expectedProtocol: .chatCompletions, database: db),
+                     "a blob under an unknown protocol is not spliceable for this turn")
+    }
+
+    func test_safe_protocolMismatch_refuses() throws {
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: plainRound, api: .chatCompletions,
+                                         modelName: nil, hostedTools: HostedTools(), database: db)
+        XCTAssertNil(ChatBlobAssembler.stitchedHistoryIfSafe(chatID: "A", expectedProtocol: .responses, database: db),
+                     "blobs frozen under a different protocol are not spliceable for this turn")
+    }
+
+    func test_safe_corruptPayload_refuses() throws {
+        let db = try makeTempDB()
+        db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .anthropic, role: .user,
+                               payload: Data("garbage".utf8)))
+        XCTAssertNil(ChatBlobAssembler.stitchedHistoryIfSafe(chatID: "A", expectedProtocol: .anthropic, database: db))
+    }
 }

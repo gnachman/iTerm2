@@ -160,8 +160,12 @@ struct ChatBlob: iTermDatabaseInitializable {
               let payload = result.data(forColumn: Columns.payload.rawValue) else {
             return nil
         }
-        // A blob whose protocol this build doesn't understand (written by a newer
-        // iTerm2) can't be replayed, so drop it on read rather than crash.
+        // iTermAIAPI is an ObjC NS_ENUM, so iTermAIAPI(rawValue:) accepts ANY
+        // nonnegative value (an unknown protocol written by a newer iTerm2 decodes
+        // as an unrecognized case, it is not dropped here). That is fine: an
+        // unknown protocol never equals a real turn's protocol, so the assembler's
+        // expectedProtocol check refuses to replay it. This guard only rejects a
+        // structurally impossible negative value.
         let rawProtocol = result.longLongInt(forColumn: Columns.blobProtocol.rawValue)
         guard rawProtocol >= 0,
               let blobProtocol = iTermAIAPI(rawValue: UInt(rawProtocol)) else {

@@ -60,4 +60,43 @@ enum ChatBlobAssembler {
         }
         return merged
     }
+
+    /// The safety gate for blob-native replay. Returns the stitched wire history
+    /// for `chatID` ONLY if the blob path is provably safe; otherwise nil, so the
+    /// caller falls back to codec reconstruction. Returning nil (rather than
+    /// throwing) makes "fall back" the natural default for every not-safe case:
+    ///
+    /// - the chat has no blobs (legacy / never captured) -> migrate via the codec;
+    /// - a stored row failed to decode, so `blobs(inChat:)` is SHORTER than the row
+    ///   count (a blob written under a protocol this build can't read, e.g. a newer
+    ///   iTerm2) -> splicing the survivors would send a HOLED conversation;
+    /// - any blob's protocol is not `expectedProtocol` (a protocol switch that has
+    ///   not been re-frozen) -> the frozen bytes are not replayable under the turn's
+    ///   protocol;
+    /// - a payload is corrupt.
+    ///
+    /// `expectedProtocol` is the protocol the current turn will be sent under; the
+    /// blobs must match it to be spliceable.
+    static func stitchedHistoryIfSafe(chatID: String,
+                                      expectedProtocol: iTermAIAPI,
+                                      database: ChatDatabase) -> [Any]? {
+        let rowCount = database.blobCount(inChat: chatID)
+        guard rowCount > 0 else {
+            return nil  // legacy / blobless: caller reconstructs via the codec
+        }
+        let blobs = database.blobs(inChat: chatID)
+        guard blobs.count == rowCount else {
+            RLog("ChatBlobAssembler: chat \(chatID) has \(rowCount) blob rows but only \(blobs.count) decoded (unreadable protocol?); refusing blob replay to avoid a holed history")
+            return nil
+        }
+        guard blobs.allSatisfy({ $0.blobProtocol == expectedProtocol }) else {
+            RLog("ChatBlobAssembler: chat \(chatID) blobs are not all protocol \(expectedProtocol.rawValue); refusing blob replay (needs a re-freeze)")
+            return nil
+        }
+        guard let stitched = try? stitch(blobs) else {
+            RLog("ChatBlobAssembler: chat \(chatID) has a corrupt blob payload; refusing blob replay")
+            return nil
+        }
+        return stitched
+    }
 }
