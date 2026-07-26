@@ -27,6 +27,14 @@ struct LLMRequestBuilder {
     // user permission. See LLMRequestBuilderVolatileContextTests.
     var trailingVolatileText: String?
 
+    // Blob-native replay: the chat's verbatim frozen-history wire messages (the
+    // comma-joined inner element bytes of the stored blobs, no surrounding
+    // brackets) that the per-vendor builder splices into its message array after
+    // the system message(s). nil for the normal path, where `messages` carries the
+    // whole conversation. Only the protocols whose builder supports it consume it.
+    // Declared last so it is an optional trailing argument on the memberwise init.
+    var frozenHistoryElements: Data? = nil
+
     // The message list with the volatile per-turn context folded in as a
     // trailing user message. Used by every builder EXCEPT Anthropic, which
     // places it itself so it lands after the cache breakpoint.
@@ -61,7 +69,8 @@ struct LLMRequestBuilder {
             try ModernBodyRequestBuilder(messages: messagesWithVolatile,
                                          provider: provider,
                                          functions: functions,
-                                         stream: stream).body()
+                                         stream: stream,
+                                         frozenHistoryElements: frozenHistoryElements).body()
         case .responses:
             try ResponsesBodyRequestBuilder(messages: messagesWithVolatile,
                                             provider: provider,

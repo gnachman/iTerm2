@@ -71,24 +71,30 @@ enum ChatBlobAssembler {
     /// the outer brackets) are spliced, so the emitted history is exactly the bytes
     /// that were captured.
     static func stitchBytes(_ blobs: [ChatBlob]) throws -> Data {
-        var inners: [Data] = []
+        var result = Data([0x5B])  // [
+        result.append(try stitchInner(blobs))
+        result.append(0x5D)  // ]
+        return result
+    }
+
+    /// The verbatim inner element bytes (the messages joined by commas, WITHOUT the
+    /// surrounding brackets) of a chat's blobs. This is what a per-vendor builder
+    /// splices into its own message array via JSONArraySplice, so the history is
+    /// reproduced byte-for-byte. Empty when there are no blobs. Throws on a corrupt
+    /// payload (caller falls back).
+    static func stitchInner(_ blobs: [ChatBlob]) throws -> Data {
+        var result = Data()
+        var wroteAny = false
         for blob in blobs {
             guard (try? JSONSerialization.jsonObject(with: blob.payload)) is [Any] else {
                 throw ChatBlobAssemblerError.corruptPayload(blobID: blob.blobID)
             }
             let inner = innerBytes(ofJSONArray: blob.payload)
-            if !inner.isEmpty {
-                inners.append(inner)
-            }
-        }
-        var result = Data([0x5B])  // [
-        for (index, inner) in inners.enumerated() {
-            if index > 0 {
-                result.append(0x2C)  // ,
-            }
+            if inner.isEmpty { continue }
+            if wroteAny { result.append(0x2C) }  // ,
             result.append(inner)
+            wroteAny = true
         }
-        result.append(0x5D)  // ]
         return result
     }
 

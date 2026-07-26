@@ -102,6 +102,57 @@ final class ChatBlobAssemblerTests: XCTestCase {
     func test_roundTrip_gemini() throws { try assertRoundTrip(.gemini, [plainRound, toolRound, plainRound]) }
     func test_roundTrip_responses() throws { try assertRoundTrip(.responses, [plainRound, toolRound, plainRound]) }
 
+    // MARK: - Send path (frozen history spliced into the real builder)
+
+    private func builder(_ model: AIMetadata.Model, messages: [LLM.Message], frozen: Data?) -> LLMRequestBuilder {
+        LLMRequestBuilder(provider: LLMProvider(model: model), apiKey: "test-key", messages: messages,
+                          functions: [], stream: false, hostedTools: HostedTools(), previousResponseID: nil,
+                          shouldThink: nil, reasoningEffort: nil, serviceTier: nil, trailingVolatileText: nil,
+                          frozenHistoryElements: frozen)
+    }
+    private func messagesArray(_ builder: LLMRequestBuilder, key: String) throws -> [Any] {
+        let body = try XCTUnwrap(JSONSerialization.jsonObject(with: builder.body()) as? [String: Any])
+        return try XCTUnwrap(body[key] as? [Any])
+    }
+
+    /// The whole point of the send path: a blob-native request (envelope + new turn,
+    /// history spliced from stored blobs) must produce the SAME messages array as a
+    /// live request built from the full [LLM.Message] history.
+    func test_sendPath_chatCompletions_messagesMatchLiveFullHistory() throws {
+        var model = try baseModel()
+        model.api = .chatCompletions
+        let priorConvo = plainRound + toolRound   // two finished rounds, frozen as blobs
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: priorConvo, api: .chatCompletions,
+                                         modelName: model.name, hostedTools: HostedTools(), database: db)
+        let inner = try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A"))
+
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let newUser = user("what's next?")
+
+        let blobNative = try messagesArray(builder(model, messages: [system, newUser], frozen: inner),
+                                           key: "messages")
+        let live = try messagesArray(builder(model, messages: [system] + priorConvo + [newUser], frozen: nil),
+                                     key: "messages")
+        XCTAssertEqual(blobNative as NSArray, live as NSArray,
+                       "blob-native spliced messages must equal the live full-history messages array")
+    }
+
+    /// With no system message, the history splices at the very start of the array.
+    func test_sendPath_chatCompletions_noSystem_messagesMatchLive() throws {
+        var model = try baseModel()
+        model.api = .chatCompletions
+        let priorConvo = plainRound + plainRound
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: priorConvo, api: .chatCompletions,
+                                         modelName: model.name, hostedTools: HostedTools(), database: db)
+        let inner = try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A"))
+        let newUser = user("more?")
+        let blobNative = try messagesArray(builder(model, messages: [newUser], frozen: inner), key: "messages")
+        let live = try messagesArray(builder(model, messages: priorConvo + [newUser], frozen: nil), key: "messages")
+        XCTAssertEqual(blobNative as NSArray, live as NSArray)
+    }
+
     // MARK: - Integrity
 
     func test_stitch_corruptPayload_throws() throws {
