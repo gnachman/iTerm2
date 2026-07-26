@@ -1129,6 +1129,12 @@ class ChatAgent {
         let effectiveModel = Self.resolvedModel(named: turnModelName) ?? LLMMetadata.model()
         conversation.hostedTools = Self.hostedTools(features: effectiveModel?.features ?? [],
                                                     configuration: userMessage.configuration)
+        // Snapshot the turn's protocol / model / hosted-tools for blob capture at
+        // turn end: self.conversation is replaced by the amended copy on
+        // completion, so read these now while they reflect this turn.
+        let captureAPI = effectiveModel?.api
+        let captureModelName = turnModelName
+        let captureHostedTools = conversation.hostedTools
 
         if let responseID = userMessage.inResponseTo {
             conversation.deleteMessages(after: responseID)
@@ -1261,6 +1267,56 @@ class ChatAgent {
                                                 userMessage: userMessage,
                                                 streamID: uuid)
             completion(message)
+
+            // Freeze this completed round as wire-fragment blobs. Only on a
+            // successful turn with no tool call still parked (a parked turn never
+            // reaches here). completion(...) committed the reply synchronously via
+            // ChatService.finishTurn, so the chat's display messages now include
+            // the whole round.
+            if result.successValue != nil,
+               self.pendingRemoteCommands.isEmpty,
+               let captureAPI {
+                self.captureBlobsForCompletedTurn(api: captureAPI,
+                                                  modelName: captureModelName,
+                                                  hostedTools: captureHostedTools)
+            }
+        }
+    }
+
+    /// Freeze the just-completed round as wire-fragment blobs so future requests can
+    /// replay from them instead of re-running the reconstruction pipeline. Runs at
+    /// true turn end (success, no parked tool call, reply committed). Reconstructs
+    /// the whole chat as [LLM.Message] via the same translate() the reload path uses
+    /// and lets ChatBlobCapture freeze any round not yet stored -- incremental
+    /// per-turn, and the whole legacy history on first capture (migration), through
+    /// one path. On a protocol switch it re-freezes the whole history under the new
+    /// protocol first (blobs are not replayable cross-protocol).
+    private func captureBlobsForCompletedTurn(api: iTermAIAPI,
+                                              modelName: String?,
+                                              hostedTools: HostedTools) {
+        // Use the broker's list model (and its database) so capture writes to the
+        // SAME store the turn used -- the real singleton in production, a temp DB
+        // under test -- rather than reaching for the ChatDatabase.instance singleton.
+        let listModel = broker.listModel
+        guard let displayMessages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return
+        }
+        let database = listModel.chatDatabase
+        let all = translate(messages: Array(displayMessages))
+        if database.blobCount(inChat: chatID) > 0,
+           database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
+            // Protocol switch: clear so captureNewRounds re-freezes every round
+            // under the new protocol.
+            database.replaceBlobs(inChat: chatID, with: [])
+        }
+        let appended = ChatBlobCapture.captureNewRounds(chatID: chatID,
+                                                        allMessages: all,
+                                                        api: api,
+                                                        modelName: modelName,
+                                                        hostedTools: hostedTools,
+                                                        database: database)
+        if appended > 0 {
+            try? listModel.setBlobProtocol(Int(api.rawValue), forChatID: chatID)
         }
     }
 

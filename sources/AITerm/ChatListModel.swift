@@ -441,6 +441,25 @@ class ChatListModel: ChatListDataSource {
         postMetadataChange()
     }
 
+    /// Stamp the protocol a chat's wire-fragment blobs are frozen to (the iTermAIAPI
+    /// raw value), set on the first blob capture. Unlike the other setters this does
+    /// NOT postMetadataChange(): blobProtocol is an internal reconstruction detail,
+    /// not display metadata, so the chat list and model pickers needn't refresh.
+    func setBlobProtocol(_ blobProtocol: Int?, forChatID chatID: String) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        temp.blobProtocol = blobProtocol
+        try chatStorage.set(at: i, temp)
+    }
+
+    /// Read access to the backing store for wire-fragment blob operations, so
+    /// callers reach the SAME database this list model uses (the real singleton in
+    /// production, a temp DB under test) rather than the ChatDatabase.instance
+    /// singleton directly.
+    var chatDatabase: ChatDatabase { database }
+
     // MARK: - Orchestrator-mode accessors
 
     // Flip the chat between session-bound and orchestrator modes.
