@@ -26,6 +26,34 @@ final class ChatBlobStorageTests: XCTestCase {
         return try XCTUnwrap(ChatDatabase(url: dir.appendingPathComponent("chatdb.sqlite")))
     }
 
+    // MARK: - Unknown-protocol decode behavior (pins ChatBlob.init? semantics)
+
+    /// Pins a surprising but verified import quirk: unlike a Swift-native raw enum,
+    /// this imported ObjC NS_ENUM does NOT validate init?(rawValue:) against its
+    /// declared cases -- iTermAIAPI(rawValue: 99) is Optional(99), not nil. So
+    /// ChatBlob.init? does NOT drop an unknown-protocol row; the assembler's
+    /// protocol check (blobProtocol == the turn's protocol), NOT the count-mismatch
+    /// guard, is what refuses to replay it. If a future Swift/toolchain change ever
+    /// makes this validate (return nil), this test flips and we revisit that design.
+    func test_iTermAIAPI_unknownRawValue_isNonNil() {
+        XCTAssertEqual(iTermAIAPI(rawValue: 99)?.rawValue, 99,
+                       "imported NS_ENUM accepts any raw value; init?(rawValue:) does not validate")
+    }
+
+    /// Because the unknown protocol decodes (above), an unknown-protocol row is NOT
+    /// dropped: blobs(inChat:) equals blobCount(inChat:). It is the protocol check
+    /// in stitchedHistoryIfSafe -- not the count-mismatch check -- that refuses it.
+    func test_chatBlob_unknownProtocolRow_decodesAndIsNotDropped() throws {
+        let db = try makeTempDB()
+        db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .chatCompletions, role: .user,
+                               payload: Data("[]".utf8)))
+        try db.db.executeUpdate(
+            "insert into ChatBlob (blobID, chatID, blobProtocol, role, payload) values (?, ?, ?, ?, ?)",
+            withArguments: [UUID().uuidString, "A", 99, "user", Data("[]".utf8)])
+        XCTAssertEqual(db.blobCount(inChat: "A"), 2, "both rows are stored")
+        XCTAssertEqual(db.blobs(inChat: "A").count, 2, "the unknown-protocol row still decodes (NS_ENUM accepts any raw)")
+    }
+
     // MARK: - ChatBlob schema / insertQuery (no database)
 
     func testChatBlobSchema_declaresSeqAutoincrement() {

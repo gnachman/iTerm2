@@ -131,11 +131,17 @@ enum ChatBlobAssembler {
     /// throwing) makes "fall back" the natural default for every not-safe case:
     ///
     /// - the chat has no blobs (legacy / never captured) -> migrate via the codec;
-    /// - a stored row failed to decode, so `blobs(inChat:)` is SHORTER than the row
-    ///   count (a blob written under a protocol this build can't read, e.g. a newer
-    ///   iTerm2) -> splicing the survivors would send a HOLED conversation;
+    /// - a stored row failed to STRUCTURALLY decode (a corrupt blobID, role, or
+    ///   payload makes ChatBlob.init? return nil), so `blobs(inChat:)` is SHORTER
+    ///   than the row count -> splicing the survivors would send a HOLED
+    ///   conversation. NOTE this does NOT catch an unknown/future protocol: the
+    ///   imported iTermAIAPI NS_ENUM accepts any raw value, so such a row DECODES
+    ///   (it does not shorten the count) -- the protocol check below is what
+    ///   catches it. Both guards are load-bearing for DISTINCT cases; neither is
+    ///   redundant.
     /// - any blob's protocol is not `expectedProtocol` (a protocol switch that has
-    ///   not been re-frozen) -> the frozen bytes are not replayable under the turn's
+    ///   not been re-frozen, OR a future-iTerm2 unknown protocol that decoded to an
+    ///   unrecognized case) -> the frozen bytes are not replayable under the turn's
     ///   protocol;
     /// - a payload is corrupt.
     ///
