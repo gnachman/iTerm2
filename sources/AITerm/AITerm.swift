@@ -237,6 +237,16 @@ class AITermController {
     // @MainActor closure; nil for non-orchestration turns.
     var trailingVolatileTextProvider: (() -> String?)?
 
+    // Blob-native replay decision for the current turn, set each turn by the chat
+    // layer (exactly like trailingVolatileTextProvider, and for the same reason:
+    // it is per-turn request-build wiring that lives on the controller, not on the
+    // copied-forward AIConversation snapshot). Given the full conversation it
+    // returns the REDUCED message list ([system] + the current round only) plus the
+    // frozen-history bytes to splice, or nil to fall back to full reconstruction.
+    // nil for non-chat callers. AIConversation.complete consults this (never in
+    // Responses delta mode) and stamps frozenHistoryElements from the result.
+    var blobReplayProvider: (([Message]) -> (messages: [Message], frozen: Data)?)?
+
     // Blob-native replay: the chat's verbatim frozen-history wire bytes (the
     // comma-joined inner element bytes of the stored blobs, no surrounding
     // brackets) that the per-vendor builder splices into its message array after
