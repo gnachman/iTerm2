@@ -24,6 +24,7 @@
 - Don't change defaults silently.
 - Use [iTermUserDefaults userDefaults] instead of [NSUserDefaults standardUserDefaults]
 - Use `make run` to build and run a debug build.
+- Never run the app without the argument `-suite suitename` where `suitename` is the last path component of the current directory. To run a development build, just do `make run`. Omitting -suite causes conflicts between the new instance of iTerm2 and the main one, where claude runs.
 - Do not use associated objects (objc_getAssociatedObject or objc_setAssociatedObject) without express written permission.
 - You should treat warnings as errors.
 - If you get stuck, ask for help. It's better to ask me to look at something in the debugger than to flail around for a long time.
