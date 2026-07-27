@@ -180,6 +180,57 @@ final class ChatBlobAssemblerTests: XCTestCase {
     func test_sendPath_gemini_contentsMatch() throws { try assertSendPathMatches(.gemini, key: "contents") }
     func test_sendPath_responses_inputMatch() throws { try assertSendPathMatches(.responses, key: "input") }
 
+    // MARK: - messagesPastFrozenRounds (the send-time reduction)
+
+    /// The reduction the controller applies before splicing frozen bytes: from the
+    /// full outgoing [system, ...all rounds..., current-round-partial], keep the
+    /// leading system message(s) and only the rounds PAST the frozen ones. Its
+    /// output, spliced with the frozen bytes, is what the send-path parity tests
+    /// prove equals the live full-history request.
+    func test_messagesPastFrozenRounds_dropsFrozenKeepsSystemAndTail() throws {
+        let system = LLM.Message(role: .system, content: "sys")
+        let full = [system] + plainRound + toolRound + [user("now")]  // 2 frozen rounds + current
+        let reduced = try XCTUnwrap(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 2))
+        XCTAssertEqual(reduced.first?.role, .system)
+        XCTAssertEqual(reduced.dropFirst().map { $0 }, [user("now")],
+                       "the two finished rounds are dropped; only system + the current round remain")
+    }
+
+    /// A current round mid-tool-loop (user + preamble + tool_use + tool_result) is
+    /// kept whole as the tail; the frozen prefix is still dropped.
+    func test_messagesPastFrozenRounds_keepsPartialCurrentRound() throws {
+        let system = LLM.Message(role: .system, content: "sys")
+        let full = [system] + plainRound + toolRound  // 1 frozen round + an in-progress tool round
+        let reduced = try XCTUnwrap(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 1))
+        XCTAssertEqual(reduced, [system] + toolRound)
+    }
+
+    /// No system message: reduction still drops the frozen rounds.
+    func test_messagesPastFrozenRounds_noSystem() throws {
+        let full = plainRound + plainRound + [user("q3")]
+        let reduced = try XCTUnwrap(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 2))
+        XCTAssertEqual(reduced, [user("q3")])
+    }
+
+    /// Frozen count zero is a no-op (everything is the tail).
+    func test_messagesPastFrozenRounds_zeroIsIdentity() throws {
+        let system = LLM.Message(role: .system, content: "sys")
+        let full = [system] + plainRound + [user("q2")]
+        XCTAssertEqual(try XCTUnwrap(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 0)), full)
+    }
+
+    /// Misalignment guard: if fewer rounds are present than are frozen (or exactly
+    /// as many, leaving no current round), the reduction refuses (nil) so the caller
+    /// falls back to the full, un-spliced request rather than send a history-less one.
+    func test_messagesPastFrozenRounds_misalignment_returnsNil() throws {
+        let system = LLM.Message(role: .system, content: "sys")
+        let full = [system] + plainRound  // 1 round present
+        XCTAssertNil(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 1),
+                     "equal counts leave no current round -> refuse")
+        XCTAssertNil(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 2),
+                     "more frozen than present -> refuse")
+    }
+
     /// The value bytes of the JSON array at `key` (from `[` to its matching `]`),
     /// depth- and string-aware. For byte-exact comparison of the cache-relevant
     /// prefix without the surrounding envelope fields (e.g. max_tokens).

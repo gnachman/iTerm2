@@ -106,6 +106,39 @@ enum ChatBlobAssembler {
         return data.subdata(in: (data.startIndex + 1)..<(data.endIndex - 1))
     }
 
+    /// Reduce a full outgoing message list to what the blob-native send path hands
+    /// the per-vendor builder: the leading system message(s) followed by only the
+    /// rounds PAST the `frozenRoundCount` rounds already carried verbatim in the
+    /// frozen-history bytes. The builder then splices those bytes back in after the
+    /// system message(s) (JSONArraySplice), reproducing the whole conversation
+    /// byte-for-byte without re-serializing the frozen prefix.
+    ///
+    /// System messages are peeled first (they are the envelope, not part of any
+    /// round) and the remainder is split into rounds exactly as capture split them
+    /// (ChatBlobCapture.rounds: a round begins at each user message), so dropping
+    /// the first `frozenRoundCount` rounds drops exactly the frozen prefix and keeps
+    /// the current round (including any in-progress tool-loop items).
+    ///
+    /// Returns nil when the reduction cannot be done safely -- fewer rounds are
+    /// present than are frozen, or exactly as many (which would leave no current
+    /// round). The caller must then send the full, un-spliced list. This defends the
+    /// turn-start safety gate against any mid-turn misalignment (e.g. truncation
+    /// having dropped rounds the frozen count still assumes present).
+    static func messagesPastFrozenRounds(_ full: [LLM.Message],
+                                         frozenRoundCount: Int) -> [LLM.Message]? {
+        guard frozenRoundCount > 0 else { return full }
+        var systemPrefixEnd = full.startIndex
+        while systemPrefixEnd < full.endIndex && full[systemPrefixEnd].role == .system {
+            systemPrefixEnd = full.index(after: systemPrefixEnd)
+        }
+        let system = Array(full[..<systemPrefixEnd])
+        let rest = Array(full[systemPrefixEnd...])
+        let rounds = ChatBlobCapture.rounds(from: rest)
+        guard rounds.count > frozenRoundCount else { return nil }
+        let tail = rounds[frozenRoundCount...].flatMap { $0 }
+        return system + tail
+    }
+
     /// Splice a chat's frozen-history inner bytes into a request body a per-vendor
     /// builder just serialized: insert them at `arrayKey` after `afterCount`
     /// elements (the builder's own leading system messages, or 0 when the protocol
