@@ -106,6 +106,71 @@ enum ChatBlobAssembler {
         return data.subdata(in: (data.startIndex + 1)..<(data.endIndex - 1))
     }
 
+    /// How aggressively to truncate a blob-native chat's frozen history.
+    enum TruncationPolicy {
+        /// Prompt-cache pricing (Anthropic): when we near the limit, cut DEEP (down
+        /// to 50% of the context window) so the new, shorter prefix is stable for
+        /// many subsequent turns and the cache keeps hitting. One big cut, long
+        /// runway, instead of shaving every turn.
+        case anthropicHalve
+        /// No cache pricing: drop only as many head blobs as needed to fit, keeping
+        /// as much history as possible.
+        case fitOnly
+    }
+
+    /// The outcome of planning a truncation: how many whole HEAD blobs (oldest
+    /// rounds) to drop, and whether even dropping them all leaves the request over
+    /// budget (so the caller must fall back to in-message text elision on the tail).
+    struct TruncationPlan: Equatable {
+        var dropCount: Int
+        var needsElision: Bool
+    }
+
+    /// Decide the whole-round truncation for a blob-native request. Dropping head
+    /// blobs is safe (a blob is one round, so a tool_use/tool_result pair is always
+    /// inside a single blob, never split across the drop boundary).
+    ///
+    /// - blobWeights: per-blob token weight, OLDEST FIRST. The caller resolves each
+    ///   blob's stored tokenCount (or a byte estimate when it is nil) before calling.
+    /// - fixedCost: tokens always present regardless of truncation = the envelope
+    ///   (system + tools + volatile) plus the current round (the un-frozen tail).
+    /// - contextWindow / outputReserve: the model's limits; the fit budget is
+    ///   contextWindow - outputReserve (leaving room for the response).
+    ///
+    /// Truncation triggers only when the request would exceed the fit budget (so a
+    /// conversation comfortably under the limit is never cut, which is what keeps
+    /// the Anthropic prefix stable turn over turn). Once triggered, it drops head
+    /// blobs until under the policy's target: the fit budget (fitOnly) or 50% of the
+    /// context window (anthropicHalve). If it runs out of blobs first and the
+    /// remaining fixedCost still exceeds the fit budget, needsElision is set.
+    static func planTruncation(blobWeights: [Int],
+                               fixedCost: Int,
+                               contextWindow: Int,
+                               outputReserve: Int,
+                               policy: TruncationPolicy) -> TruncationPlan {
+        let fitBudget = contextWindow - outputReserve
+        var running = fixedCost + blobWeights.reduce(0, +)
+        guard running > fitBudget else {
+            return TruncationPlan(dropCount: 0, needsElision: false)
+        }
+        let target: Int
+        switch policy {
+        case .anthropicHalve: target = contextWindow / 2
+        case .fitOnly: target = fitBudget
+        }
+        var dropCount = 0
+        while running > target && dropCount < blobWeights.count {
+            running -= blobWeights[dropCount]
+            dropCount += 1
+        }
+        // needsElision is about genuinely not fitting the HARD budget (fitBudget),
+        // not about failing to reach a deeper anthropicHalve target: if the envelope
+        // + tail alone are under fitBudget the request still sends, we just could not
+        // shrink the cached prefix as much as we wanted.
+        let needsElision = dropCount == blobWeights.count && fixedCost > fitBudget
+        return TruncationPlan(dropCount: dropCount, needsElision: needsElision)
+    }
+
     /// Reduce a full outgoing message list to what the blob-native send path hands
     /// the per-vendor builder: the leading system message(s) followed by only the
     /// rounds PAST the `frozenRoundCount` rounds already carried verbatim in the
