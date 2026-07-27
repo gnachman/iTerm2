@@ -44,6 +44,13 @@ struct ChatBlob: iTermDatabaseInitializable {
     // previous_response_id fast path can be used when the id is still valid;
     // blobs remain the stateless fallback when it is not.
     var responseID: String?
+    // This round's real token weight, derived by subtraction from the vendor's
+    // reported usage (frozenTokens(after this round) - frozenTokens(before)), used
+    // by assembly-time truncation to drop whole head blobs to fit the budget. nil
+    // when the provider reported no usage or for a legacy blob, in which case the
+    // truncator falls back to the byte estimate for this blob. Stored as TEXT so
+    // nil (unknown) stays distinct from 0, which the integer accessor cannot.
+    var tokenCount: Int?
 
     // The wire role of a fragment. Distinct from Message's Participant: these are
     // request-message roles, and an assistant turn's tool call rides in the same
@@ -63,6 +70,7 @@ struct ChatBlob: iTermDatabaseInitializable {
         case role
         case payload
         case responseID
+        case tokenCount
     }
 
     init(blobID: UUID = UUID(),
@@ -71,6 +79,7 @@ struct ChatBlob: iTermDatabaseInitializable {
          role: Role,
          payload: Data,
          responseID: String? = nil,
+         tokenCount: Int? = nil,
          seq: Int64 = 0) {
         self.seq = seq
         self.blobID = blobID
@@ -79,6 +88,7 @@ struct ChatBlob: iTermDatabaseInitializable {
         self.role = role
         self.payload = payload
         self.responseID = responseID
+        self.tokenCount = tokenCount
     }
 
     static func schema() -> String {
@@ -90,8 +100,25 @@ struct ChatBlob: iTermDatabaseInitializable {
              \(Columns.blobProtocol.rawValue) integer not null,
              \(Columns.role.rawValue) text not null,
              \(Columns.payload.rawValue) blob not null,
-             \(Columns.responseID.rawValue) text)
+             \(Columns.responseID.rawValue) text,
+             \(Columns.tokenCount.rawValue) text)
         """
+    }
+
+    // ChatBlob is created with `create table if not exists`, so a beta database
+    // that already has the table (from before this column existed) needs an
+    // ADD COLUMN pass, exactly like Chat/Message. tokenCount is TEXT (see the
+    // property doc: nil must stay distinct from 0).
+    static func migrations(existingColumns: [String]) -> [Migration] {
+        var result = [Migration]()
+        if !existingColumns.contains(Columns.tokenCount.rawValue) {
+            result.append(.init(query: "ALTER TABLE ChatBlob ADD COLUMN \(Columns.tokenCount.rawValue) text", args: []))
+        }
+        return result
+    }
+
+    static func tableInfoQuery() -> String {
+        "PRAGMA table_info(ChatBlob)"
     }
 
     // seq is left to the engine (AUTOINCREMENT), exactly like Message.appendQuery.
@@ -100,15 +127,17 @@ struct ChatBlob: iTermDatabaseInitializable {
          insert into ChatBlob
              (\(Columns.blobID.rawValue), \(Columns.chatID.rawValue),
               \(Columns.blobProtocol.rawValue), \(Columns.role.rawValue),
-              \(Columns.payload.rawValue), \(Columns.responseID.rawValue))
-         values (?, ?, ?, ?, ?, ?)
+              \(Columns.payload.rawValue), \(Columns.responseID.rawValue),
+              \(Columns.tokenCount.rawValue))
+         values (?, ?, ?, ?, ?, ?, ?)
          """,
          [blobID.uuidString,
           chatID,
           Int(blobProtocol.rawValue),
           role.rawValue,
           payload,
-          responseID as Any?])
+          responseID as Any?,
+          tokenCount.map { String($0) } as Any?])
     }
 
     /// A chat's blobs oldest-first (splice order). seq is the ordinal, so ASC
@@ -178,5 +207,7 @@ struct ChatBlob: iTermDatabaseInitializable {
         self.role = role
         self.payload = payload
         self.responseID = result.string(forColumn: Columns.responseID.rawValue)
+        // TEXT column: nil (no usage / legacy) stays distinct from a real 0.
+        self.tokenCount = result.string(forColumn: Columns.tokenCount.rawValue).flatMap { Int($0) }
     }
 }

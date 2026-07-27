@@ -132,6 +132,46 @@ final class ChatBlobStorageTests: XCTestCase {
         XCTAssertNil(try XCTUnwrap(db.blobs(inChat: "c").first).responseID)
     }
 
+    /// The per-round real token weight (used by truncation to drop whole head
+    /// blobs) round-trips, including a large value.
+    func testAppendBlob_roundTripsTokenCount() throws {
+        let db = try makeTempDB()
+        db.appendBlob(ChatBlob(chatID: "c", blobProtocol: .anthropic, role: .user,
+                               payload: Data("u".utf8), tokenCount: 4096))
+        XCTAssertEqual(try XCTUnwrap(db.blobs(inChat: "c").first).tokenCount, 4096)
+    }
+
+    /// A provider that reports no usage (or a legacy blob) stores nil, which the
+    /// truncator reads as "unknown, fall back to the byte estimate." nil must stay
+    /// distinct from 0, so tokenCount is TEXT like blobProtocol.
+    func testAppendBlob_nilTokenCount_roundTripsAsNil() throws {
+        let db = try makeTempDB()
+        db.appendBlob(ChatBlob(chatID: "c", blobProtocol: .anthropic, role: .user,
+                               payload: Data("u".utf8)))
+        XCTAssertNil(try XCTUnwrap(db.blobs(inChat: "c").first).tokenCount)
+    }
+
+    func testChatBlobSchema_declaresTokenCount() {
+        XCTAssertTrue(ChatBlob.schema().contains(ChatBlob.Columns.tokenCount.rawValue),
+                      "schema must declare tokenCount; got: \(ChatBlob.schema())")
+    }
+
+    private static let preTokenCountBlobColumns = [
+        "seq", "blobID", "chatID", "blobProtocol", "role", "payload", "responseID"
+    ]
+
+    func testChatBlobMigrations_addsTokenCount_whenMissing() {
+        let migrations = ChatBlob.migrations(existingColumns: Self.preTokenCountBlobColumns)
+        XCTAssertTrue(migrations.contains { $0.query.contains(ChatBlob.Columns.tokenCount.rawValue) },
+                      "migrations must add tokenCount when missing")
+    }
+
+    func testChatBlobMigrations_skipsTokenCount_whenPresent() {
+        let migrations = ChatBlob.migrations(existingColumns: Self.preTokenCountBlobColumns + ["tokenCount"])
+        XCTAssertFalse(migrations.contains { $0.query.contains(ChatBlob.Columns.tokenCount.rawValue) },
+                       "migrations must not re-add tokenCount (SQLite throws duplicate column)")
+    }
+
     func testBlobs_orderedBySeq_andScopedByChat() throws {
         let db = try makeTempDB()
         // Interleave two chats. Splice order within a chat is capture order.

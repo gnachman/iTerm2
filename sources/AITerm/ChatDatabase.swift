@@ -178,6 +178,14 @@ class ChatDatabase {
             // what gets sent to the model). "create table if not exists" plus its
             // own AUTOINCREMENT seq; index the per-chat oldest-first splice read.
             try db.executeUpdate(ChatBlob.schema(), withArguments: [])
+            let blobMigrations = ChatBlob.migrations(existingColumns:
+                                                        listColumns(
+                                                            resultSet: try db.executeQuery(
+                                                                ChatBlob.tableInfoQuery(),
+                                                                withArguments: [])))
+            for migration in blobMigrations {
+                try db.executeUpdate(migration.query, withArguments: migration.args)
+            }
             try db.executeUpdate(
                 "create index if not exists ChatBlob_chatID_seq on ChatBlob "
                 + "(\(ChatBlob.Columns.chatID.rawValue), \(ChatBlob.Columns.seq.rawValue))",
