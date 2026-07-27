@@ -2327,3 +2327,8 @@ Bug Fixes:
   part of the cached prompt prefix, so the
   conversation history is reused from cache
   instead of being reprocessed every turn.
+- Fixed a bug where a tab reshaped by the
+  Python API’s apply_layout could end up with
+  no focused pane, so typing went nowhere until
+  you clicked a pane. Focus is now restored
+  after the layout is applied.

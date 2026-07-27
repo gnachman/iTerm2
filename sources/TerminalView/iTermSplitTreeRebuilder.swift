@@ -196,7 +196,13 @@ class iTermSplitTreeRebuilder: NSObject {
         // it survived, otherwise pick the first session in the new tree.
         let surviving = tab.sessions() ?? []
         if let active = tab.activeSession, surviving.contains(where: { $0 === active }) {
-            // Active session survived; nothing to do.
+            // Active session survived; the pointer is unchanged so
+            // setActiveSession: (below) won't run and won't restore the
+            // first responder. But setRoot above reparented every
+            // SessionView, which severed the window's responder chain, so
+            // we must restore focus explicitly or the tab ends up with no
+            // focused pane until the user clicks one.
+            tab.restoreActiveSessionFirstResponder()
         } else if let first = surviving.first {
             tab.activeSession = first
         }

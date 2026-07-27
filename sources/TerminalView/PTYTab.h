@@ -172,6 +172,14 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 
 - (void)setRoot:(NSSplitView *)newRoot;
 
+// Restore the window's first responder to the active session's main
+// responder. A view-hierarchy rebuild (e.g. apply_layout) reparents
+// SessionViews, which severs the responder chain even when the active
+// session pointer is unchanged; setActiveSession: only calls
+// makeFirstResponder: when the active session actually changes, so
+// callers that rebuild the tree must restore focus explicitly.
+- (void)restoreActiveSessionFirstResponder;
+
 // This is safe to call when there may be a maximized pane.
 - (void)setActiveSessionPreservingMaximization:(PTYSession *)session;
 

@@ -151,6 +151,42 @@ final class ChatBlobStorageTests: XCTestCase {
         XCTAssertNil(try XCTUnwrap(db.blobs(inChat: "c").first).tokenCount)
     }
 
+    /// End-to-end migration wiring: a beta database whose ChatBlob table PREDATES
+    /// tokenCount must gain the column via ALTER, and its old rows must then read
+    /// tokenCount as nil (and new rows can set it). Simulates the pre-column table
+    /// by dropping and recreating ChatBlob without the column, then runs the same
+    /// migration pass createTables runs. (A fresh DB alone can't prove this: its
+    /// schema() already includes tokenCount, so the ALTER never fires there.)
+    func testTokenCount_addColumnMigration_onPreColumnTable() throws {
+        let db = try makeTempDB()
+        try db.db.executeUpdate("drop table ChatBlob", withArguments: [])
+        try db.db.executeUpdate("""
+            create table ChatBlob
+                (seq integer primary key autoincrement, blobID text, chatID text not null,
+                 blobProtocol integer not null, role text not null, payload blob not null,
+                 responseID text)
+            """, withArguments: [])
+        try db.db.executeUpdate(
+            "insert into ChatBlob (blobID, chatID, blobProtocol, role, payload) values (?, ?, ?, ?, ?)",
+            withArguments: [UUID().uuidString, "A", 0, "user", Data("[]".utf8)])
+
+        // The migration pass, exactly as createTables runs it.
+        var existing = [String]()
+        let rs = try XCTUnwrap(db.db.executeQuery(ChatBlob.tableInfoQuery(), withArguments: []))
+        while rs.next() { if let name = rs.string(forColumn: "name") { existing.append(name) } }
+        XCTAssertFalse(existing.contains(ChatBlob.Columns.tokenCount.rawValue))
+        for migration in ChatBlob.migrations(existingColumns: existing) {
+            try db.db.executeUpdate(migration.query, withArguments: migration.args)
+        }
+
+        XCTAssertNil(try XCTUnwrap(db.blobs(inChat: "A").first).tokenCount,
+                     "a pre-column row reads tokenCount as nil after the ALTER")
+        db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .completions, role: .user,
+                               payload: Data("[]".utf8), tokenCount: 7))
+        XCTAssertEqual(db.blobs(inChat: "A").last?.tokenCount, 7,
+                       "the migrated column accepts a real value on new inserts")
+    }
+
     func testChatBlobSchema_declaresTokenCount() {
         XCTAssertTrue(ChatBlob.schema().contains(ChatBlob.Columns.tokenCount.rawValue),
                       "schema must declare tokenCount; got: \(ChatBlob.schema())")

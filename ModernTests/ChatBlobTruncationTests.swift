@@ -117,6 +117,24 @@ final class ChatBlobTruncationTests: XCTestCase {
         XCTAssertTrue(p.needsElision)
     }
 
+    /// Realistic large-output model: 200k context, 128k max-output reserve, so the
+    /// halve target (100k) sits ABOVE the fit budget (72k). A running total between
+    /// them must still truncate to fit (this is the exact regime that hid the bug).
+    func test_anthropicHalve_reserveOverHalf_stillFits() {
+        // 40000 + 50000 = 90000 > fitBudget 72000, but < halve target 100000.
+        let p = plan([50_000], fixedCost: 40_000, context: 200_000, reserve: 128_000, .anthropicHalve)
+        XCTAssertEqual(p.dropCount, 1, "must drop the head blob to get under the 72000 fit budget")
+        XCTAssertFalse(p.needsElision)
+    }
+
+    /// Same realistic regime, tail alone over the fit budget -> elide.
+    func test_anthropicHalve_reserveOverHalf_tailOverBudget_needsElision() {
+        // fitBudget 72000; fixedCost 80000 already exceeds it.
+        let p = plan([50_000], fixedCost: 80_000, context: 200_000, reserve: 128_000, .anthropicHalve)
+        XCTAssertEqual(p.dropCount, 1)
+        XCTAssertTrue(p.needsElision)
+    }
+
     /// dropCount never exceeds the blob count.
     func test_dropCountBounded() {
         let p = plan([10, 10], fixedCost: 5000, context: 1000, reserve: 100, .anthropicHalve)

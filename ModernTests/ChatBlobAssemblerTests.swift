@@ -212,6 +212,23 @@ final class ChatBlobAssemblerTests: XCTestCase {
         XCTAssertEqual(reduced, [user("q3")])
     }
 
+    /// Multiple leading system messages are all peeled and preserved ahead of the
+    /// tail (a chat can carry more than one system message).
+    func test_messagesPastFrozenRounds_peelsMultipleSystem() throws {
+        let s1 = LLM.Message(role: .system, content: "a")
+        let s2 = LLM.Message(role: .system, content: "b")
+        let full = [s1, s2] + plainRound + [user("now")]
+        let reduced = try XCTUnwrap(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 1))
+        XCTAssertEqual(reduced, [s1, s2, user("now")])
+    }
+
+    /// Only system messages, no rounds: with a positive frozen count the guard
+    /// (rounds.count > frozenRoundCount) fails, so reduction refuses (nil).
+    func test_messagesPastFrozenRounds_allSystemNoRounds_returnsNil() throws {
+        let full = [LLM.Message(role: .system, content: "a"), LLM.Message(role: .system, content: "b")]
+        XCTAssertNil(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: 1))
+    }
+
     /// Frozen count zero is a no-op (everything is the tail).
     func test_messagesPastFrozenRounds_zeroIsIdentity() throws {
         let system = LLM.Message(role: .system, content: "sys")

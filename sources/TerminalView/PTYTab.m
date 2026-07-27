@@ -978,6 +978,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                       userInfo:nil];
 }
 
+- (void)restoreActiveSessionFirstResponder {
+    if (!activeSession_) {
+        return;
+    }
+    if ([realParentWindow_ currentTab] != self) {
+        // Don't make a non-current tab's textview the first responder.
+        // See setActiveSession:updateActivityCounter: for the crash this
+        // avoids.
+        return;
+    }
+    [[realParentWindow_ window] makeFirstResponder:[activeSession_ mainResponder]];
+}
+
 - (void)sessionActivate:(PTYSession *)session {
     if (self.activeSession == session) {
         return;
