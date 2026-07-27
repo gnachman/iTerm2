@@ -83,20 +83,34 @@ class VT100ScreenTests: XCTestCase {
         XCTAssertEqual(range, VT100GridCoordRangeMake(1, 1, 3, 1))
     }
 
-    func testSwitchingScreenBuffersRefreshesKeyReportingFlags() {
+    func testSwitchingScreenBuffersRefreshesChangedKeyReportingFlags() {
         let screen = screen(width: 80, height: 24)
 
-        session.keyReportingFlagsDidChangeCount = 0
-        screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState.terminalShowAltBuffer()
-        })
-        XCTAssertEqual(session.keyReportingFlagsDidChangeCount, 1)
+        feed(screen, "\u{1b}[>1u")
+        feed(screen, "\u{1b}[?1049h")
+        feed(screen, "\u{1b}[>2u")
 
-        session.keyReportingFlagsDidChangeCount = 0
-        screen.performBlock(joinedThreads: { _, mutableState, _ in
-            mutableState.terminalShowPrimaryBuffer()
-        })
-        XCTAssertEqual(session.keyReportingFlagsDidChangeCount, 1)
+        session.keyReportingFlagsAtChange.removeAll()
+        feed(screen, "\u{1b}[?1049l")
+        XCTAssertEqual(session.keyReportingFlagsAtChange, [.disambiguateEscape])
+
+        session.keyReportingFlagsAtChange.removeAll()
+        feed(screen, "\u{1b}[?1049h")
+        XCTAssertEqual(session.keyReportingFlagsAtChange, [.reportAllEventTypes])
+    }
+
+    func testSwitchingScreenBuffersDoesNotRefreshUnchangedKeyReportingFlags() {
+        let screen = screen(width: 80, height: 24)
+
+        feed(screen, "\u{1b}[?1049h")
+        feed(screen, "\u{1b}[?1049l")
+        XCTAssertTrue(session.keyReportingFlagsAtChange.isEmpty)
+
+        feed(screen, "\u{1b}[=1;1u")
+        session.keyReportingFlagsAtChange.removeAll()
+        feed(screen, "\u{1b}[?1049h")
+        feed(screen, "\u{1b}[?1049l")
+        XCTAssertTrue(session.keyReportingFlagsAtChange.isEmpty)
     }
 
     private func screen(width: Int32, height: Int32) -> VT100Screen {
@@ -130,6 +144,11 @@ class VT100ScreenTests: XCTestCase {
                 }
             }
         })
+    }
+
+    private func feed(_ screen: VT100Screen, _ string: String) {
+        screen.inject(string.data(using: .utf8)!)
+        screen.performBlock(joinedThreads: { _, _, _ in })
     }
 
     // The per-row cache's combined screenCharArrayForLine:contentIdentity: must
@@ -1622,7 +1641,7 @@ struct SeededGenerator: RandomNumberGenerator {
 }
 
 class FakeSession: NSObject, VT100ScreenDelegate {
-    var keyReportingFlagsDidChangeCount = 0
+    var keyReportingFlagsAtChange = [VT100TerminalKeyReportingFlags]()
     var screen: VT100Screen?
     var configuration = VT100MutableScreenConfiguration()
     var selection = iTermSelection()
@@ -1922,7 +1941,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
     
     func screenKeyReportingFlagsDidChange() {
-        keyReportingFlagsDidChangeCount += 1
+        keyReportingFlagsAtChange.append(screen!.terminalKeyReportingFlags)
     }
     
     func screenReportVariableNamed(_ name: String) {

@@ -2256,6 +2256,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.currentGrid == self.altGrid) {
         return;
     }
+    const VT100TerminalKeyReportingFlags oldKeyReportingFlags = self.terminalKeyReportingFlags;
     if (!self.altGrid) {
         self.altGrid = [[VT100Grid alloc] initWithSize:self.primaryGrid.size delegate:self];
         self.altGrid.defaultChar = self.terminal.defaultChar;
@@ -2274,7 +2275,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     [self invalidateCommandStartCoordWithoutSideEffects];
-    [self terminalKeyReportingFlagsDidChange];
+    // currentGrid selects which key-reporting stack contributes the effective flags.
+    if (oldKeyReportingFlags != self.terminalKeyReportingFlags) {
+        [self terminalKeyReportingFlagsDidChange];
+    }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
@@ -2286,6 +2290,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.currentGrid != self.altGrid) {
         return;
     }
+    const VT100TerminalKeyReportingFlags oldKeyReportingFlags = self.terminalKeyReportingFlags;
     [self.temporaryDoubleBuffer reset];
     [self hideOnScreenNotesAndTruncateSpanners];
     self.currentGrid = self.primaryGrid;
@@ -2296,7 +2301,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self reloadMarkCache];
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
-    [self terminalKeyReportingFlagsDidChange];
+    if (oldKeyReportingFlags != self.terminalKeyReportingFlags) {
+        [self terminalKeyReportingFlagsDidChange];
+    }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
