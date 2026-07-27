@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -142,7 +142,7 @@
 		6081128751A30702F4779925 /* PushService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PushService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		63015AE13F6D51E68264173D /* SessionWatchState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionWatchState.swift; sourceTree = "<group>"; };
 		631296BBCA3E0137EC1AF183 /* DictationController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DictationController.swift; sourceTree = "<group>"; };
-		65D186D965D39DB40C585942 /* AppIcon.icon */ = {isa = PBXFileReference; includeInIndex = 1; name = AppIcon.icon; path = Resources/AppIcon.icon; sourceTree = "<group>"; };
+		65D186D965D39DB40C585942 /* AppIcon.icon */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.iconcomposer.icon; name = AppIcon.icon; path = Resources/AppIcon.icon; sourceTree = "<group>"; };
 		664A61E5A4AA5B31131219EF /* PhoneIdentity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PhoneIdentity.swift; sourceTree = "<group>"; };
 		6BA2ECD647A2C1BAFE475AD5 /* MentionComposerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionComposerView.swift; sourceTree = "<group>"; };
 		6D7652217BD8DAF7E22F64FA /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
@@ -233,7 +233,6 @@
 				4BEC38A34F869A0974365028 /* NSEFetcher.swift */,
 				AC3443B7AC00DA186609CCD1 /* PushService-Bridging-Header.h */,
 			);
-			name = PushService;
 			path = PushService;
 			sourceTree = "<group>";
 		};
@@ -248,7 +247,6 @@
 				C6335B47A72D52FF5814ACC7 /* WhisperModelManager.swift */,
 				296BFB874CF5628B5BCD5D0B /* iTerm2CompanionApp.swift */,
 			);
-			name = App;
 			path = App;
 			sourceTree = "<group>";
 		};
@@ -266,7 +264,6 @@
 				090C3D6ACA21BAD86836584A /* CompanionClient.swift */,
 				664A61E5A4AA5B31131219EF /* PhoneIdentity.swift */,
 			);
-			name = Connection;
 			path = Connection;
 			sourceTree = "<group>";
 		};
@@ -281,7 +278,6 @@
 				6D7652217BD8DAF7E22F64FA /* Assets.xcassets */,
 				65D186D965D39DB40C585942 /* AppIcon.icon */,
 			);
-			name = iTerm2Companion;
 			path = iTerm2Companion;
 			sourceTree = "<group>";
 		};
@@ -302,7 +298,6 @@
 				91FC40C40E5B13E4B162301A /* MacShims.swift */,
 				F9C8559ED2E9CA942A485EA2 /* MacTypeShadows.swift */,
 			);
-			name = Satellites;
 			path = Satellites;
 			sourceTree = "<group>";
 		};
@@ -371,7 +366,6 @@
 				FF7D5F20D3CEBE131CD354DE /* SessionKeyboardAccessory.swift */,
 				2324404F5EA8EA7927F4D837 /* SessionTreeList.swift */,
 			);
-			name = Views;
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -381,7 +375,6 @@
 				8454A9C3B7FBD0655B2C7007 /* AppModelWatchTests.swift */,
 				80A95D0D017CD9D9DB8C0721 /* SessionWatchStateTests.swift */,
 			);
-			name = iTerm2CompanionTests;
 			path = iTerm2CompanionTests;
 			sourceTree = "<group>";
 		};
@@ -404,7 +397,6 @@
 				E640F5531E816752BE2772DC /* UpgradeRequiredView.swift */,
 				E746874BEDCCC59BD1CF5D6E /* WorkgroupView.swift */,
 			);
-			name = Screens;
 			path = Screens;
 			sourceTree = "<group>";
 		};
@@ -494,12 +486,10 @@
 				Base,
 			);
 			mainGroup = A6CF5CF99431595AD00C1CDB;
-			minimizedProjectReferenceProxies = 0;
 			packageReferences = (
 				FE0F880D892F02223312470A /* XCLocalSwiftPackageReference "CompanionCore" */,
 				483A4180C8ABE3ED7C0D7844 /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
-			preferredProjectObjectVersion = 77;
 			productRefGroup = 583C2CFDCA41ED99E2C91345 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -647,13 +637,17 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = PushService/PushService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PushService/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PushService;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.companion.PushService;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -728,13 +722,16 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = "iTerm2Companion/Resources/iTerm2Companion-Debug.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = iTerm2Companion/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.companion;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -812,13 +809,17 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = PushService/PushService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PushService/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PushService;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.companion.PushService;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -856,13 +857,16 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = "iTerm2Companion/Resources/iTerm2Companion-Release.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = H7V7XYVQ7D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = iTerm2Companion/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.companion;
 				PRODUCT_NAME = "$(TARGET_NAME)";
