@@ -2332,3 +2332,9 @@ Bug Fixes:
   no focused pane, so typing went nowhere until
   you clicked a pane. Focus is now restored
   after the layout is applied.
+- AI chat history is now replayed to the model
+  from the exact bytes previously sent rather
+  than rebuilt each turn, so the prompt cache
+  stays valid across turns (including turns
+  that ran a tool) and long conversations keep
+  getting cheaper and faster.
