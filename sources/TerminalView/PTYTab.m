@@ -2194,6 +2194,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     session.delegate = self;
 }
 
+- (void)restoreFirstResponderAfterViewHierarchyRebuild {
+    if (!activeSession_) {
+        return;
+    }
+    if ([realParentWindow_ currentTab] != self) {
+        return;
+    }
+    [[realParentWindow_ window] makeFirstResponder:[activeSession_ mainResponder]];
+}
+
 - (void)removeSession:(PTYSession*)aSession {
     SessionView *theView = aSession.view;
 

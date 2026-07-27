@@ -348,6 +348,16 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Used by the layout-application API for cross-tab moves.
 - (void)adoptSession:(PTYSession *)session;
 
+// Restore the window's first responder to the active session after a
+// view-hierarchy rebuild that reparented SessionViews. Reparenting (via
+// setRoot:) detaches whatever view held first-responder status, leaving
+// the window with a nil/stale responder. Unlike setActiveSession:, this
+// fires even when the active session pointer is unchanged, which is the
+// common case for an in-place reshape where the active pane survives.
+// Guarded to the current tab to avoid making a non-visible textview the
+// first responder (see the NSTextInput note in setActiveSession:).
+- (void)restoreFirstResponderAfterViewHierarchyRebuild;
+
 - (void)bounceMetal;
 - (void)makeActive;
 - (void)willDeselectTab;
