@@ -668,6 +668,8 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (NSMutableArray<NSNumber *> *)currentKeyReportingModeStack {
+    // The active screen buffer selects its independent key-reporting mode stack, so changing
+    // buffers can change keyReportingFlags without mutating either stack.
     if ([self.delegate terminalIsInAlternateScreenMode]) {
         return _alternateKeyReportingModeStack;
     }
