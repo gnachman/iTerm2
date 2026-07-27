@@ -1174,15 +1174,33 @@ class ChatAgent {
         if let captureAPI, let effectiveModel {
             let replayChatID = chatID
             let replayDatabase = broker.listModel.chatDatabase
-            let contextWindow = effectiveModel.contextWindowTokens
-            let outputReserve = effectiveModel.maxResponseTokens
+            // Budget the frozen prefix against the SAME limit the legacy truncate()
+            // path honors (the user's AiMaxTokens preference), clamped to the model's
+            // real context window, and reserve output room the same way. Without the
+            // clamp, blob-native chats would silently retain far more history than the
+            // user's configured cap on a model whose window exceeds it.
+            let maxTotalTokens = conversation.maxTotalTokens
+            let outputReserve = conversation.maxResponseTokens
+            let contextWindow = min(effectiveModel.contextWindowTokens, maxTotalTokens)
             let policy: ChatBlobAssembler.TruncationPolicy =
                 captureAPI == .anthropic ? .anthropicHalve : .fitOnly
+            // Read the tool schemas + volatile context live at send time (they are
+            // not in the reduced message list but the builder adds them to the wire),
+            // so the truncation budget counts the whole request. Captured by
+            // reference; evaluated only on the blob path (envelopeTokens is a thunk).
+            let replayController = conversation.controller
             conversation.blobReplayProvider = { fullMessages in
                 ChatBlobAssembler.blobReplayPlan(
                     chatID: replayChatID, fullMessages: fullMessages, expectedProtocol: captureAPI,
                     contextWindow: contextWindow, outputReserve: outputReserve, policy: policy,
                     tokenEstimate: { AIMetadata.instance.tokens(in: String(decoding: $0, as: UTF8.self)) },
+                    envelopeTokens: {
+                        let volatile = replayController.trailingVolatileTextProvider?() ?? ""
+                        let functionsJSON = (try? JSONEncoder().encode(replayController.functions.map { $0.decl }))
+                            .flatMap { String(data: $0, encoding: .utf8) } ?? ""
+                        return AIMetadata.instance.tokens(in: volatile)
+                            + AIMetadata.instance.tokens(in: functionsJSON)
+                    },
                     database: replayDatabase)
             }
         } else {

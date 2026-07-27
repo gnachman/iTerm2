@@ -237,7 +237,7 @@ final class ChatBlobAssemblerTests: XCTestCase {
         let plan = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
             chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
             contextWindow: 1_000_000, outputReserve: 1000, policy: .fitOnly,
-            tokenEstimate: { _ in 1 }, database: db))
+            tokenEstimate: { _ in 1 }, envelopeTokens: { 0 }, database: db))
         XCTAssertEqual(plan.messages, [system, newUser])
         XCTAssertEqual(plan.frozen, try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A")))
     }
@@ -256,13 +256,43 @@ final class ChatBlobAssemblerTests: XCTestCase {
         let plan = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
             chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
             contextWindow: 1000, outputReserve: 100, policy: .fitOnly,
-            tokenEstimate: { _ in 300 }, database: db))
+            tokenEstimate: { _ in 300 }, envelopeTokens: { 0 }, database: db))
         XCTAssertEqual(plan.frozen, try ChatBlobAssembler.stitchInner(Array(db.blobs(inChat: "A")[1...])),
                        "oldest blob dropped from the frozen bytes")
         let blobNative = try messagesArray(builder(model, messages: plan.messages, frozen: plan.frozen), key: "messages")
         let truncatedLive = [system] + rounds[1] + rounds[2] + [newUser]
         let live = try messagesArray(builder(model, messages: truncatedLive, frozen: nil), key: "messages")
         XCTAssertEqual(blobNative as NSArray, live as NSArray)
+    }
+
+    /// envelopeTokens (tool schemas + volatile context the builder adds at send
+    /// time, not in `reduced`) folds into the budget: the SAME conversation that fits
+    /// with a zero envelope must truncate once a large envelope is counted. Guards
+    /// the finding that omitting it could send an over-window request with no
+    /// fallback (the frozen prefix is bounded ONLY here).
+    func test_blobReplayPlan_envelopeTokensCountedInBudget() throws {
+        var model = try baseModel(); model.api = .chatCompletions
+        let db = try makeTempDB()
+        let rounds = capture3Rounds(db, model: model)
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let full = [system] + rounds.flatMap { $0 } + [user("next?")]
+
+        // Weights sum to 600 (3 x 200); fit budget = 1000 - 100 = 900. With no
+        // envelope the whole history fits (no drop). With a 400-token envelope,
+        // 600 + 400 + tail > 900 -> a head blob must be dropped.
+        let noEnvelope = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
+            contextWindow: 1000, outputReserve: 100, policy: .fitOnly,
+            tokenEstimate: { _ in 200 }, envelopeTokens: { 0 }, database: db))
+        XCTAssertEqual(noEnvelope.frozen, try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A")),
+                       "with no envelope the whole history fits")
+
+        let withEnvelope = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
+            contextWindow: 1000, outputReserve: 100, policy: .fitOnly,
+            tokenEstimate: { _ in 200 }, envelopeTokens: { 400 }, database: db))
+        XCTAssertEqual(withEnvelope.frozen, try ChatBlobAssembler.stitchInner(Array(db.blobs(inChat: "A")[1...])),
+                       "counting the envelope forces the oldest round to be dropped")
     }
 
     /// The tail alone exceeds the budget: even dropping every blob can't fit, so the
@@ -277,7 +307,7 @@ final class ChatBlobAssemblerTests: XCTestCase {
         XCTAssertNil(ChatBlobAssembler.blobReplayPlan(
             chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
             contextWindow: 4, outputReserve: 2, policy: .fitOnly,
-            tokenEstimate: { _ in 1 }, database: db))
+            tokenEstimate: { _ in 1 }, envelopeTokens: { 0 }, database: db))
     }
 
     /// A protocol mismatch (blobs frozen under a different protocol) fails the safety
@@ -291,7 +321,7 @@ final class ChatBlobAssemblerTests: XCTestCase {
         XCTAssertNil(ChatBlobAssembler.blobReplayPlan(
             chatID: "A", fullMessages: full, expectedProtocol: .responses,  // mismatch
             contextWindow: 1_000_000, outputReserve: 1000, policy: .fitOnly,
-            tokenEstimate: { _ in 1 }, database: db))
+            tokenEstimate: { _ in 1 }, envelopeTokens: { 0 }, database: db))
     }
 
     // MARK: - messagesPastFrozenRounds (the send-time reduction)

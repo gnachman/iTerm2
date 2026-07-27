@@ -305,6 +305,14 @@ enum ChatBlobAssembler {
     ///   rounds + the current round), i.e. AIConversation.messages.
     /// - tokenEstimate: byte -> token fallback for a blob whose stored tokenCount is
     ///   nil (no vendor usage / legacy). Injected so this stays testable.
+    /// - envelopeTokens: tokens the per-vendor builder ADDS at send time that are NOT
+    ///   in `reduced` and so would otherwise be omitted from the budget: the
+    ///   tool/function schemas and the volatile per-turn context (terminal screen /
+    ///   workgroups snapshot). This is the ONLY place the frozen prefix size is
+    ///   bounded (the legacy `truncate` never touches the spliced frozen bytes), so
+    ///   omitting them could let an over-window request through with no fallback. It
+    ///   is a thunk so the (potentially expensive, e.g. a screen grab) estimate is
+    ///   computed ONLY on the blob path, after the safety gate and reduction pass.
     static func blobReplayPlan(chatID: String,
                                fullMessages: [LLM.Message],
                                expectedProtocol: iTermAIAPI,
@@ -312,6 +320,7 @@ enum ChatBlobAssembler {
                                outputReserve: Int,
                                policy: TruncationPolicy,
                                tokenEstimate: (Data) -> Int,
+                               envelopeTokens: () -> Int,
                                database: ChatDatabase) -> (messages: [LLM.Message], frozen: Data)? {
         guard let blobs = safeBlobsForReplay(chatID: chatID, expectedProtocol: expectedProtocol,
                                              database: database) else {
@@ -321,7 +330,7 @@ enum ChatBlobAssembler {
             return nil
         }
         let weights = blobs.map { $0.tokenCount ?? tokenEstimate($0.payload) }
-        let fixedCost = reduced.map { $0.approximateTokenCount }.reduce(0, +)
+        let fixedCost = reduced.map { $0.approximateTokenCount }.reduce(0, +) + envelopeTokens()
         let plan = planTruncation(blobWeights: weights, fixedCost: fixedCost,
                                   contextWindow: contextWindow, outputReserve: outputReserve,
                                   policy: policy)
