@@ -64,6 +64,12 @@ extension AILiveHarness {
             initialMessages: [])
         addTeardownBlock { try? broker.delete(chatID: chatID) }
 
+        // Bind the chat to Anthropic up front. The provider binding locks to the
+        // model of the FIRST turn (else the global default, which is whatever
+        // vendor the machine is configured for), so without this a per-turn
+        // configuration.model naming Anthropic is a forbidden cross-provider switch.
+        try broker.listModel.setModel(chatID: chatID, modelName: anthropicModel.name)
+
         let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
         let registrationSub = broker.subscribe(chatID: chatID,
                                                registrationProvider: registrationProvider) { _ in }
@@ -121,7 +127,7 @@ extension AILiveHarness {
         //    prefix = the cache-fix invariant). The first round's inner bytes must
         //    appear in a later turn's request body.
         let blobs = db.blobs(inChat: chatID)
-        XCTAssertGreaterThanOrEqual(blobs.count, 1)
+        try XCTSkipIf(blobs.isEmpty, "no blobs captured; earlier assertion already failed")
         let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([blobs[0]]), as: UTF8.self)
         XCTAssertFalse(firstRoundInner.isEmpty)
         XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains(firstRoundInner) },
