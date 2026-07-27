@@ -39,28 +39,17 @@ enum ChatBlobCapture {
         return result
     }
 
-    /// Freeze any rounds of `allMessages` not yet stored as blobs for `chatID`,
-    /// appending them in order. Incremental and idempotent: with N rounds already
-    /// stored (one blob per round) only rounds N.. are frozen. Returns the number
-    /// of blobs appended (0 if nothing new). The caller stamps Chat.blobProtocol
-    /// after the first successful capture (this function does not touch the Chat
-    /// row).
-    ///
-    /// On an encode failure it stops rather than skipping a round, so the stored
-    /// sequence never gets a hole; the un-captured tail is retried on the next turn.
-    ///
-    /// PRECONDITION: a blob is only replayable under the protocol it was frozen
-    /// for, so on a protocol switch (the chat's bound model/provider changed mid
-    /// conversation) the caller MUST re-freeze the whole history via
-    /// ChatDatabase.replaceBlobs BEFORE calling this. This function defends the
-    /// invariant anyway: if the chat already has blobs under a different protocol
-    /// it refuses (returns 0) rather than append a mixed, unreplayable sequence.
     /// Capture a completed turn's rounds, handling a protocol switch. Blobs are
     /// only replayable under the protocol they were frozen for, so if the chat
     /// already has blobs under a DIFFERENT protocol than `api` (the user switched
     /// model/provider mid-conversation), clear them first and let captureNewRounds
     /// re-freeze the whole history under the new protocol. Otherwise this is a
     /// normal incremental capture. Returns the number of blobs appended.
+    ///
+    /// NOTE this handles a protocol switch but NOT a message edit/delete, which
+    /// also violates the append-only assumption captureNewRounds relies on. That
+    /// must be handled where the history is truncated (ChatListModel.delete), by
+    /// clearing the chat's blobs so the next capture re-freezes the edited history.
     @discardableResult
     static func captureTurn(chatID: String,
                             allMessages: [LLM.Message],
@@ -76,6 +65,29 @@ enum ChatBlobCapture {
                                 modelName: modelName, hostedTools: hostedTools, database: database)
     }
 
+    /// Freeze any rounds of `allMessages` not yet stored as blobs for `chatID`,
+    /// appending them in order. Incremental and idempotent: with N rounds already
+    /// stored (one blob per round) only rounds N.. are frozen. Returns the number
+    /// of blobs appended (0 if nothing new). The caller stamps Chat.blobProtocol
+    /// after the first successful capture (this function does not touch the Chat
+    /// row).
+    ///
+    /// ASSUMES APPEND-ONLY history: `existing` (stored row count) is compared to
+    /// the reconstructed round count to find what is new, which is only correct if
+    /// rounds are never edited or deleted out from under the blobs. A message
+    /// edit/delete must invalidate the chat's blobs at the truncation site
+    /// (ChatListModel.delete) BEFORE the next capture; otherwise the stored
+    /// sequence describes a conversation that no longer exists.
+    ///
+    /// On an encode failure it stops rather than skipping a round, so the stored
+    /// sequence never gets a hole; the un-captured tail is retried on the next turn.
+    ///
+    /// PRECONDITION: a blob is only replayable under the protocol it was frozen
+    /// for, so on a protocol switch (the chat's bound model/provider changed mid
+    /// conversation) the caller MUST re-freeze the whole history via
+    /// ChatDatabase.replaceBlobs BEFORE calling this. This function defends the
+    /// invariant anyway: if the chat already has blobs under a different protocol
+    /// it refuses (returns 0) rather than append a mixed, unreplayable sequence.
     @discardableResult
     static func captureNewRounds(chatID: String,
                                  allMessages: [LLM.Message],

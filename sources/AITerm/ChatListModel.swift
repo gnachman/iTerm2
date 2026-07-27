@@ -233,6 +233,15 @@ class ChatListModel: ChatListDataSource {
         }
         do {
             try messages.removeAll(where: { messageIDs.contains($0.uniqueID) })
+            // A deletion (edit/retry truncates the display log from a chosen
+            // message onward) breaks the append-only assumption wire-fragment blob
+            // capture relies on: it decides what is "new" by comparing the stored
+            // blob count to the reconstructed round count, which is only valid if
+            // rounds are never removed. Invalidate the chat's blobs so the next
+            // completed turn re-freezes the edited history from scratch, instead of
+            // leaving a stored sequence that describes a conversation that no longer
+            // exists (or, worse, splicing new rounds onto stale ones).
+            database.replaceBlobs(inChat: chatID, with: [])
         } catch {
             RLog("Failed to delete messages from chat \(chatID): \(error)")
         }

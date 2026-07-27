@@ -54,6 +54,25 @@ final class ChatBlobStorageTests: XCTestCase {
         XCTAssertEqual(db.blobs(inChat: "A").count, 2, "the unknown-protocol row still decodes (NS_ENUM accepts any raw)")
     }
 
+    /// Deleting messages (edit/retry truncates the display log) must invalidate the
+    /// chat's blobs, since capture assumes append-only history. The next completed
+    /// turn re-freezes the edited history from scratch.
+    @MainActor
+    func testDeleteMessages_invalidatesChatBlobs() throws {
+        let db = try makeTempDB()
+        let listModel = try XCTUnwrap(ChatListModel(database: db))
+        db.appendBlob(ChatBlob(chatID: "A", blobProtocol: .anthropic, role: .user,
+                               payload: Data("[]".utf8)))
+        db.appendBlob(ChatBlob(chatID: "B", blobProtocol: .anthropic, role: .user,
+                               payload: Data("[]".utf8)))
+        XCTAssertEqual(db.blobCount(inChat: "A"), 1)
+
+        listModel.delete(chatID: "A", messageIDs: [UUID()])
+
+        XCTAssertEqual(db.blobCount(inChat: "A"), 0, "deleting from a chat must invalidate its blobs")
+        XCTAssertEqual(db.blobCount(inChat: "B"), 1, "other chats' blobs are untouched")
+    }
+
     // MARK: - ChatBlob schema / insertQuery (no database)
 
     func testChatBlobSchema_declaresSeqAutoincrement() {
