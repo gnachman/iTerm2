@@ -180,6 +180,40 @@ final class ChatBlobAssemblerTests: XCTestCase {
     func test_sendPath_gemini_contentsMatch() throws { try assertSendPathMatches(.gemini, key: "contents") }
     func test_sendPath_responses_inputMatch() throws { try assertSendPathMatches(.responses, key: "input") }
 
+    /// Truncation + reduction compose. When truncation drops the oldest `dropCount`
+    /// head blobs (whole rounds) from the frozen bytes, the message reduction still
+    /// peels ALL N frozen rounds and keeps only the current round (dropCount selects
+    /// which BLOBS splice, not which messages reduce). The result must reproduce the
+    /// live builder fed the TRUNCATED history (oldest dropCount rounds removed).
+    /// This guards the dropCount <-> frozenRoundCount alignment: an off-by-one would
+    /// drop or duplicate a round at the splice boundary.
+    func test_sendPath_truncatedReplay_matchesTruncatedLiveHistory() throws {
+        var model = try baseModel()
+        model.api = .chatCompletions
+        let r0 = plainRound, r1 = toolRound, r2 = plainRound  // three frozen rounds
+        let priorConvo = r0 + r1 + r2
+        let db = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: priorConvo, api: .chatCompletions,
+                                         modelName: model.name, hostedTools: HostedTools(), database: db)
+        let blobs = db.blobs(inChat: "A")
+        XCTAssertEqual(blobs.count, 3)
+
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let newUser = user("what's next?")
+        let full = [system] + priorConvo + [newUser]
+
+        let dropCount = 1  // truncation drops the oldest round
+        let frozen = try ChatBlobAssembler.stitchInner(Array(blobs[dropCount...]))
+        // Reduction peels all N frozen rounds regardless of dropCount.
+        let reduced = try XCTUnwrap(ChatBlobAssembler.messagesPastFrozenRounds(full, frozenRoundCount: blobs.count))
+
+        let blobNative = try messagesArray(builder(model, messages: reduced, frozen: frozen), key: "messages")
+        let truncatedLive = [system] + r1 + r2 + [newUser]  // oldest round removed
+        let live = try messagesArray(builder(model, messages: truncatedLive, frozen: nil), key: "messages")
+        XCTAssertEqual(blobNative as NSArray, live as NSArray,
+                       "truncated blob replay must equal the live builder fed the truncated history")
+    }
+
     // MARK: - messagesPastFrozenRounds (the send-time reduction)
 
     /// The reduction the controller applies before splicing frozen bytes: from the

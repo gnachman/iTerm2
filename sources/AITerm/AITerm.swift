@@ -237,6 +237,17 @@ class AITermController {
     // @MainActor closure; nil for non-orchestration turns.
     var trailingVolatileTextProvider: (() -> String?)?
 
+    // Blob-native replay: the chat's verbatim frozen-history wire bytes (the
+    // comma-joined inner element bytes of the stored blobs, no surrounding
+    // brackets) that the per-vendor builder splices into its message array after
+    // the system message(s). Set once per turn by the chat layer (AIConversation
+    // from ChatAgent's decision) alongside sending the REDUCED message list
+    // ([system] + the current round only); the same bytes are re-spliced on every
+    // tool-loop sub-request of the turn, since the frozen prefix does not change
+    // mid-turn (only the current round's tail grows). nil for the normal path,
+    // where `messages` carries the whole conversation.
+    var frozenHistoryElements: Data?
+
     func define(functions: [LLM.AnyFunction]) {
         if llmProvider?.model.features.contains(.functionCalling) != true {
             return
@@ -542,6 +553,7 @@ class AITermController {
                                         reasoningEffort: llmProvider.model.supports(reasoningEffort: reasoningEffort) ? reasoningEffort : nil,
                                         serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil,
                                         trailingVolatileText: trailingVolatileTextProvider?())
+        builder.frozenHistoryElements = frozenHistoryElements
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
