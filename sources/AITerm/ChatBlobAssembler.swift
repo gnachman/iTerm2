@@ -155,8 +155,15 @@ enum ChatBlobAssembler {
         }
         let target: Int
         switch policy {
-        case .anthropicHalve: target = contextWindow / 2
-        case .fitOnly: target = fitBudget
+        case .anthropicHalve:
+            // Clamp to the fit budget: the deep-cut target must never sit ABOVE the
+            // hard budget, or a large-max-output model (outputReserve > context/2,
+            // so context/2 > fitBudget) would truncate LESS than needed and return
+            // dropCount 0 for a request that does not fit (with needsElision falsely
+            // false). Clamped, that regime degrades to fitOnly, which is correct.
+            target = min(contextWindow / 2, fitBudget)
+        case .fitOnly:
+            target = fitBudget
         }
         var dropCount = 0
         while running > target && dropCount < blobWeights.count {

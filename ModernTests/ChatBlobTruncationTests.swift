@@ -95,6 +95,28 @@ final class ChatBlobTruncationTests: XCTestCase {
         XCTAssertTrue(plan([], fixedCost: 950, context: 1000, reserve: 100, .fitOnly).needsElision)
     }
 
+    /// Regression: a large-max-output model where outputReserve > contextWindow/2.
+    /// Then the naive halve target (contextWindow/2) sits ABOVE the fit budget, so
+    /// anthropicHalve must NOT truncate less than fitOnly would. It must still drop
+    /// enough to fit (target clamped to the fit budget).
+    func test_anthropicHalve_largeReserve_stillFits() {
+        // context 1000, reserve 700 -> fitBudget 300; naive target = 500 (> fit).
+        // fixedCost 100 + weights 300 = 400 > fitBudget 300, so we must truncate.
+        let p = plan([100, 100, 100], fixedCost: 100, context: 1000, reserve: 700, .anthropicHalve)
+        XCTAssertEqual(p.dropCount, 1, "must drop to fit the hard budget, not stop at the higher halve target")
+        XCTAssertFalse(p.needsElision)
+    }
+
+    /// Same large-reserve regime, but the tail alone exceeds the fit budget: dropping
+    /// every blob still doesn't fit, so needsElision must be true (the naive target
+    /// would have masked this by never entering the drop loop).
+    func test_anthropicHalve_largeReserve_tailOverBudget_needsElision() {
+        // fitBudget 300; fixedCost 350 already exceeds it.
+        let p = plan([100, 100], fixedCost: 350, context: 1000, reserve: 700, .anthropicHalve)
+        XCTAssertEqual(p.dropCount, 2)
+        XCTAssertTrue(p.needsElision)
+    }
+
     /// dropCount never exceeds the blob count.
     func test_dropCountBounded() {
         let p = plan([10, 10], fixedCost: 5000, context: 1000, reserve: 100, .anthropicHalve)
