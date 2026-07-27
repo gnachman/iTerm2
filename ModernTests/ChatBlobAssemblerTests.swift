@@ -214,6 +214,86 @@ final class ChatBlobAssemblerTests: XCTestCase {
                        "truncated blob replay must equal the live builder fed the truncated history")
     }
 
+    // MARK: - blobReplayPlan (full send decision: gate + reduce + truncate + splice)
+
+    private func capture3Rounds(_ db: ChatDatabase, model: AIMetadata.Model) -> [[LLM.Message]] {
+        let rounds = [plainRound, toolRound, plainRound]
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: rounds.flatMap { $0 },
+                                         api: model.api, modelName: model.name,
+                                         hostedTools: HostedTools(), database: db)
+        return rounds
+    }
+
+    /// Under budget: no truncation. The plan returns [system, newUser] and the whole
+    /// frozen history (all blobs), and byte-matches the live full-history builder.
+    func test_blobReplayPlan_underBudget_keepsAllBlobs() throws {
+        var model = try baseModel(); model.api = .chatCompletions
+        let db = try makeTempDB()
+        let rounds = capture3Rounds(db, model: model)
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let newUser = user("next?")
+        let full = [system] + rounds.flatMap { $0 } + [newUser]
+
+        let plan = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
+            contextWindow: 1_000_000, outputReserve: 1000, policy: .fitOnly,
+            tokenEstimate: { _ in 1 }, database: db))
+        XCTAssertEqual(plan.messages, [system, newUser])
+        XCTAssertEqual(plan.frozen, try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A")))
+    }
+
+    /// Over budget: drops the oldest whole round and the result byte-matches the live
+    /// builder fed the TRUNCATED history (composes reduction + truncation + splice).
+    func test_blobReplayPlan_overBudget_dropsOldestRound_matchesTruncatedLive() throws {
+        var model = try baseModel(); model.api = .chatCompletions
+        let db = try makeTempDB()
+        let rounds = capture3Rounds(db, model: model)  // r0, r1, r2
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let newUser = user("next?")
+        let full = [system] + rounds.flatMap { $0 } + [newUser]
+
+        // fit budget = 1000 - 100 = 900; each blob weighs 300 -> 900 + tail > 900 -> drop 1.
+        let plan = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
+            contextWindow: 1000, outputReserve: 100, policy: .fitOnly,
+            tokenEstimate: { _ in 300 }, database: db))
+        XCTAssertEqual(plan.frozen, try ChatBlobAssembler.stitchInner(Array(db.blobs(inChat: "A")[1...])),
+                       "oldest blob dropped from the frozen bytes")
+        let blobNative = try messagesArray(builder(model, messages: plan.messages, frozen: plan.frozen), key: "messages")
+        let truncatedLive = [system] + rounds[1] + rounds[2] + [newUser]
+        let live = try messagesArray(builder(model, messages: truncatedLive, frozen: nil), key: "messages")
+        XCTAssertEqual(blobNative as NSArray, live as NSArray)
+    }
+
+    /// The tail alone exceeds the budget: even dropping every blob can't fit, so the
+    /// plan refuses (nil) and the caller falls back to the codec's in-message elision.
+    func test_blobReplayPlan_tailOverBudget_returnsNil() throws {
+        var model = try baseModel(); model.api = .chatCompletions
+        let db = try makeTempDB()
+        let rounds = capture3Rounds(db, model: model)
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let full = [system] + rounds.flatMap { $0 } + [user("next?")]
+        // contextWindow tiny so fixedCost (the reduced tail) alone exceeds fit budget.
+        XCTAssertNil(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: full, expectedProtocol: .chatCompletions,
+            contextWindow: 4, outputReserve: 2, policy: .fitOnly,
+            tokenEstimate: { _ in 1 }, database: db))
+    }
+
+    /// A protocol mismatch (blobs frozen under a different protocol) fails the safety
+    /// gate, so the plan refuses.
+    func test_blobReplayPlan_protocolMismatch_returnsNil() throws {
+        var model = try baseModel(); model.api = .chatCompletions
+        let db = try makeTempDB()
+        _ = capture3Rounds(db, model: model)  // frozen as chatCompletions
+        let system = LLM.Message(role: .system, content: "s")
+        let full = [system] + [user("next?")]
+        XCTAssertNil(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: full, expectedProtocol: .responses,  // mismatch
+            contextWindow: 1_000_000, outputReserve: 1000, policy: .fitOnly,
+            tokenEstimate: { _ in 1 }, database: db))
+    }
+
     // MARK: - messagesPastFrozenRounds (the send-time reduction)
 
     /// The reduction the controller applies before splicing frozen bytes: from the

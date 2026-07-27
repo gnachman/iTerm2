@@ -255,6 +255,19 @@ enum ChatBlobAssembler {
     static func stitchedHistoryIfSafe(chatID: String,
                                       expectedProtocol: iTermAIAPI,
                                       database: ChatDatabase) -> [Any]? {
+        guard let blobs = safeBlobsForReplay(chatID: chatID, expectedProtocol: expectedProtocol,
+                                             database: database) else {
+            return nil
+        }
+        return try? stitch(blobs)
+    }
+
+    /// The safety gate shared by stitchedHistoryIfSafe and blobReplayPlan: returns
+    /// the chat's blobs ONLY if blob-native replay is provably safe (see the cases
+    /// documented on stitchedHistoryIfSafe), else nil so the caller falls back.
+    static func safeBlobsForReplay(chatID: String,
+                                   expectedProtocol: iTermAIAPI,
+                                   database: ChatDatabase) -> [ChatBlob]? {
         let rowCount = database.blobCount(inChat: chatID)
         guard rowCount > 0 else {
             return nil  // legacy / blobless: caller reconstructs via the codec
@@ -268,10 +281,56 @@ enum ChatBlobAssembler {
             RLog("ChatBlobAssembler: chat \(chatID) blobs are not all protocol \(expectedProtocol.rawValue); refusing blob replay (needs a re-freeze)")
             return nil
         }
-        guard let stitched = try? stitch(blobs) else {
+        guard (try? stitch(blobs)) != nil else {
             RLog("ChatBlobAssembler: chat \(chatID) has a corrupt blob payload; refusing blob replay")
             return nil
         }
-        return stitched
+        return blobs
+    }
+
+    /// The full blob-native send decision for one turn, composing every piece: the
+    /// safety gate, the message reduction, whole-round truncation, and the verbatim
+    /// byte splice. Returns the REDUCED outgoing messages ([system] + the current
+    /// round) paired with the frozen-history bytes to splice, or nil to fall back to
+    /// full reconstruction. Set as AITermController.blobReplayProvider by the chat
+    /// layer; called by AIConversation.outgoingRequest each turn (outside delta mode).
+    ///
+    /// Falls back (nil) when: the chat is not safely blob-native (safeBlobsForReplay),
+    /// the reconstructed round count is misaligned with the stored blobs
+    /// (messagesPastFrozenRounds), or even dropping every blob cannot fit the budget
+    /// (planTruncation needsElision) -- there the old in-message elision path handles
+    /// the oversized tail.
+    ///
+    /// - fullMessages: the whole conversation the codec would send ([system] + all
+    ///   rounds + the current round), i.e. AIConversation.messages.
+    /// - tokenEstimate: byte -> token fallback for a blob whose stored tokenCount is
+    ///   nil (no vendor usage / legacy). Injected so this stays testable.
+    static func blobReplayPlan(chatID: String,
+                               fullMessages: [LLM.Message],
+                               expectedProtocol: iTermAIAPI,
+                               contextWindow: Int,
+                               outputReserve: Int,
+                               policy: TruncationPolicy,
+                               tokenEstimate: (Data) -> Int,
+                               database: ChatDatabase) -> (messages: [LLM.Message], frozen: Data)? {
+        guard let blobs = safeBlobsForReplay(chatID: chatID, expectedProtocol: expectedProtocol,
+                                             database: database) else {
+            return nil
+        }
+        guard let reduced = messagesPastFrozenRounds(fullMessages, frozenRoundCount: blobs.count) else {
+            return nil
+        }
+        let weights = blobs.map { $0.tokenCount ?? tokenEstimate($0.payload) }
+        let fixedCost = reduced.map { $0.approximateTokenCount }.reduce(0, +)
+        let plan = planTruncation(blobWeights: weights, fixedCost: fixedCost,
+                                  contextWindow: contextWindow, outputReserve: outputReserve,
+                                  policy: policy)
+        if plan.needsElision {
+            return nil  // even with no history it doesn't fit; let the codec elide the tail
+        }
+        guard let frozen = try? stitchInner(Array(blobs[plan.dropCount...])) else {
+            return nil
+        }
+        return (reduced, frozen)
     }
 }
