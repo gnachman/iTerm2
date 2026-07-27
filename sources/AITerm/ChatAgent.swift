@@ -1161,6 +1161,33 @@ class ChatAgent {
         conversation.trailingVolatileTextProvider = { [weak self] in
             MainActor.assumeIsolated { self?.currentVolatileText() }
         }
+        // Blob-native replay: if this chat has verbatim wire-fragment blobs frozen
+        // under the turn's protocol, send [system] + the current round and splice
+        // the frozen history bytes, instead of reconstructing the whole conversation
+        // (which churns the cached prefix). Set per turn like the volatile provider
+        // above (it lives on the controller and does not survive the amended copy).
+        // Returns nil -> full reconstruction for a legacy/blobless chat, a protocol
+        // mismatch, a misaligned round count, or a turn too large to fit even after
+        // dropping every blob (the codec's in-message elision handles that tail).
+        // Anthropic cuts DEEP on truncation (50% of context) for a long caching
+        // runway; other vendors (no cache pricing) just drop enough to fit.
+        if let captureAPI, let effectiveModel {
+            let replayChatID = chatID
+            let replayDatabase = broker.listModel.chatDatabase
+            let contextWindow = effectiveModel.contextWindowTokens
+            let outputReserve = effectiveModel.maxResponseTokens
+            let policy: ChatBlobAssembler.TruncationPolicy =
+                captureAPI == .anthropic ? .anthropicHalve : .fitOnly
+            conversation.blobReplayProvider = { fullMessages in
+                ChatBlobAssembler.blobReplayPlan(
+                    chatID: replayChatID, fullMessages: fullMessages, expectedProtocol: captureAPI,
+                    contextWindow: contextWindow, outputReserve: outputReserve, policy: policy,
+                    tokenEstimate: { AIMetadata.instance.tokens(in: String(decoding: $0, as: UTF8.self)) },
+                    database: replayDatabase)
+            }
+        } else {
+            conversation.blobReplayProvider = nil
+        }
         conversation.add(baseUserAIMessage)
         // The binding's verdict, not the raw configuration: a turn with no
         // configuration runs on the chat's bound model.
