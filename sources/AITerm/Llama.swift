@@ -95,6 +95,10 @@ extension LlamaResponse: LLM.AnyResponse {
     var isStreamingResponse: Bool {
         Streaming.streaming
     }
+    // Explicit (not the protocol default) because LlamaResponse conforms to both
+    // AnyResponse and AnyStreamingResponse, whose defaults would otherwise be
+    // ambiguous. Llama's response carries no usage, so there is no token count.
+    var promptTokens: Int? { nil }
 }
 
 extension LlamaResponse: LLM.AnyStreamingResponse {
