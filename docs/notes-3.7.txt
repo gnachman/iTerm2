@@ -786,6 +786,10 @@ Bug Fixes:
   traces) were trimmed or moved back to regular
   debug logging, extending how far back the ring
   reaches.
+- The proxy icon in Compact and Minimal theme
+  windows now hides and reveals along with the
+  stoplight buttons instead of staying visible
+  when they are hidden.
 - Hiding a hotkey window on macOS 26 no longer
   briefly flashes background iTerm2 windows to
   the front. The window now waits for the

@@ -1605,6 +1605,10 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         [self updateProxyIcon];
     }
     [self updateCompactProxyIconFrame];
+    // The proxy icon lives next to the stoplight buttons and must appear and
+    // disappear in lockstep with them (e.g., when the stoplight hotbox hides
+    // the buttons in the minimal theme). Messaging a nil proxy icon is a no-op.
+    _compactProxyIconView.alphaValue = _standardWindowButtonsView.alphaValue;
     [self updateTitleAndBorderViews];
 }
 
@@ -1922,6 +1926,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                      animations:^{
                          self->_stoplightHotbox.animator.alphaValue = 0;
                          self->_standardWindowButtonsView.animator.alphaValue = 0;
+                         self->_compactProxyIconView.animator.alphaValue = 0;
                      }
                      completion:^(BOOL finished) {
                          if (!finished) {
@@ -1968,10 +1973,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [_stoplightHotbox setNeedsDisplay:YES];
     _stoplightHotbox.alphaValue = 0;
     _standardWindowButtonsView.alphaValue = 0;
+    _compactProxyIconView.alphaValue = 0;
     [NSView animateWithDuration:0.25
                      animations:^{
                          self->_stoplightHotbox.animator.alphaValue = 1;
                          self->_standardWindowButtonsView.animator.alphaValue = 1;
+                         self->_compactProxyIconView.animator.alphaValue = 1;
                      }
                      completion:nil];
     return YES;
