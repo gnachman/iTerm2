@@ -4340,7 +4340,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 // NSWindow delegate methods
 - (void)windowDidDeminiaturize:(NSNotification *)aNotification {
-    RLog(@"windowDidDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowDidDeminiaturize: %@", self);
     [[iTermDockBadgeController sharedInstance] resetBellCount];
     if ([[self currentTab] blur]) {
         [self enableBlur:[[self currentTab] blurRadius]];
@@ -4604,7 +4604,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowWillMiniaturize:(NSNotification *)aNotification {
-    RLog(@"windowWillMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowWillMiniaturize: %@", self);
     [self disableBlur];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowWillMiniaturize"
                                                         object:self
@@ -6398,7 +6398,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // Returns whether a permanent (i.e., not flashing) tabbar ought to be drawn while in full screen.
 // It does not check if you're already in full screen.
 - (BOOL)shouldShowPermanentFullScreenTabBar {
-    RLog(@"%@", self);
     if (togglingLionFullScreen_) {
         RLog(@"togglingLionFullSCreen so return YES");
         return YES;
@@ -6528,7 +6527,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
              @(_contentView.tabBarControl.isHidden),
              @(_contentView.tabBarControl.alphaValue),
              NSStringFromRect(_contentView.tabBarControl.frame));
-        RLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
+        DLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
 
         [_titlebarAccessoryNanny add:viewController];
         const BOOL minHeightChanged = [_titlebarAccessoryNanny updateViewController:viewController
@@ -8060,7 +8059,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (BOOL)tabBarProvidesProgressVisibility {
     if (togglingLionFullScreen_ || self.anyFullScreen) {
         const BOOL result = self.shouldShowPermanentFullScreenTabBar;
-        RLog(@"tabBarProvidesProgressVisibility: fullscreen path -> shouldShowPermanentFullScreenTabBar=%d", result);
+        DLog(@"tabBarProvidesProgressVisibility: fullscreen path -> shouldShowPermanentFullScreenTabBar=%d", result);
         return result;
     }
     const BOOL result = self.tabBarShouldBeVisible;
@@ -8125,13 +8124,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)safeSetAppearance:(NSAppearance *)appearance {
     if (_deferSetAppearance) {
-        RLog(@"Defer set appearance to %@ for %@", appearance.name, self);
+        RLog(@"Defer set appearance to %@", appearance.name);
         _haveDesiredAppearance = YES;
         [_desiredAppearance autorelease];
         _desiredAppearance = [appearance retain];
         return;
     }
-    RLog(@"Immediately set appearance to %@ for %@", appearance.name, self);
+    RLog(@"Immediately set appearance to %@", appearance.name);
     self.window.appearance = appearance;
 }
 
@@ -8966,12 +8965,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)windowPerformMiniaturize:(id)sender {
-    RLog(@"windowPerformMiniaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowPerformMiniaturize: %@", self);
     [[self window] performMiniaturize:sender];
 }
 
 - (void)windowDeminiaturize:(id)sender {
-    RLog(@"windowDeminiaturize: %@\n%@", self, [NSThread callStackSymbols]);
+    RLog(@"windowDeminiaturize: %@", self);
     [[self window] deminiaturize:sender];
 }
 

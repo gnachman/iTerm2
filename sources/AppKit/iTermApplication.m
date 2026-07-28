@@ -988,12 +988,12 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)activateIgnoringOtherApps:(BOOL)flag {
-    RLog(@"flag=%@\n%@", @(flag), [NSThread callStackSymbols]);
+    RLog(@"activateIgnoringOtherApps flag=%@", @(flag));
     [super activateIgnoringOtherApps:flag];
 }
 
 - (void)activate {
-    RLog(@"%@", [NSThread callStackSymbols]);
+    RLog(@"activate");
     [super activate];
 }
 

@@ -284,7 +284,7 @@
 
 - (PTYFontInfo *)computedBoldVersion {
     NSFont *boldFont = [self boldVersionOfFont:font_];
-    RLog(@"Bold version of %@ is %@", font_, boldFont);
+    DLog(@"Bold version of %@ is %@", font_, boldFont);
     if (boldFont && boldFont != font_) {
         return [PTYFontInfo fontInfoWithFont:boldFont];
     } else {
@@ -296,7 +296,7 @@
 - (PTYFontInfo *)computedItalicVersion {
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
     NSFont* italicFont = [fontManager convertFont:font_ toHaveTrait:NSItalicFontMask];
-    RLog(@"Italic version of %@ is %@", font_, italicFont);
+    DLog(@"Italic version of %@ is %@", font_, italicFont);
     if (italicFont && italicFont != font_) {
         return [PTYFontInfo fontInfoWithFont:italicFont];
     } else {

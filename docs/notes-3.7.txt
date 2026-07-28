@@ -779,6 +779,13 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Retrospective debug logging no longer fills its
+  in-memory ring so quickly on busy hosts. Several
+  high-frequency sites that logged large payloads
+  (window descriptions, view hierarchies, and stack
+  traces) were trimmed or moved back to regular
+  debug logging, extending how far back the ring
+  reaches.
 - Hiding a hotkey window on macOS 26 no longer
   briefly flashes background iTerm2 windows to
   the front. The window now waits for the
