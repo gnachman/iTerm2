@@ -247,6 +247,85 @@ extension AILiveHarness {
                       "model must recall the tool output from the blob-replayed tool_result; got: \(lastAgentText)")
     }
 
+    /// Second protocol/vendor: DeepSeek uses the chatCompletions wire shape (a
+    /// different splice path than Anthropic, and the strict tool-adjacency vendor
+    /// from issue #12883). Proves a real non-Anthropic vendor accepts the frozen
+    /// history spliced into its messages array across turns. No cache assertion
+    /// (DeepSeek has no prompt-cache pricing).
+    func test_chat_blobNativeReplay_multiTurnDeepSeekAccepted() throws {
+        guard let apiKey = Self.blobConfigValue("DEEPSEEK_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No DEEPSEEK_API_KEY")
+        }
+        let deepSeekModel =
+            AIMetadata.instance.models.first(where: { $0.vendor == .deepSeek && !$0.features.contains(.configurableThinking) })
+            ?? AIMetadata.instance.models.first(where: { $0.vendor == .deepSeek })
+        guard let deepSeekModel else { throw XCTSkip("No DeepSeek model in AIMetadata") }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live blob deepseek \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-ds-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: deepSeekModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runTurn(_ body: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done {
+                    done = true; ended.fulfill()
+                }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: deepSeekModel.name, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        let secret = "OTTER-NIMBUS-3390"
+        try runTurn("Remember this secret code exactly: \(secret). Reply with only: OK")
+        try runTurn("What is 3 + 4? Reply with only the digit.")
+        try runTurn("What was the secret code I gave you earlier? Reply with only the code.")
+
+        let db = broker.listModel.chatDatabase
+        XCTAssertEqual(db.blobCount(inChat: chatID), 3, "one blob per accepted round")
+
+        let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+            .flatMap { Self.blobText($0.content) } ?? ""
+        XCTAssertTrue(lastAgentText.contains(secret),
+                      "DeepSeek must recall the secret from blob-replayed history; got: \(lastAgentText)")
+
+        let blobs = db.blobs(inChat: chatID)
+        try XCTSkipIf(blobs.isEmpty, "no blobs; earlier assertion already failed")
+        let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([blobs[0]]), as: UTF8.self)
+        XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains(firstRoundInner) },
+                      "a later DeepSeek request must splice the first round's stored blob bytes verbatim")
+    }
+
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
 
     private static func blobConfigValue(_ key: String) -> String? {
