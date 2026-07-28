@@ -220,3 +220,69 @@ class ExtendURLSearchResultsTests: XCTestCase {
                       "Should detect pipe character as divider")
     }
 }
+
+// MARK: - Forward-walk URL extension
+
+/// Tests for -[iTermTextExtractor locatedStringByWalkingForwardFrom:characterSet:maxChars:],
+/// which extends a URL match past the fixed capture window so long URLs get fully linkified.
+/// Reuses MockDataSourceWithDividers above (plain strings, no dividers).
+class URLForwardWalkTests: XCTestCase {
+    // iTermTextExtractor holds its data source weakly, so keep the mocks alive for the test.
+    private var retainedSources: [MockDataSourceWithDividers] = []
+
+    private func urlLikeCharacterSet() -> CharacterSet {
+        var set = CharacterSet.alphanumerics
+        set.insert(charactersIn: "/:._-")
+        return set
+    }
+
+    private func extractor(_ lines: [String], width: Int32) -> iTermTextExtractor {
+        let source = MockDataSourceWithDividers(strings: lines, width: width)
+        retainedSources.append(source)
+        return iTermTextExtractor(dataSource: source)
+    }
+
+    // Walks from the end of a full (soft-wrapped) line onto the next line, stopping at a separator.
+    func testWalkAcrossSoftWrapStopsAtSeparator() {
+        let ex = extractor(["abcdefghij", "klmno pqr "], width: 10)
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 10000)
+        XCTAssertEqual(result.string, "klmno")
+    }
+
+    // The collected coordinates are 1:1 with the characters and land on the continuation line.
+    func testWalkRecordsCoordinates() {
+        let ex = extractor(["abcdefghij", "klmno pqr "], width: 10)
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 10000)
+        XCTAssertEqual(result.gridCoords.count, 5)
+        guard result.gridCoords.count == 5 else { return }
+        XCTAssertEqual(result.gridCoords.coord(at: 0).x, 0)
+        XCTAssertEqual(result.gridCoords.coord(at: 0).y, 1)
+        XCTAssertEqual(result.gridCoords.coord(at: 4).x, 4)
+    }
+
+    // maxChars caps the walk.
+    func testWalkStopsAtMaxChars() {
+        let ex = extractor(["abcdefghij", "klmnopqrst"], width: 10)
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 3)
+        XCTAssertEqual(result.string, "klm")
+    }
+
+    // An immediate separator, and running off the end of the buffer, both yield empty results.
+    func testWalkEmptyCases() {
+        let atSeparator = extractor(["abcdefghij", " klmnopqr "], width: 10)
+            .locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                           characterSet: urlLikeCharacterSet(), maxChars: 10000)
+        XCTAssertEqual(atSeparator.length, 0)
+
+        let atBufferEnd = extractor(["abcdefghij"], width: 10)
+            .locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                           characterSet: urlLikeCharacterSet(), maxChars: 10000)
+        XCTAssertEqual(atBufferEnd.length, 0)
+    }
+}

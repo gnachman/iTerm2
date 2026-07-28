@@ -117,6 +117,11 @@ Major New Features:
   tokens, or AI chat content. These could
   previously accumulate in memory with debug
   logging off.
+- ⌘-click now linkifies very long URLs in
+  full. Previously only the first couple
+  thousand characters were clickable; the
+  linkifier now scans onward to the next
+  separator so the whole URL is detected.
 - In AI chat orchestration mode, references
   to a session or workgroup now appear as a
   clickable link, marked with a terminal

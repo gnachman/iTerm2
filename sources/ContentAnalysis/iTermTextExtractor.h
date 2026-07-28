@@ -213,6 +213,15 @@ extern const NSInteger kLongMaximumWordLength;
                              continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
                            convertNullsToSpace:(BOOL)convertNullsToSpace;
 
+// Walks forward from `coord` (starting at its successor), collecting successive characters that are
+// members of `characterSet` into a located string with one grid coordinate per character. Stops at
+// the first character that is not a member, a null, a complex (non-simple) character, the end of the
+// buffer, or once `maxChars` characters have been collected. Used to extend a URL match past the
+// fixed capture window so very long URLs get fully linkified.
+- (iTermLocatedString *)locatedStringByWalkingForwardFrom:(VT100GridCoord)coord
+                                             characterSet:(NSCharacterSet *)characterSet
+                                                 maxChars:(int)maxChars;
+
 - (ScreenCharArray *)combinedLinesInRange:(NSRange)range;
 
 - (screen_char_t)characterAtVisualCoord:(VT100GridCoord)coord;

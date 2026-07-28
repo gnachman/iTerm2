@@ -1881,6 +1881,25 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     return locatedString;
 }
 
+- (iTermLocatedString *)locatedStringByWalkingForwardFrom:(VT100GridCoord)coord
+                                             characterSet:(NSCharacterSet *)characterSet
+                                                 maxChars:(int)maxChars {
+    iTermLocatedString *result = [[iTermLocatedString alloc] init];
+    VT100GridCoord previousCoord = coord;
+    VT100GridCoord next = [self successorOfCoord:coord];
+    while (result.length < maxChars && !VT100GridCoordEquals(next, previousCoord)) {
+        const screen_char_t c = [self characterAt:next];
+        const unichar ch = c.code;
+        if (c.code == 0 || c.complexChar || ![characterSet characterIsMember:ch]) {
+            break;
+        }
+        [result appendString:[NSString stringWithCharacters:&ch length:1] at:next];
+        previousCoord = next;
+        next = [self successorOfCoord:next];
+    }
+    return result;
+}
+
 // Convenience: callers that don't need metadata get a wrapper that ignores it.
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
                   supportBidi:(BOOL)supportBidi
