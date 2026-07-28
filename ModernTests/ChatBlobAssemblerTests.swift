@@ -214,6 +214,43 @@ final class ChatBlobAssemblerTests: XCTestCase {
                        "truncated blob replay must equal the live builder fed the truncated history")
     }
 
+    // MARK: - forkBlobPrefix (fork blob inheritance)
+
+    private func blob(_ chatID: String) -> ChatBlob {
+        ChatBlob(chatID: chatID, blobProtocol: .anthropic, role: .user, payload: Data("[]".utf8))
+    }
+
+    /// A fully-linked retained prefix returns exactly those source blobs, in order.
+    func test_forkBlobPrefix_cleanPrefix_returnsIt() {
+        let b0 = blob("A"), b1 = blob("A"), b2 = blob("A")
+        let source = [b0, b1, b2]
+        let retained = [b0.blobID.uuidString, b1.blobID.uuidString]  // fork keeps first two rounds
+        let result = ChatBlobAssembler.forkBlobPrefix(sourceBlobs: source, retainedBlobRefs: retained)
+        XCTAssertEqual(result?.map { $0.blobID }, [b0.blobID, b1.blobID])
+    }
+
+    /// No retained refs (nothing linked, e.g. a migration-era prefix) -> copy nothing.
+    func test_forkBlobPrefix_noRefs_returnsNil() {
+        XCTAssertNil(ChatBlobAssembler.forkBlobPrefix(sourceBlobs: [blob("A")], retainedBlobRefs: []))
+    }
+
+    /// Refs that don't match the source's blob prefix in order (a gap, or a reordered
+    /// / migration-unlinked head) must refuse rather than copy a misaligned set.
+    func test_forkBlobPrefix_mismatch_returnsNil() {
+        let b0 = blob("A"), b1 = blob("A")
+        // retained ref points at b1 as the FIRST retained round, but the source prefix
+        // starts with b0 -> not a clean prefix.
+        XCTAssertNil(ChatBlobAssembler.forkBlobPrefix(sourceBlobs: [b0, b1],
+                                                      retainedBlobRefs: [b1.blobID.uuidString]))
+    }
+
+    /// More retained refs than source blobs (impossible clean prefix) -> nil.
+    func test_forkBlobPrefix_moreRefsThanBlobs_returnsNil() {
+        let b0 = blob("A")
+        XCTAssertNil(ChatBlobAssembler.forkBlobPrefix(sourceBlobs: [b0],
+                                                      retainedBlobRefs: [b0.blobID.uuidString, UUID().uuidString]))
+    }
+
     // MARK: - blobReplayPlan (full send decision: gate + reduce + truncate + splice)
 
     private func capture3Rounds(_ db: ChatDatabase, model: AIMetadata.Model) -> [[LLM.Message]] {

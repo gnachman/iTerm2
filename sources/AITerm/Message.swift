@@ -694,6 +694,11 @@ struct Message: Codable {
         copy.uniqueID = UUID()
         uuidMap[uniqueID] = copy.uniqueID
         copy.content = content.clone(uuidMap, messages: messages)
+        // firstBlobRef references a blob in the SOURCE chat and is meaningless in the
+        // fork until the retained blobs are copied and it is remapped to the new
+        // blobID (see the fork path). Clear it so a fork that does not copy blobs
+        // leaves no dangling reference.
+        copy.firstBlobRef = nil
         return copy
     }
 }

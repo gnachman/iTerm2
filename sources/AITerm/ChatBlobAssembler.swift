@@ -288,6 +288,20 @@ enum ChatBlobAssembler {
         return blobs
     }
 
+    /// The source blobs a fork should copy for its retained message prefix, or nil to
+    /// copy nothing (fall back to re-migration). `retainedBlobRefs` are the
+    /// firstBlobRefs of the retained messages, in order. Returns the source blob
+    /// prefix ONLY when it matches those refs exactly and in order (a fully-linked
+    /// prefix); any gap or migration-era unlinked round yields nil, so the fork never
+    /// copies a blob set that would not match its display history.
+    static func forkBlobPrefix(sourceBlobs: [ChatBlob], retainedBlobRefs: [String]) -> [ChatBlob]? {
+        guard !retainedBlobRefs.isEmpty else { return nil }
+        guard retainedBlobRefs.count <= sourceBlobs.count else { return nil }
+        let prefix = Array(sourceBlobs.prefix(retainedBlobRefs.count))
+        guard prefix.map({ $0.blobID.uuidString }) == retainedBlobRefs else { return nil }
+        return prefix
+    }
+
     /// The full blob-native send decision for one turn, composing every piece: the
     /// safety gate, the message reduction, whole-round truncation, and the verbatim
     /// byte splice. Returns the REDUCED outgoing messages ([system] + the current
