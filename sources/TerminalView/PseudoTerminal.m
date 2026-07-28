@@ -3669,6 +3669,19 @@ ITERM_WEAKLY_REFERENCEABLE
     // a tmux controller) will be based on the tmux window's name provided by
     // the tab. This must be done after setting the tmux controller.
     [tab loadTitleFromSession];
+    // Apply the profile’s custom tab title to a newly created tmux window (a
+    // manual Command-T open). Because tmux tabs derive their title from the
+    // tmux window name, -setTitleOverride: renames the tmux window, so we only
+    // do this for windows the user just created, never for the windows that are
+    // loaded when attaching to an existing session (which would clobber their
+    // names).
+    if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
+        Profile *profile = [tmuxController profileForWindow:window];
+        if ([iTermProfilePreferences boolForKey:KEY_USE_CUSTOM_TAB_TITLE inProfile:profile]) {
+            [tab applyProfileCustomTabTitleForNewTmuxWindow:[iTermProfilePreferences stringForKey:KEY_CUSTOM_TAB_TITLE
+                                                                                        inProfile:profile]];
+        }
+    }
     [self endTmuxOriginatedResize];
     RLog(@"end loadTmuxLayout");
 }

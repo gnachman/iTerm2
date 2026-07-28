@@ -8,6 +8,7 @@
 #import "iTermArrangementKeys.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermFlexibleView.h"
 #import "iTermMoveTabToWindowBuiltInFunction.h"
 #import "iTermNotificationController.h"
@@ -5989,6 +5990,30 @@ typedef struct {
                                                  window:self.tmuxWindow];
         }
     }
+}
+
+- (void)applyProfileCustomTabTitleForNewTmuxWindow:(NSString *)template {
+    if (template.length == 0) {
+        return;
+    }
+    // The profile’s custom tab title is an interpolated-string template. Evaluate
+    // it up front against this tab’s scope so that -setTitleOverride:, which for a
+    // tmux tab renames the tmux window (a change shared with every attached
+    // client), gets a concrete value like the session name rather than the literal
+    // template text (e.g. “\(session.name)”). A zero timeout completes
+    // synchronously and makes no RPCs. Ignore an empty result so we never rename
+    // the tmux window to a blank name.
+    iTermExpressionEvaluator *evaluator =
+        [[iTermExpressionEvaluator alloc] initWithInterpolatedString:template
+                                                              scope:self.variablesScope];
+    [evaluator evaluateWithTimeout:0
+                sideEffectsAllowed:NO
+                        completion:^(iTermExpressionEvaluator *evaluator) {
+        NSString *evaluated = [NSString castFrom:evaluator.value];
+        if (evaluated.length > 0) {
+            [self setTitleOverride:evaluated];
+        }
+    }];
 }
 
 - (void)updateTitleOverrideFromFormatVariable {

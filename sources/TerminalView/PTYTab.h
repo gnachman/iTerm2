@@ -312,6 +312,11 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // after setting up tmux tabs.
 - (void)loadTitleFromSession;
 
+// Apply a profile's custom-tab-title template to a newly created tmux window's tab. The template is
+// evaluated against this tab's scope so the tmux window is renamed to a concrete value rather than
+// the literal template text. A blank result is ignored.
+- (void)applyProfileCustomTabTitleForNewTmuxWindow:(NSString *)template;
+
 // Update icons in tab.
 - (void)updateIcon;
 
