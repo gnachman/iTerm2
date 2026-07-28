@@ -372,8 +372,9 @@ Password Manager Improvements:
 - The Keeper adapter supports Nested Shared
   Folders as well as the classic vault.
   Both appear in one list, labeled (Classic)
-  or (Nested). Add, edit, and delete work
-  for either type.
+  or (Nested). Add, edit, and delete route by
+  vault type; Nested edit no longer stops on a
+  false classic success.
 - Password manager adapters can declare
   optional toggles in their handshake that the
   Add Account panel renders as checkboxes. The

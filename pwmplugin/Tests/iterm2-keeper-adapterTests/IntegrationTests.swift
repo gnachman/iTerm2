@@ -68,6 +68,9 @@ class H(BaseHTTPRequestHandler):
             req_id = self.path.rsplit("/", 1)[-1]
             cmd = REQUESTS.get(req_id, "")
             if cmd.startswith("nsf-list"):
+                if SCENARIO == "nsf_list_fail":
+                    _send(self, 200, {"error": "nsf-list unavailable", "status": "error"})
+                    return
                 nsf_data = [
                     {"Item Type": "Folder", "Parent/Folder": "",
                      "Title": "NewDemoFolder", "Type": "folder",
@@ -118,10 +121,18 @@ class H(BaseHTTPRequestHandler):
             if cmd.startswith("record-update ") or cmd.startswith("nsf-record-update "):
                 if SCENARIO == "set_password_error":
                     _send(self, 200, {"error": "password invalid"})
+                elif SCENARIO == "classic_update_false_success" and cmd.startswith("record-update "):
+                    # Mimic live Commander: classic update returns success for NSF UIDs without effect.
+                    _send(self, 200, {"status": "success", "message": ["no-op"]})
+                elif SCENARIO == "classic_update_false_success" and cmd.startswith("nsf-record-update "):
+                    _send(self, 200, {"status": "success", "message": "nested-updated"})
                 else:
                     _send(self, 200, {"status": "success"})
                 return
             if cmd.startswith("nsf-record-add "):
+                if SCENARIO == "nsf_add_fail":
+                    _send(self, 200, {"error": "Nested Shared Folder not available", "status": "error"})
+                    return
                 _send(self, 200, {
                     "command": "nsf-record-add",
                     "data": None,
@@ -133,6 +144,9 @@ class H(BaseHTTPRequestHandler):
                 _send(self, 200, {"status": "success", "data": {"record_uid": "NEWUID1234567890"}})
                 return
             if cmd.startswith("rm -f ") or cmd.startswith("nsf-rm "):
+                if SCENARIO == "classic_rm_nsf_error" and cmd.startswith("rm -f "):
+                    _send(self, 200, {"error": "out_of_sync: This object no longer exists.", "status": "error"})
+                    return
                 _send(self, 200, {"status": "success"})
                 return
             if cmd == "sync-down":
@@ -364,38 +378,62 @@ server.serve_forever()
     }
 
     func testSetPasswordOnNestedRecordUsesNsfRecordUpdate() throws {
-        let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"nested:UIDNSF1234567890"},"newPassword":"new-pass"}"#
+        // Bare UID + sourceLabel (production shape). Classic would return false success;
+        // nested-only routing must still succeed via nsf-record-update.
+        let server = try MockKeeperServer(scenario: "classic_update_false_success")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UIDNSF1234567890"},"sourceLabel":"Nested","newPassword":"new-pass"}"#
         let result = try run("set-password", input: input)
         XCTAssertEqual(result.status, 0, result.output)
     }
 
     func testSetPasswordOnClassicRecordUsesRecordUpdate() throws {
         let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"classic:UID1234567890123"},"newPassword":"new-pass"}"#
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
         let result = try run("set-password", input: input)
         XCTAssertEqual(result.status, 0, result.output)
     }
 
     func testDeleteAccountSuccess() throws {
         let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"}}"#
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic"}"#
         let result = try run("delete-account", input: input)
         XCTAssertEqual(result.status, 0, result.output)
     }
 
     func testDeleteAccountOnClassicRecordUsesRm() throws {
         let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"classic:UID1234567890123"}}"#
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic"}"#
         let result = try run("delete-account", input: input)
         XCTAssertEqual(result.status, 0, result.output)
     }
 
     func testDeleteAccountOnNestedRecordUsesNsfRm() throws {
-        let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"nested:UIDNSF1234567890"}}"#
+        let server = try MockKeeperServer(scenario: "classic_rm_nsf_error")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UIDNSF1234567890"},"sourceLabel":"Nested"}"#
         let result = try run("delete-account", input: input)
         XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testAddAccountFallsBackToClassicWhenNsfAddFails() throws {
+        let server = try MockKeeperServer(scenario: "nsf_add_fail")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
+        let result = try run("add-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NEWUID1234567890")
+    }
+
+    func testListAccountsWarnsWhenNsfListFails() throws {
+        let server = try MockKeeperServer(scenario: "nsf_list_fail")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        XCTAssertEqual(accounts.count, 2)
+        let warning = try XCTUnwrap(json["warning"] as? String)
+        XCTAssertTrue(warning.contains("Nested Shared Folder"), warning)
     }
 
     func testKeeperSyncDownSuccess() throws {
