@@ -125,6 +125,14 @@ extension AILiveHarness {
         XCTAssertTrue(lastAgentText.contains(secret),
                       "model must recall the secret from blob-replayed history; got: \(lastAgentText)")
 
+        // 2b) Real per-round token weights were captured by subtraction (#9): the
+        //     first round has no prior turn to diff against (nil -> byte estimate),
+        //     but the later rounds carry a real, positive delta-derived tokenCount.
+        let capturedBlobs = db.blobs(inChat: chatID)
+        XCTAssertTrue(capturedBlobs.dropFirst().allSatisfy { ($0.tokenCount ?? 0) > 0 },
+                      "rounds after the first must carry a real vendor-usage-derived tokenCount: "
+                      + "\(capturedBlobs.map { $0.tokenCount as Any })")
+
         // 3) Stored blob bytes are spliced VERBATIM into later requests (byte-stable
         //    prefix = the cache-fix invariant). The first round's inner bytes must
         //    appear in a later turn's request body.
