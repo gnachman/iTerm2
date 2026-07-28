@@ -411,6 +411,15 @@ struct LLMGeminiResponseParser: LLMResponseParser {
         }
 
         let candidates: [Candidate]
+        // Gemini reports token usage in usageMetadata; promptTokenCount is the whole
+        // input. Optional: some error/streaming chunks omit it.
+        var usageMetadata: UsageMetadata?
+
+        struct UsageMetadata: Codable {
+            var promptTokenCount: Int?
+        }
+
+        var promptTokens: Int? { usageMetadata?.promptTokenCount }
 
         struct Candidate: Codable {
             var content: Content?
@@ -453,6 +462,8 @@ struct LLMGeminiStreamingResponseParser: LLMStreamingResponseParser {
         var choiceMessages: [LLM.Message] {
             responseObject.choiceMessages
         }
+        // usageMetadata rides the final Gemini stream chunk; nil on earlier ones.
+        var promptTokens: Int? { responseObject.promptTokens }
     }
     mutating func parse(data: Data) throws -> LLM.AnyStreamingResponse? {
         let decoder = JSONDecoder()

@@ -409,6 +409,8 @@ struct LLMModernResponseParser: LLMResponseParser {
             guard let first = choices.first else { return [] }
             return [first.message.llmMessage]
         }
+
+        var promptTokens: Int? { usage?.prompt_tokens }
     }
 
     var parsedResponse: ModernResponse?

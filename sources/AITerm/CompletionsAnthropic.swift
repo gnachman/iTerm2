@@ -584,7 +584,17 @@ struct AnthropicResponseParser: LLMResponseParser {
         struct AnthropicUsage: Codable {
             let input_tokens: Int
             let output_tokens: Int
+            // Anthropic reports input_tokens as the NON-cached input only; the cached
+            // portion is billed/counted separately. The true prompt size is the sum.
+            let cache_read_input_tokens: Int?
+            let cache_creation_input_tokens: Int?
+
+            var totalInputTokens: Int {
+                input_tokens + (cache_read_input_tokens ?? 0) + (cache_creation_input_tokens ?? 0)
+            }
         }
+
+        var promptTokens: Int? { usage.totalInputTokens }
 
         var choiceMessages: [LLM.Message] {
             // Anthropic returns one assistant turn whose `content` array can
@@ -668,7 +678,18 @@ struct AnthropicStreamingResponseParser: LLMStreamingResponseParser {
         struct AnthropicUsage: Codable {
             let input_tokens: Int
             let output_tokens: Int
+            // input_tokens is the non-cached input only (see the non-streaming usage).
+            let cache_read_input_tokens: Int?
+            let cache_creation_input_tokens: Int?
+
+            var totalInputTokens: Int {
+                input_tokens + (cache_read_input_tokens ?? 0) + (cache_creation_input_tokens ?? 0)
+            }
         }
+
+        // Anthropic reports input usage on the message_start event (the `message`
+        // envelope); nil on every later delta/stop event.
+        var promptTokens: Int? { message?.usage.totalInputTokens }
 
         struct StreamingContentBlock: Codable {
             let type: String
