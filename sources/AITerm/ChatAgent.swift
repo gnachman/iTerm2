@@ -868,6 +868,24 @@ class ChatAgent {
         return consent == .unknown && !alreadyAskedThisSession
     }
 
+    /// Classify an error as an unusable Responses-API `previous_response_id`: the id
+    /// can expire on the server (retention), the referenced response may have had
+    /// `store` off, or it may have been deleted. That is NOT a real failure - the
+    /// turn should be retried as a full stateless replay from blobs with the id
+    /// omitted. Deliberately narrow: it must mention the PREVIOUS RESPONSE and a
+    /// not-usable reason, so a generic 4xx (rate limit, bad key, some other
+    /// not-found) is never misread as an expiry and silently retried.
+    nonisolated static func isUnusablePreviousResponseIDError(_ error: Error) -> Bool {
+        let text = "\(error)".lowercased()
+        let mentionsPreviousResponse =
+            text.contains("previous_response_id") || text.contains("previous response")
+        guard mentionsPreviousResponse else { return false }
+        return text.contains("not found")
+            || text.contains("expired")
+            || text.contains("does not exist")
+            || text.contains("no longer exists")
+    }
+
     /// Defang our control-tag delimiters in untrusted terminal content so it cannot
     /// break out of the <visible-screen> / <terminal-state> wrappers and inject
     /// trusted top-level context (prompt injection): terminal output that contains a
