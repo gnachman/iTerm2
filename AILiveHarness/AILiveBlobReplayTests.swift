@@ -511,6 +511,104 @@ extension AILiveHarness {
                       "model must recall the seeded name from the full replay; got: \(lastAgentText)")
     }
 
+    /// Phase 5 (migration, end-to-end): a legacy chat that predates blobs (seeded
+    /// history, blobProtocol nil) migrates on its FIRST turn - capture reconstructs
+    /// the whole history via translate() and freezes every round - then is blob-native
+    /// on the next turn. Asserts the seeded round is frozen (blobCount covers it), the
+    /// next turn splices the migrated seed round's bytes verbatim, and the model
+    /// recalls the seeded fact across the migration.
+    func test_chat_legacyChatMigratesToBlobsOnFirstTurn() throws {
+        guard let apiKey = Self.blobConfigValue("ANTHROPIC_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No ANTHROPIC_API_KEY")
+        }
+        let anthropicModel =
+            AIMetadata.instance.models.first(where: { $0.vendor == .anthropic && !$0.name.lowercased().contains("haiku") })
+            ?? AIMetadata.instance.models.first(where: { $0.vendor == .anthropic })
+        guard let anthropicModel else { throw XCTSkip("No Anthropic model in AIMetadata") }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        // A legacy chat: seeded prior exchange, NO blobs. This is the shape a chat
+        // reloaded from before the blob feature has.
+        let secret = "MARMOT-VECTOR-6021"
+        let seedUser = Message(chatID: "seed", author: .user,
+                               content: .markdown("Please remember this code exactly: \(secret)."),
+                               sentDate: Date(), uniqueID: UUID())
+        let seedAssistant = Message(chatID: "seed", author: .agent,
+                                    content: .markdown("Got it, I will remember \(secret)."),
+                                    sentDate: Date(), uniqueID: UUID())
+
+        let chatID = try broker.create(
+            chatWithTitle: "live legacy migration \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-migrate-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [seedUser, seedAssistant])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: anthropicModel.name)
+
+        let db = broker.listModel.chatDatabase
+        XCTAssertEqual(db.blobCount(inChat: chatID), 0, "a seeded legacy chat starts with no blobs")
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runTurn(_ body: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done { done = true; ended.fulfill() }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: anthropicModel.name, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        // Turn 1 migrates: the seeded round + this turn's round are both frozen.
+        try runTurn("What is 8 + 9? Reply with only the number.")
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+        XCTAssertGreaterThanOrEqual(db.blobCount(inChat: chatID), 2,
+                                    "first turn must migrate the seeded round AND freeze this turn's round")
+
+        // The seeded (round-0) blob must carry the secret it migrated.
+        let migratedFirstRound = String(decoding: db.blobs(inChat: chatID)[0].payload, as: UTF8.self)
+        XCTAssertTrue(migratedFirstRound.contains(secret), "the migrated first round must encode the seeded content")
+
+        // Turn 2 is blob-native: it splices the migrated seed round's bytes verbatim.
+        let requestsBeforeTurn2 = wire.requests.count
+        try runTurn("What was the code I gave you at the start? Reply with only the code.")
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+        let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([db.blobs(inChat: chatID)[0]]), as: UTF8.self)
+        XCTAssertTrue(wire.requests[requestsBeforeTurn2...].contains { $0.contains(firstRoundInner) },
+                      "turn 2 must splice the MIGRATED first round's blob bytes verbatim (now blob-native)")
+
+        // The model recalls the seeded secret across the migration.
+        let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+            .flatMap { Self.blobText($0.content) } ?? ""
+        XCTAssertTrue(lastAgentText.contains(secret),
+                      "model must recall the seeded secret after migration; got: \(lastAgentText)")
+    }
+
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
 
     private static func blobConfigValue(_ key: String) -> String? {
