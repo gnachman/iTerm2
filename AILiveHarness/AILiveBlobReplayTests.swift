@@ -609,6 +609,90 @@ extension AILiveHarness {
                       "model must recall the seeded secret after migration; got: \(lastAgentText)")
     }
 
+    /// A model switch WITHIN a protocol (two Anthropic models) keeps the existing
+    /// blobs (they are protocol-keyed, not model-keyed) and replays them unchanged
+    /// under the new model. Turn 1 freezes a round on model A; turn 2 runs on model B
+    /// and must splice turn 1's blob verbatim, be accepted, and recall the fact -
+    /// proving blobs frozen under one model replay fine under another of the same
+    /// vendor (no re-freeze, unlike a cross-PROTOCOL switch).
+    func test_chat_modelSwitchWithinProtocol_keepsBlobs() throws {
+        guard let apiKey = Self.blobConfigValue("ANTHROPIC_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No ANTHROPIC_API_KEY")
+        }
+        let anthropicModels = AIMetadata.instance.models.filter { $0.vendor == .anthropic }
+        guard anthropicModels.count >= 2 else {
+            throw XCTSkip("Need two Anthropic models for a within-protocol switch")
+        }
+        let modelA = anthropicModels[0]
+        let modelB = anthropicModels[1]
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live model switch \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-switch-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: modelA.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runTurn(_ body: String, model: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done { done = true; ended.fulfill() }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: model, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        let secret = "BADGER-PRISM-4415"
+        try runTurn("Remember this code exactly: \(secret). Reply with only: OK", model: modelA.name)
+        let requestsBeforeSwitch = wire.requests.count
+        try runTurn("What was the code? Reply with only the code.", model: modelB.name)
+
+        let db = broker.listModel.chatDatabase
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+
+        // Both turns accepted; the blobs were NOT re-frozen on the model switch (still
+        // one protocol), so the sequence just grew.
+        XCTAssertEqual(db.blobCount(inChat: chatID), 2, "a within-protocol model switch must not re-freeze")
+
+        // Turn 2 (model B) spliced turn 1's blob (frozen under model A) verbatim.
+        let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([db.blobs(inChat: chatID)[0]]), as: UTF8.self)
+        XCTAssertTrue(wire.requests[requestsBeforeSwitch...].contains { $0.contains(firstRoundInner) },
+                      "model B must replay model A's blob verbatim")
+
+        let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+            .flatMap { Self.blobText($0.content) } ?? ""
+        XCTAssertTrue(lastAgentText.contains(secret),
+                      "model B must recall the fact from model A's blob-replayed round; got: \(lastAgentText)")
+    }
+
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
 
     private static func blobConfigValue(_ key: String) -> String? {
