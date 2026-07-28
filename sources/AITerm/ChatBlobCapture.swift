@@ -27,6 +27,20 @@ enum ChatBlobCapture {
     /// agent/tool item until the next user message). This is the unit one ChatBlob
     /// freezes. A leading non-user message (should not happen for a real chat)
     /// opens the first round so nothing is dropped.
+    /// The newest round's real token weight, by subtraction: this turn's total input
+    /// tokens minus the previous captured turn's. The envelope (system + tools +
+    /// volatile) is present in both and cancels, leaving the round's own contribution.
+    /// nil (caller byte-estimates) when either turn reported no vendor usage. Clamped
+    /// at 0 so an edit/truncation that SHRANK the prompt between turns can't produce a
+    /// negative weight.
+    static func roundTokenWeight(thisTurnPromptTokens: Int?,
+                                 previousTurnPromptTokens: Int?) -> Int? {
+        guard let this = thisTurnPromptTokens, let previous = previousTurnPromptTokens else {
+            return nil
+        }
+        return max(0, this - previous)
+    }
+
     static func rounds(from messages: [LLM.Message]) -> [[LLM.Message]] {
         var result: [[LLM.Message]] = []
         for message in messages {
@@ -50,19 +64,26 @@ enum ChatBlobCapture {
     /// also violates the append-only assumption captureNewRounds relies on. That
     /// must be handled where the history is truncated (ChatListModel.delete), by
     /// clearing the chat's blobs so the next capture re-freezes the edited history.
+    /// `newRoundTokenCount` is the real token weight of the round being frozen this
+    /// turn (a turn-over-turn usage delta from the chat layer), applied to the blob
+    /// ONLY when exactly one new round is appended (the incremental case it describes);
+    /// a multi-round migration capture cannot attribute one turn's usage across many
+    /// rounds, so those fall back to the byte estimate at read time.
     @discardableResult
     static func captureTurn(chatID: String,
                             allMessages: [LLM.Message],
                             api: iTermAIAPI,
                             modelName: String?,
                             hostedTools: HostedTools,
+                            newRoundTokenCount: Int? = nil,
                             database: ChatDatabase) -> Int {
         if database.blobCount(inChat: chatID) > 0,
            database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
             database.replaceBlobs(inChat: chatID, with: [])
         }
         return captureNewRounds(chatID: chatID, allMessages: allMessages, api: api,
-                                modelName: modelName, hostedTools: hostedTools, database: database)
+                                modelName: modelName, hostedTools: hostedTools,
+                                newRoundTokenCount: newRoundTokenCount, database: database)
     }
 
     /// Freeze any rounds of `allMessages` not yet stored as blobs for `chatID`,
@@ -94,6 +115,7 @@ enum ChatBlobCapture {
                                  api: iTermAIAPI,
                                  modelName: String?,
                                  hostedTools: HostedTools,
+                                 newRoundTokenCount: Int? = nil,
                                  database: ChatDatabase) -> Int {
         // Row count (not decoded-blob count): O(1)-ish and robust to rows this
         // build can't decode (a newer protocol), which would otherwise undercount
@@ -110,6 +132,12 @@ enum ChatBlobCapture {
         guard allRounds.count > existing else {
             return 0
         }
+        // The real per-round token weight (newRoundTokenCount) describes ONE turn's
+        // round, so credit it only when this capture appends exactly one round (the
+        // incremental case). A multi-round migration capture can't split one turn's
+        // usage across rounds, so those store nil and byte-estimate at read time.
+        let newRoundCount = allRounds.count - existing
+        let tokenCountForSingleRound = newRoundCount == 1 ? newRoundTokenCount : nil
         var appended = 0
         for round in allRounds[existing...] {
             let payload: Data
@@ -128,7 +156,8 @@ enum ChatBlobCapture {
                                 blobProtocol: api,
                                 role: .user,  // a round leads with a user message
                                 payload: payload,
-                                responseID: responseID)
+                                responseID: responseID,
+                                tokenCount: tokenCountForSingleRound)
             if database.appendBlob(blob) != nil {
                 appended += 1
             } else {

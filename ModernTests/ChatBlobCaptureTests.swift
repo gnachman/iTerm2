@@ -25,6 +25,30 @@ final class ChatBlobCaptureTests: XCTestCase {
                     functionCallID: LLM.Message.FunctionCallID(callID: callID, itemID: ""))
     }
 
+    // MARK: - roundTokenWeight (turn-over-turn usage delta)
+
+    func test_roundTokenWeight_delta() {
+        XCTAssertEqual(ChatBlobCapture.roundTokenWeight(thisTurnPromptTokens: 8600,
+                                                        previousTurnPromptTokens: 8000), 600)
+    }
+
+    func test_roundTokenWeight_firstTurn_nilPrevious_isNil() {
+        XCTAssertNil(ChatBlobCapture.roundTokenWeight(thisTurnPromptTokens: 8000,
+                                                      previousTurnPromptTokens: nil))
+    }
+
+    func test_roundTokenWeight_noUsageThisTurn_isNil() {
+        XCTAssertNil(ChatBlobCapture.roundTokenWeight(thisTurnPromptTokens: nil,
+                                                      previousTurnPromptTokens: 8000))
+    }
+
+    /// A shrinking prompt (an edit/truncation dropped history between turns) must not
+    /// yield a negative weight.
+    func test_roundTokenWeight_shrunkPrompt_clampsToZero() {
+        XCTAssertEqual(ChatBlobCapture.roundTokenWeight(thisTurnPromptTokens: 5000,
+                                                        previousTurnPromptTokens: 8000), 0)
+    }
+
     // MARK: - rounds(from:)
 
     func testRounds_empty() {
@@ -201,6 +225,28 @@ final class ChatBlobCaptureTests: XCTestCase {
         XCTAssertEqual(blobs.count, 3)
         XCTAssertTrue(blobs.allSatisfy { $0.blobProtocol == .anthropic },
                       "every blob is now the new protocol; none of the old chatCompletions blobs remain")
+    }
+
+    /// The real per-round token count is credited ONLY when exactly one new round is
+    /// frozen (the incremental case it describes). A multi-round migration capture
+    /// can't split one turn's usage across rounds, so those store nil (byte estimate).
+    func testCapture_creditsTokenCount_onlyOnSingleRound() throws {
+        let db = try makeTempDB()
+        // Incremental: one new round -> the count is stored on it.
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: [user("q1"), asst("a1")],
+                                         api: .chatCompletions, modelName: nil, hostedTools: HostedTools(),
+                                         newRoundTokenCount: 600, database: db)
+        XCTAssertEqual(db.blobs(inChat: "A").last?.tokenCount, 600)
+
+        // Migration: multiple new rounds at once -> none is credited (all nil).
+        let db2 = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "B",
+                                         allMessages: [user("q1"), asst("a1"), user("q2"), asst("a2")],
+                                         api: .chatCompletions, modelName: nil, hostedTools: HostedTools(),
+                                         newRoundTokenCount: 600, database: db2)
+        XCTAssertEqual(db2.blobs(inChat: "B").count, 2)
+        XCTAssertTrue(db2.blobs(inChat: "B").allSatisfy { $0.tokenCount == nil },
+                      "a multi-round migration capture must not credit one turn's usage to a round")
     }
 
     func testCapture_recordsResponseID_fromRoundTail() throws {

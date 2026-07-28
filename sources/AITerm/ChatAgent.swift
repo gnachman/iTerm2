@@ -123,6 +123,13 @@ class ChatAgent {
     // unchanged screen is sent as a short marker instead of resending the grid.
     private var lastAutoProvidedScreen: String?
 
+    // The vendor's reported total input tokens from the previous captured turn, used
+    // to derive the newest round's real token weight by subtraction (this turn minus
+    // last turn; the envelope cancels between adjacent turns). In-memory only: after
+    // a restart the first captured round falls back to the byte estimate, then real
+    // deltas resume. nil until the first turn with usage completes.
+    private var previousTurnPromptTokens: Int?
+
     // Optional developer-only console trace of chat-agent traffic.
     // Gated on the advanced setting "aiChatVerboseConsoleLogging";
     // does nothing when off.
@@ -1327,6 +1334,9 @@ class ChatAgent {
                                   streaming streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?,
                                   didRetryExpiry: Bool,
                                   completion: @escaping (Message?) -> ()) {
+        // Read the turn's reported input tokens NOW, before the success branch swaps
+        // in the amended copy (which has a fresh controller with no usage recorded).
+        let turnPromptTokens = conversation.lastPromptTokens
         if case .failure(let error) = result,
            !didRetryExpiry,
            conversation.controller.previousResponseID != nil,
@@ -1408,7 +1418,8 @@ class ChatAgent {
            let captureAPI {
             self.captureBlobsForCompletedTurn(api: captureAPI,
                                               modelName: captureModelName,
-                                              hostedTools: captureHostedTools)
+                                              hostedTools: captureHostedTools,
+                                              promptTokens: turnPromptTokens)
         }
     }
 
@@ -1422,7 +1433,21 @@ class ChatAgent {
     /// protocol first (blobs are not replayable cross-protocol).
     private func captureBlobsForCompletedTurn(api: iTermAIAPI,
                                               modelName: String?,
-                                              hostedTools: HostedTools) {
+                                              hostedTools: HostedTools,
+                                              promptTokens: Int?) {
+        // Real per-round weight for THIS turn's round: the turn-over-turn input-token
+        // delta (this turn minus the last captured turn). The envelope (system, tools,
+        // volatile) cancels between adjacent turns, so the delta is the round's own
+        // contribution. nil (byte estimate at read time) when either turn reported no
+        // usage. max(0, ...) guards a shrinking prompt (an edit/truncation between
+        // turns). Advance the watermark whenever this turn reported usage.
+        let newRoundTokenCount = ChatBlobCapture.roundTokenWeight(
+            thisTurnPromptTokens: promptTokens,
+            previousTurnPromptTokens: previousTurnPromptTokens)
+        if let promptTokens {
+            previousTurnPromptTokens = promptTokens
+        }
+
         // Use the broker's list model (and its database) so capture writes to the
         // SAME store the turn used -- the real singleton in production, a temp DB
         // under test -- rather than reaching for the ChatDatabase.instance singleton.
@@ -1436,6 +1461,7 @@ class ChatAgent {
                                                    api: api,
                                                    modelName: modelName,
                                                    hostedTools: hostedTools,
+                                                   newRoundTokenCount: newRoundTokenCount,
                                                    database: listModel.chatDatabase)
         if appended > 0 {
             try? listModel.setBlobProtocol(Int(api.rawValue), forChatID: chatID)

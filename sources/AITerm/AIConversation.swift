@@ -208,6 +208,13 @@ struct AIConversation {
         }
     }
 
+    // The vendor's reported total input tokens for the turn just completed (nil if no
+    // usage). Read by the chat layer at turn end (before it swaps in the amended copy,
+    // which has a fresh controller) to derive the round's real token weight.
+    var lastPromptTokens: Int? {
+        controller.lastPromptTokens
+    }
+
     var systemMessageDirty = false
 
     var systemMessage: String? {
@@ -369,6 +376,9 @@ struct AIConversation {
         // vendor/model emits no reasoning would inherit the prior turn's text.
         delegate.pendingReasoning = nil
         let controller = self.controller
+        // Fresh per turn: a turn whose vendor reports no usage must not read a stale
+        // prior-turn token count when the chat layer captures the round at turn end.
+        controller.lastPromptTokens = nil
 
         // Set providerOverride + previousResponseID BEFORE deciding what to send, so
         // the delta-mode check, the blob-replay decision, and BOTH send sites below

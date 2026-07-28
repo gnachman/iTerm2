@@ -258,6 +258,16 @@ class AITermController {
     // where `messages` carries the whole conversation.
     var frozenHistoryElements: Data?
 
+    // The vendor's reported total input (prompt) tokens from the most recent
+    // response of the current turn (kept as the last non-nil value across a stream,
+    // since usage rides a single event). Read by the chat layer at turn end to derive
+    // the new round's real token weight for truncation. nil when no vendor usage was
+    // seen this turn. Reset to nil at turn start by AIConversation.complete so a turn
+    // whose vendor reports no usage does not read a stale prior-turn value; each
+    // request's parse updates it (last non-nil wins, and the turn's final request has
+    // the fullest input footprint).
+    var lastPromptTokens: Int?
+
     func define(functions: [LLM.AnyFunction]) {
         if llmProvider?.model.features.contains(.functionCalling) != true {
             return
@@ -958,6 +968,11 @@ class AITermController {
                             DLog("Stream finished")
                             break
                         }
+                        // Capture usage even on an "ignore" event (e.g. Anthropic's
+                        // message_start carries input usage but no content).
+                        if let promptTokens = response.promptTokens {
+                            lastPromptTokens = promptTokens
+                        }
                         if !response.ignore {
                             if let id = response.newlyCreatedResponseID {
                                 previousResponseID = id
@@ -1096,6 +1111,9 @@ class AITermController {
             }
             if let id = response.newlyCreatedResponseID {
                 previousResponseID = id
+            }
+            if let promptTokens = response.promptTokens {
+                lastPromptTokens = promptTokens
             }
             // Parsers now guarantee at most one Message per response: a single
             // assistant turn whose body is `.text`, `.functionCall`, or a
