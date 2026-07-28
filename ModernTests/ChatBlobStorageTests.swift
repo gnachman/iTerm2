@@ -292,6 +292,18 @@ final class ChatBlobStorageTests: XCTestCase {
                        "replaceBlobs must not touch other chats")
     }
 
+    func testLastBlobID_returnsNewestBySeq_orNil() throws {
+        let db = try makeTempDB()
+        XCTAssertNil(db.lastBlobID(inChat: "A"), "no blobs -> nil")
+        let a = UUID(), b = UUID()
+        db.appendBlob(ChatBlob(blobID: a, chatID: "A", blobProtocol: .anthropic, role: .user,
+                               payload: Data("r0".utf8)))
+        db.appendBlob(ChatBlob(blobID: b, chatID: "A", blobProtocol: .anthropic, role: .user,
+                               payload: Data("r1".utf8)))
+        XCTAssertEqual(db.lastBlobID(inChat: "A"), b, "newest by seq")
+        XCTAssertNil(db.lastBlobID(inChat: "other"))
+    }
+
     // MARK: - Chat.blobProtocol column
 
     private static let preBlobChatColumns = [

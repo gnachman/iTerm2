@@ -1473,7 +1473,7 @@ class ChatAgent {
         // just-frozen blob and this turn's user message; a multi-round migration
         // capture leaves firstBlobRef nil (the fork falls back to re-migration for the
         // un-linked prefix).
-        if appended == 1, let newestBlobID = listModel.chatDatabase.blobs(inChat: chatID).last?.blobID {
+        if appended == 1, let newestBlobID = listModel.chatDatabase.lastBlobID(inChat: chatID) {
             listModel.setFirstBlobRef(newestBlobID.uuidString, forMessageID: userMessageID, inChat: chatID)
         }
     }

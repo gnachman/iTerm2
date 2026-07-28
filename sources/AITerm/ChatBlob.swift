@@ -173,6 +173,18 @@ struct ChatBlob: iTermDatabaseInitializable {
          [chatID])
     }
 
+    /// The blobID of a chat's NEWEST blob (highest seq), read WITHOUT decoding any
+    /// payload. Nil if the chat has no blobs. Used by capture to link the just-frozen
+    /// round to its message, avoiding an O(rounds) full-payload decode just to recover
+    /// one UUID.
+    static func lastBlobIDQuery(forChatID chatID: String) -> (String, [Any?]) {
+        ("""
+         select \(Columns.blobID.rawValue) from ChatBlob
+         where \(Columns.chatID.rawValue)=? order by \(Columns.seq.rawValue) desc limit 1
+         """,
+         [chatID])
+    }
+
     /// Delete a chat's blobs (used when a protocol switch forces a re-freeze, and
     /// on chat deletion). Returns the statement; the caller runs it in a
     /// transaction with the re-blob inserts so a switch is atomic.

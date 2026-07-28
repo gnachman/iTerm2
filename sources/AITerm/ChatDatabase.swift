@@ -570,6 +570,23 @@ class ChatDatabase {
         return nil
     }
 
+    /// The blobID of a chat's newest blob (highest seq), or nil if it has none. Reads
+    /// ONE row / ONE column - no payload decode - so capture can recover the
+    /// just-appended blob's id without loading and decoding every round.
+    func lastBlobID(inChat chatID: String) -> UUID? {
+        let (sql, args) = ChatBlob.lastBlobIDQuery(forChatID: chatID)
+        do {
+            guard let rs = try db.executeQuery(sql, withArguments: args) else { return nil }
+            defer { rs.close() }
+            if rs.next() {
+                return rs.string(forColumn: ChatBlob.Columns.blobID.rawValue).flatMap { UUID(uuidString: $0) }
+            }
+        } catch {
+            RLog("lastBlobID failed for chat \(chatID): \(error)")
+        }
+        return nil
+    }
+
     /// A chat's blobs oldest-first (splice order). Empty on a read error or an
     /// empty/blobless chat; the caller distinguishes "blobless" via
     /// Chat.blobProtocol (nil = legacy, needs migration) rather than an empty read.
