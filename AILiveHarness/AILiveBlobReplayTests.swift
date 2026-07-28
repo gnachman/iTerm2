@@ -147,6 +147,106 @@ extension AILiveHarness {
                              "prompt cache must be READ on a later turn; blob replay must not churn the cached prefix")
     }
 
+    /// A tool-using round replayed from a blob. Turn 1 runs a tool (one round =
+    /// user + assistant [text, tool_use] + tool_result + final assistant, all in ONE
+    /// blob). Turn 2 replays that round purely from the blob; Anthropic must accept
+    /// the spliced tool_use/tool_result pairing (a broken pairing 400s) and the model
+    /// must recall what the tool did. This is the mutator-B / tool-adjacency proof the
+    /// offline byte-tests can't give (only a real vendor enforces the pairing).
+    func test_chat_blobNativeReplay_toolRoundReplaysAndIsAccepted() throws {
+        guard let apiKey = Self.blobConfigValue("ANTHROPIC_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No ANTHROPIC_API_KEY")
+        }
+        let anthropicModel =
+            AIMetadata.instance.models.first(where: { $0.vendor == .anthropic && !$0.name.lowercased().contains("haiku") })
+            ?? AIMetadata.instance.models.first(where: { $0.vendor == .anthropic })
+        guard let anthropicModel, anthropicModel.features.contains(.functionCalling) else {
+            throw XCTSkip("No function-calling Anthropic model in AIMetadata")
+        }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        // Grant Run Commands so the execute_command tool is offered.
+        let perms = #"[{"guid":"blob-tool-test","category":"Run Commands","chatID":"blob-tool-test"},"always"]"#
+        let chatID = try broker.create(
+            chatWithTitle: "live blob tool replay \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-tool-test",
+            browserSessionGuid: nil,
+            permissions: perms,
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: anthropicModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        // Auto-answer the tool with a distinctive marker the model can echo back.
+        let toolMarker = "TOOLOUT-ZEPHYR-5107"
+        let responder = BlobFakeToolResponder(broker: broker, chatID: chatID,
+                                              output: "command output: \(toolMarker)")
+        defer { responder.shutdown() }
+
+        func runTurn(_ body: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done {
+                    done = true; ended.fulfill()
+                }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: anthropicModel.name, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        try runTurn("Use the execute_command tool to run a command (any command is fine), then tell me you did it. Reply OK when done.")
+        try runTurn("What was in the output of the command you ran earlier? Reply with just the marker string from it.")
+
+        let db = broker.listModel.chatDatabase
+
+        // Both turns accepted (a rejected turn writes no blob). Turn 2 only succeeds
+        // if the tool round replayed from turn 1's blob was accepted by Anthropic.
+        XCTAssertEqual(db.blobCount(inChat: chatID), 2,
+                       "both rounds captured; turn 2 replaying the tool round from a blob must be accepted")
+
+        // Turn 1's blob is the tool round: it must carry the assistant tool_use block
+        // AND the tool_result, together (the pairing the vendor enforces).
+        let blobs = db.blobs(inChat: chatID)
+        try XCTSkipIf(blobs.isEmpty, "no blobs; earlier assertion already failed")
+        let firstRound = String(decoding: blobs[0].payload, as: UTF8.self)
+        XCTAssertTrue(firstRound.contains("tool_use"), "the tool round's blob must carry the assistant tool_use block")
+        XCTAssertTrue(firstRound.contains("tool_result"), "the tool round's blob must carry the tool_result")
+
+        // The tool round's stored bytes are spliced verbatim into turn 2's request.
+        let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([blobs[0]]), as: UTF8.self)
+        XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains(firstRoundInner) },
+                      "turn 2 must splice the tool round's stored blob bytes verbatim")
+
+        // The model recalled the tool output, so the replayed tool_result reached it.
+        let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+            .flatMap { Self.blobText($0.content) } ?? ""
+        XCTAssertTrue(lastAgentText.contains(toolMarker),
+                      "model must recall the tool output from the blob-replayed tool_result; got: \(lastAgentText)")
+    }
+
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
 
     private static func blobConfigValue(_ key: String) -> String? {
@@ -200,4 +300,47 @@ private final class BlobTestRegistrationProvider: AIRegistrationProvider {
 private final class BlobWireCapture {
     var requests: [String] = []
     var responses: [String] = []
+}
+
+/// Broker-side tool runner: answers each execute_command request with a fixed
+/// output, round-tripping the function-call id so the reconstructed tool_result
+/// is well-formed. One response per request (a replayed round can re-invoke).
+@MainActor
+private final class BlobFakeToolResponder {
+    private let broker: ChatBroker
+    private let chatID: String
+    private let output: String
+    private var subscription: ChatBroker.Subscription?
+    private var respondedRequestIDs = Set<UUID>()
+
+    init(broker: ChatBroker, chatID: String, output: String) {
+        self.broker = broker
+        self.chatID = chatID
+        self.output = output
+        subscription = broker.subscribe(chatID: chatID, registrationProvider: nil) { [weak self] update in
+            self?.handle(update)
+        }
+    }
+
+    func shutdown() {
+        subscription?.unsubscribe()
+        subscription = nil
+    }
+
+    private func handle(_ update: ChatBroker.Update) {
+        guard case .delivery(let message, _, _) = update else { return }
+        guard case .remoteCommandRequest(let payload, _) = message.content else { return }
+        guard case .classic(let cmd) = payload else { return }
+        guard respondedRequestIDs.insert(message.uniqueID).inserted else { return }
+        let response = Message(
+            chatID: chatID,
+            author: .user,
+            content: .remoteCommandResponse(.success(output),
+                                            message.uniqueID,
+                                            cmd.content.functionName,
+                                            cmd.llmMessage.functionCallID),
+            sentDate: Date(),
+            uniqueID: UUID())
+        try? broker.publish(message: response, toChatID: chatID, partial: false)
+    }
 }
