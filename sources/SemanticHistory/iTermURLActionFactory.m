@@ -109,6 +109,46 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     return factory;
 }
 
++ (NSURL *)openableURLAtCoord:(VT100GridCoord)coord
+          respectHardNewlines:(BOOL)respectHardNewlines
+                    extractor:(iTermTextExtractor *)extractor {
+    const NSInteger maxChars = [iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix];
+    iTermLocatedString *locatedPrefix =
+        [extractor wrappedLocatedStringAt:coord
+                                  forward:NO
+                      respectHardNewlines:respectHardNewlines
+                                 maxChars:maxChars
+                        continuationChars:[NSMutableIndexSet indexSet]
+                      convertNullsToSpace:NO];
+    iTermLocatedString *locatedSuffix =
+        [extractor wrappedLocatedStringAt:coord
+                                  forward:YES
+                      respectHardNewlines:respectHardNewlines
+                                 maxChars:maxChars
+                        continuationChars:[NSMutableIndexSet indexSet]
+                      convertNullsToSpace:NO];
+    NSString *joined = [locatedPrefix.string stringByAppendingString:locatedSuffix.string];
+    NSString *candidate = [self urlLikeStringInString:joined
+                                         aroundOffset:locatedPrefix.string.length
+                                                range:NULL
+                                          prefixChars:NULL];
+    if (candidate.length == 0) {
+        return nil;
+    }
+    // Require an explicit scheme so we don't offer to copy a bare hostname or a local
+    // filename (which ⌘-click resolves via Semantic History, something we can't do
+    // synchronously here). Then confirm the OS has a handler for it, matching the
+    // openability test ⌘-click uses.
+    NSURL *url = [NSURL URLWithUserSuppliedString:candidate];
+    if (url.scheme.length == 0) {
+        return nil;
+    }
+    if ([[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] == nil) {
+        return nil;
+    }
+    return url;
+}
+
 - (void)cancelOperation {
     DLog(@"Cancel %@", self);
     [_pathFinderCanceler cancelOperation];
@@ -557,25 +597,50 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     return nil;
 }
 
-- (URLAction *)urlActionForURLLike {
-    NSString *joined = [self.locatedPrefix.string stringByAppendingString:self.locatedSuffix.string];
-    DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
-         joined, (int)[self.locatedPrefix.string length]);
+// Extracts the URL-like substring (with surrounding punctuation, parens, brackets,
+// etc. trimmed) from `joined` around `offset`, or nil if none is found. On success,
+// outRange is the substring's range within the permissible-character run and
+// outPrefixChars is how many of its characters fell in the prefix (before `offset`).
++ (NSString *)urlLikeStringInString:(NSString *)joined
+                       aroundOffset:(NSInteger)offset
+                              range:(out NSRange *)outRange
+                        prefixChars:(out int *)outPrefixChars {
     int prefixChars = 0;
-    NSString *possibleUrl = [joined substringIncludingOffset:[self.locatedPrefix.string length]
+    NSString *possibleUrl = [joined substringIncludingOffset:offset
                                             fromCharacterSet:[NSCharacterSet urlCharacterSet]
                                         charsTakenFromPrefix:&prefixChars];
     DLog(@"String of just permissible chars is <<%@>> with prefix length %d", possibleUrl, prefixChars);
 
-    // Remove punctuation, parens, brackets, etc.
-    NSRange rangeWithoutNearbyPunctuation = [possibleUrl rangeOfURLInString];
-    if (rangeWithoutNearbyPunctuation.location == NSNotFound) {
+    NSRange range = [possibleUrl rangeOfURLInString];
+    if (range.location == NSNotFound) {
+        return nil;
+    }
+    prefixChars -= range.location;
+    if (outRange) {
+        *outRange = range;
+    }
+    if (outPrefixChars) {
+        *outPrefixChars = prefixChars;
+    }
+    return [possibleUrl substringWithRange:range];
+}
+
+- (URLAction *)urlActionForURLLike {
+    NSString *joined = [self.locatedPrefix.string stringByAppendingString:self.locatedSuffix.string];
+    DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
+         joined, (int)[self.locatedPrefix.string length]);
+    NSRange rangeWithoutNearbyPunctuation = { NSNotFound, 0 };
+    int prefixChars = 0;
+    NSString *stringWithoutNearbyPunctuation =
+        [iTermURLActionFactory urlLikeStringInString:joined
+                                        aroundOffset:[self.locatedPrefix.string length]
+                                               range:&rangeWithoutNearbyPunctuation
+                                         prefixChars:&prefixChars];
+    if (!stringWithoutNearbyPunctuation) {
         DLog(@"No URL found");
         return nil;
     }
-    prefixChars -= rangeWithoutNearbyPunctuation.location;
-    DLog(@"Range excluding punctuation is %@. Adjust prefixChars down to %d", NSStringFromRange(rangeWithoutNearbyPunctuation), prefixChars);
-    NSString *stringWithoutNearbyPunctuation = [possibleUrl substringWithRange:rangeWithoutNearbyPunctuation];
+    DLog(@"Range excluding punctuation is %@. Adjusted prefixChars to %d", NSStringFromRange(rangeWithoutNearbyPunctuation), prefixChars);
     DLog(@"String without nearby punctuation: %@", stringWithoutNearbyPunctuation);
 
     if ([iTermAdvancedSettingsModel conservativeURLGuessing]) {
@@ -614,7 +679,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         // Only try to use HTTP if the string has something especially HTTP URL-like about it, such as
         // containing a slash. This helps reduce the number of random strings that are misinterpreted
         // as URLs.
-        looksLikeURL = [self stringLooksLikeURL:[possibleUrl substringWithRange:rangeWithoutNearbyPunctuation]];
+        looksLikeURL = [self stringLooksLikeURL:stringWithoutNearbyPunctuation];
 
         if (looksLikeURL) {
             if (!self.workingDirectoryIsLocal && ![stringWithoutNearbyPunctuation containsString:@"/"]) {

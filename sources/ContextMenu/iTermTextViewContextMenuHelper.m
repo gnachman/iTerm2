@@ -313,6 +313,7 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(inspectImage:) ||
         [item action] == @selector(apiMenuItem:) ||
         [item action] == @selector(copyLinkAddress:) ||
+        [item action] == @selector(copyDetectedURL:) ||
         [item action] == @selector(copyString:) ||
         [item action] == @selector(copyData:) ||
         [item action] == @selector(replaceWithPrettyJSON:) ||
@@ -621,6 +622,16 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
             NSMenuItem *item = [theMenu addItemWithTitle:@"Copy Link Address" action:@selector(copyLinkAddress:) keyEquivalent:@""];
             item.target = self;
             item.representedObject = url;
+        } else {
+            // Offer to copy the URL that ⌘-click would open, stitching hard newlines
+            // out of wrapped URLs so a clean link can be pasted elsewhere. Only shown
+            // when there's genuinely a URL under the cursor.
+            NSURL *detectedURL = [_urlActionHelper urlForCopyAtCoord:coord];
+            if (detectedURL) {
+                NSMenuItem *item = [theMenu addItemWithTitle:@"Copy URL" action:@selector(copyDetectedURL:) keyEquivalent:@""];
+                item.target = self;
+                item.representedObject = detectedURL;
+            }
         }
     }
     
@@ -1217,6 +1228,14 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)copyLinkAddress:(id)sender {
     [self.delegate contextMenu:self copyURL:[sender representedObject]];
+}
+
+- (void)copyDetectedURL:(id)sender {
+    NSURL *url = [NSURL castFrom:[sender representedObject]];
+    if (!url) {
+        return;
+    }
+    [self.delegate contextMenu:self copyURL:url];
 }
 
 - (void)copyString:(id)sender {

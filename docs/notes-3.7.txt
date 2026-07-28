@@ -2279,3 +2279,8 @@ Bug Fixes:
   the app owns the selection. Hold Option
   during the drag to make a local iTerm2
   selection instead. Issues 12953 and 12950.
+- Added a Copy URL context menu item that
+  copies the URL under the cursor, stitching
+  wrapped URLs back together so you can paste
+  a clean link into a browser other than your
+  default. Issue 12944.

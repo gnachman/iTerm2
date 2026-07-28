@@ -113,6 +113,22 @@
     return canceller;
 }
 
+- (NSURL *)urlForCopyAtCoord:(VT100GridCoord)visualCoord {
+    if (visualCoord.y < 0) {
+        return nil;
+    }
+    iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
+    extractor.supportBidi = [iTermPreferences bidiEnabled];
+    VT100GridCoord logicalCoord = [extractor logicalCoordForVisualCoord:visualCoord];
+    if ([extractor characterAt:logicalCoord].code == 0) {
+        return nil;
+    }
+    [extractor restrictToLogicalWindowIncludingCoord:visualCoord];
+    return [iTermURLActionFactory openableURLAtCoord:logicalCoord
+                                respectHardNewlines:![self ignoreHardNewlinesInURLs]
+                                          extractor:extractor];
+}
+
 - (void)openTargetWithEvent:(NSEvent *)event
                inBackground:(BOOL)openInBackground
                       style:(iTermOpenStyle)style
