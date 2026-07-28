@@ -543,6 +543,10 @@ Python API Improvements:
   having its pongs buffered without limit. The it2
   command-line client handles a flood of ping
   frames iteratively instead of recursively.
+- The Script Console has a Clear Terminated
+  button that removes stopped sessions from the
+  list, so it no longer grows without bound when
+  you repeatedly restart a script.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.

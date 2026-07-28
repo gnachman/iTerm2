@@ -14,8 +14,10 @@
 #import "iTermWebSocketConnection.h"
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "SFSymbolEnum/SFSymbolEnum.h"
 
 typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     iTermScriptFilterControlTagAll = 0,
@@ -41,8 +43,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
     NSDateFormatter *_dateFormatter;
     IBOutlet NSTextField *_filter;
+    IBOutlet NSButton *_inspectorButton;
     IBOutlet NSButton *_terminateButton;
     IBOutlet NSButton *_startButton;
+    IBOutlet NSButton *_clearTerminatedButton;
     iTermScriptInspector *_inspector;
 
     id _token;
@@ -155,7 +159,17 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     [self makeTextViewHorizontallyScrollable:_logsView];
     [self makeTextViewHorizontallyScrollable:_callsView];
 
+    [self setSymbol:SFSymbolGetString(SFSymbolScope) tooltip:@"Inspector" onButton:_inspectorButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolStopCircle) tooltip:@"Terminate" onButton:_terminateButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolArrowClockwise) tooltip:@"Restart" onButton:_startButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolTrash) tooltip:@"Clear Terminated" onButton:_clearTerminatedButton];
+
     [self reloadTableFully];
+}
+
+- (void)setSymbol:(NSString *)symbolName tooltip:(NSString *)tooltip onButton:(NSButton *)button {
+    button.image = [NSImage it_imageForSymbolName:symbolName accessibilityDescription:tooltip];
+    button.toolTip = tooltip;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
@@ -220,6 +234,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
             entry.relaunch();
         }
     }
+}
+
+- (IBAction)clearTerminated:(id)sender {
+    [[iTermScriptHistory sharedInstance] removeTerminatedEntries];
 }
 
 - (IBAction)closeCurrentSession:(id)sender {
@@ -510,6 +528,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 }
 
 - (void)updateButtonsEnabled {
+    // The Clear Terminated button acts on the whole list, so its state depends
+    // only on whether any stopped entry exists, not on the current selection.
+    iTermScriptHistoryEntry *terminated = [[[iTermScriptHistory sharedInstance] entries] objectPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger index, BOOL *stop) {
+        return !entry.isRunning;
+    }];
+    _clearTerminatedButton.enabled = (terminated != nil);
+
     const NSInteger row = _tableView.selectedRow;
     if (row < 0 || row >= self.filteredEntries.count) {
         _terminateButton.enabled = NO;

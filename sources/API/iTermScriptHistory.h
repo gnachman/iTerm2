@@ -62,6 +62,10 @@ extern NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification;
 
 + (instancetype)sharedInstance;
 - (void)addHistoryEntry:(iTermScriptHistoryEntry *)entry;
+- (void)removeHistoryEntry:(iTermScriptHistoryEntry *)entry;
+// Removes every entry that has stopped running. Persistent pseudo-entries (the
+// app, APS, dynamic profiles, browser loggers) are always running and survive.
+- (void)removeTerminatedEntries;
 - (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier;
 - (iTermScriptHistoryEntry *)runningEntryWithPath:(NSString *)path;
 - (iTermScriptHistoryEntry *)runningEntryWithFullPath:(NSString *)fullPath;

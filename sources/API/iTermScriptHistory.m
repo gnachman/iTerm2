@@ -401,6 +401,27 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
                                                         object:self];
 }
 
+- (void)removeHistoryEntry:(iTermScriptHistoryEntry *)entry {
+    if (![_entries containsObject:entry]) {
+        return;
+    }
+    [_entries removeObject:entry];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                                        object:self];
+}
+
+- (void)removeTerminatedEntries {
+    NSIndexSet *terminated = [_entries indexesOfObjectsPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger idx, BOOL *stop) {
+        return !entry.isRunning;
+    }];
+    if (terminated.count == 0) {
+        return;
+    }
+    [_entries removeObjectsAtIndexes:terminated];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                                        object:self];
+}
+
 - (iTermScriptHistoryEntry *)entryWithIdentifier:(NSString *)identifier {
     return [_entries objectPassingTest:^BOOL(iTermScriptHistoryEntry *element, NSUInteger index, BOOL *stop) {
         return [element.identifier isEqualToString:identifier];
