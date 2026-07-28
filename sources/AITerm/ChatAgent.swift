@@ -1419,7 +1419,8 @@ class ChatAgent {
             self.captureBlobsForCompletedTurn(api: captureAPI,
                                               modelName: captureModelName,
                                               hostedTools: captureHostedTools,
-                                              promptTokens: turnPromptTokens)
+                                              promptTokens: turnPromptTokens,
+                                              userMessageID: userMessage.uniqueID)
         }
     }
 
@@ -1434,7 +1435,8 @@ class ChatAgent {
     private func captureBlobsForCompletedTurn(api: iTermAIAPI,
                                               modelName: String?,
                                               hostedTools: HostedTools,
-                                              promptTokens: Int?) {
+                                              promptTokens: Int?,
+                                              userMessageID: UUID) {
         // Real per-round weight for THIS turn's round: the turn-over-turn input-token
         // delta (this turn minus the last captured turn). The envelope (system, tools,
         // volatile) cancels between adjacent turns, so the delta is the round's own
@@ -1465,6 +1467,14 @@ class ChatAgent {
                                                    database: listModel.chatDatabase)
         if appended > 0 {
             try? listModel.setBlobProtocol(Int(api.rawValue), forChatID: chatID)
+        }
+        // Link this turn's user message to the round's blob for fork slicing. Only the
+        // incremental case (exactly one new round) has a clean 1:1 mapping between the
+        // just-frozen blob and this turn's user message; a multi-round migration
+        // capture leaves firstBlobRef nil (the fork falls back to re-migration for the
+        // un-linked prefix).
+        if appended == 1, let newestBlobID = listModel.chatDatabase.blobs(inChat: chatID).last?.blobID {
+            listModel.setFirstBlobRef(newestBlobID.uuidString, forMessageID: userMessageID, inChat: chatID)
         }
     }
 

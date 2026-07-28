@@ -209,6 +209,21 @@ class ChatListModel: ChatListDataSource {
                         createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }
     }
 
+    /// Link a display message to the blob for the round it begins (fork slicing uses
+    /// this). Set at capture on the round's first user message. Persists via the
+    /// message's updateQuery.
+    func setFirstBlobRef(_ blobID: String, forMessageID messageID: UUID, inChat chatID: String) {
+        guard let array = messages(forChat: chatID, createIfNeeded: false),
+              let index = array.firstIndex(where: { $0.uniqueID == messageID }) else {
+            return
+        }
+        do {
+            try array.modify(at: index) { $0.firstBlobRef = blobID }
+        } catch {
+            RLog("setFirstBlobRef failed for \(messageID) in \(chatID): \(error)")
+        }
+    }
+
     // The no-maxLength form is the ChatListDataSource witness (a defaulted
     // parameter can't satisfy a protocol requirement).
     func snippet(forChatID chatID: String) -> String? {

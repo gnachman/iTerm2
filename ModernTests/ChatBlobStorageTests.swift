@@ -73,6 +73,24 @@ final class ChatBlobStorageTests: XCTestCase {
         XCTAssertEqual(db.blobCount(inChat: "B"), 1, "other chats' blobs are untouched")
     }
 
+    /// setFirstBlobRef links a display message to its round's blob and persists it
+    /// (fork slicing reads this).
+    @MainActor
+    func testSetFirstBlobRef_persistsOnMessage() throws {
+        let db = try makeTempDB()
+        let listModel = try XCTUnwrap(ChatListModel(database: db))
+        let messageID = UUID()
+        try listModel.append(message: Message(chatID: "A", author: .user,
+                                              content: .markdown("hi"),
+                                              sentDate: Date(), uniqueID: messageID),
+                             toChatID: "A")
+        let blobID = UUID().uuidString
+        listModel.setFirstBlobRef(blobID, forMessageID: messageID, inChat: "A")
+
+        let reloaded = try XCTUnwrap(db.messages(inChat: "A")?.first(where: { $0.uniqueID == messageID }))
+        XCTAssertEqual(reloaded.firstBlobRef, blobID)
+    }
+
     // MARK: - ChatBlob schema / insertQuery (no database)
 
     func testChatBlobSchema_declaresSeqAutoincrement() {
