@@ -30,6 +30,24 @@ NSString *const iTermWebSocketConnectionLibraryVersionTooOldString = @"Library v
 //
 static NSString *const iTermWebSocketConnectionMinimumPythonLibraryVersion = @"0.24";
 
+// Backpressure limits to keep a misbehaving or malicious (but authenticated)
+// peer from exhausting memory by flooding us with frames faster than we can
+// process or the peer can drain our responses.
+//
+// Bound on how many inbound read chunks may be queued for parsing at once. When
+// this many are in flight the reader stops draining the socket, engaging TCP
+// flow control, until the parser catches up.
+static const long iTermWebSocketMaxInFlightReadChunks = 16;
+// Bound on how many pong frames may be submitted for writing but not yet flushed
+// to the socket. A well-behaved peer drains pongs, so this count falls as writes
+// flush. A peer that floods pings but stops reading fills the socket send buffer,
+// pong writes stop flushing, and the count pins at the cap; exceeding it (see
+// -sendControlResponseFrame:) means the peer is misbehaving, so we abort the
+// connection. We deliberately do not block waiting for a slot: frame processing,
+// including teardown, runs on _queue, so blocking it on a peer that never reads
+// would make the connection un-abortable and pin an fd plus a worker thread.
+static const NSInteger iTermWebSocketMaxOutstandingPongs = 256;
+
 typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermWebSocketConnectionStateConnecting,
     iTermWebSocketConnectionStateOpen,
@@ -44,6 +62,12 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     iTermWebSocketFrame *_fragment;
     dispatch_queue_t _queue;
     iTermWebSocketFrameBuilder *_frameBuilder;
+    // Limits the number of inbound read chunks queued on _queue for parsing.
+    dispatch_semaphore_t _readBackpressureSemaphore;
+    // Count of pong frames submitted for writing but not yet flushed. Only
+    // touched on _queue (incremented when a pong is sent, decremented by that
+    // write's flush callback, which also runs on _queue).
+    NSInteger _outstandingPongs;
 }
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
@@ -156,6 +180,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
     if (self) {
         _connection = connection;
         _queue = dispatch_queue_create("com.iterm2.websocket", NULL);
+        _readBackpressureSemaphore = dispatch_semaphore_create(iTermWebSocketMaxInFlightReadChunks);
         _guid = [[NSUUID UUID] UUIDString];
     }
     return self;
@@ -204,6 +229,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 
     // I tried using dispatch_read but it didn't work reliably. Seems to work OK for writing.
     __weak __typeof(self) weakSelf = self;
+    dispatch_semaphore_t backpressure = _readBackpressureSemaphore;
     dispatch_async(self->_connection.queue, ^{
         while (weakSelf) {
             NSMutableData *data = [self->_connection readSynchronously];
@@ -212,8 +238,15 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                 [weakSelf abortWithCompletion:nil];
                 return;
             }
+            // Block the reader (and thus stop draining the socket, engaging TCP
+            // flow control) when too many inbound chunks are already queued for
+            // parsing. Signaled once each chunk finishes processing. Without
+            // this a peer that sends data faster than we can parse it could
+            // force an unbounded backlog of unparsed chunks into memory.
+            dispatch_semaphore_wait(backpressure, DISPATCH_TIME_FOREVER);
             dispatch_async(self->_queue, ^{
                 [weakSelf didReceiveData:data];
+                dispatch_semaphore_signal(backpressure);
             });
         }
     });
@@ -289,21 +322,59 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
 // queue
 - (void)sendFrame:(iTermWebSocketFrame *)frame {
     DLog(@"Send frame %@", frame);
-    [self sendData:frame.data];
+    [self sendData:frame.data flushed:nil];
 }
 
 // queue
-- (void)sendData:(NSData *)data {
+// Sends a pong. Rather than block _queue waiting for outbound room (which would
+// make the connection un-abortable against a peer that never reads - teardown
+// also runs on _queue), we bound the number of outstanding, not-yet-flushed
+// pongs. A well-behaved peer drains pongs, so _outstandingPongs falls as writes
+// flush and a slot is always available. A peer that floods pings but stops
+// reading fills the send buffer, pongs stop flushing, and the count pins at the
+// cap; the next pong then aborts the misbehaving connection, which frees the fd,
+// the reader thread, and (via the write-error path) the outstanding writes. We
+// never silently drop a pong and carry on.
+- (void)sendControlResponseFrame:(iTermWebSocketFrame *)frame {
+    if (_outstandingPongs >= iTermWebSocketMaxOutstandingPongs) {
+        RLog(@"Peer has %@ undrained pongs; aborting misbehaving connection",
+             @(_outstandingPongs));
+        [self reallyAbort];
+        return;
+    }
+    _outstandingPongs += 1;
+    __weak __typeof(self) weakSelf = self;
+    [self sendData:frame.data flushed:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            strongSelf->_outstandingPongs -= 1;
+        }
+    }];
+}
+
+// queue
+// `flushed`, if provided, runs on _queue exactly once when the write finishes
+// (successfully or with an error).
+- (void)sendData:(NSData *)data flushed:(void (^)(void))flushed {
     dispatch_data_t dispatchData = dispatch_data_create(data.bytes, data.length, _queue, ^{
         DLog(@"Disposing of data %p", data);
         [data length];  // Keep a reference to data
     });
 
     __weak __typeof(self) weakSelf = self;
+    __block BOOL settled = NO;
     [_connection writeAsynchronously:dispatchData queue:_queue completion:^(bool done, dispatch_data_t  _Nullable data, int error) {
         DLog(@"Write progress: done=%d error=%d", (int)done, (int)error);
         if (error) {
             [weakSelf reallyAbort];
+        }
+        // dispatch_io_write may invoke this repeatedly for a partial write; run
+        // `flushed` only on the final call (done) or on error.
+        if ((done || error) && !settled) {
+            settled = YES;
+            if (flushed) {
+                flushed();
+            }
         }
     }];
 }
@@ -366,7 +437,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
         case iTermWebSocketOpcodePing:
             if (_state == iTermWebSocketConnectionStateOpen) {
                 DLog(@"Sending pong");
-                [self sendFrame:[iTermWebSocketFrame pongFrameForPingFrame:frame]];
+                [self sendControlResponseFrame:[iTermWebSocketFrame pongFrameForPingFrame:frame]];
             } else {
                 [self reallyAbort];
             }

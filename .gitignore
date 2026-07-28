@@ -85,3 +85,6 @@ emoji-sequences.txt
 
 # Live AI harness config (API keys) written by tools/run_ai_live.sh; never commit.
 .iterm2-ai-live.json
+
+# Throwaway venv created by tests/run_ping_flood_dos_test.sh.
+tests/.venv-ping-flood/

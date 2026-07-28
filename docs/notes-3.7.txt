@@ -535,6 +535,14 @@ Python API Improvements:
   sessions across tabs and windows. New
   sessions can be created in place with
   new_session leaves.
+- The API server no longer lets a client flood it
+  with frames to exhaust memory: it bounds how
+  much unparsed inbound data it buffers, and a
+  client that floods pings but stops reading the
+  pongs is disconnected as misbehaving rather than
+  having its pongs buffered without limit. The it2
+  command-line client handles a flood of ping
+  frames iteratively instead of recursively.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.

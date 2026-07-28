@@ -393,17 +393,25 @@
                                       dispatch_data_t _Nullable data,
                                       int error))completion {
     @synchronized(_lock) {
-        if (!_stream) {
+        if (_stream) {
+            dispatch_io_write(_stream.stream,
+                              0,  // offset
+                              dispatchData,
+                              queue,
+                              ^(bool done, dispatch_data_t  _Nullable data, int error) {
+                completion(done, data, error);
+            });
             return;
         }
-        dispatch_io_write(_stream.stream,
-                          0,  // offset
-                          dispatchData,
-                          queue,
-                          ^(bool done, dispatch_data_t  _Nullable data, int error) {
-            completion(done, data, error);
-        });
     }
+    // The stream is gone, so the write can never be submitted. Still deliver a
+    // terminal (error) completion on the caller's queue so that callers relying
+    // on completion running exactly once - e.g. to release a backpressure slot -
+    // are not wedged forever. Done outside @synchronized because completion may
+    // reenter this object.
+    dispatch_async(queue, ^{
+        completion(true, NULL, EPIPE);
+    });
 }
 
 @end

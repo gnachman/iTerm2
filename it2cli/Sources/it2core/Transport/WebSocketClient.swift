@@ -91,54 +91,62 @@ class WebSocketClient {
     }
 
     /// Receive a binary WebSocket frame. Returns the unmasked payload.
+    ///
+    /// Control frames (ping/pong) are handled inline and the loop continues to
+    /// the next frame. This is a loop rather than a recursive call so that a
+    /// flood of control frames from the peer cannot overflow the stack.
     func receiveBinary() throws -> Data {
-        // Read first 2 bytes: FIN/opcode + mask/length
-        let header = try socket.recv(count: 2)
-        let opcode = header[0] & 0x0F
-        let masked = (header[1] & 0x80) != 0
-        var payloadLength = UInt64(header[1] & 0x7F)
+        while true {
+            // Read first 2 bytes: FIN/opcode + mask/length
+            let header = try socket.recv(count: 2)
+            let opcode = header[0] & 0x0F
+            let masked = (header[1] & 0x80) != 0
+            var payloadLength = UInt64(header[1] & 0x7F)
 
-        if payloadLength == 126 {
-            let ext = try socket.recv(count: 2)
-            payloadLength = UInt64(ext[0]) << 8 | UInt64(ext[1])
-        } else if payloadLength == 127 {
-            let ext = try socket.recv(count: 8)
-            payloadLength = 0
-            for i in 0..<8 {
-                payloadLength = (payloadLength << 8) | UInt64(ext[i])
+            if payloadLength == 126 {
+                let ext = try socket.recv(count: 2)
+                payloadLength = UInt64(ext[0]) << 8 | UInt64(ext[1])
+            } else if payloadLength == 127 {
+                let ext = try socket.recv(count: 8)
+                payloadLength = 0
+                for i in 0..<8 {
+                    payloadLength = (payloadLength << 8) | UInt64(ext[i])
+                }
+            }
+
+            // Read mask key if present (server shouldn't mask, but handle it)
+            var maskKey: [UInt8]?
+            if masked {
+                let keyData = try socket.recv(count: 4)
+                maskKey = [UInt8](keyData)
+            }
+
+            // Read payload
+            guard payloadLength <= 100_000_000 else {
+                throw IT2Error.connectionError("WebSocket frame too large: \(payloadLength) bytes")
+            }
+            var payload = try socket.recv(count: Int(payloadLength))
+
+            // Unmask if needed
+            if let key = maskKey {
+                for i in 0..<payload.count {
+                    payload[i] ^= key[i % 4]
+                }
+            }
+
+            // Handle control frames
+            switch opcode {
+            case 0x08: // Close
+                throw IT2Error.connectionError("Server closed WebSocket connection")
+            case 0x09: // Ping — send pong and read the next frame
+                try sendPong(payload)
+                continue
+            case 0x0A: // Pong — ignore and read the next frame
+                continue
+            default:
+                return payload
             }
         }
-
-        // Read mask key if present (server shouldn't mask, but handle it)
-        var maskKey: [UInt8]?
-        if masked {
-            let keyData = try socket.recv(count: 4)
-            maskKey = [UInt8](keyData)
-        }
-
-        // Read payload
-        guard payloadLength <= 100_000_000 else {
-            throw IT2Error.connectionError("WebSocket frame too large: \(payloadLength) bytes")
-        }
-        var payload = try socket.recv(count: Int(payloadLength))
-
-        // Unmask if needed
-        if let key = maskKey {
-            for i in 0..<payload.count {
-                payload[i] ^= key[i % 4]
-            }
-        }
-
-        // Handle control frames
-        if opcode == 0x08 { // Close
-            throw IT2Error.connectionError("Server closed WebSocket connection")
-        }
-        if opcode == 0x09 { // Ping — send pong
-            try sendPong(payload)
-            return try receiveBinary() // Read next frame
-        }
-
-        return payload
     }
 
     func disconnect() {
