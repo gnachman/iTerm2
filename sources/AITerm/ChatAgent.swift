@@ -759,7 +759,13 @@ class ChatAgent {
     /// not session-bound, has no linked session, or has granted neither "provided
     /// automatically" permission. Read at request time so it is fresh; an unchanged
     /// visible screen collapses to a short marker rather than resending the grid.
-    private func autoProvidedContext() -> String? {
+    /// - commit: when false, PEEK only - compute the block for sizing without
+    ///   advancing the visible-screen dedup watermark or showing the consent prompt.
+    ///   The truncation-budget path passes false so estimating the envelope size does
+    ///   not consume the screen; if it committed, the real send (the per-vendor
+    ///   builder, which runs AFTER budgeting) would then see the screen as unchanged
+    ///   and emit `<visible-screen unchanged="true"/>`, silently never sending it.
+    private func autoProvidedContext(commit: Bool = true) -> String? {
         guard mode == .sessionBound else {
             return nil
         }
@@ -783,7 +789,9 @@ class ChatAgent {
         if Self.shouldSuppressAutoProvide(wantsAutoSend: wantsAutoSend,
                                           consent: iTermUserDefaults.autoProvideConsent) {
             RLog("autoProvidedContext: chat \(chatID) wants auto-send but consent is not granted (\(iTermUserDefaults.autoProvideConsent.rawValue)); suppressing")
-            requestAutoProvideConsentIfNeeded()
+            if commit {
+                requestAutoProvideConsentIfNeeded()
+            }
             return nil
         }
         var blocks = [String]()
@@ -797,7 +805,12 @@ class ChatAgent {
             if screen == lastAutoProvidedScreen {
                 blocks.append("<visible-screen unchanged=\"true\"/>")
             } else {
-                lastAutoProvidedScreen = screen
+                // Only advance the watermark on a real send (commit); a budget peek
+                // sizes the full block but must leave the dedup state untouched so the
+                // actual send still emits the screen.
+                if commit {
+                    lastAutoProvidedScreen = screen
+                }
                 blocks.append("<visible-screen>\n" + Self.neutralizeContextDelimiters(screen) + "\n</visible-screen>")
             }
         }
@@ -886,9 +899,9 @@ class ChatAgent {
     /// terminal/screen block, recomputed live so mid-turn session changes are
     /// reflected. Invoked fresh for every request via the controller's
     /// trailingVolatileTextProvider.
-    private func currentVolatileText() -> String? {
+    private func currentVolatileText(commit: Bool = true) -> String? {
         let providerContext = toolProviders.lazy.compactMap { $0.volatileContext() }.first
-        return Self.combinedVolatileText([providerContext, autoProvidedContext()])
+        return Self.combinedVolatileText([providerContext, autoProvidedContext(commit: commit)])
     }
 
     func fetchCompletion(userMessage: Message,
@@ -1189,13 +1202,17 @@ class ChatAgent {
             // so the truncation budget counts the whole request. Captured by
             // reference; evaluated only on the blob path (envelopeTokens is a thunk).
             let replayController = conversation.controller
-            conversation.blobReplayProvider = { fullMessages in
+            conversation.blobReplayProvider = { [weak self] fullMessages in
                 ChatBlobAssembler.blobReplayPlan(
                     chatID: replayChatID, fullMessages: fullMessages, expectedProtocol: captureAPI,
                     contextWindow: contextWindow, outputReserve: outputReserve, policy: policy,
                     tokenEstimate: { AIMetadata.instance.tokens(in: String(decoding: $0, as: UTF8.self)) },
                     envelopeTokens: {
-                        let volatile = replayController.trailingVolatileTextProvider?() ?? ""
+                        // PEEK the volatile context for sizing only (commit: false):
+                        // the real send drives the stateful provider later, so committing
+                        // here would advance the auto-provided-screen dedup watermark and
+                        // make the actual request emit "<visible-screen unchanged>".
+                        let volatile = MainActor.assumeIsolated { self?.currentVolatileText(commit: false) } ?? ""
                         let functionsJSON = (try? JSONEncoder().encode(replayController.functions.map { $0.decl }))
                             .flatMap { String(data: $0, encoding: .utf8) } ?? ""
                         return AIMetadata.instance.tokens(in: volatile)
