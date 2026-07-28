@@ -332,6 +332,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     private func hydratePersistedCredentialsIfNeeded() {
         guard handshakeInfo?.persistsCredentials == true else { return }
+        // One-time cleanup of pre-migration Settings apiKey keychain entries.
+        deleteOrphanedLegacyApiKeySettings()
         if pathToDatabase == nil {
             if let u = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)"), !u.isEmpty {
                 pathToDatabase = u
@@ -377,7 +379,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     }
 
     private func deleteAllSettingsFieldStorage() {
-        guard let fields = handshakeInfo?.settingsFields else { return }
+        guard let fields = handshakeInfo?.settingsFields else {
+            deleteOrphanedLegacyApiKeySettings()
+            return
+        }
         for field in fields {
             if field.persistInKeychain {
                 _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: field.key)
@@ -385,6 +390,13 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(field.key)")
             }
         }
+        deleteOrphanedLegacyApiKeySettings()
+    }
+
+    /// Pre-round-3 builds stored the API key under settings account "apiKey". That field is gone;
+    /// purge the orphan so Reset Configuration fully clears credentials.
+    private func deleteOrphanedLegacyApiKeySettings() {
+        _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
     }
 
     private func ensureAuthentication(window: NSWindow?, _ completion: @escaping (Error?) -> ()) {
@@ -585,12 +597,25 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
                 let accounts = response.accounts.map { entry in
                     CommandLinePasswordDataSource.Account(
-                        identifier: CommandLinePasswordDataSource.AccountIdentifier(value: entry.identifier.accountID),
+                        identifier: CommandLinePasswordDataSource.AccountIdentifier(value: entry.identifier.accountID,
+                                                                                    sourceLabel: entry.sourceLabel),
                         userName: entry.userName,
                         accountName: entry.accountName,
                         hasOTP: entry.hasOTP,
                         sendOTP: entry.hasOTP,
                         sourceLabel: entry.sourceLabel)
+                }
+
+                if let warning = response.warning?.trimmingCharacters(in: .whitespacesAndNewlines), !warning.isEmpty {
+                    DispatchQueue.main.async {
+                        iTermWarning.show(withTitle: warning,
+                                          actions: ["OK"],
+                                          accessory: nil,
+                                          identifier: "NoSyncKeeperListPartialFailure",
+                                          silenceable: .kiTermWarningTypePersistent,
+                                          heading: "Password Manager",
+                                          window: nil)
+                    }
                 }
 
                 completion(.success(accounts))
@@ -686,7 +711,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         userAccountID: self.userAccountID,
                         token: self.authToken,
                         accountIdentifier: AccountIdentifierEntry(accountID: setPasswordRequest.accountIdentifier.value),
-                        newPassword: setPasswordRequest.newPassword)
+                        newPassword: setPasswordRequest.newPassword,
+                        sourceLabel: setPasswordRequest.accountIdentifier.sourceLabel)
 
                     let encoder = JSONEncoder()
                     guard let inputData = try? encoder.encode(request) else {
@@ -747,7 +773,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         header: self.standardHeader,
                         userAccountID: self.userAccountID,
                         token: self.authToken,
-                        accountIdentifier: AccountIdentifierEntry(accountID: accountIdentifier.value))
+                        accountIdentifier: AccountIdentifierEntry(accountID: accountIdentifier.value),
+                        sourceLabel: accountIdentifier.sourceLabel)
 
                     let encoder = JSONEncoder()
                     guard let inputData = try? encoder.encode(request) else {
@@ -906,6 +933,7 @@ extension AdapterPasswordDataSource {
         iTermUserDefaults.userDefaults().removeObject(forKey: "PathToExecutable_\(identifier)")
         deletePersistedCredentials()
         deleteAllSettingsFieldStorage()
+        deleteOrphanedLegacyApiKeySettings()
         handshakeInfo = nil
     }
 

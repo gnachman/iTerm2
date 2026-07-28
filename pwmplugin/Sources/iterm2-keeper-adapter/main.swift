@@ -139,8 +139,8 @@ private func handleListAccounts() {
         let baseURL = try extractServiceURL(from: request.header)
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
-        let accounts = try listAccountsRecords(apiKey: apiKey, client: client)
-        writeOutput(ListAccountsResponse(accounts: accounts))
+        let listed = try listAccountsRecords(apiKey: apiKey, client: client)
+        writeOutput(ListAccountsResponse(accounts: listed.accounts, warning: listed.warning))
     } catch {
         writeError(error.localizedDescription)
         exit(1)
@@ -179,8 +179,12 @@ private func handleSetPassword() {
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let uid = request.accountIdentifier.accountID
-        KeeperAdapterLog.write("handleSetPassword: uid=\(uid), newPassword.length=\(request.newPassword?.count ?? 0)")
-        try setPassword(apiKey: apiKey, recordUid: uid, newPassword: request.newPassword, client: client)
+        KeeperAdapterLog.write("handleSetPassword: uid=\(uid), sourceLabel=\(request.sourceLabel ?? "nil"), newPassword.length=\(request.newPassword?.count ?? 0)")
+        try setPassword(apiKey: apiKey,
+                        recordUid: uid,
+                        newPassword: request.newPassword,
+                        sourceLabel: request.sourceLabel,
+                        client: client)
         KeeperAdapterLog.write("handleSetPassword: success uid=\(uid)")
         writeOutput(SetPasswordResponse())
     } catch {
@@ -232,8 +236,11 @@ private func handleDeleteAccount() {
         let baseURL = try extractServiceURL(from: request.header)
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
-        KeeperAdapterLog.write("handleDeleteAccount: accountID=\(request.accountIdentifier.accountID)")
-        try deleteRecord(apiKey: apiKey, recordUid: request.accountIdentifier.accountID, client: client)
+        KeeperAdapterLog.write("handleDeleteAccount: accountID=\(request.accountIdentifier.accountID), sourceLabel=\(request.sourceLabel ?? "nil")")
+        try deleteRecord(apiKey: apiKey,
+                         recordUid: request.accountIdentifier.accountID,
+                         sourceLabel: request.sourceLabel,
+                         client: client)
         KeeperAdapterLog.write("handleDeleteAccount: success accountID=\(request.accountIdentifier.accountID)")
         writeOutput(DeleteAccountResponse())
     } catch {

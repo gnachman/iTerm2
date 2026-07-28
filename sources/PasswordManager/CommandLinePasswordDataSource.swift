@@ -27,10 +27,7 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     }
 
     var formattedAccountName: String {
-        if let source = sourceLabel?.trimmingCharacters(in: .whitespacesAndNewlines), !source.isEmpty {
-            return "\(accountName) (\(source))"
-        }
-        return accountName
+        iTermPasswordManagerAccountFormatting.displayName(accountName: accountName, sourceLabel: sourceLabel)
     }
 
     func fetchPassword(context: RecipeExecutionContext, _ completion: @escaping (String?, String?, Error?) -> ()) {
@@ -42,7 +39,7 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     }
 
     func set(context: RecipeExecutionContext, password: String, completion: @escaping (Error?) -> ()) {
-        let accountIdentifier = CommandLinePasswordDataSource.AccountIdentifier(value: identifier)
+        let accountIdentifier = CommandLinePasswordDataSource.AccountIdentifier(value: identifier, sourceLabel: sourceLabel)
         let request = CommandLinePasswordDataSource.SetPasswordRequest(accountIdentifier: accountIdentifier,
                                                                        newPassword: password)
         configuration.setPasswordRecipe.transformAsync(
@@ -55,7 +52,7 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     func delete(context: RecipeExecutionContext, _ completion: @escaping (Error?) -> ()) {
         configuration.deleteRecipe.transformAsync(
             context: context,
-            inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { _, error in
+            inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier, sourceLabel: sourceLabel)) { _, error in
                 if error == nil {
                     self.configuration.listAccountsRecipe.invalidateRecipe()
                 }
@@ -907,6 +904,12 @@ class CommandLinePasswordDataSource: NSObject {
 
     struct AccountIdentifier {
         let value: String
+        let sourceLabel: String?
+
+        init(value: String, sourceLabel: String? = nil) {
+            self.value = value
+            self.sourceLabel = sourceLabel
+        }
     }
 
     struct Account {

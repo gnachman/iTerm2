@@ -1703,10 +1703,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     if ([(id)entry respondsToSelector:@selector(sourceLabel)]) {
         source = entry.sourceLabel;
     }
-    if (source.length > 0) {
-        return [NSString stringWithFormat:@"%@ (%@)", name, source];
-    }
-    return name;
+    return [iTermPasswordManagerAccountFormatting displayNameForAccountName:name sourceLabel:source];
 }
 
 - (NSString *)accountNameByStrippingSourceSuffix:(NSString *)name

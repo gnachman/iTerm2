@@ -161,9 +161,12 @@ public enum PasswordManagerProtocol {
 
     public struct ListAccountsResponse: Codable {
         public var accounts: [Account]
+        /// Non-fatal listing issue (e.g. Nested Shared Folder list failed while classic succeeded).
+        public var warning: String?
 
-        public init(accounts: [Account]) {
+        public init(accounts: [Account], warning: String? = nil) {
             self.accounts = accounts
+            self.warning = warning
         }
     }
 
@@ -226,6 +229,8 @@ public enum PasswordManagerProtocol {
         public var token: String?
         public var accountIdentifier: AccountIdentifier
         public var newPassword: String?
+        /// Optional vault hint from list (`Classic` / `Nested`). Opaque to the host.
+        public var sourceLabel: String?
     }
 
     public struct SetPasswordResponse: Codable {
@@ -240,6 +245,8 @@ public enum PasswordManagerProtocol {
         public var userAccountID: String?
         public var token: String?
         public var accountIdentifier: AccountIdentifier
+        /// Optional vault hint from list (`Classic` / `Nested`). Opaque to the host.
+        public var sourceLabel: String?
     }
 
     public struct DeleteAccountResponse: Codable {
