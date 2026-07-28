@@ -107,6 +107,8 @@ extension AILiveHarness {
         try runTurn("What was the secret code I gave you earlier? Reply with only the code.")
 
         let db = broker.listModel.chatDatabase
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
 
         // 1) Every turn was accepted: a blob is captured only at a successful turn
         //    end, so three blobs == three accepted turns (a rejection writes none).
@@ -219,6 +221,8 @@ extension AILiveHarness {
         try runTurn("What was in the output of the command you ran earlier? Reply with just the marker string from it.")
 
         let db = broker.listModel.chatDatabase
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
 
         // Both turns accepted (a rejected turn writes no blob). Turn 2 only succeeds
         // if the tool round replayed from turn 1's blob was accepted by Anthropic.
@@ -310,6 +314,8 @@ extension AILiveHarness {
         try runTurn("What was the secret code I gave you earlier? Reply with only the code.")
 
         let db = broker.listModel.chatDatabase
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
         XCTAssertEqual(db.blobCount(inChat: chatID), 3, "one blob per accepted round")
 
         let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
@@ -324,6 +330,84 @@ extension AILiveHarness {
         let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([blobs[0]]), as: UTF8.self)
         XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains(firstRoundInner) },
                       "a later DeepSeek request must splice the first round's stored blob bytes verbatim")
+    }
+
+    /// Third splice path: Gemini uses the `contents` array with system carried
+    /// separately (afterCount 0), distinct from both Anthropic and chatCompletions.
+    /// Proves the verbatim splice is accepted by Gemini across turns.
+    func test_chat_blobNativeReplay_multiTurnGeminiAccepted() throws {
+        guard let apiKey = Self.blobConfigValue("GEMINI_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No GEMINI_API_KEY")
+        }
+        guard let geminiModel = AIMetadata.instance.models.first(where: { $0.vendor == .gemini }) else {
+            throw XCTSkip("No Gemini model in AIMetadata")
+        }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live blob gemini \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-gm-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: geminiModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runTurn(_ body: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done {
+                    done = true; ended.fulfill()
+                }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: geminiModel.name, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        let secret = "FALCON-COMET-7714"
+        try runTurn("Remember this secret code exactly: \(secret). Reply with only: OK")
+        try runTurn("What is 5 + 6? Reply with only the number.")
+        try runTurn("What was the secret code I gave you earlier? Reply with only the code.")
+
+        let db = broker.listModel.chatDatabase
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+        XCTAssertEqual(db.blobCount(inChat: chatID), 3, "one blob per accepted round")
+
+        let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+            .flatMap { Self.blobText($0.content) } ?? ""
+        XCTAssertTrue(lastAgentText.contains(secret),
+                      "Gemini must recall the secret from blob-replayed history; got: \(lastAgentText)")
+
+        let blobs = db.blobs(inChat: chatID)
+        try XCTSkipIf(blobs.isEmpty, "no blobs; earlier assertion already failed")
+        let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([blobs[0]]), as: UTF8.self)
+        XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains(firstRoundInner) },
+                      "a later Gemini request must splice the first round's stored blob bytes verbatim")
     }
 
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
@@ -346,6 +430,23 @@ extension AILiveHarness {
         broker.processors = []
         test.addTeardownBlock { @MainActor in
             broker.processors = saved
+        }
+    }
+
+    /// Skip (don't fail) when a turn hit a TRANSIENT vendor error (capacity/rate
+    /// limit), since these tests drive ChatAgent, which has no 503 retry. Only the
+    /// transient set is matched, so a real splice rejection (an HTTP 400 like broken
+    /// tool adjacency) still FAILS rather than being masked. `messages` are the
+    /// chat's committed messages (ChatAgent commits vendor errors as an agent reply).
+    private static func skipIfTransientVendorError(_ messages: [Message]) throws {
+        let transient = ["status 503", "status 502", "status 500", "status 429",
+                         "high demand", "overloaded", "experiencing", "try again later",
+                         "RESOURCE_EXHAUSTED", "UNAVAILABLE"]
+        for message in messages where message.author == .agent {
+            guard let text = blobText(message.content) else { continue }
+            if let hit = transient.first(where: { text.contains($0) }) {
+                throw XCTSkip("transient vendor error during live run (\(hit)): \(text.prefix(160))")
+            }
         }
     }
 
