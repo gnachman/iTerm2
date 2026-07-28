@@ -1294,72 +1294,121 @@ class ChatAgent {
             conversation.cancelOutstandingOperation()
         }
         conversation.complete(streaming: streamingCallback) { [weak self] result in
-            guard let self else {
-                return
-            }
-            #if ITERM_DEBUG
-            // TEMPORARY probe (Development builds only — ITERM_DEBUG is set only
-            // in the Development config, not Beta/Nightly/Deployment, and this
-            // target never defines DEBUG): a turn that completes while
-            // an orchestration tool call is still parked is the bug we're
-            // chasing — the agent swaps in a fresh conversation on completion
-            // and the parked tool's eventual result resumes a dead controller.
-            // Log the result shape, the last message body kind, and how many
-            // tool calls are still parked so a reproduction pins the trigger.
-            do {
-                let kind: String
-                switch result {
-                case .success: kind = "success"
-                case .failure(let e):
-                    kind = (e is PendingCommandCanceled) ? "cancelled" : "failure(\(e))"
-                }
-                let lastBody: String
-                switch result.successValue?.messages.last?.body {
-                case .some(.functionCall(let call, _)): lastBody = "functionCall(\(call.name ?? "?"))"
-                case .some(.text(let t)): lastBody = "text(\(OrchestrationToolProvider.snippet(of: String(t.prefix(60)))))"
-                case .some(.multipart): lastBody = "multipart"
-                case .some(.functionOutput): lastBody = "functionOutput"
-                case .some(.attachment): lastBody = "attachment"
-                case .some(.uninitialized): lastBody = "uninitialized"
-                case .none: lastBody = "none"
-                }
-                NSFuckingLog("ChatAgent.complete done: result=\(kind) lastBody=\(lastBody) parkedToolCalls=\(self.pendingRemoteCommands.count) needsRenaming=\(needsRenaming)")
-            }
-            #endif
-            if result.failureValue is PendingCommandCanceled {
-                completion(nil)
-                return
-            }
-            if let updated = result.successValue {
-                self.conversation = updated
-                if needsRenaming {
-                    self.requestRenaming()
-                }
-            }
-            switch result {
-            case .success(let updated):
-                let fallback = updated.messages.last?.body.content ?? ""
-                self.consoleLogger.logAgentReply(fallbackText: fallback)
-            case .failure(let error):
-                self.consoleLogger.logAgentError(error.localizedDescription)
-            }
-            let message = Self.committedMessage(forResult: result,
-                                                userMessage: userMessage,
-                                                streamID: uuid)
-            completion(message)
+            // streamID is a LIVE accessor: the streaming callback mutates `uuid`, and
+            // a Phase-4 retry re-streams, so the committed message must read the
+            // post-retry id, not a snapshot.
+            self?.handleTurnResult(result,
+                                   userMessage: userMessage,
+                                   streamID: { uuid },
+                                   needsRenaming: needsRenaming,
+                                   captureAPI: captureAPI,
+                                   captureModelName: captureModelName,
+                                   captureHostedTools: captureHostedTools,
+                                   streaming: streamingCallback,
+                                   didRetryExpiry: false,
+                                   completion: completion)
+        }
+    }
 
-            // Freeze this completed round as wire-fragment blobs. Only on a
-            // successful turn with no tool call still parked (a parked turn never
-            // reaches here). completion(...) committed the reply synchronously via
-            // ChatService.finishTurn, so the chat's display messages now include
-            // the whole round.
-            if result.successValue != nil,
-               self.pendingRemoteCommands.isEmpty,
-               let captureAPI {
-                self.captureBlobsForCompletedTurn(api: captureAPI,
-                                                  modelName: captureModelName,
-                                                  hostedTools: captureHostedTools)
+    /// Finish (or fail) a turn, with a one-shot Phase-4 retry: an unusable Responses
+    /// `previous_response_id` (expired / `store` off / deleted) is not a real failure
+    /// - re-issue the SAME turn as a full stateless replay from blobs with the id
+    /// omitted. `systemMessageDirty` forces `complete()` to null `previousResponseID`
+    /// (otherwise it would re-derive the stale id from the last assistant message).
+    /// Only retried when we actually sent an id (delta mode); a full replay that
+    /// fails is a real failure. `didRetryExpiry` bounds it to a single retry.
+    private func handleTurnResult(_ result: Result<AIConversation, Error>,
+                                  userMessage: Message,
+                                  streamID: @escaping () -> UUID?,
+                                  needsRenaming: Bool,
+                                  captureAPI: iTermAIAPI?,
+                                  captureModelName: String?,
+                                  captureHostedTools: HostedTools,
+                                  streaming streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?,
+                                  didRetryExpiry: Bool,
+                                  completion: @escaping (Message?) -> ()) {
+        if case .failure(let error) = result,
+           !didRetryExpiry,
+           conversation.controller.previousResponseID != nil,
+           Self.isUnusablePreviousResponseIDError(error) {
+            RLog("ChatAgent: previous_response_id unusable in \(chatID); retrying as full stateless replay: \(error)")
+            conversation.systemMessageDirty = true
+            conversation.complete(streaming: streamingCallback) { [weak self] result in
+                self?.handleTurnResult(result,
+                                       userMessage: userMessage,
+                                       streamID: streamID,
+                                       needsRenaming: needsRenaming,
+                                       captureAPI: captureAPI,
+                                       captureModelName: captureModelName,
+                                       captureHostedTools: captureHostedTools,
+                                       streaming: streamingCallback,
+                                       didRetryExpiry: true,
+                                       completion: completion)
             }
+            return
+        }
+        #if ITERM_DEBUG
+        // TEMPORARY probe (Development builds only — ITERM_DEBUG is set only
+        // in the Development config, not Beta/Nightly/Deployment, and this
+        // target never defines DEBUG): a turn that completes while
+        // an orchestration tool call is still parked is the bug we're
+        // chasing — the agent swaps in a fresh conversation on completion
+        // and the parked tool's eventual result resumes a dead controller.
+        // Log the result shape, the last message body kind, and how many
+        // tool calls are still parked so a reproduction pins the trigger.
+        do {
+            let kind: String
+            switch result {
+            case .success: kind = "success"
+            case .failure(let e):
+                kind = (e is PendingCommandCanceled) ? "cancelled" : "failure(\(e))"
+            }
+            let lastBody: String
+            switch result.successValue?.messages.last?.body {
+            case .some(.functionCall(let call, _)): lastBody = "functionCall(\(call.name ?? "?"))"
+            case .some(.text(let t)): lastBody = "text(\(OrchestrationToolProvider.snippet(of: String(t.prefix(60)))))"
+            case .some(.multipart): lastBody = "multipart"
+            case .some(.functionOutput): lastBody = "functionOutput"
+            case .some(.attachment): lastBody = "attachment"
+            case .some(.uninitialized): lastBody = "uninitialized"
+            case .none: lastBody = "none"
+            }
+            NSFuckingLog("ChatAgent.complete done: result=\(kind) lastBody=\(lastBody) parkedToolCalls=\(self.pendingRemoteCommands.count) needsRenaming=\(needsRenaming)")
+        }
+        #endif
+        if result.failureValue is PendingCommandCanceled {
+            completion(nil)
+            return
+        }
+        if let updated = result.successValue {
+            self.conversation = updated
+            if needsRenaming {
+                self.requestRenaming()
+            }
+        }
+        switch result {
+        case .success(let updated):
+            let fallback = updated.messages.last?.body.content ?? ""
+            self.consoleLogger.logAgentReply(fallbackText: fallback)
+        case .failure(let error):
+            self.consoleLogger.logAgentError(error.localizedDescription)
+        }
+        let message = Self.committedMessage(forResult: result,
+                                            userMessage: userMessage,
+                                            streamID: streamID())
+        completion(message)
+
+        // Freeze this completed round as wire-fragment blobs. Only on a
+        // successful turn with no tool call still parked (a parked turn never
+        // reaches here). completion(...) committed the reply synchronously via
+        // ChatService.finishTurn, so the chat's display messages now include
+        // the whole round.
+        if result.successValue != nil,
+           self.pendingRemoteCommands.isEmpty,
+           let captureAPI {
+            self.captureBlobsForCompletedTurn(api: captureAPI,
+                                              modelName: captureModelName,
+                                              hostedTools: captureHostedTools)
         }
     }
 
