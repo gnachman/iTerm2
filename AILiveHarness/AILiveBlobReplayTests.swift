@@ -410,6 +410,99 @@ extension AILiveHarness {
                       "a later Gemini request must splice the first round's stored blob bytes verbatim")
     }
 
+    /// Phase 4 (recovery TARGET): the full stateless Responses replay that a
+    /// post-expiry retry sends must be accepted by OpenAI and carry the history. A
+    /// fresh agent's first turn sets its system message, which nulls
+    /// previous_response_id, so this turn IS a full replay of the seeded history with
+    /// the id omitted - the exact request the retry re-issues on an unusable id.
+    /// Asserts OpenAI accepts it (a blob is captured only on success) and the model
+    /// uses the replayed history (recalls the seeded name). This also closes the
+    /// last live splice-path gap (Responses `input` array).
+    ///
+    /// NOTE the auto-retry TRIGGER (classifying an unusable id and re-issuing) is
+    /// covered by ChatAgentExpiryTests, not here: the stack never puts a BAD id on
+    /// the wire without a real server-side expiry (systemMessageDirty nulls it on
+    /// turn 1; turns 2+ use the valid in-memory id; `store` is always on), and adding
+    /// a production seam just to force one is not worth it.
+    func test_chat_responses_fullStatelessReplayAcceptedWithIdOmitted() throws {
+        guard let apiKey = Self.blobConfigValue("OPENAI_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No OPENAI_API_KEY")
+        }
+        guard let responsesModel = AIMetadata.instance.models.first(where: { $0.api == .responses }) else {
+            throw XCTSkip("No Responses-API model in AIMetadata")
+        }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        // Seed a prior exchange the full replay must carry to the model.
+        let name = "Zorbax"
+        let seedAssistant = Message(chatID: "seed", author: .agent,
+                                    content: .markdown("Nice to meet you, \(name)!"),
+                                    sentDate: Date(), uniqueID: UUID())
+        let seedUser = Message(chatID: "seed", author: .user,
+                               content: .markdown("My name is \(name). Please remember it."),
+                               sentDate: Date(), uniqueID: UUID())
+
+        let chatID = try broker.create(
+            chatWithTitle: "live responses full-replay \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-resp-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [seedUser, seedAssistant])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: responsesModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        let ended = expectation(description: "turn ends")
+        var done = false
+        let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+            if case .turnLifecycle(let event) = update, event == .ended, !done { done = true; ended.fulfill() }
+        }
+        defer { sub.unsubscribe() }
+        var msg = Message(chatID: chatID, author: .user,
+                          content: .plainText("What is my name? Reply with only the name.", context: nil),
+                          sentDate: Date(), uniqueID: UUID())
+        msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                  model: responsesModel.name, shouldThink: false)
+        try broker.publish(message: msg, toChatID: chatID, partial: false)
+        wait(for: [ended], timeout: 120)
+
+        let db = broker.listModel.chatDatabase
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+
+        // A full stateless replay: no previous_response_id on the wire.
+        XCTAssertFalse(wire.requests.isEmpty)
+        XCTAssertTrue(wire.requests.allSatisfy { !$0.contains("previous_response_id") },
+                      "a full stateless replay must omit previous_response_id")
+
+        // OpenAI accepted it (a blob is captured only on a successful turn end).
+        XCTAssertGreaterThanOrEqual(db.blobCount(inChat: chatID), 1,
+                                    "the full stateless replay must be accepted (a rejected turn writes no blob)")
+
+        // The replayed history reached the model: it recalls the seeded name.
+        let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+            .flatMap { Self.blobText($0.content) } ?? ""
+        XCTAssertTrue(lastAgentText.contains(name),
+                      "model must recall the seeded name from the full replay; got: \(lastAgentText)")
+    }
+
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
 
     private static func blobConfigValue(_ key: String) -> String? {
