@@ -2265,3 +2265,13 @@ Bug Fixes:
   these keys to tmux by name so tmux encodes
   them just as it does outside control mode,
   honoring its extended-keys-format.
+- Fixed a three-finger drag over a mouse-
+  reporting app (such as tmux with mouse
+  mode on, or vim with mouse=a) producing
+  both an iTerm2 selection and the app's own
+  selection at once. Three-finger drags are
+  now forwarded to the app like one-finger
+  drags when mouse reporting is active, so
+  the app owns the selection. Hold Option
+  during the drag to make a local iTerm2
+  selection instead. Issues 12953 and 12950.

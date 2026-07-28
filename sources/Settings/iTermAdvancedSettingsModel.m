@@ -396,7 +396,6 @@ DEFINE_BOOL(naturalScrollingAffectsHorizontalMouseReporting, NO, SECTION_MOUSE @
 DEFINE_FLOAT(horizontalScrollingSensitivity, 0.1, SECTION_MOUSE @"Sensitivity of mouse wheel for horizontal scrolling.\nUse 0 to disable. Value should be between 0 and 1. Changes to this setting only affect new sessions.");
 DEFINE_BOOL(useDoubleClickDelayForCommandSelection, NO, SECTION_MOUSE @"Wait to be sure it's not a double click before selecting a command");
 DEFINE_BOOL(requireOptionToDragSplitPaneTitleBar, NO, SECTION_MOUSE @"Require Option to be pressed to drag a split pane by its title bar?\nThis helps prevent accidental drags.");
-DEFINE_BOOL(threeFingerDragSendsMouseReports, NO, SECTION_MOUSE @"Three-finger drag sends mouse reports when mouse reporting is enabled.\nWhen enabled, three-finger drags will send mouse events to terminal applications like vim, tmux, or zellij instead of performing iTerm2 text selection.");
 
 #pragma mark Terminal
 
